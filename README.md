@@ -51,7 +51,10 @@ accepted
   P0 Compose reference realization
 
 next construction edge
-  P0 deterministic portable renderer contract
+  P0 VexWeb browser manifestation foundation
+  -> completed-view blueprint
+  -> F0 fractal vocabulary pressure
+  -> deterministic generated web artifacts
 
 later
   P1 web-native container
