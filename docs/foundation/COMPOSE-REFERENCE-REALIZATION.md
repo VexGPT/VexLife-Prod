@@ -200,3 +200,22 @@ Those omissions preserve the clean-container boundary; adding them only to resem
 violate the same judgment discipline #209 documents.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][P0][COMPOSE-REFERENCE][A002] -->
+
+
+## A002 proof reconciliation
+
+A002 reached Kotlin source compilation and failed only because the reference source explicitly
+imported `androidx.compose.foundation.layout.weight`.
+
+Under the current Compose source, `weight` is a parent-layout scope extension: Row/Column placement
+owns whether a child has weight. The correction removes the explicit import and leaves each
+`Modifier.weight(...)` expression at its existing callsite inside a Row/Column scope.
+
+~~~text
+PARENT LAYOUT OWNS PLACEMENT
+!= CHILD IMPORTS A GLOBAL WEIGHT PRIMITIVE
+~~~
+
+No Family, Blueprint, Parameter, or presentation ownership changed.
+
+<!-- [VXG RealForever][VEXLIFE-PROD][P0][COMPOSE-REFERENCE][A003] -->
