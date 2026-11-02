@@ -726,6 +726,333 @@ object VexWeb {
                         visitedHorizontal,
                 )
             }
+
+
+            val xCache =
+                mutableMapOf<
+                    SeamRef.Vertical,
+                    Double
+                >()
+            val yCache =
+                mutableMapOf<
+                    SeamRef.Horizontal,
+                    Double
+                >()
+
+            fun allocationFraction(
+                allocation: Parameter.Allocation,
+            ): Double =
+                when (allocation) {
+                    is Parameter.Allocation.Ratio ->
+                        allocation.beforeParts
+                            .toDouble() /
+                            allocation.totalParts
+                                .toDouble()
+                }
+
+            fun resolveVertical(
+                ref: SeamRef.Vertical,
+            ): Double {
+                xCache[
+                    ref
+                ]?.let {
+                    return it
+                }
+
+                val seam =
+                    verticalByRef
+                        .getValue(
+                            ref,
+                        )
+
+                fun xValue(
+                    boundary: XBoundary,
+                ): Double =
+                    when (boundary) {
+                        XBoundary.FrameStart ->
+                            0.0
+
+                        XBoundary.FrameEnd ->
+                            1.0
+
+                        is XBoundary.Seam ->
+                            resolveVertical(
+                                boundary.ref,
+                            )
+                    }
+
+                val start =
+                    xValue(
+                        seam.between.start,
+                    )
+                val end =
+                    xValue(
+                        seam.between.end,
+                    )
+
+                require(
+                    start <
+                        end,
+                ) {
+                    "VexWeb vertical Seam allocation interval must progress from start to end"
+                }
+
+                val resolved =
+                    start +
+                        (
+                            end -
+                                start
+                        ) *
+                        allocationFraction(
+                            seam.allocation,
+                        )
+
+                xCache[
+                    ref
+                ] =
+                    resolved
+
+                return resolved
+            }
+
+            fun resolveHorizontal(
+                ref: SeamRef.Horizontal,
+            ): Double {
+                yCache[
+                    ref
+                ]?.let {
+                    return it
+                }
+
+                val seam =
+                    horizontalByRef
+                        .getValue(
+                            ref,
+                        )
+
+                fun yValue(
+                    boundary: YBoundary,
+                ): Double =
+                    when (boundary) {
+                        YBoundary.FrameTop ->
+                            0.0
+
+                        YBoundary.FrameBottom ->
+                            1.0
+
+                        is YBoundary.Seam ->
+                            resolveHorizontal(
+                                boundary.ref,
+                            )
+                    }
+
+                val top =
+                    yValue(
+                        seam.between.top,
+                    )
+                val bottom =
+                    yValue(
+                        seam.between.bottom,
+                    )
+
+                require(
+                    top <
+                        bottom,
+                ) {
+                    "VexWeb horizontal Seam allocation interval must progress from top to bottom"
+                }
+
+                val resolved =
+                    top +
+                        (
+                            bottom -
+                                top
+                        ) *
+                        allocationFraction(
+                            seam.allocation,
+                        )
+
+                yCache[
+                    ref
+                ] =
+                    resolved
+
+                return resolved
+            }
+
+            fun xValue(
+                boundary: XBoundary,
+            ): Double =
+                when (boundary) {
+                    XBoundary.FrameStart ->
+                        0.0
+
+                    XBoundary.FrameEnd ->
+                        1.0
+
+                    is XBoundary.Seam ->
+                        resolveVertical(
+                            boundary.ref,
+                        )
+                }
+
+            fun yValue(
+                boundary: YBoundary,
+            ): Double =
+                when (boundary) {
+                    YBoundary.FrameTop ->
+                        0.0
+
+                    YBoundary.FrameBottom ->
+                        1.0
+
+                    is YBoundary.Seam ->
+                        resolveHorizontal(
+                            boundary.ref,
+                        )
+                }
+
+            verticalByRef.keys.forEach {
+                resolveVertical(
+                    it,
+                )
+            }
+            horizontalByRef.keys.forEach {
+                resolveHorizontal(
+                    it,
+                )
+            }
+
+            val epsilon =
+                1e-9
+
+            val verticalSpanByRef =
+                verticalByRef
+                    .mapValues { (_, seam) ->
+                        val top =
+                            yValue(
+                                seam.span.top,
+                            )
+                        val bottom =
+                            yValue(
+                                seam.span.bottom,
+                            )
+
+                        require(
+                            top <
+                                bottom,
+                        ) {
+                            "VexWeb vertical Seam span must progress from top to bottom"
+                        }
+
+                        top to
+                            bottom
+                    }
+
+            val horizontalSpanByRef =
+                horizontalByRef
+                    .mapValues { (_, seam) ->
+                        val start =
+                            xValue(
+                                seam.span.start,
+                            )
+                        val end =
+                            xValue(
+                                seam.span.end,
+                            )
+
+                        require(
+                            start <
+                                end,
+                        ) {
+                            "VexWeb horizontal Seam span must progress from start to end"
+                        }
+
+                        start to
+                            end
+                    }
+
+            regions.forEach { region ->
+                val start =
+                    xValue(
+                        region.bounds.start,
+                    )
+                val end =
+                    xValue(
+                        region.bounds.end,
+                    )
+                val top =
+                    yValue(
+                        region.bounds.top,
+                    )
+                val bottom =
+                    yValue(
+                        region.bounds.bottom,
+                    )
+
+                require(
+                    start <
+                        end &&
+                        top <
+                        bottom,
+                ) {
+                    "VexWeb Region must resolve to a non-empty forward rectangle"
+                }
+
+                listOf(
+                    region.bounds.start,
+                    region.bounds.end,
+                ).forEach { boundary ->
+                    if (
+                        boundary is
+                        XBoundary.Seam
+                    ) {
+                        val span =
+                            verticalSpanByRef
+                                .getValue(
+                                    boundary.ref,
+                                )
+
+                        require(
+                            span.first <=
+                                top +
+                                epsilon &&
+                                span.second >=
+                                bottom -
+                                epsilon,
+                        ) {
+                            "VexWeb vertical Seam does not cover the full Region edge that references it"
+                        }
+                    }
+                }
+
+                listOf(
+                    region.bounds.top,
+                    region.bounds.bottom,
+                ).forEach { boundary ->
+                    if (
+                        boundary is
+                        YBoundary.Seam
+                    ) {
+                        val span =
+                            horizontalSpanByRef
+                                .getValue(
+                                    boundary.ref,
+                                )
+
+                        require(
+                            span.first <=
+                                start +
+                                epsilon &&
+                                span.second >=
+                                end -
+                                epsilon,
+                        ) {
+                            "VexWeb horizontal Seam does not cover the full Region edge that references it"
+                        }
+                    }
+                }
+            }
         }
 
         override val identity: Identity =
