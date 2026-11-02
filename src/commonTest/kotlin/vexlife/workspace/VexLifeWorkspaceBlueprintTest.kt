@@ -2,7 +2,7 @@ package vexlife.workspace
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import kotlin.test.assertSame
 
 class VexLifeWorkspaceBlueprintTest {
     @Test
@@ -23,18 +23,42 @@ class VexLifeWorkspaceBlueprintTest {
             refs.size,
             refs.toSet().size,
         )
+        assertEquals(
+            19,
+            refs.size,
+        )
 
-        assertTrue(
-            "element.vexlife-workspace.browser.viewport" in
-                refs,
+        assertEquals(
+            "element.vexlife-workspace.browser.viewport",
+            VexLifeWorkspaceBlueprint
+                .BrowserViewport
+                .ref,
         )
-        assertTrue(
-            "element.vexlife-workspace.companion.conversation.send" in
-                refs,
+        assertEquals(
+            VexLifeWorkspaceBlueprint.Browser.ref,
+            VexLifeWorkspaceBlueprint
+                .BrowserViewport
+                .parentRef,
         )
-        assertTrue(
-            "element.vexlife-workspace.companion.settings.reset" in
-                refs,
+
+        assertEquals(
+            "element.vexlife-workspace.companion.conversation.send",
+            VexLifeWorkspaceBlueprint
+                .Send
+                .ref,
+        )
+        assertEquals(
+            VexLifeWorkspaceBlueprint.Conversation.ref,
+            VexLifeWorkspaceBlueprint
+                .Send
+                .parentRef,
+        )
+
+        assertEquals(
+            "element.vexlife-workspace.companion.settings.reset",
+            VexLifeWorkspaceBlueprint
+                .SettingsReset
+                .ref,
         )
     }
 }

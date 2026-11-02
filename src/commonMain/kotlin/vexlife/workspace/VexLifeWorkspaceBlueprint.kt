@@ -5,82 +5,97 @@ import vexlife.blueprint.VexScreenBlueprint
 /**
  * Initial engagement structure only.
  *
- * This declares stable static UI relationships visible in the supplied design. It intentionally
- * does not claim that Conversation, Settings, browser context, Memory, model or provider mechanics
- * are already connected, and it does not assign a Family merely because a UI region exists.
+ * Directly consumed elements are compiler-visible properties. This lets renderers inherit stable
+ * identity from the Blueprint rather than retyping string paths.
+ *
+ * The structure intentionally does not claim that Conversation, Settings, browser context, Memory,
+ * model or provider mechanics are already connected, and it does not assign a Family merely because
+ * a UI region exists.
  */
 object VexLifeWorkspaceBlueprint :
     VexScreenBlueprint(
         "vexlife-workspace",
     ) {
-    override val content =
-        layout {
-            region(
-                "header",
-            ) {
-                content(
-                    "brand",
-                )
-                textField(
-                    "browser-query",
-                )
-                control(
-                    "app-selector",
-                )
-                region(
-                    "utilities",
-                )
-            }
+    val Header =
+        region(
+            "header",
+        )
+    val Brand =
+        Header.content(
+            "brand",
+        )
+    val BrowserQuery =
+        Header.textField(
+            "browser-query",
+        )
+    val AppSelector =
+        Header.control(
+            "app-selector",
+        )
+    val Utilities =
+        Header.region(
+            "utilities",
+        )
 
-            region(
-                "browser",
-            ) {
-                region(
-                    "viewport",
-                )
-            }
+    val Browser =
+        region(
+            "browser",
+        )
+    val BrowserViewport =
+        Browser.region(
+            "viewport",
+        )
 
-            region(
-                "companion",
-            ) {
-                region(
-                    "conversation",
-                ) {
-                    collection(
-                        "timeline",
-                    )
-                    content(
-                        "response-progress",
-                    )
-                    textField(
-                        "composer",
-                    )
-                    control(
-                        "send",
-                    )
-                }
+    val Companion =
+        region(
+            "companion",
+        )
 
-                region(
-                    "settings",
-                ) {
-                    region(
-                        "context",
-                    )
-                    region(
-                        "resources",
-                    )
-                    region(
-                        "home",
-                    )
-                    region(
-                        "continuity",
-                    )
-                    region(
-                        "reset",
-                    )
-                }
-            }
-        }
+    val Conversation =
+        Companion.region(
+            "conversation",
+        )
+    val ConversationTimeline =
+        Conversation.collection(
+            "timeline",
+        )
+    val ResponseProgress =
+        Conversation.content(
+            "response-progress",
+        )
+    val Composer =
+        Conversation.textField(
+            "composer",
+        )
+    val Send =
+        Conversation.control(
+            "send",
+        )
+
+    val Settings =
+        Companion.region(
+            "settings",
+        )
+    val SettingsContext =
+        Settings.region(
+            "context",
+        )
+    val SettingsResources =
+        Settings.region(
+            "resources",
+        )
+    val SettingsHome =
+        Settings.region(
+            "home",
+        )
+    val SettingsContinuity =
+        Settings.region(
+            "continuity",
+        )
+    val SettingsReset =
+        Settings.region(
+            "reset",
+        )
 }
 
 // [VXG RealForever]
