@@ -1,10 +1,16 @@
 package vexlife.blueprint
 
-/** Static semantic UI structure. Runtime/provider instances remain outside this tree. */
-data class VexUiElement(
+/**
+ * Stable static UI coordinate.
+ *
+ * The ref and parent relationship are authored by one Screen Blueprint. Runtime/provider instances
+ * remain outside this static registry.
+ */
+@ConsistentCopyVisibility
+data class VexUiElementRef internal constructor(
     val ref: String,
     val kind: Kind,
-    val children: List<VexUiElement> = emptyList(),
+    val parentRef: String?,
 ) {
     enum class Kind {
         Region,
@@ -13,19 +19,17 @@ data class VexUiElement(
         Control,
         Collection,
     }
-
-    fun flatten(): List<VexUiElement> =
-        listOf(this) +
-            children.flatMap(
-                VexUiElement::flatten,
-            )
 }
 
 /**
- * Rooted static Screen Blueprint.
+ * Rooted static Screen Blueprint with compiler-visible element handles.
  *
- * A Screen owns stable identity + structural placement only. Renderer/runtime currentness and
- * product semantic State remain separate owners.
+ * Directly referenced UI relationships are Kotlin properties on the concrete Screen Blueprint. A
+ * renderer therefore consumes e.g. Workspace.BrowserViewport rather than reconstructing a string
+ * path from convention.
+ *
+ * Screen Blueprint owns stable identity + structural placement only. Renderer/runtime currentness
+ * and product semantic State remain separate owners.
  */
 abstract class VexScreenBlueprint(
     screenKey: String,
@@ -38,140 +42,130 @@ abstract class VexScreenBlueprint(
     val screenRef: String =
         "screen.$screenKey"
 
-    protected fun layout(
-        block: VexUiScope.() -> Unit,
-    ): List<VexUiElement> =
-        VexUiScope(
-            screenKey = screenKey,
-            path = emptyList(),
-        )
-            .apply(
-                block,
-            )
-            .build()
+    private val declaredElements =
+        mutableListOf<VexUiElementRef>()
 
-    abstract val content: List<VexUiElement>
-
-    val elements: List<VexUiElement>
+    val elements: List<VexUiElementRef>
         get() =
-            content.flatMap(
-                VexUiElement::flatten,
+            declaredElements.toList()
+
+    fun requireElement(
+        ref: String,
+    ): VexUiElementRef =
+        elements.singleOrNull {
+            it.ref ==
+                ref
+        }
+            ?: error(
+                "Unknown Blueprint element ref: $ref",
             )
-}
 
-/** Nested identity authoring scope; child refs inherit their Screen + parent path. */
-class VexUiScope internal constructor(
-    private val screenKey: String,
-    private val path: List<String>,
-) {
-    private val children =
-        mutableListOf<VexUiElement>()
-
-    fun region(
+    protected fun region(
         id: String,
-        block: VexUiScope.() -> Unit = {},
-    ) =
-        container(
+    ): VexUiElementRef =
+        declare(
+            parent = null,
             id = id,
-            kind = VexUiElement.Kind.Region,
-            block = block,
+            kind = VexUiElementRef.Kind.Region,
         )
 
-    fun content(
+    protected fun VexUiElementRef.region(
         id: String,
-    ) =
-        leaf(
+    ): VexUiElementRef =
+        declare(
+            parent = this,
             id = id,
-            kind = VexUiElement.Kind.Content,
+            kind = VexUiElementRef.Kind.Region,
         )
 
-    fun textField(
+    protected fun VexUiElementRef.content(
         id: String,
-    ) =
-        leaf(
+    ): VexUiElementRef =
+        declare(
+            parent = this,
             id = id,
-            kind = VexUiElement.Kind.TextField,
+            kind = VexUiElementRef.Kind.Content,
         )
 
-    fun control(
+    protected fun VexUiElementRef.textField(
         id: String,
-    ) =
-        leaf(
+    ): VexUiElementRef =
+        declare(
+            parent = this,
             id = id,
-            kind = VexUiElement.Kind.Control,
+            kind = VexUiElementRef.Kind.TextField,
         )
 
-    fun collection(
+    protected fun VexUiElementRef.control(
         id: String,
-    ) =
-        leaf(
+    ): VexUiElementRef =
+        declare(
+            parent = this,
             id = id,
-            kind = VexUiElement.Kind.Collection,
+            kind = VexUiElementRef.Kind.Control,
         )
 
-    internal fun build(): List<VexUiElement> =
-        children.toList()
-
-    private fun container(
+    protected fun VexUiElementRef.collection(
         id: String,
-        kind: VexUiElement.Kind,
-        block: VexUiScope.() -> Unit,
-    ) {
+    ): VexUiElementRef =
+        declare(
+            parent = this,
+            id = id,
+            kind = VexUiElementRef.Kind.Collection,
+        )
+
+    private fun declare(
+        parent: VexUiElementRef?,
+        id: String,
+        kind: VexUiElementRef.Kind,
+    ): VexUiElementRef {
         val segment =
             normalizeSegment(
                 id,
             )
-        val nextPath =
-            path +
+        val parentPath =
+            parent
+                ?.ref
+                ?.removePrefix(
+                    "element.$screenKey.",
+                )
+                ?.takeIf {
+                    it !=
+                        parent.ref
+                }
+        val path =
+            if (
+                parentPath ==
+                null
+            ) {
                 segment
-        val nested =
-            VexUiScope(
-                screenKey = screenKey,
-                path = nextPath,
-            )
-                .apply(
-                    block,
-                )
+            } else {
+                "$parentPath.$segment"
+            }
+        val ref =
+            "element.$screenKey.$path"
 
-        children +=
-            VexUiElement(
-                ref =
-                    elementRef(
-                        screenKey = screenKey,
-                        path = nextPath,
-                    ),
-                kind = kind,
-                children = nested.build(),
-            )
-    }
+        require(
+            declaredElements.none {
+                it.ref ==
+                    ref
+            },
+        ) {
+            "Duplicate Blueprint element ref: $ref"
+        }
 
-    private fun leaf(
-        id: String,
-        kind: VexUiElement.Kind,
-    ) {
-        val nextPath =
-            path +
-                normalizeSegment(
-                    id,
-                )
-
-        children +=
-            VexUiElement(
-                ref =
-                    elementRef(
-                        screenKey = screenKey,
-                        path = nextPath,
-                    ),
-                kind = kind,
+        return VexUiElementRef(
+            ref = ref,
+            kind = kind,
+            parentRef =
+                parent
+                    ?.ref,
+        )
+            .also(
+                declaredElements::add,
             )
     }
 }
-
-private fun elementRef(
-    screenKey: String,
-    path: List<String>,
-): String =
-    "element.$screenKey.${path.joinToString(".")}"
 
 internal fun normalizeSegment(
     value: String,

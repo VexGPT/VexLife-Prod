@@ -1,5 +1,5 @@
 plugins {
-    kotlin("multiplatform") version "2.4.20"
+    id("org.jetbrains.kotlin.multiplatform")
 }
 
 kotlin {
