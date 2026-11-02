@@ -516,3 +516,49 @@ Those choices must descend from F0/F1 pressure rather than become precedent beca
 needed examples.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][VEXWEB][COMPLETED-VIEW-BLUEPRINT] -->
+
+
+## Fractal split scalability pressure
+
+The initial completed view shows one browser/companion divider, but VexWeb Split must not mean
+"exactly two screens forever."
+
+Current reusable law:
+
+~~~text
+Split
+├── axis
+├── leading : Node
+├── handle  : Node
+└── trailing: Node
+
+Node may itself be another Split
+~~~
+
+Therefore pane topology scales fractally:
+
+~~~text
+two panes
+  one Split
+
+three panes
+  Split
+  -> one pane
+  -> nested Split
+
+four-pane 2x2
+  Horizontal Split
+  -> Vertical Split
+  -> Vertical Split
+~~~
+
+This allows multiplayer-style split-screen composition without creating separate two-pane / three-pane /
+four-pane languages.
+
+`Horizontal` and `Vertical` name the authored arrangement axis. `leading` / `trailing` remain
+logical roles relative to that axis rather than hard-coded left/right/top/bottom platform coordinates.
+
+Do not invent a generic N-way Partition merely because N can be greater than two. Earn it only if a
+future relationship has group-level invariants that recursive Split cannot preserve clearly.
+
+<!-- [VXG RealForever][VEXWEB][COMPLETED-VIEW][SPLIT-SCALABILITY] -->

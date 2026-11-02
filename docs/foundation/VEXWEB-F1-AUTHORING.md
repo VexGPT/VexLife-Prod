@@ -138,3 +138,81 @@ and:
 ~~~
 
 <!-- [VXG RealForever][VEXWEB][F1][AUTHORING] -->
+
+
+## A001 proof PASS / recursive split scalability pressure
+
+F1 A001 exact RETURN:
+
+~~~text
+sha256 3da3493468bc36d7db608205c2c74ee33d4407a621329dfccbd17b574d5db00f
+
+compileKotlinJvm      PASS
+jvmTest               PASS
+compileKotlinJs       PASS
+compileTestKotlinJs   PASS
+clean worktree        PASS
+~~~
+
+Before acceptance, human pressure asked whether `Split` is reusable beyond two panes, including a
+four-player split-screen experience.
+
+The existing F0 vocabulary already has a fractal property:
+
+~~~text
+Split.leading  : Node
+Split.trailing : Node
+
+Node may itself be another Split
+~~~
+
+So the smallest reusable answer is recursive composition, not a new `Grid`, `MultiSplit`, or
+`Partition` abstraction.
+
+The real missing intention was orientation. F1 A002 therefore adds one presentation parameter:
+
+~~~text
+SplitAxis
+  Horizontal
+  Vertical
+~~~
+
+A four-pane 2x2 layout is then:
+
+~~~text
+Split(axis = Horizontal)
+├── leading -> Split(axis = Vertical)
+│   ├── PlayerOne
+│   └── PlayerTwo
+└── trailing -> Split(axis = Vertical)
+    ├── PlayerThree
+    └── PlayerFour
+~~~
+
+This preserves the fractal law: larger pane topologies are composed from the same relationship rather
+than switching to a second layout language.
+
+Do not generalize further yet.
+
+A broader N-way Partition is earned only if concrete pressure appears that recursive binary Split does
+not express cleanly, such as:
+
+~~~text
+synchronized resizing across N siblings
+dynamic pane counts as one maintained relationship
+non-binary weighting that becomes unreadable through recursion
+another invariant that truly belongs to the group as a whole
+~~~
+
+Permanent:
+
+~~~text
+MORE PANES
+!= AUTOMATICALLY A NEW CONTAINER ONTOLOGY
+
+RECURSIVE SPLIT
++ AUTHORED AXIS
+= CURRENT SMALLEST FRACTAL ANSWER
+~~~
+
+<!-- [VXG RealForever][VEXWEB][F1][A002-SPLIT-SCALABILITY] -->
