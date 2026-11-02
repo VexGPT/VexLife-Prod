@@ -42,9 +42,9 @@ This repository is intentionally young. The front door is a map, not a replaceme
 
 ~~~text
 P0 repository front door
-  SOURCE CANDIDATE FORMED
+  this source provides the repository entry
 
-next
+next construction edge
   P0 compiler-constrained semantic Blueprint authoring practicum
 
 later
@@ -55,7 +55,7 @@ later
   P3 lived context-aware browser/Conversation proof
 ~~~
 
-No Kotlin semantic foundation, Compose renderer, web runtime, model connection, Conversation backend, Memory integration, DOM perception, or browser effect authority is claimed by this front-door candidate.
+No Kotlin semantic foundation, Compose renderer, web runtime, model connection, Conversation backend, Memory integration, DOM perception, or browser effect authority is claimed by the front-door source.
 
 ## Permanent distinctions
 

@@ -8,7 +8,7 @@ A foundation is added when a recurring semantic owner, construction invariant, o
 
 | Foundation | Human question | Current source | Proof | State |
 |---|---|---|---|---|
-| Repository front door | Can a fresh worker understand why this repository exists, where to descend, and what is currently claimed without this chat? | `README.md`, `AGENTS.md`, `docs/CULTURE.md`, this index | source review | **ESTABLISHING** |
+| Repository front door | Can a fresh worker understand why this repository exists, where to descend, and what is currently claimed without this chat? | `README.md`, `AGENTS.md`, `docs/CULTURE.md`, this index | source review | SOURCE ENTRY |
 | Semantic contract / Blueprint authoring | Can one small VexLife relationship be authored in pure Kotlin so Family/State/Control/DisplayState/UI kinship is compiler-visible rather than copied from examples? | **not yet formed** | **not yet formed** | **NEXT** |
 | Compose reference realization | Can the accepted semantic contract render through a simple Compose reference without Compose becoming product-semantic authority? | **not yet formed** | **not yet formed** | HELD on semantic contract |
 | Portable UI contract | Can the accepted semantic relationship project deterministically into machine-readable renderer input without AI reinterpretation? | **not yet formed** | **not yet formed** | HELD |
@@ -20,9 +20,10 @@ A foundation is added when a recurring semantic owner, construction invariant, o
 ## Current descent
 
 ~~~text
-current edge
+repository entry
 -> Repository front door
--> prove/review candidate
+
+next construction edge
 -> Semantic contract / Blueprint authoring
 ~~~
 

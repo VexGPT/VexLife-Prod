@@ -53,8 +53,8 @@ A renderer may consume semantic truth; it does not become that truth owner.
 
 ## Current route
 
-The only admitted source work at this checkpoint is the P0 front door itself.
+This front door routes the repository; VexWork carries lifecycle/current work position.
 
-The next intended work is the smallest pure-Kotlin semantic/Blueprint practicum needed to test whether compiler-visible contracts can constrain future AI construction. Do not begin web UI or backend reintegration by skipping that edge.
+The next construction edge is the smallest pure-Kotlin semantic/Blueprint practicum needed to test whether compiler-visible contracts can constrain future AI construction. Do not begin web UI or backend reintegration by skipping that edge.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][AGENTS] -->
