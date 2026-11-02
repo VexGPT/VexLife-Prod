@@ -289,3 +289,80 @@ DOM context projection
 ~~~
 
 <!-- [VXG RealForever][VEXWEB][SPATIAL][FRAME-SEAM-REGION] -->
+
+
+## A001 proof PASS / A002 geometry-validity hardening
+
+A001 exact RETURN:
+
+~~~text
+sha256 3249350cc4c1bef19865f300e319aa6037de9015c213e6dea7a2f060a7b03abb
+
+compileKotlinJvm      PASS
+jvmTest               PASS
+compileKotlinJs       PASS
+compileTestKotlinJs   PASS
+clean worktree        PASS
+~~~
+
+The same Frame / Seam / Region nouns passed the 2 / 3 / 4 region pressure.
+
+Threshold review found one additional requirement before acceptance:
+
+~~~text
+source relationship
+-> must resolve to valid geometry
+-> renderer must not repair or guess
+~~~
+
+A002 therefore resolves Allocation relationships internally into normalized Frame coordinates for
+validation only.
+
+That derived resolution now rejects:
+
+~~~text
+same-axis Seam dependency cycle
+reversed Seam allocation interval
+reversed / empty Seam span
+reversed / empty Region rectangle
+Region edge using a Seam that does not cover that full edge
+~~~
+
+Example:
+
+~~~text
+partial Vertical Seam spans only top half
+
+Region:
+  start  = Frame.Start
+  end    = partial Vertical Seam
+  top    = Frame.Top
+  bottom = Frame.Bottom
+
+-> INVALID
+
+because the referenced Seam does not exist along the Region's entire end edge.
+~~~
+
+Permanent:
+
+~~~text
+INTERNAL NORMALIZED RESOLUTION
+= VALIDATION / FUTURE INSPECTION SUPPORT
+
+INTERNAL NORMALIZED RESOLUTION
+!= AUTHORED PIXEL COORDINATES
+!= SECOND SPATIAL LANGUAGE
+~~~
+
+The authored spatial grammar remains unchanged:
+
+~~~text
+Frame
+Seam
+Region
+Allocation
+Depth
+~~~
+
+<!-- [VXG RealForever][VEXWEB][SPATIAL][A002-GEOMETRY-VALIDITY] -->
