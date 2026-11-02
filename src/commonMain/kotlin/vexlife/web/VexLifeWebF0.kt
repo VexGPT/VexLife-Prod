@@ -3,10 +3,10 @@ package vexlife.web
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 /**
- * First VexWeb pressure specimen from the accepted completed-view blueprint.
+ * Accepted F0 meaning authored through the F1 compositional surface.
  *
- * It is intentionally inert. No browser provider, Conversation backend, model, Memory, Settings
- * backend or DOM-context channel exists here.
+ * The nested source should read in the same direction as the completed-view relationship graph while
+ * every emitted node remains the accepted F0 vocabulary.
  */
 object VexLifeWebF0 {
     object Refs {
@@ -31,189 +31,160 @@ object VexLifeWebF0 {
             )
     }
 
-    val Snackbar =
-        VexWeb.Structural(
-            ref =
-                Refs.Snackbar,
-            placement =
-                VexWeb.Placement.Overlay,
-            depth =
-                VexWeb.Depth.Transient,
-            presentation =
-                VexWeb.Presentation.TransientFeedback,
-        )
-
-    val OverlayRoot =
-        VexWeb.Structural(
-            ref =
-                Refs.OverlayRoot,
-            placement =
-                VexWeb.Placement.Overlay,
-            depth =
-                VexWeb.Depth.Transient,
-            presentation =
-                VexWeb.Presentation.Surface,
-            children =
-                listOf(
-                    Snackbar,
-                ),
-        )
-
-    val Send =
-        VexWeb.Element(
-            element =
-                VexLifeWorkspaceBlueprint.Send,
-            placement =
-                VexWeb.Placement.Trailing,
-            depth =
-                VexWeb.Depth.Content,
-            presentation =
-                VexWeb.Presentation.PrimaryAction,
-            interactions =
-                setOf(
-                    VexWeb.Interaction.Activate,
-                ),
-            binding =
-                VexWeb.Binding.Unbound(
-                    fallback =
-                        VexWeb.Fallback.NotYetImplemented(
-                            capabilityRef =
-                                VexWeb.CapabilityRef.of(
-                                    "conversation.send",
-                                ),
-                            feedbackTarget =
-                                Refs.Snackbar,
-                        ),
-                ),
-        )
-
-    val Composer =
-        VexWeb.Element(
-            element =
-                VexLifeWorkspaceBlueprint.Composer,
-            placement =
-                VexWeb.Placement.InFlow,
-            depth =
-                VexWeb.Depth.Content,
-            presentation =
-                VexWeb.Presentation.Surface,
-            children =
-                listOf(
-                    Send,
-                ),
-        )
-
-    val Conversation =
-        VexWeb.Element(
-            element =
-                VexLifeWorkspaceBlueprint.Conversation,
-            placement =
-                VexWeb.Placement.FillAvailable,
-            depth =
-                VexWeb.Depth.Content,
-            presentation =
-                VexWeb.Presentation.Surface,
-            children =
-                listOf(
-                    Composer,
-                ),
-        )
-
-    val CompanionPane =
-        VexWeb.Element(
-            element =
-                VexLifeWorkspaceBlueprint.Companion,
-            placement =
-                VexWeb.Placement.Trailing,
-            depth =
-                VexWeb.Depth.Content,
-            presentation =
-                VexWeb.Presentation.Surface,
-            children =
-                listOf(
-                    Conversation,
-                ),
-        )
-
-    val BrowserViewport =
-        VexWeb.Element(
-            element =
-                VexLifeWorkspaceBlueprint.BrowserViewport,
-            placement =
-                VexWeb.Placement.FillAvailable,
-            depth =
-                VexWeb.Depth.Content,
-            presentation =
-                VexWeb.Presentation.Surface,
-        )
-
-    val BrowserPane =
-        VexWeb.Element(
-            element =
-                VexLifeWorkspaceBlueprint.Browser,
-            placement =
-                VexWeb.Placement.Leading,
-            depth =
-                VexWeb.Depth.Content,
-            presentation =
-                VexWeb.Presentation.Surface,
-            children =
-                listOf(
-                    BrowserViewport,
-                ),
-        )
-
-    val SplitHandle =
-        VexWeb.Structural(
-            ref =
-                Refs.SplitHandle,
-            placement =
-                VexWeb.Placement.InFlow,
-            depth =
-                VexWeb.Depth.Chrome,
-            presentation =
-                VexWeb.Presentation.SplitHandle,
-            interactions =
-                setOf(
-                    VexWeb.Interaction.Resize,
-                    VexWeb.Interaction.CollapseLeading,
-                    VexWeb.Interaction.CollapseTrailing,
-                ),
-            binding =
-                VexWeb.Binding.LocalPresentation(
-                    target =
-                        Refs.SplitContainer,
-                ),
-        )
-
-    val SplitContainer =
-        VexWeb.Split(
-            ref =
-                Refs.SplitContainer,
-            mode =
-                VexWeb.Parameter.SplitMode.Balanced(
-                    ratio =
-                        VexWeb.Parameter
-                            .SplitRatio
-                            .Equal,
-                ),
-            leading =
-                BrowserPane,
-            handle =
-                SplitHandle,
-            trailing =
-                CompanionPane,
-        )
-
     val Surface =
-        VexWeb.Surface(
-            screenRef =
-                VexLifeWorkspaceBlueprint.screenRef,
-            content =
-                SplitContainer,
-            overlayRoot =
-                OverlayRoot,
-        )
+        vexWebSurface(
+            VexLifeWorkspaceBlueprint,
+        ) {
+            content {
+                split(
+                    ref =
+                        Refs.SplitContainer,
+                    mode =
+                        VexWeb.Parameter
+                            .SplitMode
+                            .Balanced(
+                                ratio =
+                                    VexWeb.Parameter
+                                        .SplitRatio
+                                        .Equal,
+                            ),
+                ) {
+                    leading {
+                        element(
+                            element =
+                                VexLifeWorkspaceBlueprint.Browser,
+                            placement =
+                                VexWeb.Placement.Leading,
+                            depth =
+                                VexWeb.Depth.Content,
+                            presentation =
+                                VexWeb.Presentation.Surface,
+                        ) {
+                            element(
+                                element =
+                                    VexLifeWorkspaceBlueprint.BrowserViewport,
+                                placement =
+                                    VexWeb.Placement.FillAvailable,
+                                depth =
+                                    VexWeb.Depth.Content,
+                                presentation =
+                                    VexWeb.Presentation.Surface,
+                            )
+                        }
+                    }
+
+                    handle {
+                        interactiveStructural(
+                            ref =
+                                Refs.SplitHandle,
+                            placement =
+                                VexWeb.Placement.InFlow,
+                            depth =
+                                VexWeb.Depth.Chrome,
+                            presentation =
+                                VexWeb.Presentation.SplitHandle,
+                            interactions =
+                                setOf(
+                                    VexWeb.Interaction.Resize,
+                                    VexWeb.Interaction.CollapseLeading,
+                                    VexWeb.Interaction.CollapseTrailing,
+                                ),
+                            binding =
+                                VexWeb.Binding.LocalPresentation(
+                                    target =
+                                        Refs.SplitContainer,
+                                ),
+                        )
+                    }
+
+                    trailing {
+                        element(
+                            element =
+                                VexLifeWorkspaceBlueprint.Companion,
+                            placement =
+                                VexWeb.Placement.Trailing,
+                            depth =
+                                VexWeb.Depth.Content,
+                            presentation =
+                                VexWeb.Presentation.Surface,
+                        ) {
+                            element(
+                                element =
+                                    VexLifeWorkspaceBlueprint.Conversation,
+                                placement =
+                                    VexWeb.Placement.FillAvailable,
+                                depth =
+                                    VexWeb.Depth.Content,
+                                presentation =
+                                    VexWeb.Presentation.Surface,
+                            ) {
+                                element(
+                                    element =
+                                        VexLifeWorkspaceBlueprint.Composer,
+                                    placement =
+                                        VexWeb.Placement.InFlow,
+                                    depth =
+                                        VexWeb.Depth.Content,
+                                    presentation =
+                                        VexWeb.Presentation.Surface,
+                                ) {
+                                    interactiveElement(
+                                        element =
+                                            VexLifeWorkspaceBlueprint.Send,
+                                        placement =
+                                            VexWeb.Placement.Trailing,
+                                        depth =
+                                            VexWeb.Depth.Content,
+                                        presentation =
+                                            VexWeb.Presentation.PrimaryAction,
+                                        interactions =
+                                            setOf(
+                                                VexWeb.Interaction.Activate,
+                                            ),
+                                        binding =
+                                            VexWeb.Binding.Unbound(
+                                                fallback =
+                                                    VexWeb.Fallback.NotYetImplemented(
+                                                        capabilityRef =
+                                                            VexWeb.CapabilityRef.of(
+                                                                "conversation.send",
+                                                            ),
+                                                        feedbackTarget =
+                                                            Refs.Snackbar,
+                                                    ),
+                                            ),
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            overlayRoot {
+                structural(
+                    ref =
+                        Refs.OverlayRoot,
+                    placement =
+                        VexWeb.Placement.Overlay,
+                    depth =
+                        VexWeb.Depth.Transient,
+                    presentation =
+                        VexWeb.Presentation.Surface,
+                ) {
+                    structural(
+                        ref =
+                            Refs.Snackbar,
+                        placement =
+                            VexWeb.Placement.Overlay,
+                        depth =
+                            VexWeb.Depth.Transient,
+                        presentation =
+                            VexWeb.Presentation.TransientFeedback,
+                    )
+                }
+            }
+        }
 }
 
 // [VXG RealForever]

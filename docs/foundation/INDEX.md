@@ -11,7 +11,7 @@ A foundation is added when a recurring semantic owner, construction invariant, o
 | Repository front door | Can a fresh worker understand why this repository exists, where to descend, and what is currently claimed without this chat? | `README.md`, `AGENTS.md`, `docs/CULTURE.md`, this index | source review | SOURCE ENTRY |
 | Semantic contract / Blueprint authoring | Can one small VexLife relationship be authored in pure Kotlin so Family/State/Control/DisplayState/UI kinship is compiler-visible rather than copied from examples? | `docs/foundation/SEMANTIC-CONTRACT-AUTHORING.md`, `src/commonMain/kotlin/vexlife/semantic/VexFamilyContract.kt`, `src/commonMain/kotlin/vexlife/blueprint/VexUiBlueprint.kt` | Kotlin 2.4.20 JVM test + JS production/test compile PASS; accepted tree `4e6e74255bb444d2adfbd991ddd6c1fba0049fb0` | **ACCEPTED** |
 | Compose reference realization | Can the accepted semantic contract render through a simple Compose reference without Compose becoming product-semantic authority? | `docs/foundation/COMPOSE-REFERENCE-REALIZATION.md`, `reference/compose/src/main/kotlin/vexlife/reference/compose/` | root JVM/JS + reference Compose JVM compile/test PASS; accepted tree `aeb6c6977fa3b5772854b1c4fe21ec1095513d06` | **ACCEPTED** |
-| VexWeb browser manifestation foundation | Can browser UI be authored as compiler-visible relationships bound to Blueprint identity so native HTML/CSS/JS are deterministic generated artifacts rather than AI-authored source? | `docs/foundation/VEXWEB-COMPLETED-VIEW-BLUEPRINT.md`, `docs/foundation/VEXWEB-F0-VOCABULARY.md`, `src/commonMain/kotlin/vexlife/web/` | F0 JVM/JS compile + tests PASS; accepted tree `29c7a57462a8795f209d0c9f7436901ce6c5b563` | **F0 ACCEPTED** |
+| VexWeb browser manifestation foundation | Can browser UI be authored as compiler-visible relationships bound to Blueprint identity so native HTML/CSS/JS are deterministic generated artifacts rather than AI-authored source? | `docs/foundation/VEXWEB-COMPLETED-VIEW-BLUEPRINT.md`, `docs/foundation/VEXWEB-F0-VOCABULARY.md`, `docs/foundation/VEXWEB-F1-AUTHORING.md`, `src/commonMain/kotlin/vexlife/web/` | F0 accepted; F1 exact JVM/JS proof **PENDING** | **F1 CANDIDATE** |
 | Web-native VexLife workspace | Can a browser-native renderer realize the same semantic contract and the initial nested-browser + companion workspace? | **not yet formed** | **not yet formed** | HELD |
 | Public GitHub nested-browser practicum | Can VexLife render and navigate bounded public GitHub-hosted Vex content while preserving current document identity? | **not yet formed** | **not yet formed** | HELD |
 | Browser context / DOM projection | What exact current browser context may Vex perceive, with provenance/currentness, without gaining browser effect authority? | **not yet formed** | **not yet formed** | HELD |
@@ -33,9 +33,10 @@ accepted foundation
 -> VexWeb F0 vocabulary
 
 current construction edge
--> VexWeb F1 authoring ergonomics
--> preserve accepted F0 relationships while making authoring compositional/fractal
--> do not begin HTML/CSS/JS generation yet
+-> VexWeb F1 compositional authoring candidate
+-> accepted F0 vocabulary remains the meaning layer
+-> exact JVM/JS proof required
+-> F2 HTML/CSS/JS generation remains unstarted
 ~~~
 
 Do not skip ahead merely because later foundations are named here. Their rows preserve the intended map; they do not claim that source exists.

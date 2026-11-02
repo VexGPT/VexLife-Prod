@@ -65,7 +65,17 @@ class VexLifeWebF0Test {
     @Test
     fun splitRolesAreExplicitRatherThanChildOrderConvention() {
         val split =
-            VexLifeWebF0.SplitContainer
+            assertIs<
+                VexWeb.Split
+            >(
+                VexLifeWebF0
+                    .Surface
+                    .requireNode(
+                        VexLifeWebF0
+                            .Refs
+                            .SplitContainer,
+                    ),
+            )
 
         assertEquals(
             VexLifeWorkspaceBlueprint.Browser.ref,
@@ -99,13 +109,20 @@ class VexLifeWebF0Test {
 
     @Test
     fun splitHandleBindsLocalPresentationToTheExactSplit() {
+        val splitHandle =
+            VexLifeWebF0
+                .Surface
+                .requireNode(
+                    VexLifeWebF0
+                        .Refs
+                        .SplitHandle,
+                )
+
         val binding =
             assertIs<
                 VexWeb.Binding.LocalPresentation
             >(
-                VexLifeWebF0
-                    .SplitHandle
-                    .binding,
+                splitHandle.binding,
             )
 
         assertEquals(
@@ -117,27 +134,32 @@ class VexLifeWebF0Test {
 
         assertTrue(
             VexWeb.Interaction.Resize in
-                VexLifeWebF0.SplitHandle.interactions,
+                splitHandle.interactions,
         )
         assertTrue(
             VexWeb.Interaction.CollapseLeading in
-                VexLifeWebF0.SplitHandle.interactions,
+                splitHandle.interactions,
         )
         assertTrue(
             VexWeb.Interaction.CollapseTrailing in
-                VexLifeWebF0.SplitHandle.interactions,
+                splitHandle.interactions,
         )
     }
 
     @Test
     fun unboundSendCarriesItsMissingCapabilityAndFeedbackTarget() {
+        val send =
+            VexLifeWebF0
+                .Surface
+                .requireNode(
+                    VexLifeWorkspaceBlueprint.Send,
+                )
+
         val binding =
             assertIs<
                 VexWeb.Binding.Unbound
             >(
-                VexLifeWebF0
-                    .Send
-                    .binding,
+                send.binding,
             )
 
         val fallback =
@@ -195,6 +217,58 @@ class VexLifeWebF0Test {
                         VexWeb.Interaction.Activate,
                     ),
             )
+        }
+    }
+
+    @Test
+    fun f1AuthoringRequiresEverySplitRole() {
+        assertFailsWith<IllegalArgumentException> {
+            vexWebSurface(
+                VexLifeWorkspaceBlueprint,
+            ) {
+                content {
+                    split(
+                        ref =
+                            VexWeb.StructuralRef.of(
+                                "vexweb.test.incomplete-split",
+                            ),
+                        mode =
+                            VexWeb.Parameter
+                                .SplitMode
+                                .Balanced(),
+                    ) {
+                        leading {
+                            structural(
+                                ref =
+                                    VexWeb.StructuralRef.of(
+                                        "vexweb.test.incomplete-split.leading",
+                                    ),
+                                placement =
+                                    VexWeb.Placement.Leading,
+                                depth =
+                                    VexWeb.Depth.Content,
+                                presentation =
+                                    VexWeb.Presentation.Surface,
+                            )
+                        }
+                    }
+                }
+
+                overlayRoot {
+                    structural(
+                        ref =
+                            VexWeb.StructuralRef.of(
+                                "vexweb.test.overlay",
+                            ),
+                        placement =
+                            VexWeb.Placement.Overlay,
+                        depth =
+                            VexWeb.Depth.Transient,
+                        presentation =
+                            VexWeb.Presentation.Surface,
+                    )
+                }
+            }
         }
     }
 
