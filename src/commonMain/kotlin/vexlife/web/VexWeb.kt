@@ -64,6 +64,7 @@ object VexWeb {
 
     sealed interface Identity {
         val ref: String
+        val sourceParentRef: String?
 
         @ConsistentCopyVisibility
         data class Blueprint internal constructor(
@@ -72,6 +73,9 @@ object VexWeb {
             Identity {
             override val ref: String =
                 element.ref
+
+            override val sourceParentRef: String? =
+                element.parentRef
         }
 
         @ConsistentCopyVisibility
@@ -81,6 +85,9 @@ object VexWeb {
             Identity {
             override val ref: String =
                 structuralRef.value
+
+            override val sourceParentRef: String? =
+                null
         }
     }
 
@@ -356,14 +363,16 @@ object VexWeb {
 
             fun walk(
                 node: Node,
-                parentRef: String,
+                containerRef: String,
             ) {
                 coordinates +=
                     Coordinate(
                         ref =
                             node.identity.ref,
-                        parentRef =
-                            parentRef,
+                        sourceParentRef =
+                            node.identity.sourceParentRef,
+                        containerRef =
+                            containerRef,
                         placement =
                             node.placement,
                         depth =
@@ -380,7 +389,7 @@ object VexWeb {
                     walk(
                         node =
                             it,
-                        parentRef =
+                        containerRef =
                             node.identity.ref,
                     )
                 }
@@ -389,13 +398,13 @@ object VexWeb {
             walk(
                 node =
                     content,
-                parentRef =
+                containerRef =
                     screenRef,
             )
             walk(
                 node =
                     overlayRoot,
-                parentRef =
+                containerRef =
                     screenRef,
             )
 
@@ -468,7 +477,8 @@ object VexWeb {
     @ConsistentCopyVisibility
     data class Coordinate internal constructor(
         val ref: String,
-        val parentRef: String,
+        val sourceParentRef: String?,
+        val containerRef: String,
         val placement: Placement,
         val depth: Depth,
         val presentation: Presentation,
