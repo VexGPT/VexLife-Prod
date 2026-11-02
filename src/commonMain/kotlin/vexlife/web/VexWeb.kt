@@ -12,8 +12,8 @@ import vexlife.blueprint.VexUiElementRef
  * This is intentionally pre-generator: HTML/CSS/JS do not appear in this vocabulary.
  */
 object VexWeb {
-    @JvmInline
-    value class StructuralRef private constructor(
+    @ConsistentCopyVisibility
+    data class StructuralRef private constructor(
         val value: String,
     ) {
         companion object {
@@ -37,8 +37,8 @@ object VexWeb {
         }
     }
 
-    @JvmInline
-    value class CapabilityRef private constructor(
+    @ConsistentCopyVisibility
+    data class CapabilityRef private constructor(
         val value: String,
     ) {
         companion object {
