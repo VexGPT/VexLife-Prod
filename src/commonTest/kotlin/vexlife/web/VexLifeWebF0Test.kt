@@ -14,7 +14,7 @@ class VexLifeWebF0Test {
             .coordinates()
 
     @Test
-    fun completedViewSliceKeepsExactBlueprintIdentity() {
+    fun blueprintParentAndManifestationContainmentRemainDistinct() {
         val byRef =
             coordinates.associateBy {
                 it.ref
@@ -28,7 +28,7 @@ class VexLifeWebF0Test {
                         .BrowserViewport
                         .ref,
                 )
-                .parentRef,
+                .sourceParentRef,
         )
         assertEquals(
             VexLifeWorkspaceBlueprint.Conversation.ref,
@@ -38,7 +38,17 @@ class VexLifeWebF0Test {
                         .Composer
                         .ref,
                 )
-                .parentRef,
+                .sourceParentRef,
+        )
+        assertEquals(
+            VexLifeWorkspaceBlueprint.Conversation.ref,
+            byRef
+                .getValue(
+                    VexLifeWorkspaceBlueprint
+                        .Send
+                        .ref,
+                )
+                .sourceParentRef,
         )
         assertEquals(
             VexLifeWorkspaceBlueprint.Composer.ref,
@@ -48,7 +58,7 @@ class VexLifeWebF0Test {
                         .Send
                         .ref,
                 )
-                .parentRef,
+                .containerRef,
         )
     }
 
