@@ -90,6 +90,11 @@ class VexLifeWebF0Test {
             split.trailing.identity.ref,
         )
 
+        assertEquals(
+            VexWeb.Parameter.SplitAxis.Horizontal,
+            split.axis,
+        )
+
         val mode =
             assertIs<
                 VexWeb.Parameter.SplitMode.Balanced
@@ -232,6 +237,8 @@ class VexLifeWebF0Test {
                             VexWeb.StructuralRef.of(
                                 "vexweb.test.incomplete-split",
                             ),
+                        axis =
+                            VexWeb.Parameter.SplitAxis.Horizontal,
                         mode =
                             VexWeb.Parameter
                                 .SplitMode
