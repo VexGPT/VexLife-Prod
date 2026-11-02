@@ -145,11 +145,25 @@ product semantics
 Current missing proof:
 
 ~~~text
-repository-owned Gradle execution
--> Kotlin 2.4.20 common/JVM/JS compile
+complete repository-owned Gradle wrapper
+  text launcher/properties = SOURCE-FORMED
+  binary gradle-wrapper.jar = HELD_HOST_MATERIALIZATION
+
+-> exact Kotlin 2.4.20 common/JVM/JS compile
 -> common tests
 ~~~
 
-A Gradle wrapper has not yet been source-established in this repository. Do not call this foundation proved until a reproducible repository-owned build route and exact candidate proof exist.
+The text wrapper source is byte-identical to current VexLife-Android PR #209 at `b544ca789831305dfeeb9badb6d41ca1ac50439c`:
+
+~~~text
+gradlew                                  git blob 249efbb032ce46a80c687c0723eb172e85f6a136
+gradlew.bat                              git blob a51ec4f5886d3bb106b26724ee4507addbbe3fa8
+gradle/wrapper/gradle-wrapper.properties git blob 65d8749eabe0ced0bdda3a2cafb2f10019d9ddb5
+expected wrapper JAR git blob            b1b8ef56b44f16b14dc800fa8103a6d89abb526f
+~~~
+
+The connected GitHub surface cannot transfer non-UTF-8 repository blobs across repositories. The missing JAR is therefore a host-carriage/build-substrate predicate, not candidate semantic evidence.
+
+Do not call this foundation proved until the exact wrapper JAR is materialized from that content-addressed source, committed to this candidate, and the exact Kotlin 2.4.20 JVM/JS/common-test proof passes.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][P0][SEMANTIC-CONTRACT] -->
