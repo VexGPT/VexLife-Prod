@@ -9,7 +9,7 @@ A foundation is added when a recurring semantic owner, construction invariant, o
 | Foundation | Human question | Current source | Proof | State |
 |---|---|---|---|---|
 | Repository front door | Can a fresh worker understand why this repository exists, where to descend, and what is currently claimed without this chat? | `README.md`, `AGENTS.md`, `docs/CULTURE.md`, this index | source review | SOURCE ENTRY |
-| Semantic contract / Blueprint authoring | Can one small VexLife relationship be authored in pure Kotlin so Family/State/Control/DisplayState/UI kinship is compiler-visible rather than copied from examples? | **not yet formed** | **not yet formed** | **NEXT** |
+| Semantic contract / Blueprint authoring | Can one small VexLife relationship be authored in pure Kotlin so Family/State/Control/DisplayState/UI kinship is compiler-visible rather than copied from examples? | `docs/foundation/SEMANTIC-CONTRACT-AUTHORING.md`, `src/commonMain/kotlin/vexlife/semantic/VexFamilyContract.kt`, `src/commonMain/kotlin/vexlife/blueprint/VexUiBlueprint.kt` | exact Kotlin 2.4.20 JVM/JS + common tests **PENDING** | CANDIDATE |
 | Compose reference realization | Can the accepted semantic contract render through a simple Compose reference without Compose becoming product-semantic authority? | **not yet formed** | **not yet formed** | HELD on semantic contract |
 | Portable UI contract | Can the accepted semantic relationship project deterministically into machine-readable renderer input without AI reinterpretation? | **not yet formed** | **not yet formed** | HELD |
 | Web-native VexLife workspace | Can a browser-native renderer realize the same semantic contract and the initial nested-browser + companion workspace? | **not yet formed** | **not yet formed** | HELD |
@@ -23,8 +23,9 @@ A foundation is added when a recurring semantic owner, construction invariant, o
 repository entry
 -> Repository front door
 
-next construction edge
+current construction edge
 -> Semantic contract / Blueprint authoring
+-> exact repository-owned Kotlin 2.4.20 JVM/JS proof required before acceptance
 ~~~
 
 Do not skip ahead merely because later foundations are named here. Their rows preserve the intended map; they do not claim that source exists.
