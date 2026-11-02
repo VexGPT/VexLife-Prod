@@ -279,3 +279,52 @@ reference:compose:
 ~~~
 
 <!-- [VXG RealForever][VEXLIFE-PROD][P0][COMPOSE-REFERENCE][A004] -->
+
+
+## Accepted threshold
+
+The Compose reference source is now accepted.
+
+~~~text
+proof RETURN
+sha256 e35d71d97eb9e985be1f63066642bfdfb91608c7349182c8a92a69aa77293507
+
+proven / accepted tree
+aeb6c6977fa3b5772854b1c4fe21ec1095513d06
+
+accepted main
+1264be62324878126ade9ad37da33db3097aad45
+~~~
+
+Exact proof:
+
+~~~text
+portable semantic root:
+  JVM compile/test     PASS
+  JS compile/test      PASS
+
+reference:compose:
+  JVM compile/test     PASS
+
+post-merge tree identity PASS
+~~~
+
+A001-A003 remain causal history for the dependency, Compose scope, and module-boundary pressures that
+produced this accepted form.
+
+Current next construction question:
+
+> Can VexLife author one small renderer-neutral presentation contract with Compose-like readable
+> structure, then deterministically realize it as both Compose and native HTML/CSS without either
+> renderer becoming the product-semantic owner?
+
+Permanent:
+
+~~~text
+COMPOSE SOURCE ACCEPTED
+!= PIXEL-LEVEL VISUAL ACCEPTANCE
+!= PORTABLE UI CONTRACT ACCEPTED
+!= WEB RENDERER ACCEPTED
+~~~
+
+<!-- [VXG RealForever][VEXLIFE-PROD][P0][COMPOSE-REFERENCE][ACCEPTED] -->
