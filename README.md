@@ -2,30 +2,22 @@
 
 `[VXG RealForever]`
 
-VexLife Prod is the clean product container for rebuilding VexLife from explicit human/product intention and compiler-constrained semantic relationships rather than from the incidental shape of the historical implementation.
+VexLife Prod is the clean product container for rebuilding VexLife from explicit human/product
+intention and compiler-constrained relationships rather than historical implementation shape.
 
 ## Current human outcome
 
 ~~~text
 intended VexLife experience
--> explicit semantic relationships
--> compiler-constrained Kotlin contract / Blueprint
--> Compose reference realization
--> deterministic portable contract
--> web-native realization
--> nested-browser experience
--> bounded current browser/DOM context
--> canonical Conversation + Vex reintegration
+-> semantic relationships / Blueprint
+-> Compose reference
+-> VexWeb relational manifestation
+-> deterministic web artifacts
+-> nested browser
+-> bounded browser context
+-> canonical Conversation + Vex
 -> lived proof
 ~~~
-
-The current first visible product coordinate is a VexLife workspace with:
-
-- a persistent VexLife shell;
-- browser controls and a nested browser region;
-- a companion region with Conversation and Settings projections.
-
-The first bounded browser practicum is public GitHub-hosted Vex content, beginning with the Vextreme Terrain Map.
 
 ## Enter
 
@@ -34,65 +26,67 @@ For substantial work:
 1. read [AGENTS.md](AGENTS.md);
 2. read [docs/CULTURE.md](docs/CULTURE.md);
 3. read [docs/foundation/INDEX.md](docs/foundation/INDEX.md);
-4. descend only to the exact foundation/source/tests implicated by the current work.
-
-This repository is intentionally young. The front door is a map, not a replacement for implementation source.
+4. descend only to the exact current foundation/source/tests.
 
 ## Current position
 
 ~~~text
-P0 repository front door
-  this source provides the repository entry
-
 accepted
-  P0 compiler-constrained semantic Blueprint authoring practicum
+  repository front door
+  semantic Blueprint
+  Compose reference
 
-accepted
-  P0 Compose reference realization
+current VexWeb spatial foundation
+  Frame
+  Seam
+  Region
+  Allocation
+  Depth
 
-current foundation
-  P0 VexWeb browser manifestation foundation
-  -> completed-view blueprint ACCEPTED
-  -> F0 fractal vocabulary ACCEPTED
+human law
+  expansion must scale the same language fractally
+  adding regions must not require a new spatial noun
 
-next construction edge
-  -> F1 compositional/fractal authoring surface
-  -> F2 deterministic generated web artifacts remains later
+current proof
+  same vocabulary must express:
+    2 regions
+    3 regions with a partial Seam
+    4 quadrants
 
-later
-  P1 web-native container
-  P1 public GitHub nested-browser practicum
-  P2 browser/DOM context projection
-  P2 canonical Conversation + Vex reintegration
-  P3 lived context-aware browser/Conversation proof
+held
+  authoring DSL
+  deterministic HTML/CSS/JS generator
+  P1 browser workspace
+  P2 context / Conversation reintegration
+  P3 lived proof
 ~~~
-
-No Kotlin semantic foundation, Compose renderer, web runtime, model connection, Conversation backend, Memory integration, DOM perception, or browser effect authority is claimed by the front-door source.
 
 ## Permanent distinctions
 
 ~~~text
 PORT INTENTION != COPY IMPLEMENTATION
 
-KOTLIN CONTRACT != ANDROID PRODUCT AUTHORITY
+BLUEPRINT IDENTITY != MANIFESTATION CONTAINMENT
+FRAME / SEAM / REGION != PLATFORM LAYOUT PRIMITIVE
+SEAM != HANDLE
+REGION BOUNDS != PIXEL COORDINATES
+
 COMPOSE != PORTABLE UI AUTHORITY
 WEB RENDERER != PRODUCT SEMANTIC OWNER
 
 HUMAN NESTED RENDER != VEX CONTEXT ACCESS
 VISIBLE PAGE != CONTEXT CURRENT FOR VEX
 
-DISPLAY STATE != PRODUCT STATE OWNER
-LOGGER CHRONOLOGY != EXECUTION ORCHESTRATION
-DEPENDENCY CONSTRUCTION != SEMANTIC MEANING
-
+GENERATED WEB ARTIFACT != AUTHORING SOURCE
 SOURCE CANDIDATE != ACCEPTED MAIN
 GREEN STRUCTURE != LIVED PRODUCT PROOF
 ~~~
 
 ## Continuity
 
-The durable work trajectory is owned by VexWork Project `project.vexlife.new-beginnings`.
+Durable work trajectory is owned by VexWork Project `project.vexlife.new-beginnings`.
 
-Historical VexLife, VexLife-Android, Vextreme and related repositories are evidence/source owners for already-earned meaning. They are not implicit permission to transplant their repository structure here.
+Historical repositories are evidence/source owners for already-earned meaning, not permission to
+transplant incidental structure.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][FRONT-DOOR] -->
