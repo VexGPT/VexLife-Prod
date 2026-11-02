@@ -42,9 +42,13 @@ Do not skip ahead merely because later foundations are named here. Their rows pr
 
 ## Architecture reference
 
-Current design pressure comes from VexLife-Android PR #209, especially Family / DisplayState / Execution / Dependency / Logger responsibility boundaries.
+Accepted VexArchitecture source now lives on VexLife-Android `main` at merge
+`66c866dea6a8dd78e2946da88715c4deb78c1847`, including the Family / DisplayState / Execution /
+Dependency / Logger responsibility boundaries pressured through PR #209.
 
-That PR is architecture evidence and quarry. VexLife Prod must not copy its Kotlin/Android forms blindly.
+PR #209 remains provenance for the before/pressure/subtraction reasoning history. VexLife Prod should
+descend to accepted repository source for current architecture truth and must not copy Android/Kotlin
+forms blindly.
 
 ## Work truth
 
