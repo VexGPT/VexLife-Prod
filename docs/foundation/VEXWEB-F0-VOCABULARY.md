@@ -111,6 +111,23 @@ Send
 The future renderer should not have to rediscover which split a handle controls or where missing
 capability feedback belongs.
 
+F0 now enforces this mechanically:
+
+~~~text
+interactive node
+-> Binding must be explicit
+
+LocalPresentation(target)
+-> target must resolve inside the same Surface
+
+NotYetImplemented(feedbackTarget)
+-> target must resolve inside the same Surface
+-> target must live on Transient or Modal depth
+~~~
+
+So a clickable/resizeable node cannot silently exist with `Binding.None`, and a fallback cannot
+point at an imaginary snackbar.
+
 This follows the same architectural instinct behind fully-bound Family Methods: keep meaning bound
 until the one mechanical layer that must realize it.
 
