@@ -23,7 +23,7 @@ object VexWeb {
                 require(
                     value.matches(
                         Regex(
-                            "vexweb\.[a-z0-9]+(?:[.-][a-z0-9]+)*",
+                            """vexweb\.[a-z0-9]+(?:[.-][a-z0-9]+)*""",
                         ),
                     ),
                 ) {
@@ -258,6 +258,15 @@ object VexWeb {
             emptyList(),
     ) :
         Node {
+        init {
+            require(
+                interactions.isEmpty() ||
+                    binding !is Binding.None,
+            ) {
+                "Interactive VexWeb Blueprint element requires an explicit binding"
+            }
+        }
+
         override val identity: Identity =
             Identity.Blueprint(
                 element,
@@ -278,6 +287,15 @@ object VexWeb {
             emptyList(),
     ) :
         Node {
+        init {
+            require(
+                interactions.isEmpty() ||
+                    binding !is Binding.None,
+            ) {
+                "Interactive VexWeb structural node requires an explicit binding"
+            }
+        }
+
         override val identity: Identity =
             Identity.Structural(
                 ref,
@@ -391,6 +409,56 @@ object VexWeb {
                     refs.toSet().size,
             ) {
                 "VexWeb surface contains duplicate source identity"
+            }
+
+            val byRef =
+                coordinates.associateBy {
+                    it.ref
+                }
+
+            coordinates.forEach { coordinate ->
+                when (
+                    val authoredBinding =
+                        coordinate.binding
+                ) {
+                    is Binding.LocalPresentation ->
+                        require(
+                            authoredBinding.target.value in
+                                byRef,
+                        ) {
+                            "VexWeb local presentation target is outside this surface: ${authoredBinding.target.value}"
+                        }
+
+                    is Binding.Unbound ->
+                        when (
+                            val fallback =
+                                authoredBinding.fallback
+                        ) {
+                            is Fallback.NotYetImplemented -> {
+                                val target =
+                                    byRef[
+                                        fallback
+                                            .feedbackTarget
+                                            .value
+                                    ]
+                                        ?: error(
+                                            "VexWeb fallback target is outside this surface: ${fallback.feedbackTarget.value}",
+                                        )
+
+                                require(
+                                    target.depth ==
+                                        Depth.Transient ||
+                                        target.depth ==
+                                            Depth.Modal,
+                                ) {
+                                    "VexWeb feedback target must live on a transient/modal depth plane"
+                                }
+                            }
+                        }
+
+                    Binding.None ->
+                        Unit
+                }
             }
 
             return coordinates
