@@ -425,6 +425,163 @@ class VexWebSpatialScalabilityTest {
         }
     }
 
+
+    @Test
+    fun partialSeamCannotBoundARegionOutsideItsSpan() {
+        val vertical =
+            VexWeb.SeamRef.Vertical.of(
+                "vexweb.test.coverage.seam.vertical",
+            )
+        val middle =
+            VexWeb.SeamRef.Horizontal.of(
+                "vexweb.test.coverage.seam.middle",
+            )
+
+        assertFailsWith<IllegalArgumentException> {
+            VexWeb.Frame(
+                ref =
+                    VexWeb.StructuralRef.of(
+                        "vexweb.test.coverage.frame",
+                    ),
+                seams =
+                    listOf(
+                        VexWeb.Seam.Horizontal(
+                            ref =
+                                middle,
+                            between =
+                                VexWeb.YSpan(
+                                    top =
+                                        VexWeb.YBoundary.FrameTop,
+                                    bottom =
+                                        VexWeb.YBoundary.FrameBottom,
+                                ),
+                            allocation =
+                                VexWeb.Parameter.Allocation.Ratio.Equal,
+                            span =
+                                VexWeb.XSpan(
+                                    start =
+                                        VexWeb.XBoundary.FrameStart,
+                                    end =
+                                        VexWeb.XBoundary.FrameEnd,
+                                ),
+                        ),
+                        VexWeb.Seam.Vertical(
+                            ref =
+                                vertical,
+                            between =
+                                VexWeb.XSpan(
+                                    start =
+                                        VexWeb.XBoundary.FrameStart,
+                                    end =
+                                        VexWeb.XBoundary.FrameEnd,
+                                ),
+                            allocation =
+                                VexWeb.Parameter.Allocation.Ratio.Equal,
+                            span =
+                                VexWeb.YSpan(
+                                    top =
+                                        VexWeb.YBoundary.FrameTop,
+                                    bottom =
+                                        VexWeb.YBoundary.Seam(
+                                            middle,
+                                        ),
+                                ),
+                        ),
+                    ),
+                regions =
+                    listOf(
+                        VexWeb.Region(
+                            ref =
+                                VexWeb.StructuralRef.of(
+                                    "vexweb.test.coverage.region",
+                                ),
+                            bounds =
+                                VexWeb.Bounds(
+                                    start =
+                                        VexWeb.XBoundary.FrameStart,
+                                    end =
+                                        VexWeb.XBoundary.Seam(
+                                            vertical,
+                                        ),
+                                    top =
+                                        VexWeb.YBoundary.FrameTop,
+                                    bottom =
+                                        VexWeb.YBoundary.FrameBottom,
+                                ),
+                            content =
+                                leaf(
+                                    "vexweb.test.coverage.content",
+                                ),
+                        ),
+                    ),
+            )
+        }
+    }
+
+    @Test
+    fun seamAllocationIntervalMustProgressForward() {
+        val vertical =
+            VexWeb.SeamRef.Vertical.of(
+                "vexweb.test.reverse.seam",
+            )
+
+        assertFailsWith<IllegalArgumentException> {
+            VexWeb.Frame(
+                ref =
+                    VexWeb.StructuralRef.of(
+                        "vexweb.test.reverse.frame",
+                    ),
+                seams =
+                    listOf(
+                        VexWeb.Seam.Vertical(
+                            ref =
+                                vertical,
+                            between =
+                                VexWeb.XSpan(
+                                    start =
+                                        VexWeb.XBoundary.FrameEnd,
+                                    end =
+                                        VexWeb.XBoundary.FrameStart,
+                                ),
+                            allocation =
+                                VexWeb.Parameter.Allocation.Ratio.Equal,
+                            span =
+                                VexWeb.YSpan(
+                                    top =
+                                        VexWeb.YBoundary.FrameTop,
+                                    bottom =
+                                        VexWeb.YBoundary.FrameBottom,
+                                ),
+                        ),
+                    ),
+                regions =
+                    listOf(
+                        VexWeb.Region(
+                            ref =
+                                VexWeb.StructuralRef.of(
+                                    "vexweb.test.reverse.region",
+                                ),
+                            bounds =
+                                VexWeb.Bounds(
+                                    start =
+                                        VexWeb.XBoundary.FrameStart,
+                                    end =
+                                        VexWeb.XBoundary.FrameEnd,
+                                    top =
+                                        VexWeb.YBoundary.FrameTop,
+                                    bottom =
+                                        VexWeb.YBoundary.FrameBottom,
+                                ),
+                            content =
+                                leaf(
+                                    "vexweb.test.reverse.content",
+                                ),
+                        ),
+                    ),
+            )
+        }
+    }
+
     @Test
     fun fourRegionsUseTwoCrossingSeamsWithoutChangingTheLanguage() {
         val vertical =
