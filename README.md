@@ -44,8 +44,11 @@ This repository is intentionally young. The front door is a map, not a replaceme
 P0 repository front door
   this source provides the repository entry
 
-next construction edge
+accepted
   P0 compiler-constrained semantic Blueprint authoring practicum
+
+next construction edge
+  P0 Compose reference realization
 
 later
   P1 web-native container

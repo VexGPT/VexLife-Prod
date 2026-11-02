@@ -167,3 +167,44 @@ The connected GitHub surface cannot transfer non-UTF-8 repository blobs across r
 Do not call this foundation proved until the exact wrapper JAR is materialized from that content-addressed source, committed to this candidate, and the exact Kotlin 2.4.20 JVM/JS/common-test proof passes.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][P0][SEMANTIC-CONTRACT] -->
+
+
+## Accepted threshold
+
+The P0 semantic-contract threshold is now accepted source.
+
+~~~text
+host proof RETURN
+sha256 f90ad6d92e5910d534dff2fa021685a473dbfbea33cabe849d017cb9279913f5
+
+proven / accepted tree
+4e6e74255bb444d2adfbd991ddd6c1fba0049fb0
+
+accepted main
+c9aca940a49cb2e828ecfbd4be726f3553bf0063
+~~~
+
+Exact proof:
+
+~~~text
+Kotlin/JVM compile + jvmTest     PASS
+Kotlin/JS production compile    PASS
+Kotlin/JS test compile          PASS
+post-merge candidate tree       EXACT
+~~~
+
+The historical formation/proof sections above remain provenance for how the threshold was earned. They are not the current lifecycle state.
+
+Current next construction question:
+
+> Can a Compose reference renderer consume the accepted Blueprint and DisplayState relationships with simple presentation code, without introducing product semantics, provider mechanics, or a production Family merely for visual state?
+
+Permanent:
+
+~~~text
+SEMANTIC CONTRACT ACCEPTED
+!= COMPOSE ACCEPTED
+!= PORTABLE RENDERER CONTRACT ACCEPTED
+~~~
+
+<!-- [VXG RealForever][VEXLIFE-PROD][P0][SEMANTIC-CONTRACT][ACCEPTED] -->
