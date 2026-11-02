@@ -39,6 +39,10 @@ object VexLifeWebF0 {
                 split(
                     ref =
                         Refs.SplitContainer,
+                    axis =
+                        VexWeb.Parameter
+                            .SplitAxis
+                            .Horizontal,
                     mode =
                         VexWeb.Parameter
                             .SplitMode
