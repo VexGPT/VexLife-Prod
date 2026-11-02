@@ -2,6 +2,7 @@ package vexlife.web
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import vexlife.workspace.VexLifeWorkspaceBlueprint
@@ -163,6 +164,28 @@ class VexLifeWebF0Test {
                 VexWeb.Depth.Transient,
             ),
         )
+    }
+
+    @Test
+    fun interactiveNodesCannotExistWithoutAnExplicitBinding() {
+        assertFailsWith<IllegalArgumentException> {
+            VexWeb.Structural(
+                ref =
+                    VexWeb.StructuralRef.of(
+                        "vexweb.test.unbound-control",
+                    ),
+                placement =
+                    VexWeb.Placement.InFlow,
+                depth =
+                    VexWeb.Depth.Content,
+                presentation =
+                    VexWeb.Presentation.PrimaryAction,
+                interactions =
+                    setOf(
+                        VexWeb.Interaction.Activate,
+                    ),
+            )
+        }
     }
 
     @Test
