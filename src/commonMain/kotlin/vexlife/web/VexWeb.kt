@@ -573,6 +573,159 @@ object VexWeb {
                     "VexWeb Region references a boundary outside its Frame"
                 }
             }
+
+            val verticalByRef =
+                seams
+                    .filterIsInstance<Seam.Vertical>()
+                    .associateBy {
+                        it.ref
+                    }
+            val horizontalByRef =
+                seams
+                    .filterIsInstance<Seam.Horizontal>()
+                    .associateBy {
+                        it.ref
+                    }
+
+            fun verticalDependencies(
+                seam: Seam.Vertical,
+            ): Set<SeamRef.Vertical> =
+                listOf(
+                    seam.between.start,
+                    seam.between.end,
+                )
+                    .mapNotNull {
+                        (it as? XBoundary.Seam)
+                            ?.ref
+                    }
+                    .toSet()
+
+            fun horizontalDependencies(
+                seam: Seam.Horizontal,
+            ): Set<SeamRef.Horizontal> =
+                listOf(
+                    seam.between.top,
+                    seam.between.bottom,
+                )
+                    .mapNotNull {
+                        (it as? YBoundary.Seam)
+                            ?.ref
+                    }
+                    .toSet()
+
+            fun validateVertical(
+                ref: SeamRef.Vertical,
+                visiting: MutableSet<SeamRef.Vertical>,
+                visited: MutableSet<SeamRef.Vertical>,
+            ) {
+                if (
+                    ref in
+                    visited
+                ) {
+                    return
+                }
+
+                require(
+                    ref !in
+                        visiting,
+                ) {
+                    "VexWeb vertical Seam allocation contains a dependency cycle"
+                }
+
+                visiting +=
+                    ref
+
+                verticalDependencies(
+                    verticalByRef
+                        .getValue(
+                            ref,
+                        ),
+                ).forEach {
+                    validateVertical(
+                        ref =
+                            it,
+                        visiting =
+                            visiting,
+                        visited =
+                            visited,
+                    )
+                }
+
+                visiting -=
+                    ref
+                visited +=
+                    ref
+            }
+
+            fun validateHorizontal(
+                ref: SeamRef.Horizontal,
+                visiting: MutableSet<SeamRef.Horizontal>,
+                visited: MutableSet<SeamRef.Horizontal>,
+            ) {
+                if (
+                    ref in
+                    visited
+                ) {
+                    return
+                }
+
+                require(
+                    ref !in
+                        visiting,
+                ) {
+                    "VexWeb horizontal Seam allocation contains a dependency cycle"
+                }
+
+                visiting +=
+                    ref
+
+                horizontalDependencies(
+                    horizontalByRef
+                        .getValue(
+                            ref,
+                        ),
+                ).forEach {
+                    validateHorizontal(
+                        ref =
+                            it,
+                        visiting =
+                            visiting,
+                        visited =
+                            visited,
+                    )
+                }
+
+                visiting -=
+                    ref
+                visited +=
+                    ref
+            }
+
+            val visitedVertical =
+                mutableSetOf<SeamRef.Vertical>()
+            verticalByRef.keys.forEach {
+                validateVertical(
+                    ref =
+                        it,
+                    visiting =
+                        mutableSetOf(),
+                    visited =
+                        visitedVertical,
+                )
+            }
+
+            val visitedHorizontal =
+                mutableSetOf<SeamRef.Horizontal>()
+            horizontalByRef.keys.forEach {
+                validateHorizontal(
+                    ref =
+                        it,
+                    visiting =
+                        mutableSetOf(),
+                    visited =
+                        visitedHorizontal,
+                )
+            }
         }
 
         override val identity: Identity =
