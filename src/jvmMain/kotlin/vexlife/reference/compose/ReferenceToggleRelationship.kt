@@ -8,6 +8,10 @@ import vexlife.semantic.VexFamilyContract
  * Reference-only relationship used to prove the renderer contract.
  *
  * It is not a VexLife product feature and is intentionally not wired into the Workspace reference.
+ *
+ * The same Family Parameter instance crosses Control -> Effect so this pressure keeps the
+ * VexLife-Android Functional State Hoisting lesson at the semantic boundary without importing
+ * execution/Store mechanics the clean-container reference has not earned.
  */
 internal class ReferenceToggleFamily :
     VexFamilyContract<
@@ -16,6 +20,16 @@ internal class ReferenceToggleFamily :
         ReferenceToggleFamily.Control,
         ReferenceToggleFamily.Effect
     >() {
+
+    sealed interface Parameter :
+        VexFamilyContract.Parameter<ReferenceToggleFamily> {
+
+        data class Activation(
+            val active: Boolean,
+        ) :
+            Parameter
+    }
+
     enum class State :
         VexFamilyContract.State<ReferenceToggleFamily> {
         Inactive,
@@ -24,16 +38,20 @@ internal class ReferenceToggleFamily :
 
     sealed interface Control :
         VexFamilyContract.Control<ReferenceToggleFamily> {
+
         data class Select(
-            val active: Boolean,
-        ) : Control
+            val activation: Parameter.Activation,
+        ) :
+            Control
     }
 
     sealed interface Effect :
         VexFamilyContract.Effect<ReferenceToggleFamily> {
+
         data class Remember(
-            val active: Boolean,
-        ) : Effect
+            val activation: Parameter.Activation,
+        ) :
+            Effect
     }
 
     sealed interface DisplayState :
@@ -70,7 +88,9 @@ internal class ReferenceToggleFamily :
             is Control.Select -> {
                 val target =
                     if (
-                        control.active
+                        control
+                            .activation
+                            .active
                     ) {
                         State.Active
                     } else {
@@ -78,8 +98,8 @@ internal class ReferenceToggleFamily :
                     }
                 val effect =
                     Effect.Remember(
-                        active =
-                            control.active,
+                        activation =
+                            control.activation,
                     )
 
                 if (
@@ -134,7 +154,7 @@ internal class ReferenceToggleFamily :
  * Reference renderer law:
  *
  * DisplayState -> checked presentation
- * UI interaction -> typed Control
+ * UI interaction -> typed Control carrying one Family-owned Parameter
  *
  * The Composable does not receive Family State, Store/provider, Effect, execution or Logger.
  */
@@ -157,8 +177,13 @@ internal fun ReferenceToggleControl(
                 ReferenceToggleFamily
                     .Control
                     .Select(
-                        active =
-                            it,
+                        activation =
+                            ReferenceToggleFamily
+                                .Parameter
+                                .Activation(
+                                    active =
+                                        it,
+                                ),
                     ),
             )
         },

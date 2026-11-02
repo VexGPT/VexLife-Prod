@@ -3,6 +3,7 @@ package vexlife.reference.compose
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertSame
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexLifeComposeReferenceTest {
@@ -29,7 +30,7 @@ class VexLifeComposeReferenceTest {
     }
 
     @Test
-    fun referenceDisplayStateProjectsPresentationWithoutExposingEffectMechanics() {
+    fun referenceDisplayStateProjectsPresentationAndCarriesOneParameterIdentity() {
         val family =
             ReferenceToggleFamily()
         val projection =
@@ -38,6 +39,20 @@ class VexLifeComposeReferenceTest {
                     .State
                     .Inactive,
             )
+        val activation =
+            ReferenceToggleFamily
+                .Parameter
+                .Activation(
+                    active =
+                        true,
+                )
+        val control =
+            ReferenceToggleFamily
+                .Control
+                .Select(
+                    activation =
+                        activation,
+                )
 
         assertEquals(
             false,
@@ -51,18 +66,19 @@ class VexLifeComposeReferenceTest {
                 currentState =
                     projection.state,
                 control =
-                    ReferenceToggleFamily
-                        .Control
-                        .Select(
-                            active =
-                                true,
-                        ),
+                    control,
             )
 
-        assertIs<
-            ReferenceToggleFamily.Effect.Remember
-        >(
-            act?.effect,
+        val effect =
+            assertIs<
+                ReferenceToggleFamily.Effect.Remember
+            >(
+                act?.effect,
+            )
+
+        assertSame(
+            activation,
+            effect.activation,
         )
         assertEquals(
             ReferenceToggleFamily

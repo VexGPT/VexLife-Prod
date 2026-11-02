@@ -160,3 +160,43 @@ exact candidate compile
 A visual human inspection may become a later lived/reference checkpoint; source compilation alone does not prove pixel-level acceptance.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][P0][COMPOSE-REFERENCE] -->
+
+
+## A001 proof reconciliation and #209 alignment hardening
+
+A001 stopped before Kotlin source compilation because Compose Desktop's AndroidX transitive
+dependencies require Google's Maven repository. Maven Central alone was an incomplete dependency
+source.
+
+~~~text
+A001 COMPILE_KOTLIN_JVM safe failure
+-> missing Google Maven repository
+-> candidate semantics not reached
+~~~
+
+The same threshold review re-read current VexLife-Android PR #209 and found two useful compiler
+hardening opportunities in this clean contract:
+
+1. nested Family primitives now require their generic Family coordinate to actually be a
+   `VexFamilyContract<...>`, matching #209's family-scoped compiler fence;
+2. the reference-only Toggle now carries one `Parameter.Activation` instance by identity through
+   `Control.Select -> Effect.Remember`.
+
+This is intentional alignment of the semantic law, not wholesale API parity.
+
+Still deliberately absent until earned by real runtime pressure:
+
+~~~text
+live Family state holder
+activate / observe
+Act.Begin + execution Approach
+RelationshipId / ResourceId
+Act.Method / MethodFollowUp
+VexExecution
+Store/provider realization
+~~~
+
+Those omissions preserve the clean-container boundary; adding them only to resemble #209 would
+violate the same judgment discipline #209 documents.
+
+<!-- [VXG RealForever][VEXLIFE-PROD][P0][COMPOSE-REFERENCE][A002] -->
