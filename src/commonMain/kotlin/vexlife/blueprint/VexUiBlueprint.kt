@@ -6,6 +6,7 @@ package vexlife.blueprint
  * The ref and parent relationship are authored by one Screen Blueprint. Runtime/provider instances
  * remain outside this static registry.
  */
+@ConsistentCopyVisibility
 data class VexUiElementRef internal constructor(
     val ref: String,
     val kind: Kind,

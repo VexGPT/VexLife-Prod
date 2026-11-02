@@ -219,3 +219,63 @@ PARENT LAYOUT OWNS PLACEMENT
 No Family, Blueprint, Parameter, or presentation ownership changed.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][P0][COMPOSE-REFERENCE][A003] -->
+
+
+## A003 proof reconciliation — manifestation module boundary
+
+A003 proved the JVM Compose manifestation source:
+
+~~~text
+compileKotlinJvm PASS
+jvmTest          PASS
+~~~
+
+Then the retained root JS proof failed because the Compose compiler plugin was applied to the root
+Kotlin Multiplatform project. That made the portable JS semantic target require Compose Runtime even
+though no Compose source belongs to that target.
+
+A004 corrects the ownership topology instead of adding Compose Runtime to JS:
+
+~~~text
+root project
+  Kotlin Multiplatform
+  common semantic contract + Blueprint
+  JVM semantic proof
+  JS semantic proof
+  NO Compose plugin
+
+reference:compose
+  Kotlin JVM
+  Compose Multiplatform
+  Compose compiler
+  depends on root semantic project
+  owns reference manifestation only
+~~~
+
+This is a build-level expression of the same architecture law:
+
+~~~text
+Family / Blueprint semantic source
+!= Compose manifestation substrate
+~~~
+
+The A003 Kotlin warning for `VexUiElementRef` also showed that an internal data-class constructor
+would have a generated `copy()` visibility mismatch that becomes an error in a future Kotlin
+language version. A004 adds `@ConsistentCopyVisibility`, matching the compiler-visibility posture
+used in current PR #209.
+
+Required A004 proof now separates the questions explicitly:
+
+~~~text
+root:
+  compileKotlinJvm
+  jvmTest
+  compileKotlinJs
+  compileTestKotlinJs
+
+reference:compose:
+  compileKotlin
+  test
+~~~
+
+<!-- [VXG RealForever][VEXLIFE-PROD][P0][COMPOSE-REFERENCE][A004] -->
