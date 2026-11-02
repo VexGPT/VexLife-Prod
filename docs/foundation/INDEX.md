@@ -10,7 +10,7 @@ A foundation is added when a recurring semantic owner, construction invariant, o
 |---|---|---|---|---|
 | Repository front door | Can a fresh worker understand why this repository exists, where to descend, and what is currently claimed without this chat? | `README.md`, `AGENTS.md`, `docs/CULTURE.md`, this index | source review | SOURCE ENTRY |
 | Semantic contract / Blueprint authoring | Can one small VexLife relationship be authored in pure Kotlin so Family/State/Control/DisplayState/UI kinship is compiler-visible rather than copied from examples? | `docs/foundation/SEMANTIC-CONTRACT-AUTHORING.md`, `src/commonMain/kotlin/vexlife/semantic/VexFamilyContract.kt`, `src/commonMain/kotlin/vexlife/blueprint/VexUiBlueprint.kt` | Kotlin 2.4.20 JVM test + JS production/test compile PASS; accepted tree `4e6e74255bb444d2adfbd991ddd6c1fba0049fb0` | **ACCEPTED** |
-| Compose reference realization | Can the accepted semantic contract render through a simple Compose reference without Compose becoming product-semantic authority? | `docs/foundation/COMPOSE-REFERENCE-REALIZATION.md`, `reference/compose/src/main/kotlin/vexlife/reference/compose/` | exact JVM Compose + retained JVM/JS semantic proof **PENDING** | **CANDIDATE** |
+| Compose reference realization | Can the accepted semantic contract render through a simple Compose reference without Compose becoming product-semantic authority? | `docs/foundation/COMPOSE-REFERENCE-REALIZATION.md`, `reference/compose/src/main/kotlin/vexlife/reference/compose/` | root JVM/JS + reference Compose JVM compile/test PASS; accepted tree `aeb6c6977fa3b5772854b1c4fe21ec1095513d06` | **ACCEPTED** |
 | Portable UI contract | Can the accepted semantic relationship project deterministically into machine-readable renderer input without AI reinterpretation? | **not yet formed** | **not yet formed** | HELD |
 | Web-native VexLife workspace | Can a browser-native renderer realize the same semantic contract and the initial nested-browser + companion workspace? | **not yet formed** | **not yet formed** | HELD |
 | Public GitHub nested-browser practicum | Can VexLife render and navigate bounded public GitHub-hosted Vex content while preserving current document identity? | **not yet formed** | **not yet formed** | HELD |
@@ -26,10 +26,14 @@ repository entry
 accepted foundation
 -> Semantic contract / Blueprint authoring
 
+accepted foundation
+-> Compose reference realization
+
 current construction edge
--> Compose reference realization candidate
--> compiler-visible Blueprint handles + DisplayState -> UI / UI -> typed Control
--> exact proof required before acceptance
+-> Portable UI contract
+-> one renderer-neutral presentation syntax / IR
+-> deterministic Compose + web mappings
+-> web must not manually reinterpret Compose source
 ~~~
 
 Do not skip ahead merely because later foundations are named here. Their rows preserve the intended map; they do not claim that source exists.

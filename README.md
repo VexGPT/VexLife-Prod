@@ -47,8 +47,11 @@ P0 repository front door
 accepted
   P0 compiler-constrained semantic Blueprint authoring practicum
 
-next construction edge
+accepted
   P0 Compose reference realization
+
+next construction edge
+  P0 deterministic portable renderer contract
 
 later
   P1 web-native container
