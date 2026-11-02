@@ -229,6 +229,8 @@ internal class VexWebSplitScope {
     fun build(
         ref:
             VexWeb.StructuralRef,
+        axis:
+            VexWeb.Parameter.SplitAxis,
         mode:
             VexWeb.Parameter.SplitMode,
     ):
@@ -236,6 +238,8 @@ internal class VexWebSplitScope {
         VexWeb.Split(
             ref =
                 ref,
+            axis =
+                axis,
             mode =
                 mode,
             leading =
@@ -461,6 +465,8 @@ internal fun VexWebNodeSink.interactiveStructural(
 internal fun VexWebNodeSink.split(
     ref:
         VexWeb.StructuralRef,
+    axis:
+        VexWeb.Parameter.SplitAxis,
     mode:
         VexWeb.Parameter.SplitMode,
     block:
@@ -474,6 +480,8 @@ internal fun VexWebNodeSink.split(
             .build(
                 ref =
                     ref,
+                axis =
+                    axis,
                 mode =
                     mode,
             ),
