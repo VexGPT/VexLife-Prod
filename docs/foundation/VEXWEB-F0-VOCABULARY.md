@@ -283,3 +283,72 @@ now merged at `66c866dea6a8dd78e2946da88715c4deb78c1847`. Future architecture gr
 accepted repository source; PR #209 remains provenance for the pressure/reasoning history.
 
 <!-- [VXG RealForever][VEXWEB][F0][A002] -->
+
+
+## A002 proof PASS / A003 semantic non-collapse
+
+A002 exact RETURN:
+
+~~~text
+sha256 899e5f9cc0fcd7646007fe003a7fffe785bda44bf6b492ea679bfff153e190b5
+
+compileKotlinJvm      PASS
+jvmTest               PASS
+compileKotlinJs       PASS
+compileTestKotlinJs   PASS
+clean worktree        PASS
+~~~
+
+Threshold reorientation found one non-compiler issue before vocabulary acceptance.
+
+The accepted completed-view blueprint explicitly preserves:
+
+~~~text
+BLUEPRINT IDENTITY
+!= MANIFESTATION STRUCTURE
+!= DOM TREE PATH
+~~~
+
+The F0 projection previously exposed one `parentRef`, which was VexWeb manifestation containment.
+That could make a later consumer mistake manifestation containment for the accepted Blueprint parent.
+
+Concrete pressure:
+
+~~~text
+accepted Blueprint:
+  Send.source parent = Conversation
+
+F0 manifestation:
+  Composer
+    -> Send
+~~~
+
+A003 therefore preserves both coordinates:
+
+~~~text
+sourceParentRef
+  accepted Blueprint parent when identity is Blueprint-owned
+
+containerRef
+  current VexWeb manifestation containment
+~~~
+
+For Send:
+
+~~~text
+sourceParentRef = Conversation
+containerRef    = Composer
+~~~
+
+This is intentionally not a request to make VexWeb nesting mirror Blueprint nesting. It keeps the two
+truths separately recoverable.
+
+~~~text
+A002 TECHNICAL PASS
+!= F0 VOCABULARY ACCEPTED
+
+A003
+= same vocabulary + explicit non-collapse of source parent vs manifestation container
+~~~
+
+<!-- [VXG RealForever][VEXWEB][F0][A003] -->
