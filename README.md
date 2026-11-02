@@ -50,11 +50,14 @@ accepted
 accepted
   P0 Compose reference realization
 
-next construction edge
+current foundation
   P0 VexWeb browser manifestation foundation
-  -> completed-view blueprint
-  -> F0 fractal vocabulary pressure
-  -> deterministic generated web artifacts
+  -> completed-view blueprint ACCEPTED
+  -> F0 fractal vocabulary ACCEPTED
+
+next construction edge
+  -> F1 compositional/fractal authoring surface
+  -> F2 deterministic generated web artifacts remains later
 
 later
   P1 web-native container

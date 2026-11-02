@@ -352,3 +352,45 @@ A003
 ~~~
 
 <!-- [VXG RealForever][VEXWEB][F0][A003] -->
+
+
+## Accepted threshold
+
+F0 vocabulary is accepted source.
+
+~~~text
+proof RETURN
+sha256 0ebea0e6f2fcf628aaaca2a66272cd50d6578449022f2619a62d2b05f791ae01
+
+proven / accepted tree
+29c7a57462a8795f209d0c9f7436901ce6c5b563
+
+accepted main
+979ffaa31a94a94d44d0b0bc4c3dc532efb3eed2
+~~~
+
+Exact proof:
+
+~~~text
+JVM compile/test     PASS
+JS compile/test      PASS
+clean worktree       PASS
+post-merge tree      EXACT
+~~~
+
+Accepted F0 meaning includes the source-parent / manifestation-container non-collapse.
+
+Current next question:
+
+> Can the accepted F0 vocabulary be authored through a small compositional/fractal Kotlin surface
+> without reopening the vocabulary or introducing generator/platform syntax?
+
+Permanent:
+
+~~~text
+F0 VOCABULARY ACCEPTED
+!= F1 AUTHORING SURFACE ACCEPTED
+!= F2 ARTIFACT COMPILER ACCEPTED
+~~~
+
+<!-- [VXG RealForever][VEXWEB][F0][ACCEPTED] -->
