@@ -2,6 +2,7 @@ package vexlife.web
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexWebSpatialScalabilityTest {
@@ -329,6 +330,99 @@ class VexWebSpatialScalabilityTest {
                 .spatialRegions()
                 .size,
         )
+    }
+
+
+    @Test
+    fun sameAxisSeamAllocationCyclesAreRejected() {
+        val first =
+            VexWeb.SeamRef.Vertical.of(
+                "vexweb.test.cycle.seam.first",
+            )
+        val second =
+            VexWeb.SeamRef.Vertical.of(
+                "vexweb.test.cycle.seam.second",
+            )
+
+        assertFailsWith<IllegalArgumentException> {
+            VexWeb.Frame(
+                ref =
+                    VexWeb.StructuralRef.of(
+                        "vexweb.test.cycle.frame",
+                    ),
+                seams =
+                    listOf(
+                        VexWeb.Seam.Vertical(
+                            ref =
+                                first,
+                            between =
+                                VexWeb.XSpan(
+                                    start =
+                                        VexWeb.XBoundary.Seam(
+                                            second,
+                                        ),
+                                    end =
+                                        VexWeb.XBoundary.FrameEnd,
+                                ),
+                            allocation =
+                                VexWeb.Parameter.Allocation.Ratio.Equal,
+                            span =
+                                VexWeb.YSpan(
+                                    top =
+                                        VexWeb.YBoundary.FrameTop,
+                                    bottom =
+                                        VexWeb.YBoundary.FrameBottom,
+                                ),
+                        ),
+                        VexWeb.Seam.Vertical(
+                            ref =
+                                second,
+                            between =
+                                VexWeb.XSpan(
+                                    start =
+                                        VexWeb.XBoundary.FrameStart,
+                                    end =
+                                        VexWeb.XBoundary.Seam(
+                                            first,
+                                        ),
+                                ),
+                            allocation =
+                                VexWeb.Parameter.Allocation.Ratio.Equal,
+                            span =
+                                VexWeb.YSpan(
+                                    top =
+                                        VexWeb.YBoundary.FrameTop,
+                                    bottom =
+                                        VexWeb.YBoundary.FrameBottom,
+                                ),
+                        ),
+                    ),
+                regions =
+                    listOf(
+                        VexWeb.Region(
+                            ref =
+                                VexWeb.StructuralRef.of(
+                                    "vexweb.test.cycle.region",
+                                ),
+                            bounds =
+                                VexWeb.Bounds(
+                                    start =
+                                        VexWeb.XBoundary.FrameStart,
+                                    end =
+                                        VexWeb.XBoundary.FrameEnd,
+                                    top =
+                                        VexWeb.YBoundary.FrameTop,
+                                    bottom =
+                                        VexWeb.YBoundary.FrameBottom,
+                                ),
+                            content =
+                                leaf(
+                                    "vexweb.test.cycle.content",
+                                ),
+                        ),
+                    ),
+            )
+        }
     }
 
     @Test
