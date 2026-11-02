@@ -246,3 +246,40 @@ and review:
 ~~~
 
 <!-- [VXG RealForever][VEXWEB][F0][VOCABULARY] -->
+
+
+## A001 proof reconciliation — portable source identity
+
+A001 exact RETURN:
+
+~~~text
+sha256 03a7309be17244e29d19ec332e18bcbc8e80d38c97fc2537e0bd9f6cdbd71fa4
+
+compileKotlinJvm PASS
+jvmTest          PASS
+compileKotlinJs  SAFE_FAILURE
+~~~
+
+The first JS compiler finding was not a VexWeb relationship failure. It found JVM-specific
+representation metadata in portable common source:
+
+~~~text
+@JvmInline value class StructuralRef
+@JvmInline value class CapabilityRef
+~~~
+
+A002 retains the typed source identities and validation but uses platform-neutral data classes with
+consistent copy visibility.
+
+Permanent:
+
+~~~text
+SOURCE IDENTITY
+!= JVM REPRESENTATION OPTIMIZATION
+~~~
+
+Current VexArchitecture orientation also changed during this threshold: VexLife-Android PR #209 is
+now merged at `66c866dea6a8dd78e2946da88715c4deb78c1847`. Future architecture grounding descends to
+accepted repository source; PR #209 remains provenance for the pressure/reasoning history.
+
+<!-- [VXG RealForever][VEXWEB][F0][A002] -->
