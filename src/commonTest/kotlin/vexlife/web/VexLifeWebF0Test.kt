@@ -21,32 +21,10 @@ class VexLifeWebF0Test {
             }
 
         assertEquals(
-            VexLifeWorkspaceBlueprint.Browser.ref,
-            byRef
-                .getValue(
-                    VexLifeWorkspaceBlueprint
-                        .BrowserViewport
-                        .ref,
-                )
-                .sourceParentRef,
-        )
-        assertEquals(
             VexLifeWorkspaceBlueprint.Conversation.ref,
             byRef
                 .getValue(
-                    VexLifeWorkspaceBlueprint
-                        .Composer
-                        .ref,
-                )
-                .sourceParentRef,
-        )
-        assertEquals(
-            VexLifeWorkspaceBlueprint.Conversation.ref,
-            byRef
-                .getValue(
-                    VexLifeWorkspaceBlueprint
-                        .Send
-                        .ref,
+                    VexLifeWorkspaceBlueprint.Send.ref,
                 )
                 .sourceParentRef,
         )
@@ -54,78 +32,90 @@ class VexLifeWebF0Test {
             VexLifeWorkspaceBlueprint.Composer.ref,
             byRef
                 .getValue(
-                    VexLifeWorkspaceBlueprint
-                        .Send
-                        .ref,
+                    VexLifeWorkspaceBlueprint.Send.ref,
                 )
                 .containerRef,
         )
     }
 
     @Test
-    fun splitRolesAreExplicitRatherThanChildOrderConvention() {
-        val split =
-            VexLifeWebF0.SplitContainer
+    fun browserAndCompanionAreRegionsBoundToTheSameNamedSeam() {
+        val byRef =
+            VexLifeWebF0
+                .Surface
+                .spatialRegions()
+                .associateBy {
+                    it.ref
+                }
 
         assertEquals(
-            VexLifeWorkspaceBlueprint.Browser.ref,
-            split.leading.identity.ref,
+            VexWeb.Bounds(
+                start =
+                    VexWeb.XBoundary.FrameStart,
+                end =
+                    VexWeb.XBoundary.Seam(
+                        VexLifeWebF0.Refs.BrowserCompanionSeam,
+                    ),
+                top =
+                    VexWeb.YBoundary.FrameTop,
+                bottom =
+                    VexWeb.YBoundary.FrameBottom,
+            ),
+            byRef
+                .getValue(
+                    VexLifeWebF0.Refs.BrowserRegion.value,
+                )
+                .bounds,
         )
         assertEquals(
-            VexLifeWebF0.Refs.SplitHandle.value,
-            split.handle.identity.ref,
-        )
-        assertEquals(
-            VexLifeWorkspaceBlueprint.Companion.ref,
-            split.trailing.identity.ref,
-        )
-
-        val mode =
-            assertIs<
-                VexWeb.Parameter.SplitMode.Balanced
-            >(
-                split.mode,
-            )
-
-        assertEquals(
-            1,
-            mode.ratio.leadingParts,
-        )
-        assertEquals(
-            1,
-            mode.ratio.trailingParts,
+            VexWeb.Bounds(
+                start =
+                    VexWeb.XBoundary.Seam(
+                        VexLifeWebF0.Refs.BrowserCompanionSeam,
+                    ),
+                end =
+                    VexWeb.XBoundary.FrameEnd,
+                top =
+                    VexWeb.YBoundary.FrameTop,
+                bottom =
+                    VexWeb.YBoundary.FrameBottom,
+            ),
+            byRef
+                .getValue(
+                    VexLifeWebF0.Refs.CompanionRegion.value,
+                )
+                .bounds,
         )
     }
 
     @Test
-    fun splitHandleBindsLocalPresentationToTheExactSplit() {
+    fun seamHandleBindsToTheExactSpatialBoundary() {
         val binding =
             assertIs<
-                VexWeb.Binding.LocalPresentation
+                VexWeb.Binding.LocalSpatial
             >(
                 VexLifeWebF0
-                    .SplitHandle
+                    .SeamHandle
                     .binding,
             )
 
         assertEquals(
             VexLifeWebF0
                 .Refs
-                .SplitContainer,
+                .BrowserCompanionSeam,
             binding.target,
         )
-
         assertTrue(
             VexWeb.Interaction.Resize in
-                VexLifeWebF0.SplitHandle.interactions,
+                VexLifeWebF0.SeamHandle.interactions,
         )
         assertTrue(
-            VexWeb.Interaction.CollapseLeading in
-                VexLifeWebF0.SplitHandle.interactions,
+            VexWeb.Interaction.CollapseBefore in
+                VexLifeWebF0.SeamHandle.interactions,
         )
         assertTrue(
-            VexWeb.Interaction.CollapseTrailing in
-                VexLifeWebF0.SplitHandle.interactions,
+            VexWeb.Interaction.CollapseAfter in
+                VexLifeWebF0.SeamHandle.interactions,
         )
     }
 
@@ -199,7 +189,101 @@ class VexLifeWebF0Test {
     }
 
     @Test
-    fun allFractalCoordinatesAreUniqueAndSourceAddressable() {
+    fun spatialBindingCannotTargetAnImaginarySeam() {
+        val unknown =
+            VexWeb.SeamRef.Vertical.of(
+                "vexweb.test.seam.unknown",
+            )
+
+        assertFailsWith<IllegalArgumentException> {
+            VexWeb.Surface(
+                screenRef =
+                    VexLifeWorkspaceBlueprint.screenRef,
+                content =
+                    VexWeb.Frame(
+                        ref =
+                            VexWeb.StructuralRef.of(
+                                "vexweb.test.frame",
+                            ),
+                        seams =
+                            emptyList(),
+                        regions =
+                            listOf(
+                                VexWeb.Region(
+                                    ref =
+                                        VexWeb.StructuralRef.of(
+                                            "vexweb.test.frame.region",
+                                        ),
+                                    bounds =
+                                        VexWeb.Bounds(
+                                            start =
+                                                VexWeb.XBoundary.FrameStart,
+                                            end =
+                                                VexWeb.XBoundary.FrameEnd,
+                                            top =
+                                                VexWeb.YBoundary.FrameTop,
+                                            bottom =
+                                                VexWeb.YBoundary.FrameBottom,
+                                        ),
+                                    content =
+                                        VexWeb.Structural(
+                                            ref =
+                                                VexWeb.StructuralRef.of(
+                                                    "vexweb.test.frame.content",
+                                                ),
+                                            placement =
+                                                VexWeb.Placement.FillAvailable,
+                                            depth =
+                                                VexWeb.Depth.Content,
+                                            presentation =
+                                                VexWeb.Presentation.Surface,
+                                        ),
+                                ),
+                            ),
+                        chrome =
+                            listOf(
+                                VexWeb.Structural(
+                                    ref =
+                                        VexWeb.StructuralRef.of(
+                                            "vexweb.test.frame.handle",
+                                        ),
+                                    placement =
+                                        VexWeb.Placement.Overlay,
+                                    depth =
+                                        VexWeb.Depth.Chrome,
+                                    presentation =
+                                        VexWeb.Presentation.SeamHandle,
+                                    interactions =
+                                        setOf(
+                                            VexWeb.Interaction.Resize,
+                                        ),
+                                    binding =
+                                        VexWeb.Binding.LocalSpatial(
+                                            target =
+                                                unknown,
+                                        ),
+                                ),
+                            ),
+                    ),
+                overlayRoot =
+                    VexWeb.Structural(
+                        ref =
+                            VexWeb.StructuralRef.of(
+                                "vexweb.test.overlay",
+                            ),
+                        placement =
+                            VexWeb.Placement.Overlay,
+                        depth =
+                            VexWeb.Depth.Transient,
+                        presentation =
+                            VexWeb.Presentation.Surface,
+                    ),
+            ).coordinates()
+        }
+    }
+
+    @Test
+    fun allNodeAndSeamIdentitiesRemainSourceAddressable() {
         val refs =
             coordinates.map {
                 it.ref
@@ -211,6 +295,10 @@ class VexLifeWebF0Test {
         )
         assertTrue(
             VexLifeWorkspaceBlueprint.Send.ref in
+                refs,
+        )
+        assertTrue(
+            VexLifeWebF0.Refs.BrowserRegion.value in
                 refs,
         )
         assertTrue(

@@ -3,21 +3,36 @@ package vexlife.web
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 /**
- * First VexWeb pressure specimen from the accepted completed-view blueprint.
+ * First relational VexWeb spatial specimen.
  *
- * It is intentionally inert. No browser provider, Conversation backend, model, Memory, Settings
- * backend or DOM-context channel exists here.
+ * The browser/companion geometry is authored through Frame edges, one named Seam, and two Regions.
+ * No binary decomposition language is source authority.
  */
 object VexLifeWebF0 {
     object Refs {
-        val SplitContainer =
+        val WorkspaceFrame =
             VexWeb.StructuralRef.of(
-                "vexweb.vexlife-workspace.split",
+                "vexweb.vexlife-workspace.frame",
             )
 
-        val SplitHandle =
+        val BrowserCompanionSeam =
+            VexWeb.SeamRef.Vertical.of(
+                "vexweb.vexlife-workspace.seam.browser-companion",
+            )
+
+        val BrowserRegion =
             VexWeb.StructuralRef.of(
-                "vexweb.vexlife-workspace.split.handle",
+                "vexweb.vexlife-workspace.region.browser",
+            )
+
+        val CompanionRegion =
+            VexWeb.StructuralRef.of(
+                "vexweb.vexlife-workspace.region.companion",
+            )
+
+        val SeamHandle =
+            VexWeb.StructuralRef.of(
+                "vexweb.vexlife-workspace.seam.browser-companion.handle",
             )
 
         val OverlayRoot =
@@ -124,7 +139,7 @@ object VexLifeWebF0 {
             element =
                 VexLifeWorkspaceBlueprint.Companion,
             placement =
-                VexWeb.Placement.Trailing,
+                VexWeb.Placement.FillAvailable,
             depth =
                 VexWeb.Depth.Content,
             presentation =
@@ -152,7 +167,7 @@ object VexLifeWebF0 {
             element =
                 VexLifeWorkspaceBlueprint.Browser,
             placement =
-                VexWeb.Placement.Leading,
+                VexWeb.Placement.FillAvailable,
             depth =
                 VexWeb.Depth.Content,
             presentation =
@@ -163,46 +178,101 @@ object VexLifeWebF0 {
                 ),
         )
 
-    val SplitHandle =
+    val SeamHandle =
         VexWeb.Structural(
             ref =
-                Refs.SplitHandle,
+                Refs.SeamHandle,
             placement =
-                VexWeb.Placement.InFlow,
+                VexWeb.Placement.Overlay,
             depth =
                 VexWeb.Depth.Chrome,
             presentation =
-                VexWeb.Presentation.SplitHandle,
+                VexWeb.Presentation.SeamHandle,
             interactions =
                 setOf(
                     VexWeb.Interaction.Resize,
-                    VexWeb.Interaction.CollapseLeading,
-                    VexWeb.Interaction.CollapseTrailing,
+                    VexWeb.Interaction.CollapseBefore,
+                    VexWeb.Interaction.CollapseAfter,
                 ),
             binding =
-                VexWeb.Binding.LocalPresentation(
+                VexWeb.Binding.LocalSpatial(
                     target =
-                        Refs.SplitContainer,
+                        Refs.BrowserCompanionSeam,
                 ),
         )
 
-    val SplitContainer =
-        VexWeb.Split(
+    val WorkspaceFrame =
+        VexWeb.Frame(
             ref =
-                Refs.SplitContainer,
-            mode =
-                VexWeb.Parameter.SplitMode.Balanced(
-                    ratio =
-                        VexWeb.Parameter
-                            .SplitRatio
-                            .Equal,
+                Refs.WorkspaceFrame,
+            seams =
+                listOf(
+                    VexWeb.Seam.Vertical(
+                        ref =
+                            Refs.BrowserCompanionSeam,
+                        between =
+                            VexWeb.XSpan(
+                                start =
+                                    VexWeb.XBoundary.FrameStart,
+                                end =
+                                    VexWeb.XBoundary.FrameEnd,
+                            ),
+                        allocation =
+                            VexWeb.Parameter.Allocation.Ratio.Equal,
+                        span =
+                            VexWeb.YSpan(
+                                top =
+                                    VexWeb.YBoundary.FrameTop,
+                                bottom =
+                                    VexWeb.YBoundary.FrameBottom,
+                            ),
+                    ),
                 ),
-            leading =
-                BrowserPane,
-            handle =
-                SplitHandle,
-            trailing =
-                CompanionPane,
+            regions =
+                listOf(
+                    VexWeb.Region(
+                        ref =
+                            Refs.BrowserRegion,
+                        bounds =
+                            VexWeb.Bounds(
+                                start =
+                                    VexWeb.XBoundary.FrameStart,
+                                end =
+                                    VexWeb.XBoundary.Seam(
+                                        Refs.BrowserCompanionSeam,
+                                    ),
+                                top =
+                                    VexWeb.YBoundary.FrameTop,
+                                bottom =
+                                    VexWeb.YBoundary.FrameBottom,
+                            ),
+                        content =
+                            BrowserPane,
+                    ),
+                    VexWeb.Region(
+                        ref =
+                            Refs.CompanionRegion,
+                        bounds =
+                            VexWeb.Bounds(
+                                start =
+                                    VexWeb.XBoundary.Seam(
+                                        Refs.BrowserCompanionSeam,
+                                    ),
+                                end =
+                                    VexWeb.XBoundary.FrameEnd,
+                                top =
+                                    VexWeb.YBoundary.FrameTop,
+                                bottom =
+                                    VexWeb.YBoundary.FrameBottom,
+                            ),
+                        content =
+                            CompanionPane,
+                    ),
+                ),
+            chrome =
+                listOf(
+                    SeamHandle,
+                ),
         )
 
     val Surface =
@@ -210,7 +280,7 @@ object VexLifeWebF0 {
             screenRef =
                 VexLifeWorkspaceBlueprint.screenRef,
             content =
-                SplitContainer,
+                WorkspaceFrame,
             overlayRoot =
                 OverlayRoot,
         )

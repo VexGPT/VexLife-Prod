@@ -3,13 +3,12 @@ package vexlife.web
 import vexlife.blueprint.VexUiElementRef
 
 /**
- * First compiler-visible browser-manifestation vocabulary pressured by the accepted completed-view
- * blueprint.
+ * Compiler-visible browser-manifestation vocabulary.
  *
- * VexWeb does not own product State. It relates existing Blueprint identity to manifestation
- * structure, layout/depth intent, interaction, capability binding and honest fallback behavior.
+ * Spatial meaning is relational: Frames establish local space, Seams establish named boundaries,
+ * Regions bind their edges to Frame edges / Seams, and optional Handles manipulate Seams.
  *
- * This is intentionally pre-generator: HTML/CSS/JS do not appear in this vocabulary.
+ * VexWeb does not own product State and does not encode HTML/CSS/JS.
  */
 object VexWeb {
     @ConsistentCopyVisibility
@@ -20,15 +19,10 @@ object VexWeb {
             fun of(
                 value: String,
             ): StructuralRef {
-                require(
-                    value.matches(
-                        Regex(
-                            """vexweb\.[a-z0-9]+(?:[.-][a-z0-9]+)*""",
-                        ),
-                    ),
-                ) {
-                    "VexWeb structural ref must be stable lowercase source identity: $value"
-                }
+                requireSourceRef(
+                    value,
+                    "structural",
+                )
 
                 return StructuralRef(
                     value,
@@ -48,7 +42,7 @@ object VexWeb {
                 require(
                     value.matches(
                         Regex(
-                            "[a-z0-9]+(?:[.-][a-z0-9]+)*",
+                            """[a-z0-9]+(?:[.-][a-z0-9]+)*""",
                         ),
                     ),
                 ) {
@@ -58,6 +52,52 @@ object VexWeb {
                 return CapabilityRef(
                     value,
                 )
+            }
+        }
+    }
+
+    sealed interface SeamRef {
+        val value: String
+
+        @ConsistentCopyVisibility
+        data class Vertical private constructor(
+            override val value: String,
+        ) :
+            SeamRef {
+            companion object {
+                fun of(
+                    value: String,
+                ): Vertical {
+                    requireSourceRef(
+                        value,
+                        "vertical seam",
+                    )
+
+                    return Vertical(
+                        value,
+                    )
+                }
+            }
+        }
+
+        @ConsistentCopyVisibility
+        data class Horizontal private constructor(
+            override val value: String,
+        ) :
+            SeamRef {
+            companion object {
+                fun of(
+                    value: String,
+                ): Horizontal {
+                    requireSourceRef(
+                        value,
+                        "horizontal seam",
+                    )
+
+                    return Horizontal(
+                        value,
+                    )
+                }
             }
         }
     }
@@ -91,79 +131,54 @@ object VexWeb {
         }
     }
 
-    /**
-     * VexWeb-owned presentation input.
-     *
-     * VexWeb.Parameter and VexFamily.Parameter intentionally have different owners. This Parameter
-     * names a browser-manifestation dimension, not product semantic State.
-     */
     sealed interface Parameter {
-        @ConsistentCopyVisibility
-        data class SplitRatio private constructor(
-            val leadingParts: Int,
-            val trailingParts: Int,
-        ) :
-            Parameter {
-            init {
-                require(
-                    leadingParts >
-                        0,
-                )
-                require(
-                    trailingParts >
-                        0,
-                )
-            }
-
-            val totalParts: Int =
-                leadingParts +
-                    trailingParts
-
-            companion object {
-                fun of(
-                    leadingParts: Int,
-                    trailingParts: Int,
-                ): SplitRatio =
-                    SplitRatio(
-                        leadingParts =
-                            leadingParts,
-                        trailingParts =
-                            trailingParts,
-                    )
-
-                val Equal =
-                    SplitRatio(
-                        leadingParts =
-                            1,
-                        trailingParts =
-                            1,
-                    )
-            }
-        }
-
-        sealed interface SplitMode :
+        sealed interface Allocation :
             Parameter {
             @ConsistentCopyVisibility
-            data class Balanced internal constructor(
-                val ratio: SplitRatio =
-                    SplitRatio.Equal,
+            data class Ratio private constructor(
+                val beforeParts: Int,
+                val afterParts: Int,
             ) :
-                SplitMode
+                Allocation {
+                init {
+                    require(
+                        beforeParts >
+                            0,
+                    )
+                    require(
+                        afterParts >
+                            0,
+                    )
+                }
 
-            data object LeadingOnly :
-                SplitMode
+                val totalParts: Int =
+                    beforeParts +
+                        afterParts
 
-            data object TrailingOnly :
-                SplitMode
+                companion object {
+                    fun of(
+                        beforeParts: Int,
+                        afterParts: Int,
+                    ): Ratio =
+                        Ratio(
+                            beforeParts =
+                                beforeParts,
+                            afterParts =
+                                afterParts,
+                        )
+
+                    val Equal =
+                        Ratio(
+                            beforeParts =
+                                1,
+                            afterParts =
+                                1,
+                        )
+                }
+            }
         }
     }
 
-    /**
-     * Relative authored depth.
-     *
-     * Declaration order expresses only the stable relative relationship. A renderer may choose
-     * platform-specific stacking numbers; those numbers are not VexWeb source meaning.
-     */
     enum class Depth {
         Content,
         Chrome,
@@ -190,14 +205,9 @@ object VexWeb {
         Overlay,
     }
 
-    /**
-     * Presentation intent, not CSS/widget vocabulary.
-     *
-     * Add roles only when completed-view pressure requires a distinction.
-     */
     enum class Presentation {
         Surface,
-        SplitHandle,
+        SeamHandle,
         PrimaryAction,
         TransientFeedback,
     }
@@ -205,8 +215,8 @@ object VexWeb {
     enum class Interaction {
         Activate,
         Resize,
-        CollapseLeading,
-        CollapseTrailing,
+        CollapseBefore,
+        CollapseAfter,
     }
 
     sealed interface Fallback {
@@ -218,19 +228,13 @@ object VexWeb {
             Fallback
     }
 
-    /**
-     * What an interaction is currently connected to.
-     *
-     * LocalPresentation is explicitly not a product Family binding. Unbound is honest missing
-     * capability state with an already-bound fallback target.
-     */
     sealed interface Binding {
         data object None :
             Binding
 
         @ConsistentCopyVisibility
-        data class LocalPresentation internal constructor(
-            val target: StructuralRef,
+        data class LocalSpatial internal constructor(
+            val target: SeamRef,
         ) :
             Binding
 
@@ -309,18 +313,82 @@ object VexWeb {
             )
     }
 
-    /**
-     * One exact split relationship.
-     *
-     * Leading / handle / trailing are compiler-visible roles rather than child-order convention.
-     */
+    sealed interface XBoundary {
+        data object FrameStart :
+            XBoundary
+
+        data object FrameEnd :
+            XBoundary
+
+        @ConsistentCopyVisibility
+        data class Seam internal constructor(
+            val ref: SeamRef.Vertical,
+        ) :
+            XBoundary
+    }
+
+    sealed interface YBoundary {
+        data object FrameTop :
+            YBoundary
+
+        data object FrameBottom :
+            YBoundary
+
+        @ConsistentCopyVisibility
+        data class Seam internal constructor(
+            val ref: SeamRef.Horizontal,
+        ) :
+            YBoundary
+    }
+
     @ConsistentCopyVisibility
-    data class Split internal constructor(
+    data class XSpan internal constructor(
+        val start: XBoundary,
+        val end: XBoundary,
+    )
+
+    @ConsistentCopyVisibility
+    data class YSpan internal constructor(
+        val top: YBoundary,
+        val bottom: YBoundary,
+    )
+
+    @ConsistentCopyVisibility
+    data class Bounds internal constructor(
+        val start: XBoundary,
+        val end: XBoundary,
+        val top: YBoundary,
+        val bottom: YBoundary,
+    )
+
+    sealed interface Seam {
+        val ref: SeamRef
+        val allocation: Parameter.Allocation
+
+        @ConsistentCopyVisibility
+        data class Vertical internal constructor(
+            override val ref: SeamRef.Vertical,
+            val between: XSpan,
+            override val allocation: Parameter.Allocation,
+            val span: YSpan,
+        ) :
+            Seam
+
+        @ConsistentCopyVisibility
+        data class Horizontal internal constructor(
+            override val ref: SeamRef.Horizontal,
+            val between: YSpan,
+            override val allocation: Parameter.Allocation,
+            val span: XSpan,
+        ) :
+            Seam
+    }
+
+    @ConsistentCopyVisibility
+    data class Region internal constructor(
         val ref: StructuralRef,
-        val mode: Parameter.SplitMode,
-        val leading: Node,
-        val handle: Node,
-        val trailing: Node,
+        val bounds: Bounds,
+        val content: Node,
     ) :
         Node {
         override val identity: Identity =
@@ -343,12 +411,193 @@ object VexWeb {
         override val binding =
             Binding.None
 
-        override val children: List<Node> =
+        override val children =
             listOf(
-                leading,
-                handle,
-                trailing,
+                content,
             )
+    }
+
+    @ConsistentCopyVisibility
+    data class Frame internal constructor(
+        val ref: StructuralRef,
+        val seams: List<Seam>,
+        val regions: List<Region>,
+        val chrome: List<Node> =
+            emptyList(),
+    ) :
+        Node {
+        init {
+            require(
+                regions.isNotEmpty(),
+            ) {
+                "VexWeb Frame requires at least one Region"
+            }
+
+            val verticalRefs =
+                seams
+                    .filterIsInstance<Seam.Vertical>()
+                    .map {
+                        it.ref
+                    }
+                    .toSet()
+            val horizontalRefs =
+                seams
+                    .filterIsInstance<Seam.Horizontal>()
+                    .map {
+                        it.ref
+                    }
+                    .toSet()
+            val seamValues =
+                seams.map {
+                    it.ref.value
+                }
+
+            require(
+                seamValues.size ==
+                    seamValues.toSet().size,
+            ) {
+                "VexWeb Frame contains duplicate Seam identity"
+            }
+
+            fun xKnown(
+                boundary: XBoundary,
+            ): Boolean =
+                when (boundary) {
+                    XBoundary.FrameStart,
+                    XBoundary.FrameEnd,
+                    ->
+                        true
+
+                    is XBoundary.Seam ->
+                        boundary.ref in
+                            verticalRefs
+                }
+
+            fun yKnown(
+                boundary: YBoundary,
+            ): Boolean =
+                when (boundary) {
+                    YBoundary.FrameTop,
+                    YBoundary.FrameBottom,
+                    ->
+                        true
+
+                    is YBoundary.Seam ->
+                        boundary.ref in
+                            horizontalRefs
+                }
+
+            seams.forEach { seam ->
+                when (seam) {
+                    is Seam.Vertical -> {
+                        require(
+                            xKnown(
+                                seam.between.start,
+                            ) &&
+                                xKnown(
+                                    seam.between.end,
+                                ) &&
+                                yKnown(
+                                    seam.span.top,
+                                ) &&
+                                yKnown(
+                                    seam.span.bottom,
+                                ),
+                        ) {
+                            "VexWeb vertical Seam references a boundary outside its Frame"
+                        }
+
+                        require(
+                            seam.between.start !=
+                                XBoundary.Seam(
+                                    seam.ref,
+                                ) &&
+                                seam.between.end !=
+                                XBoundary.Seam(
+                                    seam.ref,
+                                ),
+                        ) {
+                            "VexWeb vertical Seam cannot position itself from itself"
+                        }
+                    }
+
+                    is Seam.Horizontal -> {
+                        require(
+                            yKnown(
+                                seam.between.top,
+                            ) &&
+                                yKnown(
+                                    seam.between.bottom,
+                                ) &&
+                                xKnown(
+                                    seam.span.start,
+                                ) &&
+                                xKnown(
+                                    seam.span.end,
+                                ),
+                        ) {
+                            "VexWeb horizontal Seam references a boundary outside its Frame"
+                        }
+
+                        require(
+                            seam.between.top !=
+                                YBoundary.Seam(
+                                    seam.ref,
+                                ) &&
+                                seam.between.bottom !=
+                                YBoundary.Seam(
+                                    seam.ref,
+                                ),
+                        ) {
+                            "VexWeb horizontal Seam cannot position itself from itself"
+                        }
+                    }
+                }
+            }
+
+            regions.forEach { region ->
+                require(
+                    xKnown(
+                        region.bounds.start,
+                    ) &&
+                        xKnown(
+                            region.bounds.end,
+                        ) &&
+                        yKnown(
+                            region.bounds.top,
+                        ) &&
+                        yKnown(
+                            region.bounds.bottom,
+                        ),
+                ) {
+                    "VexWeb Region references a boundary outside its Frame"
+                }
+            }
+        }
+
+        override val identity: Identity =
+            Identity.Structural(
+                ref,
+            )
+
+        override val placement =
+            Placement.FillAvailable
+
+        override val depth =
+            Depth.Content
+
+        override val presentation =
+            Presentation.Surface
+
+        override val interactions =
+            emptySet<Interaction>()
+
+        override val binding =
+            Binding.None
+
+        override val children: List<Node> =
+            regions +
+                chrome
     }
 
     @ConsistentCopyVisibility
@@ -424,18 +673,69 @@ object VexWeb {
                 coordinates.associateBy {
                     it.ref
                 }
+            val seamRefs =
+                linkedMapOf<
+                    String,
+                    SeamRef
+                >()
+
+            fun collectSeams(
+                node: Node,
+            ) {
+                if (
+                    node is
+                    Frame
+                ) {
+                    node.seams.forEach { seam ->
+                        require(
+                            seam.ref.value !in
+                                seamRefs,
+                        ) {
+                            "VexWeb Surface contains duplicate Seam identity"
+                        }
+
+                        seamRefs[
+                            seam.ref.value
+                        ] =
+                            seam.ref
+                    }
+                }
+
+                node.children.forEach {
+                    collectSeams(
+                        it,
+                    )
+                }
+            }
+
+            collectSeams(
+                content,
+            )
+            collectSeams(
+                overlayRoot,
+            )
+
+            require(
+                seamRefs.keys.none {
+                    it in
+                        byRef
+                },
+            ) {
+                "VexWeb Seam identity must not collide with Node identity"
+            }
 
             coordinates.forEach { coordinate ->
                 when (
                     val authoredBinding =
                         coordinate.binding
                 ) {
-                    is Binding.LocalPresentation ->
+                    is Binding.LocalSpatial ->
                         require(
                             authoredBinding.target.value in
-                                byRef,
+                                seamRefs,
                         ) {
-                            "VexWeb local presentation target is outside this surface: ${authoredBinding.target.value}"
+                            "VexWeb spatial binding target is outside this Surface: " +
+                                authoredBinding.target.value
                         }
 
                     is Binding.Unbound ->
@@ -451,7 +751,8 @@ object VexWeb {
                                             .value
                                     ]
                                         ?: error(
-                                            "VexWeb fallback target is outside this surface: ${fallback.feedbackTarget.value}",
+                                            "VexWeb fallback target is outside this Surface: " +
+                                                fallback.feedbackTarget.value,
                                         )
 
                                 require(
@@ -472,6 +773,51 @@ object VexWeb {
 
             return coordinates
         }
+
+        fun spatialRegions(): List<RegionCoordinate> {
+            val regions =
+                mutableListOf<RegionCoordinate>()
+
+            fun walk(
+                node: Node,
+            ) {
+                if (
+                    node is
+                    Frame
+                ) {
+                    node.regions.forEach { region ->
+                        regions +=
+                            RegionCoordinate(
+                                ref =
+                                    region.ref.value,
+                                frameRef =
+                                    node.ref.value,
+                                bounds =
+                                    region.bounds,
+                                contentRef =
+                                    region.content
+                                        .identity
+                                        .ref,
+                            )
+                    }
+                }
+
+                node.children.forEach {
+                    walk(
+                        it,
+                    )
+                }
+            }
+
+            walk(
+                content,
+            )
+            walk(
+                overlayRoot,
+            )
+
+            return regions
+        }
     }
 
     @ConsistentCopyVisibility
@@ -485,6 +831,29 @@ object VexWeb {
         val interactions: Set<Interaction>,
         val binding: Binding,
     )
+
+    @ConsistentCopyVisibility
+    data class RegionCoordinate internal constructor(
+        val ref: String,
+        val frameRef: String,
+        val bounds: Bounds,
+        val contentRef: String,
+    )
+
+    private fun requireSourceRef(
+        value: String,
+        kind: String,
+    ) {
+        require(
+            value.matches(
+                Regex(
+                    """vexweb\.[a-z0-9]+(?:[.-][a-z0-9]+)*""",
+                ),
+            ),
+        ) {
+            "VexWeb $kind ref must be stable lowercase source identity: $value"
+        }
+    }
 }
 
 // [VXG RealForever]
