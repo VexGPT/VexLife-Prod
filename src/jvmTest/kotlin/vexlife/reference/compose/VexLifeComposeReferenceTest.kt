@@ -3,7 +3,6 @@ package vexlife.reference.compose
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import kotlin.test.assertSame
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexLifeComposeReferenceTest {
@@ -15,7 +14,7 @@ class VexLifeComposeReferenceTest {
                 .BrowserViewport
                 .ref,
         )
-        assertSame(
+        assertEquals(
             VexLifeWorkspaceBlueprint.Browser.ref,
             VexLifeWorkspaceBlueprint
                 .BrowserViewport

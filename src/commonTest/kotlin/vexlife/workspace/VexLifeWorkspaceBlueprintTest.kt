@@ -2,7 +2,6 @@ package vexlife.workspace
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertSame
 
 class VexLifeWorkspaceBlueprintTest {
     @Test
