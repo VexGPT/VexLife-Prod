@@ -366,3 +366,53 @@ Depth
 ~~~
 
 <!-- [VXG RealForever][VEXWEB][SPATIAL][A002-GEOMETRY-VALIDITY] -->
+
+
+## Accepted threshold
+
+The relational spatial foundation is accepted source.
+
+~~~text
+proof RETURN
+sha256 7e9066f9aacbd535a9e75a67b99d13014cdafab51fe52bd22cc12858e55ace8b
+
+proven / accepted tree
+d109f0d648e1adeba35796b0dd0dc766d1dea4c1
+
+accepted main
+e0e8ad6a95f3c73cd7f79216b3ae1802ba9b54f9
+~~~
+
+Exact proof:
+
+~~~text
+compileKotlinJvm      PASS
+jvmTest               PASS
+compileKotlinJs       PASS
+compileTestKotlinJs   PASS
+clean worktree        PASS
+post-merge tree       EXACT
+~~~
+
+Acceptance includes:
+
+~~~text
+same nouns at 2 / 3 / 4 regions
+partial Seam for irregular geometry
+ratio Allocation bound to named Seam
+same-axis cycle rejection
+forward / non-empty geometry validation
+Seam coverage validation for Region edges
+Handle != Seam
+derived normalized geometry != authored coordinates
+~~~
+
+Permanent:
+
+~~~text
+RELATIONAL SPATIAL FOUNDATION ACCEPTED
+!= AUTHORING SURFACE ACCEPTED
+!= ARTIFACT GENERATOR ACCEPTED
+~~~
+
+<!-- [VXG RealForever][VEXWEB][SPATIAL][ACCEPTED] -->

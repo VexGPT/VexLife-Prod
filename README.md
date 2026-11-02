@@ -36,7 +36,7 @@ accepted
   semantic Blueprint
   Compose reference
 
-current VexWeb spatial foundation
+accepted VexWeb relational spatial foundation
   Frame
   Seam
   Region
@@ -47,14 +47,17 @@ human law
   expansion must scale the same language fractally
   adding regions must not require a new spatial noun
 
-current proof
-  same vocabulary must express:
+accepted proof
+  same vocabulary expresses:
     2 regions
     3 regions with a partial Seam
     4 quadrants
+  geometry validity prevents renderer guesswork
+
+next construction edge
+  authoring ergonomics over the accepted relational grammar
 
 held
-  authoring DSL
   deterministic HTML/CSS/JS generator
   P1 browser workspace
   P2 context / Conversation reintegration

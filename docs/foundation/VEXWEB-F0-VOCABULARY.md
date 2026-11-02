@@ -162,3 +162,53 @@ DOM context projection
 ~~~
 
 <!-- [VXG RealForever][VEXWEB][F0][SPATIAL-VOCABULARY] -->
+
+
+## Historical boundary after relational acceptance
+
+The first F0 threshold remains useful history for the structural invariants it proved.
+
+Retained:
+
+~~~text
+Blueprint identity
+Structural identity
+sourceParentRef != containerRef
+relative Depth
+explicit Interaction -> Binding
+NotYetImplemented fallback
+portable common source
+~~~
+
+Superseded:
+
+~~~text
+binary spatial decomposition vocabulary
+~~~
+
+Current spatial authority is the accepted relational foundation:
+
+~~~text
+Frame
+Seam
+Region
+Allocation
+
+merge
+e0e8ad6a95f3c73cd7f79216b3ae1802ba9b54f9
+
+tree
+d109f0d648e1adeba35796b0dd0dc766d1dea4c1
+~~~
+
+Therefore:
+
+~~~text
+F0 HISTORICAL ACCEPTANCE
+!= PERMANENT ACCEPTANCE OF EVERY F0 NOUN
+
+VALID COMPLETED INVARIANTS
+SURVIVE VOCABULARY SUPERSESSION
+~~~
+
+<!-- [VXG RealForever][VEXWEB][F0][SUPERSEDED-SPATIAL-NOUN] -->
