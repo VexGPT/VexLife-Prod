@@ -98,6 +98,12 @@ object VexWeb {
      * names a browser-manifestation dimension, not product semantic State.
      */
     sealed interface Parameter {
+        enum class SplitAxis :
+            Parameter {
+            Horizontal,
+            Vertical,
+        }
+
         @ConsistentCopyVisibility
         data class SplitRatio private constructor(
             val leadingParts: Int,
@@ -317,6 +323,7 @@ object VexWeb {
     @ConsistentCopyVisibility
     data class Split internal constructor(
         val ref: StructuralRef,
+        val axis: Parameter.SplitAxis,
         val mode: Parameter.SplitMode,
         val leading: Node,
         val handle: Node,
