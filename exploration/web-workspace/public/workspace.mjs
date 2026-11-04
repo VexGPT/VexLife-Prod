@@ -621,10 +621,20 @@ function receiptNode({ prompt, outcome, failure, usage }) {
       button.className = 'receipt-link';
       button.textContent = `Read ${prompt.context.title || shortUrl(prompt.context.sourceUrl)} (${characters(prompt.context.characters)})`;
       button.dataset.contextRef = prompt.context.contextRef;
-      button.title = 'See exactly what Vex received';
+      button.title = 'See the captured page receipt';
       facts.append(button);
     } else {
       facts.append('No page included');
+    }
+    if (prompt.materialization) {
+      facts.append(' · ');
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'prompt-receipt-link';
+      button.dataset.promptReceiptRef = prompt.materialization.receiptRef;
+      button.textContent = `What Vex received (~${numberFormat.format(prompt.materialization.materializedInputTokenEstimate)} input tokens)`;
+      button.title = 'Inspect the canonical prompt-materialization receipt for this turn';
+      facts.append(button);
     }
   }
   if (usage?.prompt_tokens) facts.append(`, ${tokens(usage.prompt_tokens)} in, ${numberFormat.format(usage.completion_tokens ?? 0)} out`);
@@ -705,43 +715,38 @@ function setMeter({ meter, segments, text, label, known }) {
 
 function renderSettings() {
   if (!ui) return;
-  const windowTokens = model.resources?.contextWindow?.tokens ?? null;
-  const last = [...model.transcript].reverse().find((record) => record.outcome === 'Completed' && record.response.usage?.prompt_tokens);
+  const last = [...model.transcript].reverse().find((record) =>
+    record.outcome === 'Completed' && record.prompt?.materialization);
   if (last) {
-    const promptTokens = last.response.usage.prompt_tokens;
-    const completionTokens = last.response.usage.completion_tokens ?? 0;
-    const core = Math.round(promptTokens * Math.min(1, last.prompt.systemCharacters / last.prompt.requestCharacters));
-    const used = promptTokens - core + completionTokens;
-    const total = core + used;
-    if (windowTokens) {
-      setMeter({
-        meter: vex.el('ContextWindow'),
-        segments: [[ui.contextCore, core / windowTokens], [ui.contextUsed, used / windowTokens]],
-        text: `${tokens(total)} / ${tokens(windowTokens)} used`,
-        label: `Context window: ${tokens(total)} of ${tokens(windowTokens)} used`,
-        known: true
-      });
-    } else {
-      setMeter({
-        meter: vex.el('ContextWindow'),
-        segments: [[ui.contextCore, core / total], [ui.contextUsed, used / total]],
-        text: `${tokens(total)} used, window size unknown`,
-        label: `Context window: ${tokens(total)} used; window size unknown`,
-        known: false
-      });
-    }
-    ui.contextNote.textContent = `Core is Vex's standing instructions, about ${tokens(core)} (estimated from their share of the last request). Used is the rest of the last request plus Vex's reply.${windowTokens ? ' The window size comes from the model\'s config.json.' : ''}`;
+    const receipt = last.prompt.materialization;
+    const input = receipt.materializedInputTokenEstimate;
+    const reserved = receipt.reservedOutputTokens;
+    const hard = receipt.hardTokenLimit;
+    const remaining = Math.max(0, hard - input - reserved);
+    setMeter({
+      meter: vex.el('ContextWindow'),
+      segments: [[ui.contextCore, hard ? input / hard : 0], [ui.contextUsed, hard ? reserved / hard : 0]],
+      text: `~${tokens(input)} input + ${tokens(reserved)} reserved / ${tokens(hard)} limit`,
+      label: `Prompt context: about ${tokens(input)} materialized input, ${tokens(reserved)} reserved output, ${tokens(remaining)} remaining at admission`,
+      known: true
+    });
+    const priorCount = receipt.selectedConversationEventRefs.length;
+    const memorySummary = receipt.memoryContextIncluded
+      ? `Memory contributed about ${tokens(receipt.memoryEstimatedSystemMessageTokens)}.`
+      : 'No Memory packet was included.';
+    ui.contextNote.textContent = `Canonical receipt for the last turn: ${memorySummary} ${priorCount} prior Conversation event${priorCount === 1 ? '' : 's'} selected. Whole-history enumeration: no. Hidden reasoning included: no.`;
   } else {
+    const windowTokens = model.resources?.contextWindow?.tokens ?? null;
     setMeter({
       meter: vex.el('ContextWindow'),
       segments: [[ui.contextCore, 0], [ui.contextUsed, 0]],
-      text: windowTokens ? `0 / ${tokens(windowTokens)} used` : 'Not exposed yet',
-      label: windowTokens ? `Context window: 0 of ${tokens(windowTokens)} used` : 'Context window: current prompt usage is not exposed by the canonical Companion yet',
+      text: windowTokens ? `${tokens(windowTokens)} model window known · no turn receipt yet` : 'No turn receipt yet',
+      label: windowTokens ? `Model window ${tokens(windowTokens)}; no canonical prompt receipt retained in this presentation session` : 'No canonical prompt receipt retained in this presentation session',
       known: Boolean(windowTokens)
     });
-    ui.contextNote.textContent = windowTokens
-      ? "The model window size is known, but this presentation does not yet receive the canonical prompt/context usage receipt."
-      : 'The canonical Companion does not yet expose the exact prompt/context receipt needed to show what Vex received.';
+    ui.contextNote.textContent = model.transcript.length
+      ? 'Older/reloaded canonical Conversation turns do not carry their prompt receipts in the Conversation projection. Send a new turn here to inspect exactly what the canonical Companion admits for that turn.'
+      : 'Send a turn to inspect the canonical prompt-materialization receipt that VexLife returns for that exact turn.';
   }
 
   const memory = model.resources?.memory;
@@ -752,13 +757,13 @@ function renderSettings() {
       meter: vex.el('MemoryResource'),
       segments: [[ui.memoryUsed, usedBytes / memory.totalBytes]],
       text: `${gigabytes(usedBytes)} used of ${gigabytes(memory.totalBytes)}`,
-      label: `Memory: ${gigabytes(usedBytes)} used of ${gigabytes(memory.totalBytes)}, ${Math.round(share * 100)}% left`,
+      label: `Mac memory: ${gigabytes(usedBytes)} used of ${gigabytes(memory.totalBytes)}, ${Math.round(share * 100)}% left`,
       known: true
     });
     const runtime = model.resources.runtime?.residentBytes ? ` The model runtime holds ${gigabytes(model.resources.runtime.residentBytes)}.` : '';
     ui.memoryNote.textContent = `${Math.round(share * 100)}% left on this Mac.${runtime}`;
   } else {
-    setMeter({ meter: vex.el('MemoryResource'), segments: [[ui.memoryUsed, 0]], text: 'Not measured', label: 'Memory not measured', known: false });
+    setMeter({ meter: vex.el('MemoryResource'), segments: [[ui.memoryUsed, 0]], text: 'Not measured', label: 'Mac memory not measured', known: false });
     ui.memoryNote.textContent = '';
   }
 
@@ -802,6 +807,19 @@ function notify(text) {
   snackbarTimer = setTimeout(() => { bar.hidden = true; }, 5200);
 }
 
+function showInspector({ title, facts, text }) {
+  ui.inspectorTitle.textContent = title;
+  ui.inspectorFacts.replaceChildren(...facts.flatMap(([term, value]) => {
+    const dt = document.createElement('dt');
+    dt.textContent = term;
+    const dd = document.createElement('dd');
+    dd.textContent = value;
+    return [dt, dd];
+  }));
+  ui.inspectorText.textContent = text;
+  vex.el('ContextInspector').showModal();
+}
+
 async function inspectContext(contextRef) {
   let record;
   try {
@@ -810,23 +828,38 @@ async function inspectContext(contextRef) {
     notify("That page text isn't available any more.");
     return;
   }
-  const facts = [
-    ['Page', record.sourceUrl],
-    ['Title', record.title || 'None'],
-    ['Read from', record.capture === 'Rendered' ? 'The page as it showed in your browser' : 'The page source (the page could not supply what it showed)'],
-    ['Length', record.truncated ? `${characters(record.characters)} (first part of the page)` : characters(record.characters)],
-    ['sha256', record.sha256],
-    ['Read at', new Date(record.acquiredAt).toLocaleString()]
-  ];
-  ui.inspectorFacts.replaceChildren(...facts.flatMap(([term, value]) => {
-    const dt = document.createElement('dt');
-    dt.textContent = term;
-    const dd = document.createElement('dd');
-    dd.textContent = value;
-    return [dt, dd];
-  }));
-  ui.inspectorText.textContent = record.text;
-  vex.el('ContextInspector').showModal();
+  showInspector({
+    title: 'Captured page receipt',
+    facts: [
+      ['Page', record.sourceUrl],
+      ['Title', record.title || 'None'],
+      ['Read from', record.capture === 'Rendered' ? 'The page as it showed in your browser' : 'The page source (the page could not supply what it showed)'],
+      ['Length', record.truncated ? `${characters(record.characters)} (first part of the page)` : characters(record.characters)],
+      ['sha256', record.sha256],
+      ['Read at', new Date(record.acquiredAt).toLocaleString()]
+    ],
+    text: record.text
+  });
+}
+
+function inspectPromptReceipt(receiptRef) {
+  const record = [...model.transcript].reverse().find((turn) => turn.prompt?.materialization?.receiptRef === receiptRef);
+  if (!record) {
+    notify('That prompt receipt is no longer retained in this presentation session.');
+    return;
+  }
+  let description;
+  try {
+    description = describePromptContextMaterializationReceipt(record.prompt.materialization);
+  } catch {
+    notify("That prompt receipt isn't valid for inspection.");
+    return;
+  }
+  showInspector({
+    title: 'What Vex received for this turn',
+    facts: description.facts,
+    text: description.text
+  });
 }
 
 function askCleanChat() {
@@ -965,186 +998,3 @@ function sizeDraft() {
 
 function wireInput() {
   ui.addressForm.addEventListener('submit', (event) => {
-    event.preventDefault();
-    if (openPage(vex.el('BrowserQuery').value)) vex.el('BrowserQuery').blur();
-  });
-  vex.el('BrowserQuery').addEventListener('input', () => { ui.addressError.hidden = true; });
-  ui.reload.addEventListener('click', () => {
-    if (model.browser.type === 'Addressed') openPage(model.browser.page);
-  });
-  vex.el('AppSelector').addEventListener('change', (event) => { event.target.value = 'browser'; });
-  ui.pageFrame.addEventListener('load', onFrameLoad);
-  window.addEventListener('message', onFrameMessage);
-
-  vex.el('QuickActions').addEventListener('click', (event) => {
-    const button = event.target.closest('.quick-action');
-    if (!button) return;
-    const action = QUICK_ACTIONS.find((candidate) => candidate.key === button.dataset.action);
-    if (action.key === 'theme') {
-      model.preferences.theme = currentTheme() === 'dark' ? 'light' : 'dark';
-      savePreferences();
-      applyTheme();
-      return;
-    }
-    notify(`${action.label} isn't connected in this workspace yet.`);
-  });
-
-  vex.el('CompanionCheck').addEventListener('click', () => control('companion', { type: 'Check' }));
-  vex.el('CompanionViewSwitch').addEventListener('click', () => {
-    model.view = model.view === 'settings' ? 'conversation' : 'settings';
-    render();
-    if (model.view === 'settings') refreshResources();
-  });
-
-  vex.el('ContextShare').addEventListener('click', () => {
-    const context = model.browser.type === 'Addressed' ? model.browser.context.type : null;
-    if (context === 'Shared' || context === 'Acquiring' || context === 'AwaitingPage') control('browser', { type: 'StopSharing' });
-    else control('browser', { type: 'Share' });
-  });
-
-  ui.composeForm.addEventListener('submit', (event) => {
-    event.preventDefault();
-    send();
-  });
-  ui.draft.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
-      event.preventDefault();
-      send();
-    } else if (event.key === 'Escape' && model.session?.turnCancellation === true && Composer.converge(model.companion, model.turn, model.browser).stopAvailable) {
-      control('turn', { type: 'Stop' });
-    }
-  });
-  ui.draft.addEventListener('input', () => {
-    sizeDraft();
-    renderComposer();
-  });
-  vex.el('Stop').addEventListener('click', () => { if (model.session?.turnCancellation === true) control('turn', { type: 'Stop' }); });
-
-  ui.ticketView.addEventListener('click', () => {
-    if (ui.ticketView.dataset.contextRef) inspectContext(ui.ticketView.dataset.contextRef);
-  });
-  vex.el('ConversationTimeline').addEventListener('click', (event) => {
-    const link = event.target.closest('.receipt-link');
-    if (link) {
-      inspectContext(link.dataset.contextRef);
-      return;
-    }
-    const toggle = event.target.closest('.thought-toggle');
-    if (toggle) {
-      const key = toggle.dataset.thoughtKey;
-      if (model.expandedThoughts.has(key)) model.expandedThoughts.delete(key);
-      else model.expandedThoughts.add(key);
-      renderTimeline();
-    }
-  });
-  ui.inspectorClose.addEventListener('click', () => vex.el('ContextInspector').close());
-
-  vex.el('ThoughtVisibility').addEventListener('click', () => {
-    model.preferences.thoughtsVisible = !model.preferences.thoughtsVisible;
-    savePreferences();
-    render();
-  });
-  vex.el('LowMemoryAlert').addEventListener('click', () => {
-    model.preferences.lowMemoryAlert = !model.preferences.lowMemoryAlert;
-    model.lowMemoryNotified = false;
-    savePreferences();
-    renderSettings();
-    checkLowMemory();
-  });
-  vex.el('CleanChat').addEventListener('click', askCleanChat);
-  ui.confirmCancel.addEventListener('click', () => ui.confirmDialog.close());
-  ui.confirmAccept.addEventListener('click', startCleanChat);
-}
-
-// ------------------------------------------------------------------ Start
-
-async function start() {
-  loadPreferences();
-  applyTheme();
-
-  const root = document.getElementById('workspace');
-  try {
-    vex = await bindWorkspace(root);
-  } catch (error) {
-    const failure = document.getElementById('binding-failure');
-    failure.textContent = `This workspace can't bind to its Blueprint: ${error.message}`;
-    failure.hidden = false;
-    return;
-  }
-
-  const byId = (id) => document.getElementById(id);
-  ui = {
-    frame: byId('frame'),
-    seam: byId('seam'),
-    collapseBefore: byId('collapse-before'),
-    collapseAfter: byId('collapse-after'),
-    companionTitle: byId('companion-title'),
-    statusText: byId('companion-status-text'),
-    statusModel: byId('companion-status-model'),
-    addressForm: byId('address-form'),
-    addressError: byId('address-error'),
-    reload: byId('reload'),
-    pageFrame: byId('page-frame'),
-    viewportEmpty: byId('viewport-empty'),
-    hold: byId('composer-hold'),
-    shareLabel: byId('context-share-label'),
-    ticketTitle: byId('ticket-title'),
-    ticketLine: byId('ticket-line'),
-    ticketUrl: byId('ticket-url'),
-    ticketHash: byId('ticket-hash'),
-    ticketDiverged: byId('ticket-diverged'),
-    ticketView: byId('ticket-view'),
-    draft: byId('draft'),
-    composeForm: byId('compose-form'),
-    contextCore: byId('context-core'),
-    contextUsed: byId('context-used'),
-    contextNote: byId('context-note'),
-    memoryUsed: byId('memory-used'),
-    memoryNote: byId('memory-note'),
-    alertThreshold: byId('alert-threshold'),
-    settingDataDir: byId('setting-data-dir'),
-    settingRenderer: byId('setting-renderer'),
-    snackbar: byId('snackbar'),
-    inspectorFacts: byId('inspector-facts'),
-    inspectorText: byId('inspector-text'),
-    inspectorClose: byId('inspector-close'),
-    confirmDialog: byId('confirm-clean'),
-    confirmText: byId('confirm-text'),
-    confirmCancel: byId('confirm-cancel'),
-    confirmAccept: byId('confirm-accept')
-  };
-
-  renderQuickActions();
-  wireSeam();
-  wireInput();
-  applySplit();
-  describeRenderer();
-
-  try {
-    const session = await getJson('/api/session');
-    model.session = session;
-    ui.settingDataDir.textContent = session.dataDir;
-    try {
-      const conversation = await getJson('/api/conversation');
-      model.transcript = conversation.turns;
-      model.turn = ConversationTurn.idleAfter(conversation.lastSequence);
-    } catch {
-      model.transcript = [];
-      model.turn = ConversationTurn.idleAfter(session.lastSequence ?? 0);
-    }
-  } catch {
-    notify("Couldn't reach this workspace's local server.");
-  }
-
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('view') === 'settings') model.view = 'settings';
-  render();
-  control('companion', { type: 'Check' });
-  openPage(params.get('page') || DEFAULT_PAGE);
-  if (params.get('include') === '1') control('browser', { type: 'Share' });
-  setInterval(() => {
-    if (document.visibilityState === 'visible' && (model.view === 'settings' || model.preferences.lowMemoryAlert)) refreshResources();
-  }, RESOURCE_POLL_MS);
-}
-
-start();

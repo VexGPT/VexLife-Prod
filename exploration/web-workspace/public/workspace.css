@@ -360,11 +360,12 @@ svg { display: block; }
 .receipt-line {
   grid-area: receipt; margin: 6px 2px 0; color: var(--ink-3); font-size: var(--step--1);
 }
-.receipt-link {
+.receipt-link,
+.prompt-receipt-link {
   padding: 0; background: none; border: 0; color: var(--ink-2);
   text-decoration: underline; text-decoration-color: var(--rule-strong); text-underline-offset: 2px;
 }
-.receipt-link:hover { color: var(--ink); text-decoration-color: currentColor; }
+.receipt-link:hover, .prompt-receipt-link:hover { color: var(--ink); text-decoration-color: currentColor; }
 
 .timeline-empty { margin: 18% 6px 0; color: var(--ink-2); max-width: 42ch; }
 .timeline-empty-heading { margin: 0 0 6px; color: var(--ink); font-family: var(--voice); font-size: 20px; line-height: 1.3; }

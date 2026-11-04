@@ -25,6 +25,7 @@ import { createVexLifeCompanionClient, DEFAULT_VEXLIFE_COMPANION_ORIGIN } from '
 import { observeHostResources } from './lib/host-resources.mjs';
 import { createUpstream } from './lib/upstream.mjs';
 import { TOKEN_SHAPE } from './public/frame-address.mjs';
+import { projectPromptContextMaterializationReceipt } from './public/prompt-context-receipt.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = path.resolve(HERE, '..', '..');
@@ -276,7 +277,8 @@ export function createWorkspaceServer({
         contextPolicy: 'CANONICAL_VEXLIFE_CONVERSATION',
         context: null,
         canonicalRequestMessageRef: final.requestMessageRef ?? null,
-        canonicalResponseMessageRef: final.responseMessageRef ?? null
+        canonicalResponseMessageRef: final.responseMessageRef ?? null,
+        materialization: projectPromptContextMaterializationReceipt(final.promptContextMaterialization ?? null)
       },
       model: {
         source: 'CURRENT_VEXLIFE_COMPANION',
