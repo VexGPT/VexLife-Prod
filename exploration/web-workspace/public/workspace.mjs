@@ -621,10 +621,20 @@ function receiptNode({ prompt, outcome, failure, usage }) {
       button.className = 'receipt-link';
       button.textContent = `Read ${prompt.context.title || shortUrl(prompt.context.sourceUrl)} (${characters(prompt.context.characters)})`;
       button.dataset.contextRef = prompt.context.contextRef;
-      button.title = 'See exactly what Vex received';
+      button.title = 'See the captured page receipt';
       facts.append(button);
     } else {
       facts.append('No page included');
+    }
+    if (prompt.materialization) {
+      facts.append(' · ');
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'prompt-receipt-link';
+      button.dataset.promptReceiptRef = prompt.materialization.receiptRef;
+      button.textContent = `What Vex received (~${numberFormat.format(prompt.materialization.materializedInputTokenEstimate)} input tokens)`;
+      button.title = 'Inspect the canonical prompt-materialization receipt for this turn';
+      facts.append(button);
     }
   }
   if (usage?.prompt_tokens) facts.append(`, ${tokens(usage.prompt_tokens)} in, ${numberFormat.format(usage.completion_tokens ?? 0)} out`);
@@ -705,43 +715,38 @@ function setMeter({ meter, segments, text, label, known }) {
 
 function renderSettings() {
   if (!ui) return;
-  const windowTokens = model.resources?.contextWindow?.tokens ?? null;
-  const last = [...model.transcript].reverse().find((record) => record.outcome === 'Completed' && record.response.usage?.prompt_tokens);
+  const last = [...model.transcript].reverse().find((record) =>
+    record.outcome === 'Completed' && record.prompt?.materialization);
   if (last) {
-    const promptTokens = last.response.usage.prompt_tokens;
-    const completionTokens = last.response.usage.completion_tokens ?? 0;
-    const core = Math.round(promptTokens * Math.min(1, last.prompt.systemCharacters / last.prompt.requestCharacters));
-    const used = promptTokens - core + completionTokens;
-    const total = core + used;
-    if (windowTokens) {
-      setMeter({
-        meter: vex.el('ContextWindow'),
-        segments: [[ui.contextCore, core / windowTokens], [ui.contextUsed, used / windowTokens]],
-        text: `${tokens(total)} / ${tokens(windowTokens)} used`,
-        label: `Context window: ${tokens(total)} of ${tokens(windowTokens)} used`,
-        known: true
-      });
-    } else {
-      setMeter({
-        meter: vex.el('ContextWindow'),
-        segments: [[ui.contextCore, core / total], [ui.contextUsed, used / total]],
-        text: `${tokens(total)} used, window size unknown`,
-        label: `Context window: ${tokens(total)} used; window size unknown`,
-        known: false
-      });
-    }
-    ui.contextNote.textContent = `Core is Vex's standing instructions, about ${tokens(core)} (estimated from their share of the last request). Used is the rest of the last request plus Vex's reply.${windowTokens ? ' The window size comes from the model\'s config.json.' : ''}`;
+    const receipt = last.prompt.materialization;
+    const input = receipt.materializedInputTokenEstimate;
+    const reserved = receipt.reservedOutputTokens;
+    const hard = receipt.hardTokenLimit;
+    const remaining = Math.max(0, hard - input - reserved);
+    setMeter({
+      meter: vex.el('ContextWindow'),
+      segments: [[ui.contextCore, hard ? input / hard : 0], [ui.contextUsed, hard ? reserved / hard : 0]],
+      text: `~${tokens(input)} input + ${tokens(reserved)} reserved / ${tokens(hard)} limit`,
+      label: `Prompt context: about ${tokens(input)} materialized input, ${tokens(reserved)} reserved output, ${tokens(remaining)} remaining at admission`,
+      known: true
+    });
+    const priorCount = receipt.selectedConversationEventRefs.length;
+    const memorySummary = receipt.memoryContextIncluded
+      ? `Memory contributed about ${tokens(receipt.memoryEstimatedSystemMessageTokens)}.`
+      : 'No Memory packet was included.';
+    ui.contextNote.textContent = `Canonical receipt for the last turn: ${memorySummary} ${priorCount} prior Conversation event${priorCount === 1 ? '' : 's'} selected. Whole-history enumeration: no. Hidden reasoning included: no.`;
   } else {
+    const windowTokens = model.resources?.contextWindow?.tokens ?? null;
     setMeter({
       meter: vex.el('ContextWindow'),
       segments: [[ui.contextCore, 0], [ui.contextUsed, 0]],
-      text: windowTokens ? `0 / ${tokens(windowTokens)} used` : 'Not exposed yet',
-      label: windowTokens ? `Context window: 0 of ${tokens(windowTokens)} used` : 'Context window: current prompt usage is not exposed by the canonical Companion yet',
+      text: windowTokens ? `${tokens(windowTokens)} model window known · no turn receipt yet` : 'No turn receipt yet',
+      label: windowTokens ? `Model window ${tokens(windowTokens)}; no canonical prompt receipt retained in this presentation session` : 'No canonical prompt receipt retained in this presentation session',
       known: Boolean(windowTokens)
     });
-    ui.contextNote.textContent = windowTokens
-      ? "The model window size is known, but this presentation does not yet receive the canonical prompt/context usage receipt."
-      : 'The canonical Companion does not yet expose the exact prompt/context receipt needed to show what Vex received.';
+    ui.contextNote.textContent = model.transcript.length
+      ? 'Older/reloaded canonical Conversation turns do not carry their prompt receipts in the Conversation projection. Send a new turn here to inspect exactly what the canonical Companion admits for that turn.'
+      : 'Send a turn to inspect the canonical prompt-materialization receipt that VexLife returns for that exact turn.';
   }
 
   const memory = model.resources?.memory;
@@ -752,13 +757,13 @@ function renderSettings() {
       meter: vex.el('MemoryResource'),
       segments: [[ui.memoryUsed, usedBytes / memory.totalBytes]],
       text: `${gigabytes(usedBytes)} used of ${gigabytes(memory.totalBytes)}`,
-      label: `Memory: ${gigabytes(usedBytes)} used of ${gigabytes(memory.totalBytes)}, ${Math.round(share * 100)}% left`,
+      label: `Mac memory: ${gigabytes(usedBytes)} used of ${gigabytes(memory.totalBytes)}, ${Math.round(share * 100)}% left`,
       known: true
     });
     const runtime = model.resources.runtime?.residentBytes ? ` The model runtime holds ${gigabytes(model.resources.runtime.residentBytes)}.` : '';
     ui.memoryNote.textContent = `${Math.round(share * 100)}% left on this Mac.${runtime}`;
   } else {
-    setMeter({ meter: vex.el('MemoryResource'), segments: [[ui.memoryUsed, 0]], text: 'Not measured', label: 'Memory not measured', known: false });
+    setMeter({ meter: vex.el('MemoryResource'), segments: [[ui.memoryUsed, 0]], text: 'Not measured', label: 'Mac memory not measured', known: false });
     ui.memoryNote.textContent = '';
   }
 
@@ -802,6 +807,19 @@ function notify(text) {
   snackbarTimer = setTimeout(() => { bar.hidden = true; }, 5200);
 }
 
+function showInspector({ title, facts, text }) {
+  ui.inspectorTitle.textContent = title;
+  ui.inspectorFacts.replaceChildren(...facts.flatMap(([term, value]) => {
+    const dt = document.createElement('dt');
+    dt.textContent = term;
+    const dd = document.createElement('dd');
+    dd.textContent = value;
+    return [dt, dd];
+  }));
+  ui.inspectorText.textContent = text;
+  vex.el('ContextInspector').showModal();
+}
+
 async function inspectContext(contextRef) {
   let record;
   try {
@@ -810,23 +828,38 @@ async function inspectContext(contextRef) {
     notify("That page text isn't available any more.");
     return;
   }
-  const facts = [
-    ['Page', record.sourceUrl],
-    ['Title', record.title || 'None'],
-    ['Read from', record.capture === 'Rendered' ? 'The page as it showed in your browser' : 'The page source (the page could not supply what it showed)'],
-    ['Length', record.truncated ? `${characters(record.characters)} (first part of the page)` : characters(record.characters)],
-    ['sha256', record.sha256],
-    ['Read at', new Date(record.acquiredAt).toLocaleString()]
-  ];
-  ui.inspectorFacts.replaceChildren(...facts.flatMap(([term, value]) => {
-    const dt = document.createElement('dt');
-    dt.textContent = term;
-    const dd = document.createElement('dd');
-    dd.textContent = value;
-    return [dt, dd];
-  }));
-  ui.inspectorText.textContent = record.text;
-  vex.el('ContextInspector').showModal();
+  showInspector({
+    title: 'Captured page receipt',
+    facts: [
+      ['Page', record.sourceUrl],
+      ['Title', record.title || 'None'],
+      ['Read from', record.capture === 'Rendered' ? 'The page as it showed in your browser' : 'The page source (the page could not supply what it showed)'],
+      ['Length', record.truncated ? `${characters(record.characters)} (first part of the page)` : characters(record.characters)],
+      ['sha256', record.sha256],
+      ['Read at', new Date(record.acquiredAt).toLocaleString()]
+    ],
+    text: record.text
+  });
+}
+
+function inspectPromptReceipt(receiptRef) {
+  const record = [...model.transcript].reverse().find((turn) => turn.prompt?.materialization?.receiptRef === receiptRef);
+  if (!record) {
+    notify('That prompt receipt is no longer retained in this presentation session.');
+    return;
+  }
+  let description;
+  try {
+    description = describePromptContextMaterializationReceipt(record.prompt.materialization);
+  } catch {
+    notify("That prompt receipt isn't valid for inspection.");
+    return;
+  }
+  showInspector({
+    title: 'What Vex received for this turn',
+    facts: description.facts,
+    text: description.text
+  });
 }
 
 function askCleanChat() {
@@ -1024,9 +1057,14 @@ function wireInput() {
     if (ui.ticketView.dataset.contextRef) inspectContext(ui.ticketView.dataset.contextRef);
   });
   vex.el('ConversationTimeline').addEventListener('click', (event) => {
-    const link = event.target.closest('.receipt-link');
-    if (link) {
-      inspectContext(link.dataset.contextRef);
+    const pageLink = event.target.closest('.receipt-link');
+    if (pageLink) {
+      inspectContext(pageLink.dataset.contextRef);
+      return;
+    }
+    const promptLink = event.target.closest('.prompt-receipt-link');
+    if (promptLink) {
+      inspectPromptReceipt(promptLink.dataset.promptReceiptRef);
       return;
     }
     const toggle = event.target.closest('.thought-toggle');
@@ -1105,6 +1143,7 @@ async function start() {
     settingDataDir: byId('setting-data-dir'),
     settingRenderer: byId('setting-renderer'),
     snackbar: byId('snackbar'),
+    inspectorTitle: byId('inspector-title'),
     inspectorFacts: byId('inspector-facts'),
     inspectorText: byId('inspector-text'),
     inspectorClose: byId('inspector-close'),

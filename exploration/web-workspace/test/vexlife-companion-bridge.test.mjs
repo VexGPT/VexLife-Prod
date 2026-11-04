@@ -131,7 +131,67 @@ function fakeVexLife() {
         responseMessageRef: 'message.companion.2',
         conversationHeadSha256: 'e'.repeat(64),
         actualHttpCall: true,
-        loopbackOnly: true
+        loopbackOnly: true,
+        promptContextMaterialization: {
+          schemaVersion: 'vexlife.prompt-context-materialization-receipt/v2',
+          receiptRef: 'receipt.vexlife.prompt-context-materialization.' + '1'.repeat(32),
+          semanticFingerprint: '1'.repeat(64),
+          authorityRef: 'authority.vexlife.browser-prompt-context-runtime',
+          authorityObservedAt: '2026-11-03T04:00:03.000Z',
+          providerBoundaryCurrentnessVerified: true,
+          providerBoundarySourceBindingsVerified: true,
+          contextLeaseRef: 'lease.vexlife.browser-prompt-context.test',
+          contextLeaseFingerprint: '2'.repeat(64),
+          contextLeaseFormedAt: '2026-11-03T04:00:02.000Z',
+          contextLeaseExpiresAt: '2026-11-03T04:01:02.000Z',
+          contextLeaseCurrentness: 'CURRENT',
+          contextLeaseLifecycle: 'ACTIVE',
+          continuityProjectionRef: 'projection.vexlife.continuity-stream-adapter.test',
+          continuityProjectionFingerprint: '3'.repeat(64),
+          lineageRef: 'companion-lineage.test',
+          threadRef: identity.threadRef,
+          priorConversationHeadSha256: 'b'.repeat(64),
+          turnRef: 'turn.vexlife.test',
+          currentRequestEventRef: 'event.vexlife.request.test',
+          currentRequestContentHash: '4'.repeat(64),
+          selectedConversationEventRefs: ['event.vexlife.prior.request', 'event.vexlife.prior.response'],
+          memoryContextRefOrNull: 'memory-context.vexlife.prompt.test',
+          memoryContextFingerprintOrNull: '5'.repeat(64),
+          memoryContextIncluded: true,
+          memorySourceRefs: ['page.living-journal.memory.test', 'statement.memory.test'],
+          memoryTokenCap: 100000,
+          memoryEstimatedSystemMessageTokens: 12000,
+          memoryTokenBoundedOutPageCount: 1,
+          memoryBoundedOutStatementCount: 2,
+          memoryHeldOrDeferredStatementCount: 3,
+          includedSourceRefs: ['event.vexlife.prior.request', 'event.vexlife.prior.response', 'event.vexlife.request.test', 'page.living-journal.memory.test'],
+          orderedMaterializationEntries: [
+            { ordinal: 0, role: 'system', sourceEventRef: null, sourceEventHash: null, sourceContentHash: '6'.repeat(64), sequence: null, completedHeadSha256: null, memoryContextRef: 'memory-context.vexlife.prompt.test', memoryContextFingerprint: '5'.repeat(64), estimatedTokens: 12000 },
+            { ordinal: 1, role: 'user', sourceEventRef: 'event.vexlife.prior.request', sourceEventHash: '7'.repeat(64), sourceContentHash: '8'.repeat(64), sequence: 1, completedHeadSha256: '9'.repeat(64), memoryContextRef: null, memoryContextFingerprint: null, estimatedTokens: 20 },
+            { ordinal: 2, role: 'assistant', sourceEventRef: 'event.vexlife.prior.response', sourceEventHash: 'a'.repeat(64), sourceContentHash: 'b'.repeat(64), sequence: 2, completedHeadSha256: '9'.repeat(64), memoryContextRef: null, memoryContextFingerprint: null, estimatedTokens: 24 },
+            { ordinal: 3, role: 'user', sourceEventRef: 'event.vexlife.request.test', sourceEventHash: 'c'.repeat(64), sourceContentHash: '4'.repeat(64), sequence: 3, completedHeadSha256: null, memoryContextRef: null, memoryContextFingerprint: null, estimatedTokens: 18 }
+          ],
+          exactMessagesSha256: 'd'.repeat(64),
+          messageCount: 4,
+          materializedInputTokenEstimate: 12062,
+          contextLeaseInputTokenEstimate: 192000,
+          reservedOutputTokens: 16000,
+          hardTokenLimit: 208000,
+          exactEventFileReadCount: 3,
+          headMetadataReadCount: 2,
+          wholeHistoryEventEnumerationPerformed: false,
+          currentRequestIncludedExactlyOnce: true,
+          priorHumanMessagesUnmodified: true,
+          priorAssistantMessagesUnmodified: true,
+          tokenBudgetSatisfied: true,
+          sourceCurrentnessVerified: true,
+          crossLineageLeakage: false,
+          crossThreadLeakage: false,
+          memoryEffectPerformed: false,
+          trainingSelectionPerformed: false,
+          modelWeightEffectPerformed: false,
+          hiddenReasoningIncluded: false
+        }
       });
       return res.end();
     }
@@ -185,6 +245,11 @@ test('threshold shell can project and stream the current canonical VexLife Compa
     assert.equal(record.response.text, 'hello back');
     assert.equal(record.canonical.actualHttpCall, true);
     assert.equal(record.canonical.loopbackOnly, true);
+    assert.equal(record.prompt.materialization.schemaVersion, 'vexlife.prompt-context-materialization-receipt/v2');
+    assert.equal(record.prompt.materialization.materializedInputTokenEstimate, 12062);
+    assert.equal(record.prompt.materialization.memoryContextIncluded, true);
+    assert.equal(record.prompt.materialization.hiddenReasoningIncluded, false);
+    assert.equal(record.prompt.materialization.orderedMaterializationEntries.length, 4);
     assert.equal(upstream.observed.turns.length, 1);
   } finally {
     await workspace.close();
