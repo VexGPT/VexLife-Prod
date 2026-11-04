@@ -51,6 +51,40 @@ find similar code
 
 A renderer may consume semantic truth; it does not become that truth owner.
 
+## Mac startup integrity
+
+Mac launch work has already produced lived regressions by treating an easier proof route as the product route and by composing a higher-level human front door when only its lower lifecycle readiness was needed.
+
+Permanent distinctions:
+
+~~~text
+PROOF_ROUTE != ORDINARY_PRODUCT_ROUTE
+TERMINAL_FALLBACK != WINDOWED_HUMAN_DEFAULT
+
+ENSURE_VEX_LIFECYCLE_READY != OPEN_REFERENCE_PRESENTATION
+REFERENCE_PRESENTATION_OPEN != BACKEND_READINESS
+
+BOOT_PASS != SUSTAINED_LIFETIME_PASS
+PRESENTATION_READY_ONCE != PRESENTATION_REMAINS_REACHABLE
+PRESENTATION_REACHABLE != CANONICAL_COMPANION_REACHABLE
+
+NEW_PRESENTATION_PROCESS != FREE_DEPENDENCY
+REUSED_PROCESS_PRIMITIVE != REUSED_LIFECYCLE_MEANING
+~~~
+
+Before changing or adding a Mac front door:
+
+1. trace the current VexLife startup sequence to its existing lifecycle/process/currentness owners;
+2. reuse the lowest rightful owner that provides the needed effect—do not call a higher-level human action merely because it eventually reaches the same state;
+3. preserve the ordinary windowed human route unless the human explicitly selects a terminal/recovery route;
+4. keep lifecycle readiness and presentation selection as distinct effects;
+5. do not open two live VexLife presentations as a side effect of composition;
+6. if a new long-lived process is added, prove its ownership, source currentness, failure evidence and sustained lifetime rather than only initial bind/readiness;
+7. a front-door claim requires lived host proof after the launcher has completed: the presentation remains reachable, a fresh readiness check still succeeds, and a subsequent canonical Vex turn completes;
+8. a failed lived run invalidates the dependent completion claim immediately; do not repair by accreting around the failed abstraction before rechecking whether the existing owner was used at the correct level.
+
+Observed lived evidence outranks a launcher-shaped source review. A test that bypasses the direct human/process path does not prove that path.
+
 ## Current route
 
 This front door routes the repository; VexWork carries lifecycle/current work position.
