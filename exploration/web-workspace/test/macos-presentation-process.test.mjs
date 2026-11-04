@@ -128,7 +128,7 @@ test('Mac front door delegates backend setup/repair to current VexLife before st
   assert.equal(syntax.status, 0, syntax.stderr);
 
   const backend = source.indexOf('setup-vexlife.command');
-  const backendRun = source.indexOf('VEXLIFE_SETUP_MODE="$BACKEND_SETUP_MODE" /bin/bash "$BACKEND_BOOTSTRAP"');
+  const backendRun = source.indexOf('/bin/bash "$BACKEND_BOOTSTRAP"');
   const prodResolve = source.indexOf('Getting current VexLife Prod presentation source');
   const presentationStart = source.indexOf('tools/macos-presentation.mjs');
 
@@ -138,6 +138,9 @@ test('Mac front door delegates backend setup/repair to current VexLife before st
   assert.ok(presentationStart > prodResolve);
   assert.match(source, /raw\.githubusercontent\.com\/\$VEXLIFE_REPOSITORY\/\$VEX_SOURCE_SHA\/src\/core\/macos-user-launchd-process\.mjs/u);
   assert.match(source, /VEXLIFE_SETUP_COMPLETION="return-ready"/u);
+  assert.match(source, /BACKEND_SETUP_MODE="window"/u);
+  assert.match(source, /COMPANION_ORIGIN="http:\/\/127\.0\.0\.1:18110"/u);
+  assert.doesNotMatch(source, /VEXLIFE_PROD_SOURCE_ROOT|VEXLIFE_PROD_RUNTIME_ROOT|VEXLIFE_COMPANION_ORIGIN|VEXLIFE_PROD_VEXLIFE_SETUP_MODE/u);
   assert.match(source, /VEXLIFE_SOURCE_REF="\$VEXLIFE_SOURCE_REF"/u);
   assert.match(source, /commits\/\$VEXLIFE_SOURCE_REF/u);
   assert.match(source, /canonical VexLife lifecycle did not finish with Companion READY/u);
