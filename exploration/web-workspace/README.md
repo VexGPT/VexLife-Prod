@@ -77,15 +77,14 @@ threshold additionally established the presentation with canonical Vex READY and
 turn visible through the canonical Conversation. Current lived evidence still does **not** establish
 page-context composition or the not-yet-accepted CLEAN_START backend effect.
 
-## Run this threshold
+## Launch boundary
 
-From the repository root:
+The source in this directory is retained because its lived Companion/Conversation threshold is valid.
+Its former root `open-vexlife.command` wrapper is **not** retained as a current launch authority.
 
-~~~text
-bash ./open-vexlife.command
-~~~
-
-Or use the source-local one-command front door documented in the root `README.md`.
+The Mac product lifecycle remains owned by current VexLife source. A future Prod launcher must first
+reuse that accepted lifecycle/currentness/process-ownership substrate and then add the smallest
+presentation-specific relation needed to host this workspace.
 
 ## Next bounded edges
 
