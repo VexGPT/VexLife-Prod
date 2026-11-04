@@ -16,8 +16,14 @@ test('ordinary product recovery copy does not promote the Terminal fallback', ()
 
 test('Prod consumes VexLife lifecycle readiness without opening the reference presentation', () => {
   assert.match(launcher, /VEXLIFE_SETUP_COMPLETION="return-ready"/u);
-  assert.match(launcher, /VEXLIFE_PROD_VEXLIFE_SOURCE_REF:-main/u);
+  assert.match(launcher, /VEXLIFE_PROD_PROOF_VEXLIFE_SOURCE_REF:-main/u);
+  assert.match(launcher, /VEXLIFE_PROD_PROOF_SOURCE_REF:-main/u);
   assert.match(launcher, /raw\.githubusercontent\.com\/\$VEXLIFE_REPOSITORY\/\$VEXLIFE_SOURCE_REF\/setup-vexlife\.command/u);
   assert.match(launcher, /commits\/\$VEXLIFE_SOURCE_REF/u);
   assert.doesNotMatch(launcher, /raw\.githubusercontent\.com\/\$VEXLIFE_REPOSITORY\/main\/setup-vexlife\.command/u);
+  assert.match(launcher, /PROD_SOURCE_ROOT="\$HOME\/Library\/Application Support\/VexLife-Prod\/source"/u);
+  assert.match(launcher, /PROD_RUNTIME_ROOT="\$HOME\/Library\/Application Support\/VexLife-Prod"/u);
+  assert.match(launcher, /COMPANION_ORIGIN="http:\/\/127\.0\.0\.1:18110"/u);
+  assert.match(launcher, /BACKEND_SETUP_MODE="window"/u);
+  assert.doesNotMatch(launcher, /VEXLIFE_PROD_SOURCE_ROOT|VEXLIFE_PROD_RUNTIME_ROOT|VEXLIFE_COMPANION_ORIGIN|VEXLIFE_PROD_VEXLIFE_SETUP_MODE/u);
 });
