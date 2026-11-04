@@ -149,10 +149,12 @@ if ! node "$TARGET/exploration/web-workspace/tools/macos-presentation.mjs" \
   --runtime-root "$PROD_RUNTIME_ROOT" \
   --companion-origin "$COMPANION_ORIGIN" \
   --substrate-module "$SUBSTRATE_MODULE" >"$RESULT"; then
-  if [ -f "$PROD_RUNTIME_ROOT/runtime/presentation.err.log" ]; then
-    say "VexLife Prod presentation log:"
-    /bin/cat "$PROD_RUNTIME_ROOT/runtime/presentation.err.log" >&2 || true
-  fi
+  for log in presentation.out.log presentation.err.log; do
+    if [ -f "$PROD_RUNTIME_ROOT/runtime/$log" ]; then
+      say "VexLife Prod $log:"
+      /bin/cat "$PROD_RUNTIME_ROOT/runtime/$log" >&2 || true
+    fi
+  done
   fail "the VexLife-Prod presentation lifecycle did not reach current exact-source readiness."
 fi
 
