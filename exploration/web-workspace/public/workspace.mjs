@@ -349,7 +349,7 @@ const UNAVAILABLE_HOLD = {
   RuntimeNotListening: "Vex isn't running. Start VexLife, then check again.",
   RuntimeUnhealthy: "Vex's model is loading or unhealthy. Check again in a moment.",
   ModelIdentityMissing: "The model runtime answered but didn't name its model.",
-  BridgeUnreachable: 'This workspace lost its local server. Restart it from Terminal.'
+  BridgeUnreachable: 'This workspace lost its local service. Reopen VexLife to reconnect.'
 };
 
 const HOLD_TEXT = {
