@@ -137,6 +137,10 @@ test('Mac front door delegates backend setup/repair to current VexLife before st
   assert.ok(prodResolve > backendRun);
   assert.ok(presentationStart > prodResolve);
   assert.match(source, /raw\.githubusercontent\.com\/\$VEXLIFE_REPOSITORY\/\$VEX_SOURCE_SHA\/src\/core\/macos-user-launchd-process\.mjs/u);
+  assert.match(source, /VEXLIFE_SETUP_COMPLETION="return-ready"/u);
+  assert.match(source, /VEXLIFE_SOURCE_REF="\$VEXLIFE_SOURCE_REF"/u);
+  assert.match(source, /commits\/\$VEXLIFE_SOURCE_REF/u);
   assert.match(source, /canonical VexLife lifecycle did not finish with Companion READY/u);
   assert.doesNotMatch(source, /--operation (?:repair|rebuild-preserve|uninstall-preserve)/u);
+  assert.doesNotMatch(source, /setup-vexlife\.command"[^\n]*main/u);
 });
