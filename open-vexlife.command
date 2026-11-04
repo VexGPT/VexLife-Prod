@@ -11,12 +11,13 @@ set -euo pipefail
 
 PROD_REPOSITORY="VexGPT/VexLife-Prod"
 VEXLIFE_REPOSITORY="vgong24/VexLife"
-VEXLIFE_SOURCE_REF="${VEXLIFE_PROD_VEXLIFE_SOURCE_REF:-main}"
-PROD_SOURCE_REF="${VEXLIFE_PROD_SOURCE_REF:-main}"
-PROD_SOURCE_ROOT="${VEXLIFE_PROD_SOURCE_ROOT:-$HOME/Library/Application Support/VexLife-Prod/source}"
-PROD_RUNTIME_ROOT="${VEXLIFE_PROD_RUNTIME_ROOT:-$HOME/Library/Application Support/VexLife-Prod}"
-COMPANION_ORIGIN="${VEXLIFE_COMPANION_ORIGIN:-http://127.0.0.1:18110}"
-BACKEND_SETUP_MODE="${VEXLIFE_PROD_VEXLIFE_SETUP_MODE:-window}"
+# Ordinary product topology is constant. Only proof/test runs may pin source refs.
+VEXLIFE_SOURCE_REF="${VEXLIFE_PROD_PROOF_VEXLIFE_SOURCE_REF:-main}"
+PROD_SOURCE_REF="${VEXLIFE_PROD_PROOF_SOURCE_REF:-main}"
+PROD_SOURCE_ROOT="$HOME/Library/Application Support/VexLife-Prod/source"
+PROD_RUNTIME_ROOT="$HOME/Library/Application Support/VexLife-Prod"
+COMPANION_ORIGIN="http://127.0.0.1:18110"
+BACKEND_SETUP_MODE="window"
 
 say() { printf '\n%s\n' "$1"; }
 fail() { printf '\nVexLife Prod stopped: %s\n' "$1" >&2; exit 1; }
@@ -25,10 +26,7 @@ fail() { printf '\nVexLife Prod stopped: %s\n' "$1" >&2; exit 1; }
 case "$PROD_SOURCE_REF" in
   ''|*[!A-Za-z0-9._-]*) fail "the requested VexLife-Prod source ref is not a supported GitHub ref." ;;
 esac
-case "$BACKEND_SETUP_MODE" in
-  window|terminal) ;;
-  *) fail "VEXLIFE_PROD_VEXLIFE_SETUP_MODE must be 'window' or 'terminal'." ;;
-esac
+[ "$BACKEND_SETUP_MODE" = "window" ] || fail "ordinary VexLife-Prod startup must use the windowed VexLife human route."
 for tool in /usr/bin/curl /usr/bin/tar /usr/bin/plutil /usr/bin/mktemp /usr/bin/open; do
   [ -x "$tool" ] || fail "a required macOS system tool is unavailable: $tool"
 done
