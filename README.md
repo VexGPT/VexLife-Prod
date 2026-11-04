@@ -28,38 +28,39 @@ For substantial work:
 3. read [docs/foundation/INDEX.md](docs/foundation/INDEX.md);
 4. descend only to the exact current foundation/source/tests.
 
-## Open the current lived VexLife — macOS
+## Mac launch status
 
-The human/product front door is now this repository. Run:
+The lived VexLife-Prod presentation remains a retained exploration threshold, but there is currently
+**no accepted VexLife-Prod Mac front-door command on main**.
 
-```bash
-rm -f /tmp/open-vexlife.command
-curl -fsSL https://raw.githubusercontent.com/VexGPT/VexLife-Prod/main/open-vexlife.command -o /tmp/open-vexlife.command && bash /tmp/open-vexlife.command
-```
+Two source-local launch candidates (#15 and #16) were merged before their Mac direct-execution path
+was proved end to end. Victor's lived runs falsified the front-door completion claim: both reached the
+canonical VexLife Companion and then failed before the VexLife-Prod presentation became available.
 
-The launcher resolves current `VexLife-Prod/main` to one exact source commit and opens the lived
-workspace on a fresh numeric-loopback port selected by macOS. That avoids stale/unknown local
-processes on an old presentation port without killing them. Set `VEXLIFE_PROD_PORT` only when a
-fixed presentation port is specifically needed.
+Those launchers are therefore withdrawn rather than preserved as architectural precedent.
 
-Current ownership remains intentionally split:
+Current accepted ownership remains:
 
 ~~~text
-VexLife-Prod
-  human/product presentation front door
-
 vgong24/VexLife
-  canonical Conversation + prompt/Memory composition + Companion/model runtime
-  currently projected to VexLife-Prod over numeric loopback
+  exact-source Mac bootstrap
+  -> Home lifecycle classification
+  -> open / reconnect / repair / rebuild-preserve
+  -> runtime qualification
+  -> exact browser-process ownership
+  -> launchd lifetime
+  -> source-current browser
+  -> canonical Companion READY
+
+VexLife-Prod
+  retained lived presentation / product exploration
+  -> consumes canonical VexLife Conversation + Companion truth
+  -> does not yet own an accepted Mac presentation lifecycle
 ~~~
 
-If the canonical Companion is already READY, the launcher simply uses it. If it is not READY, the
-launcher invokes VexLife's current source-local Mac setup first rather than substituting a raw model
-or a second Conversation owner. The presentation writes a source-bound startup receipt before the
-browser opens; if startup fails, the launcher prints the exact server failure instead of reducing it
-to a generic readiness timeout. Exploration-only browser-context data persists under
-`~/Library/Application Support/VexLife-Prod/` across source refreshes.
-
+The next launch implementation must consume the existing VexLife lifecycle/process-currentness
+contracts first and add only the missing VexLife-Prod presentation relationship. Do not reconstruct
+setup, process ownership, repair semantics, or source rotation from this repository by example.
 
 ## Current position
 
