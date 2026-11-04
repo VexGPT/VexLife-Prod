@@ -30,8 +30,8 @@ EXPLORATION THRESHOLD != VEXWEB F2 GENERATED PRODUCT
 
 - The nested browser can render/navigate bounded public pages and form source-addressed browser-context receipts.
 - Those browser-context receipts are **not yet admitted into the canonical prompt/context owner**. If the human includes the page, Send is held visibly rather than silently concatenating page text into the prompt.
-- Clean-chat/reset is **not yet connected**. The button remains as intended UI, but the presentation refuses to pretend it owns canonical Conversation reset/archive semantics.
-- Exact canonical prompt/context usage is **not yet exposed to this presentation**. Settings therefore says `Not exposed yet` rather than inferring context usage from local rendering or model internals.
+- The current presentation projects VexLife's canonical `vexlife.prompt-context-materialization-receipt/v2` into the response timeline and Context Inspector. It shows source classes, token estimates, selected prior Conversation-event refs, Memory inclusion/source refs and the provider message-set hash without exposing hidden reasoning or raw prompt text.
+- Clean-chat/reset is **not yet accepted end-to-end**. The UI control is present, and VexLife PR #975 has formed/proven a canonical `CLEAN_START` Send mode candidate, but current accepted VexLife `main` still owns the backend boundary until that candidate completes lifecycle. The presentation must not emulate reset/archive locally.
 - VexLife Home, Continuity Mode and Dream Sync remain unbound here.
 
 ## Source shape
@@ -62,21 +62,35 @@ No raw Heretic transport or local alternate Conversation implementation is retai
 
 ## Proof boundary
 
-Applicable retained machine proof:
+Current applicable machine proof includes the canonical prompt-receipt projection:
 
 ~~~text
 node --test \
   exploration/web-workspace/test/families.conformance.test.mjs \
   exploration/web-workspace/test/frame-host.test.mjs \
-  exploration/web-workspace/test/vexlife-companion-bridge.test.mjs
+  exploration/web-workspace/test/vexlife-companion-bridge.test.mjs \
+  exploration/web-workspace/test/prompt-context-receipt.test.mjs
 ~~~
 
-The lived Mac threshold additionally established the new presentation with canonical Vex READY and a real human↔Vex turn visible through the canonical Conversation. That lived threshold does **not** establish page-context composition, clean-chat/reset, exact prompt-context inspection, or production lifecycle ownership for this presentation.
+The exact #14 candidate recorded 17 / 17 PASS for that bounded source set before merge. The lived Mac
+threshold additionally established the presentation with canonical Vex READY and a real human↔Vex
+turn visible through the canonical Conversation. Current lived evidence still does **not** establish
+page-context composition or the not-yet-accepted CLEAN_START backend effect.
+
+## Run this threshold
+
+From the repository root:
+
+~~~text
+bash ./open-vexlife.command
+~~~
+
+Or use the source-local one-command front door documented in the root `README.md`.
 
 ## Next bounded edges
 
-1. Source-map and admit canonical clean-chat/reset semantics through the rightful Conversation/Memory owners.
-2. Expose a truthful, inspectable **context receipt** showing the exact context Vex is given for a turn (source classes, bounded content/provenance/currentness), without exposing hidden chain-of-thought or inventing model internals.
+1. Complete lifecycle/currentness for VexLife PR #975's canonical `CLEAN_START` Send mode, then wire this presentation to arm that mode for the next Send and prove the zero-prior-event receipt.
+2. Source-map/admit browser-page context into the canonical prompt owner without making the renderer or browser receipt a second context authority.
 3. Continue the accepted VexWeb F1/F2 trajectory so a later generated renderer can absorb the earned lived behavior rather than treating this hand-built exploration as permanent authoring authority.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][LIVED-CANONICAL-COMPANION-THRESHOLD] -->

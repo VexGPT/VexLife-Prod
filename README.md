@@ -28,6 +28,34 @@ For substantial work:
 3. read [docs/foundation/INDEX.md](docs/foundation/INDEX.md);
 4. descend only to the exact current foundation/source/tests.
 
+## Open the current lived VexLife — macOS
+
+The human/product front door is now this repository. Run:
+
+```bash
+rm -f /tmp/open-vexlife.command
+curl -fsSL https://raw.githubusercontent.com/VexGPT/VexLife-Prod/main/open-vexlife.command -o /tmp/open-vexlife.command && bash /tmp/open-vexlife.command
+```
+
+The launcher resolves current `VexLife-Prod/main` to one exact source commit and opens the lived
+workspace at `http://127.0.0.1:18210`.
+
+Current ownership remains intentionally split:
+
+~~~text
+VexLife-Prod
+  human/product presentation front door
+
+vgong24/VexLife
+  canonical Conversation + prompt/Memory composition + Companion/model runtime
+  currently projected to VexLife-Prod over numeric loopback
+~~~
+
+If the canonical Companion is already READY, the launcher simply uses it. If it is not READY, the
+launcher invokes VexLife's current source-local Mac setup first rather than substituting a raw model
+or a second Conversation owner.
+
+
 ## Current position
 
 ~~~text
@@ -58,7 +86,9 @@ lived exploration threshold retained
   exploration/web-workspace
   bounded public nested-browser rendering
   canonical Conversation projection + human Send through current VexLife Companion
-  page-context prompt composition, reset and exact context receipt remain held
+  canonical prompt-materialization receipt projected into Context Inspector
+  clean-start UI present; canonical CLEAN_START backend semantics remain pending acceptance in VexLife
+  page-context prompt composition remains held
   != accepted VexWeb generated product
 
 next construction edge
@@ -66,9 +96,10 @@ next construction edge
 
 held
   deterministic HTML/CSS/JS generator
-  P1 browser workspace
-  P2 context / Conversation reintegration
-  P3 lived proof
+  accepted/generated P1 browser workspace
+  page-context admission into the canonical prompt owner
+  canonical CLEAN_START acceptance + presentation wiring
+  full P3 lived browser-context-aware proof
 ~~~
 
 ## Permanent distinctions
