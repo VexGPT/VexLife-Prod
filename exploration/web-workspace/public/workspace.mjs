@@ -998,3 +998,192 @@ function sizeDraft() {
 
 function wireInput() {
   ui.addressForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (openPage(vex.el('BrowserQuery').value)) vex.el('BrowserQuery').blur();
+  });
+  vex.el('BrowserQuery').addEventListener('input', () => { ui.addressError.hidden = true; });
+  ui.reload.addEventListener('click', () => {
+    if (model.browser.type === 'Addressed') openPage(model.browser.page);
+  });
+  vex.el('AppSelector').addEventListener('change', (event) => { event.target.value = 'browser'; });
+  ui.pageFrame.addEventListener('load', onFrameLoad);
+  window.addEventListener('message', onFrameMessage);
+
+  vex.el('QuickActions').addEventListener('click', (event) => {
+    const button = event.target.closest('.quick-action');
+    if (!button) return;
+    const action = QUICK_ACTIONS.find((candidate) => candidate.key === button.dataset.action);
+    if (action.key === 'theme') {
+      model.preferences.theme = currentTheme() === 'dark' ? 'light' : 'dark';
+      savePreferences();
+      applyTheme();
+      return;
+    }
+    notify(`${action.label} isn't connected in this workspace yet.`);
+  });
+
+  vex.el('CompanionCheck').addEventListener('click', () => control('companion', { type: 'Check' }));
+  vex.el('CompanionViewSwitch').addEventListener('click', () => {
+    model.view = model.view === 'settings' ? 'conversation' : 'settings';
+    render();
+    if (model.view === 'settings') refreshResources();
+  });
+
+  vex.el('ContextShare').addEventListener('click', () => {
+    const context = model.browser.type === 'Addressed' ? model.browser.context.type : null;
+    if (context === 'Shared' || context === 'Acquiring' || context === 'AwaitingPage') control('browser', { type: 'StopSharing' });
+    else control('browser', { type: 'Share' });
+  });
+
+  ui.composeForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    send();
+  });
+  ui.draft.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+      event.preventDefault();
+      send();
+    } else if (event.key === 'Escape' && model.session?.turnCancellation === true && Composer.converge(model.companion, model.turn, model.browser).stopAvailable) {
+      control('turn', { type: 'Stop' });
+    }
+  });
+  ui.draft.addEventListener('input', () => {
+    sizeDraft();
+    renderComposer();
+  });
+  vex.el('Stop').addEventListener('click', () => { if (model.session?.turnCancellation === true) control('turn', { type: 'Stop' }); });
+
+  ui.ticketView.addEventListener('click', () => {
+    if (ui.ticketView.dataset.contextRef) inspectContext(ui.ticketView.dataset.contextRef);
+  });
+  vex.el('ConversationTimeline').addEventListener('click', (event) => {
+    const pageLink = event.target.closest('.receipt-link');
+    if (pageLink) {
+      inspectContext(pageLink.dataset.contextRef);
+      return;
+    }
+    const promptLink = event.target.closest('.prompt-receipt-link');
+    if (promptLink) {
+      inspectPromptReceipt(promptLink.dataset.promptReceiptRef);
+      return;
+    }
+    const toggle = event.target.closest('.thought-toggle');
+    if (toggle) {
+      const key = toggle.dataset.thoughtKey;
+      if (model.expandedThoughts.has(key)) model.expandedThoughts.delete(key);
+      else model.expandedThoughts.add(key);
+      renderTimeline();
+    }
+  });
+  ui.inspectorClose.addEventListener('click', () => vex.el('ContextInspector').close());
+
+  vex.el('ThoughtVisibility').addEventListener('click', () => {
+    model.preferences.thoughtsVisible = !model.preferences.thoughtsVisible;
+    savePreferences();
+    render();
+  });
+  vex.el('LowMemoryAlert').addEventListener('click', () => {
+    model.preferences.lowMemoryAlert = !model.preferences.lowMemoryAlert;
+    model.lowMemoryNotified = false;
+    savePreferences();
+    renderSettings();
+    checkLowMemory();
+  });
+  vex.el('CleanChat').addEventListener('click', askCleanChat);
+  ui.confirmCancel.addEventListener('click', () => ui.confirmDialog.close());
+  ui.confirmAccept.addEventListener('click', startCleanChat);
+}
+
+// ------------------------------------------------------------------ Start
+
+async function start() {
+  loadPreferences();
+  applyTheme();
+
+  const root = document.getElementById('workspace');
+  try {
+    vex = await bindWorkspace(root);
+  } catch (error) {
+    const failure = document.getElementById('binding-failure');
+    failure.textContent = `This workspace can't bind to its Blueprint: ${error.message}`;
+    failure.hidden = false;
+    return;
+  }
+
+  const byId = (id) => document.getElementById(id);
+  ui = {
+    frame: byId('frame'),
+    seam: byId('seam'),
+    collapseBefore: byId('collapse-before'),
+    collapseAfter: byId('collapse-after'),
+    companionTitle: byId('companion-title'),
+    statusText: byId('companion-status-text'),
+    statusModel: byId('companion-status-model'),
+    addressForm: byId('address-form'),
+    addressError: byId('address-error'),
+    reload: byId('reload'),
+    pageFrame: byId('page-frame'),
+    viewportEmpty: byId('viewport-empty'),
+    hold: byId('composer-hold'),
+    shareLabel: byId('context-share-label'),
+    ticketTitle: byId('ticket-title'),
+    ticketLine: byId('ticket-line'),
+    ticketUrl: byId('ticket-url'),
+    ticketHash: byId('ticket-hash'),
+    ticketDiverged: byId('ticket-diverged'),
+    ticketView: byId('ticket-view'),
+    draft: byId('draft'),
+    composeForm: byId('compose-form'),
+    contextCore: byId('context-core'),
+    contextUsed: byId('context-used'),
+    contextNote: byId('context-note'),
+    memoryUsed: byId('memory-used'),
+    memoryNote: byId('memory-note'),
+    alertThreshold: byId('alert-threshold'),
+    settingDataDir: byId('setting-data-dir'),
+    settingRenderer: byId('setting-renderer'),
+    snackbar: byId('snackbar'),
+    inspectorTitle: byId('inspector-title'),
+    inspectorFacts: byId('inspector-facts'),
+    inspectorText: byId('inspector-text'),
+    inspectorClose: byId('inspector-close'),
+    confirmDialog: byId('confirm-clean'),
+    confirmText: byId('confirm-text'),
+    confirmCancel: byId('confirm-cancel'),
+    confirmAccept: byId('confirm-accept')
+  };
+
+  renderQuickActions();
+  wireSeam();
+  wireInput();
+  applySplit();
+  describeRenderer();
+
+  try {
+    const session = await getJson('/api/session');
+    model.session = session;
+    ui.settingDataDir.textContent = session.dataDir;
+    try {
+      const conversation = await getJson('/api/conversation');
+      model.transcript = conversation.turns;
+      model.turn = ConversationTurn.idleAfter(conversation.lastSequence);
+    } catch {
+      model.transcript = [];
+      model.turn = ConversationTurn.idleAfter(session.lastSequence ?? 0);
+    }
+  } catch {
+    notify("Couldn't reach this workspace's local server.");
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('view') === 'settings') model.view = 'settings';
+  render();
+  control('companion', { type: 'Check' });
+  openPage(params.get('page') || DEFAULT_PAGE);
+  if (params.get('include') === '1') control('browser', { type: 'Share' });
+  setInterval(() => {
+    if (document.visibilityState === 'visible' && (model.view === 'settings' || model.preferences.lowMemoryAlert)) refreshResources();
+  }, RESOURCE_POLL_MS);
+}
+
+start();
