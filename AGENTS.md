@@ -85,6 +85,36 @@ Before changing or adding a Mac front door:
 
 Observed lived evidence outranks a launcher-shaped source review. A test that bypasses the direct human/process path does not prove that path.
 
+### Startup dependency law
+
+Ordinary startup should vary by **identity**, not by topology.
+
+~~~text
+CONSTANT PRODUCT TOPOLOGY
+  human entry surface
+  lifecycle sequence
+  semantic/process owners
+  setup completion target
+  service roles + loopback ports
+  presentation identity
+  Home preservation / recovery semantics
+
+RELEASE-VARIABLE IDENTITIES
+  exact VexLife source commit
+  exact VexLife-Prod source commit
+
+DERIVED CURRENTNESS
+  Source Manifest records
+  admitted lifecycle action from observed Home state
+  runtime binding/currentness
+  process ownership receipts
+  presentation source currentness
+~~~
+
+Do not turn constants into launcher parameters merely because a shell variable is convenient. Proof/test source pinning must be explicitly named as proof-only and must not redefine the ordinary product route.
+
+When one source identity changes, recompute only its true dependents. A new commit does **not** by itself justify changing the window, sequence, ports, process topology, owner boundaries, recovery semantics, or presentation selection.
+
 ## Current route
 
 This front door routes the repository; VexWork carries lifecycle/current work position.
