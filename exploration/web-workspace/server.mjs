@@ -431,6 +431,15 @@ function parseArgs(argv) {
   return out;
 }
 
+function writeStartupReceipt(filePath, value) {
+  if (!filePath) return;
+  const resolved = path.resolve(filePath);
+  fs.mkdirSync(path.dirname(resolved), { recursive: true });
+  const temporary = `${resolved}.partial-${process.pid}-${crypto.randomBytes(4).toString('hex')}`;
+  fs.writeFileSync(temporary, `${JSON.stringify(value, null, 2)}\n`, { mode: 0o600 });
+  fs.renameSync(temporary, resolved);
+}
+
 const invokedDirectly = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (invokedDirectly) {
   const args = parseArgs(process.argv.slice(2));
@@ -441,12 +450,23 @@ if (invokedDirectly) {
     companionOrigin: args['companion-origin'] || process.env.VEXLIFE_COMPANION_ORIGIN || DEFAULT_VEXLIFE_COMPANION_ORIGIN,
     log: (line) => process.stdout.write(`[workspace] ${new Date().toISOString()} ${line}\n`)
   });
-  workspace.listen().then(({ origin, framePort }) => {
+  workspace.listen().then(({ origin, port, framePort }) => {
+    writeStartupReceipt(args['ready-file'], {
+      schemaVersion: 'vexlife-prod.workspace-startup/v1',
+      sourceSha: process.env.VEXLIFE_PROD_SOURCE_SHA || null,
+      origin,
+      port,
+      framePort,
+      dataDir: workspace.contextStore.dataDir,
+      pid: process.pid,
+      formedAt: new Date().toISOString()
+    });
     process.stdout.write(`[workspace] VexLife web workspace (exploration) on ${origin}\n`);
     process.stdout.write(`[workspace] Vex's browser frame host on port ${framePort} (public pages, signed out)\n`);
     process.stdout.write(`[workspace] data: ${workspace.contextStore.dataDir}\n`);
-  }).catch((error) => {
-    process.stderr.write(`[workspace] could not start: ${error.message}\n`);
+  }).catch(async (error) => {
+    await workspace.close().catch(() => {});
+    process.stderr.write(`[workspace] could not start: ${error.stack || error.message}\n`);
     process.exitCode = 1;
   });
   const stop = () => workspace.close().then(() => process.exit(0));

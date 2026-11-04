@@ -38,7 +38,9 @@ curl -fsSL https://raw.githubusercontent.com/VexGPT/VexLife-Prod/main/open-vexli
 ```
 
 The launcher resolves current `VexLife-Prod/main` to one exact source commit and opens the lived
-workspace at `http://127.0.0.1:18210`.
+workspace on a fresh numeric-loopback port selected by macOS. That avoids stale/unknown local
+processes on an old presentation port without killing them. Set `VEXLIFE_PROD_PORT` only when a
+fixed presentation port is specifically needed.
 
 Current ownership remains intentionally split:
 
@@ -53,7 +55,10 @@ vgong24/VexLife
 
 If the canonical Companion is already READY, the launcher simply uses it. If it is not READY, the
 launcher invokes VexLife's current source-local Mac setup first rather than substituting a raw model
-or a second Conversation owner.
+or a second Conversation owner. The presentation writes a source-bound startup receipt before the
+browser opens; if startup fails, the launcher prints the exact server failure instead of reducing it
+to a generic readiness timeout. Exploration-only browser-context data persists under
+`~/Library/Application Support/VexLife-Prod/` across source refreshes.
 
 
 ## Current position
