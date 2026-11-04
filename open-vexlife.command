@@ -11,6 +11,7 @@ set -euo pipefail
 
 PROD_REPOSITORY="VexGPT/VexLife-Prod"
 VEXLIFE_REPOSITORY="vgong24/VexLife"
+VEXLIFE_SOURCE_REF="${VEXLIFE_PROD_VEXLIFE_SOURCE_REF:-main}"
 PROD_SOURCE_REF="${VEXLIFE_PROD_SOURCE_REF:-main}"
 PROD_SOURCE_ROOT="${VEXLIFE_PROD_SOURCE_ROOT:-$HOME/Library/Application Support/VexLife-Prod/source}"
 PROD_RUNTIME_ROOT="${VEXLIFE_PROD_RUNTIME_ROOT:-$HOME/Library/Application Support/VexLife-Prod}"
@@ -51,18 +52,22 @@ companion_ready() {
 }
 
 # ---------------------------------------------------------------------------
-# 1. Delegate Home/runtime/open/repair/currentness to the existing VexLife owner.
+# 1. Delegate Home/runtime/repair/currentness to the existing VexLife owner.
+#    Request readiness back to this caller; do not open the reference presentation.
 # ---------------------------------------------------------------------------
 
 say "Opening the current VexLife setup / Open Vex owner..."
 BACKEND_BOOTSTRAP="$TMP_ROOT/setup-vexlife.command"
 /usr/bin/curl --proto '=https' --tlsv1.2 -fsSL --retry 3 \
-  "https://raw.githubusercontent.com/$VEXLIFE_REPOSITORY/main/setup-vexlife.command" \
+  "https://raw.githubusercontent.com/$VEXLIFE_REPOSITORY/$VEXLIFE_SOURCE_REF/setup-vexlife.command" \
   -o "$BACKEND_BOOTSTRAP" \
   || fail "the canonical VexLife Mac front door could not be downloaded."
 
-VEXLIFE_SETUP_MODE="$BACKEND_SETUP_MODE" /bin/bash "$BACKEND_BOOTSTRAP" \
-  || fail "the canonical VexLife setup/lifecycle did not complete."
+VEXLIFE_SOURCE_REF="$VEXLIFE_SOURCE_REF" \
+VEXLIFE_SETUP_MODE="$BACKEND_SETUP_MODE" \
+VEXLIFE_SETUP_COMPLETION="return-ready" \
+  /bin/bash "$BACKEND_BOOTSTRAP" \
+  || fail "the canonical VexLife setup/lifecycle did not return readiness to VexLife-Prod."
 
 companion_ready \
   || fail "the canonical VexLife lifecycle did not finish with Companion READY. Use its current Open/repair route before VexLife-Prod presentation startup."
@@ -123,7 +128,7 @@ TARGET="$RUN_PARENT/source"
 
 VEX_META="$TMP_ROOT/vexlife-source.json"
 /usr/bin/curl --proto '=https' --tlsv1.2 -fsSL --retry 3 \
-  "https://api.github.com/repos/$VEXLIFE_REPOSITORY/commits/main" -o "$VEX_META" \
+  "https://api.github.com/repos/$VEXLIFE_REPOSITORY/commits/$VEXLIFE_SOURCE_REF" -o "$VEX_META" \
   || fail "current VexLife source identity could not be resolved."
 VEX_SOURCE_SHA="$(/usr/bin/plutil -extract sha raw -o - "$VEX_META" 2>/dev/null || true)"
 case "$VEX_SOURCE_SHA" in *[!0-9a-fA-F]*|'') fail "GitHub did not return one exact VexLife source identity." ;; esac
