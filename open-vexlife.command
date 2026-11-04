@@ -12,8 +12,9 @@ set -euo pipefail
 REPOSITORY="VexGPT/VexLife-Prod"
 SOURCE_REF="${VEXLIFE_PROD_SOURCE_REF:-main}"
 COMPANION_ORIGIN="${VEXLIFE_COMPANION_ORIGIN:-http://127.0.0.1:18110}"
-WORKSPACE_PORT="${VEXLIFE_PROD_PORT:-18210}"
-FRAME_PORT="${VEXLIFE_PROD_FRAME_PORT:-18211}"
+WORKSPACE_PORT="${VEXLIFE_PROD_PORT:-0}"
+FRAME_PORT="${VEXLIFE_PROD_FRAME_PORT:-0}"
+DATA_DIR="${VEXLIFE_PROD_DATA_DIR:-$HOME/Library/Application Support/VexLife-Prod/exploration/web-workspace}"
 BACKEND_BOOTSTRAP_URL="https://raw.githubusercontent.com/vgong24/VexLife/main/setup-vexlife.command"
 
 say() { printf '\n%s\n' "$1"; }
@@ -26,7 +27,7 @@ esac
 case "$WORKSPACE_PORT" in ''|*[!0-9]*) fail "VEXLIFE_PROD_PORT must be numeric." ;; esac
 case "$FRAME_PORT" in ''|*[!0-9]*) fail "VEXLIFE_PROD_FRAME_PORT must be numeric." ;; esac
 
-for tool in /usr/bin/curl /usr/bin/tar /usr/bin/plutil /usr/bin/mktemp /usr/bin/open; do
+for tool in /usr/bin/curl /usr/bin/tar /usr/bin/plutil /usr/bin/mktemp /usr/bin/open /bin/cat; do
   [ -x "$tool" ] || fail "a required macOS system tool is unavailable: $tool"
 done
 command -v node >/dev/null 2>&1 || fail "Node.js 20 or newer is required."
@@ -44,9 +45,13 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
+loopback_json() {
+  /usr/bin/curl --noproxy '*' -fsS --max-time 3 "$1" -o "$2" 2>/dev/null
+}
+
 companion_ready() {
   local receipt="$TMP_ROOT/companion-availability.json"
-  if ! /usr/bin/curl -fsS --max-time 3 "$COMPANION_ORIGIN/api/v1/companion/availability" -o "$receipt" 2>/dev/null; then
+  if ! loopback_json "$COMPANION_ORIGIN/api/v1/companion/availability" "$receipt"; then
     return 1
   fi
   local schema state
@@ -105,25 +110,52 @@ if ! companion_ready; then
   [ "$READY" -eq 1 ] || fail "the canonical VexLife Companion did not become READY at $COMPANION_ORIGIN. VexLife-Prod will not substitute another Conversation/model path."
 fi
 
-say "Canonical VexLife Companion is READY. Starting VexLife Prod..."
-node "$SERVER" \
+say "Canonical VexLife Companion is READY. Starting current VexLife Prod..."
+READY_FILE="$TMP_ROOT/workspace-ready.json"
+SERVER_LOG="$TMP_ROOT/workspace.log"
+/bin/mkdir -p "$DATA_DIR"
+
+VEXLIFE_PROD_SOURCE_SHA="$SOURCE_SHA" node "$SERVER" \
   --port "$WORKSPACE_PORT" \
   --frame-port "$FRAME_PORT" \
-  --companion-origin "$COMPANION_ORIGIN" &
+  --data "$DATA_DIR" \
+  --companion-origin "$COMPANION_ORIGIN" \
+  --ready-file "$READY_FILE" \
+  >"$SERVER_LOG" 2>&1 &
 SERVER_PID=$!
 
-WORKSPACE_ORIGIN="http://127.0.0.1:$WORKSPACE_PORT"
 READY=0
+WORKSPACE_ORIGIN=""
 ATTEMPT=0
-while [ "$ATTEMPT" -lt 40 ]; do
-  if /usr/bin/curl -fsS --max-time 2 "$WORKSPACE_ORIGIN/api/session" >/dev/null 2>&1; then READY=1; break; fi
+while [ "$ATTEMPT" -lt 80 ]; do
+  if [ -f "$READY_FILE" ]; then
+    STARTUP_SCHEMA="$(/usr/bin/plutil -extract schemaVersion raw -o - "$READY_FILE" 2>/dev/null || true)"
+    STARTUP_SOURCE="$(/usr/bin/plutil -extract sourceSha raw -o - "$READY_FILE" 2>/dev/null || true)"
+    WORKSPACE_ORIGIN="$(/usr/bin/plutil -extract origin raw -o - "$READY_FILE" 2>/dev/null || true)"
+    if [ "$STARTUP_SCHEMA" = "vexlife-prod.workspace-startup/v1" ] \
+      && [ "$STARTUP_SOURCE" = "$SOURCE_SHA" ] \
+      && [ -n "$WORKSPACE_ORIGIN" ] \
+      && /usr/bin/curl --noproxy '*' -fsS --max-time 2 "$WORKSPACE_ORIGIN/api/session" >/dev/null 2>&1; then
+      READY=1
+      break
+    fi
+  fi
   if ! kill -0 "$SERVER_PID" 2>/dev/null; then break; fi
   ATTEMPT=$((ATTEMPT + 1))
   sleep 0.25
 done
-[ "$READY" -eq 1 ] || fail "the VexLife-Prod workspace did not become ready on $WORKSPACE_ORIGIN."
+
+if [ "$READY" -ne 1 ]; then
+  if [ -s "$SERVER_LOG" ]; then
+    say "VexLife Prod startup log:"
+    /bin/cat "$SERVER_LOG" >&2
+  fi
+  fail "the exact VexLife-Prod source did not reach a source-bound ready state. The startup log above is the first failure; rerunning the same command fetches current main and starts on fresh loopback ports by default."
+fi
 
 say "Opening VexLife Prod at $WORKSPACE_ORIGIN"
 /usr/bin/open "$WORKSPACE_ORIGIN"
-say "VexLife Prod is running from exact source $SOURCE_SHA. Keep this Terminal window open; press Ctrl+C to stop the presentation."
+say "VexLife Prod is running from exact source $SOURCE_SHA."
+say "Local presentation data: $DATA_DIR"
+say "Keep this Terminal window open; press Ctrl+C to stop this exact presentation process."
 wait "$SERVER_PID"
