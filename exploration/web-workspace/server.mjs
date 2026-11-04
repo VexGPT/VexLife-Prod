@@ -144,11 +144,15 @@ export function createWorkspaceServer({
   framePort = DEFAULT_FRAME_PORT,
   dataDir = DEFAULT_DATA_DIR,
   companionOrigin = DEFAULT_VEXLIFE_COMPANION_ORIGIN,
+  sourceSha = null,
   fetchImpl = fetch,
   upstream = createUpstream(),
   now = () => new Date(),
   log = () => {}
 } = {}) {
+  if (sourceSha !== null && !/^[0-9a-f]{40}$/u.test(sourceSha)) {
+    throw new TypeError('VexLife-Prod presentation sourceSha must be null or one exact Git SHA');
+  }
   const contextStore = createContextStore(dataDir);
   const companion = createVexLifeCompanionClient({ origin: companionOrigin, fetchImpl });
   const token = frameToken(contextStore.dataDir);
@@ -312,6 +316,22 @@ export function createWorkspaceServer({
       if (origin !== undefined && !allowedOrigins().has(origin)) throw new HttpError(403, 'ORIGIN_NOT_ALLOWED', 'cross-origin request refused');
     }
 
+    if (req.method === 'GET' && pathname === '/api/source-currentness') {
+      if (sourceSha === null) {
+        return sendJson(res, 503, {
+          schemaVersion: 'vexlife-prod.presentation-source-currentness-failure/v1',
+          state: 'UNAVAILABLE',
+          effectsPerformed: false
+        });
+      }
+      return sendJson(res, 200, {
+        schemaVersion: 'vexlife-prod.presentation-source-currentness/v1',
+        state: 'CURRENT',
+        sourceSha,
+        effectsPerformed: false
+      });
+    }
+
     if (req.method === 'GET' && pathname === '/api/session') {
       return sendJson(res, 200, {
         schemaVersion: 'vexlife-prod.exploration.session/v2',
@@ -431,7 +451,15 @@ function parseArgs(argv) {
   return out;
 }
 
-const invokedDirectly = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+function sameRealFile(left, right) {
+  try {
+    return fs.realpathSync(left) === fs.realpathSync(right);
+  } catch {
+    return false;
+  }
+}
+
+const invokedDirectly = process.argv[1] && sameRealFile(process.argv[1], fileURLToPath(import.meta.url));
 if (invokedDirectly) {
   const args = parseArgs(process.argv.slice(2));
   const workspace = createWorkspaceServer({
@@ -439,6 +467,7 @@ if (invokedDirectly) {
     framePort: args['frame-port'] ? Number(args['frame-port']) : DEFAULT_FRAME_PORT,
     dataDir: args.data ? path.resolve(args.data) : DEFAULT_DATA_DIR,
     companionOrigin: args['companion-origin'] || process.env.VEXLIFE_COMPANION_ORIGIN || DEFAULT_VEXLIFE_COMPANION_ORIGIN,
+    sourceSha: args['source-sha'] || null,
     log: (line) => process.stdout.write(`[workspace] ${new Date().toISOString()} ${line}\n`)
   });
   workspace.listen().then(({ origin, framePort }) => {
