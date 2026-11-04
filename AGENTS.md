@@ -55,6 +55,10 @@ A renderer may consume semantic truth; it does not become that truth owner.
 
 This front door routes the repository; VexWork carries lifecycle/current work position.
 
-The next construction edge is the smallest pure-Kotlin semantic/Blueprint practicum needed to test whether compiler-visible contracts can constrain future AI construction. Do not begin web UI or backend reintegration by skipping that edge.
+The current accepted construction edge remains VexWeb F1 compiler-visible authoring over the accepted Frame / Seam / Region / Allocation grammar, followed by deterministic artifact generation.
+
+A lived exploration threshold is retained under `exploration/web-workspace/`: it proves that the intended nested-browser shell can project the current canonical VexLife Conversation and complete a real human↔Vex turn without becoming Conversation/model authority. It is evidence and a runnable threshold, not the accepted generated renderer or permission to skip F1/F2.
+
+Do not copy the hand-built exploration as product authoring precedent. Harvest earned behavior back through the accepted semantic/VexWeb owners.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][AGENTS] -->
