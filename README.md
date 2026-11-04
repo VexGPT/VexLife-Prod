@@ -54,6 +54,13 @@ accepted proof
     4 quadrants
   geometry validity prevents renderer guesswork
 
+lived exploration threshold retained
+  exploration/web-workspace
+  bounded public nested-browser rendering
+  canonical Conversation projection + human Send through current VexLife Companion
+  page-context prompt composition, reset and exact context receipt remain held
+  != accepted VexWeb generated product
+
 next construction edge
   authoring ergonomics over the accepted relational grammar
 

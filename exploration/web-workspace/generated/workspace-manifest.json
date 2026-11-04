@@ -1,0 +1,418 @@
+{
+  "schemaVersion": "vexlife-prod.exploration.web-workspace-manifest/v1",
+  "generatedBy": "src/jvmTest/kotlin/vexlife/exploration/WorkspaceManifestGoldenTest.kt",
+  "screenRef": "screen.vexlife-workspace",
+  "elements": [
+    {
+      "handle": "Header",
+      "ref": "element.vexlife-workspace.header",
+      "kind": "Region",
+      "parentRef": null
+    },
+    {
+      "handle": "Brand",
+      "ref": "element.vexlife-workspace.header.brand",
+      "kind": "Content",
+      "parentRef": "element.vexlife-workspace.header"
+    },
+    {
+      "handle": "BrowserQuery",
+      "ref": "element.vexlife-workspace.header.browser-query",
+      "kind": "TextField",
+      "parentRef": "element.vexlife-workspace.header"
+    },
+    {
+      "handle": "AppSelector",
+      "ref": "element.vexlife-workspace.header.app-selector",
+      "kind": "Control",
+      "parentRef": "element.vexlife-workspace.header"
+    },
+    {
+      "handle": "Utilities",
+      "ref": "element.vexlife-workspace.header.utilities",
+      "kind": "Region",
+      "parentRef": "element.vexlife-workspace.header"
+    },
+    {
+      "handle": "Browser",
+      "ref": "element.vexlife-workspace.browser",
+      "kind": "Region",
+      "parentRef": null
+    },
+    {
+      "handle": "BrowserViewport",
+      "ref": "element.vexlife-workspace.browser.viewport",
+      "kind": "Region",
+      "parentRef": "element.vexlife-workspace.browser"
+    },
+    {
+      "handle": "Companion",
+      "ref": "element.vexlife-workspace.companion",
+      "kind": "Region",
+      "parentRef": null
+    },
+    {
+      "handle": "Conversation",
+      "ref": "element.vexlife-workspace.companion.conversation",
+      "kind": "Region",
+      "parentRef": "element.vexlife-workspace.companion"
+    },
+    {
+      "handle": "ConversationTimeline",
+      "ref": "element.vexlife-workspace.companion.conversation.timeline",
+      "kind": "Collection",
+      "parentRef": "element.vexlife-workspace.companion.conversation"
+    },
+    {
+      "handle": "ResponseProgress",
+      "ref": "element.vexlife-workspace.companion.conversation.response-progress",
+      "kind": "Content",
+      "parentRef": "element.vexlife-workspace.companion.conversation"
+    },
+    {
+      "handle": "Composer",
+      "ref": "element.vexlife-workspace.companion.conversation.composer",
+      "kind": "TextField",
+      "parentRef": "element.vexlife-workspace.companion.conversation"
+    },
+    {
+      "handle": "Send",
+      "ref": "element.vexlife-workspace.companion.conversation.send",
+      "kind": "Control",
+      "parentRef": "element.vexlife-workspace.companion.conversation"
+    },
+    {
+      "handle": "Settings",
+      "ref": "element.vexlife-workspace.companion.settings",
+      "kind": "Region",
+      "parentRef": "element.vexlife-workspace.companion"
+    },
+    {
+      "handle": "SettingsContext",
+      "ref": "element.vexlife-workspace.companion.settings.context",
+      "kind": "Region",
+      "parentRef": "element.vexlife-workspace.companion.settings"
+    },
+    {
+      "handle": "SettingsResources",
+      "ref": "element.vexlife-workspace.companion.settings.resources",
+      "kind": "Region",
+      "parentRef": "element.vexlife-workspace.companion.settings"
+    },
+    {
+      "handle": "SettingsHome",
+      "ref": "element.vexlife-workspace.companion.settings.home",
+      "kind": "Region",
+      "parentRef": "element.vexlife-workspace.companion.settings"
+    },
+    {
+      "handle": "SettingsContinuity",
+      "ref": "element.vexlife-workspace.companion.settings.continuity",
+      "kind": "Region",
+      "parentRef": "element.vexlife-workspace.companion.settings"
+    },
+    {
+      "handle": "SettingsReset",
+      "ref": "element.vexlife-workspace.companion.settings.reset",
+      "kind": "Region",
+      "parentRef": "element.vexlife-workspace.companion.settings"
+    },
+    {
+      "handle": "QuickActions",
+      "ref": "element.vexlife-workspace.header.utilities.quick-actions",
+      "kind": "Collection",
+      "parentRef": "element.vexlife-workspace.header.utilities"
+    },
+    {
+      "handle": "BrowserFrameStatus",
+      "ref": "element.vexlife-workspace.browser.frame-status",
+      "kind": "Content",
+      "parentRef": "element.vexlife-workspace.browser"
+    },
+    {
+      "handle": "CompanionStatus",
+      "ref": "element.vexlife-workspace.companion.companion-status",
+      "kind": "Content",
+      "parentRef": "element.vexlife-workspace.companion"
+    },
+    {
+      "handle": "CompanionCheck",
+      "ref": "element.vexlife-workspace.companion.companion-check",
+      "kind": "Control",
+      "parentRef": "element.vexlife-workspace.companion"
+    },
+    {
+      "handle": "CompanionViewSwitch",
+      "ref": "element.vexlife-workspace.companion.view-switch",
+      "kind": "Control",
+      "parentRef": "element.vexlife-workspace.companion"
+    },
+    {
+      "handle": "ContextShare",
+      "ref": "element.vexlife-workspace.companion.conversation.context-share",
+      "kind": "Control",
+      "parentRef": "element.vexlife-workspace.companion.conversation"
+    },
+    {
+      "handle": "ContextReceipt",
+      "ref": "element.vexlife-workspace.companion.conversation.context-receipt",
+      "kind": "Content",
+      "parentRef": "element.vexlife-workspace.companion.conversation"
+    },
+    {
+      "handle": "ContextInspector",
+      "ref": "element.vexlife-workspace.companion.conversation.context-inspector",
+      "kind": "Content",
+      "parentRef": "element.vexlife-workspace.companion.conversation"
+    },
+    {
+      "handle": "Stop",
+      "ref": "element.vexlife-workspace.companion.conversation.stop",
+      "kind": "Control",
+      "parentRef": "element.vexlife-workspace.companion.conversation"
+    },
+    {
+      "handle": "ContextWindow",
+      "ref": "element.vexlife-workspace.companion.settings.context.context-window",
+      "kind": "Content",
+      "parentRef": "element.vexlife-workspace.companion.settings.context"
+    },
+    {
+      "handle": "MemoryResource",
+      "ref": "element.vexlife-workspace.companion.settings.resources.memory",
+      "kind": "Content",
+      "parentRef": "element.vexlife-workspace.companion.settings.resources"
+    },
+    {
+      "handle": "ThoughtVisibility",
+      "ref": "element.vexlife-workspace.companion.settings.thought-visibility",
+      "kind": "Control",
+      "parentRef": "element.vexlife-workspace.companion.settings"
+    },
+    {
+      "handle": "LowMemoryAlert",
+      "ref": "element.vexlife-workspace.companion.settings.resources.low-memory-alert",
+      "kind": "Control",
+      "parentRef": "element.vexlife-workspace.companion.settings.resources"
+    },
+    {
+      "handle": "HomeDirectories",
+      "ref": "element.vexlife-workspace.companion.settings.home.directories",
+      "kind": "Control",
+      "parentRef": "element.vexlife-workspace.companion.settings.home"
+    },
+    {
+      "handle": "HomeAddDirectory",
+      "ref": "element.vexlife-workspace.companion.settings.home.add-directory",
+      "kind": "Control",
+      "parentRef": "element.vexlife-workspace.companion.settings.home"
+    },
+    {
+      "handle": "ContinuityMode",
+      "ref": "element.vexlife-workspace.companion.settings.continuity.continuity-mode",
+      "kind": "Control",
+      "parentRef": "element.vexlife-workspace.companion.settings.continuity"
+    },
+    {
+      "handle": "DreamSync",
+      "ref": "element.vexlife-workspace.companion.settings.continuity.dream-sync",
+      "kind": "Control",
+      "parentRef": "element.vexlife-workspace.companion.settings.continuity"
+    },
+    {
+      "handle": "CleanChat",
+      "ref": "element.vexlife-workspace.companion.settings.reset.clean-chat",
+      "kind": "Control",
+      "parentRef": "element.vexlife-workspace.companion.settings.reset"
+    }
+  ],
+  "surface": {
+    "coordinates": [
+      {
+        "ref": "vexweb.vexlife-workspace.frame",
+        "sourceParentRef": null,
+        "containerRef": "screen.vexlife-workspace",
+        "placement": "FillAvailable",
+        "depth": "Content",
+        "presentation": "Surface",
+        "interactions": [],
+        "binding": {
+          "type": "None"
+        }
+      },
+      {
+        "ref": "vexweb.vexlife-workspace.region.browser",
+        "sourceParentRef": null,
+        "containerRef": "vexweb.vexlife-workspace.frame",
+        "placement": "FillAvailable",
+        "depth": "Content",
+        "presentation": "Surface",
+        "interactions": [],
+        "binding": {
+          "type": "None"
+        }
+      },
+      {
+        "ref": "element.vexlife-workspace.browser",
+        "sourceParentRef": null,
+        "containerRef": "vexweb.vexlife-workspace.region.browser",
+        "placement": "FillAvailable",
+        "depth": "Content",
+        "presentation": "Surface",
+        "interactions": [],
+        "binding": {
+          "type": "None"
+        }
+      },
+      {
+        "ref": "element.vexlife-workspace.browser.viewport",
+        "sourceParentRef": "element.vexlife-workspace.browser",
+        "containerRef": "element.vexlife-workspace.browser",
+        "placement": "FillAvailable",
+        "depth": "Content",
+        "presentation": "Surface",
+        "interactions": [],
+        "binding": {
+          "type": "None"
+        }
+      },
+      {
+        "ref": "vexweb.vexlife-workspace.region.companion",
+        "sourceParentRef": null,
+        "containerRef": "vexweb.vexlife-workspace.frame",
+        "placement": "FillAvailable",
+        "depth": "Content",
+        "presentation": "Surface",
+        "interactions": [],
+        "binding": {
+          "type": "None"
+        }
+      },
+      {
+        "ref": "element.vexlife-workspace.companion",
+        "sourceParentRef": null,
+        "containerRef": "vexweb.vexlife-workspace.region.companion",
+        "placement": "FillAvailable",
+        "depth": "Content",
+        "presentation": "Surface",
+        "interactions": [],
+        "binding": {
+          "type": "None"
+        }
+      },
+      {
+        "ref": "element.vexlife-workspace.companion.conversation",
+        "sourceParentRef": "element.vexlife-workspace.companion",
+        "containerRef": "element.vexlife-workspace.companion",
+        "placement": "FillAvailable",
+        "depth": "Content",
+        "presentation": "Surface",
+        "interactions": [],
+        "binding": {
+          "type": "None"
+        }
+      },
+      {
+        "ref": "element.vexlife-workspace.companion.conversation.composer",
+        "sourceParentRef": "element.vexlife-workspace.companion.conversation",
+        "containerRef": "element.vexlife-workspace.companion.conversation",
+        "placement": "InFlow",
+        "depth": "Content",
+        "presentation": "Surface",
+        "interactions": [],
+        "binding": {
+          "type": "None"
+        }
+      },
+      {
+        "ref": "element.vexlife-workspace.companion.conversation.send",
+        "sourceParentRef": "element.vexlife-workspace.companion.conversation",
+        "containerRef": "element.vexlife-workspace.companion.conversation.composer",
+        "placement": "Trailing",
+        "depth": "Content",
+        "presentation": "PrimaryAction",
+        "interactions": [
+          "Activate"
+        ],
+        "binding": {
+          "type": "Unbound",
+          "fallback": {
+            "type": "NotYetImplemented",
+            "capabilityRef": "conversation.send",
+            "feedbackTarget": "vexweb.vexlife-workspace.overlay.snackbar"
+          }
+        }
+      },
+      {
+        "ref": "vexweb.vexlife-workspace.seam.browser-companion.handle",
+        "sourceParentRef": null,
+        "containerRef": "vexweb.vexlife-workspace.frame",
+        "placement": "Overlay",
+        "depth": "Chrome",
+        "presentation": "SeamHandle",
+        "interactions": [
+          "CollapseAfter",
+          "CollapseBefore",
+          "Resize"
+        ],
+        "binding": {
+          "type": "LocalSpatial",
+          "target": "vexweb.vexlife-workspace.seam.browser-companion"
+        }
+      },
+      {
+        "ref": "vexweb.vexlife-workspace.overlay",
+        "sourceParentRef": null,
+        "containerRef": "screen.vexlife-workspace",
+        "placement": "Overlay",
+        "depth": "Transient",
+        "presentation": "Surface",
+        "interactions": [],
+        "binding": {
+          "type": "None"
+        }
+      },
+      {
+        "ref": "vexweb.vexlife-workspace.overlay.snackbar",
+        "sourceParentRef": null,
+        "containerRef": "vexweb.vexlife-workspace.overlay",
+        "placement": "Overlay",
+        "depth": "Transient",
+        "presentation": "TransientFeedback",
+        "interactions": [],
+        "binding": {
+          "type": "None"
+        }
+      }
+    ],
+    "regions": [
+      {
+        "ref": "vexweb.vexlife-workspace.region.browser",
+        "frameRef": "vexweb.vexlife-workspace.frame",
+        "start": "Frame.Start",
+        "end": "Seam:vexweb.vexlife-workspace.seam.browser-companion",
+        "top": "Frame.Top",
+        "bottom": "Frame.Bottom",
+        "contentRef": "element.vexlife-workspace.browser"
+      },
+      {
+        "ref": "vexweb.vexlife-workspace.region.companion",
+        "frameRef": "vexweb.vexlife-workspace.frame",
+        "start": "Seam:vexweb.vexlife-workspace.seam.browser-companion",
+        "end": "Frame.End",
+        "top": "Frame.Top",
+        "bottom": "Frame.Bottom",
+        "contentRef": "element.vexlife-workspace.companion"
+      }
+    ],
+    "seams": [
+      {
+        "ref": "vexweb.vexlife-workspace.seam.browser-companion",
+        "frameRef": "vexweb.vexlife-workspace.frame",
+        "axis": "Vertical",
+        "beforeParts": 1,
+        "afterParts": 1
+      }
+    ]
+  }
+}
