@@ -1,10 +1,11 @@
 package vexlife.model.heretic
 
 /**
- * Home-scoped selection/binding relationship for the certified Heretic product model.
+ * Home + Companion-lineage scoped selection/binding relationship for the certified Heretic model.
  *
- * Selecting Heretic is not authority to download, activate, replace another model, or start a
- * process. Those effects belong to later runtime/platform owners.
+ * [BindingScope] carries refs supplied by those rightful owners; this package does not define Home
+ * or Companion lineage semantics. Selecting Heretic is not authority to download, activate,
+ * replace another model, or start a process. Those effects belong to later runtime/platform owners.
  */
 object HereticModelConfiguration {
     const val Schema =
@@ -21,7 +22,7 @@ object HereticModelConfiguration {
         ),
     }
 
-    data class HomeIdentity(
+    data class BindingScope(
         val homeRef: String,
         val companionLineageRef: String,
     ) {
@@ -57,7 +58,7 @@ object HereticModelConfiguration {
     )
 
     fun pending(
-        homeIdentity: HomeIdentity,
+        homeIdentity: BindingScope,
     ): Value =
         form(
             homeIdentity = homeIdentity,
@@ -65,7 +66,7 @@ object HereticModelConfiguration {
         )
 
     fun bound(
-        homeIdentity: HomeIdentity,
+        homeIdentity: BindingScope,
     ): Value =
         form(
             homeIdentity = homeIdentity,
@@ -74,7 +75,7 @@ object HereticModelConfiguration {
 
     fun validate(
         value: Value,
-        homeIdentity: HomeIdentity,
+        homeIdentity: BindingScope,
     ): Value {
         require(
             value.schemaVersion ==
@@ -134,7 +135,7 @@ object HereticModelConfiguration {
             State.BoundProductModel
 
     private fun form(
-        homeIdentity: HomeIdentity,
+        homeIdentity: BindingScope,
         state: State,
     ): Value =
         validate(
