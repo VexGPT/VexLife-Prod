@@ -10,26 +10,44 @@ import java.nio.file.StandardOpenOption
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.PosixFilePermission
 import java.util.UUID
+import vexlife.filesystem.VexOwnedPath
 
 /**
  * Atomic filesystem realization for one strict durable Vex contract.
  *
- * Domain source owns the schema and meaning. This owner only proves the path is one regular
- * non-symlink file, encodes/decodes through [VexContractJson], and performs private atomic writes.
+ * Domain source owns schema and meaning. This owner only proves that the contract path stays below
+ * one caller-supplied owned root, encodes/decodes through [VexContractJson], and performs private
+ * atomic writes. Every existing directory component below the owned root is checked without
+ * following symlinks.
  */
 object VexDurableContractFile {
     inline fun <reified T> read(
+        ownedRoot: Path,
         path: Path,
     ): T? {
-        require(
-            path.isAbsolute,
+        val root =
+            VexOwnedPath.requireRoot(
+                ownedRoot,
+                "durable contract owned root",
+            )
+        val normalized =
+            normalizedFile(
+                path,
+            )
+
+        if (
+            VexOwnedPath.observeParent(
+                root,
+                normalized,
+            ) ==
+            VexOwnedPath.DirectoryState.Missing
         ) {
-            "durable contract path must be absolute"
+            return null
         }
 
         if (
             !Files.exists(
-                path,
+                normalized,
                 LinkOption.NOFOLLOW_LINKS,
             )
         ) {
@@ -37,49 +55,51 @@ object VexDurableContractFile {
         }
 
         requireRegularFile(
-            path,
+            normalized,
         )
 
         return VexContractJson.decode(
             Files.readString(
-                path,
+                normalized,
                 StandardCharsets.UTF_8,
             ),
         )
     }
 
     inline fun <reified T> write(
+        ownedRoot: Path,
         path: Path,
         value: T,
     ) {
-        require(
-            path.isAbsolute,
-        ) {
-            "durable contract path must be absolute"
-        }
+        val root =
+            VexOwnedPath.requireRoot(
+                ownedRoot,
+                "durable contract owned root",
+            )
+        val normalized =
+            normalizedFile(
+                path,
+            )
+
+        VexOwnedPath.ensureParent(
+            root,
+            normalized,
+        )
 
         if (
             Files.exists(
-                path,
+                normalized,
                 LinkOption.NOFOLLOW_LINKS,
             )
         ) {
             requireRegularFile(
-                path,
+                normalized,
             )
         }
 
-        secureDirectory(
-            requireNotNull(
-                path.parent,
-            ) {
-                "durable contract path requires a parent directory"
-            },
-        )
-
         val temporary =
-            path.resolveSibling(
-                "${path.fileName}.partial-${UUID.randomUUID()}",
+            normalized.resolveSibling(
+                "${normalized.fileName}.partial-${UUID.randomUUID()}",
             )
 
         try {
@@ -99,7 +119,7 @@ object VexDurableContractFile {
             try {
                 Files.move(
                     temporary,
-                    path,
+                    normalized,
                     StandardCopyOption.ATOMIC_MOVE,
                     StandardCopyOption.REPLACE_EXISTING,
                 )
@@ -107,11 +127,11 @@ object VexDurableContractFile {
                 _: AtomicMoveNotSupportedException,
             ) {
                 error(
-                    "atomic durable contract replacement is unavailable for $path",
+                    "atomic durable contract replacement is unavailable for $normalized",
                 )
             }
             secureFile(
-                path,
+                normalized,
             )
         } finally {
             Files.deleteIfExists(
@@ -121,17 +141,32 @@ object VexDurableContractFile {
     }
 
     fun delete(
+        ownedRoot: Path,
         path: Path,
     ): Boolean {
-        require(
-            path.isAbsolute,
+        val root =
+            VexOwnedPath.requireRoot(
+                ownedRoot,
+                "durable contract owned root",
+            )
+        val normalized =
+            normalizedFile(
+                path,
+            )
+
+        if (
+            VexOwnedPath.observeParent(
+                root,
+                normalized,
+            ) ==
+            VexOwnedPath.DirectoryState.Missing
         ) {
-            "durable contract path must be absolute"
+            return false
         }
 
         if (
             !Files.exists(
-                path,
+                normalized,
                 LinkOption.NOFOLLOW_LINKS,
             )
         ) {
@@ -139,12 +174,24 @@ object VexDurableContractFile {
         }
 
         requireRegularFile(
-            path,
+            normalized,
         )
 
         return Files.deleteIfExists(
-            path,
+            normalized,
         )
+    }
+
+    @PublishedApi
+    internal fun normalizedFile(
+        path: Path,
+    ): Path {
+        require(
+            path.isAbsolute,
+        ) {
+            "durable contract path must be absolute"
+        }
+        return path.normalize()
     }
 
     @PublishedApi
@@ -166,13 +213,27 @@ object VexDurableContractFile {
         }
     }
 
-    @PublishedApi
     internal fun secureDirectory(
         path: Path,
     ) {
-        Files.createDirectories(
-            path,
-        )
+        if (
+            Files.exists(
+                path,
+                LinkOption.NOFOLLOW_LINKS,
+            )
+        ) {
+            requireRealDirectory(
+                path,
+            )
+        } else {
+            Files.createDirectory(
+                path,
+            )
+            requireRealDirectory(
+                path,
+            )
+        }
+
         setPosixPermissionsIfSupported(
             path,
             setOf(
@@ -194,6 +255,24 @@ object VexDurableContractFile {
                 PosixFilePermission.OWNER_WRITE,
             ),
         )
+    }
+
+    private fun requireRealDirectory(
+        path: Path,
+    ) {
+        val attributes =
+            Files.readAttributes(
+                path,
+                BasicFileAttributes::class.java,
+                LinkOption.NOFOLLOW_LINKS,
+            )
+
+        require(
+            attributes.isDirectory &&
+                !attributes.isSymbolicLink,
+        ) {
+            "durable contract directory must be one real non-symlink directory: $path"
+        }
     }
 
     private fun setPosixPermissionsIfSupported(
