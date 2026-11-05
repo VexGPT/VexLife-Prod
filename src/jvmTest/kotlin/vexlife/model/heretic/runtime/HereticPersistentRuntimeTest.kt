@@ -34,7 +34,7 @@ class HereticPersistentRuntimeTest {
         }
     }
 
-    private class Platform(
+    private inner class Platform(
         private val trace: MutableList<String>,
     ) : HereticPersistentRuntime.Platform {
         override val platform = "darwin"
