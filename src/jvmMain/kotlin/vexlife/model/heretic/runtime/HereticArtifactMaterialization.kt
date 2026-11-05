@@ -170,10 +170,27 @@ object HereticArtifactMaterialization {
                 "$ModelRootRelativePath/${plan.providerRevision}",
             )
 
-        VexOwnedPath.ensureDirectory(
-            home,
-            modelPath,
-        )
+        val modelDirectoryState =
+            VexOwnedPath.observeDirectory(
+                home,
+                modelPath,
+            )
+
+        if (
+            modelDirectoryState ==
+                VexOwnedPath.DirectoryState.Missing
+        ) {
+            require(
+                allowAcquisition,
+            ) {
+                "Heretic model directory is absent and acquisition was not authorized"
+            }
+
+            VexOwnedPath.ensureDirectory(
+                home,
+                modelPath,
+            )
+        }
 
         val descriptors =
             HereticArtifactCatalog.Members
