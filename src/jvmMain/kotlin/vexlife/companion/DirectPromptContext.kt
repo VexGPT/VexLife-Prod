@@ -424,6 +424,54 @@ object DirectPromptContext {
             )
         }
 
+    internal fun browserContextMatches(
+        receipt: Receipt,
+        context: BrowserContext?,
+    ): Boolean {
+        if (
+            context ==
+                null
+        ) {
+            return !receipt.browserContextIncluded &&
+                receipt.browserContextRef ==
+                null &&
+                receipt.browserPageUrl ==
+                null &&
+                receipt.browserTitle ==
+                null &&
+                receipt.browserContextSha256 ==
+                null &&
+                receipt.browserContextCharacters ==
+                null &&
+                receipt.browserContextCapture ==
+                null
+        }
+
+        val fingerprint =
+            sha256(
+                VexContractJson.encode(
+                    context,
+                ),
+            )
+
+        return receipt.browserContextIncluded &&
+            receipt.browserContextRef ==
+                "browser-context.vexlife-prod." +
+                fingerprint.take(
+                    32,
+                ) &&
+            receipt.browserPageUrl ==
+                context.pageUrl &&
+            receipt.browserTitle ==
+                context.title &&
+            receipt.browserContextSha256 ==
+                fingerprint &&
+            receipt.browserContextCharacters ==
+                context.text.length &&
+            receipt.browserContextCapture ==
+                context.capture
+    }
+
     fun estimatedMessageTokens(
         content: String,
     ): Int {
