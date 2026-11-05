@@ -185,6 +185,15 @@ object HereticPersistentRuntime {
             receipt: Receipt,
         ): Retirement
 
+        /**
+         * Retire a process that has a source-owned construction receipt but has not yet earned
+         * semantic Heretic runtime ownership.
+         */
+        fun retireProvisional(
+            spawned: Spawned,
+            args: List<String>,
+        ): Retirement
+
         fun waitUntilHealthy(
             binding: Binding,
             pid: Long,
@@ -431,11 +440,12 @@ object HereticPersistentRuntime {
                     pid,
                 )
             ) {
-                requireExactOwnedProcess(
-                    currentPrior,
-                    args,
-                    platform,
-                )
+                val currentIdentity =
+                    requireExactOwnedProcess(
+                        currentPrior,
+                        args,
+                        platform,
+                    )
 
                 if (
                     currentPrior.state ==
@@ -490,12 +500,7 @@ object HereticPersistentRuntime {
                         binding = binding,
                         pid = pid,
                         identity =
-                            requireNotNull(
-                                platform.processIdentity(
-                                    pid,
-                                    args,
-                                ),
-                            ),
+                            currentIdentity,
                         state =
                             HereticRuntimeState.Qualified,
                         formedAt =
@@ -587,16 +592,10 @@ object HereticPersistentRuntime {
             identity ==
                 null
         ) {
-            val provisional =
-                provisionalReceipt(
-                    binding,
+            val cleanup =
+                platform.retireProvisional(
                     spawned,
                     args,
-                    platform.now(),
-                )
-            val cleanup =
-                platform.retire(
-                    provisional,
                 )
             require(
                 cleanup.exactOwnershipVerified &&
@@ -977,29 +976,6 @@ object HereticPersistentRuntime {
 
         return null
     }
-
-    private fun provisionalReceipt(
-        binding: Binding,
-        spawned: Spawned,
-        args: List<String>,
-        formedAt: String,
-    ): Receipt =
-        formReceipt(
-            binding = binding,
-            pid = spawned.pid,
-            identity =
-                ProcessIdentity(
-                    pid = spawned.pid,
-                    processGroupId = spawned.pid,
-                    exactOwnedDetachedGroup = true,
-                ),
-            state = HereticRuntimeState.Starting,
-            formedAt = formedAt,
-            receiptRef = "receipt.vexlife.heretic-persistent-runtime.provisional",
-            processSubstrate = spawned.processSubstrate,
-            qualification = null,
-            argsOverride = args,
-        )
 
     private fun formReceipt(
         binding: Binding,
