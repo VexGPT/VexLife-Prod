@@ -161,10 +161,10 @@ class DirectConversationStoreTest {
     }
 
     @Test
-    fun incompleteDurableRequestHoldsOrdinaryContinuation() {
+    fun offHeadFailedRequestRemainsDurableWhileNewTurnMayBranchFromLastValidHead() {
         val parent =
             Files.createTempDirectory(
-                "vexlife-prod-direct-conversation-incomplete-",
+                "vexlife-prod-direct-conversation-failed-branch-",
             )
                 .toAbsolutePath()
         val productHome =
@@ -183,25 +183,58 @@ class DirectConversationStoreTest {
 
             store.withWriterLease {
                 beginRequest(
-                    turnRef = "turn.self-development.001",
-                    requestMessageRef = "message.self-development.human.001",
-                    content = "Hello Vex",
+                    turnRef = "turn.self-development.failed.001",
+                    requestMessageRef = "message.self-development.human.failed.001",
+                    content = "Failed request",
                 )
             }
 
-            assertFailsWith<DirectConversationStore.IncompleteConversationException> {
+            val failedState =
                 store.current()
-            }
+            assertNull(
+                failedState.head,
+            )
+            assertTrue(
+                failedState.canonicalEvents.isEmpty(),
+            )
+            assertEquals(
+                1,
+                failedState.abandonedAttempts.size,
+            )
+            assertEquals(
+                "Failed request",
+                failedState.abandonedAttempts
+                    .single()
+                    .requestEvent
+                    .content,
+            )
 
             store.withWriterLease {
-                assertFailsWith<DirectConversationStore.IncompleteConversationException> {
+                val replacement =
                     beginRequest(
-                        turnRef = "turn.self-development.002",
-                        requestMessageRef = "message.self-development.human.002",
-                        content = "Second request",
+                        turnRef = "turn.self-development.new.002",
+                        requestMessageRef = "message.self-development.human.new.002",
+                        content = "New admitted request",
                     )
-                }
+
+                assertEquals(
+                    0L,
+                    replacement.sequence,
+                )
+                assertNull(
+                    replacement.priorEventSha256,
+                )
             }
+
+            val twoBranches =
+                store.current()
+            assertEquals(
+                2,
+                twoBranches.abandonedAttempts.size,
+            )
+            assertTrue(
+                twoBranches.canonicalEvents.isEmpty(),
+            )
         } finally {
             parent
                 .toFile()
