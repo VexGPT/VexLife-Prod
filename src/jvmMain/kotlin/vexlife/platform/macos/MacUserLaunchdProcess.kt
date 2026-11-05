@@ -123,9 +123,7 @@ object MacUserLaunchdProcess {
     ): Spec {
         require(labelPattern.matches(label)) { "launchd label must be one com.vexlife.* identity" }
         require(uid >= 0) { "launchd uid must be non-negative" }
-        require(programArguments.all(String::isNotBlank)) { "launchd program arguments must be non-blank" }
         require(environment.keys.all(environmentKeyPattern::matches)) { "launchd environment key is invalid" }
-        require(environment.values.none { it.indexOf('\u0000') >= 0 }) { "launchd environment value contains NUL" }
 
         return Spec(
             schemaVersion = Schema,
