@@ -115,6 +115,37 @@ fun runExactCommand(
     return output.trim()
 }
 
+fun deleteTreeNoFollow(
+    root: Path,
+) {
+    if (
+        !Files.exists(
+            root,
+            LinkOption.NOFOLLOW_LINKS,
+        )
+    ) {
+        return
+    }
+
+    Files.walk(
+        root,
+    )
+        .use {
+            stream ->
+            stream
+                .toList()
+                .sortedByDescending {
+                    it.nameCount
+                }
+                .forEach {
+                    path ->
+                    Files.deleteIfExists(
+                        path,
+                    )
+                }
+        }
+}
+
 fun payloadFingerprint(
     root: Path,
     excludedRelativePaths: Set<String> =
@@ -641,9 +672,9 @@ tasks.register(
                 LinkOption.NOFOLLOW_LINKS,
             )
         ) {
-            output
-                .toFile()
-                .deleteRecursively()
+            deleteTreeNoFollow(
+                output,
+            )
         }
 
         val runtimeRoot =
@@ -1006,9 +1037,9 @@ tasks.register(
                 LinkOption.NOFOLLOW_LINKS,
             )
         ) {
-            outputRoot
-                .toFile()
-                .deleteRecursively()
+            deleteTreeNoFollow(
+                outputRoot,
+            )
         }
         Files.createDirectories(
             outputRoot,
