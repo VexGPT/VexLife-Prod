@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 import vexlife.artifact.DirectHttpsArtifactDelivery
 import vexlife.artifact.ExactArtifactFile
+import vexlife.filesystem.VexOwnedPath
 
 /**
  * Private exact managed-Python bootstrap for VexLife-Prod.
@@ -139,8 +140,9 @@ object ManagedPython {
                 entries,
             )
 
-            Files.createDirectories(
+            VexOwnedPath.requireRoot(
                 stagingDirectory,
+                "uv extraction staging directory",
             )
 
             requireCommandPass(
@@ -215,11 +217,11 @@ object ManagedPython {
         extractor: ArchiveExtractor = SystemArchiveExtractor,
         runner: Runner = SystemRunner,
     ): Result {
-        require(
-            productHome.isAbsolute,
-        ) {
-            "VexLife-Prod Home must be absolute"
-        }
+        val home =
+            VexOwnedPath.requireRoot(
+                productHome,
+                "VexLife-Prod Home",
+            )
         require(
             pythonVersion.matches(
                 Regex(
@@ -230,47 +232,65 @@ object ManagedPython {
             "managed Python version must be one exact patch version"
         }
 
-        val home =
-            productHome.normalize()
         val pythonInstallRoot =
-            home.resolve(
+            VexOwnedPath.resolveInside(
+                home,
                 PythonInstallRelativePath,
             )
-                .normalize()
         val uvToolRoot =
-            home.resolve(
+            VexOwnedPath.resolveInside(
+                home,
                 UvToolRelativePath,
             )
-                .normalize()
         val uvCacheRoot =
-            home.resolve(
+            VexOwnedPath.resolveInside(
+                home,
                 UvCacheRelativePath,
             )
-                .normalize()
 
-        for (
-            path in
-            listOf(
-                pythonInstallRoot,
+        val uvToolState =
+            VexOwnedPath.observeDirectory(
+                home,
                 uvToolRoot,
+            )
+        val uvCacheState =
+            VexOwnedPath.observeDirectory(
+                home,
                 uvCacheRoot,
             )
+        val pythonInstallState =
+            VexOwnedPath.observeDirectory(
+                home,
+                pythonInstallRoot,
+            )
+
+        if (
+            allowAcquisition
         ) {
+            VexOwnedPath.ensureDirectory(
+                home,
+                uvToolRoot,
+            )
+            VexOwnedPath.ensureDirectory(
+                home,
+                uvCacheRoot,
+            )
+            VexOwnedPath.ensureDirectory(
+                home,
+                pythonInstallRoot,
+            )
+        } else {
             require(
-                path.startsWith(
-                    home,
-                ),
+                uvToolState ==
+                    VexOwnedPath.DirectoryState.Present &&
+                    uvCacheState ==
+                    VexOwnedPath.DirectoryState.Present &&
+                    pythonInstallState ==
+                    VexOwnedPath.DirectoryState.Present,
             ) {
-                "managed Python path escaped VexLife-Prod Home"
+                "managed Python prerequisites are not exactly reusable and acquisition was not authorized"
             }
         }
-
-        Files.createDirectories(
-            uvToolRoot,
-        )
-        Files.createDirectories(
-            uvCacheRoot,
-        )
 
         val uvBinary =
             uvToolRoot.resolve(
@@ -348,10 +368,16 @@ object ManagedPython {
             }
 
             val staging =
-                uvToolRoot.resolve(
+                VexOwnedPath.resolveInside(
+                    uvToolRoot,
                     ".extract-" +
                         UUID.randomUUID(),
                 )
+
+            VexOwnedPath.ensureDirectory(
+                uvToolRoot,
+                staging,
+            )
 
             try {
                 val extracted =
