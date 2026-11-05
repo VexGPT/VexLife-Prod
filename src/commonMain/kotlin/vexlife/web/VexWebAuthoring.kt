@@ -204,7 +204,8 @@ object VexWebAuthoring {
             emptySet(),
         binding: VexWeb.Binding =
             VexWeb.Binding.None,
-        vararg children: VexWeb.Node,
+        children: List<VexWeb.Node> =
+            emptyList(),
     ): VexWeb.Element =
         VexWeb.Element(
             element = element,
@@ -213,7 +214,7 @@ object VexWebAuthoring {
             presentation = presentation,
             interactions = interactions,
             binding = binding,
-            children = children.toList(),
+            children = children,
         )
 
     fun structural(
@@ -225,7 +226,8 @@ object VexWebAuthoring {
             emptySet(),
         binding: VexWeb.Binding =
             VexWeb.Binding.None,
-        vararg children: VexWeb.Node,
+        children: List<VexWeb.Node> =
+            emptyList(),
     ): VexWeb.Structural =
         VexWeb.Structural(
             ref = ref,
@@ -234,7 +236,7 @@ object VexWebAuthoring {
             presentation = presentation,
             interactions = interactions,
             binding = binding,
-            children = children.toList(),
+            children = children,
         )
 
     fun localSpatial(
