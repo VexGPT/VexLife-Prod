@@ -205,7 +205,7 @@ REMEMBERED PID      != LOCK OWNERSHIP
 OS FILE LOCK         = SAME-HOST EXCLUSION
 ~~~
 
-## Failure boundary
+## Failure and recovery boundary
 
 The human REQUEST is durably written before inference.
 
@@ -213,10 +213,36 @@ If provider/materialization/context/head completion fails after that point:
 
 - the current completed head does not advance;
 - first-failure evidence is written under the Prod recovery subtree when possible;
-- ordinary next-turn continuation sees the incomplete durable state and holds;
-- automatic provider replay is **not** invented inside persistence.
+- the failed request (and optional failed response) remains durable off the canonical completed head;
+- the same `sendAttemptRef` is never replayed automatically;
+- a new `sendAttemptRef` may continue from the last valid canonical head;
+- the failed branch is not selected into ordinary CONTINUE prompt context.
 
-Explicit incomplete-turn recovery is still held.
+The recovery route is explicit in the first-failure receipt:
+
+~~~text
+no prior completed head
+  -> FORM_NEW_SEND_ATTEMPT_AND_RETRY
+
+prior completed head exists
+  -> RESUME_LAST_VALID_HEAD_THEN_FORM_NEW_SEND_ATTEMPT
+~~~
+
+Permanent:
+
+~~~text
+FAILED DURABLE REQUEST
+!= DELETE REQUEST
+
+FAILED SEND ATTEMPT
+!= RETRY SAME INFERENCE
+
+OFF-HEAD FAILED EVIDENCE
+!= CANONICAL CONVERSATION
+
+NEW SEND ATTEMPT
+-> LAST VALID CANONICAL HEAD
+~~~
 
 ## Current proof formed in source
 
@@ -233,7 +259,7 @@ Tests are source-formed for:
 - context-gated head commit;
 - whole-turn writer exclusion;
 - exact completed-send duplicate suppression;
-- provider failure receipt + incomplete-thread hold;
+- provider failure receipt + non-replaying failed-attempt recovery;
 - two consecutive direct turns where turn 2 receives the immediately prior pair.
 
 ## Held before acceptance
@@ -247,8 +273,6 @@ real macOS:
   direct turn 1
   direct turn 2
   sustained process after setup completion
-
-explicit incomplete-turn recovery
 
 fresh Memory owner + attributed Memory selection
 CLEAN_START presentation/semantic wiring
