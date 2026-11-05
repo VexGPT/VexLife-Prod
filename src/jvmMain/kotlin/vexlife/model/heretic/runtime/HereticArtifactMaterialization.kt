@@ -5,6 +5,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
 import vexlife.artifact.ExactArtifactFile
+import vexlife.filesystem.VexOwnedPath
 import vexlife.model.heretic.HereticArtifactCatalog
 import vexlife.model.heretic.HereticProductIdentity
 
@@ -159,26 +160,18 @@ object HereticArtifactMaterialization {
         val plan =
             plan()
         val home =
-            productHome.normalize()
+            VexOwnedPath.requireRoot(
+                productHome,
+                "VexLife-Prod Home",
+            )
         val modelPath =
-            home
-                .resolve(
-                    ModelRootRelativePath,
-                )
-                .resolve(
-                    plan.providerRevision,
-                )
-                .normalize()
-
-        require(
-            modelPath.startsWith(
+            VexOwnedPath.resolveInside(
                 home,
-            ),
-        ) {
-            "Heretic materialization path escaped VexLife-Prod Home"
-        }
+                "$ModelRootRelativePath/${plan.providerRevision}",
+            )
 
-        Files.createDirectories(
+        VexOwnedPath.ensureDirectory(
+            home,
             modelPath,
         )
 
@@ -207,11 +200,10 @@ object HereticArtifactMaterialization {
                         member.artifactRef
                 }
             val finalPath =
-                modelPath
-                    .resolve(
-                        member.logicalPath,
-                    )
-                    .normalize()
+                VexOwnedPath.resolveInside(
+                    modelPath,
+                    member.logicalPath,
+                )
 
             require(
                 finalPath.parent ==
