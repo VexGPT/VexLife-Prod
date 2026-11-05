@@ -383,20 +383,32 @@ class DirectConversationStore(
 
     private val eventsDirectory: Path =
         VexOwnedPath.resolveInside(
-            conversationRoot,
-            "events",
+            this.productHome,
+            "conversations/" +
+                manifest.currentCompanionLineageRef +
+                "/" +
+                DirectConversationIdentity.ThreadRef +
+                "/events",
         )
 
     private val headsDirectory: Path =
         VexOwnedPath.resolveInside(
-            conversationRoot,
-            "heads",
+            this.productHome,
+            "conversations/" +
+                manifest.currentCompanionLineageRef +
+                "/" +
+                DirectConversationIdentity.ThreadRef +
+                "/heads",
         )
 
     private val currentHeadPath: Path =
         VexOwnedPath.resolveInside(
-            conversationRoot,
-            "head.json",
+            this.productHome,
+            "conversations/" +
+                manifest.currentCompanionLineageRef +
+                "/" +
+                DirectConversationIdentity.ThreadRef +
+                "/head.json",
         )
 
     private val lockDirectory: Path =
@@ -408,8 +420,11 @@ class DirectConversationStore(
 
     private val lockPath: Path =
         VexOwnedPath.resolveInside(
-            lockDirectory,
-            DirectConversationIdentity.ThreadRef +
+            this.productHome,
+            "runtime/conversation-writer-locks/" +
+                manifest.currentCompanionLineageRef +
+                "/" +
+                DirectConversationIdentity.ThreadRef +
                 ".lock",
         )
 
@@ -428,10 +443,8 @@ class DirectConversationStore(
             }
     }
 
-    fun current(): Snapshot {
-        prepareOwnedDirectories()
-        return readCurrentComplete()
-    }
+    fun current(): Snapshot =
+        readCurrentComplete()
 
     private fun prepareOwnedDirectories() {
         for (
@@ -644,10 +657,123 @@ class DirectConversationStore(
             "direct Conversation current head differs from its immutable receipt"
         }
 
+        validateImmutableHeadLineage(
+            currentHead = head,
+            chain = chain,
+        )
+
         return Snapshot(
             head = head,
             events = chain,
         )
+    }
+
+    private fun validateImmutableHeadLineage(
+        currentHead: Head,
+        chain: List<Event>,
+    ) {
+        val pairCount =
+            chain.size /
+                2
+        val reversed =
+            mutableListOf<Head>()
+        var cursor: String? =
+            currentHead.conversationHeadSha256
+
+        while (
+            cursor !=
+                null
+        ) {
+            require(
+                reversed.none {
+                    it.conversationHeadSha256 ==
+                        cursor
+                },
+            ) {
+                "direct Conversation immutable head lineage contains a cycle"
+            }
+
+            val historical =
+                requireNotNull(
+                    VexDurableContractFile.read<Head>(
+                        ownedRoot = productHome,
+                        path =
+                            immutableHeadPath(
+                                cursor,
+                            ),
+                    ),
+                ) {
+                    "direct Conversation immutable head lineage is missing a historical receipt"
+                }
+            validateHead(
+                historical,
+            )
+            require(
+                historical.conversationHeadSha256 ==
+                    cursor,
+            ) {
+                "direct Conversation immutable head is stored under the wrong identity"
+            }
+
+            reversed +=
+                historical
+            cursor =
+                historical.priorConversationHeadSha256
+        }
+
+        reversed.reverse()
+
+        require(
+            reversed.size ==
+                pairCount,
+        ) {
+            "direct Conversation immutable head lineage count does not match completed turns"
+        }
+
+        reversed.forEachIndexed {
+            index,
+            historical,
+            ->
+            val request =
+                chain[
+                    index *
+                        2
+                ]
+            val response =
+                chain[
+                    index *
+                        2 +
+                        1
+                ]
+            val expectedPrior =
+                if (
+                    index ==
+                        0
+                ) {
+                    null
+                } else {
+                    reversed[
+                        index -
+                            1
+                    ]
+                        .conversationHeadSha256
+                }
+
+            require(
+                historical.sequence ==
+                    response.sequence &&
+                    historical.requestEventSha256 ==
+                    request.eventSha256 &&
+                    historical.responseEventSha256 ==
+                    response.eventSha256 &&
+                    historical.turnRef ==
+                    request.turnRef &&
+                    historical.priorConversationHeadSha256 ==
+                    expectedPrior,
+            ) {
+                "direct Conversation immutable head lineage does not bind the exact completed pair"
+            }
+        }
     }
 
     private fun validateRequestAsPending(
