@@ -172,6 +172,73 @@ object MacUserLaunchdProcess {
         return if (pid == null) Observation.LoadedStopped else Observation.Running(pid)
     }
 
+    fun receiptCurrent(
+        receipt: Receipt,
+        host: Host = SystemHost,
+        expectedPid: Long = receipt.pid,
+    ): Boolean {
+        return try {
+            validate(
+                receipt,
+            )
+            require(
+                expectedPid >
+                    0,
+            )
+
+            val spec =
+                receipt.toSpec()
+            val plist =
+                Path.of(
+                    receipt.plistPath,
+                )
+
+            if (
+                !Files.isRegularFile(
+                    plist,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) ||
+                Files.isSymbolicLink(
+                    plist,
+                )
+            ) {
+                return false
+            }
+
+            if (
+                Files.readString(
+                    plist,
+                    StandardCharsets.UTF_8,
+                ) !=
+                renderPlist(
+                    spec,
+                )
+            ) {
+                return false
+            }
+
+            val observed =
+                observe(
+                    spec,
+                    host,
+                )
+
+            observed is
+                Observation.Running &&
+                observed.pid ==
+                expectedPid &&
+                receipt.pid ==
+                expectedPid &&
+                host.processAlive(
+                    expectedPid,
+                )
+        } catch (
+            _: Exception,
+        ) {
+            false
+        }
+    }
+
     fun start(
         spec: Spec,
         host: Host = SystemHost,
