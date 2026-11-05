@@ -57,6 +57,7 @@ class FileHereticRuntimeReceiptStoreTest {
                         "runtime/heretic/mlx-lm-server.err.log",
                     )
                         .toString(),
+                environment = emptyMap(),
                 keepAlive = false,
                 pid = pid,
             )
