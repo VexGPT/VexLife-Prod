@@ -216,9 +216,9 @@ object VexLifeProdPrivateServiceImageInstaller {
                     LinkOption.NOFOLLOW_LINKS,
                 )
             ) {
-                staging
-                    .toFile()
-                    .deleteRecursively()
+                deleteTreeNoFollow(
+                    staging,
+                )
             }
         }
     }
@@ -322,6 +322,28 @@ object VexLifeProdPrivateServiceImageInstaller {
                                         relative,
                                 )
                         }
+                    }
+            }
+    }
+
+    private fun deleteTreeNoFollow(
+        root: Path,
+    ) {
+        Files.walk(
+            root,
+        )
+            .use {
+                stream ->
+                stream
+                    .toList()
+                    .sortedByDescending {
+                        it.nameCount
+                    }
+                    .forEach {
+                        path ->
+                        Files.deleteIfExists(
+                            path,
+                        )
                     }
             }
     }
