@@ -7,8 +7,11 @@ import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.PosixFilePermission
 import java.security.MessageDigest
 import org.gradle.api.tasks.bundling.Jar
+import org.gradle.jvm.toolchain.JavaLanguageVersion
+import org.gradle.jvm.toolchain.JavaToolchainService
 
 plugins {
+    id("jvm-toolchains")
     id("org.jetbrains.kotlin.multiplatform")
     id("org.jetbrains.kotlin.plugin.serialization")
 }
@@ -349,6 +352,19 @@ val jvmJarTask =
     tasks.named<Jar>(
         "jvmJar",
     )
+
+val serviceImageJdk21 =
+    extensions
+        .getByType(
+            JavaToolchainService::class.java,
+        )
+        .compilerFor {
+            languageVersion.set(
+                JavaLanguageVersion.of(
+                    21,
+                ),
+            )
+        }
 
 val serviceLauncherSource =
     layout.projectDirectory.file(
@@ -701,20 +717,25 @@ tasks.register(
         ) {
             "VexLife-Prod service image must be assembled on macOS arm64"
         }
+        val serviceImageJava =
+            serviceImageJdk21
+                .get()
         require(
-            Runtime.version()
-                .feature() ==
+            serviceImageJava
+                .metadata
+                .languageVersion
+                .asInt() ==
                 21,
         ) {
-            "VexLife-Prod service image must be assembled with JDK 21"
+            "VexLife-Prod service image requires an exact JDK 21 toolchain"
         }
 
         val javaHome =
-            Path.of(
-                System.getProperty(
-                    "java.home",
-                ),
-            )
+            serviceImageJava
+                .metadata
+                .installationPath
+                .asFile
+                .toPath()
                 .toAbsolutePath()
                 .normalize()
         val jdeps =
