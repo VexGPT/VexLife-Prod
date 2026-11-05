@@ -281,11 +281,15 @@ Disposable compiler pressure on the source-formed package:
 kotlinc-jvm 1.9.0
   production package compile                         PASS
 
-runtime probe
+runtime probes
   exact identity load                               PASS
   11-member catalog / 15,153,242,506-byte total    PASS
   pending configuration has no automatic effects   PASS
   bound configuration transition                   PASS
+  STARTING / QUALIFIED wire compatibility          PASS
+  qualification effect boundary                     PASS
+  exact-owned != PID-only ownership                PASS
+  abandoned runtime requires not-live evidence     PASS
 
 Kotlin/JS IR 1.9.0
   production package compile                        PASS
