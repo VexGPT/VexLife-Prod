@@ -213,23 +213,24 @@ object HereticArtifactMaterialization {
             }
 
             when (
-                ExactArtifactFile.classify(
-                    path = finalPath,
-                    expectedSha256 = member.sha256,
-                    expectedBytes = member.byteLength,
-                )
+                val local =
+                    ExactArtifactFile.classify(
+                        path = finalPath,
+                        expectedSha256 = member.sha256,
+                        expectedBytes = member.byteLength,
+                    )
             ) {
                 is ExactArtifactFile.Classification.VerifiedReusable ->
                     reused +=
                         1
 
-                else -> {
+                is ExactArtifactFile.Classification.Missing -> {
                     require(
                         allowAcquisition,
                     ) {
                         "Heretic artifact " +
                             member.logicalPath +
-                            " is not exactly reusable and acquisition was not authorized"
+                            " is missing and acquisition was not authorized"
                     }
 
                     acquirer.acquire(
@@ -255,6 +256,17 @@ object HereticArtifactMaterialization {
                     acquired +=
                         1
                 }
+
+                is ExactArtifactFile.Classification.InvalidSize,
+                is ExactArtifactFile.Classification.InvalidHash,
+                ->
+                    error(
+                        "existing Heretic artifact failed exact verification and requires an explicit repair owner before reacquisition: " +
+                            member.logicalPath +
+                            " (" +
+                            local::class.simpleName +
+                            ")",
+                    )
             }
         }
 
