@@ -22,7 +22,7 @@ import java.util.UUID
  * It owns no Heretic, Conversation, Vex Home, or presentation meaning.
  */
 object MacUserLaunchdProcess {
-    const val Schema = "vexlife.macos-user-launchd-process/v1"
+    const val Schema = "vexlife.macos-user-launchd-process/v2"
     const val SubstrateRef = "substrate.vexlife.macos-user-launchd-process.001"
     const val DefaultStartTimeoutMs = 15_000L
     const val DefaultRetireTimeoutMs = 10_000L
@@ -95,6 +95,7 @@ object MacUserLaunchdProcess {
         val workingDirectory: String,
         val stdoutPath: String,
         val stderrPath: String,
+        val environment: Map<String, String>,
         val keepAlive: Boolean,
         val pid: Long,
     )
@@ -151,6 +152,8 @@ object MacUserLaunchdProcess {
             "launchd receipt schema/substrate is not current"
         }
         require(receipt.domainTarget.matches(Regex("gui/\\d+"))) { "launchd receipt domainTarget is invalid" }
+        require(receipt.environment.keys.all(environmentKeyPattern::matches)) { "launchd receipt environment key is invalid" }
+        require(receipt.environment == receipt.environment.toSortedMap()) { "launchd receipt environment must be canonical/sorted" }
         require(!receipt.keepAlive) { "launchd receipt KeepAlive must remain false" }
         require(receipt.pid > 0) { "launchd receipt requires one positive pid" }
         receipt.toSpec()
@@ -291,7 +294,7 @@ object MacUserLaunchdProcess {
         workingDirectory = workingDirectory,
         stdoutPath = stdoutPath,
         stderrPath = stderrPath,
-        environment = emptyMap(),
+        environment = environment,
         uid = domainTarget.substringAfter("gui/").toLong(),
     )
 
