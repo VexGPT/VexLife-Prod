@@ -142,6 +142,10 @@ object DirectHttpsArtifactDelivery {
 
         val final =
             finalPath.normalize()
+        val uri =
+            URI(
+                request.url,
+            )
 
         if (
             Files.exists(
@@ -203,10 +207,43 @@ object DirectHttpsArtifactDelivery {
             }
         }
 
-        val uri =
-            URI(
-                request.url,
+        if (
+            resumeFrom ==
+            request.expectedBytes
+        ) {
+            val completePartialSha256 =
+                sha256File(
+                    partial,
+                )
+
+            if (
+                completePartialSha256 ==
+                request.expectedSha256
+            ) {
+                moveAtomically(
+                    partial,
+                    final,
+                )
+
+                return Result(
+                    state = "VERIFIED",
+                    disposition = "RECOVERED_COMPLETE_PARTIAL_AND_VERIFIED",
+                    path = final.toString(),
+                    bytes = request.expectedBytes,
+                    actualSha256 = completePartialSha256,
+                    recordedSourceUrl =
+                        sanitizeSourceUrl(
+                            uri,
+                        ),
+                )
+            }
+
+            Files.delete(
+                partial,
             )
+            resumeFrom =
+                0
+        }
 
         val opened =
             transport.open(
@@ -370,19 +407,10 @@ object DirectHttpsArtifactDelivery {
                     )
                 }
 
-                try {
-                    Files.move(
-                        partial,
-                        final,
-                        StandardCopyOption.ATOMIC_MOVE,
-                    )
-                } catch (
-                    _: AtomicMoveNotSupportedException,
-                ) {
-                    error(
-                        "atomic artifact completion is unavailable for $final",
-                    )
-                }
+                moveAtomically(
+                    partial,
+                    final,
+                )
 
                 return Result(
                     state = "VERIFIED",
@@ -428,6 +456,25 @@ object DirectHttpsArtifactDelivery {
 
                 throw error
             }
+        }
+    }
+
+    private fun moveAtomically(
+        source: Path,
+        target: Path,
+    ) {
+        try {
+            Files.move(
+                source,
+                target,
+                StandardCopyOption.ATOMIC_MOVE,
+            )
+        } catch (
+            _: AtomicMoveNotSupportedException,
+        ) {
+            error(
+                "atomic artifact completion is unavailable for $target",
+            )
         }
     }
 
