@@ -1,8 +1,6 @@
 package vexlife.local
 
 import java.net.InetAddress
-import java.nio.file.Files
-import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.time.OffsetDateTime
 import vexlife.home.VexLifeProdHome
@@ -158,14 +156,14 @@ object VexLifeProdLocalSetup {
                 )
         }
 
-        val homeAlreadyExists =
-            Files.exists(
+        val existingHome =
+            VexLifeProdHomeFiles.observeExisting(
                 productHome,
-                LinkOption.NOFOLLOW_LINKS,
             )
 
         if (
-            !homeAlreadyExists
+            existingHome ==
+                null
         ) {
             require(
                 allowAcquisition,
@@ -175,20 +173,21 @@ object VexLifeProdLocalSetup {
         }
 
         val home =
-            VexLifeProdHomeFiles.bootstrap(
-                productHome = productHome,
-                plan =
-                    VexLifeProdHome.plan(
-                        personRef = VexLifeProdHome.DefaultPersonRef,
-                        familyRef = VexLifeProdHome.DefaultFamilyRef,
-                        deviceName = hooks.deviceName(),
-                        platform = host.observation.platform,
-                        architecture = host.observation.architecture,
-                        ids =
-                            VexLifeProdHomeFiles.newInstallationIds(),
-                        createdAt = hooks.now(),
-                    ),
-            )
+            existingHome
+                ?: VexLifeProdHomeFiles.bootstrap(
+                    productHome = productHome,
+                    plan =
+                        VexLifeProdHome.plan(
+                            personRef = VexLifeProdHome.DefaultPersonRef,
+                            familyRef = VexLifeProdHome.DefaultFamilyRef,
+                            deviceName = hooks.deviceName(),
+                            platform = host.observation.platform,
+                            architecture = host.observation.architecture,
+                            ids =
+                                VexLifeProdHomeFiles.newInstallationIds(),
+                            createdAt = hooks.now(),
+                        ),
+                )
 
         val modelConfiguration =
             FileHereticModelConfigurationStore(
