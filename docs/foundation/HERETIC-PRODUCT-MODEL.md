@@ -12,12 +12,19 @@ This foundation ports the already-earned Heretic product identity from current V
 
 ~~~text
 vexlife.model.heretic
-  HereticProductModel
-    CurrentIdentity
-    CertifiedArtifactMembers
+  HereticProductIdentity
+    Current
+
+  HereticArtifactCatalog
+    Members
+
+  HereticModelConfiguration
     HomeIdentity
-    Configuration
-    ConfigurationState
+    State
+    Value
+
+  HereticContractValidation
+    shared validation only
 ~~~
 
 ## Porting rule
@@ -173,7 +180,7 @@ HERETIC PRODUCT MODEL CONTRACT
 ~~~
 
 When the fresh build ports runtime realization, that work must identify the next rightful owners
-rather than growing effectful methods inside `HereticProductModel`.
+rather than growing effectful methods inside the Heretic product package.
 
 ## Provenance and currentness
 
