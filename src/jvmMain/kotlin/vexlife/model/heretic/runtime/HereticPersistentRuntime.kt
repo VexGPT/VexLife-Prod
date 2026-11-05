@@ -62,33 +62,60 @@ object HereticPersistentRuntime {
             "[0-9a-f]{64}",
         )
 
+    const val ImplementationClassResource =
+        "vexlife/model/heretic/runtime/HereticPersistentRuntime.class"
+
     @Serializable
-    data class SourceIdentity(
+    @ConsistentCopyVisibility
+    data class ImplementationIdentity internal constructor(
         val repository: String,
-        val modulePath: String,
-        val moduleSha256: String,
+        val classResource: String,
+        val classSha256: String,
     ) {
         init {
             require(
                 repository ==
                     "VexGPT/VexLife-Prod",
             ) {
-                "Heretic runtime source identity must belong to VexLife-Prod"
+                "Heretic runtime implementation identity must belong to VexLife-Prod"
             }
             require(
-                modulePath ==
-                    "src/jvmMain/kotlin/vexlife/model/heretic/runtime/HereticPersistentRuntime.kt",
+                classResource ==
+                    ImplementationClassResource,
             ) {
-                "Heretic runtime source module identity drift"
+                "Heretic runtime implementation class identity drift"
             }
             require(
                 Sha256Pattern.matches(
-                    moduleSha256,
+                    classSha256,
                 ),
             ) {
-                "Heretic runtime source identity requires lowercase SHA-256"
+                "Heretic runtime implementation identity requires lowercase SHA-256"
             }
         }
+    }
+
+    fun currentImplementationIdentity(): ImplementationIdentity {
+        val bytes =
+            requireNotNull(
+                HereticPersistentRuntime::class.java.classLoader
+                    .getResourceAsStream(
+                        ImplementationClassResource,
+                    ),
+            ) {
+                "packaged Heretic runtime implementation class bytes are unavailable"
+            }
+                .use {
+                    it.readBytes()
+                }
+
+        return ImplementationIdentity(
+            repository = "VexGPT/VexLife-Prod",
+            classResource = ImplementationClassResource,
+            classSha256 = sha256(
+                bytes,
+            ),
+        )
     }
 
     @ConsistentCopyVisibility
@@ -98,7 +125,7 @@ object HereticPersistentRuntime {
         val modelPath: String,
         val pythonPath: String,
         val pythonEnvironmentRoot: String,
-        val sourceIdentity: SourceIdentity,
+        val implementationIdentity: ImplementationIdentity,
     )
 
     data class ProcessIdentity(
@@ -140,7 +167,7 @@ object HereticPersistentRuntime {
         val pythonEnvironmentRoot: String,
         val endpoint: String,
         val requestModel: String,
-        val sourceIdentity: SourceIdentity,
+        val implementationIdentity: ImplementationIdentity,
         val runtime: RuntimeProcess,
         val effects: HereticRuntimeEffectBoundary.Value,
         val qualification: HereticRuntimeQualification?,
@@ -261,7 +288,6 @@ object HereticPersistentRuntime {
         authorityRef: String,
         materialization: HereticArtifactMaterialization.Result,
         environment: HereticPythonEnvironment.Result,
-        sourceIdentity: SourceIdentity,
     ): Binding {
         require(
             RefPattern.matches(
@@ -325,7 +351,7 @@ object HereticPersistentRuntime {
             modelPath = model.toString(),
             pythonPath = python.toString(),
             pythonEnvironmentRoot = environmentRoot.toString(),
-            sourceIdentity = sourceIdentity,
+            implementationIdentity = currentImplementationIdentity(),
         )
     }
 
@@ -340,7 +366,7 @@ object HereticPersistentRuntime {
             receiptBinds(
                 binding = binding,
                 receipt = receipt,
-                requireSourceSha = true,
+                requireImplementationSha = true,
             ) &&
                 receipt.state ==
                 HereticRuntimeState.Qualified &&
@@ -422,7 +448,7 @@ object HereticPersistentRuntime {
             )
         val prior =
             store.read()
-        var staleSourceRotated =
+        var staleImplementationRotated =
             false
 
         if (
@@ -431,12 +457,12 @@ object HereticPersistentRuntime {
                 !receiptBinds(
                     binding,
                     prior,
-                    requireSourceSha = true,
+                    requireImplementationSha = true,
                 ) &&
                 receiptBinds(
                     binding,
                     prior,
-                    requireSourceSha = false,
+                    requireImplementationSha = false,
                 )
         ) {
             if (
@@ -459,10 +485,10 @@ object HereticPersistentRuntime {
                 retired.exactOwnershipVerified &&
                     retired.verifiedNotLive,
             ) {
-                "stale-source Heretic runtime could not be retired before current-source restart"
+                "stale-implementation Heretic runtime could not be retired before current-implementation restart"
             }
             store.delete()
-            staleSourceRotated =
+            staleImplementationRotated =
                 true
         } else if (
             prior !=
@@ -470,7 +496,7 @@ object HereticPersistentRuntime {
                 !receiptBinds(
                     binding,
                     prior,
-                    requireSourceSha = true,
+                    requireImplementationSha = true,
                 )
         ) {
             error(
@@ -480,7 +506,7 @@ object HereticPersistentRuntime {
 
         val currentPrior =
             if (
-                staleSourceRotated
+                staleImplementationRotated
             ) {
                 null
             } else {
@@ -680,7 +706,7 @@ object HereticPersistentRuntime {
         val receiptRef =
             "receipt.vexlife-prod.heretic-persistent-runtime." +
                 sha256(
-                    binding.sourceIdentity.moduleSha256 +
+                    binding.implementationIdentity.classSha256 +
                         "|" +
                         spawned.pid +
                         "|" +
@@ -771,9 +797,9 @@ object HereticPersistentRuntime {
         return StartResult(
             disposition =
                 if (
-                    staleSourceRotated
+                    staleImplementationRotated
                 ) {
-                    "ROTATED_STALE_SOURCE_AND_STARTED_NEW_EXACT_MLX_RUNTIME"
+                    "ROTATED_STALE_IMPLEMENTATION_AND_STARTED_NEW_EXACT_MLX_RUNTIME"
                 } else {
                     "STARTED_NEW_EXACT_MLX_RUNTIME"
                 },
@@ -809,7 +835,7 @@ object HereticPersistentRuntime {
             receiptBinds(
                 binding,
                 receipt,
-                requireSourceSha =
+                requireImplementationSha =
                     requireCurrentSource,
             ),
         ) {
@@ -883,7 +909,7 @@ object HereticPersistentRuntime {
     private fun receiptBinds(
         binding: Binding,
         receipt: Receipt,
-        requireSourceSha: Boolean,
+        requireImplementationSha: Boolean,
     ): Boolean {
         val expectedArgs =
             serverArgs(
@@ -928,14 +954,14 @@ object HereticPersistentRuntime {
             HereticProductIdentity.Endpoint &&
             receipt.requestModel ==
             HereticProductIdentity.RequestModel &&
-            receipt.sourceIdentity.repository ==
-            binding.sourceIdentity.repository &&
-            receipt.sourceIdentity.modulePath ==
-            binding.sourceIdentity.modulePath &&
+            receipt.implementationIdentity.repository ==
+            binding.implementationIdentity.repository &&
+            receipt.implementationIdentity.classResource ==
+            binding.implementationIdentity.classResource &&
             (
-                !requireSourceSha ||
-                    receipt.sourceIdentity.moduleSha256 ==
-                    binding.sourceIdentity.moduleSha256
+                !requireImplementationSha ||
+                    receipt.implementationIdentity.classSha256 ==
+                    binding.implementationIdentity.classSha256
             ) &&
             receipt.runtime.pid >
             0 &&
@@ -1071,7 +1097,7 @@ object HereticPersistentRuntime {
             pythonEnvironmentRoot = binding.pythonEnvironmentRoot,
             endpoint = HereticProductIdentity.Endpoint,
             requestModel = HereticProductIdentity.RequestModel,
-            sourceIdentity = binding.sourceIdentity,
+            implementationIdentity = binding.implementationIdentity,
             runtime =
                 RuntimeProcess(
                     pid = pid,
@@ -1115,6 +1141,25 @@ object HereticPersistentRuntime {
         }
         return path.normalize()
     }
+
+    private fun sha256(
+        value: ByteArray,
+    ): String =
+        MessageDigest
+            .getInstance(
+                "SHA-256",
+            )
+            .digest(
+                value,
+            )
+            .joinToString(
+                "",
+            ) {
+                "%02x".format(
+                    it.toInt() and
+                        0xff,
+                )
+            }
 
     private fun sha256(
         value: String,
