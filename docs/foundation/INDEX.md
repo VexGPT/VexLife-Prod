@@ -11,7 +11,8 @@ construction invariant, or proof burden is earned.
 | Semantic contract / Blueprint authoring | Can one VexLife relationship be compiler-visible instead of copied from examples? | `docs/foundation/SEMANTIC-CONTRACT-AUTHORING.md`, `src/commonMain/kotlin/vexlife/semantic/`, `src/commonMain/kotlin/vexlife/blueprint/` | accepted JVM/JS proof | **ACCEPTED** |
 | Compose reference realization | Can the semantic contract render through Compose without Compose becoming semantic authority? | `docs/foundation/COMPOSE-REFERENCE-REALIZATION.md`, `reference/compose/` | accepted root JVM/JS + Compose JVM proof | **ACCEPTED** |
 | VexWeb relational spatial foundation | Can browser manifestation be authored through stable relational geometry that scales without new vocabulary as region count/shape changes? | `docs/foundation/VEXWEB-COMPLETED-VIEW-BLUEPRINT.md`, `docs/foundation/VEXWEB-SPATIAL-FOUNDATION.md`, `src/commonMain/kotlin/vexlife/web/` | A002 JVM/JS compile + tests PASS; accepted tree `d109f0d648e1adeba35796b0dd0dc766d1dea4c1` | **ACCEPTED** |
-| VexWeb relational authoring | Can humans/AI author the accepted Frame / Seam / Region relationships readably without introducing another spatial ontology or renderer meaning? | `docs/foundation/VEXWEB-SPATIAL-FOUNDATION.md#f1-relational-authoring-candidate`, `src/commonMain/kotlin/vexlife/web/VexWebAuthoring.kt`, `src/commonTest/kotlin/vexlife/web/VexWebAuthoringTest.kt` | direct-object equality + 2/3/4-region authoring + fail-closed source tests formed; exact Kotlin 2.4.20 JVM/JS proof pending | **SOURCE CANDIDATE · F2 GENERATION HELD** |
+| VexWeb relational authoring | Can humans/AI author the accepted Frame / Seam / Region relationships readably without introducing another spatial ontology or renderer meaning? | `docs/foundation/VEXWEB-SPATIAL-FOUNDATION.md`, `src/commonMain/kotlin/vexlife/web/VexWebAuthoring.kt`, `src/commonTest/kotlin/vexlife/web/VexWebAuthoringTest.kt` | SourceOwner A003 exact Kotlin/JVM + Kotlin/JS regression PASS; accepted tree `9d6a6096e065c4d6582b2da086237ddc5ed19d67` | **ACCEPTED** |
+| VexWeb deterministic artifact generation | Can accepted VexWeb relationships deterministically produce source-addressable HTML/CSS/JS + a semantic manifest without generated syntax becoming source authority? | `docs/foundation/VEXWEB-ARTIFACT-GENERATION.md`, `src/commonMain/kotlin/vexlife/web/VexWebArtifacts.kt`, `src/commonTest/kotlin/vexlife/web/VexWebArtifactsTest.kt` | deterministic/source-addressable/relational-geometry tests formed; exact repository proof pending | **SOURCE CANDIDATE** |
 | Lived canonical Companion exploration threshold | Can the intended nested-browser shell converse through the canonical VexLife Conversation without becoming Conversation/model authority? | `exploration/web-workspace/` | 17/17 bounded machine proof through prompt-receipt projection + Victor lived Mac checkpoint | **EXPLORATION THRESHOLD** |
 | Web-native VexLife workspace | Can browser-native output realize the same accepted relationships? | **not yet formed** | **not yet formed** | HELD |
 | Public GitHub nested-browser practicum | Can bounded public Vex content render/navigate while preserving current identity? | **not yet formed** | **not yet formed** | HELD |
@@ -40,11 +41,16 @@ lived exploration threshold retained
 -> page-context prompt admission + canonical CLEAN_START remain held at their rightful owners
 -> does not replace accepted authoring/compiler sequence
 
+accepted
+-> F1 relational authoring over accepted spatial source
+-> exact Kotlin/JVM + Kotlin/JS regression PASS
+-> merge tree exact at c2ed37471eab9f163acd2b0cfaf979d7cdeead73
+
 current construction edge
--> authoring ergonomics over accepted relational spatial source
+-> F2 deterministic HTML/CSS/JS + semantic-manifest generation
 
 held
--> deterministic HTML/CSS/JS generator
+-> accepted/generated P1 browser workspace
 ~~~
 
 ## Architecture reference
