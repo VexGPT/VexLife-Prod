@@ -212,7 +212,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 frame.dataset.vexGeneratedPart = 'nested-browser';
                 frame.title = 'Vex browser';
                 frame.referrerPolicy = 'no-referrer';
-                frame.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin allow-popups');
+                frame.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+                frame.addEventListener('load', () => {
+                  currentBrowserContext = null;
+                  root.dataset.vexCurrentBrowserPage = '';
+                  setProgress('Waiting for browser page context…', 'browser-loading');
+                });
                 frame.style.border = '0';
                 frame.style.width = '100%';
                 frame.style.height = '100%';
