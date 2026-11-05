@@ -65,7 +65,10 @@ object VexLifeWebF0 {
             placement = VexWeb.Placement.Overlay,
             depth = VexWeb.Depth.Transient,
             presentation = VexWeb.Presentation.Surface,
-            Snackbar,
+            children =
+                listOf(
+                    Snackbar,
+                ),
         )
 
     val Send =
@@ -91,7 +94,10 @@ object VexLifeWebF0 {
             placement = VexWeb.Placement.InFlow,
             depth = VexWeb.Depth.Content,
             presentation = VexWeb.Presentation.Surface,
-            Send,
+            children =
+                listOf(
+                    Send,
+                ),
         )
 
     val Conversation =
@@ -100,7 +106,10 @@ object VexLifeWebF0 {
             placement = VexWeb.Placement.FillAvailable,
             depth = VexWeb.Depth.Content,
             presentation = VexWeb.Presentation.Surface,
-            Composer,
+            children =
+                listOf(
+                    Composer,
+                ),
         )
 
     val CompanionPane =
@@ -109,7 +118,10 @@ object VexLifeWebF0 {
             placement = VexWeb.Placement.FillAvailable,
             depth = VexWeb.Depth.Content,
             presentation = VexWeb.Presentation.Surface,
-            Conversation,
+            children =
+                listOf(
+                    Conversation,
+                ),
         )
 
     val BrowserViewport =
@@ -126,7 +138,10 @@ object VexLifeWebF0 {
             placement = VexWeb.Placement.FillAvailable,
             depth = VexWeb.Depth.Content,
             presentation = VexWeb.Presentation.Surface,
-            BrowserViewport,
+            children =
+                listOf(
+                    BrowserViewport,
+                ),
         )
 
     val SeamHandle =
