@@ -2,6 +2,7 @@ package vexlife.contract
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -54,6 +55,27 @@ class VexContractJsonTest {
                 VexContractJson.encode(
                     input,
                 ),
+            ),
+        )
+    }
+
+    @Test
+    fun canonicalEncodingRecursivelySortsKeysAndPreservesArrayOrder() {
+        val source =
+            Json.parseToJsonElement(
+                """
+                {
+                  "z": 1,
+                  "a": { "y": true, "b": null },
+                  "list": [ { "k": "v", "a": 2 } ]
+                }
+                """.trimIndent(),
+            )
+
+        assertEquals(
+            "{\"a\":{\"b\":null,\"y\":true},\"list\":[{\"a\":2,\"k\":\"v\"}],\"z\":1}",
+            VexContractJson.canonicalEncodeElement(
+                source,
             ),
         )
     }
