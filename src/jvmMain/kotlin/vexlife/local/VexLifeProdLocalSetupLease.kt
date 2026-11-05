@@ -22,7 +22,7 @@ internal object VexLifeProdLocalSetupLease {
     private const val LockSuffix =
         ".setup.lock"
 
-    internal class Held private[local] constructor(
+    internal class Held internal constructor(
         private val channel: FileChannel,
         private val lock: FileLock,
     ) : AutoCloseable {
