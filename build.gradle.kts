@@ -259,9 +259,14 @@ val serviceLauncherSource =
         "packaging/private-service-image/bin/vexlife-prod-service",
     )
 
-val serviceImageRoot =
+val serviceImageBuildRoot =
     layout.buildDirectory.dir(
         "vexlife-prod-service-image",
+    )
+
+val serviceImageOutputRoot =
+    layout.buildDirectory.dir(
+        "vexlife-prod-service-image/images",
     )
 
 val serviceImageSourceIdentityFile =
@@ -379,7 +384,7 @@ tasks.register(
         serviceLauncherSource,
     )
     outputs.dir(
-        serviceImageRoot,
+        serviceImageOutputRoot,
     )
     outputs.upToDateWhen {
         false
@@ -617,7 +622,7 @@ tasks.register(
         }
 
         val output =
-            serviceImageRoot
+            serviceImageOutputRoot
                 .get()
                 .asFile
                 .toPath()
