@@ -67,6 +67,7 @@ object VexWebArtifacts {
         )
     }
 
+    @ConsistentCopyVisibility
     private data class Fraction private constructor(
         val numerator: Long,
         val denominator: Long,
