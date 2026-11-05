@@ -10,5 +10,8 @@
   "setupWindowRelativePath": "setup/vexlife-prod-setup-window.applescript",
   "setupLauncherRelativePath": "bin/vexlife-prod-setup",
   "serviceLauncherRelativePath": "bin/vexlife-prod-service",
-  "imageManifestRelativePath": "service-image.json"
+  "imageManifestRelativePath": "service-image.json",
+  "bootstrapNamePrefix": "vexlife-prod-bootstrap-darwin-arm64-",
+  "bootstrapSuffix": ".command",
+  "bootstrapTemplateRelativePath": "packaging/bootstrap/vexlife-prod-bootstrap.command.template"
 }
