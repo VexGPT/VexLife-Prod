@@ -416,3 +416,104 @@ RELATIONAL SPATIAL FOUNDATION ACCEPTED
 ~~~
 
 <!-- [VXG RealForever][VEXWEB][SPATIAL][ACCEPTED] -->
+
+
+## F1 relational authoring candidate
+
+The accepted spatial vocabulary remains unchanged.
+
+~~~text
+Frame
+Seam
+Region
+Allocation
+Depth
+~~~
+
+F1 adds only a compiler-visible authoring surface over those exact objects:
+
+~~~text
+VexWebAuthoring.surface
+  -> exactly one content root
+  -> exactly one overlay root
+
+VexWebAuthoring.frame
+  -> verticalSeam
+  -> horizontalSeam
+  -> region
+  -> chrome
+
+VexWebAuthoring.element
+VexWebAuthoring.structural
+
+binding helpers
+  -> localSpatial
+  -> unbound
+~~~
+
+The authoring layer forms the existing `VexWeb.Surface`, `Frame`, `Seam`, `Region`,
+`Element` and `Structural` values. Their accepted constructors and validators remain authority.
+
+Permanent:
+
+~~~text
+AUTHORING SURFACE
+!= NEW SPATIAL LANGUAGE
+
+AUTHORING SURFACE
+!= RENDERER
+
+AUTHORING SURFACE
+!= HTML / CSS / JAVASCRIPT
+
+AUTHORING SURFACE
+!= GENERATOR
+~~~
+
+The earlier Split-based F1 experiment remains rejected. Its technical success does not revive its
+binary-decomposition noun.
+
+~~~text
+REJECTED:
+  Split
+  recursive binary decomposition
+  authored axis as foundational spatial language
+
+CURRENT:
+  stable Frame / Seam / Region relationships
+~~~
+
+Candidate source pressure proves:
+
+~~~text
+direct accepted object construction
+== relational authoring output
+
+2 regions
+3 irregular regions with partial Seam
+4 quadrants
+-> same F1 authoring nouns
+
+missing Surface roots
+-> fail closed
+
+interactive Node without Binding
+-> accepted VexWeb validator fails closed
+~~~
+
+The current VexLife workspace specimen is re-authored through F1 while retaining the same stable
+Blueprint/structural/seam identities.
+
+Held before F1 acceptance:
+
+~~~text
+exact Kotlin 2.4.20 JVM compile + common tests
+exact Kotlin 2.4.20 JS IR compile + test compile
+review that no renderer/generator meaning leaked into authoring
+
+F2 deterministic artifact generation
+browser runtime
+Conversation/service binding into generated output
+~~~
+
+<!-- [VXG RealForever][VEXWEB][F1][RELATIONAL-AUTHORING] -->
