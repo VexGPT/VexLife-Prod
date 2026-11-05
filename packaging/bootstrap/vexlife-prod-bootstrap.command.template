@@ -1,0 +1,94 @@
+#!/bin/bash
+set -euo pipefail
+
+REPOSITORY="@REPOSITORY@"
+SOURCE_SHA="@SOURCE_SHA@"
+RELEASE_TAG="@RELEASE_TAG@"
+ARCHIVE_NAME="@ARCHIVE_NAME@"
+ARCHIVE_SHA256="@ARCHIVE_SHA256@"
+SETUP_WINDOW_RELATIVE_PATH="@SETUP_WINDOW_RELATIVE_PATH@"
+SETUP_LAUNCHER_RELATIVE_PATH="@SETUP_LAUNCHER_RELATIVE_PATH@"
+IMAGE_MANIFEST_RELATIVE_PATH="@IMAGE_MANIFEST_RELATIVE_PATH@"
+
+fail() {
+  printf '\nVexLife setup stopped: %s\n' "$1" >&2
+  exit 1
+}
+
+case "$SOURCE_SHA" in
+  *[!0-9a-f]*|'') fail "the bootstrap source identity is invalid." ;;
+esac
+[ "${#SOURCE_SHA}" -eq 40 ] || fail "the bootstrap source identity is not one exact Git commit."
+
+case "$ARCHIVE_SHA256" in
+  *[!0-9a-f]*|'') fail "the bootstrap archive digest is invalid." ;;
+esac
+[ "${#ARCHIVE_SHA256}" -eq 64 ] || fail "the bootstrap archive digest is not SHA-256."
+
+for tool in /usr/bin/curl /usr/bin/shasum /usr/bin/tar /usr/bin/osacompile /usr/bin/plutil /usr/bin/open /usr/bin/mktemp; do
+  [ -x "$tool" ] || fail "required macOS bootstrap tool is unavailable: $tool"
+done
+
+TMP_ROOT="$(/usr/bin/mktemp -d "${TMPDIR:-/tmp}/vexlife-prod-bootstrap.XXXXXX")" \
+  || fail "a private bootstrap staging directory could not be created."
+trap '/bin/rm -rf -- "$TMP_ROOT"' EXIT HUP INT TERM
+
+ARCHIVE="$TMP_ROOT/$ARCHIVE_NAME"
+IMAGE_ROOT="$TMP_ROOT/image"
+ARCHIVE_URL="https://github.com/$REPOSITORY/releases/download/$RELEASE_TAG/$ARCHIVE_NAME"
+
+printf 'Getting exact VexLife product %s...\n' "$SOURCE_SHA"
+/usr/bin/curl \
+  --fail \
+  --location \
+  --proto '=https' \
+  --tlsv1.2 \
+  --output "$ARCHIVE" \
+  "$ARCHIVE_URL" \
+  || fail "the exact source-bound VexLife archive could not be downloaded."
+
+ACTUAL_ARCHIVE_SHA256="$(/usr/bin/shasum -a 256 "$ARCHIVE" | /usr/bin/awk '{print $1}')"
+[ "$ACTUAL_ARCHIVE_SHA256" = "$ARCHIVE_SHA256" ] \
+  || fail "the downloaded VexLife archive failed its exact SHA-256 check."
+
+/bin/mkdir "$IMAGE_ROOT" \
+  || fail "the private VexLife image staging directory could not be created."
+
+COPYFILE_DISABLE=1 /usr/bin/tar -xzf "$ARCHIVE" -C "$IMAGE_ROOT" \
+  || fail "the exact VexLife archive could not be extracted."
+
+MANIFEST="$IMAGE_ROOT/$IMAGE_MANIFEST_RELATIVE_PATH"
+SETUP_WINDOW="$IMAGE_ROOT/$SETUP_WINDOW_RELATIVE_PATH"
+SETUP_LAUNCHER="$IMAGE_ROOT/$SETUP_LAUNCHER_RELATIVE_PATH"
+
+[ -f "$MANIFEST" ] && [ ! -L "$MANIFEST" ] \
+  || fail "the extracted VexLife image is missing its source-bound manifest."
+[ -f "$SETUP_WINDOW" ] && [ ! -L "$SETUP_WINDOW" ] \
+  || fail "the extracted VexLife image is missing its native setup window."
+[ -x "$SETUP_LAUNCHER" ] && [ ! -L "$SETUP_LAUNCHER" ] \
+  || fail "the extracted VexLife image is missing its bundled setup process."
+
+MANIFEST_SOURCE_SHA="$(/usr/bin/plutil -extract sourceSha raw -o - "$MANIFEST" 2>/dev/null || true)"
+[ "$MANIFEST_SOURCE_SHA" = "$SOURCE_SHA" ] \
+  || fail "the extracted VexLife image does not bind the exact bootstrap source."
+
+WINDOW_APP="$TMP_ROOT/VexLife Prod Setup.app"
+/usr/bin/osacompile -o "$WINDOW_APP" "$SETUP_WINDOW" \
+  || fail "the exact native VexLife setup window could not be compiled."
+
+INFO_PLIST="$WINDOW_APP/Contents/Info.plist"
+[ -f "$INFO_PLIST" ] || fail "the native VexLife setup app is missing its bundle metadata."
+
+/usr/bin/plutil -replace CFBundleIdentifier -string "com.vexlife.prod.setup" "$INFO_PLIST" \
+  || fail "the native VexLife setup app could not bind its stable application identity."
+/usr/bin/plutil -insert LSMultipleInstancesProhibited -bool YES "$INFO_PLIST" \
+  || fail "the native VexLife setup app could not prohibit duplicate instances."
+/usr/bin/plutil -insert VexLifeProdExpectedSourceSha -string "$SOURCE_SHA" "$INFO_PLIST" \
+  || fail "the native VexLife setup app could not bind the exact source identity."
+/usr/bin/plutil -insert VexLifeProdSetupLauncher -string "$SETUP_LAUNCHER" "$INFO_PLIST" \
+  || fail "the native VexLife setup app could not bind the exact bundled setup process."
+
+/usr/bin/open -W "$WINDOW_APP" \
+  || fail "the native VexLife setup window could not be opened."
+
+# [VXG RealForever]
