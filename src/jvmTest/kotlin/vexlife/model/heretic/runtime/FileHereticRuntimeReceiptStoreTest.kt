@@ -3,6 +3,7 @@ package vexlife.model.heretic.runtime
 import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -156,6 +157,70 @@ class FileHereticRuntimeReceiptStoreTest {
             )
         } finally {
             productHome
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun symlinkedRuntimeDirectoryCannotRedirectReceiptCustody() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-runtime-receipt-link-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        val outside =
+            parent.resolve(
+                "outside",
+            )
+
+        try {
+            Files.createDirectory(
+                productHome,
+            )
+            Files.createDirectory(
+                outside,
+            )
+            Files.createSymbolicLink(
+                productHome.resolve(
+                    "runtime",
+                ),
+                outside,
+            )
+
+            val store =
+                FileHereticRuntimeReceiptStore(
+                    productHome,
+                )
+
+            assertFailsWith<IllegalArgumentException> {
+                store.read()
+            }
+            assertFailsWith<IllegalArgumentException> {
+                store.write(
+                    receipt(
+                        productHome,
+                    ),
+                )
+            }
+            assertFalse(
+                Files.exists(
+                    outside.resolve(
+                        "heretic/persistent-runtime-owner-receipt.json",
+                    ),
+                ),
+            )
+        } finally {
+            Files.deleteIfExists(
+                productHome.resolve(
+                    "runtime",
+                ),
+            )
+            parent
                 .toFile()
                 .deleteRecursively()
         }
