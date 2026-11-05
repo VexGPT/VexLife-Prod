@@ -313,6 +313,81 @@ class DirectCompanionTurnTest {
     }
 
     @Test
+    fun newSendRequiresFreshRuntimeCurrentnessBeforeProviderEffect() {
+        val home =
+            productHome()
+        var providerCalls =
+            0
+        var runtimeObservations =
+            0
+
+        try {
+            val failed =
+                assertFailsWith<DirectCompanionTurn.TurnException> {
+                    DirectCompanionTurn.performWithHooks(
+                        setup = setup(
+                            home,
+                        ),
+                        intent =
+                            DirectCompanionTurn.Intent(
+                                sendAttemptRef = "send.self-development.runtime-held",
+                                content = "Do not call the provider",
+                            ),
+                        hooks =
+                            DirectCompanionTurn.Hooks(
+                                transport =
+                                    DirectCompanionConnection.Transport {
+                                        providerCalls +=
+                                            1
+                                        error(
+                                            "provider must not run without current runtime evidence",
+                                        )
+                                    },
+                                currentRuntimeEvidence = {
+                                    _ ->
+                                    runtimeObservations +=
+                                        1
+                                    error(
+                                        "runtime currentness held",
+                                    )
+                                },
+                            ),
+                    )
+                }
+
+            assertEquals(
+                1,
+                runtimeObservations,
+            )
+            assertEquals(
+                0,
+                providerCalls,
+            )
+            assertFalse(
+                failed.retrySameSendAttemptAllowed,
+            )
+
+            val current =
+                DirectConversationStore(
+                    home,
+                )
+                    .current()
+            assertEquals(
+                null,
+                current.head,
+            )
+            assertEquals(
+                1,
+                current.abandonedAttempts.size,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun providerFailurePreservesRequestSuppressesSameAttemptAndAllowsNewAttempt() {
         val home =
             productHome()
