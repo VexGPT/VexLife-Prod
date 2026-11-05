@@ -12,11 +12,16 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.browser.VexLifeProdFrameHost
 import vexlife.companion.DirectCompanionTurn
+import vexlife.companion.DirectPromptContext
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.model.heretic.HereticRuntimeState
+import vexlife.web.VexLifeWebP1RuntimeArtifacts
+import vexlife.web.VexWebArtifacts
 
 /**
  * Fixed loopback service boundary for the isolated VexLife-Prod product.
@@ -29,6 +34,8 @@ class VexLifeProdLocalService private constructor(
     val sourceSha: String,
     private val startupSetup: VexLifeProdLocalSetup.Result,
     private val server: HttpServer,
+    private val frameHost: VexLifeProdFrameHost,
+    private val presentation: VexWebArtifacts.Bundle,
     private val executor: ExecutorService,
     private val turnExecutor: TurnExecutor,
 ) : AutoCloseable {
@@ -63,6 +70,11 @@ class VexLifeProdLocalService private constructor(
                         VexLifeProdServiceContract.Host,
                         VexLifeProdServiceContract.Port,
                     ),
+                frameAddress =
+                    InetSocketAddress(
+                        VexLifeProdServiceContract.Host,
+                        VexLifeProdBrowserContract.FrameHostPort,
+                    ),
                 turnExecutor =
                     TurnExecutor {
                         _,
@@ -88,6 +100,11 @@ class VexLifeProdLocalService private constructor(
                         VexLifeProdServiceContract.Host,
                         0,
                     ),
+                frameAddress =
+                    InetSocketAddress(
+                        VexLifeProdServiceContract.Host,
+                        0,
+                    ),
                 turnExecutor = turnExecutor,
             )
 
@@ -95,6 +112,7 @@ class VexLifeProdLocalService private constructor(
             sourceSha: String,
             startupSetup: VexLifeProdLocalSetup.Result,
             address: InetSocketAddress,
+            frameAddress: InetSocketAddress,
             turnExecutor: TurnExecutor,
         ): VexLifeProdLocalService {
             require(
@@ -131,17 +149,33 @@ class VexLifeProdLocalService private constructor(
 
             val executor =
                 Executors.newCachedThreadPool()
-            val server =
-                HttpServer.create(
-                    address,
-                    0,
+            val frameHost =
+                VexLifeProdFrameHost.startAt(
+                    frameAddress,
                 )
+            val server =
+                try {
+                    HttpServer.create(
+                        address,
+                        0,
+                    )
+                } catch (
+                    error: Throwable,
+                ) {
+                    frameHost.close()
+                    executor.shutdownNow()
+                    throw error
+                }
+            val presentation =
+                VexLifeWebP1RuntimeArtifacts.generate()
 
             val service =
                 VexLifeProdLocalService(
                     sourceSha = sourceSha,
                     startupSetup = startupSetup,
                     server = server,
+                    frameHost = frameHost,
+                    presentation = presentation,
                     executor = executor,
                     turnExecutor = turnExecutor,
                 )
@@ -156,7 +190,15 @@ class VexLifeProdLocalService private constructor(
                     exchange,
                 )
             }
-            server.start()
+            try {
+                server.start()
+            } catch (
+                error: Throwable,
+            ) {
+                frameHost.close()
+                executor.shutdownNow()
+                throw error
+            }
 
             return service
         }
@@ -180,10 +222,15 @@ class VexLifeProdLocalService private constructor(
         get() =
             server.address.port
 
+    val frameOrigin: String
+        get() =
+            frameHost.origin
+
     override fun close() {
         server.stop(
             0,
         )
+        frameHost.close()
         executor.shutdownNow()
     }
 
@@ -207,6 +254,34 @@ class VexLifeProdLocalService private constructor(
             when (
                 exchange.requestURI.path
             ) {
+                VexLifeProdServiceContract.PresentationIndexPath ->
+                    handlePresentation(
+                        exchange = exchange,
+                        artifactPath = "index.html",
+                        contentType = "text/html; charset=utf-8",
+                    )
+
+                VexLifeProdServiceContract.PresentationCssPath ->
+                    handlePresentation(
+                        exchange = exchange,
+                        artifactPath = "vexweb.css",
+                        contentType = "text/css; charset=utf-8",
+                    )
+
+                VexLifeProdServiceContract.PresentationJavascriptPath ->
+                    handlePresentation(
+                        exchange = exchange,
+                        artifactPath = "vexweb.js",
+                        contentType = "text/javascript; charset=utf-8",
+                    )
+
+                VexLifeProdServiceContract.PresentationManifestPath ->
+                    handlePresentation(
+                        exchange = exchange,
+                        artifactPath = "vexweb-manifest.json",
+                        contentType = "application/json; charset=utf-8",
+                    )
+
                 VexLifeProdServiceContract.SourceCurrentnessPath ->
                     handleSourceCurrentness(
                         exchange,
@@ -300,6 +375,7 @@ class VexLifeProdLocalService private constructor(
                     serviceState = "SOURCE_BOUND_LISTENING",
                     sourceSha = sourceSha,
                     processPid = ProcessHandle.current().pid(),
+                    frameHostOrigin = frameOrigin,
                     runtimeCurrentness = "NOT_REOBSERVED_BY_SERVICE",
                     startupQualifiedRuntimeReceiptRef =
                         startupSetup.qualifiedRuntimeEvidence.runtimeReceiptRef,
@@ -307,6 +383,43 @@ class VexLifeProdLocalService private constructor(
                         conversation.currentConversationHeadSha256,
                     effectsPerformed = false,
                 ),
+        )
+    }
+
+    private fun handlePresentation(
+        exchange: HttpExchange,
+        artifactPath: String,
+        contentType: String,
+    ) {
+        requireMethod(
+            exchange,
+            "GET",
+        )
+
+        val bytes =
+            presentation
+                .content(
+                    artifactPath,
+                )
+                .toByteArray(
+                    StandardCharsets.UTF_8,
+                )
+
+        exchange.responseHeaders.set(
+            "content-type",
+            contentType,
+        )
+        exchange.responseHeaders.set(
+            "cache-control",
+            "no-store",
+        )
+        exchange.sendResponseHeaders(
+            200,
+            bytes.size
+                .toLong(),
+        )
+        exchange.responseBody.write(
+            bytes,
         )
     }
 
@@ -350,6 +463,16 @@ class VexLifeProdLocalService private constructor(
                 DirectCompanionTurn.Intent(
                     sendAttemptRef = request.sendAttemptRef,
                     content = request.content,
+                    browserContext =
+                        request.browserContext
+                            ?.let {
+                                DirectPromptContext.BrowserContext(
+                                    pageUrl = it.pageUrl,
+                                    title = it.title,
+                                    text = it.text,
+                                    capture = it.capture,
+                                )
+                            },
                 ),
             )
 
@@ -395,6 +518,20 @@ class VexLifeProdLocalService private constructor(
                                 result.promptContextReceipt.memorySelectionPerformed,
                             trainingSelectionPerformed =
                                 result.promptContextReceipt.trainingSelectionPerformed,
+                            browserContextIncluded =
+                                result.promptContextReceipt.browserContextIncluded,
+                            browserContextRef =
+                                result.promptContextReceipt.browserContextRef,
+                            browserPageUrl =
+                                result.promptContextReceipt.browserPageUrl,
+                            browserTitle =
+                                result.promptContextReceipt.browserTitle,
+                            browserContextSha256 =
+                                result.promptContextReceipt.browserContextSha256,
+                            browserContextCharacters =
+                                result.promptContextReceipt.browserContextCharacters,
+                            browserContextCapture =
+                                result.promptContextReceipt.browserContextCapture,
                             effectsPerformed = result.promptContextReceipt.effectsPerformed,
                         ),
                 ),
