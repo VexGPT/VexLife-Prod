@@ -7,7 +7,7 @@ import kotlin.test.assertTrue
 
 class HereticProductModelTest {
     private val home =
-        HereticProductModel.HomeIdentity(
+        HereticModelConfiguration.HomeIdentity(
             homeRef = "home.vexlife.test",
             companionLineageRef = "lineage.vexlife.test",
         )
@@ -15,7 +15,7 @@ class HereticProductModelTest {
     @Test
     fun certifiedProductIdentityIsOneReadableContract() {
         val identity =
-            HereticProductModel.CurrentIdentity
+            HereticProductIdentity.Current
 
         assertEquals(
             "model-bundle.vexlife.heretic.qwen3.8-27b.mlx4.329658ee8f27.001",
@@ -71,7 +71,7 @@ class HereticProductModelTest {
     @Test
     fun certifiedArtifactCatalogIsCompleteAndByteExact() {
         val members =
-            HereticProductModel.CertifiedArtifactMembers
+            HereticArtifactCatalog.Members
 
         assertEquals(
             11,
@@ -96,9 +96,9 @@ class HereticProductModelTest {
         assertTrue(
             members.all {
                 it.sourceRef ==
-                    HereticProductModel.ProviderSourceRef &&
+                    HereticArtifactCatalog.ProviderSourceRef &&
                     it.licenseRef ==
-                    HereticProductModel.LicenseRef
+                    HereticArtifactCatalog.LicenseRef
             },
         )
         assertEquals(
@@ -115,12 +115,12 @@ class HereticProductModelTest {
     @Test
     fun configurationSelectionCannotSilentlyGrantRuntimeEffects() {
         val pending =
-            HereticProductModel.pendingConfiguration(
+            HereticModelConfiguration.pending(
                 home,
             )
 
         assertEquals(
-            HereticProductModel.ConfigurationState.EstablishmentPending,
+            HereticModelConfiguration.State.EstablishmentPending,
             pending.state,
         )
         assertFalse(
@@ -133,22 +133,22 @@ class HereticProductModelTest {
             pending.automaticActivation,
         )
         assertFalse(
-            HereticProductModel.isBound(
+            HereticModelConfiguration.isBound(
                 pending,
             ),
         )
 
         val bound =
-            HereticProductModel.boundConfiguration(
+            HereticModelConfiguration.bound(
                 home,
             )
 
         assertEquals(
-            HereticProductModel.ConfigurationState.BoundProductModel,
+            HereticModelConfiguration.State.BoundProductModel,
             bound.state,
         )
         assertTrue(
-            HereticProductModel.isBound(
+            HereticModelConfiguration.isBound(
                 bound,
             ),
         )
@@ -157,7 +157,7 @@ class HereticProductModelTest {
     @Test
     fun configurationRemainsHomeAndCompanionLineageScoped() {
         val configured =
-            HereticProductModel.boundConfiguration(
+            HereticModelConfiguration.bound(
                 home,
             )
 
@@ -170,11 +170,11 @@ class HereticProductModelTest {
             configured.companionLineageRef,
         )
         assertEquals(
-            HereticProductModel.ArtifactSetRef,
+            HereticProductIdentity.ArtifactSetRef,
             configured.artifactRef,
         )
         assertEquals(
-            HereticProductModel.RuntimeReceiptRelativePath,
+            HereticProductIdentity.RuntimeReceiptRelativePath,
             configured.runtimeReceiptPath,
         )
     }
