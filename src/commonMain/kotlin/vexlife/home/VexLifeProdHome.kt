@@ -22,6 +22,12 @@ object VexLifeProdHome {
     const val InitialModelConfigurationSchema =
         "vexlife-prod.model-configuration/v1"
 
+    const val DefaultPersonRef =
+        "person.local-user"
+
+    const val DefaultFamilyRef =
+        "vex-family.local-user"
+
     const val ExistingHomePolicy =
         "PRESERVE_AND_CLASSIFY"
 
