@@ -244,6 +244,10 @@ class MacUserLaunchdProcessTest {
             assertFalse(
                 receipt.keepAlive,
             )
+            assertEquals(
+                spec.environment,
+                receipt.environment,
+            )
             assertTrue(
                 Files.exists(
                     java.nio.file.Path.of(
