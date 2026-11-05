@@ -60,9 +60,7 @@ internal object VexLifeWebP1ArtifactMaterializer {
         )
 
         val bundle =
-            VexWebArtifacts.generate(
-                VexLifeWebP1.Surface,
-            )
+            VexLifeWebP1RuntimeArtifacts.generate()
 
         require(
             bundle.paths.toSet() ==
@@ -119,9 +117,7 @@ internal object VexLifeWebP1ArtifactMaterializer {
         }
 
         val bundle =
-            VexWebArtifacts.generate(
-                VexLifeWebP1.Surface,
-            )
+            VexLifeWebP1RuntimeArtifacts.generate()
 
         ExpectedPaths.forEach { name ->
             val path =
