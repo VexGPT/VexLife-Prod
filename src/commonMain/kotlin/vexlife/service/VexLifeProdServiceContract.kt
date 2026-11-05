@@ -3,10 +3,11 @@ package vexlife.service
 import kotlinx.serialization.Serializable
 
 /**
- * Shared browser/service contract for the isolated VexLife-Prod local product.
+ * Shared browser/service contract for the local VexLife implementation.
  *
  * This source owns only stable route/topology identity and wire projections. It does not own
- * Conversation meaning, Heretic lifecycle, prompt selection, presentation state, or process lifetime.
+ * Conversation meaning, Memory, Heretic lifecycle, prompt selection, presentation state, or process
+ * lifetime. Prompt projections preserve the exact source identities formed by their rightful owners.
  */
 object VexLifeProdServiceContract {
     const val SourceCurrentnessSchema =
@@ -16,7 +17,7 @@ object VexLifeProdServiceContract {
         "vexlife-prod.local-service-conversation-projection/v1"
 
     const val SendResponseSchema =
-        "vexlife-prod.local-service-send-response/v1"
+        "vexlife-prod.local-service-send-response/v2"
 
     const val ErrorSchema =
         "vexlife-prod.local-service-error/v1"
@@ -115,6 +116,9 @@ object VexLifeProdServiceContract {
         val reservedOutputTokens: Int,
         val hardTokenLimit: Int,
         val wholeHistoryEventEnumerationPerformed: Boolean,
+        val memoryContextRef: String?,
+        val memoryContextFingerprint: String?,
+        val memorySourceRefs: List<String>,
         val memoryIncluded: Boolean,
         val memorySelectionPerformed: Boolean,
         val trainingSelectionPerformed: Boolean,
@@ -158,7 +162,6 @@ object VexLifeProdServiceContract {
                 Regex(
                     "[a-z0-9](?:[a-z0-9._-]{0,220}[a-z0-9])?",
                 ),
-            ),
         ) {
             "$label must be one portable ref"
         }
