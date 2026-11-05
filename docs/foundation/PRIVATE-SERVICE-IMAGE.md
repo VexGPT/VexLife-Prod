@@ -261,6 +261,53 @@ same runnable image.
 The build implementation and runtime verifier intentionally implement this same explicit protocol.
 Changing the protocol requires a schema/version decision rather than an incidental refactor.
 
+## Source-addressed archive carriage
+
+The build also source-forms:
+
+~~~text
+./gradlew archiveVexLifeProdServiceImage
+~~~
+
+It consumes the already-formed exact image and produces:
+
+~~~text
+build/vexlife-prod-service-image/archives/<source-sha>/
+  vexlife-prod-service-image-darwin-arm64-<source-sha>.tar.gz
+  vexlife-prod-service-image-darwin-arm64-<source-sha>.tar.gz.sha256
+  vexlife-prod-service-image-darwin-arm64-<source-sha>.receipt.json
+~~~
+
+The archive uses macOS `/usr/bin/tar` with `COPYFILE_DISABLE=1` so carriage preserves the private
+image's file modes/symlinks without adding AppleDouble sidecars.
+
+The archive receipt binds:
+
+~~~text
+sourceSha
+platform = darwin-arm64
+archiveName
+archiveSha256
+archiveBytes
+imagePayloadSha256
+~~~
+
+Permanent:
+
+~~~text
+ARCHIVE
+!= IMAGE CURRENTNESS
+
+ARCHIVE SHA
+!= IMAGE PAYLOAD SHA
+
+ARCHIVE RECEIPT
+!= INSTALL AUTHORITY
+~~~
+
+The archive is carriage around the already-source-bound image. After extraction, the image verifier
+must still independently re-prove the internal payload.
+
 ## Runtime verification
 
 `VexLifeProdPrivateServiceImage.observe(imageRoot, expectedSourceSha)` performs no effects.
@@ -323,7 +370,9 @@ exact repository Gradle 9.6 / Kotlin 2.4.20 packaging execution
 real macOS arm64 JDK 21 image formation
 real jdeps module result
 real jlink runtime launch
-image archive/delivery + exact extraction
+real archive formation + archive receipt proof
+provider publication / delivery
+exact extraction
 installation into VexLife-Prod local storage
 launchd-owned product service currentness
 source rotation
