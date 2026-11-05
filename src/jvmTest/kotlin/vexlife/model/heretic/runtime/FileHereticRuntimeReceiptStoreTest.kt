@@ -84,13 +84,8 @@ class FileHereticRuntimeReceiptStoreTest {
             pythonEnvironmentRoot = environment.toString(),
             endpoint = HereticProductIdentity.Endpoint,
             requestModel = HereticProductIdentity.RequestModel,
-            sourceIdentity =
-                HereticPersistentRuntime.SourceIdentity(
-                    repository = "VexGPT/VexLife-Prod",
-                    modulePath =
-                        "src/jvmMain/kotlin/vexlife/model/heretic/runtime/HereticPersistentRuntime.kt",
-                    moduleSha256 = "a".repeat(64),
-                ),
+            implementationIdentity =
+                HereticPersistentRuntime.currentImplementationIdentity(),
             runtime =
                 HereticPersistentRuntime.RuntimeProcess(
                     pid = pid,
