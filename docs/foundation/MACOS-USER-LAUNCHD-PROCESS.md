@@ -131,6 +131,17 @@ KeepAlive is therefore an architecture change, not a reliability tweak.
 
 ## Proof boundary
 
+Disposable Kotlin/JVM 1.9 formation proof:
+
+~~~text
+production source compile             PASS
+fake launchd start -> exact receipt   PASS
+plist persisted                       PASS
+exact retire -> launchd bootout       PASS
+verified-not-live                     PASS
+plist removed after verified retire   PASS
+~~~
+
 Source candidate tests cover:
 
 - plist meaning and environment projection;
