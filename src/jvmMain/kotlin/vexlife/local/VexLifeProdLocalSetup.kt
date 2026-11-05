@@ -123,7 +123,7 @@ object VexLifeProdLocalSetup {
     fun establish(
         allowAcquisition: Boolean,
     ): Result =
-        establishAt(
+        establishSerializedAt(
             productHome =
                 VexLifeProdHomeFiles.defaultMacRoot(
                     Path.of(
@@ -135,6 +135,23 @@ object VexLifeProdLocalSetup {
             allowAcquisition = allowAcquisition,
             hooks = Hooks(),
         )
+
+    internal fun establishSerializedAt(
+        productHome: Path,
+        allowAcquisition: Boolean,
+        hooks: Hooks,
+    ): Result =
+        VexLifeProdLocalSetupLease
+            .acquire(
+                productHome,
+            )
+            .use {
+                establishAt(
+                    productHome = productHome,
+                    allowAcquisition = allowAcquisition,
+                    hooks = hooks,
+                )
+            }
 
     internal fun establishAt(
         productHome: Path,
