@@ -225,6 +225,10 @@ object VexWebArtifacts {
     }
 
     private data class Rect(
+        val sourceStart: String,
+        val sourceEnd: String,
+        val sourceTop: String,
+        val sourceBottom: String,
         val start: Fraction,
         val end: Fraction,
         val top: Fraction,
@@ -233,6 +237,12 @@ object VexWebArtifacts {
 
     private data class SeamGeometry(
         val orientation: String,
+        val sourceBetweenStart: String,
+        val sourceBetweenEnd: String,
+        val allocationBeforeParts: Int,
+        val allocationAfterParts: Int,
+        val sourceSpanStart: String,
+        val sourceSpanEnd: String,
         val position: Fraction,
         val spanStart: Fraction,
         val spanEnd: Fraction,
@@ -319,6 +329,33 @@ object VexWebArtifacts {
                         )
                 }
 
+            fun xBoundaryRef(
+                boundary: VexWeb.XBoundary,
+            ): String =
+                when (boundary) {
+                    VexWeb.XBoundary.FrameStart -> "FRAME_START"
+                    VexWeb.XBoundary.FrameEnd -> "FRAME_END"
+                    is VexWeb.XBoundary.Seam -> "SEAM:${boundary.ref.value}"
+                }
+
+            fun yBoundaryRef(
+                boundary: VexWeb.YBoundary,
+            ): String =
+                when (boundary) {
+                    VexWeb.YBoundary.FrameTop -> "FRAME_TOP"
+                    VexWeb.YBoundary.FrameBottom -> "FRAME_BOTTOM"
+                    is VexWeb.YBoundary.Seam -> "SEAM:${boundary.ref.value}"
+                }
+
+            fun ratioParts(
+                value: VexWeb.Parameter.Allocation,
+            ): Pair<Int, Int> =
+                when (value) {
+                    is VexWeb.Parameter.Allocation.Ratio ->
+                        value.beforeParts to
+                            value.afterParts
+                }
+
             fun resolveX(
                 boundary: VexWeb.XBoundary,
             ): Fraction =
@@ -389,33 +426,53 @@ object VexWebArtifacts {
                         seamGeometry[
                             seam.ref.value
                         ] =
-                            SeamGeometry(
-                                orientation = "VERTICAL",
-                                position =
-                                    resolveX(
-                                        VexWeb.XBoundary.Seam(
-                                            seam.ref,
+                            ratioParts(
+                                seam.allocation,
+                            ).let { (beforeParts, afterParts) ->
+                                SeamGeometry(
+                                    orientation = "VERTICAL",
+                                    sourceBetweenStart = xBoundaryRef(seam.between.start),
+                                    sourceBetweenEnd = xBoundaryRef(seam.between.end),
+                                    allocationBeforeParts = beforeParts,
+                                    allocationAfterParts = afterParts,
+                                    sourceSpanStart = yBoundaryRef(seam.span.top),
+                                    sourceSpanEnd = yBoundaryRef(seam.span.bottom),
+                                    position =
+                                        resolveX(
+                                            VexWeb.XBoundary.Seam(
+                                                seam.ref,
+                                            ),
                                         ),
-                                    ),
-                                spanStart = resolveY(seam.span.top),
-                                spanEnd = resolveY(seam.span.bottom),
-                            )
+                                    spanStart = resolveY(seam.span.top),
+                                    spanEnd = resolveY(seam.span.bottom),
+                                )
+                            }
 
                     is VexWeb.Seam.Horizontal ->
                         seamGeometry[
                             seam.ref.value
                         ] =
-                            SeamGeometry(
-                                orientation = "HORIZONTAL",
-                                position =
-                                    resolveY(
-                                        VexWeb.YBoundary.Seam(
-                                            seam.ref,
+                            ratioParts(
+                                seam.allocation,
+                            ).let { (beforeParts, afterParts) ->
+                                SeamGeometry(
+                                    orientation = "HORIZONTAL",
+                                    sourceBetweenStart = yBoundaryRef(seam.between.top),
+                                    sourceBetweenEnd = yBoundaryRef(seam.between.bottom),
+                                    allocationBeforeParts = beforeParts,
+                                    allocationAfterParts = afterParts,
+                                    sourceSpanStart = xBoundaryRef(seam.span.start),
+                                    sourceSpanEnd = xBoundaryRef(seam.span.end),
+                                    position =
+                                        resolveY(
+                                            VexWeb.YBoundary.Seam(
+                                                seam.ref,
+                                            ),
                                         ),
-                                    ),
-                                spanStart = resolveX(seam.span.start),
-                                spanEnd = resolveX(seam.span.end),
-                            )
+                                    spanStart = resolveX(seam.span.start),
+                                    spanEnd = resolveX(seam.span.end),
+                                )
+                            }
                 }
             }
 
@@ -426,6 +483,10 @@ object VexWebArtifacts {
                     region.ref.value
                 ] =
                     Rect(
+                        sourceStart = xBoundaryRef(region.bounds.start),
+                        sourceEnd = xBoundaryRef(region.bounds.end),
+                        sourceTop = yBoundaryRef(region.bounds.top),
+                        sourceBottom = yBoundaryRef(region.bounds.bottom),
                         start = resolveX(region.bounds.start),
                         end = resolveX(region.bounds.end),
                         top = resolveY(region.bounds.top),
@@ -650,6 +711,7 @@ object VexWebArtifacts {
             append("[data-vex-kind=\"frame\"]{position:relative;width:100%;height:100%;}\n")
             append("[data-vex-kind=\"region\"]{position:absolute;overflow:hidden;}\n")
             append("[data-vex-placement=\"fillavailable\"]{width:100%;height:100%;}\n")
+            append("[data-vex-placement=\"overlay\"]{position:absolute;inset:0;}\n")
             append("[data-vex-depth=\"content\"]{z-index:0;}\n")
             append("[data-vex-depth=\"chrome\"]{z-index:10;}\n")
             append("[data-vex-depth=\"transient\"]{z-index:20;}\n")
@@ -807,6 +869,18 @@ root?.addEventListener('click', (event) => {
                     append(json(ref))
                     append("\",\"orientation\":\"")
                     append(seam.orientation)
+                    append("\",\"betweenStart\":\"")
+                    append(json(seam.sourceBetweenStart))
+                    append("\",\"betweenEnd\":\"")
+                    append(json(seam.sourceBetweenEnd))
+                    append("\",\"allocation\":{\"beforeParts\":")
+                    append(seam.allocationBeforeParts)
+                    append(",\"afterParts\":")
+                    append(seam.allocationAfterParts)
+                    append("},\"spanStartBoundary\":\"")
+                    append(json(seam.sourceSpanStart))
+                    append("\",\"spanEndBoundary\":\"")
+                    append(json(seam.sourceSpanEnd))
                     append("\",\"position\":")
                     append(seam.position.json())
                     append(",\"spanStart\":")
@@ -825,6 +899,14 @@ root?.addEventListener('click', (event) => {
                     }
                     append("{\"ref\":\"")
                     append(json(ref))
+                    append("\",\"startBoundary\":\"")
+                    append(json(rect.sourceStart))
+                    append("\",\"endBoundary\":\"")
+                    append(json(rect.sourceEnd))
+                    append("\",\"topBoundary\":\"")
+                    append(json(rect.sourceTop))
+                    append("\",\"bottomBoundary\":\"")
+                    append(json(rect.sourceBottom))
                     append("\",\"start\":")
                     append(rect.start.json())
                     append(",\"end\":")
