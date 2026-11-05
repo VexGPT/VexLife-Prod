@@ -2,6 +2,7 @@ package vexlife.home
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -16,82 +17,84 @@ class VexLifeProdHomeTest {
             ids =
                 VexLifeProdHome.InstallationIds(
                     deviceRef =
-                        "device.vexlife-prod.00000000-0000-0000-0000-000000000001",
+                        "device.vexlife.00000000-0000-0000-0000-000000000001",
                     companionLineageRef =
-                        "companion-lineage.vexlife-prod.00000000-0000-0000-0000-000000000002",
+                        "companion-lineage.vexlife.00000000-0000-0000-0000-000000000002",
                 ),
             createdAt = "2026-11-04T17:30:00-08:00",
         )
 
     @Test
-    fun freshHomeIdentityIsSeparateFromLegacyVexLifeNamespace() {
-        assertTrue(
-            plan.manifest.homeRef.startsWith(
-                "vex-home.prod.",
-            ),
+    fun newImplementationPreservesCanonicalVexLifeHomeAndLineageIdentity() {
+        assertEquals(
+            "vexlife.home/v0",
+            plan.manifest.schemaVersion,
+        )
+        assertEquals(
+            "vex-home.${plan.installation.deviceRef}",
+            plan.manifest.homeRef,
         )
         assertTrue(
-            plan.installation.deviceRef.startsWith(
-                "device.vexlife-prod.",
-            ),
-        )
-        assertTrue(
-            plan.installation.companionLineageRef.startsWith(
-                "companion-lineage.vexlife-prod.",
-            ),
-        )
-
-        assertFalse(
             plan.installation.deviceRef.startsWith(
                 "device.vexlife.",
             ),
         )
-        assertFalse(
+        assertTrue(
             plan.installation.companionLineageRef.startsWith(
                 "companion-lineage.vexlife.",
+            ),
+        )
+
+        assertFalse(
+            plan.manifest.homeRef.startsWith(
+                "vex-home.prod.",
+            ),
+        )
+        assertFalse(
+            plan.installation.deviceRef.startsWith(
+                "device.vexlife-prod.",
+            ),
+        )
+        assertFalse(
+            plan.installation.companionLineageRef.startsWith(
+                "companion-lineage.vexlife-prod.",
             ),
         )
     }
 
     @Test
-    fun baseHomeCreatesOnlyCoordinatesOwnedByTheFoundation() {
+    fun productRuntimeCoordinatesDoNotReplaceCanonicalHomeConfiguration() {
         assertEquals(
             listOf(
                 "config",
+                "devices",
                 "runtime",
                 "recovery",
             ),
             plan.directories,
         )
         assertEquals(
-            listOf(
-                "config/home.json",
-                "config/model.json",
-                "recovery/bootstrap-receipt.json",
+            "config/model.json",
+            plan.manifest.modelConfigurationRef,
+        )
+        assertEquals(
+            "runtime/vexlife-prod/model-binding.json",
+            VexLifeProdHome.ModelConfigurationRelativePath,
+        )
+        assertTrue(
+            plan.writes.contains(
+                VexLifeProdHome.ModelConfigurationRelativePath,
             ),
-            plan.writes,
-        )
-
-        // Models, Conversations, Memory, Score, Dream, etc. are created by their rightful owners
-        // when those capabilities are ported; the Home foundation does not pre-author them.
-        assertFalse(
-            plan.directories.any {
-                it.startsWith(
-                    "models",
-                )
-            },
         )
         assertFalse(
-            plan.directories.any {
-                it.startsWith(
-                    "conversations",
-                )
-            },
+            plan.writes.contains(
+                plan.manifest.modelConfigurationRef,
+            ),
         )
     }
 
     @Test
-    fun initialModelStateCannotSilentlyDownloadFallbackOrActivate() {
+    fun productRuntimeBindingCannotSilentlyDownloadFallbackOrActivate() {
         val model =
             plan.initialModelConfiguration
 
@@ -111,7 +114,7 @@ class VexLifeProdHomeTest {
     }
 
     @Test
-    fun freshBootstrapImportsNothingAndDeletesNothing() {
+    fun bootstrapPlanPreservesExistingHumanContinuityAndDeletesNothing() {
         val receipt =
             plan.receipt
 
@@ -134,7 +137,19 @@ class VexLifeProdHomeTest {
     }
 
     @Test
-    fun homeAndCompanionRefsCanBePassedAsOneBorrowedBindingScope() {
+    fun repositoryProductNameCannotMintAnotherVexIdentity() {
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeProdHome.InstallationIds(
+                deviceRef =
+                    "device.vexlife-prod.00000000-0000-0000-0000-000000000001",
+                companionLineageRef =
+                    "companion-lineage.vexlife-prod.00000000-0000-0000-0000-000000000002",
+            )
+        }
+    }
+
+    @Test
+    fun homeAndCompanionRefsRemainOneBorrowedBindingScope() {
         val (
             homeRef,
             lineageRef,
