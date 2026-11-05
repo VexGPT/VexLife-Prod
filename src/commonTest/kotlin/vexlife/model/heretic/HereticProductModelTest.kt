@@ -42,13 +42,17 @@ class HereticProductModelTest {
             identity.runtimeAdapterRef,
         )
         assertEquals(
-            "profile.repository.vexlife.macos-v1",
+            "profile.repository.vexlife-prod.macos-v1",
             identity.hostExecutionProfileRef,
         )
         assertFalse(
             identity.hostExecutionProfileRef.contains(
                 "vextreme-sdk",
             ),
+        )
+        assertFalse(
+            identity.hostExecutionProfileRef ==
+                "profile.repository.vexlife.macos-v1",
         )
         assertEquals(
             "3.14.7",
