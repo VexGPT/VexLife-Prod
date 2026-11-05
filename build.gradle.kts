@@ -295,6 +295,11 @@ val setupLauncherSource =
         "packaging/private-service-image/bin/vexlife-prod-setup",
     )
 
+val setupWindowSource =
+    layout.projectDirectory.file(
+        "packaging/private-service-image/setup/vexlife-prod-setup-window.applescript",
+    )
+
 val serviceImageOutputRoot =
     layout.buildDirectory.dir(
         "vexlife-prod-service-image/images",
@@ -416,6 +421,9 @@ tasks.register(
     )
     inputs.file(
         setupLauncherSource,
+    )
+    inputs.file(
+        setupWindowSource,
     )
     outputs.dir(
         serviceImageOutputRoot,
@@ -689,6 +697,10 @@ tasks.register(
             output.resolve(
                 "bin",
             )
+        val setupRoot =
+            output.resolve(
+                "setup",
+            )
 
         Files.createDirectories(
             output,
@@ -698,6 +710,9 @@ tasks.register(
         )
         Files.createDirectories(
             binRoot,
+        )
+        Files.createDirectories(
+            setupRoot,
         )
 
         runExactCommand(
@@ -774,6 +789,18 @@ tasks.register(
             ),
         )
 
+        val setupWindow =
+            setupRoot.resolve(
+                "vexlife-prod-setup-window.applescript",
+            )
+        Files.copy(
+            setupWindowSource
+                .asFile
+                .toPath(),
+            setupWindow,
+            StandardCopyOption.REPLACE_EXISTING,
+        )
+
         val payloadSha256 =
             payloadFingerprint(
                 output,
@@ -840,7 +867,7 @@ tasks.register(
                     "{",
                 )
                 appendLine(
-                    "  \"schemaVersion\": \"vexlife-prod.private-service-image/v2\",",
+                    "  \"schemaVersion\": \"vexlife-prod.private-service-image/v3\",",
                 )
                 appendLine(
                     "  \"truthClass\": \"SOURCE_BOUND_PRIVATE_SERVICE_IMAGE\",",
@@ -864,6 +891,9 @@ tasks.register(
                 )
                 appendLine(
                     "  \"setupLauncher\": \"bin/vexlife-prod-setup\",",
+                )
+                appendLine(
+                    "  \"setupWindow\": \"setup/vexlife-prod-setup-window.applescript\",",
                 )
                 appendLine(
                     "  \"runtimeModules\": [" +
