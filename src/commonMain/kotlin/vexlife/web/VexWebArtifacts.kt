@@ -797,8 +797,7 @@ object VexWebArtifacts {
             append("[data-vex-placement=\"overlay\"]{position:absolute;}\n")
             append(selector(surface.overlayRoot.identity.ref))
             append("{inset:0;pointer-events:none;}\n")
-            append(selector(surface.overlayRoot.identity.ref))
-            append(" [data-vex-interactions]{pointer-events:auto;}\n")
+            append(selector(surface.overlayRoot.identity.ref))            append(" [data-vex-interactions]{pointer-events:auto;}\n")
             append("[data-vex-generated-part=\"text-field\"]{box-sizing:border-box;width:100%;min-height:2.5rem;}\n")
             append("[data-vex-generated-part=\"control\"]{cursor:pointer;}\n")
             append("[data-vex-depth=\"content\"]{z-index:0;}\n")
@@ -998,3 +997,123 @@ root?.addEventListener('click', (event) => {
                     append("\",\"spanEndBoundary\":\"")
                     append(json(seam.sourceSpanEnd))
                     append("\",\"position\":")
+                    append(seam.position.json())
+                    append(",\"spanStart\":")
+                    append(seam.spanStart.json())
+                    append(",\"spanEnd\":")
+                    append(seam.spanEnd.json())
+                    append('}')
+                }
+                append("],\"regions\":[")
+                frame.regions.entries.forEachIndexed { regionIndex, (ref, rect) ->
+                    if (
+                        regionIndex >
+                        0
+                    ) {
+                        append(',')
+                    }
+                    append("{\"ref\":\"")
+                    append(json(ref))
+                    append("\",\"startBoundary\":\"")
+                    append(json(rect.sourceStart))
+                    append("\",\"endBoundary\":\"")
+                    append(json(rect.sourceEnd))
+                    append("\",\"topBoundary\":\"")
+                    append(json(rect.sourceTop))
+                    append("\",\"bottomBoundary\":\"")
+                    append(json(rect.sourceBottom))
+                    append("\",\"start\":")
+                    append(rect.start.json())
+                    append(",\"end\":")
+                    append(rect.end.json())
+                    append(",\"top\":")
+                    append(rect.top.json())
+                    append(",\"bottom\":")
+                    append(rect.bottom.json())
+                    append('}')
+                }
+                append("]}")
+                if (
+                    frameIndex !=
+                    geometry.values.size -
+                    1
+                ) {
+                    append(',')
+                }
+                append('\n')
+            }
+            append("  ]\n")
+            append("}\n")
+        }
+
+    private fun nodeKind(
+        node: VexWeb.Node,
+    ): String =
+        when (node) {
+            is VexWeb.Frame -> "FRAME"
+            is VexWeb.Region -> "REGION"
+            is VexWeb.Element -> "BLUEPRINT_ELEMENT"
+            is VexWeb.Structural -> "STRUCTURAL"
+        }
+
+    private fun bindingJson(
+        binding: VexWeb.Binding,
+    ): String =
+        when (binding) {
+            VexWeb.Binding.None ->
+                "{\"type\":\"NONE\"}"
+
+            is VexWeb.Binding.LocalSpatial ->
+                "{\"type\":\"LOCAL_SPATIAL\",\"target\":\"${json(binding.target.value)}\"}"
+
+            is VexWeb.Binding.Unbound ->
+                when (
+                    val fallback =
+                        binding.fallback
+                ) {
+                    is VexWeb.Fallback.NotYetImplemented ->
+                        "{\"type\":\"UNBOUND\",\"fallback\":{\"type\":\"NOT_YET_IMPLEMENTED\",\"capabilityRef\":\"${json(fallback.capabilityRef.value)}\",\"feedbackTarget\":\"${json(fallback.feedbackTarget.value)}\"}}"
+                }
+        }
+
+    private fun selector(
+        ref: String,
+    ): String =
+        "[data-vex-ref=\"$ref\"]"
+
+    private fun html(
+        value: String,
+    ): String =
+        value
+            .replace("&", "&amp;")
+            .replace("\"", "&quot;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+
+    private fun jsonOrNull(
+        value: String?,
+    ): String =
+        value
+            ?.let {
+                "\"${json(it)}\""
+            }
+            ?: "null"
+
+    private fun json(
+        value: String,
+    ): String =
+        buildString {
+            value.forEach { character ->
+                when (character) {
+                    '\\' -> append("\\\\")
+                    '"' -> append("\\\"")
+                    '\n' -> append("\\n")
+                    '\r' -> append("\\r")
+                    '\t' -> append("\\t")
+                    else -> append(character)
+                }
+            }
+        }
+}
+
+// [VXG RealForever]
