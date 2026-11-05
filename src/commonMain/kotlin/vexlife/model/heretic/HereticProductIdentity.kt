@@ -41,13 +41,13 @@ object HereticProductIdentity {
         "MLX_LM_OPENAI_NUMERIC_LOOPBACK"
 
     /**
-     * Current VexLife-owned product host profile.
+     * Fresh product-owned host execution profile.
      *
-     * Historical VexLife source also recognizes an older SDK profile for legacy receipt
-     * compatibility. The fresh product does not collapse that provenance into current identity.
+     * Its eligibility meaning is faithfully ported from current VexLife Heretic setup rather than
+     * retaining the legacy repository-scoped profile identity as a runtime dependency.
      */
     const val HostExecutionProfileRef =
-        "profile.repository.vexlife.macos-v1"
+        "profile.repository.vexlife-prod.macos-v1"
 
     const val PythonVersion =
         "3.14.7"
