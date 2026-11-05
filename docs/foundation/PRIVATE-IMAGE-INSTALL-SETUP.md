@@ -37,25 +37,28 @@ VexLifeProdSetupProcess
 VEXLIFE_PROD_SETUP_READY
 ~~~
 
-## Image contract v2
+## Image contract v3
 
 This slice advances the strict private-image schema to:
 
 ~~~text
-vexlife-prod.private-service-image/v2
+vexlife-prod.private-service-image/v3
 ~~~
 
-v2 binds two private launchers:
+v3 binds the two private JVM launchers plus the source-owned native setup-window projection:
 
 ~~~text
 bin/vexlife-prod-service
 bin/vexlife-prod-setup
+setup/vexlife-prod-setup-window.applescript
 ~~~
 
-Both use the bundled Java runtime and exact image classpath.
+The JVM launchers use the bundled Java runtime and exact image classpath. The AppKit source is carried
+inside the same payload fingerprint and may only invoke the exact bundled setup launcher selected by
+the bootstrap.
 
-A v1 image cannot silently masquerade as v2 because the strict manifest shape and schema version
-change together.
+An older image cannot silently masquerade as v3 because the strict manifest shape, payload fingerprint
+and schema version change together.
 
 ## Setup process input
 
@@ -173,19 +176,22 @@ Machine-readable setup output is emitted only after:
 source image verified
 Home/local setup complete
 private image installed/reused exact
+exact macOS product service source/PID current
 ~~~
 
-The setup process still does not:
+The setup process delegates service start/reuse to `VexLifeProdMacServiceLifetime` before readiness,
+but still does not own that lifetime.
 
 ~~~text
-start long-lived service
-own launchd
-open presentation
-resolve current release
-download its own private image
+SETUP COMPOSITION
+-> calls exact service-lifetime owner
+
+SETUP COMPOSITION
+!= LAUNCHD / PROCESS CURRENTNESS OWNER
 ~~~
 
-Those remain later owners.
+It still does not open the final VexLife presentation, resolve a mutable "latest" release, or download
+its own private image. Those remain separate boundaries.
 
 ## Source-formed proof
 
@@ -203,46 +209,80 @@ exact installed image reuses with zero mutation
 invalid installed image is preserved/held
 arbitrary directory cannot masquerade as Home
 
-private image v2 verifies both service + setup launchers
+private image v3 verifies service + setup launchers + native setup-window source
+service currentness precedes SETUP_READY
 ~~~
 
 ## Held
 
 ~~~text
 exact Gradle/Kotlin proof
-real private image v2 build
-real archive extraction
+real private image v3 build
+real archive/bootstrap generation + extraction
+real native AppKit setup window
 real setup process from extracted image
 real 15GB artifact acquisition/reuse
 real install into Product Home
-provider release publication / bootstrap carriage
-launchd service lifetime
+real launchd service currentness after setup
+provider release publication
 presentation
 ordinary human entry
 ~~~
 
 ## Bootstrap consequence
 
-The eventual pre-JVM bootstrap only needs to own carriage:
+The pre-JVM bootstrap is now source-formed as **carriage only**.
 
 ~~~text
-resolve desired exact release source
-download exact archive/receipt
-verify archive bytes
-extract to temporary staging
-invoke staged bin/vexlife-prod-setup with explicit human authorization
+source-owned release contract
++ exact archive/source identity
+        ↓
+archiveVexLifeProdServiceImage
+        ↓
+exact digest-bound bootstrap .command
+        ↓
+GitHub Release asset URL for exact source tag
+        ↓
+download exact archive
+        ↓
+verify embedded archive SHA-256
+        ↓
+extract into private temporary staging
+        ↓
+verify extracted manifest binds same source
+        ↓
+compile/open packaged AppKit setup window
+        ↓
+window carries explicit human acquisition consent
+        ↓
+bundled setup process
 ~~~
 
-It should not:
+The bootstrap does not:
 
 ~~~text
 pre-create Product Home
 choose install paths
 run model commands directly
 write Home manifests
+own Heretic runtime
 own service launchd
+invent presentation state
 ~~~
 
-That keeps the bootstrap replaceable and small.
+Release naming is owned by:
+
+~~~text
+packaging/private-service-image/release-contract.json
+~~~
+
+The archive task consumes that contract and the bootstrap template mechanically. A release-contract
+field that is not source-valid therefore fails formation rather than becoming remembered provider
+convention.
+
+The generated bootstrap is pinned to one source SHA and one archive SHA-256. It is **not** a mutable
+"latest" pointer. Provider publication/current-channel selection remains held.
+
+That keeps carriage replaceable and small.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][PRIVATE-IMAGE-INSTALL-SETUP] -->
