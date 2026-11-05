@@ -147,60 +147,61 @@ class VexLifeProdLocalService private constructor(
             )
                 .current()
 
+            val presentation =
+                VexLifeWebP1RuntimeArtifacts.generate()
             val executor =
                 Executors.newCachedThreadPool()
-            val frameHost =
-                VexLifeProdFrameHost.startAt(
-                    frameAddress,
-                )
-            val server =
-                try {
+            var frameHost: VexLifeProdFrameHost? =
+                null
+            var server: HttpServer? =
+                null
+
+            try {
+                frameHost =
+                    VexLifeProdFrameHost.startAt(
+                        frameAddress,
+                    )
+                server =
                     HttpServer.create(
                         address,
                         0,
                     )
-                } catch (
-                    error: Throwable,
+                val service =
+                    VexLifeProdLocalService(
+                        sourceSha = sourceSha,
+                        startupSetup = startupSetup,
+                        server = server,
+                        frameHost = frameHost,
+                        presentation = presentation,
+                        executor = executor,
+                        turnExecutor = turnExecutor,
+                    )
+
+                server.executor =
+                    executor
+                server.createContext(
+                    "/",
                 ) {
-                    frameHost.close()
-                    executor.shutdownNow()
-                    throw error
+                    exchange ->
+                    service.handle(
+                        exchange,
+                    )
                 }
-            val presentation =
-                VexLifeWebP1RuntimeArtifacts.generate()
-
-            val service =
-                VexLifeProdLocalService(
-                    sourceSha = sourceSha,
-                    startupSetup = startupSetup,
-                    server = server,
-                    frameHost = frameHost,
-                    presentation = presentation,
-                    executor = executor,
-                    turnExecutor = turnExecutor,
-                )
-
-            server.executor =
-                executor
-            server.createContext(
-                "/",
-            ) {
-                exchange ->
-                service.handle(
-                    exchange,
-                )
-            }
-            try {
                 server.start()
+
+                return service
             } catch (
                 error: Throwable,
             ) {
-                frameHost.close()
+                server
+                    ?.stop(
+                        0,
+                    )
+                frameHost
+                    ?.close()
                 executor.shutdownNow()
                 throw error
             }
-
-            return service
         }
     }
 
