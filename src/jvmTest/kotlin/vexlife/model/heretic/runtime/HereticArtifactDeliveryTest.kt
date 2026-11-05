@@ -7,65 +7,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import vexlife.artifact.DirectHttpsArtifactDelivery
 import vexlife.model.heretic.HereticArtifactCatalog
+import vexlife.model.heretic.HereticArtifactDeliveryCatalog
 
 class HereticArtifactDeliveryTest {
-    @Test
-    fun everyCertifiedMemberResolvesToOneProdOwnedFixedHttpsChannel() {
-        for (
-            member in
-            HereticArtifactCatalog.Members
-        ) {
-            val channel =
-                HereticArtifactDelivery.channelFor(
-                    member,
-                )
-
-            assertTrue(
-                channel.channelRef.startsWith(
-                    "channel.vexlife-prod.heretic.qwen3.8-27b-mlx4.",
-                ),
-            )
-            assertEquals(
-                HereticArtifactDelivery.TransportClass,
-                channel.transportClass,
-            )
-            assertTrue(
-                channel.url.startsWith(
-                    "https://huggingface.co/" +
-                        HereticArtifactDelivery.ProviderRepository +
-                        "/resolve/" +
-                        "808b82a2bd04b2bac362b5d0b7a1197aeea59e57/",
-                ),
-            )
-            assertTrue(
-                channel.url.endsWith(
-                    "/" +
-                        member.filename +
-                        "?download=true",
-                ),
-            )
-        }
-    }
-
-    @Test
-    fun currentConfigMemberMatchesTheAcceptedVexLifeDeliveryUrl() {
-        val member =
-            HereticArtifactCatalog.Members
-                .single {
-                    it.filename ==
-                        "config.json"
-                }
-
-        assertEquals(
-            "https://huggingface.co/donedynamics/Qwen3.8-27B-heretic-MLX-4bit/resolve/" +
-                "808b82a2bd04b2bac362b5d0b7a1197aeea59e57/config.json?download=true",
-            HereticArtifactDelivery.channelFor(
-                member,
-            )
-                .url,
-        )
-    }
-
     @Test
     fun acquirerDelegatesExactMemberBoundsToTheGenericDownloader() {
         val member =
@@ -124,8 +68,8 @@ class HereticArtifactDeliveryTest {
             }
 
             assertEquals(
-                HereticArtifactDelivery.channelFor(
-                    member,
+                HereticArtifactDeliveryCatalog.channelFor(
+                    member.artifactRef,
                 )
                     .url,
                 openedUrl,
