@@ -30,8 +30,20 @@ object HereticPersistentRuntime {
     const val StopActionRef =
         "action.vexlife.heretic-persistent-runtime.stop-exact-owned-runtime"
 
-    const val Port =
-        8765
+    val Port: Int =
+        HereticProductIdentity.Endpoint
+            .substringAfterLast(
+                ":",
+            )
+            .toInt()
+            .also {
+                require(
+                    it in
+                        1024..65535,
+                ) {
+                    "Heretic product endpoint must expose one unprivileged runtime port"
+                }
+            }
 
     const val OwnershipTimeoutMs =
         30_000L
