@@ -1,5 +1,7 @@
 package vexlife.platform.macos
 
+import kotlinx.serialization.Serializable
+
 import java.nio.charset.StandardCharsets
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
@@ -79,6 +81,7 @@ object MacUserLaunchdProcess {
         val keepAlive: Boolean,
     )
 
+    @Serializable
     data class Receipt(
         val schemaVersion: String,
         val substrateRef: String,
