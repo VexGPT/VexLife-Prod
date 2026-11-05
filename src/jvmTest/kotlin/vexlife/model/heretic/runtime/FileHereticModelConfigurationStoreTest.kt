@@ -7,31 +7,14 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.home.VexLifeProdHome
-import vexlife.home.VexLifeProdHomeFiles
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeState
 
 class FileHereticModelConfigurationStoreTest {
-    private fun plan(): VexLifeProdHome.BootstrapPlan =
-        VexLifeProdHome.plan(
-            personRef = "person.local-user",
-            familyRef = "vex-family.local-user",
-            deviceName = "Test Mac",
-            platform = "darwin",
-            architecture = "arm64",
-            ids =
-                VexLifeProdHome.InstallationIds(
-                    deviceRef =
-                        "device.vexlife-prod.00000000-0000-0000-0000-000000000001",
-                    companionLineageRef =
-                        "companion-lineage.vexlife-prod.00000000-0000-0000-0000-000000000002",
-                ),
-            createdAt = "2026-11-04T17:30:00-08:00",
-        )
-
     private fun qualifiedRuntime(): HereticModelConfiguration.QualifiedRuntimeEvidence =
         HereticModelConfiguration.QualifiedRuntimeEvidence(
             runtimeReceiptRef = "receipt.vexlife-prod.heretic.test",
@@ -48,22 +31,29 @@ class FileHereticModelConfigurationStoreTest {
         )
 
     @Test
-    fun freshHomeTransitionsExplicitlyFromUnconfiguredToPendingToBound() {
+    fun canonicalHomeGetsASeparateProductRuntimeBindingWithoutConfigRewrite() {
         val parent =
             Files.createTempDirectory(
-                "vexlife-prod-model-config-",
+                "vexlife-prod-model-binding-",
             )
                 .toAbsolutePath()
         val home =
             parent.resolve(
-                "VexLife-Prod",
+                ".vexlife",
             )
 
         try {
-            val bootstrap =
-                VexLifeProdHomeFiles.bootstrap(
+            val fixture =
+                CanonicalVexLifeHomeFixture.form(
                     home,
-                    plan(),
+                )
+            val canonicalModelPath =
+                home.resolve(
+                    "config/model.json",
+                )
+            val canonicalModelBefore =
+                Files.readString(
+                    canonicalModelPath,
                 )
             val store =
                 FileHereticModelConfigurationStore(
@@ -72,20 +62,20 @@ class FileHereticModelConfigurationStoreTest {
 
             assertIs<FileHereticModelConfigurationStore.Snapshot.Unconfigured>(
                 store.read(
-                    bootstrap.manifest,
+                    fixture.manifest,
                 ),
             )
 
             assertFailsWith<IllegalArgumentException> {
                 store.bindQualified(
-                    manifest = bootstrap.manifest,
+                    manifest = fixture.manifest,
                     qualifiedRuntime = qualifiedRuntime(),
                 )
             }
 
             val selected =
                 store.selectHeretic(
-                    bootstrap.manifest,
+                    fixture.manifest,
                 )
 
             assertEquals(
@@ -102,7 +92,7 @@ class FileHereticModelConfigurationStoreTest {
 
             val selectedAgain =
                 store.selectHeretic(
-                    bootstrap.manifest,
+                    fixture.manifest,
                 )
 
             assertEquals(
@@ -115,7 +105,7 @@ class FileHereticModelConfigurationStoreTest {
 
             val bound =
                 store.bindQualified(
-                    manifest = bootstrap.manifest,
+                    manifest = fixture.manifest,
                     qualifiedRuntime = qualifiedRuntime(),
                 )
 
@@ -134,7 +124,7 @@ class FileHereticModelConfigurationStoreTest {
 
             val rebound =
                 store.bindQualified(
-                    manifest = bootstrap.manifest,
+                    manifest = fixture.manifest,
                     qualifiedRuntime = qualifiedRuntime(),
                 )
 
@@ -149,13 +139,26 @@ class FileHereticModelConfigurationStoreTest {
             val current =
                 assertIs<FileHereticModelConfigurationStore.Snapshot.Heretic>(
                     store.read(
-                        bootstrap.manifest,
+                        fixture.manifest,
                     ),
                 )
 
             assertEquals(
                 HereticModelConfiguration.State.BoundProductModel,
                 current.value.state,
+            )
+            assertTrue(
+                Files.isRegularFile(
+                    home.resolve(
+                        VexLifeProdHome.ModelConfigurationRelativePath,
+                    ),
+                ),
+            )
+            assertEquals(
+                canonicalModelBefore,
+                Files.readString(
+                    canonicalModelPath,
+                ),
             )
         } finally {
             parent
