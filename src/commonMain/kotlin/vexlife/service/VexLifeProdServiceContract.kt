@@ -52,8 +52,8 @@ object VexLifeProdServiceContract {
         val productRef: String,
         val serviceState: String,
         val sourceSha: String,
-        val runtimeState: String,
-        val runtimeReceiptRef: String,
+        val runtimeCurrentness: String,
+        val startupQualifiedRuntimeReceiptRef: String,
         val currentConversationHeadSha256: String?,
         val effectsPerformed: Boolean,
     )
