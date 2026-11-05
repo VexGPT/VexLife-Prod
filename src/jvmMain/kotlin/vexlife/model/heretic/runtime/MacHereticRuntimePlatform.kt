@@ -489,7 +489,7 @@ class MacHereticRuntimePlatform(
         val spec =
             MacUserLaunchdProcess.form(
                 label =
-                    "com.vexlife.heretic.$launchId",
+                    "com.vexlife.prod.heretic.$launchId",
                 plistPath =
                     runtimeRoot
                         .resolve(
