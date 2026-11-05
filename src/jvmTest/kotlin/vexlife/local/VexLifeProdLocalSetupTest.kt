@@ -317,6 +317,14 @@ class VexLifeProdLocalSetupTest {
                 result.state,
             )
             assertEquals(
+                HereticRuntimeState.Qualified,
+                result.qualifiedRuntimeEvidence.runtimeState,
+            )
+            assertEquals(
+                HereticProductIdentity.Endpoint,
+                result.qualifiedRuntimeEvidence.endpoint,
+            )
+            assertEquals(
                 "NEW_HOME_FORMED",
                 result.homeDisposition,
             )
