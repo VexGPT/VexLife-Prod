@@ -7,6 +7,7 @@ import java.net.URL
 import java.nio.file.Path
 import java.time.Instant
 import java.util.UUID
+import vexlife.filesystem.VexOwnedPath
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.platform.macos.MacUserLaunchdProcess
@@ -19,7 +20,7 @@ import vexlife.platform.macos.MacUserLaunchdProcess
  * MLX qualification effects.
  */
 class MacHereticRuntimePlatform(
-    runtimeRoot: Path,
+    productHome: Path,
     private val launchdHost: MacUserLaunchdProcess.Host =
         MacUserLaunchdProcess.SystemHost,
     private val processInspector: ProcessInspector =
@@ -35,16 +36,17 @@ class MacHereticRuntimePlatform(
         Instant.now()
     },
 ) : HereticPersistentRuntime.Platform {
+    private val productHome =
+        VexOwnedPath.requireRoot(
+            productHome,
+            "VexLife-Prod Home",
+        )
+
     private val runtimeRoot =
-        runtimeRoot
-            .also {
-                require(
-                    it.isAbsolute,
-                ) {
-                    "Heretic runtime root must be absolute"
-                }
-            }
-            .normalize()
+        VexOwnedPath.resolveInside(
+            this.productHome,
+            "runtime/heretic",
+        )
 
     override val platform: String =
         when (
@@ -475,6 +477,40 @@ class MacHereticRuntimePlatform(
         binding: HereticPersistentRuntime.Binding,
         args: List<String>,
     ): HereticPersistentRuntime.Spawned {
+        require(
+            VexOwnedPath.observeDirectory(
+                productHome,
+                Path.of(
+                    binding.modelPath,
+                ),
+            ) ==
+                VexOwnedPath.DirectoryState.Present,
+        ) {
+            "Heretic model path is not inside one current owned Prod Home directory chain"
+        }
+        require(
+            VexOwnedPath.observeDirectory(
+                productHome,
+                Path.of(
+                    binding.pythonEnvironmentRoot,
+                ),
+            ) ==
+                VexOwnedPath.DirectoryState.Present,
+        ) {
+            "Heretic Python environment is not inside one current owned Prod Home directory chain"
+        }
+
+        VexOwnedPath.ensureDirectory(
+            productHome,
+            runtimeRoot,
+        )
+        VexOwnedPath.ensureDirectory(
+            productHome,
+            runtimeRoot.resolve(
+                "launchd",
+            ),
+        )
+
         val launchId =
             UUID
                 .randomUUID()
