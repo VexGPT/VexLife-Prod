@@ -122,11 +122,17 @@ arm64 / Apple Silicon
 JDK 21 build tools
 ~~~
 
-The packaging task therefore fails closed unless it is running on macOS arm64 with JDK 21
-`jdeps` + `jlink`.
+The packaging task therefore fails closed unless it is running on macOS arm64 and can resolve one
+exact JDK 21 toolchain with executable `jdeps` + `jlink`.
 
-The fresh **user** does not need JDK 21. The JDK is a build-host requirement; the resulting image
-contains its own custom runtime.
+The Gradle launcher/build JVM is a separate construction concern and does **not** need to be Java 21.
+The service-image task asks Gradle's Java toolchain owner for JDK 21 and uses that installation's tools.
+If no matching JDK is already installed, the settings-level Foojay resolver may provision one into
+Gradle-managed toolchain storage. That provisioned JDK remains build tooling; it does not become product
+runtime state or a fresh-user prerequisite.
+
+The fresh **user** does not need JDK 21. The resulting private image contains its own custom Java 21
+runtime.
 
 ## Dependency formation
 
