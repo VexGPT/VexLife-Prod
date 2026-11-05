@@ -75,6 +75,10 @@ class VexLifeProdPrivateServiceImageTest {
             root.resolve(
                 VexLifeProdPrivateServiceImage.LauncherRelativePath,
             )
+        val setupLauncher =
+            root.resolve(
+                VexLifeProdPrivateServiceImage.SetupLauncherRelativePath,
+            )
         val app =
             root.resolve(
                 "lib/vexlife-prod.jar",
@@ -97,6 +101,10 @@ class VexLifeProdPrivateServiceImageTest {
             "#!/bin/bash\nexit 0\n",
         )
         Files.writeString(
+            setupLauncher,
+            "#!/bin/bash\nexit 0\n",
+        )
+        Files.writeString(
             app,
             "app",
         )
@@ -115,6 +123,14 @@ class VexLifeProdPrivateServiceImageTest {
         )
         Files.setPosixFilePermissions(
             launcher,
+            setOf(
+                PosixFilePermission.OWNER_READ,
+                PosixFilePermission.OWNER_WRITE,
+                PosixFilePermission.OWNER_EXECUTE,
+            ),
+        )
+        Files.setPosixFilePermissions(
+            setupLauncher,
             setOf(
                 PosixFilePermission.OWNER_READ,
                 PosixFilePermission.OWNER_WRITE,
@@ -161,6 +177,7 @@ class VexLifeProdPrivateServiceImageTest {
                 javaRuntimeMajor = VexLifeProdPrivateServiceImage.JavaRuntimeMajor,
                 mainClass = VexLifeProdPrivateServiceImage.MainClass,
                 launcher = VexLifeProdPrivateServiceImage.LauncherRelativePath,
+                setupLauncher = VexLifeProdPrivateServiceImage.SetupLauncherRelativePath,
                 runtimeModules =
                     listOf(
                         "java.base",
@@ -231,6 +248,13 @@ class VexLifeProdPrivateServiceImageTest {
                 )
                     .toString(),
                 observed.launcherPath,
+            )
+            assertEquals(
+                root.resolve(
+                    VexLifeProdPrivateServiceImage.SetupLauncherRelativePath,
+                )
+                    .toString(),
+                observed.setupLauncherPath,
             )
             assertFalse(
                 observed.effectsPerformed,
