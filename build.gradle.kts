@@ -259,11 +259,6 @@ val serviceLauncherSource =
         "packaging/private-service-image/bin/vexlife-prod-service",
     )
 
-val serviceImageBuildRoot =
-    layout.buildDirectory.dir(
-        "vexlife-prod-service-image",
-    )
-
 val serviceImageOutputRoot =
     layout.buildDirectory.dir(
         "vexlife-prod-service-image/images",
