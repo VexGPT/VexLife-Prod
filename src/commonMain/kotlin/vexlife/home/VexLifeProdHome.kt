@@ -55,6 +55,20 @@ object VexLifeProdHome {
                 companionLineageRef,
                 "companionLineageRef",
             )
+            require(
+                deviceRef.startsWith(
+                    "device.vexlife-prod.",
+                ),
+            ) {
+                "deviceRef must belong to the VexLife-Prod installation namespace"
+            }
+            require(
+                companionLineageRef.startsWith(
+                    "companion-lineage.vexlife-prod.",
+                ),
+            ) {
+                "companionLineageRef must belong to the VexLife-Prod lineage namespace"
+            }
         }
     }
 
@@ -165,7 +179,9 @@ object VexLifeProdHome {
 
         val homeRef =
             "vex-home.prod." +
-                ids.deviceRef
+                ids.deviceRef.removePrefix(
+                    "device.vexlife-prod.",
+                )
 
         val manifest =
             Manifest(
