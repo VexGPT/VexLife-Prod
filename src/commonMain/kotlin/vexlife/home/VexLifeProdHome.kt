@@ -241,11 +241,106 @@ object VexLifeProdHome {
         )
     }
 
+    fun validateManifest(
+        manifest: Manifest,
+    ): Manifest {
+        require(
+            manifest.schemaVersion ==
+                HomeSchema,
+        ) {
+            "VexLife-Prod Home manifest schema is not current"
+        }
+        requireRef(
+            manifest.homeRef,
+            "homeRef",
+        )
+        require(
+            manifest.homeRef.startsWith(
+                "vex-home.prod.",
+            ),
+        ) {
+            "homeRef must belong to the VexLife-Prod Home namespace"
+        }
+        requireRef(
+            manifest.familyRef,
+            "familyRef",
+        )
+        require(
+            manifest.createdAt.isNotBlank(),
+        ) {
+            "VexLife-Prod Home manifest requires formed time"
+        }
+        requireRef(
+            manifest.currentDeviceRef,
+            "currentDeviceRef",
+        )
+        require(
+            manifest.currentDeviceRef.startsWith(
+                "device.vexlife-prod.",
+            ),
+        ) {
+            "currentDeviceRef must belong to the VexLife-Prod installation namespace"
+        }
+        requireRef(
+            manifest.currentCompanionLineageRef,
+            "currentCompanionLineageRef",
+        )
+        require(
+            manifest.currentCompanionLineageRef.startsWith(
+                "companion-lineage.vexlife-prod.",
+            ),
+        ) {
+            "currentCompanionLineageRef must belong to the VexLife-Prod lineage namespace"
+        }
+        require(
+            manifest.modelConfigurationRef ==
+                ModelConfigurationRelativePath,
+        ) {
+            "VexLife-Prod Home manifest model configuration coordinate drift"
+        }
+        require(
+            manifest.existingHomePolicy ==
+                ExistingHomePolicy,
+        ) {
+            "VexLife-Prod Home manifest preservation policy drift"
+        }
+
+        return manifest
+    }
+
+    fun validateInitialModelConfiguration(
+        value: InitialModelConfiguration,
+    ): InitialModelConfiguration {
+        require(
+            value.schemaVersion ==
+                InitialModelConfigurationSchema &&
+                value.state ==
+                "UNCONFIGURED" &&
+                value.endpoint ==
+                null &&
+                value.activeArtifactRef ==
+                null &&
+                !value.automaticFallback &&
+                !value.automaticDownload &&
+                !value.automaticActivation,
+        ) {
+            "initial VexLife-Prod model configuration is not the exact unconfigured state"
+        }
+
+        return value
+    }
+
     fun bindingScope(
         manifest: Manifest,
-    ): Pair<String, String> =
-        manifest.homeRef to
-            manifest.currentCompanionLineageRef
+    ): Pair<String, String> {
+        val current =
+            validateManifest(
+                manifest,
+            )
+
+        return current.homeRef to
+            current.currentCompanionLineageRef
+    }
 
     private fun requireRef(
         value: String,
