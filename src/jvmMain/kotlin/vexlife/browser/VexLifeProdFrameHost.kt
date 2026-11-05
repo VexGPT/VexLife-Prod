@@ -456,12 +456,19 @@ class VexLifeProdFrameHost private constructor(
               };
 
               let reportTimer = null;
+              const currentPageUrl = () => {
+                if (!location.hostname.endsWith(FRAME_SUFFIX)) return SOURCE_URL;
+                const upstreamHost = location.hostname.slice(0, -FRAME_SUFFIX.length);
+                if (!ADMITTED_HOSTS.includes(upstreamHost)) return SOURCE_URL;
+                return 'https://' + upstreamHost + location.pathname + location.search + location.hash;
+              };
+
               const report = () => {
                 reportTimer = null;
                 const text = (document.body?.innerText || '').slice(0, TEXT_LIMIT);
                 parent.postMessage({
                   type: MESSAGE_TYPE,
-                  pageUrl: SOURCE_URL,
+                  pageUrl: currentPageUrl(),
                   title: document.title || null,
                   text,
                   capture: 'RENDERED'
@@ -480,7 +487,7 @@ class VexLifeProdFrameHost private constructor(
                 if (!raw || raw.startsWith('#')) return;
                 let target;
                 try {
-                  target = new URL(raw, SOURCE_URL).href;
+                  target = new URL(raw, currentPageUrl()).href;
                 } catch {
                   event.preventDefault();
                   return;
