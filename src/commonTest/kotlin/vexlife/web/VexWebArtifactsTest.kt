@@ -72,7 +72,12 @@ class VexWebArtifactsTest {
         )
         assertTrue(
             first.css.contains(
-                "[data-vex-placement=\"overlay\"]{position:absolute;inset:0;pointer-events:none;}",
+                "[data-vex-placement=\"overlay\"]{position:absolute;}",
+            ),
+        )
+        assertTrue(
+            first.css.contains(
+                "[data-vex-ref=\"${VexLifeWebF0.Refs.OverlayRoot.value}\"]{inset:0;pointer-events:none;}",
             ),
         )
         assertTrue(
