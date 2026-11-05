@@ -156,6 +156,7 @@ object DirectCompanionConnection {
         }
     }
 
+    @Serializable
     data class ReportedModelField(
         val present: Boolean,
         val valueType: String?,
@@ -165,6 +166,7 @@ object DirectCompanionConnection {
         val rawValuePersisted: Boolean,
     )
 
+    @Serializable
     data class ReasoningTrace(
         val present: Boolean,
         val contentSha256: String?,
@@ -175,6 +177,7 @@ object DirectCompanionConnection {
         val trainingProjection: String,
     )
 
+    @Serializable
     data class RuntimeObservation(
         val schemaVersion: String,
         val truthClass: String,
@@ -196,6 +199,7 @@ object DirectCompanionConnection {
         val semanticFingerprint: String,
     )
 
+    @Serializable
     data class ObservedEffects(
         val modelRuntimeObserved: Boolean,
         val providerOrNetworkObserved: Boolean,
@@ -205,6 +209,7 @@ object DirectCompanionConnection {
         val modelWeightEffectObserved: Boolean,
     )
 
+    @Serializable
     data class InvocationEvidence(
         val schemaVersion: String,
         val truthClass: String,
