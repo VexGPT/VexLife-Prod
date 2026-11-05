@@ -394,6 +394,102 @@ object HereticPersistentRuntime {
         )
     }
 
+    /**
+     * Re-observe one already-qualified runtime without lifecycle mutation or another qualification
+     * inference. This is the currentness gate for long-lived consumers such as the local product
+     * service.
+     */
+    fun observeCurrentQualified(
+        binding: Binding,
+        store: ReceiptStore,
+        platform: Platform,
+    ): HereticModelConfiguration.QualifiedRuntimeEvidence {
+        validateBinding(
+            binding,
+        )
+        require(
+            platform.platform ==
+                "darwin" &&
+                platform.architecture ==
+                "arm64",
+        ) {
+            "Heretic runtime currentness requires darwin/arm64"
+        }
+        require(
+            platform.environmentCurrent(
+                binding,
+            ),
+        ) {
+            "Heretic runtime currentness requires the exact current environment"
+        }
+
+        val receipt =
+            requireNotNull(
+                store.read(),
+            ) {
+                "Heretic runtime currentness requires one existing receipt"
+            }
+
+        require(
+            receiptBinds(
+                binding = binding,
+                receipt = receipt,
+                requireImplementationSha = true,
+            ) &&
+                receipt.state ==
+                HereticRuntimeState.Qualified &&
+                receipt.qualification !=
+                null,
+        ) {
+            "Heretic runtime currentness requires one exact qualified current receipt"
+        }
+
+        val args =
+            serverArgs(
+                binding,
+            )
+
+        require(
+            platform.processAlive(
+                receipt.runtime.pid,
+            ),
+        ) {
+            "qualified Heretic runtime receipt process is not live"
+        }
+
+        val matching =
+            platform.matchingProcesses(
+                args,
+            )
+        require(
+            matching.size ==
+                1 &&
+                matching.single().pid ==
+                receipt.runtime.pid &&
+                matching.single().processGroupId ==
+                receipt.runtime.processGroupId &&
+                matching.single().exactOwnedDetachedGroup,
+        ) {
+            "qualified Heretic runtime is not the one exact matching process"
+        }
+
+        requireExactOwnedProcess(
+            receipt = receipt,
+            args = args,
+            platform = platform,
+        )
+
+        platform.waitUntilHealthy(
+            binding,
+            receipt.runtime.pid,
+        )
+
+        return configurationEvidence(
+            binding = binding,
+            receipt = receipt,
+        )
+    }
+
     fun serverArgs(
         binding: Binding,
     ): List<String> {
