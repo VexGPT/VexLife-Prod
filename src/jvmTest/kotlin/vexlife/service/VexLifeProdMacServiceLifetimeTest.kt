@@ -1,5 +1,6 @@
 package vexlife.service
 
+import vexlife.browser.VexLifeProdBrowserContract
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.LinkOption
@@ -489,6 +490,7 @@ class VexLifeProdMacServiceLifetimeTest {
             serviceState = state,
             sourceSha = sourceSha,
             processPid = pid,
+            frameHostOrigin = VexLifeProdBrowserContract.FrameHostOrigin,
             runtimeCurrentness = "NOT_REOBSERVED_BY_SERVICE",
             startupQualifiedRuntimeReceiptRef =
                 "receipt.vexlife-prod.heretic.service-lifetime-test",
