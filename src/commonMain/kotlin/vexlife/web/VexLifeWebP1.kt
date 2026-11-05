@@ -157,9 +157,8 @@ object VexLifeWebP1 {
                     VexWeb.Interaction.Activate,
                 ),
             binding =
-                VexWebAuthoring.unbound(
-                    capabilityRef = Refs.ConversationSendCapability,
-                    feedbackTarget = Refs.Snackbar,
+                VexWebAuthoring.capability(
+                    Refs.ConversationSendCapability,
                 ),
         )
 
