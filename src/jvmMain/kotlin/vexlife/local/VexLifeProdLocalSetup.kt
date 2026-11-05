@@ -3,7 +3,6 @@ package vexlife.local
 import java.net.InetAddress
 import java.nio.file.Path
 import java.time.OffsetDateTime
-import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
@@ -18,11 +17,13 @@ import vexlife.model.heretic.runtime.MacHereticRuntimePlatform
 import vexlife.platform.python.ManagedPython
 
 /**
- * Application-level composition for the isolated local VexLife-Prod substrate.
+ * Application-level composition for VexLife-Prod runtime machinery beneath the canonical VexLife
+ * Home/identity.
  *
- * This owner contributes sequencing only. Every durable identity, artifact fact, environment rule,
- * process/lifetime effect, and model-configuration transition remains owned by the component that
- * answers that question.
+ * This owner contributes sequencing only. It does not mint another Home, device, Companion lineage,
+ * Conversation, Memory or human product identity. Every artifact fact, environment rule,
+ * process/lifetime effect and runtime-binding transition remains owned by the component that answers
+ * that question.
  */
 object VexLifeProdLocalSetup {
     const val RuntimeAuthorityRef =
@@ -136,9 +137,8 @@ object VexLifeProdLocalSetup {
     )
 
     /**
-     * Ordinary product route. The Home coordinate and all local topology are fixed by source.
-     *
-     * [allowAcquisition] is the one explicit human authorization carried by this local setup edge.
+     * Ordinary product route. The canonical Home coordinate is fixed by the existing VexLife
+     * relationship; [allowAcquisition] authorizes only missing model/runtime prerequisites.
      */
     fun establish(
         allowAcquisition: Boolean,
@@ -225,38 +225,14 @@ object VexLifeProdLocalSetup {
                 )
         }
 
-        val existingHome =
-            VexLifeProdHomeFiles.observeExisting(
-                productHome,
-            )
-
-        if (
-            existingHome ==
-                null
-        ) {
-            require(
-                allowAcquisition,
-            ) {
-                "fresh VexLife-Prod setup requires explicit local model/runtime acquisition authorization before Home formation"
-            }
-        }
-
         val home =
-            existingHome
-                ?: VexLifeProdHomeFiles.bootstrap(
-                    productHome = productHome,
-                    plan =
-                        VexLifeProdHome.plan(
-                            personRef = VexLifeProdHome.DefaultPersonRef,
-                            familyRef = VexLifeProdHome.DefaultFamilyRef,
-                            deviceName = hooks.deviceName(),
-                            platform = host.observation.platform,
-                            architecture = host.observation.architecture,
-                            ids =
-                                VexLifeProdHomeFiles.newInstallationIds(),
-                            createdAt = hooks.now(),
-                        ),
-                )
+            requireNotNull(
+                VexLifeProdHomeFiles.observeExisting(
+                    productHome,
+                ),
+            ) {
+                "canonical ~/.vexlife Home is absent; VexLife-Prod must not mint a parallel Home or Companion lineage"
+            }
 
         val modelConfiguration =
             FileHereticModelConfigurationStore(
