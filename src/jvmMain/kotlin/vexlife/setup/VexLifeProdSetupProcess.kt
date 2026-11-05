@@ -7,6 +7,7 @@ import vexlife.local.VexLifeProdLocalSetup
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
 import vexlife.service.VexLifeProdMacServiceLifetime
+import vexlife.service.VexLifeProdMacServiceLifetime
 
 /**
  * First-run/repair setup process executed from the private service image.
@@ -24,6 +25,16 @@ object VexLifeProdSetupProcess {
     data class Arguments(
         val expectedSourceSha: String,
         val allowAcquisition: Boolean,
+    )
+
+    data class Result(
+        val sourceSha: String,
+        val productHome: String,
+        val installedImagePath: String,
+        val runtimeReceiptRef: String,
+        val serviceDisposition: String,
+        val servicePid: Long,
+        val serviceOrigin: String,
     )
 
     internal data class Hooks(
@@ -62,6 +73,18 @@ object VexLifeProdSetupProcess {
                 sourceImageRoot = sourceImageRoot,
                 productHome = productHome,
                 expectedSourceSha = expectedSourceSha,
+            )
+        },
+        val startService: (
+            productHome: Path,
+            expectedSourceSha: String,
+        ) -> VexLifeProdMacServiceLifetime.Result = {
+            productHome,
+            expectedSourceSha,
+            ->
+            VexLifeProdMacServiceLifetime.startOrReuse(
+                productHome = productHome,
+                desiredSourceSha = expectedSourceSha,
             )
         },
         val startService: (
@@ -162,7 +185,7 @@ object VexLifeProdSetupProcess {
     internal fun runWithHooks(
         arguments: Arguments,
         hooks: Hooks,
-    ) {
+    ): Result {
         require(
             arguments.allowAcquisition,
         ) {
