@@ -65,8 +65,11 @@ HOST / PORT / ROUTES
 The source-formed service start currently remains module-internal. It accepts the exact source SHA +
 already-qualified local setup result, while host/port remain fixed source constants.
 
-It is intentionally not yet a standalone product entry because this layer does not re-observe
-Heretic runtime ownership/currentness after setup.
+It is intentionally not yet a standalone product entry because process lifetime/source rotation
+still remain held outside this layer.
+
+For model effects, runtime currentness is re-observed by the rightful direct-turn/runtime owners
+immediately before a new provider invocation.
 
 A proof-only internal start path may bind port 0 for deterministic tests. That does not redefine the
 ordinary product route.
@@ -243,12 +246,28 @@ SOURCE-BOUND SERVICE OBJECT
 != SUSTAINED LIFETIME PROOF
 ~~~
 
-The later macOS product-lifetime owner must therefore own/re-prove:
+Long-lived Send currentness now follows:
+
+~~~text
+new Send
+-> DirectCompanionTurn
+-> LocalSetup.Session current-runtime capability
+-> HereticPersistentRuntime.observeCurrentQualified()
+-> exact receipt + environment + one matching process + launchd substrate + health
+-> provider invocation
+
+exact completed duplicate
+-> durable result
+-> no runtime-currentness observation
+-> no provider invocation
+~~~
+
+The later macOS product-lifetime owner must still own/re-prove:
 
 ~~~text
 exact service source/process binding
-start/reuse/retire currentness
-sustained reachability after launcher completion
+start/reuse/retire service currentness
+sustained service reachability after launcher completion
 later Send succeeds
 ~~~
 
@@ -297,6 +316,8 @@ HTTP Send -> canonical direct-turn owner
 durable Conversation projection after Send
 exact duplicate attempt -> zero second provider call
 unknown wire field -> rejected before turn effect
+new inference held when runtime currentness is not exact
+completed duplicate does not require runtime/provider availability
 ~~~
 
 ## Held before acceptance
