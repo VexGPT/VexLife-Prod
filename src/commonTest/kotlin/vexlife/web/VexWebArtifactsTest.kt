@@ -86,7 +86,12 @@ class VexWebArtifactsTest {
         )
         assertTrue(
             artifacts.semanticManifest.contains(
-                "\"ref\":\"${VexLifeWebF0.Refs.BrowserCompanionSeam.value}\",\"orientation\":\"VERTICAL\",\"position\":{\"numerator\":1,\"denominator\":2,\"percent\":\"50%\"}",
+                "\"ref\":\"${VexLifeWebF0.Refs.BrowserCompanionSeam.value}\",\"orientation\":\"VERTICAL\",\"betweenStart\":\"FRAME_START\",\"betweenEnd\":\"FRAME_END\",\"allocation\":{\"beforeParts\":1,\"afterParts\":1},\"spanStartBoundary\":\"FRAME_TOP\",\"spanEndBoundary\":\"FRAME_BOTTOM\",\"position\":{\"numerator\":1,\"denominator\":2,\"percent\":\"50%\"}",
+            ),
+        )
+        assertTrue(
+            artifacts.semanticManifest.contains(
+                "\"ref\":\"${VexLifeWebF0.Refs.BrowserRegion.value}\",\"startBoundary\":\"FRAME_START\",\"endBoundary\":\"SEAM:${VexLifeWebF0.Refs.BrowserCompanionSeam.value}\"",
             ),
         )
     }
