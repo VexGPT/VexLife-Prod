@@ -136,6 +136,11 @@ class VexLifeProdSetupProcessTest {
                         "bin/vexlife-prod-service",
                     )
                         .toString(),
+                setupLauncherPath =
+                    sourceImage.resolve(
+                        "bin/vexlife-prod-setup",
+                    )
+                        .toString(),
                 javaPath =
                     sourceImage.resolve(
                         "runtime/bin/java",
