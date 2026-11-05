@@ -115,6 +115,70 @@ fun runExactCommand(
     return output.trim()
 }
 
+fun requiredJsonString(
+    text: String,
+    field: String,
+): String {
+    val prefix =
+        "\"" +
+            field +
+            "\""
+    val sourceLine =
+        requireNotNull(
+            text
+                .lineSequence()
+                .map(
+                    String::trim,
+                )
+                .singleOrNull {
+                    it.startsWith(
+                        prefix,
+                    )
+                },
+        ) {
+            "required JSON string field is missing or duplicated: $field"
+        }
+    val separator =
+        sourceLine.indexOf(
+            ':',
+        )
+    require(
+        separator >
+            0,
+    ) {
+        "required JSON string field has no separator: $field"
+    }
+
+    val encoded =
+        sourceLine
+            .substring(
+                separator +
+                    1,
+            )
+            .trim()
+            .removeSuffix(
+                ",",
+            )
+    require(
+        encoded.length >=
+            2 &&
+            encoded.first() ==
+            '"' &&
+            encoded.last() ==
+            '"' &&
+            '\\' !in
+            encoded,
+    ) {
+        "required JSON string field must be one simple source-owned string: $field"
+    }
+
+    return encoded.substring(
+        1,
+        encoded.length -
+            1,
+    )
+}
+
 fun deleteTreeNoFollow(
     root: Path,
 ) {
@@ -295,6 +359,140 @@ val setupLauncherSource =
         "packaging/private-service-image/bin/vexlife-prod-setup",
     )
 
+val setupWindowSource =
+    layout.projectDirectory.file(
+        "packaging/private-service-image/setup/vexlife-prod-setup-window.applescript",
+    )
+
+val releaseContractSource =
+    layout.projectDirectory.file(
+        "packaging/private-service-image/release-contract.json",
+    )
+
+val releaseContractText =
+    releaseContractSource
+        .asFile
+        .readText(
+            StandardCharsets.UTF_8,
+        )
+
+val releaseSchemaVersion =
+    requiredJsonString(
+        releaseContractText,
+        "schemaVersion",
+    )
+val releaseRepository =
+    requiredJsonString(
+        releaseContractText,
+        "repository",
+    )
+val releasePlatform =
+    requiredJsonString(
+        releaseContractText,
+        "platform",
+    )
+val releaseCurrentChannel =
+    requiredJsonString(
+        releaseContractText,
+        "currentChannel",
+    )
+val releaseTagPrefix =
+    requiredJsonString(
+        releaseContractText,
+        "releaseTagPrefix",
+    )
+val releaseArchiveNamePrefix =
+    requiredJsonString(
+        releaseContractText,
+        "archiveNamePrefix",
+    )
+val releaseArchiveSuffix =
+    requiredJsonString(
+        releaseContractText,
+        "archiveSuffix",
+    )
+val releaseReceiptSuffix =
+    requiredJsonString(
+        releaseContractText,
+        "receiptSuffix",
+    )
+val releaseBootstrapNamePrefix =
+    requiredJsonString(
+        releaseContractText,
+        "bootstrapNamePrefix",
+    )
+val releaseBootstrapSuffix =
+    requiredJsonString(
+        releaseContractText,
+        "bootstrapSuffix",
+    )
+val releaseCurrentBootstrapAssetName =
+    requiredJsonString(
+        releaseContractText,
+        "currentBootstrapAssetName",
+    )
+val releaseCurrentBootstrapSha256AssetName =
+    requiredJsonString(
+        releaseContractText,
+        "currentBootstrapSha256AssetName",
+    )
+val releaseSetupWindowRelativePath =
+    requiredJsonString(
+        releaseContractText,
+        "setupWindowRelativePath",
+    )
+val releaseSetupLauncherRelativePath =
+    requiredJsonString(
+        releaseContractText,
+        "setupLauncherRelativePath",
+    )
+val releaseServiceLauncherRelativePath =
+    requiredJsonString(
+        releaseContractText,
+        "serviceLauncherRelativePath",
+    )
+val releaseImageManifestRelativePath =
+    requiredJsonString(
+        releaseContractText,
+        "imageManifestRelativePath",
+    )
+val bootstrapTemplateSource =
+    layout.projectDirectory.file(
+        requiredJsonString(
+            releaseContractText,
+            "bootstrapTemplateRelativePath",
+        ),
+    )
+
+require(
+    releaseSchemaVersion ==
+        "vexlife-prod.private-service-release/v1" &&
+        releaseRepository ==
+        "VexGPT/VexLife-Prod" &&
+        releasePlatform ==
+        "darwin-arm64" &&
+        releaseCurrentChannel ==
+        "github-release-latest" &&
+        releaseCurrentBootstrapAssetName.matches(
+            Regex(
+                "[A-Za-z0-9._-]+\\.command",
+            ),
+        ) &&
+        releaseCurrentBootstrapSha256AssetName ==
+        releaseCurrentBootstrapAssetName +
+        ".sha256" &&
+        releaseSetupWindowRelativePath ==
+        "setup/vexlife-prod-setup-window.applescript" &&
+        releaseSetupLauncherRelativePath ==
+        "bin/vexlife-prod-setup" &&
+        releaseServiceLauncherRelativePath ==
+        "bin/vexlife-prod-service" &&
+        releaseImageManifestRelativePath ==
+        "service-image.json",
+) {
+    "VexLife-Prod private-service release contract identity drift"
+}
+
 val serviceImageOutputRoot =
     layout.buildDirectory.dir(
         "vexlife-prod-service-image/images",
@@ -416,6 +614,9 @@ tasks.register(
     )
     inputs.file(
         setupLauncherSource,
+    )
+    inputs.file(
+        setupWindowSource,
     )
     outputs.dir(
         serviceImageOutputRoot,
@@ -689,6 +890,10 @@ tasks.register(
             output.resolve(
                 "bin",
             )
+        val setupRoot =
+            output.resolve(
+                "setup",
+            )
 
         Files.createDirectories(
             output,
@@ -698,6 +903,9 @@ tasks.register(
         )
         Files.createDirectories(
             binRoot,
+        )
+        Files.createDirectories(
+            setupRoot,
         )
 
         runExactCommand(
@@ -774,6 +982,18 @@ tasks.register(
             ),
         )
 
+        val setupWindow =
+            setupRoot.resolve(
+                "vexlife-prod-setup-window.applescript",
+            )
+        Files.copy(
+            setupWindowSource
+                .asFile
+                .toPath(),
+            setupWindow,
+            StandardCopyOption.REPLACE_EXISTING,
+        )
+
         val payloadSha256 =
             payloadFingerprint(
                 output,
@@ -840,7 +1060,7 @@ tasks.register(
                     "{",
                 )
                 appendLine(
-                    "  \"schemaVersion\": \"vexlife-prod.private-service-image/v2\",",
+                    "  \"schemaVersion\": \"vexlife-prod.private-service-image/v3\",",
                 )
                 appendLine(
                     "  \"truthClass\": \"SOURCE_BOUND_PRIVATE_SERVICE_IMAGE\",",
@@ -864,6 +1084,9 @@ tasks.register(
                 )
                 appendLine(
                     "  \"setupLauncher\": \"bin/vexlife-prod-setup\",",
+                )
+                appendLine(
+                    "  \"setupWindow\": \"setup/vexlife-prod-setup-window.applescript\",",
                 )
                 appendLine(
                     "  \"runtimeModules\": [" +
@@ -930,6 +1153,12 @@ tasks.register(
     )
     inputs.dir(
         serviceImageOutputRoot,
+    )
+    inputs.file(
+        releaseContractSource,
+    )
+    inputs.file(
+        bootstrapTemplateSource,
     )
     outputs.dir(
         serviceArchiveOutputRoot,
@@ -1045,10 +1274,13 @@ tasks.register(
             outputRoot,
         )
 
+        val releaseTag =
+            releaseTagPrefix +
+                sourceSha
         val archiveName =
-            "vexlife-prod-service-image-darwin-arm64-" +
+            releaseArchiveNamePrefix +
                 sourceSha +
-                ".tar.gz"
+                releaseArchiveSuffix
         val archive =
             outputRoot.resolve(
                 archiveName,
@@ -1101,17 +1333,141 @@ tasks.register(
             StandardCharsets.UTF_8,
         )
 
-        val receiptName =
-            "vexlife-prod-service-image-darwin-arm64-" +
+        val bootstrapName =
+            releaseBootstrapNamePrefix +
                 sourceSha +
-                ".receipt.json"
+                releaseBootstrapSuffix
+        val bootstrapPath =
+            outputRoot.resolve(
+                bootstrapName,
+            )
+        val bootstrapTemplate =
+            Files.readString(
+                bootstrapTemplateSource
+                    .asFile
+                    .toPath(),
+                StandardCharsets.UTF_8,
+            )
+        val bootstrap =
+            mapOf(
+                "@REPOSITORY@" to releaseRepository,
+                "@SOURCE_SHA@" to sourceSha,
+                "@RELEASE_TAG@" to releaseTag,
+                "@ARCHIVE_NAME@" to archiveName,
+                "@ARCHIVE_SHA256@" to archiveSha256,
+                "@SETUP_WINDOW_RELATIVE_PATH@" to releaseSetupWindowRelativePath,
+                "@SETUP_LAUNCHER_RELATIVE_PATH@" to releaseSetupLauncherRelativePath,
+                "@IMAGE_MANIFEST_RELATIVE_PATH@" to releaseImageManifestRelativePath,
+            )
+                .entries
+                .fold(
+                    bootstrapTemplate,
+                ) {
+                    current,
+                    replacement,
+                    ->
+                    current.replace(
+                        replacement.key,
+                        replacement.value,
+                    )
+                }
+
+        require(
+            !Regex(
+                "@[A-Z0-9_]+@",
+            )
+                .containsMatchIn(
+                    bootstrap,
+                ),
+        ) {
+            "VexLife-Prod bootstrap template still contains unresolved source tokens"
+        }
+
+        Files.writeString(
+            bootstrapPath,
+            bootstrap,
+            StandardCharsets.UTF_8,
+        )
+        Files.setPosixFilePermissions(
+            bootstrapPath,
+            setOf(
+                PosixFilePermission.OWNER_READ,
+                PosixFilePermission.OWNER_WRITE,
+                PosixFilePermission.OWNER_EXECUTE,
+            ),
+        )
+
+        val bootstrapSha256 =
+            sha256(
+                bootstrapPath,
+            )
+        val bootstrapBytes =
+            Files.size(
+                bootstrapPath,
+            )
+        Files.writeString(
+            outputRoot.resolve(
+                bootstrapName +
+                    ".sha256",
+            ),
+            bootstrapSha256 +
+                "  " +
+                bootstrapName +
+                "\n",
+            StandardCharsets.UTF_8,
+        )
+
+        val currentBootstrapPath =
+            outputRoot.resolve(
+                releaseCurrentBootstrapAssetName,
+            )
+        Files.copy(
+            bootstrapPath,
+            currentBootstrapPath,
+            StandardCopyOption.REPLACE_EXISTING,
+        )
+        Files.setPosixFilePermissions(
+            currentBootstrapPath,
+            setOf(
+                PosixFilePermission.OWNER_READ,
+                PosixFilePermission.OWNER_WRITE,
+                PosixFilePermission.OWNER_EXECUTE,
+            ),
+        )
+        require(
+            sha256(
+                currentBootstrapPath,
+            ) ==
+                bootstrapSha256 &&
+                Files.size(
+                    currentBootstrapPath,
+                ) ==
+                bootstrapBytes,
+        ) {
+            "current-channel bootstrap alias differs from the exact source bootstrap"
+        }
+        Files.writeString(
+            outputRoot.resolve(
+                releaseCurrentBootstrapSha256AssetName,
+            ),
+            bootstrapSha256 +
+                "  " +
+                releaseCurrentBootstrapAssetName +
+                "\n",
+            StandardCharsets.UTF_8,
+        )
+
+        val receiptName =
+            releaseArchiveNamePrefix +
+                sourceSha +
+                releaseReceiptSuffix
         val receipt =
             buildString {
                 appendLine(
                     "{",
                 )
                 appendLine(
-                    "  \"schemaVersion\": \"vexlife-prod.private-service-image-archive-receipt/v1\",",
+                    "  \"schemaVersion\": \"vexlife-prod.private-service-image-archive-receipt/v3\",",
                 )
                 appendLine(
                     "  \"truthClass\": \"SOURCE_BOUND_PRIVATE_SERVICE_IMAGE_ARCHIVE\",",
@@ -1140,6 +1496,41 @@ tasks.register(
                         ",",
                 )
                 appendLine(
+                    "  \"releaseTag\": \"" +
+                        releaseTag +
+                        "\",",
+                )
+                appendLine(
+                    "  \"currentChannel\": \"" +
+                        releaseCurrentChannel +
+                        "\",",
+                )
+                appendLine(
+                    "  \"bootstrapName\": \"" +
+                        bootstrapName +
+                        "\",",
+                )
+                appendLine(
+                    "  \"bootstrapSha256\": \"" +
+                        bootstrapSha256 +
+                        "\",",
+                )
+                appendLine(
+                    "  \"currentBootstrapAssetName\": \"" +
+                        releaseCurrentBootstrapAssetName +
+                        "\",",
+                )
+                appendLine(
+                    "  \"currentBootstrapSha256AssetName\": \"" +
+                        releaseCurrentBootstrapSha256AssetName +
+                        "\",",
+                )
+                appendLine(
+                    "  \"bootstrapBytes\": " +
+                        bootstrapBytes +
+                        ",",
+                )
+                appendLine(
                     "  \"imagePayloadSha256\": \"" +
                         payloadSha256 +
                         "\"",
@@ -1162,7 +1553,13 @@ tasks.register(
                 "\t" +
                 archive +
                 "\t" +
-                archiveSha256,
+                archiveSha256 +
+                "\t" +
+                bootstrapPath +
+                "\t" +
+                bootstrapSha256 +
+                "\t" +
+                currentBootstrapPath,
         )
     }
 }

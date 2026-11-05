@@ -6,12 +6,14 @@ import java.nio.file.Path
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
+import vexlife.service.VexLifeProdMacServiceLifetime
 
 /**
  * First-run/repair setup process executed from the private service image.
  *
  * It verifies its own source-bound image, carries explicit human acquisition authorization into
- * LocalSetup, installs the verified image into the established Home, and reports machine-readable
+ * LocalSetup, installs the verified image into the established Home, delegates exact service
+ * start/reuse to the macOS service-lifetime owner, and only then reports machine-readable
  * completion. It does not open presentation or own the long-lived service process.
  */
 object VexLifeProdSetupProcess {
@@ -63,6 +65,18 @@ object VexLifeProdSetupProcess {
                 expectedSourceSha = expectedSourceSha,
             )
         },
+        val startService: (
+            productHome: Path,
+            expectedSourceSha: String,
+        ) -> VexLifeProdMacServiceLifetime.Result = {
+            productHome,
+            expectedSourceSha,
+            ->
+            VexLifeProdMacServiceLifetime.startOrReuse(
+                productHome = productHome,
+                desiredSourceSha = expectedSourceSha,
+            )
+        },
         val reportImageVerified: (
             VexLifeProdPrivateServiceImage.Observation,
         ) -> Unit = {
@@ -79,10 +93,12 @@ object VexLifeProdSetupProcess {
             arguments: Arguments,
             session: VexLifeProdLocalSetup.Session,
             installed: VexLifeProdPrivateServiceImageInstaller.Result,
+            service: VexLifeProdMacServiceLifetime.Result,
         ) -> Unit = {
             arguments,
             session,
             installed,
+            service,
             ->
             println(
                 "VEXLIFE_PROD_SETUP_READY\t" +
@@ -92,7 +108,11 @@ object VexLifeProdSetupProcess {
                     "\t" +
                     installed.imagePath +
                     "\t" +
-                    session.result.qualifiedRuntimeEvidence.runtimeReceiptRef,
+                    session.result.qualifiedRuntimeEvidence.runtimeReceiptRef +
+                    "\t" +
+                    service.pid +
+                    "\t" +
+                    service.serviceOrigin,
             )
             System.out.flush()
         },
@@ -187,10 +207,28 @@ object VexLifeProdSetupProcess {
             "installed VexLife-Prod private image differs from verified setup image"
         }
 
+        val service =
+            hooks.startService(
+                Path.of(
+                    session.result.productHome,
+                ),
+                arguments.expectedSourceSha,
+            )
+
+        require(
+            service.sourceSha ==
+                installed.sourceSha &&
+                service.imagePayloadSha256 ==
+                installed.payloadSha256,
+        ) {
+            "started VexLife-Prod service differs from the verified installed image"
+        }
+
         hooks.reportReady(
             arguments,
             session,
             installed,
+            service,
         )
     }
 

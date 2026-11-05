@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "vexlife-prod.private-service-release/v1",
+  "repository": "VexGPT/VexLife-Prod",
+  "platform": "darwin-arm64",
+  "currentChannel": "github-release-latest",
+  "releaseTagPrefix": "private-service-image-",
+  "archiveNamePrefix": "vexlife-prod-service-image-darwin-arm64-",
+  "archiveSuffix": ".tar.gz",
+  "receiptSuffix": ".receipt.json",
+  "bootstrapNamePrefix": "vexlife-prod-bootstrap-darwin-arm64-",
+  "bootstrapSuffix": ".command",
+  "currentBootstrapAssetName": "vexlife-prod-bootstrap-darwin-arm64.command",
+  "currentBootstrapSha256AssetName": "vexlife-prod-bootstrap-darwin-arm64.command.sha256",
+  "bootstrapTemplateRelativePath": "packaging/bootstrap/vexlife-prod-bootstrap.command.template",
+  "setupWindowRelativePath": "setup/vexlife-prod-setup-window.applescript",
+  "setupLauncherRelativePath": "bin/vexlife-prod-setup",
+  "serviceLauncherRelativePath": "bin/vexlife-prod-service",
+  "imageManifestRelativePath": "service-image.json"
+}

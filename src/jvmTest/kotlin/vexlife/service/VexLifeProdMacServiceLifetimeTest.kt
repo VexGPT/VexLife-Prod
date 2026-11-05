@@ -329,6 +329,11 @@ class VexLifeProdMacServiceLifetimeTest {
                 "bin",
             ),
         )
+        Files.createDirectories(
+            root.resolve(
+                "setup",
+            ),
+        )
 
         val java =
             root.resolve(
@@ -345,6 +350,10 @@ class VexLifeProdMacServiceLifetimeTest {
         val setupLauncher =
             root.resolve(
                 VexLifeProdPrivateServiceImage.SetupLauncherRelativePath,
+            )
+        val setupWindow =
+            root.resolve(
+                VexLifeProdPrivateServiceImage.SetupWindowRelativePath,
             )
         val app =
             root.resolve(
@@ -370,6 +379,10 @@ class VexLifeProdMacServiceLifetimeTest {
         Files.writeString(
             setupLauncher,
             "#!/bin/bash\nexit 0\n",
+        )
+        Files.writeString(
+            setupWindow,
+            "use framework \"AppKit\"\n-- test setup window\n",
         )
         Files.writeString(
             app,
@@ -438,6 +451,7 @@ class VexLifeProdMacServiceLifetimeTest {
                 mainClass = VexLifeProdPrivateServiceImage.MainClass,
                 launcher = VexLifeProdPrivateServiceImage.LauncherRelativePath,
                 setupLauncher = VexLifeProdPrivateServiceImage.SetupLauncherRelativePath,
+                setupWindow = VexLifeProdPrivateServiceImage.SetupWindowRelativePath,
                 runtimeModules =
                     listOf(
                         "java.base",

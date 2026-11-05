@@ -198,7 +198,7 @@ It does not search PATH for Java.
 Schema:
 
 ~~~text
-vexlife-prod.private-service-image/v2
+vexlife-prod.private-service-image/v3
 ~~~
 
 Truth class:
@@ -216,6 +216,7 @@ javaRuntimeMajor = 21
 mainClass
 launcher
 setupLauncher
+setupWindow
 runtimeModules[]
 payloadSha256
 artifacts[]:
@@ -277,6 +278,10 @@ It consumes the already-formed exact image and produces:
 build/vexlife-prod-service-image/archives/<source-sha>/
   vexlife-prod-service-image-darwin-arm64-<source-sha>.tar.gz
   vexlife-prod-service-image-darwin-arm64-<source-sha>.tar.gz.sha256
+  vexlife-prod-bootstrap-darwin-arm64-<source-sha>.command
+  vexlife-prod-bootstrap-darwin-arm64-<source-sha>.command.sha256
+  vexlife-prod-bootstrap-darwin-arm64.command
+  vexlife-prod-bootstrap-darwin-arm64.command.sha256
   vexlife-prod-service-image-darwin-arm64-<source-sha>.receipt.json
 ~~~
 
@@ -291,6 +296,13 @@ platform = darwin-arm64
 archiveName
 archiveSha256
 archiveBytes
+releaseTag
+currentChannel = github-release-latest
+bootstrapName
+bootstrapSha256
+currentBootstrapAssetName
+currentBootstrapSha256AssetName
+bootstrapBytes
 imagePayloadSha256
 ~~~
 
@@ -302,6 +314,15 @@ ARCHIVE
 
 ARCHIVE SHA
 != IMAGE PAYLOAD SHA
+
+CURRENT RELEASE CHANNEL
+-> selects one exact release
+
+CURRENT BOOTSTRAP ALIAS
+= byte-exact copy of that release's source-specific bootstrap
+
+CURRENT BOOTSTRAP ALIAS
+!= mutable runtime configuration
 
 ARCHIVE RECEIPT
 != INSTALL AUTHORITY
@@ -372,9 +393,9 @@ exact repository Gradle 9.6 / Kotlin 2.4.20 packaging execution
 real macOS arm64 JDK 21 image formation
 real jdeps module result
 real jlink runtime launch
-real archive formation + archive receipt proof
-provider publication / delivery
-exact extraction
+real archive + generated bootstrap formation / receipt proof
+provider release publication / asset delivery
+exact bootstrap download + extraction
 installation into VexLife-Prod local storage
 launchd-owned product service currentness
 source rotation
