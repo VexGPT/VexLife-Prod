@@ -816,7 +816,7 @@ object HereticPersistentRuntime {
         binding: Binding,
         store: ReceiptStore,
         platform: Platform,
-        requireCurrentSource: Boolean = true,
+        requireCurrentImplementation: Boolean = true,
     ): StopResult {
         validateBinding(
             binding,
@@ -836,7 +836,7 @@ object HereticPersistentRuntime {
                 binding,
                 receipt,
                 requireImplementationSha =
-                    requireCurrentSource,
+                    requireCurrentImplementation,
             ),
         ) {
             "exact current Heretic runtime receipt is required to stop"
