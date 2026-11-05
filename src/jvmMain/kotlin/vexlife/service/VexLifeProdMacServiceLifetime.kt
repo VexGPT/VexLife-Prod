@@ -338,7 +338,12 @@ object VexLifeProdMacServiceLifetime {
 
         if (
             launchd is
-            MacUserLaunchdProcess.Observation.Running
+                MacUserLaunchdProcess.Observation.Running &&
+            MacUserLaunchdProcess.receiptCurrent(
+                receipt = receipt.launchd,
+                host = host,
+                expectedPid = receipt.launchd.pid,
+            )
         ) {
             val currentness =
                 probe.observe(
@@ -514,21 +519,14 @@ object VexLifeProdMacServiceLifetime {
                 )
             }
 
-            val finalLaunchdObservation =
-                MacUserLaunchdProcess.observe(
-                    desiredSpec,
-                    host,
-                )
             require(
-                finalLaunchdObservation is
-                    MacUserLaunchdProcess.Observation.Running &&
-                    finalLaunchdObservation.pid ==
-                    launchd.pid &&
-                    host.processAlive(
-                        launchd.pid,
-                    ),
+                MacUserLaunchdProcess.receiptCurrent(
+                    receipt = launchd,
+                    host = host,
+                    expectedPid = launchd.pid,
+                ),
             ) {
-                "VexLife-Prod service lost exact launchd ownership before lifetime receipt commit"
+                "VexLife-Prod service lost exact launchd/plist ownership before lifetime receipt commit"
             }
 
             val receipt =
