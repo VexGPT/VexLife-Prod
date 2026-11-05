@@ -48,6 +48,10 @@ object VexWebArtifacts {
             GeometryResolver.resolve(
                 surface,
             )
+        val nodes =
+            nodeByRef(
+                surface,
+            )
 
         return Bundle(
             html = renderHtml(surface),
@@ -58,6 +62,7 @@ object VexWebArtifacts {
                     surface = surface,
                     coordinates = coordinates,
                     geometry = geometry,
+                    nodes = nodes,
                 ),
         )
     }
@@ -502,6 +507,40 @@ object VexWebArtifacts {
         }
     }
 
+    private fun nodeByRef(
+        surface: VexWeb.Surface,
+    ): Map<String, VexWeb.Node> {
+        val result =
+            linkedMapOf<String, VexWeb.Node>()
+
+        fun walk(
+            node: VexWeb.Node,
+        ) {
+            check(
+                result.put(
+                    node.identity.ref,
+                    node,
+                ) ==
+                    null,
+            ) {
+                "duplicate generated Node identity"
+            }
+
+            node.children.forEach(
+                ::walk,
+            )
+        }
+
+        walk(
+            surface.content,
+        )
+        walk(
+            surface.overlayRoot,
+        )
+
+        return result
+    }
+
     private fun renderHtml(
         surface: VexWeb.Surface,
     ): String =
@@ -561,24 +600,28 @@ object VexWebArtifacts {
             append(" hidden")
         }
         if (
-            tag ==
-            "button"
-        ) {
-            append(" type=\"button\"")
-        }
-        if (
             node is
-            VexWeb.Element &&
-            node.element.kind ==
-            VexUiElementRef.Kind.Collection
+            VexWeb.Element
         ) {
-            append(" role=\"list\"")
+            append(" data-vex-blueprint-kind=\"")
+            append(
+                node.element.kind.name
+                    .lowercase(),
+            )
+            append('"')
         }
         append('>')
 
+        val generatedPrimitive =
+            generatedPrimitive(
+                node,
+            )
         val children =
             node.children
+
         if (
+            generatedPrimitive ==
+                null &&
             children.isEmpty()
         ) {
             append("</")
@@ -588,6 +631,15 @@ object VexWebArtifacts {
         }
 
         append('\n')
+        if (
+            generatedPrimitive !=
+                null
+        ) {
+            append(indent)
+            append("  ")
+            append(generatedPrimitive)
+            append('\n')
+        }
         children.forEach {
             renderNode(
                 node = it,
@@ -603,20 +655,51 @@ object VexWebArtifacts {
     private fun tagFor(
         node: VexWeb.Node,
     ): String =
+        when (node) {
+            is VexWeb.Region ->
+                "section"
+
+            is VexWeb.Element ->
+                when (node.element.kind) {
+                    VexUiElementRef.Kind.Region -> "section"
+                    VexUiElementRef.Kind.Content,
+                    VexUiElementRef.Kind.TextField,
+                    VexUiElementRef.Kind.Control,
+                    VexUiElementRef.Kind.Collection,
+                    ->
+                        "div"
+                }
+
+            is VexWeb.Frame,
+            is VexWeb.Structural,
+            ->
+                "div"
+        }
+
+    private fun generatedPrimitive(
+        node: VexWeb.Node,
+    ): String? {
         if (
-            node is
+            node !is
             VexWeb.Element
         ) {
-            when (node.element.kind) {
-                VexUiElementRef.Kind.Region -> "section"
-                VexUiElementRef.Kind.Content -> "div"
-                VexUiElementRef.Kind.TextField -> "textarea"
-                VexUiElementRef.Kind.Control -> "button"
-                VexUiElementRef.Kind.Collection -> "div"
-            }
-        } else {
-            "div"
+            return null
         }
+
+        return when (node.element.kind) {
+            VexUiElementRef.Kind.TextField ->
+                "<textarea data-vex-generated-part=\"text-field\"></textarea>"
+
+            VexUiElementRef.Kind.Control ->
+                "<button type=\"button\" data-vex-generated-part=\"control\"></button>"
+
+            VexUiElementRef.Kind.Region,
+            VexUiElementRef.Kind.Content,
+            VexUiElementRef.Kind.Collection,
+            ->
+                null
+        }
+    }
 
     private fun nodeAttributes(
         node: VexWeb.Node,
@@ -711,7 +794,10 @@ object VexWebArtifacts {
             append("[data-vex-kind=\"frame\"]{position:relative;width:100%;height:100%;}\n")
             append("[data-vex-kind=\"region\"]{position:absolute;overflow:hidden;}\n")
             append("[data-vex-placement=\"fillavailable\"]{width:100%;height:100%;}\n")
-            append("[data-vex-placement=\"overlay\"]{position:absolute;inset:0;}\n")
+            append("[data-vex-placement=\"overlay\"]{position:absolute;inset:0;pointer-events:none;}\n")
+            append("[data-vex-placement=\"overlay\"] [data-vex-interactions]{pointer-events:auto;}\n")
+            append("[data-vex-generated-part=\"text-field\"]{box-sizing:border-box;width:100%;min-height:2.5rem;}\n")
+            append("[data-vex-generated-part=\"control\"]{cursor:pointer;}\n")
             append("[data-vex-depth=\"content\"]{z-index:0;}\n")
             append("[data-vex-depth=\"chrome\"]{z-index:10;}\n")
             append("[data-vex-depth=\"transient\"]{z-index:20;}\n")
@@ -786,7 +872,8 @@ object VexWebArtifacts {
         """// Generated from VexWeb bindings. Do not edit by hand.
 const root = document.querySelector('[data-vex-screen]');
 root?.addEventListener('click', (event) => {
-  const control = event.target.closest('[data-vex-binding="unbound"]');
+  const eventElement = event.target instanceof Element ? event.target : null;
+  const control = eventElement?.closest('[data-vex-binding="unbound"]');
   if (!control || !root.contains(control)) return;
   const targetRef = control.dataset.vexFeedbackTarget;
   const capability = control.dataset.vexCapability;
@@ -803,6 +890,7 @@ root?.addEventListener('click', (event) => {
         surface: VexWeb.Surface,
         coordinates: List<VexWeb.Coordinate>,
         geometry: Map<String, FrameGeometry>,
+        nodes: Map<String, VexWeb.Node>,
     ): String =
         buildString {
             append("{\n")
@@ -812,13 +900,38 @@ root?.addEventListener('click', (event) => {
             append("  \"screenRef\":\"")
             append(json(surface.screenRef))
             append("\",\n")
+            append("  \"contentRef\":\"")
+            append(json(surface.content.identity.ref))
+            append("\",\n")
+            append("  \"overlayRootRef\":\"")
+            append(json(surface.overlayRoot.identity.ref))
+            append("\",\n")
             append("  \"artifacts\":[\"index.html\",\"vexweb.css\",\"vexweb.js\",\"vexweb-manifest.json\"],\n")
             append("  \"coordinates\":[\n")
             coordinates.forEachIndexed { index, coordinate ->
+                val node =
+                    nodes.getValue(
+                        coordinate.ref,
+                    )
                 append("    {")
                 append("\"ref\":\"")
                 append(json(coordinate.ref))
-                append("\",\"sourceParentRef\":")
+                append("\",\"nodeKind\":\"")
+                append(nodeKind(node))
+                append("\",\"blueprintKind\":")
+                append(
+                    if (
+                        node is
+                        VexWeb.Element
+                    ) {
+                        "\"" +
+                            node.element.kind.name +
+                            "\""
+                    } else {
+                        "null"
+                    },
+                )
+                append(",\"sourceParentRef\":")
                 append(jsonOrNull(coordinate.sourceParentRef))
                 append(",\"containerRef\":\"")
                 append(json(coordinate.containerRef))
@@ -885,110 +998,3 @@ root?.addEventListener('click', (event) => {
                     append(seam.position.json())
                     append(",\"spanStart\":")
                     append(seam.spanStart.json())
-                    append(",\"spanEnd\":")
-                    append(seam.spanEnd.json())
-                    append('}')
-                }
-                append("],\"regions\":[")
-                frame.regions.entries.forEachIndexed { regionIndex, (ref, rect) ->
-                    if (
-                        regionIndex >
-                        0
-                    ) {
-                        append(',')
-                    }
-                    append("{\"ref\":\"")
-                    append(json(ref))
-                    append("\",\"startBoundary\":\"")
-                    append(json(rect.sourceStart))
-                    append("\",\"endBoundary\":\"")
-                    append(json(rect.sourceEnd))
-                    append("\",\"topBoundary\":\"")
-                    append(json(rect.sourceTop))
-                    append("\",\"bottomBoundary\":\"")
-                    append(json(rect.sourceBottom))
-                    append("\",\"start\":")
-                    append(rect.start.json())
-                    append(",\"end\":")
-                    append(rect.end.json())
-                    append(",\"top\":")
-                    append(rect.top.json())
-                    append(",\"bottom\":")
-                    append(rect.bottom.json())
-                    append('}')
-                }
-                append("]}")
-                if (
-                    frameIndex !=
-                    geometry.values.size -
-                    1
-                ) {
-                    append(',')
-                }
-                append('\n')
-            }
-            append("  ]\n")
-            append("}\n")
-        }
-
-    private fun bindingJson(
-        binding: VexWeb.Binding,
-    ): String =
-        when (binding) {
-            VexWeb.Binding.None ->
-                "{\"type\":\"NONE\"}"
-
-            is VexWeb.Binding.LocalSpatial ->
-                "{\"type\":\"LOCAL_SPATIAL\",\"target\":\"${json(binding.target.value)}\"}"
-
-            is VexWeb.Binding.Unbound ->
-                when (
-                    val fallback =
-                        binding.fallback
-                ) {
-                    is VexWeb.Fallback.NotYetImplemented ->
-                        "{\"type\":\"UNBOUND\",\"fallback\":{\"type\":\"NOT_YET_IMPLEMENTED\",\"capabilityRef\":\"${json(fallback.capabilityRef.value)}\",\"feedbackTarget\":\"${json(fallback.feedbackTarget.value)}\"}}"
-                }
-        }
-
-    private fun selector(
-        ref: String,
-    ): String =
-        "[data-vex-ref=\"$ref\"]"
-
-    private fun html(
-        value: String,
-    ): String =
-        value
-            .replace("&", "&amp;")
-            .replace("\"", "&quot;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
-
-    private fun jsonOrNull(
-        value: String?,
-    ): String =
-        value
-            ?.let {
-                "\"${json(it)}\""
-            }
-            ?: "null"
-
-    private fun json(
-        value: String,
-    ): String =
-        buildString {
-            value.forEach { character ->
-                when (character) {
-                    '\\' -> append("\\\\")
-                    '"' -> append("\\\"")
-                    '\n' -> append("\\n")
-                    '\r' -> append("\\r")
-                    '\t' -> append("\\t")
-                    else -> append(character)
-                }
-            }
-        }
-}
-
-// [VXG RealForever]
