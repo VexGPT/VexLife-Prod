@@ -25,7 +25,7 @@ case "$ARCHIVE_SHA256" in
 esac
 [ "${#ARCHIVE_SHA256}" -eq 64 ] || fail "the bootstrap archive digest is not SHA-256."
 
-for tool in /usr/bin/curl /usr/bin/shasum /usr/bin/tar /usr/bin/osacompile /usr/bin/plutil /usr/bin/open /usr/bin/mktemp; do
+for tool in /usr/bin/curl /usr/bin/shasum /usr/bin/awk /usr/bin/tar /usr/bin/osacompile /usr/bin/plutil /usr/bin/open /usr/bin/mktemp; do
   [ -x "$tool" ] || fail "required macOS bootstrap tool is unavailable: $tool"
 done
 
