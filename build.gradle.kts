@@ -119,26 +119,64 @@ fun requiredJsonString(
     text: String,
     field: String,
 ): String {
-    val pattern =
-        Regex(
-            "\\"" +
-                Regex.escape(
-                    field,
-                ) +
-                "\\"\\s*:\\s*\\"([^\\"]+)\\"",
+    val prefix =
+        "\"" +
+            field +
+            "\""
+    val sourceLine =
+        requireNotNull(
+            text
+                .lineSequence()
+                .map(
+                    String::trim,
+                )
+                .singleOrNull {
+                    it.startsWith(
+                        prefix,
+                    )
+                },
+        ) {
+            "required JSON string field is missing or duplicated: $field"
+        }
+    val separator =
+        sourceLine.indexOf(
+            ':',
         )
-
-    return requireNotNull(
-        pattern.find(
-            text,
-        )
-            ?.groupValues
-            ?.get(
-                1,
-            ),
+    require(
+        separator >
+            0,
     ) {
-        "required JSON string field is missing: $field"
+        "required JSON string field has no separator: $field"
     }
+
+    val encoded =
+        sourceLine
+            .substring(
+                separator +
+                    1,
+            )
+            .trim()
+            .removeSuffix(
+                ",",
+            )
+    require(
+        encoded.length >=
+            2 &&
+            encoded.first() ==
+            '"' &&
+            encoded.last() ==
+            '"' &&
+            '\\' !in
+            encoded,
+    ) {
+        "required JSON string field must be one simple source-owned string: $field"
+    }
+
+    return encoded.substring(
+        1,
+        encoded.length -
+            1,
+    )
 }
 
 fun deleteTreeNoFollow(
