@@ -157,7 +157,8 @@ object DirectCompanionConnection {
     }
 
     @Serializable
-    data class ReportedModelField(
+    @ConsistentCopyVisibility
+    data class ReportedModelField private constructor(
         val present: Boolean,
         val valueType: String?,
         val byteLength: Int?,
@@ -167,7 +168,8 @@ object DirectCompanionConnection {
     )
 
     @Serializable
-    data class ReasoningTrace(
+    @ConsistentCopyVisibility
+    data class ReasoningTrace private constructor(
         val present: Boolean,
         val contentSha256: String?,
         val characterCount: Int,
@@ -178,7 +180,8 @@ object DirectCompanionConnection {
     )
 
     @Serializable
-    data class RuntimeObservation(
+    @ConsistentCopyVisibility
+    data class RuntimeObservation private constructor(
         val schemaVersion: String,
         val truthClass: String,
         val runtimeReceiptRef: String,
@@ -200,7 +203,8 @@ object DirectCompanionConnection {
     )
 
     @Serializable
-    data class ObservedEffects(
+    @ConsistentCopyVisibility
+    data class ObservedEffects private constructor(
         val modelRuntimeObserved: Boolean,
         val providerOrNetworkObserved: Boolean,
         val nativeToolExecutionObserved: Boolean,
@@ -210,7 +214,8 @@ object DirectCompanionConnection {
     )
 
     @Serializable
-    data class InvocationEvidence(
+    @ConsistentCopyVisibility
+    data class InvocationEvidence private constructor(
         val schemaVersion: String,
         val truthClass: String,
         val runtimeReceiptRef: String,
@@ -228,7 +233,8 @@ object DirectCompanionConnection {
         val semanticFingerprint: String,
     )
 
-    data class Result(
+    @ConsistentCopyVisibility
+    data class Result private constructor(
         val content: String,
         val model: String,
         val runtimeObservation: RuntimeObservation,
