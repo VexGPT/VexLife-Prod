@@ -78,7 +78,7 @@ object HereticPersistentRuntime {
         }
     }
 
-    data class Binding(
+    data class Binding private constructor(
         val schemaVersion: String,
         val authorityRef: String,
         val modelPath: String,
