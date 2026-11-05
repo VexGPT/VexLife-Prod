@@ -3,6 +3,8 @@ package vexlife.contract
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * One repository-owned JSON boundary for durable VexLife-Prod contracts.
@@ -34,6 +36,29 @@ object VexContractJson {
         Strict.decodeFromString(
             text,
         )
+
+    fun schemaVersion(
+        text: String,
+    ): String {
+        val value =
+            Strict
+                .parseToJsonElement(
+                    text,
+                )
+                .jsonObject[
+                    "schemaVersion"
+                ]
+                ?.jsonPrimitive
+                ?.content
+
+        require(
+            !value.isNullOrBlank(),
+        ) {
+            "durable contract requires one non-empty schemaVersion"
+        }
+
+        return value
+    }
 }
 
 // [VXG RealForever]
