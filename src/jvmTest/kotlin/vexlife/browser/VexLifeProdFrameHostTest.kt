@@ -35,11 +35,13 @@ class VexLifeProdFrameHostTest {
             socket.getOutputStream()
                 .flush()
 
-            socket.getInputStream()
-                .bufferedReader(
-                    StandardCharsets.UTF_8,
-                )
-                .readLine()
+            requireNotNull(
+                socket.getInputStream()
+                    .bufferedReader(
+                        StandardCharsets.UTF_8,
+                    )
+                    .readLine(),
+            )
         }
 
     @Test
