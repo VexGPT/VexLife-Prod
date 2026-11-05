@@ -244,6 +244,10 @@ class MacUserLaunchdProcessTest {
             assertFalse(
                 receipt.keepAlive,
             )
+            assertEquals(
+                spec.environment,
+                receipt.environment,
+            )
             assertTrue(
                 Files.exists(
                     java.nio.file.Path.of(
@@ -325,6 +329,66 @@ class MacUserLaunchdProcessTest {
                         spec.plistPath,
                     ),
                 ),
+            )
+        } finally {
+            root
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun receiptCurrentRequiresExactPersistedPlistButRetirementStillUsesDurableReceipt() {
+        val (
+            spec,
+            root,
+        ) =
+            fixture()
+        val host =
+            FakeHost()
+
+        try {
+            val receipt =
+                MacUserLaunchdProcess.start(
+                    spec,
+                    host,
+                )
+
+            assertTrue(
+                MacUserLaunchdProcess.receiptCurrent(
+                    receipt = receipt,
+                    host = host,
+                ),
+            )
+
+            Files.writeString(
+                java.nio.file.Path.of(
+                    receipt.plistPath,
+                ),
+                "tampered",
+            )
+
+            assertFalse(
+                MacUserLaunchdProcess.receiptCurrent(
+                    receipt = receipt,
+                    host = host,
+                ),
+            )
+
+            val retired =
+                MacUserLaunchdProcess.retire(
+                    receipt = receipt,
+                    host = host,
+                )
+
+            assertTrue(
+                retired.exactOwnershipVerified,
+            )
+            assertTrue(
+                retired.verifiedNotLive,
+            )
+            assertFalse(
+                host.alive,
             )
         } finally {
             root

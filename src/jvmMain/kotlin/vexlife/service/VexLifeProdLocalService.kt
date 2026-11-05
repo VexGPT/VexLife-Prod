@@ -299,6 +299,7 @@ class VexLifeProdLocalService private constructor(
                     productRef = VexLifeProdServiceContract.ProductRef,
                     serviceState = "SOURCE_BOUND_LISTENING",
                     sourceSha = sourceSha,
+                    processPid = ProcessHandle.current().pid(),
                     runtimeCurrentness = "NOT_REOBSERVED_BY_SERVICE",
                     startupQualifiedRuntimeReceiptRef =
                         startupSetup.qualifiedRuntimeEvidence.runtimeReceiptRef,

@@ -214,6 +214,7 @@ class HereticPersistentRuntimeTest {
         workingDirectory = "/tmp/vexlife-prod-test/runtime/python",
         stdoutPath = "/tmp/vexlife-prod-test/runtime/heretic.out.log",
         stderrPath = "/tmp/vexlife-prod-test/runtime/heretic.err.log",
+        environment = emptyMap(),
         keepAlive = false,
         pid = pid,
     )

@@ -439,28 +439,11 @@ class MacHereticRuntimePlatform(
         receipt: MacUserLaunchdProcess.Receipt,
         expectedPid: Long,
     ): Boolean =
-        try {
-            val current =
-                MacUserLaunchdProcess.validate(
-                    receipt,
-                )
-            val observed =
-                MacUserLaunchdProcess.observe(
-                    current.toSpec(),
-                    launchdHost,
-                )
-
-            current.pid ==
-                expectedPid &&
-                observed is
-                MacUserLaunchdProcess.Observation.Running &&
-                observed.pid ==
-                expectedPid
-        } catch (
-            _: Exception,
-        ) {
-            false
-        }
+        MacUserLaunchdProcess.receiptCurrent(
+            receipt = receipt,
+            host = launchdHost,
+            expectedPid = expectedPid,
+        )
 
     override fun matchingProcesses(
         args: List<String>,
@@ -806,7 +789,7 @@ class MacHereticRuntimePlatform(
             workingDirectory = workingDirectory,
             stdoutPath = stdoutPath,
             stderrPath = stderrPath,
-            environment = emptyMap(),
+            environment = environment,
             uid =
                 domainTarget
                     .substringAfter(
