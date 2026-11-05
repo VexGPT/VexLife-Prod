@@ -466,6 +466,53 @@ class VexLifeProdLocalSetupTest {
     }
 
     @Test
+    fun serializedSetupHoldsBeforeAnyDomainEffectWhenAnotherSetupOwnsTheLease() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-local-setup-serialized-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        val trace =
+            mutableListOf<String>()
+
+        try {
+            VexLifeProdLocalSetupLease
+                .acquire(
+                    home,
+                )
+                .use {
+                    assertFailsWith<IllegalArgumentException> {
+                        VexLifeProdLocalSetup.establishSerializedAt(
+                            productHome = home,
+                            allowAcquisition = true,
+                            hooks =
+                                hooks(
+                                    trace,
+                                ),
+                        )
+                    }
+                }
+
+            assertTrue(
+                trace.isEmpty(),
+            )
+            assertFalse(
+                Files.exists(
+                    home,
+                ),
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun existingHomeRerunPreservesIdentityAndReusesBoundConfiguration() {
         val parent =
             Files.createTempDirectory(
