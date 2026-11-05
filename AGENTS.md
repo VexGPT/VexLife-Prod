@@ -119,7 +119,7 @@ When one source identity changes, recompute only its true dependents. A new comm
 
 This front door routes the repository; VexWork carries lifecycle/current work position.
 
-The current accepted construction edge remains VexWeb F1 compiler-visible authoring over the accepted Frame / Seam / Region / Allocation grammar, followed by deterministic artifact generation.
+VexWeb F1 compiler-visible authoring over the accepted Frame / Seam / Region / Allocation grammar is accepted source. The current construction edge is F2 deterministic browser-artifact generation from those accepted relationships.
 
 A lived exploration threshold is retained under `exploration/web-workspace/`: it proves that the intended nested-browser shell can project the current canonical VexLife Conversation and complete a real human↔Vex turn without becoming Conversation/model authority. It is evidence and a runnable threshold, not the accepted generated renderer or permission to skip F1/F2.
 
