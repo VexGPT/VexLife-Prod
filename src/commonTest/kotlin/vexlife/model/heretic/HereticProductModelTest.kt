@@ -7,7 +7,7 @@ import kotlin.test.assertTrue
 
 class HereticProductModelTest {
     private val home =
-        HereticModelConfiguration.HomeIdentity(
+        HereticModelConfiguration.BindingScope(
             homeRef = "home.vexlife.test",
             companionLineageRef = "lineage.vexlife.test",
         )
