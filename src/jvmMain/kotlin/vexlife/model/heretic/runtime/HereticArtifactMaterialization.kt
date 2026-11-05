@@ -2,10 +2,9 @@ package vexlife.model.heretic.runtime
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
-import java.nio.file.LinkOption
 import java.nio.file.Path
-import java.nio.file.attribute.BasicFileAttributes
 import java.security.MessageDigest
+import vexlife.artifact.ExactArtifactFile
 import vexlife.model.heretic.HereticArtifactCatalog
 import vexlife.model.heretic.HereticProductIdentity
 
@@ -47,32 +46,6 @@ object HereticArtifactMaterialization {
         val totalBytes: Long,
         val members: List<PlanMember>,
     )
-
-    sealed interface Classification {
-        val path: String
-
-        data class Missing(
-            override val path: String,
-        ) : Classification
-
-        data class InvalidSize(
-            override val path: String,
-            val bytes: Long,
-            val expectedBytes: Long,
-        ) : Classification
-
-        data class InvalidHash(
-            override val path: String,
-            val bytes: Long,
-            val actualSha256: String,
-        ) : Classification
-
-        data class VerifiedReusable(
-            override val path: String,
-            val bytes: Long,
-            val actualSha256: String,
-        ) : Classification
-    }
 
     fun interface Acquirer {
         fun acquire(
@@ -172,86 +145,6 @@ object HereticArtifactMaterialization {
         )
     }
 
-    fun classifyExactArtifact(
-        finalPath: Path,
-        expectedSha256: String,
-        expectedBytes: Long,
-    ): Classification {
-        require(
-            expectedSha256.matches(
-                Regex(
-                    "[0-9a-f]{64}",
-                ),
-            ),
-        ) {
-            "expectedSha256 must be lowercase SHA-256"
-        }
-        require(
-            expectedBytes >
-                0,
-        ) {
-            "expectedBytes must be positive"
-        }
-
-        if (
-            !Files.exists(
-                finalPath,
-                LinkOption.NOFOLLOW_LINKS,
-            )
-        ) {
-            return Classification.Missing(
-                finalPath.toString(),
-            )
-        }
-
-        val attributes =
-            Files.readAttributes(
-                finalPath,
-                BasicFileAttributes::class.java,
-                LinkOption.NOFOLLOW_LINKS,
-            )
-
-        require(
-            attributes.isRegularFile &&
-                !attributes.isSymbolicLink,
-        ) {
-            "artifact destination must be one regular non-symlink file"
-        }
-
-        if (
-            attributes.size() !=
-                expectedBytes
-        ) {
-            return Classification.InvalidSize(
-                path = finalPath.toString(),
-                bytes = attributes.size(),
-                expectedBytes = expectedBytes,
-            )
-        }
-
-        val actualSha256 =
-            sha256File(
-                finalPath,
-            )
-
-        if (
-            actualSha256 !=
-                expectedSha256
-        ) {
-            return Classification.InvalidHash(
-                path = finalPath.toString(),
-                bytes = attributes.size(),
-                actualSha256 = actualSha256,
-            )
-        }
-
-        return Classification.VerifiedReusable(
-            path = finalPath.toString(),
-            bytes = attributes.size(),
-            actualSha256 = actualSha256,
-        )
-    }
-
     fun materializeCurrent(
         productHome: Path,
         allowAcquisition: Boolean,
@@ -328,13 +221,13 @@ object HereticArtifactMaterialization {
             }
 
             when (
-                classifyExactArtifact(
-                    finalPath = finalPath,
+                ExactArtifactFile.classify(
+                    path = finalPath,
                     expectedSha256 = member.sha256,
                     expectedBytes = member.byteLength,
                 )
             ) {
-                is Classification.VerifiedReusable ->
+                is ExactArtifactFile.Classification.VerifiedReusable ->
                     reused +=
                         1
 
@@ -528,59 +421,6 @@ object HereticArtifactMaterialization {
         ) {
             "Heretic provider source ref must end in one exact 40-hex revision"
         }
-
-    private fun sha256File(
-        path: Path,
-    ): String {
-        val digest =
-            MessageDigest.getInstance(
-                "SHA-256",
-            )
-
-        Files.newInputStream(
-            path,
-        )
-            .use {
-                input ->
-                val buffer =
-                    ByteArray(
-                        1024 *
-                            1024,
-                    )
-
-                while (
-                    true
-                ) {
-                    val count =
-                        input.read(
-                            buffer,
-                        )
-                    if (
-                        count <
-                        0
-                    ) {
-                        break
-                    }
-                    digest.update(
-                        buffer,
-                        0,
-                        count,
-                    )
-                }
-            }
-
-        return digest
-            .digest()
-            .joinToString(
-                "",
-            ) {
-                byte ->
-                "%02x".format(
-                    byte.toInt() and
-                        0xff,
-                )
-            }
-    }
 
     private fun compareUtf8(
         left: String,
