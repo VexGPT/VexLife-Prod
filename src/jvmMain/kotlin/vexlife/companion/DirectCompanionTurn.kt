@@ -820,9 +820,6 @@ object DirectCompanionTurn {
                 "CONNECTION_" +
                     error.code.name
 
-            is DirectConversationStore.IncompleteConversationException ->
-                "CONVERSATION_RECOVERY_REQUIRED"
-
             is IllegalArgumentException ->
                 "ADMISSION_FAILED"
 
