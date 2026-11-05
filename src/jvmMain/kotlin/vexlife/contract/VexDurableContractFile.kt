@@ -24,7 +24,19 @@ object VexDurableContractFile {
     inline fun <reified T> read(
         ownedRoot: Path,
         path: Path,
-    ): T? {
+    ): T? =
+        readText(
+            ownedRoot = ownedRoot,
+            path = path,
+        )
+            ?.let(
+                VexContractJson::decode,
+            )
+
+    fun readText(
+        ownedRoot: Path,
+        path: Path,
+    ): String? {
         val root =
             VexOwnedPath.requireRoot(
                 ownedRoot,
@@ -58,11 +70,9 @@ object VexDurableContractFile {
             normalized,
         )
 
-        return VexContractJson.decode(
-            Files.readString(
-                normalized,
-                StandardCharsets.UTF_8,
-            ),
+        return Files.readString(
+            normalized,
+            StandardCharsets.UTF_8,
         )
     }
 
