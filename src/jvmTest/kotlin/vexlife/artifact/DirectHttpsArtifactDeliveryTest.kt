@@ -204,6 +204,179 @@ class DirectHttpsArtifactDeliveryTest {
     }
 
     @Test
+    fun completeVerifiedPartialFinalizesWithoutAnotherNetworkRequest() {
+        val root =
+            Files.createTempDirectory(
+                "vexlife-prod-download-complete-partial-",
+            )
+                .toAbsolutePath()
+        val final =
+            root.resolve(
+                "artifact.bin",
+            )
+        val partial =
+            root.resolve(
+                "artifact.bin.partial",
+            )
+        val full =
+            "certified".toByteArray(
+                StandardCharsets.UTF_8,
+            )
+        var opened =
+            false
+
+        try {
+            Files.write(
+                partial,
+                full,
+            )
+
+            val result =
+                DirectHttpsArtifactDelivery.download(
+                    request =
+                        DirectHttpsArtifactDelivery.Request(
+                            url = "https://example.invalid/artifact.bin",
+                            expectedSha256 =
+                                sha256(
+                                    full,
+                                ),
+                            expectedBytes =
+                                full.size.toLong(),
+                        ),
+                    finalPath = final,
+                    transport =
+                        DirectHttpsArtifactDelivery.Transport {
+                            _,
+                            _,
+                            ->
+                            opened =
+                                true
+                            error(
+                                "network must not run for a complete verified partial",
+                            )
+                        },
+                )
+
+            assertFalse(
+                opened,
+            )
+            assertEquals(
+                "RECOVERED_COMPLETE_PARTIAL_AND_VERIFIED",
+                result.disposition,
+            )
+            assertEquals(
+                full.toList(),
+                Files.readAllBytes(
+                    final,
+                )
+                    .toList(),
+            )
+            assertFalse(
+                Files.exists(
+                    partial,
+                ),
+            )
+        } finally {
+            root
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun completeCorruptPartialIsDiscardedBeforeFreshDownload() {
+        val root =
+            Files.createTempDirectory(
+                "vexlife-prod-download-corrupt-complete-partial-",
+            )
+                .toAbsolutePath()
+        val final =
+            root.resolve(
+                "artifact.bin",
+            )
+        val partial =
+            root.resolve(
+                "artifact.bin.partial",
+            )
+        val good =
+            "certified".toByteArray(
+                StandardCharsets.UTF_8,
+            )
+        val wrong =
+            "corrupted".toByteArray(
+                StandardCharsets.UTF_8,
+            )
+        val seen =
+            mutableListOf<Long>()
+
+        require(
+            wrong.size ==
+                good.size,
+        )
+
+        try {
+            Files.write(
+                partial,
+                wrong,
+            )
+
+            val result =
+                DirectHttpsArtifactDelivery.download(
+                    request =
+                        DirectHttpsArtifactDelivery.Request(
+                            url = "https://example.invalid/artifact.bin",
+                            expectedSha256 =
+                                sha256(
+                                    good,
+                                ),
+                            expectedBytes =
+                                good.size.toLong(),
+                        ),
+                    finalPath = final,
+                    transport =
+                        DirectHttpsArtifactDelivery.Transport {
+                            _,
+                            resumeFrom,
+                            ->
+                            seen +=
+                                resumeFrom
+                            DirectHttpsArtifactDelivery.Opened(
+                                status = 200,
+                                contentLength = good.size.toLong(),
+                                contentRange = null,
+                                body =
+                                    ByteArrayInputStream(
+                                        good,
+                                    ),
+                            )
+                        },
+                )
+
+            assertEquals(
+                listOf(
+                    0L,
+                ),
+                seen,
+            )
+            assertEquals(
+                "DOWNLOADED_AND_VERIFIED",
+                result.disposition,
+            )
+            assertEquals(
+                good.toList(),
+                Files.readAllBytes(
+                    final,
+                )
+                    .toList(),
+            )
+        } finally {
+            root
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun serverIgnoringRangeRestartsFromZeroInsteadOfDuplicatingBytes() {
         val root =
             Files.createTempDirectory(
