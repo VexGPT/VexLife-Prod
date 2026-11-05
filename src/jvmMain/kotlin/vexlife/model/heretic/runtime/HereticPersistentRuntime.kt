@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.security.MessageDigest
+import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeEffectBoundary
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -325,6 +326,45 @@ object HereticPersistentRuntime {
             pythonPath = python.toString(),
             pythonEnvironmentRoot = environmentRoot.toString(),
             sourceIdentity = sourceIdentity,
+        )
+    }
+
+    fun configurationEvidence(
+        binding: Binding,
+        receipt: Receipt,
+    ): HereticModelConfiguration.QualifiedRuntimeEvidence {
+        validateBinding(
+            binding,
+        )
+        require(
+            receiptBinds(
+                binding = binding,
+                receipt = receipt,
+                requireSourceSha = true,
+            ) &&
+                receipt.state ==
+                HereticRuntimeState.Qualified &&
+                receipt.qualification !=
+                null,
+        ) {
+            "Heretic model configuration evidence requires one exact current qualified runtime receipt"
+        }
+
+        return HereticModelConfiguration.QualifiedRuntimeEvidence(
+            runtimeReceiptRef = receipt.receiptRef,
+            runtimeState = receipt.state,
+            modelRef = receipt.modelRef,
+            modelProfileRef = receipt.modelProfileRef,
+            artifactRef = receipt.artifactRef,
+            artifactContentSetSha256 = receipt.artifactContentSetSha256,
+            runtimeAdapterRef = receipt.runtimeAdapterRef,
+            runtimeClass = receipt.runtimeClass,
+            endpoint = receipt.endpoint,
+            requestModel = receipt.requestModel,
+            qualification =
+                requireNotNull(
+                    receipt.qualification,
+                ),
         )
     }
 
