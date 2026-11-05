@@ -12,6 +12,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import vexlife.companion.DirectCompanionTurn
+import vexlife.continuity.VexLifeCompanionContinuityGate
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.local.VexLifeProdLocalSetup
@@ -50,29 +51,15 @@ class VexLifeProdLocalService private constructor(
                 allowStructuredMapKeys = false
             }
 
+        /**
+         * Ordinary product entry is deliberately held while the canonical durable ports are
+         * incomplete. Test-only construction below remains available for bounded mechanical proof.
+         */
         internal fun start(
             sourceSha: String,
             session: VexLifeProdLocalSetup.Session,
         ): VexLifeProdLocalService =
-            startAt(
-                sourceSha = sourceSha,
-                startupSetup = session.result,
-                address =
-                    InetSocketAddress(
-                        VexLifeProdServiceContract.Host,
-                        VexLifeProdServiceContract.Port,
-                    ),
-                turnExecutor =
-                    TurnExecutor {
-                        _,
-                        intent,
-                        ->
-                        DirectCompanionTurn.perform(
-                            session = session,
-                            intent = intent,
-                        )
-                    },
-            )
+            VexLifeCompanionContinuityGate.requireProductionReady()
 
         internal fun startForTest(
             sourceSha: String,
