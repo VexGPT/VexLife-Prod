@@ -134,9 +134,17 @@ class DirectConversationStore(
         val formedAt: String,
     )
 
+    @ConsistentCopyVisibility
+    data class AbandonedAttempt internal constructor(
+        val requestEvent: Event,
+        val responseEventOrNull: Event?,
+    )
+
     data class Snapshot(
         val head: Head?,
         val events: List<Event>,
+        val canonicalEvents: List<Event>,
+        val abandonedAttempts: List<AbandonedAttempt>,
     )
 
     @ConsistentCopyVisibility
@@ -183,6 +191,18 @@ class DirectConversationStore(
 
             val before =
                 readCurrentComplete()
+
+            require(
+                before.events.none {
+                    it.turnRef ==
+                        turnRef ||
+                        it.messageRef ==
+                        requestMessageRef
+                },
+            ) {
+                "direct Conversation turn/message identity is already durable; same failed attempt must not replay"
+            }
+
             val sequence =
                 before.head
                     ?.sequence
@@ -545,16 +565,17 @@ class DirectConversationStore(
             head ==
                 null
         ) {
-            if (
-                events.isNotEmpty()
-            ) {
-                throw IncompleteConversationException(
-                    "direct Conversation has durable events without one completed head; explicit recovery is required",
+            val abandoned =
+                classifyAbandonedAttempts(
+                    events = events,
+                    canonicalChain = emptyList(),
                 )
-            }
+
             return Snapshot(
                 head = null,
-                events = emptyList(),
+                events = events,
+                canonicalEvents = emptyList(),
+                abandonedAttempts = abandoned,
             )
         }
 
@@ -603,12 +624,11 @@ class DirectConversationStore(
 
         chain.reverse()
 
-        require(
-            chain.size ==
-                events.size,
-        ) {
-            "direct Conversation contains durable events outside the completed head; explicit recovery is required"
-        }
+        val abandoned =
+            classifyAbandonedAttempts(
+                events = events,
+                canonicalChain = chain,
+            )
         require(
             chain.size >=
                 2 &&
@@ -736,8 +756,171 @@ class DirectConversationStore(
 
         return Snapshot(
             head = head,
-            events = chain,
+            events = events,
+            canonicalEvents = chain,
+            abandonedAttempts = abandoned,
         )
+    }
+
+    private fun classifyAbandonedAttempts(
+        events: List<Event>,
+        canonicalChain: List<Event>,
+    ): List<AbandonedAttempt> {
+        val canonicalHashes =
+            canonicalChain
+                .map(
+                    Event::eventSha256,
+                )
+                .toSet()
+        val extras =
+            events.filter {
+                it.eventSha256 !in
+                    canonicalHashes
+            }
+
+        if (
+            extras.isEmpty()
+        ) {
+            return emptyList()
+        }
+
+        val canonicalResponseBySequence =
+            canonicalChain
+                .filter {
+                    it.eventKind ==
+                        "RESPONSE"
+                }
+                .associateBy(
+                    Event::sequence,
+                )
+
+        val canonicalTurnRefs =
+            canonicalChain
+                .map(
+                    Event::turnRef,
+                )
+                .toSet()
+
+        val groups =
+            extras.groupBy(
+                Event::turnRef,
+            )
+
+        require(
+            groups.size ==
+                extras
+                    .filter {
+                        it.eventKind ==
+                            "REQUEST"
+                    }
+                    .map(
+                        Event::turnRef,
+                    )
+                    .distinct()
+                    .size,
+        ) {
+            "direct Conversation off-head events do not form unique failed-turn branches"
+        }
+
+        return groups
+            .values
+            .map {
+                group ->
+                group.forEach(
+                    ::validateEvent,
+                )
+
+                require(
+                    group.size in
+                        1..2,
+                ) {
+                    "direct Conversation failed branch may contain only one request and optional response"
+                }
+
+                val request =
+                    requireNotNull(
+                        group.singleOrNull {
+                            it.eventKind ==
+                                "REQUEST"
+                        },
+                    ) {
+                        "direct Conversation off-head branch requires one REQUEST"
+                    }
+                val response =
+                    group.singleOrNull {
+                        it.eventKind ==
+                            "RESPONSE"
+                    }
+
+                require(
+                    request.turnRef !in
+                        canonicalTurnRefs &&
+                        request.sequence %
+                        2 ==
+                        0L,
+                ) {
+                    "direct Conversation failed request identity/sequence is not admissible"
+                }
+
+                val expectedPrior =
+                    if (
+                        request.sequence ==
+                            0L
+                    ) {
+                        null
+                    } else {
+                        requireNotNull(
+                            canonicalResponseBySequence[
+                                request.sequence -
+                                    1
+                            ],
+                        ) {
+                            "direct Conversation failed request does not branch from one canonical response"
+                        }
+                            .eventSha256
+                    }
+
+                require(
+                    request.priorEventSha256 ==
+                        expectedPrior,
+                ) {
+                    "direct Conversation failed request does not extend one exact historical canonical head"
+                }
+
+                if (
+                    response !=
+                        null
+                ) {
+                    require(
+                        response.sequence ==
+                            request.sequence +
+                                1 &&
+                            response.priorEventSha256 ==
+                            request.eventSha256 &&
+                            response.turnRef ==
+                            request.turnRef &&
+                            response.speakerRef ==
+                            request.recipientRefs.single() &&
+                            response.recipientRefs ==
+                            listOf(
+                                request.speakerRef,
+                            ),
+                    ) {
+                        "direct Conversation failed response does not bind its exact off-head request"
+                    }
+                }
+
+                AbandonedAttempt(
+                    requestEvent = request,
+                    responseEventOrNull = response,
+                )
+            }
+            .sortedWith(
+                compareBy(
+                    { it.requestEvent.sequence },
+                    { it.requestEvent.eventSha256 },
+                ),
+            )
     }
 
     private fun validateImmutableHeadLineage(
@@ -997,18 +1180,27 @@ class DirectConversationStore(
                 beforeHead,
                 all,
             )
-        val extras =
+        val canonical =
             all.filter {
-                it.eventSha256 !in
+                it.eventSha256 in
                     completedHashes
             }
+        val abandoned =
+            classifyAbandonedAttempts(
+                events = all,
+                canonicalChain = canonical,
+            )
+        val pending =
+            abandoned.singleOrNull {
+                it.requestEvent.eventSha256 ==
+                    request.eventSha256
+            }
+
         require(
-            extras ==
-                listOf(
-                    request,
-                ),
+            pending !=
+                null
         ) {
-            "direct Conversation pending request is not the only uncommitted event"
+            "direct Conversation pending request is not one exact off-head attempt"
         }
     }
 
