@@ -226,7 +226,7 @@ class HereticPersistentRuntimeTest {
     ): HereticPersistentRuntime.Receipt =
         HereticPersistentRuntime.Receipt(
             schemaVersion = HereticPersistentRuntime.ReceiptSchema,
-            receiptRef = "receipt.vexlife.heretic-persistent-runtime.test",
+            receiptRef = "receipt.vexlife-prod.heretic-persistent-runtime.test",
             state = state,
             formedAt = "2026-11-04T17:00:00.000-08:00",
             authorityRef = binding.authorityRef,
