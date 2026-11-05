@@ -120,6 +120,17 @@ class MacUserLaunchdProcessTest {
             Files.createTempDirectory(
                 "vexlife-prod-launchd-",
             )
+        Files.createDirectory(
+            root.resolve(
+                "launchd",
+            ),
+        )
+        Files.createDirectory(
+            root.resolve(
+                "runtime",
+            ),
+        )
+
         val spec =
             MacUserLaunchdProcess.form(
                 label = "com.vexlife.prod.presentation",
