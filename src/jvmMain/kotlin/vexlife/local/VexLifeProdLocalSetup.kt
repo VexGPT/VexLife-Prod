@@ -39,6 +39,7 @@ object VexLifeProdLocalSetup {
         val runtimeDisposition: String,
         val modelBindingDisposition: String,
         val modelConfigurationState: HereticModelConfiguration.State,
+        val qualifiedRuntimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
         val endpoint: String,
         val requestModel: String,
     )
@@ -263,14 +264,16 @@ object VexLifeProdLocalSetup {
                 ),
             )
 
+        val qualifiedRuntimeEvidence =
+            HereticPersistentRuntime.configurationEvidence(
+                binding = binding,
+                receipt = runtime.receipt,
+            )
+
         val bound =
             modelConfiguration.bindQualified(
                 manifest = home.manifest,
-                qualifiedRuntime =
-                    HereticPersistentRuntime.configurationEvidence(
-                        binding = binding,
-                        receipt = runtime.receipt,
-                    ),
+                qualifiedRuntime = qualifiedRuntimeEvidence,
             )
 
         return Result(
@@ -284,6 +287,7 @@ object VexLifeProdLocalSetup {
             runtimeDisposition = runtime.disposition,
             modelBindingDisposition = bound.state,
             modelConfigurationState = bound.value.state,
+            qualifiedRuntimeEvidence = qualifiedRuntimeEvidence,
             endpoint = runtime.endpoint,
             requestModel = runtime.requestModel,
         )
