@@ -280,9 +280,37 @@ The archive task consumes that contract and the bootstrap template mechanically.
 field that is not source-valid therefore fails formation rather than becoming remembered provider
 convention.
 
-The generated bootstrap is pinned to one source SHA and one archive SHA-256. It is **not** a mutable
-"latest" pointer. Provider publication/current-channel selection remains held.
+Each exact release still contains a source-specific bootstrap pinned to one source SHA and one archive
+SHA-256.
 
-That keeps carriage replaceable and small.
+The release contract now also defines a stable provider-current alias:
+
+~~~text
+currentChannel:
+  github-release-latest
+
+asset:
+  vexlife-prod-bootstrap-darwin-arm64.command
+~~~
+
+Archive formation requires that alias to be a byte-exact copy of the source-specific bootstrap and
+binds both names into archive receipt v3. Therefore:
+
+~~~text
+STABLE CURRENT URL
+-> provider chooses one admitted latest Release
+-> stable bootstrap asset name
+-> exact bootstrap bytes
+-> embedded exact source SHA + archive SHA-256
+
+CURRENT POINTER
+!= CURRENT TOPOLOGY
+!= MUTABLE BOOTSTRAP LOGIC
+~~~
+
+Provider publication is still held: this source forms the contract/assets but does not claim that a
+GitHub Release currently exists or is correctly marked latest.
+
+That keeps carriage replaceable, currentizable and small.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][PRIVATE-IMAGE-INSTALL-SETUP] -->
