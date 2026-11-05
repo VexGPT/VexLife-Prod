@@ -9,6 +9,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
@@ -757,6 +758,120 @@ class DirectCompanionTurnTest {
                 .deleteRecursively()
         }
     }
+
+    @Test
+    fun completedDuplicateRequiresTheExactSameBrowserContext() {
+        val home =
+            productHome()
+        var calls =
+            0
+        val transport =
+            DirectCompanionConnection.Transport {
+                calls +=
+                    1
+                DirectCompanionConnection.HttpResult(
+                    status = 200,
+                    body =
+                        """
+                        {
+                          "model": "default_model",
+                          "choices": [
+                            {
+                              "message": {
+                                "role": "assistant",
+                                "content": "Browser-aware response"
+                              }
+                            }
+                          ]
+                        }
+                        """.trimIndent(),
+                )
+            }
+        val browserContext =
+            DirectPromptContext.BrowserContext(
+                pageUrl = VexLifeProdBrowserContract.InitialPageUrl,
+                title = "Vextreme Terrain",
+                text = "Current terrain text",
+                capture = VexLifeProdBrowserContract.CaptureRendered,
+            )
+        val intent =
+            DirectCompanionTurn.Intent(
+                sendAttemptRef = "send.self-development.browser-exact",
+                content = "What is on this page?",
+                browserContext = browserContext,
+            )
+
+        try {
+            val first =
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup(
+                        home,
+                    ),
+                    intent = intent,
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                        ),
+                )
+            val duplicate =
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup(
+                        home,
+                    ),
+                    intent = intent,
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                        ),
+                )
+
+            assertEquals(
+                1,
+                calls,
+            )
+            assertFalse(
+                first.recoveredCompletedTurn,
+            )
+            assertTrue(
+                duplicate.recoveredCompletedTurn,
+            )
+            assertTrue(
+                duplicate.promptContextReceipt.browserContextIncluded,
+            )
+            assertEquals(
+                first.promptContextReceipt.browserContextSha256,
+                duplicate.promptContextReceipt.browserContextSha256,
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup(
+                        home,
+                    ),
+                    intent =
+                        intent.copy(
+                            browserContext =
+                                browserContext.copy(
+                                    text = "Different terrain text",
+                                ),
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                        ),
+                )
+            }
+            assertEquals(
+                1,
+                calls,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
 }
 
 // [VXG RealForever]
