@@ -1,5 +1,6 @@
 package vexlife.model.heretic.runtime
 
+import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.security.MessageDigest
 import vexlife.model.heretic.HereticProductIdentity
@@ -541,9 +542,10 @@ object HereticPersistentRuntime {
                     currentPrior,
                 )
             require(
-                retired.verifiedNotLive,
+                retired.exactOwnershipVerified &&
+                    retired.verifiedNotLive,
             ) {
-                "dead Heretic runtime substrate could not be retired"
+                "dead Heretic runtime substrate could not be retired with exact substrate ownership"
             }
             store.delete()
         }
@@ -1064,7 +1066,9 @@ object HereticPersistentRuntime {
                 "SHA-256",
             )
             .digest(
-                value.toByteArray(),
+                value.toByteArray(
+                    StandardCharsets.UTF_8,
+                ),
             )
             .joinToString(
                 "",
