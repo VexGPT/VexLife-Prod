@@ -67,6 +67,10 @@ object VexLifeProdHomeFiles {
             "VexLife-Prod Home path must be absolute"
         }
 
+        val currentPlan =
+            VexLifeProdHome.validateBootstrapPlan(
+                plan,
+            )
         val home =
             productHome.normalize()
 
@@ -114,14 +118,9 @@ object VexLifeProdHomeFiles {
                     "existing VexLife-Prod Home has no current manifest"
                 }
 
-            require(
-                manifest.schemaVersion ==
-                    VexLifeProdHome.HomeSchema &&
-                    manifest.existingHomePolicy ==
-                    VexLifeProdHome.ExistingHomePolicy,
-            ) {
-                "existing VexLife-Prod Home manifest is not current"
-            }
+            VexLifeProdHome.validateManifest(
+                manifest,
+            )
 
             return Result(
                 state = "EXISTING_HOME_PRESERVED",
@@ -165,7 +164,7 @@ object VexLifeProdHomeFiles {
 
             for (
                 relative in
-                plan.directories
+                currentPlan.directories
             ) {
                 val directory =
                     VexOwnedPath.resolveInside(
@@ -188,7 +187,7 @@ object VexLifeProdHomeFiles {
                         staging,
                         VexLifeProdHome.HomeManifestRelativePath,
                     ),
-                value = plan.manifest,
+                value = currentPlan.manifest,
             )
             VexDurableContractFile.write(
                 ownedRoot = staging,
@@ -197,7 +196,7 @@ object VexLifeProdHomeFiles {
                         staging,
                         VexLifeProdHome.ModelConfigurationRelativePath,
                     ),
-                value = plan.initialModelConfiguration,
+                value = currentPlan.initialModelConfiguration,
             )
             VexDurableContractFile.write(
                 ownedRoot = staging,
@@ -206,7 +205,7 @@ object VexLifeProdHomeFiles {
                         staging,
                         VexLifeProdHome.BootstrapReceiptRelativePath,
                     ),
-                value = plan.receipt,
+                value = currentPlan.receipt,
             )
 
             try {
