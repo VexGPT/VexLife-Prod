@@ -273,6 +273,76 @@ later Send succeeds
 
 Do not make this service class own launchd merely because it listens on a port.
 
+## Long-lived service process entry
+
+The JVM source now also contains one process program:
+
+~~~text
+VexLifeProdServiceProcess
+~~~
+
+Its admitted arguments are intentionally only:
+
+~~~text
+--source-sha <exact lowercase Git SHA>
+~~~
+
+It cannot accept:
+
+~~~text
+port
+endpoint
+model
+Home path
+runtime path
+download mode
+presentation URL
+~~~
+
+Process sequence:
+
+~~~text
+exact source identity
+-> VexLifeProdLocalSetup.establishSession(allowAcquisition=false)
+-> fixed VexLifeProdLocalService.start(...)
+-> VEXLIFE_PROD_SERVICE_READY receipt line
+-> remain alive until process termination
+~~~
+
+The service process therefore cannot silently decide to acquire the model/Python prerequisites.
+Missing prerequisites return to the separately-owned human setup path.
+
+Permanent:
+
+~~~text
+SERVICE PROCESS
+!= HUMAN SETUP
+
+SERVICE PROCESS
+!= ARTIFACT ACQUISITION AUTHORITY
+
+SERVICE PROCESS SOURCE
+!= PACKAGED MAC EXECUTABLE
+
+SERVICE PROCESS
+!= LAUNCHD OWNERSHIP
+~~~
+
+The JVM shutdown path closes the in-process listener, but external process/source currentness still
+belongs to the later macOS product-lifetime owner.
+
+Current packaging pressure is now explicit:
+
+~~~text
+FRESH MAC
+cannot be assumed to have Java / Gradle / Kotlin tooling
+
+therefore:
+  product distribution must carry the runtime needed to execute this source
+~~~
+
+Do not solve that by asking the human to install a development JDK.
+
 ## Presentation boundary
 
 This candidate does not hand-author the permanent product UI.
@@ -318,6 +388,8 @@ exact duplicate attempt -> zero second provider call
 unknown wire field -> rejected before turn effect
 new inference held when runtime currentness is not exact
 completed duplicate does not require runtime/provider availability
+service process accepts only exact source identity
+service process establishes with acquisition disabled
 ~~~
 
 ## Held before acceptance
@@ -334,6 +406,7 @@ real macOS:
   direct Send 2
   service remains alive after launcher completion
 
+packaged Mac executable with bundled runtime
 VexWeb generated presentation
 Mac service process lifecycle
 ordinary fresh-user Mac entry
