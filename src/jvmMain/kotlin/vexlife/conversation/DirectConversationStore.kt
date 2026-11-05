@@ -156,12 +156,6 @@ class DirectConversationStore(
         val wholeHistoryEventEnumerationPerformed: Boolean,
     )
 
-    class IncompleteConversationException(
-        message: String,
-    ) : IllegalStateException(
-        message,
-    )
-
     inner class Locked internal constructor() {
         fun current(): Snapshot =
             readCurrentComplete()
