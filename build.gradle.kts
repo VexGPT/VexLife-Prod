@@ -1,3 +1,4 @@
+import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.LinkOption
@@ -747,8 +748,11 @@ tasks.register(
                 .normalize()
 
         val runtimeDependencies =
-            jvmMainCompilation
-                .runtimeDependencyFiles
+            requireNotNull(
+                jvmMainCompilation.runtimeDependencyFiles,
+            ) {
+                "JVM service runtime dependency collection is unavailable"
+            }
                 .files
                 .map {
                     it.toPath()
@@ -807,7 +811,7 @@ tasks.register(
         val classpath =
             runtimeDependencies.joinToString(
                 separator =
-                    java.io.File.pathSeparator,
+                    File.pathSeparator,
             )
 
         val modules =
