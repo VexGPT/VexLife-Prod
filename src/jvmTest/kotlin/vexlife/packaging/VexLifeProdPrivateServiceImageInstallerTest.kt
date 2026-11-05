@@ -76,6 +76,10 @@ class VexLifeProdPrivateServiceImageInstallerTest {
             root.resolve(
                 VexLifeProdPrivateServiceImage.LauncherRelativePath,
             )
+        val setupLauncher =
+            root.resolve(
+                VexLifeProdPrivateServiceImage.SetupLauncherRelativePath,
+            )
         val app =
             root.resolve(
                 "lib/vexlife-prod.jar",
@@ -98,6 +102,10 @@ class VexLifeProdPrivateServiceImageInstallerTest {
             "#!/bin/bash\nexit 0\n",
         )
         Files.writeString(
+            setupLauncher,
+            "#!/bin/bash\nexit 0\n",
+        )
+        Files.writeString(
             app,
             "app",
         )
@@ -116,6 +124,14 @@ class VexLifeProdPrivateServiceImageInstallerTest {
         )
         Files.setPosixFilePermissions(
             launcher,
+            setOf(
+                PosixFilePermission.OWNER_READ,
+                PosixFilePermission.OWNER_WRITE,
+                PosixFilePermission.OWNER_EXECUTE,
+            ),
+        )
+        Files.setPosixFilePermissions(
+            setupLauncher,
             setOf(
                 PosixFilePermission.OWNER_READ,
                 PosixFilePermission.OWNER_WRITE,
@@ -162,6 +178,7 @@ class VexLifeProdPrivateServiceImageInstallerTest {
                 javaRuntimeMajor = VexLifeProdPrivateServiceImage.JavaRuntimeMajor,
                 mainClass = VexLifeProdPrivateServiceImage.MainClass,
                 launcher = VexLifeProdPrivateServiceImage.LauncherRelativePath,
+                setupLauncher = VexLifeProdPrivateServiceImage.SetupLauncherRelativePath,
                 runtimeModules =
                     listOf(
                         "java.base",
