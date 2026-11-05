@@ -59,7 +59,7 @@ probe's serialization.
 ## Placement
 
 ~~~text
-<Vex Home>/
+<VexLife-Prod Home>/
   runtime/
     heretic/
       python-3.14.7-mlx-lm-0.32.0/
