@@ -62,8 +62,11 @@ HOST / PORT / ROUTES
 = source-owned ordinary product constants
 ~~~
 
-The public product start API therefore accepts the exact source SHA + already-qualified local setup
-result. Host/port are not caller configuration.
+The source-formed service start currently remains module-internal. It accepts the exact source SHA +
+already-qualified local setup result, while host/port remain fixed source constants.
+
+It is intentionally not yet a standalone product entry because this layer does not re-observe
+Heretic runtime ownership/currentness after setup.
 
 A proof-only internal start path may bind port 0 for deterministic tests. That does not redefine the
 ordinary product route.
@@ -103,12 +106,13 @@ Source currentness keeps these questions distinct:
 ~~~text
 serviceState
 sourceSha
-runtimeState
-runtimeReceiptRef
+runtimeCurrentness = NOT_REOBSERVED_BY_SERVICE
+startupQualifiedRuntimeReceiptRef
 currentConversationHeadSha256
 ~~~
 
-It intentionally does not collapse them into one generic READY value.
+It intentionally does not collapse them into one generic READY value and does not promote
+setup-time qualification into current runtime truth.
 
 The route is read-only:
 
@@ -239,7 +243,7 @@ SOURCE-BOUND SERVICE OBJECT
 != SUSTAINED LIFETIME PROOF
 ~~~
 
-The later macOS product-lifetime owner must still prove:
+The later macOS product-lifetime owner must therefore own/re-prove:
 
 ~~~text
 exact service source/process binding
