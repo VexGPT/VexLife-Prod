@@ -82,9 +82,11 @@ class VexLifeProdHomeFilesTest {
 
             val storedManifest =
                 VexDurableContractFile.read<VexLifeProdHome.Manifest>(
-                    productHome.resolve(
-                        VexLifeProdHome.HomeManifestRelativePath,
-                    ),
+                    ownedRoot = productHome,
+                    path =
+                        productHome.resolve(
+                            VexLifeProdHome.HomeManifestRelativePath,
+                        ),
                 )
             assertEquals(
                 firstPlan.manifest,
@@ -116,9 +118,11 @@ class VexLifeProdHomeFilesTest {
             assertEquals(
                 firstPlan.manifest,
                 VexDurableContractFile.read<VexLifeProdHome.Manifest>(
-                    productHome.resolve(
-                        VexLifeProdHome.HomeManifestRelativePath,
-                    ),
+                    ownedRoot = productHome,
+                    path =
+                        productHome.resolve(
+                            VexLifeProdHome.HomeManifestRelativePath,
+                        ),
                 ),
             )
         } finally {
@@ -156,6 +160,75 @@ class VexLifeProdHomeFilesTest {
             )
         } finally {
             productHome
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun existingHomeWithSymlinkedRequiredDirectoryFailsClosed() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-home-subdir-link-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        val outside =
+            parent.resolve(
+                "outside",
+            )
+
+        try {
+            Files.createDirectories(
+                productHome,
+            )
+            Files.createDirectory(
+                outside,
+            )
+            Files.createSymbolicLink(
+                productHome.resolve(
+                    "config",
+                ),
+                outside,
+            )
+            Files.createDirectory(
+                productHome.resolve(
+                    "runtime",
+                ),
+            )
+            Files.createDirectory(
+                productHome.resolve(
+                    "recovery",
+                ),
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                VexLifeProdHomeFiles.bootstrap(
+                    productHome,
+                    plan(
+                        "00000000-0000-0000-0000-000000000001",
+                        "00000000-0000-0000-0000-000000000002",
+                    ),
+                )
+            }
+
+            assertFalse(
+                Files.exists(
+                    outside.resolve(
+                        "home.json",
+                    ),
+                ),
+            )
+        } finally {
+            Files.deleteIfExists(
+                productHome.resolve(
+                    "config",
+                ),
+            )
+            parent
                 .toFile()
                 .deleteRecursively()
         }
