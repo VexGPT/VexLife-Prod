@@ -33,7 +33,7 @@ class HereticRuntimeContractTest {
     fun exactOwnedObservationRequiresMoreThanPidMatching() {
         val proof =
             HereticRuntimeObservation.OwnershipProof(
-                ownerReceiptRef = "receipt.vexlife.heretic.test",
+                ownerReceiptRef = "receipt.vexlife-prod.heretic.test",
                 runtimeIdentityRef = "runtime.vexlife.heretic.process.4242",
                 executableIdentityRef = "executable.vexlife.heretic.python.test",
                 processGroupIdentityRef = "process-group.vexlife.heretic.4242",
@@ -70,7 +70,7 @@ class HereticRuntimeContractTest {
     fun ambiguousRuntimeCannotCarryExactOwnershipProof() {
         val proof =
             HereticRuntimeObservation.OwnershipProof(
-                ownerReceiptRef = "receipt.vexlife.heretic.test",
+                ownerReceiptRef = "receipt.vexlife-prod.heretic.test",
                 runtimeIdentityRef = "runtime.vexlife.heretic.process.4242",
                 executableIdentityRef = "executable.vexlife.heretic.python.test",
                 processGroupIdentityRef = "process-group.vexlife.heretic.4242",
@@ -134,7 +134,7 @@ class HereticRuntimeContractTest {
     fun staleRuntimeRequiresExactOwnershipAndSourceStaleEvidence() {
         val proof =
             HereticRuntimeObservation.OwnershipProof(
-                ownerReceiptRef = "receipt.vexlife.heretic.test",
+                ownerReceiptRef = "receipt.vexlife-prod.heretic.test",
                 runtimeIdentityRef = "runtime.vexlife.heretic.process.4242",
                 executableIdentityRef = "executable.vexlife.heretic.python.test",
                 processGroupIdentityRef = "process-group.vexlife.heretic.4242",
