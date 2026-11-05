@@ -193,7 +193,7 @@ class HereticArtifactMaterializationTest {
         try {
             assertFailsWith<IllegalArgumentException> {
                 HereticArtifactMaterialization.materializeCurrent(
-                    vexHome = home,
+                    productHome = home,
                     allowAcquisition = false,
                     acquirer =
                         HereticArtifactMaterialization.Acquirer {
