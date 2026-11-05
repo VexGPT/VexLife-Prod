@@ -846,4 +846,263 @@ tasks.register(
     }
 }
 
+val serviceArchiveOutputRoot =
+    layout.buildDirectory.dir(
+        "vexlife-prod-service-image/archives",
+    )
+
+tasks.register(
+    "archiveVexLifeProdServiceImage",
+) {
+    group =
+        "distribution"
+    description =
+        "Archive the exact private macOS service image for source-addressed provider carriage."
+
+    dependsOn(
+        "assembleVexLifeProdServiceImage",
+    )
+
+    inputs.file(
+        serviceImageSourceIdentityFile,
+    )
+    inputs.dir(
+        serviceImageOutputRoot,
+    )
+    outputs.dir(
+        serviceArchiveOutputRoot,
+    )
+    outputs.upToDateWhen {
+        false
+    }
+
+    doLast {
+        val sourceSha =
+            Files.readString(
+                serviceImageSourceIdentityFile
+                    .get()
+                    .asFile
+                    .toPath(),
+                StandardCharsets.UTF_8,
+            )
+                .trim()
+
+        require(
+            sourceSha.matches(
+                Regex(
+                    "[0-9a-f]{40}",
+                ),
+            ),
+        ) {
+            "service archive requires one admitted exact source SHA"
+        }
+
+        val imageRoot =
+            serviceImageOutputRoot
+                .get()
+                .asFile
+                .toPath()
+                .resolve(
+                    sourceSha,
+                )
+                .toAbsolutePath()
+                .normalize()
+        require(
+            Files.isDirectory(
+                imageRoot,
+                LinkOption.NOFOLLOW_LINKS,
+            ) &&
+                !Files.isSymbolicLink(
+                    imageRoot,
+                ),
+        ) {
+            "service archive requires one real assembled private image"
+        }
+
+        val imageManifest =
+            Files.readString(
+                imageRoot.resolve(
+                    "service-image.json",
+                ),
+                StandardCharsets.UTF_8,
+            )
+        val manifestSourceSha =
+            Regex(
+                "\\\"sourceSha\\\"\\s*:\\s*\\\"([0-9a-f]{40})\\\"",
+            )
+                .find(
+                    imageManifest,
+                )
+                ?.groupValues
+                ?.get(
+                    1,
+                )
+        val payloadSha256 =
+            Regex(
+                "\\\"payloadSha256\\\"\\s*:\\s*\\\"([0-9a-f]{64})\\\"",
+            )
+                .find(
+                    imageManifest,
+                )
+                ?.groupValues
+                ?.get(
+                    1,
+                )
+
+        require(
+            manifestSourceSha ==
+                sourceSha &&
+                payloadSha256 !=
+                null,
+        ) {
+            "service image manifest is not bound to the admitted archive source"
+        }
+
+        val outputRoot =
+            serviceArchiveOutputRoot
+                .get()
+                .asFile
+                .toPath()
+                .resolve(
+                    sourceSha,
+                )
+                .toAbsolutePath()
+                .normalize()
+
+        if (
+            Files.exists(
+                outputRoot,
+                LinkOption.NOFOLLOW_LINKS,
+            )
+        ) {
+            outputRoot
+                .toFile()
+                .deleteRecursively()
+        }
+        Files.createDirectories(
+            outputRoot,
+        )
+
+        val archiveName =
+            "vexlife-prod-service-image-darwin-arm64-" +
+                sourceSha +
+                ".tar.gz"
+        val archive =
+            outputRoot.resolve(
+                archiveName,
+            )
+
+        runExactCommand(
+            listOf(
+                "/usr/bin/env",
+                "COPYFILE_DISABLE=1",
+                "/usr/bin/tar",
+                "-czf",
+                archive.toString(),
+                "-C",
+                imageRoot.toString(),
+                ".",
+            ),
+        )
+
+        require(
+            Files.isRegularFile(
+                archive,
+                LinkOption.NOFOLLOW_LINKS,
+            ) &&
+                Files.size(
+                    archive,
+                ) >
+                0,
+        ) {
+            "service-image archive was not formed"
+        }
+
+        val archiveSha256 =
+            sha256(
+                archive,
+            )
+        val archiveBytes =
+            Files.size(
+                archive,
+            )
+
+        Files.writeString(
+            outputRoot.resolve(
+                archiveName +
+                    ".sha256",
+            ),
+            archiveSha256 +
+                "  " +
+                archiveName +
+                "\n",
+            StandardCharsets.UTF_8,
+        )
+
+        val receiptName =
+            "vexlife-prod-service-image-darwin-arm64-" +
+                sourceSha +
+                ".receipt.json"
+        val receipt =
+            buildString {
+                appendLine(
+                    "{",
+                )
+                appendLine(
+                    "  \"schemaVersion\": \"vexlife-prod.private-service-image-archive-receipt/v1\",",
+                )
+                appendLine(
+                    "  \"truthClass\": \"SOURCE_BOUND_PRIVATE_SERVICE_IMAGE_ARCHIVE\",",
+                )
+                appendLine(
+                    "  \"sourceSha\": \"" +
+                        sourceSha +
+                        "\",",
+                )
+                appendLine(
+                    "  \"platform\": \"darwin-arm64\",",
+                )
+                appendLine(
+                    "  \"archiveName\": \"" +
+                        archiveName +
+                        "\",",
+                )
+                appendLine(
+                    "  \"archiveSha256\": \"" +
+                        archiveSha256 +
+                        "\",",
+                )
+                appendLine(
+                    "  \"archiveBytes\": " +
+                        archiveBytes +
+                        ",",
+                )
+                appendLine(
+                    "  \"imagePayloadSha256\": \"" +
+                        payloadSha256 +
+                        "\"",
+                )
+                appendLine(
+                    "}",
+                )
+            }
+        Files.writeString(
+            outputRoot.resolve(
+                receiptName,
+            ),
+            receipt,
+            StandardCharsets.UTF_8,
+        )
+
+        println(
+            "VEXLIFE_PROD_SERVICE_ARCHIVE\t" +
+                sourceSha +
+                "\t" +
+                archive +
+                "\t" +
+                archiveSha256,
+        )
+    }
+}
+
 // [VXG RealForever]
