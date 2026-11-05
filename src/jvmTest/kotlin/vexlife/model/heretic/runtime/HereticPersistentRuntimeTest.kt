@@ -264,6 +264,153 @@ class HereticPersistentRuntimeTest {
         )
 
     @Test
+    fun currentQualifiedObservationProvesSameProcessWithoutLifecycleMutationOrQualificationChat() {
+        val trace =
+            mutableListOf<String>()
+        val current =
+            binding()
+        val existing =
+            receipt(
+                current,
+            )
+        val store =
+            Store(
+                initial = existing,
+                trace = trace,
+            )
+        val platform =
+            Platform(
+                trace,
+            )
+        platform.alivePids +=
+            existing.runtime.pid
+        platform.processGroupId =
+            existing.runtime.processGroupId
+        platform.matching =
+            listOf(
+                HereticPersistentRuntime.ProcessIdentity(
+                    pid = existing.runtime.pid,
+                    processGroupId = existing.runtime.processGroupId,
+                    exactOwnedDetachedGroup = true,
+                ),
+            )
+
+        val evidence =
+            HereticPersistentRuntime.observeCurrentQualified(
+                binding = current,
+                store = store,
+                platform = platform,
+            )
+
+        assertEquals(
+            existing.receiptRef,
+            evidence.runtimeReceiptRef,
+        )
+        assertEquals(
+            HereticRuntimeState.Qualified,
+            evidence.runtimeState,
+        )
+        assertTrue(
+            "ENVIRONMENT_CURRENT" in
+                trace,
+        )
+        assertTrue(
+            "STORE_READ" in
+                trace,
+        )
+        assertTrue(
+            "PROCESS_ALIVE_" +
+                existing.runtime.pid in
+                trace,
+        )
+        assertTrue(
+            "MATCHING_PROCESSES" in
+                trace,
+        )
+        assertTrue(
+            "PROCESS_IDENTITY_" +
+                existing.runtime.pid in
+                trace,
+        )
+        assertTrue(
+            "SUBSTRATE_CURRENT_" +
+                existing.runtime.pid in
+                trace,
+        )
+        assertTrue(
+            "WAIT_HEALTHY" in
+                trace,
+        )
+        assertFalse(
+            trace.any {
+                it.startsWith(
+                    "STORE_WRITE_",
+                ) ||
+                    it ==
+                    "SPAWN" ||
+                    it.startsWith(
+                        "RETIRE",
+                    ) ||
+                    it ==
+                    "QUALIFY"
+            },
+        )
+    }
+
+    @Test
+    fun currentQualifiedObservationFailsClosedWhenReceiptProcessIsNotTheOnlyMatch() {
+        val trace =
+            mutableListOf<String>()
+        val current =
+            binding()
+        val existing =
+            receipt(
+                current,
+            )
+        val store =
+            Store(
+                initial = existing,
+                trace = trace,
+            )
+        val platform =
+            Platform(
+                trace,
+            )
+        platform.alivePids +=
+            existing.runtime.pid
+        platform.matching =
+            listOf(
+                HereticPersistentRuntime.ProcessIdentity(
+                    pid = existing.runtime.pid,
+                    processGroupId = existing.runtime.processGroupId,
+                    exactOwnedDetachedGroup = true,
+                ),
+                HereticPersistentRuntime.ProcessIdentity(
+                    pid = 5151L,
+                    processGroupId = 5151L,
+                    exactOwnedDetachedGroup = true,
+                ),
+            )
+
+        assertFailsWith<IllegalArgumentException> {
+            HereticPersistentRuntime.observeCurrentQualified(
+                binding = current,
+                store = store,
+                platform = platform,
+            )
+        }
+
+        assertFalse(
+            "WAIT_HEALTHY" in
+                trace,
+        )
+        assertFalse(
+            "QUALIFY" in
+                trace,
+        )
+    }
+
+    @Test
     fun newStartCommitsStartingOwnershipBeforeReadinessAndQualification() {
         val trace = mutableListOf<String>()
         val store = Store(trace = trace)
