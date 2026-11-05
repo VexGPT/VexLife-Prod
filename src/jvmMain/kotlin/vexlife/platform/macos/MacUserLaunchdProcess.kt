@@ -309,6 +309,7 @@ object MacUserLaunchdProcess {
         workingDirectory = spec.workingDirectory,
         stdoutPath = spec.stdoutPath,
         stderrPath = spec.stderrPath,
+        environment = spec.environment,
         keepAlive = false,
         pid = pid,
     )
