@@ -3,10 +3,10 @@ package vexlife.web
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 /**
- * First relational VexWeb spatial specimen.
+ * First relational VexWeb specimen, now authored through the F1 relational authoring surface.
  *
- * The browser/companion geometry is authored through Frame edges, one named Seam, and two Regions.
- * No binary decomposition language is source authority.
+ * Frame / Seam / Region remain accepted manifestation meaning. [VexWebAuthoring] only removes
+ * constructor ceremony; it emits the same accepted VexWeb objects and validators.
  */
 object VexLifeWebF0 {
     object Refs {
@@ -44,150 +44,97 @@ object VexLifeWebF0 {
             VexWeb.StructuralRef.of(
                 "vexweb.vexlife-workspace.overlay.snackbar",
             )
+
+        val ConversationSendCapability =
+            VexWeb.CapabilityRef.of(
+                "conversation.send",
+            )
     }
 
     val Snackbar =
-        VexWeb.Structural(
-            ref =
-                Refs.Snackbar,
-            placement =
-                VexWeb.Placement.Overlay,
-            depth =
-                VexWeb.Depth.Transient,
-            presentation =
-                VexWeb.Presentation.TransientFeedback,
+        VexWebAuthoring.structural(
+            ref = Refs.Snackbar,
+            placement = VexWeb.Placement.Overlay,
+            depth = VexWeb.Depth.Transient,
+            presentation = VexWeb.Presentation.TransientFeedback,
         )
 
     val OverlayRoot =
-        VexWeb.Structural(
-            ref =
-                Refs.OverlayRoot,
-            placement =
-                VexWeb.Placement.Overlay,
-            depth =
-                VexWeb.Depth.Transient,
-            presentation =
-                VexWeb.Presentation.Surface,
-            children =
-                listOf(
-                    Snackbar,
-                ),
+        VexWebAuthoring.structural(
+            ref = Refs.OverlayRoot,
+            placement = VexWeb.Placement.Overlay,
+            depth = VexWeb.Depth.Transient,
+            presentation = VexWeb.Presentation.Surface,
+            Snackbar,
         )
 
     val Send =
-        VexWeb.Element(
-            element =
-                VexLifeWorkspaceBlueprint.Send,
-            placement =
-                VexWeb.Placement.Trailing,
-            depth =
-                VexWeb.Depth.Content,
-            presentation =
-                VexWeb.Presentation.PrimaryAction,
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.Send,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.PrimaryAction,
             interactions =
                 setOf(
                     VexWeb.Interaction.Activate,
                 ),
             binding =
-                VexWeb.Binding.Unbound(
-                    fallback =
-                        VexWeb.Fallback.NotYetImplemented(
-                            capabilityRef =
-                                VexWeb.CapabilityRef.of(
-                                    "conversation.send",
-                                ),
-                            feedbackTarget =
-                                Refs.Snackbar,
-                        ),
+                VexWebAuthoring.unbound(
+                    capabilityRef = Refs.ConversationSendCapability,
+                    feedbackTarget = Refs.Snackbar,
                 ),
         )
 
     val Composer =
-        VexWeb.Element(
-            element =
-                VexLifeWorkspaceBlueprint.Composer,
-            placement =
-                VexWeb.Placement.InFlow,
-            depth =
-                VexWeb.Depth.Content,
-            presentation =
-                VexWeb.Presentation.Surface,
-            children =
-                listOf(
-                    Send,
-                ),
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.Composer,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            Send,
         )
 
     val Conversation =
-        VexWeb.Element(
-            element =
-                VexLifeWorkspaceBlueprint.Conversation,
-            placement =
-                VexWeb.Placement.FillAvailable,
-            depth =
-                VexWeb.Depth.Content,
-            presentation =
-                VexWeb.Presentation.Surface,
-            children =
-                listOf(
-                    Composer,
-                ),
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.Conversation,
+            placement = VexWeb.Placement.FillAvailable,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            Composer,
         )
 
     val CompanionPane =
-        VexWeb.Element(
-            element =
-                VexLifeWorkspaceBlueprint.Companion,
-            placement =
-                VexWeb.Placement.FillAvailable,
-            depth =
-                VexWeb.Depth.Content,
-            presentation =
-                VexWeb.Presentation.Surface,
-            children =
-                listOf(
-                    Conversation,
-                ),
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.Companion,
+            placement = VexWeb.Placement.FillAvailable,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            Conversation,
         )
 
     val BrowserViewport =
-        VexWeb.Element(
-            element =
-                VexLifeWorkspaceBlueprint.BrowserViewport,
-            placement =
-                VexWeb.Placement.FillAvailable,
-            depth =
-                VexWeb.Depth.Content,
-            presentation =
-                VexWeb.Presentation.Surface,
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.BrowserViewport,
+            placement = VexWeb.Placement.FillAvailable,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
         )
 
     val BrowserPane =
-        VexWeb.Element(
-            element =
-                VexLifeWorkspaceBlueprint.Browser,
-            placement =
-                VexWeb.Placement.FillAvailable,
-            depth =
-                VexWeb.Depth.Content,
-            presentation =
-                VexWeb.Presentation.Surface,
-            children =
-                listOf(
-                    BrowserViewport,
-                ),
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.Browser,
+            placement = VexWeb.Placement.FillAvailable,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            BrowserViewport,
         )
 
     val SeamHandle =
-        VexWeb.Structural(
-            ref =
-                Refs.SeamHandle,
-            placement =
-                VexWeb.Placement.Overlay,
-            depth =
-                VexWeb.Depth.Chrome,
-            presentation =
-                VexWeb.Presentation.SeamHandle,
+        VexWebAuthoring.structural(
+            ref = Refs.SeamHandle,
+            placement = VexWeb.Placement.Overlay,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.SeamHandle,
             interactions =
                 setOf(
                     VexWeb.Interaction.Resize,
@@ -195,95 +142,64 @@ object VexLifeWebF0 {
                     VexWeb.Interaction.CollapseAfter,
                 ),
             binding =
-                VexWeb.Binding.LocalSpatial(
-                    target =
-                        Refs.BrowserCompanionSeam,
+                VexWebAuthoring.localSpatial(
+                    Refs.BrowserCompanionSeam,
                 ),
         )
 
     val WorkspaceFrame =
-        VexWeb.Frame(
-            ref =
-                Refs.WorkspaceFrame,
-            seams =
-                listOf(
-                    VexWeb.Seam.Vertical(
-                        ref =
-                            Refs.BrowserCompanionSeam,
-                        between =
-                            VexWeb.XSpan(
-                                start =
-                                    VexWeb.XBoundary.FrameStart,
-                                end =
-                                    VexWeb.XBoundary.FrameEnd,
-                            ),
-                        allocation =
-                            VexWeb.Parameter.Allocation.Ratio.Equal,
-                        span =
-                            VexWeb.YSpan(
-                                top =
-                                    VexWeb.YBoundary.FrameTop,
-                                bottom =
-                                    VexWeb.YBoundary.FrameBottom,
-                            ),
+        VexWebAuthoring.frame(
+            Refs.WorkspaceFrame,
+        ) {
+            verticalSeam(
+                ref = Refs.BrowserCompanionSeam,
+                betweenStart = VexWeb.XBoundary.FrameStart,
+                betweenEnd = VexWeb.XBoundary.FrameEnd,
+                allocation = VexWeb.Parameter.Allocation.Ratio.Equal,
+                spanTop = VexWeb.YBoundary.FrameTop,
+                spanBottom = VexWeb.YBoundary.FrameBottom,
+            )
+
+            region(
+                ref = Refs.BrowserRegion,
+                start = VexWeb.XBoundary.FrameStart,
+                end =
+                    VexWeb.XBoundary.Seam(
+                        Refs.BrowserCompanionSeam,
                     ),
-                ),
-            regions =
-                listOf(
-                    VexWeb.Region(
-                        ref =
-                            Refs.BrowserRegion,
-                        bounds =
-                            VexWeb.Bounds(
-                                start =
-                                    VexWeb.XBoundary.FrameStart,
-                                end =
-                                    VexWeb.XBoundary.Seam(
-                                        Refs.BrowserCompanionSeam,
-                                    ),
-                                top =
-                                    VexWeb.YBoundary.FrameTop,
-                                bottom =
-                                    VexWeb.YBoundary.FrameBottom,
-                            ),
-                        content =
-                            BrowserPane,
+                top = VexWeb.YBoundary.FrameTop,
+                bottom = VexWeb.YBoundary.FrameBottom,
+                content = BrowserPane,
+            )
+
+            region(
+                ref = Refs.CompanionRegion,
+                start =
+                    VexWeb.XBoundary.Seam(
+                        Refs.BrowserCompanionSeam,
                     ),
-                    VexWeb.Region(
-                        ref =
-                            Refs.CompanionRegion,
-                        bounds =
-                            VexWeb.Bounds(
-                                start =
-                                    VexWeb.XBoundary.Seam(
-                                        Refs.BrowserCompanionSeam,
-                                    ),
-                                end =
-                                    VexWeb.XBoundary.FrameEnd,
-                                top =
-                                    VexWeb.YBoundary.FrameTop,
-                                bottom =
-                                    VexWeb.YBoundary.FrameBottom,
-                            ),
-                        content =
-                            CompanionPane,
-                    ),
-                ),
-            chrome =
-                listOf(
-                    SeamHandle,
-                ),
-        )
+                end = VexWeb.XBoundary.FrameEnd,
+                top = VexWeb.YBoundary.FrameTop,
+                bottom = VexWeb.YBoundary.FrameBottom,
+                content = CompanionPane,
+            )
+
+            chrome(
+                SeamHandle,
+            )
+        }
 
     val Surface =
-        VexWeb.Surface(
-            screenRef =
-                VexLifeWorkspaceBlueprint.screenRef,
-            content =
+        VexWebAuthoring.surface(
+            VexLifeWorkspaceBlueprint.screenRef,
+        ) {
+            content(
                 WorkspaceFrame,
-            overlayRoot =
+            )
+            overlay(
                 OverlayRoot,
-        )
+            )
+        }
 }
 
 // [VXG RealForever]
