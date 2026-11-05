@@ -25,6 +25,8 @@ object DirectCompanionTurn {
     data class Intent(
         val sendAttemptRef: String,
         val content: String,
+        val browserContext: DirectPromptContext.BrowserContext? =
+            null,
     ) {
         init {
             requireRef(
@@ -207,6 +209,7 @@ object DirectCompanionTurn {
                         contextStore = contextStore,
                         identity = identity,
                         content = intent.content,
+                        browserContext = intent.browserContext,
                         productHome = productHome,
                     )
 
@@ -238,12 +241,14 @@ object DirectCompanionTurn {
                         DirectPromptContext.materialize(
                             prior = prior,
                             currentRequest = request,
+                            browserContext = intent.browserContext,
                         )
 
                     DirectPromptContext.reverify(
                         materialization = prompt,
                         prior = immediatePriorCompletedTurn(),
                         currentRequest = request,
+                        browserContext = intent.browserContext,
                     )
 
                     val runtimeEvidence =
@@ -415,6 +420,7 @@ object DirectCompanionTurn {
         contextStore: DirectTurnContextStore,
         identity: Identity,
         content: String,
+        browserContext: DirectPromptContext.BrowserContext?,
         productHome: Path,
     ): Result? {
         val canonicalRequest =
@@ -464,6 +470,15 @@ object DirectCompanionTurn {
                 ) {
                     "completed duplicate turn has no exact durable context evidence"
                 }
+
+            require(
+                DirectPromptContext.browserContextMatches(
+                    receipt = context.promptContext,
+                    context = browserContext,
+                ),
+            ) {
+                "sendAttemptRef already identifies a completed turn with different browser context"
+            }
 
             return Result(
                 state = "TURN_COMPLETED",
