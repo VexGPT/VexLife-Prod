@@ -6,123 +6,23 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import vexlife.contract.VexDurableContractFile
 
 class VexLifeProdHomeFilesTest {
-    private fun plan(
-        deviceSuffix: String,
-        lineageSuffix: String,
-    ): VexLifeProdHome.BootstrapPlan =
-        VexLifeProdHome.plan(
-            personRef = "person.local-user",
-            familyRef = "vex-family.local-user",
-            deviceName = "Test Mac",
-            platform = "darwin",
-            architecture = "arm64",
-            ids =
-                VexLifeProdHome.InstallationIds(
-                    deviceRef =
-                        "device.vexlife-prod.$deviceSuffix",
-                    companionLineageRef =
-                        "companion-lineage.vexlife-prod.$lineageSuffix",
-                ),
-            createdAt = "2026-11-04T17:30:00-08:00",
-        )
-
     @Test
-    fun firstBootstrapFormsWholeIsolatedHomeAndSecondRunPreservesIt() {
+    fun defaultMacRootRemainsTheCanonicalVexLifeHome() {
         val userHome =
             Files.createTempDirectory(
-                "vexlife-prod-user-home-",
+                "vexlife-user-home-",
             )
                 .toAbsolutePath()
-        val productHome =
-            VexLifeProdHomeFiles.defaultMacRoot(
-                userHome,
-            )
-        val firstPlan =
-            plan(
-                "00000000-0000-0000-0000-000000000001",
-                "00000000-0000-0000-0000-000000000002",
-            )
 
         try {
-            val formed =
-                VexLifeProdHomeFiles.bootstrap(
-                    productHome,
-                    firstPlan,
-                )
-
             assertEquals(
-                "NEW_HOME_FORMED",
-                formed.state,
-            )
-            assertTrue(
-                formed.effectsPerformed,
-            )
-            assertTrue(
-                Files.isDirectory(
-                    productHome,
+                userHome.resolve(
+                    ".vexlife",
                 ),
-            )
-
-            for (
-                relative in
-                firstPlan.directories
-            ) {
-                assertTrue(
-                    Files.isDirectory(
-                        productHome.resolve(
-                            relative,
-                        ),
-                    ),
-                    relative,
-                )
-            }
-
-            val storedManifest =
-                VexDurableContractFile.read<VexLifeProdHome.Manifest>(
-                    ownedRoot = productHome,
-                    path =
-                        productHome.resolve(
-                            VexLifeProdHome.HomeManifestRelativePath,
-                        ),
-                )
-            assertEquals(
-                firstPlan.manifest,
-                storedManifest,
-            )
-
-            val secondPlan =
-                plan(
-                    "00000000-0000-0000-0000-000000000099",
-                    "00000000-0000-0000-0000-000000000098",
-                )
-            val preserved =
-                VexLifeProdHomeFiles.bootstrap(
-                    productHome,
-                    secondPlan,
-                )
-
-            assertEquals(
-                "EXISTING_HOME_PRESERVED",
-                preserved.state,
-            )
-            assertFalse(
-                preserved.effectsPerformed,
-            )
-            assertEquals(
-                firstPlan.manifest,
-                preserved.manifest,
-            )
-            assertEquals(
-                firstPlan.manifest,
-                VexDurableContractFile.read<VexLifeProdHome.Manifest>(
-                    ownedRoot = productHome,
-                    path =
-                        productHome.resolve(
-                            VexLifeProdHome.HomeManifestRelativePath,
-                        ),
+                VexLifeProdHomeFiles.defaultMacRoot(
+                    userHome,
                 ),
             )
         } finally {
@@ -133,101 +33,88 @@ class VexLifeProdHomeFilesTest {
     }
 
     @Test
-    fun existingDirectoryWithoutCurrentManifestHoldsWithoutInventingBootstrap() {
-        val productHome =
-            Files.createTempDirectory(
-                "vexlife-prod-partial-home-",
-            )
-                .toAbsolutePath()
-
-        try {
-            assertFailsWith<IllegalArgumentException> {
-                VexLifeProdHomeFiles.bootstrap(
-                    productHome,
-                    plan(
-                        "00000000-0000-0000-0000-000000000001",
-                        "00000000-0000-0000-0000-000000000002",
-                    ),
-                )
-            }
-
-            assertFalse(
-                Files.exists(
-                    productHome.resolve(
-                        VexLifeProdHome.HomeManifestRelativePath,
-                    ),
-                ),
-            )
-        } finally {
-            productHome
-                .toFile()
-                .deleteRecursively()
-        }
-    }
-
-    @Test
-    fun existingHomeWithSymlinkedRequiredDirectoryFailsClosed() {
+    fun existingCanonicalHomeAndLineageAreObservedWithoutMutation() {
         val parent =
             Files.createTempDirectory(
-                "vexlife-prod-home-subdir-link-",
+                "vexlife-canonical-home-",
             )
                 .toAbsolutePath()
-        val productHome =
+        val home =
             parent.resolve(
-                "VexLife-Prod",
-            )
-        val outside =
-            parent.resolve(
-                "outside",
+                ".vexlife",
             )
 
         try {
-            Files.createDirectories(
-                productHome,
-            )
-            Files.createDirectory(
-                outside,
-            )
-            Files.createSymbolicLink(
-                productHome.resolve(
-                    "config",
-                ),
-                outside,
-            )
-            Files.createDirectory(
-                productHome.resolve(
-                    "runtime",
-                ),
-            )
-            Files.createDirectory(
-                productHome.resolve(
-                    "recovery",
-                ),
-            )
-
-            assertFailsWith<IllegalArgumentException> {
-                VexLifeProdHomeFiles.bootstrap(
-                    productHome,
-                    plan(
-                        "00000000-0000-0000-0000-000000000001",
-                        "00000000-0000-0000-0000-000000000002",
+            val fixture =
+                CanonicalVexLifeHomeFixture.form(
+                    home,
+                )
+            val manifestBefore =
+                Files.readString(
+                    home.resolve(
+                        "config/home.json",
                     ),
                 )
-            }
+            val deviceBefore =
+                Files.readString(
+                    home.resolve(
+                        "devices/${fixture.installation.deviceRef}.json",
+                    ),
+                )
+            val modelBefore =
+                Files.readString(
+                    home.resolve(
+                        "config/model.json",
+                    ),
+                )
 
+            val observed =
+                requireNotNull(
+                    VexLifeProdHomeFiles.observeExisting(
+                        home,
+                    ),
+                )
+
+            assertEquals(
+                "EXISTING_CANONICAL_VEXLIFE_HOME_BOUND",
+                observed.state,
+            )
             assertFalse(
-                Files.exists(
-                    outside.resolve(
-                        "home.json",
+                observed.effectsPerformed,
+            )
+            assertEquals(
+                fixture.manifest,
+                observed.manifest,
+            )
+            assertEquals(
+                fixture.installation,
+                observed.installation,
+            )
+            assertEquals(
+                manifestBefore,
+                Files.readString(
+                    home.resolve(
+                        "config/home.json",
+                    ),
+                ),
+            )
+            assertEquals(
+                deviceBefore,
+                Files.readString(
+                    home.resolve(
+                        "devices/${fixture.installation.deviceRef}.json",
+                    ),
+                ),
+            )
+            assertEquals(
+                modelBefore,
+                Files.readString(
+                    home.resolve(
+                        "config/model.json",
                     ),
                 ),
             )
         } finally {
-            Files.deleteIfExists(
-                productHome.resolve(
-                    "config",
-                ),
-            )
             parent
                 .toFile()
                 .deleteRecursively()
@@ -235,19 +122,111 @@ class VexLifeProdHomeFilesTest {
     }
 
     @Test
-    fun existingSymlinkNeverBecomesHomeBootstrapAuthority() {
+    fun absentCanonicalHomeHoldsWithoutMintingParallelIdentity() {
         val parent =
             Files.createTempDirectory(
-                "vexlife-prod-home-link-",
+                "vexlife-home-absent-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+        val plan =
+            VexLifeProdHome.plan(
+                personRef = "person.local-user",
+                familyRef = "vex-family.local-user",
+                deviceName = "Test Mac",
+                platform = "darwin",
+                architecture = "arm64",
+                ids =
+                    VexLifeProdHome.InstallationIds(
+                        deviceRef =
+                            "device.vexlife.00000000-0000-0000-0000-000000000001",
+                        companionLineageRef =
+                            "companion-lineage.vexlife.00000000-0000-0000-0000-000000000002",
+                    ),
+                createdAt = "2026-11-04T17:30:00-08:00",
+            )
+
+        try {
+            assertFailsWith<IllegalStateException> {
+                VexLifeProdHomeFiles.bootstrap(
+                    home,
+                    plan,
+                )
+            }
+
+            assertFalse(
+                Files.exists(
+                    home,
+                ),
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun mismatchedCurrentDeviceAndCompanionLineageFailClosed() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-home-identity-mismatch-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            val fixture =
+                CanonicalVexLifeHomeFixture.form(
+                    home,
+                )
+            val devicePath =
+                home.resolve(
+                    "devices/${fixture.installation.deviceRef}.json",
+                )
+            Files.writeString(
+                devicePath,
+                Files.readString(
+                    devicePath,
+                )
+                    .replace(
+                        fixture.installation.companionLineageRef,
+                        "companion-lineage.vexlife.00000000-0000-0000-0000-000000000099",
+                    ),
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                VexLifeProdHomeFiles.observeExisting(
+                    home,
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun existingSymlinkNeverBecomesCanonicalHomeAuthority() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-home-link-",
             )
                 .toAbsolutePath()
         val target =
             parent.resolve(
                 "real-target",
             )
-        val productHome =
+        val home =
             parent.resolve(
-                "VexLife-Prod",
+                ".vexlife",
             )
 
         try {
@@ -255,28 +234,24 @@ class VexLifeProdHomeFilesTest {
                 target,
             )
             Files.createSymbolicLink(
-                productHome,
+                home,
                 target,
             )
 
             assertFailsWith<IllegalArgumentException> {
-                VexLifeProdHomeFiles.bootstrap(
-                    productHome,
-                    plan(
-                        "00000000-0000-0000-0000-000000000001",
-                        "00000000-0000-0000-0000-000000000002",
-                    ),
+                VexLifeProdHomeFiles.observeExisting(
+                    home,
                 )
             }
 
             assertTrue(
                 Files.isSymbolicLink(
-                    productHome,
+                    home,
                 ),
             )
         } finally {
             Files.deleteIfExists(
-                productHome,
+                home,
             )
             parent
                 .toFile()
