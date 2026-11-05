@@ -51,6 +51,31 @@ class VexWebArtifactsTest {
             ),
         )
         assertTrue(
+            first.html.contains(
+                "data-vex-ref=\"${VexLifeWebF0.Composer.identity.ref}\"",
+            ),
+        )
+        assertTrue(
+            first.html.contains(
+                "<textarea data-vex-generated-part=\"text-field\"></textarea>",
+            ),
+        )
+        assertTrue(
+            first.html.contains(
+                "<button type=\"button\" data-vex-generated-part=\"control\"></button>",
+            ),
+        )
+        assertFalse(
+            first.html.contains(
+                "<textarea data-vex-ref=",
+            ),
+        )
+        assertTrue(
+            first.css.contains(
+                "[data-vex-placement=\"overlay\"]{position:absolute;inset:0;pointer-events:none;}",
+            ),
+        )
+        assertTrue(
             first.javascript.contains(
                 "Capability ${'$'}{capability} is not connected yet.",
             ),
@@ -106,12 +131,22 @@ class VexWebArtifactsTest {
 
         assertTrue(
             manifest.contains(
-                "\"ref\":\"${VexLifeWebF0.BrowserPane.identity.ref}\",\"sourceParentRef\":null,\"containerRef\":\"${VexLifeWebF0.Refs.BrowserRegion.value}\"",
+                "\"contentRef\":\"${VexLifeWebF0.Refs.WorkspaceFrame.value}\"",
             ),
         )
         assertTrue(
             manifest.contains(
-                "\"ref\":\"${VexLifeWebF0.Send.identity.ref}\"",
+                "\"overlayRootRef\":\"${VexLifeWebF0.Refs.OverlayRoot.value}\"",
+            ),
+        )
+        assertTrue(
+            manifest.contains(
+                "\"ref\":\"${VexLifeWebF0.BrowserPane.identity.ref}\",\"nodeKind\":\"BLUEPRINT_ELEMENT\",\"blueprintKind\":\"Region\",\"sourceParentRef\":null,\"containerRef\":\"${VexLifeWebF0.Refs.BrowserRegion.value}\"",
+            ),
+        )
+        assertTrue(
+            manifest.contains(
+                "\"ref\":\"${VexLifeWebF0.Send.identity.ref}\",\"nodeKind\":\"BLUEPRINT_ELEMENT\",\"blueprintKind\":\"Control\"",
             ),
         )
         assertTrue(
