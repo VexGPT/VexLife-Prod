@@ -9,8 +9,17 @@ import kotlinx.serialization.Serializable
  * Conversation meaning, Heretic lifecycle, prompt selection, presentation state, or process lifetime.
  */
 object VexLifeProdServiceContract {
-    const val Schema =
-        "vexlife-prod.local-service/v1"
+    const val SourceCurrentnessSchema =
+        "vexlife-prod.local-service-source-currentness/v1"
+
+    const val ConversationProjectionSchema =
+        "vexlife-prod.local-service-conversation-projection/v1"
+
+    const val SendResponseSchema =
+        "vexlife-prod.local-service-send-response/v1"
+
+    const val ErrorSchema =
+        "vexlife-prod.local-service-error/v1"
 
     const val ServiceRef =
         "service.vexlife-prod.local"
