@@ -190,6 +190,7 @@ class VexLifeProdLocalSetupTest {
                                 workingDirectory = binding.pythonEnvironmentRoot,
                                 stdoutPath = "/tmp/vexlife-prod-test/heretic.out.log",
                                 stderrPath = "/tmp/vexlife-prod-test/heretic.err.log",
+                                environment = emptyMap(),
                                 keepAlive = false,
                                 pid = pid,
                             ),
