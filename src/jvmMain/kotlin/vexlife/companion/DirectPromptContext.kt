@@ -37,13 +37,20 @@ object DirectPromptContext {
         val selectedConversationEventSha256: List<String>,
         val currentRequestEventRef: String,
         val currentRequestEventSha256: String,
-        val browserContextIncluded: Boolean,
-        val browserContextRef: String?,
-        val browserPageUrl: String?,
-        val browserTitle: String?,
-        val browserContextSha256: String?,
-        val browserContextCharacters: Int?,
-        val browserContextCapture: String?,
+        val browserContextIncluded: Boolean =
+            false,
+        val browserContextRef: String? =
+            null,
+        val browserPageUrl: String? =
+            null,
+        val browserTitle: String? =
+            null,
+        val browserContextSha256: String? =
+            null,
+        val browserContextCharacters: Int? =
+            null,
+        val browserContextCapture: String? =
+            null,
         val providerMessageSetSha256: String,
         val providerMaterializedInputTokenEstimate: Int,
         val inputTokenBudget: Int,
@@ -68,13 +75,20 @@ object DirectPromptContext {
         val selectedConversationEventSha256: List<String>,
         val currentRequestEventRef: String,
         val currentRequestEventSha256: String,
-        val browserContextIncluded: Boolean,
-        val browserContextRef: String?,
-        val browserPageUrl: String?,
-        val browserTitle: String?,
-        val browserContextSha256: String?,
-        val browserContextCharacters: Int?,
-        val browserContextCapture: String?,
+        val browserContextIncluded: Boolean =
+            false,
+        val browserContextRef: String? =
+            null,
+        val browserPageUrl: String? =
+            null,
+        val browserTitle: String? =
+            null,
+        val browserContextSha256: String? =
+            null,
+        val browserContextCharacters: Int? =
+            null,
+        val browserContextCapture: String? =
+            null,
         val providerMessageSetSha256: String,
         val providerMaterializedInputTokenEstimate: Int,
         val inputTokenBudget: Int,
