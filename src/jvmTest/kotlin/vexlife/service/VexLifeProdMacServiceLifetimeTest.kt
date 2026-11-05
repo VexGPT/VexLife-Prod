@@ -166,7 +166,7 @@ class VexLifeProdMacServiceLifetimeTest {
             }
     }
 
-    private class Probe(
+    private inner class Probe(
         var sourceSha: String,
         private val host: Host,
     ) : VexLifeProdMacServiceLifetime.SourceCurrentnessProbe {
