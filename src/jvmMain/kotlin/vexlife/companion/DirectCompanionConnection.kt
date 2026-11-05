@@ -73,33 +73,9 @@ object DirectCompanionConnection {
     )
 
     @Serializable
-    data class ProviderMessage(
-        val role: String,
-        val content: String,
-    ) {
-        init {
-            require(
-                role in
-                    setOf(
-                        "system",
-                        "user",
-                        "assistant",
-                    ),
-            ) {
-                "provider-ready message role is not admitted"
-            }
-            require(
-                content.isNotEmpty(),
-            ) {
-                "provider-ready message content must be non-empty"
-            }
-        }
-    }
-
-    @Serializable
     private data class RequestPayload(
         val model: String,
-        val messages: List<ProviderMessage>,
+        val messages: List<CompanionProviderMessage>,
         val max_tokens: Int,
         val stream: Boolean = false,
     )
@@ -256,7 +232,7 @@ object DirectCompanionConnection {
 
     fun invoke(
         runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
-        messages: List<ProviderMessage>,
+        messages: List<CompanionProviderMessage>,
         transport: Transport = SystemTransport,
         now: () -> Instant = {
             Instant.now()
