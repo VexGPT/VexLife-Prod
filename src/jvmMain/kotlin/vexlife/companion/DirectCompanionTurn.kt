@@ -10,6 +10,7 @@ import vexlife.contract.VexDurableContractFile
 import vexlife.conversation.DirectConversationStore
 import vexlife.filesystem.VexOwnedPath
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.model.heretic.HereticModelConfiguration
 
 /**
  * One direct personal human -> Vex turn over the isolated VexLife-Prod local foundation.
@@ -124,6 +125,12 @@ object DirectCompanionTurn {
         val now: () -> Instant = {
             Instant.now()
         },
+        val currentRuntimeEvidence: (
+            setup: VexLifeProdLocalSetup.Result,
+        ) -> HereticModelConfiguration.QualifiedRuntimeEvidence = {
+            setup ->
+            setup.qualifiedRuntimeEvidence
+        },
     )
 
     fun perform(
@@ -134,6 +141,21 @@ object DirectCompanionTurn {
             setup = setup,
             intent = intent,
             hooks = Hooks(),
+        )
+
+    internal fun perform(
+        session: VexLifeProdLocalSetup.Session,
+        intent: Intent,
+    ): Result =
+        performWithHooks(
+            setup = session.result,
+            intent = intent,
+            hooks =
+                Hooks(
+                    currentRuntimeEvidence = {
+                        session.currentQualifiedRuntimeEvidence()
+                    },
+                ),
         )
 
     internal fun performWithHooks(
@@ -224,9 +246,14 @@ object DirectCompanionTurn {
                         currentRequest = request,
                     )
 
+                    val runtimeEvidence =
+                        hooks.currentRuntimeEvidence(
+                            setup,
+                        )
+
                     val inference =
                         DirectCompanionConnection.invoke(
-                            runtime = setup.qualifiedRuntimeEvidence,
+                            runtime = runtimeEvidence,
                             messages = prompt.messages,
                             transport = hooks.transport,
                             now = hooks.now,
