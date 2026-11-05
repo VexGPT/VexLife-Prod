@@ -218,6 +218,72 @@ class HereticArtifactMaterializationTest {
     }
 
     @Test
+    fun invalidExistingFinalRequiresSeparateRepairAuthorityBeforeAcquisition() {
+        val home =
+            Files.createTempDirectory(
+                "vexlife-heretic-invalid-final-",
+            )
+                .toAbsolutePath()
+        val plan =
+            HereticArtifactMaterialization.plan()
+        val member =
+            plan.members.first()
+        val modelPath =
+            home.resolve(
+                HereticArtifactMaterialization.ModelRootRelativePath,
+            )
+                .resolve(
+                    plan.providerRevision,
+                )
+        val finalPath =
+            modelPath.resolve(
+                member.logicalPath,
+            )
+        var acquisitionCalls =
+            0
+
+        try {
+            Files.createDirectories(
+                modelPath,
+            )
+            Files.writeString(
+                finalPath,
+                "corrupt",
+            )
+
+            assertFailsWith<IllegalStateException> {
+                HereticArtifactMaterialization.materializeCurrent(
+                    productHome = home,
+                    allowAcquisition = true,
+                    acquirer =
+                        HereticArtifactMaterialization.Acquirer {
+                            _,
+                            _,
+                            ->
+                            acquisitionCalls +=
+                                1
+                        },
+                )
+            }
+
+            assertEquals(
+                0,
+                acquisitionCalls,
+            )
+            assertEquals(
+                "corrupt",
+                Files.readString(
+                    finalPath,
+                ),
+            )
+        } finally {
+            home
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun symlinkedModelsParentCannotRedirectArtifactAcquisition() {
         val parent =
             Files.createTempDirectory(
