@@ -17,8 +17,9 @@ import java.security.MessageDigest
 /**
  * Resumable credential-free HTTPS file delivery.
  *
- * Artifact/domain owners supply the source URL and exact expected bytes/hash. This owner performs
- * transport + partial-file mechanics only and never grants acquisition authority by itself.
+ * Artifact/domain owners supply the source URL, exact expected bytes/hash, and an already-owned
+ * real destination directory. This owner performs transport + partial-file mechanics only and
+ * never grants acquisition or directory-topology authority by itself.
  */
 object DirectHttpsArtifactDelivery {
     data class Request(
@@ -162,10 +163,13 @@ object DirectHttpsArtifactDelivery {
             )
         }
 
-        Files.createDirectories(
+        requireRealDirectory(
             requireNotNull(
                 final.parent,
-            ),
+            ) {
+                "artifact final path requires one destination parent"
+            },
+            "artifact destination parent",
         )
 
         val partial =
@@ -514,6 +518,25 @@ object DirectHttpsArtifactDelivery {
                 request.expectedBytes,
         ) {
             "artifact byte bounds must be positive and admit expectedBytes"
+        }
+    }
+
+    private fun requireRealDirectory(
+        path: Path,
+        label: String,
+    ) {
+        val attributes =
+            Files.readAttributes(
+                path,
+                BasicFileAttributes::class.java,
+                LinkOption.NOFOLLOW_LINKS,
+            )
+
+        require(
+            attributes.isDirectory &&
+                !attributes.isSymbolicLink,
+        ) {
+            "$label must be one real non-symlink directory"
         }
     }
 
