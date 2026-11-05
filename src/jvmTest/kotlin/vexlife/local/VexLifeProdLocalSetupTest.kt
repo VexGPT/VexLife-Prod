@@ -350,19 +350,10 @@ class VexLifeProdLocalSetupTest {
             )
 
             val manifest =
-                VexLifeProdHomeFiles.bootstrap(
-                    productHome = home,
-                    plan =
-                        vexlife.home.VexLifeProdHome.plan(
-                            personRef = vexlife.home.VexLifeProdHome.DefaultPersonRef,
-                            familyRef = vexlife.home.VexLifeProdHome.DefaultFamilyRef,
-                            deviceName = "Other",
-                            platform = "darwin",
-                            architecture = "arm64",
-                            ids =
-                                VexLifeProdHomeFiles.newInstallationIds(),
-                            createdAt = "2026-11-04T19:00:00-08:00",
-                        ),
+                requireNotNull(
+                    VexLifeProdHomeFiles.observeExisting(
+                        home,
+                    ),
                 )
                     .manifest
             val current =
@@ -543,8 +534,6 @@ class VexLifeProdLocalSetupTest {
             assertEquals(
                 listOf(
                     "HOST",
-                    "DEVICE",
-                    "NOW",
                     "MANAGED_PYTHON",
                     "ARTIFACTS",
                     "HERETIC_ENVIRONMENT",
