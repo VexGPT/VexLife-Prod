@@ -13,8 +13,8 @@ object VexLifeProdBrowserContract {
     const val FrameHostOrigin =
         "http://127.0.0.1:18211"
 
-    const val FramePath =
-        "/frame"
+    const val FrameHostSuffix =
+        ".vex.localhost"
 
     const val InitialPageUrl =
         "https://vgong24.github.io/Vextreme/pages/terrain-map.html?group=direct_contact&page=direct-contact"
@@ -60,6 +60,81 @@ object VexLifeProdBrowserContract {
         }
 
         return value
+    }
+
+    fun frameUrlFor(
+        pageUrl: String,
+    ): String {
+        val admitted =
+            admitPageUrl(
+                pageUrl,
+            )
+        val separator =
+            admitted.indexOf(
+                '/',
+                startIndex = "https://".length,
+            )
+        val authority =
+            if (
+                separator <
+                    0
+            ) {
+                admitted.removePrefix(
+                    "https://",
+                )
+            } else {
+                admitted
+                    .substring(
+                        "https://".length,
+                        separator,
+                    )
+            }
+        val suffix =
+            if (
+                separator <
+                    0
+            ) {
+                "/"
+            } else {
+                admitted.substring(
+                    separator,
+                )
+            }
+
+        return "http://" +
+            authority +
+            FrameHostSuffix +
+            ":" +
+            FrameHostPort +
+            suffix
+    }
+
+    fun admittedUpstreamHost(
+        frameHost: String,
+    ): String {
+        val suffix =
+            FrameHostSuffix
+        require(
+            frameHost.endsWith(
+                suffix,
+            ),
+        ) {
+            "VexLife-Prod frame host is outside the admitted local frame namespace"
+        }
+        val upstream =
+            frameHost.removeSuffix(
+                suffix,
+            )
+        require(
+            upstream ==
+                "vgong24.github.io" ||
+                upstream ==
+                    "vexgpt.github.io",
+        ) {
+            "VexLife-Prod frame host does not map to an admitted upstream"
+        }
+
+        return upstream
     }
 
     fun admitRenderedText(
