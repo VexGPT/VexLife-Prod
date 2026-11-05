@@ -825,6 +825,68 @@ class VexLifeProdMacServiceLifetimeTest {
     }
 
     @Test
+    fun sameSourceWithTamperedPersistedPlistIsRestartedRatherThanReused() {
+        fixture()
+            .use {
+                fixture ->
+                val probe =
+                    Probe(
+                        fixture.sourceSha,
+                        fixture.host,
+                    )
+                VexLifeProdMacServiceLifetime.startOrReuse(
+                    productHome = fixture.home,
+                    desiredSourceSha = fixture.sourceSha,
+                    host = fixture.host,
+                    probe = probe,
+                )
+
+                val receipt =
+                    assertNotNull(
+                        lifetimeReceipt(
+                            fixture.home,
+                        ),
+                    )
+                Files.writeString(
+                    Path.of(
+                        receipt.launchd.plistPath,
+                    ),
+                    "tampered",
+                )
+                fixture.host.nextBootstrapPid =
+                    5252L
+
+                val restarted =
+                    VexLifeProdMacServiceLifetime.startOrReuse(
+                        productHome = fixture.home,
+                        desiredSourceSha = fixture.sourceSha,
+                        host = fixture.host,
+                        probe = probe,
+                    )
+
+                assertEquals(
+                    "STARTED_CURRENT_SERVICE",
+                    restarted.disposition,
+                )
+                assertTrue(
+                    restarted.priorProcessRetired,
+                )
+                assertEquals(
+                    5252L,
+                    restarted.pid,
+                )
+                assertEquals(
+                    2,
+                    fixture.host.bootstrapCount(),
+                )
+                assertEquals(
+                    1,
+                    fixture.host.bootoutCount(),
+                )
+            }
+    }
+
+    @Test
     fun httpCurrentnessMustBindExactLaunchdPidOrCurrentOwnedServiceIsRestarted() {
         fixture()
             .use {
