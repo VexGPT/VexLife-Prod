@@ -1,5 +1,7 @@
 package vexlife.model.heretic
 
+import kotlinx.serialization.Serializable
+
 /**
  * Home + Companion-lineage scoped selection/binding relationship for the certified Heretic model.
  *
@@ -11,6 +13,7 @@ object HereticModelConfiguration {
     const val Schema =
         "vexlife.heretic-model-configuration/v1"
 
+    @Serializable
     enum class State(
         val wireValue: String,
     ) {
@@ -22,6 +25,7 @@ object HereticModelConfiguration {
         ),
     }
 
+    @Serializable
     data class BindingScope(
         val homeRef: String,
         val companionLineageRef: String,
@@ -38,6 +42,7 @@ object HereticModelConfiguration {
         }
     }
 
+    @Serializable
     data class Value(
         val schemaVersion: String,
         val state: State,
