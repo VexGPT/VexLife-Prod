@@ -167,17 +167,17 @@ class HereticPersistentRuntimeTest {
         }
     }
 
-    private fun sourceIdentity(
-        sha: String = "a".repeat(64),
-    ) = HereticPersistentRuntime.SourceIdentity(
+    private fun implementationIdentity(
+        sha: String =
+            HereticPersistentRuntime.currentImplementationIdentity()
+                .classSha256,
+    ) = HereticPersistentRuntime.ImplementationIdentity(
         repository = "VexGPT/VexLife-Prod",
-        modulePath = "src/jvmMain/kotlin/vexlife/model/heretic/runtime/HereticPersistentRuntime.kt",
-        moduleSha256 = sha,
+        classResource = HereticPersistentRuntime.ImplementationClassResource,
+        classSha256 = sha,
     )
 
-    private fun binding(
-        sha: String = "a".repeat(64),
-    ): HereticPersistentRuntime.Binding =
+    private fun binding(): HereticPersistentRuntime.Binding =
         HereticPersistentRuntime.bind(
             authorityRef = "authority.vexlife-prod.heretic-runtime.test",
             materialization = HereticArtifactMaterialization.Result(
@@ -201,7 +201,6 @@ class HereticPersistentRuntimeTest {
                 pipReportPath = "/tmp/vexlife-prod-test/runtime/python/vexlife-mlx-lm-install-report.json",
                 environmentMutationPerformed = false,
             ),
-            sourceIdentity = sourceIdentity(sha),
         )
 
     private fun substrate(pid: Long) = MacUserLaunchdProcess.Receipt(
@@ -222,7 +221,7 @@ class HereticPersistentRuntimeTest {
     private fun receipt(
         binding: HereticPersistentRuntime.Binding,
         state: HereticRuntimeState = HereticRuntimeState.Qualified,
-        sourceSha: String = binding.sourceIdentity.moduleSha256,
+        implementationSha: String = binding.implementationIdentity.classSha256,
         pid: Long = 4242L,
     ): HereticPersistentRuntime.Receipt =
         HereticPersistentRuntime.Receipt(
@@ -248,7 +247,7 @@ class HereticPersistentRuntimeTest {
             pythonEnvironmentRoot = binding.pythonEnvironmentRoot,
             endpoint = HereticProductIdentity.Endpoint,
             requestModel = HereticProductIdentity.RequestModel,
-            sourceIdentity = sourceIdentity(sourceSha),
+            implementationIdentity = implementationIdentity(implementationSha),
             runtime = HereticPersistentRuntime.RuntimeProcess(
                 pid = pid,
                 processGroupId = pid,
@@ -316,16 +315,31 @@ class HereticPersistentRuntimeTest {
     }
 
     @Test
-    fun staleSourceExactOwnedRuntimeRotatesBeforeReplacement() {
+    fun staleImplementationExactOwnedRuntimeRotatesBeforeReplacement() {
         val trace = mutableListOf<String>()
-        val current = binding("b".repeat(64))
-        val prior = receipt(current, sourceSha = "a".repeat(64))
+        val current = binding()
+        val staleSha =
+            if (
+                current.implementationIdentity.classSha256 ==
+                    "a".repeat(
+                        64,
+                    )
+            ) {
+                "b".repeat(
+                    64,
+                )
+            } else {
+                "a".repeat(
+                    64,
+                )
+            }
+        val prior = receipt(current, implementationSha = staleSha)
         val store = Store(prior, trace)
         val platform = Platform(trace).also { it.alivePids += prior.runtime.pid }
 
         val result = HereticPersistentRuntime.startOrReuse(current, store, platform)
 
-        assertEquals("ROTATED_STALE_SOURCE_AND_STARTED_NEW_EXACT_MLX_RUNTIME", result.disposition)
+        assertEquals("ROTATED_STALE_IMPLEMENTATION_AND_STARTED_NEW_EXACT_MLX_RUNTIME", result.disposition)
         assertTrue(trace.indexOf("RETIRE_Qualified") < trace.indexOf("SPAWN"))
         assertTrue(trace.contains("STORE_DELETE"))
     }
@@ -334,8 +348,7 @@ class HereticPersistentRuntimeTest {
     fun bindingMismatchFailsBeforeRuntimeEffects() {
         val trace = mutableListOf<String>()
         val current = binding()
-        val other = binding("b".repeat(64))
-        val mismatched = receipt(other).copy(modelPath = "/tmp/vexlife-prod-test/different-model")
+        val mismatched = receipt(current).copy(modelPath = "/tmp/vexlife-prod-test/different-model")
         val store = Store(mismatched, trace)
         val platform = Platform(trace)
 
