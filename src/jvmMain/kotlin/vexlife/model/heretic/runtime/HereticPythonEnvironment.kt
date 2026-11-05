@@ -22,8 +22,11 @@ object HereticPythonEnvironment {
     const val InstallReportFilename =
         "vexlife-mlx-lm-install-report.json"
 
-    const val EnvironmentDirectoryName =
-        "python-3.14.7-mlx-lm-0.32.0"
+    val EnvironmentDirectoryName: String =
+        "python-" +
+            HereticProductIdentity.PythonVersion +
+            "-mlx-lm-" +
+            HereticProductIdentity.MlxLmVersion
 
     data class CommandResult(
         val status: Int?,
