@@ -8,6 +8,8 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
@@ -256,6 +258,13 @@ class VexLifeProdLocalSetupTest {
                     "ARTIFACTS"
                 materialization(
                     home,
+                    if (
+                        reuse
+                    ) {
+                        "HERETIC_ARTIFACTS_REUSED_EXACT"
+                    } else {
+                        "HERETIC_ARTIFACTS_MATERIALIZED_EXACT"
+                    },
                 )
             },
             ensureHereticEnvironment = {
@@ -290,7 +299,7 @@ class VexLifeProdLocalSetupTest {
         )
 
     @Test
-    fun authorizedFreshSetupComposesOneReadableLocalFoundationChain() {
+    fun establishedCanonicalHomeComposesRuntimeWithoutIdentityRewrite() {
         val parent =
             Files.createTempDirectory(
                 "vexlife-prod-local-setup-",
@@ -298,12 +307,35 @@ class VexLifeProdLocalSetupTest {
                 .toAbsolutePath()
         val home =
             parent.resolve(
-                "VexLife-Prod",
+                ".vexlife",
             )
         val trace =
             mutableListOf<String>()
 
         try {
+            val fixture =
+                CanonicalVexLifeHomeFixture.form(
+                    home,
+                )
+            val homeBefore =
+                Files.readString(
+                    home.resolve(
+                        "config/home.json",
+                    ),
+                )
+            val deviceBefore =
+                Files.readString(
+                    home.resolve(
+                        "devices/${fixture.installation.deviceRef}.json",
+                    ),
+                )
+            val modelBefore =
+                Files.readString(
+                    home.resolve(
+                        "config/model.json",
+                    ),
+                )
+
             val result =
                 VexLifeProdLocalSetup.establishAt(
                     productHome = home,
@@ -322,11 +354,7 @@ class VexLifeProdLocalSetupTest {
                 result.qualifiedRuntimeEvidence.runtimeState,
             )
             assertEquals(
-                HereticProductIdentity.Endpoint,
-                result.qualifiedRuntimeEvidence.endpoint,
-            )
-            assertEquals(
-                "NEW_HOME_FORMED",
+                "EXISTING_CANONICAL_VEXLIFE_HOME_BOUND",
                 result.homeDisposition,
             )
             assertEquals(
@@ -348,8 +376,6 @@ class VexLifeProdLocalSetupTest {
             assertEquals(
                 listOf(
                     "HOST",
-                    "DEVICE",
-                    "NOW",
                     "MANAGED_PYTHON",
                     "ARTIFACTS",
                     "HERETIC_ENVIRONMENT",
@@ -358,25 +384,49 @@ class VexLifeProdLocalSetupTest {
                 trace,
             )
 
-            val manifest =
-                requireNotNull(
-                    VexLifeProdHomeFiles.observeExisting(
-                        home,
-                    ),
-                )
-                    .manifest
             val current =
                 assertIs<FileHereticModelConfigurationStore.Snapshot.Heretic>(
                     FileHereticModelConfigurationStore(
                         home,
                     )
                         .read(
-                            manifest,
+                            fixture.manifest,
                         ),
                 )
             assertTrue(
                 HereticModelConfiguration.isBound(
                     current.value,
+                ),
+            )
+            assertTrue(
+                Files.isRegularFile(
+                    home.resolve(
+                        VexLifeProdHome.ModelConfigurationRelativePath,
+                    ),
+                ),
+            )
+            assertEquals(
+                homeBefore,
+                Files.readString(
+                    home.resolve(
+                        "config/home.json",
+                    ),
+                ),
+            )
+            assertEquals(
+                deviceBefore,
+                Files.readString(
+                    home.resolve(
+                        "devices/${fixture.installation.deviceRef}.json",
+                    ),
+                ),
+            )
+            assertEquals(
+                modelBefore,
+                Files.readString(
+                    home.resolve(
+                        "config/model.json",
+                    ),
                 ),
             )
         } finally {
@@ -387,15 +437,15 @@ class VexLifeProdLocalSetupTest {
     }
 
     @Test
-    fun freshSetupWithoutAcquisitionAuthorizationStopsBeforeHomeFormation() {
+    fun absentCanonicalHomeStopsBeforeAnyDomainEffectEvenWithAcquisitionAuthority() {
         val parent =
             Files.createTempDirectory(
-                "vexlife-prod-local-setup-no-consent-",
+                "vexlife-prod-local-setup-home-absent-",
             )
                 .toAbsolutePath()
         val home =
             parent.resolve(
-                "VexLife-Prod",
+                ".vexlife",
             )
         val trace =
             mutableListOf<String>()
@@ -404,7 +454,7 @@ class VexLifeProdLocalSetupTest {
             assertFailsWith<IllegalArgumentException> {
                 VexLifeProdLocalSetup.establishAt(
                     productHome = home,
-                    allowAcquisition = false,
+                    allowAcquisition = true,
                     hooks = hooks(
                         trace,
                     ),
@@ -430,7 +480,7 @@ class VexLifeProdLocalSetupTest {
     }
 
     @Test
-    fun unsupportedHostStopsBeforeHomeFormation() {
+    fun unsupportedHostStopsBeforeHomeOrRuntimeEffects() {
         val parent =
             Files.createTempDirectory(
                 "vexlife-prod-local-setup-host-held-",
@@ -438,12 +488,16 @@ class VexLifeProdLocalSetupTest {
                 .toAbsolutePath()
         val home =
             parent.resolve(
-                "VexLife-Prod",
+                ".vexlife",
             )
         val trace =
             mutableListOf<String>()
 
         try {
+            CanonicalVexLifeHomeFixture.form(
+                home,
+            )
+
             assertFailsWith<IllegalArgumentException> {
                 VexLifeProdLocalSetup.establishAt(
                     productHome = home,
@@ -464,7 +518,9 @@ class VexLifeProdLocalSetupTest {
             )
             assertFalse(
                 Files.exists(
-                    home,
+                    home.resolve(
+                        VexLifeProdHome.ModelConfigurationRelativePath,
+                    ),
                 ),
             )
         } finally {
@@ -483,12 +539,23 @@ class VexLifeProdLocalSetupTest {
                 .toAbsolutePath()
         val home =
             parent.resolve(
-                "VexLife-Prod",
+                ".vexlife",
             )
         val trace =
             mutableListOf<String>()
 
         try {
+            val fixture =
+                CanonicalVexLifeHomeFixture.form(
+                    home,
+                )
+            val homeBefore =
+                Files.readString(
+                    home.resolve(
+                        "config/home.json",
+                    ),
+                )
+
             VexLifeProdLocalSetupLease
                 .acquire(
                     home,
@@ -509,10 +576,22 @@ class VexLifeProdLocalSetupTest {
             assertTrue(
                 trace.isEmpty(),
             )
-            assertFalse(
-                Files.exists(
-                    home,
+            assertEquals(
+                homeBefore,
+                Files.readString(
+                    home.resolve(
+                        "config/home.json",
+                    ),
                 ),
+            )
+            assertEquals(
+                fixture.manifest,
+                requireNotNull(
+                    VexLifeProdHomeFiles.observeExisting(
+                        home,
+                    ),
+                )
+                    .manifest,
             )
         } finally {
             parent
@@ -522,7 +601,7 @@ class VexLifeProdLocalSetupTest {
     }
 
     @Test
-    fun existingHomeRerunPreservesIdentityAndReusesBoundConfiguration() {
+    fun rerunPreservesCanonicalIdentityAndReusesProductRuntimeBinding() {
         val parent =
             Files.createTempDirectory(
                 "vexlife-prod-local-setup-rerun-",
@@ -530,24 +609,35 @@ class VexLifeProdLocalSetupTest {
                 .toAbsolutePath()
         val home =
             parent.resolve(
-                "VexLife-Prod",
+                ".vexlife",
             )
         val firstTrace =
             mutableListOf<String>()
 
         try {
+            val fixture =
+                CanonicalVexLifeHomeFixture.form(
+                    home,
+                )
+            val homeBefore =
+                Files.readString(
+                    home.resolve(
+                        "config/home.json",
+                    ),
+                )
+            val modelBefore =
+                Files.readString(
+                    home.resolve(
+                        "config/model.json",
+                    ),
+                )
+
             val first =
                 VexLifeProdLocalSetup.establishAt(
                     productHome = home,
                     allowAcquisition = true,
                     hooks = hooks(
                         firstTrace,
-                    ),
-                )
-            val manifestBefore =
-                Files.readString(
-                    home.resolve(
-                        "config/home.json",
                     ),
                 )
 
@@ -564,7 +654,7 @@ class VexLifeProdLocalSetupTest {
                 )
 
             assertEquals(
-                "EXISTING_HOME_PRESERVED",
+                "EXISTING_CANONICAL_VEXLIFE_HOME_BOUND",
                 second.homeDisposition,
             )
             assertEquals(
@@ -580,12 +670,29 @@ class VexLifeProdLocalSetupTest {
                 second.productHome,
             )
             assertEquals(
-                manifestBefore,
+                homeBefore,
                 Files.readString(
                     home.resolve(
                         "config/home.json",
                     ),
                 ),
+            )
+            assertEquals(
+                modelBefore,
+                Files.readString(
+                    home.resolve(
+                        "config/model.json",
+                    ),
+                ),
+            )
+            assertEquals(
+                fixture.manifest,
+                requireNotNull(
+                    VexLifeProdHomeFiles.observeExisting(
+                        home,
+                    ),
+                )
+                    .manifest,
             )
             assertEquals(
                 listOf(
