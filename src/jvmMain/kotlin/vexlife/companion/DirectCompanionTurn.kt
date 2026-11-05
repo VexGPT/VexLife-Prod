@@ -590,6 +590,10 @@ object DirectCompanionTurn {
                     exactNextSafeRoute = core.exactNextSafeRoute,
                     formedAt = core.formedAt,
                 )
+            validateFailureReceipt(
+                receipt,
+            )
+
             val path =
                 VexOwnedPath.resolveInside(
                     directory,
