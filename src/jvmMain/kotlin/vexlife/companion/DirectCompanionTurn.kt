@@ -7,6 +7,7 @@ import java.time.Instant
 import kotlinx.serialization.Serializable
 import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
+import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.filesystem.VexOwnedPath
 import vexlife.local.VexLifeProdLocalSetup
@@ -80,7 +81,7 @@ object DirectCompanionTurn {
 
     @Serializable
     @ConsistentCopyVisibility
-    data class FailureReceipt private constructor(
+    data class FailureReceipt internal constructor(
         val schemaVersion: String,
         val failureRef: String,
         val semanticFingerprint: String,
@@ -373,6 +374,7 @@ object DirectCompanionTurn {
                 exactNextSafeRoute = error.route,
                 cause = error,
             )
+        }
     }
 
     private data class Identity(
