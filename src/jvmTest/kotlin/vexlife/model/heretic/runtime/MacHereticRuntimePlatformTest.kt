@@ -185,6 +185,11 @@ class MacHereticRuntimePlatformTest {
             python,
             "fake",
         )
+        Files.createDirectory(
+            root.resolve(
+                "model",
+            ),
+        )
         Files.writeString(
             environment.resolve(
                 HereticPythonEnvironment.InstallReportFilename,
@@ -248,10 +253,7 @@ class MacHereticRuntimePlatformTest {
             Runner()
         val platform =
             MacHereticRuntimePlatform(
-                runtimeRoot =
-                    root.resolve(
-                        "runtime",
-                    ),
+                productHome = root,
                 launchdHost =
                     LaunchdHost(),
                 processInspector =
@@ -301,10 +303,7 @@ class MacHereticRuntimePlatformTest {
             Inspector()
         val platform =
             MacHereticRuntimePlatform(
-                runtimeRoot =
-                    root.resolve(
-                        "runtime",
-                    ),
+                productHome = root,
                 launchdHost =
                     host,
                 processInspector =
@@ -391,6 +390,87 @@ class MacHereticRuntimePlatformTest {
     }
 
     @Test
+    fun symlinkedRuntimeParentCannotRedirectLaunchdFilesOutsideProdHome() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-mac-heretic-runtime-link-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        val outside =
+            parent.resolve(
+                "outside",
+            )
+        val host =
+            LaunchdHost()
+        val platform =
+            run {
+                Files.createDirectory(
+                    root,
+                )
+                Files.createDirectory(
+                    outside,
+                )
+                Files.createSymbolicLink(
+                    root.resolve(
+                        "runtime",
+                    ),
+                    outside,
+                )
+                MacHereticRuntimePlatform(
+                    productHome = root,
+                    launchdHost = host,
+                    processInspector = Inspector(),
+                    commandRunner = Runner(),
+                    healthProbe =
+                        MacHereticRuntimePlatform.HealthProbe {
+                            true
+                        },
+                )
+            }
+
+        try {
+            val current =
+                binding(
+                    root,
+                )
+            val args =
+                HereticPersistentRuntime.serverArgs(
+                    current,
+                )
+
+            assertFailsWith<IllegalArgumentException> {
+                platform.spawn(
+                    current,
+                    args,
+                )
+            }
+            assertFalse(
+                host.present,
+            )
+            assertFalse(
+                Files.exists(
+                    outside.resolve(
+                        "heretic",
+                    ),
+                ),
+            )
+        } finally {
+            Files.deleteIfExists(
+                root.resolve(
+                    "runtime",
+                ),
+            )
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun qualificationUsesTheBoundPythonAndCurrentThreePartProbe() {
         val root =
             Files.createTempDirectory(
@@ -401,10 +481,7 @@ class MacHereticRuntimePlatformTest {
             Runner()
         val platform =
             MacHereticRuntimePlatform(
-                runtimeRoot =
-                    root.resolve(
-                        "runtime",
-                    ),
+                productHome = root,
                 launchdHost =
                     LaunchdHost(),
                 processInspector =
@@ -497,10 +574,7 @@ class MacHereticRuntimePlatformTest {
             mutableListOf<String>()
         val platform =
             MacHereticRuntimePlatform(
-                runtimeRoot =
-                    root.resolve(
-                        "runtime",
-                    ),
+                productHome = root,
                 launchdHost =
                     LaunchdHost(),
                 processInspector =
