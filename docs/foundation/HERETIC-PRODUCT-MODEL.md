@@ -166,6 +166,81 @@ The catalog asserts unique refs/names, exact member count, and the exact aggrega
 
 The artifact bytes themselves are **not** stored in this repository.
 
+## Portable runtime meaning now carried with the package
+
+The package also ports the **meaning** that the current VexLife persistent-runtime owner must prove,
+without porting its macOS process effects yet:
+
+~~~text
+HereticRuntimeState
+  STARTING
+  QUALIFIED
+
+HereticRuntimeQualification
+  healthAndExactModelVerified = true
+  actualChatCompletionPerformed = true
+  qualificationInferenceEffect = true
+  qualificationOutputPersisted = false
+  livedConversationEffect = false
+
+HereticRuntimeObservation
+  ownership:
+    UNOWNED
+    UNKNOWN
+    AMBIGUOUS
+    EXACT_OWNED
+
+  lifecycle:
+    CURRENT
+    STALE
+    ABANDONED
+    UNKNOWN
+
+HereticRuntimeEffectBoundary
+  modelRuntime = true
+  providerNetwork = false
+  modelDownload = false
+  artifactMutation = false
+  training = false
+  weightMutation = false
+  memoryMutation = false
+  activation = false
+  succession = false
+  publication = false
+  repositoryMutation = false
+  homeMutation = false
+~~~
+
+The observation contract preserves a particularly important current VexLife rule:
+
+~~~text
+PID MATCH
+!= EXACT PROCESS OWNERSHIP
+~~~
+
+An `EXACT_OWNED` observation must carry current receipt/runtime/executable/process-group evidence and
+must explicitly say `pidMatchOnly = false`. An `ABANDONED` runtime requires current not-live
+evidence. A `STALE` runtime requires exact ownership plus source-stale evidence.
+
+Qualification preserves the existing lived qualification threshold:
+
+~~~text
+GET /health
+-> exact status = ok
+
+GET /v1/models
+-> exact model materialization appears exactly once
+
+POST /v1/chat/completions
+-> requestModel = default_model
+-> one real non-streaming completion
+-> non-empty response
+-> not written into lived Conversation
+~~~
+
+The future platform runtime owner must produce these portable truths. It does not get to redefine
+their meaning because it happens to own launchd/process mechanics.
+
 ## VexArchitecture boundary
 
 This package is not a Family merely because it is important.
