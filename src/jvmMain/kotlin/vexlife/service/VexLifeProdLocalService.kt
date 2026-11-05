@@ -51,7 +51,7 @@ class VexLifeProdLocalService private constructor(
                 allowStructuredMapKeys = false
             }
 
-        fun start(
+        internal fun start(
             sourceSha: String,
             setup: VexLifeProdLocalSetup.Result,
         ): VexLifeProdLocalService =
@@ -297,10 +297,11 @@ class VexLifeProdLocalService private constructor(
                     schemaVersion = VexLifeProdServiceContract.SourceCurrentnessSchema,
                     serviceRef = VexLifeProdServiceContract.ServiceRef,
                     productRef = VexLifeProdServiceContract.ProductRef,
-                    serviceState = "LISTENING_CURRENT_SOURCE",
+                    serviceState = "SOURCE_BOUND_LISTENING",
                     sourceSha = sourceSha,
-                    runtimeState = setup.qualifiedRuntimeEvidence.runtimeState.wireValue,
-                    runtimeReceiptRef = setup.qualifiedRuntimeEvidence.runtimeReceiptRef,
+                    runtimeCurrentness = "NOT_REOBSERVED_BY_SERVICE",
+                    startupQualifiedRuntimeReceiptRef =
+                        setup.qualifiedRuntimeEvidence.runtimeReceiptRef,
                     currentConversationHeadSha256 =
                         conversation.currentConversationHeadSha256,
                     effectsPerformed = false,
