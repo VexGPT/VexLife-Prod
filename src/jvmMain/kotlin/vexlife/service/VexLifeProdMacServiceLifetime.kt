@@ -480,43 +480,40 @@ object VexLifeProdMacServiceLifetime {
         try {
             var currentness: VexLifeProdServiceContract.SourceCurrentness? =
                 null
-        val deadline =
-            host.nowMs() +
-                ReadinessTimeoutMs
+            val deadline =
+                host.nowMs() +
+                    ReadinessTimeoutMs
 
-        while (
-            host.nowMs() <
-            deadline
-        ) {
-            val observed =
-                probe.observe(
-                    VexLifeProdServiceContract.Origin,
-                )
-            if (
-                observed !=
-                    null &&
-                validSourceCurrentness(
-                    currentness = observed,
-                    expectedSourceSha = image.sourceSha,
-                    expectedPid = launchd.pid,
-                )
+            while (
+                host.nowMs() <
+                deadline
             ) {
-                currentness =
-                    observed
-                break
+                val observed =
+                    probe.observe(
+                        VexLifeProdServiceContract.Origin,
+                    )
+                if (
+                    observed !=
+                        null &&
+                    validSourceCurrentness(
+                        currentness = observed,
+                        expectedSourceSha = image.sourceSha,
+                        expectedPid = launchd.pid,
+                    )
+                ) {
+                    currentness =
+                        observed
+                    break
+                }
+                host.sleep(
+                    PollMs,
+                )
             }
-            host.sleep(
-                PollMs,
-            )
-        }
 
-            if (
-                currentness ==
-                    null
+            requireNotNull(
+                currentness,
             ) {
-                error(
-                    "VexLife-Prod service process did not become source-current before timeout",
-                )
+                "VexLife-Prod service process did not become source/PID-current before timeout"
             }
 
             require(
@@ -530,33 +527,34 @@ object VexLifeProdMacServiceLifetime {
             }
 
             val receipt =
-            Receipt(
-                schemaVersion = ReceiptSchema,
-                sourceSha = image.sourceSha,
-                imagePayloadSha256 = image.payloadSha256,
-                imagePath =
-                    VexLifeProdPrivateServiceImageInstaller.installedImagePath(
-                        productHome = home,
-                        sourceSha = image.sourceSha,
-                    )
-                        .toString(),
-                serviceOrigin = VexLifeProdServiceContract.Origin,
-                launchd = launchd,
+                Receipt(
+                    schemaVersion = ReceiptSchema,
+                    sourceSha = image.sourceSha,
+                    imagePayloadSha256 = image.payloadSha256,
+                    imagePath =
+                        VexLifeProdPrivateServiceImageInstaller.installedImagePath(
+                            productHome = home,
+                            sourceSha = image.sourceSha,
+                        )
+                            .toString(),
+                    serviceOrigin = VexLifeProdServiceContract.Origin,
+                    launchd = launchd,
+                )
+
+            validateReceipt(
+                home = home,
+                receipt = receipt,
+                host = host,
             )
-        validateReceipt(
-            home = home,
-            receipt = receipt,
-            host = host,
-        )
-        VexDurableContractFile.write(
-            ownedRoot = home,
-            path =
-                VexOwnedPath.resolveInside(
-                    home,
-                    ReceiptRelativePath,
-                ),
-            value = receipt,
-        )
+            VexDurableContractFile.write(
+                ownedRoot = home,
+                path =
+                    VexOwnedPath.resolveInside(
+                        home,
+                        ReceiptRelativePath,
+                    ),
+                value = receipt,
+            )
 
             return Result(
                 disposition = "STARTED_CURRENT_SERVICE",
