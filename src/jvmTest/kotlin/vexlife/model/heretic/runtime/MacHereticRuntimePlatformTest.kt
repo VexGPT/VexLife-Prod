@@ -352,6 +352,16 @@ class MacHereticRuntimePlatformTest {
                 ),
             )
             assertTrue(
+                host.observedPlist.contains(
+                    "<string>com.vexlife.prod.heretic.",
+                ),
+            )
+            assertFalse(
+                host.observedPlist.contains(
+                    "<string>com.vexlife.heretic.",
+                ),
+            )
+            assertTrue(
                 platform.processSubstrateCurrent(
                     spawned.processSubstrate,
                     spawned.pid,
