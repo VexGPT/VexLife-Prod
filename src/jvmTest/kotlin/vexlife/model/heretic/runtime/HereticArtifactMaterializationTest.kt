@@ -218,6 +218,76 @@ class HereticArtifactMaterializationTest {
     }
 
     @Test
+    fun symlinkedModelsParentCannotRedirectArtifactAcquisition() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-heretic-model-parent-link-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        val outside =
+            parent.resolve(
+                "outside",
+            )
+        var acquisitionCalls =
+            0
+
+        try {
+            Files.createDirectory(
+                home,
+            )
+            Files.createDirectory(
+                outside,
+            )
+            Files.createSymbolicLink(
+                home.resolve(
+                    "models",
+                ),
+                outside,
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                HereticArtifactMaterialization.materializeCurrent(
+                    productHome = home,
+                    allowAcquisition = true,
+                    acquirer =
+                        HereticArtifactMaterialization.Acquirer {
+                            _,
+                            _,
+                            ->
+                            acquisitionCalls +=
+                                1
+                        },
+                )
+            }
+
+            assertEquals(
+                0,
+                acquisitionCalls,
+            )
+            assertFalse(
+                Files.exists(
+                    outside.resolve(
+                        "heretic",
+                    ),
+                ),
+            )
+        } finally {
+            Files.deleteIfExists(
+                home.resolve(
+                    "models",
+                ),
+            )
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun materializerOwnsArtifactMutationButNotRuntimeActivation() {
         val resultType =
             HereticArtifactMaterialization.Result(
