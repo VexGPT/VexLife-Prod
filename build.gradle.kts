@@ -266,11 +266,7 @@ val vexLifeProdSourceSha =
 
 val serviceImageRoot =
     layout.buildDirectory.dir(
-        vexLifeProdSourceSha.map {
-            sourceSha ->
-            "vexlife-prod-service-image/" +
-                sourceSha
-        },
+        "vexlife-prod-service-image",
     )
 
 tasks.register(
@@ -501,6 +497,9 @@ tasks.register(
                 .get()
                 .asFile
                 .toPath()
+                .resolve(
+                    sourceSha,
+                )
                 .toAbsolutePath()
                 .normalize()
 
