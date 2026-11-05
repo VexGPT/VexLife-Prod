@@ -34,6 +34,12 @@ object VexLifeProdBrowserContract {
     const val CaptureRendered =
         "RENDERED"
 
+    val AdmittedHosts =
+        listOf(
+            "vgong24.github.io",
+            "vexgpt.github.io",
+        )
+
     private val AdmittedPage =
         Regex(
             """https://(?:vgong24|vexgpt)\.github\.io(?:[/?#][^\s\\]*)?""",
@@ -126,10 +132,8 @@ object VexLifeProdBrowserContract {
                 suffix,
             )
         require(
-            upstream ==
-                "vgong24.github.io" ||
-                upstream ==
-                    "vexgpt.github.io",
+            upstream in
+                AdmittedHosts,
         ) {
             "VexLife-Prod frame host does not map to an admitted upstream"
         }
