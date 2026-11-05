@@ -395,15 +395,18 @@ class MacHereticRuntimePlatform(
         try {
             val observation =
                 HereticPythonEnvironment.observeCurrent(
-                    environmentRoot =
-                        Path.of(
-                            binding.pythonEnvironmentRoot,
-                        ),
+                    productHome = productHome,
                     runner = commandRunner,
                 )
 
             observation !=
                 null &&
+                observation.pythonEnvironmentRoot ==
+                Path.of(
+                    binding.pythonEnvironmentRoot,
+                )
+                    .normalize()
+                    .toString() &&
                 observation.pythonPath ==
                 Path.of(
                     binding.pythonPath,
