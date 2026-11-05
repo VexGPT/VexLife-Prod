@@ -45,6 +45,7 @@ object VexLifeWebP1RuntimeArtifacts {
               if (!root) return;
 
               const refs = Object.freeze({
+                brand: ${jsString(VexLifeWebP1.Brand.identity.ref)},
                 browserQuery: ${jsString(VexLifeWebP1.BrowserQuery.identity.ref)},
                 browserViewport: ${jsString(VexLifeWebP1.BrowserViewport.identity.ref)},
                 conversationTimeline: ${jsString(VexLifeWebP1.ConversationTimeline.identity.ref)},
@@ -70,6 +71,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const byRef = (ref) => root.querySelector('[data-vex-ref="' + ref + '"]');
               const generatedPart = (ref, part) => byRef(ref)?.querySelector('[data-vex-generated-part="' + part + '"]') ?? null;
+              const brand = byRef(refs.brand);
               const browserQuery = generatedPart(refs.browserQuery, 'text-field');
               const browserViewport = byRef(refs.browserViewport);
               const timeline = byRef(refs.conversationTimeline);
@@ -80,6 +82,11 @@ object VexLifeWebP1RuntimeArtifacts {
               let currentBrowserContext = null;
               let frame = null;
               let pendingSend = null;
+
+              if (brand) brand.textContent = 'VexLife';
+              if (browserQuery) browserQuery.placeholder = 'Open a Vex page URL';
+              if (composer) composer.placeholder = 'Message Vex…';
+              if (sendButton) sendButton.textContent = 'Send';
 
               const setProgress = (message, state = 'idle') => {
                 if (!responseProgress) return;
