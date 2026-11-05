@@ -140,3 +140,38 @@ F2 ACCEPTED
 ~~~
 
 <!-- [VXG RealForever][VEXWEB][F2][ARTIFACT-GENERATION] -->
+
+
+## Accepted threshold
+
+F2 deterministic browser-artifact generation is accepted source.
+
+~~~text
+A002 full behavioral regression
+  compileKotlinJvm      PASS
+  jvmTest               PASS
+  compileKotlinJs       PASS
+  compileTestKotlinJs   PASS
+
+A003 post-A002 compatibility delta
+  compileKotlinJvm      PASS
+  compileKotlinJs       PASS
+
+accepted main
+cf7de23e2979cc49133e2de4c5eee841d5bcf584
+
+accepted tree
+c20e92d48aab1296da52596691e898cad9cd6c21
+~~~
+
+The historical lifecycle section above remains provenance for the candidate state before acceptance.
+
+Permanent:
+
+~~~text
+F2 DETERMINISTIC ARTIFACT GENERATION ACCEPTED
+!= GENERATED P1 WORKSPACE ACCEPTED
+!= RUNTIME CONVERGENCE COMPLETE
+~~~
+
+<!-- [VXG RealForever][VEXWEB][F2][ARTIFACT-GENERATION][ACCEPTED] -->

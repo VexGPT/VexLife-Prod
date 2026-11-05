@@ -82,6 +82,11 @@ accepted VexWeb relational authoring
   exact Kotlin/JVM + Kotlin/JS regression PASS
   accepted main c2ed37471eab9f163acd2b0cfaf979d7cdeead73
 
+accepted VexWeb deterministic artifact generation
+  source-addressable HTML/CSS/JS + semantic manifest
+  exact Kotlin/JVM + Kotlin/JS regression PASS
+  accepted main cf7de23e2979cc49133e2de4c5eee841d5bcf584
+
 human law
   expansion must scale the same language fractally
   adding regions must not require a new spatial noun
@@ -103,10 +108,11 @@ lived exploration threshold retained
   != accepted VexWeb generated product
 
 current construction edge
-  deterministic HTML/CSS/JS + semantic-manifest generation from accepted VexWeb relationships
+  generated P1 browser workspace from accepted Blueprint + VexWeb relationships
+  build-owned exact artifact materialization
 
 held
-  accepted/generated P1 browser workspace
+  nested-browser provider + generated-product convergence
   page-context admission into the canonical prompt owner
   canonical CLEAN_START acceptance + presentation wiring
   full P3 lived browser-context-aware proof
