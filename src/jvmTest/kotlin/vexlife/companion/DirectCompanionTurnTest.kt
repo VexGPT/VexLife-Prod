@@ -293,9 +293,16 @@ class DirectCompanionTurnTest {
     }
 
     @Test
-    fun providerFailureLeavesRequestDurableAndRecordsFirstFailureForExplicitRecovery() {
+    fun providerFailurePreservesRequestSuppressesSameAttemptAndAllowsNewAttempt() {
         val home =
             productHome()
+        var calls =
+            0
+        val failedIntent =
+            DirectCompanionTurn.Intent(
+                sendAttemptRef = "send.self-development.failure",
+                content = "Please answer",
+            )
 
         try {
             val error =
@@ -304,15 +311,13 @@ class DirectCompanionTurnTest {
                         setup = setup(
                             home,
                         ),
-                        intent =
-                            DirectCompanionTurn.Intent(
-                                sendAttemptRef = "send.self-development.failure",
-                                content = "Please answer",
-                            ),
+                        intent = failedIntent,
                         hooks =
                             DirectCompanionTurn.Hooks(
                                 transport =
                                     DirectCompanionConnection.Transport {
+                                        calls +=
+                                            1
                                         DirectCompanionConnection.HttpResult(
                                             status = 503,
                                             body = "",
@@ -339,13 +344,318 @@ class DirectCompanionTurnTest {
             assertFalse(
                 receipt.currentHeadCommitted,
             )
+            assertFalse(
+                receipt.retrySameSendAttemptAllowed,
+            )
+            assertEquals(
+                "FORM_NEW_SEND_ATTEMPT_AND_RETRY",
+                receipt.exactNextSafeRoute,
+            )
 
-            assertFailsWith<DirectConversationStore.IncompleteConversationException> {
+            val failedState =
                 DirectConversationStore(
                     home,
                 )
                     .current()
+            assertNull(
+                failedState.head,
+            )
+            assertEquals(
+                1,
+                failedState.abandonedAttempts.size,
+            )
+
+            val sameAttempt =
+                assertFailsWith<DirectCompanionTurn.TurnException> {
+                    DirectCompanionTurn.performWithHooks(
+                        setup = setup(
+                            home,
+                        ),
+                        intent = failedIntent,
+                        hooks =
+                            DirectCompanionTurn.Hooks(
+                                transport =
+                                    DirectCompanionConnection.Transport {
+                                        calls +=
+                                            1
+                                        error(
+                                            "same failed send must not reach the provider",
+                                        )
+                                    },
+                            ),
+                    )
+                }
+
+            assertEquals(
+                "FAILED_SEND_ATTEMPT_REQUIRES_NEW_SEND_ATTEMPT",
+                sameAttempt.failureCode,
+            )
+            assertFalse(
+                sameAttempt.retrySameSendAttemptAllowed,
+            )
+            assertEquals(
+                "FORM_NEW_SEND_ATTEMPT_AND_RETRY",
+                sameAttempt.exactNextSafeRoute,
+            )
+            assertEquals(
+                1,
+                calls,
+            )
+
+            val recovered =
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup(
+                        home,
+                    ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            sendAttemptRef = "send.self-development.recovery-new",
+                            content = "Please answer again",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport =
+                                DirectCompanionConnection.Transport {
+                                    calls +=
+                                        1
+                                    DirectCompanionConnection.HttpResult(
+                                        status = 200,
+                                        body =
+                                            """
+                                            {
+                                              "choices": [
+                                                {
+                                                  "message": {
+                                                    "role": "assistant",
+                                                    "content": "Recovered on a new turn."
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                            """.trimIndent(),
+                                    )
+                                },
+                        ),
+                )
+
+            assertEquals(
+                "Recovered on a new turn.",
+                recovered.content,
+            )
+            assertEquals(
+                2,
+                calls,
+            )
+
+            val current =
+                DirectConversationStore(
+                    home,
+                )
+                    .current()
+            assertNotNull(
+                current.head,
+            )
+            assertEquals(
+                2,
+                current.canonicalEvents.size,
+            )
+            assertEquals(
+                1,
+                current.abandonedAttempts.size,
+            )
+            assertEquals(
+                "Please answer",
+                current.abandonedAttempts
+                    .single()
+                    .requestEvent
+                    .content,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun failedFollowUpResumesLastValidHeadOnlyWithANewSendAttempt() {
+        val home =
+            productHome()
+        val setup =
+            setup(
+                home,
+            )
+        var calls =
+            0
+        val transport =
+            DirectCompanionConnection.Transport {
+                call ->
+                calls +=
+                    1
+
+                when (
+                    calls
+                ) {
+                    1 ->
+                        DirectCompanionConnection.HttpResult(
+                            status = 200,
+                            body =
+                                """
+                                {
+                                  "choices": [
+                                    {
+                                      "message": {
+                                        "role": "assistant",
+                                        "content": "Canonical first response"
+                                      }
+                                    }
+                                  ]
+                                }
+                                """.trimIndent(),
+                        )
+
+                    2 ->
+                        DirectCompanionConnection.HttpResult(
+                            status = 503,
+                            body = "",
+                        )
+
+                    else -> {
+                        assertTrue(
+                            call.body.contains(
+                                "Canonical first request",
+                            ),
+                        )
+                        assertTrue(
+                            call.body.contains(
+                                "Canonical first response",
+                            ),
+                        )
+                        assertTrue(
+                            call.body.contains(
+                                "Fresh recovery request",
+                            ),
+                        )
+                        assertFalse(
+                            call.body.contains(
+                                "Failed follow-up request",
+                            ),
+                        )
+
+                        DirectCompanionConnection.HttpResult(
+                            status = 200,
+                            body =
+                                """
+                                {
+                                  "choices": [
+                                    {
+                                      "message": {
+                                        "role": "assistant",
+                                        "content": "Recovery continued from the last valid head"
+                                      }
+                                    }
+                                  ]
+                                }
+                                """.trimIndent(),
+                        )
+                    }
+                }
             }
+
+        try {
+            val first =
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup,
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            sendAttemptRef = "send.self-development.canonical-first",
+                            content = "Canonical first request",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                        ),
+                )
+
+            val failed =
+                assertFailsWith<DirectCompanionTurn.TurnException> {
+                    DirectCompanionTurn.performWithHooks(
+                        setup = setup,
+                        intent =
+                            DirectCompanionTurn.Intent(
+                                sendAttemptRef = "send.self-development.failed-followup",
+                                content = "Failed follow-up request",
+                            ),
+                        hooks =
+                            DirectCompanionTurn.Hooks(
+                                transport = transport,
+                            ),
+                    )
+                }
+
+            val failure =
+                assertNotNull(
+                    failed.failureReceipt,
+                )
+            assertEquals(
+                first.currentConversationHeadSha256,
+                failure.lastValidConversationHeadSha256OrNull,
+            )
+            assertTrue(
+                failure.resumePossible,
+            )
+            assertEquals(
+                "RESUME_LAST_VALID_HEAD_THEN_FORM_NEW_SEND_ATTEMPT",
+                failure.exactNextSafeRoute,
+            )
+
+            val recovered =
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup,
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            sendAttemptRef = "send.self-development.fresh-recovery",
+                            content = "Fresh recovery request",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                        ),
+                )
+
+            assertEquals(
+                "Recovery continued from the last valid head",
+                recovered.content,
+            )
+            assertEquals(
+                "IMMEDIATE_PRIOR_COMPLETED_TURN",
+                recovered.promptContextReceipt.contextMode,
+            )
+            assertEquals(
+                3,
+                calls,
+            )
+
+            val current =
+                DirectConversationStore(
+                    home,
+                )
+                    .current()
+            assertEquals(
+                4,
+                current.canonicalEvents.size,
+            )
+            assertEquals(
+                1,
+                current.abandonedAttempts.size,
+            )
+            assertEquals(
+                "Failed follow-up request",
+                current.abandonedAttempts
+                    .single()
+                    .requestEvent
+                    .content,
+            )
         } finally {
             home.parent
                 .toFile()
