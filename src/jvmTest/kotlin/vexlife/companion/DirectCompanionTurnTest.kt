@@ -87,6 +87,8 @@ class DirectCompanionTurnTest {
             productHome()
         var calls =
             0
+        var runtimeObservations =
+            0
         val transport =
             DirectCompanionConnection.Transport {
                 call ->
@@ -252,6 +254,12 @@ class DirectCompanionTurnTest {
                     hooks =
                         DirectCompanionTurn.Hooks(
                             transport = transport,
+                            currentRuntimeEvidence = {
+                                currentSetup ->
+                                runtimeObservations +=
+                                    1
+                                currentSetup.qualifiedRuntimeEvidence
+                            },
                         ),
                 )
             val recovered =
@@ -263,12 +271,23 @@ class DirectCompanionTurnTest {
                     hooks =
                         DirectCompanionTurn.Hooks(
                             transport = transport,
+                            currentRuntimeEvidence = {
+                                currentSetup ->
+                                runtimeObservations +=
+                                    1
+                                currentSetup.qualifiedRuntimeEvidence
+                            },
                         ),
                 )
 
             assertEquals(
                 1,
                 calls,
+            )
+            assertEquals(
+                1,
+                runtimeObservations,
+                "exact durable duplicate must not require current runtime observation",
             )
             assertFalse(
                 first.recoveredCompletedTurn,
