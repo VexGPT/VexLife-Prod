@@ -77,6 +77,11 @@ accepted VexWeb relational spatial foundation
   Allocation
   Depth
 
+accepted VexWeb relational authoring
+  compiler-visible authoring over the same accepted objects
+  exact Kotlin/JVM + Kotlin/JS regression PASS
+  accepted main c2ed37471eab9f163acd2b0cfaf979d7cdeead73
+
 human law
   expansion must scale the same language fractally
   adding regions must not require a new spatial noun
@@ -97,11 +102,10 @@ lived exploration threshold retained
   page-context prompt composition remains held
   != accepted VexWeb generated product
 
-next construction edge
-  authoring ergonomics over the accepted relational grammar
+current construction edge
+  deterministic HTML/CSS/JS + semantic-manifest generation from accepted VexWeb relationships
 
 held
-  deterministic HTML/CSS/JS generator
   accepted/generated P1 browser workspace
   page-context admission into the canonical prompt owner
   canonical CLEAN_START acceptance + presentation wiring

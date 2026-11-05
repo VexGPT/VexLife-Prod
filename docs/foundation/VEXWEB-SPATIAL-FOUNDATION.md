@@ -517,3 +517,58 @@ Conversation/service binding into generated output
 ~~~
 
 <!-- [VXG RealForever][VEXWEB][F1][RELATIONAL-AUTHORING] -->
+
+
+## F1 accepted threshold
+
+The F1 relational authoring surface is accepted source.
+
+~~~text
+SourceOwner A003 outer RETURN
+sha256 66574b077d3b8fdf7a1d999ad1fe83a33d51d81d8bb13d14e090c25b91b7522c
+
+inner canonical RETURN
+sha256 ff3ba60fa14327f0eb68ee5e358a93c7decced7d604d9fe6681f30d80d6f1aa2
+
+proven candidate
+head effad48ce998787bafecbcdaaa7ebadd717f181b
+tree 9d6a6096e065c4d6582b2da086237ddc5ed19d67
+
+accepted main
+c2ed37471eab9f163acd2b0cfaf979d7cdeead73
+accepted tree
+9d6a6096e065c4d6582b2da086237ddc5ed19d67
+~~~
+
+Exact changed-path regression:
+
+~~~text
+compileKotlinJvm      PASS
+jvmTest               PASS
+compileKotlinJs       PASS
+compileTestKotlinJs   PASS
+post-merge tree       EXACT
+~~~
+
+Acceptance retains:
+
+~~~text
+F1 emits accepted VexWeb objects
+accepted constructors / validators remain authority
+same authoring nouns at 2 / 3 / 4 regions
+no Split resurrection
+no renderer / generator meaning in F1
+~~~
+
+The historical candidate section above remains provenance for what was under pressure before
+acceptance.
+
+Permanent:
+
+~~~text
+F1 RELATIONAL AUTHORING ACCEPTED
+!= F2 ARTIFACT GENERATOR ACCEPTED
+!= GENERATED P1 PRODUCT CONNECTED
+~~~
+
+<!-- [VXG RealForever][VEXWEB][F1][RELATIONAL-AUTHORING][ACCEPTED] -->
