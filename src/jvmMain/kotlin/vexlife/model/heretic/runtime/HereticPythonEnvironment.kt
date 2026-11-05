@@ -70,15 +70,15 @@ object HereticPythonEnvironment {
     )
 
     fun environmentRoot(
-        vexHome: Path,
+        productHome: Path,
     ): Path {
         require(
-            vexHome.isAbsolute,
+            productHome.isAbsolute,
         ) {
-            "Vex Home must be one absolute path"
+            "VexLife-Prod Home must be one absolute path"
         }
 
-        return vexHome
+        return productHome
             .normalize()
             .resolve(
                 "runtime/heretic/" +
