@@ -1,5 +1,7 @@
 package vexlife.model.heretic
 
+import kotlinx.serialization.Serializable
+
 /**
  * Protected effect boundary carried by a qualified Heretic persistent-runtime receipt.
  *
@@ -8,6 +10,7 @@ package vexlife.model.heretic
  * or Vex Home semantics.
  */
 object HereticRuntimeEffectBoundary {
+    @Serializable
     data class Value(
         val modelRuntime: Boolean,
         val providerNetwork: Boolean,
