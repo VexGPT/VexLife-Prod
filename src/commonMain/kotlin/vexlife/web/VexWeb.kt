@@ -239,6 +239,12 @@ object VexWeb {
             Binding
 
         @ConsistentCopyVisibility
+        data class Capability internal constructor(
+            val capabilityRef: CapabilityRef,
+        ) :
+            Binding
+
+        @ConsistentCopyVisibility
         data class Unbound internal constructor(
             val fallback: Fallback,
         ) :
@@ -1217,6 +1223,9 @@ object VexWeb {
                             "VexWeb spatial binding target is outside this Surface: " +
                                 authoredBinding.target.value
                         }
+
+                    is Binding.Capability ->
+                        Unit
 
                     is Binding.Unbound ->
                         when (
