@@ -120,55 +120,6 @@ object HereticPythonEnvironment {
                 productHome,
                 "VexLife-Prod Home",
             )
-        val managedPythonRoot =
-            VexOwnedPath.resolveInside(
-                home,
-                ManagedPython.PythonInstallRelativePath,
-            )
-        val bootstrapPython =
-            Path.of(
-                managedPython.pythonPath,
-            )
-                .normalize()
-
-        require(
-            (
-                managedPython.state ==
-                    "REUSED_VERIFIED" ||
-                    managedPython.state ==
-                    "INSTALLED_VERIFIED"
-            ) &&
-                managedPython.pythonVersion ==
-                HereticProductIdentity.PythonVersion &&
-                managedPython.uvVersion ==
-                ManagedPython.UvVersion &&
-                !managedPython.globalBinMutationPerformed &&
-                Path.of(
-                    managedPython.pythonInstallRoot,
-                )
-                    .normalize() ==
-                managedPythonRoot &&
-                bootstrapPython.startsWith(
-                    managedPythonRoot,
-                ),
-        ) {
-            "Heretic environment requires one exact VexLife-Prod managed Python result"
-        }
-
-        require(
-            VexOwnedPath.observeParent(
-                home,
-                bootstrapPython,
-            ) ==
-                VexOwnedPath.DirectoryState.Present,
-        ) {
-            "managed Python executable parent is not current inside VexLife-Prod Home"
-        }
-        requireRegularFile(
-            bootstrapPython,
-            "managed bootstrap Python",
-        )
-
         val root =
             environmentRoot(
                 home,
@@ -234,6 +185,11 @@ object HereticPythonEnvironment {
             VexOwnedPath.requireRoot(
                 productHome,
                 "VexLife-Prod Home",
+            )
+        val bootstrapPython =
+            validateManagedPython(
+                home = home,
+                managedPython = managedPython,
             )
         val root =
             environmentRoot(
@@ -402,6 +358,62 @@ object HereticPythonEnvironment {
             }
             throw error
         }
+    }
+
+    private fun validateManagedPython(
+        home: Path,
+        managedPython: ManagedPython.Result,
+    ): Path {
+        val managedPythonRoot =
+            VexOwnedPath.resolveInside(
+                home,
+                ManagedPython.PythonInstallRelativePath,
+            )
+        val bootstrapPython =
+            Path.of(
+                managedPython.pythonPath,
+            )
+                .normalize()
+
+        require(
+            (
+                managedPython.state ==
+                    "REUSED_VERIFIED" ||
+                    managedPython.state ==
+                    "INSTALLED_VERIFIED"
+            ) &&
+                managedPython.pythonVersion ==
+                HereticProductIdentity.PythonVersion &&
+                managedPython.uvVersion ==
+                ManagedPython.UvVersion &&
+                !managedPython.globalBinMutationPerformed &&
+                Path.of(
+                    managedPython.pythonInstallRoot,
+                )
+                    .normalize() ==
+                managedPythonRoot &&
+                bootstrapPython.startsWith(
+                    managedPythonRoot,
+                ),
+        ) {
+            "Heretic environment requires one exact VexLife-Prod managed Python result"
+        }
+
+        require(
+            VexOwnedPath.observeParent(
+                home,
+                bootstrapPython,
+            ) ==
+                VexOwnedPath.DirectoryState.Present,
+        ) {
+            "managed Python executable parent is not current inside VexLife-Prod Home"
+        }
+        requireRegularFile(
+            bootstrapPython,
+            "managed bootstrap Python",
+        )
+
+        return bootstrapPython
     }
 
     private fun runtimeProbe(
