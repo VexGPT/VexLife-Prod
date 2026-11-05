@@ -391,6 +391,11 @@ val releasePlatform =
         releaseContractText,
         "platform",
     )
+val releaseCurrentChannel =
+    requiredJsonString(
+        releaseContractText,
+        "currentChannel",
+    )
 val releaseTagPrefix =
     requiredJsonString(
         releaseContractText,
@@ -420,6 +425,16 @@ val releaseBootstrapSuffix =
     requiredJsonString(
         releaseContractText,
         "bootstrapSuffix",
+    )
+val releaseCurrentBootstrapAssetName =
+    requiredJsonString(
+        releaseContractText,
+        "currentBootstrapAssetName",
+    )
+val releaseCurrentBootstrapSha256AssetName =
+    requiredJsonString(
+        releaseContractText,
+        "currentBootstrapSha256AssetName",
     )
 val releaseSetupWindowRelativePath =
     requiredJsonString(
@@ -456,6 +471,16 @@ require(
         "VexGPT/VexLife-Prod" &&
         releasePlatform ==
         "darwin-arm64" &&
+        releaseCurrentChannel ==
+        "github-release-latest" &&
+        releaseCurrentBootstrapAssetName.matches(
+            Regex(
+                "[A-Za-z0-9._-]+\\.command",
+            ),
+        ) &&
+        releaseCurrentBootstrapSha256AssetName ==
+        releaseCurrentBootstrapAssetName +
+        ".sha256" &&
         releaseSetupWindowRelativePath ==
         "setup/vexlife-prod-setup-window.applescript" &&
         releaseSetupLauncherRelativePath ==
@@ -1392,6 +1417,46 @@ tasks.register(
             StandardCharsets.UTF_8,
         )
 
+        val currentBootstrapPath =
+            outputRoot.resolve(
+                releaseCurrentBootstrapAssetName,
+            )
+        Files.copy(
+            bootstrapPath,
+            currentBootstrapPath,
+            StandardCopyOption.REPLACE_EXISTING,
+        )
+        Files.setPosixFilePermissions(
+            currentBootstrapPath,
+            setOf(
+                PosixFilePermission.OWNER_READ,
+                PosixFilePermission.OWNER_WRITE,
+                PosixFilePermission.OWNER_EXECUTE,
+            ),
+        )
+        require(
+            sha256(
+                currentBootstrapPath,
+            ) ==
+                bootstrapSha256 &&
+                Files.size(
+                    currentBootstrapPath,
+                ) ==
+                bootstrapBytes,
+        ) {
+            "current-channel bootstrap alias differs from the exact source bootstrap"
+        }
+        Files.writeString(
+            outputRoot.resolve(
+                releaseCurrentBootstrapSha256AssetName,
+            ),
+            bootstrapSha256 +
+                "  " +
+                releaseCurrentBootstrapAssetName +
+                "\n",
+            StandardCharsets.UTF_8,
+        )
+
         val receiptName =
             releaseArchiveNamePrefix +
                 sourceSha +
@@ -1402,7 +1467,7 @@ tasks.register(
                     "{",
                 )
                 appendLine(
-                    "  \"schemaVersion\": \"vexlife-prod.private-service-image-archive-receipt/v2\",",
+                    "  \"schemaVersion\": \"vexlife-prod.private-service-image-archive-receipt/v3\",",
                 )
                 appendLine(
                     "  \"truthClass\": \"SOURCE_BOUND_PRIVATE_SERVICE_IMAGE_ARCHIVE\",",
@@ -1436,6 +1501,11 @@ tasks.register(
                         "\",",
                 )
                 appendLine(
+                    "  \"currentChannel\": \"" +
+                        releaseCurrentChannel +
+                        "\",",
+                )
+                appendLine(
                     "  \"bootstrapName\": \"" +
                         bootstrapName +
                         "\",",
@@ -1443,6 +1513,16 @@ tasks.register(
                 appendLine(
                     "  \"bootstrapSha256\": \"" +
                         bootstrapSha256 +
+                        "\",",
+                )
+                appendLine(
+                    "  \"currentBootstrapAssetName\": \"" +
+                        releaseCurrentBootstrapAssetName +
+                        "\",",
+                )
+                appendLine(
+                    "  \"currentBootstrapSha256AssetName\": \"" +
+                        releaseCurrentBootstrapSha256AssetName +
                         "\",",
                 )
                 appendLine(
@@ -1477,7 +1557,9 @@ tasks.register(
                 "\t" +
                 bootstrapPath +
                 "\t" +
-                bootstrapSha256,
+                bootstrapSha256 +
+                "\t" +
+                currentBootstrapPath,
         )
     }
 }
