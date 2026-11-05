@@ -40,7 +40,7 @@ class DirectCompanionConnectionTest {
                 runtime = qualifiedRuntime(),
                 messages =
                     listOf(
-                        DirectCompanionConnection.ProviderMessage(
+                        CompanionProviderMessage(
                             role = "user",
                             content = "Hello Vex",
                         ),
@@ -139,7 +139,7 @@ class DirectCompanionConnectionTest {
                 runtime = qualifiedRuntime(),
                 messages =
                     listOf(
-                        DirectCompanionConnection.ProviderMessage(
+                        CompanionProviderMessage(
                             role = "user",
                             content = "Hello",
                         ),
@@ -224,7 +224,7 @@ class DirectCompanionConnectionTest {
                     runtime = qualifiedRuntime(),
                     messages =
                         listOf(
-                            DirectCompanionConnection.ProviderMessage(
+                            CompanionProviderMessage(
                                 role = "user",
                                 content = "Hello",
                             ),
@@ -259,7 +259,7 @@ class DirectCompanionConnectionTest {
                 runtime = runtime,
                 messages =
                     listOf(
-                        DirectCompanionConnection.ProviderMessage(
+                        CompanionProviderMessage(
                             role = "user",
                             content = "Hello",
                         ),
