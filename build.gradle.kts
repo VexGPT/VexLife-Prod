@@ -259,11 +259,6 @@ val serviceLauncherSource =
         "packaging/private-service-image/bin/vexlife-prod-service",
     )
 
-val vexLifeProdSourceSha =
-    providers.gradleProperty(
-        "vexlifeProdSourceSha",
-    )
-
 val serviceImageRoot =
     layout.buildDirectory.dir(
         "vexlife-prod-service-image",
@@ -281,10 +276,6 @@ tasks.register(
         jvmJarTask,
     )
 
-    inputs.property(
-        "sourceSha",
-        vexLifeProdSourceSha,
-    )
     inputs.file(
         jvmJarTask.flatMap {
             it.archiveFile
@@ -299,22 +290,53 @@ tasks.register(
     outputs.dir(
         serviceImageRoot,
     )
+    outputs.upToDateWhen {
+        false
+    }
 
     doLast {
+        val repositoryRoot =
+            rootDir
+                .toPath()
+                .toAbsolutePath()
+                .normalize()
         val sourceSha =
-            vexLifeProdSourceSha.orNull
-                ?: error(
-                    "assembleVexLifeProdServiceImage requires -PvexlifeProdSourceSha=<exact-git-sha>",
-                )
+            runExactCommand(
+                listOf(
+                    "git",
+                    "-C",
+                    repositoryRoot.toString(),
+                    "rev-parse",
+                    "HEAD",
+                ),
+            )
 
         require(
             sourceSha.matches(
                 Regex(
-                    "[0-9a-f]{40,64}",
+                    "[0-9a-f]{40}",
                 ),
             ),
         ) {
-            "vexlifeProdSourceSha must be one lowercase Git identity"
+            "current VexLife-Prod checkout did not resolve to one exact Git commit"
+        }
+
+        val worktreeStatus =
+            runExactCommand(
+                listOf(
+                    "git",
+                    "-C",
+                    repositoryRoot.toString(),
+                    "status",
+                    "--porcelain=v1",
+                    "--untracked-files=all",
+                ),
+            )
+        require(
+            worktreeStatus.isEmpty(),
+        ) {
+            "VexLife-Prod service image requires a clean exact-source checkout:\n" +
+                worktreeStatus
         }
 
         require(
