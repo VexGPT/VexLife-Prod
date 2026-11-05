@@ -186,7 +186,7 @@ class HereticPythonEnvironmentTest {
             val result =
                 HereticPythonEnvironment.ensure(
                     bootstrapPython = "python3.14",
-                    environmentRoot = root,
+                    productHome = home,
                     allowCreation = false,
                     runner = runner,
                 )
@@ -227,7 +227,7 @@ class HereticPythonEnvironmentTest {
             assertFailsWith<IllegalStateException> {
                 HereticPythonEnvironment.ensure(
                     bootstrapPython = "python3.14",
-                    environmentRoot = root,
+                    productHome = home,
                     allowCreation = false,
                     runner = runner,
                 )
@@ -260,7 +260,7 @@ class HereticPythonEnvironmentTest {
             val result =
                 HereticPythonEnvironment.ensure(
                     bootstrapPython = "python3.14",
-                    environmentRoot = root,
+                    productHome = home,
                     allowCreation = true,
                     runner = runner,
                 )
@@ -333,7 +333,7 @@ class HereticPythonEnvironmentTest {
             assertFailsWith<IllegalArgumentException> {
                 HereticPythonEnvironment.ensure(
                     bootstrapPython = "python3.14",
-                    environmentRoot = root,
+                    productHome = home,
                     allowCreation = true,
                     runner = runner,
                 )
@@ -366,6 +366,69 @@ class HereticPythonEnvironmentTest {
     }
 
     @Test
+    fun symlinkedRuntimeParentNeverRedirectsEnvironmentCreationOrCleanup() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-heretic-env-parent-link-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        val outside =
+            parent.resolve(
+                "outside",
+            )
+        val runner =
+            FakeRunner()
+
+        try {
+            Files.createDirectory(
+                home,
+            )
+            Files.createDirectory(
+                outside,
+            )
+            Files.createSymbolicLink(
+                home.resolve(
+                    "runtime",
+                ),
+                outside,
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                HereticPythonEnvironment.ensure(
+                    bootstrapPython = "python3.14",
+                    productHome = home,
+                    allowCreation = true,
+                    runner = runner,
+                )
+            }
+
+            assertTrue(
+                runner.calls.isEmpty(),
+            )
+            assertFalse(
+                Files.exists(
+                    outside.resolve(
+                        "heretic",
+                    ),
+                ),
+            )
+        } finally {
+            Files.deleteIfExists(
+                home.resolve(
+                    "runtime",
+                ),
+            )
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun failedAuthorizedCreationCleansOnlyTheRealEnvironmentDirectory() {
         val home =
             Files.createTempDirectory(
@@ -386,7 +449,7 @@ class HereticPythonEnvironmentTest {
             assertFailsWith<IllegalArgumentException> {
                 HereticPythonEnvironment.ensure(
                     bootstrapPython = "python3.14",
-                    environmentRoot = root,
+                    productHome = home,
                     allowCreation = true,
                     runner = runner,
                 )
@@ -444,7 +507,7 @@ class HereticPythonEnvironmentTest {
             assertFailsWith<IllegalArgumentException> {
                 HereticPythonEnvironment.ensure(
                     bootstrapPython = "python3.14",
-                    environmentRoot = root,
+                    productHome = home,
                     allowCreation = false,
                     runner = runner,
                 )
