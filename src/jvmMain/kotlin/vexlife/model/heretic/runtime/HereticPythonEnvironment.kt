@@ -103,6 +103,73 @@ object HereticPythonEnvironment {
             )
     }
 
+    /**
+     * Fresh no-effect observation of one already-materialized environment.
+     *
+     * Missing returns null. Present-but-invalid fails closed. No repair/removal occurs here.
+     */
+    fun observeCurrent(
+        environmentRoot: Path,
+        runner: Runner = SystemRunner,
+    ): Result? {
+        require(
+            environmentRoot.isAbsolute,
+        ) {
+            "Heretic environment root must be absolute"
+        }
+
+        val root =
+            environmentRoot.normalize()
+
+        if (
+            !Files.exists(
+                root,
+                LinkOption.NOFOLLOW_LINKS,
+            )
+        ) {
+            return null
+        }
+
+        requireRealDirectory(
+            root,
+            "environmentRoot",
+        )
+
+        val python =
+            pythonPath(
+                root,
+            )
+        val report =
+            root.resolve(
+                InstallReportFilename,
+            )
+        val probe =
+            runtimeProbe(
+                python,
+                runner,
+            )
+
+        verifyProbe(
+            probe,
+            root,
+            python,
+        )
+        requireRegularFile(
+            report,
+            "pip installation report",
+        )
+
+        return Result(
+            state = "REUSED_VERIFIED",
+            pythonEnvironmentRoot = root.toString(),
+            pythonPath = python.toString(),
+            pythonVersion = HereticProductIdentity.PythonVersion,
+            mlxLmVersion = HereticProductIdentity.MlxLmVersion,
+            pipReportPath = report.toString(),
+            environmentMutationPerformed = false,
+        )
+    }
+
     fun ensure(
         bootstrapPython: String,
         environmentRoot: Path,
@@ -142,35 +209,12 @@ object HereticPythonEnvironment {
         ) {
             // Identity/topology is checked before any repair removal. A symlink or non-directory
             // never becomes deletion authority.
-            requireRealDirectory(
-                root,
-                "environmentRoot",
-            )
-
             try {
-                val probe =
-                    runtimeProbe(
-                        python,
+                return requireNotNull(
+                    observeCurrent(
+                        root,
                         runner,
-                    )
-                verifyProbe(
-                    probe,
-                    root,
-                    python,
-                )
-                requireRegularFile(
-                    report,
-                    "pip installation report",
-                )
-
-                return Result(
-                    state = "REUSED_VERIFIED",
-                    pythonEnvironmentRoot = root.toString(),
-                    pythonPath = python.toString(),
-                    pythonVersion = HereticProductIdentity.PythonVersion,
-                    mlxLmVersion = HereticProductIdentity.MlxLmVersion,
-                    pipReportPath = report.toString(),
-                    environmentMutationPerformed = false,
+                    ),
                 )
             } catch (
                 error: Exception,
