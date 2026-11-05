@@ -232,13 +232,6 @@ class MacHereticRuntimePlatformTest {
                             .toString(),
                     environmentMutationPerformed = false,
                 ),
-            sourceIdentity =
-                HereticPersistentRuntime.SourceIdentity(
-                    repository = "VexGPT/VexLife-Prod",
-                    modulePath =
-                        "src/jvmMain/kotlin/vexlife/model/heretic/runtime/HereticPersistentRuntime.kt",
-                    moduleSha256 = "a".repeat(64),
-                ),
         )
     }
 
