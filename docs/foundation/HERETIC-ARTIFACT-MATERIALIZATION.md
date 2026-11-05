@@ -59,7 +59,7 @@ From `heretic-runtime-establishment.mjs` and `artifact-delivery.mjs`:
 The faithful current layout is preserved:
 
 ~~~text
-<Vex Home>/
+<VexLife-Prod Home>/
   models/
     heretic/
       qwen3.8-27b-mlx4/
