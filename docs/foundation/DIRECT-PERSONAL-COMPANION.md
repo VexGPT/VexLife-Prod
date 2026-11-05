@@ -272,6 +272,63 @@ Tests are source-formed for:
 - provider failure receipt + non-replaying failed-attempt recovery;
 - two consecutive direct turns where turn 2 receives the immediately prior pair.
 
+## VexBoard projectability horizon
+
+This direct circuit should remain explicit enough that a later read-only VexBoard adapter can project
+it without reverse-engineering repository convention.
+
+This is a **downstream proof target**, not a runtime dependency and not a reason to deform the current
+architecture.
+
+Preserve now:
+
+~~~text
+stable semantic/product refs
+explicit owner boundaries
+explicit consume/return relationships
+source-addressable provider/runtime boundaries
+construction/lifetime != semantic ownership
+provider observation != requested/admitted state
+presentation identity != renderer selector
+~~~
+
+Later, once the fresh product service/presentation is coherent enough, form one exact source-pinned
+projection route:
+
+~~~text
+VexLife-Prod source @ exact revision
+  -> source-owned architecture export OR bounded read-only adapter
+  -> generated VexBoard Lens snapshot
+  -> VexBoard human/AI projection
+~~~
+
+Required laws:
+
+~~~text
+VEXBOARD != SOURCE AUTHORITY
+ADAPTER != PRODUCT RUNTIME DEPENDENCY
+GENERATED LENS != AUTHORING SOURCE
+OVERLAY != SECOND SOURCE OF TRUTH
+SOURCE IDENTITY != FILE PATH
+SOURCE IDENTITY != DISPLAY LABEL
+~~~
+
+The preferred mature form is a source-owned export from the compiler-visible product model so the
+VexBoard side performs less parser inference. The exact export schema remains held until a real
+VexLife-Prod Screen/browser/Conversation/Heretic path is coherent enough to earn it.
+
+Success means the same architecture is demonstrated two ways:
+
+~~~text
+LIVED PRODUCT
+  proves the causal body executes
+
+VEXBOARD SNAPSHOT
+  proves the causal body is explicit/perceivable from source
+~~~
+
+Those proofs are complementary, not interchangeable.
+
 ## Held before acceptance
 
 ~~~text
