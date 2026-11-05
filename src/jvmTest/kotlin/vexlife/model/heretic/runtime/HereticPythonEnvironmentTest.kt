@@ -8,6 +8,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.model.heretic.HereticProductIdentity
+import vexlife.platform.python.ManagedPython
 
 class HereticPythonEnvironmentTest {
     private class FakeRunner :
@@ -29,26 +30,31 @@ class HereticPythonEnvironmentTest {
                     args
 
             if (
-                program ==
-                    "python3.14" &&
-                    args.firstOrNull() ==
-                    "-c"
+                args.firstOrNull() ==
+                    "-c" &&
+                    args.getOrNull(
+                        1,
+                    )
+                        ?.contains(
+                            "mlx_lm",
+                        ) !=
+                    true
             ) {
                 return HereticPythonEnvironment.CommandResult(
                     status = 0,
                     stdout =
                         HereticProductIdentity.PythonVersion +
-                            "\n/usr/local/bin/python3.14\n",
+                            "\n" +
+                            program +
+                            "\n",
                     stderr = "",
                 )
             }
 
             if (
-                program ==
-                    "python3.14" &&
-                    args.take(
-                        2,
-                    ) ==
+                args.take(
+                    2,
+                ) ==
                     listOf(
                         "-m",
                         "venv",
@@ -150,6 +156,61 @@ class HereticPythonEnvironmentTest {
         }
     }
 
+    private fun managedPython(
+        home: Path,
+        materialize: Boolean = true,
+    ): ManagedPython.Result {
+        val installRoot =
+            home.resolve(
+                ManagedPython.PythonInstallRelativePath,
+            )
+                .normalize()
+        val python =
+            installRoot.resolve(
+                "cpython-3.14.7/bin/python3.14",
+            )
+        val uv =
+            home.resolve(
+                ManagedPython.UvToolRelativePath,
+            )
+                .resolve(
+                    "uv",
+                )
+
+        if (
+            materialize
+        ) {
+            Files.createDirectories(
+                python.parent,
+            )
+            Files.writeString(
+                python,
+                "fake-managed-python",
+            )
+            Files.createDirectories(
+                uv.parent,
+            )
+            Files.writeString(
+                uv,
+                "fake-uv",
+            )
+        }
+
+        return ManagedPython.Result(
+            state = "REUSED_VERIFIED",
+            pythonVersion = HereticProductIdentity.PythonVersion,
+            pythonPath = python.toString(),
+            pythonInstallRoot = installRoot.toString(),
+            uvVersion = ManagedPython.UvVersion,
+            uvPath = uv.toString(),
+            uvArchiveSha256 = ManagedPython.UvMacArm64ArchiveSha256,
+            uvReleaseSourceCommit = ManagedPython.UvReleaseSourceCommit,
+            uvAcquisitionPerformed = false,
+            pythonInstallationPerformed = false,
+            globalBinMutationPerformed = false,
+        )
+    }
+
     @Test
     fun verifiedEnvironmentIsReusedWithoutMutation() {
         val home =
@@ -185,7 +246,9 @@ class HereticPythonEnvironmentTest {
 
             val result =
                 HereticPythonEnvironment.ensure(
-                    bootstrapPython = "python3.14",
+                    managedPython = managedPython(
+                        home,
+                    ),
                     productHome = home,
                     allowCreation = false,
                     runner = runner,
@@ -226,7 +289,9 @@ class HereticPythonEnvironmentTest {
         try {
             assertFailsWith<IllegalStateException> {
                 HereticPythonEnvironment.ensure(
-                    bootstrapPython = "python3.14",
+                    managedPython = managedPython(
+                        home,
+                    ),
                     productHome = home,
                     allowCreation = false,
                     runner = runner,
@@ -259,7 +324,9 @@ class HereticPythonEnvironmentTest {
         try {
             val result =
                 HereticPythonEnvironment.ensure(
-                    bootstrapPython = "python3.14",
+                    managedPython = managedPython(
+                        home,
+                    ),
                     productHome = home,
                     allowCreation = true,
                     runner = runner,
@@ -332,7 +399,9 @@ class HereticPythonEnvironmentTest {
 
             assertFailsWith<IllegalArgumentException> {
                 HereticPythonEnvironment.ensure(
-                    bootstrapPython = "python3.14",
+                    managedPython = managedPython(
+                        home,
+                    ),
                     productHome = home,
                     allowCreation = true,
                     runner = runner,
@@ -399,7 +468,10 @@ class HereticPythonEnvironmentTest {
 
             assertFailsWith<IllegalArgumentException> {
                 HereticPythonEnvironment.ensure(
-                    bootstrapPython = "python3.14",
+                    managedPython = managedPython(
+                        home,
+                        materialize = false,
+                    ),
                     productHome = home,
                     allowCreation = true,
                     runner = runner,
@@ -448,7 +520,9 @@ class HereticPythonEnvironmentTest {
         try {
             assertFailsWith<IllegalArgumentException> {
                 HereticPythonEnvironment.ensure(
-                    bootstrapPython = "python3.14",
+                    managedPython = managedPython(
+                        home,
+                    ),
                     productHome = home,
                     allowCreation = true,
                     runner = runner,
@@ -506,7 +580,9 @@ class HereticPythonEnvironmentTest {
 
             assertFailsWith<IllegalArgumentException> {
                 HereticPythonEnvironment.ensure(
-                    bootstrapPython = "python3.14",
+                    managedPython = managedPython(
+                        home,
+                    ),
                     productHome = home,
                     allowCreation = false,
                     runner = runner,
