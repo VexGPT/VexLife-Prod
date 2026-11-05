@@ -306,6 +306,79 @@ class VexLifeProdPrivateServiceImageTest {
     }
 
     @Test
+    fun hashConsistentImageStillRejectsSymlinkEscapingImageRoot() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-private-service-image-symlink-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "image",
+            )
+        val outside =
+            parent.resolve(
+                "outside-target",
+            )
+        val sourceSha =
+            "a".repeat(
+                40,
+            )
+
+        try {
+            Files.createDirectory(
+                root,
+            )
+            val original =
+                formImage(
+                    root,
+                    sourceSha,
+                )
+            Files.writeString(
+                outside,
+                "outside",
+            )
+            Files.createSymbolicLink(
+                root.resolve(
+                    "runtime/lib/escape",
+                ),
+                Path.of(
+                    "../../../outside-target",
+                ),
+            )
+
+            val rewritten =
+                original.copy(
+                    payloadSha256 =
+                        VexLifeProdPrivateServiceImage.payloadFingerprint(
+                            root,
+                        ),
+                )
+            Files.writeString(
+                root.resolve(
+                    VexLifeProdPrivateServiceImage.ManifestRelativePath,
+                ),
+                VexContractJson.encode(
+                    rewritten,
+                ) +
+                    "\n",
+                StandardCharsets.UTF_8,
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                VexLifeProdPrivateServiceImage.observe(
+                    imageRoot = root,
+                    expectedSourceSha = sourceSha,
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun payloadMutationFailsEvenWhenManifestWasPreviouslyValid() {
         val parent =
             Files.createTempDirectory(
