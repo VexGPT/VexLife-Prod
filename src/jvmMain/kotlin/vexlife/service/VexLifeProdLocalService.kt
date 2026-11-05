@@ -2,7 +2,6 @@ package vexlife.service
 
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
-import java.io.ByteArrayOutputStream
 import java.net.InetSocketAddress
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
@@ -19,11 +18,11 @@ import vexlife.local.VexLifeProdLocalSetup
 import vexlife.model.heretic.HereticRuntimeState
 
 /**
- * Fixed loopback service boundary for the isolated VexLife-Prod product.
+ * Fixed loopback service boundary for the local VexLife implementation.
  *
  * Browser/presentation code consumes [VexLifeProdServiceContract]. This JVM realization owns only
- * local HTTP delivery and projection. It does not own Home, Conversation, prompt selection, Heretic
- * lifecycle, source update policy, process lifetime, or presentation semantics.
+ * local HTTP delivery and projection. It does not own Home, Conversation, Memory, prompt selection,
+ * Heretic lifecycle, source update policy, process lifetime, or presentation semantics.
  */
 class VexLifeProdLocalService private constructor(
     val sourceSha: String,
@@ -102,7 +101,7 @@ class VexLifeProdLocalService private constructor(
                     sourceSha,
                 ),
             ) {
-                "VexLife-Prod service sourceSha must be one lowercase Git identity"
+                "VexLife service sourceSha must be one lowercase Git identity"
             }
             require(
                 startupSetup.state ==
@@ -110,7 +109,7 @@ class VexLifeProdLocalService private constructor(
                     startupSetup.qualifiedRuntimeEvidence.runtimeState ==
                     HereticRuntimeState.Qualified,
             ) {
-                "VexLife-Prod service requires one qualified isolated local foundation"
+                "VexLife service requires one qualified local runtime foundation"
             }
 
             val productHome =
@@ -120,7 +119,7 @@ class VexLifeProdLocalService private constructor(
             require(
                 productHome.isAbsolute,
             ) {
-                "VexLife-Prod service requires one absolute product Home"
+                "VexLife service requires one absolute canonical Home"
             }
 
             // Construction-time validation only. The Conversation store remains the durable owner.
@@ -199,7 +198,7 @@ class VexLifeProdLocalService private constructor(
                     exchange = exchange,
                     status = 400,
                     code = "QUERY_NOT_ADMITTED",
-                    message = "VexLife-Prod local service routes do not accept query parameters",
+                    message = "VexLife local service routes do not accept query parameters",
                 )
                 return
             }
@@ -227,7 +226,7 @@ class VexLifeProdLocalService private constructor(
                         exchange = exchange,
                         status = 404,
                         code = "ROUTE_NOT_FOUND",
-                        message = "VexLife-Prod local service route not found",
+                        message = "VexLife local service route not found",
                     )
             }
         } catch (
@@ -271,7 +270,7 @@ class VexLifeProdLocalService private constructor(
                 exchange = exchange,
                 status = 500,
                 code = "SERVICE_FAILURE",
-                message = "VexLife-Prod local service failed without a completed product result",
+                message = "VexLife local service failed without a completed product result",
             )
         } finally {
             exchange.close()
@@ -390,6 +389,12 @@ class VexLifeProdLocalService private constructor(
                             hardTokenLimit = result.promptContextReceipt.hardTokenLimit,
                             wholeHistoryEventEnumerationPerformed =
                                 result.promptContextReceipt.wholeHistoryEventEnumerationPerformed,
+                            memoryContextRef =
+                                result.promptContextReceipt.memoryContextRef,
+                            memoryContextFingerprint =
+                                result.promptContextReceipt.memoryContextFingerprint,
+                            memorySourceRefs =
+                                result.promptContextReceipt.memorySourceRefs,
                             memoryIncluded = result.promptContextReceipt.memoryIncluded,
                             memorySelectionPerformed =
                                 result.promptContextReceipt.memorySelectionPerformed,
