@@ -133,6 +133,14 @@ class DirectConversationStore(
         val events: List<Event>,
     )
 
+    data class ImmediatePriorCompletedTurn(
+        val head: Head,
+        val requestEvent: Event,
+        val responseEvent: Event,
+        val exactEventFileReadCount: Int,
+        val wholeHistoryEventEnumerationPerformed: Boolean,
+    )
+
     class IncompleteConversationException(
         message: String,
     ) : IllegalStateException(
@@ -142,6 +150,9 @@ class DirectConversationStore(
     inner class Locked internal constructor() {
         fun current(): Snapshot =
             readCurrentComplete()
+
+        fun immediatePriorCompletedTurn(): ImmediatePriorCompletedTurn? =
+            readImmediatePriorCompletedTurn()
 
         fun beginRequest(
             turnRef: String,
@@ -776,6 +787,98 @@ class DirectConversationStore(
         }
     }
 
+    private fun readImmediatePriorCompletedTurn(): ImmediatePriorCompletedTurn? {
+        val head =
+            readHead()
+                ?: return null
+
+        val immutable =
+            VexDurableContractFile.read<Head>(
+                ownedRoot = productHome,
+                path =
+                    immutableHeadPath(
+                        head.conversationHeadSha256,
+                    ),
+            )
+        require(
+            immutable ==
+                head,
+        ) {
+            "direct Conversation current head differs from its immutable receipt"
+        }
+
+        val request =
+            requireNotNull(
+                VexDurableContractFile.read<Event>(
+                    ownedRoot = productHome,
+                    path =
+                        eventPath(
+                            sequence =
+                                head.sequence -
+                                    1,
+                            eventSha256 =
+                                head.requestEventSha256,
+                        ),
+                ),
+            ) {
+                "direct Conversation immediate prior request event is missing"
+            }
+        val response =
+            requireNotNull(
+                VexDurableContractFile.read<Event>(
+                    ownedRoot = productHome,
+                    path =
+                        eventPath(
+                            sequence = head.sequence,
+                            eventSha256 =
+                                head.responseEventSha256,
+                        ),
+                ),
+            ) {
+                "direct Conversation immediate prior response event is missing"
+            }
+
+        validateEvent(
+            request,
+        )
+        validateEvent(
+            response,
+        )
+        require(
+            request.eventKind ==
+                "REQUEST" &&
+                response.eventKind ==
+                "RESPONSE" &&
+                request.sequence +
+                1 ==
+                response.sequence &&
+                response.sequence ==
+                head.sequence &&
+                response.priorEventSha256 ==
+                request.eventSha256 &&
+                request.turnRef ==
+                response.turnRef &&
+                request.messageRef ==
+                head.requestMessageRef &&
+                response.messageRef ==
+                head.responseMessageRef &&
+                request.eventSha256 ==
+                head.requestEventSha256 &&
+                response.eventSha256 ==
+                head.responseEventSha256,
+        ) {
+            "direct Conversation immediate prior completed turn does not bind the exact current head"
+        }
+
+        return ImmediatePriorCompletedTurn(
+            head = head,
+            requestEvent = request,
+            responseEvent = response,
+            exactEventFileReadCount = 2,
+            wholeHistoryEventEnumerationPerformed = false,
+        )
+    }
+
     private fun validateRequestAsPending(
         request: Event,
     ) {
@@ -1379,24 +1482,43 @@ class DirectConversationStore(
     private fun eventPath(
         event: Event,
     ): Path =
+        eventPath(
+            sequence = event.sequence,
+            eventSha256 = event.eventSha256,
+        )
+
+    private fun eventPath(
+        sequence: Long,
+        eventSha256: String,
+    ): Path =
         VexOwnedPath.resolveInside(
             eventsDirectory,
             eventFilename(
-                event,
+                sequence = sequence,
+                eventSha256 = eventSha256,
             ),
         )
 
     private fun eventFilename(
         event: Event,
     ): String =
-        event.sequence
+        eventFilename(
+            sequence = event.sequence,
+            eventSha256 = event.eventSha256,
+        )
+
+    private fun eventFilename(
+        sequence: Long,
+        eventSha256: String,
+    ): String =
+        sequence
             .toString()
             .padStart(
                 8,
                 '0',
             ) +
             "-" +
-            event.eventSha256 +
+            eventSha256 +
             ".json"
 
     private fun immutableHeadPath(
