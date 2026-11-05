@@ -253,11 +253,6 @@ object ManagedPython {
                 home,
                 uvToolRoot,
             )
-        val uvCacheState =
-            VexOwnedPath.observeDirectory(
-                home,
-                uvCacheRoot,
-            )
         val pythonInstallState =
             VexOwnedPath.observeDirectory(
                 home,
@@ -282,8 +277,6 @@ object ManagedPython {
         } else {
             require(
                 uvToolState ==
-                    VexOwnedPath.DirectoryState.Present &&
-                    uvCacheState ==
                     VexOwnedPath.DirectoryState.Present &&
                     pythonInstallState ==
                     VexOwnedPath.DirectoryState.Present,
