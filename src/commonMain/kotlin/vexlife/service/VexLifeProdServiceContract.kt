@@ -1,6 +1,7 @@
 package vexlife.service
 
 import kotlinx.serialization.Serializable
+import vexlife.browser.VexLifeProdBrowserContract
 
 /**
  * Shared browser/service contract for the isolated VexLife-Prod local product.
@@ -10,13 +11,13 @@ import kotlinx.serialization.Serializable
  */
 object VexLifeProdServiceContract {
     const val SourceCurrentnessSchema =
-        "vexlife-prod.local-service-source-currentness/v2"
+        "vexlife-prod.local-service-source-currentness/v3"
 
     const val ConversationProjectionSchema =
         "vexlife-prod.local-service-conversation-projection/v1"
 
     const val SendResponseSchema =
-        "vexlife-prod.local-service-send-response/v1"
+        "vexlife-prod.local-service-send-response/v2"
 
     const val ErrorSchema =
         "vexlife-prod.local-service-error/v1"
@@ -36,6 +37,18 @@ object VexLifeProdServiceContract {
     const val Origin =
         "http://127.0.0.1:18210"
 
+    const val PresentationIndexPath =
+        "/"
+
+    const val PresentationCssPath =
+        "/vexweb.css"
+
+    const val PresentationJavascriptPath =
+        "/vexweb.js"
+
+    const val PresentationManifestPath =
+        "/vexweb-manifest.json"
+
     const val SourceCurrentnessPath =
         "/api/v1/source-currentness"
 
@@ -53,6 +66,7 @@ object VexLifeProdServiceContract {
         val serviceState: String,
         val sourceSha: String,
         val processPid: Long,
+        val frameHostOrigin: String,
         val runtimeCurrentness: String,
         val startupQualifiedRuntimeReceiptRef: String,
         val currentConversationHeadSha256: String?,
@@ -85,9 +99,37 @@ object VexLifeProdServiceContract {
     )
 
     @Serializable
+    data class BrowserContextInput(
+        val pageUrl: String,
+        val title: String?,
+        val text: String,
+        val capture: String,
+    ) {
+        init {
+            VexLifeProdBrowserContract.admitPageUrl(
+                pageUrl,
+            )
+            VexLifeProdBrowserContract.admitTitle(
+                title,
+            )
+            VexLifeProdBrowserContract.admitRenderedText(
+                text,
+            )
+            require(
+                capture ==
+                    VexLifeProdBrowserContract.CaptureRendered,
+            ) {
+                "VexLife-Prod browser context capture is not admitted"
+            }
+        }
+    }
+
+    @Serializable
     data class SendRequest(
         val sendAttemptRef: String,
         val content: String,
+        val browserContext: BrowserContextInput? =
+            null,
     ) {
         init {
             requirePortableRef(
@@ -118,6 +160,13 @@ object VexLifeProdServiceContract {
         val memoryIncluded: Boolean,
         val memorySelectionPerformed: Boolean,
         val trainingSelectionPerformed: Boolean,
+        val browserContextIncluded: Boolean,
+        val browserContextRef: String?,
+        val browserPageUrl: String?,
+        val browserTitle: String?,
+        val browserContextSha256: String?,
+        val browserContextCharacters: Int?,
+        val browserContextCapture: String?,
         val effectsPerformed: Boolean,
     )
 
