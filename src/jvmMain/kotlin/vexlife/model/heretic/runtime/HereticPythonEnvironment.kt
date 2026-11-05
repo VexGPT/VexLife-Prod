@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 import vexlife.filesystem.VexOwnedPath
 import vexlife.model.heretic.HereticProductIdentity
+import vexlife.platform.python.ManagedPython
 
 /**
  * Exact Python + mlx-lm environment owner for the Heretic runtime.
@@ -116,6 +117,55 @@ object HereticPythonEnvironment {
                 productHome,
                 "VexLife-Prod Home",
             )
+        val managedPythonRoot =
+            VexOwnedPath.resolveInside(
+                home,
+                ManagedPython.PythonInstallRelativePath,
+            )
+        val bootstrapPython =
+            Path.of(
+                managedPython.pythonPath,
+            )
+                .normalize()
+
+        require(
+            (
+                managedPython.state ==
+                    "REUSED_VERIFIED" ||
+                    managedPython.state ==
+                    "INSTALLED_VERIFIED"
+            ) &&
+                managedPython.pythonVersion ==
+                HereticProductIdentity.PythonVersion &&
+                managedPython.uvVersion ==
+                ManagedPython.UvVersion &&
+                !managedPython.globalBinMutationPerformed &&
+                Path.of(
+                    managedPython.pythonInstallRoot,
+                )
+                    .normalize() ==
+                managedPythonRoot &&
+                bootstrapPython.startsWith(
+                    managedPythonRoot,
+                ),
+        ) {
+            "Heretic environment requires one exact VexLife-Prod managed Python result"
+        }
+
+        require(
+            VexOwnedPath.observeParent(
+                home,
+                bootstrapPython,
+            ) ==
+                VexOwnedPath.DirectoryState.Present,
+        ) {
+            "managed Python executable parent is not current inside VexLife-Prod Home"
+        }
+        requireRegularFile(
+            bootstrapPython,
+            "managed bootstrap Python",
+        )
+
         val root =
             environmentRoot(
                 home,
@@ -172,17 +222,11 @@ object HereticPythonEnvironment {
     }
 
     fun ensure(
-        bootstrapPython: String,
+        managedPython: ManagedPython.Result,
         productHome: Path,
         allowCreation: Boolean,
         runner: Runner = SystemRunner,
     ): Result {
-        require(
-            bootstrapPython.isNotBlank(),
-        ) {
-            "bootstrapPython must be one non-empty command or path"
-        }
-
         val home =
             VexOwnedPath.requireRoot(
                 productHome,
@@ -249,22 +293,26 @@ object HereticPythonEnvironment {
 
         val bootstrap =
             bootstrapProbe(
-                bootstrapPython,
+                bootstrapPython.toString(),
                 runner,
             )
 
         require(
             bootstrap.first ==
-                HereticProductIdentity.PythonVersion,
+                HereticProductIdentity.PythonVersion &&
+                Path.of(
+                    bootstrap.second,
+                )
+                    .normalize() ==
+                bootstrapPython,
         ) {
-            "bootstrap Python must be exactly " +
-                HereticProductIdentity.PythonVersion
+            "managed bootstrap Python identity/version does not match the certified Heretic prerequisite"
         }
 
         try {
             requireCommandPass(
                 runner.run(
-                    program = bootstrapPython,
+                    program = bootstrapPython.toString(),
                     args =
                         listOf(
                             "-m",
