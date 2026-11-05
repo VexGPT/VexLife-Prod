@@ -175,7 +175,7 @@ object HereticArtifactMaterialization {
                 home,
             ),
         ) {
-            "Heretic materialization path escaped Vex Home"
+            "Heretic materialization path escaped VexLife-Prod Home"
         }
 
         Files.createDirectories(
@@ -246,15 +246,15 @@ object HereticArtifactMaterialization {
                     )
 
                     val verified =
-                        classifyExactArtifact(
-                            finalPath = finalPath,
+                        ExactArtifactFile.classify(
+                            path = finalPath,
                             expectedSha256 = member.sha256,
                             expectedBytes = member.byteLength,
                         )
 
                     require(
                         verified is
-                            Classification.VerifiedReusable,
+                            ExactArtifactFile.Classification.VerifiedReusable,
                     ) {
                         "authorized acquisition did not produce exact Heretic artifact " +
                             member.logicalPath
