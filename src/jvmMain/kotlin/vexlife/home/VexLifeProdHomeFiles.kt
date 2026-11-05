@@ -57,15 +57,86 @@ object VexLifeProdHomeFiles {
                         .lowercase(),
         )
 
-    fun bootstrap(
+    fun observeExisting(
         productHome: Path,
-        plan: VexLifeProdHome.BootstrapPlan,
-    ): Result {
+    ): Result? {
         require(
             productHome.isAbsolute,
         ) {
             "VexLife-Prod Home path must be absolute"
         }
+
+        val home =
+            productHome.normalize()
+
+        if (
+            !Files.exists(
+                home,
+                LinkOption.NOFOLLOW_LINKS,
+            )
+        ) {
+            return null
+        }
+
+        requireRealDirectory(
+            home,
+        )
+
+        for (
+            relative in
+            VexLifeProdHome.BaseDirectories
+        ) {
+            val directory =
+                VexOwnedPath.resolveInside(
+                    home,
+                    relative,
+                )
+            require(
+                VexOwnedPath.observeDirectory(
+                    home,
+                    directory,
+                ) ==
+                    VexOwnedPath.DirectoryState.Present,
+            ) {
+                "existing VexLife-Prod Home is missing required directory: $relative"
+            }
+        }
+
+        val manifest =
+            requireNotNull(
+                VexDurableContractFile.read<VexLifeProdHome.Manifest>(
+                    ownedRoot = home,
+                    path =
+                        VexOwnedPath.resolveInside(
+                            home,
+                            VexLifeProdHome.HomeManifestRelativePath,
+                        ),
+                ),
+            ) {
+                "existing VexLife-Prod Home has no current manifest"
+            }
+
+        return Result(
+            state = "EXISTING_HOME_PRESERVED",
+            productHome = home.toString(),
+            manifest =
+                VexLifeProdHome.validateManifest(
+                    manifest,
+                ),
+            effectsPerformed = false,
+        )
+    }
+
+    fun bootstrap(
+        productHome: Path,
+        plan: VexLifeProdHome.BootstrapPlan,
+    ): Result {
+        observeExisting(
+            productHome,
+        )
+            ?.let {
+                return it
+            }
 
         val currentPlan =
             VexLifeProdHome.validateBootstrapPlan(
@@ -73,62 +144,6 @@ object VexLifeProdHomeFiles {
             )
         val home =
             productHome.normalize()
-
-        if (
-            Files.exists(
-                home,
-                LinkOption.NOFOLLOW_LINKS,
-            )
-        ) {
-            requireRealDirectory(
-                home,
-            )
-
-            for (
-                relative in
-                VexLifeProdHome.BaseDirectories
-            ) {
-                val directory =
-                    VexOwnedPath.resolveInside(
-                        home,
-                        relative,
-                    )
-                require(
-                    VexOwnedPath.observeDirectory(
-                        home,
-                        directory,
-                    ) ==
-                        VexOwnedPath.DirectoryState.Present,
-                ) {
-                    "existing VexLife-Prod Home is missing required directory: $relative"
-                }
-            }
-
-            val manifest =
-                requireNotNull(
-                    VexDurableContractFile.read<VexLifeProdHome.Manifest>(
-                        ownedRoot = home,
-                        path =
-                            VexOwnedPath.resolveInside(
-                                home,
-                                VexLifeProdHome.HomeManifestRelativePath,
-                            ),
-                    ),
-                ) {
-                    "existing VexLife-Prod Home has no current manifest"
-                }
-
-            VexLifeProdHome.validateManifest(
-                manifest,
-            )
-
-            return Result(
-                state = "EXISTING_HOME_PRESERVED",
-                productHome = home.toString(),
-                manifest = manifest,
-                effectsPerformed = false,
-            )
-        }
 
         val parent =
             requireNotNull(
