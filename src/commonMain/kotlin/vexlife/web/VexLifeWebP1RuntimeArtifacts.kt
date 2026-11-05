@@ -79,6 +79,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               let currentBrowserContext = null;
               let frame = null;
+              let pendingSend = null;
 
               const setProgress = (message, state = 'idle') => {
                 if (!responseProgress) return;
@@ -147,8 +148,10 @@ object VexLifeWebP1RuntimeArtifacts {
               const readJson = async (response) => {
                 const value = await response.json();
                 if (!response.ok) {
-                  const message = value?.message || value?.code || ('HTTP ' + response.status);
-                  throw new Error(message);
+                  const error = new Error(value?.message || value?.code || ('HTTP ' + response.status));
+                  error.vexStatus = response.status;
+                  error.vexResponse = value;
+                  throw error;
                 }
                 return value;
               };
@@ -176,24 +179,28 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const send = async () => {
                 const content = composer?.value?.trim() ?? '';
-                if (!content || !sendButton) return;
+                if ((!content && !pendingSend) || !sendButton) return;
                 sendButton.disabled = true;
-                setProgress('Vex is responding…', 'sending');
-                try {
-                  const body = {
+                const retrying = pendingSend !== null;
+                if (!pendingSend) {
+                  pendingSend = Object.freeze({
                     sendAttemptRef: 'send.' + crypto.randomUUID().toLowerCase(),
                     content,
                     browserContext: currentBrowserContext
-                  };
+                  });
+                }
+                setProgress(retrying ? 'Retrying the prior exact send…' : 'Vex is responding…', 'sending');
+                try {
                   const response = await fetch(service.sendPath, {
                     method: 'POST',
                     headers: {
                       'accept': 'application/json',
                       'content-type': 'application/json'
                     },
-                    body: JSON.stringify(body)
+                    body: JSON.stringify(pendingSend)
                   });
                   const result = await readJson(response);
+                  pendingSend = null;
                   if (composer) composer.value = '';
                   await loadConversation();
                   root.dataset.vexLastContextRef = String(result.contextRef ?? '');
@@ -201,6 +208,9 @@ object VexLifeWebP1RuntimeArtifacts {
                   root.dataset.vexLastBrowserContextRef = String(result.promptContext?.browserContextRef ?? '');
                   setProgress('', 'complete');
                 } catch (error) {
+                  const status = Number(error?.vexStatus ?? 0);
+                  const retryAllowed = error?.vexResponse?.retrySameSendAttemptAllowed;
+                  if (status === 400 || retryAllowed === false) pendingSend = null;
                   setProgress(error instanceof Error ? error.message : 'Send failed.', 'error');
                 } finally {
                   sendButton.disabled = false;
