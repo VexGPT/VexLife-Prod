@@ -105,7 +105,7 @@ The build fails if source changes between admission and image formation.
 Build outputs remain under:
 
 ~~~text
-build/vexlife-prod-service-image/<exact-source-sha>/
+build/vexlife-prod-service-image/images/<exact-source-sha>/
 ~~~
 
 Ordinary repository compile/test does not require any packaging property.
