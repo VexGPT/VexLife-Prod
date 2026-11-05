@@ -29,7 +29,8 @@ object VexContractJson {
             prettyPrint = true
         }
 
-    private val Compact =
+    @PublishedApi
+    internal val Compact =
         Json {
             encodeDefaults = true
             explicitNulls = true
