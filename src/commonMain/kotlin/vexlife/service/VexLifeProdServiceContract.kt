@@ -116,9 +116,12 @@ object VexLifeProdServiceContract {
         val reservedOutputTokens: Int,
         val hardTokenLimit: Int,
         val wholeHistoryEventEnumerationPerformed: Boolean,
-        val memoryContextRef: String?,
-        val memoryContextFingerprint: String?,
-        val memorySourceRefs: List<String>,
+        val memoryContextRef: String? =
+            null,
+        val memoryContextFingerprint: String? =
+            null,
+        val memorySourceRefs: List<String> =
+            emptyList(),
         val memoryIncluded: Boolean,
         val memorySelectionPerformed: Boolean,
         val trainingSelectionPerformed: Boolean,
@@ -162,6 +165,7 @@ object VexLifeProdServiceContract {
                 Regex(
                     "[a-z0-9](?:[a-z0-9._-]{0,220}[a-z0-9])?",
                 ),
+            ),
         ) {
             "$label must be one portable ref"
         }
