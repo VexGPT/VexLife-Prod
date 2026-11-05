@@ -264,6 +264,96 @@ val serviceImageRoot =
         "vexlife-prod-service-image",
     )
 
+val serviceImageSourceIdentityFile =
+    layout.buildDirectory.file(
+        "vexlife-prod-service-image/source-identity.txt",
+    )
+
+val verifyVexLifeProdServiceImageSource =
+    tasks.register(
+        "verifyVexLifeProdServiceImageSource",
+    ) {
+        group =
+            "verification"
+        description =
+            "Witness one clean exact VexLife-Prod Git source identity before service-image assembly."
+
+        outputs.file(
+            serviceImageSourceIdentityFile,
+        )
+        outputs.upToDateWhen {
+            false
+        }
+
+        doLast {
+            val repositoryRoot =
+                rootDir
+                    .toPath()
+                    .toAbsolutePath()
+                    .normalize()
+            val sourceSha =
+                runExactCommand(
+                    listOf(
+                        "git",
+                        "-C",
+                        repositoryRoot.toString(),
+                        "rev-parse",
+                        "HEAD",
+                    ),
+                )
+            require(
+                sourceSha.matches(
+                    Regex(
+                        "[0-9a-f]{40}",
+                    ),
+                ),
+            ) {
+                "current VexLife-Prod checkout did not resolve to one exact Git commit"
+            }
+
+            val status =
+                runExactCommand(
+                    listOf(
+                        "git",
+                        "-C",
+                        repositoryRoot.toString(),
+                        "status",
+                        "--porcelain=v1",
+                        "--untracked-files=all",
+                    ),
+                )
+            require(
+                status.isEmpty(),
+            ) {
+                "VexLife-Prod service image requires a clean exact-source checkout:\n" +
+                    status
+            }
+
+            val identityFile =
+                serviceImageSourceIdentityFile
+                    .get()
+                    .asFile
+                    .toPath()
+            Files.createDirectories(
+                requireNotNull(
+                    identityFile.parent,
+                ),
+            )
+            Files.writeString(
+                identityFile,
+                sourceSha +
+                    "\n",
+                StandardCharsets.UTF_8,
+            )
+        }
+    }
+
+jvmJarTask.configure {
+    mustRunAfter(
+        verifyVexLifeProdServiceImageSource,
+    )
+}
+
 tasks.register(
     "assembleVexLifeProdServiceImage",
 ) {
@@ -273,6 +363,7 @@ tasks.register(
         "Build the private self-contained macOS arm64 VexLife-Prod service image."
 
     dependsOn(
+        verifyVexLifeProdServiceImageSource,
         jvmJarTask,
     )
 
@@ -300,6 +391,15 @@ tasks.register(
                 .toPath()
                 .toAbsolutePath()
                 .normalize()
+        val admittedSourceSha =
+            Files.readString(
+                serviceImageSourceIdentityFile
+                    .get()
+                    .asFile
+                    .toPath(),
+                StandardCharsets.UTF_8,
+            )
+                .trim()
         val sourceSha =
             runExactCommand(
                 listOf(
@@ -312,13 +412,15 @@ tasks.register(
             )
 
         require(
-            sourceSha.matches(
-                Regex(
-                    "[0-9a-f]{40}",
+            sourceSha ==
+                admittedSourceSha &&
+                sourceSha.matches(
+                    Regex(
+                        "[0-9a-f]{40}",
+                    ),
                 ),
-            ),
         ) {
-            "current VexLife-Prod checkout did not resolve to one exact Git commit"
+            "VexLife-Prod source identity changed after package-source admission"
         }
 
         val worktreeStatus =
@@ -335,7 +437,7 @@ tasks.register(
         require(
             worktreeStatus.isEmpty(),
         ) {
-            "VexLife-Prod service image requires a clean exact-source checkout:\n" +
+            "VexLife-Prod source changed during service-image assembly:\n" +
                 worktreeStatus
         }
 
