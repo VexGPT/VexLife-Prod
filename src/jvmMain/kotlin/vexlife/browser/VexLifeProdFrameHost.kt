@@ -78,7 +78,17 @@ class VexLifeProdFrameHost private constructor(
                     exchange,
                 )
             }
-            server.start()
+            try {
+                server.start()
+            } catch (
+                error: Throwable,
+            ) {
+                server.stop(
+                    0,
+                )
+                executor.shutdownNow()
+                throw error
+            }
 
             return host
         }
