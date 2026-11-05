@@ -259,6 +259,11 @@ val serviceLauncherSource =
         "packaging/private-service-image/bin/vexlife-prod-service",
     )
 
+val setupLauncherSource =
+    layout.projectDirectory.file(
+        "packaging/private-service-image/bin/vexlife-prod-setup",
+    )
+
 val serviceImageOutputRoot =
     layout.buildDirectory.dir(
         "vexlife-prod-service-image/images",
@@ -377,6 +382,9 @@ tasks.register(
     )
     inputs.file(
         serviceLauncherSource,
+    )
+    inputs.file(
+        setupLauncherSource,
     )
     outputs.dir(
         serviceImageOutputRoot,
@@ -715,6 +723,26 @@ tasks.register(
             ),
         )
 
+        val setupLauncher =
+            binRoot.resolve(
+                "vexlife-prod-setup",
+            )
+        Files.copy(
+            setupLauncherSource
+                .asFile
+                .toPath(),
+            setupLauncher,
+            StandardCopyOption.REPLACE_EXISTING,
+        )
+        Files.setPosixFilePermissions(
+            setupLauncher,
+            setOf(
+                PosixFilePermission.OWNER_READ,
+                PosixFilePermission.OWNER_WRITE,
+                PosixFilePermission.OWNER_EXECUTE,
+            ),
+        )
+
         val payloadSha256 =
             payloadFingerprint(
                 output,
@@ -781,7 +809,7 @@ tasks.register(
                     "{",
                 )
                 appendLine(
-                    "  \"schemaVersion\": \"vexlife-prod.private-service-image/v1\",",
+                    "  \"schemaVersion\": \"vexlife-prod.private-service-image/v2\",",
                 )
                 appendLine(
                     "  \"truthClass\": \"SOURCE_BOUND_PRIVATE_SERVICE_IMAGE\",",
@@ -802,6 +830,9 @@ tasks.register(
                 )
                 appendLine(
                     "  \"launcher\": \"bin/vexlife-prod-service\",",
+                )
+                appendLine(
+                    "  \"setupLauncher\": \"bin/vexlife-prod-setup\",",
                 )
                 appendLine(
                     "  \"runtimeModules\": [" +
