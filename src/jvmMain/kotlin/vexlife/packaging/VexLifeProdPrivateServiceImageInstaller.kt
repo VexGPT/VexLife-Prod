@@ -275,10 +275,6 @@ object VexLifeProdPrivateServiceImageInstaller {
                                         sourcePath,
                                     ),
                                 )
-                                copyPermissions(
-                                    sourcePath,
-                                    destination,
-                                )
                             }
 
                             Files.isDirectory(
