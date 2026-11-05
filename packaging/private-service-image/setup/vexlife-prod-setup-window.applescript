@@ -134,8 +134,8 @@ on run
     if statusValue is 0 and readyObserved then
         set successAlert to app's NSAlert's alloc()'s init()
         successAlert's setAlertStyle:(app's NSAlertStyleInformational)
-        successAlert's setMessageText:"VexLife is ready."
-        successAlert's setInformativeText:"The exact current VexLife service is installed and running."
+        successAlert's setMessageText:"VexLife setup is complete."
+        successAlert's setInformativeText:"The exact current VexLife local service is installed and running. The final VexLife product interface is a separate held edge in this candidate."
         successAlert's addButtonWithTitle:"Done"
         successAlert's runModal()
     else
