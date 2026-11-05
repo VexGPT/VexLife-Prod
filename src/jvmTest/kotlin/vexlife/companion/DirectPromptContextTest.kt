@@ -141,16 +141,28 @@ class DirectPromptContextTest {
                             "2026-11-05T04:01:00Z",
                         ),
                     )
-                completeResponse(
+                val response =
+                    appendResponse(
+                        request = first,
+                        responseMessageRef = "message.self-development.companion.001",
+                        content = "First response",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef = "observation.vexlife-prod.model-runtime.first",
+                        invocationEvidenceRef = "evidence.vexlife-prod.model-runtime-invocation.first",
+                        formedAt = Instant.parse(
+                            "2026-11-05T04:01:01Z",
+                        ),
+                    )
+                commitCompletedTurn(
                     request = first,
-                    responseMessageRef = "message.self-development.companion.001",
-                    content = "First response",
-                    model = "default_model",
-                    endpointOrigin = "http://127.0.0.1:8765",
-                    runtimeObservationRef = "observation.vexlife-prod.model-runtime.first",
-                    invocationEvidenceRef = "evidence.vexlife-prod.model-runtime-invocation.first",
+                    response = response,
+                    contextRef = "context.vexlife-prod.direct.first",
+                    contextSha256 = "d".repeat(
+                        64,
+                    ),
                     formedAt = Instant.parse(
-                        "2026-11-05T04:01:01Z",
+                        "2026-11-05T04:01:02Z",
                     ),
                 )
             }
