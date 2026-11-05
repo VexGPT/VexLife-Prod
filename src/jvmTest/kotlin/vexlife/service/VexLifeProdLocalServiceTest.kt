@@ -145,11 +145,15 @@ class VexLifeProdLocalServiceTest {
 
     @Test
     fun sourceCurrentnessAndEmptyConversationAreReadOnlyProjections() {
-        val root =
+        val parent =
             Files.createTempDirectory(
                 "vexlife-prod-service-empty-",
             )
                 .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "VexLife-Prod",
+            )
 
         try {
             bootstrapHome(
@@ -249,7 +253,7 @@ class VexLifeProdLocalServiceTest {
                 "read-only service projections must not create Conversation storage",
             )
         } finally {
-            root
+            parent
                 .toFile()
                 .deleteRecursively()
         }
@@ -257,11 +261,15 @@ class VexLifeProdLocalServiceTest {
 
     @Test
     fun sendDelegatesToCanonicalTurnAndDuplicateAttemptDoesNotCallProviderTwice() {
-        val root =
+        val parent =
             Files.createTempDirectory(
                 "vexlife-prod-service-send-",
             )
                 .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "VexLife-Prod",
+            )
         var providerCalls =
             0
 
@@ -430,7 +438,7 @@ class VexLifeProdLocalServiceTest {
                     )
                 }
         } finally {
-            root
+            parent
                 .toFile()
                 .deleteRecursively()
         }
@@ -438,11 +446,15 @@ class VexLifeProdLocalServiceTest {
 
     @Test
     fun unknownSendFieldsFailBeforeTurnEffect() {
-        val root =
+        val parent =
             Files.createTempDirectory(
                 "vexlife-prod-service-strict-json-",
             )
                 .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "VexLife-Prod",
+            )
         var turns =
             0
 
@@ -504,7 +516,7 @@ class VexLifeProdLocalServiceTest {
                     )
                 }
         } finally {
-            root
+            parent
                 .toFile()
                 .deleteRecursively()
         }
