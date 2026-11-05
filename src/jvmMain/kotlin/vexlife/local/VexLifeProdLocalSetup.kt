@@ -44,6 +44,33 @@ object VexLifeProdLocalSetup {
         val requestModel: String,
     )
 
+    /**
+     * Construction/lifetime capability for long-lived product consumers.
+     *
+     * The public result remains the setup projection. This Session retains only the capability to
+     * ask the rightful Heretic runtime owner for fresh currentness before later effects.
+     */
+    internal class Session internal constructor(
+        val result: Result,
+        private val currentRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
+    ) {
+        fun currentSetupResult(): Result {
+            val current =
+                currentRuntimeEvidence()
+
+            return result.copy(
+                qualifiedRuntimeEvidence = current,
+                endpoint = current.endpoint,
+                requestModel = current.requestModel,
+            )
+        }
+    }
+
+    private data class Established(
+        val result: Result,
+        val binding: HereticPersistentRuntime.Binding,
+    )
+
     internal data class Hooks(
         val observeHost: () -> HereticMacHostProfile.Result = {
             HereticMacHostProfile.observeCurrent()
@@ -124,18 +151,37 @@ object VexLifeProdLocalSetup {
     fun establish(
         allowAcquisition: Boolean,
     ): Result =
-        establishSerializedAt(
-            productHome =
-                VexLifeProdHomeFiles.defaultMacRoot(
-                    Path.of(
-                        System.getProperty(
-                            "user.home",
-                        ),
+        establishSession(
+            allowAcquisition,
+        )
+            .result
+
+    internal fun establishSession(
+        allowAcquisition: Boolean,
+    ): Session {
+        val productHome =
+            VexLifeProdHomeFiles.defaultMacRoot(
+                Path.of(
+                    System.getProperty(
+                        "user.home",
                     ),
                 ),
-            allowAcquisition = allowAcquisition,
-            hooks = Hooks(),
-        )
+            )
+
+        return VexLifeProdLocalSetupLease
+            .acquire(
+                productHome,
+            )
+            .use {
+                formSession(
+                    establishDetailedAt(
+                        productHome = productHome,
+                        allowAcquisition = allowAcquisition,
+                        hooks = Hooks(),
+                    ),
+                )
+            }
+    }
 
     internal fun establishSerializedAt(
         productHome: Path,
@@ -147,18 +193,31 @@ object VexLifeProdLocalSetup {
                 productHome,
             )
             .use {
-                establishAt(
+                establishDetailedAt(
                     productHome = productHome,
                     allowAcquisition = allowAcquisition,
                     hooks = hooks,
                 )
+                    .result
             }
 
     internal fun establishAt(
         productHome: Path,
         allowAcquisition: Boolean,
         hooks: Hooks,
-    ): Result {
+    ): Result =
+        establishDetailedAt(
+            productHome = productHome,
+            allowAcquisition = allowAcquisition,
+            hooks = hooks,
+        )
+            .result
+
+    private fun establishDetailedAt(
+        productHome: Path,
+        allowAcquisition: Boolean,
+        hooks: Hooks,
+    ): Established {
         val host =
             hooks.observeHost()
 
@@ -276,20 +335,51 @@ object VexLifeProdLocalSetup {
                 qualifiedRuntime = qualifiedRuntimeEvidence,
             )
 
-        return Result(
-            state = "LOCAL_HERETIC_FOUNDATION_READY",
-            productHome = home.productHome,
-            homeDisposition = home.state,
-            modelSelectionDisposition = selected.state,
-            managedPythonDisposition = managedPython.state,
-            artifactDisposition = materialized.state,
-            environmentDisposition = environment.state,
-            runtimeDisposition = runtime.disposition,
-            modelBindingDisposition = bound.state,
-            modelConfigurationState = bound.value.state,
-            qualifiedRuntimeEvidence = qualifiedRuntimeEvidence,
-            endpoint = runtime.endpoint,
-            requestModel = runtime.requestModel,
+        return Established(
+            result =
+                Result(
+                    state = "LOCAL_HERETIC_FOUNDATION_READY",
+                    productHome = home.productHome,
+                    homeDisposition = home.state,
+                    modelSelectionDisposition = selected.state,
+                    managedPythonDisposition = managedPython.state,
+                    artifactDisposition = materialized.state,
+                    environmentDisposition = environment.state,
+                    runtimeDisposition = runtime.disposition,
+                    modelBindingDisposition = bound.state,
+                    modelConfigurationState = bound.value.state,
+                    qualifiedRuntimeEvidence = qualifiedRuntimeEvidence,
+                    endpoint = runtime.endpoint,
+                    requestModel = runtime.requestModel,
+                ),
+            binding = binding,
+        )
+    }
+
+    private fun formSession(
+        established: Established,
+    ): Session {
+        val productHome =
+            Path.of(
+                established.result.productHome,
+            )
+                .normalize()
+
+        return Session(
+            result = established.result,
+            currentRuntimeEvidence = {
+                HereticPersistentRuntime.observeCurrentQualified(
+                    binding = established.binding,
+                    store =
+                        FileHereticRuntimeReceiptStore(
+                            productHome,
+                        ),
+                    platform =
+                        MacHereticRuntimePlatform(
+                            productHome = productHome,
+                        ),
+                )
+            },
         )
     }
 
