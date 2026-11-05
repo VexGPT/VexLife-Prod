@@ -1,5 +1,7 @@
 package vexlife.model.heretic.runtime
 
+import kotlinx.serialization.Serializable
+
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.security.MessageDigest
@@ -47,6 +49,7 @@ object HereticPersistentRuntime {
             "[0-9a-f]{64}",
         )
 
+    @Serializable
     data class SourceIdentity(
         val repository: String,
         val modulePath: String,
@@ -90,6 +93,7 @@ object HereticPersistentRuntime {
         val exactOwnedDetachedGroup: Boolean,
     )
 
+    @Serializable
     data class RuntimeProcess(
         val pid: Long,
         val processGroupId: Long,
@@ -98,6 +102,7 @@ object HereticPersistentRuntime {
         val processSubstrate: MacUserLaunchdProcess.Receipt,
     )
 
+    @Serializable
     data class Receipt(
         val schemaVersion: String,
         val receiptRef: String,
