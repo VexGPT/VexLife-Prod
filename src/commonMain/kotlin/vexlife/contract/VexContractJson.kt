@@ -13,8 +13,9 @@ import kotlinx.serialization.json.jsonPrimitive
 /**
  * One repository-owned JSON boundary for durable VexLife contracts.
  *
- * Domain packages own schemas and meaning. This object owns deterministic transport plus the
- * canonical key-sorted compact JSON preimage used by current VexLife semantic hashes.
+ * Domain packages own schemas and meaning. This object owns deterministic transport, compact ordered
+ * provider JSON, and the canonical key-sorted compact JSON preimage used by current VexLife semantic
+ * hashes.
  */
 object VexContractJson {
     val Strict =
@@ -28,7 +29,7 @@ object VexContractJson {
             prettyPrint = true
         }
 
-    private val Canonical =
+    private val Compact =
         Json {
             encodeDefaults = true
             explicitNulls = true
@@ -43,6 +44,13 @@ object VexContractJson {
         value: T,
     ): String =
         Strict.encodeToString(
+            value,
+        )
+
+    inline fun <reified T> compactEncode(
+        value: T,
+    ): String =
+        Compact.encodeToString(
             value,
         )
 
@@ -69,7 +77,7 @@ object VexContractJson {
     fun canonicalEncodeElement(
         value: JsonElement,
     ): String =
-        Canonical.encodeToString(
+        Compact.encodeToString(
             JsonElement.serializer(),
             canonicalize(
                 value,
