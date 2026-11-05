@@ -27,7 +27,8 @@ import vexlife.model.heretic.HereticRuntimeState
  */
 class VexLifeProdLocalService private constructor(
     val sourceSha: String,
-    private val setup: VexLifeProdLocalSetup.Result,
+    private val startupSetup: VexLifeProdLocalSetup.Result,
+    private val currentSetup: () -> VexLifeProdLocalSetup.Result,
     private val server: HttpServer,
     private val executor: ExecutorService,
     private val turnExecutor: TurnExecutor,
@@ -53,11 +54,12 @@ class VexLifeProdLocalService private constructor(
 
         internal fun start(
             sourceSha: String,
-            setup: VexLifeProdLocalSetup.Result,
+            session: VexLifeProdLocalSetup.Session,
         ): VexLifeProdLocalService =
             startAt(
                 sourceSha = sourceSha,
-                setup = setup,
+                startupSetup = session.result,
+                currentSetup = session::currentSetupResult,
                 address =
                     InetSocketAddress(
                         VexLifeProdServiceContract.Host,
@@ -78,11 +80,15 @@ class VexLifeProdLocalService private constructor(
         internal fun startForTest(
             sourceSha: String,
             setup: VexLifeProdLocalSetup.Result,
+            currentSetup: () -> VexLifeProdLocalSetup.Result = {
+                setup
+            },
             turnExecutor: TurnExecutor,
         ): VexLifeProdLocalService =
             startAt(
                 sourceSha = sourceSha,
-                setup = setup,
+                startupSetup = setup,
+                currentSetup = currentSetup,
                 address =
                     InetSocketAddress(
                         VexLifeProdServiceContract.Host,
@@ -93,7 +99,8 @@ class VexLifeProdLocalService private constructor(
 
         private fun startAt(
             sourceSha: String,
-            setup: VexLifeProdLocalSetup.Result,
+            startupSetup: VexLifeProdLocalSetup.Result,
+            currentSetup: () -> VexLifeProdLocalSetup.Result,
             address: InetSocketAddress,
             turnExecutor: TurnExecutor,
         ): VexLifeProdLocalService {
@@ -105,9 +112,9 @@ class VexLifeProdLocalService private constructor(
                 "VexLife-Prod service sourceSha must be one lowercase Git identity"
             }
             require(
-                setup.state ==
+                startupSetup.state ==
                     "LOCAL_HERETIC_FOUNDATION_READY" &&
-                    setup.qualifiedRuntimeEvidence.runtimeState ==
+                    startupSetup.qualifiedRuntimeEvidence.runtimeState ==
                     HereticRuntimeState.Qualified,
             ) {
                 "VexLife-Prod service requires one qualified isolated local foundation"
@@ -115,7 +122,7 @@ class VexLifeProdLocalService private constructor(
 
             val productHome =
                 Path.of(
-                    setup.productHome,
+                    startupSetup.productHome,
                 )
             require(
                 productHome.isAbsolute,
@@ -140,7 +147,8 @@ class VexLifeProdLocalService private constructor(
             val service =
                 VexLifeProdLocalService(
                     sourceSha = sourceSha,
-                    setup = setup,
+                    startupSetup = startupSetup,
+                    currentSetup = currentSetup,
                     server = server,
                     executor = executor,
                     turnExecutor = turnExecutor,
@@ -301,7 +309,7 @@ class VexLifeProdLocalService private constructor(
                     sourceSha = sourceSha,
                     runtimeCurrentness = "NOT_REOBSERVED_BY_SERVICE",
                     startupQualifiedRuntimeReceiptRef =
-                        setup.qualifiedRuntimeEvidence.runtimeReceiptRef,
+                        startupSetup.qualifiedRuntimeEvidence.runtimeReceiptRef,
                     currentConversationHeadSha256 =
                         conversation.currentConversationHeadSha256,
                     effectsPerformed = false,
@@ -343,9 +351,19 @@ class VexLifeProdLocalService private constructor(
                 ),
             )
 
+        val current =
+            currentSetup()
+
+        require(
+            current.productHome ==
+                startupSetup.productHome,
+        ) {
+            "VexLife-Prod service runtime currentness changed product Home"
+        }
+
         val result =
             turnExecutor.perform(
-                setup,
+                current,
                 DirectCompanionTurn.Intent(
                     sendAttemptRef = request.sendAttemptRef,
                     content = request.content,
@@ -404,7 +422,7 @@ class VexLifeProdLocalService private constructor(
         val snapshot =
             DirectConversationStore(
                 Path.of(
-                    setup.productHome,
+                    startupSetup.productHome,
                 ),
             )
                 .current()
