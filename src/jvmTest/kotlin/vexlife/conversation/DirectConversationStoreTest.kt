@@ -102,8 +102,8 @@ class DirectConversationStoreTest {
                     },
                 )
 
-                val head =
-                    completeResponse(
+                val response =
+                    appendResponse(
                         request = request,
                         responseMessageRef = "message.self-development.companion.001",
                         content = "Hello human.",
@@ -113,6 +113,18 @@ class DirectConversationStoreTest {
                         invocationEvidenceRef = "evidence.vexlife-prod.model-runtime-invocation.test",
                         formedAt = Instant.parse(
                             "2026-11-05T03:31:01Z",
+                        ),
+                    )
+                val head =
+                    commitCompletedTurn(
+                        request = request,
+                        response = response,
+                        contextRef = "context.vexlife-prod.direct.test",
+                        contextSha256 = "c".repeat(
+                            64,
+                        ),
+                        formedAt = Instant.parse(
+                            "2026-11-05T03:31:02Z",
                         ),
                     )
 
