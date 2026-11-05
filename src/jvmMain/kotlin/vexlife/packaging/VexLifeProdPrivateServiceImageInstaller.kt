@@ -9,6 +9,7 @@ import java.nio.file.attribute.PosixFilePermission
 import java.util.UUID
 import vexlife.filesystem.VexExclusiveFileLease
 import vexlife.filesystem.VexOwnedPath
+import vexlife.home.VexLifeProdHomeFiles
 
 /**
  * Install one already-verified private service image into the established VexLife-Prod Home.
@@ -41,9 +42,19 @@ object VexLifeProdPrivateServiceImageInstaller {
                 imageRoot = sourceImageRoot,
                 expectedSourceSha = expectedSourceSha,
             )
+        val currentHome =
+            requireNotNull(
+                VexLifeProdHomeFiles.observeExisting(
+                    productHome,
+                ),
+            ) {
+                "private service-image installation requires one established current VexLife-Prod Home"
+            }
         val home =
             VexOwnedPath.requireRoot(
-                productHome,
+                Path.of(
+                    currentHome.productHome,
+                ),
                 "VexLife-Prod Home",
             )
         val imageBase =
