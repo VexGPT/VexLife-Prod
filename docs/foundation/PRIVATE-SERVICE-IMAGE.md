@@ -280,6 +280,8 @@ build/vexlife-prod-service-image/archives/<source-sha>/
   vexlife-prod-service-image-darwin-arm64-<source-sha>.tar.gz.sha256
   vexlife-prod-bootstrap-darwin-arm64-<source-sha>.command
   vexlife-prod-bootstrap-darwin-arm64-<source-sha>.command.sha256
+  vexlife-prod-bootstrap-darwin-arm64.command
+  vexlife-prod-bootstrap-darwin-arm64.command.sha256
   vexlife-prod-service-image-darwin-arm64-<source-sha>.receipt.json
 ~~~
 
@@ -295,8 +297,11 @@ archiveName
 archiveSha256
 archiveBytes
 releaseTag
+currentChannel = github-release-latest
 bootstrapName
 bootstrapSha256
+currentBootstrapAssetName
+currentBootstrapSha256AssetName
 bootstrapBytes
 imagePayloadSha256
 ~~~
@@ -309,6 +314,15 @@ ARCHIVE
 
 ARCHIVE SHA
 != IMAGE PAYLOAD SHA
+
+CURRENT RELEASE CHANNEL
+-> selects one exact release
+
+CURRENT BOOTSTRAP ALIAS
+= byte-exact copy of that release's source-specific bootstrap
+
+CURRENT BOOTSTRAP ALIAS
+!= mutable runtime configuration
 
 ARCHIVE RECEIPT
 != INSTALL AUTHORITY
