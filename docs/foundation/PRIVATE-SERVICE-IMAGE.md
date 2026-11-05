@@ -171,6 +171,7 @@ Other transitive JDK modules remain derived.
 
   bin/
     vexlife-prod-service
+    vexlife-prod-setup
 
   lib/
     vexlife-prod.jar
@@ -197,7 +198,7 @@ It does not search PATH for Java.
 Schema:
 
 ~~~text
-vexlife-prod.private-service-image/v1
+vexlife-prod.private-service-image/v2
 ~~~
 
 Truth class:
@@ -214,6 +215,7 @@ platform = darwin-arm64
 javaRuntimeMajor = 21
 mainClass
 launcher
+setupLauncher
 runtimeModules[]
 payloadSha256
 artifacts[]:
