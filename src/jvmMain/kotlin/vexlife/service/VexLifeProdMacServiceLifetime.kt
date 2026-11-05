@@ -1,5 +1,6 @@
 package vexlife.service
 
+import vexlife.browser.VexLifeProdBrowserContract
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -876,6 +877,8 @@ object VexLifeProdMacServiceLifetime {
             expectedSourceSha &&
             currentness.processPid ==
             expectedPid &&
+            currentness.frameHostOrigin ==
+                VexLifeProdBrowserContract.FrameHostOrigin &&
             !currentness.effectsPerformed
 
     private fun currentHome(
