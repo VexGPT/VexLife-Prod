@@ -142,6 +142,16 @@ memorySelectionPerformed  false
 
 until the fresh Memory owner is ported.
 
+Current VexLife's prompt-context runtime also has a separately-owned
+`WORKING_CHECKPOINT_SUCCESSOR` mode when one exact working-rollover owner is eligible. That
+relationship is **not** implemented by this first fresh direct circuit and remains held rather than
+being collapsed into `IMMEDIATE_PRIOR_COMPLETED_TURN`.
+
+~~~text
+FIRST DIRECT CONTINUE CIRCUIT
+!= FULL CURRENT PROMPT-CONTINUITY PARITY
+~~~
+
 ### `DirectCompanionConnection`
 
 Owns only:
@@ -275,6 +285,7 @@ real macOS:
   sustained process after setup completion
 
 fresh Memory owner + attributed Memory selection
+working-checkpoint successor / rollover continuity
 CLEAN_START presentation/semantic wiring
 streamed response progress
 explicit-open reasoning projection
