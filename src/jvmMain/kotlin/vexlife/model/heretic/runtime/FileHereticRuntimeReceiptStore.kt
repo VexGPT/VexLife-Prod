@@ -2,6 +2,7 @@ package vexlife.model.heretic.runtime
 
 import java.nio.file.Path
 import vexlife.contract.VexDurableContractFile
+import vexlife.filesystem.VexOwnedPath
 import vexlife.model.heretic.HereticProductIdentity
 
 /**
@@ -13,47 +14,38 @@ import vexlife.model.heretic.HereticProductIdentity
 class FileHereticRuntimeReceiptStore(
     productHome: Path,
 ) : HereticPersistentRuntime.ReceiptStore {
+    private val productHome: Path =
+        VexOwnedPath.requireRoot(
+            productHome,
+            "VexLife-Prod Home",
+        )
+
     private val receiptPath: Path =
-        productHome
-            .also {
-                require(
-                    it.isAbsolute,
-                ) {
-                    "VexLife-Prod Home must be absolute"
-                }
-            }
-            .normalize()
-            .resolve(
-                HereticProductIdentity.RuntimeReceiptRelativePath,
-            )
-            .normalize()
-            .also {
-                require(
-                    it.startsWith(
-                        productHome.normalize(),
-                    ),
-                ) {
-                    "Heretic runtime receipt path escaped VexLife-Prod Home"
-                }
-            }
+        VexOwnedPath.resolveInside(
+            this.productHome,
+            HereticProductIdentity.RuntimeReceiptRelativePath,
+        )
 
     override fun read(): HereticPersistentRuntime.Receipt? =
         VexDurableContractFile.read(
-            receiptPath,
+            ownedRoot = productHome,
+            path = receiptPath,
         )
 
     override fun write(
         receipt: HereticPersistentRuntime.Receipt,
     ) {
         VexDurableContractFile.write(
-            receiptPath,
-            receipt,
+            ownedRoot = productHome,
+            path = receiptPath,
+            value = receipt,
         )
     }
 
     override fun delete() {
         VexDurableContractFile.delete(
-            receiptPath,
+            ownedRoot = productHome,
+            path = receiptPath,
         )
     }
 
