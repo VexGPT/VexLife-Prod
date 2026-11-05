@@ -13,6 +13,7 @@ import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
+import vexlife.service.VexLifeProdMacServiceLifetime
 
 class VexLifeProdSetupProcessTest {
     private fun runtimeEvidence(): HereticModelConfiguration.QualifiedRuntimeEvidence =
@@ -174,6 +175,17 @@ class VexLifeProdSetupProcessTest {
                     "$productHome/runtime/product-service/images/$sourceSha",
                 imageMutationPerformed = true,
             )
+        val service =
+            VexLifeProdMacServiceLifetime.Result(
+                disposition = "STARTED_CURRENT_SERVICE",
+                sourceSha = sourceSha,
+                imagePayloadSha256 = payloadSha,
+                pid = 4242L,
+                serviceOrigin = "http://127.0.0.1:18210",
+                processStarted = true,
+                priorProcessRetired = false,
+                receiptWritePerformed = true,
+            )
 
         VexLifeProdSetupProcess.runWithHooks(
             arguments =
@@ -237,6 +249,24 @@ class VexLifeProdSetupProcessTest {
                         )
                         installed
                     },
+                    startService = {
+                        home,
+                        expected,
+                        ->
+                        trace +=
+                            "SERVICE"
+                        assertEquals(
+                            Path.of(
+                                productHome,
+                            ),
+                            home,
+                        )
+                        assertEquals(
+                            sourceSha,
+                            expected,
+                        )
+                        service
+                    },
                     reportImageVerified = {
                         value ->
                         trace +=
@@ -250,6 +280,7 @@ class VexLifeProdSetupProcessTest {
                         arguments,
                         currentSession,
                         currentInstalled,
+                        currentService,
                         ->
                         trace +=
                             "READY"
@@ -265,6 +296,10 @@ class VexLifeProdSetupProcessTest {
                             installed,
                             currentInstalled,
                         )
+                        assertSame(
+                            service,
+                            currentService,
+                        )
                     },
                 ),
         )
@@ -276,6 +311,7 @@ class VexLifeProdSetupProcessTest {
                 "REPORT_IMAGE",
                 "SETUP",
                 "INSTALL",
+                "SERVICE",
                 "READY",
             ),
             trace,
