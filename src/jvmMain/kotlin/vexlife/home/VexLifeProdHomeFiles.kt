@@ -3,7 +3,9 @@ package vexlife.home
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.LinkOption
+import java.nio.file.FileVisitResult
 import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.UUID
@@ -112,7 +114,9 @@ object VexLifeProdHomeFiles {
                 "VexLife-Prod Home requires one parent directory"
             }
 
-        VexDurableContractFile.secureDirectory(
+        // The parent (for example ~/Library/Application Support) is ambient OS/user space.
+        // Ensure it exists, but do not rewrite its permissions as though Prod owned it.
+        Files.createDirectories(
             parent,
         )
 
@@ -272,8 +276,38 @@ object VexLifeProdHomeFiles {
         requireRealDirectory(
             root,
         )
-        root.toFile()
-            .deleteRecursively()
+
+        Files.walkFileTree(
+            root,
+            object :
+                SimpleFileVisitor<Path>() {
+                override fun visitFile(
+                    file: Path,
+                    attrs: BasicFileAttributes,
+                ): FileVisitResult {
+                    Files.delete(
+                        file,
+                    )
+                    return FileVisitResult.CONTINUE
+                }
+
+                override fun postVisitDirectory(
+                    directory: Path,
+                    error: java.io.IOException?,
+                ): FileVisitResult {
+                    if (
+                        error !=
+                            null
+                    ) {
+                        throw error
+                    }
+                    Files.delete(
+                        directory,
+                    )
+                    return FileVisitResult.CONTINUE
+                }
+            },
+        )
     }
 }
 
