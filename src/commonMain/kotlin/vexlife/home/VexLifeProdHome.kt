@@ -241,6 +241,128 @@ object VexLifeProdHome {
         )
     }
 
+    fun validateBootstrapPlan(
+        plan: BootstrapPlan,
+    ): BootstrapPlan {
+        val installation =
+            plan.installation
+
+        require(
+            installation.schemaVersion ==
+                InstallationSchema,
+        ) {
+            "VexLife-Prod installation schema is not current"
+        }
+        requireRef(
+            installation.personRef,
+            "installation.personRef",
+        )
+        requireRef(
+            installation.familyRef,
+            "installation.familyRef",
+        )
+        requireRef(
+            installation.deviceRef,
+            "installation.deviceRef",
+        )
+        require(
+            installation.deviceRef.startsWith(
+                "device.vexlife-prod.",
+            ),
+        ) {
+            "installation.deviceRef is outside the VexLife-Prod namespace"
+        }
+        require(
+            installation.deviceName.isNotBlank() &&
+                installation.platform.isNotBlank() &&
+                installation.architecture.isNotBlank() &&
+                installation.createdAt.isNotBlank(),
+        ) {
+            "VexLife-Prod installation identity is incomplete"
+        }
+        requireRef(
+            installation.companionLineageRef,
+            "installation.companionLineageRef",
+        )
+        require(
+            installation.companionLineageRef.startsWith(
+                "companion-lineage.vexlife-prod.",
+            ),
+        ) {
+            "installation Companion lineage is outside the VexLife-Prod namespace"
+        }
+
+        val manifest =
+            validateManifest(
+                plan.manifest,
+            )
+        val initialModel =
+            validateInitialModelConfiguration(
+                plan.initialModelConfiguration,
+            )
+        val receipt =
+            plan.receipt
+
+        require(
+            manifest.homeRef ==
+                "vex-home.prod." +
+                installation.deviceRef.removePrefix(
+                    "device.vexlife-prod.",
+                ) &&
+                manifest.familyRef ==
+                installation.familyRef &&
+                manifest.createdAt ==
+                installation.createdAt &&
+                manifest.currentDeviceRef ==
+                installation.deviceRef &&
+                manifest.currentCompanionLineageRef ==
+                installation.companionLineageRef,
+        ) {
+            "VexLife-Prod installation and Home manifest identities disagree"
+        }
+
+        require(
+            receipt.schemaVersion ==
+                BootstrapReceiptSchema &&
+                receipt.homeRef ==
+                manifest.homeRef &&
+                receipt.deviceRef ==
+                installation.deviceRef &&
+                receipt.companionLineageRef ==
+                installation.companionLineageRef &&
+                receipt.familyRef ==
+                installation.familyRef &&
+                receipt.formedAt ==
+                installation.createdAt &&
+                !receipt.legacyVexLifeHomeImported &&
+                !receipt.personalMemoryImported &&
+                !receipt.modelArtifactDownloaded &&
+                !receipt.existingDataDeleted,
+        ) {
+            "VexLife-Prod bootstrap receipt does not describe the exact no-import/no-download Home formation"
+        }
+
+        require(
+            plan.directories ==
+                BaseDirectories &&
+                plan.writes ==
+                listOf(
+                    HomeManifestRelativePath,
+                    ModelConfigurationRelativePath,
+                    BootstrapReceiptRelativePath,
+                ),
+        ) {
+            "VexLife-Prod bootstrap filesystem plan drift"
+        }
+
+        require(
+            initialModel.state ==
+                "UNCONFIGURED",
+        )
+
+        return plan
+    }
+
     fun validateManifest(
         manifest: Manifest,
     ): Manifest {
