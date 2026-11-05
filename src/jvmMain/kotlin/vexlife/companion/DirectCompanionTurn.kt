@@ -71,11 +71,15 @@ object DirectCompanionTurn {
         val responseDurablyRecorded: Boolean,
         val contextDurablyRecorded: Boolean,
         val currentHeadCommitted: Boolean,
+        val retrySameSendAttemptAllowed: Boolean,
+        val resumePossible: Boolean,
+        val exactNextSafeRoute: String,
         val formedAt: String,
     )
 
     @Serializable
-    data class FailureReceipt(
+    @ConsistentCopyVisibility
+    data class FailureReceipt private constructor(
         val schemaVersion: String,
         val failureRef: String,
         val semanticFingerprint: String,
@@ -90,16 +94,28 @@ object DirectCompanionTurn {
         val responseDurablyRecorded: Boolean,
         val contextDurablyRecorded: Boolean,
         val currentHeadCommitted: Boolean,
+        val retrySameSendAttemptAllowed: Boolean,
+        val resumePossible: Boolean,
+        val exactNextSafeRoute: String,
         val formedAt: String,
     )
 
     class TurnException(
         val failureCode: String,
         val failureReceipt: FailureReceipt?,
+        val retrySameSendAttemptAllowed: Boolean,
+        val exactNextSafeRoute: String,
         cause: Throwable,
     ) : IllegalStateException(
         "direct Companion turn failed: $failureCode",
         cause,
+    )
+
+    private class FailedSendAttemptException(
+        val receipt: FailureReceipt?,
+        val route: String,
+    ) : IllegalStateException(
+        "same failed send attempt must not replay; form a new sendAttemptRef",
     )
 
     internal data class Hooks(
@@ -169,6 +185,7 @@ object DirectCompanionTurn {
                         contextStore = contextStore,
                         identity = identity,
                         content = intent.content,
+                        productHome = productHome,
                     )
 
                 if (
@@ -298,22 +315,45 @@ object DirectCompanionTurn {
                             null
                         }
 
+                    val route =
+                        failure
+                            ?.exactNextSafeRoute
+                            ?: exactFailureRoute(
+                                lastValidHeadSha256 =
+                                    before.head
+                                        ?.conversationHeadSha256,
+                            )
+
                     throw TurnException(
                         failureCode =
                             failureCode(
                                 error,
                             ),
                         failureReceipt = failure,
+                        retrySameSendAttemptAllowed = false,
+                        exactNextSafeRoute = route,
                         cause = error,
                     )
                 }
             }
+        } catch (
+            error: FailedSendAttemptException,
+        ) {
+            throw TurnException(
+                failureCode = "FAILED_SEND_ATTEMPT_REQUIRES_NEW_SEND_ATTEMPT",
+                failureReceipt = error.receipt,
+                retrySameSendAttemptAllowed = false,
+                exactNextSafeRoute = error.route,
+                cause = error,
+            )
         } catch (
             error: DirectConversationStore.IncompleteConversationException,
         ) {
             throw TurnException(
                 failureCode = "CONVERSATION_RECOVERY_REQUIRED",
                 failureReceipt = null,
+                retrySameSendAttemptAllowed = false,
+                exactNextSafeRoute = "ATTENTION_REQUIRED_CONVERSATION_STATE",
                 cause = error,
             )
         }
@@ -359,89 +399,130 @@ object DirectCompanionTurn {
         contextStore: DirectTurnContextStore,
         identity: Identity,
         content: String,
+        productHome: Path,
     ): Result? {
-        val index =
-            snapshot.events.indexOfFirst {
-                it.messageRef ==
-                    identity.requestMessageRef
-            }
+        val canonicalRequest =
+            snapshot.canonicalEvents
+                .firstOrNull {
+                    it.messageRef ==
+                        identity.requestMessageRef
+                }
 
         if (
-            index <
-                0
+            canonicalRequest !=
+                null
+        ) {
+            require(
+                canonicalRequest.eventKind ==
+                    "REQUEST" &&
+                    canonicalRequest.turnRef ==
+                    identity.turnRef &&
+                    canonicalRequest.content ==
+                    content,
+            ) {
+                "sendAttemptRef already identifies a different durable human request"
+            }
+
+            val response =
+                requireNotNull(
+                    snapshot.canonicalEvents
+                        .firstOrNull {
+                            it.eventKind ==
+                                "RESPONSE" &&
+                                it.turnRef ==
+                                identity.turnRef &&
+                                it.messageRef ==
+                                identity.responseMessageRef &&
+                                it.priorEventSha256 ==
+                                canonicalRequest.eventSha256
+                        },
+                ) {
+                    "canonical completed send is missing its exact response"
+                }
+
+            val context =
+                requireNotNull(
+                    contextStore.read(
+                        identity.turnRef,
+                    ),
+                ) {
+                    "completed duplicate turn has no exact durable context evidence"
+                }
+
+            return Result(
+                state = "TURN_COMPLETED",
+                recoveredCompletedTurn = true,
+                modelCallPerformed = false,
+                actualHttpCallPerformedNow = false,
+                turnRef = identity.turnRef,
+                requestMessageRef = identity.requestMessageRef,
+                responseMessageRef = identity.responseMessageRef,
+                requestEventRef = canonicalRequest.eventRef,
+                responseEventRef = response.eventRef,
+                content = response.content,
+                model =
+                    requireNotNull(
+                        response.model,
+                    ),
+                currentConversationHeadSha256 =
+                    requireNotNull(
+                        snapshot.head,
+                    )
+                        .conversationHeadSha256,
+                contextRef = context.contextRef,
+                promptContextReceipt = context.promptContext,
+                runtimeObservation = context.runtimeObservation,
+                invocationEvidence = context.invocationEvidence,
+            )
+        }
+
+        val failed =
+            snapshot.abandonedAttempts
+                .firstOrNull {
+                    it.requestEvent.messageRef ==
+                        identity.requestMessageRef ||
+                        it.requestEvent.turnRef ==
+                        identity.turnRef
+                }
+
+        if (
+            failed ==
+                null
         ) {
             return null
         }
 
-        val request =
-            snapshot.events[
-                index
-            ]
         require(
-            request.eventKind ==
-                "REQUEST" &&
-                request.turnRef ==
+            failed.requestEvent.turnRef ==
                 identity.turnRef &&
-                request.content ==
+                failed.requestEvent.messageRef ==
+                identity.requestMessageRef &&
+                failed.requestEvent.content ==
                 content,
         ) {
-            "sendAttemptRef already identifies a different durable human request"
+            "sendAttemptRef already identifies different failed durable evidence"
         }
 
-        val response =
-            snapshot.events
-                .getOrNull(
-                    index +
-                        1,
-                )
-        require(
-            response !=
-                null &&
-                response.eventKind ==
-                "RESPONSE" &&
-                response.turnRef ==
-                identity.turnRef &&
-                response.messageRef ==
-                identity.responseMessageRef &&
-                response.priorEventSha256 ==
-                request.eventSha256,
-        ) {
-            "sendAttemptRef identifies an incomplete or mismatched durable turn"
-        }
-
-        val context =
-            requireNotNull(
-                contextStore.read(
-                    identity.turnRef,
-                ),
-            ) {
-                "completed duplicate turn has no exact durable context evidence"
-            }
-        val head =
-            requireNotNull(
-                snapshot.head,
+        val receipt =
+            readFailureReceipt(
+                productHome = productHome,
+                turnRef = identity.turnRef,
             )
+        val route =
+            receipt
+                ?.exactNextSafeRoute
+                ?: if (
+                    snapshot.head ==
+                        null
+                ) {
+                    "FORM_NEW_SEND_ATTEMPT_AND_RETRY"
+                } else {
+                    "RESUME_LAST_VALID_HEAD_THEN_FORM_NEW_SEND_ATTEMPT"
+                }
 
-        return Result(
-            state = "TURN_COMPLETED",
-            recoveredCompletedTurn = true,
-            modelCallPerformed = false,
-            actualHttpCallPerformedNow = false,
-            turnRef = identity.turnRef,
-            requestMessageRef = identity.requestMessageRef,
-            responseMessageRef = identity.responseMessageRef,
-            requestEventRef = request.eventRef,
-            responseEventRef = response.eventRef,
-            content = response.content,
-            model =
-                requireNotNull(
-                    response.model,
-                ),
-            currentConversationHeadSha256 = head.conversationHeadSha256,
-            contextRef = context.contextRef,
-            promptContextReceipt = context.promptContext,
-            runtimeObservation = context.runtimeObservation,
-            invocationEvidence = context.invocationEvidence,
+        throw FailedSendAttemptException(
+            receipt = receipt,
+            route = route,
         )
     }
 
@@ -479,6 +560,14 @@ object DirectCompanionTurn {
                     responseDurablyRecorded = responseDurablyRecorded,
                     contextDurablyRecorded = contextDurablyRecorded,
                     currentHeadCommitted = false,
+                    retrySameSendAttemptAllowed = false,
+                    resumePossible =
+                        lastValidHeadSha256 !=
+                            null,
+                    exactNextSafeRoute =
+                        exactFailureRoute(
+                            lastValidHeadSha256,
+                        ),
                     formedAt = formedAt.toString(),
                 )
             val fingerprint =
@@ -507,6 +596,9 @@ object DirectCompanionTurn {
                     responseDurablyRecorded = core.responseDurablyRecorded,
                     contextDurablyRecorded = core.contextDurablyRecorded,
                     currentHeadCommitted = core.currentHeadCommitted,
+                    retrySameSendAttemptAllowed = core.retrySameSendAttemptAllowed,
+                    resumePossible = core.resumePossible,
+                    exactNextSafeRoute = core.exactNextSafeRoute,
                     formedAt = core.formedAt,
                 )
             val path =
@@ -532,6 +624,9 @@ object DirectCompanionTurn {
                 receipt
             } else {
                 // Preserve the first substantive failure for this exact send attempt.
+                validateFailureReceipt(
+                    existing,
+                )
                 existing
             }
         } catch (
@@ -540,6 +635,158 @@ object DirectCompanionTurn {
             null
         }
     }
+
+    private fun readFailureReceipt(
+        productHome: Path,
+        turnRef: String,
+    ): FailureReceipt? {
+        val directory =
+            VexOwnedPath.resolveInside(
+                productHome,
+                "recovery/direct-companion",
+            )
+
+        if (
+            VexOwnedPath.observeDirectory(
+                productHome,
+                directory,
+            ) ==
+            VexOwnedPath.DirectoryState.Missing
+        ) {
+            return null
+        }
+
+        val receipt =
+            VexDurableContractFile.read<FailureReceipt>(
+                ownedRoot = productHome,
+                path =
+                    VexOwnedPath.resolveInside(
+                        directory,
+                        turnRef +
+                            ".json",
+                    ),
+            )
+                ?: return null
+
+        validateFailureReceipt(
+            receipt,
+        )
+
+        return receipt
+    }
+
+    private fun validateFailureReceipt(
+        receipt: FailureReceipt,
+    ) {
+        require(
+            receipt.schemaVersion ==
+                FailureReceiptSchema &&
+                !receipt.retrySameSendAttemptAllowed &&
+                !receipt.currentHeadCommitted &&
+                receipt.requestDurablyRecorded,
+        ) {
+            "direct Companion failure receipt shape/authority is invalid"
+        }
+        requireRef(
+            receipt.turnRef,
+            "failure.turnRef",
+        )
+        requireRef(
+            receipt.requestMessageRef,
+            "failure.requestMessageRef",
+        )
+        requireRef(
+            receipt.responseMessageRef,
+            "failure.responseMessageRef",
+        )
+        receipt.requestEventRefOrNull?.let {
+            requireRef(
+                it,
+                "failure.requestEventRef",
+            )
+        }
+        receipt.requestEventSha256OrNull?.let {
+            require(
+                it.matches(
+                    Regex(
+                        "[0-9a-f]{64}",
+                    ),
+                ),
+            )
+        }
+        receipt.lastValidConversationHeadSha256OrNull?.let {
+            require(
+                it.matches(
+                    Regex(
+                        "[0-9a-f]{64}",
+                    ),
+                ),
+            )
+        }
+        require(
+            receipt.exactNextSafeRoute ==
+                exactFailureRoute(
+                    receipt.lastValidConversationHeadSha256OrNull,
+                ) &&
+                receipt.resumePossible ==
+                (
+                    receipt.lastValidConversationHeadSha256OrNull !=
+                        null
+                ),
+        ) {
+            "direct Companion failure receipt recovery route is not canonical"
+        }
+
+        val core =
+            FailureCore(
+                schemaVersion = receipt.schemaVersion,
+                turnRef = receipt.turnRef,
+                requestMessageRef = receipt.requestMessageRef,
+                responseMessageRef = receipt.responseMessageRef,
+                requestEventRefOrNull = receipt.requestEventRefOrNull,
+                requestEventSha256OrNull = receipt.requestEventSha256OrNull,
+                lastValidConversationHeadSha256OrNull = receipt.lastValidConversationHeadSha256OrNull,
+                failureCode = receipt.failureCode,
+                requestDurablyRecorded = receipt.requestDurablyRecorded,
+                responseDurablyRecorded = receipt.responseDurablyRecorded,
+                contextDurablyRecorded = receipt.contextDurablyRecorded,
+                currentHeadCommitted = receipt.currentHeadCommitted,
+                retrySameSendAttemptAllowed = receipt.retrySameSendAttemptAllowed,
+                resumePossible = receipt.resumePossible,
+                exactNextSafeRoute = receipt.exactNextSafeRoute,
+                formedAt = receipt.formedAt,
+            )
+        val expected =
+            sha256(
+                VexContractJson.encode(
+                    core,
+                ),
+            )
+
+        require(
+            receipt.semanticFingerprint ==
+                expected &&
+                receipt.failureRef ==
+                "failure.vexlife-prod.direct-companion." +
+                    expected.take(
+                        32,
+                    ),
+        ) {
+            "direct Companion first-failure receipt integrity is invalid"
+        }
+    }
+
+    private fun exactFailureRoute(
+        lastValidHeadSha256: String?,
+    ): String =
+        if (
+            lastValidHeadSha256 ==
+                null
+        ) {
+            "FORM_NEW_SEND_ATTEMPT_AND_RETRY"
+        } else {
+            "RESUME_LAST_VALID_HEAD_THEN_FORM_NEW_SEND_ATTEMPT"
+        }
 
     private fun failureCode(
         error: Throwable,
