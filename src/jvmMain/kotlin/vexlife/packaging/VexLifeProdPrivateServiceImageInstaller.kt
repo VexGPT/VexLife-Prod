@@ -32,6 +32,31 @@ object VexLifeProdPrivateServiceImageInstaller {
         val imageMutationPerformed: Boolean,
     )
 
+    fun installedImagePath(
+        productHome: Path,
+        sourceSha: String,
+    ): Path {
+        require(
+            sourceSha.matches(
+                Regex(
+                    "[0-9a-f]{40}",
+                ),
+            ),
+        ) {
+            "installed private service-image source SHA must be one exact Git commit"
+        }
+
+        val home =
+            currentHomeRoot(
+                productHome,
+            )
+
+        return VexOwnedPath.resolveInside(
+            home,
+            "$ImageBaseRelativePath/$sourceSha",
+        )
+    }
+
     fun install(
         sourceImageRoot: Path,
         productHome: Path,
@@ -42,25 +67,18 @@ object VexLifeProdPrivateServiceImageInstaller {
                 imageRoot = sourceImageRoot,
                 expectedSourceSha = expectedSourceSha,
             )
-        val currentHome =
-            requireNotNull(
-                VexLifeProdHomeFiles.observeExisting(
-                    productHome,
-                ),
-            ) {
-                "private service-image installation requires one established current VexLife-Prod Home"
-            }
         val home =
-            VexOwnedPath.requireRoot(
-                Path.of(
-                    currentHome.productHome,
-                ),
-                "VexLife-Prod Home",
+            currentHomeRoot(
+                productHome,
+            )
+        val target =
+            installedImagePath(
+                productHome = home,
+                sourceSha = expectedSourceSha,
             )
         val imageBase =
-            VexOwnedPath.resolveInside(
-                home,
-                ImageBaseRelativePath,
+            requireNotNull(
+                target.parent,
             )
         VexOwnedPath.ensureDirectory(
             home,
@@ -90,6 +108,26 @@ object VexLifeProdPrivateServiceImageInstaller {
             }
     }
 
+    private fun currentHomeRoot(
+        productHome: Path,
+    ): Path {
+        val currentHome =
+            requireNotNull(
+                VexLifeProdHomeFiles.observeExisting(
+                    productHome,
+                ),
+            ) {
+                "private service-image installation requires one established current VexLife-Prod Home"
+            }
+
+        return VexOwnedPath.requireRoot(
+            Path.of(
+                currentHome.productHome,
+            ),
+            "VexLife-Prod Home",
+        )
+    }
+
     private fun installUnderLease(
         sourceImageRoot: Path,
         source: VexLifeProdPrivateServiceImage.Observation,
@@ -97,12 +135,6 @@ object VexLifeProdPrivateServiceImageInstaller {
         imageBase: Path,
         expectedSourceSha: String,
     ): Result {
-        val target =
-            VexOwnedPath.resolveInside(
-                imageBase,
-                expectedSourceSha,
-            )
-
         if (
             sourceImageRoot ==
                 target
