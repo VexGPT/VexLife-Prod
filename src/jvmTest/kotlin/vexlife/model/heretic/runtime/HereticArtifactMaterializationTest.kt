@@ -210,6 +210,14 @@ class HereticArtifactMaterializationTest {
                 0,
                 acquisitionCalls,
             )
+            assertFalse(
+                Files.exists(
+                    home.resolve(
+                        "models",
+                    ),
+                ),
+                "reuse-only materialization must not form model directories",
+            )
         } finally {
             home
                 .toFile()
