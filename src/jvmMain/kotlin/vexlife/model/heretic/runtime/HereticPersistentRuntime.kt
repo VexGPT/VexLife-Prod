@@ -119,7 +119,7 @@ object HereticPersistentRuntime {
     }
 
     @ConsistentCopyVisibility
-    data class Binding private constructor(
+    data class Binding internal constructor(
         val schemaVersion: String,
         val authorityRef: String,
         val modelPath: String,
