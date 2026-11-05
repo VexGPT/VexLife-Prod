@@ -232,6 +232,10 @@ object VexLifeProdPrivateServiceImage {
             }
         }
 
+        validateSymlinkContainment(
+            root,
+        )
+
         val payload =
             payloadFingerprint(
                 root,
@@ -257,6 +261,65 @@ object VexLifeProdPrivateServiceImage {
             runtimeModules = manifest.runtimeModules,
             effectsPerformed = false,
         )
+    }
+
+    private fun validateSymlinkContainment(
+        root: Path,
+    ) {
+        val canonicalRoot =
+            root.toRealPath()
+
+        Files.walk(
+            root,
+        )
+            .use {
+                stream ->
+                stream.forEach {
+                    path ->
+                    if (
+                        !Files.isSymbolicLink(
+                            path,
+                        )
+                    ) {
+                        return@forEach
+                    }
+
+                    val target =
+                        Files.readSymbolicLink(
+                            path,
+                        )
+                    require(
+                        !target.isAbsolute,
+                    ) {
+                        "private service image cannot contain absolute symlink targets"
+                    }
+
+                    val resolved =
+                        path
+                            .parent
+                            .resolve(
+                                target,
+                            )
+                            .normalize()
+                    require(
+                        resolved.startsWith(
+                            root,
+                        ),
+                    ) {
+                        "private service image symlink escaped image root"
+                    }
+
+                    val canonicalTarget =
+                        path.toRealPath()
+                    require(
+                        canonicalTarget.startsWith(
+                            canonicalRoot,
+                        ),
+                    ) {
+                        "private service image symlink resolves outside image root"
+                    }
+                }
+            }
     }
 
     internal fun payloadFingerprint(
