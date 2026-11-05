@@ -18,7 +18,7 @@ import vexlife.filesystem.VexOwnedPath
  */
 object VexLifeProdPrivateServiceImage {
     const val Schema =
-        "vexlife-prod.private-service-image/v2"
+        "vexlife-prod.private-service-image/v3"
 
     const val TruthClass =
         "SOURCE_BOUND_PRIVATE_SERVICE_IMAGE"
@@ -37,6 +37,9 @@ object VexLifeProdPrivateServiceImage {
 
     const val SetupLauncherRelativePath =
         "bin/vexlife-prod-setup"
+
+    const val SetupWindowRelativePath =
+        "setup/vexlife-prod-setup-window.applescript"
 
     const val ManifestRelativePath =
         "service-image.json"
@@ -68,6 +71,7 @@ object VexLifeProdPrivateServiceImage {
         val mainClass: String,
         val launcher: String,
         val setupLauncher: String,
+        val setupWindow: String,
         val runtimeModules: List<String>,
         val payloadSha256: String,
         val artifacts: List<Artifact>,
@@ -79,6 +83,7 @@ object VexLifeProdPrivateServiceImage {
         val payloadSha256: String,
         val launcherPath: String,
         val setupLauncherPath: String,
+        val setupWindowPath: String,
         val javaPath: String,
         val runtimeModules: List<String>,
         val effectsPerformed: Boolean,
@@ -169,6 +174,17 @@ object VexLifeProdPrivateServiceImage {
             "private service-image setup launcher must be executable"
         }
 
+        val setupWindow =
+            VexOwnedPath.resolveInside(
+                root,
+                manifest.setupWindow,
+            )
+        requireRegularFile(
+            root = root,
+            path = setupWindow,
+            label = "private service-image setup window source",
+        )
+
         val java =
             VexOwnedPath.resolveInside(
                 root,
@@ -257,6 +273,7 @@ object VexLifeProdPrivateServiceImage {
             payloadSha256 = payload,
             launcherPath = launcher.toString(),
             setupLauncherPath = setupLauncher.toString(),
+            setupWindowPath = setupWindow.toString(),
             javaPath = java.toString(),
             runtimeModules = manifest.runtimeModules,
             effectsPerformed = false,
@@ -469,6 +486,8 @@ object VexLifeProdPrivateServiceImage {
                 LauncherRelativePath &&
                 manifest.setupLauncher ==
                 SetupLauncherRelativePath &&
+                manifest.setupWindow ==
+                SetupWindowRelativePath &&
                 Sha256.matches(
                     manifest.payloadSha256,
                 ),
