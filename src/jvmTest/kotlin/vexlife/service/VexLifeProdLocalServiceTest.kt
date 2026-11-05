@@ -205,6 +205,13 @@ class VexLifeProdLocalServiceTest {
                         "SOURCE_BOUND_LISTENING",
                         source.serviceState,
                     )
+                    assertTrue(
+                        source.processPid > 0,
+                    )
+                    assertEquals(
+                        ProcessHandle.current().pid(),
+                        source.processPid,
+                    )
                     assertEquals(
                         "NOT_REOBSERVED_BY_SERVICE",
                         source.runtimeCurrentness,
