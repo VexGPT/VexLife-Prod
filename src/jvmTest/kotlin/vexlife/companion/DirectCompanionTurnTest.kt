@@ -87,8 +87,6 @@ class DirectCompanionTurnTest {
             productHome()
         var calls =
             0
-        var runtimeObservations =
-            0
         val transport =
             DirectCompanionConnection.Transport {
                 call ->
@@ -216,6 +214,8 @@ class DirectCompanionTurnTest {
         val home =
             productHome()
         var calls =
+            0
+        var runtimeObservations =
             0
         val transport =
             DirectCompanionConnection.Transport {
