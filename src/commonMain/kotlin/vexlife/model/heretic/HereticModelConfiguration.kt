@@ -42,6 +42,60 @@ object HereticModelConfiguration {
         }
     }
 
+    /**
+     * Transient current-runtime truth required to admit BOUND_HERETIC_PRODUCT_MODEL.
+     *
+     * The persistent runtime owner forms this from one exact qualified receipt. Configuration
+     * consumes the evidence but does not persist or become owner of runtime/process truth.
+     */
+    @ConsistentCopyVisibility
+    data class QualifiedRuntimeEvidence internal constructor(
+        val runtimeReceiptRef: String,
+        val runtimeState: HereticRuntimeState,
+        val modelRef: String,
+        val modelProfileRef: String,
+        val artifactRef: String,
+        val artifactContentSetSha256: String,
+        val runtimeAdapterRef: String,
+        val runtimeClass: String,
+        val endpoint: String,
+        val requestModel: String,
+        val qualification: HereticRuntimeQualification,
+    ) {
+        init {
+            requirePortableRef(
+                runtimeReceiptRef,
+                "runtimeReceiptRef",
+            )
+            require(
+                runtimeState ==
+                    HereticRuntimeState.Qualified,
+            ) {
+                "Heretic model binding requires a qualified runtime"
+            }
+            require(
+                modelRef ==
+                    HereticProductIdentity.ModelRef &&
+                    modelProfileRef ==
+                    HereticProductIdentity.ModelProfileRef &&
+                    artifactRef ==
+                    HereticProductIdentity.ArtifactSetRef &&
+                    artifactContentSetSha256 ==
+                    HereticProductIdentity.ArtifactContentSetSha256 &&
+                    runtimeAdapterRef ==
+                    HereticProductIdentity.RuntimeAdapterRef &&
+                    runtimeClass ==
+                    HereticProductIdentity.RuntimeClass &&
+                    endpoint ==
+                    HereticProductIdentity.Endpoint &&
+                    requestModel ==
+                    HereticProductIdentity.RequestModel,
+            ) {
+                "qualified runtime evidence does not match the certified Heretic product identity"
+            }
+        }
+    }
+
     @Serializable
     data class Value(
         val schemaVersion: String,
@@ -72,11 +126,20 @@ object HereticModelConfiguration {
 
     fun bound(
         homeIdentity: BindingScope,
-    ): Value =
-        form(
+        qualifiedRuntime: QualifiedRuntimeEvidence,
+    ): Value {
+        require(
+            qualifiedRuntime.runtimeState ==
+                HereticRuntimeState.Qualified,
+        ) {
+            "Heretic product model cannot bind without current qualified runtime evidence"
+        }
+
+        return form(
             homeIdentity = homeIdentity,
             state = State.BoundProductModel,
         )
+    }
 
     fun validate(
         value: Value,
