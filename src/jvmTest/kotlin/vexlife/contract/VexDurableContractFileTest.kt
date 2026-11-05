@@ -32,7 +32,8 @@ class VexDurableContractFileTest {
         try {
             assertNull(
                 VexDurableContractFile.read<Fixture>(
-                    path,
+                    ownedRoot = root,
+                    path = path,
                 ),
             )
 
@@ -43,14 +44,16 @@ class VexDurableContractFileTest {
                 )
 
             VexDurableContractFile.write(
-                path,
-                value,
+                ownedRoot = root,
+                path = path,
+                value = value,
             )
 
             assertEquals(
                 value,
                 VexDurableContractFile.read<Fixture>(
-                    path,
+                    ownedRoot = root,
+                    path = path,
                 ),
             )
             assertTrue(
@@ -95,7 +98,8 @@ class VexDurableContractFileTest {
 
             assertFailsWith<Exception> {
                 VexDurableContractFile.read<Fixture>(
-                    path,
+                    ownedRoot = root,
+                    path = path,
                 )
             }
         } finally {
@@ -106,7 +110,7 @@ class VexDurableContractFileTest {
     }
 
     @Test
-    fun symlinkNeverBecomesDurableReadWriteOrDeleteAuthority() {
+    fun finalSymlinkNeverBecomesDurableReadWriteOrDeleteAuthority() {
         val root =
             Files.createTempDirectory(
                 "vexlife-prod-contract-file-symlink-",
@@ -133,21 +137,25 @@ class VexDurableContractFileTest {
 
             assertFailsWith<IllegalArgumentException> {
                 VexDurableContractFile.read<Fixture>(
-                    link,
+                    ownedRoot = root,
+                    path = link,
                 )
             }
             assertFailsWith<IllegalArgumentException> {
                 VexDurableContractFile.write(
-                    link,
-                    Fixture(
-                        schemaVersion = "vexlife-prod.test/v1",
-                        state = "CURRENT",
-                    ),
+                    ownedRoot = root,
+                    path = link,
+                    value =
+                        Fixture(
+                            schemaVersion = "vexlife-prod.test/v1",
+                            state = "CURRENT",
+                        ),
                 )
             }
             assertFailsWith<IllegalArgumentException> {
                 VexDurableContractFile.delete(
-                    link,
+                    ownedRoot = root,
+                    path = link,
                 )
             }
 
@@ -172,6 +180,83 @@ class VexDurableContractFileTest {
     }
 
     @Test
+    fun intermediateSymlinkNeverBecomesDurablePathCustody() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-contract-parent-link-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "owned",
+            )
+        val outside =
+            parent.resolve(
+                "outside",
+            )
+        val path =
+            root.resolve(
+                "runtime/receipt.json",
+            )
+
+        try {
+            Files.createDirectory(
+                root,
+            )
+            Files.createDirectory(
+                outside,
+            )
+            Files.createSymbolicLink(
+                root.resolve(
+                    "runtime",
+                ),
+                outside,
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                VexDurableContractFile.read<Fixture>(
+                    ownedRoot = root,
+                    path = path,
+                )
+            }
+            assertFailsWith<IllegalArgumentException> {
+                VexDurableContractFile.write(
+                    ownedRoot = root,
+                    path = path,
+                    value =
+                        Fixture(
+                            schemaVersion = "vexlife-prod.test/v1",
+                            state = "CURRENT",
+                        ),
+                )
+            }
+            assertFailsWith<IllegalArgumentException> {
+                VexDurableContractFile.delete(
+                    ownedRoot = root,
+                    path = path,
+                )
+            }
+
+            assertFalse(
+                Files.exists(
+                    outside.resolve(
+                        "receipt.json",
+                    ),
+                ),
+            )
+        } finally {
+            Files.deleteIfExists(
+                root.resolve(
+                    "runtime",
+                ),
+            )
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun exactDeleteIsExplicitAndIdempotent() {
         val root =
             Files.createTempDirectory(
@@ -185,21 +270,25 @@ class VexDurableContractFileTest {
 
         try {
             VexDurableContractFile.write(
-                path,
-                Fixture(
-                    schemaVersion = "vexlife-prod.test/v1",
-                    state = "CURRENT",
-                ),
+                ownedRoot = root,
+                path = path,
+                value =
+                    Fixture(
+                        schemaVersion = "vexlife-prod.test/v1",
+                        state = "CURRENT",
+                    ),
             )
 
             assertTrue(
                 VexDurableContractFile.delete(
-                    path,
+                    ownedRoot = root,
+                    path = path,
                 ),
             )
             assertFalse(
                 VexDurableContractFile.delete(
-                    path,
+                    ownedRoot = root,
+                    path = path,
                 ),
             )
         } finally {
