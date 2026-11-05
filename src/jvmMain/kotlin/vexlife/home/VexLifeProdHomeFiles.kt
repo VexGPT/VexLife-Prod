@@ -10,6 +10,7 @@ import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.UUID
 import vexlife.contract.VexDurableContractFile
+import vexlife.filesystem.VexOwnedPath
 
 /**
  * Filesystem realization of [VexLifeProdHome].
@@ -79,12 +80,35 @@ object VexLifeProdHomeFiles {
                 home,
             )
 
+            for (
+                relative in
+                VexLifeProdHome.BaseDirectories
+            ) {
+                val directory =
+                    VexOwnedPath.resolveInside(
+                        home,
+                        relative,
+                    )
+                require(
+                    VexOwnedPath.observeDirectory(
+                        home,
+                        directory,
+                    ) ==
+                        VexOwnedPath.DirectoryState.Present,
+                ) {
+                    "existing VexLife-Prod Home is missing required directory: $relative"
+                }
+            }
+
             val manifest =
                 requireNotNull(
                     VexDurableContractFile.read<VexLifeProdHome.Manifest>(
-                        home.resolve(
-                            VexLifeProdHome.HomeManifestRelativePath,
-                        ),
+                        ownedRoot = home,
+                        path =
+                            VexOwnedPath.resolveInside(
+                                home,
+                                VexLifeProdHome.HomeManifestRelativePath,
+                            ),
                     ),
                 ) {
                     "existing VexLife-Prod Home has no current manifest"
@@ -144,35 +168,45 @@ object VexLifeProdHomeFiles {
                 plan.directories
             ) {
                 val directory =
-                    resolveInside(
+                    VexOwnedPath.resolveInside(
                         staging,
                         relative,
                     )
+                VexOwnedPath.ensureDirectory(
+                    staging,
+                    directory,
+                )
                 VexDurableContractFile.secureDirectory(
                     directory,
                 )
             }
 
             VexDurableContractFile.write(
-                resolveInside(
-                    staging,
-                    VexLifeProdHome.HomeManifestRelativePath,
-                ),
-                plan.manifest,
+                ownedRoot = staging,
+                path =
+                    VexOwnedPath.resolveInside(
+                        staging,
+                        VexLifeProdHome.HomeManifestRelativePath,
+                    ),
+                value = plan.manifest,
             )
             VexDurableContractFile.write(
-                resolveInside(
-                    staging,
-                    VexLifeProdHome.ModelConfigurationRelativePath,
-                ),
-                plan.initialModelConfiguration,
+                ownedRoot = staging,
+                path =
+                    VexOwnedPath.resolveInside(
+                        staging,
+                        VexLifeProdHome.ModelConfigurationRelativePath,
+                    ),
+                value = plan.initialModelConfiguration,
             )
             VexDurableContractFile.write(
-                resolveInside(
-                    staging,
-                    VexLifeProdHome.BootstrapReceiptRelativePath,
-                ),
-                plan.receipt,
+                ownedRoot = staging,
+                path =
+                    VexOwnedPath.resolveInside(
+                        staging,
+                        VexLifeProdHome.BootstrapReceiptRelativePath,
+                    ),
+                value = plan.receipt,
             )
 
             try {
@@ -196,9 +230,12 @@ object VexLifeProdHomeFiles {
             val manifest =
                 requireNotNull(
                     VexDurableContractFile.read<VexLifeProdHome.Manifest>(
-                        home.resolve(
-                            VexLifeProdHome.HomeManifestRelativePath,
-                        ),
+                        ownedRoot = home,
+                        path =
+                            VexOwnedPath.resolveInside(
+                                home,
+                                VexLifeProdHome.HomeManifestRelativePath,
+                            ),
                     ),
                 )
 
@@ -220,36 +257,6 @@ object VexLifeProdHomeFiles {
                 )
             }
         }
-    }
-
-    private fun resolveInside(
-        root: Path,
-        relative: String,
-    ): Path {
-        require(
-            relative.isNotBlank() &&
-                !Path.of(
-                    relative,
-                ).isAbsolute,
-        ) {
-            "VexLife-Prod Home relative path must be non-empty and relative"
-        }
-
-        val resolved =
-            root.resolve(
-                relative,
-            )
-                .normalize()
-
-        require(
-            resolved.startsWith(
-                root,
-            ),
-        ) {
-            "VexLife-Prod Home relative path escaped the Home root"
-        }
-
-        return resolved
     }
 
     private fun requireRealDirectory(
