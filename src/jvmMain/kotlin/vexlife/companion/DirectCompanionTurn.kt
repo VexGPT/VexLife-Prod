@@ -346,17 +346,6 @@ object DirectCompanionTurn {
                 exactNextSafeRoute = error.route,
                 cause = error,
             )
-        } catch (
-            error: DirectConversationStore.IncompleteConversationException,
-        ) {
-            throw TurnException(
-                failureCode = "CONVERSATION_RECOVERY_REQUIRED",
-                failureReceipt = null,
-                retrySameSendAttemptAllowed = false,
-                exactNextSafeRoute = "ATTENTION_REQUIRED_CONVERSATION_STATE",
-                cause = error,
-            )
-        }
     }
 
     private data class Identity(
