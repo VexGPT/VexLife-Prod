@@ -142,6 +142,11 @@ class VexLifeProdSetupProcessTest {
                         "bin/vexlife-prod-setup",
                     )
                         .toString(),
+                setupWindowPath =
+                    sourceImage.resolve(
+                        "setup/vexlife-prod-setup-window.applescript",
+                    )
+                        .toString(),
                 javaPath =
                     sourceImage.resolve(
                         "runtime/bin/java",
