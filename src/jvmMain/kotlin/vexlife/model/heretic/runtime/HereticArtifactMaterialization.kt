@@ -253,20 +253,20 @@ object HereticArtifactMaterialization {
     }
 
     fun materializeCurrent(
-        vexHome: Path,
+        productHome: Path,
         allowAcquisition: Boolean,
         acquirer: Acquirer,
     ): Result {
         require(
-            vexHome.isAbsolute,
+            productHome.isAbsolute,
         ) {
-            "Vex Home must be one absolute path"
+            "VexLife-Prod Home must be one absolute path"
         }
 
         val plan =
             plan()
         val home =
-            vexHome.normalize()
+            productHome.normalize()
         val modelPath =
             home
                 .resolve(
