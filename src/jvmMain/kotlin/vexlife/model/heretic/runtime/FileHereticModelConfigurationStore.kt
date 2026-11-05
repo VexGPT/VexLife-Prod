@@ -8,11 +8,11 @@ import vexlife.home.VexLifeProdHome
 import vexlife.model.heretic.HereticModelConfiguration
 
 /**
- * Durable owner for the single VexLife-Prod model configuration coordinate.
+ * Durable VexLife-Prod implementation binding for the certified Heretic runtime.
  *
- * The Home owner forms the initial UNCONFIGURED contract. This owner may explicitly select Heretic
- * into PENDING and may bind it only from qualified runtime evidence. Runtime liveness/currentness
- * remains outside this file.
+ * The binding lives under runtime/vexlife-prod. It deliberately does not read, replace or reinterpret
+ * the canonical VexLife `config/model.json` contract merely because this implementation uses the same
+ * local model. Runtime liveness/currentness remains outside this file.
  */
 class FileHereticModelConfigurationStore(
     productHome: Path,
@@ -36,7 +36,7 @@ class FileHereticModelConfigurationStore(
     private val productHome =
         VexOwnedPath.requireRoot(
             productHome,
-            "VexLife-Prod Home",
+            "canonical VexLife Home",
         )
 
     fun read(
@@ -51,14 +51,13 @@ class FileHereticModelConfigurationStore(
                 currentManifest,
             )
         val text =
-            requireNotNull(
-                VexDurableContractFile.readText(
-                    ownedRoot = productHome,
-                    path = path,
-                ),
-            ) {
-                "VexLife-Prod Home has no model configuration at its current manifest coordinate"
-            }
+            VexDurableContractFile.readText(
+                ownedRoot = productHome,
+                path = path,
+            )
+                ?: return Snapshot.Unconfigured(
+                    VexLifeProdHome.initialProductModelConfiguration(),
+                )
 
         return when (
             VexContractJson.schemaVersion(
@@ -92,7 +91,7 @@ class FileHereticModelConfigurationStore(
 
             else ->
                 error(
-                    "VexLife-Prod model configuration schema is not admitted",
+                    "VexLife-Prod runtime model binding schema is not admitted",
                 )
         }
     }
@@ -164,7 +163,7 @@ class FileHereticModelConfigurationStore(
             current is
                 Snapshot.Heretic,
         ) {
-            "Heretic model must be explicitly selected before qualified runtime can bind it"
+            "Heretic runtime must be explicitly selected before qualified evidence can bind it"
         }
 
         val bound =
@@ -191,7 +190,7 @@ class FileHereticModelConfigurationStore(
             current.value.state ==
                 HereticModelConfiguration.State.EstablishmentPending,
         ) {
-            "current Heretic model configuration cannot transition to bound"
+            "current Heretic runtime binding cannot transition to qualified"
         }
 
         write(
@@ -241,11 +240,16 @@ class FileHereticModelConfigurationStore(
 
     private fun configurationPath(
         manifest: VexLifeProdHome.Manifest,
-    ): Path =
-        VexOwnedPath.resolveInside(
-            productHome,
-            manifest.modelConfigurationRef,
+    ): Path {
+        VexLifeProdHome.validateManifest(
+            manifest,
         )
+
+        return VexOwnedPath.resolveInside(
+            productHome,
+            VexLifeProdHome.ModelConfigurationRelativePath,
+        )
+    }
 
     private fun bindingScope(
         manifest: VexLifeProdHome.Manifest,
