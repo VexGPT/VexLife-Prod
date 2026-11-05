@@ -202,12 +202,16 @@ class VexLifeProdLocalServiceTest {
                         source.sourceSha,
                     )
                     assertEquals(
-                        "LISTENING_CURRENT_SOURCE",
+                        "SOURCE_BOUND_LISTENING",
                         source.serviceState,
                     )
                     assertEquals(
-                        HereticRuntimeState.Qualified.wireValue,
-                        source.runtimeState,
+                        "NOT_REOBSERVED_BY_SERVICE",
+                        source.runtimeCurrentness,
+                    )
+                    assertEquals(
+                        setup.qualifiedRuntimeEvidence.runtimeReceiptRef,
+                        source.startupQualifiedRuntimeReceiptRef,
                     )
                     assertNull(
                         source.currentConversationHeadSha256,
