@@ -2,6 +2,7 @@ package vexlife.model.heretic
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -10,6 +11,21 @@ class HereticProductModelTest {
         HereticModelConfiguration.BindingScope(
             homeRef = "home.vexlife.test",
             companionLineageRef = "lineage.vexlife.test",
+        )
+
+    private fun qualifiedRuntime(): HereticModelConfiguration.QualifiedRuntimeEvidence =
+        HereticModelConfiguration.QualifiedRuntimeEvidence(
+            runtimeReceiptRef = "receipt.vexlife-prod.heretic.test",
+            runtimeState = HereticRuntimeState.Qualified,
+            modelRef = HereticProductIdentity.ModelRef,
+            modelProfileRef = HereticProductIdentity.ModelProfileRef,
+            artifactRef = HereticProductIdentity.ArtifactSetRef,
+            artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
+            runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
+            runtimeClass = HereticProductIdentity.RuntimeClass,
+            endpoint = HereticProductIdentity.Endpoint,
+            requestModel = HereticProductIdentity.RequestModel,
+            qualification = HereticRuntimeQualification.qualified(),
         )
 
     @Test
@@ -144,7 +160,8 @@ class HereticProductModelTest {
 
         val bound =
             HereticModelConfiguration.bound(
-                home,
+                homeIdentity = home,
+                qualifiedRuntime = qualifiedRuntime(),
             )
 
         assertEquals(
@@ -159,10 +176,30 @@ class HereticProductModelTest {
     }
 
     @Test
+    fun boundConfigurationCannotBeFormedFromStartingRuntimeTruth() {
+        assertFailsWith<IllegalArgumentException> {
+            HereticModelConfiguration.QualifiedRuntimeEvidence(
+                runtimeReceiptRef = "receipt.vexlife-prod.heretic.test",
+                runtimeState = HereticRuntimeState.Starting,
+                modelRef = HereticProductIdentity.ModelRef,
+                modelProfileRef = HereticProductIdentity.ModelProfileRef,
+                artifactRef = HereticProductIdentity.ArtifactSetRef,
+                artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
+                runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
+                runtimeClass = HereticProductIdentity.RuntimeClass,
+                endpoint = HereticProductIdentity.Endpoint,
+                requestModel = HereticProductIdentity.RequestModel,
+                qualification = HereticRuntimeQualification.qualified(),
+            )
+        }
+    }
+
+    @Test
     fun configurationRemainsHomeAndCompanionLineageScoped() {
         val configured =
             HereticModelConfiguration.bound(
-                home,
+                homeIdentity = home,
+                qualifiedRuntime = qualifiedRuntime(),
             )
 
         assertEquals(
