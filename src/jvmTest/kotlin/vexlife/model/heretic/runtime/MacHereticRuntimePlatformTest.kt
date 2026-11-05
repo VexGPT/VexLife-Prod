@@ -3,6 +3,7 @@ package vexlife.model.heretic.runtime
 import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.model.heretic.HereticProductIdentity
