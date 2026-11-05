@@ -103,6 +103,8 @@ class DirectConversationStore(
         val responseMessageRef: String,
         val requestEventSha256: String,
         val responseEventSha256: String,
+        val contextRef: String,
+        val contextSha256: String,
         val sequence: Long,
         val priorConversationHeadSha256: String?,
         val formedAt: String,
@@ -125,6 +127,8 @@ class DirectConversationStore(
         val responseMessageRef: String,
         val requestEventSha256: String,
         val responseEventSha256: String,
+        val contextRef: String,
+        val contextSha256: String,
         val sequence: Long,
         val priorConversationHeadSha256: String?,
         val formedAt: String,
@@ -232,7 +236,7 @@ class DirectConversationStore(
             return event
         }
 
-        fun completeResponse(
+        fun appendResponse(
             request: Event,
             responseMessageRef: String,
             content: String,
@@ -241,7 +245,7 @@ class DirectConversationStore(
             runtimeObservationRef: String,
             invocationEvidenceRef: String,
             formedAt: Instant = Instant.now(),
-        ): Head {
+        ): Event {
             validateRequestAsPending(
                 request,
             )
@@ -319,6 +323,59 @@ class DirectConversationStore(
                 response,
             )
 
+            return response
+        }
+
+        fun commitCompletedTurn(
+            request: Event,
+            response: Event,
+            contextRef: String,
+            contextSha256: String,
+            formedAt: Instant = Instant.now(),
+        ): Head {
+            validateRequestAsPending(
+                request,
+            )
+            validateEvent(
+                response,
+            )
+            require(
+                response.eventKind ==
+                    "RESPONSE" &&
+                    response.turnRef ==
+                    request.turnRef &&
+                    response.sequence ==
+                    request.sequence +
+                    1 &&
+                    response.priorEventSha256 ==
+                    request.eventSha256,
+            ) {
+                "direct Conversation completed head requires the exact response to its pending request"
+            }
+            requireRef(
+                contextRef,
+                "contextRef",
+            )
+            requireSha256(
+                contextSha256,
+                "contextSha256",
+            )
+
+            val durableResponse =
+                VexDurableContractFile.read<Event>(
+                    ownedRoot = productHome,
+                    path =
+                        eventPath(
+                            response,
+                        ),
+                )
+            require(
+                durableResponse ==
+                    response,
+            ) {
+                "direct Conversation response is not durably exact before head commit"
+            }
+
             val priorHead =
                 readHead()
             val headCore =
@@ -335,6 +392,8 @@ class DirectConversationStore(
                     responseMessageRef = response.messageRef,
                     requestEventSha256 = request.eventSha256,
                     responseEventSha256 = response.eventSha256,
+                    contextRef = contextRef,
+                    contextSha256 = contextSha256,
                     sequence = response.sequence,
                     priorConversationHeadSha256 =
                         priorHead
@@ -355,7 +414,6 @@ class DirectConversationStore(
                 value = head,
             )
 
-            // Re-read the exact committed state before returning success.
             val current =
                 readCurrentComplete()
             require(
@@ -1214,6 +1272,8 @@ class DirectConversationStore(
             responseMessageRef = core.responseMessageRef,
             requestEventSha256 = core.requestEventSha256,
             responseEventSha256 = core.responseEventSha256,
+            contextRef = core.contextRef,
+            contextSha256 = core.contextSha256,
             sequence = core.sequence,
             priorConversationHeadSha256 = core.priorConversationHeadSha256,
             formedAt = core.formedAt,
@@ -1440,6 +1500,14 @@ class DirectConversationStore(
             head.responseEventSha256,
             "head.responseEventSha256",
         )
+        requireRef(
+            head.contextRef,
+            "head.contextRef",
+        )
+        requireSha256(
+            head.contextSha256,
+            "head.contextSha256",
+        )
         head.priorConversationHeadSha256?.let {
             requireSha256(
                 it,
@@ -1461,6 +1529,8 @@ class DirectConversationStore(
                 responseMessageRef = head.responseMessageRef,
                 requestEventSha256 = head.requestEventSha256,
                 responseEventSha256 = head.responseEventSha256,
+                contextRef = head.contextRef,
+                contextSha256 = head.contextSha256,
                 sequence = head.sequence,
                 priorConversationHeadSha256 = head.priorConversationHeadSha256,
                 formedAt = head.formedAt,
