@@ -54,16 +54,8 @@ object VexLifeProdLocalSetup {
         val result: Result,
         private val currentRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
     ) {
-        fun currentSetupResult(): Result {
-            val current =
-                currentRuntimeEvidence()
-
-            return result.copy(
-                qualifiedRuntimeEvidence = current,
-                endpoint = current.endpoint,
-                requestModel = current.requestModel,
-            )
-        }
+        fun currentQualifiedRuntimeEvidence(): HereticModelConfiguration.QualifiedRuntimeEvidence =
+            currentRuntimeEvidence()
     }
 
     private data class Established(
