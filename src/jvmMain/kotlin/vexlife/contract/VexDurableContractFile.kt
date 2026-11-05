@@ -29,9 +29,12 @@ object VexDurableContractFile {
             ownedRoot = ownedRoot,
             path = path,
         )
-            ?.let(
-                VexContractJson::decode,
-            )
+            ?.let {
+                text ->
+                VexContractJson.decode<T>(
+                    text,
+                )
+            }
 
     fun readText(
         ownedRoot: Path,
