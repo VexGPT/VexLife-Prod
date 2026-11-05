@@ -806,7 +806,7 @@ class MacHereticRuntimePlatform(
             workingDirectory = workingDirectory,
             stdoutPath = stdoutPath,
             stderrPath = stderrPath,
-            environment = emptyMap(),
+            environment = environment,
             uid =
                 domainTarget
                     .substringAfter(
