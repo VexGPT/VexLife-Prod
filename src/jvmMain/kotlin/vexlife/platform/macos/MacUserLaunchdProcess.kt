@@ -5,9 +5,11 @@ import kotlinx.serialization.Serializable
 import java.nio.charset.StandardCharsets
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
+import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.PosixFilePermission
 import java.util.UUID
 
@@ -356,7 +358,31 @@ object MacUserLaunchdProcess {
 
     private fun secureDirectory(path: Path?) {
         if (path == null) return
-        Files.createDirectories(path)
+
+        if (
+            Files.exists(
+                path,
+                LinkOption.NOFOLLOW_LINKS,
+            )
+        ) {
+            val attributes =
+                Files.readAttributes(
+                    path,
+                    BasicFileAttributes::class.java,
+                    LinkOption.NOFOLLOW_LINKS,
+                )
+            require(
+                attributes.isDirectory &&
+                    !attributes.isSymbolicLink,
+            ) {
+                "launchd runtime directory must be one real non-symlink directory: $path"
+            }
+        } else {
+            Files.createDirectory(
+                path,
+            )
+        }
+
         setPosixPermissionsIfSupported(
             path,
             setOf(
