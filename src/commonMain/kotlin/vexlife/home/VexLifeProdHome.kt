@@ -1,5 +1,7 @@
 package vexlife.home
 
+import kotlinx.serialization.Serializable
+
 /**
  * Portable identity/layout contract for one isolated VexLife-Prod Home.
  *
@@ -72,6 +74,7 @@ object VexLifeProdHome {
         }
     }
 
+    @Serializable
     data class Installation(
         val schemaVersion: String,
         val personRef: String,
@@ -85,6 +88,7 @@ object VexLifeProdHome {
         val identityStatement: String,
     )
 
+    @Serializable
     data class Manifest(
         val schemaVersion: String,
         val homeRef: String,
@@ -96,6 +100,7 @@ object VexLifeProdHome {
         val existingHomePolicy: String,
     )
 
+    @Serializable
     data class InitialModelConfiguration(
         val schemaVersion: String,
         val state: String,
@@ -106,6 +111,7 @@ object VexLifeProdHome {
         val automaticActivation: Boolean,
     )
 
+    @Serializable
     data class BootstrapReceipt(
         val schemaVersion: String,
         val homeRef: String,
