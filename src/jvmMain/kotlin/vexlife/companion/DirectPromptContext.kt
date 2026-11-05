@@ -5,27 +5,52 @@ import java.security.MessageDigest
 import kotlinx.serialization.Serializable
 import vexlife.contract.VexContractJson
 import vexlife.conversation.DirectConversationStore
+import vexlife.memory.VexLifeMemoryContract
 
 /**
  * Bounded direct Companion prompt materialization.
  *
- * CONTINUE selects exactly the immediate prior completed REQUEST/RESPONSE pair. First turn selects
- * no prior Conversation events. Memory is intentionally held until its rightful owner is ported.
- *
- * This owner performs no provider call and no durable mutation.
+ * CONTINUE selects exactly the immediate prior completed REQUEST/RESPONSE pair. Current attributed
+ * Memory may be supplied only through the exact source-owned Memory contract and is reverified before
+ * provider materialization. This owner performs no provider call and no durable mutation.
  */
 object DirectPromptContext {
     const val ReceiptSchema =
-        "vexlife-prod.direct-prompt-materialization-receipt/v1"
+        "vexlife-prod.direct-prompt-materialization-receipt/v2"
 
     const val InputTokenBudget =
-        192_000
+        VexLifeMemoryContract.ContextInputTokenBudget
 
     const val ReservedOutputTokens =
         DirectCompanionConnection.OutputTokenLimit
 
     const val HardTokenLimit =
-        208_000
+        VexLifeMemoryContract.HardTokenLimit
+
+    @Serializable
+    private data class ProviderMemoryPacket(
+        val schemaVersion: String,
+        val truthClass: String,
+        val projectionState: String,
+        val projectionCurrentness: String,
+        val sourceOwnerRefs: List<String>,
+        val currentDailyStratumRef: String?,
+        val currentDailyStratumSha256: String?,
+        val sourceConversationHeadSha256: String?,
+        val sourceScoreHeadSha256: String?,
+        val sourceSemanticAuthorityHeadSha256: String?,
+        val pages: List<VexLifeMemoryContract.Page>,
+        val heldOrDeferredStatementRefs: List<String>,
+        val boundedOutStatementRefs: List<String>,
+        val tokenBoundedOutPageRefs: List<String>,
+        val reasons: List<String>,
+        val memoryTokenCap: Int,
+    )
+
+    private data class VerifiedMemory(
+        val context: VexLifeMemoryContract.Context,
+        val systemContent: String?,
+    )
 
     @Serializable
     private data class ReceiptCore(
@@ -42,6 +67,9 @@ object DirectPromptContext {
         val reservedOutputTokens: Int,
         val hardTokenLimit: Int,
         val wholeHistoryEventEnumerationPerformed: Boolean,
+        val memoryContextRef: String?,
+        val memoryContextFingerprint: String?,
+        val memorySourceRefs: List<String>,
         val memoryIncluded: Boolean,
         val memorySelectionPerformed: Boolean,
         val trainingSelectionPerformed: Boolean,
@@ -66,6 +94,9 @@ object DirectPromptContext {
         val reservedOutputTokens: Int,
         val hardTokenLimit: Int,
         val wholeHistoryEventEnumerationPerformed: Boolean,
+        val memoryContextRef: String?,
+        val memoryContextFingerprint: String?,
+        val memorySourceRefs: List<String>,
         val memoryIncluded: Boolean,
         val memorySelectionPerformed: Boolean,
         val trainingSelectionPerformed: Boolean,
@@ -81,6 +112,8 @@ object DirectPromptContext {
     fun materialize(
         prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
         currentRequest: DirectConversationStore.Event,
+        memoryContext: VexLifeMemoryContract.Context? =
+            null,
     ): Materialization {
         require(
             currentRequest.eventKind ==
@@ -126,8 +159,22 @@ object DirectPromptContext {
                 )
             }
 
+        val memory =
+            verifyMemoryContext(
+                memoryContext,
+            )
         val messages =
             buildList {
+                memory
+                    ?.systemContent
+                    ?.let {
+                        add(
+                            CompanionProviderMessage(
+                                role = "system",
+                                content = it,
+                            ),
+                        )
+                    }
                 for (
                     event in
                     selected
@@ -180,10 +227,17 @@ object DirectPromptContext {
 
         val providerMessageSetSha256 =
             sha256(
-                VexContractJson.encode(
+                VexContractJson.canonicalEncode(
                     messages,
                 ),
             )
+        val memoryValue =
+            memory
+                ?.context
+        val memoryIncluded =
+            memoryValue
+                ?.included ==
+                true
         val core =
             ReceiptCore(
                 schemaVersion = ReceiptSchema,
@@ -216,14 +270,24 @@ object DirectPromptContext {
                 reservedOutputTokens = ReservedOutputTokens,
                 hardTokenLimit = HardTokenLimit,
                 wholeHistoryEventEnumerationPerformed = false,
-                memoryIncluded = false,
-                memorySelectionPerformed = false,
+                memoryContextRef =
+                    memoryValue
+                        ?.memoryContextRef,
+                memoryContextFingerprint =
+                    memoryValue
+                        ?.semanticFingerprint,
+                memorySourceRefs =
+                    memoryValue
+                        ?.sourceRefs
+                        ?: emptyList(),
+                memoryIncluded = memoryIncluded,
+                memorySelectionPerformed = memoryIncluded,
                 trainingSelectionPerformed = false,
                 effectsPerformed = false,
             )
         val fingerprint =
             sha256(
-                VexContractJson.encode(
+                VexContractJson.canonicalEncode(
                     core,
                 ),
             )
@@ -231,7 +295,7 @@ object DirectPromptContext {
             Receipt(
                 schemaVersion = core.schemaVersion,
                 receiptRef =
-                    "receipt.vexlife-prod.direct-prompt." +
+                    "receipt.vexlife.prompt-context." +
                         fingerprint.take(
                             32,
                         ),
@@ -248,6 +312,9 @@ object DirectPromptContext {
                 reservedOutputTokens = core.reservedOutputTokens,
                 hardTokenLimit = core.hardTokenLimit,
                 wholeHistoryEventEnumerationPerformed = core.wholeHistoryEventEnumerationPerformed,
+                memoryContextRef = core.memoryContextRef,
+                memoryContextFingerprint = core.memoryContextFingerprint,
+                memorySourceRefs = core.memorySourceRefs,
                 memoryIncluded = core.memoryIncluded,
                 memorySelectionPerformed = core.memorySelectionPerformed,
                 trainingSelectionPerformed = core.trainingSelectionPerformed,
@@ -264,11 +331,14 @@ object DirectPromptContext {
         materialization: Materialization,
         prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
         currentRequest: DirectConversationStore.Event,
+        memoryContext: VexLifeMemoryContract.Context? =
+            null,
     ) {
         val current =
             materialize(
                 prior = prior,
                 currentRequest = currentRequest,
+                memoryContext = memoryContext,
             )
 
         require(
@@ -299,6 +369,148 @@ object DirectPromptContext {
         ) +
             4
     }
+
+    private fun verifyMemoryContext(
+        value: VexLifeMemoryContract.Context?,
+    ): VerifiedMemory? {
+        if (
+            value ==
+                null
+        ) {
+            return null
+        }
+
+        val current =
+            VexLifeMemoryContract.validateContext(
+                value,
+            )
+        val providerPacket =
+            ProviderMemoryPacket(
+                schemaVersion = current.schemaVersion,
+                truthClass = current.truthClass,
+                projectionState = current.projectionState,
+                projectionCurrentness = current.projectionCurrentness,
+                sourceOwnerRefs = current.sourceOwnerRefs,
+                currentDailyStratumRef = current.currentDailyStratumRef,
+                currentDailyStratumSha256 = current.currentDailyStratumSha256,
+                sourceConversationHeadSha256 = current.sourceConversationHeadSha256,
+                sourceScoreHeadSha256 = current.sourceScoreHeadSha256,
+                sourceSemanticAuthorityHeadSha256 = current.sourceSemanticAuthorityHeadSha256,
+                pages = current.pages,
+                heldOrDeferredStatementRefs = current.heldOrDeferredStatementRefs,
+                boundedOutStatementRefs = current.boundedOutStatementRefs,
+                tokenBoundedOutPageRefs = current.tokenBoundedOutPageRefs,
+                reasons = current.reasons,
+                memoryTokenCap = current.memoryTokenCap,
+            )
+        val systemContent =
+            if (
+                current.included
+            ) {
+                memorySystemContent(
+                    providerPacket,
+                )
+            } else {
+                null
+            }
+        val expectedSystemSha256 =
+            systemContent
+                ?.let(
+                    ::sha256,
+                )
+        val expectedSystemTokens =
+            systemContent
+                ?.let(
+                    ::estimatedMessageTokens,
+                )
+                ?: 0
+        val packetCore =
+            VexLifeMemoryContract.PacketCore(
+                schemaVersion = current.schemaVersion,
+                truthClass = current.truthClass,
+                projectionState = current.projectionState,
+                projectionCurrentness = current.projectionCurrentness,
+                sourceOwnerRefs = current.sourceOwnerRefs,
+                currentDailyStratumRef = current.currentDailyStratumRef,
+                currentDailyStratumSha256 = current.currentDailyStratumSha256,
+                sourceConversationHeadSha256 = current.sourceConversationHeadSha256,
+                sourceScoreHeadSha256 = current.sourceScoreHeadSha256,
+                sourceSemanticAuthorityHeadSha256 = current.sourceSemanticAuthorityHeadSha256,
+                pages = current.pages,
+                heldOrDeferredStatementRefs = current.heldOrDeferredStatementRefs,
+                boundedOutStatementRefs = current.boundedOutStatementRefs,
+                tokenBoundedOutPageRefs = current.tokenBoundedOutPageRefs,
+                reasons = current.reasons,
+                memoryTokenCap = current.memoryTokenCap,
+                systemMessageSha256 = expectedSystemSha256,
+                estimatedSystemMessageTokens = expectedSystemTokens,
+            )
+        val expectedFingerprint =
+            sha256(
+                VexContractJson.canonicalEncode(
+                    packetCore,
+                ),
+            )
+        val expectedSourceRefs =
+            buildList {
+                addAll(
+                    current.sourceOwnerRefs,
+                )
+                current.currentDailyStratumRef
+                    ?.let(
+                        ::add,
+                    )
+                current.pages.forEach {
+                    page ->
+                    add(
+                        page.pageRef,
+                    )
+                    add(
+                        page.statementRef,
+                    )
+                    add(
+                        page.semanticAcceptanceRef,
+                    )
+                }
+            }
+                .distinct()
+                .sorted()
+
+        require(
+            current.systemMessageSha256 ==
+                expectedSystemSha256 &&
+                current.estimatedSystemMessageTokens ==
+                expectedSystemTokens &&
+                current.semanticFingerprint ==
+                expectedFingerprint &&
+                current.memoryContextRef ==
+                "memory-context.vexlife.prompt.${expectedFingerprint.take(32)}" &&
+                current.sourceRefs ==
+                expectedSourceRefs,
+        ) {
+            "VexLife Memory context does not bind its exact provider bytes and source descent"
+        }
+
+        return VerifiedMemory(
+            context = current,
+            systemContent = systemContent,
+        )
+    }
+
+    private fun memorySystemContent(
+        packet: ProviderMemoryPacket,
+    ): String =
+        listOf(
+            "VEXLIFE_CURRENT_MEMORY_CONTEXT/v1",
+            "These are current source-attributed Memory references, not proof of subjective recall or original wording by this model.",
+            "Use them as bounded continuity context. If they conflict with current source or the human, preserve the conflict rather than inventing reconciliation.",
+            VexContractJson.compactEncode(
+                packet,
+            ),
+        )
+            .joinToString(
+                "\n",
+            )
 
     private fun sha256(
         value: String,
