@@ -10,7 +10,7 @@ import kotlinx.serialization.Serializable
  */
 object VexLifeProdServiceContract {
     const val SourceCurrentnessSchema =
-        "vexlife-prod.local-service-source-currentness/v1"
+        "vexlife-prod.local-service-source-currentness/v2"
 
     const val ConversationProjectionSchema =
         "vexlife-prod.local-service-conversation-projection/v1"
@@ -52,6 +52,7 @@ object VexLifeProdServiceContract {
         val productRef: String,
         val serviceState: String,
         val sourceSha: String,
+        val processPid: Long,
         val runtimeCurrentness: String,
         val startupQualifiedRuntimeReceiptRef: String,
         val currentConversationHeadSha256: String?,
