@@ -8,6 +8,7 @@ import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
+import vexlife.filesystem.VexOwnedPath
 import vexlife.model.heretic.HereticProductIdentity
 
 /**
@@ -72,19 +73,17 @@ object HereticPythonEnvironment {
     fun environmentRoot(
         productHome: Path,
     ): Path {
-        require(
-            productHome.isAbsolute,
-        ) {
-            "VexLife-Prod Home must be one absolute path"
-        }
-
-        return productHome
-            .normalize()
-            .resolve(
-                "runtime/heretic/" +
-                    EnvironmentDirectoryName,
+        val home =
+            VexOwnedPath.requireRoot(
+                productHome,
+                "VexLife-Prod Home",
             )
-            .normalize()
+
+        return VexOwnedPath.resolveInside(
+            home,
+            "runtime/heretic/" +
+                EnvironmentDirectoryName,
+        )
     }
 
     fun pythonPath(
@@ -109,23 +108,25 @@ object HereticPythonEnvironment {
      * Missing returns null. Present-but-invalid fails closed. No repair/removal occurs here.
      */
     fun observeCurrent(
-        environmentRoot: Path,
+        productHome: Path,
         runner: Runner = SystemRunner,
     ): Result? {
-        require(
-            environmentRoot.isAbsolute,
-        ) {
-            "Heretic environment root must be absolute"
-        }
-
+        val home =
+            VexOwnedPath.requireRoot(
+                productHome,
+                "VexLife-Prod Home",
+            )
         val root =
-            environmentRoot.normalize()
+            environmentRoot(
+                home,
+            )
 
         if (
-            !Files.exists(
+            VexOwnedPath.observeDirectory(
+                home,
                 root,
-                LinkOption.NOFOLLOW_LINKS,
-            )
+            ) ==
+            VexOwnedPath.DirectoryState.Missing
         ) {
             return null
         }
@@ -172,7 +173,7 @@ object HereticPythonEnvironment {
 
     fun ensure(
         bootstrapPython: String,
-        environmentRoot: Path,
+        productHome: Path,
         allowCreation: Boolean,
         runner: Runner = SystemRunner,
     ): Result {
@@ -181,14 +182,16 @@ object HereticPythonEnvironment {
         ) {
             "bootstrapPython must be one non-empty command or path"
         }
-        require(
-            environmentRoot.isAbsolute,
-        ) {
-            "Heretic environment root must be absolute"
-        }
 
+        val home =
+            VexOwnedPath.requireRoot(
+                productHome,
+                "VexLife-Prod Home",
+            )
         val root =
-            environmentRoot.normalize()
+            environmentRoot(
+                home,
+            )
         val python =
             pythonPath(
                 root,
@@ -199,10 +202,11 @@ object HereticPythonEnvironment {
             )
 
         val existed =
-            Files.exists(
+            VexOwnedPath.observeDirectory(
+                home,
                 root,
-                LinkOption.NOFOLLOW_LINKS,
-            )
+            ) ==
+                VexOwnedPath.DirectoryState.Present
 
         if (
             existed
@@ -212,7 +216,7 @@ object HereticPythonEnvironment {
             try {
                 return requireNotNull(
                     observeCurrent(
-                        root,
+                        home,
                         runner,
                     ),
                 )
@@ -235,6 +239,13 @@ object HereticPythonEnvironment {
                 "Heretic Python/mlx-lm environment is not locally reusable and creation was not authorized",
             )
         }
+
+        VexOwnedPath.ensureDirectory(
+            home,
+            requireNotNull(
+                root.parent,
+            ),
+        )
 
         val bootstrap =
             bootstrapProbe(
