@@ -14,7 +14,7 @@ object HereticRuntimeObservation {
         "SOURCE_BOUND_HOST_RESOURCE_OBSERVATION"
 
     const val ResourceRef =
-        "resource.vexlife.heretic.persistent-runtime"
+        "resource.vexlife-prod.heretic.persistent-runtime"
 
     const val ResourceClass =
         "HERETIC_PERSISTENT_MLX_RUNTIME"
