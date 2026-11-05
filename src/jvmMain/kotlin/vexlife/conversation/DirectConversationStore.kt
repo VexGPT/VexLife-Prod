@@ -61,7 +61,8 @@ class DirectConversationStore(
     )
 
     @Serializable
-    data class Event(
+    @ConsistentCopyVisibility
+    data class Event internal constructor(
         val schemaVersion: String,
         val eventKind: String,
         val eventRef: String,
@@ -108,7 +109,8 @@ class DirectConversationStore(
     )
 
     @Serializable
-    data class Head(
+    @ConsistentCopyVisibility
+    data class Head internal constructor(
         val schemaVersion: String,
         val headRef: String,
         val conversationHeadSha256: String,
@@ -133,7 +135,8 @@ class DirectConversationStore(
         val events: List<Event>,
     )
 
-    data class ImmediatePriorCompletedTurn(
+    @ConsistentCopyVisibility
+    data class ImmediatePriorCompletedTurn internal constructor(
         val head: Head,
         val requestEvent: Event,
         val responseEvent: Event,
