@@ -833,6 +833,8 @@ object VexLifeProdMacServiceLifetime {
                 spec.stdoutPath &&
                 receipt.stderrPath ==
                 spec.stderrPath &&
+                receipt.environment ==
+                spec.environment &&
                 receipt.keepAlive ==
                 spec.keepAlive,
         ) {
