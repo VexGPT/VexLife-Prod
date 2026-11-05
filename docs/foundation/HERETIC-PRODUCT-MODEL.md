@@ -194,3 +194,42 @@ re-prove every true dependent. It must not be inferred from whichever runtime sc
 recently.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][HERETIC-PRODUCT-MODEL] -->
+
+
+## Formation proof
+
+Disposable compiler pressure on the source-formed package:
+
+~~~text
+kotlinc-jvm 1.9.0
+  production package compile                         PASS
+
+runtime probe
+  exact identity load                               PASS
+  11-member catalog / 15,153,242,506-byte total    PASS
+  pending configuration has no automatic effects   PASS
+  bound configuration transition                   PASS
+
+Kotlin/JS IR 1.9.0
+  production package compile                        PASS
+~~~
+
+This is formation evidence only.
+
+~~~text
+DISPOSABLE KOTLIN 1.9 PROOF
+!= REPOSITORY-OWNED KOTLIN 2.4.20 ACCEPTANCE
+~~~
+
+Required before acceptance:
+
+~~~text
+exact candidate
+-> repository Gradle wrapper
+-> Kotlin 2.4.20 JVM compile + common tests
+-> Kotlin 2.4.20 JS IR compile + test compile
+-> exact source review against current VexLife provenance
+~~~
+
+Runtime realization remains a separate held effect even after this identity/configuration package is
+accepted.
