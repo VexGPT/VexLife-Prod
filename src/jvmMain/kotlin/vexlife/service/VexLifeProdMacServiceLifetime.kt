@@ -208,11 +208,29 @@ object VexLifeProdMacServiceLifetime {
                 host = host,
                 createDirectories = false,
             )
-        val receipt =
-            readReceipt(
-                home,
-                host,
+        val receiptResult =
+            runCatching {
+                readReceipt(
+                    home,
+                    host,
+                )
+            }
+        if (
+            receiptResult.isFailure
+        ) {
+            return Observation.HeldUnknown(
+                desiredImage = desiredImage,
+                detail =
+                    "product-service lifetime receipt is unreadable or invalid: " +
+                        (
+                            receiptResult.exceptionOrNull()
+                                ?.message
+                                ?: "unknown receipt failure"
+                        ),
             )
+        }
+        val receipt =
+            receiptResult.getOrNull()
 
         if (
             receipt ==
@@ -330,8 +348,9 @@ object VexLifeProdMacServiceLifetime {
                 currentness !=
                     null &&
                 validSourceCurrentness(
-                    currentness,
-                    desiredSourceSha,
+                    currentness = currentness,
+                    expectedSourceSha = desiredSourceSha,
+                    expectedPid = receipt.launchd.pid,
                 )
             ) {
                 return Observation.RunningCurrent(
@@ -453,8 +472,9 @@ object VexLifeProdMacServiceLifetime {
                 host,
             )
 
-        var currentness: VexLifeProdServiceContract.SourceCurrentness? =
-            null
+        try {
+            var currentness: VexLifeProdServiceContract.SourceCurrentness? =
+                null
         val deadline =
             host.nowMs() +
                 ReadinessTimeoutMs
@@ -471,8 +491,9 @@ object VexLifeProdMacServiceLifetime {
                 observed !=
                     null &&
                 validSourceCurrentness(
-                    observed,
-                    image.sourceSha,
+                    currentness = observed,
+                    expectedSourceSha = image.sourceSha,
+                    expectedPid = launchd.pid,
                 )
             ) {
                 currentness =
@@ -484,21 +505,33 @@ object VexLifeProdMacServiceLifetime {
             )
         }
 
-        if (
-            currentness ==
-                null
-        ) {
-            MacUserLaunchdProcess.retire(
-                receipt = launchd,
-                host = host,
-                expectedPid = launchd.pid,
-            )
-            error(
-                "VexLife-Prod service process did not become source-current before timeout",
-            )
-        }
+            if (
+                currentness ==
+                    null
+            ) {
+                error(
+                    "VexLife-Prod service process did not become source-current before timeout",
+                )
+            }
 
-        val receipt =
+            val finalLaunchdObservation =
+                MacUserLaunchdProcess.observe(
+                    desiredSpec,
+                    host,
+                )
+            require(
+                finalLaunchdObservation is
+                    MacUserLaunchdProcess.Observation.Running &&
+                    finalLaunchdObservation.pid ==
+                    launchd.pid &&
+                    host.processAlive(
+                        launchd.pid,
+                    ),
+            ) {
+                "VexLife-Prod service lost exact launchd ownership before lifetime receipt commit"
+            }
+
+            val receipt =
             Receipt(
                 schemaVersion = ReceiptSchema,
                 sourceSha = image.sourceSha,
@@ -527,16 +560,43 @@ object VexLifeProdMacServiceLifetime {
             value = receipt,
         )
 
-        return Result(
-            disposition = "STARTED_CURRENT_SERVICE",
-            sourceSha = image.sourceSha,
-            imagePayloadSha256 = image.payloadSha256,
-            pid = launchd.pid,
-            serviceOrigin = VexLifeProdServiceContract.Origin,
-            processStarted = true,
-            priorProcessRetired = priorProcessRetired,
-            receiptWritePerformed = true,
-        )
+            return Result(
+                disposition = "STARTED_CURRENT_SERVICE",
+                sourceSha = image.sourceSha,
+                imagePayloadSha256 = image.payloadSha256,
+                pid = launchd.pid,
+                serviceOrigin = VexLifeProdServiceContract.Origin,
+                processStarted = true,
+                priorProcessRetired = priorProcessRetired,
+                receiptWritePerformed = true,
+            )
+        } catch (
+            startupError: Throwable,
+        ) {
+            try {
+                val retired =
+                    MacUserLaunchdProcess.retire(
+                        receipt = launchd,
+                        host = host,
+                        expectedPid = launchd.pid,
+                    )
+                require(
+                    retired.exactOwnershipVerified &&
+                        retired.verifiedNotLive,
+                ) {
+                    "new product service was not exactly retired after startup failure"
+                }
+            } catch (
+                cleanupError: Throwable,
+            ) {
+                throw IllegalStateException(
+                    "VexLife-Prod service startup failed and exact cleanup also failed",
+                    cleanupError,
+                )
+            }
+
+            throw startupError
+        }
     }
 
     private fun retireExact(
@@ -804,6 +864,7 @@ object VexLifeProdMacServiceLifetime {
     private fun validSourceCurrentness(
         currentness: VexLifeProdServiceContract.SourceCurrentness,
         expectedSourceSha: String,
+        expectedPid: Long,
     ): Boolean =
         currentness.schemaVersion ==
             VexLifeProdServiceContract.SourceCurrentnessSchema &&
@@ -815,6 +876,8 @@ object VexLifeProdMacServiceLifetime {
             "SOURCE_BOUND_LISTENING" &&
             currentness.sourceSha ==
             expectedSourceSha &&
+            currentness.processPid ==
+            expectedPid &&
             !currentness.effectsPerformed
 
     private fun currentHome(
