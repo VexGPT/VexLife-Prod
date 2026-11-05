@@ -19,7 +19,7 @@ vexlife.model.heretic
     Members
 
   HereticModelConfiguration
-    HomeIdentity
+    BindingScope
     State
     Value
 
@@ -129,10 +129,12 @@ bound Heretic product model
 Both states remain scoped to:
 
 ~~~text
-Vex Home identity
-+ current Companion lineage
-+ exact Heretic product identity
+Vex Home ref                  <- supplied by rightful Home owner
+current Companion lineage ref <- supplied by rightful Companion owner
+exact Heretic product identity
 ~~~
+
+`BindingScope` is therefore a borrowed coordinate, not a second Home or Companion identity owner.
 
 And neither configuration state grants these effects:
 
