@@ -1,5 +1,7 @@
 package vexlife.model.heretic
 
+import kotlinx.serialization.Serializable
+
 /**
  * Meaning of a successful Heretic runtime qualification.
  *
@@ -11,6 +13,7 @@ package vexlife.model.heretic
  * Performing those checks is a platform/runtime effect. This common contract only represents the
  * resulting truth.
  */
+@Serializable
 data class HereticRuntimeQualification private constructor(
     val healthAndExactModelVerified: Boolean,
     val actualChatCompletionPerformed: Boolean,
