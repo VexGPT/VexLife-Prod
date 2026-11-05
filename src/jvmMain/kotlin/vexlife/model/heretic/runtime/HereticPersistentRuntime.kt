@@ -26,10 +26,10 @@ object HereticPersistentRuntime {
         "vexlife.heretic-persistent-runtime-owner-receipt/v1"
 
     const val OwnerRef =
-        "owner.vexlife.heretic-persistent-runtime.001"
+        "owner.vexlife-prod.heretic-persistent-runtime.001"
 
     const val StopActionRef =
-        "action.vexlife.heretic-persistent-runtime.stop-exact-owned-runtime"
+        "action.vexlife-prod.heretic-persistent-runtime.stop-exact-owned-runtime"
 
     val Port: Int =
         HereticProductIdentity.Endpoint
@@ -678,7 +678,7 @@ object HereticPersistentRuntime {
         }
 
         val receiptRef =
-            "receipt.vexlife.heretic-persistent-runtime." +
+            "receipt.vexlife-prod.heretic-persistent-runtime." +
                 sha256(
                     binding.sourceIdentity.moduleSha256 +
                         "|" +
