@@ -1,0 +1,251 @@
+package vexlife.setup
+
+import java.nio.file.Files
+import java.nio.file.LinkOption
+import java.nio.file.Path
+import vexlife.local.VexLifeProdLocalSetup
+import vexlife.packaging.VexLifeProdPrivateServiceImage
+import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
+
+/**
+ * First-run/repair setup process executed from the private service image.
+ *
+ * It verifies its own source-bound image, carries explicit human acquisition authorization into
+ * LocalSetup, installs the verified image into the established Home, and reports machine-readable
+ * completion. It does not open presentation or own the long-lived service process.
+ */
+object VexLifeProdSetupProcess {
+    private val GitSha =
+        Regex(
+            "[0-9a-f]{40}",
+        )
+
+    data class Arguments(
+        val expectedSourceSha: String,
+        val allowAcquisition: Boolean,
+    )
+
+    internal data class Hooks(
+        val locateImageRoot: () -> Path =
+            ::currentImageRoot,
+        val observeImage: (
+            imageRoot: Path,
+            expectedSourceSha: String,
+        ) -> VexLifeProdPrivateServiceImage.Observation = {
+            imageRoot,
+            expectedSourceSha,
+            ->
+            VexLifeProdPrivateServiceImage.observe(
+                imageRoot = imageRoot,
+                expectedSourceSha = expectedSourceSha,
+            )
+        },
+        val establishSession: (
+            allowAcquisition: Boolean,
+        ) -> VexLifeProdLocalSetup.Session = {
+            allowAcquisition ->
+            VexLifeProdLocalSetup.establishSession(
+                allowAcquisition,
+            )
+        },
+        val installImage: (
+            sourceImageRoot: Path,
+            productHome: Path,
+            expectedSourceSha: String,
+        ) -> VexLifeProdPrivateServiceImageInstaller.Result = {
+            sourceImageRoot,
+            productHome,
+            expectedSourceSha,
+            ->
+            VexLifeProdPrivateServiceImageInstaller.install(
+                sourceImageRoot = sourceImageRoot,
+                productHome = productHome,
+                expectedSourceSha = expectedSourceSha,
+            )
+        },
+        val reportImageVerified: (
+            VexLifeProdPrivateServiceImage.Observation,
+        ) -> Unit = {
+            observation ->
+            println(
+                "VEXLIFE_PROD_SETUP_IMAGE_VERIFIED\t" +
+                    observation.sourceSha +
+                    "\t" +
+                    observation.payloadSha256,
+            )
+            System.out.flush()
+        },
+        val reportReady: (
+            arguments: Arguments,
+            session: VexLifeProdLocalSetup.Session,
+            installed: VexLifeProdPrivateServiceImageInstaller.Result,
+        ) -> Unit = {
+            arguments,
+            session,
+            installed,
+            ->
+            println(
+                "VEXLIFE_PROD_SETUP_READY\t" +
+                    arguments.expectedSourceSha +
+                    "\t" +
+                    session.result.productHome +
+                    "\t" +
+                    installed.imagePath +
+                    "\t" +
+                    session.result.qualifiedRuntimeEvidence.runtimeReceiptRef,
+            )
+            System.out.flush()
+        },
+    )
+
+    fun parse(
+        args: Array<String>,
+    ): Arguments {
+        require(
+            args.size ==
+                3 &&
+                args[0] ==
+                "--expected-source-sha" &&
+                args[2] ==
+                "--allow-acquisition",
+        ) {
+            "VexLife-Prod setup requires exactly --expected-source-sha <git-sha> --allow-acquisition"
+        }
+
+        val sourceSha =
+            args[1]
+        require(
+            GitSha.matches(
+                sourceSha,
+            ),
+        ) {
+            "VexLife-Prod setup expected source SHA must be one exact lowercase Git commit"
+        }
+
+        return Arguments(
+            expectedSourceSha = sourceSha,
+            allowAcquisition = true,
+        )
+    }
+
+    fun run(
+        args: Array<String>,
+    ) {
+        runWithHooks(
+            arguments =
+                parse(
+                    args,
+                ),
+            hooks = Hooks(),
+        )
+    }
+
+    internal fun runWithHooks(
+        arguments: Arguments,
+        hooks: Hooks,
+    ) {
+        require(
+            arguments.allowAcquisition,
+        ) {
+            "VexLife-Prod setup process requires explicit acquisition authorization"
+        }
+
+        val imageRoot =
+            hooks.locateImageRoot()
+                .toAbsolutePath()
+                .normalize()
+        val observed =
+            hooks.observeImage(
+                imageRoot,
+                arguments.expectedSourceSha,
+            )
+
+        hooks.reportImageVerified(
+            observed,
+        )
+
+        val session =
+            hooks.establishSession(
+                true,
+            )
+
+        val installed =
+            hooks.installImage(
+                imageRoot,
+                Path.of(
+                    session.result.productHome,
+                ),
+                arguments.expectedSourceSha,
+            )
+
+        require(
+            installed.sourceSha ==
+                observed.sourceSha &&
+                installed.payloadSha256 ==
+                observed.payloadSha256,
+        ) {
+            "installed VexLife-Prod private image differs from verified setup image"
+        }
+
+        hooks.reportReady(
+            arguments,
+            session,
+            installed,
+        )
+    }
+
+    private fun currentImageRoot(): Path {
+        val codeSource =
+            Path.of(
+                VexLifeProdSetupProcess::class
+                    .java
+                    .protectionDomain
+                    .codeSource
+                    .location
+                    .toURI(),
+            )
+                .toAbsolutePath()
+                .normalize()
+
+        require(
+            Files.isRegularFile(
+                codeSource,
+                LinkOption.NOFOLLOW_LINKS,
+            ) &&
+                !Files.isSymbolicLink(
+                    codeSource,
+                ) &&
+                codeSource.fileName
+                    .toString() ==
+                "vexlife-prod.jar",
+        ) {
+            "VexLife-Prod setup must execute from the packaged vexlife-prod.jar"
+        }
+
+        val libRoot =
+            requireNotNull(
+                codeSource.parent,
+            )
+        require(
+            libRoot.fileName
+                .toString() ==
+                "lib",
+        ) {
+            "VexLife-Prod setup JAR is not inside the private image lib directory"
+        }
+
+        return requireNotNull(
+            libRoot.parent,
+        )
+    }
+}
+
+fun main(
+    args: Array<String>,
+) {
+    VexLifeProdSetupProcess.run(
+        args,
+    )
+}
+
+// [VXG RealForever]

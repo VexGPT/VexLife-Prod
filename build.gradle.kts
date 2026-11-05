@@ -115,6 +115,37 @@ fun runExactCommand(
     return output.trim()
 }
 
+fun deleteTreeNoFollow(
+    root: Path,
+) {
+    if (
+        !Files.exists(
+            root,
+            LinkOption.NOFOLLOW_LINKS,
+        )
+    ) {
+        return
+    }
+
+    Files.walk(
+        root,
+    )
+        .use {
+            stream ->
+            stream
+                .toList()
+                .sortedByDescending {
+                    it.nameCount
+                }
+                .forEach {
+                    path ->
+                    Files.deleteIfExists(
+                        path,
+                    )
+                }
+        }
+}
+
 fun payloadFingerprint(
     root: Path,
     excludedRelativePaths: Set<String> =
@@ -259,6 +290,11 @@ val serviceLauncherSource =
         "packaging/private-service-image/bin/vexlife-prod-service",
     )
 
+val setupLauncherSource =
+    layout.projectDirectory.file(
+        "packaging/private-service-image/bin/vexlife-prod-setup",
+    )
+
 val serviceImageOutputRoot =
     layout.buildDirectory.dir(
         "vexlife-prod-service-image/images",
@@ -377,6 +413,9 @@ tasks.register(
     )
     inputs.file(
         serviceLauncherSource,
+    )
+    inputs.file(
+        setupLauncherSource,
     )
     outputs.dir(
         serviceImageOutputRoot,
@@ -633,9 +672,9 @@ tasks.register(
                 LinkOption.NOFOLLOW_LINKS,
             )
         ) {
-            output
-                .toFile()
-                .deleteRecursively()
+            deleteTreeNoFollow(
+                output,
+            )
         }
 
         val runtimeRoot =
@@ -715,6 +754,26 @@ tasks.register(
             ),
         )
 
+        val setupLauncher =
+            binRoot.resolve(
+                "vexlife-prod-setup",
+            )
+        Files.copy(
+            setupLauncherSource
+                .asFile
+                .toPath(),
+            setupLauncher,
+            StandardCopyOption.REPLACE_EXISTING,
+        )
+        Files.setPosixFilePermissions(
+            setupLauncher,
+            setOf(
+                PosixFilePermission.OWNER_READ,
+                PosixFilePermission.OWNER_WRITE,
+                PosixFilePermission.OWNER_EXECUTE,
+            ),
+        )
+
         val payloadSha256 =
             payloadFingerprint(
                 output,
@@ -781,7 +840,7 @@ tasks.register(
                     "{",
                 )
                 appendLine(
-                    "  \"schemaVersion\": \"vexlife-prod.private-service-image/v1\",",
+                    "  \"schemaVersion\": \"vexlife-prod.private-service-image/v2\",",
                 )
                 appendLine(
                     "  \"truthClass\": \"SOURCE_BOUND_PRIVATE_SERVICE_IMAGE\",",
@@ -802,6 +861,9 @@ tasks.register(
                 )
                 appendLine(
                     "  \"launcher\": \"bin/vexlife-prod-service\",",
+                )
+                appendLine(
+                    "  \"setupLauncher\": \"bin/vexlife-prod-setup\",",
                 )
                 appendLine(
                     "  \"runtimeModules\": [" +
@@ -975,9 +1037,9 @@ tasks.register(
                 LinkOption.NOFOLLOW_LINKS,
             )
         ) {
-            outputRoot
-                .toFile()
-                .deleteRecursively()
+            deleteTreeNoFollow(
+                outputRoot,
+            )
         }
         Files.createDirectories(
             outputRoot,

@@ -75,6 +75,10 @@ class VexLifeProdPrivateServiceImageTest {
             root.resolve(
                 VexLifeProdPrivateServiceImage.LauncherRelativePath,
             )
+        val setupLauncher =
+            root.resolve(
+                VexLifeProdPrivateServiceImage.SetupLauncherRelativePath,
+            )
         val app =
             root.resolve(
                 "lib/vexlife-prod.jar",
@@ -97,6 +101,10 @@ class VexLifeProdPrivateServiceImageTest {
             "#!/bin/bash\nexit 0\n",
         )
         Files.writeString(
+            setupLauncher,
+            "#!/bin/bash\nexit 0\n",
+        )
+        Files.writeString(
             app,
             "app",
         )
@@ -115,6 +123,14 @@ class VexLifeProdPrivateServiceImageTest {
         )
         Files.setPosixFilePermissions(
             launcher,
+            setOf(
+                PosixFilePermission.OWNER_READ,
+                PosixFilePermission.OWNER_WRITE,
+                PosixFilePermission.OWNER_EXECUTE,
+            ),
+        )
+        Files.setPosixFilePermissions(
+            setupLauncher,
             setOf(
                 PosixFilePermission.OWNER_READ,
                 PosixFilePermission.OWNER_WRITE,
@@ -161,6 +177,7 @@ class VexLifeProdPrivateServiceImageTest {
                 javaRuntimeMajor = VexLifeProdPrivateServiceImage.JavaRuntimeMajor,
                 mainClass = VexLifeProdPrivateServiceImage.MainClass,
                 launcher = VexLifeProdPrivateServiceImage.LauncherRelativePath,
+                setupLauncher = VexLifeProdPrivateServiceImage.SetupLauncherRelativePath,
                 runtimeModules =
                     listOf(
                         "java.base",
@@ -232,6 +249,13 @@ class VexLifeProdPrivateServiceImageTest {
                     .toString(),
                 observed.launcherPath,
             )
+            assertEquals(
+                root.resolve(
+                    VexLifeProdPrivateServiceImage.SetupLauncherRelativePath,
+                )
+                    .toString(),
+                observed.setupLauncherPath,
+            )
             assertFalse(
                 observed.effectsPerformed,
             )
@@ -272,6 +296,79 @@ class VexLifeProdPrivateServiceImageTest {
                         "b".repeat(
                             40,
                         ),
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun hashConsistentImageStillRejectsSymlinkEscapingImageRoot() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-private-service-image-symlink-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "image",
+            )
+        val outside =
+            parent.resolve(
+                "outside-target",
+            )
+        val sourceSha =
+            "a".repeat(
+                40,
+            )
+
+        try {
+            Files.createDirectory(
+                root,
+            )
+            val original =
+                formImage(
+                    root,
+                    sourceSha,
+                )
+            Files.writeString(
+                outside,
+                "outside",
+            )
+            Files.createSymbolicLink(
+                root.resolve(
+                    "runtime/lib/escape",
+                ),
+                Path.of(
+                    "../../../outside-target",
+                ),
+            )
+
+            val rewritten =
+                original.copy(
+                    payloadSha256 =
+                        VexLifeProdPrivateServiceImage.payloadFingerprint(
+                            root,
+                        ),
+                )
+            Files.writeString(
+                root.resolve(
+                    VexLifeProdPrivateServiceImage.ManifestRelativePath,
+                ),
+                VexContractJson.encode(
+                    rewritten,
+                ) +
+                    "\n",
+                StandardCharsets.UTF_8,
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                VexLifeProdPrivateServiceImage.observe(
+                    imageRoot = root,
+                    expectedSourceSha = sourceSha,
                 )
             }
         } finally {

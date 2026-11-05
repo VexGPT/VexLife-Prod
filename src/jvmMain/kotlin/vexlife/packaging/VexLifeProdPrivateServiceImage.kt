@@ -18,7 +18,7 @@ import vexlife.filesystem.VexOwnedPath
  */
 object VexLifeProdPrivateServiceImage {
     const val Schema =
-        "vexlife-prod.private-service-image/v1"
+        "vexlife-prod.private-service-image/v2"
 
     const val TruthClass =
         "SOURCE_BOUND_PRIVATE_SERVICE_IMAGE"
@@ -34,6 +34,9 @@ object VexLifeProdPrivateServiceImage {
 
     const val LauncherRelativePath =
         "bin/vexlife-prod-service"
+
+    const val SetupLauncherRelativePath =
+        "bin/vexlife-prod-setup"
 
     const val ManifestRelativePath =
         "service-image.json"
@@ -64,6 +67,7 @@ object VexLifeProdPrivateServiceImage {
         val javaRuntimeMajor: Int,
         val mainClass: String,
         val launcher: String,
+        val setupLauncher: String,
         val runtimeModules: List<String>,
         val payloadSha256: String,
         val artifacts: List<Artifact>,
@@ -74,6 +78,7 @@ object VexLifeProdPrivateServiceImage {
         val sourceSha: String,
         val payloadSha256: String,
         val launcherPath: String,
+        val setupLauncherPath: String,
         val javaPath: String,
         val runtimeModules: List<String>,
         val effectsPerformed: Boolean,
@@ -146,6 +151,24 @@ object VexLifeProdPrivateServiceImage {
             "private service-image launcher must be executable"
         }
 
+        val setupLauncher =
+            VexOwnedPath.resolveInside(
+                root,
+                manifest.setupLauncher,
+            )
+        requireRegularFile(
+            root = root,
+            path = setupLauncher,
+            label = "private service-image setup launcher",
+        )
+        require(
+            Files.isExecutable(
+                setupLauncher,
+            ),
+        ) {
+            "private service-image setup launcher must be executable"
+        }
+
         val java =
             VexOwnedPath.resolveInside(
                 root,
@@ -209,6 +232,10 @@ object VexLifeProdPrivateServiceImage {
             }
         }
 
+        validateSymlinkContainment(
+            root,
+        )
+
         val payload =
             payloadFingerprint(
                 root,
@@ -229,10 +256,70 @@ object VexLifeProdPrivateServiceImage {
             sourceSha = manifest.sourceSha,
             payloadSha256 = payload,
             launcherPath = launcher.toString(),
+            setupLauncherPath = setupLauncher.toString(),
             javaPath = java.toString(),
             runtimeModules = manifest.runtimeModules,
             effectsPerformed = false,
         )
+    }
+
+    private fun validateSymlinkContainment(
+        root: Path,
+    ) {
+        val canonicalRoot =
+            root.toRealPath()
+
+        Files.walk(
+            root,
+        )
+            .use {
+                stream ->
+                stream.forEach {
+                    path ->
+                    if (
+                        !Files.isSymbolicLink(
+                            path,
+                        )
+                    ) {
+                        return@forEach
+                    }
+
+                    val target =
+                        Files.readSymbolicLink(
+                            path,
+                        )
+                    require(
+                        !target.isAbsolute,
+                    ) {
+                        "private service image cannot contain absolute symlink targets"
+                    }
+
+                    val resolved =
+                        path
+                            .parent
+                            .resolve(
+                                target,
+                            )
+                            .normalize()
+                    require(
+                        resolved.startsWith(
+                            root,
+                        ),
+                    ) {
+                        "private service image symlink escaped image root"
+                    }
+
+                    val canonicalTarget =
+                        path.toRealPath()
+                    require(
+                        canonicalTarget.startsWith(
+                            canonicalRoot,
+                        ),
+                    ) {
+                        "private service image symlink resolves outside image root"
+                    }
+                }
+            }
     }
 
     internal fun payloadFingerprint(
@@ -380,6 +467,8 @@ object VexLifeProdPrivateServiceImage {
                 MainClass &&
                 manifest.launcher ==
                 LauncherRelativePath &&
+                manifest.setupLauncher ==
+                SetupLauncherRelativePath &&
                 Sha256.matches(
                     manifest.payloadSha256,
                 ),
