@@ -16,6 +16,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
 import vexlife.home.VexLifeProdHome
@@ -213,6 +214,10 @@ class VexLifeProdLocalServiceTest {
                         source.processPid,
                     )
                     assertEquals(
+                        service.frameOrigin,
+                        source.frameHostOrigin,
+                    )
+                    assertEquals(
                         "NOT_REOBSERVED_BY_SERVICE",
                         source.runtimeCurrentness,
                     )
@@ -225,6 +230,43 @@ class VexLifeProdLocalServiceTest {
                     )
                     assertFalse(
                         source.effectsPerformed,
+                    )
+
+                    val presentation =
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.PresentationIndexPath,
+                        )
+                    assertEquals(
+                        200,
+                        presentation.statusCode(),
+                    )
+                    assertTrue(
+                        presentation.body()
+                            .contains(
+                                "data-vex-screen=\"screen.vexlife-workspace\"",
+                            ),
+                    )
+                    val runtimeJavascript =
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.PresentationJavascriptPath,
+                        )
+                    assertEquals(
+                        200,
+                        runtimeJavascript.statusCode(),
+                    )
+                    assertTrue(
+                        runtimeJavascript.body()
+                            .contains(
+                                VexLifeProdServiceContract.ConversationSendPath,
+                            ),
+                    )
+                    assertTrue(
+                        runtimeJavascript.body()
+                            .contains(
+                                VexLifeProdBrowserContract.InitialPageUrl,
+                            ),
                     )
 
                     val conversation =
@@ -348,6 +390,13 @@ class VexLifeProdLocalServiceTest {
                         VexLifeProdServiceContract.SendRequest(
                             sendAttemptRef = "send-attempt.vexlife-prod.service.001",
                             content = "Hello Vex",
+                            browserContext =
+                                VexLifeProdServiceContract.BrowserContextInput(
+                                    pageUrl = VexLifeProdBrowserContract.InitialPageUrl,
+                                    title = "Vextreme Terrain",
+                                    text = "Current direct-contact terrain context",
+                                    capture = VexLifeProdBrowserContract.CaptureRendered,
+                                ),
                         )
                     val body =
                         json.encodeToString(
@@ -381,6 +430,28 @@ class VexLifeProdLocalServiceTest {
                     )
                     assertTrue(
                         firstResult.actualHttpCallPerformedNow,
+                    )
+                    assertTrue(
+                        firstResult.promptContext.browserContextIncluded,
+                    )
+                    assertEquals(
+                        VexLifeProdBrowserContract.InitialPageUrl,
+                        firstResult.promptContext.browserPageUrl,
+                    )
+                    assertEquals(
+                        VexLifeProdBrowserContract.CaptureRendered,
+                        firstResult.promptContext.browserContextCapture,
+                    )
+                    assertEquals(
+                        "Current direct-contact terrain context".length,
+                        firstResult.promptContext.browserContextCharacters,
+                    )
+                    assertTrue(
+                        firstResult.promptContext.browserContextRef
+                            ?.startsWith(
+                                "browser-context.vexlife-prod.",
+                            ) ==
+                            true,
                     )
                     assertEquals(
                         1,
