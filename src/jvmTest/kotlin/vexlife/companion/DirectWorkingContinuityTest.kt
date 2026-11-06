@@ -4,6 +4,7 @@ import java.nio.file.Files
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -50,6 +51,57 @@ class DirectWorkingContinuityTest {
                     ),
                 ),
             )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun producerRejectsMemoryThatDoesNotMatchThePromptReceiptSelection() {
+        val home =
+            productHome()
+
+        try {
+            val store =
+                DirectConversationStore(
+                    home,
+                )
+            val memory =
+                VexLifeMemoryContextFixture.current()
+
+            store.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef =
+                            "turn.vexlife.working.memory-mismatch",
+                        requestMessageRef =
+                            "message.vexlife.working.memory-mismatch",
+                        content =
+                            "Memory binding request",
+                    )
+                val prompt =
+                    DirectPromptContext.materialize(
+                        prior = null,
+                        currentRequest = request,
+                        memoryContext = memory,
+                    )
+                val otherMemory =
+                    memory.copy(
+                        memoryContextRef =
+                            "memory-context.vexlife.prompt.other",
+                    )
+
+                assertFailsWith<IllegalArgumentException> {
+                    DirectWorkingContinuity.prepare(
+                        productHome = home,
+                        currentRequest = request,
+                        promptContext = prompt.receipt,
+                        memoryContext = otherMemory,
+                    )
+                }
+            }
         } finally {
             home.parent
                 .toFile()
