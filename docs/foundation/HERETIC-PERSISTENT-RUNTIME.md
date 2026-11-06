@@ -5,8 +5,9 @@
 ## Human question
 
 Once VexLife-Prod has an exact certified Heretic model, exact local artifact bytes, and an exact
-Python/MLX environment, can it own one isolated local runtime without re-declaring those facts inside
-process scripts or confusing "a process exists" with "this exact runtime is ours"?
+Python/MLX environment, can it consume one qualified runtime without re-declaring those facts,
+counterfeiting predecessor process ownership, or confusing "a process exists" with "this exact runtime
+is current for Vex"?
 
 ## Dependency chain
 
@@ -26,11 +27,17 @@ HereticPythonEnvironment.Result
         ↓
 HereticPersistentRuntime.bind(...)
   consumes those exact outputs
-  + one explicit runtime-owner source identity
+  + one explicit product-runtime implementation identity
         ↓
-HereticPersistentRuntime
-  STARTING / QUALIFIED
-  reuse / recover / source-rotate / stop
+runtime selection
+  |
+  +-> StableVexLifeHereticRuntimeCompatibility
+  |     read-only predecessor receipt/process verification
+  |     no ownership transfer / no receipt rewrite
+  |
+  +-> HereticPersistentRuntime
+        VexLife-Prod-owned STARTING / QUALIFIED
+        reuse / recover / implementation-rotate / stop
         ↓
 MacHereticRuntimePlatform
   physical process / port / health / MLX qualification
@@ -116,7 +123,42 @@ HEALTHY PROCESS
 
 ## Persistent runtime state machine
 
-### New start
+### Stable predecessor borrow
+
+Canonical-Home continuity may already have one qualified Heretic runtime owned by stable VexLife:
+
+~~~text
+runtime/heretic/persistent-runtime-owner-receipt.json
+  stable VexLife owner
+        ↓
+exact schema/state/model/artifact/environment/argv/effect validation
+        ↓
+exact live PID + process-group + launchd-substrate currentness
+        ↓
+borrow QualifiedRuntimeEvidence
+        ↓
+re-observe same predecessor owner before later inference
+~~~
+
+Borrowing does **not** write a VexLife-Prod receipt and does not make the stable process
+VexLife-Prod-owned.
+
+~~~text
+BORROWED QUALIFIED RUNTIME
+!= PROCESS OWNERSHIP TRANSFER
+
+STABLE RECEIPT READ
+!= STABLE RECEIPT MUTATION
+
+PORT 8765 ANSWERS
+!= BORROWED RUNTIME ADMISSION
+~~~
+
+If the stable receipt is absent, product-owned runtime formation may proceed under the separate
+VexLife-Prod receipt coordinate. If the stable receipt is present but invalid/drifting, setup holds
+rather than silently starting a competing process on the same endpoint.
+
+### New product-owned start
 
 ~~~text
 fresh exact environment observation
@@ -239,11 +281,21 @@ grant those effects retroactively.
 
 ## Process isolation
 
-The fresh runtime is intended to live under the VexLife-Prod Home/runtime tree and to use the generic
-macOS process substrate. It is not hosted inside the legacy/current VexLife browser process.
+A newly-created VexLife-Prod runtime lives under the product-owned runtime namespace and uses the
+generic macOS process substrate:
 
-The eventual production launchd label must remain in the VexLife-Prod-owned namespace. This is an
-isolated process/lifetime relationship even when model lineage/provenance originated in VexLife.
+~~~text
+product receipt:
+  runtime/vexlife-prod/heretic-persistent-runtime-owner-receipt.json
+
+stable predecessor receipt:
+  runtime/heretic/persistent-runtime-owner-receipt.json
+  read-only to VexLife-Prod
+~~~
+
+A product-owned runtime launchd label remains in the VexLife-Prod namespace. A borrowed stable
+runtime retains its stable VexLife launchd/process ownership; only portable qualified-runtime
+evidence crosses the compatibility boundary.
 
 ## Current source
 
@@ -282,7 +334,8 @@ Source tests are formed for:
 - exact artifact plan/classification;
 - exact Python/MLX create/verify/reuse semantics;
 - generic launchd start/retire behavior under a fake host;
-- persistent runtime start/reuse/STARTING recovery/source rotation;
+- persistent runtime start/reuse/STARTING recovery/implementation rotation;
+- exact stable VexLife predecessor receipt/process compatibility without ownership transfer;
 - orphan/port holds;
 - provisional cleanup without false semantic ownership;
 - qualification failure cleanup;
@@ -294,8 +347,9 @@ Still required before acceptance:
 ~~~text
 repository-owned Kotlin 2.4.20 JVM + common/jvm tests
 Kotlin/JS compile for common contracts
-durable Home/runtime receipt persistence through VexContractJson
-real macOS launchd + process census proof
+durable product-owned Home/runtime receipt persistence through VexContractJson
+lived stable-runtime borrow against the canonical predecessor receipt
+real macOS launchd + process census proof for a product-owned fallback runtime
 real certified model artifact/environment reuse or acquisition
 real MLX start + health + model + chat qualification
 sustained local runtime after launcher completion

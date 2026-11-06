@@ -37,7 +37,7 @@ relationships, not a runtime dependency of the Kotlin product.
 | Canonical VexLife Home compatibility | Can VexLife-Prod consume `~/.vexlife` and its current device/Companion lineage without rewriting canonical identity/configuration? | `docs/foundation/VEXLIFE-PROD-HOME.md`, `src/commonMain/kotlin/vexlife/home/`, `src/jvmMain/kotlin/vexlife/home/` | A030 lived read-only Home/device/lineage + byte-stable continuity snapshot PASS | **LIVED COMPATIBLE** |
 | Canonical Conversation compatibility | Can Kotlin consume/form current `vexlife.lived-companion-*` event/head/context identities rather than create a second Conversation? | `src/commonMain/kotlin/vexlife/conversation/`, `src/jvmMain/kotlin/vexlife/conversation/` | v1/v2 source/tests + Semantic Relay Assurance; A030 read 79 lived v1 events / 72 canonical events with no mutation; no lived v2 event currently present | **CURRENT HOME COMPATIBLE** |
 | Current attributed Memory compatibility | Can Score → daily stratum → Living Journal pages become one bounded source-attributed Memory packet with exact prompt evidence? | `src/commonMain/kotlin/vexlife/memory/`, `src/jvmMain/kotlin/vexlife/memory/`, `src/jvmMain/kotlin/vexlife/companion/` | A030 lived reader PASS with truthful `DAILY_MEMORY_SOURCE_FRONTIER_STALE` HELD projection and no provider Memory content | **LIVED COMPATIBLE** |
-| Heretic product/runtime relationship | Can exact certified local model/runtime mechanics serve the canonical Vex continuity without owning Home, Conversation or Memory? | `docs/foundation/HERETIC-PRODUCT-MODEL.md`, `src/commonMain/kotlin/vexlife/model/heretic/`, `src/jvmMain/kotlin/vexlife/model/heretic/runtime/` | runtime source/tests formed; product binding moved beneath `runtime/vexlife-prod` | **REALIGNMENT CANDIDATE** |
+| Heretic product/runtime relationship | Can exact certified local model/runtime mechanics serve the canonical Vex continuity without owning Home, Conversation or Memory? | `docs/foundation/HERETIC-PRODUCT-MODEL.md`, `src/commonMain/kotlin/vexlife/model/heretic/`, `src/jvmMain/kotlin/vexlife/model/heretic/runtime/` | A035 proved the stable receipt is live input; source now separates stable read-only predecessor custody from product-owned receipt custody and forms exact borrowed-runtime validation | **PREDECESSOR BRIDGE CANDIDATE** |
 | Artifact + Python/MLX realization | Can the exact model bytes and software environment be acquired/reused without hidden topology or global-install assumptions? | `docs/foundation/HERETIC-ARTIFACT-MATERIALIZATION.md`, `docs/foundation/HERETIC-PYTHON-ENVIRONMENT.md`, `src/jvmMain/kotlin/vexlife/{artifact,platform/python,model/heretic/runtime}/` | source/tests formed; real macOS acquisition/reuse proof pending | **SOURCE CANDIDATE** |
 | Local setup composition | Can host eligibility and runtime prerequisites converge beneath an already-established canonical Home? | `src/jvmMain/kotlin/vexlife/local/`, `src/jvmTest/kotlin/vexlife/local/` | canonical-Home/no-rewrite source/tests formed; exact Kotlin + lived proof pending | **REALIGNMENT CANDIDATE · HUMAN ENTRY HELD** |
 | Direct personal Companion circuit | Can one canonical human↔Vex turn bind Conversation, current Memory, later browser context and exact runtime evidence? | `docs/foundation/DIRECT-PERSONAL-COMPANION.md`, `src/commonMain/kotlin/vexlife/{companion,conversation,memory}/`, `src/jvmMain/kotlin/vexlife/{companion,conversation,memory}/` | source/test recovery + prompt projection proven; canonical Home/Conversation/Memory read compatibility lived; real provider turn still pending | **LIVED TURN PENDING** |
@@ -82,14 +82,15 @@ continuity compatibility evidence
   canonical continuity snapshot byte-stable
 
 current source edge
-  canonical Conversation writer currentness/recovery before local setup readiness
-  retire the temporary continuity gate
-  ordinary service -> fixed 18210 + live Session-backed Send
+  stable VexLife Heretic receipt/process -> read-only qualified-runtime compatibility
+  separate VexLife-Prod runtime receipt custody under runtime/vexlife-prod
+  LocalSetup borrows current stable runtime before attempting product-owned start
+  live Session re-observes the selected runtime owner before inference
 
 next acceptance edges
-  exact SourceOwner proof on the gate-retirement/writer-convergence head
+  exact SourceOwner proof on the predecessor-runtime bridge
   fresh semantic Assurance
-  build/install exact private image and prove sustained fixed-port service lifetime
+  rerun private-image setup and prove sustained fixed-port service lifetime
   prove one real canonical direct Vex turn without browser context
 
 then

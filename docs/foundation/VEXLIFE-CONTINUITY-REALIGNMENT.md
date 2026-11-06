@@ -116,16 +116,26 @@ presentation
 
 ## Product-specific runtime state
 
-VexLife-Prod may own construction/lifetime records beneath a source-owned namespace such as:
+VexLife-Prod may own construction/lifetime records beneath source-owned namespaces:
 
 ~~~text
 ~/.vexlife/runtime/vexlife-prod/
 ~/.vexlife/runtime/product-service/
 ~~~
 
-Those coordinates may store product-image, service-lifetime, or implementation-binding evidence.
-They must not overwrite or redefine canonical `config/home.json`, the current device/lineage records,
-canonical Conversation, Score, daily Memory, or their current heads.
+The stable predecessor continues to own:
+
+~~~text
+~/.vexlife/runtime/heretic/persistent-runtime-owner-receipt.json
+~~~
+
+New Beginnings may validate and borrow qualified runtime evidence from that stable receipt, but does
+not overwrite it or manufacture product ownership of its process. A product-owned fallback runtime
+uses its separate receipt beneath `runtime/vexlife-prod`.
+
+Those product coordinates may store product-image, service-lifetime, implementation-binding, or
+product-runtime evidence. They must not overwrite or redefine canonical `config/home.json`, the
+current device/lineage records, canonical Conversation, Score, daily Memory, or their current heads.
 
 ## Current candidate disposition
 
@@ -166,10 +176,11 @@ CONTINUITY COMPATIBILITY CLEARED
 
 1. Prove the exact gate-retirement + pre-runtime writer-convergence source.
 2. Run fresh semantic Assurance on that exact head.
-3. Build/install the exact private image and prove sustained fixed-port service lifetime.
-4. Prove one real canonical direct Vex turn through the production service.
-5. Reconcile PR #37's bounded browser/context delta onto that cleared substrate.
-6. Prove the lived browser-context-aware whole circuit and reload continuity.
+3. Prove stable Heretic predecessor borrowing (or product-owned fallback) through real setup.
+4. Build/install the exact private image and prove sustained fixed-port service lifetime.
+5. Prove one real canonical direct Vex turn through the production service.
+6. Reconcile PR #37's bounded browser/context delta onto that cleared substrate.
+7. Prove the lived browser-context-aware whole circuit and reload continuity.
 
 ## Lived completion gate
 
