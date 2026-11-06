@@ -251,7 +251,9 @@ class VexLifeWorkingContinuityOwner(
             receipt.commitReceiptRef == head.commitReceiptRef &&
             receipt.semanticFingerprint == head.commitReceiptFingerprint &&
             receipt.checkpointRef == checkpoint.checkpointRef &&
-            receipt.checkpointFingerprint == checkpoint.semanticFingerprint,
+            receipt.checkpointFingerprint == checkpoint.semanticFingerprint &&
+            receipt.priorCheckpointRefOrNull == checkpoint.priorCheckpointRefOrNull &&
+            receipt.priorCheckpointFingerprintOrNull == checkpoint.priorCheckpointFingerprintOrNull,
         ) {
             "working continuity current head bindings are invalid"
         }
@@ -758,6 +760,10 @@ class VexLifeWorkingContinuityOwner(
             value.effectOwnerRef == EffectOwnerRef &&
             value.disposition in setOf("CHECKPOINT_COMMITTED", "ROLLOVER_COMMITTED") &&
             value.successorContextRequired == (value.disposition == "ROLLOVER_COMMITTED") &&
+            value.effects.priorCheckpointSuperseded ==
+                (value.priorCheckpointRefOrNull != null) &&
+            ((value.priorCheckpointRefOrNull == null) ==
+                (value.priorCheckpointFingerprintOrNull == null)) &&
             value.effects.homeMutated &&
             value.effects.checkpointPersisted &&
             !value.effects.successorContextClaimed &&
