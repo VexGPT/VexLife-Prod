@@ -453,10 +453,18 @@ object VexLifeWorkingContinuity {
             )
         priorCheckpoint
             ?.let {
-                requireCurrentCheckpoint(
-                    checkpoint = it,
-                    workingSet = workingSet,
+                checkpoint ->
+                validateCheckpoint(
+                    checkpoint,
                 )
+                require(
+                    checkpoint.lineageRef ==
+                        workingSet.lineageRef &&
+                        checkpoint.threadRef ==
+                        workingSet.threadRef,
+                ) {
+                    "prior working checkpoint belongs to another lineage/thread"
+                }
             }
 
         val checkpoint =
@@ -614,10 +622,125 @@ object VexLifeWorkingContinuity {
         val effects: PlanEffects,
     )
 
-    private fun requireCurrentCheckpoint(
+    fun validatePlan(
+        plan: Plan,
+    ): Plan {
+        require(
+            plan.schemaVersion ==
+                PlanSchema &&
+                plan.truthClass ==
+                "SOURCE_BOUND_EFFECT_FREE_CONTINUITY_ROLLOVER_PLAN" &&
+                plan.currentness ==
+                "CURRENT" &&
+                !plan.effectAuthorityGranted &&
+                plan.effects ==
+                PlanEffects() &&
+                plan.reasonCodes ==
+                plan.reasonCodes
+                    .distinct()
+                    .sorted(),
+        ) {
+            "working continuity plan identity/effects are invalid"
+        }
+
+        val expectedNextSafeAction =
+            when (
+                plan.state
+            ) {
+                PlanState.NoCheckpointRequired ->
+                    "CONTINUE_WITH_CURRENT_CONTEXT_MODE"
+
+                PlanState.CheckpointReady ->
+                    "DELEGATE_REFERENCE_ONLY_CHECKPOINT_TO_WORKING_CONTINUITY_OWNER"
+
+                PlanState.RolloverReady ->
+                    "DELEGATE_CHECKPOINT_THEN_FORM_EXACT_SUCCESSOR_CONTEXT"
+            }
+
+        require(
+            plan.nextSafeAction ==
+                expectedNextSafeAction,
+        ) {
+            "working continuity plan next-safe-action is invalid"
+        }
+
+        when (
+            plan.state
+        ) {
+            PlanState.NoCheckpointRequired ->
+                require(
+                    plan.checkpoint ==
+                        null,
+                ) {
+                    "non-checkpoint working continuity plan must not carry a checkpoint"
+                }
+
+            PlanState.CheckpointReady,
+            PlanState.RolloverReady,
+            -> {
+                val checkpoint =
+                    validateCheckpoint(
+                        requireNotNull(
+                            plan.checkpoint,
+                        ) {
+                            "committable working continuity plan requires one checkpoint"
+                        },
+                    )
+                require(
+                    checkpoint.lineageRef ==
+                        plan.lineageRef &&
+                        checkpoint.threadRef ==
+                        plan.threadRef &&
+                        checkpoint.pressureRef ==
+                        plan.pressureRef &&
+                        checkpoint.pressureFingerprint ==
+                        plan.pressureFingerprint,
+                ) {
+                    "working continuity plan/checkpoint binding is invalid"
+                }
+            }
+        }
+
+        val core =
+            PlanCore(
+                schemaVersion = plan.schemaVersion,
+                truthClass = plan.truthClass,
+                currentness = plan.currentness,
+                state = plan.state,
+                reasonCodes = plan.reasonCodes,
+                pressureRef = plan.pressureRef,
+                pressureFingerprint = plan.pressureFingerprint,
+                lineageRef = plan.lineageRef,
+                threadRef = plan.threadRef,
+                checkpoint = plan.checkpoint,
+                nextSafeAction = plan.nextSafeAction,
+                effectAuthorityGranted =
+                    plan.effectAuthorityGranted,
+                effects = plan.effects,
+            )
+        val fingerprint =
+            semanticHash(
+                core,
+            )
+
+        require(
+            plan.semanticFingerprint ==
+                fingerprint &&
+                plan.planRef ==
+                "plan.vexlife-prod.continuity-rollover." +
+                    fingerprint.take(
+                        32,
+                    ),
+        ) {
+            "working continuity plan semantic identity is invalid"
+        }
+
+        return plan
+    }
+
+    fun validateCheckpoint(
         checkpoint: Checkpoint,
-        workingSet: WorkingSet,
-    ) {
+    ): Checkpoint {
         require(
             checkpoint.schemaVersion ==
                 CheckpointSchema &&
@@ -627,17 +750,13 @@ object VexLifeWorkingContinuity {
                 "CURRENT" &&
                 checkpoint.lifecycle ==
                 "CURRENT" &&
-                checkpoint.lineageRef ==
-                workingSet.lineageRef &&
-                checkpoint.threadRef ==
-                workingSet.threadRef &&
                 !checkpoint.effectAuthorityGranted &&
                 !checkpoint.semanticMemoryPromotionAuthorized &&
                 !checkpoint.modelOutputAcceptedAsMemory &&
                 checkpoint.checkpointTruth ==
                 CheckpointTruth(),
         ) {
-            "prior working checkpoint is not current/reference-only for this lineage/thread"
+            "working checkpoint is not current/reference-only"
         }
 
         require(
@@ -702,8 +821,10 @@ object VexLifeWorkingContinuity {
                         32,
                     ),
         ) {
-            "prior working checkpoint semantic identity is invalid"
+            "working checkpoint semantic identity is invalid"
         }
+
+        return checkpoint
     }
 
     private fun formCheckpoint(
