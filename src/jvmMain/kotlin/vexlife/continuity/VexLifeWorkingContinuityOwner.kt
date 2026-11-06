@@ -610,6 +610,234 @@ class VexLifeWorkingContinuityOwner(
             }
     }
 
+    fun issueSuccessorContext(
+        lineageRef: String,
+        threadRef: String,
+        successorClaimRef: String,
+        successorClaimFingerprint: String,
+        issuedAt: Instant = Instant.now(),
+    ): IssueResult {
+        requireRef(
+            successorClaimRef,
+            "successorClaimRef",
+        )
+        requireSha256(
+            successorClaimFingerprint,
+            "successorClaimFingerprint",
+        )
+
+        val current =
+            requireNotNull(
+                readCurrent(
+                    lineageRef,
+                    threadRef,
+                ),
+            ) {
+                "working continuity successor Context requires one current checkpoint"
+            }
+        val claim =
+            requireNotNull(
+                readSuccessorClaim(
+                    lineageRef,
+                    threadRef,
+                ),
+            ) {
+                "working continuity successor Context requires one exact current claim"
+            }
+        require(
+            claim.successorClaimRef ==
+                successorClaimRef &&
+                claim.semanticFingerprint ==
+                successorClaimFingerprint,
+        ) {
+            "working continuity successor Context does not bind the exact current claim"
+        }
+
+        val paths =
+            paths(
+                lineageRef,
+                threadRef,
+            )
+        val contextPath =
+            paths.successorContexts.resolve(
+                current.checkpoint.semanticFingerprint +
+                    ".json",
+            )
+        val existing =
+            VexDurableContractFile.read<SuccessorContext>(
+                ownedRoot = home,
+                path = contextPath,
+            )
+        if (
+            existing !=
+                null
+        ) {
+            validateSuccessorContext(
+                existing,
+            )
+            require(
+                successorContextMatches(
+                    context = existing,
+                    current = current,
+                    claim = claim,
+                ),
+            ) {
+                "working continuity successor Context is already issued for different current truth"
+            }
+            return IssueResult(
+                state = "IDEMPOTENT_CURRENT",
+                effectPerformedNow = false,
+                context = existing,
+            )
+        }
+
+        return VexExclusiveFileLease
+            .acquire(
+                paths.lock,
+            )
+            .use {
+                val rebound =
+                    requireNotNull(
+                        readCurrent(
+                            lineageRef,
+                            threadRef,
+                        ),
+                    ) {
+                        "working continuity current checkpoint disappeared before successor Context issuance"
+                    }
+                require(
+                    rebound ==
+                        current,
+                ) {
+                    "working continuity current checkpoint changed before successor Context issuance"
+                }
+                val reboundClaim =
+                    requireNotNull(
+                        readSuccessorClaim(
+                            lineageRef,
+                            threadRef,
+                        ),
+                    ) {
+                        "working continuity current successor claim disappeared before Context issuance"
+                    }
+                require(
+                    reboundClaim ==
+                        claim,
+                ) {
+                    "working continuity successor claim changed before Context issuance"
+                }
+
+                val reboundExisting =
+                    VexDurableContractFile.read<SuccessorContext>(
+                        ownedRoot = home,
+                        path = contextPath,
+                    )
+                if (
+                    reboundExisting !=
+                        null
+                ) {
+                    validateSuccessorContext(
+                        reboundExisting,
+                    )
+                    require(
+                        successorContextMatches(
+                            context = reboundExisting,
+                            current = rebound,
+                            claim = reboundClaim,
+                        ),
+                    ) {
+                        "working continuity successor Context is already issued for different current truth"
+                    }
+                    return@use IssueResult(
+                        state = "IDEMPOTENT_CURRENT",
+                        effectPerformedNow = false,
+                        context = reboundExisting,
+                    )
+                }
+
+                val context =
+                    formSuccessorContext(
+                        current = rebound,
+                        claim = reboundClaim,
+                        issuedAt = issuedAt,
+                    )
+                writeImmutableOrRequireExact(
+                    path = contextPath,
+                    value = context,
+                )
+
+                val readback =
+                    requireNotNull(
+                        VexDurableContractFile.read<SuccessorContext>(
+                            ownedRoot = home,
+                            path = contextPath,
+                        ),
+                    ) {
+                        "working continuity successor Context did not persist"
+                    }
+                        .also(
+                            ::validateSuccessorContext,
+                        )
+                require(
+                    readback ==
+                        context,
+                ) {
+                    "working continuity successor Context readback mismatch"
+                }
+
+                IssueResult(
+                    state = "ISSUED",
+                    effectPerformedNow = true,
+                    context = readback,
+                )
+            }
+    }
+
+    fun readSuccessorContext(
+        lineageRef: String,
+        threadRef: String,
+    ): SuccessorContext? {
+        val current =
+            readCurrent(
+                lineageRef,
+                threadRef,
+            )
+                ?: return null
+        val claim =
+            readSuccessorClaim(
+                lineageRef,
+                threadRef,
+            )
+                ?: return null
+        val paths =
+            paths(
+                lineageRef,
+                threadRef,
+            )
+        return VexDurableContractFile.read<SuccessorContext>(
+            ownedRoot = home,
+            path =
+                paths.successorContexts.resolve(
+                    current.checkpoint.semanticFingerprint +
+                        ".json",
+                ),
+        )
+            ?.also {
+                validateSuccessorContext(
+                    it,
+                )
+                require(
+                    successorContextMatches(
+                        context = it,
+                        current = current,
+                        claim = claim,
+                    ),
+                ) {
+                    "working continuity successor Context is not current"
+                }
+            }
+    }
+
     private fun paths(
         lineageRef: String,
         threadRef: String,
@@ -627,6 +855,7 @@ class VexLifeWorkingContinuityOwner(
             checkpoints = root.resolve("checkpoints"),
             receipts = root.resolve("receipts"),
             successorClaims = root.resolve("successor-context-claims"),
+            successorContexts = root.resolve("successor-contexts"),
             head = root.resolve("head.json"),
             lock = root.resolve("owner.lock"),
         )
@@ -762,6 +991,97 @@ class VexLifeWorkingContinuityOwner(
             formedAt = core.formedAt,
             headRef =
                 "head.vexlife-prod.working-continuity." + fingerprint.take(32),
+            semanticFingerprint = fingerprint,
+        )
+    }
+
+    private fun formSuccessorContext(
+        current: Current,
+        claim: SuccessorClaim,
+        issuedAt: Instant,
+    ): SuccessorContext {
+        val sourceRefs =
+            (
+                current.checkpoint.sourceRefs +
+                    listOf(
+                        current.checkpoint.checkpointRef,
+                        current.commitReceipt.commitReceiptRef,
+                        claim.successorClaimRef,
+                    )
+            )
+                .distinct()
+                .sorted()
+        val core =
+            SuccessorContextCore(
+                schemaVersion = SuccessorContextSchema,
+                truthClass =
+                    "NON_SEMANTIC_WORKING_CONTINUITY_SUCCESSOR_CONTEXT",
+                effectOwnerRef = EffectOwnerRef,
+                contextMode =
+                    "WORKING_CHECKPOINT_SUCCESSOR",
+                lineageRef = current.checkpoint.lineageRef,
+                threadRef = current.checkpoint.threadRef,
+                checkpointRef = current.checkpoint.checkpointRef,
+                checkpointFingerprint =
+                    current.checkpoint.semanticFingerprint,
+                commitReceiptRef =
+                    current.commitReceipt.commitReceiptRef,
+                commitReceiptFingerprint =
+                    current.commitReceipt.semanticFingerprint,
+                successorClaimRef =
+                    claim.successorClaimRef,
+                successorClaimFingerprint =
+                    claim.semanticFingerprint,
+                priorConversationHeadSha256 =
+                    claim.priorConversationHeadSha256,
+                priorRequestEventRef =
+                    claim.priorRequestEventRef,
+                currentRequestEventBinding =
+                    claim.currentRequestEventBinding,
+                workingSet =
+                    current.checkpoint.workingSet,
+                sourceRefs = sourceRefs,
+                issuedAt = issuedAt.toString(),
+                effects =
+                    SuccessorContextEffects(
+                        homeMutated = true,
+                        successorContextIssued = true,
+                    ),
+            )
+        val fingerprint =
+            semanticHash(
+                core,
+            )
+        return SuccessorContext(
+            schemaVersion = core.schemaVersion,
+            truthClass = core.truthClass,
+            effectOwnerRef = core.effectOwnerRef,
+            contextMode = core.contextMode,
+            lineageRef = core.lineageRef,
+            threadRef = core.threadRef,
+            checkpointRef = core.checkpointRef,
+            checkpointFingerprint = core.checkpointFingerprint,
+            commitReceiptRef = core.commitReceiptRef,
+            commitReceiptFingerprint =
+                core.commitReceiptFingerprint,
+            successorClaimRef = core.successorClaimRef,
+            successorClaimFingerprint =
+                core.successorClaimFingerprint,
+            priorConversationHeadSha256 =
+                core.priorConversationHeadSha256,
+            priorRequestEventRef =
+                core.priorRequestEventRef,
+            currentRequestEventBinding =
+                core.currentRequestEventBinding,
+            workingSet = core.workingSet,
+            sourceRefs = core.sourceRefs,
+            issuedAt = core.issuedAt,
+            effects = core.effects,
+            successorContextRef =
+                "context.vexlife-prod.working-continuity-successor." +
+                    fingerprint.take(
+                        32,
+                    ),
             semanticFingerprint = fingerprint,
         )
     }
@@ -922,6 +1242,169 @@ class VexLifeWorkingContinuityOwner(
         }
     }
 
+    private fun validateSuccessorContext(
+        value: SuccessorContext,
+    ) {
+        require(
+            value.schemaVersion ==
+                SuccessorContextSchema &&
+                value.truthClass ==
+                "NON_SEMANTIC_WORKING_CONTINUITY_SUCCESSOR_CONTEXT" &&
+                value.effectOwnerRef ==
+                EffectOwnerRef &&
+                value.contextMode ==
+                "WORKING_CHECKPOINT_SUCCESSOR" &&
+                value.effects.homeMutated &&
+                !value.effects.checkpointMutated &&
+                !value.effects.currentHeadMutated &&
+                !value.effects.successorClaimMutated &&
+                value.effects.successorContextIssued &&
+                !value.effects.semanticAcceptanceCreated &&
+                !value.effects.memoryPromotionPerformed &&
+                !value.effects.providerCalled &&
+                !value.effects.modelCalled &&
+                !value.effects.trainingRan &&
+                !value.effects.modelWeightsChanged,
+        ) {
+            "working continuity successor Context identity/effects are invalid"
+        }
+        requireRef(
+            value.lineageRef,
+            "successor Context lineageRef",
+        )
+        requireRef(
+            value.threadRef,
+            "successor Context threadRef",
+        )
+        requireRef(
+            value.checkpointRef,
+            "successor Context checkpointRef",
+        )
+        requireSha256(
+            value.checkpointFingerprint,
+            "successor Context checkpointFingerprint",
+        )
+        requireRef(
+            value.commitReceiptRef,
+            "successor Context commitReceiptRef",
+        )
+        requireSha256(
+            value.commitReceiptFingerprint,
+            "successor Context commitReceiptFingerprint",
+        )
+        requireRef(
+            value.successorClaimRef,
+            "successor Context successorClaimRef",
+        )
+        requireSha256(
+            value.successorClaimFingerprint,
+            "successor Context successorClaimFingerprint",
+        )
+        requireSha256(
+            value.priorConversationHeadSha256,
+            "successor Context priorConversationHeadSha256",
+        )
+        requireRef(
+            value.priorRequestEventRef,
+            "successor Context priorRequestEventRef",
+        )
+        requireCurrentRequestBinding(
+            value.currentRequestEventBinding,
+        )
+        VexLifeWorkingContinuity.validateCheckpoint(
+            VexLifeWorkingContinuity.Checkpoint(
+                schemaVersion =
+                    VexLifeWorkingContinuity.CheckpointSchema,
+                truthClass =
+                    "SOURCE_BOUND_NON_SEMANTIC_WORKING_CONTINUITY_CHECKPOINT",
+                currentness = "CURRENT",
+                lifecycle = "CURRENT",
+                lineageRef = value.workingSet.lineageRef,
+                threadRef = value.workingSet.threadRef,
+                pressureRef = value.checkpointRef,
+                pressureFingerprint =
+                    value.checkpointFingerprint,
+                pressureState =
+                    VexLifeWorkingContinuity.PressureState.CheckpointRecommended,
+                promptReceiptRef =
+                    value.checkpointRef,
+                workingSet = value.workingSet,
+                priorCheckpointRefOrNull = null,
+                priorCheckpointFingerprintOrNull = null,
+                sourceRefs = value.sourceRefs,
+                effectAuthorityGranted = false,
+                semanticMemoryPromotionAuthorized = false,
+                modelOutputAcceptedAsMemory = false,
+                checkpointTruth =
+                    VexLifeWorkingContinuity.CheckpointTruth(),
+                checkpointRef =
+                    value.checkpointRef,
+                semanticFingerprint =
+                    value.checkpointFingerprint,
+            ),
+        )
+        require(
+            value.workingSet.lineageRef ==
+                value.lineageRef &&
+                value.workingSet.threadRef ==
+                value.threadRef &&
+                value.workingSet.cursorEventRef ==
+                value.priorRequestEventRef &&
+                value.sourceRefs ==
+                value.sourceRefs
+                    .distinct()
+                    .sorted(),
+        ) {
+            "working continuity successor Context working/source bindings are invalid"
+        }
+
+        val core =
+            SuccessorContextCore(
+                schemaVersion = value.schemaVersion,
+                truthClass = value.truthClass,
+                effectOwnerRef = value.effectOwnerRef,
+                contextMode = value.contextMode,
+                lineageRef = value.lineageRef,
+                threadRef = value.threadRef,
+                checkpointRef = value.checkpointRef,
+                checkpointFingerprint =
+                    value.checkpointFingerprint,
+                commitReceiptRef =
+                    value.commitReceiptRef,
+                commitReceiptFingerprint =
+                    value.commitReceiptFingerprint,
+                successorClaimRef =
+                    value.successorClaimRef,
+                successorClaimFingerprint =
+                    value.successorClaimFingerprint,
+                priorConversationHeadSha256 =
+                    value.priorConversationHeadSha256,
+                priorRequestEventRef =
+                    value.priorRequestEventRef,
+                currentRequestEventBinding =
+                    value.currentRequestEventBinding,
+                workingSet = value.workingSet,
+                sourceRefs = value.sourceRefs,
+                issuedAt = value.issuedAt,
+                effects = value.effects,
+            )
+        val fingerprint =
+            semanticHash(
+                core,
+            )
+        require(
+            value.semanticFingerprint ==
+                fingerprint &&
+                value.successorContextRef ==
+                "context.vexlife-prod.working-continuity-successor." +
+                    fingerprint.take(
+                        32,
+                    ),
+        ) {
+            "working continuity successor Context semantic identity is invalid"
+        }
+    }
+
     private fun validateSuccessorClaim(
         value: SuccessorClaim,
     ) {
@@ -979,6 +1462,36 @@ class VexLifeWorkingContinuityOwner(
             "working continuity successor claim semantic identity is invalid"
         }
     }
+
+    private fun successorContextMatches(
+        context: SuccessorContext,
+        current: Current,
+        claim: SuccessorClaim,
+    ): Boolean =
+        context.lineageRef ==
+            current.checkpoint.lineageRef &&
+            context.threadRef ==
+            current.checkpoint.threadRef &&
+            context.checkpointRef ==
+            current.checkpoint.checkpointRef &&
+            context.checkpointFingerprint ==
+            current.checkpoint.semanticFingerprint &&
+            context.commitReceiptRef ==
+            current.commitReceipt.commitReceiptRef &&
+            context.commitReceiptFingerprint ==
+            current.commitReceipt.semanticFingerprint &&
+            context.successorClaimRef ==
+            claim.successorClaimRef &&
+            context.successorClaimFingerprint ==
+            claim.semanticFingerprint &&
+            context.priorConversationHeadSha256 ==
+            claim.priorConversationHeadSha256 &&
+            context.priorRequestEventRef ==
+            claim.priorRequestEventRef &&
+            context.currentRequestEventBinding ==
+            claim.currentRequestEventBinding &&
+            context.workingSet ==
+            current.checkpoint.workingSet
 
     private fun sameSuccessorRequest(
         existing: SuccessorClaim,
