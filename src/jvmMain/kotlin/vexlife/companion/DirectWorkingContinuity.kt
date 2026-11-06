@@ -71,6 +71,11 @@ object DirectWorkingContinuity {
     )
 
     @ConsistentCopyVisibility
+    data class CurrentSuccessor internal constructor(
+        val context: VexLifeWorkingContinuityOwner.SuccessorContext,
+    )
+
+    @ConsistentCopyVisibility
     data class Prepared internal constructor(
         val pressureInput: VexLifeWorkingContinuity.PromptPressureInput,
         val workingSet: VexLifeWorkingContinuity.WorkingSet,
@@ -104,7 +109,7 @@ object DirectWorkingContinuity {
         currentRequest: DirectConversationStore.Event,
         issuedAt: Instant =
             Instant.now(),
-    ): VexLifeWorkingContinuityOwner.SuccessorContext? {
+    ): CurrentSuccessor? {
         if (
             prior ==
                 null
@@ -194,14 +199,16 @@ object DirectWorkingContinuity {
             prior = prior,
             currentRequest = currentRequest,
         )
-        return currentContext
+        return CurrentSuccessor(
+            context = currentContext,
+        )
     }
 
     fun requireSuccessorContextCurrent(
         productHome: Path,
         prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
         currentRequest: DirectConversationStore.Event,
-        expected: VexLifeWorkingContinuityOwner.SuccessorContext?,
+        expected: CurrentSuccessor?,
     ) {
         if (
             prior ==
@@ -274,7 +281,7 @@ object DirectWorkingContinuity {
             }
         require(
             observed ==
-                expected,
+                expected.context,
         ) {
             "working rollover successor Context changed before provider invocation"
         }
@@ -290,7 +297,7 @@ object DirectWorkingContinuity {
         currentRequest: DirectConversationStore.Event,
         promptContext: DirectPromptContext.Receipt,
         memoryContext: VexLifeMemoryContract.Context,
-        priorSuccessorContext: VexLifeWorkingContinuityOwner.SuccessorContext? =
+        priorSuccessorContext: CurrentSuccessor? =
             null,
     ): Prepared {
         require(
@@ -350,25 +357,25 @@ object DirectWorkingContinuity {
             }
         } else {
             require(
-                priorSuccessorContext.contextMode ==
+                priorSuccessorContext.context.contextMode ==
                     "WORKING_CHECKPOINT_SUCCESSOR" &&
-                    priorSuccessorContext.lineageRef ==
+                    priorSuccessorContext.context.lineageRef ==
                     currentRequest.companionLineageRef &&
-                    priorSuccessorContext.threadRef ==
+                    priorSuccessorContext.context.threadRef ==
                     currentRequest.threadRef &&
                     promptContext.workingContinuityIncluded &&
                     promptContext.contextMode ==
                     "WORKING_CHECKPOINT_SUCCESSOR" &&
                     promptContext.workingContinuityContextRef ==
-                    priorSuccessorContext.successorContextRef &&
+                    priorSuccessorContext.context.successorContextRef &&
                     promptContext.workingContinuityContextFingerprint ==
-                    priorSuccessorContext.semanticFingerprint &&
+                    priorSuccessorContext.context.semanticFingerprint &&
                     promptContext.workingContinuityCheckpointRef ==
-                    priorSuccessorContext.checkpointRef &&
+                    priorSuccessorContext.context.checkpointRef &&
                     promptContext.workingContinuitySuccessorClaimRef ==
-                    priorSuccessorContext.successorClaimRef &&
+                    priorSuccessorContext.context.successorClaimRef &&
                     promptContext.workingContinuitySourceRefs ==
-                    priorSuccessorContext.sourceRefs,
+                    priorSuccessorContext.context.sourceRefs,
             ) {
                 "direct working continuity prior successor Context does not match exact prompt materialization"
             }
@@ -376,6 +383,7 @@ object DirectWorkingContinuity {
 
         val previousWorkingSet =
             priorSuccessorContext
+                ?.context
                 ?.workingSet
                 ?.let(
                     VexLifeWorkingContinuity::validateWorkingSet,
@@ -443,6 +451,7 @@ object DirectWorkingContinuity {
                             ?.sourceRefs
                             .orEmpty() +
                             priorSuccessorContext
+                                ?.context
                                 ?.sourceRefs
                                 .orEmpty() +
                             validatedMemory.sourceRefs +
@@ -479,6 +488,7 @@ object DirectWorkingContinuity {
                             validatedMemory.memoryContextRef,
                         ) +
                             priorSuccessorContext
+                                ?.context
                                 ?.let {
                                     listOf(
                                         it.successorContextRef,
