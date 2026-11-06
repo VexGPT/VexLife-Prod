@@ -619,7 +619,7 @@ object DirectCompanionConnection {
             null,
             uri.host,
             uri.port,
-            "/",
+            null,
             null,
             null,
         )
