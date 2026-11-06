@@ -357,7 +357,7 @@ class VexLifeProdLocalService private constructor(
                     content = result.content,
                     model = result.model,
                     currentConversationHeadSha256 = result.currentConversationHeadSha256,
-                    contextRef = result.contextRef,
+                    contextPath = result.contextPath,
                     promptContext =
                         VexLifeProdServiceContract.PromptContextProjection(
                             receiptRef = result.promptContextReceipt.receiptRef,
