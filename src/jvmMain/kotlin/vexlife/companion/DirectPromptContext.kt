@@ -148,8 +148,10 @@ object DirectPromptContext {
                         prior.responseEvent.eventSha256 &&
                         currentRequest.threadRef ==
                         prior.head.threadRef &&
+                        prior.requestEvent.channelRef ==
+                        prior.responseEvent.channelRef &&
                         currentRequest.channelRef ==
-                        prior.head.channelRef,
+                        prior.responseEvent.channelRef,
                 ) {
                     "direct prompt context current request does not immediately follow the exact prior completed turn"
                 }
