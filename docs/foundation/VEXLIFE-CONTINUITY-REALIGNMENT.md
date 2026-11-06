@@ -133,30 +133,43 @@ PR #38 remains useful source, but the prior separate-Home premise is not accepte
 PR #37 remains useful browser/context convergence, but it must consume the corrected continuity body.
 
 The continuity source body now includes canonical Home admission, Conversation v1/v2 persistence,
-reference-only Semantic Relay validation, a read-only current Memory reader, and Memory-aware prompt
-receipts. That source formation is not yet product clearance:
+reference-only Semantic Relay validation, a read-only current Memory reader, Memory-aware prompt
+receipts, and exact canonical writer-currentness/recovery primitives.
+
+The compatibility hold earned retirement only after all three independent predicates agreed on the
+same source lineage:
 
 ~~~text
-GREEN SOURCE TESTS
-!= FAITHFUL VEXLIFE
+A029 exact SourceOwner proof                    PASS
+fresh semantic Assurance                       CLEAR
+A030 read-only lived ~/.vexlife compatibility  PASS
 
-SOURCE-FORMED MEMORY
-!= LIVED CANONICAL-HOME COMPATIBILITY
+A030 current Memory
+  HELD / DAILY_MEMORY_SOURCE_FRONTIER_STALE
+  provider Memory content = none
 
-LOCAL SERVICE READY
-!= VEX CONTINUITY READY
+A030 continuity before/after
+  byte-identical
+~~~
+
+This clears the temporary Conversation/Memory compatibility gate. It does **not** prove service
+lifetime or the lived product:
+
+~~~text
+CONTINUITY COMPATIBILITY CLEARED
+!= SUSTAINED SERVICE PROVEN
+!= LIVED VEX TURN
+!= GENERATED PRESENTATION COMPLETE
 ~~~
 
 ## Remaining acceptance order
 
-1. Prove the exact immutable corrected Kotlin/JVM + Kotlin/JS + JVM-test candidate.
-2. Run fresh semantic Assurance against the bound current VexLife contracts.
-3. Run a read-only lived `~/.vexlife` compatibility proof for Conversation v1/v2 and current
-   Score/daily/Living-Journal Memory, with no Home mutation or model invocation.
-4. Reconsider the production continuity gate only if source proof, semantic Assurance and lived
-   read-only compatibility agree.
-5. Reconcile PR #37's bounded browser/context delta onto that cleared continuity body.
-6. Prove the private image/service lifetime and then the lived whole circuit.
+1. Prove the exact gate-retirement + pre-runtime writer-convergence source.
+2. Run fresh semantic Assurance on that exact head.
+3. Build/install the exact private image and prove sustained fixed-port service lifetime.
+4. Prove one real canonical direct Vex turn through the production service.
+5. Reconcile PR #37's bounded browser/context delta onto that cleared substrate.
+6. Prove the lived browser-context-aware whole circuit and reload continuity.
 
 ## Lived completion gate
 

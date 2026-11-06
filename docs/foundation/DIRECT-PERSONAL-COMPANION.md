@@ -352,7 +352,8 @@ real macOS:
   direct turn 2
   sustained process after setup completion
 
-read-only lived canonical Home compatibility for Conversation v1/v2 + attributed Memory
+canonical Home/Conversation/Memory read compatibility = A030 PASS
+real production-service direct turn
 working-checkpoint successor / rollover continuity
 CLEAN_START presentation/semantic wiring
 streamed response progress
