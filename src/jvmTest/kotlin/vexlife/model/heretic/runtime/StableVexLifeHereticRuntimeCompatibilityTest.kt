@@ -3,6 +3,7 @@ package vexlife.model.heretic.runtime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeEffectBoundary
@@ -171,6 +172,106 @@ class StableVexLifeHereticRuntimeCompatibilityTest {
             keepAlive = false,
             pid = pid,
         )
+
+    @Test
+    fun exactAbandonedStableReceiptFallsThroughWithoutBorrowOrOwnershipEffect() {
+        val binding =
+            binding()
+        val pid =
+            4242L
+        val platform =
+            Platform(
+                expectedPid = 9999L,
+                expectedProcessGroupId = pid,
+            )
+        val receipt =
+            StableVexLifeHereticRuntimeCompatibility.Receipt(
+                schemaVersion = StableVexLifeHereticRuntimeCompatibility.ReceiptSchema,
+                receiptRef = "receipt.vexlife.heretic-persistent-runtime.abandoned-test",
+                state = StableVexLifeHereticRuntimeCompatibility.QualifiedState,
+                formedAt = "2026-11-05T19:44:00-08:00",
+                authorityRef = StableVexLifeHereticRuntimeCompatibility.StableAuthorityRef,
+                modelRef = HereticProductIdentity.ModelRef,
+                modelProfileRef = HereticProductIdentity.ModelProfileRef,
+                artifactRef = HereticProductIdentity.ArtifactSetRef,
+                artifactCustodyEvidenceRef = HereticProductIdentity.ArtifactCustodyEvidenceRef,
+                artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
+                runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
+                runtimeClass = HereticProductIdentity.RuntimeClass,
+                transportClass = HereticProductIdentity.TransportClass,
+                hostExecutionProfileRef =
+                    StableVexLifeHereticRuntimeCompatibility.StableHostExecutionProfileRef,
+                pythonVersion = HereticProductIdentity.PythonVersion,
+                mlxLmVersion = HereticProductIdentity.MlxLmVersion,
+                trainerSourceCommit = HereticProductIdentity.TrainerSourceCommit,
+                modelPath = binding.modelPath,
+                pythonPath = binding.pythonPath,
+                pythonEnvironmentRoot = binding.pythonEnvironmentRoot,
+                endpoint = HereticProductIdentity.Endpoint,
+                requestModel = HereticProductIdentity.RequestModel,
+                sourceIdentity =
+                    StableVexLifeHereticRuntimeCompatibility.SourceIdentity(
+                        repository =
+                            StableVexLifeHereticRuntimeCompatibility.StableOwnerRepository,
+                        modulePath =
+                            StableVexLifeHereticRuntimeCompatibility.StableOwnerModulePath,
+                        moduleSha256 =
+                            "a".repeat(
+                                64,
+                            ),
+                    ),
+                runtime =
+                    StableVexLifeHereticRuntimeCompatibility.RuntimeProcess(
+                        pid = pid,
+                        processGroupId = pid,
+                        exactOwnedDetachedGroup = true,
+                        args =
+                            HereticPersistentRuntime.serverArgs(
+                                binding,
+                            ),
+                        processSubstrate =
+                            substrate(
+                                pid = pid,
+                                binding = binding,
+                            ),
+                    ),
+                effects = HereticRuntimeEffectBoundary.QualifiedRuntime,
+                qualification = HereticRuntimeQualification.qualified(),
+            )
+        val launchdHost =
+            object : MacUserLaunchdProcess.Host {
+                override val uid =
+                    501L
+
+                override fun launchctl(
+                    args: List<String>,
+                ): MacUserLaunchdProcess.CommandResult =
+                    error(
+                        "abandoned predecessor must not require live launchd currentness",
+                    )
+
+                override fun processAlive(
+                    pid: Long,
+                ): Boolean =
+                    false
+            }
+
+        assertNull(
+            StableVexLifeHereticRuntimeCompatibility.observeReceipt(
+                receipt = receipt,
+                binding = binding,
+                platform = platform,
+                launchdHost = launchdHost,
+            ),
+        )
+        assertEquals(
+            listOf(
+                "ENVIRONMENT_CURRENT",
+                "PROCESS_ALIVE",
+            ),
+            platform.trace,
+        )
+    }
 
     @Test
     fun exactStableReceiptBecomesBorrowedEvidenceWithoutOwnershipEffects() {

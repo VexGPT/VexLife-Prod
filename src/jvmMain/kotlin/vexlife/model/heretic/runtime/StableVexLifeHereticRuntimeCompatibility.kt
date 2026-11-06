@@ -167,7 +167,7 @@ object StableVexLifeHereticRuntimeCompatibility {
         binding: HereticPersistentRuntime.Binding,
         platform: HereticPersistentRuntime.Platform,
         launchdHost: MacUserLaunchdProcess.Host,
-    ): Observation {
+    ): Observation? {
         require(
             platform.platform ==
                 "darwin" &&
@@ -236,34 +236,9 @@ object StableVexLifeHereticRuntimeCompatibility {
             "stable VexLife Heretic runtime receipt is not compatible with the certified New Beginnings runtime relationship"
         }
 
-        val qualification =
-            requireNotNull(
-                receipt.qualification,
-            ) {
-                "stable VexLife Heretic runtime receipt lacks exact qualification evidence"
-            }
-        val substrate =
-            requireNotNull(
-                receipt.runtime.processSubstrate,
-            ) {
-                "stable VexLife Heretic runtime receipt lacks exact process-substrate ownership evidence"
-            }
         val expectedArgs =
             HereticPersistentRuntime.serverArgs(
                 binding,
-            )
-        validateStableLaunchdReceipt(
-            receipt = substrate,
-            expectedPythonPath = binding.pythonPath,
-            expectedWorkingDirectory = binding.pythonEnvironmentRoot,
-            expectedArguments = expectedArgs,
-            expectedPid = receipt.runtime.pid,
-        )
-        val launchd =
-            MacUserLaunchdProcess.observeCoordinate(
-                domainTarget = substrate.domainTarget,
-                label = substrate.label,
-                host = launchdHost,
             )
         require(
             receipt.runtime.pid >
@@ -272,14 +247,54 @@ object StableVexLifeHereticRuntimeCompatibility {
                 0 &&
                 receipt.runtime.exactOwnedDetachedGroup &&
                 receipt.runtime.args ==
-                expectedArgs &&
-                launchd is
+                expectedArgs,
+        ) {
+            "stable VexLife Heretic runtime receipt process identity is invalid"
+        }
+
+        receipt.runtime.processSubstrate
+            ?.let {
+                substrate ->
+                validateStableLaunchdReceipt(
+                    receipt = substrate,
+                    expectedPythonPath = binding.pythonPath,
+                    expectedWorkingDirectory = binding.pythonEnvironmentRoot,
+                    expectedArguments = expectedArgs,
+                    expectedPid = receipt.runtime.pid,
+                )
+            }
+
+        if (
+            !platform.processAlive(
+                receipt.runtime.pid,
+            )
+        ) {
+            return null
+        }
+
+        val qualification =
+            requireNotNull(
+                receipt.qualification,
+            ) {
+                "live stable VexLife Heretic runtime receipt lacks exact qualification evidence"
+            }
+        val substrate =
+            requireNotNull(
+                receipt.runtime.processSubstrate,
+            ) {
+                "live stable VexLife Heretic runtime receipt lacks exact process-substrate ownership evidence"
+            }
+        val launchd =
+            MacUserLaunchdProcess.observeCoordinate(
+                domainTarget = substrate.domainTarget,
+                label = substrate.label,
+                host = launchdHost,
+            )
+        require(
+            launchd is
                 MacUserLaunchdProcess.Observation.Running &&
                 launchd.pid ==
-                receipt.runtime.pid &&
-                platform.processAlive(
-                    receipt.runtime.pid,
-                ),
+                receipt.runtime.pid,
         ) {
             "stable VexLife Heretic runtime receipt does not bind one live exact-owned process"
         }

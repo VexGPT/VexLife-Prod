@@ -165,8 +165,11 @@ PORT 8765 ANSWERS
 ~~~
 
 If the stable receipt is absent, product-owned runtime formation may proceed under the separate
-VexLife-Prod receipt coordinate. If the stable receipt is present but invalid/drifting, setup holds
-rather than silently starting a competing process on the same endpoint.
+VexLife-Prod receipt coordinate. An exact stable receipt whose recorded PID is no longer live is
+classified as predecessor `UNOWNED / ABANDONED`: it is left untouched, is not borrowed, and the
+product-owned runtime path may proceed only through its own matching-process census and port-occupancy
+checks. If the stable receipt is malformed, ambiguous, or claims a live-but-drifting process, setup
+holds rather than silently starting a competing process on the same endpoint.
 
 ### New product-owned start
 
