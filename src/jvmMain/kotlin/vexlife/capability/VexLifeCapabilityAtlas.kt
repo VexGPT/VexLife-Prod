@@ -133,7 +133,7 @@ object VexLifeCapabilityAtlas {
         val currentContext: CurrentContext,
         val sourceRefs: List<String>,
         val tokenBudget: Int =
-            1_200,
+            1_600,
         val formedAt: Instant =
             Instant.now(),
     )
@@ -171,15 +171,6 @@ object VexLifeCapabilityAtlas {
         val omittedCapabilityRefs: List<String>,
         val omissionReasons: List<String>,
         val truncated: Boolean,
-    )
-
-    @Serializable
-    private data class FrameBudgetBase(
-        val schemaVersion: String,
-        val registryRef: String,
-        val activeRoleRef: String,
-        val platformRef: String,
-        val currentContext: CurrentContext,
     )
 
     @Serializable
@@ -517,61 +508,74 @@ object VexLifeCapabilityAtlas {
             registry()
         val formedAt =
             input.formedAt.toString()
-        val baseTokenCost =
-            estimatedTokens(
-                FrameBudgetBase(
-                    schemaVersion =
-                        FrameSchema,
-                    registryRef =
-                        registry.registryRef,
-                    activeRoleRef =
-                        input.activeRoleRef,
-                    platformRef =
-                        input.platformRef,
-                    currentContext =
-                        input.currentContext,
-                ),
-            )
-
-        require(
-            baseTokenCost <=
-                input.tokenBudget,
-        ) {
-            "self-capability frame tokenBudget is too small for the frame header/current context"
-        }
-
-        var usedTokens =
-            baseTokenCost
         val selected =
-            mutableListOf<Entry>()
+            candidates.toMutableList()
         val omitted =
             mutableListOf<String>()
 
-        candidates.forEach {
-            entry ->
-            val cost =
-                estimatedTokens(
-                    entry,
+        var frame =
+            materializedFrame(
+                input =
+                    input,
+                registry =
+                    registry,
+                baseSourceRefs =
+                    baseSourceRefs,
+                selected =
+                    selected,
+                omittedCapabilityRefs =
+                    omitted,
+                formedAt =
+                    formedAt,
+            )
+
+        while (
+            frame.coverage.usedTokens >
+            input.tokenBudget
+        ) {
+            val removed =
+                selected.removeLastOrNull()
+                    ?: throw IllegalArgumentException(
+                        "self-capability frame tokenBudget is too small for the final frame metadata/current context and truthful omission accounting",
+                    )
+            omitted +=
+                removed.capabilityRef
+            frame =
+                materializedFrame(
+                    input =
+                        input,
+                    registry =
+                        registry,
+                    baseSourceRefs =
+                        baseSourceRefs,
+                    selected =
+                        selected,
+                    omittedCapabilityRefs =
+                        omitted,
+                    formedAt =
+                        formedAt,
                 )
-            if (
-                usedTokens +
-                    cost <=
-                input.tokenBudget
-            ) {
-                selected +=
-                    entry
-                usedTokens +=
-                    cost
-            } else {
-                omitted +=
-                    entry.capabilityRef
-            }
         }
 
+        return frame
+    }
+
+    private fun materializedFrame(
+        input: FrameInput,
+        registry: Registry,
+        baseSourceRefs: List<String>,
+        selected: List<Entry>,
+        omittedCapabilityRefs: List<String>,
+        formedAt: String,
+    ): Frame {
         val sortedSelected =
             selected.sortedBy {
                 it.capabilityRef
             }
+        val omitted =
+            omittedCapabilityRefs
+                .distinct()
+                .sorted()
         val sourceRefs =
             (
                 baseSourceRefs +
@@ -584,128 +588,149 @@ object VexLifeCapabilityAtlas {
             )
                 .distinct()
                 .sorted()
-        val coverage =
-            Coverage(
-                tokenBudget =
-                    input.tokenBudget,
-                usedTokens =
-                    usedTokens,
-                omittedCapabilityRefs =
-                    omitted.sorted(),
-                omissionReasons =
-                    omitted
-                        .sorted()
-                        .map {
+
+        var usedTokens =
+            0
+        repeat(
+            8,
+        ) {
+            val coverage =
+                Coverage(
+                    tokenBudget =
+                        input.tokenBudget,
+                    usedTokens =
+                        usedTokens,
+                    omittedCapabilityRefs =
+                        omitted,
+                    omissionReasons =
+                        omitted.map {
                             "TOKEN_BUDGET"
                         },
-                truncated =
-                    omitted.isNotEmpty(),
-            )
-        val core =
-            FrameCore(
-                schemaVersion =
-                    FrameSchema,
-                truthClass =
-                    "BOUNDED_SOURCE_BOUND_SELF_CAPABILITY_FRAME",
-                registryRef =
-                    registry.registryRef,
-                registryFingerprint =
-                    registry.semanticFingerprint,
-                activeRoleRef =
-                    input.activeRoleRef,
-                platformRef =
-                    input.platformRef,
-                currentContext =
-                    input.currentContext,
-                capabilityEntries =
-                    sortedSelected,
-                availableCapabilityRefs =
-                    refsInState(
+                    truncated =
+                        omitted.isNotEmpty(),
+                )
+            val core =
+                FrameCore(
+                    schemaVersion =
+                        FrameSchema,
+                    truthClass =
+                        "BOUNDED_SOURCE_BOUND_SELF_CAPABILITY_FRAME",
+                    registryRef =
+                        registry.registryRef,
+                    registryFingerprint =
+                        registry.semanticFingerprint,
+                    activeRoleRef =
+                        input.activeRoleRef,
+                    platformRef =
+                        input.platformRef,
+                    currentContext =
+                        input.currentContext,
+                    capabilityEntries =
                         sortedSelected,
-                        FrameState.AVAILABLE,
-                    ),
-                heldCapabilityEntries =
-                    sortedSelected
-                        .filter {
-                            it.state ==
-                                FrameState.HELD
-                        }
-                        .map {
-                            HeldEntry(
-                                capabilityRef =
-                                    it.capabilityRef,
-                                reasonCodes =
-                                    it.reasonCodes,
-                                permissionRef =
-                                    it.permissionRef,
-                                resourceRef =
-                                    it.resourceRef,
-                            )
-                        },
-                unavailableCapabilityRefs =
-                    refsInState(
-                        sortedSelected,
-                        FrameState.UNAVAILABLE,
-                    ),
-                unknownCapabilityRefs =
-                    refsInState(
-                        sortedSelected,
-                        FrameState.UNKNOWN,
-                    ),
-                sourceRefs =
-                    sourceRefs,
-                coverage =
-                    coverage,
-                effectAuthorityGranted =
-                    false,
-                formedAt =
-                    formedAt,
-            )
-        val fingerprint =
-            semanticHash(
-                core,
-            )
+                    availableCapabilityRefs =
+                        refsInState(
+                            sortedSelected,
+                            FrameState.AVAILABLE,
+                        ),
+                    heldCapabilityEntries =
+                        sortedSelected
+                            .filter {
+                                it.state ==
+                                    FrameState.HELD
+                            }
+                            .map {
+                                HeldEntry(
+                                    capabilityRef =
+                                        it.capabilityRef,
+                                    reasonCodes =
+                                        it.reasonCodes,
+                                    permissionRef =
+                                        it.permissionRef,
+                                    resourceRef =
+                                        it.resourceRef,
+                                )
+                            },
+                    unavailableCapabilityRefs =
+                        refsInState(
+                            sortedSelected,
+                            FrameState.UNAVAILABLE,
+                        ),
+                    unknownCapabilityRefs =
+                        refsInState(
+                            sortedSelected,
+                            FrameState.UNKNOWN,
+                        ),
+                    sourceRefs =
+                        sourceRefs,
+                    coverage =
+                        coverage,
+                    effectAuthorityGranted =
+                        false,
+                    formedAt =
+                        formedAt,
+                )
+            val fingerprint =
+                semanticHash(
+                    core,
+                )
+            val frame =
+                Frame(
+                    schemaVersion =
+                        core.schemaVersion,
+                    truthClass =
+                        core.truthClass,
+                    registryRef =
+                        core.registryRef,
+                    registryFingerprint =
+                        core.registryFingerprint,
+                    activeRoleRef =
+                        core.activeRoleRef,
+                    platformRef =
+                        core.platformRef,
+                    currentContext =
+                        core.currentContext,
+                    capabilityEntries =
+                        core.capabilityEntries,
+                    availableCapabilityRefs =
+                        core.availableCapabilityRefs,
+                    heldCapabilityEntries =
+                        core.heldCapabilityEntries,
+                    unavailableCapabilityRefs =
+                        core.unavailableCapabilityRefs,
+                    unknownCapabilityRefs =
+                        core.unknownCapabilityRefs,
+                    sourceRefs =
+                        core.sourceRefs,
+                    coverage =
+                        core.coverage,
+                    effectAuthorityGranted =
+                        core.effectAuthorityGranted,
+                    formedAt =
+                        core.formedAt,
+                    selfCapabilityFrameRef =
+                        "frame.vexlife-prod.self-capability." +
+                            fingerprint.take(
+                                32,
+                            ),
+                    semanticFingerprint =
+                        fingerprint,
+                )
+            val actualTokens =
+                estimatedTokens(
+                    frame,
+                )
+            if (
+                actualTokens ==
+                usedTokens
+            ) {
+                return frame
+            }
+            usedTokens =
+                actualTokens
+        }
 
-        return Frame(
-            schemaVersion =
-                core.schemaVersion,
-            truthClass =
-                core.truthClass,
-            registryRef =
-                core.registryRef,
-            registryFingerprint =
-                core.registryFingerprint,
-            activeRoleRef =
-                core.activeRoleRef,
-            platformRef =
-                core.platformRef,
-            currentContext =
-                core.currentContext,
-            capabilityEntries =
-                core.capabilityEntries,
-            availableCapabilityRefs =
-                core.availableCapabilityRefs,
-            heldCapabilityEntries =
-                core.heldCapabilityEntries,
-            unavailableCapabilityRefs =
-                core.unavailableCapabilityRefs,
-            unknownCapabilityRefs =
-                core.unknownCapabilityRefs,
-            sourceRefs =
-                core.sourceRefs,
-            coverage =
-                core.coverage,
-            effectAuthorityGranted =
-                core.effectAuthorityGranted,
-            formedAt =
-                core.formedAt,
-            selfCapabilityFrameRef =
-                "frame.vexlife-prod.self-capability." +
-                    fingerprint.take(
-                        32,
-                    ),
-            semanticFingerprint =
-                fingerprint,
+        error(
+            "self-capability frame token accounting did not converge",
         )
     }
 

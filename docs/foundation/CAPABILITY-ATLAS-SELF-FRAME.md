@@ -167,7 +167,17 @@ omissionReasons = TOKEN_BUDGET
 truncated
 ~~~
 
-If the frame header/current-context itself does not fit the admitted budget, formation fails closed.
+`usedTokens` is the deterministic estimate of the **final canonical Frame materialization**, including
+current context, selected entries, aggregate state/source projections, coverage metadata and the
+fixed-length content-addressed identity fields. It is not merely the sum of selected entry costs.
+
+Selection walks source-owned priority order and keeps the highest-priority prefix whose complete
+materialized frame fits the budget. Lower-priority entries are omitted with `TOKEN_BUDGET`. If even
+the truthful empty-selection frame (metadata/current context plus omission accounting) cannot fit,
+formation fails closed.
+
+The default budget is sized for the current four-capability frame; smaller callers may deliberately
+receive a deterministic truncated frame.
 
 The frame carries only bounded refs/currentness metadata. It does not carry full implementation
 schemas, source files, credentials, private payloads or capability instructions.

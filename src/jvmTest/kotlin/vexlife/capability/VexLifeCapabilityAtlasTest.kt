@@ -1,5 +1,6 @@
 package vexlife.capability
 
+import java.nio.charset.StandardCharsets
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -7,6 +8,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
+import vexlife.contract.VexContractJson
 
 class VexLifeCapabilityAtlasTest {
     private val allCapabilityRefs =
@@ -104,7 +106,7 @@ class VexLifeCapabilityAtlasTest {
         resources: List<VexLifeCapabilityAtlas.ResourceFact> =
             resourceFacts(),
         tokenBudget: Int =
-            1_200,
+            1_600,
     ) =
         VexLifeCapabilityAtlas.FrameInput(
             activeRoleRef =
@@ -133,6 +135,29 @@ class VexLifeCapabilityAtlasTest {
                     "2026-11-06T12:30:00Z",
                 ),
         )
+
+    private fun materializedFrameTokens(
+        frame: VexLifeCapabilityAtlas.Frame,
+    ): Int {
+        val bytes =
+            VexContractJson
+                .canonicalEncode(
+                    frame,
+                )
+                .toByteArray(
+                    StandardCharsets.UTF_8,
+                )
+                .size
+        return maxOf(
+            1,
+            (
+                bytes +
+                    3
+            ) /
+                4,
+        ) +
+            4
+    }
 
     @Test
     fun registryContainsOnlyCurrentlyGroundedProductCapabilities() {
@@ -185,6 +210,16 @@ class VexLifeCapabilityAtlasTest {
                 input(),
             )
 
+        assertEquals(
+            materializedFrameTokens(
+                frame,
+            ),
+            frame.coverage.usedTokens,
+        )
+        assertTrue(
+            frame.coverage.usedTokens <=
+                frame.coverage.tokenBudget,
+        )
         assertEquals(
             allCapabilityRefs,
             frame.availableCapabilityRefs,
@@ -367,6 +402,12 @@ class VexLifeCapabilityAtlasTest {
                 ),
             )
 
+        assertEquals(
+            materializedFrameTokens(
+                bounded,
+            ),
+            bounded.coverage.usedTokens,
+        )
         assertTrue(
             bounded.coverage.usedTokens <=
                 bounded.coverage.tokenBudget,
@@ -403,7 +444,7 @@ class VexLifeCapabilityAtlasTest {
             VexLifeCapabilityAtlas.formFrame(
                 input(
                     tokenBudget =
-                        256,
+                        500,
                 )
                     .copy(
                         currentContext =
