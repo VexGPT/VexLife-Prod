@@ -158,16 +158,39 @@ BUILD SCRIPT
 
 `jdeps --print-module-deps` analyzes the application JAR against that exact runtime classpath.
 
-Its result feeds `jlink --add-modules`.
+Its result feeds the static application/JDK roots for `jlink --add-modules`.
 
-The current service requires the derived module set to include at least:
+Java 21 security-provider availability is a separate runtime construction concern. `jdeps`
+cannot prove providers that are selected through the Java Security service/provider mechanism.
+Because setup performs HTTPS acquisition through `java.net.http.HttpClient`, the private Java 21
+runtime explicitly adds the SunEC provider module:
+
+~~~text
+jdk.crypto.ec
+~~~
+
+The final module set therefore requires at least:
 
 ~~~text
 java.net.http
 jdk.httpserver
+jdk.crypto.ec
 ~~~
 
 Other transitive JDK modules remain derived.
+
+Permanent:
+
+~~~text
+JDEPS STATIC DEPENDENCY GRAPH
+!= RUNTIME SECURITY-PROVIDER AVAILABILITY
+
+HTTPS API PRESENT
+!= TLS HANDSHAKE CAPABLE
+
+JAVA 21 PRIVATE RUNTIME
+-> SUNEC PROVIDER PRESENT
+~~~
 
 ## Image shape
 

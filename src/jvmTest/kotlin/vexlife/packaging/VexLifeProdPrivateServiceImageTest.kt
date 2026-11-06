@@ -196,6 +196,7 @@ class VexLifeProdPrivateServiceImageTest {
                     listOf(
                         "java.base",
                         "java.net.http",
+                        "jdk.crypto.ec",
                         "jdk.httpserver",
                     ),
                 payloadSha256 = payload,
@@ -280,6 +281,64 @@ class VexLifeProdPrivateServiceImageTest {
             assertFalse(
                 observed.effectsPerformed,
             )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun java21ImageWithoutSunEcProviderIsRejectedEvenWhenPayloadBytesAreUnchanged() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-private-service-image-tls-provider-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "image",
+            )
+        val sourceSha =
+            "a".repeat(
+                40,
+            )
+
+        try {
+            Files.createDirectory(
+                root,
+            )
+            val original =
+                formImage(
+                    root,
+                    sourceSha,
+                )
+            val missingTlsProvider =
+                original.copy(
+                    runtimeModules =
+                        original.runtimeModules.filterNot {
+                            it ==
+                                "jdk.crypto.ec"
+                        },
+                )
+
+            Files.writeString(
+                root.resolve(
+                    VexLifeProdPrivateServiceImage.ManifestRelativePath,
+                ),
+                VexContractJson.encode(
+                    missingTlsProvider,
+                ) +
+                    "\n",
+                StandardCharsets.UTF_8,
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                VexLifeProdPrivateServiceImage.observe(
+                    imageRoot = root,
+                    expectedSourceSha = sourceSha,
+                )
+            }
         } finally {
             parent
                 .toFile()

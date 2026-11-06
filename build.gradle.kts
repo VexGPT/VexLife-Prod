@@ -866,19 +866,29 @@ tasks.register(
             "jdeps produced an invalid module dependency set: $modules"
         }
 
+        val runtimeProviderModules =
+            setOf(
+                "jdk.crypto.ec",
+            )
         val moduleSet =
-            modules
-                .split(
-                    ",",
-                )
-                .toSet()
+            (
+                modules
+                    .split(
+                        ",",
+                    )
+                    .toSet() +
+                    runtimeProviderModules
+            )
+                .sorted()
         require(
             "jdk.httpserver" in
                 moduleSet &&
                 "java.net.http" in
+                moduleSet &&
+                "jdk.crypto.ec" in
                 moduleSet,
         ) {
-            "service runtime image must include jdk.httpserver + java.net.http"
+            "service runtime image must include jdk.httpserver + java.net.http + Java 21 SunEC provider"
         }
 
         val output =
@@ -937,7 +947,9 @@ tasks.register(
             listOf(
                 jlink.toString(),
                 "--add-modules",
-                modules,
+                moduleSet.joinToString(
+                    ",",
+                ),
                 "--strip-debug",
                 "--no-header-files",
                 "--no-man-pages",
@@ -1064,11 +1076,7 @@ tasks.register(
             }
 
         val moduleJson =
-            modules
-                .split(
-                    ",",
-                )
-                .sorted()
+            moduleSet
                 .joinToString(
                     separator =
                         ",",
