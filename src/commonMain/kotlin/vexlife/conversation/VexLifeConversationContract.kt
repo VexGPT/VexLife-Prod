@@ -1,14 +1,15 @@
 package vexlife.conversation
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
 import vexlife.continuity.VexLifeContinuity
 
 /**
- * Exact portable contract for the lived VexLife direct Conversation event/head chain.
+ * Exact portable contract for the lived VexLife direct Conversation event/head/context chain.
  *
- * These shapes intentionally mirror current VexLife at the bound reference revision. They are not a
- * new VexLife-Prod Conversation vocabulary. JVM persistence may change implementation mechanics only
- * after proving that its bytes, semantic-hash preimages and lineage rules remain compatible.
+ * These shapes mirror current VexLife at [VexLifeContinuity.ReferenceRevision]. They are not a new
+ * VexLife-Prod Conversation vocabulary. JVM persistence may replace implementation mechanics only
+ * while these durable identities, semantic-hash preimages and causal bindings remain compatible.
  */
 object VexLifeConversationContract {
     const val EventSchemaV1 =
@@ -132,6 +133,46 @@ object VexLifeConversationContract {
         val eventHash: String,
     )
 
+    /**
+     * Canonical bounded context. The nested prompt receipt is intentionally represented as JSON:
+     * current VexLife owns the outer context contract while prompt-materialization owners may evolve
+     * their own exact receipt schema without making Conversation re-own prompt semantics.
+     */
+    @Serializable
+    data class ContextCore(
+        val schemaVersion: String,
+        val homeRef: String,
+        val deviceRef: String,
+        val companionLineageRef: String,
+        val instanceRef: String,
+        val threadRef: String,
+        val turnRef: String,
+        val contextSourceRefs: List<String>,
+        val requestEventHash: String,
+        val responseEventHash: String,
+        val promptContextMaterializationReceipt: JsonObject? = null,
+        val privacyClass: String,
+        val formedAt: String,
+    )
+
+    @Serializable
+    data class Context(
+        val schemaVersion: String,
+        val homeRef: String,
+        val deviceRef: String,
+        val companionLineageRef: String,
+        val instanceRef: String,
+        val threadRef: String,
+        val turnRef: String,
+        val contextSourceRefs: List<String>,
+        val requestEventHash: String,
+        val responseEventHash: String,
+        val promptContextMaterializationReceipt: JsonObject? = null,
+        val privacyClass: String,
+        val formedAt: String,
+        val serializedContextSha256: String,
+    )
+
     @Serializable
     data class HeadCore(
         val schemaVersion: String,
@@ -175,18 +216,11 @@ object VexLifeConversationContract {
         value: RequestCoreV1,
     ): RequestCoreV1 {
         require(
-            value.schemaVersion ==
-                EventSchemaV1 &&
-                value.eventKind ==
-                RequestKind &&
-                value.privacyClass ==
-                PrivacyClass &&
+            value.schemaVersion == EventSchemaV1 &&
+                value.eventKind == RequestKind &&
+                value.privacyClass == PrivacyClass &&
                 value.content.isNotEmpty() &&
-                value.sequence >=
-                0 &&
-                value.sequence %
-                2 ==
-                0L,
+                value.sequence >= 0,
         ) {
             "canonical VexLife request event semantics are invalid"
         }
@@ -195,27 +229,33 @@ object VexLifeConversationContract {
             deviceRef = value.deviceRef,
             companionLineageRef = value.companionLineageRef,
         )
-        requireRefs(
+        requireNonEmpty(
             value.eventRef,
-            value.instanceRef,
-            value.threadRef,
             value.channelRef,
-            value.turnRef,
             value.messageRef,
             value.speakerRef,
             *value.recipientRefs.toTypedArray(),
+        )
+        requireSafeRefs(
+            value.instanceRef,
+            value.threadRef,
+            value.turnRef,
         )
         requireSha256(
             value.contentHash,
             "contentHash",
         )
-        value.priorEventHash
-            ?.let {
-                requireSha256(
-                    it,
-                    "priorEventHash",
-                )
-            }
+        value.priorEventHash?.let {
+            requireSha256(
+                it,
+                "priorEventHash",
+            )
+        }
+        require(
+            value.formedAt.isNotEmpty(),
+        ) {
+            "canonical VexLife request event requires one formedAt value"
+        }
 
         return value
     }
@@ -224,18 +264,11 @@ object VexLifeConversationContract {
         value: ResponseCoreV1,
     ): ResponseCoreV1 {
         require(
-            value.schemaVersion ==
-                EventSchemaV1 &&
-                value.eventKind ==
-                ResponseKind &&
-                value.privacyClass ==
-                PrivacyClass &&
+            value.schemaVersion == EventSchemaV1 &&
+                value.eventKind == ResponseKind &&
+                value.privacyClass == PrivacyClass &&
                 value.content.isNotEmpty() &&
-                value.sequence >=
-                1 &&
-                value.sequence %
-                2 ==
-                1L,
+                value.sequence >= 1,
         ) {
             "canonical VexLife response event semantics are invalid"
         }
@@ -244,17 +277,19 @@ object VexLifeConversationContract {
             deviceRef = value.deviceRef,
             companionLineageRef = value.companionLineageRef,
         )
-        requireRefs(
+        requireNonEmpty(
             value.eventRef,
-            value.instanceRef,
-            value.threadRef,
             value.channelRef,
-            value.turnRef,
             value.messageRef,
             value.speakerRef,
             value.endpointProfileRef,
             value.modelNameOrBoundedTestProfileRef,
             *value.recipientRefs.toTypedArray(),
+        )
+        requireSafeRefs(
+            value.instanceRef,
+            value.threadRef,
+            value.turnRef,
         )
         requireSha256(
             value.priorEventHash,
@@ -264,16 +299,78 @@ object VexLifeConversationContract {
             value.contentHash,
             "contentHash",
         )
+        requireNumericLoopbackOrigin(
+            value.sanitizedEndpointOrigin,
+        )
         require(
-            value.sanitizedEndpointOrigin.startsWith(
-                "http://127.0.0.1:",
-            ) ||
-                value.sanitizedEndpointOrigin.startsWith(
-                    "http://[::1]:",
-                ),
+            value.formedAt.isNotEmpty(),
         ) {
-            "canonical VexLife response endpoint must remain numeric loopback"
+            "canonical VexLife response event requires one formedAt value"
         }
+
+        return value
+    }
+
+    fun validateContextCore(
+        value: ContextCore,
+    ): ContextCore {
+        require(
+            value.schemaVersion == ContextSchema &&
+                value.privacyClass == PrivacyClass &&
+                value.contextSourceRefs.size >= 2 &&
+                value.formedAt.isNotEmpty(),
+        ) {
+            "canonical VexLife bounded context semantics are invalid"
+        }
+        validateIdentity(
+            homeRef = value.homeRef,
+            deviceRef = value.deviceRef,
+            companionLineageRef = value.companionLineageRef,
+        )
+        requireSafeRefs(
+            value.instanceRef,
+            value.threadRef,
+            value.turnRef,
+        )
+        requireNonEmpty(
+            *value.contextSourceRefs.toTypedArray(),
+        )
+        requireSha256(
+            value.requestEventHash,
+            "requestEventHash",
+        )
+        requireSha256(
+            value.responseEventHash,
+            "responseEventHash",
+        )
+
+        return value
+    }
+
+    fun validateContext(
+        value: Context,
+    ): Context {
+        validateContextCore(
+            ContextCore(
+                schemaVersion = value.schemaVersion,
+                homeRef = value.homeRef,
+                deviceRef = value.deviceRef,
+                companionLineageRef = value.companionLineageRef,
+                instanceRef = value.instanceRef,
+                threadRef = value.threadRef,
+                turnRef = value.turnRef,
+                contextSourceRefs = value.contextSourceRefs,
+                requestEventHash = value.requestEventHash,
+                responseEventHash = value.responseEventHash,
+                promptContextMaterializationReceipt = value.promptContextMaterializationReceipt,
+                privacyClass = value.privacyClass,
+                formedAt = value.formedAt,
+            ),
+        )
+        requireSha256(
+            value.serializedContextSha256,
+            "serializedContextSha256",
+        )
 
         return value
     }
@@ -282,13 +379,8 @@ object VexLifeConversationContract {
         value: HeadCore,
     ): HeadCore {
         require(
-            value.schemaVersion ==
-                HeadSchema &&
-                value.sequence >=
-                1 &&
-                value.sequence %
-                2 ==
-                1L &&
+            value.schemaVersion == HeadSchema &&
+                value.sequence >= 1 &&
                 value.contextPath.isNotEmpty() &&
                 value.formedAt.isNotEmpty(),
         ) {
@@ -299,10 +391,12 @@ object VexLifeConversationContract {
             deviceRef = value.deviceRef,
             companionLineageRef = value.companionLineageRef,
         )
-        requireRefs(
+        requireSafeRefs(
             value.instanceRef,
             value.threadRef,
             value.turnRef,
+        )
+        requireNonEmpty(
             value.requestMessageRef,
             value.responseMessageRef,
         )
@@ -314,13 +408,42 @@ object VexLifeConversationContract {
             value.contextSha256,
             "contextSha256",
         )
-        value.priorConversationHeadSha256
-            ?.let {
-                requireSha256(
-                    it,
-                    "priorConversationHeadSha256",
-                )
-            }
+        value.priorConversationHeadSha256?.let {
+            requireSha256(
+                it,
+                "priorConversationHeadSha256",
+            )
+        }
+
+        return value
+    }
+
+    fun validateHead(
+        value: Head,
+    ): Head {
+        validateHeadCore(
+            HeadCore(
+                schemaVersion = value.schemaVersion,
+                homeRef = value.homeRef,
+                deviceRef = value.deviceRef,
+                companionLineageRef = value.companionLineageRef,
+                instanceRef = value.instanceRef,
+                threadRef = value.threadRef,
+                turnRef = value.turnRef,
+                requestMessageRef = value.requestMessageRef,
+                responseMessageRef = value.responseMessageRef,
+                eventHash = value.eventHash,
+                contextSha256 = value.contextSha256,
+                contextPath = value.contextPath,
+                sequence = value.sequence,
+                priorConversationHeadSha256 = value.priorConversationHeadSha256,
+                formedAt = value.formedAt,
+            ),
+        )
+        requireSha256(
+            value.conversationHeadSha256,
+            "conversationHeadSha256",
+        )
 
         return value
     }
@@ -344,7 +467,7 @@ object VexLifeConversationContract {
         }
     }
 
-    private fun requireRefs(
+    private fun requireSafeRefs(
         vararg values: String,
     ) {
         require(
@@ -353,12 +476,39 @@ object VexLifeConversationContract {
                     value ->
                     value.matches(
                         Regex(
-                            "[A-Za-z0-9][A-Za-z0-9._:/-]*",
+                            "[a-z0-9](?:[a-z0-9._-]{0,126}[a-z0-9])?",
                         ),
                     )
                 },
         ) {
-            "canonical VexLife Conversation refs must remain portable and non-empty"
+            "canonical VexLife safe refs must remain lowercase portable path segments"
+        }
+    }
+
+    private fun requireNonEmpty(
+        vararg values: String,
+    ) {
+        require(
+            values.isNotEmpty() &&
+                values.all(
+                    String::isNotEmpty,
+                ),
+        ) {
+            "canonical VexLife Conversation reference strings must be non-empty"
+        }
+    }
+
+    private fun requireNumericLoopbackOrigin(
+        value: String,
+    ) {
+        require(
+            value.matches(
+                Regex(
+                    "http://(?:127\\.0\\.0\\.1|\\[::1]):[0-9]+",
+                ),
+            ),
+        ) {
+            "canonical VexLife response endpoint must remain one numeric-loopback HTTP origin"
         }
     }
 
