@@ -24,6 +24,12 @@ object DirectCompanionTurn {
     const val FailureReceiptSchema =
         "vexlife-prod.direct-companion-turn-failure/v1"
 
+    private val BrowserCompanionInstanceRef =
+        "instance.vexlife.browser-companion." +
+            UUID.randomUUID()
+                .toString()
+                .lowercase()
+
     data class Intent(
         val idempotencyKey: String,
         val content: String,
@@ -199,7 +205,9 @@ object DirectCompanionTurn {
             )
 
         return try {
-            conversation.withWriterLease {
+            conversation.withWriterLease(
+                instanceRef = BrowserCompanionInstanceRef,
+            ) {
                 val before =
                     current()
 
