@@ -60,7 +60,7 @@ object DirectCompanionTurn {
         val content: String,
         val model: String,
         val currentConversationHeadSha256: String,
-        val contextRef: String,
+        val contextPath: String,
         val promptContextReceipt: DirectPromptContext.Receipt,
         val runtimeObservation: DirectCompanionConnection.RuntimeObservation,
         val invocationEvidence: DirectCompanionConnection.InvocationEvidence,
@@ -295,7 +295,6 @@ object DirectCompanionTurn {
                         commitCompletedTurn(
                             request = request,
                             response = response,
-                            contextRef = context.contextRef,
                             contextSha256 = context.contextSha256,
                             formedAt = hooks.now(),
                         )
@@ -316,7 +315,7 @@ object DirectCompanionTurn {
                                 response.model,
                             ),
                         currentConversationHeadSha256 = head.conversationHeadSha256,
-                        contextRef = context.contextRef,
+                        contextPath = context.contextPath,
                         promptContextReceipt = prompt.receipt,
                         runtimeObservation = inference.runtimeObservation,
                         invocationEvidence = inference.invocationEvidence,
@@ -521,7 +520,7 @@ object DirectCompanionTurn {
                         snapshot.head,
                     )
                         .conversationHeadSha256,
-                contextRef = context.contextRef,
+                contextPath = context.contextPath,
                 promptContextReceipt = context.promptContext,
                 runtimeObservation = context.runtimeObservation,
                 invocationEvidence = context.invocationEvidence,
