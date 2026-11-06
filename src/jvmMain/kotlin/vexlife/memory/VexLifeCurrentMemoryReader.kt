@@ -17,10 +17,12 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import vexlife.companion.DirectPromptContext
+import vexlife.continuity.VexLifeContinuityObservation
 import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
+import vexlife.conversation.VexLifeConversationContract
 import vexlife.filesystem.VexOwnedPath
 import vexlife.home.VexLifeProdHomeFiles
 
@@ -212,13 +214,15 @@ object VexLifeCurrentMemoryReader {
             )
         }
 
+        val conversationStore =
+            DirectConversationStore(
+                home,
+            )
+        val conversation =
+            conversationStore.current()
         val conversationHead =
             requireNotNull(
-                DirectConversationStore(
-                    home,
-                )
-                    .current()
-                    .head,
+                conversation.head,
             ) {
                 "committed Daily Memory requires one current lived Conversation head"
             }
@@ -228,6 +232,8 @@ object VexLifeCurrentMemoryReader {
                 home = home,
                 identity = identity,
                 expectedConversationHead = conversationHead.conversationHeadSha256,
+                conversationStore = conversationStore,
+                conversation = conversation,
             )
         val daily =
             loadDaily(
@@ -247,6 +253,8 @@ object VexLifeCurrentMemoryReader {
         home: Path,
         identity: Identity,
         expectedConversationHead: String,
+        conversationStore: DirectConversationStore,
+        conversation: DirectConversationStore.Snapshot,
     ): ScoreSnapshot {
         val root =
             "score/" +
@@ -337,10 +345,13 @@ object VexLifeCurrentMemoryReader {
                             "Score event",
                         )
                     validateScoreEvent(
-                        event,
-                        identity,
-                        file.fileName
-                            .toString(),
+                        event = event,
+                        identity = identity,
+                        filename =
+                            file.fileName
+                                .toString(),
+                        conversationStore = conversationStore,
+                        conversation = conversation,
                     )
                     event
                 }
@@ -1132,6 +1143,8 @@ object VexLifeCurrentMemoryReader {
         event: JsonObject,
         identity: Identity,
         filename: String,
+        conversationStore: DirectConversationStore,
+        conversation: DirectConversationStore.Snapshot,
     ) {
         require(
             event.string(
@@ -1290,6 +1303,210 @@ object VexLifeCurrentMemoryReader {
                 error(
                     "Score event kind is not admitted",
                 )
+        }
+
+        validateScoreSource(
+            event = event,
+            identity = identity,
+            conversationStore = conversationStore,
+            conversation = conversation,
+        )
+    }
+
+    private fun validateScoreSource(
+        event: JsonObject,
+        identity: Identity,
+        conversationStore: DirectConversationStore,
+        conversation: DirectConversationStore.Snapshot,
+    ) {
+        val sourceHeadSha =
+            event.string(
+                "sourceConversationHeadSha256",
+            )
+        val historical =
+            conversationStore.historicalCompletedTurn(
+                sourceHeadSha,
+            )
+        require(
+            historical.currentCommittedLineageVerified,
+        ) {
+            "Score source Conversation head is not in the current committed lineage"
+        }
+
+        val committedByHash =
+            conversation.canonicalEvents
+                .filter {
+                    it.sequence <=
+                        historical.head.sequence
+                }
+                .associateBy(
+                    DirectConversationStore.Event::eventHash,
+                )
+
+        val sourceEvents =
+            event.objectList(
+                "sourceBindings",
+            )
+                .map {
+                    binding ->
+                    require(
+                        binding.string(
+                            "eventKind",
+                        ) in
+                            setOf(
+                                VexLifeConversationContract.RequestKind,
+                                VexLifeConversationContract.ResponseKind,
+                            ) &&
+                            binding.long(
+                                "sequence",
+                            ) >=
+                            0,
+                    ) {
+                        "Score source binding is malformed"
+                    }
+                    val eventHash =
+                        binding.string(
+                            "eventHash",
+                        )
+                    requireSha256(
+                        eventHash,
+                        "Score source binding eventHash",
+                    )
+                    requireSha256(
+                        binding.string(
+                            "contentHash",
+                        ),
+                        "Score source binding contentHash",
+                    )
+                    val observed =
+                        requireNotNull(
+                            committedByHash[
+                                eventHash
+                            ],
+                        ) {
+                            "Score source binding is absent from the committed Conversation chain"
+                        }
+                    require(
+                        binding.string(
+                            "eventRef",
+                        ) ==
+                            observed.eventRef &&
+                            binding.string(
+                                "eventKind",
+                            ) ==
+                            observed.eventKind &&
+                            binding.long(
+                                "sequence",
+                            ) ==
+                            observed.sequence &&
+                            binding.string(
+                                "turnRef",
+                            ) ==
+                            observed.turnRef &&
+                            binding.string(
+                                "messageRef",
+                            ) ==
+                            observed.messageRef &&
+                            binding.string(
+                                "contentHash",
+                            ) ==
+                            observed.contentHash,
+                    ) {
+                        "Score source binding substitutes committed Conversation event identity"
+                    }
+                    observed
+                }
+
+        require(
+            sourceEvents.isNotEmpty() &&
+                sourceEvents.size %
+                2 ==
+                0,
+        ) {
+            "Score source intake requires complete committed request/response pairs"
+        }
+        sourceEvents.chunked(
+            2,
+        )
+            .forEach {
+                pair ->
+                val request =
+                    pair[
+                        0
+                    ]
+                val response =
+                    pair[
+                        1
+                    ]
+                require(
+                    request.eventKind ==
+                        VexLifeConversationContract.RequestKind &&
+                        response.eventKind ==
+                        VexLifeConversationContract.ResponseKind &&
+                        response.sequence ==
+                        request.sequence +
+                        1 &&
+                        response.priorEventHash ==
+                        request.eventHash &&
+                        response.turnRef ==
+                        request.turnRef,
+                ) {
+                    "Score source bindings do not form exact committed Conversation pairs"
+                }
+            }
+
+        val core =
+            VexLifeContinuityObservation.conversationEpisodeRangeCore(
+                sourceLineageRef = identity.lineageRef,
+                sourceEvents =
+                    sourceEvents.map {
+                        source ->
+                        VexLifeContinuityObservation.ConversationEventFact(
+                            eventRef = source.eventRef,
+                            eventHash = source.eventHash,
+                            speakerRef = source.speakerRef,
+                            recipientRefs = source.recipientRefs,
+                        )
+                    },
+                threadRef = identity.threadRef,
+                formedByRef =
+                    event.string(
+                        "instanceRef",
+                    ),
+                formedAt =
+                    event.string(
+                        "formedAt",
+                    ),
+            )
+        val fingerprint =
+            sha256(
+                VexContractJson.canonicalEncode(
+                    core,
+                ),
+            )
+        val expected =
+            VexLifeContinuityObservation.observationFromCore(
+                core = core,
+                observationRef =
+                    "continuity-observation." +
+                        fingerprint.take(
+                            24,
+                        ),
+                semanticFingerprint = fingerprint,
+            )
+        val observed =
+            VexContractJson.decode<VexLifeContinuityObservation.Observation>(
+                VexContractJson.compactEncodeElement(
+                    event.element(
+                        "continuityObservation",
+                    ),
+                ),
+            )
+        require(
+            observed ==
+                expected,
+        ) {
+            "Score continuity observation is not exact to its committed Conversation source"
         }
     }
 
