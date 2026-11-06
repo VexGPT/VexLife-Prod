@@ -42,7 +42,7 @@ object VexLifeProdMacServiceLifetime {
         "runtime/product-service/logs/service.err.log"
 
     private const val ReadinessTimeoutMs =
-        30_000L
+        120_000L
 
     private const val PollMs =
         100L

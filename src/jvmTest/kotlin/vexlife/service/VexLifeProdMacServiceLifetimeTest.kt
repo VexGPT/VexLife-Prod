@@ -954,6 +954,74 @@ class VexLifeProdMacServiceLifetimeTest {
     }
 
     @Test
+    fun readinessBeyondThirtySecondsRemainsBoundedAndCanStillBecomeCurrent() {
+        fixture()
+            .use {
+                fixture ->
+                val probe =
+                    VexLifeProdMacServiceLifetime.SourceCurrentnessProbe {
+                        origin ->
+                        assertEquals(
+                            VexLifeProdServiceContract.Origin,
+                            origin,
+                        )
+
+                        if (
+                            fixture.host.now <
+                            35_000L
+                        ) {
+                            null
+                        } else {
+                            sourceCurrentness(
+                                sourceSha = fixture.sourceSha,
+                                pid = fixture.host.currentPid,
+                            )
+                        }
+                    }
+
+                val started =
+                    VexLifeProdMacServiceLifetime.startOrReuse(
+                        productHome = fixture.home,
+                        desiredSourceSha = fixture.sourceSha,
+                        host = fixture.host,
+                        probe = probe,
+                    )
+
+                assertEquals(
+                    "STARTED_CURRENT_SERVICE",
+                    started.disposition,
+                )
+                assertTrue(
+                    fixture.host.now >=
+                        35_000L,
+                )
+                assertTrue(
+                    fixture.host.now <
+                        120_000L,
+                )
+                assertEquals(
+                    1,
+                    fixture.host.bootstrapCount(),
+                )
+                assertEquals(
+                    0,
+                    fixture.host.bootoutCount(),
+                )
+                assertTrue(
+                    fixture.host.servicePresent,
+                )
+                assertTrue(
+                    fixture.host.alive,
+                )
+                assertNotNull(
+                    lifetimeReceipt(
+                        fixture.home,
+                    ),
+                )
+            }
+    }
+
+    @Test
     fun startupReadinessTimeoutRetiresNewProcessAndLeavesNoProductReceipt() {
         fixture()
             .use {
