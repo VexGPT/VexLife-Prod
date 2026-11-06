@@ -160,6 +160,24 @@ object VexLifeProdLocalSetup {
                     ),
             )
         },
+        val observeCurrentProductRuntime: (
+            productHome: Path,
+            binding: HereticPersistentRuntime.Binding,
+            store: HereticPersistentRuntime.ReceiptStore,
+        ) -> HereticModelConfiguration.QualifiedRuntimeEvidence = {
+            productHome,
+            binding,
+            store,
+            ->
+            HereticPersistentRuntime.observeCurrentQualified(
+                binding = binding,
+                store = store,
+                platform =
+                    MacHereticRuntimePlatform(
+                        productHome = productHome,
+                    ),
+            )
+        },
         val startRuntime: (
             productHome: Path,
             binding: HereticPersistentRuntime.Binding,
@@ -363,34 +381,46 @@ object VexLifeProdLocalSetup {
                     .evidence
             }
         } else {
-            val runtime =
-                hooks.startRuntime(
+            val productRuntimeStore =
+                FileHereticRuntimeReceiptStore(
+                    canonicalHome,
+                )
+
+            if (
+                allowAcquisition
+            ) {
+                val runtime =
+                    hooks.startRuntime(
+                        canonicalHome,
+                        binding,
+                        productRuntimeStore,
+                    )
+                qualifiedRuntimeEvidence =
+                    HereticPersistentRuntime.configurationEvidence(
+                        binding = binding,
+                        receipt = runtime.receipt,
+                    )
+                runtimeDisposition =
+                    runtime.disposition
+            } else {
+                qualifiedRuntimeEvidence =
+                    hooks.observeCurrentProductRuntime(
+                        canonicalHome,
+                        binding,
+                        productRuntimeStore,
+                    )
+                runtimeDisposition =
+                    "REOBSERVED_CURRENT_PRODUCT_QUALIFIED_RUNTIME"
+            }
+            runtimeReceiptPath =
+                HereticProductIdentity.ProductRuntimeReceiptRelativePath
+            currentRuntimeEvidence = {
+                hooks.observeCurrentProductRuntime(
                     canonicalHome,
                     binding,
                     FileHereticRuntimeReceiptStore(
                         canonicalHome,
                     ),
-                )
-            qualifiedRuntimeEvidence =
-                HereticPersistentRuntime.configurationEvidence(
-                    binding = binding,
-                    receipt = runtime.receipt,
-                )
-            runtimeDisposition =
-                runtime.disposition
-            runtimeReceiptPath =
-                HereticProductIdentity.ProductRuntimeReceiptRelativePath
-            currentRuntimeEvidence = {
-                HereticPersistentRuntime.observeCurrentQualified(
-                    binding = binding,
-                    store =
-                        FileHereticRuntimeReceiptStore(
-                            canonicalHome,
-                        ),
-                    platform =
-                        MacHereticRuntimePlatform(
-                            productHome = canonicalHome,
-                        ),
                 )
             }
         }

@@ -311,6 +311,22 @@ class VexLifeProdLocalSetupTest {
                     },
                 )
             },
+            observeCurrentProductRuntime = {
+                _,
+                binding,
+                _,
+                ->
+                trace +=
+                    "PRODUCT_RUNTIME_CURRENTNESS"
+                HereticPersistentRuntime.configurationEvidence(
+                    binding = binding,
+                    receipt =
+                        runtimeResult(
+                            binding,
+                        )
+                            .receipt,
+                )
+            },
             startRuntime = {
                 _,
                 binding,
@@ -911,6 +927,10 @@ class VexLifeProdLocalSetupTest {
                 second.modelBindingDisposition,
             )
             assertEquals(
+                "REOBSERVED_CURRENT_PRODUCT_QUALIFIED_RUNTIME",
+                second.runtimeDisposition,
+            )
+            assertEquals(
                 first.productHome,
                 second.productHome,
             )
@@ -946,7 +966,7 @@ class VexLifeProdLocalSetupTest {
                     "MANAGED_PYTHON",
                     "ARTIFACTS",
                     "HERETIC_ENVIRONMENT",
-                    "RUNTIME",
+                    "PRODUCT_RUNTIME_CURRENTNESS",
                 ),
                 secondTrace,
             )
