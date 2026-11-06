@@ -249,7 +249,7 @@ object DirectPromptContext {
         currentRequest: DirectConversationStore.Event,
         memoryContext: VexLifeMemoryContract.Context? =
             null,
-        workingContinuityContext: VexLifeWorkingContinuityOwner.SuccessorContext? =
+        workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
             null,
         browserContext: BrowserContext? =
             null,
@@ -593,7 +593,7 @@ object DirectPromptContext {
         currentRequest: DirectConversationStore.Event,
         memoryContext: VexLifeMemoryContract.Context? =
             null,
-        workingContinuityContext: VexLifeWorkingContinuityOwner.SuccessorContext? =
+        workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
             null,
         browserContext: BrowserContext? =
             null,
@@ -617,7 +617,7 @@ object DirectPromptContext {
     }
 
     private fun verifyWorkingContinuityContext(
-        value: VexLifeWorkingContinuityOwner.SuccessorContext?,
+        value: DirectWorkingContinuity.CurrentSuccessor?,
         prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
         currentRequest: DirectConversationStore.Event,
     ): VerifiedWorkingContinuity? {
@@ -627,6 +627,8 @@ object DirectPromptContext {
         ) {
             return null
         }
+        val durable =
+            value.context
         val exactPrior =
             requireNotNull(
                 prior,
@@ -638,49 +640,49 @@ object DirectPromptContext {
             currentRequest = currentRequest,
         )
         require(
-            value.schemaVersion ==
+            durable.schemaVersion ==
                 VexLifeWorkingContinuityOwner.SuccessorContextSchema &&
-                value.truthClass ==
+                durable.truthClass ==
                 "NON_SEMANTIC_WORKING_CONTINUITY_SUCCESSOR_CONTEXT" &&
-                value.effectOwnerRef ==
+                durable.effectOwnerRef ==
                 VexLifeWorkingContinuityOwner.EffectOwnerRef &&
-                value.contextMode ==
+                durable.contextMode ==
                 "WORKING_CHECKPOINT_SUCCESSOR" &&
-                value.lineageRef ==
+                durable.lineageRef ==
                 currentRequest.companionLineageRef &&
-                value.threadRef ==
+                durable.threadRef ==
                 currentRequest.threadRef &&
-                value.priorConversationHeadSha256 ==
+                durable.priorConversationHeadSha256 ==
                 exactPrior.head.conversationHeadSha256 &&
-                value.priorRequestEventRef ==
+                durable.priorRequestEventRef ==
                 exactPrior.requestEvent.eventRef &&
-                value.currentRequestEventBinding.eventRef ==
+                durable.currentRequestEventBinding.eventRef ==
                 currentRequest.eventRef &&
-                value.currentRequestEventBinding.eventHash ==
+                durable.currentRequestEventBinding.eventHash ==
                 currentRequest.eventHash &&
-                value.currentRequestEventBinding.sequence ==
+                durable.currentRequestEventBinding.sequence ==
                 currentRequest.sequence &&
-                value.workingSet.cursorEventRef ==
+                durable.workingSet.cursorEventRef ==
                 exactPrior.requestEvent.eventRef &&
-                value.workingSet.lineageRef ==
+                durable.workingSet.lineageRef ==
                 currentRequest.companionLineageRef &&
-                value.workingSet.threadRef ==
+                durable.workingSet.threadRef ==
                 currentRequest.threadRef &&
-                value.sourceRefs ==
-                value.sourceRefs
+                durable.sourceRefs ==
+                durable.sourceRefs
                     .distinct()
                     .sorted() &&
-                value.effects.homeMutated &&
-                value.effects.successorContextIssued &&
-                !value.effects.checkpointMutated &&
-                !value.effects.currentHeadMutated &&
-                !value.effects.successorClaimMutated &&
-                !value.effects.semanticAcceptanceCreated &&
-                !value.effects.memoryPromotionPerformed &&
-                !value.effects.providerCalled &&
-                !value.effects.modelCalled &&
-                !value.effects.trainingRan &&
-                !value.effects.modelWeightsChanged,
+                durable.effects.homeMutated &&
+                durable.effects.successorContextIssued &&
+                !durable.effects.checkpointMutated &&
+                !durable.effects.currentHeadMutated &&
+                !durable.effects.successorClaimMutated &&
+                !durable.effects.semanticAcceptanceCreated &&
+                !durable.effects.memoryPromotionPerformed &&
+                !durable.effects.providerCalled &&
+                !durable.effects.modelCalled &&
+                !durable.effects.trainingRan &&
+                !durable.effects.modelWeightsChanged,
         ) {
             "working-checkpoint successor Context does not bind exact prompt/Conversation truth"
         }
@@ -692,30 +694,30 @@ object DirectPromptContext {
                 truthClass =
                     "CURRENT_NON_SEMANTIC_WORKING_CONTINUITY_CONTEXT",
                 contextRef =
-                    value.successorContextRef,
+                    durable.successorContextRef,
                 contextFingerprint =
-                    value.semanticFingerprint,
+                    durable.semanticFingerprint,
                 checkpointRef =
-                    value.checkpointRef,
+                    durable.checkpointRef,
                 commitReceiptRef =
-                    value.commitReceiptRef,
+                    durable.commitReceiptRef,
                 successorClaimRef =
-                    value.successorClaimRef,
+                    durable.successorClaimRef,
                 priorConversationHeadSha256 =
-                    value.priorConversationHeadSha256,
+                    durable.priorConversationHeadSha256,
                 currentRequestEventRef =
                     currentRequest.eventRef,
                 workingSet =
-                    value.workingSet,
+                    durable.workingSet,
                 sourceRefs =
-                    value.sourceRefs,
+                    durable.sourceRefs,
             )
         val systemContent =
             workingContinuitySystemContent(
                 packet,
             )
         return VerifiedWorkingContinuity(
-            context = value,
+            context = durable,
             systemContent = systemContent,
             systemMessageSha256 =
                 sha256(
