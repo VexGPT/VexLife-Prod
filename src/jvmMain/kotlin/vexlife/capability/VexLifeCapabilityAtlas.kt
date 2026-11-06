@@ -174,6 +174,15 @@ object VexLifeCapabilityAtlas {
     )
 
     @Serializable
+    private data class FrameBudgetBase(
+        val schemaVersion: String,
+        val registryRef: String,
+        val activeRoleRef: String,
+        val platformRef: String,
+        val currentContext: CurrentContext,
+    )
+
+    @Serializable
     private data class FrameCore(
         val schemaVersion: String,
         val truthClass: String,
@@ -510,16 +519,16 @@ object VexLifeCapabilityAtlas {
             input.formedAt.toString()
         val baseTokenCost =
             estimatedTokens(
-                mapOf(
-                    "schemaVersion" to
+                FrameBudgetBase(
+                    schemaVersion =
                         FrameSchema,
-                    "registryRef" to
+                    registryRef =
                         registry.registryRef,
-                    "activeRoleRef" to
+                    activeRoleRef =
                         input.activeRoleRef,
-                    "platformRef" to
+                    platformRef =
                         input.platformRef,
-                    "currentContext" to
+                    currentContext =
                         input.currentContext,
                 ),
             )
@@ -1036,8 +1045,8 @@ object VexLifeCapabilityAtlas {
         }
     }
 
-    private fun estimatedTokens(
-        value: Any,
+    private inline fun <reified T> estimatedTokens(
+        value: T,
     ): Int {
         val bytes =
             VexContractJson
