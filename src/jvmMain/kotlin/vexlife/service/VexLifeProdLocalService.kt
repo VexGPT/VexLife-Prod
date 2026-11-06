@@ -334,7 +334,7 @@ class VexLifeProdLocalService private constructor(
             turnExecutor.perform(
                 startupSetup,
                 DirectCompanionTurn.Intent(
-                    sendAttemptRef = request.sendAttemptRef,
+                    idempotencyKey = request.idempotencyKey,
                     content = request.content,
                 ),
             )
