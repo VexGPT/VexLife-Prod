@@ -131,7 +131,7 @@ class DirectCompanionTurnTest {
                     ),
                     intent =
                         DirectCompanionTurn.Intent(
-                            sendAttemptRef = "send.self-development.001",
+                            idempotencyKey = "send.self-development.001",
                             content = "First request",
                         ),
                     hooks =
@@ -151,7 +151,7 @@ class DirectCompanionTurnTest {
                     ),
                     intent =
                         DirectCompanionTurn.Intent(
-                            sendAttemptRef = "send.self-development.002",
+                            idempotencyKey = "send.self-development.002",
                             content = "Second request",
                         ),
                     hooks =
@@ -227,7 +227,7 @@ class DirectCompanionTurnTest {
             }
         val intent =
             DirectCompanionTurn.Intent(
-                sendAttemptRef = "send.self-development.retry",
+                idempotencyKey = "send.self-development.retry",
                 content = "One request",
             )
 
@@ -317,7 +317,7 @@ class DirectCompanionTurnTest {
                         ),
                         intent =
                             DirectCompanionTurn.Intent(
-                                sendAttemptRef = "send.self-development.runtime-held",
+                                idempotencyKey = "send.self-development.runtime-held",
                                 content = "Do not call the provider",
                             ),
                         hooks =
@@ -382,7 +382,7 @@ class DirectCompanionTurnTest {
             0
         val failedIntent =
             DirectCompanionTurn.Intent(
-                sendAttemptRef = "send.self-development.failure",
+                idempotencyKey = "send.self-development.failure",
                 content = "Please answer",
             )
 
@@ -491,7 +491,7 @@ class DirectCompanionTurnTest {
                     ),
                     intent =
                         DirectCompanionTurn.Intent(
-                            sendAttemptRef = "send.self-development.recovery-new",
+                            idempotencyKey = "send.self-development.recovery-new",
                             content = "Please answer again",
                         ),
                     hooks =
@@ -650,7 +650,7 @@ class DirectCompanionTurnTest {
                     setup = setup,
                     intent =
                         DirectCompanionTurn.Intent(
-                            sendAttemptRef = "send.self-development.canonical-first",
+                            idempotencyKey = "send.self-development.canonical-first",
                             content = "Canonical first request",
                         ),
                     hooks =
@@ -665,7 +665,7 @@ class DirectCompanionTurnTest {
                         setup = setup,
                         intent =
                             DirectCompanionTurn.Intent(
-                                sendAttemptRef = "send.self-development.failed-followup",
+                                idempotencyKey = "send.self-development.failed-followup",
                                 content = "Failed follow-up request",
                             ),
                         hooks =
@@ -696,7 +696,7 @@ class DirectCompanionTurnTest {
                     setup = setup,
                     intent =
                         DirectCompanionTurn.Intent(
-                            sendAttemptRef = "send.self-development.fresh-recovery",
+                            idempotencyKey = "send.self-development.fresh-recovery",
                             content = "Fresh recovery request",
                         ),
                     hooks =
