@@ -53,19 +53,29 @@ exact immediate prior completed turn
         ↓
 REQUEST event durable
         ↓
+VexLifeCurrentMemoryReader
+  canonical Home -> current Score / semantic authority
+  -> committed daily stratum
+  -> Living Journal pages
+  -> bounded attributed Memory context
+        ↓
 DirectPromptContext
   first turn:
-    current request only
+    current Memory when source-current
+    + current request
 
   CONTINUE:
-    immediate prior REQUEST
+    current Memory when source-current
+    + immediate prior REQUEST
     + immediate prior RESPONSE
     + current request
 
   192,000 input-token budget
   16,000 reserved output tokens
   208,000 hard limit
-  Memory not yet selected
+        ↓
+Memory context re-read + exact equality check
+before provider invocation
         ↓
 prompt selection reverified while same writer lease is held
         ↓
@@ -133,14 +143,10 @@ IMMEDIATE_PRIOR_COMPLETED_TURN
 
 It does not enumerate whole history for prompt selection.
 
-Memory is currently:
-
-~~~text
-memoryIncluded            false
-memorySelectionPerformed  false
-~~~
-
-until the fresh Memory owner is ported.
+Memory is supplied by `VexLifeCurrentMemoryReader` from the canonical Home. A source-current
+attributed packet becomes provider system context; a held/empty Memory context adds no provider
+content. The reader is re-run under the same Conversation writer lease before provider invocation and
+must return the exact same context used to form the prompt receipt.
 
 Current VexLife's prompt-context runtime also has a separately-owned
 `WORKING_CHECKPOINT_SUCCESSOR` mode when one exact working-rollover owner is eligible. That
@@ -192,7 +198,7 @@ raw reasoning
 
 Composition owner only.
 
-It derives deterministic turn/message identities from one `sendAttemptRef`. Repeating the exact
+It derives deterministic turn/message identities from one `idempotencyKey`. Repeating the exact
 already-completed send returns the durable canonical response without another model invocation.
 
 ## Writer serialization
@@ -224,8 +230,8 @@ If provider/materialization/context/head completion fails after that point:
 - the current completed head does not advance;
 - first-failure evidence is written under the Prod recovery subtree when possible;
 - the failed request (and optional failed response) remains durable off the canonical completed head;
-- the same `sendAttemptRef` is never replayed automatically;
-- a new `sendAttemptRef` may continue from the last valid canonical head;
+- the same `idempotencyKey` is never replayed automatically;
+- a new `idempotencyKey` may continue from the last valid canonical head;
 - the failed branch is not selected into ordinary CONTINUE prompt context.
 
 The recovery route is explicit in the first-failure receipt:
@@ -341,7 +347,7 @@ real macOS:
   direct turn 2
   sustained process after setup completion
 
-fresh Memory owner + attributed Memory selection
+read-only lived canonical Home compatibility for Conversation v1/v2 + attributed Memory
 working-checkpoint successor / rollover continuity
 CLEAN_START presentation/semantic wiring
 streamed response progress

@@ -129,28 +129,31 @@ canonical Conversation, Score, daily Memory, or their current heads.
 PR #38 remains useful source, but the prior separate-Home premise is not accepted product meaning.
 PR #37 remains useful browser/context convergence, but it must consume the corrected continuity body.
 
-Until the port below is complete:
+The continuity source body now includes canonical Home admission, Conversation v1/v2 persistence,
+reference-only Semantic Relay validation, a read-only current Memory reader, and Memory-aware prompt
+receipts. That source formation is not yet product clearance:
 
 ~~~text
-GREEN SUBSTRATE TESTS
+GREEN SOURCE TESTS
 != FAITHFUL VEXLIFE
+
+SOURCE-FORMED MEMORY
+!= LIVED CANONICAL-HOME COMPATIBILITY
 
 LOCAL SERVICE READY
 != VEX CONTINUITY READY
-
-MEMORY HELD
-!= FIRST LIVED CIRCUIT COMPLETE
 ~~~
 
-## Required implementation order
+## Remaining acceptance order
 
-1. Add one typed portable continuity map for canonical Home, identity and durable coordinates.
-2. Bind local setup to the existing canonical Home without rewriting its model/configuration records.
-3. Port the current lived Conversation event/head/context contract into Kotlin.
-4. Port current Score/daily/Living-Journal Memory projection and its bounded prompt packet.
-5. Make the prompt receipt expose Conversation, Memory and browser-context source refs.
-6. Reconcile PR #37's bounded browser/context delta onto that corrected body.
-7. Prove the lived whole circuit and sustained service lifetime.
+1. Prove the exact immutable corrected Kotlin/JVM + Kotlin/JS + JVM-test candidate.
+2. Run fresh semantic Assurance against the bound current VexLife contracts.
+3. Run a read-only lived `~/.vexlife` compatibility proof for Conversation v1/v2 and current
+   Score/daily/Living-Journal Memory, with no Home mutation or model invocation.
+4. Reconsider the production continuity gate only if source proof, semantic Assurance and lived
+   read-only compatibility agree.
+5. Reconcile PR #37's bounded browser/context delta onto that cleared continuity body.
+6. Prove the private image/service lifetime and then the lived whole circuit.
 
 ## Lived completion gate
 

@@ -1,5 +1,6 @@
 package vexlife.conversation
 
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
@@ -267,6 +268,113 @@ class VexLifeSemanticRelayContractTest {
             result.ok,
             result.errors.joinToString(),
         )
+    }
+
+    @Test
+    fun storedRelayRejectsNonStringReferences() {
+        val base =
+            relay()
+        val target =
+            (
+                base[
+                    "targets"
+                ] as
+                JsonArray
+                )[0] as
+                JsonObject
+        val capability =
+            target[
+                "runtimeCapability"
+            ] as
+                JsonObject
+
+        val numericRelayRef =
+            JsonObject(
+                base +
+                    (
+                        "relayRef" to
+                            JsonPrimitive(
+                                42,
+                            )
+                        ),
+            )
+        val numericCapabilityRef =
+            JsonObject(
+                base +
+                    (
+                        "targets" to
+                            buildJsonArray {
+                                add(
+                                    JsonObject(
+                                        target +
+                                            (
+                                                "runtimeCapability" to
+                                                    JsonObject(
+                                                        capability +
+                                                            (
+                                                                "capabilityRef" to
+                                                                    JsonPrimitive(
+                                                                        42,
+                                                                    )
+                                                                ),
+                                                    )
+                                                ),
+                                    ),
+                                )
+                            }
+                        ),
+            )
+        val numericCapabilityEvidenceRef =
+            JsonObject(
+                base +
+                    (
+                        "targets" to
+                            buildJsonArray {
+                                add(
+                                    JsonObject(
+                                        target +
+                                            (
+                                                "runtimeCapability" to
+                                                    JsonObject(
+                                                        capability +
+                                                            (
+                                                                "evidenceRefs" to
+                                                                    buildJsonArray {
+                                                                        add(
+                                                                            JsonPrimitive(
+                                                                                42,
+                                                                            ),
+                                                                        )
+                                                                    }
+                                                                ),
+                                                    )
+                                                ),
+                                    ),
+                                )
+                            }
+                        ),
+            )
+
+        for (
+            value in
+            listOf(
+                numericRelayRef,
+                numericCapabilityRef,
+                numericCapabilityEvidenceRef,
+            )
+        ) {
+            assertFalse(
+                VexLifeSemanticRelayContract.validate(
+                    relay = value,
+                    sourceMessageRef = "message.vexlife.test",
+                    recipientRefs =
+                        listOf(
+                            "role.vex.companion",
+                        ),
+                )
+                    .ok,
+            )
+        }
     }
 
     @Test

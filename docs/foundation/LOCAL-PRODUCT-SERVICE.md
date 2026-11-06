@@ -25,6 +25,7 @@ VexLifeProdLocalService
         |
         +-> DirectCompanionTurn.perform(...)
                  |
+                 +-> VexLifeCurrentMemoryReader
                  +-> DirectPromptContext
                  +-> DirectCompanionConnection
                  +-> DirectTurnContextStore
@@ -145,7 +146,7 @@ Off-head failed attempts are counted but are not silently injected into the cano
 The wire request carries only:
 
 ~~~text
-sendAttemptRef
+idempotencyKey
 content
 ~~~
 
@@ -169,7 +170,7 @@ The service delegates exactly once to:
 DirectCompanionTurn.perform(setup, intent)
 ~~~
 
-The existing deterministic sendAttemptRef behavior therefore remains authoritative:
+The existing deterministic idempotencyKey behavior therefore remains authoritative:
 
 ~~~text
 same exact completed attempt
@@ -198,10 +199,11 @@ effectsPerformed
 This is metadata about what Vex received. It does not expose raw hidden prompt text or model
 reasoning.
 
-Current direct-circuit held scope remains unchanged:
+Current direct-circuit acceptance remains held, but Memory is no longer an unformed source edge:
 
 ~~~text
-Memory = HELD
+Memory source path = CONNECTED IN SOURCE
+Memory lived canonical-Home compatibility = PENDING
 WORKING_CHECKPOINT_SUCCESSOR = HELD
 CLEAN_START = HELD
 ~~~

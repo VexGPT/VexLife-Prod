@@ -612,6 +612,66 @@ object VexLifeSemanticRelayContract {
                 allowEmpty = true,
             )
 
+            val runtimeCapability =
+                target[
+                    "runtimeCapability"
+                ] as?
+                JsonObject
+            if (
+                runtimeCapability !=
+                null
+            ) {
+                val capabilityRef =
+                    runtimeCapability[
+                        "capabilityRef"
+                    ]
+                if (
+                    capabilityRef !=
+                        null &&
+                    capabilityRef !is
+                        JsonNull &&
+                    !isRef(
+                        capabilityRef,
+                    )
+                ) {
+                    errors +=
+                        "$path.runtime capability ref is invalid"
+                }
+
+                for (
+                    field in
+                    listOf(
+                        "supportedLanguageRefs",
+                        "evidenceRefs",
+                    )
+                ) {
+                    val rawRefs =
+                        runtimeCapability[
+                            field
+                        ]
+                    if (
+                        rawRefs is
+                        JsonArray &&
+                        rawRefs.any {
+                            !isRef(
+                                it,
+                            )
+                        }
+                    ) {
+                        errors +=
+                            "$path.runtime capability " +
+                                if (
+                                    field ==
+                                    "supportedLanguageRefs"
+                                ) {
+                                    "supported languages must be an array of stable references"
+                                } else {
+                                    "evidence must be an array of stable references"
+                                }
+                    }
+                }
+            }
+
             val capability =
                 normalizedCapability(
                     target[
@@ -1014,9 +1074,8 @@ object VexLifeSemanticRelayContract {
             element as?
             JsonPrimitive
                 ?: return false
-        return primitive.contentOrNull
-            ?.isNotEmpty() ==
-            true
+        return primitive.isString &&
+            primitive.content.isNotEmpty()
     }
 
     private fun JsonObject.stringOrNull(

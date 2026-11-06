@@ -35,12 +35,12 @@ relationships, not a runtime dependency of the Kotlin product.
 | Continuity realignment | Can New Beginnings preserve the lived Home → Conversation → Memory → prompt → response → surface circuit while replacing implementation machinery? | `docs/foundation/VEXLIFE-CONTINUITY-REALIGNMENT.md`, `src/commonMain/kotlin/vexlife/continuity/` | source relationship/test candidate formed; exact full proof pending | **CURRENT SEMANTIC REALIGNMENT** |
 | Durable contract JSON | Can Kotlin form the same canonical JSON identity preimages as current VexLife while preserving strict durable transport? | `docs/foundation/CONTRACT-JSON.md`, `src/commonMain/kotlin/vexlife/contract/`, `src/jvmMain/kotlin/vexlife/contract/` | strict + compact + recursively key-sorted canonical source/tests formed | **REALIGNMENT CANDIDATE** |
 | Canonical VexLife Home compatibility | Can VexLife-Prod consume `~/.vexlife` and its current device/Companion lineage without rewriting canonical identity/configuration? | `docs/foundation/VEXLIFE-PROD-HOME.md`, `src/commonMain/kotlin/vexlife/home/`, `src/jvmMain/kotlin/vexlife/home/` | exact current Home/device fixture + no-mutation source/tests formed | **REALIGNMENT CANDIDATE** |
-| Canonical Conversation compatibility | Can Kotlin consume/form current `vexlife.lived-companion-*` event/head/context identities rather than create a second Conversation? | `src/commonMain/kotlin/vexlife/conversation/VexLifeConversationContract.kt`, `src/jvmMain/kotlin/vexlife/conversation/` | exact portable contract formed; JVM store conversion pending | **CURRENT SOURCE EDGE** |
-| Current attributed Memory compatibility | Can Score → daily stratum → Living Journal pages become one bounded source-attributed Memory packet with exact prompt evidence? | `src/commonMain/kotlin/vexlife/memory/`, `src/jvmMain/kotlin/vexlife/companion/DirectPromptContext.kt` | portable contract + exact provider packet verification formed; real Home reader pending | **CURRENT SOURCE EDGE** |
+| Canonical Conversation compatibility | Can Kotlin consume/form current `vexlife.lived-companion-*` event/head/context identities rather than create a second Conversation? | `src/commonMain/kotlin/vexlife/conversation/`, `src/jvmMain/kotlin/vexlife/conversation/` | canonical v1/v2 reader/writer + reference-only Semantic Relay validation source-formed; semantic + lived read-only compatibility pending | **REALIGNMENT CANDIDATE** |
+| Current attributed Memory compatibility | Can Score → daily stratum → Living Journal pages become one bounded source-attributed Memory packet with exact prompt evidence? | `src/commonMain/kotlin/vexlife/memory/`, `src/jvmMain/kotlin/vexlife/memory/`, `src/jvmMain/kotlin/vexlife/companion/` | read-only canonical-Home reader + prompt integration source-formed; semantic + lived read-only compatibility pending | **REALIGNMENT CANDIDATE** |
 | Heretic product/runtime relationship | Can exact certified local model/runtime mechanics serve the canonical Vex continuity without owning Home, Conversation or Memory? | `docs/foundation/HERETIC-PRODUCT-MODEL.md`, `src/commonMain/kotlin/vexlife/model/heretic/`, `src/jvmMain/kotlin/vexlife/model/heretic/runtime/` | runtime source/tests formed; product binding moved beneath `runtime/vexlife-prod` | **REALIGNMENT CANDIDATE** |
 | Artifact + Python/MLX realization | Can the exact model bytes and software environment be acquired/reused without hidden topology or global-install assumptions? | `docs/foundation/HERETIC-ARTIFACT-MATERIALIZATION.md`, `docs/foundation/HERETIC-PYTHON-ENVIRONMENT.md`, `src/jvmMain/kotlin/vexlife/{artifact,platform/python,model/heretic/runtime}/` | source/tests formed; real macOS acquisition/reuse proof pending | **SOURCE CANDIDATE** |
 | Local setup composition | Can host eligibility and runtime prerequisites converge beneath an already-established canonical Home? | `src/jvmMain/kotlin/vexlife/local/`, `src/jvmTest/kotlin/vexlife/local/` | canonical-Home/no-rewrite source/tests formed; exact Kotlin + lived proof pending | **REALIGNMENT CANDIDATE · HUMAN ENTRY HELD** |
-| Direct personal Companion circuit | Can one canonical human↔Vex turn bind Conversation, current Memory, later browser context and exact runtime evidence? | `docs/foundation/DIRECT-PERSONAL-COMPANION.md`, `src/commonMain/kotlin/vexlife/{companion,conversation,memory}/`, `src/jvmMain/kotlin/vexlife/{companion,conversation}/` | Memory-aware prompt/receipt source formed; real reader + canonical store conversion pending | **CURRENT SOURCE EDGE** |
+| Direct personal Companion circuit | Can one canonical human↔Vex turn bind Conversation, current Memory, later browser context and exact runtime evidence? | `docs/foundation/DIRECT-PERSONAL-COMPANION.md`, `src/commonMain/kotlin/vexlife/{companion,conversation,memory}/`, `src/jvmMain/kotlin/vexlife/{companion,conversation,memory}/` | canonical Conversation + current Memory + prompt/runtime evidence path source-formed; semantic + lived read-only compatibility pending | **REALIGNMENT CANDIDATE** |
 | Local product service | Can one loopback doorway project canonical Conversation and exact what-Vex-received evidence without becoming another owner? | `docs/foundation/LOCAL-PRODUCT-SERVICE.md`, `src/commonMain/kotlin/vexlife/service/`, `src/jvmMain/kotlin/vexlife/service/` | Memory source refs now preserved through service projection; full proof pending | **REALIGNMENT CANDIDATE** |
 | Private macOS service image | Can the source-bound service run on a supported Mac without a user-installed development JDK or second visible app? | `docs/foundation/PRIVATE-SERVICE-IMAGE.md`, `packaging/private-service-image/`, `src/jvmMain/kotlin/vexlife/packaging/`, `build.gradle.kts` | exact JDK-21 toolchain source formed; archive proof pending after semantic realignment compiles | **SOURCE CANDIDATE** |
 | Private image install + setup | Can an exact staged image establish prerequisites, install itself and converge the service without owning human identity? | `docs/foundation/PRIVATE-IMAGE-INSTALL-SETUP.md`, `src/jvmMain/kotlin/vexlife/{setup,packaging}/` | source/tests formed; must consume canonical Home realignment | **SOURCE CANDIDATE · LIVED MAC HELD** |
@@ -70,15 +70,15 @@ current source work
   exact current Home/device/lineage compatibility
   product runtime state under runtime/vexlife-prod
   canonical JSON identity preimages
-  current Conversation contract
-  current attributed Memory contract
-  Memory-aware prompt receipt + service projection
+  canonical Conversation v1/v2 reader/writer + Semantic Relay validation
+  current attributed Memory reader
+  DirectCompanionTurn -> Memory -> prompt receipt + service projection
 
-next executable source edges
-  convert the JVM Conversation/context store to the canonical contract
-  implement the real Score/daily/Living-Journal Memory reader
-  bind DirectCompanionTurn to that Memory producer
-  run exact Kotlin/JVM + Kotlin/JS proof
+next acceptance edges
+  run exact Kotlin/JVM + Kotlin/JS/JVM-test proof on the immutable corrected source
+  run fresh semantic Assurance against the bound VexLife reference
+  prove read-only lived ~/.vexlife Conversation v1/v2 + current Memory compatibility
+  reconsider the production continuity gate only if all three agree
 
 then
   reconcile PR #37's bounded browser/context paths
