@@ -1314,6 +1314,15 @@ class VexLifeWorkingContinuityOwner(
         VexLifeWorkingContinuity.validateWorkingSet(
             value.workingSet,
         )
+        value.sourceRefs.forEach {
+            requireRef(
+                it,
+                "successor Context sourceRef",
+            )
+        }
+        Instant.parse(
+            value.issuedAt,
+        )
         require(
             value.workingSet.lineageRef ==
                 value.lineageRef &&
