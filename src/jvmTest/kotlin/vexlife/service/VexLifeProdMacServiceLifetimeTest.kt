@@ -16,8 +16,7 @@ import kotlin.test.assertTrue
 import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
 import vexlife.filesystem.VexOwnedPath
-import vexlife.home.VexLifeProdHome
-import vexlife.home.VexLifeProdHomeFiles
+import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
 import vexlife.platform.macos.MacUserLaunchdProcess
@@ -259,23 +258,10 @@ class VexLifeProdMacServiceLifetimeTest {
     private fun bootstrapHome(
         productHome: Path,
     ) {
-        VexLifeProdHomeFiles.bootstrap(
-            productHome = productHome,
-            plan =
-                VexLifeProdHome.plan(
-                    personRef = VexLifeProdHome.DefaultPersonRef,
-                    familyRef = VexLifeProdHome.DefaultFamilyRef,
-                    deviceName = "Service Lifetime Test Mac",
-                    platform = "darwin",
-                    architecture = "arm64",
-                    ids =
-                        VexLifeProdHome.InstallationIds(
-                            deviceRef = "device.vexlife-prod.service-lifetime-test",
-                            companionLineageRef =
-                                "companion-lineage.vexlife-prod.service-lifetime-test",
-                        ),
-                    createdAt = "2026-11-05T06:00:00-08:00",
-                ),
+        CanonicalVexLifeHomeFixture.form(
+            home = productHome,
+            deviceSuffix = "service-lifetime-test",
+            lineageSuffix = "service-lifetime-test",
         )
     }
 
