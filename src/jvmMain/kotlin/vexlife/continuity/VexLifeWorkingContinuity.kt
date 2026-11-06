@@ -325,9 +325,9 @@ object VexLifeWorkingContinuity {
         when (
             state
         ) {
-            PressureState.Normal ->
-                reasons +=
-                    "PRESSURE_WITHIN_NORMAL_BOUNDS"
+            PressureState.Normal -> {
+                // Added only after Memory pressure has had a chance to raise the final state.
+            }
 
             PressureState.Watch ->
                 reasons +=
@@ -348,8 +348,6 @@ object VexLifeWorkingContinuity {
             input.memoryTokenBoundedOutPageCount >
                 0
         ) {
-            reasons +=
-                "MEMORY_BOUNDED_OUT"
             if (
                 state.ordinal <
                 CurrentPolicy.memoryBoundedOutFloor.ordinal
@@ -357,6 +355,17 @@ object VexLifeWorkingContinuity {
                 state =
                     CurrentPolicy.memoryBoundedOutFloor
             }
+            reasons +=
+                "MEMORY_CONTINUITY_BOUNDED_OUT"
+        }
+
+        if (
+            state ==
+                PressureState.Normal &&
+            reasons.isEmpty()
+        ) {
+            reasons +=
+                "PRESSURE_WITHIN_NORMAL_BOUNDS"
         }
 
         val core =
