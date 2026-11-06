@@ -246,6 +246,13 @@ object VexWebAuthoring {
             target,
         )
 
+    fun capability(
+        capabilityRef: VexWeb.CapabilityRef,
+    ): VexWeb.Binding.Capability =
+        VexWeb.Binding.Capability(
+            capabilityRef,
+        )
+
     fun unbound(
         capabilityRef: VexWeb.CapabilityRef,
         feedbackTarget: VexWeb.StructuralRef,

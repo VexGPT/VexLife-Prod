@@ -7,7 +7,7 @@ import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexLifeWebP1Test {
     @Test
-    fun p1ManifestsEveryCurrentBlueprintCoordinateWithoutInventingRuntimeTruth() {
+    fun p1ManifestsEveryCurrentBlueprintCoordinateWithTypedCapabilityBinding() {
         val manifested =
             VexLifeWebP1.Surface
                 .coordinates()
@@ -43,7 +43,24 @@ class VexLifeWebP1Test {
 
         assertTrue(
             send.binding is
-                VexWeb.Binding.Unbound,
+                VexWeb.Binding.Capability,
+        )
+        assertEquals(
+            VexLifeWebP1.Refs.ConversationSendCapability,
+            (
+                send.binding as
+                    VexWeb.Binding.Capability
+            ).capabilityRef,
+        )
+
+        val artifacts =
+            VexWebArtifacts.generate(
+                VexLifeWebP1.Surface,
+            )
+        assertTrue(
+            artifacts.semanticManifest.contains(
+                "\"type\":\"CAPABILITY\",\"capabilityRef\":\"conversation.send\"",
+            ),
         )
     }
 
