@@ -261,7 +261,7 @@ class DirectConversationStoreTest {
                 )
 
             first.withWriterLease {
-                assertFailsWith<IllegalArgumentException> {
+                assertFailsWith<IllegalStateException> {
                     second.withWriterLease {
                         current()
                     }
