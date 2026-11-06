@@ -333,7 +333,7 @@ class VexLifeProdLocalServiceTest {
                     service ->
                     val request =
                         VexLifeProdServiceContract.SendRequest(
-                            sendAttemptRef = "send-attempt.vexlife-prod.service.001",
+                            idempotencyKey = "send.vexlife.browser.service.001",
                             content = "Hello Vex",
                         )
                     val body =
@@ -489,7 +489,7 @@ class VexLifeProdLocalServiceTest {
                             VexLifeProdServiceContract.ConversationSendPath,
                             """
                             {
-                              "sendAttemptRef": "send-attempt.vexlife-prod.service.bad",
+                              "idempotencyKey": "send.vexlife.browser.service.bad",
                               "content": "Hello",
                               "endpoint": "http://example.com"
                             }
