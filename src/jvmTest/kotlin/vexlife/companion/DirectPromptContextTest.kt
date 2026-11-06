@@ -732,19 +732,19 @@ class DirectPromptContextTest {
                     materialized.receipt.workingContinuityIncluded,
                 )
                 assertEquals(
-                    successor.successorContextRef,
+                    successor.context.successorContextRef,
                     materialized.receipt.workingContinuityContextRef,
                 )
                 assertEquals(
-                    successor.semanticFingerprint,
+                    successor.context.semanticFingerprint,
                     materialized.receipt.workingContinuityContextFingerprint,
                 )
                 assertEquals(
-                    successor.checkpointRef,
+                    successor.context.checkpointRef,
                     materialized.receipt.workingContinuityCheckpointRef,
                 )
                 assertEquals(
-                    successor.successorClaimRef,
+                    successor.context.successorClaimRef,
                     materialized.receipt.workingContinuitySuccessorClaimRef,
                 )
 
