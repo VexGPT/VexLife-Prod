@@ -70,6 +70,7 @@ object DirectWorkingContinuity {
         val semanticFingerprint: String,
     )
 
+    @ConsistentCopyVisibility
     data class Prepared internal constructor(
         val pressureInput: VexLifeWorkingContinuity.PromptPressureInput,
         val workingSet: VexLifeWorkingContinuity.WorkingSet,
