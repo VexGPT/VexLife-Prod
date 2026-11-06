@@ -8,6 +8,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.memory.VexLifeMemoryContextFixture
@@ -283,15 +284,21 @@ class DirectPromptContextTest {
                             "2026-11-05T04:01:01Z",
                         ),
                     )
+                val context =
+                    CanonicalLivedContextFixture.write(
+                        productHome = productHome,
+                        request = first,
+                        response = response,
+                        formedAt = Instant.parse(
+                            "2026-11-05T04:01:02Z",
+                        ),
+                    )
                 commitCompletedTurn(
                     request = first,
                     response = response,
-                    contextRef = "context.vexlife-prod.direct.first",
-                    contextSha256 = "d".repeat(
-                        64,
-                    ),
+                    contextSha256 = context.sha256,
                     formedAt = Instant.parse(
-                        "2026-11-05T04:01:02Z",
+                        "2026-11-05T04:01:03Z",
                     ),
                 )
             }
