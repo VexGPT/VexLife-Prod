@@ -453,20 +453,10 @@ object VexLifeWorkingContinuity {
             )
         priorCheckpoint
             ?.let {
-                require(
-                    it.schemaVersion ==
-                        CheckpointSchema &&
-                        it.currentness ==
-                        "CURRENT" &&
-                        it.lifecycle ==
-                        "CURRENT" &&
-                        it.lineageRef ==
-                        workingSet.lineageRef &&
-                        it.threadRef ==
-                        workingSet.threadRef,
-                ) {
-                    "prior working checkpoint is not current for this lineage/thread"
-                }
+                requireCurrentCheckpoint(
+                    checkpoint = it,
+                    workingSet = workingSet,
+                )
             }
 
         val checkpoint =
@@ -623,6 +613,98 @@ object VexLifeWorkingContinuity {
         val effectAuthorityGranted: Boolean,
         val effects: PlanEffects,
     )
+
+    private fun requireCurrentCheckpoint(
+        checkpoint: Checkpoint,
+        workingSet: WorkingSet,
+    ) {
+        require(
+            checkpoint.schemaVersion ==
+                CheckpointSchema &&
+                checkpoint.truthClass ==
+                "SOURCE_BOUND_NON_SEMANTIC_WORKING_CONTINUITY_CHECKPOINT" &&
+                checkpoint.currentness ==
+                "CURRENT" &&
+                checkpoint.lifecycle ==
+                "CURRENT" &&
+                checkpoint.lineageRef ==
+                workingSet.lineageRef &&
+                checkpoint.threadRef ==
+                workingSet.threadRef &&
+                !checkpoint.effectAuthorityGranted &&
+                !checkpoint.semanticMemoryPromotionAuthorized &&
+                !checkpoint.modelOutputAcceptedAsMemory &&
+                checkpoint.checkpointTruth ==
+                CheckpointTruth(),
+        ) {
+            "prior working checkpoint is not current/reference-only for this lineage/thread"
+        }
+
+        require(
+            checkpoint.workingSet ==
+                canonicalWorkingSet(
+                    checkpoint.workingSet,
+                ),
+        ) {
+            "prior working checkpoint working set is not canonical"
+        }
+
+        requireRefs(
+            checkpoint.sourceRefs,
+            "prior checkpoint sourceRefs",
+        )
+        require(
+            checkpoint.sourceRefs ==
+                checkpoint.sourceRefs
+                    .distinct()
+                    .sorted(),
+        ) {
+            "prior checkpoint sourceRefs must be canonical"
+        }
+
+        val core =
+            CheckpointCore(
+                schemaVersion = checkpoint.schemaVersion,
+                truthClass = checkpoint.truthClass,
+                currentness = checkpoint.currentness,
+                lifecycle = checkpoint.lifecycle,
+                lineageRef = checkpoint.lineageRef,
+                threadRef = checkpoint.threadRef,
+                pressureRef = checkpoint.pressureRef,
+                pressureFingerprint = checkpoint.pressureFingerprint,
+                pressureState = checkpoint.pressureState,
+                promptReceiptRef = checkpoint.promptReceiptRef,
+                workingSet = checkpoint.workingSet,
+                priorCheckpointRefOrNull =
+                    checkpoint.priorCheckpointRefOrNull,
+                priorCheckpointFingerprintOrNull =
+                    checkpoint.priorCheckpointFingerprintOrNull,
+                sourceRefs = checkpoint.sourceRefs,
+                effectAuthorityGranted =
+                    checkpoint.effectAuthorityGranted,
+                semanticMemoryPromotionAuthorized =
+                    checkpoint.semanticMemoryPromotionAuthorized,
+                modelOutputAcceptedAsMemory =
+                    checkpoint.modelOutputAcceptedAsMemory,
+                checkpointTruth = checkpoint.checkpointTruth,
+            )
+        val fingerprint =
+            semanticHash(
+                core,
+            )
+
+        require(
+            checkpoint.semanticFingerprint ==
+                fingerprint &&
+                checkpoint.checkpointRef ==
+                "checkpoint.vexlife-prod.working-continuity." +
+                    fingerprint.take(
+                        32,
+                    ),
+        ) {
+            "prior working checkpoint semantic identity is invalid"
+        }
+    }
 
     private fun formCheckpoint(
         pressure: Pressure,
