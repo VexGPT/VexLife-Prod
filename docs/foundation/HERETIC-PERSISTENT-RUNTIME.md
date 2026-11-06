@@ -131,9 +131,13 @@ Canonical-Home continuity may already have one qualified Heretic runtime owned b
 runtime/heretic/persistent-runtime-owner-receipt.json
   stable VexLife owner
         ↓
-exact schema/state/model/artifact/environment/argv/effect validation
+exact stable runtime schema/state/model/artifact/environment/argv/effect validation
         ↓
-exact live PID + process-group + launchd-substrate currentness
+stable launchd v1 receipt validation
+  (v1 durable receipt omits environment)
+        ↓
+launchd coordinate + PID currentness
++ exact live process/process-group identity
         ↓
 borrow QualifiedRuntimeEvidence
         ↓
@@ -149,6 +153,12 @@ BORROWED QUALIFIED RUNTIME
 
 STABLE RECEIPT READ
 != STABLE RECEIPT MUTATION
+
+STABLE LAUNCHD v1 RECEIPT
+!= VEXLIFE-PROD LAUNCHD v2 RECEIPT
+
+V1 COMPATIBILITY OBSERVATION
+!= DURABLE SCHEMA RELABELING
 
 PORT 8765 ANSWERS
 != BORROWED RUNTIME ADMISSION

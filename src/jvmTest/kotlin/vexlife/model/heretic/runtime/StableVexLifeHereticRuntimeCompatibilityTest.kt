@@ -57,12 +57,10 @@ class StableVexLifeHereticRuntimeCompatibilityTest {
         override fun processSubstrateCurrent(
             receipt: MacUserLaunchdProcess.Receipt,
             expectedPid: Long,
-        ): Boolean {
-            trace +=
-                "SUBSTRATE_CURRENT"
-            return receipt.pid ==
-                expectedPid
-        }
+        ): Boolean =
+            error(
+                "stable v1 borrow must not route through the product-v2 receiptCurrent contract",
+            )
 
         override fun matchingProcesses(
             args: List<String>,
@@ -152,19 +150,24 @@ class StableVexLifeHereticRuntimeCompatibilityTest {
 
     private fun substrate(
         pid: Long,
-    ): MacUserLaunchdProcess.Receipt =
-        MacUserLaunchdProcess.Receipt(
-            schemaVersion = MacUserLaunchdProcess.Schema,
-            substrateRef = MacUserLaunchdProcess.SubstrateRef,
+        binding: HereticPersistentRuntime.Binding,
+    ): StableVexLifeHereticRuntimeCompatibility.StableMacUserLaunchdProcessReceipt =
+        StableVexLifeHereticRuntimeCompatibility.StableMacUserLaunchdProcessReceipt(
+            schemaVersion =
+                StableVexLifeHereticRuntimeCompatibility.StableLaunchdReceiptSchema,
+            substrateRef =
+                StableVexLifeHereticRuntimeCompatibility.StableLaunchdSubstrateRef,
             label = "com.vexlife.heretic.stable-test",
             domainTarget = "gui/501",
             plistPath = "/tmp/vexlife-runtime-compat/stable.plist",
-            programPath = "/tmp/vexlife-runtime-compat/python/bin/python",
-            programArguments = emptyList(),
-            workingDirectory = "/tmp/vexlife-runtime-compat/python",
+            programPath = binding.pythonPath,
+            programArguments =
+                HereticPersistentRuntime.serverArgs(
+                    binding,
+                ),
+            workingDirectory = binding.pythonEnvironmentRoot,
             stdoutPath = "/tmp/vexlife-runtime-compat/stable.out.log",
             stderrPath = "/tmp/vexlife-runtime-compat/stable.err.log",
-            environment = emptyMap(),
             keepAlive = false,
             pid = pid,
         )
@@ -227,18 +230,47 @@ class StableVexLifeHereticRuntimeCompatibilityTest {
                             ),
                         processSubstrate =
                             substrate(
-                                pid,
+                                pid = pid,
+                                binding = binding,
                             ),
                     ),
                 effects = HereticRuntimeEffectBoundary.QualifiedRuntime,
                 qualification = HereticRuntimeQualification.qualified(),
             )
 
+        val launchdHost =
+            object : MacUserLaunchdProcess.Host {
+                override val uid =
+                    501L
+
+                val trace =
+                    mutableListOf<List<String>>()
+
+                override fun launchctl(
+                    args: List<String>,
+                ): MacUserLaunchdProcess.CommandResult {
+                    trace +=
+                        args
+                    return MacUserLaunchdProcess.CommandResult(
+                        status = 0,
+                        stdout = "pid = $pid\n",
+                        stderr = "",
+                    )
+                }
+
+                override fun processAlive(
+                    pid: Long,
+                ): Boolean =
+                    pid ==
+                        4242L
+            }
+
         val observed =
             StableVexLifeHereticRuntimeCompatibility.observeReceipt(
                 receipt = receipt,
                 binding = binding,
                 platform = platform,
+                launchdHost = launchdHost,
             )
 
         assertEquals(
@@ -262,9 +294,17 @@ class StableVexLifeHereticRuntimeCompatibilityTest {
                 "ENVIRONMENT_CURRENT",
                 "PROCESS_ALIVE",
                 "PROCESS_IDENTITY",
-                "SUBSTRATE_CURRENT",
             ),
             platform.trace,
+        )
+        assertEquals(
+            listOf(
+                listOf(
+                    "print",
+                    "gui/501/com.vexlife.heretic.stable-test",
+                ),
+            ),
+            launchdHost.trace,
         )
         assertTrue(
             observed.evidence.qualification.healthAndExactModelVerified,

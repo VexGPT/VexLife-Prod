@@ -160,17 +160,96 @@ object MacUserLaunchdProcess {
         return receipt
     }
 
-    fun observe(spec: Spec, host: Host = SystemHost): Observation {
-        val result = host.launchctl(listOf("print", jobTarget(spec)))
-        result.errorMessage?.let { return Observation.Unknown(it) }
-        if (result.status != 0) {
-            val detail = listOf(result.stdout, result.stderr).joinToString("\n").trim()
-            return if (missingServicePattern.containsMatchIn(detail)) Observation.Absent
-            else Observation.Unknown(detail)
+    fun observeCoordinate(
+        domainTarget: String,
+        label: String,
+        host: Host = SystemHost,
+    ): Observation {
+        require(
+            domainTarget.matches(
+                Regex(
+                    "gui/\\d+",
+                ),
+            ),
+        ) {
+            "launchd observation domainTarget is invalid"
         }
-        val pid = pidPattern.find(result.stdout)?.groupValues?.get(1)?.toLongOrNull()
-        return if (pid == null) Observation.LoadedStopped else Observation.Running(pid)
+        require(
+            labelPattern.matches(
+                label,
+            ),
+        ) {
+            "launchd observation label must be one com.vexlife.* identity"
+        }
+
+        val result =
+            host.launchctl(
+                listOf(
+                    "print",
+                    "$domainTarget/$label",
+                ),
+            )
+        result.errorMessage
+            ?.let {
+                return Observation.Unknown(
+                    it,
+                )
+            }
+        if (
+            result.status !=
+            0
+        ) {
+            val detail =
+                listOf(
+                    result.stdout,
+                    result.stderr,
+                )
+                    .joinToString(
+                        "\n",
+                    )
+                    .trim()
+            return if (
+                missingServicePattern.containsMatchIn(
+                    detail,
+                )
+            ) {
+                Observation.Absent
+            } else {
+                Observation.Unknown(
+                    detail,
+                )
+            }
+        }
+        val pid =
+            pidPattern.find(
+                result.stdout,
+            )
+                ?.groupValues
+                ?.get(
+                    1,
+                )
+                ?.toLongOrNull()
+        return if (
+            pid ==
+            null
+        ) {
+            Observation.LoadedStopped
+        } else {
+            Observation.Running(
+                pid,
+            )
+        }
     }
+
+    fun observe(
+        spec: Spec,
+        host: Host = SystemHost,
+    ): Observation =
+        observeCoordinate(
+            domainTarget = spec.domainTarget,
+            label = spec.label,
+            host = host,
+        )
 
     fun receiptCurrent(
         receipt: Receipt,
