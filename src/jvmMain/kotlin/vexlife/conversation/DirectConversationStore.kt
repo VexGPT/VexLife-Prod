@@ -491,20 +491,13 @@ class DirectConversationStore(
          * Advance the canonical current head only after the context owner has durably formed the
          * exact canonical context at its current VexLife path.
          *
-         * [contextRef] is retained as a Kotlin caller compatibility argument only and is deliberately
-         * absent from canonical Head bytes.
          */
         fun commitCompletedTurn(
             request: Event,
             response: Event,
-            contextRef: String,
             contextSha256: String,
             formedAt: Instant = Instant.now(),
         ): Head {
-            requireNonEmpty(
-                contextRef,
-                "contextRef",
-            )
             validateRequestAsPending(
                 request,
             )
