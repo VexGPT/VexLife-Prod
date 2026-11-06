@@ -577,16 +577,33 @@ object VexLifeCurrentMemoryReader {
             )
         for (
             statement in
-            statements.values.filter(
-                Statement::current,
-            )
+            statements.values
         ) {
-            validateCurrentStatementAuthority(
+            val statementAuthority =
+                loadHistoricalAuthority(
+                    home = home,
+                    identity = identity,
+                    semanticAuthorityHeadSha256 = statement.semanticAuthorityHeadSha256,
+                )
+            validateStatementAuthority(
                 home = home,
                 identity = identity,
                 statement = statement,
-                currentAuthority = authority,
+                authority = statementAuthority,
             )
+
+            if (
+                statement.current
+            ) {
+                require(
+                    authorityContains(
+                        authority,
+                        statement,
+                    )
+                ) {
+                    "Score statement is absent from its admitted semantic authority head"
+                }
+            }
         }
 
         return ScoreSnapshot(
@@ -743,14 +760,60 @@ object VexLifeCurrentMemoryReader {
         return current
     }
 
-    private fun validateCurrentStatementAuthority(
+    private fun loadHistoricalAuthority(
+        home: Path,
+        identity: Identity,
+        semanticAuthorityHeadSha256: String,
+    ): JsonObject {
+        requireSha256(
+            semanticAuthorityHeadSha256,
+            "semanticAuthorityHeadSha256",
+        )
+        val root =
+            "semantic-authority/score/" +
+                identity.lineageRef +
+                "/" +
+                identity.threadRef
+        val head =
+            readAddressed(
+                home = home,
+                path =
+                    inside(
+                        home,
+                        root +
+                            "/heads/" +
+                            semanticAuthorityHeadSha256 +
+                            ".json",
+                    ),
+                schemaVersion = SemanticAuthorityHeadSchema,
+                refField = "semanticAuthorityHeadRef",
+                hashField = "semanticAuthorityHeadSha256",
+                prefix = "score-semantic-authority-head",
+                label = "historical semantic authority head",
+            )
+        validateAuthorityIdentity(
+            head,
+            identity,
+        )
+        require(
+            head.string(
+                "semanticAuthorityHeadSha256",
+            ) ==
+                semanticAuthorityHeadSha256,
+        ) {
+            "historical semantic authority head is stored under the wrong identity"
+        }
+        return head
+    }
+
+    private fun validateStatementAuthority(
         home: Path,
         identity: Identity,
         statement: Statement,
-        currentAuthority: JsonObject,
+        authority: JsonObject,
     ) {
         val binding =
-            currentAuthority
+            authority
                 .objectList(
                     "currentAcceptanceBindings",
                 )
