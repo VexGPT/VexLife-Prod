@@ -102,16 +102,22 @@ class DirectConversationStoreTest {
                             "2026-11-05T03:31:01Z",
                         ),
                     )
+                val context =
+                    CanonicalLivedContextFixture.write(
+                        productHome = productHome,
+                        request = request,
+                        response = response,
+                        formedAt = Instant.parse(
+                            "2026-11-05T03:31:02Z",
+                        ),
+                    )
                 val head =
                     commitCompletedTurn(
                         request = request,
                         response = response,
-                        contextRef = "context.vexlife-prod.direct.test",
-                        contextSha256 = "c".repeat(
-                            64,
-                        ),
+                        contextSha256 = context.sha256,
                         formedAt = Instant.parse(
-                            "2026-11-05T03:31:02Z",
+                            "2026-11-05T03:31:03Z",
                         ),
                     )
 
