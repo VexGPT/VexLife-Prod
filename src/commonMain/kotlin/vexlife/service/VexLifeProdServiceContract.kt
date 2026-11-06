@@ -143,7 +143,7 @@ object VexLifeProdServiceContract {
         val content: String,
         val model: String,
         val currentConversationHeadSha256: String,
-        val contextRef: String,
+        val contextPath: String,
         val promptContext: PromptContextProjection,
     )
 
