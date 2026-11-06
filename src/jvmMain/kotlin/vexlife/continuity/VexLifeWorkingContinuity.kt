@@ -453,10 +453,18 @@ object VexLifeWorkingContinuity {
             )
         priorCheckpoint
             ?.let {
-                requireCurrentCheckpoint(
-                    checkpoint = it,
-                    workingSet = workingSet,
+                checkpoint ->
+                validateCheckpoint(
+                    checkpoint,
                 )
+                require(
+                    checkpoint.lineageRef ==
+                        workingSet.lineageRef &&
+                        checkpoint.threadRef ==
+                        workingSet.threadRef,
+                ) {
+                    "prior working checkpoint belongs to another lineage/thread"
+                }
             }
 
         val checkpoint =
@@ -614,10 +622,9 @@ object VexLifeWorkingContinuity {
         val effects: PlanEffects,
     )
 
-    private fun requireCurrentCheckpoint(
+    fun validateCheckpoint(
         checkpoint: Checkpoint,
-        workingSet: WorkingSet,
-    ) {
+    ): Checkpoint {
         require(
             checkpoint.schemaVersion ==
                 CheckpointSchema &&
@@ -627,17 +634,13 @@ object VexLifeWorkingContinuity {
                 "CURRENT" &&
                 checkpoint.lifecycle ==
                 "CURRENT" &&
-                checkpoint.lineageRef ==
-                workingSet.lineageRef &&
-                checkpoint.threadRef ==
-                workingSet.threadRef &&
                 !checkpoint.effectAuthorityGranted &&
                 !checkpoint.semanticMemoryPromotionAuthorized &&
                 !checkpoint.modelOutputAcceptedAsMemory &&
                 checkpoint.checkpointTruth ==
                 CheckpointTruth(),
         ) {
-            "prior working checkpoint is not current/reference-only for this lineage/thread"
+            "working checkpoint is not current/reference-only"
         }
 
         require(
@@ -702,8 +705,10 @@ object VexLifeWorkingContinuity {
                         32,
                     ),
         ) {
-            "prior working checkpoint semantic identity is invalid"
+            "working checkpoint semantic identity is invalid"
         }
+
+        return checkpoint
     }
 
     private fun formCheckpoint(
