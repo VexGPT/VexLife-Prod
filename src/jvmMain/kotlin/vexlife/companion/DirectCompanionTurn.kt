@@ -12,6 +12,8 @@ import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.filesystem.VexOwnedPath
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.memory.VexLifeCurrentMemoryReader
+import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticModelConfiguration
 
 /**
@@ -139,6 +141,14 @@ object DirectCompanionTurn {
             setup ->
             setup.qualifiedRuntimeEvidence
         },
+        val currentMemoryContext: (
+            productHome: Path,
+        ) -> VexLifeMemoryContract.Context = {
+            productHome ->
+            VexLifeCurrentMemoryReader.readCurrent(
+                productHome,
+            )
+        },
     )
 
     fun perform(
@@ -244,16 +254,34 @@ object DirectCompanionTurn {
                             content = intent.content,
                             formedAt = hooks.now(),
                         )
+                    val memoryContext =
+                        hooks.currentMemoryContext(
+                            productHome,
+                        )
                     val prompt =
                         DirectPromptContext.materialize(
                             prior = prior,
                             currentRequest = request,
+                            memoryContext = memoryContext,
                         )
 
                     DirectPromptContext.reverify(
                         materialization = prompt,
                         prior = immediatePriorCompletedTurn(),
                         currentRequest = request,
+                        memoryContext =
+                            hooks.currentMemoryContext(
+                                productHome,
+                            )
+                                .also {
+                                    current ->
+                                    require(
+                                        current ==
+                                            memoryContext,
+                                    ) {
+                                        "VexLife Memory context changed before provider invocation"
+                                    }
+                                },
                     )
 
                     val runtimeEvidence =
