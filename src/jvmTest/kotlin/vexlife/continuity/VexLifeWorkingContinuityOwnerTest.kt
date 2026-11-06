@@ -200,6 +200,17 @@ class VexLifeWorkingContinuityOwnerTest {
                 owner.readSuccessorClaim(
                     lineageRef = working.lineageRef,
                     threadRef = working.threadRef,
+                    currentRequestEventBinding =
+                        VexLifeMemoryContract.CurrentRequestBinding(
+                            eventRef =
+                                "event.vexlife.request.owner-test.none",
+                            eventHash =
+                                "9".repeat(
+                                    64,
+                                ),
+                            sequence =
+                                2L,
+                        ),
                 ),
             )
         } finally {
@@ -626,6 +637,8 @@ class VexLifeWorkingContinuityOwnerTest {
                     owner.readSuccessorClaim(
                         lineageRef = working.lineageRef,
                         threadRef = working.threadRef,
+                        currentRequestEventBinding =
+                            binding,
                     ),
                 ),
             )
@@ -700,6 +713,8 @@ class VexLifeWorkingContinuityOwnerTest {
                 owner.issueSuccessorContext(
                     lineageRef = working.lineageRef,
                     threadRef = working.threadRef,
+                    currentRequestEventBinding =
+                        claim.currentRequestEventBinding,
                     successorClaimRef =
                         claim.successorClaimRef,
                     successorClaimFingerprint =
@@ -776,6 +791,8 @@ class VexLifeWorkingContinuityOwnerTest {
                 owner.issueSuccessorContext(
                     lineageRef = working.lineageRef,
                     threadRef = working.threadRef,
+                    currentRequestEventBinding =
+                        claim.currentRequestEventBinding,
                     successorClaimRef =
                         claim.successorClaimRef,
                     successorClaimFingerprint =
@@ -803,6 +820,8 @@ class VexLifeWorkingContinuityOwnerTest {
                     owner.readSuccessorContext(
                         lineageRef = working.lineageRef,
                         threadRef = working.threadRef,
+                        currentRequestEventBinding =
+                            claim.currentRequestEventBinding,
                     ),
                 ),
             )
@@ -868,6 +887,8 @@ class VexLifeWorkingContinuityOwnerTest {
                 owner.issueSuccessorContext(
                     lineageRef = working.lineageRef,
                     threadRef = working.threadRef,
+                    currentRequestEventBinding =
+                        claim.currentRequestEventBinding,
                     successorClaimRef =
                         claim.successorClaimRef,
                     successorClaimFingerprint =
@@ -881,6 +902,8 @@ class VexLifeWorkingContinuityOwnerTest {
                 owner.readSuccessorContext(
                     lineageRef = working.lineageRef,
                     threadRef = working.threadRef,
+                    currentRequestEventBinding =
+                        claim.currentRequestEventBinding,
                 ),
             )
         } finally {
@@ -945,6 +968,8 @@ class VexLifeWorkingContinuityOwnerTest {
                 owner.issueSuccessorContext(
                     lineageRef = firstWorking.lineageRef,
                     threadRef = firstWorking.threadRef,
+                    currentRequestEventBinding =
+                        claim.currentRequestEventBinding,
                     successorClaimRef =
                         claim.successorClaimRef,
                     successorClaimFingerprint =
@@ -955,6 +980,8 @@ class VexLifeWorkingContinuityOwnerTest {
                 owner.readSuccessorContext(
                     lineageRef = firstWorking.lineageRef,
                     threadRef = firstWorking.threadRef,
+                    currentRequestEventBinding =
+                        claim.currentRequestEventBinding,
                 ),
             )
 
@@ -984,6 +1011,8 @@ class VexLifeWorkingContinuityOwnerTest {
                 owner.readSuccessorContext(
                     lineageRef = firstWorking.lineageRef,
                     threadRef = firstWorking.threadRef,
+                    currentRequestEventBinding =
+                        claim.currentRequestEventBinding,
                 ),
             )
 
@@ -998,10 +1027,11 @@ class VexLifeWorkingContinuityOwnerTest {
                         paths
                             .filter {
                                 path ->
-                                path.parent
-                                    ?.fileName
-                                    ?.toString() ==
-                                    "successor-contexts" &&
+                                path
+                                    .toString()
+                                    .contains(
+                                        "successor-contexts",
+                                    ) &&
                                     path.fileName
                                         .toString()
                                         .endsWith(
@@ -1025,10 +1055,10 @@ class VexLifeWorkingContinuityOwnerTest {
     }
 
     @Test
-    fun differentRequestCannotStealAnExistingRolloverClaim() {
+    fun differentRequestsCanUseTheSameRolloverCheckpointWithoutStealingEachOther() {
         val home =
             Files.createTempDirectory(
-                "vexlife-working-owner-claim-conflict-",
+                "vexlife-working-owner-request-scoped-successors-",
             )
                 .toAbsolutePath()
 
@@ -1052,29 +1082,30 @@ class VexLifeWorkingContinuityOwnerTest {
                 workingSet = working,
             )
 
-            owner.claimSuccessorContext(
-                lineageRef = working.lineageRef,
-                threadRef = working.threadRef,
-                priorConversationHeadSha256 =
-                    "a".repeat(
-                        64,
-                    ),
-                priorRequestEventRef =
-                    working.cursorEventRef,
-                currentRequestEventBinding =
-                    VexLifeMemoryContract.CurrentRequestBinding(
-                        eventRef =
-                            "event.vexlife.request.owner-test.successor-a",
-                        eventHash =
-                            "b".repeat(
-                                64,
-                            ),
-                        sequence =
-                            2L,
-                    ),
-            )
+            val bindingA =
+                VexLifeMemoryContract.CurrentRequestBinding(
+                    eventRef =
+                        "event.vexlife.request.owner-test.successor-a",
+                    eventHash =
+                        "b".repeat(
+                            64,
+                        ),
+                    sequence =
+                        2L,
+                )
+            val bindingB =
+                VexLifeMemoryContract.CurrentRequestBinding(
+                    eventRef =
+                        "event.vexlife.request.owner-test.successor-b",
+                    eventHash =
+                        "c".repeat(
+                            64,
+                        ),
+                    sequence =
+                        2L,
+                )
 
-            assertFailsWith<IllegalArgumentException> {
+            val claimA =
                 owner.claimSuccessorContext(
                     lineageRef = working.lineageRef,
                     threadRef = working.threadRef,
@@ -1085,18 +1116,93 @@ class VexLifeWorkingContinuityOwnerTest {
                     priorRequestEventRef =
                         working.cursorEventRef,
                     currentRequestEventBinding =
-                        VexLifeMemoryContract.CurrentRequestBinding(
-                            eventRef =
-                                "event.vexlife.request.owner-test.successor-b",
-                            eventHash =
-                                "c".repeat(
-                                    64,
-                                ),
-                            sequence =
-                                2L,
-                        ),
+                        bindingA,
                 )
-            }
+                    .claim
+            val contextA =
+                owner.issueSuccessorContext(
+                    lineageRef = working.lineageRef,
+                    threadRef = working.threadRef,
+                    currentRequestEventBinding =
+                        bindingA,
+                    successorClaimRef =
+                        claimA.successorClaimRef,
+                    successorClaimFingerprint =
+                        claimA.semanticFingerprint,
+                )
+                    .context
+
+            val claimB =
+                owner.claimSuccessorContext(
+                    lineageRef = working.lineageRef,
+                    threadRef = working.threadRef,
+                    priorConversationHeadSha256 =
+                        "a".repeat(
+                            64,
+                        ),
+                    priorRequestEventRef =
+                        working.cursorEventRef,
+                    currentRequestEventBinding =
+                        bindingB,
+                )
+                    .claim
+            val contextB =
+                owner.issueSuccessorContext(
+                    lineageRef = working.lineageRef,
+                    threadRef = working.threadRef,
+                    currentRequestEventBinding =
+                        bindingB,
+                    successorClaimRef =
+                        claimB.successorClaimRef,
+                    successorClaimFingerprint =
+                        claimB.semanticFingerprint,
+                )
+                    .context
+
+            assertTrue(
+                claimA.successorClaimRef !=
+                    claimB.successorClaimRef,
+            )
+            assertTrue(
+                contextA.successorContextRef !=
+                    contextB.successorContextRef,
+            )
+            assertEquals(
+                claimA,
+                owner.readSuccessorClaim(
+                    lineageRef = working.lineageRef,
+                    threadRef = working.threadRef,
+                    currentRequestEventBinding =
+                        bindingA,
+                ),
+            )
+            assertEquals(
+                claimB,
+                owner.readSuccessorClaim(
+                    lineageRef = working.lineageRef,
+                    threadRef = working.threadRef,
+                    currentRequestEventBinding =
+                        bindingB,
+                ),
+            )
+            assertEquals(
+                contextA,
+                owner.readSuccessorContext(
+                    lineageRef = working.lineageRef,
+                    threadRef = working.threadRef,
+                    currentRequestEventBinding =
+                        bindingA,
+                ),
+            )
+            assertEquals(
+                contextB,
+                owner.readSuccessorContext(
+                    lineageRef = working.lineageRef,
+                    threadRef = working.threadRef,
+                    currentRequestEventBinding =
+                        bindingB,
+                ),
+            )
         } finally {
             home
                 .toFile()

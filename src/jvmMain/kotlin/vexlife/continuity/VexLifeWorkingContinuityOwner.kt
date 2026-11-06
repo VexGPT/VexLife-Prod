@@ -488,8 +488,12 @@ class VexLifeWorkingContinuityOwner(
 
         val paths = paths(lineageRef, threadRef)
         val claimPath =
-            paths.successorClaims.resolve(
-                current.checkpoint.semanticFingerprint + ".json",
+            successorClaimPath(
+                paths = paths,
+                checkpointFingerprint =
+                    current.checkpoint.semanticFingerprint,
+                currentRequestEventHash =
+                    currentRequestEventBinding.eventHash,
             )
         val existing =
             VexDurableContractFile.read<SuccessorClaim>(
@@ -507,7 +511,7 @@ class VexLifeWorkingContinuityOwner(
                     currentRequestEventBinding,
                 ),
             ) {
-                "working continuity rollover is already claimed by another request"
+                "working continuity request-scoped successor claim address contains different truth"
             }
             return ClaimResult(
                 state = "IDEMPOTENT_CURRENT",
@@ -525,10 +529,18 @@ class VexLifeWorkingContinuityOwner(
                 "working continuity current checkpoint changed before successor claim"
             }
 
+            val reboundPath =
+                successorClaimPath(
+                    paths = paths,
+                    checkpointFingerprint =
+                        rebound.checkpoint.semanticFingerprint,
+                    currentRequestEventHash =
+                        currentRequestEventBinding.eventHash,
+                )
             val reboundExisting =
                 VexDurableContractFile.read<SuccessorClaim>(
                     ownedRoot = home,
-                    path = claimPath,
+                    path = reboundPath,
                 )
             if (reboundExisting != null) {
                 validateSuccessorClaim(reboundExisting)
@@ -541,7 +553,7 @@ class VexLifeWorkingContinuityOwner(
                         currentRequestEventBinding,
                     ),
                 ) {
-                    "working continuity rollover is already claimed by another request"
+                    "working continuity request-scoped successor claim address contains different truth"
                 }
                 return@use ClaimResult(
                     state = "IDEMPOTENT_CURRENT",
@@ -559,14 +571,14 @@ class VexLifeWorkingContinuityOwner(
                     claimedAt = claimedAt,
                 )
             writeImmutableOrRequireExact(
-                path = claimPath,
+                path = reboundPath,
                 value = claim,
             )
             val readback =
                 requireNotNull(
                     VexDurableContractFile.read<SuccessorClaim>(
                         ownedRoot = home,
-                        path = claimPath,
+                        path = reboundPath,
                     ),
                 ) {
                     "working continuity successor claim did not persist"
@@ -587,14 +599,22 @@ class VexLifeWorkingContinuityOwner(
     fun readSuccessorClaim(
         lineageRef: String,
         threadRef: String,
+        currentRequestEventBinding: VexLifeMemoryContract.CurrentRequestBinding,
     ): SuccessorClaim? {
+        requireCurrentRequestBinding(
+            currentRequestEventBinding,
+        )
         val current = readCurrent(lineageRef, threadRef) ?: return null
         val paths = paths(lineageRef, threadRef)
         return VexDurableContractFile.read<SuccessorClaim>(
             ownedRoot = home,
             path =
-                paths.successorClaims.resolve(
-                    current.checkpoint.semanticFingerprint + ".json",
+                successorClaimPath(
+                    paths = paths,
+                    checkpointFingerprint =
+                        current.checkpoint.semanticFingerprint,
+                    currentRequestEventHash =
+                        currentRequestEventBinding.eventHash,
                 ),
         )
             ?.also {
@@ -603,9 +623,10 @@ class VexLifeWorkingContinuityOwner(
                     it.checkpointRef == current.checkpoint.checkpointRef &&
                     it.checkpointFingerprint == current.checkpoint.semanticFingerprint &&
                     it.commitReceiptRef == current.commitReceipt.commitReceiptRef &&
-                    it.commitReceiptFingerprint == current.commitReceipt.semanticFingerprint,
+                    it.commitReceiptFingerprint == current.commitReceipt.semanticFingerprint &&
+                    it.currentRequestEventBinding == currentRequestEventBinding,
                 ) {
-                    "working continuity successor claim is not current"
+                    "working continuity successor claim is not current for the exact request"
                 }
             }
     }
@@ -613,10 +634,14 @@ class VexLifeWorkingContinuityOwner(
     fun issueSuccessorContext(
         lineageRef: String,
         threadRef: String,
+        currentRequestEventBinding: VexLifeMemoryContract.CurrentRequestBinding,
         successorClaimRef: String,
         successorClaimFingerprint: String,
         issuedAt: Instant = Instant.now(),
     ): IssueResult {
+        requireCurrentRequestBinding(
+            currentRequestEventBinding,
+        )
         requireRef(
             successorClaimRef,
             "successorClaimRef",
@@ -638,11 +663,13 @@ class VexLifeWorkingContinuityOwner(
         val claim =
             requireNotNull(
                 readSuccessorClaim(
-                    lineageRef,
-                    threadRef,
+                    lineageRef = lineageRef,
+                    threadRef = threadRef,
+                    currentRequestEventBinding =
+                        currentRequestEventBinding,
                 ),
             ) {
-                "working continuity successor Context requires one exact current claim"
+                "working continuity successor Context requires one exact current request claim"
             }
         require(
             claim.successorClaimRef ==
@@ -659,9 +686,12 @@ class VexLifeWorkingContinuityOwner(
                 threadRef,
             )
         val contextPath =
-            paths.successorContexts.resolve(
-                current.checkpoint.semanticFingerprint +
-                    ".json",
+            successorContextPath(
+                paths = paths,
+                checkpointFingerprint =
+                    current.checkpoint.semanticFingerprint,
+                currentRequestEventHash =
+                    currentRequestEventBinding.eventHash,
             )
         val existing =
             VexDurableContractFile.read<SuccessorContext>(
@@ -680,9 +710,11 @@ class VexLifeWorkingContinuityOwner(
                     context = existing,
                     current = current,
                     claim = claim,
-                ),
+                ) &&
+                    existing.currentRequestEventBinding ==
+                    currentRequestEventBinding,
             ) {
-                "working continuity successor Context is already issued for different current truth"
+                "working continuity request-scoped successor Context address contains different truth"
             }
             return IssueResult(
                 state = "IDEMPOTENT_CURRENT",
@@ -714,11 +746,13 @@ class VexLifeWorkingContinuityOwner(
                 val reboundClaim =
                     requireNotNull(
                         readSuccessorClaim(
-                            lineageRef,
-                            threadRef,
+                            lineageRef = lineageRef,
+                            threadRef = threadRef,
+                            currentRequestEventBinding =
+                                currentRequestEventBinding,
                         ),
                     ) {
-                        "working continuity current successor claim disappeared before Context issuance"
+                        "working continuity exact request successor claim disappeared before Context issuance"
                     }
                 require(
                     reboundClaim ==
@@ -727,10 +761,18 @@ class VexLifeWorkingContinuityOwner(
                     "working continuity successor claim changed before Context issuance"
                 }
 
+                val reboundPath =
+                    successorContextPath(
+                        paths = paths,
+                        checkpointFingerprint =
+                            rebound.checkpoint.semanticFingerprint,
+                        currentRequestEventHash =
+                            currentRequestEventBinding.eventHash,
+                    )
                 val reboundExisting =
                     VexDurableContractFile.read<SuccessorContext>(
                         ownedRoot = home,
-                        path = contextPath,
+                        path = reboundPath,
                     )
                 if (
                     reboundExisting !=
@@ -744,9 +786,11 @@ class VexLifeWorkingContinuityOwner(
                             context = reboundExisting,
                             current = rebound,
                             claim = reboundClaim,
-                        ),
+                        ) &&
+                            reboundExisting.currentRequestEventBinding ==
+                            currentRequestEventBinding,
                     ) {
-                        "working continuity successor Context is already issued for different current truth"
+                        "working continuity request-scoped successor Context address contains different truth"
                     }
                     return@use IssueResult(
                         state = "IDEMPOTENT_CURRENT",
@@ -762,7 +806,7 @@ class VexLifeWorkingContinuityOwner(
                         issuedAt = issuedAt,
                     )
                 writeImmutableOrRequireExact(
-                    path = contextPath,
+                    path = reboundPath,
                     value = context,
                 )
 
@@ -770,7 +814,7 @@ class VexLifeWorkingContinuityOwner(
                     requireNotNull(
                         VexDurableContractFile.read<SuccessorContext>(
                             ownedRoot = home,
-                            path = contextPath,
+                            path = reboundPath,
                         ),
                     ) {
                         "working continuity successor Context did not persist"
@@ -796,7 +840,11 @@ class VexLifeWorkingContinuityOwner(
     fun readSuccessorContext(
         lineageRef: String,
         threadRef: String,
+        currentRequestEventBinding: VexLifeMemoryContract.CurrentRequestBinding,
     ): SuccessorContext? {
+        requireCurrentRequestBinding(
+            currentRequestEventBinding,
+        )
         val current =
             readCurrent(
                 lineageRef,
@@ -805,8 +853,10 @@ class VexLifeWorkingContinuityOwner(
                 ?: return null
         val claim =
             readSuccessorClaim(
-                lineageRef,
-                threadRef,
+                lineageRef = lineageRef,
+                threadRef = threadRef,
+                currentRequestEventBinding =
+                    currentRequestEventBinding,
             )
                 ?: return null
         val paths =
@@ -817,9 +867,12 @@ class VexLifeWorkingContinuityOwner(
         return VexDurableContractFile.read<SuccessorContext>(
             ownedRoot = home,
             path =
-                paths.successorContexts.resolve(
-                    current.checkpoint.semanticFingerprint +
-                        ".json",
+                successorContextPath(
+                    paths = paths,
+                    checkpointFingerprint =
+                        current.checkpoint.semanticFingerprint,
+                    currentRequestEventHash =
+                        currentRequestEventBinding.eventHash,
                 ),
         )
             ?.also {
@@ -831,9 +884,11 @@ class VexLifeWorkingContinuityOwner(
                         context = it,
                         current = current,
                         claim = claim,
-                    ),
+                    ) &&
+                        it.currentRequestEventBinding ==
+                        currentRequestEventBinding,
                 ) {
-                    "working continuity successor Context is not current"
+                    "working continuity successor Context is not current for the exact request"
                 }
             }
     }
@@ -859,6 +914,52 @@ class VexLifeWorkingContinuityOwner(
             head = root.resolve("head.json"),
             lock = root.resolve("owner.lock"),
         )
+    }
+
+    private fun successorClaimPath(
+        paths: Paths,
+        checkpointFingerprint: String,
+        currentRequestEventHash: String,
+    ): Path {
+        requireSha256(
+            checkpointFingerprint,
+            "successor claim checkpointFingerprint",
+        )
+        requireSha256(
+            currentRequestEventHash,
+            "successor claim currentRequestEventHash",
+        )
+        return paths.successorClaims
+            .resolve(
+                checkpointFingerprint,
+            )
+            .resolve(
+                currentRequestEventHash +
+                    ".json",
+            )
+    }
+
+    private fun successorContextPath(
+        paths: Paths,
+        checkpointFingerprint: String,
+        currentRequestEventHash: String,
+    ): Path {
+        requireSha256(
+            checkpointFingerprint,
+            "successor Context checkpointFingerprint",
+        )
+        requireSha256(
+            currentRequestEventHash,
+            "successor Context currentRequestEventHash",
+        )
+        return paths.successorContexts
+            .resolve(
+                checkpointFingerprint,
+            )
+            .resolve(
+                currentRequestEventHash +
+                    ".json",
+            )
     }
 
     private fun sameCurrentPlan(

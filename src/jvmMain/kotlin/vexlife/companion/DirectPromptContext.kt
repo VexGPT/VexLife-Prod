@@ -2,9 +2,12 @@ package vexlife.companion
 
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.contract.VexContractJson
+import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.conversation.DirectConversationStore
 import vexlife.memory.VexLifeMemoryContract
 
@@ -16,8 +19,11 @@ import vexlife.memory.VexLifeMemoryContract
  * provider materialization. This owner performs no provider call and no durable mutation.
  */
 object DirectPromptContext {
-    const val ReceiptSchema =
+    const val ReceiptSchemaV2 =
         "vexlife-prod.direct-prompt-materialization-receipt/v2"
+
+    const val ReceiptSchema =
+        "vexlife-prod.direct-prompt-materialization-receipt/v3"
 
     const val InputTokenBudget =
         VexLifeMemoryContract.ContextInputTokenBudget
@@ -46,6 +52,28 @@ object DirectPromptContext {
         val tokenBoundedOutPageRefs: List<String>,
         val reasons: List<String>,
         val memoryTokenCap: Int,
+    )
+
+    @Serializable
+    private data class ProviderWorkingContinuityPacket(
+        val schemaVersion: String,
+        val truthClass: String,
+        val contextRef: String,
+        val contextFingerprint: String,
+        val checkpointRef: String,
+        val commitReceiptRef: String,
+        val successorClaimRef: String,
+        val priorConversationHeadSha256: String,
+        val currentRequestEventRef: String,
+        val workingSet: vexlife.continuity.VexLifeWorkingContinuity.WorkingSet,
+        val sourceRefs: List<String>,
+    )
+
+    private data class VerifiedWorkingContinuity(
+        val context: VexLifeWorkingContinuityOwner.SuccessorContext,
+        val systemContent: String,
+        val systemMessageSha256: String,
+        val estimatedSystemMessageTokens: Int,
     )
 
     private data class VerifiedMemory(
@@ -87,10 +115,21 @@ object DirectPromptContext {
         val memorySourceRefs: List<String>,
         val memoryIncluded: Boolean,
         val memorySelectionPerformed: Boolean,
+        val workingContinuityIncluded: Boolean,
+        val workingContinuityContextRef: String?,
+        val workingContinuityContextFingerprint: String?,
+        val workingContinuityCheckpointRef: String?,
+        val workingContinuitySuccessorClaimRef: String?,
+        val workingContinuitySourceRefs: List<String>,
+        val workingContinuitySystemMessageSha256: String?,
+        val workingContinuityEstimatedSystemMessageTokens: Int,
         val trainingSelectionPerformed: Boolean,
         val effectsPerformed: Boolean,
     )
 
+    @OptIn(
+        ExperimentalSerializationApi::class,
+    )
     @Serializable
     @ConsistentCopyVisibility
     data class Receipt internal constructor(
@@ -130,6 +169,46 @@ object DirectPromptContext {
         val memorySelectionPerformed: Boolean,
         val trainingSelectionPerformed: Boolean,
         val effectsPerformed: Boolean,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val workingContinuityIncluded: Boolean =
+            false,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val workingContinuityContextRef: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val workingContinuityContextFingerprint: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val workingContinuityCheckpointRef: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val workingContinuitySuccessorClaimRef: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val workingContinuitySourceRefs: List<String> =
+            emptyList(),
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val workingContinuitySystemMessageSha256: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val workingContinuityEstimatedSystemMessageTokens: Int =
+            0,
     )
 
     @Serializable
@@ -170,6 +249,8 @@ object DirectPromptContext {
         currentRequest: DirectConversationStore.Event,
         memoryContext: VexLifeMemoryContract.Context? =
             null,
+        workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
+            null,
         browserContext: BrowserContext? =
             null,
     ): Materialization {
@@ -180,43 +261,45 @@ object DirectPromptContext {
             "direct prompt context requires one durable current REQUEST"
         }
 
+        val workingContinuity =
+            verifyWorkingContinuityContext(
+                value = workingContinuityContext,
+                prior = prior,
+                currentRequest = currentRequest,
+            )
+
         val selected =
             if (
                 prior ==
                     null
             ) {
                 require(
-                    currentRequest.sequence ==
+                    workingContinuity ==
+                        null &&
+                        currentRequest.sequence ==
                         0L &&
                         currentRequest.priorEventSha256 ==
                         null,
                 ) {
-                    "first-turn prompt context requires one genesis request"
+                    "first-turn prompt context requires one genesis request without working rollover"
                 }
                 emptyList()
             } else {
-                require(
-                    prior.exactEventFileReadCount ==
-                        2 &&
-                        !prior.wholeHistoryEventEnumerationPerformed &&
-                        currentRequest.sequence ==
-                        prior.head.sequence +
-                        1 &&
-                        currentRequest.priorEventSha256 ==
-                        prior.responseEvent.eventSha256 &&
-                        currentRequest.threadRef ==
-                        prior.head.threadRef &&
-                        prior.requestEvent.channelRef ==
-                        prior.responseEvent.channelRef &&
-                        currentRequest.channelRef ==
-                        prior.responseEvent.channelRef,
-                ) {
-                    "direct prompt context current request does not immediately follow the exact prior completed turn"
-                }
-                listOf(
-                    prior.requestEvent,
-                    prior.responseEvent,
+                requireImmediatePriorBinding(
+                    prior = prior,
+                    currentRequest = currentRequest,
                 )
+                if (
+                    workingContinuity ==
+                        null
+                ) {
+                    listOf(
+                        prior.requestEvent,
+                        prior.responseEvent,
+                    )
+                } else {
+                    emptyList()
+                }
             }
 
         val memory =
@@ -226,6 +309,16 @@ object DirectPromptContext {
         val messages =
             buildList {
                 memory
+                    ?.systemContent
+                    ?.let {
+                        add(
+                            CompanionProviderMessage(
+                                role = "system",
+                                content = it,
+                            ),
+                        )
+                    }
+                workingContinuity
                     ?.systemContent
                     ?.let {
                         add(
@@ -333,13 +426,17 @@ object DirectPromptContext {
             ReceiptCore(
                 schemaVersion = ReceiptSchema,
                 contextMode =
-                    if (
+                    when {
                         prior ==
-                            null
-                    ) {
-                        "FIRST_TURN"
-                    } else {
-                        "IMMEDIATE_PRIOR_COMPLETED_TURN"
+                            null ->
+                            "FIRST_TURN"
+
+                        workingContinuity !=
+                            null ->
+                            "WORKING_CHECKPOINT_SUCCESSOR"
+
+                        else ->
+                            "IMMEDIATE_PRIOR_COMPLETED_TURN"
                     },
                 priorConversationHeadSha256 =
                     prior
@@ -391,6 +488,37 @@ object DirectPromptContext {
                         ?: emptyList(),
                 memoryIncluded = memoryIncluded,
                 memorySelectionPerformed = memoryIncluded,
+                workingContinuityIncluded =
+                    workingContinuity !=
+                    null,
+                workingContinuityContextRef =
+                    workingContinuity
+                        ?.context
+                        ?.successorContextRef,
+                workingContinuityContextFingerprint =
+                    workingContinuity
+                        ?.context
+                        ?.semanticFingerprint,
+                workingContinuityCheckpointRef =
+                    workingContinuity
+                        ?.context
+                        ?.checkpointRef,
+                workingContinuitySuccessorClaimRef =
+                    workingContinuity
+                        ?.context
+                        ?.successorClaimRef,
+                workingContinuitySourceRefs =
+                    workingContinuity
+                        ?.context
+                        ?.sourceRefs
+                        ?: emptyList(),
+                workingContinuitySystemMessageSha256 =
+                    workingContinuity
+                        ?.systemMessageSha256,
+                workingContinuityEstimatedSystemMessageTokens =
+                    workingContinuity
+                        ?.estimatedSystemMessageTokens
+                        ?: 0,
                 trainingSelectionPerformed = false,
                 effectsPerformed = false,
             )
@@ -434,6 +562,22 @@ object DirectPromptContext {
                 memoryIncluded = core.memoryIncluded,
                 memorySelectionPerformed = core.memorySelectionPerformed,
                 trainingSelectionPerformed = core.trainingSelectionPerformed,
+                workingContinuityIncluded =
+                    core.workingContinuityIncluded,
+                workingContinuityContextRef =
+                    core.workingContinuityContextRef,
+                workingContinuityContextFingerprint =
+                    core.workingContinuityContextFingerprint,
+                workingContinuityCheckpointRef =
+                    core.workingContinuityCheckpointRef,
+                workingContinuitySuccessorClaimRef =
+                    core.workingContinuitySuccessorClaimRef,
+                workingContinuitySourceRefs =
+                    core.workingContinuitySourceRefs,
+                workingContinuitySystemMessageSha256 =
+                    core.workingContinuitySystemMessageSha256,
+                workingContinuityEstimatedSystemMessageTokens =
+                    core.workingContinuityEstimatedSystemMessageTokens,
                 effectsPerformed = core.effectsPerformed,
             )
 
@@ -449,6 +593,8 @@ object DirectPromptContext {
         currentRequest: DirectConversationStore.Event,
         memoryContext: VexLifeMemoryContract.Context? =
             null,
+        workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
+            null,
         browserContext: BrowserContext? =
             null,
     ) {
@@ -457,6 +603,8 @@ object DirectPromptContext {
                 prior = prior,
                 currentRequest = currentRequest,
                 memoryContext = memoryContext,
+                workingContinuityContext =
+                    workingContinuityContext,
                 browserContext = browserContext,
             )
 
@@ -467,6 +615,161 @@ object DirectPromptContext {
             "direct prompt materialization is no longer current at the provider boundary"
         }
     }
+
+    private fun verifyWorkingContinuityContext(
+        value: DirectWorkingContinuity.CurrentSuccessor?,
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
+    ): VerifiedWorkingContinuity? {
+        if (
+            value ==
+                null
+        ) {
+            return null
+        }
+        val durable =
+            value.context
+        val exactPrior =
+            requireNotNull(
+                prior,
+            ) {
+                "working-checkpoint successor prompt requires one exact prior completed turn"
+            }
+        requireImmediatePriorBinding(
+            prior = exactPrior,
+            currentRequest = currentRequest,
+        )
+        require(
+            durable.schemaVersion ==
+                VexLifeWorkingContinuityOwner.SuccessorContextSchema &&
+                durable.truthClass ==
+                "NON_SEMANTIC_WORKING_CONTINUITY_SUCCESSOR_CONTEXT" &&
+                durable.effectOwnerRef ==
+                VexLifeWorkingContinuityOwner.EffectOwnerRef &&
+                durable.contextMode ==
+                "WORKING_CHECKPOINT_SUCCESSOR" &&
+                durable.lineageRef ==
+                currentRequest.companionLineageRef &&
+                durable.threadRef ==
+                currentRequest.threadRef &&
+                durable.priorConversationHeadSha256 ==
+                exactPrior.head.conversationHeadSha256 &&
+                durable.priorRequestEventRef ==
+                exactPrior.requestEvent.eventRef &&
+                durable.currentRequestEventBinding.eventRef ==
+                currentRequest.eventRef &&
+                durable.currentRequestEventBinding.eventHash ==
+                currentRequest.eventHash &&
+                durable.currentRequestEventBinding.sequence ==
+                currentRequest.sequence &&
+                durable.workingSet.cursorEventRef ==
+                exactPrior.requestEvent.eventRef &&
+                durable.workingSet.lineageRef ==
+                currentRequest.companionLineageRef &&
+                durable.workingSet.threadRef ==
+                currentRequest.threadRef &&
+                durable.sourceRefs ==
+                durable.sourceRefs
+                    .distinct()
+                    .sorted() &&
+                durable.effects.homeMutated &&
+                durable.effects.successorContextIssued &&
+                !durable.effects.checkpointMutated &&
+                !durable.effects.currentHeadMutated &&
+                !durable.effects.successorClaimMutated &&
+                !durable.effects.semanticAcceptanceCreated &&
+                !durable.effects.memoryPromotionPerformed &&
+                !durable.effects.providerCalled &&
+                !durable.effects.modelCalled &&
+                !durable.effects.trainingRan &&
+                !durable.effects.modelWeightsChanged,
+        ) {
+            "working-checkpoint successor Context does not bind exact prompt/Conversation truth"
+        }
+
+        val packet =
+            ProviderWorkingContinuityPacket(
+                schemaVersion =
+                    "vexlife-prod.working-continuity-provider-packet/v1",
+                truthClass =
+                    "CURRENT_NON_SEMANTIC_WORKING_CONTINUITY_CONTEXT",
+                contextRef =
+                    durable.successorContextRef,
+                contextFingerprint =
+                    durable.semanticFingerprint,
+                checkpointRef =
+                    durable.checkpointRef,
+                commitReceiptRef =
+                    durable.commitReceiptRef,
+                successorClaimRef =
+                    durable.successorClaimRef,
+                priorConversationHeadSha256 =
+                    durable.priorConversationHeadSha256,
+                currentRequestEventRef =
+                    currentRequest.eventRef,
+                workingSet =
+                    durable.workingSet,
+                sourceRefs =
+                    durable.sourceRefs,
+            )
+        val systemContent =
+            workingContinuitySystemContent(
+                packet,
+            )
+        return VerifiedWorkingContinuity(
+            context = durable,
+            systemContent = systemContent,
+            systemMessageSha256 =
+                sha256(
+                    systemContent,
+                ),
+            estimatedSystemMessageTokens =
+                estimatedMessageTokens(
+                    systemContent,
+                ),
+        )
+    }
+
+    private fun requireImmediatePriorBinding(
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn,
+        currentRequest: DirectConversationStore.Event,
+    ) {
+        require(
+            prior.exactEventFileReadCount ==
+                2 &&
+                !prior.wholeHistoryEventEnumerationPerformed &&
+                currentRequest.sequence ==
+                prior.head.sequence +
+                1 &&
+                currentRequest.priorEventSha256 ==
+                prior.responseEvent.eventSha256 &&
+                currentRequest.companionLineageRef ==
+                prior.head.companionLineageRef &&
+                currentRequest.threadRef ==
+                prior.head.threadRef &&
+                prior.requestEvent.channelRef ==
+                prior.responseEvent.channelRef &&
+                currentRequest.channelRef ==
+                prior.responseEvent.channelRef,
+        ) {
+            "direct prompt context current request does not immediately follow the exact prior completed turn"
+        }
+    }
+
+    private fun workingContinuitySystemContent(
+        packet: ProviderWorkingContinuityPacket,
+    ): String =
+        listOf(
+            "VEXLIFE_WORKING_CONTINUITY_CONTEXT/v1",
+            "These are current non-semantic working coordinates from an exact rollover checkpoint, not durable Memory or a replay of prior Conversation text.",
+            "Use the references and working coordinates to maintain the current work trajectory. Do not invent content behind a ref; resolve or source-check it through its rightful owner when needed.",
+            VexContractJson.compactEncode(
+                packet,
+            ),
+        )
+            .joinToString(
+                "\n",
+            )
 
     private fun browserContextMessage(
         context: BrowserContext,

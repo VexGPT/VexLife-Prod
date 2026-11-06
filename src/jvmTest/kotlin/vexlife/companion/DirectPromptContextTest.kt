@@ -2,6 +2,10 @@ package vexlife.companion
 
 import java.nio.file.Files
 import java.time.Instant
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -9,6 +13,9 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.continuity.VexLifeWorkingContinuity
+import vexlife.continuity.VexLifeWorkingContinuityOwner
+import vexlife.contract.VexContractJson
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
@@ -21,6 +28,111 @@ class DirectPromptContextTest {
         CanonicalVexLifeHomeFixture.form(
             productHome,
         )
+    }
+
+    @Test
+    fun historicalV2ReceiptRoundTripsWithoutNewWorkingFieldsInCanonicalHashShape() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-v2-compat-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val store =
+                DirectConversationStore(
+                    productHome,
+                )
+
+            store.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef =
+                            "turn.self-development.v2-compat",
+                        requestMessageRef =
+                            "message.self-development.human.v2-compat",
+                        content =
+                            "Historical receipt compatibility",
+                    )
+                val receipt =
+                    DirectPromptContext.materialize(
+                        prior = null,
+                        currentRequest = request,
+                    )
+                        .receipt
+                val full =
+                    VexContractJson.Strict
+                        .encodeToJsonElement(
+                            receipt,
+                        )
+                        .jsonObject
+                val workingKeys =
+                    setOf(
+                        "workingContinuityIncluded",
+                        "workingContinuityContextRef",
+                        "workingContinuityContextFingerprint",
+                        "workingContinuityCheckpointRef",
+                        "workingContinuitySuccessorClaimRef",
+                        "workingContinuitySourceRefs",
+                        "workingContinuitySystemMessageSha256",
+                        "workingContinuityEstimatedSystemMessageTokens",
+                    )
+                val historical =
+                    JsonObject(
+                        full
+                            .filterKeys {
+                                it !in
+                                    workingKeys
+                            }
+                            .toMutableMap()
+                            .also {
+                                it[
+                                    "schemaVersion"
+                                ] =
+                                    JsonPrimitive(
+                                        DirectPromptContext.ReceiptSchemaV2,
+                                    )
+                            },
+                    )
+                val decoded =
+                    VexContractJson.decode<DirectPromptContext.Receipt>(
+                        historical.toString(),
+                    )
+
+                assertEquals(
+                    DirectPromptContext.ReceiptSchemaV2,
+                    decoded.schemaVersion,
+                )
+                assertFalse(
+                    decoded.workingContinuityIncluded,
+                )
+                assertNull(
+                    decoded.workingContinuityContextRef,
+                )
+                assertTrue(
+                    decoded.workingContinuitySourceRefs.isEmpty(),
+                )
+                assertEquals(
+                    VexContractJson.canonicalEncodeElement(
+                        historical,
+                    ),
+                    VexContractJson.canonicalEncode(
+                        decoded,
+                    ),
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
     }
 
     @Test
@@ -360,6 +472,302 @@ class DirectPromptContextTest {
                             immediatePriorCompletedTurn(),
                         ),
                     currentRequest = second,
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun workingCheckpointSuccessorUsesMemoryWorkingSetAndCurrentRequestWithoutPriorPairReplay() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-working-successor-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val store =
+                DirectConversationStore(
+                    productHome,
+                )
+            var firstRequestOrNull: DirectConversationStore.Event? =
+                null
+
+            store.withWriterLease {
+                val firstRequest =
+                    beginRequest(
+                        turnRef =
+                            "turn.self-development.working.001",
+                        requestMessageRef =
+                            "message.self-development.human.working.001",
+                        content =
+                            "Prior request that must not replay",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-06T12:00:00Z",
+                            ),
+                    )
+                firstRequestOrNull =
+                    firstRequest
+                val response =
+                    appendResponse(
+                        request = firstRequest,
+                        responseMessageRef =
+                            "message.self-development.companion.working.001",
+                        content =
+                            "Prior response that must not replay",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef =
+                            "observation.vexlife-prod.model-runtime.working",
+                        invocationEvidenceRef =
+                            "evidence.vexlife-prod.model-runtime-invocation.working",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-06T12:00:01Z",
+                            ),
+                    )
+                val context =
+                    CanonicalLivedContextFixture.write(
+                        productHome = productHome,
+                        request = firstRequest,
+                        response = response,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-06T12:00:02Z",
+                            ),
+                    )
+                commitCompletedTurn(
+                    request = firstRequest,
+                    response = response,
+                    contextSha256 = context.sha256,
+                    formedAt =
+                        Instant.parse(
+                            "2026-11-06T12:00:03Z",
+                        ),
+                )
+            }
+
+            val firstRequest =
+                requireNotNull(
+                    firstRequestOrNull,
+                )
+            val owner =
+                VexLifeWorkingContinuityOwner(
+                    productHome,
+                )
+            val workingSet =
+                VexLifeWorkingContinuity.WorkingSet(
+                    lineageRef =
+                        firstRequest.companionLineageRef,
+                    threadRef =
+                        firstRequest.threadRef,
+                    cursorEventRef =
+                        firstRequest.eventRef,
+                    activeWorkNodeRefs =
+                        listOf(
+                            "work-node.vexlife.prompt.working",
+                        ),
+                    currentIntentReceiptRefs =
+                        listOf(
+                            "receipt.vexlife.intent.prompt.working",
+                        ),
+                    openLoopRefs =
+                        listOf(
+                            "loop.vexlife.prompt.working",
+                        ),
+                    currentStatementRefs =
+                        listOf(
+                            "statement.score.continuity.001",
+                        ),
+                    currentContinuityRecordRefs =
+                        listOf(
+                            "continuity.vexlife.prompt.working",
+                        ),
+                    currentDailyStratumRefOrNull =
+                        "daily-memory-stratum.vexlife.001",
+                    sourceRefs =
+                        listOf(
+                            "source.vexlife.prompt.working",
+                        ),
+                )
+            val pressureInput =
+                VexLifeWorkingContinuity.PromptPressureInput(
+                    promptReceiptRef =
+                        "receipt.vexlife.prompt-context.working-test",
+                    providerMaterializedInputTokenEstimate =
+                        176_000,
+                    inputTokenBudget =
+                        192_000,
+                    reservedOutputTokens =
+                        16_000,
+                    hardTokenLimit =
+                        208_000,
+                    memoryBoundedOutStatementCount =
+                        0,
+                    memoryTokenBoundedOutPageCount =
+                        0,
+                    sourceRefs =
+                        listOf(
+                            "source.vexlife.prompt.working-pressure",
+                        ),
+                )
+            val plan =
+                VexLifeWorkingContinuity.formPlan(
+                    pressureInput = pressureInput,
+                    workingSet = workingSet,
+                )
+            owner.commitPlan(
+                plan = plan,
+                pressureInput = pressureInput,
+                workingSet = workingSet,
+                committedAt =
+                    Instant.parse(
+                        "2026-11-06T12:00:04Z",
+                    ),
+            )
+
+            store.withWriterLease {
+                val prior =
+                    requireNotNull(
+                        immediatePriorCompletedTurn(),
+                    )
+                val current =
+                    beginRequest(
+                        turnRef =
+                            "turn.self-development.working.002",
+                        requestMessageRef =
+                            "message.self-development.human.working.002",
+                        content =
+                            "Current successor request",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-06T12:01:00Z",
+                            ),
+                    )
+                val successor =
+                    requireNotNull(
+                        DirectWorkingContinuity.resolveSuccessorContext(
+                            productHome = productHome,
+                            prior = prior,
+                            currentRequest = current,
+                            issuedAt =
+                                Instant.parse(
+                                    "2026-11-06T12:01:01Z",
+                                ),
+                        ),
+                    )
+                val memory =
+                    VexLifeMemoryContextFixture.current()
+                val materialized =
+                    DirectPromptContext.materialize(
+                        prior = prior,
+                        currentRequest = current,
+                        memoryContext = memory,
+                        workingContinuityContext =
+                            successor,
+                    )
+
+                assertEquals(
+                    listOf(
+                        "system",
+                        "system",
+                        "user",
+                    ),
+                    materialized.messages.map {
+                        it.role
+                    },
+                )
+                assertTrue(
+                    materialized.messages[0]
+                        .content
+                        .startsWith(
+                            "VEXLIFE_CURRENT_MEMORY_CONTEXT/v1",
+                        ),
+                )
+                assertTrue(
+                    materialized.messages[1]
+                        .content
+                        .startsWith(
+                            "VEXLIFE_WORKING_CONTINUITY_CONTEXT/v1",
+                        ),
+                )
+                assertTrue(
+                    materialized.messages[1]
+                        .content
+                        .contains(
+                            "work-node.vexlife.prompt.working",
+                        ),
+                )
+                assertEquals(
+                    "Current successor request",
+                    materialized.messages.last()
+                        .content,
+                )
+                assertFalse(
+                    materialized.messages.any {
+                        it.content.contains(
+                            "Prior request that must not replay",
+                        ) ||
+                            it.content.contains(
+                                "Prior response that must not replay",
+                            )
+                    },
+                )
+                assertEquals(
+                    "WORKING_CHECKPOINT_SUCCESSOR",
+                    materialized.receipt.contextMode,
+                )
+                assertTrue(
+                    materialized.receipt.selectedConversationEventRefs.isEmpty(),
+                )
+                assertTrue(
+                    materialized.receipt.selectedConversationEventSha256.isEmpty(),
+                )
+                assertTrue(
+                    materialized.receipt.workingContinuityIncluded,
+                )
+                assertEquals(
+                    successor.context.successorContextRef,
+                    materialized.receipt.workingContinuityContextRef,
+                )
+                assertEquals(
+                    successor.context.semanticFingerprint,
+                    materialized.receipt.workingContinuityContextFingerprint,
+                )
+                assertEquals(
+                    successor.context.checkpointRef,
+                    materialized.receipt.workingContinuityCheckpointRef,
+                )
+                assertEquals(
+                    successor.context.successorClaimRef,
+                    materialized.receipt.workingContinuitySuccessorClaimRef,
+                )
+
+                DirectWorkingContinuity.requireSuccessorContextCurrent(
+                    productHome = productHome,
+                    prior = prior,
+                    currentRequest = current,
+                    expected = successor,
+                )
+                DirectPromptContext.reverify(
+                    materialization = materialized,
+                    prior = prior,
+                    currentRequest = current,
+                    memoryContext = memory,
+                    workingContinuityContext =
+                        successor,
                 )
             }
         } finally {

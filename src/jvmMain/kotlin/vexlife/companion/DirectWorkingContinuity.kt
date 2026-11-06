@@ -71,6 +71,11 @@ object DirectWorkingContinuity {
     )
 
     @ConsistentCopyVisibility
+    data class CurrentSuccessor internal constructor(
+        val context: VexLifeWorkingContinuityOwner.SuccessorContext,
+    )
+
+    @ConsistentCopyVisibility
     data class Prepared internal constructor(
         val pressureInput: VexLifeWorkingContinuity.PromptPressureInput,
         val workingSet: VexLifeWorkingContinuity.WorkingSet,
@@ -98,12 +103,201 @@ object DirectWorkingContinuity {
         val effects: Effects,
     )
 
+    fun resolveSuccessorContext(
+        productHome: Path,
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
+        issuedAt: Instant =
+            Instant.now(),
+    ): CurrentSuccessor? {
+        if (
+            prior ==
+                null
+        ) {
+            return null
+        }
+        requireImmediatePriorBinding(
+            prior = prior,
+            currentRequest = currentRequest,
+        )
+        val owner =
+            VexLifeWorkingContinuityOwner(
+                productHome,
+            )
+        val current =
+            owner.readCurrent(
+                lineageRef =
+                    currentRequest.companionLineageRef,
+                threadRef =
+                    currentRequest.threadRef,
+            )
+                ?: return null
+        if (
+            !rolloverEligible(
+                current = current,
+                prior = prior,
+            )
+        ) {
+            return null
+        }
+
+        val binding =
+            currentRequestBinding(
+                currentRequest,
+            )
+        val claim =
+            owner.claimSuccessorContext(
+                lineageRef =
+                    currentRequest.companionLineageRef,
+                threadRef =
+                    currentRequest.threadRef,
+                priorConversationHeadSha256 =
+                    prior.head.conversationHeadSha256,
+                priorRequestEventRef =
+                    prior.requestEvent.eventRef,
+                currentRequestEventBinding =
+                    binding,
+                claimedAt = issuedAt,
+            )
+                .claim
+        val issued =
+            owner.issueSuccessorContext(
+                lineageRef =
+                    currentRequest.companionLineageRef,
+                threadRef =
+                    currentRequest.threadRef,
+                currentRequestEventBinding =
+                    binding,
+                successorClaimRef =
+                    claim.successorClaimRef,
+                successorClaimFingerprint =
+                    claim.semanticFingerprint,
+                issuedAt = issuedAt,
+            )
+                .context
+        val currentContext =
+            requireNotNull(
+                owner.readSuccessorContext(
+                    lineageRef =
+                        currentRequest.companionLineageRef,
+                    threadRef =
+                        currentRequest.threadRef,
+                    currentRequestEventBinding =
+                        binding,
+                ),
+            ) {
+                "direct working continuity issued successor Context is not current"
+            }
+        require(
+            currentContext ==
+                issued,
+        ) {
+            "direct working continuity successor Context readback changed after issuance"
+        }
+        requireConversationBinding(
+            context = currentContext,
+            prior = prior,
+            currentRequest = currentRequest,
+        )
+        return CurrentSuccessor(
+            context = currentContext,
+        )
+    }
+
+    fun requireSuccessorContextCurrent(
+        productHome: Path,
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
+        expected: CurrentSuccessor?,
+    ) {
+        if (
+            prior ==
+                null
+        ) {
+            require(
+                expected ==
+                    null,
+            ) {
+                "first direct turn cannot carry working-checkpoint successor Context"
+            }
+            return
+        }
+        requireImmediatePriorBinding(
+            prior = prior,
+            currentRequest = currentRequest,
+        )
+        val owner =
+            VexLifeWorkingContinuityOwner(
+                productHome,
+            )
+        val current =
+            owner.readCurrent(
+                lineageRef =
+                    currentRequest.companionLineageRef,
+                threadRef =
+                    currentRequest.threadRef,
+            )
+        val eligible =
+            current !=
+                null &&
+                rolloverEligible(
+                    current = current,
+                    prior = prior,
+                )
+
+        if (
+            expected ==
+                null
+        ) {
+            require(
+                !eligible,
+            ) {
+                "working rollover became required after prompt materialization"
+            }
+            return
+        }
+
+        require(
+            eligible,
+        ) {
+            "working rollover successor Context is no longer eligible"
+        }
+        val binding =
+            currentRequestBinding(
+                currentRequest,
+            )
+        val observed =
+            requireNotNull(
+                owner.readSuccessorContext(
+                    lineageRef =
+                        currentRequest.companionLineageRef,
+                    threadRef =
+                        currentRequest.threadRef,
+                    currentRequestEventBinding =
+                        binding,
+                ),
+            ) {
+                "working rollover successor Context is no longer current"
+            }
+        require(
+            observed ==
+                expected.context,
+        ) {
+            "working rollover successor Context changed before provider invocation"
+        }
+        requireConversationBinding(
+            context = observed,
+            prior = prior,
+            currentRequest = currentRequest,
+        )
+    }
+
     fun prepare(
         productHome: Path,
         currentRequest: DirectConversationStore.Event,
         promptContext: DirectPromptContext.Receipt,
         memoryContext: VexLifeMemoryContract.Context,
-        priorSuccessorContext: VexLifeWorkingContinuityOwner.SuccessorContext? =
+        priorSuccessorContext: CurrentSuccessor? =
             null,
     ): Prepared {
         require(
@@ -139,22 +333,57 @@ object DirectWorkingContinuity {
         ) {
             "direct working continuity Memory does not match the exact prompt materialization"
         }
-        priorSuccessorContext
-            ?.let {
-                require(
-                    it.contextMode ==
-                        "WORKING_CHECKPOINT_SUCCESSOR" &&
-                        it.lineageRef ==
-                        currentRequest.companionLineageRef &&
-                        it.threadRef ==
-                        currentRequest.threadRef,
-                ) {
-                    "direct working continuity prior successor Context belongs to another lineage/thread"
-                }
+        if (
+            priorSuccessorContext ==
+                null
+        ) {
+            require(
+                !promptContext.workingContinuityIncluded &&
+                    promptContext.workingContinuityContextRef ==
+                    null &&
+                    promptContext.workingContinuityContextFingerprint ==
+                    null &&
+                    promptContext.workingContinuityCheckpointRef ==
+                    null &&
+                    promptContext.workingContinuitySuccessorClaimRef ==
+                    null &&
+                    promptContext.workingContinuitySourceRefs.isEmpty() &&
+                    promptContext.workingContinuitySystemMessageSha256 ==
+                    null &&
+                    promptContext.workingContinuityEstimatedSystemMessageTokens ==
+                    0,
+            ) {
+                "direct working continuity prompt receipt unexpectedly carries successor Context"
             }
+        } else {
+            require(
+                priorSuccessorContext.context.contextMode ==
+                    "WORKING_CHECKPOINT_SUCCESSOR" &&
+                    priorSuccessorContext.context.lineageRef ==
+                    currentRequest.companionLineageRef &&
+                    priorSuccessorContext.context.threadRef ==
+                    currentRequest.threadRef &&
+                    promptContext.workingContinuityIncluded &&
+                    promptContext.contextMode ==
+                    "WORKING_CHECKPOINT_SUCCESSOR" &&
+                    promptContext.workingContinuityContextRef ==
+                    priorSuccessorContext.context.successorContextRef &&
+                    promptContext.workingContinuityContextFingerprint ==
+                    priorSuccessorContext.context.semanticFingerprint &&
+                    promptContext.workingContinuityCheckpointRef ==
+                    priorSuccessorContext.context.checkpointRef &&
+                    promptContext.workingContinuitySuccessorClaimRef ==
+                    priorSuccessorContext.context.successorClaimRef &&
+                    promptContext.workingContinuitySourceRefs ==
+                    priorSuccessorContext.context.sourceRefs,
+            ) {
+                "direct working continuity prior successor Context does not match exact prompt materialization"
+            }
+        }
 
         val previousWorkingSet =
             priorSuccessorContext
+                ?.context
                 ?.workingSet
                 ?.let(
                     VexLifeWorkingContinuity::validateWorkingSet,
@@ -222,6 +451,7 @@ object DirectWorkingContinuity {
                             ?.sourceRefs
                             .orEmpty() +
                             priorSuccessorContext
+                                ?.context
                                 ?.sourceRefs
                                 .orEmpty() +
                             validatedMemory.sourceRefs +
@@ -258,6 +488,7 @@ object DirectWorkingContinuity {
                             validatedMemory.memoryContextRef,
                         ) +
                             priorSuccessorContext
+                                ?.context
                                 ?.let {
                                     listOf(
                                         it.successorContextRef,
@@ -932,6 +1163,83 @@ object DirectWorkingContinuity {
                 ) {
                     "post-commit receipt persistence failure shape is invalid"
                 }
+        }
+    }
+
+    private fun rolloverEligible(
+        current: VexLifeWorkingContinuityOwner.Current,
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn,
+    ): Boolean =
+        current.commitReceipt.disposition ==
+            "ROLLOVER_COMMITTED" &&
+            current.commitReceipt.successorContextRequired &&
+            current.checkpoint.workingSet.cursorEventRef ==
+            prior.requestEvent.eventRef
+
+    private fun currentRequestBinding(
+        currentRequest: DirectConversationStore.Event,
+    ): VexLifeMemoryContract.CurrentRequestBinding =
+        VexLifeMemoryContract.CurrentRequestBinding(
+            eventRef =
+                currentRequest.eventRef,
+            eventHash =
+                currentRequest.eventHash,
+            sequence =
+                currentRequest.sequence,
+        )
+
+    private fun requireImmediatePriorBinding(
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn,
+        currentRequest: DirectConversationStore.Event,
+    ) {
+        require(
+            prior.exactEventFileReadCount ==
+                2 &&
+                !prior.wholeHistoryEventEnumerationPerformed &&
+                currentRequest.eventKind ==
+                "REQUEST" &&
+                currentRequest.sequence ==
+                prior.head.sequence +
+                1 &&
+                currentRequest.priorEventSha256 ==
+                prior.responseEvent.eventSha256 &&
+                currentRequest.companionLineageRef ==
+                prior.head.companionLineageRef &&
+                currentRequest.threadRef ==
+                prior.head.threadRef &&
+                prior.requestEvent.channelRef ==
+                prior.responseEvent.channelRef &&
+                currentRequest.channelRef ==
+                prior.responseEvent.channelRef,
+        ) {
+            "direct working continuity current request does not immediately follow the exact prior completed turn"
+        }
+    }
+
+    private fun requireConversationBinding(
+        context: VexLifeWorkingContinuityOwner.SuccessorContext,
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn,
+        currentRequest: DirectConversationStore.Event,
+    ) {
+        require(
+            context.contextMode ==
+                "WORKING_CHECKPOINT_SUCCESSOR" &&
+                context.lineageRef ==
+                currentRequest.companionLineageRef &&
+                context.threadRef ==
+                currentRequest.threadRef &&
+                context.priorConversationHeadSha256 ==
+                prior.head.conversationHeadSha256 &&
+                context.priorRequestEventRef ==
+                prior.requestEvent.eventRef &&
+                context.currentRequestEventBinding ==
+                currentRequestBinding(
+                    currentRequest,
+                ) &&
+                context.workingSet.cursorEventRef ==
+                prior.requestEvent.eventRef,
+        ) {
+            "working rollover successor Context does not bind exact Conversation currentness"
         }
     }
 
