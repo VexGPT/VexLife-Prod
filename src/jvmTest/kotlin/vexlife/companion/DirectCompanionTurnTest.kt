@@ -200,7 +200,7 @@ class DirectCompanionTurnTest {
     }
 
     @Test
-    fun successfulHighPressureTurnProducesDurableRolloverCheckpointForNextTurn() {
+    fun successfulHighPressureTurnRollsIntoWorkingCheckpointSuccessorOnNextRealTurn() {
         val home =
             productHome()
         val memory =
@@ -220,9 +220,90 @@ class DirectCompanionTurnTest {
             )
         var providerCalls =
             0
+        val transport =
+            DirectCompanionConnection.Transport {
+                call ->
+                providerCalls +=
+                    1
+                when (
+                    providerCalls
+                ) {
+                    1 ->
+                        DirectCompanionConnection.HttpResult(
+                            status = 200,
+                            body =
+                                """
+                                {
+                                  "model": "default_model",
+                                  "choices": [
+                                    {
+                                      "message": {
+                                        "role": "assistant",
+                                        "content": "Rollover producer response"
+                                      }
+                                    }
+                                  ]
+                                }
+                                """.trimIndent(),
+                        )
+
+                    else -> {
+                        assertTrue(
+                            call.body.contains(
+                                "VEXLIFE_CURRENT_MEMORY_CONTEXT/v1",
+                            ),
+                        )
+                        assertTrue(
+                            call.body.contains(
+                                "VEXLIFE_WORKING_CONTINUITY_CONTEXT/v1",
+                            ),
+                        )
+                        assertTrue(
+                            call.body.contains(
+                                "Successor request after rollover",
+                            ),
+                        )
+                        assertTrue(
+                            call.body.contains(
+                                "statement.score.continuity.001",
+                            ),
+                        )
+                        assertFalse(
+                            call.body.contains(
+                                "Rollover producer response",
+                            ),
+                        )
+                        assertFalse(
+                            call.body.contains(
+                                "x".repeat(
+                                    1024,
+                                ),
+                            ),
+                        )
+
+                        DirectCompanionConnection.HttpResult(
+                            status = 200,
+                            body =
+                                """
+                                {
+                                  "model": "default_model",
+                                  "choices": [
+                                    {
+                                      "message": {
+                                        "role": "assistant",
+                                        "content": "Successor response without prior-pair replay"
+                                      }
+                                    }
+                                  ]
+                                }
+                                """.trimIndent(),
+                        )
+                    }
+                }
+            }
 
         try {
-            val result =
+            val first =
                 DirectCompanionTurn.performWithHooks(
                     setup =
                         setup(
@@ -237,28 +318,7 @@ class DirectCompanionTurnTest {
                         ),
                     hooks =
                         DirectCompanionTurn.Hooks(
-                            transport =
-                                DirectCompanionConnection.Transport {
-                                    providerCalls +=
-                                        1
-                                    DirectCompanionConnection.HttpResult(
-                                        status = 200,
-                                        body =
-                                            """
-                                            {
-                                              "model": "default_model",
-                                              "choices": [
-                                                {
-                                                  "message": {
-                                                    "role": "assistant",
-                                                    "content": "Rollover producer response"
-                                                  }
-                                                }
-                                              ]
-                                            }
-                                            """.trimIndent(),
-                                    )
-                                },
+                            transport = transport,
                             currentMemoryContext = {
                                 memory
                             },
@@ -276,14 +336,14 @@ class DirectCompanionTurnTest {
             )
             assertEquals(
                 "TURN_COMPLETED",
-                result.state,
+                first.state,
             )
 
             val continuity =
                 assertNotNull(
                     DirectWorkingContinuity.read(
                         productHome = home,
-                        turnRef = result.turnRef,
+                        turnRef = first.turnRef,
                     ),
                 )
             assertEquals(
@@ -300,33 +360,27 @@ class DirectCompanionTurnTest {
                 continuity.effects.workingHeadMutated,
             )
 
+            val conversationAfterFirst =
+                DirectConversationStore(
+                    home,
+                )
+                    .current()
+            val firstHead =
+                assertNotNull(
+                    conversationAfterFirst.head,
+                )
+            val owner =
+                VexLifeWorkingContinuityOwner(
+                    home,
+                )
             val ownerCurrent =
                 assertNotNull(
-                    VexLifeWorkingContinuityOwner(
-                        home,
-                    )
-                        .readCurrent(
-                            lineageRef =
-                                DirectConversationStore(
-                                    home,
-                                )
-                                    .current()
-                                    .head
-                                    ?.companionLineageRef
-                                    ?: error(
-                                        "completed turn lost lineage",
-                                    ),
-                            threadRef =
-                                DirectConversationStore(
-                                    home,
-                                )
-                                    .current()
-                                    .head
-                                    ?.threadRef
-                                    ?: error(
-                                        "completed turn lost thread",
-                                    ),
-                        ),
+                    owner.readCurrent(
+                        lineageRef =
+                            firstHead.companionLineageRef,
+                        threadRef =
+                            firstHead.threadRef,
+                    ),
                 )
             assertEquals(
                 "ROLLOVER_COMMITTED",
@@ -336,12 +390,104 @@ class DirectCompanionTurnTest {
                 ownerCurrent.commitReceipt.successorContextRequired,
             )
             assertEquals(
-                result.requestEventRef,
+                first.requestEventRef,
                 ownerCurrent.checkpoint.workingSet.cursorEventRef,
             )
             assertTrue(
                 ownerCurrent.checkpoint.workingSet.currentStatementRefs.contains(
                     "statement.score.continuity.001",
+                ),
+            )
+
+            val second =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home,
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.rollover-successor",
+                            content =
+                                "Successor request after rollover",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            currentMemoryContext = {
+                                memory
+                            },
+                            now = {
+                                Instant.parse(
+                                    "2026-11-06T11:11:00Z",
+                                )
+                            },
+                        ),
+                )
+
+            assertEquals(
+                2,
+                providerCalls,
+            )
+            assertEquals(
+                "Successor response without prior-pair replay",
+                second.content,
+            )
+            assertEquals(
+                "WORKING_CHECKPOINT_SUCCESSOR",
+                second.promptContextReceipt.contextMode,
+            )
+            assertTrue(
+                second.promptContextReceipt.selectedConversationEventRefs.isEmpty(),
+            )
+            assertTrue(
+                second.promptContextReceipt.selectedConversationEventSha256.isEmpty(),
+            )
+            assertTrue(
+                second.promptContextReceipt.workingContinuityIncluded,
+            )
+            assertNotNull(
+                second.promptContextReceipt.workingContinuityContextRef,
+            )
+            assertNotNull(
+                second.promptContextReceipt.workingContinuityContextFingerprint,
+            )
+            assertNotNull(
+                second.promptContextReceipt.workingContinuityCheckpointRef,
+            )
+            assertNotNull(
+                second.promptContextReceipt.workingContinuitySuccessorClaimRef,
+            )
+
+            val secondContext =
+                assertNotNull(
+                    DirectTurnContextStore(
+                        home,
+                    )
+                        .read(
+                            second.turnRef,
+                        ),
+                )
+            assertTrue(
+                secondContext.contextSourceRefs.contains(
+                    requireNotNull(
+                        second.promptContextReceipt.workingContinuityContextRef,
+                    ),
+                ),
+            )
+            assertTrue(
+                secondContext.contextSourceRefs.contains(
+                    requireNotNull(
+                        second.promptContextReceipt.workingContinuityCheckpointRef,
+                    ),
+                ),
+            )
+            assertTrue(
+                secondContext.contextSourceRefs.contains(
+                    requireNotNull(
+                        second.promptContextReceipt.workingContinuitySuccessorClaimRef,
+                    ),
                 ),
             )
         } finally {
