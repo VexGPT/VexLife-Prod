@@ -76,6 +76,7 @@ class DirectConversationStore(
         val priorEventHash: String?,
         val content: String,
         val contentHash: String,
+        val semanticRelay: JsonObject?,
         val endpointProfileRef: String?,
         val sanitizedEndpointOrigin: String?,
         val modelNameOrBoundedTestProfileRef: String?,
@@ -1812,31 +1813,47 @@ class DirectConversationStore(
                 ?.content
 
         require(
-            schema !=
-                VexLifeConversationContract.EventSchemaV2,
-        ) {
-            "canonical semantic-relay v2 Conversation event is present; exact semantic-relay validation must be ported before this event is admitted"
-        }
-        require(
-            schema ==
-                VexLifeConversationContract.EventSchemaV1,
+            schema in
+                setOf(
+                    VexLifeConversationContract.EventSchemaV1,
+                    VexLifeConversationContract.EventSchemaV2,
+                ),
         ) {
             "canonical Conversation event schema is not admitted"
         }
 
         val event =
             when (
-                kind
+                schema to
+                    kind
             ) {
-                VexLifeConversationContract.RequestKind ->
+                VexLifeConversationContract.EventSchemaV1 to
+                    VexLifeConversationContract.RequestKind ->
                     requestProjection(
                         VexContractJson.decode(
                             text,
                         ),
                     )
 
-                VexLifeConversationContract.ResponseKind ->
+                VexLifeConversationContract.EventSchemaV1 to
+                    VexLifeConversationContract.ResponseKind ->
                     responseProjection(
+                        VexContractJson.decode(
+                            text,
+                        ),
+                    )
+
+                VexLifeConversationContract.EventSchemaV2 to
+                    VexLifeConversationContract.RequestKind ->
+                    requestProjectionV2(
+                        VexContractJson.decode(
+                            text,
+                        ),
+                    )
+
+                VexLifeConversationContract.EventSchemaV2 to
+                    VexLifeConversationContract.ResponseKind ->
+                    responseProjectionV2(
                         VexContractJson.decode(
                             text,
                         ),
@@ -1890,15 +1907,77 @@ class DirectConversationStore(
         )
 
         when (
-            event.eventKind
+            event.schemaVersion to
+                event.eventKind
         ) {
-            VexLifeConversationContract.RequestKind -> {
+            VexLifeConversationContract.EventSchemaV1 to
+                VexLifeConversationContract.RequestKind -> {
                 val core =
                     requestCore(
                         event,
                     )
                         .let(
                             VexLifeConversationContract::validateRequestCore,
+                        )
+                require(
+                    semanticHash(
+                        core,
+                    ) ==
+                        event.eventHash &&
+                        event.semanticRelay ==
+                        null &&
+                        event.speakerRef ==
+                        installation.personRef &&
+                        event.recipientRefs ==
+                        listOf(
+                            DirectConversationIdentity.CompanionRoleRef,
+                        ) &&
+                        event.endpointProfileRef ==
+                        null &&
+                        event.sanitizedEndpointOrigin ==
+                        null &&
+                        event.modelNameOrBoundedTestProfileRef ==
+                        null,
+                ) {
+                    "canonical v1 REQUEST hash/participant semantics are invalid"
+                }
+            }
+
+            VexLifeConversationContract.EventSchemaV1 to
+                VexLifeConversationContract.ResponseKind -> {
+                val core =
+                    responseCore(
+                        event,
+                    )
+                        .let(
+                            VexLifeConversationContract::validateResponseCore,
+                        )
+                require(
+                    semanticHash(
+                        core,
+                    ) ==
+                        event.eventHash &&
+                        event.semanticRelay ==
+                        null &&
+                        event.speakerRef ==
+                        DirectConversationIdentity.CompanionRoleRef &&
+                        event.recipientRefs ==
+                        listOf(
+                            installation.personRef,
+                        ),
+                ) {
+                    "canonical v1 RESPONSE hash/participant semantics are invalid"
+                }
+            }
+
+            VexLifeConversationContract.EventSchemaV2 to
+                VexLifeConversationContract.RequestKind -> {
+                val core =
+                    requestCoreV2(
+                        event,
+                    )
+                        .let(
+                            VexLifeConversationContract::validateRequestCoreV2,
                         )
                 require(
                     semanticHash(
@@ -1918,17 +1997,18 @@ class DirectConversationStore(
                         event.modelNameOrBoundedTestProfileRef ==
                         null,
                 ) {
-                    "canonical REQUEST hash/participant semantics are invalid"
+                    "canonical v2 REQUEST hash/participant semantics are invalid"
                 }
             }
 
-            VexLifeConversationContract.ResponseKind -> {
+            VexLifeConversationContract.EventSchemaV2 to
+                VexLifeConversationContract.ResponseKind -> {
                 val core =
-                    responseCore(
+                    responseCoreV2(
                         event,
                     )
                         .let(
-                            VexLifeConversationContract::validateResponseCore,
+                            VexLifeConversationContract::validateResponseCoreV2,
                         )
                 require(
                     semanticHash(
@@ -1942,13 +2022,13 @@ class DirectConversationStore(
                             installation.personRef,
                         ),
                 ) {
-                    "canonical RESPONSE hash/participant semantics are invalid"
+                    "canonical v2 RESPONSE hash/participant semantics are invalid"
                 }
             }
 
             else ->
                 error(
-                    "canonical Conversation event kind is not admitted",
+                    "canonical Conversation event schema/kind is not admitted",
                 )
         }
     }
@@ -2154,6 +2234,7 @@ class DirectConversationStore(
             priorEventHash = value.priorEventHash,
             content = value.content,
             contentHash = value.contentHash,
+            semanticRelay = null,
             endpointProfileRef = null,
             sanitizedEndpointOrigin = null,
             modelNameOrBoundedTestProfileRef = null,
@@ -2183,6 +2264,7 @@ class DirectConversationStore(
             priorEventHash = value.priorEventHash,
             content = value.content,
             contentHash = value.contentHash,
+            semanticRelay = null,
             endpointProfileRef = value.endpointProfileRef,
             sanitizedEndpointOrigin = value.sanitizedEndpointOrigin,
             modelNameOrBoundedTestProfileRef = value.modelNameOrBoundedTestProfileRef,
