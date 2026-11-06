@@ -5,7 +5,9 @@ import java.nio.file.Path
 import java.security.MessageDigest
 import java.time.Instant
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
 import vexlife.conversation.DirectConversationIdentity
@@ -236,14 +238,14 @@ class DirectTurnContextStore(
             pathFor(
                 request.turnRef,
             )
-        val existing =
-            VexDurableContractFile.read<VexLifeConversationContract.Context>(
+        val existingText =
+            VexDurableContractFile.readText(
                 ownedRoot = productHome,
                 path = contextPath,
             )
 
         if (
-            existing ==
+            existingText ==
                 null
         ) {
             VexDurableContractFile.write(
@@ -252,9 +254,10 @@ class DirectTurnContextStore(
                 value = canonical,
             )
         } else {
-            validateCanonicalContext(
-                existing,
-            )
+            val existing =
+                decodeAndValidateCanonicalContext(
+                    existingText,
+                )
             require(
                 existing ==
                     canonical,
@@ -288,18 +291,20 @@ class DirectTurnContextStore(
             return null
         }
 
-        val canonical =
-            VexDurableContractFile.read<VexLifeConversationContract.Context>(
+        val canonicalPath =
+            pathFor(
+                turnRef,
+            )
+        val canonicalText =
+            VexDurableContractFile.readText(
                 ownedRoot = productHome,
-                path =
-                    pathFor(
-                        turnRef,
-                    ),
+                path = canonicalPath,
             )
                 ?: return null
-        validateCanonicalContext(
-            canonical,
-        )
+        val canonical =
+            decodeAndValidateCanonicalContext(
+                canonicalText,
+            )
 
         val evidence =
             requireNotNull(
@@ -558,42 +563,66 @@ class DirectTurnContextStore(
         }
     }
 
-    private fun validateCanonicalContext(
-        value: VexLifeConversationContract.Context,
-    ) {
-        VexLifeConversationContract.validateContext(
-            value,
-        )
+    private fun decodeAndValidateCanonicalContext(
+        text: String,
+    ): VexLifeConversationContract.Context {
+        val objectValue =
+            VexContractJson.Strict
+                .parseToJsonElement(
+                    text,
+                )
+                .jsonObject
+        val observedHash =
+            requireNotNull(
+                objectValue[
+                    "serializedContextSha256"
+                ]
+                    ?.jsonPrimitive
+                    ?.content,
+            ) {
+                "canonical turn context has no serializedContextSha256"
+            }
+        val coreObject =
+            JsonObject(
+                objectValue.filterKeys {
+                    it !=
+                        "serializedContextSha256"
+                },
+            )
         require(
-            value.homeRef ==
+            sha256(
+                VexContractJson.canonicalEncodeElement(
+                    coreObject,
+                ),
+            ) ==
+                observedHash,
+        ) {
+            "canonical turn context hash does not match its exact durable JSON preimage"
+        }
+
+        val value =
+            VexContractJson.decode<VexLifeConversationContract.Context>(
+                text,
+            )
+                .let(
+                    VexLifeConversationContract::validateContext,
+                )
+        require(
+            value.serializedContextSha256 ==
+                observedHash &&
+                value.homeRef ==
                 manifest.homeRef &&
                 value.deviceRef ==
                 manifest.currentDeviceRef &&
                 value.companionLineageRef ==
                 manifest.currentCompanionLineageRef &&
                 value.threadRef ==
-                DirectConversationIdentity.ThreadRef &&
-                value.serializedContextSha256 ==
-                semanticHash(
-                    VexLifeConversationContract.ContextCore(
-                        schemaVersion = value.schemaVersion,
-                        homeRef = value.homeRef,
-                        deviceRef = value.deviceRef,
-                        companionLineageRef = value.companionLineageRef,
-                        instanceRef = value.instanceRef,
-                        threadRef = value.threadRef,
-                        turnRef = value.turnRef,
-                        contextSourceRefs = value.contextSourceRefs,
-                        requestEventHash = value.requestEventHash,
-                        responseEventHash = value.responseEventHash,
-                        promptContextMaterializationReceipt = value.promptContextMaterializationReceipt,
-                        privacyClass = value.privacyClass,
-                        formedAt = value.formedAt,
-                    ),
-                ),
+                DirectConversationIdentity.ThreadRef,
         ) {
-            "canonical turn context hash/identity is invalid"
+            "canonical turn context identity is invalid"
         }
+
+        return value
     }
 
     private fun writeRuntimeEvidence(
