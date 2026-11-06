@@ -510,7 +510,7 @@ object VexLifeProdMacServiceLifetime {
                 )
             }
 
-            requireNotNull(
+            checkNotNull(
                 currentness,
             ) {
                 "VexLife-Prod service process did not become source/PID-current before timeout"
