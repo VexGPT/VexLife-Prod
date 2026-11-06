@@ -151,6 +151,31 @@ object DirectCompanionTurn {
                 productHome,
             )
         },
+        val commitWorkingContinuity: (
+            productHome: Path,
+            turnRef: String,
+            prepared: DirectWorkingContinuity.Prepared,
+            formedAt: Instant,
+        ) -> Unit = {
+            productHome,
+            turnRef,
+            prepared,
+            formedAt,
+            ->
+            DirectWorkingContinuity.commitAfterCompletedTurn(
+                productHome = productHome,
+                turnRef = turnRef,
+                prepared = prepared,
+                formedAt = formedAt,
+            )
+            Unit
+        },
+    )
+
+    private data class CompletedTurn(
+        val result: Result,
+        val turnRef: String,
+        val workingContinuity: DirectWorkingContinuity.Prepared,
     )
 
     fun perform(
@@ -249,7 +274,8 @@ object DirectCompanionTurn {
                 var context: DirectTurnContextStore.Record? =
                     null
 
-                try {
+                val completed =
+                    try {
                     request =
                         beginRequest(
                             turnRef = identity.turnRef,
@@ -267,6 +293,13 @@ object DirectCompanionTurn {
                             currentRequest = request,
                             memoryContext = memoryContext,
                             browserContext = intent.browserContext,
+                        )
+                    val workingContinuity =
+                        DirectWorkingContinuity.prepare(
+                            productHome = productHome,
+                            currentRequest = request,
+                            promptContext = prompt.receipt,
+                            memoryContext = memoryContext,
                         )
 
                     DirectPromptContext.reverify(
@@ -332,7 +365,9 @@ object DirectCompanionTurn {
                             formedAt = hooks.now(),
                         )
 
-                    Result(
+                    CompletedTurn(
+                        result =
+                            Result(
                         state = "TURN_COMPLETED",
                         recoveredCompletedTurn = false,
                         modelCallPerformed = true,
@@ -349,9 +384,12 @@ object DirectCompanionTurn {
                             ),
                         currentConversationHeadSha256 = head.conversationHeadSha256,
                         contextPath = context.contextPath,
-                        promptContextReceipt = prompt.receipt,
-                        runtimeObservation = inference.runtimeObservation,
-                        invocationEvidence = inference.invocationEvidence,
+                                promptContextReceipt = prompt.receipt,
+                                runtimeObservation = inference.runtimeObservation,
+                                invocationEvidence = inference.invocationEvidence,
+                            ),
+                        turnRef = request.turnRef,
+                        workingContinuity = workingContinuity,
                     )
                 } catch (
                     error: Throwable,
@@ -404,6 +442,22 @@ object DirectCompanionTurn {
                         cause = error,
                     )
                 }
+
+                try {
+                    hooks.commitWorkingContinuity(
+                        productHome,
+                        completed.turnRef,
+                        completed.workingContinuity,
+                        hooks.now(),
+                    )
+                } catch (
+                    _: Throwable,
+                ) {
+                    // The Conversation head is already committed. Working continuity is
+                    // post-completion stewardship and must never retroactively become a failed send.
+                }
+
+                completed.result
             }
         } catch (
             error: FailedSendAttemptException,
