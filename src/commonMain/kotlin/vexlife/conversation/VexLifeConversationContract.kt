@@ -81,6 +81,55 @@ object VexLifeConversationContract {
     )
 
     @Serializable
+    data class RequestCoreV2(
+        val schemaVersion: String,
+        val eventRef: String,
+        val eventKind: String,
+        val homeRef: String,
+        val deviceRef: String,
+        val companionLineageRef: String,
+        val instanceRef: String,
+        val threadRef: String,
+        val channelRef: String,
+        val turnRef: String,
+        val messageRef: String,
+        val speakerRef: String,
+        val recipientRefs: List<String>,
+        val sequence: Long,
+        val priorEventHash: String?,
+        val content: String,
+        val contentHash: String,
+        val semanticRelay: JsonObject,
+        val privacyClass: String,
+        val formedAt: String,
+    )
+
+    @Serializable
+    data class RequestV2(
+        val schemaVersion: String,
+        val eventRef: String,
+        val eventKind: String,
+        val homeRef: String,
+        val deviceRef: String,
+        val companionLineageRef: String,
+        val instanceRef: String,
+        val threadRef: String,
+        val channelRef: String,
+        val turnRef: String,
+        val messageRef: String,
+        val speakerRef: String,
+        val recipientRefs: List<String>,
+        val sequence: Long,
+        val priorEventHash: String?,
+        val content: String,
+        val contentHash: String,
+        val semanticRelay: JsonObject,
+        val privacyClass: String,
+        val formedAt: String,
+        val eventHash: String,
+    )
+
+    @Serializable
     data class ResponseCoreV1(
         val schemaVersion: String,
         val eventRef: String,
@@ -125,6 +174,61 @@ object VexLifeConversationContract {
         val priorEventHash: String,
         val content: String,
         val contentHash: String,
+        val endpointProfileRef: String,
+        val sanitizedEndpointOrigin: String,
+        val modelNameOrBoundedTestProfileRef: String,
+        val privacyClass: String,
+        val formedAt: String,
+        val eventHash: String,
+    )
+
+    @Serializable
+    data class ResponseCoreV2(
+        val schemaVersion: String,
+        val eventRef: String,
+        val eventKind: String,
+        val homeRef: String,
+        val deviceRef: String,
+        val companionLineageRef: String,
+        val instanceRef: String,
+        val threadRef: String,
+        val channelRef: String,
+        val turnRef: String,
+        val messageRef: String,
+        val speakerRef: String,
+        val recipientRefs: List<String>,
+        val sequence: Long,
+        val priorEventHash: String,
+        val content: String,
+        val contentHash: String,
+        val semanticRelay: JsonObject,
+        val endpointProfileRef: String,
+        val sanitizedEndpointOrigin: String,
+        val modelNameOrBoundedTestProfileRef: String,
+        val privacyClass: String,
+        val formedAt: String,
+    )
+
+    @Serializable
+    data class ResponseV2(
+        val schemaVersion: String,
+        val eventRef: String,
+        val eventKind: String,
+        val homeRef: String,
+        val deviceRef: String,
+        val companionLineageRef: String,
+        val instanceRef: String,
+        val threadRef: String,
+        val channelRef: String,
+        val turnRef: String,
+        val messageRef: String,
+        val speakerRef: String,
+        val recipientRefs: List<String>,
+        val sequence: Long,
+        val priorEventHash: String,
+        val content: String,
+        val contentHash: String,
+        val semanticRelay: JsonObject,
         val endpointProfileRef: String,
         val sanitizedEndpointOrigin: String,
         val modelNameOrBoundedTestProfileRef: String,
@@ -306,6 +410,133 @@ object VexLifeConversationContract {
             value.formedAt.isNotEmpty(),
         ) {
             "canonical VexLife response event requires one formedAt value"
+        }
+
+        return value
+    }
+
+    fun validateRequestCoreV2(
+        value: RequestCoreV2,
+    ): RequestCoreV2 {
+        require(
+            value.schemaVersion == EventSchemaV2 &&
+                value.eventKind == RequestKind &&
+                value.privacyClass == PrivacyClass &&
+                value.content.isNotEmpty() &&
+                value.sequence >= 0,
+        ) {
+            "canonical VexLife v2 request event semantics are invalid"
+        }
+        validateIdentity(
+            homeRef = value.homeRef,
+            deviceRef = value.deviceRef,
+            companionLineageRef = value.companionLineageRef,
+        )
+        requireNonEmpty(
+            value.eventRef,
+            value.channelRef,
+            value.messageRef,
+            value.speakerRef,
+            *value.recipientRefs.toTypedArray(),
+        )
+        requireSafeRefs(
+            value.instanceRef,
+            value.threadRef,
+            value.turnRef,
+        )
+        requireSha256(
+            value.contentHash,
+            "contentHash",
+        )
+        value.priorEventHash?.let {
+            requireSha256(
+                it,
+                "priorEventHash",
+            )
+        }
+        require(
+            value.formedAt.isNotEmpty(),
+        ) {
+            "canonical VexLife v2 request event requires one formedAt value"
+        }
+        val relay =
+            VexLifeSemanticRelayContract.validate(
+                relay = value.semanticRelay,
+                sourceMessageRef = value.messageRef,
+                recipientRefs = value.recipientRefs,
+            )
+        require(
+            relay.ok,
+        ) {
+            "canonical VexLife v2 request Semantic Relay is invalid: " +
+                relay.errors.joinToString(
+                    "; ",
+                )
+        }
+
+        return value
+    }
+
+    fun validateResponseCoreV2(
+        value: ResponseCoreV2,
+    ): ResponseCoreV2 {
+        require(
+            value.schemaVersion == EventSchemaV2 &&
+                value.eventKind == ResponseKind &&
+                value.privacyClass == PrivacyClass &&
+                value.content.isNotEmpty() &&
+                value.sequence >= 1,
+        ) {
+            "canonical VexLife v2 response event semantics are invalid"
+        }
+        validateIdentity(
+            homeRef = value.homeRef,
+            deviceRef = value.deviceRef,
+            companionLineageRef = value.companionLineageRef,
+        )
+        requireNonEmpty(
+            value.eventRef,
+            value.channelRef,
+            value.messageRef,
+            value.speakerRef,
+            value.endpointProfileRef,
+            value.modelNameOrBoundedTestProfileRef,
+            *value.recipientRefs.toTypedArray(),
+        )
+        requireSafeRefs(
+            value.instanceRef,
+            value.threadRef,
+            value.turnRef,
+        )
+        requireSha256(
+            value.priorEventHash,
+            "priorEventHash",
+        )
+        requireSha256(
+            value.contentHash,
+            "contentHash",
+        )
+        requireNumericLoopbackOrigin(
+            value.sanitizedEndpointOrigin,
+        )
+        require(
+            value.formedAt.isNotEmpty(),
+        ) {
+            "canonical VexLife v2 response event requires one formedAt value"
+        }
+        val relay =
+            VexLifeSemanticRelayContract.validate(
+                relay = value.semanticRelay,
+                sourceMessageRef = value.messageRef,
+                recipientRefs = value.recipientRefs,
+            )
+        require(
+            relay.ok,
+        ) {
+            "canonical VexLife v2 response Semantic Relay is invalid: " +
+                relay.errors.joinToString(
+                    "; ",
+                )
         }
 
         return value
