@@ -108,17 +108,36 @@ object DirectWorkingContinuity {
         require(
             currentRequest.eventKind ==
                 "REQUEST" &&
+                promptContext.schemaVersion ==
+                DirectPromptContext.ReceiptSchema &&
                 promptContext.currentRequestEventRef ==
                 currentRequest.eventRef &&
                 promptContext.currentRequestEventSha256 ==
-                currentRequest.eventSha256,
+                currentRequest.eventSha256 &&
+                !promptContext.wholeHistoryEventEnumerationPerformed &&
+                !promptContext.trainingSelectionPerformed &&
+                !promptContext.effectsPerformed,
         ) {
-            "direct working continuity requires the exact materialized current request"
+            "direct working continuity requires one exact effect-free prompt receipt/current request"
         }
         val validatedMemory =
             VexLifeMemoryContract.validateContext(
                 memoryContext,
             )
+        require(
+            promptContext.memoryContextRef ==
+                validatedMemory.memoryContextRef &&
+                promptContext.memoryContextFingerprint ==
+                validatedMemory.semanticFingerprint &&
+                promptContext.memorySourceRefs ==
+                validatedMemory.sourceRefs &&
+                promptContext.memoryIncluded ==
+                validatedMemory.included &&
+                promptContext.memorySelectionPerformed ==
+                validatedMemory.included,
+        ) {
+            "direct working continuity Memory does not match the exact prompt materialization"
+        }
         priorSuccessorContext
             ?.let {
                 require(
