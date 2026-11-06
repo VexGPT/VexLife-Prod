@@ -87,13 +87,13 @@ object VexLifeProdServiceContract {
 
     @Serializable
     data class SendRequest(
-        val sendAttemptRef: String,
+        val idempotencyKey: String,
         val content: String,
     ) {
         init {
             requirePortableRef(
-                sendAttemptRef,
-                "sendAttemptRef",
+                idempotencyKey,
+                "idempotencyKey",
             )
             require(
                 content.isNotEmpty(),
