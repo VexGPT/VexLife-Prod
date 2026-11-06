@@ -8,8 +8,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import vexlife.conversation.DirectConversationStore
-import vexlife.home.VexLifeProdHome
-import vexlife.home.VexLifeProdHomeFiles
+import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -19,22 +18,10 @@ class DirectTurnContextStoreTest {
     private fun home(
         productHome: java.nio.file.Path,
     ) {
-        VexLifeProdHomeFiles.bootstrap(
-            productHome = productHome,
-            plan =
-                VexLifeProdHome.plan(
-                    personRef = VexLifeProdHome.DefaultPersonRef,
-                    familyRef = VexLifeProdHome.DefaultFamilyRef,
-                    deviceName = "Test Mac",
-                    platform = "darwin",
-                    architecture = "arm64",
-                    ids =
-                        VexLifeProdHome.InstallationIds(
-                            deviceRef = "device.vexlife-prod.context-device",
-                            companionLineageRef = "companion-lineage.vexlife-prod.context-lineage",
-                        ),
-                    createdAt = "2026-11-05T04:30:00Z",
-                ),
+        CanonicalVexLifeHomeFixture.form(
+            home = productHome,
+            deviceSuffix = "context-device",
+            lineageSuffix = "context-lineage",
         )
     }
 
@@ -174,7 +161,7 @@ class DirectTurnContextStoreTest {
                                 "context",
                             )
                             .resolve(
-                                "companion-lineage.vexlife-prod.context-lineage",
+                                "companion-lineage.vexlife.context-lineage",
                             )
                             .resolve(
                                 "thread.self-development.open-conversation",
