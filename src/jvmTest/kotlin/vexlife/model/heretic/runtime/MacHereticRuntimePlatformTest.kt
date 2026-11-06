@@ -400,37 +400,46 @@ class MacHereticRuntimePlatformTest {
             )
         val host =
             LaunchdHost()
+
+        Files.createDirectory(
+            root,
+        )
+        Files.createDirectory(
+            outside,
+        )
+        val current =
+            binding(
+                root,
+            )
+
+        // The binding fixture must be formed while the runtime tree is still owned by Home.
+        // Only then introduce the hostile alias so this test measures spawn containment rather
+        // than allowing fixture construction itself to follow the symlink.
+        root.resolve(
+            "runtime",
+        )
+            .toFile()
+            .deleteRecursively()
+        Files.createSymbolicLink(
+            root.resolve(
+                "runtime",
+            ),
+            outside,
+        )
+
         val platform =
-            run {
-                Files.createDirectory(
-                    root,
-                )
-                Files.createDirectory(
-                    outside,
-                )
-                Files.createSymbolicLink(
-                    root.resolve(
-                        "runtime",
-                    ),
-                    outside,
-                )
-                MacHereticRuntimePlatform(
-                    productHome = root,
-                    launchdHost = host,
-                    processInspector = Inspector(),
-                    commandRunner = Runner(),
-                    healthProbe =
-                        MacHereticRuntimePlatform.HealthProbe {
-                            true
-                        },
-                )
-            }
+            MacHereticRuntimePlatform(
+                productHome = root,
+                launchdHost = host,
+                processInspector = Inspector(),
+                commandRunner = Runner(),
+                healthProbe =
+                    MacHereticRuntimePlatform.HealthProbe {
+                        true
+                    },
+            )
 
         try {
-            val current =
-                binding(
-                    root,
-                )
             val args =
                 HereticPersistentRuntime.serverArgs(
                     current,
