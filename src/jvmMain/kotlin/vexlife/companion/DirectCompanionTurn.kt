@@ -283,6 +283,13 @@ object DirectCompanionTurn {
                             content = intent.content,
                             formedAt = hooks.now(),
                         )
+                    val workingSuccessorContext =
+                        DirectWorkingContinuity.resolveSuccessorContext(
+                            productHome = productHome,
+                            prior = prior,
+                            currentRequest = request,
+                            issuedAt = hooks.now(),
+                        )
                     val memoryContext =
                         hooks.currentMemoryContext(
                             productHome,
@@ -292,6 +299,8 @@ object DirectCompanionTurn {
                             prior = prior,
                             currentRequest = request,
                             memoryContext = memoryContext,
+                            workingContinuityContext =
+                                workingSuccessorContext,
                             browserContext = intent.browserContext,
                         )
                     val workingContinuity =
@@ -300,11 +309,21 @@ object DirectCompanionTurn {
                             currentRequest = request,
                             promptContext = prompt.receipt,
                             memoryContext = memoryContext,
+                            priorSuccessorContext =
+                                workingSuccessorContext,
                         )
 
+                    val currentPrior =
+                        immediatePriorCompletedTurn()
+                    DirectWorkingContinuity.requireSuccessorContextCurrent(
+                        productHome = productHome,
+                        prior = currentPrior,
+                        currentRequest = request,
+                        expected = workingSuccessorContext,
+                    )
                     DirectPromptContext.reverify(
                         materialization = prompt,
-                        prior = immediatePriorCompletedTurn(),
+                        prior = currentPrior,
                         currentRequest = request,
                         memoryContext =
                             hooks.currentMemoryContext(
@@ -319,6 +338,8 @@ object DirectCompanionTurn {
                                         "VexLife Memory context changed before provider invocation"
                                     }
                                 },
+                        workingContinuityContext =
+                            workingSuccessorContext,
                         browserContext = intent.browserContext,
                     )
 
