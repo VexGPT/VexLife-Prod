@@ -131,7 +131,7 @@ class FileHereticRuntimeReceiptStoreTest {
 
             assertEquals(
                 productHome.resolve(
-                    HereticProductIdentity.RuntimeReceiptRelativePath,
+                    HereticProductIdentity.ProductRuntimeReceiptRelativePath,
                 )
                     .normalize(),
                 store.path(),

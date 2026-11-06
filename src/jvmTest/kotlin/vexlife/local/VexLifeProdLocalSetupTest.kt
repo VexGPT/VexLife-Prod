@@ -22,6 +22,7 @@ import vexlife.model.heretic.runtime.HereticArtifactMaterialization
 import vexlife.model.heretic.runtime.HereticMacHostProfile
 import vexlife.model.heretic.runtime.HereticPersistentRuntime
 import vexlife.model.heretic.runtime.HereticPythonEnvironment
+import vexlife.model.heretic.runtime.StableVexLifeHereticRuntimeCompatibility
 import vexlife.platform.macos.MacUserLaunchdProcess
 import vexlife.platform.python.ManagedPython
 
@@ -561,6 +562,117 @@ class VexLifeProdLocalSetupTest {
                     "RUNTIME",
                 ),
                 trace,
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun currentStableVexLifeRuntimeIsBorrowedWithoutProductRuntimeStart() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-local-setup-borrow-stable-runtime-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+        val trace =
+            mutableListOf<String>()
+
+        try {
+            val fixture =
+                CanonicalVexLifeHomeFixture.form(
+                    home,
+                )
+            val stableEvidence =
+                HereticModelConfiguration.QualifiedRuntimeEvidence(
+                    runtimeReceiptRef = "receipt.vexlife.heretic-persistent-runtime.stable.test",
+                    runtimeState = HereticRuntimeState.Qualified,
+                    modelRef = HereticProductIdentity.ModelRef,
+                    modelProfileRef = HereticProductIdentity.ModelProfileRef,
+                    artifactRef = HereticProductIdentity.ArtifactSetRef,
+                    artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
+                    runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
+                    runtimeClass = HereticProductIdentity.RuntimeClass,
+                    endpoint = HereticProductIdentity.Endpoint,
+                    requestModel = HereticProductIdentity.RequestModel,
+                    qualification = HereticRuntimeQualification.qualified(),
+                )
+            val base =
+                hooks(
+                    trace,
+                )
+            val result =
+                VexLifeProdLocalSetup.establishAt(
+                    productHome = home,
+                    allowAcquisition = true,
+                    hooks =
+                        base.copy(
+                            observeStableRuntime = {
+                                _,
+                                _,
+                                ->
+                                trace +=
+                                    "STABLE_RUNTIME"
+                                StableVexLifeHereticRuntimeCompatibility.Observation(
+                                    evidence = stableEvidence,
+                                    receiptRelativePath =
+                                        HereticProductIdentity.StableRuntimeReceiptRelativePath,
+                                    pid = 4242L,
+                                )
+                            },
+                            startRuntime = {
+                                _,
+                                _,
+                                _,
+                                ->
+                                error(
+                                    "borrowed stable runtime must not start a VexLife-Prod runtime",
+                                )
+                            },
+                        ),
+                )
+
+            assertEquals(
+                "BORROWED_STABLE_VEXLIFE_QUALIFIED_RUNTIME",
+                result.runtimeDisposition,
+            )
+            assertEquals(
+                stableEvidence,
+                result.qualifiedRuntimeEvidence,
+            )
+            assertTrue(
+                result.modelBindingDisposition in
+                    setOf(
+                        "HERETIC_BOUND_TO_QUALIFIED_RUNTIME",
+                        "HERETIC_REBOUND_TO_QUALIFIED_RUNTIME",
+                    ),
+            )
+            assertEquals(
+                HereticProductIdentity.StableRuntimeReceiptRelativePath,
+                assertIs<FileHereticModelConfigurationStore.Snapshot.Heretic>(
+                    FileHereticModelConfigurationStore(
+                        home,
+                    )
+                        .read(
+                            fixture.manifest,
+                        ),
+                )
+                    .value
+                    .runtimeReceiptPath,
+            )
+            assertTrue(
+                "STABLE_RUNTIME" in
+                    trace,
+            )
+            assertFalse(
+                "RUNTIME" in
+                    trace,
             )
         } finally {
             parent

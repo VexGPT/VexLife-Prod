@@ -166,6 +166,56 @@ class FileHereticModelConfigurationStoreTest {
                 .deleteRecursively()
         }
     }
+    @Test
+    fun boundModelMayRebindBetweenAdmittedStableAndProductRuntimeReceiptOwners() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-model-config-rebind-runtime-owner-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            val fixture =
+                CanonicalVexLifeHomeFixture.form(
+                    home,
+                )
+            val store =
+                FileHereticModelConfigurationStore(
+                    home,
+                )
+            store.selectHeretic(
+                fixture.manifest,
+            )
+            store.bindQualified(
+                manifest = fixture.manifest,
+                qualifiedRuntime = qualifiedRuntime(),
+                runtimeReceiptPath = HereticProductIdentity.StableRuntimeReceiptRelativePath,
+            )
+            val rebound =
+                store.bindQualified(
+                    manifest = fixture.manifest,
+                    qualifiedRuntime = qualifiedRuntime(),
+                    runtimeReceiptPath = HereticProductIdentity.ProductRuntimeReceiptRelativePath,
+                )
+
+            assertEquals(
+                "HERETIC_REBOUND_TO_QUALIFIED_RUNTIME",
+                rebound.state,
+            )
+            assertEquals(
+                HereticProductIdentity.ProductRuntimeReceiptRelativePath,
+                rebound.value.runtimeReceiptPath,
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
 }
 
 // [VXG RealForever]

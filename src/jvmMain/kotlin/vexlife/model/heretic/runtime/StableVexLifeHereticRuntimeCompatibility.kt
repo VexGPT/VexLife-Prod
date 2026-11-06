@@ -120,6 +120,18 @@ object StableVexLifeHereticRuntimeCompatibility {
             )
                 ?: return null
 
+        return observeReceipt(
+            receipt = receipt,
+            binding = binding,
+            platform = platform,
+        )
+    }
+
+    internal fun observeReceipt(
+        receipt: Receipt,
+        binding: HereticPersistentRuntime.Binding,
+        platform: HereticPersistentRuntime.Platform,
+    ): Observation {
         require(
             platform.platform ==
                 "darwin" &&
