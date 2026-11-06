@@ -501,10 +501,11 @@ class DirectPromptContextTest {
                 DirectConversationStore(
                     productHome,
                 )
-            lateinit var firstRequest: DirectConversationStore.Event
+            var firstRequestOrNull: DirectConversationStore.Event? =
+                null
 
             store.withWriterLease {
-                firstRequest =
+                val firstRequest =
                     beginRequest(
                         turnRef =
                             "turn.self-development.working.001",
@@ -517,6 +518,8 @@ class DirectPromptContextTest {
                                 "2026-11-06T12:00:00Z",
                             ),
                     )
+                firstRequestOrNull =
+                    firstRequest
                 val response =
                     appendResponse(
                         request = firstRequest,
@@ -556,6 +559,10 @@ class DirectPromptContextTest {
                 )
             }
 
+            val firstRequest =
+                requireNotNull(
+                    firstRequestOrNull,
+                )
             val owner =
                 VexLifeWorkingContinuityOwner(
                     productHome,
