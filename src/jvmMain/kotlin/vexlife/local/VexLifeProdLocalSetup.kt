@@ -3,6 +3,7 @@ package vexlife.local
 import java.net.InetAddress
 import java.nio.file.Path
 import java.time.OffsetDateTime
+import vexlife.conversation.DirectConversationStore
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
@@ -74,6 +75,32 @@ object VexLifeProdLocalSetup {
         val now: () -> String = {
             OffsetDateTime.now()
                 .toString()
+        },
+        val observeConversationWriter: (
+            productHome: Path,
+        ) -> DirectConversationStore.ThreadWriterCurrentness = {
+            productHome ->
+            DirectConversationStore(
+                productHome,
+            )
+                .threadWriterCurrentness()
+        },
+        val recoverConversationWriter: (
+            productHome: Path,
+            instanceRef: String,
+            leaseSha256: String,
+        ) -> Boolean = {
+            productHome,
+            instanceRef,
+            leaseSha256,
+            ->
+            DirectConversationStore(
+                productHome,
+            )
+                .recoverAbandonedWriterLease(
+                    expectedAbandonedInstanceRef = instanceRef,
+                    expectedLeaseSha256 = leaseSha256,
+                )
         },
         val ensureManagedPython: (
             productHome: Path,
@@ -234,11 +261,19 @@ object VexLifeProdLocalSetup {
                 "canonical ~/.vexlife Home is absent; VexLife-Prod must not mint a parallel Home or Companion lineage"
             }
 
+        val canonicalHome =
+            Path.of(
+                home.productHome,
+            )
+
+        convergeConversationWriter(
+            productHome = canonicalHome,
+            hooks = hooks,
+        )
+
         val modelConfiguration =
             FileHereticModelConfigurationStore(
-                Path.of(
-                    home.productHome,
-                ),
+                canonicalHome,
             )
 
         val selected =
@@ -321,6 +356,94 @@ object VexLifeProdLocalSetup {
                     requestModel = runtime.requestModel,
                 ),
             binding = binding,
+        )
+    }
+
+    private fun convergeConversationWriter(
+        productHome: Path,
+        hooks: Hooks,
+    ) {
+        val before =
+            hooks.observeConversationWriter(
+                productHome,
+            )
+
+        if (
+            before.state ==
+                "IDLE"
+        ) {
+            require(
+                !before.recoveryRequired &&
+                    before.ownerState ==
+                    null &&
+                    before.instanceRef ==
+                    null &&
+                    before.leaseSha256 ==
+                    null,
+            ) {
+                "idle VexLife Conversation writer currentness is internally inconsistent"
+            }
+            return
+        }
+
+        if (
+            before.state ==
+                "RECOVERY_REQUIRED" &&
+                before.ownerState ==
+                "ABSENT" &&
+                before.recoveryRequired
+        ) {
+            val instanceRef =
+                requireNotNull(
+                    before.instanceRef,
+                ) {
+                    "abandoned VexLife Conversation writer lacks exact instance identity"
+                }
+            val leaseSha256 =
+                requireNotNull(
+                    before.leaseSha256,
+                ) {
+                    "abandoned VexLife Conversation writer lacks exact lease identity"
+                }
+
+            require(
+                hooks.recoverConversationWriter(
+                    productHome,
+                    instanceRef,
+                    leaseSha256,
+                ),
+            ) {
+                "abandoned VexLife Conversation writer recovery did not perform the exact effect"
+            }
+
+            val after =
+                hooks.observeConversationWriter(
+                    productHome,
+                )
+            require(
+                after.state ==
+                    "IDLE" &&
+                    !after.recoveryRequired &&
+                    after.ownerState ==
+                    null &&
+                    after.instanceRef ==
+                    null &&
+                    after.leaseSha256 ==
+                    null,
+            ) {
+                "abandoned VexLife Conversation writer recovery did not converge to IDLE"
+            }
+            return
+        }
+
+        error(
+            "Open Vex thread writer is not safely startable: " +
+                before.state +
+                "/" +
+                (
+                    before.ownerState
+                        ?: "NONE"
+                    ),
         )
     }
 

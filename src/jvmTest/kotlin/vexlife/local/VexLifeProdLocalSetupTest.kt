@@ -8,6 +8,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
@@ -243,6 +244,26 @@ class VexLifeProdLocalSetupTest {
                     "NOW"
                 "2026-11-04T18:00:00-08:00"
             },
+            observeConversationWriter = {
+                trace +=
+                    "WRITER_CURRENTNESS"
+                DirectConversationStore.ThreadWriterCurrentness(
+                    state = "IDLE",
+                    ownerState = null,
+                    instanceRef = null,
+                    leaseSha256 = null,
+                    recoveryRequired = false,
+                )
+            },
+            recoverConversationWriter = {
+                _,
+                _,
+                _,
+                ->
+                error(
+                    "idle test writer must not recover",
+                )
+            },
             ensureManagedPython = {
                 home,
                 _,
@@ -380,6 +401,7 @@ class VexLifeProdLocalSetupTest {
             assertEquals(
                 listOf(
                     "HOST",
+                    "WRITER_CURRENTNESS",
                     "MANAGED_PYTHON",
                     "ARTIFACTS",
                     "HERETIC_ENVIRONMENT",
@@ -432,6 +454,113 @@ class VexLifeProdLocalSetupTest {
                         "config/model.json",
                     ),
                 ),
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun abandonedConversationWriterRecoversExactlyBeforeRuntimeEffects() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-local-setup-writer-recovery-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+        val trace =
+            mutableListOf<String>()
+        var observationCount =
+            0
+        val leaseSha256 =
+            "a".repeat(
+                64,
+            )
+        val instanceRef =
+            "instance.vexlife.writer.abandoned.test"
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home,
+            )
+
+            val base =
+                hooks(
+                    trace,
+                )
+            val result =
+                VexLifeProdLocalSetup.establishAt(
+                    productHome = home,
+                    allowAcquisition = true,
+                    hooks =
+                        base.copy(
+                            observeConversationWriter = {
+                                trace +=
+                                    "WRITER_CURRENTNESS"
+                                observationCount +=
+                                    1
+                                if (
+                                    observationCount ==
+                                    1
+                                ) {
+                                    DirectConversationStore.ThreadWriterCurrentness(
+                                        state = "RECOVERY_REQUIRED",
+                                        ownerState = "ABSENT",
+                                        instanceRef = instanceRef,
+                                        leaseSha256 = leaseSha256,
+                                        recoveryRequired = true,
+                                    )
+                                } else {
+                                    DirectConversationStore.ThreadWriterCurrentness(
+                                        state = "IDLE",
+                                        ownerState = null,
+                                        instanceRef = null,
+                                        leaseSha256 = null,
+                                        recoveryRequired = false,
+                                    )
+                                }
+                            },
+                            recoverConversationWriter = {
+                                _,
+                                observedInstanceRef,
+                                observedLeaseSha256,
+                                ->
+                                trace +=
+                                    "WRITER_RECOVERY"
+                                assertEquals(
+                                    instanceRef,
+                                    observedInstanceRef,
+                                )
+                                assertEquals(
+                                    leaseSha256,
+                                    observedLeaseSha256,
+                                )
+                                true
+                            },
+                        ),
+                )
+
+            assertEquals(
+                "LOCAL_HERETIC_FOUNDATION_READY",
+                result.state,
+            )
+            assertEquals(
+                listOf(
+                    "HOST",
+                    "WRITER_CURRENTNESS",
+                    "WRITER_RECOVERY",
+                    "WRITER_CURRENTNESS",
+                    "MANAGED_PYTHON",
+                    "ARTIFACTS",
+                    "HERETIC_ENVIRONMENT",
+                    "RUNTIME",
+                ),
+                trace,
             )
         } finally {
             parent
@@ -701,6 +830,7 @@ class VexLifeProdLocalSetupTest {
             assertEquals(
                 listOf(
                     "HOST",
+                    "WRITER_CURRENTNESS",
                     "MANAGED_PYTHON",
                     "ARTIFACTS",
                     "HERETIC_ENVIRONMENT",
