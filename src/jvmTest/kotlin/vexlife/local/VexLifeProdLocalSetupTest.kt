@@ -84,10 +84,10 @@ class VexLifeProdLocalSetupTest {
 
     private fun materialization(
         home: Path,
-        state: String = "HERETIC_ARTIFACTS_MATERIALIZED_EXACT",
+        reuse: Boolean = false,
     ): HereticArtifactMaterialization.Result =
         HereticArtifactMaterialization.Result(
-            state = state,
+            state = "HERETIC_ARTIFACTS_MATERIALIZED_EXACT",
             modelPath =
                 home.resolve(
                     "models/heretic/qwen3.8-27b-mlx4/" +
@@ -102,10 +102,20 @@ class VexLifeProdLocalSetupTest {
             contentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
             memberCount = 11,
             totalBytes = 15_153_242_506L,
-            reusedMemberCount = 0,
-            acquiredMemberCount = 11,
-            acquisitionPerformed = true,
-            artifactMutationPerformed = true,
+            reusedMemberCount =
+                if (reuse) {
+                    11
+                } else {
+                    0
+                },
+            acquiredMemberCount =
+                if (reuse) {
+                    0
+                } else {
+                    11
+                },
+            acquisitionPerformed = !reuse,
+            artifactMutationPerformed = !reuse,
         )
 
     private fun environment(
@@ -257,14 +267,8 @@ class VexLifeProdLocalSetupTest {
                 trace +=
                     "ARTIFACTS"
                 materialization(
-                    home,
-                    if (
-                        reuse
-                    ) {
-                        "HERETIC_ARTIFACTS_REUSED_EXACT"
-                    } else {
-                        "HERETIC_ARTIFACTS_MATERIALIZED_EXACT"
-                    },
+                    home = home,
+                    reuse = reuse,
                 )
             },
             ensureHereticEnvironment = {
