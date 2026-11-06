@@ -710,12 +710,16 @@ class DirectConversationStore(
         )
 
     fun <T> withWriterLease(
+        instanceRef: String =
+            currentProcessInstanceRef(),
         block: Locked.() -> T,
     ): T {
         prepareOwnedDirectories()
+        requireSafeRef(
+            instanceRef,
+            "instanceRef",
+        )
 
-        val instanceRef =
-            currentProcessInstanceRef()
         return acquireThreadWriterLease(
             instanceRef,
         )
