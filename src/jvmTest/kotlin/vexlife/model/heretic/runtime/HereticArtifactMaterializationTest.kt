@@ -9,6 +9,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import vexlife.artifact.ExactArtifactFile
 import vexlife.model.heretic.HereticProductIdentity
 
 class HereticArtifactMaterializationTest {
@@ -84,9 +85,9 @@ class HereticArtifactMaterializationTest {
             )
 
         try {
-            assertIs<HereticArtifactMaterialization.Classification.Missing>(
-                HereticArtifactMaterialization.classifyExactArtifact(
-                    finalPath = file,
+            assertIs<ExactArtifactFile.Classification.Missing>(
+                ExactArtifactFile.classify(
+                    path = file,
                     expectedSha256 =
                         sha256(
                             "exact",
@@ -100,9 +101,9 @@ class HereticArtifactMaterializationTest {
                 "wrong-size",
             )
 
-            assertIs<HereticArtifactMaterialization.Classification.InvalidSize>(
-                HereticArtifactMaterialization.classifyExactArtifact(
-                    finalPath = file,
+            assertIs<ExactArtifactFile.Classification.InvalidSize>(
+                ExactArtifactFile.classify(
+                    path = file,
                     expectedSha256 =
                         sha256(
                             "exact",
@@ -116,9 +117,9 @@ class HereticArtifactMaterializationTest {
                 "other",
             )
 
-            assertIs<HereticArtifactMaterialization.Classification.InvalidHash>(
-                HereticArtifactMaterialization.classifyExactArtifact(
-                    finalPath = file,
+            assertIs<ExactArtifactFile.Classification.InvalidHash>(
+                ExactArtifactFile.classify(
+                    path = file,
                     expectedSha256 =
                         sha256(
                             "exact",
@@ -133,9 +134,9 @@ class HereticArtifactMaterializationTest {
             )
 
             val exact =
-                assertIs<HereticArtifactMaterialization.Classification.VerifiedReusable>(
-                    HereticArtifactMaterialization.classifyExactArtifact(
-                        finalPath = file,
+                assertIs<ExactArtifactFile.Classification.VerifiedReusable>(
+                    ExactArtifactFile.classify(
+                        path = file,
                         expectedSha256 =
                             sha256(
                                 "exact",
@@ -164,8 +165,8 @@ class HereticArtifactMaterializationTest {
 
         try {
             assertFailsWith<IllegalArgumentException> {
-                HereticArtifactMaterialization.classifyExactArtifact(
-                    finalPath = root,
+                ExactArtifactFile.classify(
+                    path = root,
                     expectedSha256 =
                         "0".repeat(
                             64,

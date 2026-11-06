@@ -17,8 +17,7 @@ import kotlin.test.assertTrue
 import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
 import vexlife.filesystem.VexOwnedPath
-import vexlife.home.VexLifeProdHome
-import vexlife.home.VexLifeProdHomeFiles
+import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
 import vexlife.platform.macos.MacUserLaunchdProcess
@@ -167,7 +166,7 @@ class VexLifeProdMacServiceLifetimeTest {
             }
     }
 
-    private class Probe(
+    private inner class Probe(
         var sourceSha: String,
         private val host: Host,
     ) : VexLifeProdMacServiceLifetime.SourceCurrentnessProbe {
@@ -260,23 +259,10 @@ class VexLifeProdMacServiceLifetimeTest {
     private fun bootstrapHome(
         productHome: Path,
     ) {
-        VexLifeProdHomeFiles.bootstrap(
-            productHome = productHome,
-            plan =
-                VexLifeProdHome.plan(
-                    personRef = VexLifeProdHome.DefaultPersonRef,
-                    familyRef = VexLifeProdHome.DefaultFamilyRef,
-                    deviceName = "Service Lifetime Test Mac",
-                    platform = "darwin",
-                    architecture = "arm64",
-                    ids =
-                        VexLifeProdHome.InstallationIds(
-                            deviceRef = "device.vexlife-prod.service-lifetime-test",
-                            companionLineageRef =
-                                "companion-lineage.vexlife-prod.service-lifetime-test",
-                        ),
-                    createdAt = "2026-11-05T06:00:00-08:00",
-                ),
+        CanonicalVexLifeHomeFixture.form(
+            home = productHome,
+            deviceSuffix = "service-lifetime-test",
+            lineageSuffix = "service-lifetime-test",
         )
     }
 
@@ -457,6 +443,7 @@ class VexLifeProdMacServiceLifetimeTest {
                     listOf(
                         "java.base",
                         "java.net.http",
+                        "jdk.crypto.ec",
                         "jdk.httpserver",
                     ),
                 payloadSha256 = payload,
@@ -964,6 +951,74 @@ class VexLifeProdMacServiceLifetimeTest {
                 assertEquals(
                     1,
                     fixture.host.bootoutCount(),
+                )
+            }
+    }
+
+    @Test
+    fun readinessBeyondThirtySecondsRemainsBoundedAndCanStillBecomeCurrent() {
+        fixture()
+            .use {
+                fixture ->
+                val probe =
+                    VexLifeProdMacServiceLifetime.SourceCurrentnessProbe {
+                        origin ->
+                        assertEquals(
+                            VexLifeProdServiceContract.Origin,
+                            origin,
+                        )
+
+                        if (
+                            fixture.host.now <
+                            35_000L
+                        ) {
+                            null
+                        } else {
+                            sourceCurrentness(
+                                sourceSha = fixture.sourceSha,
+                                pid = fixture.host.currentPid,
+                            )
+                        }
+                    }
+
+                val started =
+                    VexLifeProdMacServiceLifetime.startOrReuse(
+                        productHome = fixture.home,
+                        desiredSourceSha = fixture.sourceSha,
+                        host = fixture.host,
+                        probe = probe,
+                    )
+
+                assertEquals(
+                    "STARTED_CURRENT_SERVICE",
+                    started.disposition,
+                )
+                assertTrue(
+                    fixture.host.now >=
+                        35_000L,
+                )
+                assertTrue(
+                    fixture.host.now <
+                        120_000L,
+                )
+                assertEquals(
+                    1,
+                    fixture.host.bootstrapCount(),
+                )
+                assertEquals(
+                    0,
+                    fixture.host.bootoutCount(),
+                )
+                assertTrue(
+                    fixture.host.servicePresent,
+                )
+                assertTrue(
+                    fixture.host.alive,
+                )
+                assertNotNull(
+                    lifetimeReceipt(
+                        fixture.home,
+                    ),
                 )
             }
     }

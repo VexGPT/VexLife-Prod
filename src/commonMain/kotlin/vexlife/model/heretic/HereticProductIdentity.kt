@@ -41,6 +41,16 @@ object HereticProductIdentity {
         "MLX_LM_OPENAI_NUMERIC_LOOPBACK"
 
     /**
+     * Existing lived VexLife browser-Companion endpoint-profile identity.
+     *
+     * Canonical Conversation RESPONSE events persist this profile ref separately from the Heretic
+     * runtime-adapter identity. New Beginnings ports that accepted distinction rather than minting
+     * a product-specific endpoint-profile namespace.
+     */
+    const val CompanionEndpointProfileRef =
+        "model-profile.vexlife.browser-companion.local"
+
+    /**
      * Fresh product-owned host execution profile.
      *
      * Its eligibility meaning is faithfully ported from current VexLife Heretic setup rather than
@@ -64,8 +74,19 @@ object HereticProductIdentity {
     const val RequestModel =
         "default_model"
 
-    const val RuntimeReceiptRelativePath =
+    const val StableRuntimeReceiptRelativePath =
         "runtime/heretic/persistent-runtime-owner-receipt.json"
+
+    const val ProductRuntimeReceiptRelativePath =
+        "runtime/vexlife-prod/heretic-persistent-runtime-owner-receipt.json"
+
+    /**
+     * Existing product-model bindings formed during continuity realignment borrowed the stable
+     * VexLife receipt coordinate. Keep the compatibility alias explicit rather than silently moving
+     * those durable product-owned bindings.
+     */
+    const val RuntimeReceiptRelativePath =
+        StableRuntimeReceiptRelativePath
 
     const val ReleaseState =
         "RELEASE_QUALIFIED"

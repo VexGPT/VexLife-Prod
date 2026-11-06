@@ -3,7 +3,7 @@ package vexlife.local
 import java.net.InetAddress
 import java.nio.file.Path
 import java.time.OffsetDateTime
-import vexlife.home.VexLifeProdHome
+import vexlife.conversation.DirectConversationStore
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
@@ -15,14 +15,17 @@ import vexlife.model.heretic.runtime.HereticMacHostProfile
 import vexlife.model.heretic.runtime.HereticPersistentRuntime
 import vexlife.model.heretic.runtime.HereticPythonEnvironment
 import vexlife.model.heretic.runtime.MacHereticRuntimePlatform
+import vexlife.model.heretic.runtime.StableVexLifeHereticRuntimeCompatibility
 import vexlife.platform.python.ManagedPython
 
 /**
- * Application-level composition for the isolated local VexLife-Prod substrate.
+ * Application-level composition for VexLife-Prod runtime machinery beneath the canonical VexLife
+ * Home/identity.
  *
- * This owner contributes sequencing only. Every durable identity, artifact fact, environment rule,
- * process/lifetime effect, and model-configuration transition remains owned by the component that
- * answers that question.
+ * This owner contributes sequencing only. It does not mint another Home, device, Companion lineage,
+ * Conversation, Memory or human product identity. Every artifact fact, environment rule,
+ * process/lifetime effect and runtime-binding transition remains owned by the component that answers
+ * that question.
  */
 object VexLifeProdLocalSetup {
     const val RuntimeAuthorityRef =
@@ -60,7 +63,7 @@ object VexLifeProdLocalSetup {
 
     private data class Established(
         val result: Result,
-        val binding: HereticPersistentRuntime.Binding,
+        val currentRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
     )
 
     internal data class Hooks(
@@ -73,6 +76,32 @@ object VexLifeProdLocalSetup {
         val now: () -> String = {
             OffsetDateTime.now()
                 .toString()
+        },
+        val observeConversationWriter: (
+            productHome: Path,
+        ) -> DirectConversationStore.ThreadWriterCurrentness = {
+            productHome ->
+            DirectConversationStore(
+                productHome,
+            )
+                .threadWriterCurrentness()
+        },
+        val recoverConversationWriter: (
+            productHome: Path,
+            instanceRef: String,
+            leaseSha256: String,
+        ) -> Boolean = {
+            productHome,
+            instanceRef,
+            leaseSha256,
+            ->
+            DirectConversationStore(
+                productHome,
+            )
+                .recoverAbandonedWriterLease(
+                    expectedAbandonedInstanceRef = instanceRef,
+                    expectedLeaseSha256 = leaseSha256,
+                )
         },
         val ensureManagedPython: (
             productHome: Path,
@@ -115,6 +144,40 @@ object VexLifeProdLocalSetup {
                 allowCreation = allowCreation,
             )
         },
+        val observeStableRuntime: (
+            productHome: Path,
+            binding: HereticPersistentRuntime.Binding,
+        ) -> StableVexLifeHereticRuntimeCompatibility.Observation? = {
+            productHome,
+            binding,
+            ->
+            StableVexLifeHereticRuntimeCompatibility.observe(
+                productHome = productHome,
+                binding = binding,
+                platform =
+                    MacHereticRuntimePlatform(
+                        productHome = productHome,
+                    ),
+            )
+        },
+        val observeCurrentProductRuntime: (
+            productHome: Path,
+            binding: HereticPersistentRuntime.Binding,
+            store: HereticPersistentRuntime.ReceiptStore,
+        ) -> HereticModelConfiguration.QualifiedRuntimeEvidence = {
+            productHome,
+            binding,
+            store,
+            ->
+            HereticPersistentRuntime.observeCurrentQualified(
+                binding = binding,
+                store = store,
+                platform =
+                    MacHereticRuntimePlatform(
+                        productHome = productHome,
+                    ),
+            )
+        },
         val startRuntime: (
             productHome: Path,
             binding: HereticPersistentRuntime.Binding,
@@ -136,9 +199,8 @@ object VexLifeProdLocalSetup {
     )
 
     /**
-     * Ordinary product route. The Home coordinate and all local topology are fixed by source.
-     *
-     * [allowAcquisition] is the one explicit human authorization carried by this local setup edge.
+     * Ordinary product route. The canonical Home coordinate is fixed by the existing VexLife
+     * relationship; [allowAcquisition] authorizes only missing model/runtime prerequisites.
      */
     fun establish(
         allowAcquisition: Boolean,
@@ -225,44 +287,28 @@ object VexLifeProdLocalSetup {
                 )
         }
 
-        val existingHome =
-            VexLifeProdHomeFiles.observeExisting(
-                productHome,
+        val home =
+            requireNotNull(
+                VexLifeProdHomeFiles.observeExisting(
+                    productHome,
+                ),
+            ) {
+                "canonical ~/.vexlife Home is absent; VexLife-Prod must not mint a parallel Home or Companion lineage"
+            }
+
+        val canonicalHome =
+            Path.of(
+                home.productHome,
             )
 
-        if (
-            existingHome ==
-                null
-        ) {
-            require(
-                allowAcquisition,
-            ) {
-                "fresh VexLife-Prod setup requires explicit local model/runtime acquisition authorization before Home formation"
-            }
-        }
-
-        val home =
-            existingHome
-                ?: VexLifeProdHomeFiles.bootstrap(
-                    productHome = productHome,
-                    plan =
-                        VexLifeProdHome.plan(
-                            personRef = VexLifeProdHome.DefaultPersonRef,
-                            familyRef = VexLifeProdHome.DefaultFamilyRef,
-                            deviceName = hooks.deviceName(),
-                            platform = host.observation.platform,
-                            architecture = host.observation.architecture,
-                            ids =
-                                VexLifeProdHomeFiles.newInstallationIds(),
-                            createdAt = hooks.now(),
-                        ),
-                )
+        convergeConversationWriter(
+            productHome = canonicalHome,
+            hooks = hooks,
+        )
 
         val modelConfiguration =
             FileHereticModelConfigurationStore(
-                Path.of(
-                    home.productHome,
-                ),
+                canonicalHome,
             )
 
         val selected =
@@ -302,29 +348,88 @@ object VexLifeProdLocalSetup {
                 environment = environment,
             )
 
-        val runtime =
-            hooks.startRuntime(
-                Path.of(
-                    home.productHome,
-                ),
+        val borrowedStableRuntime =
+            hooks.observeStableRuntime(
+                canonicalHome,
                 binding,
-                FileHereticRuntimeReceiptStore(
-                    Path.of(
-                        home.productHome,
-                    ),
-                ),
             )
 
-        val qualifiedRuntimeEvidence =
-            HereticPersistentRuntime.configurationEvidence(
-                binding = binding,
-                receipt = runtime.receipt,
-            )
+        val qualifiedRuntimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence
+        val runtimeDisposition: String
+        val runtimeReceiptPath: String
+        val currentRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence
+
+        if (
+            borrowedStableRuntime !=
+                null
+        ) {
+            qualifiedRuntimeEvidence =
+                borrowedStableRuntime.evidence
+            runtimeDisposition =
+                "BORROWED_STABLE_VEXLIFE_QUALIFIED_RUNTIME"
+            runtimeReceiptPath =
+                borrowedStableRuntime.receiptRelativePath
+            currentRuntimeEvidence = {
+                requireNotNull(
+                    hooks.observeStableRuntime(
+                        canonicalHome,
+                        binding,
+                    ),
+                ) {
+                    "borrowed stable VexLife Heretic runtime is no longer current"
+                }
+                    .evidence
+            }
+        } else {
+            val productRuntimeStore =
+                FileHereticRuntimeReceiptStore(
+                    canonicalHome,
+                )
+
+            if (
+                allowAcquisition
+            ) {
+                val runtime =
+                    hooks.startRuntime(
+                        canonicalHome,
+                        binding,
+                        productRuntimeStore,
+                    )
+                qualifiedRuntimeEvidence =
+                    HereticPersistentRuntime.configurationEvidence(
+                        binding = binding,
+                        receipt = runtime.receipt,
+                    )
+                runtimeDisposition =
+                    runtime.disposition
+            } else {
+                qualifiedRuntimeEvidence =
+                    hooks.observeCurrentProductRuntime(
+                        canonicalHome,
+                        binding,
+                        productRuntimeStore,
+                    )
+                runtimeDisposition =
+                    "REOBSERVED_CURRENT_PRODUCT_QUALIFIED_RUNTIME"
+            }
+            runtimeReceiptPath =
+                HereticProductIdentity.ProductRuntimeReceiptRelativePath
+            currentRuntimeEvidence = {
+                hooks.observeCurrentProductRuntime(
+                    canonicalHome,
+                    binding,
+                    FileHereticRuntimeReceiptStore(
+                        canonicalHome,
+                    ),
+                )
+            }
+        }
 
         val bound =
             modelConfiguration.bindQualified(
                 manifest = home.manifest,
                 qualifiedRuntime = qualifiedRuntimeEvidence,
+                runtimeReceiptPath = runtimeReceiptPath,
             )
 
         return Established(
@@ -337,41 +442,111 @@ object VexLifeProdLocalSetup {
                     managedPythonDisposition = managedPython.state,
                     artifactDisposition = materialized.state,
                     environmentDisposition = environment.state,
-                    runtimeDisposition = runtime.disposition,
+                    runtimeDisposition = runtimeDisposition,
                     modelBindingDisposition = bound.state,
                     modelConfigurationState = bound.value.state,
                     qualifiedRuntimeEvidence = qualifiedRuntimeEvidence,
-                    endpoint = runtime.endpoint,
-                    requestModel = runtime.requestModel,
+                    endpoint = qualifiedRuntimeEvidence.endpoint,
+                    requestModel = qualifiedRuntimeEvidence.requestModel,
                 ),
-            binding = binding,
+            currentRuntimeEvidence = currentRuntimeEvidence,
+        )
+    }
+
+    private fun convergeConversationWriter(
+        productHome: Path,
+        hooks: Hooks,
+    ) {
+        val before =
+            hooks.observeConversationWriter(
+                productHome,
+            )
+
+        if (
+            before.state ==
+                "IDLE"
+        ) {
+            require(
+                !before.recoveryRequired &&
+                    before.ownerState ==
+                    null &&
+                    before.instanceRef ==
+                    null &&
+                    before.leaseSha256 ==
+                    null,
+            ) {
+                "idle VexLife Conversation writer currentness is internally inconsistent"
+            }
+            return
+        }
+
+        if (
+            before.state ==
+                "RECOVERY_REQUIRED" &&
+                before.ownerState ==
+                "ABSENT" &&
+                before.recoveryRequired
+        ) {
+            val instanceRef =
+                requireNotNull(
+                    before.instanceRef,
+                ) {
+                    "abandoned VexLife Conversation writer lacks exact instance identity"
+                }
+            val leaseSha256 =
+                requireNotNull(
+                    before.leaseSha256,
+                ) {
+                    "abandoned VexLife Conversation writer lacks exact lease identity"
+                }
+
+            require(
+                hooks.recoverConversationWriter(
+                    productHome,
+                    instanceRef,
+                    leaseSha256,
+                ),
+            ) {
+                "abandoned VexLife Conversation writer recovery did not perform the exact effect"
+            }
+
+            val after =
+                hooks.observeConversationWriter(
+                    productHome,
+                )
+            require(
+                after.state ==
+                    "IDLE" &&
+                    !after.recoveryRequired &&
+                    after.ownerState ==
+                    null &&
+                    after.instanceRef ==
+                    null &&
+                    after.leaseSha256 ==
+                    null,
+            ) {
+                "abandoned VexLife Conversation writer recovery did not converge to IDLE"
+            }
+            return
+        }
+
+        error(
+            "Open Vex thread writer is not safely startable: " +
+                before.state +
+                "/" +
+                (
+                    before.ownerState
+                        ?: "NONE"
+                    ),
         )
     }
 
     private fun formSession(
         established: Established,
     ): Session {
-        val productHome =
-            Path.of(
-                established.result.productHome,
-            )
-                .normalize()
-
         return Session(
             result = established.result,
-            currentRuntimeEvidence = {
-                HereticPersistentRuntime.observeCurrentQualified(
-                    binding = established.binding,
-                    store =
-                        FileHereticRuntimeReceiptStore(
-                            productHome,
-                        ),
-                    platform =
-                        MacHereticRuntimePlatform(
-                            productHome = productHome,
-                        ),
-                )
-            },
+            currentRuntimeEvidence = established.currentRuntimeEvidence,
         )
     }
 

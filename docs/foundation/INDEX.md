@@ -5,78 +5,97 @@
 This is the current architecture map. A foundation is added only when a recurring semantic owner,
 construction invariant, or proof burden is earned.
 
+## Governing product law
+
+~~~text
+stable lived VexLife relationship
+-> port pathways into Kotlin / VexArchitecture
+-> preserve human continuity
+-> replace accidental implementation machinery
+
+FRESH REPOSITORY
+!= FRESH HOME / FRESH VEX / BLANK MEMORY
+~~~
+
+The current behavioral reference for continuity realignment is `vgong24/VexLife` at
+`7d59753687ff12726b0d309ee2dde028b5f89e8a`. Historical JavaScript is provenance for earned
+relationships, not a runtime dependency of the Kotlin product.
+
+## Foundation map
+
 | Foundation | Human question | Current source | Proof | State |
 |---|---|---|---|---|
 | Repository front door | Can a fresh worker understand why this repository exists and where to descend? | `README.md`, `AGENTS.md`, `docs/CULTURE.md`, this index | source review | SOURCE ENTRY |
 | Semantic contract / Blueprint authoring | Can one VexLife relationship be compiler-visible instead of copied from examples? | `docs/foundation/SEMANTIC-CONTRACT-AUTHORING.md`, `src/commonMain/kotlin/vexlife/semantic/`, `src/commonMain/kotlin/vexlife/blueprint/` | accepted JVM/JS proof | **ACCEPTED** |
 | Compose reference realization | Can the semantic contract render through Compose without Compose becoming semantic authority? | `docs/foundation/COMPOSE-REFERENCE-REALIZATION.md`, `reference/compose/` | accepted root JVM/JS + Compose JVM proof | **ACCEPTED** |
-| VexWeb relational spatial foundation | Can browser manifestation be authored through stable relational geometry that scales without new vocabulary as region count/shape changes? | `docs/foundation/VEXWEB-COMPLETED-VIEW-BLUEPRINT.md`, `docs/foundation/VEXWEB-SPATIAL-FOUNDATION.md`, `src/commonMain/kotlin/vexlife/web/` | A002 JVM/JS compile + tests PASS; accepted tree `d109f0d648e1adeba35796b0dd0dc766d1dea4c1` | **ACCEPTED** |
-| VexWeb relational authoring | Can humans/AI author the accepted Frame / Seam / Region relationships readably without introducing another spatial ontology or renderer meaning? | `docs/foundation/VEXWEB-SPATIAL-FOUNDATION.md`, `src/commonMain/kotlin/vexlife/web/VexWebAuthoring.kt`, `src/commonTest/kotlin/vexlife/web/VexWebAuthoringTest.kt` | SourceOwner A003 exact Kotlin/JVM + Kotlin/JS regression PASS; accepted tree `9d6a6096e065c4d6582b2da086237ddc5ed19d67` | **ACCEPTED** |
-| VexWeb deterministic artifact generation | Can accepted VexWeb relationships deterministically produce source-addressable HTML/CSS/JS + a semantic manifest without generated syntax becoming source authority? | `docs/foundation/VEXWEB-ARTIFACT-GENERATION.md`, `src/commonMain/kotlin/vexlife/web/VexWebArtifacts.kt`, `src/commonTest/kotlin/vexlife/web/VexWebArtifactsTest.kt` | A002 full regression PASS + A003 compatibility-delta JVM/JS compile PASS; accepted tree `c20e92d48aab1296da52596691e898cad9cd6c21` | **ACCEPTED** |
-| Generated P1 workspace | Can the intended inert VexLife workspace manifest every current Blueprint coordinate and materialize exact deterministic browser artifacts without gaining provider/runtime authority? | `docs/foundation/VEXWEB-GENERATED-P1-WORKSPACE.md`, `src/commonMain/kotlin/vexlife/web/VexLifeWebP1.kt`, `src/jvmMain/kotlin/vexlife/web/VexLifeWebP1ArtifactMaterializer.kt` | A001 production/materialization path PASS + A002 corrected test path PASS; accepted tree `4536d195b4b5156f7fbd6c922bac28a9c16b8f2a` | **ACCEPTED** |
-| Durable contract JSON | Can durable product records share one strict JSON transport without every domain inventing parsers or losing unknown/default fields? | `docs/foundation/CONTRACT-JSON.md`, `src/commonMain/kotlin/vexlife/contract/`, `src/jvmMain/kotlin/vexlife/contract/`, `src/jvmMain/kotlin/vexlife/filesystem/` | strict JSON + atomic file + owned-path ancestry source/tests formed; exact Kotlin 2.4.20 JVM/JS proof pending | **INTEGRATED SOURCE CANDIDATE** |
-| Isolated VexLife-Prod Home | Can fresh installs own one preservation-safe Home identity without depending on or silently mutating legacy `~/.vexlife`? | `docs/foundation/VEXLIFE-PROD-HOME.md`, `src/commonMain/kotlin/vexlife/home/` | common source/tests formed; exact Kotlin 2.4.20 JVM/JS + persistence/host proof pending | **INTEGRATED SOURCE CANDIDATE** |
-| Heretic product model contract | Can the fresh product name its exact certified local model, artifact composition and Home-scoped selection without setup/runtime code owning that identity? | `docs/foundation/HERETIC-PRODUCT-MODEL.md`, `src/commonMain/kotlin/vexlife/model/heretic/` | disposable JVM/JS formation proof PASS; exact Kotlin 2.4.20 proof pending | **INTEGRATED SOURCE CANDIDATE** |
-| Heretic artifact materialization | Can the certified Heretic catalog become exact local model bytes without setup/runtime layers owning integrity or acquisition/repair authority? | `docs/foundation/HERETIC-ARTIFACT-MATERIALIZATION.md`, `src/jvmMain/kotlin/vexlife/artifact/`, `src/jvmMain/kotlin/vexlife/model/heretic/runtime/HereticArtifactMaterialization.kt`, `HereticArtifactDelivery.kt` | resumable exact-delivery + partial recovery + invalid-final hold source/tests formed; exact Kotlin 2.4.20 + real acquisition proof pending | **INTEGRATED SOURCE CANDIDATE** |
-| Heretic Python + MLX environment | Can the exact model runtime software be reused/created without setup or process code owning Python/MLX identity or caller-supplied bootstrap paths? | `docs/foundation/HERETIC-PYTHON-ENVIRONMENT.md`, `src/jvmMain/kotlin/vexlife/platform/python/ManagedPython.kt`, `src/jvmMain/kotlin/vexlife/model/heretic/runtime/HereticPythonEnvironment.kt` | managed-Python + Heretic-environment source/tests formed; exact Kotlin 2.4.20 + real macOS Python/mlx-lm proof pending | **INTEGRATED SOURCE CANDIDATE** |
-| macOS user process substrate | Can isolated Prod/Heretic processes have one exact construction/lifetime owner instead of copying launchctl/PID logic? | `docs/foundation/MACOS-USER-LAUNCHD-PROCESS.md`, `src/jvmMain/kotlin/vexlife/platform/macos/` | disposable JVM start/retire proof PASS; exact Kotlin 2.4.20 + real macOS launchd proof pending | **INTEGRATED SOURCE CANDIDATE** |
-| Heretic persistent local runtime | Can exact model bytes + exact environment become one implementation-bound isolated runtime without hidden config or PID/port ownership shortcuts? | `docs/foundation/HERETIC-PERSISTENT-RUNTIME.md`, `src/jvmMain/kotlin/vexlife/model/heretic/runtime/`, `src/jvmTest/kotlin/vexlife/model/heretic/runtime/` | STARTING/QUALIFIED, packaged-class currentness, receipt/config transition source/tests formed; exact Kotlin 2.4.20 + real macOS/model proof pending | **INTEGRATED SOURCE CANDIDATE** |
-| Isolated local setup composition | Can one ordinary fresh-user backend effect compose host eligibility -> Home -> model selection -> prerequisites -> qualified runtime without exposing hidden topology/config parameters? | `src/jvmMain/kotlin/vexlife/local/`, `src/jvmTest/kotlin/vexlife/local/` | source composition/idempotency/authorization + per-Home cross-process serialization tests formed; exact Kotlin 2.4.20 + real fresh Mac lived proof pending | **SOURCE CANDIDATE · HUMAN ENTRY HELD** |
-| Direct personal Companion circuit | Can the isolated fresh product durably complete a canonical personal human↔Vex turn through its own qualified Heretic runtime while preserving bounded prompt and invocation evidence? | `docs/foundation/DIRECT-PERSONAL-COMPANION.md`, `src/commonMain/kotlin/vexlife/{companion,conversation}/`, `src/jvmMain/kotlin/vexlife/{companion,conversation}/` | source two-turn / duplicate / failure / privacy tests formed; exact Kotlin 2.4.20 + real Mac two-turn lived proof pending | **SOURCE CANDIDATE · MEMORY / PRESENTATION HELD** |
-| Local product service | Can one fixed loopback service expose source currentness + canonical Conversation/Send to the eventual renderer without becoming a second Conversation/model/runtime owner? | `docs/foundation/LOCAL-PRODUCT-SERVICE.md`, `src/commonMain/kotlin/vexlife/service/`, `src/jvmMain/kotlin/vexlife/service/` | common contract + HTTP projection/Send/duplicate/runtime-currentness + no-acquisition service-process tests formed; exact Kotlin 2.4.20 + packaged/sustained Mac proof pending | **SOURCE CANDIDATE · PACKAGING / PRESENTATION / MAC LIFETIME HELD** |
-| Private macOS service image | Can the source-bound service run on a fresh supported Mac without a preinstalled Java/Kotlin/Gradle environment or a second visible app? | `docs/foundation/PRIVATE-SERVICE-IMAGE.md`, `packaging/private-service-image/`, `src/jvmMain/kotlin/vexlife/packaging/`, `build.gradle.kts` | clean-Git source admission + derived KMP runtime classpath + jdeps/jlink image formation + strict image verifier/tamper tests source-formed; exact Gradle 9.6/Kotlin 2.4.20 + real macOS arm64 JDK21 image proof pending | **SOURCE CANDIDATE · DELIVERY / INSTALL / MAC LIFETIME HELD** |
-| Private image install + bundled setup | Can a staged source-bound image perform explicitly-authorized first-run LocalSetup, install/reuse itself, and converge the exact service before readiness without making the setup process the lifecycle owner? | `docs/foundation/PRIVATE-IMAGE-INSTALL-SETUP.md`, `packaging/private-service-image/setup/`, `src/jvmMain/kotlin/vexlife/setup/`, `src/jvmMain/kotlin/vexlife/packaging/VexLifeProdPrivateServiceImageInstaller.kt` | v3 image + native setup-window source + Home-gated install + service-before-ready source/tests formed; exact Gradle/Kotlin + lived extracted-image/window proof pending | **SOURCE CANDIDATE · PROVIDER PUBLICATION / PRESENTATION HELD** |
-| macOS product service lifetime | Given an exact installed private image, how does one stable launchd service reconcile exact source/image/process/HTTP currentness across reuse, restart and source rotation? | `docs/foundation/MAC-SERVICE-LIFETIME.md`, `src/jvmMain/kotlin/vexlife/service/VexLifeProdMacServiceLifetime.kt`, `src/jvmMain/kotlin/vexlife/platform/macos/MacUserLaunchdProcess.kt` | source/PID-bound HTTP currentness + launchd receipt v2 environment/plist currentness + start/reuse/rotation/unknown/timeout/receipt-failure tests source-formed; exact Kotlin + real macOS launchd/sustained proof pending | **SOURCE CANDIDATE · PRESENTATION / LIVED HOST HELD** |
-| Native source-bound setup bootstrap | How can a fresh supported Mac obtain one exact private image and reach its native setup window without requiring Java/Kotlin/Gradle or making bootstrap the product installer/lifecycle owner? | `packaging/private-service-image/release-contract.json`, `packaging/bootstrap/`, `build.gradle.kts`, bootstrap section in `docs/foundation/PRIVATE-IMAGE-INSTALL-SETUP.md` | exact release-contract input + archive/bootstrap digest binding + private staging + AppKit handoff source-formed; exact Gradle generation + provider release + lived macOS proof pending | **SOURCE CANDIDATE · PROVIDER PUBLICATION / LIVED MAC HELD** |
-| Lived canonical Companion exploration threshold | Can the intended nested-browser shell converse through the canonical VexLife Conversation without becoming Conversation/model authority? | `exploration/web-workspace/` | 17/17 bounded machine proof through prompt-receipt projection + Victor lived Mac checkpoint | **EXPLORATION THRESHOLD** |
-| Web-native VexLife workspace | Can browser-native output realize the same accepted relationships? | **not yet formed** | **not yet formed** | HELD |
-| Public GitHub nested-browser practicum | Can bounded public Vex content render/navigate while preserving current identity? | **not yet formed** | **not yet formed** | HELD |
-| Browser context / DOM projection | What current browser context may Vex perceive without gaining effect authority? | **not yet formed** | **not yet formed** | HELD |
-| Conversation + Vex reintegration | How do canonical Conversation, model availability and browser context compose? | **not yet formed** | **not yet formed** | HELD |
+| VexWeb relational spatial foundation | Can browser manifestation use the same Frame / Seam / Region / Allocation vocabulary as shape and region count change? | `docs/foundation/VEXWEB-COMPLETED-VIEW-BLUEPRINT.md`, `docs/foundation/VEXWEB-SPATIAL-FOUNDATION.md`, `src/commonMain/kotlin/vexlife/web/` | accepted 2/3/4-region JVM/JS proof | **ACCEPTED** |
+| VexWeb relational authoring | Can humans/AI author those relationships without another spatial ontology? | `src/commonMain/kotlin/vexlife/web/VexWebAuthoring.kt` | exact Kotlin/JVM + Kotlin/JS regression | **ACCEPTED** |
+| VexWeb deterministic artifacts | Can accepted relationships deterministically produce HTML/CSS/JS/manifest without generated syntax becoming source authority? | `docs/foundation/VEXWEB-ARTIFACT-GENERATION.md`, `src/commonMain/kotlin/vexlife/web/VexWebArtifacts.kt` | exact source/materialization proof | **ACCEPTED** |
+| Generated P1 workspace | Can every current Blueprint coordinate manifest truthfully before provider/runtime binding? | `docs/foundation/VEXWEB-GENERATED-P1-WORKSPACE.md`, `src/commonMain/kotlin/vexlife/web/VexLifeWebP1.kt` | accepted materialization/drift proof | **ACCEPTED** |
+| Continuity realignment | Can New Beginnings preserve the lived Home → Conversation → Memory → prompt → response → surface circuit while replacing implementation machinery? | `docs/foundation/VEXLIFE-CONTINUITY-REALIGNMENT.md`, canonical Home/Conversation/Memory + setup/service composition | A029 SourceOwner PASS + fresh semantic Assurance CLEAR + A030 read-only lived canonical-Home PASS; service/writer transition proof next | **CONTINUITY COMPATIBILITY CLEARED · LIVED SERVICE NEXT** |
+| Durable contract JSON | Can Kotlin form the same canonical JSON identity preimages as current VexLife while preserving strict durable transport? | `docs/foundation/CONTRACT-JSON.md`, `src/commonMain/kotlin/vexlife/contract/`, `src/jvmMain/kotlin/vexlife/contract/` | strict + compact + recursively key-sorted canonical source/tests formed | **REALIGNMENT CANDIDATE** |
+| Canonical VexLife Home compatibility | Can VexLife-Prod consume `~/.vexlife` and its current device/Companion lineage without rewriting canonical identity/configuration? | `docs/foundation/VEXLIFE-PROD-HOME.md`, `src/commonMain/kotlin/vexlife/home/`, `src/jvmMain/kotlin/vexlife/home/` | A030 lived read-only Home/device/lineage + byte-stable continuity snapshot PASS | **LIVED COMPATIBLE** |
+| Canonical Conversation compatibility | Can Kotlin consume/form current `vexlife.lived-companion-*` event/head/context identities rather than create a second Conversation? | `src/commonMain/kotlin/vexlife/conversation/`, `src/jvmMain/kotlin/vexlife/conversation/` | v1/v2 source/tests + Semantic Relay Assurance; A030 read 79 lived v1 events / 72 canonical events with no mutation; no lived v2 event currently present | **CURRENT HOME COMPATIBLE** |
+| Current attributed Memory compatibility | Can Score → daily stratum → Living Journal pages become one bounded source-attributed Memory packet with exact prompt evidence? | `src/commonMain/kotlin/vexlife/memory/`, `src/jvmMain/kotlin/vexlife/memory/`, `src/jvmMain/kotlin/vexlife/companion/` | A030 lived reader PASS with truthful `DAILY_MEMORY_SOURCE_FRONTIER_STALE` HELD projection and no provider Memory content | **LIVED COMPATIBLE** |
+| Heretic product/runtime relationship | Can exact certified local model/runtime mechanics serve the canonical Vex continuity without owning Home, Conversation or Memory? | `docs/foundation/HERETIC-PRODUCT-MODEL.md`, `src/commonMain/kotlin/vexlife/model/heretic/`, `src/jvmMain/kotlin/vexlife/model/heretic/runtime/` | A035 proved the stable receipt is live input; source now separates stable read-only predecessor custody from product-owned receipt custody and forms exact borrowed-runtime validation | **PREDECESSOR BRIDGE CANDIDATE** |
+| Artifact + Python/MLX realization | Can the exact model bytes and software environment be acquired/reused without hidden topology or global-install assumptions? | `docs/foundation/HERETIC-ARTIFACT-MATERIALIZATION.md`, `docs/foundation/HERETIC-PYTHON-ENVIRONMENT.md`, `src/jvmMain/kotlin/vexlife/{artifact,platform/python,model/heretic/runtime}/` | source/tests formed; real macOS acquisition/reuse proof pending | **SOURCE CANDIDATE** |
+| Local setup composition | Can host eligibility and runtime prerequisites converge beneath an already-established canonical Home? | `src/jvmMain/kotlin/vexlife/local/`, `src/jvmTest/kotlin/vexlife/local/` | canonical-Home/no-rewrite source/tests formed; exact Kotlin + lived proof pending | **REALIGNMENT CANDIDATE · HUMAN ENTRY HELD** |
+| Direct personal Companion circuit | Can one canonical human↔Vex turn bind Conversation, current Memory, later browser context and exact runtime evidence? | `docs/foundation/DIRECT-PERSONAL-COMPANION.md`, `src/commonMain/kotlin/vexlife/{companion,conversation,memory}/`, `src/jvmMain/kotlin/vexlife/{companion,conversation,memory}/` | source/test recovery + prompt projection proven; canonical Home/Conversation/Memory read compatibility lived; real provider turn still pending | **LIVED TURN PENDING** |
+| Local product service | Can one loopback doorway project canonical Conversation and exact what-Vex-received evidence without becoming another owner? | `docs/foundation/LOCAL-PRODUCT-SERVICE.md`, `src/commonMain/kotlin/vexlife/service/`, `src/jvmMain/kotlin/vexlife/service/` | continuity gate retired; production fixed-port/session composition + pre-runtime writer convergence formed; exact proof/lived lifetime pending | **SOURCE CANDIDATE · LIVED SERVICE NEXT** |
+| Private macOS service image | Can the source-bound service run on a supported Mac without a user-installed development JDK or second visible app? | `docs/foundation/PRIVATE-SERVICE-IMAGE.md`, `packaging/private-service-image/`, `src/jvmMain/kotlin/vexlife/packaging/`, `build.gradle.kts` | exact JDK-21 toolchain source formed; archive proof pending after semantic realignment compiles | **SOURCE CANDIDATE** |
+| Private image install + setup | Can an exact staged image establish prerequisites, install itself and converge the service without owning human identity? | `docs/foundation/PRIVATE-IMAGE-INSTALL-SETUP.md`, `src/jvmMain/kotlin/vexlife/{setup,packaging}/` | source/tests formed; must consume canonical Home realignment | **SOURCE CANDIDATE · LIVED MAC HELD** |
+| macOS service lifetime | Can source/image/process/HTTP currentness remain exact across reuse/restart/rotation after setup exits? | `docs/foundation/MAC-SERVICE-LIFETIME.md`, `src/jvmMain/kotlin/vexlife/service/VexLifeProdMacServiceLifetime.kt` | source tests formed; real sustained-lifetime proof pending | **SOURCE CANDIDATE · LIVED MAC HELD** |
+| Lived canonical Companion exploration | Did the intended nested-browser shell already demonstrate canonical Conversation and what-Vex-received projection? | `exploration/web-workspace/`, PR #13/#14 provenance | Victor lived checkpoint + bounded machine proof | **EXPERIENCE ORACLE** |
+| Public nested-browser convergence | Can generated P1 render bounded public Vex pages and supply current rendered context? | PR #37 browser/VexWeb-specific paths | candidate formed; held until continuity substrate is corrected | **RECONNECTION HELD** |
+| Whole lived circuit | Can Victor open VexLife, converse with the same Vex using current Conversation + Memory + browser context, and reload the durable response? | corrected #38 substrate + reconciled #37 surface | not yet proven | **TERMINAL BASELINE GATE** |
 
 ## Current descent
 
 ~~~text
 accepted
--> repository / semantic / Compose foundations
+  repository / Blueprint / Compose
+  VexWeb spatial language
+  compiler-visible authoring
+  deterministic artifacts
+  generated inert P1 workspace
 
-historical threshold retained
--> first F0 structural invariants
--> its binary spatial noun was later superseded by human scalability pressure
+experience oracle
+  nested browser
+  canonical Conversation
+  real human Send + Vex response
+  what-Vex-received projection
 
-accepted foundation
--> Frame / Seam / Region / Allocation relational spatial vocabulary
--> same nouns proven at 2 / 3 / 4 regions
--> partial Seam proven for irregular three-region layout
--> geometry validity proven before merge
+current source work
+  canonical ~/.vexlife Home admission
+  exact current Home/device/lineage compatibility
+  product runtime state under runtime/vexlife-prod
+  canonical JSON identity preimages
+  canonical Conversation v1/v2 reader/writer + Semantic Relay validation
+  current attributed Memory reader
+  DirectCompanionTurn -> Memory -> prompt receipt + service projection
 
-lived exploration threshold retained
--> hand-built nested browser + canonical Companion Conversation circuit
--> canonical prompt-materialization receipt is projected read-only for human inspection
--> page-context prompt admission + canonical CLEAN_START remain held at their rightful owners
--> does not replace accepted authoring/compiler sequence
+continuity compatibility evidence
+  A029 SourceOwner PASS
+  fresh semantic Assurance CLEAR
+  A030 read-only lived ~/.vexlife PASS
+  current lived Memory = truthful HELD / DAILY_MEMORY_SOURCE_FRONTIER_STALE
+  canonical continuity snapshot byte-stable
 
-accepted
--> F1 relational authoring over accepted spatial source
--> exact Kotlin/JVM + Kotlin/JS regression PASS
--> merge tree exact at c2ed37471eab9f163acd2b0cfaf979d7cdeead73
+current source edge
+  stable VexLife Heretic receipt/process -> read-only qualified-runtime compatibility
+  separate VexLife-Prod runtime receipt custody under runtime/vexlife-prod
+  LocalSetup borrows current stable runtime before attempting product-owned start
+  live Session re-observes the selected runtime owner before inference
 
-accepted
--> F2 deterministic HTML/CSS/JS + semantic-manifest generation
--> merge tree exact at cf7de23e2979cc49133e2de4c5eee841d5bcf584
+next acceptance edges
+  exact SourceOwner proof on the predecessor-runtime bridge
+  fresh semantic Assurance
+  rerun private-image setup and prove sustained fixed-port service lifetime
+  prove one real canonical direct Vex turn without browser context
 
-accepted
--> generated P1 workspace + exact build artifact materialization
--> merge tree exact at 9615aab32c6e4427f3b538550284c391471a7eb0
-
-current construction edge
--> reconcile the cumulative local-runtime/service/setup body onto accepted P1
--> keep runtime source byte-identical where ownership does not conflict
--> establish one integrated source tree before presentation/service binding
-
-held
--> generated presentation -> local service binding
--> nested-browser provider / browser-context admission
+then
+  reconcile PR #37's bounded browser/context paths
+  prove one lived browser-context-aware Vex turn and reload
 ~~~
 
 ## Architecture reference

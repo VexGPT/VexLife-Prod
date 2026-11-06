@@ -4,12 +4,16 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.time.Instant
+import java.util.UUID
 import kotlinx.serialization.Serializable
 import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
+import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.filesystem.VexOwnedPath
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.memory.VexLifeCurrentMemoryReader
+import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticModelConfiguration
 
 /**
@@ -22,16 +26,22 @@ object DirectCompanionTurn {
     const val FailureReceiptSchema =
         "vexlife-prod.direct-companion-turn-failure/v1"
 
+    private val BrowserCompanionInstanceRef =
+        "instance.vexlife.browser-companion." +
+            UUID.randomUUID()
+                .toString()
+                .lowercase()
+
     data class Intent(
-        val sendAttemptRef: String,
+        val idempotencyKey: String,
         val content: String,
         val browserContext: DirectPromptContext.BrowserContext? =
             null,
     ) {
         init {
             requireRef(
-                sendAttemptRef,
-                "sendAttemptRef",
+                idempotencyKey,
+                "idempotencyKey",
             )
             require(
                 content.isNotEmpty(),
@@ -54,7 +64,7 @@ object DirectCompanionTurn {
         val content: String,
         val model: String,
         val currentConversationHeadSha256: String,
-        val contextRef: String,
+        val contextPath: String,
         val promptContextReceipt: DirectPromptContext.Receipt,
         val runtimeObservation: DirectCompanionConnection.RuntimeObservation,
         val invocationEvidence: DirectCompanionConnection.InvocationEvidence,
@@ -82,7 +92,7 @@ object DirectCompanionTurn {
 
     @Serializable
     @ConsistentCopyVisibility
-    data class FailureReceipt private constructor(
+    data class FailureReceipt internal constructor(
         val schemaVersion: String,
         val failureRef: String,
         val semanticFingerprint: String,
@@ -118,7 +128,7 @@ object DirectCompanionTurn {
         val receipt: FailureReceipt?,
         val route: String,
     ) : IllegalStateException(
-        "same failed send attempt must not replay; form a new sendAttemptRef",
+        "same failed send attempt must not replay; form a new idempotencyKey",
     )
 
     internal data class Hooks(
@@ -132,6 +142,14 @@ object DirectCompanionTurn {
         ) -> HereticModelConfiguration.QualifiedRuntimeEvidence = {
             setup ->
             setup.qualifiedRuntimeEvidence
+        },
+        val currentMemoryContext: (
+            productHome: Path,
+        ) -> VexLifeMemoryContract.Context = {
+            productHome ->
+            VexLifeCurrentMemoryReader.readCurrent(
+                productHome,
+            )
         },
     )
 
@@ -187,7 +205,7 @@ object DirectCompanionTurn {
 
         val identity =
             turnIdentity(
-                intent.sendAttemptRef,
+                intent.idempotencyKey,
             )
         val conversation =
             DirectConversationStore(
@@ -199,7 +217,9 @@ object DirectCompanionTurn {
             )
 
         return try {
-            conversation.withWriterLease {
+            conversation.withWriterLease(
+                instanceRef = BrowserCompanionInstanceRef,
+            ) {
                 val before =
                     current()
 
@@ -237,10 +257,15 @@ object DirectCompanionTurn {
                             content = intent.content,
                             formedAt = hooks.now(),
                         )
+                    val memoryContext =
+                        hooks.currentMemoryContext(
+                            productHome,
+                        )
                     val prompt =
                         DirectPromptContext.materialize(
                             prior = prior,
                             currentRequest = request,
+                            memoryContext = memoryContext,
                             browserContext = intent.browserContext,
                         )
 
@@ -248,6 +273,19 @@ object DirectCompanionTurn {
                         materialization = prompt,
                         prior = immediatePriorCompletedTurn(),
                         currentRequest = request,
+                        memoryContext =
+                            hooks.currentMemoryContext(
+                                productHome,
+                            )
+                                .also {
+                                    current ->
+                                    require(
+                                        current ==
+                                            memoryContext,
+                                    ) {
+                                        "VexLife Memory context changed before provider invocation"
+                                    }
+                                },
                         browserContext = intent.browserContext,
                     )
 
@@ -290,7 +328,6 @@ object DirectCompanionTurn {
                         commitCompletedTurn(
                             request = request,
                             response = response,
-                            contextRef = context.contextRef,
                             contextSha256 = context.contextSha256,
                             formedAt = hooks.now(),
                         )
@@ -311,7 +348,7 @@ object DirectCompanionTurn {
                                 response.model,
                             ),
                         currentConversationHeadSha256 = head.conversationHeadSha256,
-                        contextRef = context.contextRef,
+                        contextPath = context.contextPath,
                         promptContextReceipt = prompt.receipt,
                         runtimeObservation = inference.runtimeObservation,
                         invocationEvidence = inference.invocationEvidence,
@@ -378,7 +415,23 @@ object DirectCompanionTurn {
                 exactNextSafeRoute = error.route,
                 cause = error,
             )
+        }
     }
+
+    @Serializable
+    private data class BrowserRequestIdentityCore(
+        val surface: String,
+        val projectRef: String,
+        val threadRef: String,
+        val channelRef: String,
+        val idempotencyKey: String,
+    )
+
+    @Serializable
+    private data class BrowserResponseIdentityCore(
+        val requestMessageRef: String,
+        val speakerRef: String,
+    )
 
     private data class Identity(
         val turnRef: String,
@@ -387,29 +440,41 @@ object DirectCompanionTurn {
     )
 
     private fun turnIdentity(
-        sendAttemptRef: String,
+        idempotencyKey: String,
     ): Identity {
-        val fingerprint =
-            sha256(
-                DirectConversationIdentity.ThreadRef +
-                    "\u0000" +
-                    sendAttemptRef,
+        val requestFingerprint =
+            semanticHash(
+                BrowserRequestIdentityCore(
+                    surface = "reference.browser.direct-companion",
+                    projectRef = DirectConversationIdentity.ProjectRef,
+                    threadRef = DirectConversationIdentity.ThreadRef,
+                    channelRef = DirectConversationIdentity.ChannelRef,
+                    idempotencyKey = idempotencyKey,
+                ),
+            )
+        val requestMessageRef =
+            "message.vexlife.conversation.human." +
+                requestFingerprint.take(
+                    32,
+                )
+        val responseFingerprint =
+            semanticHash(
+                BrowserResponseIdentityCore(
+                    requestMessageRef = requestMessageRef,
+                    speakerRef = DirectConversationIdentity.CompanionRoleRef,
+                ),
             )
 
         return Identity(
             turnRef =
-                "turn.vexlife-prod.self-development." +
-                    fingerprint.take(
-                        32,
-                    ),
-            requestMessageRef =
-                "message.vexlife-prod.self-development.human." +
-                    fingerprint.take(
-                        32,
-                    ),
+                "turn.vexlife.browser-companion." +
+                    UUID.randomUUID()
+                        .toString()
+                        .lowercase(),
+            requestMessageRef = requestMessageRef,
             responseMessageRef =
-                "message.vexlife-prod.self-development.companion." +
-                    fingerprint.take(
+                "message.vexlife.conversation.companion." +
+                    responseFingerprint.take(
                         32,
                     ),
         )
@@ -437,12 +502,10 @@ object DirectCompanionTurn {
             require(
                 canonicalRequest.eventKind ==
                     "REQUEST" &&
-                    canonicalRequest.turnRef ==
-                    identity.turnRef &&
                     canonicalRequest.content ==
                     content,
             ) {
-                "sendAttemptRef already identifies a different durable human request"
+                "idempotencyKey already identifies a different durable human request"
             }
 
             val response =
@@ -452,7 +515,7 @@ object DirectCompanionTurn {
                             it.eventKind ==
                                 "RESPONSE" &&
                                 it.turnRef ==
-                                identity.turnRef &&
+                                canonicalRequest.turnRef &&
                                 it.messageRef ==
                                 identity.responseMessageRef &&
                                 it.priorEventSha256 ==
@@ -465,7 +528,7 @@ object DirectCompanionTurn {
             val context =
                 requireNotNull(
                     contextStore.read(
-                        identity.turnRef,
+                        canonicalRequest.turnRef,
                     ),
                 ) {
                     "completed duplicate turn has no exact durable context evidence"
@@ -477,7 +540,7 @@ object DirectCompanionTurn {
                     context = browserContext,
                 ),
             ) {
-                "sendAttemptRef already identifies a completed turn with different browser context"
+                "idempotencyKey already identifies a completed turn with different browser context"
             }
 
             return Result(
@@ -485,9 +548,9 @@ object DirectCompanionTurn {
                 recoveredCompletedTurn = true,
                 modelCallPerformed = false,
                 actualHttpCallPerformedNow = false,
-                turnRef = identity.turnRef,
-                requestMessageRef = identity.requestMessageRef,
-                responseMessageRef = identity.responseMessageRef,
+                turnRef = canonicalRequest.turnRef,
+                requestMessageRef = canonicalRequest.messageRef,
+                responseMessageRef = response.messageRef,
                 requestEventRef = canonicalRequest.eventRef,
                 responseEventRef = response.eventRef,
                 content = response.content,
@@ -500,7 +563,7 @@ object DirectCompanionTurn {
                         snapshot.head,
                     )
                         .conversationHeadSha256,
-                contextRef = context.contextRef,
+                contextPath = context.contextPath,
                 promptContextReceipt = context.promptContext,
                 runtimeObservation = context.runtimeObservation,
                 invocationEvidence = context.invocationEvidence,
@@ -511,9 +574,7 @@ object DirectCompanionTurn {
             snapshot.abandonedAttempts
                 .firstOrNull {
                     it.requestEvent.messageRef ==
-                        identity.requestMessageRef ||
-                        it.requestEvent.turnRef ==
-                        identity.turnRef
+                        identity.requestMessageRef
                 }
 
         if (
@@ -524,20 +585,18 @@ object DirectCompanionTurn {
         }
 
         require(
-            failed.requestEvent.turnRef ==
-                identity.turnRef &&
-                failed.requestEvent.messageRef ==
+            failed.requestEvent.messageRef ==
                 identity.requestMessageRef &&
                 failed.requestEvent.content ==
                 content,
         ) {
-            "sendAttemptRef already identifies different failed durable evidence"
+            "idempotencyKey already identifies different failed durable evidence"
         }
 
         val receipt =
             readFailureReceipt(
                 productHome = productHome,
-                turnRef = identity.turnRef,
+                turnRef = failed.requestEvent.turnRef,
             )
         val route =
             receipt
@@ -580,8 +639,8 @@ object DirectCompanionTurn {
             val core =
                 FailureCore(
                     schemaVersion = FailureReceiptSchema,
-                    turnRef = identity.turnRef,
-                    requestMessageRef = identity.requestMessageRef,
+                    turnRef = request.turnRef,
+                    requestMessageRef = request.messageRef,
                     responseMessageRef = identity.responseMessageRef,
                     requestEventRefOrNull = request.eventRef,
                     requestEventSha256OrNull = request.eventSha256,
@@ -639,7 +698,7 @@ object DirectCompanionTurn {
             val path =
                 VexOwnedPath.resolveInside(
                     directory,
-                    identity.turnRef +
+                    request.turnRef +
                         ".json",
                 )
             val existing =
@@ -833,9 +892,6 @@ object DirectCompanionTurn {
                 "CONNECTION_" +
                     error.code.name
 
-            is DirectConversationStore.IncompleteConversationException ->
-                "CONVERSATION_RECOVERY_REQUIRED"
-
             is IllegalArgumentException ->
                 "ADMISSION_FAILED"
 
@@ -857,6 +913,15 @@ object DirectCompanionTurn {
             "$label must be one portable stable ref"
         }
     }
+
+    private inline fun <reified T> semanticHash(
+        value: T,
+    ): String =
+        sha256(
+            VexContractJson.canonicalEncode(
+                value,
+            ),
+        )
 
     private fun sha256(
         value: String,

@@ -7,29 +7,16 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import vexlife.home.VexLifeProdHome
-import vexlife.home.VexLifeProdHomeFiles
+import vexlife.home.CanonicalVexLifeHomeFixture
 
 class DirectConversationStoreTest {
     private fun home(
         root: java.nio.file.Path,
     ) {
-        VexLifeProdHomeFiles.bootstrap(
-            productHome = root,
-            plan =
-                VexLifeProdHome.plan(
-                    personRef = VexLifeProdHome.DefaultPersonRef,
-                    familyRef = VexLifeProdHome.DefaultFamilyRef,
-                    deviceName = "Test Mac",
-                    platform = "darwin",
-                    architecture = "arm64",
-                    ids =
-                        VexLifeProdHome.InstallationIds(
-                            deviceRef = "device.vexlife-prod.test-device",
-                            companionLineageRef = "companion-lineage.vexlife-prod.test-lineage",
-                        ),
-                    createdAt = "2026-11-05T03:30:00Z",
-                ),
+        CanonicalVexLifeHomeFixture.form(
+            home = root,
+            deviceSuffix = "test-device",
+            lineageSuffix = "test-lineage",
         )
     }
 
@@ -115,16 +102,22 @@ class DirectConversationStoreTest {
                             "2026-11-05T03:31:01Z",
                         ),
                     )
+                val context =
+                    CanonicalLivedContextFixture.write(
+                        productHome = productHome,
+                        request = request,
+                        response = response,
+                        formedAt = Instant.parse(
+                            "2026-11-05T03:31:02Z",
+                        ),
+                    )
                 val head =
                     commitCompletedTurn(
                         request = request,
                         response = response,
-                        contextRef = "context.vexlife-prod.direct.test",
-                        contextSha256 = "c".repeat(
-                            64,
-                        ),
+                        contextSha256 = context.sha256,
                         formedAt = Instant.parse(
-                            "2026-11-05T03:31:02Z",
+                            "2026-11-05T03:31:03Z",
                         ),
                     )
 
@@ -268,7 +261,7 @@ class DirectConversationStoreTest {
                 )
 
             first.withWriterLease {
-                assertFailsWith<IllegalArgumentException> {
+                assertFailsWith<IllegalStateException> {
                     second.withWriterLease {
                         current()
                     }

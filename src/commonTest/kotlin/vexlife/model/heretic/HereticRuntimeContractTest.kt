@@ -5,6 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import vexlife.contract.VexContractJson
 
 class HereticRuntimeContractTest {
     @Test
@@ -214,6 +215,21 @@ class HereticRuntimeContractTest {
         assertEquals(
             "PERSISTENT_MLX_RUNTIME_QUALIFIED",
             HereticRuntimeState.Qualified.wireValue,
+        )
+    }
+    @Test
+    fun runtimeStateUsesStableWireIdentityInDurableJson() {
+        assertEquals(
+            "\"PERSISTENT_MLX_RUNTIME_QUALIFIED\"",
+            VexContractJson.encode(
+                HereticRuntimeState.Qualified,
+            ),
+        )
+        assertEquals(
+            HereticRuntimeState.Starting,
+            VexContractJson.decode<HereticRuntimeState>(
+                "\"PERSISTENT_MLX_RUNTIME_STARTING\"",
+            ),
         )
     }
 }

@@ -3,6 +3,7 @@ package vexlife.model.heretic.runtime
 import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.model.heretic.HereticProductIdentity
@@ -16,6 +17,7 @@ class MacHereticRuntimePlatformTest {
         var running = false
         var pid = 5151L
         var observedPlist = ""
+        var observedPlistPath = ""
 
         override fun launchctl(
             args: List<String>,
@@ -37,6 +39,8 @@ class MacHereticRuntimePlatformTest {
                     }
 
                 "bootstrap" -> {
+                    observedPlistPath =
+                        args[2]
                     observedPlist =
                         Files.readString(
                             java.nio.file.Path.of(
@@ -170,12 +174,12 @@ class MacHereticRuntimePlatformTest {
         root: java.nio.file.Path,
     ): HereticPersistentRuntime.Binding {
         val environment =
-            root.resolve(
-                "python",
+            HereticPythonEnvironment.environmentRoot(
+                root,
             )
         val python =
-            environment.resolve(
-                "bin/python",
+            HereticPythonEnvironment.pythonPath(
+                environment,
             )
 
         Files.createDirectories(
@@ -348,6 +352,41 @@ class MacHereticRuntimePlatformTest {
                     "<string>com.vexlife.prod.heretic.",
                 ),
             )
+            val productRuntimeRoot =
+                root.resolve(
+                    "runtime/vexlife-prod",
+                )
+            assertTrue(
+                java.nio.file.Path.of(
+                    host.observedPlistPath,
+                )
+                    .startsWith(
+                        productRuntimeRoot.resolve(
+                            "launchd",
+                        ),
+                    ),
+            )
+            val huggingFaceCache =
+                productRuntimeRoot.resolve(
+                    "huggingface-cache",
+                )
+            assertTrue(
+                Files.isDirectory(
+                    huggingFaceCache,
+                ),
+            )
+            assertTrue(
+                host.observedPlist.contains(
+                    "<key>HF_HUB_CACHE</key>",
+                ),
+            )
+            assertTrue(
+                host.observedPlist.contains(
+                    "<string>" +
+                        huggingFaceCache +
+                        "</string>",
+                ),
+            )
             assertFalse(
                 host.observedPlist.contains(
                     "<string>com.vexlife.heretic.",
@@ -399,37 +438,46 @@ class MacHereticRuntimePlatformTest {
             )
         val host =
             LaunchdHost()
+
+        Files.createDirectory(
+            root,
+        )
+        Files.createDirectory(
+            outside,
+        )
+        val current =
+            binding(
+                root,
+            )
+
+        // The binding fixture must be formed while the runtime tree is still owned by Home.
+        // Only then introduce the hostile alias so this test measures spawn containment rather
+        // than allowing fixture construction itself to follow the symlink.
+        root.resolve(
+            "runtime",
+        )
+            .toFile()
+            .deleteRecursively()
+        Files.createSymbolicLink(
+            root.resolve(
+                "runtime",
+            ),
+            outside,
+        )
+
         val platform =
-            run {
-                Files.createDirectory(
-                    root,
-                )
-                Files.createDirectory(
-                    outside,
-                )
-                Files.createSymbolicLink(
-                    root.resolve(
-                        "runtime",
-                    ),
-                    outside,
-                )
-                MacHereticRuntimePlatform(
-                    productHome = root,
-                    launchdHost = host,
-                    processInspector = Inspector(),
-                    commandRunner = Runner(),
-                    healthProbe =
-                        MacHereticRuntimePlatform.HealthProbe {
-                            true
-                        },
-                )
-            }
+            MacHereticRuntimePlatform(
+                productHome = root,
+                launchdHost = host,
+                processInspector = Inspector(),
+                commandRunner = Runner(),
+                healthProbe =
+                    MacHereticRuntimePlatform.HealthProbe {
+                        true
+                    },
+            )
 
         try {
-            val current =
-                binding(
-                    root,
-                )
             val args =
                 HereticPersistentRuntime.serverArgs(
                     current,
@@ -447,7 +495,7 @@ class MacHereticRuntimePlatformTest {
             assertFalse(
                 Files.exists(
                     outside.resolve(
-                        "heretic",
+                        "vexlife-prod",
                     ),
                 ),
             )
@@ -532,6 +580,9 @@ class MacHereticRuntimePlatformTest {
                     "/v1/chat/completions",
                     "Reply with OK.",
                     "enable_thinking",
+                    "non-JSON HTTP 200",
+                    "content-type=",
+                    "body=%r",
                 )
             ) {
                 assertTrue(

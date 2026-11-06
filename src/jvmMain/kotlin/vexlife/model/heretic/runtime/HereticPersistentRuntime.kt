@@ -20,10 +20,10 @@ import vexlife.platform.macos.MacUserLaunchdProcess
  */
 object HereticPersistentRuntime {
     const val BindingSchema =
-        "vexlife.heretic-persistent-runtime-owner-binding/v1"
+        "vexlife-prod.heretic-persistent-runtime-owner-binding/v1"
 
     const val ReceiptSchema =
-        "vexlife.heretic-persistent-runtime-owner-receipt/v1"
+        "vexlife-prod.heretic-persistent-runtime-owner-receipt/v1"
 
     const val OwnerRef =
         "owner.vexlife-prod.heretic-persistent-runtime.001"
@@ -119,7 +119,7 @@ object HereticPersistentRuntime {
     }
 
     @ConsistentCopyVisibility
-    data class Binding private constructor(
+    data class Binding internal constructor(
         val schemaVersion: String,
         val authorityRef: String,
         val modelPath: String,

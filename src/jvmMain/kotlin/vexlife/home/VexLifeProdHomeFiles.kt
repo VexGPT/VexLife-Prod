@@ -1,28 +1,26 @@
 package vexlife.home
 
-import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.LinkOption
-import java.nio.file.FileVisitResult
 import java.nio.file.Path
-import java.nio.file.SimpleFileVisitor
-import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.UUID
 import vexlife.contract.VexDurableContractFile
 import vexlife.filesystem.VexOwnedPath
 
 /**
- * Filesystem realization of [VexLifeProdHome].
+ * Read-only admission of the canonical lived VexLife Home for VexLife-Prod.
  *
- * New Home formation is whole-root atomic. Existing Home presence grants no overwrite/repair effect:
- * it is strictly read/classified and returned to the caller.
+ * New Beginnings may create product-runtime records beneath the admitted Home, but this owner does
+ * not form a second Home, rewrite canonical identity, or infer that an absent Home is permission to
+ * mint another Vex/Companion lineage.
  */
 object VexLifeProdHomeFiles {
     data class Result(
         val state: String,
         val productHome: String,
         val manifest: VexLifeProdHome.Manifest,
+        val installation: VexLifeProdHome.Installation,
         val effectsPerformed: Boolean,
     )
 
@@ -43,15 +41,19 @@ object VexLifeProdHomeFiles {
             .normalize()
     }
 
+    /**
+     * Canonical-namespace identity formation retained only for explicit future bootstrap proof.
+     * Ordinary VexLife-Prod setup never calls this when an established Home is absent.
+     */
     fun newInstallationIds(): VexLifeProdHome.InstallationIds =
         VexLifeProdHome.InstallationIds(
             deviceRef =
-                "device.vexlife-prod." +
+                "device.vexlife." +
                     UUID.randomUUID()
                         .toString()
                         .lowercase(),
             companionLineageRef =
-                "companion-lineage.vexlife-prod." +
+                "companion-lineage.vexlife." +
                     UUID.randomUUID()
                         .toString()
                         .lowercase(),
@@ -63,7 +65,7 @@ object VexLifeProdHomeFiles {
         require(
             productHome.isAbsolute,
         ) {
-            "VexLife-Prod Home path must be absolute"
+            "canonical VexLife Home path must be absolute"
         }
 
         val home =
@@ -98,7 +100,7 @@ object VexLifeProdHomeFiles {
                 ) ==
                     VexOwnedPath.DirectoryState.Present,
             ) {
-                "existing VexLife-Prod Home is missing required directory: $relative"
+                "canonical VexLife Home is missing required directory: $relative"
             }
         }
 
@@ -113,20 +115,56 @@ object VexLifeProdHomeFiles {
                         ),
                 ),
             ) {
-                "existing VexLife-Prod Home has no current manifest"
+                "canonical VexLife Home has no current manifest"
             }
+                .let(
+                    VexLifeProdHome::validateManifest,
+                )
+
+        val installationPath =
+            VexOwnedPath.resolveInside(
+                home,
+                "devices/${manifest.currentDeviceRef}.json",
+            )
+        val installation =
+            requireNotNull(
+                VexDurableContractFile.read<VexLifeProdHome.Installation>(
+                    ownedRoot = home,
+                    path = installationPath,
+                ),
+            ) {
+                "canonical VexLife Home has no current device installation record"
+            }
+                .let(
+                    VexLifeProdHome::validateInstallation,
+                )
+
+        require(
+            installation.deviceRef ==
+                manifest.currentDeviceRef &&
+                installation.companionLineageRef ==
+                manifest.currentCompanionLineageRef &&
+                installation.familyRef ==
+                manifest.familyRef,
+        ) {
+            "canonical VexLife Home and current device/Companion lineage disagree"
+        }
 
         return Result(
-            state = "EXISTING_HOME_PRESERVED",
+            state = "EXISTING_CANONICAL_VEXLIFE_HOME_BOUND",
             productHome = home.toString(),
-            manifest =
-                VexLifeProdHome.validateManifest(
-                    manifest,
-                ),
+            manifest = manifest,
+            installation = installation,
             effectsPerformed = false,
         )
     }
 
+    /**
+     * Preserve the historical method boundary while refusing the old parallel-Home behavior.
+     *
+     * Fresh Home formation must be ported from the accepted VexLife bootstrap as its own exact
+     * candidate. Until then, absence holds setup before any identity or filesystem mutation.
+     */
     fun bootstrap(
         productHome: Path,
         plan: VexLifeProdHome.BootstrapPlan,
@@ -138,139 +176,13 @@ object VexLifeProdHomeFiles {
                 return it
             }
 
-        val currentPlan =
-            VexLifeProdHome.validateBootstrapPlan(
-                plan,
-            )
-        val home =
-            productHome.normalize()
-
-        val parent =
-            requireNotNull(
-                home.parent,
-            ) {
-                "VexLife-Prod Home requires one parent directory"
-            }
-
-        // The parent (for example ~/Library/Application Support) is ambient OS/user space.
-        // Ensure it exists, but do not rewrite its permissions as though Prod owned it.
-        Files.createDirectories(
-            parent,
+        VexLifeProdHome.validateBootstrapPlan(
+            plan,
         )
 
-        val staging =
-            parent.resolve(
-                ".${home.fileName}.bootstrap-${UUID.randomUUID()}",
-            )
-
-        require(
-            !Files.exists(
-                staging,
-                LinkOption.NOFOLLOW_LINKS,
-            ),
-        ) {
-            "VexLife-Prod Home bootstrap staging path already exists"
-        }
-
-        try {
-            VexDurableContractFile.secureDirectory(
-                staging,
-            )
-
-            for (
-                relative in
-                currentPlan.directories
-            ) {
-                val directory =
-                    VexOwnedPath.resolveInside(
-                        staging,
-                        relative,
-                    )
-                VexOwnedPath.ensureDirectory(
-                    staging,
-                    directory,
-                )
-                VexDurableContractFile.secureDirectory(
-                    directory,
-                )
-            }
-
-            VexDurableContractFile.write(
-                ownedRoot = staging,
-                path =
-                    VexOwnedPath.resolveInside(
-                        staging,
-                        VexLifeProdHome.HomeManifestRelativePath,
-                    ),
-                value = currentPlan.manifest,
-            )
-            VexDurableContractFile.write(
-                ownedRoot = staging,
-                path =
-                    VexOwnedPath.resolveInside(
-                        staging,
-                        VexLifeProdHome.ModelConfigurationRelativePath,
-                    ),
-                value = currentPlan.initialModelConfiguration,
-            )
-            VexDurableContractFile.write(
-                ownedRoot = staging,
-                path =
-                    VexOwnedPath.resolveInside(
-                        staging,
-                        VexLifeProdHome.BootstrapReceiptRelativePath,
-                    ),
-                value = currentPlan.receipt,
-            )
-
-            try {
-                Files.move(
-                    staging,
-                    home,
-                    StandardCopyOption.ATOMIC_MOVE,
-                )
-            } catch (
-                _: AtomicMoveNotSupportedException,
-            ) {
-                error(
-                    "atomic VexLife-Prod Home formation is unavailable at $parent",
-                )
-            }
-
-            requireRealDirectory(
-                home,
-            )
-
-            val manifest =
-                requireNotNull(
-                    VexDurableContractFile.read<VexLifeProdHome.Manifest>(
-                        ownedRoot = home,
-                        path =
-                            VexOwnedPath.resolveInside(
-                                home,
-                                VexLifeProdHome.HomeManifestRelativePath,
-                            ),
-                    ),
-                )
-
-            return Result(
-                state = "NEW_HOME_FORMED",
-                productHome = home.toString(),
-                manifest = manifest,
-                effectsPerformed = true,
-            )
-        } finally {
-            if (
-                Files.exists(
-                    staging,
-                    LinkOption.NOFOLLOW_LINKS,
-                )
-            ) {
-                removeOwnedDirectoryTree(
-                    staging,
-                )
-            }
-        }
+        error(
+            "canonical VexLife Home is absent; VexLife-Prod must not mint a parallel Home or Companion lineage",
+        )
     }
 
     private fun requireRealDirectory(
@@ -287,48 +199,8 @@ object VexLifeProdHomeFiles {
             attributes.isDirectory &&
                 !attributes.isSymbolicLink,
         ) {
-            "VexLife-Prod Home must be one real non-symlink directory"
+            "canonical VexLife Home must be one real non-symlink directory"
         }
-    }
-
-    private fun removeOwnedDirectoryTree(
-        root: Path,
-    ) {
-        requireRealDirectory(
-            root,
-        )
-
-        Files.walkFileTree(
-            root,
-            object :
-                SimpleFileVisitor<Path>() {
-                override fun visitFile(
-                    file: Path,
-                    attrs: BasicFileAttributes,
-                ): FileVisitResult {
-                    Files.delete(
-                        file,
-                    )
-                    return FileVisitResult.CONTINUE
-                }
-
-                override fun postVisitDirectory(
-                    directory: Path,
-                    error: java.io.IOException?,
-                ): FileVisitResult {
-                    if (
-                        error !=
-                            null
-                    ) {
-                        throw error
-                    }
-                    Files.delete(
-                        directory,
-                    )
-                    return FileVisitResult.CONTINUE
-                }
-            },
-        )
     }
 }
 

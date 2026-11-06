@@ -11,8 +11,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.contract.VexContractJson
-import vexlife.home.VexLifeProdHome
-import vexlife.home.VexLifeProdHomeFiles
+import vexlife.home.CanonicalVexLifeHomeFixture
 
 class VexLifeProdPrivateServiceImageInstallerTest {
     private fun sha256(
@@ -197,6 +196,7 @@ class VexLifeProdPrivateServiceImageInstallerTest {
                     listOf(
                         "java.base",
                         "java.net.http",
+                        "jdk.crypto.ec",
                         "jdk.httpserver",
                     ),
                 payloadSha256 = payload,
@@ -218,23 +218,10 @@ class VexLifeProdPrivateServiceImageInstallerTest {
     private fun bootstrapHome(
         productHome: Path,
     ) {
-        VexLifeProdHomeFiles.bootstrap(
-            productHome = productHome,
-            plan =
-                VexLifeProdHome.plan(
-                    personRef = VexLifeProdHome.DefaultPersonRef,
-                    familyRef = VexLifeProdHome.DefaultFamilyRef,
-                    deviceName = "Installer Test Mac",
-                    platform = "darwin",
-                    architecture = "arm64",
-                    ids =
-                        VexLifeProdHome.InstallationIds(
-                            deviceRef = "device.vexlife-prod.image-installer-test",
-                            companionLineageRef =
-                                "companion-lineage.vexlife-prod.image-installer-test",
-                        ),
-                    createdAt = "2026-11-05T05:30:00-08:00",
-                ),
+        CanonicalVexLifeHomeFixture.form(
+            home = productHome,
+            deviceSuffix = "image-installer-test",
+            lineageSuffix = "image-installer-test",
         )
     }
 

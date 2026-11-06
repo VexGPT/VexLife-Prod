@@ -103,6 +103,7 @@ object VexLifeProdPrivateServiceImageInstaller {
                     source = source,
                     home = home,
                     imageBase = imageBase,
+                    target = target,
                     expectedSourceSha = expectedSourceSha,
                 )
             }
@@ -133,6 +134,7 @@ object VexLifeProdPrivateServiceImageInstaller {
         source: VexLifeProdPrivateServiceImage.Observation,
         home: Path,
         imageBase: Path,
+        target: Path,
         expectedSourceSha: String,
     ): Result {
         if (

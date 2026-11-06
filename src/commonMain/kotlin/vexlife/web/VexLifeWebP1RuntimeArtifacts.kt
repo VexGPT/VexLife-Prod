@@ -191,7 +191,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const retrying = pendingSend !== null;
                 if (!pendingSend) {
                   pendingSend = Object.freeze({
-                    sendAttemptRef: 'send.' + crypto.randomUUID().toLowerCase(),
+                    idempotencyKey: 'send.' + crypto.randomUUID().toLowerCase(),
                     content,
                     browserContext: currentBrowserContext
                   });
@@ -210,7 +210,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   pendingSend = null;
                   if (composer) composer.value = '';
                   await loadConversation();
-                  root.dataset.vexLastContextRef = String(result.contextRef ?? '');
+                  root.dataset.vexLastContextPath = String(result.contextPath ?? '');
                   root.dataset.vexLastPromptReceiptRef = String(result.promptContext?.receiptRef ?? '');
                   root.dataset.vexLastBrowserContextRef = String(result.promptContext?.browserContextRef ?? '');
                   setProgress('', 'complete');

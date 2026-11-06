@@ -25,6 +25,7 @@ VexLifeProdLocalService
         |
         +-> DirectCompanionTurn.perform(...)
                  |
+                 +-> VexLifeCurrentMemoryReader
                  +-> DirectPromptContext
                  +-> DirectCompanionConnection
                  +-> DirectTurnContextStore
@@ -145,7 +146,7 @@ Off-head failed attempts are counted but are not silently injected into the cano
 The wire request carries only:
 
 ~~~text
-sendAttemptRef
+idempotencyKey
 content
 ~~~
 
@@ -163,13 +164,17 @@ provider messages
 
 Those truths come from the rightful upstream owners.
 
-The service delegates exactly once to:
+The ordinary production service delegates exactly once to the live setup Session:
 
 ~~~text
-DirectCompanionTurn.perform(setup, intent)
+DirectCompanionTurn.perform(session, intent)
 ~~~
 
-The existing deterministic sendAttemptRef behavior therefore remains authoritative:
+The Session re-observes qualified runtime currentness immediately before a new inference. The
+proof-only service constructor may inject a bounded test executor without redefining the ordinary
+route.
+
+The existing deterministic idempotencyKey behavior therefore remains authoritative:
 
 ~~~text
 same exact completed attempt
@@ -198,10 +203,15 @@ effectsPerformed
 This is metadata about what Vex received. It does not expose raw hidden prompt text or model
 reasoning.
 
-Current direct-circuit held scope remains unchanged:
+The continuity realignment gate has earned retirement on the exact source/body evidence that
+established canonical Conversation + Memory compatibility. This does not make the whole product
+READY:
 
 ~~~text
-Memory = HELD
+Memory source path = CONNECTED IN SOURCE
+Memory lived canonical-Home compatibility = PASS
+lagging Daily Memory frontier = truthful HELD / no provider Memory content
+canonical Conversation writer = IDLE or exact absent-owner recovery before setup readiness
 WORKING_CHECKPOINT_SUCCESSOR = HELD
 CLEAN_START = HELD
 ~~~
@@ -410,7 +420,7 @@ packaged Mac executable with bundled runtime
 VexWeb generated presentation
 Mac service process lifecycle
 ordinary fresh-user Mac entry
-Memory
+Memory catch-up / Daily frontier may remain HELD without blocking service start
 WORKING_CHECKPOINT_SUCCESSOR
 CLEAN_START
 streamed response progress

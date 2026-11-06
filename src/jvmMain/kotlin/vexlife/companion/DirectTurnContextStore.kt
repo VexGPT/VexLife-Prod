@@ -5,68 +5,92 @@ import java.nio.file.Path
 import java.security.MessageDigest
 import java.time.Instant
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
+import vexlife.conversation.VexLifeConversationContract
 import vexlife.filesystem.VexOwnedPath
 import vexlife.home.VexLifeProdHomeFiles
 
 /**
- * Durable context/evidence record for one completed direct Companion turn.
+ * Context/evidence owner for one completed direct Companion turn.
  *
- * This owner binds "what Vex received" to the exact request/response and normalized provider
- * invocation. It persists no raw provider response, raw reasoning or raw reported model path.
+ * The canonical durable context keeps the exact lived VexLife
+ * vexlife.lived-companion-context/v1 shape under context/<lineage>/<thread>/.
+ *
+ * Product-only normalized runtime/invocation evidence remains beneath
+ * runtime/vexlife-prod/turn-evidence/. The canonical context references that evidence; it does not
+ * absorb product-runtime fields into the canonical Conversation contract.
  */
 class DirectTurnContextStore(
     productHome: Path,
 ) {
     companion object {
         const val Schema =
-            "vexlife-prod.direct-turn-context/v1"
+            VexLifeConversationContract.ContextSchema
+
+        const val RuntimeEvidenceSchema =
+            "vexlife-prod.turn-runtime-evidence/v1"
     }
 
     @Serializable
-    private data class RecordCore(
+    private data class RuntimeEvidenceCore(
         val schemaVersion: String,
-        val homeRef: String,
-        val deviceRef: String,
-        val companionLineageRef: String,
-        val projectRef: String,
-        val threadRef: String,
-        val channelRef: String,
+        val truthClass: String,
         val turnRef: String,
         val requestEventRef: String,
-        val requestEventSha256: String,
+        val requestEventHash: String,
         val responseEventRef: String,
-        val responseEventSha256: String,
+        val responseEventHash: String,
         val promptContext: DirectPromptContext.Receipt,
         val runtimeObservation: DirectCompanionConnection.RuntimeObservation,
         val invocationEvidence: DirectCompanionConnection.InvocationEvidence,
         val rawProviderResponsePersisted: Boolean,
         val rawReasoningPersisted: Boolean,
         val rawReportedModelPersisted: Boolean,
-        val privacyClass: String,
         val formedAt: String,
     )
 
     @Serializable
+    private data class RuntimeEvidence(
+        val schemaVersion: String,
+        val truthClass: String,
+        val turnRef: String,
+        val requestEventRef: String,
+        val requestEventHash: String,
+        val responseEventRef: String,
+        val responseEventHash: String,
+        val promptContext: DirectPromptContext.Receipt,
+        val runtimeObservation: DirectCompanionConnection.RuntimeObservation,
+        val invocationEvidence: DirectCompanionConnection.InvocationEvidence,
+        val rawProviderResponsePersisted: Boolean,
+        val rawReasoningPersisted: Boolean,
+        val rawReportedModelPersisted: Boolean,
+        val formedAt: String,
+        val evidenceRef: String,
+        val evidenceSha256: String,
+    )
+
     @ConsistentCopyVisibility
     data class Record internal constructor(
         val schemaVersion: String,
-        val contextRef: String,
+        val contextPath: String,
         val contextSha256: String,
+        val contextSourceRefs: List<String>,
         val homeRef: String,
         val deviceRef: String,
         val companionLineageRef: String,
-        val projectRef: String,
         val threadRef: String,
-        val channelRef: String,
         val turnRef: String,
         val requestEventRef: String,
         val requestEventSha256: String,
         val responseEventRef: String,
         val responseEventSha256: String,
+        val runtimeEvidenceRef: String,
         val promptContext: DirectPromptContext.Receipt,
         val runtimeObservation: DirectCompanionConnection.RuntimeObservation,
         val invocationEvidence: DirectCompanionConnection.InvocationEvidence,
@@ -80,18 +104,20 @@ class DirectTurnContextStore(
     private val productHome =
         VexOwnedPath.requireRoot(
             productHome,
-            "VexLife-Prod Home",
+            "canonical VexLife Home",
         )
 
-    private val manifest =
+    private val home =
         requireNotNull(
             VexLifeProdHomeFiles.observeExisting(
                 this.productHome,
             ),
         ) {
-            "direct turn context requires one current VexLife-Prod Home"
+            "direct turn context requires one current canonical VexLife Home"
         }
-            .manifest
+
+    private val manifest =
+        home.manifest
 
     private val contextDirectory =
         VexOwnedPath.resolveInside(
@@ -102,6 +128,12 @@ class DirectTurnContextStore(
                 DirectConversationIdentity.ThreadRef,
         )
 
+    private val runtimeEvidenceDirectory =
+        VexOwnedPath.resolveInside(
+            this.productHome,
+            "runtime/vexlife-prod/turn-evidence",
+        )
+
     fun record(
         request: DirectConversationStore.Event,
         response: DirectConversationStore.Event,
@@ -110,141 +142,121 @@ class DirectTurnContextStore(
         invocationEvidence: DirectCompanionConnection.InvocationEvidence,
         formedAt: Instant = Instant.now(),
     ): Record {
-        require(
-            request.eventKind ==
-                "REQUEST" &&
-                response.eventKind ==
-                "RESPONSE" &&
-                request.turnRef ==
-                response.turnRef &&
-                response.priorEventSha256 ==
-                request.eventSha256,
-        ) {
-            "direct turn context requires one exact request/response pair"
-        }
-        require(
-            promptContext.currentRequestEventRef ==
-                request.eventRef &&
-                promptContext.currentRequestEventSha256 ==
-                request.eventSha256,
-        ) {
-            "direct turn context prompt receipt does not bind the exact current request"
-        }
-        require(
-            response.runtimeObservationRef ==
-                runtimeObservation.observationRef &&
-                response.invocationEvidenceRef ==
-                invocationEvidence.invocationRef &&
-                invocationEvidence.runtimeObservationRef ==
-                runtimeObservation.observationRef &&
-                invocationEvidence.runtimeObservationFingerprint ==
-                runtimeObservation.semanticFingerprint &&
-                invocationEvidence.responseBodySha256 ==
-                runtimeObservation.responseBodySha256 &&
-                invocationEvidence.actualHttpCall &&
-                invocationEvidence.loopbackOnly,
-        ) {
-            "direct turn context provider evidence does not bind the exact response event"
-        }
-        require(
-            !runtimeObservation.rawProviderResponsePersisted &&
-                !runtimeObservation.reportedModelField.rawValuePersisted &&
-                !runtimeObservation.reasoningTrace.rawPersisted,
-        ) {
-            "direct turn context may persist normalized provider evidence only"
-        }
+        validateTurnInputs(
+            request = request,
+            response = response,
+            promptContext = promptContext,
+            runtimeObservation = runtimeObservation,
+            invocationEvidence = invocationEvidence,
+        )
 
-        val core =
-            RecordCore(
-                schemaVersion = Schema,
-                homeRef = manifest.homeRef,
-                deviceRef = manifest.currentDeviceRef,
-                companionLineageRef = manifest.currentCompanionLineageRef,
-                projectRef = DirectConversationIdentity.ProjectRef,
-                threadRef = DirectConversationIdentity.ThreadRef,
-                channelRef = DirectConversationIdentity.ChannelRef,
-                turnRef = request.turnRef,
-                requestEventRef = request.eventRef,
-                requestEventSha256 = request.eventSha256,
-                responseEventRef = response.eventRef,
-                responseEventSha256 = response.eventSha256,
+        val evidence =
+            formRuntimeEvidence(
+                request = request,
+                response = response,
                 promptContext = promptContext,
                 runtimeObservation = runtimeObservation,
                 invocationEvidence = invocationEvidence,
-                rawProviderResponsePersisted = false,
-                rawReasoningPersisted = false,
-                rawReportedModelPersisted = false,
-                privacyClass = "DEVICE_PRIVATE",
+                formedAt = formedAt,
+            )
+        writeRuntimeEvidence(
+            evidence,
+        )
+
+        val sourceRefs =
+            canonicalContextSourceRefs(
+                promptContext = promptContext,
+                runtimeEvidenceRef = evidence.evidenceRef,
+                requestEventRef = request.eventRef,
+                responseEventRef = response.eventRef,
+            )
+        val promptJson =
+            VexContractJson.Strict
+                .parseToJsonElement(
+                    VexContractJson.compactEncode(
+                        promptContext,
+                    ),
+                )
+                .jsonObject
+        val core =
+            VexLifeConversationContract.ContextCore(
+                schemaVersion = VexLifeConversationContract.ContextSchema,
+                homeRef = manifest.homeRef,
+                deviceRef = manifest.currentDeviceRef,
+                companionLineageRef = manifest.currentCompanionLineageRef,
+                instanceRef = request.instanceRef,
+                threadRef = request.threadRef,
+                turnRef = request.turnRef,
+                contextSourceRefs = sourceRefs,
+                requestEventHash = request.eventHash,
+                responseEventHash = response.eventHash,
+                promptContextMaterializationReceipt = promptJson,
+                privacyClass = VexLifeConversationContract.PrivacyClass,
                 formedAt = formedAt.toString(),
             )
+                .let(
+                    VexLifeConversationContract::validateContextCore,
+                )
         val hash =
-            sha256(
-                VexContractJson.encode(
-                    core,
-                ),
+            semanticHash(
+                core,
             )
-        val value =
-            Record(
+        val canonical =
+            VexLifeConversationContract.Context(
                 schemaVersion = core.schemaVersion,
-                contextRef =
-                    "context.vexlife-prod.direct." +
-                        hash.take(
-                            32,
-                        ),
-                contextSha256 = hash,
                 homeRef = core.homeRef,
                 deviceRef = core.deviceRef,
                 companionLineageRef = core.companionLineageRef,
-                projectRef = core.projectRef,
+                instanceRef = core.instanceRef,
                 threadRef = core.threadRef,
-                channelRef = core.channelRef,
                 turnRef = core.turnRef,
-                requestEventRef = core.requestEventRef,
-                requestEventSha256 = core.requestEventSha256,
-                responseEventRef = core.responseEventRef,
-                responseEventSha256 = core.responseEventSha256,
-                promptContext = core.promptContext,
-                runtimeObservation = core.runtimeObservation,
-                invocationEvidence = core.invocationEvidence,
-                rawProviderResponsePersisted = core.rawProviderResponsePersisted,
-                rawReasoningPersisted = core.rawReasoningPersisted,
-                rawReportedModelPersisted = core.rawReportedModelPersisted,
+                contextSourceRefs = core.contextSourceRefs,
+                requestEventHash = core.requestEventHash,
+                responseEventHash = core.responseEventHash,
+                promptContextMaterializationReceipt = core.promptContextMaterializationReceipt,
                 privacyClass = core.privacyClass,
                 formedAt = core.formedAt,
+                serializedContextSha256 = hash,
             )
+                .let(
+                    VexLifeConversationContract::validateContext,
+                )
 
         VexOwnedPath.ensureDirectory(
             productHome,
             contextDirectory,
         )
-        val path =
+        val contextPath =
             pathFor(
                 request.turnRef,
             )
-        val existing =
-            VexDurableContractFile.read<Record>(
+        val existingText =
+            VexDurableContractFile.readText(
                 ownedRoot = productHome,
-                path = path,
+                path = contextPath,
             )
 
         if (
-            existing !=
+            existingText ==
                 null
         ) {
+            VexDurableContractFile.write(
+                ownedRoot = productHome,
+                path = contextPath,
+                value = canonical,
+            )
+        } else {
+            val existing =
+                decodeAndValidateCanonicalContext(
+                    existingText,
+                )
             require(
                 existing ==
-                    value,
+                    canonical,
             ) {
-                "direct turn context address already contains different evidence"
+                "canonical turn context address already contains different evidence"
             }
-            return existing
         }
-
-        VexDurableContractFile.write(
-            ownedRoot = productHome,
-            path = path,
-            value = value,
-        )
 
         return requireNotNull(
             read(
@@ -256,7 +268,7 @@ class DirectTurnContextStore(
     fun read(
         turnRef: String,
     ): Record? {
-        requireRef(
+        requireSafeRef(
             turnRef,
             "turnRef",
         )
@@ -271,126 +283,470 @@ class DirectTurnContextStore(
             return null
         }
 
-        return VexDurableContractFile
-            .read<Record>(
-                ownedRoot = productHome,
-                path =
-                    pathFor(
-                        turnRef,
-                    ),
+        val canonicalPath =
+            pathFor(
+                turnRef,
             )
-            ?.also(
-                ::validate,
+        val canonicalText =
+            VexDurableContractFile.readText(
+                ownedRoot = productHome,
+                path = canonicalPath,
+            )
+                ?: return null
+        val canonical =
+            decodeAndValidateCanonicalContext(
+                canonicalText,
+            )
+
+        val evidence =
+            requireNotNull(
+                VexDurableContractFile.read<RuntimeEvidence>(
+                    ownedRoot = productHome,
+                    path =
+                        runtimeEvidencePath(
+                            turnRef,
+                        ),
+                ),
+            ) {
+                "product-created canonical turn context is missing its runtime evidence sidecar"
+            }
+        validateRuntimeEvidence(
+            evidence,
+        )
+        require(
+            evidence.turnRef ==
+                canonical.turnRef &&
+                evidence.requestEventHash ==
+                canonical.requestEventHash &&
+                evidence.responseEventHash ==
+                canonical.responseEventHash &&
+                canonical.contextSourceRefs.contains(
+                    evidence.evidenceRef,
+                ) &&
+                canonical.promptContextMaterializationReceipt ==
+                VexContractJson.Strict
+                    .parseToJsonElement(
+                        VexContractJson.compactEncode(
+                            evidence.promptContext,
+                        ),
+                    )
+                    .jsonObject,
+        ) {
+            "canonical turn context and product runtime evidence do not bind the same turn"
+        }
+
+        return Record(
+            schemaVersion = canonical.schemaVersion,
+            contextPath =
+                relativeContextPath(
+                    turnRef,
+                ),
+            contextSha256 = canonical.serializedContextSha256,
+            contextSourceRefs = canonical.contextSourceRefs,
+            homeRef = canonical.homeRef,
+            deviceRef = canonical.deviceRef,
+            companionLineageRef = canonical.companionLineageRef,
+            threadRef = canonical.threadRef,
+            turnRef = canonical.turnRef,
+            requestEventRef = evidence.requestEventRef,
+            requestEventSha256 = evidence.requestEventHash,
+            responseEventRef = evidence.responseEventRef,
+            responseEventSha256 = evidence.responseEventHash,
+            runtimeEvidenceRef = evidence.evidenceRef,
+            promptContext = evidence.promptContext,
+            runtimeObservation = evidence.runtimeObservation,
+            invocationEvidence = evidence.invocationEvidence,
+            rawProviderResponsePersisted = evidence.rawProviderResponsePersisted,
+            rawReasoningPersisted = evidence.rawReasoningPersisted,
+            rawReportedModelPersisted = evidence.rawReportedModelPersisted,
+            privacyClass = canonical.privacyClass,
+            formedAt = canonical.formedAt,
+        )
+    }
+
+    private fun validateTurnInputs(
+        request: DirectConversationStore.Event,
+        response: DirectConversationStore.Event,
+        promptContext: DirectPromptContext.Receipt,
+        runtimeObservation: DirectCompanionConnection.RuntimeObservation,
+        invocationEvidence: DirectCompanionConnection.InvocationEvidence,
+    ) {
+        require(
+            request.eventKind ==
+                VexLifeConversationContract.RequestKind &&
+                response.eventKind ==
+                VexLifeConversationContract.ResponseKind &&
+                request.turnRef ==
+                response.turnRef &&
+                request.instanceRef ==
+                response.instanceRef &&
+                response.priorEventHash ==
+                request.eventHash,
+        ) {
+            "direct turn context requires one exact canonical request/response pair"
+        }
+        require(
+            request.homeRef ==
+                manifest.homeRef &&
+                response.homeRef ==
+                manifest.homeRef &&
+                request.deviceRef ==
+                manifest.currentDeviceRef &&
+                response.deviceRef ==
+                manifest.currentDeviceRef &&
+                request.companionLineageRef ==
+                manifest.currentCompanionLineageRef &&
+                response.companionLineageRef ==
+                manifest.currentCompanionLineageRef &&
+                request.threadRef ==
+                DirectConversationIdentity.ThreadRef &&
+                response.threadRef ==
+                DirectConversationIdentity.ThreadRef,
+        ) {
+            "direct turn context requires the admitted canonical Home/thread identity"
+        }
+        require(
+            promptContext.currentRequestEventRef ==
+                request.eventRef &&
+                promptContext.currentRequestEventSha256 ==
+                request.eventHash,
+        ) {
+            "direct turn context prompt receipt does not bind the exact current request"
+        }
+        require(
+            invocationEvidence.runtimeObservationRef ==
+                runtimeObservation.observationRef &&
+                invocationEvidence.runtimeObservationFingerprint ==
+                runtimeObservation.semanticFingerprint &&
+                invocationEvidence.responseBodySha256 ==
+                runtimeObservation.responseBodySha256 &&
+                invocationEvidence.actualHttpCall &&
+                invocationEvidence.loopbackOnly,
+        ) {
+            "direct turn context provider evidence does not bind the exact runtime observation"
+        }
+        require(
+            !runtimeObservation.rawProviderResponsePersisted &&
+                !runtimeObservation.reportedModelField.rawValuePersisted &&
+                !runtimeObservation.reasoningTrace.rawPersisted,
+        ) {
+            "direct turn context may persist normalized provider evidence only"
+        }
+    }
+
+    private fun formRuntimeEvidence(
+        request: DirectConversationStore.Event,
+        response: DirectConversationStore.Event,
+        promptContext: DirectPromptContext.Receipt,
+        runtimeObservation: DirectCompanionConnection.RuntimeObservation,
+        invocationEvidence: DirectCompanionConnection.InvocationEvidence,
+        formedAt: Instant,
+    ): RuntimeEvidence {
+        val core =
+            RuntimeEvidenceCore(
+                schemaVersion = RuntimeEvidenceSchema,
+                truthClass = "PRODUCT_RUNTIME_TURN_EVIDENCE",
+                turnRef = request.turnRef,
+                requestEventRef = request.eventRef,
+                requestEventHash = request.eventHash,
+                responseEventRef = response.eventRef,
+                responseEventHash = response.eventHash,
+                promptContext = promptContext,
+                runtimeObservation = runtimeObservation,
+                invocationEvidence = invocationEvidence,
+                rawProviderResponsePersisted = false,
+                rawReasoningPersisted = false,
+                rawReportedModelPersisted = false,
+                formedAt = formedAt.toString(),
+            )
+        val hash =
+            semanticHash(
+                core,
+            )
+
+        return RuntimeEvidence(
+            schemaVersion = core.schemaVersion,
+            truthClass = core.truthClass,
+            turnRef = core.turnRef,
+            requestEventRef = core.requestEventRef,
+            requestEventHash = core.requestEventHash,
+            responseEventRef = core.responseEventRef,
+            responseEventHash = core.responseEventHash,
+            promptContext = core.promptContext,
+            runtimeObservation = core.runtimeObservation,
+            invocationEvidence = core.invocationEvidence,
+            rawProviderResponsePersisted = core.rawProviderResponsePersisted,
+            rawReasoningPersisted = core.rawReasoningPersisted,
+            rawReportedModelPersisted = core.rawReportedModelPersisted,
+            formedAt = core.formedAt,
+            evidenceRef =
+                "evidence.vexlife-prod.turn-runtime." +
+                    hash.take(
+                        32,
+                    ),
+            evidenceSha256 = hash,
+        )
+            .also(
+                ::validateRuntimeEvidence,
             )
     }
 
-    private fun validate(
-        value: Record,
+    private fun validateRuntimeEvidence(
+        value: RuntimeEvidence,
     ) {
         require(
             value.schemaVersion ==
-                Schema &&
-                value.homeRef ==
-                manifest.homeRef &&
-                value.deviceRef ==
-                manifest.currentDeviceRef &&
-                value.companionLineageRef ==
-                manifest.currentCompanionLineageRef &&
-                value.projectRef ==
-                DirectConversationIdentity.ProjectRef &&
-                value.threadRef ==
-                DirectConversationIdentity.ThreadRef &&
-                value.channelRef ==
-                DirectConversationIdentity.ChannelRef &&
-                value.privacyClass ==
-                "DEVICE_PRIVATE" &&
+                RuntimeEvidenceSchema &&
+                value.truthClass ==
+                "PRODUCT_RUNTIME_TURN_EVIDENCE" &&
                 !value.rawProviderResponsePersisted &&
                 !value.rawReasoningPersisted &&
                 !value.rawReportedModelPersisted,
         ) {
-            "direct turn context identity/privacy is invalid"
+            "product runtime turn evidence identity/privacy is invalid"
         }
-
+        requireSafeRef(
+            value.turnRef,
+            "runtime evidence turnRef",
+        )
         val core =
-            RecordCore(
+            RuntimeEvidenceCore(
                 schemaVersion = value.schemaVersion,
-                homeRef = value.homeRef,
-                deviceRef = value.deviceRef,
-                companionLineageRef = value.companionLineageRef,
-                projectRef = value.projectRef,
-                threadRef = value.threadRef,
-                channelRef = value.channelRef,
+                truthClass = value.truthClass,
                 turnRef = value.turnRef,
                 requestEventRef = value.requestEventRef,
-                requestEventSha256 = value.requestEventSha256,
+                requestEventHash = value.requestEventHash,
                 responseEventRef = value.responseEventRef,
-                responseEventSha256 = value.responseEventSha256,
+                responseEventHash = value.responseEventHash,
                 promptContext = value.promptContext,
                 runtimeObservation = value.runtimeObservation,
                 invocationEvidence = value.invocationEvidence,
                 rawProviderResponsePersisted = value.rawProviderResponsePersisted,
                 rawReasoningPersisted = value.rawReasoningPersisted,
                 rawReportedModelPersisted = value.rawReportedModelPersisted,
-                privacyClass = value.privacyClass,
                 formedAt = value.formedAt,
             )
         val hash =
-            sha256(
-                VexContractJson.encode(
-                    core,
-                ),
+            semanticHash(
+                core,
             )
         require(
-            value.contextSha256 ==
+            value.evidenceSha256 ==
                 hash &&
-                value.contextRef ==
-                "context.vexlife-prod.direct." +
+                value.evidenceRef ==
+                "evidence.vexlife-prod.turn-runtime." +
                     hash.take(
                         32,
-                    ),
-        ) {
-            "direct turn context hash/address is invalid"
-        }
-        require(
-            value.promptContext.currentRequestEventRef ==
+                    ) &&
+                value.promptContext.currentRequestEventRef ==
                 value.requestEventRef &&
                 value.promptContext.currentRequestEventSha256 ==
-                value.requestEventSha256 &&
-                value.runtimeObservation.observationRef ==
-                value.invocationEvidence.runtimeObservationRef &&
-                value.runtimeObservation.semanticFingerprint ==
-                value.invocationEvidence.runtimeObservationFingerprint,
+                value.requestEventHash &&
+                value.invocationEvidence.runtimeObservationRef ==
+                value.runtimeObservation.observationRef &&
+                value.invocationEvidence.runtimeObservationFingerprint ==
+                value.runtimeObservation.semanticFingerprint &&
+                value.invocationEvidence.responseBodySha256 ==
+                value.runtimeObservation.responseBodySha256 &&
+                value.invocationEvidence.actualHttpCall &&
+                value.invocationEvidence.loopbackOnly,
         ) {
-            "direct turn context internal evidence bindings are invalid"
+            "product runtime turn evidence hash/bindings are invalid"
         }
+    }
+
+    private fun decodeAndValidateCanonicalContext(
+        text: String,
+    ): VexLifeConversationContract.Context {
+        val objectValue =
+            VexContractJson.Strict
+                .parseToJsonElement(
+                    text,
+                )
+                .jsonObject
+        val observedHash =
+            requireNotNull(
+                objectValue[
+                    "serializedContextSha256"
+                ]
+                    ?.jsonPrimitive
+                    ?.content,
+            ) {
+                "canonical turn context has no serializedContextSha256"
+            }
+        val coreObject =
+            JsonObject(
+                objectValue.filterKeys {
+                    it !=
+                        "serializedContextSha256"
+                },
+            )
+        require(
+            sha256(
+                VexContractJson.canonicalEncodeElement(
+                    coreObject,
+                ),
+            ) ==
+                observedHash,
+        ) {
+            "canonical turn context hash does not match its exact durable JSON preimage"
+        }
+
+        val value =
+            VexContractJson.decode<VexLifeConversationContract.Context>(
+                text,
+            )
+                .let(
+                    VexLifeConversationContract::validateContext,
+                )
+        require(
+            value.serializedContextSha256 ==
+                observedHash &&
+                value.homeRef ==
+                manifest.homeRef &&
+                value.deviceRef ==
+                manifest.currentDeviceRef &&
+                value.companionLineageRef ==
+                manifest.currentCompanionLineageRef &&
+                value.threadRef ==
+                DirectConversationIdentity.ThreadRef,
+        ) {
+            "canonical turn context identity is invalid"
+        }
+
+        return value
+    }
+
+    private fun writeRuntimeEvidence(
+        value: RuntimeEvidence,
+    ) {
+        VexOwnedPath.ensureDirectory(
+            productHome,
+            runtimeEvidenceDirectory,
+        )
+        val path =
+            runtimeEvidencePath(
+                value.turnRef,
+            )
+        val existing =
+            VexDurableContractFile.read<RuntimeEvidence>(
+                ownedRoot = productHome,
+                path = path,
+            )
+
+        if (
+            existing ==
+                null
+        ) {
+            VexDurableContractFile.write(
+                ownedRoot = productHome,
+                path = path,
+                value = value,
+            )
+        } else {
+            validateRuntimeEvidence(
+                existing,
+            )
+            require(
+                existing ==
+                    value,
+            ) {
+                "product runtime turn evidence address already contains different bytes"
+            }
+        }
+    }
+
+    private fun canonicalContextSourceRefs(
+        promptContext: DirectPromptContext.Receipt,
+        runtimeEvidenceRef: String,
+        requestEventRef: String,
+        responseEventRef: String,
+    ): List<String> {
+        val preceding =
+            (
+                promptContext.selectedConversationEventRefs +
+                    promptContext.memorySourceRefs +
+                    listOf(
+                        promptContext.receiptRef,
+                        runtimeEvidenceRef,
+                    )
+            )
+                .filter {
+                    it !=
+                        requestEventRef &&
+                        it !=
+                        responseEventRef
+                }
+                .distinct()
+                .sorted()
+
+        return preceding +
+            listOf(
+                requestEventRef,
+                responseEventRef,
+            )
     }
 
     private fun pathFor(
         turnRef: String,
-    ): Path {
-        requireRef(
+    ): Path =
+        VexOwnedPath.resolveInside(
+            productHome,
+            relativeContextPath(
+                turnRef,
+            ),
+        )
+
+    private fun relativeContextPath(
+        turnRef: String,
+    ): String {
+        requireSafeRef(
             turnRef,
             "turnRef",
         )
+        return "context/" +
+            manifest.currentCompanionLineageRef +
+            "/" +
+            DirectConversationIdentity.ThreadRef +
+            "/" +
+            turnRef +
+            ".json"
+    }
 
+    private fun runtimeEvidencePath(
+        turnRef: String,
+    ): Path {
+        requireSafeRef(
+            turnRef,
+            "turnRef",
+        )
         return VexOwnedPath.resolveInside(
-            contextDirectory,
+            runtimeEvidenceDirectory,
             "$turnRef.json",
         )
     }
 
-    private fun requireRef(
+    private inline fun <reified T> semanticHash(
+        value: T,
+    ): String =
+        sha256(
+            VexContractJson.canonicalEncode(
+                value,
+            ),
+        )
+
+    private fun requireSafeRef(
         value: String,
         label: String,
     ) {
         require(
             value.matches(
                 Regex(
-                    "[A-Za-z0-9][A-Za-z0-9._:-]{0,220}",
+                    "[a-z0-9](?:[a-z0-9._-]{0,126}[a-z0-9])?",
                 ),
             ),
         ) {
-            "$label must be one portable stable ref"
+            "$label must be one lowercase portable canonical ref"
         }
     }
 

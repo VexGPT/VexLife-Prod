@@ -1,5 +1,6 @@
 package vexlife.model.heretic
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
@@ -11,9 +12,11 @@ import kotlinx.serialization.Serializable
 enum class HereticRuntimeState(
     val wireValue: String,
 ) {
+    @SerialName("PERSISTENT_MLX_RUNTIME_STARTING")
     Starting(
         "PERSISTENT_MLX_RUNTIME_STARTING",
     ),
+    @SerialName("PERSISTENT_MLX_RUNTIME_QUALIFIED")
     Qualified(
         "PERSISTENT_MLX_RUNTIME_QUALIFIED",
     ),

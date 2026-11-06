@@ -9,35 +9,22 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
-import vexlife.home.VexLifeProdHome
-import vexlife.home.VexLifeProdHomeFiles
+import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.memory.VexLifeMemoryContextFixture
 
 class DirectPromptContextTest {
     private fun home(
         productHome: java.nio.file.Path,
     ) {
-        VexLifeProdHomeFiles.bootstrap(
-            productHome = productHome,
-            plan =
-                VexLifeProdHome.plan(
-                    personRef = VexLifeProdHome.DefaultPersonRef,
-                    familyRef = VexLifeProdHome.DefaultFamilyRef,
-                    deviceName = "Test Mac",
-                    platform = "darwin",
-                    architecture = "arm64",
-                    ids =
-                        VexLifeProdHome.InstallationIds(
-                            deviceRef = "device.vexlife-prod.test-device",
-                            companionLineageRef = "companion-lineage.vexlife-prod.test-lineage",
-                        ),
-                    createdAt = "2026-11-05T04:00:00Z",
-                ),
+        CanonicalVexLifeHomeFixture.form(
+            productHome,
         )
     }
 
     @Test
-    fun firstTurnMaterializesOnlyTheCurrentDurableRequest() {
+    fun firstTurnMaterializesOnlyTheCurrentDurableRequestWhenMemoryIsAbsent() {
         val parent =
             Files.createTempDirectory(
                 "vexlife-prod-direct-prompt-first-",
@@ -45,7 +32,7 @@ class DirectPromptContextTest {
                 .toAbsolutePath()
         val productHome =
             parent.resolve(
-                "VexLife-Prod",
+                ".vexlife",
             )
 
         try {
@@ -103,6 +90,149 @@ class DirectPromptContextTest {
                 assertFalse(
                     materialized.receipt.memoryIncluded,
                 )
+                assertNull(
+                    materialized.receipt.memoryContextRef,
+                )
+                assertTrue(
+                    materialized.receipt.memorySourceRefs.isEmpty(),
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun currentAttributedMemoryPrecedesConversationAndCurrentRequest() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-memory-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val store =
+                DirectConversationStore(
+                    productHome,
+                )
+            val memory =
+                VexLifeMemoryContextFixture.current()
+
+            store.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef = "turn.self-development.memory.001",
+                        requestMessageRef = "message.self-development.human.memory.001",
+                        content = "What do you remember about how I prefer to work?",
+                    )
+                val materialized =
+                    DirectPromptContext.materialize(
+                        prior = null,
+                        currentRequest = request,
+                        memoryContext = memory,
+                    )
+
+                assertEquals(
+                    listOf(
+                        "system",
+                        "user",
+                    ),
+                    materialized.messages.map {
+                        it.role
+                    },
+                )
+                assertTrue(
+                    materialized.messages.first()
+                        .content
+                        .startsWith(
+                            "VEXLIFE_CURRENT_MEMORY_CONTEXT/v1\n",
+                        ),
+                )
+                assertEquals(
+                    memory.memoryContextRef,
+                    materialized.receipt.memoryContextRef,
+                )
+                assertEquals(
+                    memory.semanticFingerprint,
+                    materialized.receipt.memoryContextFingerprint,
+                )
+                assertEquals(
+                    memory.sourceRefs,
+                    materialized.receipt.memorySourceRefs,
+                )
+                assertTrue(
+                    materialized.receipt.memoryIncluded,
+                )
+                assertTrue(
+                    materialized.receipt.memorySelectionPerformed,
+                )
+
+                DirectPromptContext.reverify(
+                    materialization = materialized,
+                    prior = null,
+                    currentRequest = request,
+                    memoryContext = memory,
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun tamperedMemoryContextFailsBeforeProviderMaterialization() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-memory-tamper-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val store =
+                DirectConversationStore(
+                    productHome,
+                )
+
+            store.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef = "turn.self-development.memory.tampered",
+                        requestMessageRef = "message.self-development.human.memory.tampered",
+                        content = "Hello Vex",
+                    )
+                val tampered =
+                    VexLifeMemoryContextFixture.current()
+                        .copy(
+                            semanticFingerprint = "0".repeat(
+                                64,
+                            ),
+                        )
+
+                assertFailsWith<IllegalArgumentException> {
+                    DirectPromptContext.materialize(
+                        prior = null,
+                        currentRequest = request,
+                        memoryContext = tampered,
+                    )
+                }
             }
         } finally {
             parent
@@ -120,7 +250,7 @@ class DirectPromptContextTest {
                 .toAbsolutePath()
         val productHome =
             parent.resolve(
-                "VexLife-Prod",
+                ".vexlife",
             )
 
         try {
@@ -155,15 +285,21 @@ class DirectPromptContextTest {
                             "2026-11-05T04:01:01Z",
                         ),
                     )
+                val context =
+                    CanonicalLivedContextFixture.write(
+                        productHome = productHome,
+                        request = first,
+                        response = response,
+                        formedAt = Instant.parse(
+                            "2026-11-05T04:01:02Z",
+                        ),
+                    )
                 commitCompletedTurn(
                     request = first,
                     response = response,
-                    contextRef = "context.vexlife-prod.direct.first",
-                    contextSha256 = "d".repeat(
-                        64,
-                    ),
+                    contextSha256 = context.sha256,
                     formedAt = Instant.parse(
-                        "2026-11-05T04:01:02Z",
+                        "2026-11-05T04:01:03Z",
                     ),
                 )
             }
@@ -242,7 +378,7 @@ class DirectPromptContextTest {
                 .toAbsolutePath()
         val productHome =
             parent.resolve(
-                "VexLife-Prod",
+                ".vexlife",
             )
 
         try {
@@ -289,7 +425,7 @@ class DirectPromptContextTest {
                 .toAbsolutePath()
         val productHome =
             parent.resolve(
-                "VexLife-Prod",
+                ".vexlife",
             )
 
         try {

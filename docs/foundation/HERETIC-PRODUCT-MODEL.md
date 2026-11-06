@@ -147,6 +147,20 @@ automaticActivation = false
 Selecting the model is therefore not permission to download it, start it, replace another model, or
 activate a runtime.
 
+The product-owned binding may point at one of two admitted runtime-evidence coordinates:
+
+~~~text
+stable predecessor:
+  runtime/heretic/persistent-runtime-owner-receipt.json
+
+VexLife-Prod-owned:
+  runtime/vexlife-prod/heretic-persistent-runtime-owner-receipt.json
+~~~
+
+That path records **where qualification evidence comes from**. It does not transfer process
+ownership. A later exact qualified observation may rebind this product projection from one admitted
+owner coordinate to the other without changing the model/Vex identity.
+
 ## Certified artifact catalog
 
 The 11-member bundle is source-placed as typed data with:

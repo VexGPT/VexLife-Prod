@@ -1,188 +1,171 @@
-# VexLife-Prod Home foundation
+# Canonical VexLife Home compatibility
 
 `[VXG RealForever]`
 
 ## Human question
 
-Can a fresh VexLife-Prod installation have one isolated, preservation-safe local Home identity without
-copying the entire historical VexLife filesystem shape or silently depending on `~/.vexlife`?
+How can VexLife-Prod replace implementation machinery without silently replacing Victor's existing
+Vex Home, device/Companion lineage, Conversation, Memory or model-configuration continuity?
 
-This foundation ports the earned **Home relationship** from current VexLife while giving the fresh
-product its own identity namespace and storage root.
+## Current answer
 
-## Isolation
-
-~~~text
-legacy/current VexLife Home
-  default root: ~/.vexlife
-  refs:
-    vex-home.*
-    device.vexlife.*
-    companion-lineage.vexlife.*
-
-VexLife-Prod Home
-  default macOS root:
-    ~/Library/Application Support/VexLife-Prod
-
-  refs:
-    vex-home.prod.*
-    device.vexlife-prod.*
-    companion-lineage.vexlife-prod.*
-~~~
-
-The fresh Home does not automatically import, mutate, replace, or alias the legacy Home.
+New Beginnings binds the already-established canonical VexLife Home:
 
 ~~~text
-VEXLIFE HOME
-!= VEXLIFE-PROD HOME
-
-ISOLATED HOME
-!= AMNESIA ABOUT EARNED RELATIONSHIPS
+~/.vexlife
+  config/home.json
+  devices/<currentDeviceRef>.json
+  config/model.json
+  conversations/<currentCompanionLineageRef>/<threadRef>/
+  context/<currentCompanionLineageRef>/<threadRef>/
+  score/<currentCompanionLineageRef>/<threadRef>/
+  daily-memory-dream/<currentCompanionLineageRef>/<threadRef>/
+  runtime/
 ~~~
 
-A later migration/import owner may intentionally consume legacy VexLife evidence. Bootstrap itself
-does not gain that authority.
-
-## Faithfully ported laws
-
-Current VexLife bootstrap already earned these important defaults:
+The repository/product name does not mint another human identity:
 
 ~~~text
-existing Home
-  -> preserve / classify
-  -> do not overwrite
+FRESH REPOSITORY
+!= FRESH HOME
 
-model
-  -> UNCONFIGURED
+VEXLIFE-PROD IMPLEMENTATION
+!= NEW VEX / NEW COMPANION LINEAGE
 
-automatic fallback
-  -> false
-
-automatic download
-  -> false
-
-automatic activation
-  -> false
-
-personal Memory import
-  -> false
-
-model artifact download during Home bootstrap
-  -> false
-
-existing data deletion
-  -> false
-
-Companion lineage
-  -> explicit and distinct per device installation
+PHYSICAL RUNTIME NAMESPACE
+!= SEMANTIC HOME OWNER
 ~~~
 
-Those meanings are retained.
-
-## Refined fresh-body shape
-
-Current VexLife bootstrap pre-creates many directories for capabilities accumulated across the mature
-repository.
-
-The fresh Home creates only coordinates that the Home foundation actually owns:
+Current canonical namespaces remain:
 
 ~~~text
-config/
-runtime/
-recovery/
+vex-home.<device.vexlife.*>
+device.vexlife.*
+companion-lineage.vexlife.*
 ~~~
 
-and plans only:
+## Product-runtime namespace
+
+VexLife-Prod may own source-bound implementation/lifetime records beneath the admitted Home:
+
+~~~text
+~/.vexlife/runtime/vexlife-prod/
+  model-binding.json
+
+~/.vexlife/runtime/product-service/
+  images/
+  launchd/
+  logs/
+  service-lifetime.json
+~~~
+
+Those records may describe the new runtime implementation. They may not overwrite or reinterpret:
 
 ~~~text
 config/home.json
+current device installation
+current Companion lineage
 config/model.json
-recovery/bootstrap-receipt.json
+canonical Conversation
+Score / daily Memory
+current heads / source descent
 ~~~
 
-It intentionally does **not** pre-author:
+## Admission sequence
 
 ~~~text
-models/
-conversations/
-Memory
-Score
-Dream
-Training
-Projects
-Rhythm
-Sync
+canonical ~/.vexlife exists
+        ↓
+config/home.json exact current schema
+        ↓
+currentDeviceRef
+        ↓
+devices/<currentDeviceRef>.json exact agreement
+        ↓
+currentCompanionLineageRef exact agreement
+        ↓
+VexLife-Prod runtime setup may continue
 ~~~
 
-Those paths appear only when their rightful owners are ported and can state their own invariants.
+An absent canonical Home currently holds VexLife-Prod setup before mutation.
 
-This is subtraction, not capability rejection.
+~~~text
+HOME ABSENT
+!= PERMISSION TO MINT PARALLEL HOME
+~~~
+
+Fresh Home formation remains held until the accepted current VexLife bootstrap pathway is ported as
+its own exact Kotlin/VexArchitecture candidate. It must not be recreated from the superseded isolated
+Home draft.
+
+## Canonical configuration preservation
+
+Current VexLife owns `config/model.json`. VexLife-Prod's implementation binding therefore lives at:
+
+~~~text
+runtime/vexlife-prod/model-binding.json
+~~~
+
+This permits the new Kotlin runtime to bind exact Heretic implementation evidence without turning its
+product-specific schema into the canonical VexLife model owner.
 
 ## Portable source
 
 ~~~text
+src/commonMain/kotlin/vexlife/continuity/VexLifeContinuity.kt
 src/commonMain/kotlin/vexlife/home/VexLifeProdHome.kt
+src/jvmMain/kotlin/vexlife/home/VexLifeProdHomeFiles.kt
+src/jvmMain/kotlin/vexlife/model/heretic/runtime/FileHereticModelConfigurationStore.kt
 ~~~
 
-The portable contract owns:
+The portable source makes these relationships compiler-visible:
 
-- fresh installation IDs;
-- Home manifest meaning;
-- initial no-effect model configuration;
-- bootstrap receipt meaning;
-- minimum base directories;
-- preserve-existing policy;
-- the borrowed `homeRef + companionLineageRef` coordinate other packages may consume.
-
-It does **not** perform filesystem writes yet.
-
-## Why persistence is held
-
-The repository is beginning to accumulate multiple durable contracts: Home, model configuration,
-runtime receipts and later Conversation/Memory records.
-
-Rather than let each package invent its own JSON writer/parser, persistence/serialization will be
-formed once as a shared source-bound owner and then consumed here.
-
-~~~text
-HOME CONTRACT
-!= FILESYSTEM EFFECT
-
-FILESYSTEM EFFECT
-!= EACH DOMAIN INVENTS JSON AGAIN
-~~~
+- canonical Home root;
+- Home/device/Companion lineage identity law;
+- canonical Conversation/context/Score/daily-Memory coordinates;
+- product-specific runtime coordinates;
+- exact reference repository/revision for the port.
 
 ## Provenance
 
-The port is grounded in current VexLife:
+Behavioral/contract reference:
 
 ~~~text
+repository  vgong24/VexLife
+revision    7d59753687ff12726b0d309ee2dde028b5f89e8a
+
 src/core/boot.mjs
 src/core/device-family.mjs
-scripts/bootstrap.mjs
+src/core/lived-companion.mjs
+src/core/score-context-continuity.mjs
+src/core/daily-memory-dream.mjs
+src/core/living-journal-memory-projection.mjs
+src/core/browser-prompt-context-runtime.mjs
 ~~~
 
-The old implementation is provenance for the earned relationships, not the runtime dependency of the
-fresh Home.
+Historical JavaScript is provenance for earned relationships, not a required runtime dependency of
+the Kotlin product.
 
-## Proof boundary
+## Current proof boundary
 
-Current common tests prove:
+Source tests now target:
 
-- fresh Home/device/Companion-lineage namespaces are distinct from legacy VexLife;
-- only Home-owned base directories/writes are planned;
-- initial model selection grants no automatic effects;
-- bootstrap imports/deletes nothing;
-- Home + Companion lineage can be consumed as one borrowed binding scope.
+- default product Home resolves to `~/.vexlife`;
+- current Home/device/lineage bytes are observed without mutation;
+- `.prod` identity namespaces are rejected;
+- missing canonical Home cannot become parallel-bootstrap authority;
+- product runtime binding is written only under `runtime/vexlife-prod`;
+- canonical `config/home.json`, current device bytes and `config/model.json` remain unchanged;
+- setup reuse preserves the same canonical identity.
 
-Still held before acceptance:
+Still required before acceptance:
 
 ~~~text
-repository-owned Kotlin 2.4.20 JVM + JS/common-test proof
-shared durable contract serialization
-filesystem bootstrap realization
-fresh macOS Home proof
-legacy VexLife import/migration (separate owner, if admitted)
+exact Kotlin JVM + JS/common proof
+canonical Conversation store conversion
+current Score/daily/Living-Journal Memory reader + prompt packet
+browser-context reconnection
+real Mac whole-circuit proof
 ~~~
 
-<!-- [VXG RealForever][VEXLIFE-PROD][HOME-FOUNDATION] -->
+<!-- [VXG RealForever][VEXLIFE-PROD][CANONICAL-HOME-COMPATIBILITY] -->

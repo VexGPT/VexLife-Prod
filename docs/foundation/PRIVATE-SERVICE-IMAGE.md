@@ -122,11 +122,17 @@ arm64 / Apple Silicon
 JDK 21 build tools
 ~~~
 
-The packaging task therefore fails closed unless it is running on macOS arm64 with JDK 21
-`jdeps` + `jlink`.
+The packaging task therefore fails closed unless it is running on macOS arm64 and can resolve one
+exact JDK 21 toolchain with executable `jdeps` + `jlink`.
 
-The fresh **user** does not need JDK 21. The JDK is a build-host requirement; the resulting image
-contains its own custom runtime.
+The Gradle launcher/build JVM is a separate construction concern and does **not** need to be Java 21.
+The service-image task asks Gradle's Java toolchain owner for JDK 21 and uses that installation's tools.
+If no matching JDK is already installed, the settings-level Foojay resolver may provision one into
+Gradle-managed toolchain storage. That provisioned JDK remains build tooling; it does not become product
+runtime state or a fresh-user prerequisite.
+
+The fresh **user** does not need JDK 21. The resulting private image contains its own custom Java 21
+runtime.
 
 ## Dependency formation
 
@@ -152,16 +158,39 @@ BUILD SCRIPT
 
 `jdeps --print-module-deps` analyzes the application JAR against that exact runtime classpath.
 
-Its result feeds `jlink --add-modules`.
+Its result feeds the static application/JDK roots for `jlink --add-modules`.
 
-The current service requires the derived module set to include at least:
+Java 21 security-provider availability is a separate runtime construction concern. `jdeps`
+cannot prove providers that are selected through the Java Security service/provider mechanism.
+Because setup performs HTTPS acquisition through `java.net.http.HttpClient`, the private Java 21
+runtime explicitly adds the SunEC provider module:
+
+~~~text
+jdk.crypto.ec
+~~~
+
+The final module set therefore requires at least:
 
 ~~~text
 java.net.http
 jdk.httpserver
+jdk.crypto.ec
 ~~~
 
 Other transitive JDK modules remain derived.
+
+Permanent:
+
+~~~text
+JDEPS STATIC DEPENDENCY GRAPH
+!= RUNTIME SECURITY-PROVIDER AVAILABILITY
+
+HTTPS API PRESENT
+!= TLS HANDSHAKE CAPABLE
+
+JAVA 21 PRIVATE RUNTIME
+-> SUNEC PROVIDER PRESENT
+~~~
 
 ## Image shape
 

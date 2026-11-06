@@ -55,13 +55,13 @@ class VexLifeProdServiceContractTest {
     fun sendRequestKeepsBrowserContextOptionalAndBounded() {
         val request =
             VexLifeProdServiceContract.SendRequest(
-                sendAttemptRef = "send-attempt.vexlife-prod.test.001",
+                idempotencyKey = "send.vexlife.browser.test.001",
                 content = "Hello Vex",
             )
 
         assertEquals(
-            "send-attempt.vexlife-prod.test.001",
-            request.sendAttemptRef,
+            "send.vexlife.browser.test.001",
+            request.idempotencyKey,
         )
         assertEquals(
             "Hello Vex",
@@ -73,7 +73,7 @@ class VexLifeProdServiceContractTest {
 
         val withContext =
             VexLifeProdServiceContract.SendRequest(
-                sendAttemptRef = "send-attempt.vexlife-prod.test.002",
+                idempotencyKey = "send.vexlife.browser.test.002",
                 content = "What is on this page?",
                 browserContext =
                     VexLifeProdServiceContract.BrowserContextInput(
@@ -91,7 +91,7 @@ class VexLifeProdServiceContractTest {
 
         assertFailsWith<IllegalArgumentException> {
             VexLifeProdServiceContract.SendRequest(
-                sendAttemptRef = "../escape",
+                idempotencyKey = "../escape",
                 content = "Hello",
             )
         }

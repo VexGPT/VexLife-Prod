@@ -6,10 +6,11 @@ import vexlife.filesystem.VexOwnedPath
 import vexlife.model.heretic.HereticProductIdentity
 
 /**
- * Durable receipt store for the isolated VexLife-Prod Heretic runtime.
+ * Durable receipt store for a VexLife-Prod-owned Heretic runtime.
  *
- * Storage mechanics are delegated to [VexDurableContractFile]. This class contributes only the
- * rightful Heretic receipt coordinate inside the Prod Home.
+ * Storage mechanics are delegated to [VexDurableContractFile]. This store writes only the
+ * product-owned coordinate beneath runtime/vexlife-prod; the stable VexLife predecessor receipt
+ * remains separate and read-only to this owner.
  */
 class FileHereticRuntimeReceiptStore(
     productHome: Path,
@@ -23,7 +24,7 @@ class FileHereticRuntimeReceiptStore(
     private val receiptPath: Path =
         VexOwnedPath.resolveInside(
             this.productHome,
-            HereticProductIdentity.RuntimeReceiptRelativePath,
+            HereticProductIdentity.ProductRuntimeReceiptRelativePath,
         )
 
     override fun read(): HereticPersistentRuntime.Receipt? =

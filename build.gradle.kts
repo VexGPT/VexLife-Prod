@@ -1,3 +1,4 @@
+import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.LinkOption
@@ -6,8 +7,11 @@ import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.PosixFilePermission
 import java.security.MessageDigest
 import org.gradle.api.tasks.bundling.Jar
+import org.gradle.jvm.toolchain.JavaLanguageVersion
+import org.gradle.jvm.toolchain.JavaToolchainService
 
 plugins {
+    id("jvm-toolchains")
     id("org.jetbrains.kotlin.multiplatform")
     id("org.jetbrains.kotlin.plugin.serialization")
 }
@@ -348,6 +352,19 @@ val jvmJarTask =
     tasks.named<Jar>(
         "jvmJar",
     )
+
+val serviceImageJdk21 =
+    extensions
+        .getByType(
+            JavaToolchainService::class.java,
+        )
+        .compilerFor {
+            languageVersion.set(
+                JavaLanguageVersion.of(
+                    21,
+                ),
+            )
+        }
 
 val serviceLauncherSource =
     layout.projectDirectory.file(
@@ -700,20 +717,25 @@ tasks.register(
         ) {
             "VexLife-Prod service image must be assembled on macOS arm64"
         }
+        val serviceImageJava =
+            serviceImageJdk21
+                .get()
         require(
-            Runtime.version()
-                .feature() ==
+            serviceImageJava
+                .metadata
+                .languageVersion
+                .asInt() ==
                 21,
         ) {
-            "VexLife-Prod service image must be assembled with JDK 21"
+            "VexLife-Prod service image requires an exact JDK 21 toolchain"
         }
 
         val javaHome =
-            Path.of(
-                System.getProperty(
-                    "java.home",
-                ),
-            )
+            serviceImageJava
+                .metadata
+                .installationPath
+                .asFile
+                .toPath()
                 .toAbsolutePath()
                 .normalize()
         val jdeps =
@@ -747,8 +769,11 @@ tasks.register(
                 .normalize()
 
         val runtimeDependencies =
-            jvmMainCompilation
-                .runtimeDependencyFiles
+            requireNotNull(
+                jvmMainCompilation.runtimeDependencyFiles,
+            ) {
+                "JVM service runtime dependency collection is unavailable"
+            }
                 .files
                 .map {
                     it.toPath()
@@ -807,7 +832,7 @@ tasks.register(
         val classpath =
             runtimeDependencies.joinToString(
                 separator =
-                    java.io.File.pathSeparator,
+                    File.pathSeparator,
             )
 
         val modules =
@@ -841,19 +866,29 @@ tasks.register(
             "jdeps produced an invalid module dependency set: $modules"
         }
 
+        val runtimeProviderModules =
+            setOf(
+                "jdk.crypto.ec",
+            )
         val moduleSet =
-            modules
-                .split(
-                    ",",
-                )
-                .toSet()
+            (
+                modules
+                    .split(
+                        ",",
+                    )
+                    .toSet() +
+                    runtimeProviderModules
+            )
+                .sorted()
         require(
             "jdk.httpserver" in
                 moduleSet &&
                 "java.net.http" in
+                moduleSet &&
+                "jdk.crypto.ec" in
                 moduleSet,
         ) {
-            "service runtime image must include jdk.httpserver + java.net.http"
+            "service runtime image must include jdk.httpserver + java.net.http + Java 21 SunEC provider"
         }
 
         val output =
@@ -912,7 +947,9 @@ tasks.register(
             listOf(
                 jlink.toString(),
                 "--add-modules",
-                modules,
+                moduleSet.joinToString(
+                    ",",
+                ),
                 "--strip-debug",
                 "--no-header-files",
                 "--no-man-pages",
@@ -1039,11 +1076,7 @@ tasks.register(
             }
 
         val moduleJson =
-            modules
-                .split(
-                    ",",
-                )
-                .sorted()
+            moduleSet
                 .joinToString(
                     separator =
                         ",",

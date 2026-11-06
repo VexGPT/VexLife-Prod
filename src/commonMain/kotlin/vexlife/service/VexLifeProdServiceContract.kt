@@ -4,10 +4,11 @@ import kotlinx.serialization.Serializable
 import vexlife.browser.VexLifeProdBrowserContract
 
 /**
- * Shared browser/service contract for the isolated VexLife-Prod local product.
+ * Shared browser/service contract for the local VexLife implementation.
  *
  * This source owns only stable route/topology identity and wire projections. It does not own
- * Conversation meaning, Heretic lifecycle, prompt selection, presentation state, or process lifetime.
+ * Conversation meaning, Memory, Heretic lifecycle, prompt selection, presentation state, or process
+ * lifetime. Prompt projections preserve the exact source identities formed by their rightful owners.
  */
 object VexLifeProdServiceContract {
     const val SourceCurrentnessSchema =
@@ -126,15 +127,15 @@ object VexLifeProdServiceContract {
 
     @Serializable
     data class SendRequest(
-        val sendAttemptRef: String,
+        val idempotencyKey: String,
         val content: String,
         val browserContext: BrowserContextInput? =
             null,
     ) {
         init {
             requirePortableRef(
-                sendAttemptRef,
-                "sendAttemptRef",
+                idempotencyKey,
+                "idempotencyKey",
             )
             require(
                 content.isNotEmpty(),
@@ -157,6 +158,12 @@ object VexLifeProdServiceContract {
         val reservedOutputTokens: Int,
         val hardTokenLimit: Int,
         val wholeHistoryEventEnumerationPerformed: Boolean,
+        val memoryContextRef: String? =
+            null,
+        val memoryContextFingerprint: String? =
+            null,
+        val memorySourceRefs: List<String> =
+            emptyList(),
         val memoryIncluded: Boolean,
         val memorySelectionPerformed: Boolean,
         val trainingSelectionPerformed: Boolean,
@@ -185,7 +192,7 @@ object VexLifeProdServiceContract {
         val content: String,
         val model: String,
         val currentConversationHeadSha256: String,
-        val contextRef: String,
+        val contextPath: String,
         val promptContext: PromptContextProjection,
     )
 

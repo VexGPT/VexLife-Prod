@@ -504,6 +504,8 @@ object VexLifeProdPrivateServiceImage {
                 "java.net.http" in
                 manifest.runtimeModules &&
                 "jdk.httpserver" in
+                manifest.runtimeModules &&
+                "jdk.crypto.ec" in
                 manifest.runtimeModules,
         ) {
             "private service-image runtime module set is invalid"

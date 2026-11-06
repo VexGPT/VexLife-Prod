@@ -14,6 +14,7 @@ import kotlinx.serialization.Serializable
  * resulting truth.
  */
 @Serializable
+@ConsistentCopyVisibility
 data class HereticRuntimeQualification private constructor(
     val healthAndExactModelVerified: Boolean,
     val actualChatCompletionPerformed: Boolean,

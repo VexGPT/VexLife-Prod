@@ -158,7 +158,7 @@ object DirectCompanionConnection {
 
     @Serializable
     @ConsistentCopyVisibility
-    data class ReportedModelField private constructor(
+    data class ReportedModelField internal constructor(
         val present: Boolean,
         val valueType: String?,
         val byteLength: Int?,
@@ -169,7 +169,7 @@ object DirectCompanionConnection {
 
     @Serializable
     @ConsistentCopyVisibility
-    data class ReasoningTrace private constructor(
+    data class ReasoningTrace internal constructor(
         val present: Boolean,
         val contentSha256: String?,
         val characterCount: Int,
@@ -181,7 +181,7 @@ object DirectCompanionConnection {
 
     @Serializable
     @ConsistentCopyVisibility
-    data class RuntimeObservation private constructor(
+    data class RuntimeObservation internal constructor(
         val schemaVersion: String,
         val truthClass: String,
         val runtimeReceiptRef: String,
@@ -204,7 +204,7 @@ object DirectCompanionConnection {
 
     @Serializable
     @ConsistentCopyVisibility
-    data class ObservedEffects private constructor(
+    data class ObservedEffects internal constructor(
         val modelRuntimeObserved: Boolean,
         val providerOrNetworkObserved: Boolean,
         val nativeToolExecutionObserved: Boolean,
@@ -215,7 +215,7 @@ object DirectCompanionConnection {
 
     @Serializable
     @ConsistentCopyVisibility
-    data class InvocationEvidence private constructor(
+    data class InvocationEvidence internal constructor(
         val schemaVersion: String,
         val truthClass: String,
         val runtimeReceiptRef: String,
@@ -234,7 +234,7 @@ object DirectCompanionConnection {
     )
 
     @ConsistentCopyVisibility
-    data class Result private constructor(
+    data class Result internal constructor(
         val content: String,
         val model: String,
         val runtimeObservation: RuntimeObservation,
@@ -619,7 +619,7 @@ object DirectCompanionConnection {
             null,
             uri.host,
             uri.port,
-            "/",
+            null,
             null,
             null,
         )

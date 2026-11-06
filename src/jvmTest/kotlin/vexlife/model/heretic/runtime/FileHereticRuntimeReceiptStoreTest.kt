@@ -57,6 +57,7 @@ class FileHereticRuntimeReceiptStoreTest {
                         "runtime/heretic/mlx-lm-server.err.log",
                     )
                         .toString(),
+                environment = emptyMap(),
                 keepAlive = false,
                 pid = pid,
             )
@@ -130,7 +131,7 @@ class FileHereticRuntimeReceiptStoreTest {
 
             assertEquals(
                 productHome.resolve(
-                    HereticProductIdentity.RuntimeReceiptRelativePath,
+                    HereticProductIdentity.ProductRuntimeReceiptRelativePath,
                 )
                     .normalize(),
                 store.path(),
