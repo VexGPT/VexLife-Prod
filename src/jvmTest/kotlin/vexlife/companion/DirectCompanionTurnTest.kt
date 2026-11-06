@@ -10,8 +10,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.conversation.DirectConversationStore
-import vexlife.home.VexLifeProdHome
-import vexlife.home.VexLifeProdHomeFiles
+import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
@@ -29,22 +28,10 @@ class DirectCompanionTurnTest {
             parent.resolve(
                 "VexLife-Prod",
             )
-        VexLifeProdHomeFiles.bootstrap(
-            productHome = home,
-            plan =
-                VexLifeProdHome.plan(
-                    personRef = VexLifeProdHome.DefaultPersonRef,
-                    familyRef = VexLifeProdHome.DefaultFamilyRef,
-                    deviceName = "Test Mac",
-                    platform = "darwin",
-                    architecture = "arm64",
-                    ids =
-                        VexLifeProdHome.InstallationIds(
-                            deviceRef = "device.vexlife-prod.turn-device",
-                            companionLineageRef = "companion-lineage.vexlife-prod.turn-lineage",
-                        ),
-                    createdAt = "2026-11-05T05:00:00Z",
-                ),
+        CanonicalVexLifeHomeFixture.form(
+            home = home,
+            deviceSuffix = "turn-device",
+            lineageSuffix = "turn-lineage",
         )
         return home
     }
