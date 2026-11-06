@@ -1,6 +1,7 @@
 package vexlife.continuity
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
 
 /**
  * Portable contract for the current VexLife continuity observation used by Score source intake.
@@ -54,7 +55,7 @@ object VexLifeContinuityObservation {
         val currentness: String,
         val visibility: String,
         val summaryRef: String?,
-        val recurrenceBinding: Nothing?,
+        val recurrenceBinding: JsonObject?,
         val rawSourceContentIncluded: Boolean,
         val rawSourcesRemainImmutable: Boolean,
         val rawSourcesRetrievableByRef: Boolean,
@@ -78,7 +79,7 @@ object VexLifeContinuityObservation {
         val currentness: String,
         val visibility: String,
         val summaryRef: String?,
-        val recurrenceBinding: Nothing?,
+        val recurrenceBinding: JsonObject?,
         val rawSourceContentIncluded: Boolean,
         val rawSourcesRemainImmutable: Boolean,
         val rawSourcesRetrievableByRef: Boolean,
