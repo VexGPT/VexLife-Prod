@@ -85,6 +85,53 @@ ROLLOVER PLAN
 
 The plan may say that a checkpoint or successor context is now lawful. It cannot perform those effects.
 
+## Durable working-continuity owner
+
+The next consumer of the accepted planner is now source-owned by:
+
+~~~text
+src/jvmMain/kotlin/vexlife/continuity/VexLifeWorkingContinuityOwner.kt
+src/jvmTest/kotlin/vexlife/continuity/VexLifeWorkingContinuityOwnerTest.kt
+~~~
+
+It owns only durable custody for already-earned planner truth:
+
+~~~text
+effect-free committable Plan
+-> immutable checkpoint
+-> immutable commit receipt
+-> head.json currentness commit point
+
+ROLLOVER_COMMITTED
+-> exact successor-context claim
+-> successor Context itself still NOT issued
+~~~
+
+Currentness law:
+
+~~~text
+checkpoint file alone != current
+commit receipt alone != current
+head.json          = currentness pointer
+~~~
+
+The owner writes immutable checkpoint + receipt evidence first and advances `head.json` last. A crash before the head write therefore cannot silently promote partial evidence to current truth.
+
+Before any commit it re-derives the exact plan from the accepted planner, current durable checkpoint, pressure input and working set. Before any successor claim it requires one exact current `ROLLOVER_COMMITTED` head and binds the claim to that checkpoint/receipt plus the prior Conversation head/request and the next request event binding.
+
+Permanent:
+
+~~~text
+DURABLE WORKING CHECKPOINT
+!= SEMANTIC MEMORY
+
+SUCCESSOR CLAIM
+!= SUCCESSOR CONTEXT ISSUANCE
+
+OWNER CUSTODY
+!= PROMPT MATERIALIZATION AUTHORITY
+~~~
+
 ## Current candidate boundary
 
 This first slice owns only:
@@ -99,11 +146,9 @@ effect-free Plan
 optional reference-only Checkpoint
 ~~~
 
-It does **not yet**:
+After the durable-owner slice, the remaining held effects are:
 
-- persist checkpoints under canonical Home;
-- supersede a prior durable working checkpoint;
-- claim or issue successor context;
+- issue an exact successor Context contract from the current durable claim;
 - change `DirectPromptContext` selection;
 - activate `WORKING_CHECKPOINT_SUCCESSOR`;
 - change Memory selection;
