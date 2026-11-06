@@ -843,8 +843,12 @@ object VexLifeSemanticRelayContract {
             capability.multilingualOutput &&
             target.stringOrNull(
                 "targetLanguageRef",
-            ) in
-            capability.supportedLanguageRefs &&
+            )
+                ?.let {
+                    it in
+                        capability.supportedLanguageRefs
+                } ==
+            true &&
             capability.evidenceRefs.isNotEmpty()
         ) {
             return "MODEL_NATIVE"
@@ -1005,12 +1009,15 @@ object VexLifeSemanticRelayContract {
 
     private fun isRef(
         element: JsonElement?,
-    ): Boolean =
-        element
-            ?.jsonPrimitive
-            ?.contentOrNull
+    ): Boolean {
+        val primitive =
+            element as?
+            JsonPrimitive
+                ?: return false
+        return primitive.contentOrNull
             ?.isNotEmpty() ==
-        true
+            true
+    }
 
     private fun JsonObject.stringOrNull(
         name: String,
@@ -1026,18 +1033,22 @@ object VexLifeSemanticRelayContract {
         ) {
             return null
         }
-        return value
-            .jsonPrimitive
-            .contentOrNull
+        val primitive =
+            value as?
+            JsonPrimitive
+                ?: return null
+        return primitive.contentOrNull
     }
 
     private fun JsonObject.booleanOrNull(
         name: String,
     ): Boolean? =
-        this[
-            name
-        ]
-            ?.jsonPrimitive
+        (
+            this[
+                name
+            ] as?
+            JsonPrimitive
+            )
             ?.booleanOrNull
 
     private fun JsonObject.arrayOrNull(
@@ -1055,7 +1066,11 @@ object VexLifeSemanticRelayContract {
             name,
         )
             ?.mapNotNull {
-                it.jsonPrimitive.contentOrNull
+                (
+                    it as?
+                    JsonPrimitive
+                    )
+                    ?.contentOrNull
             }
             ?: emptyList()
 }
