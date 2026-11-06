@@ -171,12 +171,12 @@ class MacHereticRuntimePlatformTest {
         root: java.nio.file.Path,
     ): HereticPersistentRuntime.Binding {
         val environment =
-            root.resolve(
-                "python",
+            HereticPythonEnvironment.environmentRoot(
+                root,
             )
         val python =
-            environment.resolve(
-                "bin/python",
+            HereticPythonEnvironment.pythonPath(
+                environment,
             )
 
         Files.createDirectories(
