@@ -15,6 +15,9 @@ object DirectConversationIdentity {
 
     const val ChannelRef =
         "channel.self-development.companion"
+
+    const val CompanionRoleRef =
+        "role.vex.companion"
 }
 
 // [VXG RealForever]
