@@ -296,7 +296,7 @@ class DirectConversationStore(
                     speakerRef = installation.personRef,
                     recipientRefs =
                         listOf(
-                            manifest.currentCompanionLineageRef,
+                            DirectConversationIdentity.CompanionRoleRef,
                         ),
                     sequence = sequence,
                     priorEventHash = prior,
@@ -419,7 +419,7 @@ class DirectConversationStore(
                     channelRef = request.channelRef,
                     turnRef = request.turnRef,
                     messageRef = responseMessageRef,
-                    speakerRef = manifest.currentCompanionLineageRef,
+                    speakerRef = DirectConversationIdentity.CompanionRoleRef,
                     recipientRefs =
                         listOf(
                             installation.personRef,
@@ -1773,7 +1773,7 @@ class DirectConversationStore(
                         installation.personRef &&
                         event.recipientRefs ==
                         listOf(
-                            manifest.currentCompanionLineageRef,
+                            DirectConversationIdentity.CompanionRoleRef,
                         ) &&
                         event.endpointProfileRef ==
                         null &&
@@ -1800,7 +1800,7 @@ class DirectConversationStore(
                     ) ==
                         event.eventHash &&
                         event.speakerRef ==
-                        manifest.currentCompanionLineageRef &&
+                        DirectConversationIdentity.CompanionRoleRef &&
                         event.recipientRefs ==
                         listOf(
                             installation.personRef,
