@@ -2552,11 +2552,6 @@ object VexLifeCurrentMemoryReader {
             .jsonObject
     }
 
-    private fun validateDailyHeadLineagePlaceholder() {
-        // Intentionally empty: real implementation is the overload above. This declaration prevents
-        // no runtime effect and keeps no state.
-    }
-
     private fun hashWithout(
         value: JsonObject,
         field: String,
