@@ -367,12 +367,16 @@ class StableVexLifeHereticRuntimeCompatibilityTest {
             }
 
         val observed =
-            StableVexLifeHereticRuntimeCompatibility.observeReceipt(
-                receipt = receipt,
-                binding = binding,
-                platform = platform,
-                launchdHost = launchdHost,
-            )
+            requireNotNull(
+                StableVexLifeHereticRuntimeCompatibility.observeReceipt(
+                    receipt = receipt,
+                    binding = binding,
+                    platform = platform,
+                    launchdHost = launchdHost,
+                ),
+            ) {
+                "live exact stable predecessor must produce borrowed runtime evidence"
+            }
 
         assertEquals(
             pid,
