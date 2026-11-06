@@ -190,6 +190,14 @@ class DirectConversationStore(
         val leaseSha256: String,
     )
 
+    data class ThreadWriterCurrentness(
+        val state: String,
+        val ownerState: String?,
+        val instanceRef: String?,
+        val leaseSha256: String?,
+        val recoveryRequired: Boolean,
+    )
+
     private inner class HeldThreadWriterLease(
         private val lease: ThreadWriterLease,
     ) : AutoCloseable {
@@ -735,15 +743,81 @@ class DirectConversationStore(
             }
     }
 
+    fun threadWriterCurrentness(): ThreadWriterCurrentness {
+        if (
+            !Files.exists(
+                lockPath,
+                LinkOption.NOFOLLOW_LINKS,
+            )
+        ) {
+            return ThreadWriterCurrentness(
+                state = "IDLE",
+                ownerState = null,
+                instanceRef = null,
+                leaseSha256 = null,
+                recoveryRequired = false,
+            )
+        }
+
+        val lease =
+            requireNotNull(
+                VexDurableContractFile.read<ThreadWriterLease>(
+                    ownedRoot = productHome,
+                    path = lockPath,
+                ),
+            ) {
+                "thread writer lease exists but is unreadable"
+            }
+        require(
+            validateThreadLease(
+                lease,
+            ),
+        ) {
+            "thread writer lease is invalid"
+        }
+
+        val ownerState =
+            processState(
+                lease.pid,
+            )
+
+        return ThreadWriterCurrentness(
+            state =
+                when (
+                    ownerState
+                ) {
+                    "ABSENT" ->
+                        "RECOVERY_REQUIRED"
+
+                    "ACTIVE" ->
+                        "ACTIVE"
+
+                    else ->
+                        "BLOCKED"
+                },
+            ownerState = ownerState,
+            instanceRef = lease.instanceRef,
+            leaseSha256 = lease.leaseSha256,
+            recoveryRequired =
+                ownerState ==
+                    "ABSENT",
+        )
+    }
+
     /**
      * Explicit stale-writer recovery. Absence/active ownership never becomes delete authority.
      */
     fun recoverAbandonedWriterLease(
         expectedAbandonedInstanceRef: String,
+        expectedLeaseSha256: String,
     ): Boolean {
         requireSafeRef(
             expectedAbandonedInstanceRef,
             "expectedAbandonedInstanceRef",
+        )
+        requireSha256(
+            expectedLeaseSha256,
+            "expectedLeaseSha256",
         )
 
         if (
@@ -767,7 +841,9 @@ class DirectConversationStore(
                 lease,
             ) &&
                 lease.instanceRef ==
-                expectedAbandonedInstanceRef,
+                expectedAbandonedInstanceRef &&
+                lease.leaseSha256 ==
+                expectedLeaseSha256,
         ) {
             "thread writer recovery evidence does not match the exact abandoned owner"
         }
