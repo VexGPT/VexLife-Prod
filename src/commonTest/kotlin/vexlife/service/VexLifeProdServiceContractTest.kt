@@ -34,16 +34,16 @@ class VexLifeProdServiceContractTest {
     }
 
     @Test
-    fun sendRequestCarriesOnlyAttemptIdentityAndHumanContent() {
+    fun sendRequestCarriesOnlyIdempotencyIdentityAndHumanContent() {
         val request =
             VexLifeProdServiceContract.SendRequest(
-                sendAttemptRef = "send-attempt.vexlife-prod.test.001",
+                idempotencyKey = "send.vexlife.browser.test.001",
                 content = "Hello Vex",
             )
 
         assertEquals(
-            "send-attempt.vexlife-prod.test.001",
-            request.sendAttemptRef,
+            "send.vexlife.browser.test.001",
+            request.idempotencyKey,
         )
         assertEquals(
             "Hello Vex",
@@ -52,7 +52,7 @@ class VexLifeProdServiceContractTest {
 
         assertFailsWith<IllegalArgumentException> {
             VexLifeProdServiceContract.SendRequest(
-                sendAttemptRef = "../escape",
+                idempotencyKey = "../escape",
                 content = "Hello",
             )
         }
