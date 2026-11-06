@@ -1311,37 +1311,8 @@ class VexLifeWorkingContinuityOwner(
         requireCurrentRequestBinding(
             value.currentRequestEventBinding,
         )
-        VexLifeWorkingContinuity.validateCheckpoint(
-            VexLifeWorkingContinuity.Checkpoint(
-                schemaVersion =
-                    VexLifeWorkingContinuity.CheckpointSchema,
-                truthClass =
-                    "SOURCE_BOUND_NON_SEMANTIC_WORKING_CONTINUITY_CHECKPOINT",
-                currentness = "CURRENT",
-                lifecycle = "CURRENT",
-                lineageRef = value.workingSet.lineageRef,
-                threadRef = value.workingSet.threadRef,
-                pressureRef = value.checkpointRef,
-                pressureFingerprint =
-                    value.checkpointFingerprint,
-                pressureState =
-                    VexLifeWorkingContinuity.PressureState.CheckpointRecommended,
-                promptReceiptRef =
-                    value.checkpointRef,
-                workingSet = value.workingSet,
-                priorCheckpointRefOrNull = null,
-                priorCheckpointFingerprintOrNull = null,
-                sourceRefs = value.sourceRefs,
-                effectAuthorityGranted = false,
-                semanticMemoryPromotionAuthorized = false,
-                modelOutputAcceptedAsMemory = false,
-                checkpointTruth =
-                    VexLifeWorkingContinuity.CheckpointTruth(),
-                checkpointRef =
-                    value.checkpointRef,
-                semanticFingerprint =
-                    value.checkpointFingerprint,
-            ),
+        VexLifeWorkingContinuity.validateWorkingSet(
+            value.workingSet,
         )
         require(
             value.workingSet.lineageRef ==
