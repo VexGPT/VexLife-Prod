@@ -298,13 +298,23 @@ A newly-created VexLife-Prod runtime lives under the product-owned runtime names
 generic macOS process substrate:
 
 ~~~text
-product receipt:
-  runtime/vexlife-prod/heretic-persistent-runtime-owner-receipt.json
+runtime/vexlife-prod/
+  heretic-persistent-runtime-owner-receipt.json
+  launchd/
+  mlx-lm-server.out.log
+  mlx-lm-server.err.log
+  huggingface-cache/
 
 stable predecessor receipt:
   runtime/heretic/persistent-runtime-owner-receipt.json
   read-only to VexLife-Prod
 ~~~
+
+The fallback launch environment binds `HF_HUB_CACHE` to the product-owned cache directory
+explicitly. This preserves the stable VexLife lesson that MLX/Hugging Face cache selection is runtime
+construction state, not ambient shell configuration. In mlx-lm 0.32.0, `/v1/models` scans the
+Hugging Face cache; therefore an implicit or invalid cache coordinate can make model-identity
+qualification fail even after `/health` is already ready.
 
 A product-owned runtime launchd label remains in the VexLife-Prod namespace. A borrowed stable
 runtime retains its stable VexLife launchd/process ownership; only portable qualified-runtime

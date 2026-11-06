@@ -7,6 +7,7 @@ import java.net.URL
 import java.nio.file.Path
 import java.time.Instant
 import java.util.UUID
+import vexlife.continuity.VexLifeContinuity
 import vexlife.filesystem.VexOwnedPath
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -45,7 +46,12 @@ class MacHereticRuntimePlatform(
     private val runtimeRoot =
         VexOwnedPath.resolveInside(
             this.productHome,
-            "runtime/heretic",
+            VexLifeContinuity.ProductRuntimeRootRelativePath,
+        )
+
+    private val huggingFaceCacheRoot =
+        runtimeRoot.resolve(
+            "huggingface-cache",
         )
 
     override val platform: String =
@@ -496,6 +502,10 @@ class MacHereticRuntimePlatform(
                 "launchd",
             ),
         )
+        VexOwnedPath.ensureDirectory(
+            productHome,
+            huggingFaceCacheRoot,
+        )
 
         val launchId =
             UUID
@@ -537,7 +547,11 @@ class MacHereticRuntimePlatform(
                         )
                         .toString(),
                 environment =
-                    inheritedEnvironment(),
+                    inheritedEnvironment() +
+                        (
+                            "HF_HUB_CACHE" to
+                                huggingFaceCacheRoot.toString()
+                        ),
                 uid =
                     launchdHost.uid,
             )
@@ -627,9 +641,20 @@ class MacHereticRuntimePlatform(
 
             def read_json(request, timeout):
                 with urllib.request.urlopen(request, timeout=timeout) as response:
+                    body = response.read().decode("utf-8", errors="replace")
+                    content_type = response.headers.get("Content-Type", "")
                     if response.status != 200:
-                        raise RuntimeError("HTTP %s" % response.status)
-                    return json.loads(response.read().decode("utf-8"))
+                        raise RuntimeError(
+                            "HTTP %s content-type=%s body=%r"
+                            % (response.status, content_type, body[:512])
+                        )
+                    try:
+                        return json.loads(body)
+                    except json.JSONDecodeError as error:
+                        raise RuntimeError(
+                            "non-JSON HTTP 200 content-type=%s body=%r"
+                            % (content_type, body[:512])
+                        ) from error
 
             health = read_json(origin + "/health", 5)
             if health.get("status") != "ok":

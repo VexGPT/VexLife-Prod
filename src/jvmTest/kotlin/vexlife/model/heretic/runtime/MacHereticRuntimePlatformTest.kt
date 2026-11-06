@@ -17,6 +17,7 @@ class MacHereticRuntimePlatformTest {
         var running = false
         var pid = 5151L
         var observedPlist = ""
+        var observedPlistPath = ""
 
         override fun launchctl(
             args: List<String>,
@@ -38,6 +39,8 @@ class MacHereticRuntimePlatformTest {
                     }
 
                 "bootstrap" -> {
+                    observedPlistPath =
+                        args[2]
                     observedPlist =
                         Files.readString(
                             java.nio.file.Path.of(
@@ -349,6 +352,41 @@ class MacHereticRuntimePlatformTest {
                     "<string>com.vexlife.prod.heretic.",
                 ),
             )
+            val productRuntimeRoot =
+                root.resolve(
+                    "runtime/vexlife-prod",
+                )
+            assertTrue(
+                java.nio.file.Path.of(
+                    host.observedPlistPath,
+                )
+                    .startsWith(
+                        productRuntimeRoot.resolve(
+                            "launchd",
+                        ),
+                    ),
+            )
+            val huggingFaceCache =
+                productRuntimeRoot.resolve(
+                    "huggingface-cache",
+                )
+            assertTrue(
+                Files.isDirectory(
+                    huggingFaceCache,
+                ),
+            )
+            assertTrue(
+                host.observedPlist.contains(
+                    "<key>HF_HUB_CACHE</key>",
+                ),
+            )
+            assertTrue(
+                host.observedPlist.contains(
+                    "<string>" +
+                        huggingFaceCache +
+                        "</string>",
+                ),
+            )
             assertFalse(
                 host.observedPlist.contains(
                     "<string>com.vexlife.heretic.",
@@ -457,7 +495,7 @@ class MacHereticRuntimePlatformTest {
             assertFalse(
                 Files.exists(
                     outside.resolve(
-                        "heretic",
+                        "vexlife-prod",
                     ),
                 ),
             )
@@ -542,6 +580,9 @@ class MacHereticRuntimePlatformTest {
                     "/v1/chat/completions",
                     "Reply with OK.",
                     "enable_thinking",
+                    "non-JSON HTTP 200",
+                    "content-type=",
+                    "body=%r",
                 )
             ) {
                 assertTrue(
