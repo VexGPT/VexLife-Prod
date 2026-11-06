@@ -2,6 +2,7 @@ package vexlife.companion
 
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
+import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.Serializable
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.contract.VexContractJson
@@ -164,20 +165,44 @@ object DirectPromptContext {
         val memorySelectionPerformed: Boolean,
         val trainingSelectionPerformed: Boolean,
         val effectsPerformed: Boolean,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
         val workingContinuityIncluded: Boolean =
             false,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
         val workingContinuityContextRef: String? =
             null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
         val workingContinuityContextFingerprint: String? =
             null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
         val workingContinuityCheckpointRef: String? =
             null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
         val workingContinuitySuccessorClaimRef: String? =
             null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
         val workingContinuitySourceRefs: List<String> =
             emptyList(),
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
         val workingContinuitySystemMessageSha256: String? =
             null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
         val workingContinuityEstimatedSystemMessageTokens: Int =
             0,
     )
