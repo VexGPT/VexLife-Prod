@@ -542,9 +542,7 @@ object DirectCompanionTurn {
         }
 
         require(
-            failed.requestEvent.turnRef ==
-                identity.turnRef &&
-                failed.requestEvent.messageRef ==
+            failed.requestEvent.messageRef ==
                 identity.requestMessageRef &&
                 failed.requestEvent.content ==
                 content,
