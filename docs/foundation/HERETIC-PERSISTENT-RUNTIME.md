@@ -29,15 +29,27 @@ HereticPersistentRuntime.bind(...)
   consumes those exact outputs
   + one explicit product-runtime implementation identity
         ↓
-runtime selection
+StableVexLifeHereticRuntimeCompatibility
+  read-only predecessor receipt/process verification
+  no ownership transfer / no receipt rewrite
+        ↓
+HereticRuntimeAvailability
+  Family question:
+    "What does EnsureAvailable mean
+     against exact current runtime truth?"
   |
-  +-> StableVexLifeHereticRuntimeCompatibility
-  |     read-only predecessor receipt/process verification
-  |     no ownership transfer / no receipt rewrite
+  +-> exact predecessor borrowable
+  |     -> admit Qualified(BorrowedStableVexLife)
+  |     -> no product-owned Effect
   |
-  +-> HereticPersistentRuntime
-        VexLife-Prod-owned STARTING / QUALIFIED
-        reuse / recover / implementation-rotate / stop
+  +-> predecessor unavailable
+        -> request product-owned Effect
+           OBSERVE current
+           or ENSURE available
+        ↓
+HereticPersistentRuntime
+  VexLife-Prod-owned STARTING / QUALIFIED
+  reuse / recover / implementation-rotate / stop
         ↓
 MacHereticRuntimePlatform
   physical process / port / health / MLX qualification
@@ -79,6 +91,59 @@ versions
 The earlier owners must first produce their verified results.
 
 This is the anti-hidden-configuration boundary.
+
+## Runtime availability relationship
+
+The lived baseline earned one cross-owner semantic question that does not belong to either process
+implementation owner:
+
+> **What does `EnsureAvailable` mean against the exact current Heretic runtime relationship?**
+
+That question is now owned by `HereticRuntimeAvailability`.
+
+~~~text
+State.StableBorrowable
++ Control.EnsureAvailable
+-> State.Qualified(BorrowedStableVexLife)
+-> no product-owned Effect
+
+State.StablePredecessorUnavailable
++ Control.EnsureAvailable(AcquisitionAllowed)
+-> Effect.EnsureProductOwnedRuntime
+
+State.StablePredecessorUnavailable
++ Control.EnsureAvailable(ObservationOnly)
+-> Effect.ObserveCurrentProductOwnedRuntime
+
+product-owned qualified observation
+-> Family interpretation
+-> State.Qualified(VexLifeProdOwned)
+~~~
+
+Permanent ownership boundary:
+
+~~~text
+HereticRuntimeAvailability
+  owns the semantic availability decision
+
+StableVexLifeHereticRuntimeCompatibility
+  owns predecessor receipt/process observation
+
+HereticPersistentRuntime
+  owns VexLife-Prod process lifecycle + qualification
+
+VexLifeProdLocalSetup
+  composes the relationship and realizes the requested rightful Effect
+
+BORROWED QUALIFIED EVIDENCE
+!= PROCESS OWNERSHIP TRANSFER
+
+FAMILY EFFECT
+!= FAMILY PERFORMS PLATFORM WORK
+~~~
+
+The Family is intentionally small. Artifact acquisition, Python/MLX environment formation, launchd,
+HTTP qualification and product-service lifetime remain with their existing owners.
 
 ## Portable runtime meaning
 
@@ -350,32 +415,40 @@ the VexLife repository at runtime.
 
 ## Proof boundary
 
-Source tests are formed for:
-
-- exact product identity/catalog/configuration;
-- portable runtime semantic invariants;
-- exact artifact plan/classification;
-- exact Python/MLX create/verify/reuse semantics;
-- generic launchd start/retire behavior under a fake host;
-- persistent runtime start/reuse/STARTING recovery/implementation rotation;
-- exact stable VexLife predecessor receipt/process compatibility without ownership transfer;
-- orphan/port holds;
-- provisional cleanup without false semantic ownership;
-- qualification failure cleanup;
-- exact stop ownership;
-- macOS adapter wiring and qualification command shape.
-
-Still required before acceptance:
+The pre-refactor runtime body has already crossed the lived baseline on accepted VexLife-Prod main:
 
 ~~~text
-repository-owned Kotlin 2.4.20 JVM + common/jvm tests
-Kotlin/JS compile for common contracts
-durable product-owned Home/runtime receipt persistence through VexContractJson
-lived stable-runtime borrow against the canonical predecessor receipt
-real macOS launchd + process census proof for a product-owned fallback runtime
-real certified model artifact/environment reuse or acquisition
-real MLX start + health + model + chat qualification
-sustained local runtime after launcher completion
+accepted main
+1a1745547558110fdbc420d4c15896cd353f5c46
+
+accepted tree
+760a6d10f2aa98f3a0a2eebf7d53a2f5311aa7cf
 ~~~
+
+That lived trajectory established, among other predicates:
+
+- exact predecessor receipt/currentness classification, including abandoned predecessor fallthrough
+  without ownership transfer or predecessor mutation;
+- product-owned fallback runtime formation/qualification under the VexLife-Prod runtime namespace;
+- explicit product-owned Hugging Face cache binding for MLX model discovery;
+- sustained source-current product service;
+- one real canonical direct Vex turn with durable RESPONSE / Context / Head;
+- a later real browser-context turn and fresh reload continuity;
+- accepted-main service rotation preserving the same canonical Conversation/runtime relationship.
+
+The **refactor claim is narrower than re-proving those product effects**. The current candidate must
+prove:
+
+~~~text
+same runtime selection behavior
++ same predecessor/product custody boundary
++ same product-owned Effect realization
++ Family semantics compile/test on common source
++ LocalSetup JVM tests remain green
++ no new runtime / model / Home / Conversation effect
+~~~
+
+Do not replay a lived Conversation Send merely to prove this source refactor. A new lived effect is
+required only if later source changes alter a boundary whose claim cannot be proved deterministically.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][HERETIC-PERSISTENT-RUNTIME] -->
