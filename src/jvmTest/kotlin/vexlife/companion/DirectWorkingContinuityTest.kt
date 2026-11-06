@@ -1,0 +1,144 @@
+package vexlife.companion
+
+import java.nio.file.Files
+import java.time.Instant
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import vexlife.conversation.DirectConversationStore
+import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.memory.VexLifeMemoryContextFixture
+
+class DirectWorkingContinuityTest {
+    private fun productHome(): java.nio.file.Path {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-direct-working-continuity-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        CanonicalVexLifeHomeFixture.form(
+            home = home,
+            deviceSuffix = "working-device",
+            lineageSuffix = "working-lineage",
+        )
+        return home
+    }
+
+    @Test
+    fun absentReceiptReadIsEffectFree() {
+        val home =
+            productHome()
+
+        try {
+            assertNull(
+                DirectWorkingContinuity.read(
+                    productHome = home,
+                    turnRef =
+                        "turn.vexlife.working.absent",
+                ),
+            )
+            assertFalse(
+                Files.exists(
+                    home.resolve(
+                        "runtime/vexlife-prod/turn-working-continuity",
+                    ),
+                ),
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun smallPromptFormsAndPersistsNoCheckpointRequiredPostCommitTruth() {
+        val home =
+            productHome()
+
+        try {
+            val store =
+                DirectConversationStore(
+                    home,
+                )
+            val memory =
+                VexLifeMemoryContextFixture.current()
+
+            store.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef =
+                            "turn.vexlife.working.small",
+                        requestMessageRef =
+                            "message.vexlife.working.small",
+                        content =
+                            "Small continuity request",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-06T11:00:00Z",
+                            ),
+                    )
+                val prompt =
+                    DirectPromptContext.materialize(
+                        prior = null,
+                        currentRequest = request,
+                        memoryContext = memory,
+                    )
+                val prepared =
+                    DirectWorkingContinuity.prepare(
+                        productHome = home,
+                        currentRequest = request,
+                        promptContext = prompt.receipt,
+                        memoryContext = memory,
+                    )
+                val receipt =
+                    DirectWorkingContinuity.commitAfterCompletedTurn(
+                        productHome = home,
+                        turnRef = request.turnRef,
+                        prepared = prepared,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-06T11:00:01Z",
+                            ),
+                    )
+
+                assertEquals(
+                    "NO_CHECKPOINT_REQUIRED",
+                    receipt.disposition,
+                )
+                assertEquals(
+                    "NoCheckpointRequired",
+                    receipt.planStateOrNull,
+                )
+                assertTrue(
+                    receipt.effects.postCommitReceiptPersisted,
+                )
+                assertFalse(
+                    receipt.effects.workingCheckpointPersisted,
+                )
+                assertFalse(
+                    receipt.effects.workingHeadMutated,
+                )
+                assertEquals(
+                    receipt,
+                    DirectWorkingContinuity.read(
+                        productHome = home,
+                        turnRef = request.turnRef,
+                    ),
+                )
+            }
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+}
+
+// [VXG RealForever]
