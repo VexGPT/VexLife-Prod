@@ -157,6 +157,15 @@ class DirectConversationStore(
         val wholeHistoryEventEnumerationPerformed: Boolean,
     )
 
+    @ConsistentCopyVisibility
+    data class HistoricalCompletedTurn internal constructor(
+        val head: Head,
+        val requestEvent: Event,
+        val responseEvent: Event,
+        val exactEventFileReadCount: Int,
+        val currentCommittedLineageVerified: Boolean,
+    )
+
     @Serializable
     private data class ThreadWriterLeaseCore(
         val schemaVersion: String,
@@ -777,6 +786,135 @@ class DirectConversationStore(
 
     fun current(): Snapshot =
         readCurrentComplete()
+
+    /**
+     * Verify one immutable historical completed head against the exact current committed lineage.
+     *
+     * This is a read-only Conversation question. Memory/Score consumers borrow the answer rather
+     * than re-owning Conversation chain/context validation.
+     */
+    fun historicalCompletedTurn(
+        conversationHeadSha256: String,
+    ): HistoricalCompletedTurn {
+        requireSha256(
+            conversationHeadSha256,
+            "conversationHeadSha256",
+        )
+
+        val current =
+            requireNotNull(
+                readHeadRecord(),
+            ) {
+                "historical Conversation verification requires one current completed head"
+            }
+
+        val lineage =
+            mutableSetOf<String>()
+        var cursor: String? =
+            current.conversationHeadSha256
+        while (
+            cursor !=
+                null
+        ) {
+            require(
+                lineage.add(
+                    cursor,
+                ),
+            ) {
+                "canonical immutable head lineage contains a cycle"
+            }
+            val historical =
+                requireNotNull(
+                    VexDurableContractFile.read<VexLifeConversationContract.Head>(
+                        ownedRoot = productHome,
+                        path =
+                            immutableHeadPath(
+                                cursor,
+                            ),
+                    ),
+                ) {
+                    "canonical immutable head lineage is missing a historical receipt"
+                }
+            validateCanonicalHeadRecord(
+                historical,
+            )
+            cursor =
+                historical.priorConversationHeadSha256
+        }
+
+        require(
+            conversationHeadSha256 in
+                lineage,
+        ) {
+            "requested historical Conversation head is not in the exact current committed lineage"
+        }
+
+        val historical =
+            requireNotNull(
+                VexDurableContractFile.read<VexLifeConversationContract.Head>(
+                    ownedRoot = productHome,
+                    path =
+                        immutableHeadPath(
+                            conversationHeadSha256,
+                        ),
+                ),
+            )
+                .also(
+                    ::validateCanonicalHeadRecord,
+                )
+        val response =
+            requireNotNull(
+                readEventAt(
+                    eventPath(
+                        sequence = historical.sequence,
+                        eventHash = historical.eventHash,
+                    ),
+                ),
+            ) {
+                "historical Conversation response event is missing"
+            }
+        val request =
+            requireNotNull(
+                response.priorEventHash
+                    ?.let {
+                        requestHash ->
+                        readEventAt(
+                            eventPath(
+                                sequence =
+                                    historical.sequence -
+                                        1,
+                                eventHash = requestHash,
+                            ),
+                        )
+                    },
+            ) {
+                "historical Conversation request event is missing"
+            }
+
+        validateHeadAgainstPair(
+            head = historical,
+            request = request,
+            response = response,
+        )
+        validateContextBinding(
+            relativePath = historical.contextPath,
+            expectedContextSha256 = historical.contextSha256,
+            request = request,
+            response = response,
+        )
+
+        return HistoricalCompletedTurn(
+            head =
+                headProjection(
+                    value = historical,
+                    requestEventHash = request.eventHash,
+                ),
+            requestEvent = request,
+            responseEvent = response,
+            exactEventFileReadCount = 2,
+            currentCommittedLineageVerified = true,
+        )
+    }
 
     private fun prepareOwnedDirectories() {
         for (
