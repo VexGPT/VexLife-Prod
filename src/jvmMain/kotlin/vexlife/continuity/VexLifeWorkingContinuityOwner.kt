@@ -28,6 +28,8 @@ class VexLifeWorkingContinuityOwner(
             "vexlife-prod.working-continuity-head/v1"
         const val SuccessorClaimSchema =
             "vexlife-prod.working-continuity-successor-claim/v1"
+        const val SuccessorContextSchema =
+            "vexlife-prod.working-continuity-successor-context/v1"
         const val EffectOwnerRef =
             "owner.vexlife-prod.working-continuity.001"
     }
@@ -117,6 +119,46 @@ class VexLifeWorkingContinuityOwner(
         val semanticFingerprint: String,
     )
 
+    @Serializable
+    data class SuccessorContextEffects(
+        val homeMutated: Boolean,
+        val checkpointMutated: Boolean = false,
+        val currentHeadMutated: Boolean = false,
+        val successorClaimMutated: Boolean = false,
+        val successorContextIssued: Boolean,
+        val semanticAcceptanceCreated: Boolean = false,
+        val memoryPromotionPerformed: Boolean = false,
+        val providerCalled: Boolean = false,
+        val modelCalled: Boolean = false,
+        val trainingRan: Boolean = false,
+        val modelWeightsChanged: Boolean = false,
+    )
+
+    @Serializable
+    data class SuccessorContext(
+        val schemaVersion: String,
+        val truthClass: String,
+        val effectOwnerRef: String,
+        val contextMode: String,
+        val lineageRef: String,
+        val threadRef: String,
+        val checkpointRef: String,
+        val checkpointFingerprint: String,
+        val commitReceiptRef: String,
+        val commitReceiptFingerprint: String,
+        val successorClaimRef: String,
+        val successorClaimFingerprint: String,
+        val priorConversationHeadSha256: String,
+        val priorRequestEventRef: String,
+        val currentRequestEventBinding: VexLifeMemoryContract.CurrentRequestBinding,
+        val workingSet: VexLifeWorkingContinuity.WorkingSet,
+        val sourceRefs: List<String>,
+        val issuedAt: String,
+        val effects: SuccessorContextEffects,
+        val successorContextRef: String,
+        val semanticFingerprint: String,
+    )
+
     data class Current(
         val checkpoint: VexLifeWorkingContinuity.Checkpoint,
         val commitReceipt: CommitReceipt,
@@ -135,13 +177,43 @@ class VexLifeWorkingContinuityOwner(
         val claim: SuccessorClaim,
     )
 
+    data class IssueResult(
+        val state: String,
+        val effectPerformedNow: Boolean,
+        val context: SuccessorContext,
+    )
+
     private data class Paths(
         val root: Path,
         val checkpoints: Path,
         val receipts: Path,
         val successorClaims: Path,
+        val successorContexts: Path,
         val head: Path,
         val lock: Path,
+    )
+
+    @Serializable
+    private data class SuccessorContextCore(
+        val schemaVersion: String,
+        val truthClass: String,
+        val effectOwnerRef: String,
+        val contextMode: String,
+        val lineageRef: String,
+        val threadRef: String,
+        val checkpointRef: String,
+        val checkpointFingerprint: String,
+        val commitReceiptRef: String,
+        val commitReceiptFingerprint: String,
+        val successorClaimRef: String,
+        val successorClaimFingerprint: String,
+        val priorConversationHeadSha256: String,
+        val priorRequestEventRef: String,
+        val currentRequestEventBinding: VexLifeMemoryContract.CurrentRequestBinding,
+        val workingSet: VexLifeWorkingContinuity.WorkingSet,
+        val sourceRefs: List<String>,
+        val issuedAt: String,
+        val effects: SuccessorContextEffects,
     )
 
     @Serializable
