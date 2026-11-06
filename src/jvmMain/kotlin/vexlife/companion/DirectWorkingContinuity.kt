@@ -326,19 +326,53 @@ object DirectWorkingContinuity {
         ) {
             "direct working continuity Memory does not match the exact prompt materialization"
         }
-        priorSuccessorContext
-            ?.let {
-                require(
-                    it.contextMode ==
-                        "WORKING_CHECKPOINT_SUCCESSOR" &&
-                        it.lineageRef ==
-                        currentRequest.companionLineageRef &&
-                        it.threadRef ==
-                        currentRequest.threadRef,
-                ) {
-                    "direct working continuity prior successor Context belongs to another lineage/thread"
-                }
+        if (
+            priorSuccessorContext ==
+                null
+        ) {
+            require(
+                !promptContext.workingContinuityIncluded &&
+                    promptContext.workingContinuityContextRef ==
+                    null &&
+                    promptContext.workingContinuityContextFingerprint ==
+                    null &&
+                    promptContext.workingContinuityCheckpointRef ==
+                    null &&
+                    promptContext.workingContinuitySuccessorClaimRef ==
+                    null &&
+                    promptContext.workingContinuitySourceRefs.isEmpty() &&
+                    promptContext.workingContinuitySystemMessageSha256 ==
+                    null &&
+                    promptContext.workingContinuityEstimatedSystemMessageTokens ==
+                    0,
+            ) {
+                "direct working continuity prompt receipt unexpectedly carries successor Context"
             }
+        } else {
+            require(
+                priorSuccessorContext.contextMode ==
+                    "WORKING_CHECKPOINT_SUCCESSOR" &&
+                    priorSuccessorContext.lineageRef ==
+                    currentRequest.companionLineageRef &&
+                    priorSuccessorContext.threadRef ==
+                    currentRequest.threadRef &&
+                    promptContext.workingContinuityIncluded &&
+                    promptContext.contextMode ==
+                    "WORKING_CHECKPOINT_SUCCESSOR" &&
+                    promptContext.workingContinuityContextRef ==
+                    priorSuccessorContext.successorContextRef &&
+                    promptContext.workingContinuityContextFingerprint ==
+                    priorSuccessorContext.semanticFingerprint &&
+                    promptContext.workingContinuityCheckpointRef ==
+                    priorSuccessorContext.checkpointRef &&
+                    promptContext.workingContinuitySuccessorClaimRef ==
+                    priorSuccessorContext.successorClaimRef &&
+                    promptContext.workingContinuitySourceRefs ==
+                    priorSuccessorContext.sourceRefs,
+            ) {
+                "direct working continuity prior successor Context does not match exact prompt materialization"
+            }
+        }
 
         val previousWorkingSet =
             priorSuccessorContext
