@@ -10,6 +10,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
@@ -1558,13 +1559,12 @@ object VexLifeCurrentMemoryReader {
                 semanticFingerprint = fingerprint,
             )
         val observed =
-            VexContractJson.decode<VexLifeContinuityObservation.Observation>(
-                VexContractJson.compactEncodeElement(
+            VexContractJson.Strict
+                .decodeFromJsonElement<VexLifeContinuityObservation.Observation>(
                     event.element(
                         "continuityObservation",
                     ),
-                ),
-            )
+                )
         require(
             observed ==
                 expected,
