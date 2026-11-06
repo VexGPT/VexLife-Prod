@@ -268,6 +268,13 @@ object DirectCompanionTurn {
                             memoryContext = memoryContext,
                             browserContext = intent.browserContext,
                         )
+                    val workingContinuity =
+                        DirectWorkingContinuity.prepare(
+                            productHome = productHome,
+                            currentRequest = request,
+                            promptContext = prompt.receipt,
+                            memoryContext = memoryContext,
+                        )
 
                     DirectPromptContext.reverify(
                         materialization = prompt,
@@ -331,6 +338,13 @@ object DirectCompanionTurn {
                             contextSha256 = context.contextSha256,
                             formedAt = hooks.now(),
                         )
+
+                    DirectWorkingContinuity.commitAfterCompletedTurn(
+                        productHome = productHome,
+                        turnRef = request.turnRef,
+                        prepared = workingContinuity,
+                        formedAt = hooks.now(),
+                    )
 
                     Result(
                         state = "TURN_COMPLETED",
