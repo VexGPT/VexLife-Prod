@@ -210,6 +210,72 @@ class VexLifeWorkingContinuityOwnerTest {
     }
 
     @Test
+    fun tamperedPlanCannotMasqueradeAsIdempotentCurrent() {
+        val home =
+            Files.createTempDirectory(
+                "vexlife-working-owner-idempotent-tamper-",
+            )
+                .toAbsolutePath()
+
+        try {
+            val owner =
+                VexLifeWorkingContinuityOwner(
+                    home,
+                )
+            val working =
+                workingSet()
+            val (
+                input,
+                plan,
+            ) =
+                checkpointPlan(
+                    working,
+                )
+            val committed =
+                owner.commitPlan(
+                    plan = plan,
+                    pressureInput = input,
+                    workingSet = working,
+                    committedAt =
+                        Instant.parse(
+                            "2026-11-06T10:05:00Z",
+                        ),
+                )
+            val tampered =
+                plan.copy(
+                    semanticFingerprint =
+                        "0".repeat(
+                            64,
+                        ),
+                )
+
+            assertFailsWith<IllegalArgumentException> {
+                owner.commitPlan(
+                    plan = tampered,
+                    pressureInput = input,
+                    workingSet = working,
+                    committedAt =
+                        Instant.parse(
+                            "2026-11-06T10:06:00Z",
+                        ),
+                )
+            }
+
+            assertEquals(
+                committed.current,
+                owner.readCurrent(
+                    lineageRef = working.lineageRef,
+                    threadRef = working.threadRef,
+                ),
+            )
+        } finally {
+            home
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun staleOrTamperedPlanFailsBeforeDurableOwnerNamespaceIsCreated() {
         val home =
             Files.createTempDirectory(
