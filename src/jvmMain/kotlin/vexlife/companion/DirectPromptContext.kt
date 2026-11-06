@@ -3,6 +3,7 @@ package vexlife.companion
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.contract.VexContractJson
@@ -126,6 +127,9 @@ object DirectPromptContext {
         val effectsPerformed: Boolean,
     )
 
+    @OptIn(
+        ExperimentalSerializationApi::class,
+    )
     @Serializable
     @ConsistentCopyVisibility
     data class Receipt internal constructor(
