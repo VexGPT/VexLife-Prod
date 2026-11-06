@@ -181,30 +181,69 @@ SUCCESSOR CONTEXT
 != PORTABLE BEARER AUTHORITY
 ~~~
 
-## Current candidate boundary
+## Direct-turn producer
 
-This first slice owns only:
+The direct Companion path now has one bounded producer surface:
 
 ~~~text
-exact prompt-materialization pressure facts
+exact live prompt receipt + current attributed Memory
         ↓
-Pressure
+DirectWorkingContinuity.prepare(...)
         ↓
-effect-free Plan
+effect-free WorkingSet + pressure Plan
+
+successful provider turn
         ↓
-optional reference-only Checkpoint
+canonical Context + Conversation head durable
+        ↓
+DirectWorkingContinuity.commitAfterCompletedTurn(...)
+        ↓
+NO_CHECKPOINT_REQUIRED
+or CHECKPOINT_COMMITTED
+or ROLLOVER_COMMITTED
+or HELD
 ~~~
 
-After the successor-Context issuance slice, the remaining held effects are:
+The Plan is formed while the exact Memory bounded-out counts are still available, but no working
+checkpoint effect is realized until after the corresponding Conversation head is durable.
 
-- change `DirectPromptContext` selection to consume only owner-current successor Context;
+A continuity-specific formation/commit problem does **not** retroactively convert a completed
+Conversation turn into a provider failure. It becomes a separate post-commit `HELD` receipt under:
+
+~~~text
+runtime/vexlife-prod/turn-working-continuity/<turnRef>.json
+~~~
+
+The receipt is a read-side/diagnostic surface for the completed turn. It records source descent and
+whether a checkpoint/rollover owner effect became current, while explicitly denying Conversation,
+semantic-Memory, provider/model, training and weight-change effects.
+
+Permanent:
+
+~~~text
+TURN COMPLETED
+!= WORKING CONTINUITY MUST HAVE SUCCEEDED
+
+WORKING CONTINUITY HELD
+!= RETROACTIVE TURN FAILURE
+~~~
+
+## Current candidate boundary
+
+The current producer slice adds only ordinary completed-turn production of the already-accepted
+working-continuity semantics and durable owner effects.
+
+It does **not yet**:
+
+- claim/issue successor Context from the next live request;
+- change `DirectPromptContext` selection;
 - activate `WORKING_CHECKPOINT_SUCCESSOR` in provider materialization;
-- keep Memory selection current within the new mode;
-- add Capability Atlas/self-frame content;
-- change provider behavior only through the already-owned prompt path.
+- change current Memory selection;
+- add Capability Atlas/self-frame content.
 
-Those effects remain the next consumer-driven steps after the semantic contract is accepted.
-
+The next consumer-driven slice may claim/issue and consume owner-current successor Context only after
+the next durable request exists, with the Conversation owner re-verifying the exact prior/current
+request bindings before provider materialization.
 ## Why this boundary is earned
 
 If this relationship were collapsed back into prompt materialization, the product would lose a
