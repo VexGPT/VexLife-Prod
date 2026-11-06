@@ -54,10 +54,12 @@ exact immediate prior completed turn
 REQUEST event durable
         ↓
 VexLifeCurrentMemoryReader
-  canonical Home -> current Score / semantic authority
+  canonical Home -> structurally current Score / semantic authority
+  -> exact historical Conversation source ancestry
   -> committed daily stratum
-  -> Living Journal pages
-  -> bounded attributed Memory context
+  -> Living Journal pages when its source Conversation frontier is still current
+  -> otherwise HELD / DAILY_MEMORY_SOURCE_FRONTIER_STALE
+  -> bounded attributed Memory context with no provider Memory content while held
         ↓
 DirectPromptContext
   first turn:
@@ -143,10 +145,13 @@ IMMEDIATE_PRIOR_COMPLETED_TURN
 
 It does not enumerate whole history for prompt selection.
 
-Memory is supplied by `VexLifeCurrentMemoryReader` from the canonical Home. A source-current
-attributed packet becomes provider system context; a held/empty Memory context adds no provider
-content. The reader is re-run under the same Conversation writer lease before provider invocation and
-must return the exact same context used to form the prompt receipt.
+Memory is supplied by `VexLifeCurrentMemoryReader` from the canonical Home. Score may remain a
+valid structurally-current owner while its exact Conversation source is a verified historical
+ancestor. Prompt Memory is CURRENT only when the committed Daily Memory source Conversation frontier
+still equals the current canonical Conversation head; otherwise the reader returns
+`DAILY_MEMORY_SOURCE_FRONTIER_STALE` as HELD and supplies no Memory provider content. The reader is
+re-run under the same Conversation writer lease before provider invocation and must return the exact
+same context used to form the prompt receipt.
 
 Current VexLife's prompt-context runtime also has a separately-owned
 `WORKING_CHECKPOINT_SUCCESSOR` mode when one exact working-rollover owner is eligible. That

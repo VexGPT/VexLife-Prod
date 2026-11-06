@@ -71,6 +71,9 @@ Kotlin/VexArchitecture rather than acquire an ongoing runtime dependency on hist
   -> exact Conversation / Score / semantic-authority source frontier
 
 Living Journal Memory projection
+  -> Score source Conversation may be a verified historical ancestor without making Score corrupt
+  -> prompt Memory is CURRENT only when the Daily Memory Conversation frontier still equals current Conversation
+  -> historical-but-valid Daily frontier becomes HELD / DAILY_MEMORY_SOURCE_FRONTIER_STALE
   -> current attributed summaries only
   -> no raw Conversation body injection
   -> bounded pages / token budget

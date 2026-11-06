@@ -15,6 +15,33 @@ import vexlife.home.CanonicalVexLifeHomeFixture
 
 class VexLifeCurrentMemoryReaderTest {
     @Test
+    fun promptFrontierTreatsHistoricalConversationSourceAsHeldNotCorrupt() {
+        val historical =
+            "a".repeat(
+                64,
+            )
+        val current =
+            "b".repeat(
+                64,
+            )
+
+        assertEquals(
+            "HELD",
+            VexLifeCurrentMemoryReader.promptFrontierCurrentness(
+                sourceConversationHeadSha256 = historical,
+                currentConversationHeadSha256 = current,
+            ),
+        )
+        assertEquals(
+            "CURRENT",
+            VexLifeCurrentMemoryReader.promptFrontierCurrentness(
+                sourceConversationHeadSha256 = current,
+                currentConversationHeadSha256 = current,
+            ),
+        )
+    }
+
+    @Test
     fun noCommittedDailyMemoryReturnsTruthfulHeldContextWithoutProviderContent() {
         val parent =
             Files.createTempDirectory(

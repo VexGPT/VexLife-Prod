@@ -167,6 +167,28 @@ object VexLifeCurrentMemoryReader {
         val memoryTokenCap: Int,
     )
 
+    internal fun promptFrontierCurrentness(
+        sourceConversationHeadSha256: String,
+        currentConversationHeadSha256: String,
+    ): String {
+        requireSha256(
+            sourceConversationHeadSha256,
+            "sourceConversationHeadSha256",
+        )
+        requireSha256(
+            currentConversationHeadSha256,
+            "currentConversationHeadSha256",
+        )
+        return if (
+            sourceConversationHeadSha256 ==
+            currentConversationHeadSha256
+        ) {
+            "CURRENT"
+        } else {
+            "HELD"
+        }
+    }
+
     fun readCurrent(
         productHome: Path,
         threadRef: String =
@@ -232,7 +254,6 @@ object VexLifeCurrentMemoryReader {
             loadScore(
                 home = home,
                 identity = identity,
-                expectedConversationHead = conversationHead.conversationHeadSha256,
                 conversationStore = conversationStore,
                 conversation = conversation,
             )
@@ -241,8 +262,24 @@ object VexLifeCurrentMemoryReader {
                 home = home,
                 identity = identity,
                 score = score,
-                expectedConversationHead = conversationHead.conversationHeadSha256,
+                conversationStore = conversationStore,
             )
+
+        if (
+            promptFrontierCurrentness(
+                sourceConversationHeadSha256 =
+                    daily.sourceConversationHeadSha256,
+                currentConversationHeadSha256 =
+                    conversationHead.conversationHeadSha256,
+            ) ==
+            "HELD"
+        ) {
+            return held(
+                listOf(
+                    "DAILY_MEMORY_SOURCE_FRONTIER_STALE",
+                ),
+            )
+        }
 
         return formContext(
             score = score,
@@ -253,7 +290,6 @@ object VexLifeCurrentMemoryReader {
     private fun loadScore(
         home: Path,
         identity: Identity,
-        expectedConversationHead: String,
         conversationStore: DirectConversationStore,
         conversation: DirectConversationStore.Snapshot,
     ): ScoreSnapshot {
@@ -276,13 +312,18 @@ object VexLifeCurrentMemoryReader {
             head,
             identity,
         )
-        require(
+        val scoreSourceConversationHead =
             head.string(
                 "sourceConversationHeadSha256",
-            ) ==
-                expectedConversationHead,
+            )
+        val historicalScoreSource =
+            conversationStore.historicalCompletedTurn(
+                scoreSourceConversationHead,
+            )
+        require(
+            historicalScoreSource.currentCommittedLineageVerified,
         ) {
-            "current Score head is stale against current lived Conversation"
+            "current Score source Conversation head is not in the current committed lineage"
         }
 
         val scoreHeadSha =
@@ -1824,7 +1865,7 @@ object VexLifeCurrentMemoryReader {
         home: Path,
         identity: Identity,
         score: ScoreSnapshot,
-        expectedConversationHead: String,
+        conversationStore: DirectConversationStore,
     ): DailySnapshot {
         val root =
             "daily-memory-dream/" +
@@ -1846,6 +1887,10 @@ object VexLifeCurrentMemoryReader {
                 prefix = "daily-dream-head",
                 label = "current Daily Memory head",
             )
+        val sourceConversationHead =
+            head.string(
+                "sourceConversationHeadSha256",
+            )
         require(
             head.string(
                 "homeRef",
@@ -1863,10 +1908,10 @@ object VexLifeCurrentMemoryReader {
                     "threadRef",
                 ) ==
                 identity.threadRef &&
-                head.string(
+                sourceConversationHead ==
+                score.head.string(
                     "sourceConversationHeadSha256",
-                ) ==
-                expectedConversationHead &&
+                ) &&
                 head.string(
                     "sourceScoreHeadSha256",
                 ) ==
@@ -1880,7 +1925,16 @@ object VexLifeCurrentMemoryReader {
                     "semanticAuthorityHeadSha256",
                 ),
         ) {
-            "Daily Memory head is stale against current source frontier"
+            "Daily Memory head is not exact to the current Score/authority source frontier"
+        }
+        val historicalDailySource =
+            conversationStore.historicalCompletedTurn(
+                sourceConversationHead,
+            )
+        require(
+            historicalDailySource.currentCommittedLineageVerified,
+        ) {
+            "Daily Memory source Conversation head is not in the current committed lineage"
         }
 
         val headSha =
@@ -1959,7 +2013,7 @@ object VexLifeCurrentMemoryReader {
                 stratum.string(
                     "sourceConversationHeadSha256",
                 ) ==
-                expectedConversationHead &&
+                sourceConversationHead &&
                 stratum.string(
                     "sourceScoreHeadSha256",
                 ) ==
@@ -2168,7 +2222,7 @@ object VexLifeCurrentMemoryReader {
                 receipt.string(
                     "sourceConversationHeadSha256",
                 ) ==
-                    expectedConversationHead &&
+                    sourceConversationHead &&
                     receipt.string(
                         "sourceScoreHeadSha256",
                     ) ==
@@ -2176,7 +2230,7 @@ object VexLifeCurrentMemoryReader {
                         "scoreHeadSha256",
                     ),
             ) {
-                "Daily Memory child receipt is stale against current source frontier"
+                "Daily Memory child receipt differs from its exact Daily source frontier"
             }
         }
         require(
@@ -2269,7 +2323,7 @@ object VexLifeCurrentMemoryReader {
 
         return DailySnapshot(
             stratum = stratum,
-            sourceConversationHeadSha256 = expectedConversationHead,
+            sourceConversationHeadSha256 = sourceConversationHead,
             sourceScoreHeadSha256 =
                 score.head.string(
                     "scoreHeadSha256",
