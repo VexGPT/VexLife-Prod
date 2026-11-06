@@ -99,15 +99,7 @@ class DirectTurnContextStore(
         val rawReportedModelPersisted: Boolean,
         val privacyClass: String,
         val formedAt: String,
-    ) {
-        /**
-         * Temporary Kotlin caller compatibility only. Canonical VexLife persists a context path/hash,
-         * not a separately authoritative contextRef.
-         */
-        val contextRef: String
-            get() =
-                contextPath
-    }
+    )
 
     private val productHome =
         VexOwnedPath.requireRoot(
