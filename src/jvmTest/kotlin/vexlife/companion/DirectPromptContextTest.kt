@@ -2,6 +2,10 @@ package vexlife.companion
 
 import java.nio.file.Files
 import java.time.Instant
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -11,6 +15,7 @@ import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.continuity.VexLifeWorkingContinuity
 import vexlife.continuity.VexLifeWorkingContinuityOwner
+import vexlife.contract.VexContractJson
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
@@ -23,6 +28,111 @@ class DirectPromptContextTest {
         CanonicalVexLifeHomeFixture.form(
             productHome,
         )
+    }
+
+    @Test
+    fun historicalV2ReceiptRoundTripsWithoutNewWorkingFieldsInCanonicalHashShape() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-v2-compat-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val store =
+                DirectConversationStore(
+                    productHome,
+                )
+
+            store.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef =
+                            "turn.self-development.v2-compat",
+                        requestMessageRef =
+                            "message.self-development.human.v2-compat",
+                        content =
+                            "Historical receipt compatibility",
+                    )
+                val receipt =
+                    DirectPromptContext.materialize(
+                        prior = null,
+                        currentRequest = request,
+                    )
+                        .receipt
+                val full =
+                    VexContractJson.Strict
+                        .encodeToJsonElement(
+                            receipt,
+                        )
+                        .jsonObject
+                val workingKeys =
+                    setOf(
+                        "workingContinuityIncluded",
+                        "workingContinuityContextRef",
+                        "workingContinuityContextFingerprint",
+                        "workingContinuityCheckpointRef",
+                        "workingContinuitySuccessorClaimRef",
+                        "workingContinuitySourceRefs",
+                        "workingContinuitySystemMessageSha256",
+                        "workingContinuityEstimatedSystemMessageTokens",
+                    )
+                val historical =
+                    JsonObject(
+                        full
+                            .filterKeys {
+                                it !in
+                                    workingKeys
+                            }
+                            .toMutableMap()
+                            .also {
+                                it[
+                                    "schemaVersion"
+                                ] =
+                                    JsonPrimitive(
+                                        DirectPromptContext.ReceiptSchemaV2,
+                                    )
+                            },
+                    )
+                val decoded =
+                    VexContractJson.decode<DirectPromptContext.Receipt>(
+                        historical.toString(),
+                    )
+
+                assertEquals(
+                    DirectPromptContext.ReceiptSchemaV2,
+                    decoded.schemaVersion,
+                )
+                assertFalse(
+                    decoded.workingContinuityIncluded,
+                )
+                assertNull(
+                    decoded.workingContinuityContextRef,
+                )
+                assertTrue(
+                    decoded.workingContinuitySourceRefs.isEmpty(),
+                )
+                assertEquals(
+                    VexContractJson.canonicalEncodeElement(
+                        historical,
+                    ),
+                    VexContractJson.canonicalEncode(
+                        decoded,
+                    ),
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
     }
 
     @Test
