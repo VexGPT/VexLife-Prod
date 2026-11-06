@@ -10,9 +10,11 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.memory.VexLifeMemoryContextFixture
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -189,6 +191,158 @@ class DirectCompanionTurnTest {
             assertTrue(
                 first.currentConversationHeadSha256 !=
                     second.currentConversationHeadSha256,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun successfulHighPressureTurnProducesDurableRolloverCheckpointForNextTurn() {
+        val home =
+            productHome()
+        val memory =
+            VexLifeMemoryContextFixture.current()
+        val requestTokenTarget =
+            DirectPromptContext.InputTokenBudget -
+                DirectPromptContext.ReservedOutputTokens +
+                100 -
+                memory.estimatedSystemMessageTokens
+        val requestContent =
+            "x".repeat(
+                (
+                    requestTokenTarget -
+                        4
+                ) *
+                    4,
+            )
+        var providerCalls =
+            0
+
+        try {
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home,
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.rollover-producer",
+                            content =
+                                requestContent,
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport =
+                                DirectCompanionConnection.Transport {
+                                    providerCalls +=
+                                        1
+                                    DirectCompanionConnection.HttpResult(
+                                        status = 200,
+                                        body =
+                                            """
+                                            {
+                                              "model": "default_model",
+                                              "choices": [
+                                                {
+                                                  "message": {
+                                                    "role": "assistant",
+                                                    "content": "Rollover producer response"
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                            """.trimIndent(),
+                                    )
+                                },
+                            currentMemoryContext = {
+                                memory
+                            },
+                            now = {
+                                Instant.parse(
+                                    "2026-11-06T11:10:00Z",
+                                )
+                            },
+                        ),
+                )
+
+            assertEquals(
+                1,
+                providerCalls,
+            )
+            assertEquals(
+                "TURN_COMPLETED",
+                result.state,
+            )
+
+            val continuity =
+                assertNotNull(
+                    DirectWorkingContinuity.read(
+                        productHome = home,
+                        turnRef = result.turnRef,
+                    ),
+                )
+            assertEquals(
+                "ROLLOVER_COMMITTED",
+                continuity.disposition,
+            )
+            assertTrue(
+                continuity.effects.postCommitReceiptPersisted,
+            )
+            assertTrue(
+                continuity.effects.workingCheckpointPersisted,
+            )
+            assertTrue(
+                continuity.effects.workingHeadMutated,
+            )
+
+            val ownerCurrent =
+                assertNotNull(
+                    VexLifeWorkingContinuityOwner(
+                        home,
+                    )
+                        .readCurrent(
+                            lineageRef =
+                                DirectConversationStore(
+                                    home,
+                                )
+                                    .current()
+                                    .head
+                                    ?.companionLineageRef
+                                    ?: error(
+                                        "completed turn lost lineage",
+                                    ),
+                            threadRef =
+                                DirectConversationStore(
+                                    home,
+                                )
+                                    .current()
+                                    .head
+                                    ?.threadRef
+                                    ?: error(
+                                        "completed turn lost thread",
+                                    ),
+                        ),
+                )
+            assertEquals(
+                "ROLLOVER_COMMITTED",
+                ownerCurrent.commitReceipt.disposition,
+            )
+            assertTrue(
+                ownerCurrent.commitReceipt.successorContextRequired,
+            )
+            assertEquals(
+                result.requestEventRef,
+                ownerCurrent.checkpoint.workingSet.cursorEventRef,
+            )
+            assertTrue(
+                ownerCurrent.checkpoint.workingSet.currentStatementRefs.contains(
+                    "statement.score.continuity.001",
+                ),
             )
         } finally {
             home.parent
