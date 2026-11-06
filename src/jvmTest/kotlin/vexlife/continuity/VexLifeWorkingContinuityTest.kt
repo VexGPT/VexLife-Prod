@@ -155,7 +155,11 @@ class VexLifeWorkingContinuityTest {
             pressure.state,
         )
         assertTrue(
-            "MEMORY_BOUNDED_OUT" in
+            "MEMORY_CONTINUITY_BOUNDED_OUT" in
+                pressure.reasonCodes,
+        )
+        assertFalse(
+            "PRESSURE_WITHIN_NORMAL_BOUNDS" in
                 pressure.reasonCodes,
         )
         assertFalse(
