@@ -498,6 +498,309 @@ class DirectCompanionTurnTest {
     }
 
     @Test
+    fun failedWorkingSuccessorDoesNotBlockFreshRequestScopedSuccessorAttempt() {
+        val home =
+            productHome()
+        val memory =
+            VexLifeMemoryContextFixture.current()
+        val requestTokenTarget =
+            DirectPromptContext.InputTokenBudget -
+                DirectPromptContext.ReservedOutputTokens +
+                100 -
+                memory.estimatedSystemMessageTokens
+        val highPressureRequest =
+            "y".repeat(
+                (
+                    requestTokenTarget -
+                        4
+                ) *
+                    4,
+            )
+        var calls =
+            0
+        val transport =
+            DirectCompanionConnection.Transport {
+                call ->
+                calls +=
+                    1
+                when (
+                    calls
+                ) {
+                    1 ->
+                        DirectCompanionConnection.HttpResult(
+                            status = 200,
+                            body =
+                                """
+                                {
+                                  "model": "default_model",
+                                  "choices": [
+                                    {
+                                      "message": {
+                                        "role": "assistant",
+                                        "content": "Rollover recovery baseline"
+                                      }
+                                    }
+                                  ]
+                                }
+                                """.trimIndent(),
+                        )
+
+                    2 -> {
+                        assertTrue(
+                            call.body.contains(
+                                "VEXLIFE_WORKING_CONTINUITY_CONTEXT/v1",
+                            ),
+                        )
+                        assertTrue(
+                            call.body.contains(
+                                "Failed successor request",
+                            ),
+                        )
+                        DirectCompanionConnection.HttpResult(
+                            status = 503,
+                            body = "",
+                        )
+                    }
+
+                    else -> {
+                        assertTrue(
+                            call.body.contains(
+                                "VEXLIFE_WORKING_CONTINUITY_CONTEXT/v1",
+                            ),
+                        )
+                        assertTrue(
+                            call.body.contains(
+                                "Fresh successor recovery request",
+                            ),
+                        )
+                        assertFalse(
+                            call.body.contains(
+                                "Failed successor request",
+                            ),
+                        )
+                        assertFalse(
+                            call.body.contains(
+                                "Rollover recovery baseline",
+                            ),
+                        )
+                        DirectCompanionConnection.HttpResult(
+                            status = 200,
+                            body =
+                                """
+                                {
+                                  "model": "default_model",
+                                  "choices": [
+                                    {
+                                      "message": {
+                                        "role": "assistant",
+                                        "content": "Fresh request-scoped successor recovered"
+                                      }
+                                    }
+                                  ]
+                                }
+                                """.trimIndent(),
+                        )
+                    }
+                }
+            }
+
+        try {
+            val first =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home,
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.rollover-recovery-base",
+                            content =
+                                highPressureRequest,
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            currentMemoryContext = {
+                                memory
+                            },
+                        ),
+                )
+
+            val firstHead =
+                assertNotNull(
+                    DirectConversationStore(
+                        home,
+                    )
+                        .current()
+                        .head,
+                )
+            val owner =
+                VexLifeWorkingContinuityOwner(
+                    home,
+                )
+            assertEquals(
+                "ROLLOVER_COMMITTED",
+                assertNotNull(
+                    owner.readCurrent(
+                        lineageRef =
+                            firstHead.companionLineageRef,
+                        threadRef =
+                            firstHead.threadRef,
+                    ),
+                )
+                    .commitReceipt
+                    .disposition,
+            )
+
+            assertFailsWith<DirectCompanionTurn.TurnException> {
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home,
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.rollover-recovery-failed",
+                            content =
+                                "Failed successor request",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            currentMemoryContext = {
+                                memory
+                            },
+                        ),
+                )
+            }
+
+            val afterFailure =
+                DirectConversationStore(
+                    home,
+                )
+                    .current()
+            assertEquals(
+                first.currentConversationHeadSha256,
+                afterFailure.head
+                    ?.conversationHeadSha256,
+            )
+            val failedRequest =
+                afterFailure.abandonedAttempts
+                    .single()
+                    .requestEvent
+            val failedBinding =
+                VexLifeMemoryContract.CurrentRequestBinding(
+                    eventRef =
+                        failedRequest.eventRef,
+                    eventHash =
+                        failedRequest.eventHash,
+                    sequence =
+                        failedRequest.sequence,
+                )
+            val failedContext =
+                assertNotNull(
+                    owner.readSuccessorContext(
+                        lineageRef =
+                            firstHead.companionLineageRef,
+                        threadRef =
+                            firstHead.threadRef,
+                        currentRequestEventBinding =
+                            failedBinding,
+                    ),
+                )
+
+            val recovered =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home,
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.rollover-recovery-fresh",
+                            content =
+                                "Fresh successor recovery request",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            currentMemoryContext = {
+                                memory
+                            },
+                        ),
+                )
+
+            assertEquals(
+                3,
+                calls,
+            )
+            assertEquals(
+                "Fresh request-scoped successor recovered",
+                recovered.content,
+            )
+            assertEquals(
+                "WORKING_CHECKPOINT_SUCCESSOR",
+                recovered.promptContextReceipt.contextMode,
+            )
+            assertTrue(
+                recovered.promptContextReceipt.selectedConversationEventRefs.isEmpty(),
+            )
+
+            val afterRecovery =
+                DirectConversationStore(
+                    home,
+                )
+                    .current()
+            val recoveredRequest =
+                afterRecovery.canonicalEvents
+                    .single {
+                        it.eventRef ==
+                            recovered.requestEventRef
+                    }
+            val recoveredBinding =
+                VexLifeMemoryContract.CurrentRequestBinding(
+                    eventRef =
+                        recoveredRequest.eventRef,
+                    eventHash =
+                        recoveredRequest.eventHash,
+                    sequence =
+                        recoveredRequest.sequence,
+                )
+            val recoveredContext =
+                assertNotNull(
+                    owner.readSuccessorContext(
+                        lineageRef =
+                            firstHead.companionLineageRef,
+                        threadRef =
+                            firstHead.threadRef,
+                        currentRequestEventBinding =
+                            recoveredBinding,
+                    ),
+                )
+
+            assertTrue(
+                failedContext.successorContextRef !=
+                    recoveredContext.successorContextRef,
+            )
+            assertEquals(
+                failedRequest.eventRef,
+                failedContext.currentRequestEventBinding.eventRef,
+            )
+            assertEquals(
+                recovered.requestEventRef,
+                recoveredContext.currentRequestEventBinding.eventRef,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun postCompletionContinuityExceptionCannotRetroactivelyFailCompletedTurn() {
         val home =
             productHome()
