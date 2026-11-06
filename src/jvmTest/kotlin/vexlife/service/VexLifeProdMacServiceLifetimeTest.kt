@@ -442,6 +442,7 @@ class VexLifeProdMacServiceLifetimeTest {
                     listOf(
                         "java.base",
                         "java.net.http",
+                        "jdk.crypto.ec",
                         "jdk.httpserver",
                     ),
                 payloadSha256 = payload,
