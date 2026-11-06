@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.time.Instant
+import java.util.UUID
 import kotlinx.serialization.Serializable
 import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
@@ -24,13 +25,13 @@ object DirectCompanionTurn {
         "vexlife-prod.direct-companion-turn-failure/v1"
 
     data class Intent(
-        val sendAttemptRef: String,
+        val idempotencyKey: String,
         val content: String,
     ) {
         init {
             requireRef(
-                sendAttemptRef,
-                "sendAttemptRef",
+                idempotencyKey,
+                "idempotencyKey",
             )
             require(
                 content.isNotEmpty(),
@@ -117,7 +118,7 @@ object DirectCompanionTurn {
         val receipt: FailureReceipt?,
         val route: String,
     ) : IllegalStateException(
-        "same failed send attempt must not replay; form a new sendAttemptRef",
+        "same failed send attempt must not replay; form a new idempotencyKey",
     )
 
     internal data class Hooks(
@@ -186,7 +187,7 @@ object DirectCompanionTurn {
 
         val identity =
             turnIdentity(
-                intent.sendAttemptRef,
+                intent.idempotencyKey,
             )
         val conversation =
             DirectConversationStore(
@@ -377,6 +378,21 @@ object DirectCompanionTurn {
         }
     }
 
+    @Serializable
+    private data class BrowserRequestIdentityCore(
+        val surface: String,
+        val projectRef: String,
+        val threadRef: String,
+        val channelRef: String,
+        val idempotencyKey: String,
+    )
+
+    @Serializable
+    private data class BrowserResponseIdentityCore(
+        val requestMessageRef: String,
+        val speakerRef: String,
+    )
+
     private data class Identity(
         val turnRef: String,
         val requestMessageRef: String,
@@ -384,29 +400,41 @@ object DirectCompanionTurn {
     )
 
     private fun turnIdentity(
-        sendAttemptRef: String,
+        idempotencyKey: String,
     ): Identity {
-        val fingerprint =
-            sha256(
-                DirectConversationIdentity.ThreadRef +
-                    "\u0000" +
-                    sendAttemptRef,
+        val requestFingerprint =
+            semanticHash(
+                BrowserRequestIdentityCore(
+                    surface = "reference.browser.direct-companion",
+                    projectRef = DirectConversationIdentity.ProjectRef,
+                    threadRef = DirectConversationIdentity.ThreadRef,
+                    channelRef = DirectConversationIdentity.ChannelRef,
+                    idempotencyKey = idempotencyKey,
+                ),
+            )
+        val requestMessageRef =
+            "message.vexlife.conversation.human." +
+                requestFingerprint.take(
+                    32,
+                )
+        val responseFingerprint =
+            semanticHash(
+                BrowserResponseIdentityCore(
+                    requestMessageRef = requestMessageRef,
+                    speakerRef = DirectConversationIdentity.CompanionRoleRef,
+                ),
             )
 
         return Identity(
             turnRef =
-                "turn.vexlife-prod.self-development." +
-                    fingerprint.take(
-                        32,
-                    ),
-            requestMessageRef =
-                "message.vexlife-prod.self-development.human." +
-                    fingerprint.take(
-                        32,
-                    ),
+                "turn.vexlife.browser-companion." +
+                    UUID.randomUUID()
+                        .toString()
+                        .lowercase(),
+            requestMessageRef = requestMessageRef,
             responseMessageRef =
-                "message.vexlife-prod.self-development.companion." +
-                    fingerprint.take(
+                "message.vexlife.conversation.companion." +
+                    responseFingerprint.take(
                         32,
                     ),
         )
@@ -433,12 +461,10 @@ object DirectCompanionTurn {
             require(
                 canonicalRequest.eventKind ==
                     "REQUEST" &&
-                    canonicalRequest.turnRef ==
-                    identity.turnRef &&
                     canonicalRequest.content ==
                     content,
             ) {
-                "sendAttemptRef already identifies a different durable human request"
+                "idempotencyKey already identifies a different durable human request"
             }
 
             val response =
@@ -448,7 +474,7 @@ object DirectCompanionTurn {
                             it.eventKind ==
                                 "RESPONSE" &&
                                 it.turnRef ==
-                                identity.turnRef &&
+                                canonicalRequest.turnRef &&
                                 it.messageRef ==
                                 identity.responseMessageRef &&
                                 it.priorEventSha256 ==
@@ -461,7 +487,7 @@ object DirectCompanionTurn {
             val context =
                 requireNotNull(
                     contextStore.read(
-                        identity.turnRef,
+                        canonicalRequest.turnRef,
                     ),
                 ) {
                     "completed duplicate turn has no exact durable context evidence"
@@ -472,9 +498,9 @@ object DirectCompanionTurn {
                 recoveredCompletedTurn = true,
                 modelCallPerformed = false,
                 actualHttpCallPerformedNow = false,
-                turnRef = identity.turnRef,
-                requestMessageRef = identity.requestMessageRef,
-                responseMessageRef = identity.responseMessageRef,
+                turnRef = canonicalRequest.turnRef,
+                requestMessageRef = canonicalRequest.messageRef,
+                responseMessageRef = response.messageRef,
                 requestEventRef = canonicalRequest.eventRef,
                 responseEventRef = response.eventRef,
                 content = response.content,
@@ -498,9 +524,7 @@ object DirectCompanionTurn {
             snapshot.abandonedAttempts
                 .firstOrNull {
                     it.requestEvent.messageRef ==
-                        identity.requestMessageRef ||
-                        it.requestEvent.turnRef ==
-                        identity.turnRef
+                        identity.requestMessageRef
                 }
 
         if (
@@ -518,13 +542,13 @@ object DirectCompanionTurn {
                 failed.requestEvent.content ==
                 content,
         ) {
-            "sendAttemptRef already identifies different failed durable evidence"
+            "idempotencyKey already identifies different failed durable evidence"
         }
 
         val receipt =
             readFailureReceipt(
                 productHome = productHome,
-                turnRef = identity.turnRef,
+                turnRef = failed.requestEvent.turnRef,
             )
         val route =
             receipt
@@ -567,8 +591,8 @@ object DirectCompanionTurn {
             val core =
                 FailureCore(
                     schemaVersion = FailureReceiptSchema,
-                    turnRef = identity.turnRef,
-                    requestMessageRef = identity.requestMessageRef,
+                    turnRef = request.turnRef,
+                    requestMessageRef = request.messageRef,
                     responseMessageRef = identity.responseMessageRef,
                     requestEventRefOrNull = request.eventRef,
                     requestEventSha256OrNull = request.eventSha256,
@@ -626,7 +650,7 @@ object DirectCompanionTurn {
             val path =
                 VexOwnedPath.resolveInside(
                     directory,
-                    identity.turnRef +
+                    request.turnRef +
                         ".json",
                 )
             val existing =
@@ -841,6 +865,15 @@ object DirectCompanionTurn {
             "$label must be one portable stable ref"
         }
     }
+
+    private inline fun <reified T> semanticHash(
+        value: T,
+    ): String =
+        sha256(
+            VexContractJson.canonicalEncode(
+                value,
+            ),
+        )
 
     private fun sha256(
         value: String,
