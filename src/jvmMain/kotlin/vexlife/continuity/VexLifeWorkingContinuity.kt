@@ -622,6 +622,21 @@ object VexLifeWorkingContinuity {
         val effects: PlanEffects,
     )
 
+    fun validateWorkingSet(
+        workingSet: WorkingSet,
+    ): WorkingSet {
+        require(
+            workingSet ==
+                canonicalWorkingSet(
+                    workingSet,
+                ),
+        ) {
+            "working continuity working set is not canonical"
+        }
+
+        return workingSet
+    }
+
     fun validatePlan(
         plan: Plan,
     ): Plan {
@@ -759,14 +774,9 @@ object VexLifeWorkingContinuity {
             "working checkpoint is not current/reference-only"
         }
 
-        require(
-            checkpoint.workingSet ==
-                canonicalWorkingSet(
-                    checkpoint.workingSet,
-                ),
-        ) {
-            "prior working checkpoint working set is not canonical"
-        }
+        validateWorkingSet(
+            checkpoint.workingSet,
+        )
 
         requireRefs(
             checkpoint.sourceRefs,
