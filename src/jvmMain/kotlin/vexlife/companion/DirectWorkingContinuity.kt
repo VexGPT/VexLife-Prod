@@ -572,6 +572,7 @@ object DirectWorkingContinuity {
         val sourceRefs =
             (
                 realization.sourceRefs +
+                    prepared.pressureInput.sourceRefs +
                     listOf(
                         prepared.pressureInput.promptReceiptRef,
                     )
