@@ -28,8 +28,8 @@ import vexlife.model.heretic.HereticProductIdentity
  * runtime evidence meaning or presentation.
  *
  * Current head advances only after the exact REQUEST, RESPONSE and bounded canonical context are
- * durable. Historical semantic-relay v2 events remain explicitly held until their exact relay
- * validator is ported; they are never silently downgraded to v1.
+ * durable. Historical v1 and Semantic Relay v2 events are read under their accepted contracts;
+ * product-local authoring remains v1 until a rightful Semantic Relay author supplies metadata.
  */
 class DirectConversationStore(
     productHome: Path,
