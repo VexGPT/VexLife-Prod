@@ -18,8 +18,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
-import vexlife.home.VexLifeProdHome
-import vexlife.home.VexLifeProdHomeFiles
+import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
@@ -41,22 +40,10 @@ class VexLifeProdLocalServiceTest {
     private fun bootstrapHome(
         root: Path,
     ) {
-        VexLifeProdHomeFiles.bootstrap(
-            productHome = root,
-            plan =
-                VexLifeProdHome.plan(
-                    personRef = VexLifeProdHome.DefaultPersonRef,
-                    familyRef = VexLifeProdHome.DefaultFamilyRef,
-                    deviceName = "Test Mac",
-                    platform = "darwin",
-                    architecture = "arm64",
-                    ids =
-                        VexLifeProdHome.InstallationIds(
-                            deviceRef = "device.vexlife-prod.test-service",
-                            companionLineageRef = "companion-lineage.vexlife-prod.test-service",
-                        ),
-                    createdAt = "2026-11-05T04:30:00-08:00",
-                ),
+        CanonicalVexLifeHomeFixture.form(
+            home = root,
+            deviceSuffix = "test-service",
+            lineageSuffix = "test-service",
         )
     }
 
