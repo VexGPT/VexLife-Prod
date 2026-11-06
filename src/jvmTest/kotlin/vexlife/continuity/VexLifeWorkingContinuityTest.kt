@@ -2,6 +2,7 @@ package vexlife.continuity
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -341,6 +342,49 @@ class VexLifeWorkingContinuityTest {
                 changed.checkpoint
                     ?.semanticFingerprint,
         )
+    }
+
+    @Test
+    fun tamperedPriorCheckpointFailsBeforeItCanParticipateInSupersession() {
+        val first =
+            VexLifeWorkingContinuity.formPlan(
+                pressureInput =
+                    input(
+                        estimate =
+                            160_000,
+                    ),
+                workingSet =
+                    workingSet(),
+            )
+        val prior =
+            assertNotNull(
+                first.checkpoint,
+            )
+        val tampered =
+            prior.copy(
+                semanticFingerprint =
+                    "0".repeat(
+                        64,
+                    ),
+            )
+
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeWorkingContinuity.formPlan(
+                pressureInput =
+                    input(
+                        estimate =
+                            160_000,
+                    ),
+                workingSet =
+                    workingSet(
+                        statementRefs =
+                            listOf(
+                                "statement.vexlife.test.002",
+                            ),
+                    ),
+                priorCheckpoint = tampered,
+            )
+        }
     }
 
     @Test
