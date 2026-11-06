@@ -11,6 +11,7 @@ import java.security.MessageDigest
 import java.time.Instant
 import java.util.UUID
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import vexlife.contract.VexContractJson
@@ -1911,43 +1912,63 @@ class DirectConversationStore(
         ) {
             "canonical Conversation head does not reference the exact current context coordinate"
         }
-        val context =
+        val contextPath =
+            VexOwnedPath.resolveInside(
+                productHome,
+                relativePath,
+            )
+        val contextText =
             requireNotNull(
-                VexDurableContractFile.read<VexLifeConversationContract.Context>(
+                VexDurableContractFile.readText(
                     ownedRoot = productHome,
-                    path =
-                        VexOwnedPath.resolveInside(
-                            productHome,
-                            relativePath,
-                        ),
+                    path = contextPath,
                 ),
             ) {
                 "canonical bounded context record is missing"
             }
+        val contextJson =
+            VexContractJson.Strict
+                .parseToJsonElement(
+                    contextText,
+                )
+                .jsonObject
+        val observedContextHash =
+            requireNotNull(
+                contextJson[
+                    "serializedContextSha256"
+                ]
+                    ?.jsonPrimitive
+                    ?.content,
+            ) {
+                "canonical bounded context has no serializedContextSha256"
+            }
+        val contextCoreJson =
+            JsonObject(
+                contextJson.filterKeys {
+                    it !=
+                        "serializedContextSha256"
+                },
+            )
+        require(
+            sha256(
+                VexContractJson.canonicalEncodeElement(
+                    contextCoreJson,
+                ),
+            ) ==
+                observedContextHash,
+        ) {
+            "canonical bounded context hash does not match its exact durable JSON preimage"
+        }
+        val context =
+            VexContractJson.decode<VexLifeConversationContract.Context>(
+                contextText,
+            )
                 .also(
                     VexLifeConversationContract::validateContext,
                 )
-        val core =
-            VexLifeConversationContract.ContextCore(
-                schemaVersion = context.schemaVersion,
-                homeRef = context.homeRef,
-                deviceRef = context.deviceRef,
-                companionLineageRef = context.companionLineageRef,
-                instanceRef = context.instanceRef,
-                threadRef = context.threadRef,
-                turnRef = context.turnRef,
-                contextSourceRefs = context.contextSourceRefs,
-                requestEventHash = context.requestEventHash,
-                responseEventHash = context.responseEventHash,
-                promptContextMaterializationReceipt = context.promptContextMaterializationReceipt,
-                privacyClass = context.privacyClass,
-                formedAt = context.formedAt,
-            )
         require(
-            semanticHash(
-                core,
-            ) ==
-                context.serializedContextSha256 &&
+            context.serializedContextSha256 ==
+                observedContextHash &&
                 context.serializedContextSha256 ==
                 expectedContextSha256 &&
                 context.homeRef ==
