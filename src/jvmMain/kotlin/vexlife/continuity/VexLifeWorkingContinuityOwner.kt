@@ -287,7 +287,8 @@ class VexLifeWorkingContinuityOwner(
         requireExactPlan(plan, pressureInput, workingSet, before)
 
         if (
-            before?.checkpoint?.checkpointRef == plan.checkpoint.checkpointRef &&
+            before != null &&
+            before.checkpoint.checkpointRef == plan.checkpoint.checkpointRef &&
             before.checkpoint.semanticFingerprint == plan.checkpoint.semanticFingerprint
         ) {
             return CommitResult(
@@ -305,7 +306,8 @@ class VexLifeWorkingContinuityOwner(
             requireExactPlan(plan, pressureInput, workingSet, rebound)
 
             if (
-                rebound?.checkpoint?.checkpointRef == plan.checkpoint.checkpointRef &&
+                rebound != null &&
+                rebound.checkpoint.checkpointRef == plan.checkpoint.checkpointRef &&
                 rebound.checkpoint.semanticFingerprint == plan.checkpoint.semanticFingerprint
             ) {
                 return@use CommitResult(
@@ -767,8 +769,16 @@ class VexLifeWorkingContinuityOwner(
         ) {
             "working continuity commit receipt identity/effects are invalid"
         }
+        requireRef(value.lineageRef, "receipt lineageRef")
+        requireRef(value.threadRef, "receipt threadRef")
         requireRef(value.checkpointRef, "receipt checkpointRef")
         requireSha256(value.checkpointFingerprint, "receipt checkpointFingerprint")
+        value.priorCheckpointRefOrNull?.let {
+            requireRef(it, "receipt priorCheckpointRefOrNull")
+        }
+        value.priorCheckpointFingerprintOrNull?.let {
+            requireSha256(it, "receipt priorCheckpointFingerprintOrNull")
+        }
         requireRef(value.planRef, "receipt planRef")
         requireSha256(value.planFingerprint, "receipt planFingerprint")
         val core =
@@ -820,6 +830,8 @@ class VexLifeWorkingContinuityOwner(
         ) {
             "working continuity successor claim identity/effects are invalid"
         }
+        requireRef(value.lineageRef, "successor claim lineageRef")
+        requireRef(value.threadRef, "successor claim threadRef")
         requireRef(value.checkpointRef, "successor claim checkpointRef")
         requireSha256(value.checkpointFingerprint, "successor claim checkpointFingerprint")
         requireRef(value.commitReceiptRef, "successor claim commitReceiptRef")
