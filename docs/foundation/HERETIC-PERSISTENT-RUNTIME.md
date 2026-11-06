@@ -145,6 +145,50 @@ FAMILY EFFECT
 The Family is intentionally small. Artifact acquisition, Python/MLX environment formation, launchd,
 HTTP qualification and product-service lifetime remain with their existing owners.
 
+## Source-owned architecture projection
+
+The accepted Family now has one bounded read-only projection for consumers that need to traverse the
+relationship without re-inferring it from source proximity:
+
+~~~text
+HereticRuntimeAvailability
+        ↓
+HereticRuntimeAvailabilityArchitecture.current()
+        ↓
+architecture/heretic-runtime-availability.json
+~~~
+
+The projection carries:
+
+- stable semantic coordinates for the Family, Control, States, Effects, observations and participating owners;
+- exact relationship classes including the no-product-Effect borrowed path and the two product-owned request modes;
+- source refs on every node and relationship;
+- `externalEffectsPerformed=false`.
+
+The checked-in JSON is a deterministic consequence, not a second semantic owner:
+
+~~~text
+FAMILY SOURCE
+= semantic authority
+
+ARCHITECTURE PROJECTION
+= read-only source-owned explanation
+
+CHECKED-IN JSON
+= deterministic projection consequence
+
+VEXBOARD / OTHER CONSUMER
+= reader / projector
+!= architecture author
+~~~
+
+`HereticRuntimeAvailabilityArchitectureTest` requires the JSON bytes to equal
+`VexContractJson.canonicalEncode(current())`. Any semantic/source projection change therefore fails
+closed until the consequence is regenerated.
+
+This remains a patient-zero export. A reusable cross-Family architecture-export framework is **not**
+earned merely because one Family now has a consumer.
+
 ## Portable runtime meaning
 
 Common source owns the meaning of:
@@ -391,6 +435,7 @@ evidence crosses the compatibility boundary.
 src/commonMain/kotlin/vexlife/model/heretic/
 src/jvmMain/kotlin/vexlife/model/heretic/runtime/
 src/jvmMain/kotlin/vexlife/platform/macos/
+architecture/heretic-runtime-availability.json
 
 src/commonTest/kotlin/vexlife/model/heretic/
 src/jvmTest/kotlin/vexlife/model/heretic/runtime/
