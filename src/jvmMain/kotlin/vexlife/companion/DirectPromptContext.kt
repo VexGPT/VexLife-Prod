@@ -10,6 +10,7 @@ import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.contract.VexContractJson
 import vexlife.continuity.VexLifeWorkingContinuityOwner
+import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticModelConfiguration
@@ -915,7 +916,7 @@ object DirectPromptContext {
                             workingContinuityContextRefOrNull = workingContinuityContext?.successorContextRef,
                             runtimeObservationRefOrNull = null,
                         ),
-                    sourceRefs = listOf("project.vexlife.new-beginnings", currentRequest.eventRef),
+                    sourceRefs = listOf(DirectConversationIdentity.ProjectRef, currentRequest.eventRef),
                     formedAt = Instant.parse(currentRequest.formedAt),
                 ),
             )

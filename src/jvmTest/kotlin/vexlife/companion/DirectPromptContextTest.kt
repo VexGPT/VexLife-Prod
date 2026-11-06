@@ -18,6 +18,7 @@ import vexlife.continuity.VexLifeWorkingContinuity
 import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.contract.VexContractJson
 import vexlife.conversation.CanonicalLivedContextFixture
+import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.memory.VexLifeMemoryContextFixture
@@ -1064,6 +1065,16 @@ class DirectPromptContextTest {
                 assertTrue(
                     materialized.receipt.capabilityFrameSourceRefs.contains(
                         runtime.runtimeReceiptRef,
+                    ),
+                )
+                assertTrue(
+                    materialized.receipt.capabilityFrameSourceRefs.contains(
+                        DirectConversationIdentity.ProjectRef,
+                    ),
+                )
+                assertFalse(
+                    materialized.receipt.capabilityFrameSourceRefs.contains(
+                        "project.vexlife.new-beginnings",
                     ),
                 )
                 assertTrue(
