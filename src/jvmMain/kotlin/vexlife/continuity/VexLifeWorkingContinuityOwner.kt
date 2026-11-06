@@ -285,39 +285,51 @@ class VexLifeWorkingContinuityOwner(
             "working continuity owner requires one exact effect-free committable plan"
         }
 
+        VexLifeWorkingContinuity.validatePlan(
+            plan,
+        )
+
         val before = readCurrent(plan.lineageRef, plan.threadRef)
-        requireExactPlan(plan, pressureInput, workingSet, before)
 
         if (
-            before != null &&
-            before.checkpoint.checkpointRef == plan.checkpoint.checkpointRef &&
-            before.checkpoint.semanticFingerprint == plan.checkpoint.semanticFingerprint
+            sameCurrentPlan(
+                current = before,
+                plan = plan,
+            )
         ) {
             return CommitResult(
                 state = "IDEMPOTENT_CURRENT",
                 effectPerformedNow = false,
-                current = before,
+                current = requireNotNull(
+                    before,
+                ),
             )
         }
+
+        requireExactPlan(plan, pressureInput, workingSet, before)
 
         val paths = paths(plan.lineageRef, plan.threadRef)
         VexOwnedPath.ensureDirectory(home, paths.root)
 
         return VexExclusiveFileLease.acquire(paths.lock).use {
             val rebound = readCurrent(plan.lineageRef, plan.threadRef)
-            requireExactPlan(plan, pressureInput, workingSet, rebound)
 
             if (
-                rebound != null &&
-                rebound.checkpoint.checkpointRef == plan.checkpoint.checkpointRef &&
-                rebound.checkpoint.semanticFingerprint == plan.checkpoint.semanticFingerprint
+                sameCurrentPlan(
+                    current = rebound,
+                    plan = plan,
+                )
             ) {
                 return@use CommitResult(
                     state = "IDEMPOTENT_CURRENT",
                     effectPerformedNow = false,
-                    current = rebound,
+                    current = requireNotNull(
+                        rebound,
+                    ),
                 )
             }
+
+            requireExactPlan(plan, pressureInput, workingSet, rebound)
 
             val checkpoint =
                 VexLifeWorkingContinuity.validateCheckpoint(
@@ -546,6 +558,29 @@ class VexLifeWorkingContinuityOwner(
             head = root.resolve("head.json"),
             lock = root.resolve("owner.lock"),
         )
+    }
+
+    private fun sameCurrentPlan(
+        current: Current?,
+        plan: VexLifeWorkingContinuity.Plan,
+    ): Boolean {
+        if (
+            current ==
+                null ||
+            plan.checkpoint ==
+                null
+        ) {
+            return false
+        }
+
+        return current.checkpoint.checkpointRef ==
+            plan.checkpoint.checkpointRef &&
+            current.checkpoint.semanticFingerprint ==
+            plan.checkpoint.semanticFingerprint &&
+            current.commitReceipt.planRef ==
+            plan.planRef &&
+            current.commitReceipt.planFingerprint ==
+            plan.semanticFingerprint
     }
 
     private fun requireExactPlan(
