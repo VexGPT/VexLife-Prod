@@ -7,6 +7,7 @@ import vexlife.conversation.DirectConversationStore
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
+import vexlife.model.heretic.HereticRuntimeAvailability
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticRuntimeReceiptStore
 import vexlife.model.heretic.runtime.HereticArtifactDelivery
@@ -354,76 +355,148 @@ object VexLifeProdLocalSetup {
                 binding,
             )
 
-        val qualifiedRuntimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence
-        val runtimeDisposition: String
-        val runtimeReceiptPath: String
-        val currentRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence
-
-        if (
-            borrowedStableRuntime !=
-                null
-        ) {
-            qualifiedRuntimeEvidence =
-                borrowedStableRuntime.evidence
-            runtimeDisposition =
-                "BORROWED_STABLE_VEXLIFE_QUALIFIED_RUNTIME"
-            runtimeReceiptPath =
-                borrowedStableRuntime.receiptRelativePath
-            currentRuntimeEvidence = {
-                requireNotNull(
-                    hooks.observeStableRuntime(
-                        canonicalHome,
-                        binding,
-                    ),
-                ) {
-                    "borrowed stable VexLife Heretic runtime is no longer current"
-                }
-                    .evidence
-            }
-        } else {
-            val productRuntimeStore =
-                FileHereticRuntimeReceiptStore(
-                    canonicalHome,
-                )
-
-            if (
-                allowAcquisition
+        val availabilityAct =
+            requireNotNull(
+                HereticRuntimeAvailability.resolve(
+                    currentState =
+                        borrowedStableRuntime
+                            ?.let {
+                                stable ->
+                                HereticRuntimeAvailability.State.StableBorrowable(
+                                    evidence =
+                                        stable.evidence,
+                                    runtimeReceiptPath =
+                                        stable.receiptRelativePath,
+                                )
+                            }
+                            ?: HereticRuntimeAvailability.State.StablePredecessorUnavailable,
+                    control =
+                        HereticRuntimeAvailability.Control.EnsureAvailable(
+                            productOwnedMode =
+                                if (
+                                    allowAcquisition
+                                ) {
+                                    HereticRuntimeAvailability.ProductOwnedMode.AcquisitionAllowed
+                                } else {
+                                    HereticRuntimeAvailability.ProductOwnedMode.ObservationOnly
+                                },
+                        ),
+                ),
             ) {
-                val runtime =
-                    hooks.startRuntime(
-                        canonicalHome,
-                        binding,
-                        productRuntimeStore,
-                    )
-                qualifiedRuntimeEvidence =
-                    HereticPersistentRuntime.configurationEvidence(
-                        binding = binding,
-                        receipt = runtime.receipt,
-                    )
-                runtimeDisposition =
-                    runtime.disposition
-            } else {
-                qualifiedRuntimeEvidence =
-                    hooks.observeCurrentProductRuntime(
-                        canonicalHome,
-                        binding,
-                        productRuntimeStore,
-                    )
-                runtimeDisposition =
-                    "REOBSERVED_CURRENT_PRODUCT_QUALIFIED_RUNTIME"
+                "Heretic runtime availability did not resolve one lawful relationship"
             }
-            runtimeReceiptPath =
-                HereticProductIdentity.ProductRuntimeReceiptRelativePath
-            currentRuntimeEvidence = {
-                hooks.observeCurrentProductRuntime(
-                    canonicalHome,
-                    binding,
-                    FileHereticRuntimeReceiptStore(
-                        canonicalHome,
-                    ),
-                )
+
+        val availabilityAndDisposition =
+            when (
+                val admitted =
+                    availabilityAct.admittedState
+            ) {
+                is HereticRuntimeAvailability.State.Qualified -> {
+                    require(
+                        availabilityAct.effect ==
+                            null &&
+                            admitted.source ==
+                            HereticRuntimeAvailability.Source.BorrowedStableVexLife,
+                    ) {
+                        "borrowed stable Heretic runtime availability must not request a product-owned effect"
+                    }
+
+                    admitted to
+                        "BORROWED_STABLE_VEXLIFE_QUALIFIED_RUNTIME"
+                }
+
+                null -> {
+                    val productRuntimeStore =
+                        FileHereticRuntimeReceiptStore(
+                            canonicalHome,
+                        )
+
+                    when (
+                        availabilityAct.effect
+                    ) {
+                        HereticRuntimeAvailability.Effect.EnsureProductOwnedRuntime -> {
+                            val runtime =
+                                hooks.startRuntime(
+                                    canonicalHome,
+                                    binding,
+                                    productRuntimeStore,
+                                )
+
+                            HereticRuntimeAvailability.interpretProductOwnedQualified(
+                                HereticPersistentRuntime.configurationEvidence(
+                                    binding = binding,
+                                    receipt = runtime.receipt,
+                                ),
+                            ) to
+                                runtime.disposition
+                        }
+
+                        HereticRuntimeAvailability.Effect.ObserveCurrentProductOwnedRuntime -> {
+                            val evidence =
+                                hooks.observeCurrentProductRuntime(
+                                    canonicalHome,
+                                    binding,
+                                    productRuntimeStore,
+                                )
+
+                            HereticRuntimeAvailability.interpretProductOwnedQualified(
+                                evidence,
+                            ) to
+                                "REOBSERVED_CURRENT_PRODUCT_QUALIFIED_RUNTIME"
+                        }
+
+                        null ->
+                            error(
+                                "unresolved Heretic runtime availability lacks one product-owned effect",
+                            )
+                    }
+                }
+
+                else ->
+                    error(
+                        "Heretic runtime availability admitted a non-qualified terminal state",
+                    )
             }
-        }
+
+        val availability =
+            availabilityAndDisposition.first
+        val runtimeDisposition =
+            availabilityAndDisposition.second
+        val qualifiedRuntimeEvidence =
+            availability.evidence
+        val runtimeReceiptPath =
+            availability.runtimeReceiptPath
+
+        val currentRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence =
+            when (
+                availability.source
+            ) {
+                HereticRuntimeAvailability.Source.BorrowedStableVexLife -> {
+                    {
+                        requireNotNull(
+                            hooks.observeStableRuntime(
+                                canonicalHome,
+                                binding,
+                            ),
+                        ) {
+                            "borrowed stable VexLife Heretic runtime is no longer current"
+                        }
+                            .evidence
+                    }
+                }
+
+                HereticRuntimeAvailability.Source.VexLifeProdOwned -> {
+                    {
+                        hooks.observeCurrentProductRuntime(
+                            canonicalHome,
+                            binding,
+                            FileHereticRuntimeReceiptStore(
+                                canonicalHome,
+                            ),
+                        )
+                    }
+                }
+            }
 
         val bound =
             modelConfiguration.bindQualified(
