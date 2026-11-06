@@ -503,10 +503,25 @@ object DirectWorkingContinuity {
             turnRef,
             "turnRef",
         )
+        val directory =
+            VexOwnedPath.resolveInside(
+                productHome,
+                "runtime/vexlife-prod/turn-working-continuity",
+            )
+        if (
+            VexOwnedPath.observeDirectory(
+                productHome,
+                directory,
+            ) ==
+            VexOwnedPath.DirectoryState.Missing
+        ) {
+            return null
+        }
         val path =
-            pathFor(
-                productHome = productHome,
-                turnRef = turnRef,
+            VexOwnedPath.resolveInside(
+                directory,
+                turnRef +
+                    ".json",
             )
         val value =
             VexDurableContractFile.read<Receipt>(
@@ -714,6 +729,7 @@ object DirectWorkingContinuity {
                     "CHECKPOINT_COMMITTED",
                     "ROLLOVER_COMMITTED",
                     "HELD",
+                    "HELD_POST_COMMIT_RECEIPT",
                 ) &&
                 !value.effects.successorContextClaimed &&
                 !value.effects.successorContextIssued &&
@@ -885,6 +901,15 @@ object DirectWorkingContinuity {
                         !value.effects.workingHeadMutated,
                 ) {
                     "held working continuity receipt shape is invalid"
+                }
+
+            "HELD_POST_COMMIT_RECEIPT" ->
+                require(
+                    value.failureClassOrNull !=
+                        null &&
+                        !value.effects.postCommitReceiptPersisted,
+                ) {
+                    "post-commit receipt persistence failure shape is invalid"
                 }
         }
     }
