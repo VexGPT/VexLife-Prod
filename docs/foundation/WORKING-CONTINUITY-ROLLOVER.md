@@ -142,7 +142,7 @@ current ROLLOVER_COMMITTED head
         ↓
 SuccessorContext(contextMode = WORKING_CHECKPOINT_SUCCESSOR)
         ↓
-immutable successor-contexts/<checkpointFingerprint>.json
+immutable successor-contexts/<checkpointFingerprint>/<currentRequestEventHash>.json
 ~~~
 
 The Context carries only:
@@ -162,9 +162,10 @@ Currentness is owner-mediated:
 ~~~text
 copied SuccessorContext JSON != authority
 
-VexLifeWorkingContinuityOwner.readSuccessorContext(...)
+VexLifeWorkingContinuityOwner.readSuccessorContext(... exact current request ...)
 -> current head
--> current claim
+-> exact request-scoped claim
+-> exact request-scoped Context
 -> exact bindings
 -> current SuccessorContext or null
 ~~~
@@ -174,12 +175,76 @@ If a later checkpoint supersedes the head, the old successor Context remains imm
 Permanent:
 
 ~~~text
-SUCCESSOR CONTEXT ISSUED
-!= PROMPT MODE ACTIVATED
-
 SUCCESSOR CONTEXT
 != PORTABLE BEARER AUTHORITY
+
+REQUEST A SUCCESSOR EVIDENCE
+!= REQUEST B SUCCESSOR EVIDENCE
 ~~~
+
+## Live working-checkpoint successor prompt
+
+The live next-turn consumer is now source-bounded as:
+
+~~~text
+next durable REQUEST
++ exact immediate prior completed turn
++ current ROLLOVER_COMMITTED checkpoint
+        ↓
+request-scoped SuccessorClaim
+        ↓
+request-scoped SuccessorContext
+        ↓
+DirectWorkingContinuity.CurrentSuccessor
+        ↓
+DirectPromptContext v3
+        ↓
+current Memory
++ bounded non-semantic WorkingSet packet
++ optional browser context
++ current request
+        ↓
+provider
+~~~
+
+`DirectPromptContext` does not accept detached successor-Context bytes as authority. It accepts the
+in-process `CurrentSuccessor` capability produced only through the direct working-continuity bridge,
+and the bridge re-reads owner currentness again before provider invocation.
+
+Conversation currentness is independently re-bound at prompt materialization:
+
+- exact prior Conversation head SHA-256;
+- exact checkpoint cursor request ref;
+- exact current durable request event ref/hash/sequence;
+- exact lineage/thread/channel adjacency.
+
+In `WORKING_CHECKPOINT_SUCCESSOR` mode the prior REQUEST/RESPONSE pair is **not** selected for the
+provider. The provider receives the current attributed Memory plus a compact working-continuity
+packet of refs/working coordinates plus the current request.
+
+Prompt receipt v3 records the exact successor Context/checkpoint/claim/source identities and the
+working packet hash/token estimate. Historical v2 receipts remain hash-shape compatible: new
+working-continuity fields use non-default-only encoding, so decoding and re-encoding old v2 durable
+evidence does not inject new default fields into its canonical hash preimage.
+
+## Failed successor recovery
+
+VexLife-Prod requires a new send attempt after provider failure. Therefore successor claim/Context
+custody is request-scoped beneath the same rollover checkpoint:
+
+~~~text
+successor-context-claims/
+  <checkpointFingerprint>/
+    <currentRequestEventHash>.json
+
+successor-contexts/
+  <checkpointFingerprint>/
+    <currentRequestEventHash>.json
+~~~
+
+A failed request's claim/Context remain immutable evidence. A later fresh request can create its own
+independent claim/Context from the still-current rollover checkpoint. No delete/release shortcut is
+required, and stale request evidence cannot lock the new send attempt.
 
 ## Direct-turn producer
 
@@ -237,20 +302,31 @@ WORKING CONTINUITY HELD
 
 ## Current candidate boundary
 
-The current producer slice adds only ordinary completed-turn production of the already-accepted
-working-continuity semantics and durable owner effects.
+The current live-consumer slice closes the working-context rollover loop through the real direct
+Companion path:
+
+~~~text
+completed high-pressure turn
+-> ROLLOVER_COMMITTED
+
+next durable request
+-> request-scoped claim + Context
+-> WORKING_CHECKPOINT_SUCCESSOR
+-> Memory + working coordinates + current request
+-> provider
+~~~
+
+It preserves the existing failed-send recovery law by allowing a fresh request-scoped successor
+claim/Context after an abandoned failed successor attempt.
 
 It does **not yet**:
 
-- claim/issue successor Context from the next live request;
-- change `DirectPromptContext` selection;
-- activate `WORKING_CHECKPOINT_SUCCESSOR` in provider materialization;
-- change current Memory selection;
-- add Capability Atlas/self-frame content.
+- add the Capability Atlas/self-capability frame;
+- expose the current prompt/working/Memory inputs through Settings / Context;
+- change Memory acceptance or mutation authority;
+- authorize Dream/training/activation/evolution.
 
-The next consumer-driven slice may claim/issue and consume owner-current successor Context only after
-the next durable request exists, with the Conversation owner re-verifying the exact prior/current
-request bindings before provider materialization.
+Those are the next trajectory edges after this live rollover loop is accepted.
 ## Why this boundary is earned
 
 If this relationship were collapsed back into prompt materialization, the product would lose a
