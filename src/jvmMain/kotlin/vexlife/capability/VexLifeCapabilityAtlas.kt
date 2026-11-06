@@ -533,6 +533,13 @@ object VexLifeCapabilityAtlas {
                 ),
             )
 
+        require(
+            baseTokenCost <=
+                input.tokenBudget,
+        ) {
+            "self-capability frame tokenBudget is too small for the frame header/current context"
+        }
+
         var usedTokens =
             baseTokenCost
         val selected =
