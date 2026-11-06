@@ -208,7 +208,8 @@ The Plan is formed while the exact Memory bounded-out counts are still available
 checkpoint effect is realized until after the corresponding Conversation head is durable.
 
 A continuity-specific formation/commit problem does **not** retroactively convert a completed
-Conversation turn into a provider failure. It becomes a separate post-commit `HELD` receipt under:
+Conversation turn into a provider failure. Expected continuity-owner failures become a separate
+post-commit `HELD` receipt under:
 
 ~~~text
 runtime/vexlife-prod/turn-working-continuity/<turnRef>.json
@@ -217,6 +218,12 @@ runtime/vexlife-prod/turn-working-continuity/<turnRef>.json
 The receipt is a read-side/diagnostic surface for the completed turn. It records source descent and
 whether a checkpoint/rollover owner effect became current, while explicitly denying Conversation,
 semantic-Memory, provider/model, training and weight-change effects.
+
+If an unexpected boundary-level exception escapes the continuity bridge after the Conversation head
+is already durable, `DirectCompanionTurn` isolates that exception from the completed send. The
+continuity receipt may then be absent; absence means post-completion continuity evidence is unknown,
+not that the Conversation turn failed. No failed-send recovery receipt may be manufactured for that
+already-committed turn.
 
 Permanent:
 
