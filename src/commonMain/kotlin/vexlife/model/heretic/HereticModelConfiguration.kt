@@ -127,6 +127,8 @@ object HereticModelConfiguration {
     fun bound(
         homeIdentity: BindingScope,
         qualifiedRuntime: QualifiedRuntimeEvidence,
+        runtimeReceiptPath: String =
+            HereticProductIdentity.StableRuntimeReceiptRelativePath,
     ): Value {
         require(
             qualifiedRuntime.runtimeState ==
@@ -135,9 +137,17 @@ object HereticModelConfiguration {
             "Heretic product model cannot bind without current qualified runtime evidence"
         }
 
+        require(
+            runtimeReceiptPath in
+                admittedRuntimeReceiptPaths,
+        ) {
+            "Heretic product model binding requires one admitted runtime receipt owner"
+        }
+
         return form(
             homeIdentity = homeIdentity,
             state = State.BoundProductModel,
+            runtimeReceiptPath = runtimeReceiptPath,
         )
     }
 
@@ -180,8 +190,8 @@ object HereticModelConfiguration {
                 HereticProductIdentity.Endpoint &&
                 value.requestModel ==
                 HereticProductIdentity.RequestModel &&
-                value.runtimeReceiptPath ==
-                HereticProductIdentity.RuntimeReceiptRelativePath,
+                value.runtimeReceiptPath in
+                admittedRuntimeReceiptPaths,
         ) {
             "Heretic model configuration product identity drift"
         }
@@ -202,9 +212,17 @@ object HereticModelConfiguration {
         value.state ==
             State.BoundProductModel
 
+    private val admittedRuntimeReceiptPaths =
+        setOf(
+            HereticProductIdentity.StableRuntimeReceiptRelativePath,
+            HereticProductIdentity.ProductRuntimeReceiptRelativePath,
+        )
+
     private fun form(
         homeIdentity: BindingScope,
         state: State,
+        runtimeReceiptPath: String =
+            HereticProductIdentity.StableRuntimeReceiptRelativePath,
     ): Value =
         validate(
             value =
@@ -221,7 +239,7 @@ object HereticModelConfiguration {
                     runtimeClass = HereticProductIdentity.RuntimeClass,
                     endpoint = HereticProductIdentity.Endpoint,
                     requestModel = HereticProductIdentity.RequestModel,
-                    runtimeReceiptPath = HereticProductIdentity.RuntimeReceiptRelativePath,
+                    runtimeReceiptPath = runtimeReceiptPath,
                     automaticFallback = false,
                     automaticDownload = false,
                     automaticActivation = false,

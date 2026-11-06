@@ -6,6 +6,7 @@ import vexlife.contract.VexDurableContractFile
 import vexlife.filesystem.VexOwnedPath
 import vexlife.home.VexLifeProdHome
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.HereticProductIdentity
 
 /**
  * Durable VexLife-Prod implementation binding for the certified Heretic runtime.
@@ -149,6 +150,8 @@ class FileHereticModelConfigurationStore(
     fun bindQualified(
         manifest: VexLifeProdHome.Manifest,
         qualifiedRuntime: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        runtimeReceiptPath: String =
+            HereticProductIdentity.StableRuntimeReceiptRelativePath,
     ): Transition {
         val currentManifest =
             VexLifeProdHome.validateManifest(
@@ -173,6 +176,7 @@ class FileHereticModelConfigurationStore(
                         currentManifest,
                     ),
                 qualifiedRuntime = qualifiedRuntime,
+                runtimeReceiptPath = runtimeReceiptPath,
             )
 
         if (
@@ -187,8 +191,11 @@ class FileHereticModelConfigurationStore(
         }
 
         require(
-            current.value.state ==
-                HereticModelConfiguration.State.EstablishmentPending,
+            current.value.state in
+                setOf(
+                    HereticModelConfiguration.State.EstablishmentPending,
+                    HereticModelConfiguration.State.BoundProductModel,
+                ),
         ) {
             "current Heretic runtime binding cannot transition to qualified"
         }
@@ -199,7 +206,15 @@ class FileHereticModelConfigurationStore(
         )
 
         return Transition(
-            state = "HERETIC_BOUND_TO_QUALIFIED_RUNTIME",
+            state =
+                if (
+                    current.value.state ==
+                    HereticModelConfiguration.State.BoundProductModel
+                ) {
+                    "HERETIC_REBOUND_TO_QUALIFIED_RUNTIME"
+                } else {
+                    "HERETIC_BOUND_TO_QUALIFIED_RUNTIME"
+                },
             value = bound,
             writePerformed = true,
         )

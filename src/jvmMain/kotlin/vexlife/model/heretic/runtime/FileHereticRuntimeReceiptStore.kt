@@ -23,7 +23,7 @@ class FileHereticRuntimeReceiptStore(
     private val receiptPath: Path =
         VexOwnedPath.resolveInside(
             this.productHome,
-            HereticProductIdentity.RuntimeReceiptRelativePath,
+            HereticProductIdentity.ProductRuntimeReceiptRelativePath,
         )
 
     override fun read(): HereticPersistentRuntime.Receipt? =
