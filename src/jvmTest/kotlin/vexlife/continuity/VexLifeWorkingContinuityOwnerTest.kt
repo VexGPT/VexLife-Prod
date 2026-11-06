@@ -637,6 +637,394 @@ class VexLifeWorkingContinuityOwnerTest {
     }
 
     @Test
+    fun exactCurrentRolloverClaimIssuesOneIdempotentSuccessorContext() {
+        val home =
+            Files.createTempDirectory(
+                "vexlife-working-owner-context-",
+            )
+                .toAbsolutePath()
+
+        try {
+            val owner =
+                VexLifeWorkingContinuityOwner(
+                    home,
+                )
+            val working =
+                workingSet()
+            val (
+                input,
+                plan,
+            ) =
+                rolloverPlan(
+                    working,
+                )
+            val committed =
+                owner.commitPlan(
+                    plan = plan,
+                    pressureInput = input,
+                    workingSet = working,
+                    committedAt =
+                        Instant.parse(
+                            "2026-11-06T10:30:00Z",
+                        ),
+                )
+            val claim =
+                owner.claimSuccessorContext(
+                    lineageRef = working.lineageRef,
+                    threadRef = working.threadRef,
+                    priorConversationHeadSha256 =
+                        "a".repeat(
+                            64,
+                        ),
+                    priorRequestEventRef =
+                        working.cursorEventRef,
+                    currentRequestEventBinding =
+                        VexLifeMemoryContract.CurrentRequestBinding(
+                            eventRef =
+                                "event.vexlife.request.owner-test.context",
+                            eventHash =
+                                "b".repeat(
+                                    64,
+                                ),
+                            sequence =
+                                2L,
+                        ),
+                    claimedAt =
+                        Instant.parse(
+                            "2026-11-06T10:31:00Z",
+                        ),
+                )
+                    .claim
+
+            val first =
+                owner.issueSuccessorContext(
+                    lineageRef = working.lineageRef,
+                    threadRef = working.threadRef,
+                    successorClaimRef =
+                        claim.successorClaimRef,
+                    successorClaimFingerprint =
+                        claim.semanticFingerprint,
+                    issuedAt =
+                        Instant.parse(
+                            "2026-11-06T10:32:00Z",
+                        ),
+                )
+
+            assertEquals(
+                "ISSUED",
+                first.state,
+            )
+            assertTrue(
+                first.effectPerformedNow,
+            )
+            assertEquals(
+                "WORKING_CHECKPOINT_SUCCESSOR",
+                first.context.contextMode,
+            )
+            assertEquals(
+                committed.current.checkpoint.checkpointRef,
+                first.context.checkpointRef,
+            )
+            assertEquals(
+                committed.current.commitReceipt.commitReceiptRef,
+                first.context.commitReceiptRef,
+            )
+            assertEquals(
+                claim.successorClaimRef,
+                first.context.successorClaimRef,
+            )
+            assertEquals(
+                claim.currentRequestEventBinding,
+                first.context.currentRequestEventBinding,
+            )
+            assertEquals(
+                committed.current.checkpoint.workingSet,
+                first.context.workingSet,
+            )
+            assertTrue(
+                first.context.sourceRefs.contains(
+                    committed.current.checkpoint.checkpointRef,
+                ),
+            )
+            assertTrue(
+                first.context.sourceRefs.contains(
+                    committed.current.commitReceipt.commitReceiptRef,
+                ),
+            )
+            assertTrue(
+                first.context.sourceRefs.contains(
+                    claim.successorClaimRef,
+                ),
+            )
+            assertTrue(
+                first.context.effects.successorContextIssued,
+            )
+            assertFalse(
+                first.context.effects.successorClaimMutated,
+            )
+            assertFalse(
+                first.context.effects.memoryPromotionPerformed,
+            )
+            assertFalse(
+                first.context.effects.providerCalled,
+            )
+            assertFalse(
+                first.context.effects.modelCalled,
+            )
+
+            val second =
+                owner.issueSuccessorContext(
+                    lineageRef = working.lineageRef,
+                    threadRef = working.threadRef,
+                    successorClaimRef =
+                        claim.successorClaimRef,
+                    successorClaimFingerprint =
+                        claim.semanticFingerprint,
+                    issuedAt =
+                        Instant.parse(
+                            "2026-11-06T10:33:00Z",
+                        ),
+                )
+
+            assertEquals(
+                "IDEMPOTENT_CURRENT",
+                second.state,
+            )
+            assertFalse(
+                second.effectPerformedNow,
+            )
+            assertEquals(
+                first.context,
+                second.context,
+            )
+            assertEquals(
+                first.context,
+                assertNotNull(
+                    owner.readSuccessorContext(
+                        lineageRef = working.lineageRef,
+                        threadRef = working.threadRef,
+                    ),
+                ),
+            )
+        } finally {
+            home
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun wrongClaimIdentityCannotIssueSuccessorContext() {
+        val home =
+            Files.createTempDirectory(
+                "vexlife-working-owner-context-claim-mismatch-",
+            )
+                .toAbsolutePath()
+
+        try {
+            val owner =
+                VexLifeWorkingContinuityOwner(
+                    home,
+                )
+            val working =
+                workingSet()
+            val (
+                input,
+                plan,
+            ) =
+                rolloverPlan(
+                    working,
+                )
+            owner.commitPlan(
+                plan = plan,
+                pressureInput = input,
+                workingSet = working,
+            )
+            val claim =
+                owner.claimSuccessorContext(
+                    lineageRef = working.lineageRef,
+                    threadRef = working.threadRef,
+                    priorConversationHeadSha256 =
+                        "a".repeat(
+                            64,
+                        ),
+                    priorRequestEventRef =
+                        working.cursorEventRef,
+                    currentRequestEventBinding =
+                        VexLifeMemoryContract.CurrentRequestBinding(
+                            eventRef =
+                                "event.vexlife.request.owner-test.context-mismatch",
+                            eventHash =
+                                "b".repeat(
+                                    64,
+                                ),
+                            sequence =
+                                2L,
+                        ),
+                )
+                    .claim
+
+            assertFailsWith<IllegalArgumentException> {
+                owner.issueSuccessorContext(
+                    lineageRef = working.lineageRef,
+                    threadRef = working.threadRef,
+                    successorClaimRef =
+                        claim.successorClaimRef,
+                    successorClaimFingerprint =
+                        "0".repeat(
+                            64,
+                        ),
+                )
+            }
+
+            assertNull(
+                owner.readSuccessorContext(
+                    lineageRef = working.lineageRef,
+                    threadRef = working.threadRef,
+                ),
+            )
+        } finally {
+            home
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun supersedingCurrentCheckpointMakesPriorIssuedSuccessorContextNonCurrent() {
+        val home =
+            Files.createTempDirectory(
+                "vexlife-working-owner-context-superseded-",
+            )
+                .toAbsolutePath()
+
+        try {
+            val owner =
+                VexLifeWorkingContinuityOwner(
+                    home,
+                )
+            val firstWorking =
+                workingSet()
+            val (
+                firstInput,
+                firstPlan,
+            ) =
+                rolloverPlan(
+                    firstWorking,
+                )
+            val firstCommitted =
+                owner.commitPlan(
+                    plan = firstPlan,
+                    pressureInput = firstInput,
+                    workingSet = firstWorking,
+                )
+            val claim =
+                owner.claimSuccessorContext(
+                    lineageRef = firstWorking.lineageRef,
+                    threadRef = firstWorking.threadRef,
+                    priorConversationHeadSha256 =
+                        "a".repeat(
+                            64,
+                        ),
+                    priorRequestEventRef =
+                        firstWorking.cursorEventRef,
+                    currentRequestEventBinding =
+                        VexLifeMemoryContract.CurrentRequestBinding(
+                            eventRef =
+                                "event.vexlife.request.owner-test.context-superseded",
+                            eventHash =
+                                "b".repeat(
+                                    64,
+                                ),
+                            sequence =
+                                2L,
+                        ),
+                )
+                    .claim
+            val issued =
+                owner.issueSuccessorContext(
+                    lineageRef = firstWorking.lineageRef,
+                    threadRef = firstWorking.threadRef,
+                    successorClaimRef =
+                        claim.successorClaimRef,
+                    successorClaimFingerprint =
+                        claim.semanticFingerprint,
+                )
+
+            assertNotNull(
+                owner.readSuccessorContext(
+                    lineageRef = firstWorking.lineageRef,
+                    threadRef = firstWorking.threadRef,
+                ),
+            )
+
+            val secondWorking =
+                workingSet(
+                    cursor =
+                        "event.vexlife.request.owner-test.context-next",
+                    statement =
+                        "statement.vexlife.owner-test.context-next",
+                )
+            val (
+                secondInput,
+                secondPlan,
+            ) =
+                checkpointPlan(
+                    workingSet = secondWorking,
+                    prior =
+                        firstCommitted.current.checkpoint,
+                )
+            owner.commitPlan(
+                plan = secondPlan,
+                pressureInput = secondInput,
+                workingSet = secondWorking,
+            )
+
+            assertNull(
+                owner.readSuccessorContext(
+                    lineageRef = firstWorking.lineageRef,
+                    threadRef = firstWorking.threadRef,
+                ),
+            )
+
+            val contextFiles =
+                Files.walk(
+                    home.resolve(
+                        "working-continuity",
+                    ),
+                )
+                    .use {
+                        paths ->
+                        paths
+                            .filter {
+                                path ->
+                                path.parent
+                                    ?.fileName
+                                    ?.toString() ==
+                                    "successor-contexts" &&
+                                    path.fileName
+                                        .toString()
+                                        .endsWith(
+                                            ".json",
+                                        )
+                            }
+                            .count()
+                    }
+            assertEquals(
+                1L,
+                contextFiles,
+            )
+            assertTrue(
+                issued.context.effects.successorContextIssued,
+            )
+        } finally {
+            home
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun differentRequestCannotStealAnExistingRolloverClaim() {
         val home =
             Files.createTempDirectory(

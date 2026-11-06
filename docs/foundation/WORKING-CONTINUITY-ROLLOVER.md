@@ -132,6 +132,55 @@ OWNER CUSTODY
 != PROMPT MATERIALIZATION AUTHORITY
 ~~~
 
+## Exact successor Context issuance
+
+The durable owner now has one narrower direct-path successor Context contract:
+
+~~~text
+current ROLLOVER_COMMITTED head
++ exact current SuccessorClaim
+        ↓
+SuccessorContext(contextMode = WORKING_CHECKPOINT_SUCCESSOR)
+        ↓
+immutable successor-contexts/<checkpointFingerprint>.json
+~~~
+
+The Context carries only:
+
+- exact checkpoint + commit-receipt identities;
+- exact successor-claim identity;
+- prior Conversation-head SHA-256 and checkpoint cursor request ref;
+- exact next request event binding;
+- the checkpoint's canonical reference-only WorkingSet;
+- source refs proving the continuity lineage;
+- issuance effects showing Home persistence only.
+
+It does not carry raw Conversation history, a model-generated summary, semantic Memory, provider output, or model/runtime authority.
+
+Currentness is owner-mediated:
+
+~~~text
+copied SuccessorContext JSON != authority
+
+VexLifeWorkingContinuityOwner.readSuccessorContext(...)
+-> current head
+-> current claim
+-> exact bindings
+-> current SuccessorContext or null
+~~~
+
+If a later checkpoint supersedes the head, the old successor Context remains immutable evidence on disk but is no longer returned as current.
+
+Permanent:
+
+~~~text
+SUCCESSOR CONTEXT ISSUED
+!= PROMPT MODE ACTIVATED
+
+SUCCESSOR CONTEXT
+!= PORTABLE BEARER AUTHORITY
+~~~
+
 ## Current candidate boundary
 
 This first slice owns only:
@@ -146,14 +195,13 @@ effect-free Plan
 optional reference-only Checkpoint
 ~~~
 
-After the durable-owner slice, the remaining held effects are:
+After the successor-Context issuance slice, the remaining held effects are:
 
-- issue an exact successor Context contract from the current durable claim;
-- change `DirectPromptContext` selection;
-- activate `WORKING_CHECKPOINT_SUCCESSOR`;
-- change Memory selection;
-- add Capability Atlas content;
-- change provider/model behavior.
+- change `DirectPromptContext` selection to consume only owner-current successor Context;
+- activate `WORKING_CHECKPOINT_SUCCESSOR` in provider materialization;
+- keep Memory selection current within the new mode;
+- add Capability Atlas/self-frame content;
+- change provider behavior only through the already-owned prompt path.
 
 Those effects remain the next consumer-driven steps after the semantic contract is accepted.
 
