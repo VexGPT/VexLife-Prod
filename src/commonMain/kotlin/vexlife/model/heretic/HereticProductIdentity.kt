@@ -41,6 +41,16 @@ object HereticProductIdentity {
         "MLX_LM_OPENAI_NUMERIC_LOOPBACK"
 
     /**
+     * Existing lived VexLife browser-Companion endpoint-profile identity.
+     *
+     * Canonical Conversation RESPONSE events persist this profile ref separately from the Heretic
+     * runtime-adapter identity. New Beginnings ports that accepted distinction rather than minting
+     * a product-specific endpoint-profile namespace.
+     */
+    const val CompanionEndpointProfileRef =
+        "model-profile.vexlife.browser-companion.local"
+
+    /**
      * Fresh product-owned host execution profile.
      *
      * Its eligibility meaning is faithfully ported from current VexLife Heretic setup rather than
