@@ -2,14 +2,17 @@ package vexlife.companion
 
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
+import java.time.Instant
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.contract.VexContractJson
 import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.conversation.DirectConversationStore
 import vexlife.memory.VexLifeMemoryContract
+import vexlife.model.heretic.HereticModelConfiguration
 
 /**
  * Bounded direct Companion prompt materialization.
@@ -22,8 +25,11 @@ object DirectPromptContext {
     const val ReceiptSchemaV2 =
         "vexlife-prod.direct-prompt-materialization-receipt/v2"
 
-    const val ReceiptSchema =
+    const val ReceiptSchemaV3 =
         "vexlife-prod.direct-prompt-materialization-receipt/v3"
+
+    const val ReceiptSchema =
+        "vexlife-prod.direct-prompt-materialization-receipt/v4"
 
     const val InputTokenBudget =
         VexLifeMemoryContract.ContextInputTokenBudget
@@ -33,6 +39,14 @@ object DirectPromptContext {
 
     const val HardTokenLimit =
         VexLifeMemoryContract.HardTokenLimit
+
+    private val DirectTurnCapabilityRefs =
+        listOf(
+            "capability.vexlife.companion.local-inference",
+            "capability.vexlife.context.browser-current",
+            "capability.vexlife.context.memory-current",
+            "capability.vexlife.context.working-continuity",
+        )
 
     @Serializable
     private data class ProviderMemoryPacket(
@@ -81,6 +95,13 @@ object DirectPromptContext {
         val systemContent: String?,
     )
 
+    private data class VerifiedCapabilityFrame(
+        val frame: VexLifeCapabilityAtlas.Frame,
+        val systemContent: String,
+        val systemMessageSha256: String,
+        val estimatedSystemMessageTokens: Int,
+    )
+
     @Serializable
     private data class ReceiptCore(
         val schemaVersion: String,
@@ -123,6 +144,12 @@ object DirectPromptContext {
         val workingContinuitySourceRefs: List<String>,
         val workingContinuitySystemMessageSha256: String?,
         val workingContinuityEstimatedSystemMessageTokens: Int,
+        val capabilityFrameIncluded: Boolean,
+        val capabilityFrameRef: String?,
+        val capabilityFrameFingerprint: String?,
+        val capabilityFrameSourceRefs: List<String>,
+        val capabilityFrameSystemMessageSha256: String?,
+        val capabilityFrameEstimatedSystemMessageTokens: Int,
         val trainingSelectionPerformed: Boolean,
         val effectsPerformed: Boolean,
     )
@@ -209,6 +236,36 @@ object DirectPromptContext {
         )
         val workingContinuityEstimatedSystemMessageTokens: Int =
             0,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val capabilityFrameIncluded: Boolean =
+            false,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val capabilityFrameRef: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val capabilityFrameFingerprint: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val capabilityFrameSourceRefs: List<String> =
+            emptyList(),
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val capabilityFrameSystemMessageSha256: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val capabilityFrameEstimatedSystemMessageTokens: Int =
+            0,
     )
 
     @Serializable
@@ -252,6 +309,8 @@ object DirectPromptContext {
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
             null,
         browserContext: BrowserContext? =
+            null,
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
     ): Materialization {
         require(
@@ -306,6 +365,34 @@ object DirectPromptContext {
             verifyMemoryContext(
                 memoryContext,
             )
+        val browserContextSha256 =
+            browserContext
+                ?.let {
+                    sha256(
+                        VexContractJson.canonicalEncode(
+                            it,
+                        ),
+                    )
+                }
+        val browserContextRef =
+            browserContextSha256
+                ?.let {
+                    "browser-context.vexlife-prod." +
+                        it.take(
+                            32,
+                        )
+                }
+        val capabilityFrame =
+            runtimeEvidence
+                ?.let {
+                    formCapabilityFrame(
+                        currentRequest = currentRequest,
+                        memoryContext = memory?.context,
+                        workingContinuityContext = workingContinuity?.context,
+                        browserContextRef = browserContextRef,
+                        runtimeEvidence = it,
+                    )
+                }
         val messages =
             buildList {
                 memory
@@ -319,6 +406,16 @@ object DirectPromptContext {
                         )
                     }
                 workingContinuity
+                    ?.systemContent
+                    ?.let {
+                        add(
+                            CompanionProviderMessage(
+                                role = "system",
+                                content = it,
+                            ),
+                        )
+                    }
+                capabilityFrame
                     ?.systemContent
                     ?.let {
                         add(
@@ -392,23 +489,6 @@ object DirectPromptContext {
             "direct prompt materialization exceeds the admitted input/output token budget"
         }
 
-        val browserContextSha256 =
-            browserContext
-                ?.let {
-                    sha256(
-                        VexContractJson.canonicalEncode(
-                            it,
-                        ),
-                    )
-                }
-        val browserContextRef =
-            browserContextSha256
-                ?.let {
-                    "browser-context.vexlife-prod." +
-                        it.take(
-                            32,
-                        )
-                }
         val providerMessageSetSha256 =
             sha256(
                 VexContractJson.canonicalEncode(
@@ -519,6 +599,12 @@ object DirectPromptContext {
                     workingContinuity
                         ?.estimatedSystemMessageTokens
                         ?: 0,
+                capabilityFrameIncluded = capabilityFrame != null,
+                capabilityFrameRef = capabilityFrame?.frame?.selfCapabilityFrameRef,
+                capabilityFrameFingerprint = capabilityFrame?.frame?.semanticFingerprint,
+                capabilityFrameSourceRefs = capabilityFrame?.frame?.sourceRefs ?: emptyList(),
+                capabilityFrameSystemMessageSha256 = capabilityFrame?.systemMessageSha256,
+                capabilityFrameEstimatedSystemMessageTokens = capabilityFrame?.estimatedSystemMessageTokens ?: 0,
                 trainingSelectionPerformed = false,
                 effectsPerformed = false,
             )
@@ -578,6 +664,12 @@ object DirectPromptContext {
                     core.workingContinuitySystemMessageSha256,
                 workingContinuityEstimatedSystemMessageTokens =
                     core.workingContinuityEstimatedSystemMessageTokens,
+                capabilityFrameIncluded = core.capabilityFrameIncluded,
+                capabilityFrameRef = core.capabilityFrameRef,
+                capabilityFrameFingerprint = core.capabilityFrameFingerprint,
+                capabilityFrameSourceRefs = core.capabilityFrameSourceRefs,
+                capabilityFrameSystemMessageSha256 = core.capabilityFrameSystemMessageSha256,
+                capabilityFrameEstimatedSystemMessageTokens = core.capabilityFrameEstimatedSystemMessageTokens,
                 effectsPerformed = core.effectsPerformed,
             )
 
@@ -597,6 +689,8 @@ object DirectPromptContext {
             null,
         browserContext: BrowserContext? =
             null,
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
+            null,
     ) {
         val current =
             materialize(
@@ -606,6 +700,7 @@ object DirectPromptContext {
                 workingContinuityContext =
                     workingContinuityContext,
                 browserContext = browserContext,
+                runtimeEvidence = runtimeEvidence,
             )
 
         require(
@@ -755,6 +850,99 @@ object DirectPromptContext {
             "direct prompt context current request does not immediately follow the exact prior completed turn"
         }
     }
+
+    private fun formCapabilityFrame(
+        currentRequest: DirectConversationStore.Event,
+        memoryContext: VexLifeMemoryContract.Context?,
+        workingContinuityContext: VexLifeWorkingContinuityOwner.SuccessorContext?,
+        browserContextRef: String?,
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
+    ): VerifiedCapabilityFrame {
+        val frame =
+            VexLifeCapabilityAtlas.formFrame(
+                VexLifeCapabilityAtlas.FrameInput(
+                    activeRoleRef = VexLifeCapabilityAtlas.CompanionRoleRef,
+                    platformRef = VexLifeCapabilityAtlas.MacPlatformRef,
+                    projectGrantedCapabilityRefs = DirectTurnCapabilityRefs,
+                    relevantCapabilityRefs = DirectTurnCapabilityRefs,
+                    permissionFacts = emptyList(),
+                    resourceFacts =
+                        listOf(
+                            VexLifeCapabilityAtlas.ResourceFact(
+                                resourceRef = "resource.vexlife-prod.memory.current-context",
+                                state =
+                                    if (memoryContext?.included == true) {
+                                        VexLifeCapabilityAtlas.ResourceState.AVAILABLE
+                                    } else {
+                                        VexLifeCapabilityAtlas.ResourceState.UNAVAILABLE
+                                    },
+                                sourceRefs = listOfNotNull(memoryContext?.memoryContextRef),
+                            ),
+                            VexLifeCapabilityAtlas.ResourceFact(
+                                resourceRef = "resource.vexlife-prod.browser.current-context",
+                                state =
+                                    if (browserContextRef != null) {
+                                        VexLifeCapabilityAtlas.ResourceState.AVAILABLE
+                                    } else {
+                                        VexLifeCapabilityAtlas.ResourceState.UNAVAILABLE
+                                    },
+                                sourceRefs = listOfNotNull(browserContextRef),
+                            ),
+                            VexLifeCapabilityAtlas.ResourceFact(
+                                resourceRef = "resource.vexlife-prod.working-continuity.current-successor",
+                                state =
+                                    if (workingContinuityContext != null) {
+                                        VexLifeCapabilityAtlas.ResourceState.AVAILABLE
+                                    } else {
+                                        VexLifeCapabilityAtlas.ResourceState.UNAVAILABLE
+                                    },
+                                sourceRefs = listOfNotNull(workingContinuityContext?.successorContextRef),
+                            ),
+                            VexLifeCapabilityAtlas.ResourceFact(
+                                resourceRef = "resource.vexlife-prod.heretic.qualified-runtime",
+                                state = VexLifeCapabilityAtlas.ResourceState.AVAILABLE,
+                                sourceRefs = listOf(runtimeEvidence.runtimeReceiptRef),
+                            ),
+                        ),
+                    currentContext =
+                        VexLifeCapabilityAtlas.CurrentContext(
+                            homeRef = currentRequest.homeRef,
+                            companionLineageRef = currentRequest.companionLineageRef,
+                            threadRef = currentRequest.threadRef,
+                            currentRequestEventRef = currentRequest.eventRef,
+                            memoryContextRefOrNull = memoryContext?.memoryContextRef,
+                            browserContextRefOrNull = browserContextRef,
+                            workingContinuityContextRefOrNull = workingContinuityContext?.successorContextRef,
+                            runtimeObservationRefOrNull = null,
+                        ),
+                    sourceRefs = listOf("project.vexlife.new-beginnings", currentRequest.eventRef),
+                    formedAt = Instant.parse(currentRequest.formedAt),
+                ),
+            )
+        require(
+            !frame.effectAuthorityGranted && frame.capabilityEntries.all { !it.effectAuthorityGranted },
+        ) {
+            "direct prompt capability frame cannot grant effect authority"
+        }
+        val systemContent = capabilityFrameSystemContent(frame)
+        return VerifiedCapabilityFrame(
+            frame = frame,
+            systemContent = systemContent,
+            systemMessageSha256 = sha256(systemContent),
+            estimatedSystemMessageTokens = estimatedMessageTokens(systemContent),
+        )
+    }
+
+    private fun capabilityFrameSystemContent(
+        frame: VexLifeCapabilityAtlas.Frame,
+    ): String =
+        listOf(
+            "VEXLIFE_SELF_CAPABILITY_FRAME/v1",
+            "These are current bounded capability handles, not effect authority or proof that an effect already occurred.",
+            "Use AVAILABLE/HELD/UNAVAILABLE/UNKNOWN as currentness context. Any effect still belongs to its rightful owner and current authority.",
+            VexContractJson.compactEncode(frame),
+        )
+            .joinToString("\n")
 
     private fun workingContinuitySystemContent(
         packet: ProviderWorkingContinuityPacket,

@@ -10,6 +10,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
@@ -20,6 +21,10 @@ import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.memory.VexLifeMemoryContextFixture
+import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.HereticProductIdentity
+import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeState
 
 class DirectPromptContextTest {
     private fun home(
@@ -29,6 +34,24 @@ class DirectPromptContextTest {
             productHome,
         )
     }
+
+    private fun runtimeEvidence(
+        receiptRef: String =
+            "receipt.vexlife-prod.heretic.prompt-capability",
+    ) =
+        HereticModelConfiguration.QualifiedRuntimeEvidence(
+            runtimeReceiptRef = receiptRef,
+            runtimeState = HereticRuntimeState.Qualified,
+            modelRef = HereticProductIdentity.ModelRef,
+            modelProfileRef = HereticProductIdentity.ModelProfileRef,
+            artifactRef = HereticProductIdentity.ArtifactSetRef,
+            artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
+            runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
+            runtimeClass = HereticProductIdentity.RuntimeClass,
+            endpoint = HereticProductIdentity.Endpoint,
+            requestModel = HereticProductIdentity.RequestModel,
+            qualification = HereticRuntimeQualification.qualified(),
+        )
 
     @Test
     fun historicalV2ReceiptRoundTripsWithoutNewWorkingFieldsInCanonicalHashShape() {
@@ -84,12 +107,23 @@ class DirectPromptContextTest {
                         "workingContinuitySystemMessageSha256",
                         "workingContinuityEstimatedSystemMessageTokens",
                     )
+                val capabilityKeys =
+                    setOf(
+                        "capabilityFrameIncluded",
+                        "capabilityFrameRef",
+                        "capabilityFrameFingerprint",
+                        "capabilityFrameSourceRefs",
+                        "capabilityFrameSystemMessageSha256",
+                        "capabilityFrameEstimatedSystemMessageTokens",
+                    )
                 val historical =
                     JsonObject(
                         full
                             .filterKeys {
                                 it !in
-                                    workingKeys
+                                    workingKeys &&
+                                    it !in
+                                    capabilityKeys
                             }
                             .toMutableMap()
                             .also {
@@ -118,6 +152,109 @@ class DirectPromptContextTest {
                 )
                 assertTrue(
                     decoded.workingContinuitySourceRefs.isEmpty(),
+                )
+                assertEquals(
+                    VexContractJson.canonicalEncodeElement(
+                        historical,
+                    ),
+                    VexContractJson.canonicalEncode(
+                        decoded,
+                    ),
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun historicalV3ReceiptRoundTripsWithoutCapabilityFieldsInCanonicalHashShape() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-v3-compat-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val store =
+                DirectConversationStore(
+                    productHome,
+                )
+
+            store.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef =
+                            "turn.self-development.v3-compat",
+                        requestMessageRef =
+                            "message.self-development.human.v3-compat",
+                        content =
+                            "Historical v3 receipt compatibility",
+                    )
+                val receipt =
+                    DirectPromptContext.materialize(
+                        prior = null,
+                        currentRequest = request,
+                    )
+                        .receipt
+                val full =
+                    VexContractJson.Strict
+                        .encodeToJsonElement(
+                            receipt,
+                        )
+                        .jsonObject
+                val capabilityKeys =
+                    setOf(
+                        "capabilityFrameIncluded",
+                        "capabilityFrameRef",
+                        "capabilityFrameFingerprint",
+                        "capabilityFrameSourceRefs",
+                        "capabilityFrameSystemMessageSha256",
+                        "capabilityFrameEstimatedSystemMessageTokens",
+                    )
+                val historical =
+                    JsonObject(
+                        full
+                            .filterKeys {
+                                it !in
+                                    capabilityKeys
+                            }
+                            .toMutableMap()
+                            .also {
+                                it[
+                                    "schemaVersion"
+                                ] =
+                                    JsonPrimitive(
+                                        DirectPromptContext.ReceiptSchemaV3,
+                                    )
+                            },
+                    )
+                val decoded =
+                    VexContractJson.decode<DirectPromptContext.Receipt>(
+                        historical.toString(),
+                    )
+
+                assertEquals(
+                    DirectPromptContext.ReceiptSchemaV3,
+                    decoded.schemaVersion,
+                )
+                assertFalse(
+                    decoded.capabilityFrameIncluded,
+                )
+                assertNull(
+                    decoded.capabilityFrameRef,
+                )
+                assertTrue(
+                    decoded.capabilityFrameSourceRefs.isEmpty(),
                 )
                 assertEquals(
                     VexContractJson.canonicalEncodeElement(
@@ -814,6 +951,146 @@ class DirectPromptContextTest {
                     DirectPromptContext.materialize(
                         prior = null,
                         currentRequest = request,
+                    )
+                }
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun liveCapabilityFrameIsFormedFromCurrentPromptFactsAndReverified() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-capability-frame-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val store =
+                DirectConversationStore(
+                    productHome,
+                )
+
+            store.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef =
+                            "turn.self-development.capability-frame",
+                        requestMessageRef =
+                            "message.self-development.human.capability-frame",
+                        content =
+                            "What can you currently use?",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-06T13:30:00Z",
+                            ),
+                    )
+                val memory =
+                    VexLifeMemoryContextFixture.current()
+                val browserContext =
+                    DirectPromptContext.BrowserContext(
+                        pageUrl =
+                            VexLifeProdBrowserContract.InitialPageUrl,
+                        title =
+                            "Vextreme Terrain",
+                        text =
+                            "Capability frame browser context.",
+                        capture =
+                            VexLifeProdBrowserContract.CaptureRendered,
+                    )
+                val runtime =
+                    runtimeEvidence()
+                val materialized =
+                    DirectPromptContext.materialize(
+                        prior = null,
+                        currentRequest = request,
+                        memoryContext = memory,
+                        browserContext = browserContext,
+                        runtimeEvidence = runtime,
+                    )
+
+                assertEquals(
+                    listOf(
+                        "system",
+                        "system",
+                        "user",
+                        "user",
+                    ),
+                    materialized.messages.map {
+                        it.role
+                    },
+                )
+                assertTrue(
+                    materialized.messages[1]
+                        .content
+                        .startsWith(
+                            "VEXLIFE_SELF_CAPABILITY_FRAME/v1",
+                        ),
+                )
+                assertTrue(
+                    materialized.messages[1]
+                        .content
+                        .contains(
+                            "capability.vexlife.companion.local-inference",
+                        ),
+                )
+                assertTrue(
+                    materialized.messages[1]
+                        .content
+                        .contains(
+                            "\"effectAuthorityGranted\":false",
+                        ),
+                )
+                assertTrue(
+                    materialized.receipt.capabilityFrameIncluded,
+                )
+                assertNotNull(
+                    materialized.receipt.capabilityFrameRef,
+                )
+                assertNotNull(
+                    materialized.receipt.capabilityFrameFingerprint,
+                )
+                assertTrue(
+                    materialized.receipt.capabilityFrameSourceRefs.contains(
+                        runtime.runtimeReceiptRef,
+                    ),
+                )
+                assertTrue(
+                    materialized.receipt.capabilityFrameEstimatedSystemMessageTokens >
+                        0,
+                )
+
+                DirectPromptContext.reverify(
+                    materialization = materialized,
+                    prior = null,
+                    currentRequest = request,
+                    memoryContext = memory,
+                    browserContext = browserContext,
+                    runtimeEvidence = runtime,
+                )
+
+                assertFailsWith<IllegalArgumentException> {
+                    DirectPromptContext.reverify(
+                        materialization = materialized,
+                        prior = null,
+                        currentRequest = request,
+                        memoryContext = memory,
+                        browserContext = browserContext,
+                        runtimeEvidence =
+                            runtimeEvidence(
+                                "receipt.vexlife-prod.heretic.prompt-capability.changed",
+                            ),
                     )
                 }
             }

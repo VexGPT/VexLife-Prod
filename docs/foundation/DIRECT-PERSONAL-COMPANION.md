@@ -61,25 +61,32 @@ VexLifeCurrentMemoryReader
   -> otherwise HELD / DAILY_MEMORY_SOURCE_FRONTIER_STALE
   -> bounded attributed Memory context with no provider Memory content while held
         ↓
+current qualified runtime evidence
+        ↓
 DirectPromptContext
-  first turn:
-    current Memory when source-current
-    + current request
+  current source-attributed Memory when source-current
+  + owner-current working-checkpoint successor when present
+  + source-formed bounded self-capability frame
+  + immediate prior REQUEST/RESPONSE only when not in successor mode
+  + optional admitted browser context
+  + current request
 
-  CONTINUE:
-    current Memory when source-current
-    + immediate prior REQUEST
-    + immediate prior RESPONSE
-    + current request
+  self-capability frame:
+    Memory / browser / working-continuity / local-inference
+    AVAILABLE / HELD / UNAVAILABLE / UNKNOWN
+    effectAuthorityGranted = false
 
   192,000 input-token budget
   16,000 reserved output tokens
   208,000 hard limit
         ↓
-Memory context re-read + exact equality check
+Memory context + working-successor currentness re-read
 before provider invocation
         ↓
-prompt selection reverified while same writer lease is held
+fresh qualified runtime evidence
+        ↓
+prompt + self-capability frame materialized and reverified
+while the same writer lease is held
         ↓
 DirectCompanionConnection
   endpoint/model supplied only by QualifiedRuntimeEvidence
@@ -153,15 +160,14 @@ still equals the current canonical Conversation head; otherwise the reader retur
 re-run under the same Conversation writer lease before provider invocation and must return the exact
 same context used to form the prompt receipt.
 
-Current VexLife's prompt-context runtime also has a separately-owned
-`WORKING_CHECKPOINT_SUCCESSOR` mode when one exact working-rollover owner is eligible. That
-relationship is **not** implemented by this first fresh direct circuit and remains held rather than
-being collapsed into `IMMEDIATE_PRIOR_COMPLETED_TURN`.
+The fresh direct circuit now also carries the separately-owned
+`WORKING_CHECKPOINT_SUCCESSOR` mode when one exact working-rollover owner is current. In that mode
+the prior REQUEST/RESPONSE pair is not replayed; the prompt receives current Memory plus bounded
+working coordinates, the live capability frame, optional browser context and the current request.
 
-~~~text
-FIRST DIRECT CONTINUE CIRCUIT
-!= FULL CURRENT PROMPT-CONTINUITY PARITY
-~~~
+The self-capability frame is formed from live owner facts inside the prompt materialization path. It
+is context about what is currently available, not a second authority owner and not an executable
+tool registry.
 
 ### `DirectCompanionConnection`
 
