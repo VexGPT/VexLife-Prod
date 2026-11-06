@@ -354,26 +354,31 @@ class VexLifeCapabilityAtlasTest {
 
     @Test
     fun boundedFrameTruncatesByCanonicalPriorityAndNeverExceedsBudget() {
-        val frame =
+        val full =
+            VexLifeCapabilityAtlas.formFrame(
+                input(),
+            )
+        val bounded =
             VexLifeCapabilityAtlas.formFrame(
                 input(
                     tokenBudget =
-                        360,
+                        full.coverage.usedTokens -
+                            1,
                 ),
             )
 
         assertTrue(
-            frame.coverage.usedTokens <=
-                frame.coverage.tokenBudget,
+            bounded.coverage.usedTokens <=
+                bounded.coverage.tokenBudget,
         )
         assertTrue(
-            frame.coverage.truncated,
+            bounded.coverage.truncated,
         )
         assertTrue(
-            frame.coverage.omittedCapabilityRefs.isNotEmpty(),
+            bounded.coverage.omittedCapabilityRefs.isNotEmpty(),
         )
         assertTrue(
-            frame.capabilityEntries.any {
+            bounded.capabilityEntries.any {
                 it.capabilityRef ==
                     "capability.vexlife.companion.local-inference"
             },
