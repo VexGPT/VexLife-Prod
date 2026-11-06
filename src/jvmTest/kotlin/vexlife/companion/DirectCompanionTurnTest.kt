@@ -352,6 +352,120 @@ class DirectCompanionTurnTest {
     }
 
     @Test
+    fun postCompletionContinuityExceptionCannotRetroactivelyFailCompletedTurn() {
+        val home =
+            productHome()
+        var providerCalls =
+            0
+
+        try {
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home,
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.continuity-post-commit-isolation",
+                            content =
+                                "Complete this turn even if post-completion continuity breaks.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport =
+                                DirectCompanionConnection.Transport {
+                                    providerCalls +=
+                                        1
+                                    DirectCompanionConnection.HttpResult(
+                                        status = 200,
+                                        body =
+                                            """
+                                            {
+                                              "model": "default_model",
+                                              "choices": [
+                                                {
+                                                  "message": {
+                                                    "role": "assistant",
+                                                    "content": "Completed before continuity stewardship."
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                            """.trimIndent(),
+                                    )
+                                },
+                            commitWorkingContinuity = {
+                                _,
+                                _,
+                                _,
+                                _,
+                                ->
+                                error(
+                                    "synthetic post-completion continuity failure",
+                                )
+                            },
+                        ),
+                )
+
+            assertEquals(
+                1,
+                providerCalls,
+            )
+            assertEquals(
+                "TURN_COMPLETED",
+                result.state,
+            )
+            assertEquals(
+                "Completed before continuity stewardship.",
+                result.content,
+            )
+
+            val current =
+                DirectConversationStore(
+                    home,
+                )
+                    .current()
+            assertEquals(
+                result.currentConversationHeadSha256,
+                current.head
+                    ?.conversationHeadSha256,
+            )
+            assertEquals(
+                2,
+                current.canonicalEvents.size,
+            )
+            assertTrue(
+                current.abandonedAttempts.isEmpty(),
+            )
+
+            assertFalse(
+                Files.exists(
+                    home
+                        .resolve(
+                            "recovery/direct-companion",
+                        )
+                        .resolve(
+                            result.turnRef +
+                                ".json",
+                        ),
+                ),
+            )
+            assertNull(
+                DirectWorkingContinuity.read(
+                    productHome = home,
+                    turnRef = result.turnRef,
+                ),
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun exactCompletedSendRetryReturnsDurableResultWithoutAnotherModelCall() {
         val home =
             productHome()
