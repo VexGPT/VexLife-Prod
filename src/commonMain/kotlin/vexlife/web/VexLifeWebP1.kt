@@ -398,6 +398,11 @@ object VexLifeWebP1 {
             VexLifeWorkspaceBlueprint.CompanionStatus,
         )
 
+    val Vision =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.Vision,
+        )
+
     val CompanionViewSwitch =
         VexWebAuthoring.element(
             element = VexLifeWorkspaceBlueprint.CompanionViewSwitch,
@@ -423,6 +428,7 @@ object VexLifeWebP1 {
             children =
                 listOf(
                     CompanionStatus,
+                    Vision,
                     CompanionViewSwitch,
                 ),
         )
