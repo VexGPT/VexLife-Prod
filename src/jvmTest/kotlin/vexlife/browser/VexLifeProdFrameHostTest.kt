@@ -5,9 +5,42 @@ import java.net.Socket
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import kotlin.test.Test
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class VexLifeProdFrameHostTest {
+    @Test
+    fun framePolicyAllowsOnlySameAdmittedFrameOriginNestingInsideTheProduct() {
+        val policy =
+            VexLifeProdFrameHost.FrameContentSecurityPolicy
+
+        assertTrue(
+            policy.contains(
+                "frame-src 'self'",
+            ),
+        )
+        assertTrue(
+            policy.contains(
+                "frame-ancestors 'self' http://127.0.0.1:18210",
+            ),
+        )
+        assertFalse(
+            policy.contains(
+                "frame-src 'none'",
+            ),
+        )
+        assertTrue(
+            policy.contains(
+                "form-action 'none'",
+            ),
+        )
+        assertTrue(
+            policy.contains(
+                "object-src 'none'",
+            ),
+        )
+    }
+
     private fun request(
         port: Int,
         method: String,

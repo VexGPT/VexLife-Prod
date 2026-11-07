@@ -33,14 +33,14 @@ class VexLifeProdFrameHost private constructor(
         private const val RequestTimeoutSeconds =
             20L
 
-        private const val FrameContentSecurityPolicy =
+        internal const val FrameContentSecurityPolicy =
             "default-src 'self' https://vgong24.github.io https://vexgpt.github.io data: blob:; " +
                 "script-src 'self' 'unsafe-inline' https://vgong24.github.io https://vexgpt.github.io; " +
                 "style-src 'self' 'unsafe-inline' https://vgong24.github.io https://vexgpt.github.io; " +
                 "img-src 'self' https://vgong24.github.io https://vexgpt.github.io data: blob:; " +
                 "font-src 'self' https://vgong24.github.io https://vexgpt.github.io data:; " +
-                "connect-src 'self'; form-action 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; " +
-                "frame-ancestors http://127.0.0.1:18210"
+                "connect-src 'self'; form-action 'none'; object-src 'none'; frame-src 'self'; base-uri 'none'; " +
+                "frame-ancestors 'self' http://127.0.0.1:18210"
 
         fun start(): VexLifeProdFrameHost =
             startAt(
