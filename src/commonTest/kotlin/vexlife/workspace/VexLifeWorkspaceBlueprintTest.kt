@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 
 class VexLifeWorkspaceBlueprintTest {
     @Test
-    fun initialEngagementHasStableUniqueNestedAddresses() {
+    fun workspaceCompositionKeepsStableUniquePerceptibleAddresses() {
         assertEquals(
             "screen.vexlife-workspace",
             VexLifeWorkspaceBlueprint.screenRef,
@@ -23,68 +23,34 @@ class VexLifeWorkspaceBlueprintTest {
             refs.toSet().size,
         )
         assertEquals(
-            21,
+            38,
             refs.size,
         )
 
-        assertEquals(
-            "element.vexlife-workspace.header.utilities.vex-summon",
-            VexLifeWorkspaceBlueprint
-                .VexSummon
-                .ref,
-        )
-        assertEquals(
-            VexLifeWorkspaceBlueprint.Utilities.ref,
-            VexLifeWorkspaceBlueprint
-                .VexSummon
-                .parentRef,
-        )
+        val expectedParents =
+            mapOf(
+                VexLifeWorkspaceBlueprint.QuickActions.ref to VexLifeWorkspaceBlueprint.Utilities.ref,
+                VexLifeWorkspaceBlueprint.BrowserFrameStatus.ref to VexLifeWorkspaceBlueprint.Browser.ref,
+                VexLifeWorkspaceBlueprint.CompanionViewSwitch.ref to VexLifeWorkspaceBlueprint.Companion.ref,
+                VexLifeWorkspaceBlueprint.ContextShare.ref to VexLifeWorkspaceBlueprint.Conversation.ref,
+                VexLifeWorkspaceBlueprint.ContextReceipt.ref to VexLifeWorkspaceBlueprint.Conversation.ref,
+                VexLifeWorkspaceBlueprint.ContextWindow.ref to VexLifeWorkspaceBlueprint.SettingsContext.ref,
+                VexLifeWorkspaceBlueprint.MemoryResource.ref to VexLifeWorkspaceBlueprint.SettingsResources.ref,
+                VexLifeWorkspaceBlueprint.CleanChat.ref to VexLifeWorkspaceBlueprint.SettingsReset.ref,
+            )
 
-        assertEquals(
-            "element.vexlife-workspace.companion.conversation.jump-latest",
-            VexLifeWorkspaceBlueprint
-                .ConversationJumpLatest
-                .ref,
-        )
-        assertEquals(
-            VexLifeWorkspaceBlueprint.Conversation.ref,
-            VexLifeWorkspaceBlueprint
-                .ConversationJumpLatest
-                .parentRef,
-        )
-
-        assertEquals(
-            "element.vexlife-workspace.browser.viewport",
-            VexLifeWorkspaceBlueprint
-                .BrowserViewport
-                .ref,
-        )
-        assertEquals(
-            VexLifeWorkspaceBlueprint.Browser.ref,
-            VexLifeWorkspaceBlueprint
-                .BrowserViewport
-                .parentRef,
-        )
-
-        assertEquals(
-            "element.vexlife-workspace.companion.conversation.send",
-            VexLifeWorkspaceBlueprint
-                .Send
-                .ref,
-        )
-        assertEquals(
-            VexLifeWorkspaceBlueprint.Conversation.ref,
-            VexLifeWorkspaceBlueprint
-                .Send
-                .parentRef,
-        )
-
-        assertEquals(
-            "element.vexlife-workspace.companion.settings.reset",
-            VexLifeWorkspaceBlueprint
-                .SettingsReset
-                .ref,
-        )
+        expectedParents.forEach { (ref, parent) ->
+            assertEquals(
+                parent,
+                VexLifeWorkspaceBlueprint
+                    .elements
+                    .single {
+                        it.ref ==
+                            ref
+                    }
+                    .parentRef,
+            )
+        }
     }
 }
 

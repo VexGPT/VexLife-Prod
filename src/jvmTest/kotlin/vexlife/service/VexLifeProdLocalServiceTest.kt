@@ -261,19 +261,19 @@ class VexLifeProdLocalServiceTest {
                     assertTrue(
                         runtimeJavascript.body()
                             .contains(
-                                "Capabilities Vex received",
+                                "Converse with Vex",
                             ),
                     )
                     assertTrue(
                         runtimeJavascript.body()
                             .contains(
-                                "OMITTED",
+                                "Include this page",
                             ),
                     )
                     assertTrue(
                         runtimeJavascript.body()
                             .contains(
-                                "Current Conversation turn predates VexLife-Prod prompt-context evidence.",
+                                "Start clean chat",
                             ),
                     )
                     assertTrue(

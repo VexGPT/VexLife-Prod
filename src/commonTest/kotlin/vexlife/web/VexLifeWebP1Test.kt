@@ -24,7 +24,7 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            21,
+            38,
             blueprint.size,
         )
         assertTrue(
@@ -50,6 +50,44 @@ class VexLifeWebP1Test {
         assertEquals(
             VexLifeWebP1.Companion.identity.ref,
             vexSummonBinding.target.ref,
+        )
+
+        val viewSwitch =
+            VexLifeWebP1.Surface
+                .coordinates()
+                .single {
+                    it.ref ==
+                        VexLifeWorkspaceBlueprint.CompanionViewSwitch.ref
+                }
+        assertTrue(
+            VexWeb.Interaction.Activate in
+                viewSwitch.interactions,
+        )
+        val viewSwitchBinding =
+            viewSwitch.binding as
+                VexWeb.Binding.LocalInteraction
+        assertEquals(
+            VexLifeWebP1.Settings.identity.ref,
+            viewSwitchBinding.target.ref,
+        )
+
+        val contextShare =
+            VexLifeWebP1.Surface
+                .coordinates()
+                .single {
+                    it.ref ==
+                        VexLifeWorkspaceBlueprint.ContextShare.ref
+                }
+        assertTrue(
+            VexWeb.Interaction.Activate in
+                contextShare.interactions,
+        )
+        val contextShareBinding =
+            contextShare.binding as
+                VexWeb.Binding.LocalInteraction
+        assertEquals(
+            VexLifeWebP1.ContextReceipt.identity.ref,
+            contextShareBinding.target.ref,
         )
 
         val jumpLatest =
@@ -154,10 +192,34 @@ class VexLifeWebP1Test {
                 )
                 .containerRef,
         )
+        assertEquals(
+            VexLifeWebP1.Composer.identity.ref,
+            coordinates
+                .getValue(
+                    VexLifeWebP1.ContextReceipt.identity.ref,
+                )
+                .containerRef,
+        )
+        assertEquals(
+            VexLifeWebP1.Composer.identity.ref,
+            coordinates
+                .getValue(
+                    VexLifeWebP1.ContextShare.identity.ref,
+                )
+                .containerRef,
+        )
+        assertEquals(
+            VexLifeWebP1.SettingsContext.identity.ref,
+            coordinates
+                .getValue(
+                    VexLifeWebP1.ContextWindow.identity.ref,
+                )
+                .containerRef,
+        )
     }
 
     @Test
-    fun p1PositionsBrowserAsPrimaryStageAndCompanionAsContextualWorkspace() {
+    fun p1RestoresPeerBrowserAndCompanionRegionsAroundOneSeam() {
         val regions =
             VexLifeWebP1.Surface
                 .spatialRegions()
@@ -193,7 +255,7 @@ class VexLifeWebP1Test {
         )
         assertTrue(
             artifacts.css.contains(
-                "[data-vex-ref=\"${VexLifeWebP1.Refs.BrowserRegion.value}\"]{left:0%;top:0%;width:100%;height:100%;}",
+                "[data-vex-ref=\"${VexLifeWebP1.Refs.BrowserRegion.value}\"]{left:0%;top:0%;width:50%;height:100%;}",
             ),
         )
         assertTrue(
@@ -208,12 +270,12 @@ class VexLifeWebP1Test {
         )
         assertTrue(
             artifacts.semanticManifest.contains(
-                "\"ref\":\"${VexLifeWebP1.Refs.BrowserRegion.value}\",\"startBoundary\":\"FRAME_START\",\"endBoundary\":\"FRAME_END\"",
+                "\"ref\":\"${VexLifeWebP1.Refs.BrowserRegion.value}\",\"startBoundary\":\"FRAME_START\",\"endBoundary\":\"SEAM:${VexLifeWebP1.Refs.BrowserCompanionSeam.value}\"",
             ),
         )
         assertTrue(
             artifacts.semanticManifest.contains(
-                "\"ref\":\"${VexLifeWebP1.Refs.CompanionRegion.value}\",\"nodeKind\":\"REGION\",\"blueprintKind\":null,\"sourceParentRef\":null,\"containerRef\":\"${VexLifeWebP1.Refs.BodyFrame.value}\",\"placement\":\"FillAvailable\",\"depth\":\"Chrome\"",
+                "\"ref\":\"${VexLifeWebP1.Refs.CompanionRegion.value}\",\"nodeKind\":\"REGION\",\"blueprintKind\":null,\"sourceParentRef\":null,\"containerRef\":\"${VexLifeWebP1.Refs.BodyFrame.value}\",\"placement\":\"FillAvailable\",\"depth\":\"Content\"",
             ),
         )
     }

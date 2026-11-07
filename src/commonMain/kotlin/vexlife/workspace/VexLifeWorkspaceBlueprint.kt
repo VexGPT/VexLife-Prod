@@ -3,14 +3,10 @@ package vexlife.workspace
 import vexlife.blueprint.VexScreenBlueprint
 
 /**
- * Initial engagement structure only.
+ * Canonical VexLife-Prod nested workspace composition identity.
  *
- * Directly consumed elements are compiler-visible properties. This lets renderers inherit stable
- * identity from the Blueprint rather than retyping string paths.
- *
- * The structure intentionally does not claim that Conversation, Settings, browser context, Memory,
- * model or provider mechanics are already connected, and it does not assign a Family merely because
- * a UI region exists.
+ * Read this object as a product composition map. Blueprint identity owns stable addressability,
+ * while VexWeb owns manifestation relationships and runtime/service owners remain separate.
  */
 object VexLifeWorkspaceBlueprint :
     VexScreenBlueprint(
@@ -36,14 +32,22 @@ object VexLifeWorkspaceBlueprint :
         Header.region(
             "utilities",
         )
+    val QuickActions =
+        Utilities.collection(
+            "quick-actions",
+        )
     val VexSummon =
-        Utilities.control(
+        QuickActions.control(
             "vex-summon",
         )
 
     val Browser =
         region(
             "browser",
+        )
+    val BrowserFrameStatus =
+        Browser.content(
+            "frame-status",
         )
     val BrowserViewport =
         Browser.region(
@@ -53,6 +57,14 @@ object VexLifeWorkspaceBlueprint :
     val Companion =
         region(
             "companion",
+        )
+    val CompanionStatus =
+        Companion.content(
+            "companion-status",
+        )
+    val CompanionViewSwitch =
+        Companion.control(
+            "view-switch",
         )
 
     val Conversation =
@@ -75,9 +87,25 @@ object VexLifeWorkspaceBlueprint :
         Conversation.textField(
             "composer",
         )
+    val ContextReceipt =
+        Conversation.content(
+            "context-receipt",
+        )
+    val ContextShare =
+        Conversation.control(
+            "context-share",
+        )
     val Send =
         Conversation.control(
             "send",
+        )
+    val Stop =
+        Conversation.control(
+            "stop",
+        )
+    val ContextInspector =
+        Conversation.content(
+            "context-inspector",
         )
 
     val Settings =
@@ -88,21 +116,57 @@ object VexLifeWorkspaceBlueprint :
         Settings.region(
             "context",
         )
+    val ContextWindow =
+        SettingsContext.content(
+            "context-window",
+        )
     val SettingsResources =
         Settings.region(
             "resources",
+        )
+    val MemoryResource =
+        SettingsResources.content(
+            "memory",
+        )
+    val LowMemoryAlert =
+        SettingsResources.control(
+            "low-memory-alert",
+        )
+    val ThoughtVisibility =
+        Settings.control(
+            "thought-visibility",
         )
     val SettingsHome =
         Settings.region(
             "home",
         )
+    val HomeDirectories =
+        SettingsHome.control(
+            "directories",
+        )
+    val HomeAddDirectory =
+        SettingsHome.control(
+            "add-directory",
+        )
     val SettingsContinuity =
         Settings.region(
             "continuity",
         )
+    val ContinuityMode =
+        SettingsContinuity.control(
+            "continuity-mode",
+        )
+    val DreamSync =
+        SettingsContinuity.control(
+            "dream-sync",
+        )
     val SettingsReset =
         Settings.region(
             "reset",
+        )
+    val CleanChat =
+        SettingsReset.control(
+            "clean-chat",
         )
 }
 
