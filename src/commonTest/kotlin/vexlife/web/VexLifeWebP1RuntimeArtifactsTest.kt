@@ -5,6 +5,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.service.VexLifeProdServiceContract
+import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexLifeWebP1RuntimeArtifactsTest {
     @Test
@@ -65,6 +66,36 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(
             bundle.javascript.contains(
                 "setPointerCapture",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "Vex conversation workspace",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "Summon Vex",
+            ),
+        )
+        assertTrue(
+            bundle.semanticManifest.contains(
+                "\"ref\":\"${VexLifeWorkspaceBlueprint.VexSummon.ref}\"",
+            ),
+        )
+        assertTrue(
+            bundle.css.contains(
+                VexLifeWebP1.Refs.CompanionHeader.value,
+            ),
+        )
+        assertTrue(
+            bundle.css.contains(
+                "grid-template-columns:minmax(0,1.6fr) minmax(210px,.7fr)",
+            ),
+        )
+        assertFalse(
+            bundle.css.contains(
+                "max-height:34%;overflow:auto;border-top",
             ),
         )
         assertTrue(

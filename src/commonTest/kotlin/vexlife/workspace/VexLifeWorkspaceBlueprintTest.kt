@@ -23,8 +23,21 @@ class VexLifeWorkspaceBlueprintTest {
             refs.toSet().size,
         )
         assertEquals(
-            20,
+            21,
             refs.size,
+        )
+
+        assertEquals(
+            "element.vexlife-workspace.header.utilities.vex-summon",
+            VexLifeWorkspaceBlueprint
+                .VexSummon
+                .ref,
+        )
+        assertEquals(
+            VexLifeWorkspaceBlueprint.Utilities.ref,
+            VexLifeWorkspaceBlueprint
+                .VexSummon
+                .parentRef,
         )
 
         assertEquals(

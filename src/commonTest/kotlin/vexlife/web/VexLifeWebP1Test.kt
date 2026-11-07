@@ -24,13 +24,32 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            20,
+            21,
             blueprint.size,
         )
         assertTrue(
             manifested.containsAll(
                 blueprint,
             ),
+        )
+
+        val vexSummon =
+            VexLifeWebP1.Surface
+                .coordinates()
+                .single {
+                    it.ref ==
+                        VexLifeWorkspaceBlueprint.VexSummon.ref
+                }
+        assertTrue(
+            VexWeb.Interaction.Activate in
+                vexSummon.interactions,
+        )
+        val vexSummonBinding =
+            vexSummon.binding as
+                VexWeb.Binding.LocalInteraction
+        assertEquals(
+            VexLifeWebP1.Companion.identity.ref,
+            vexSummonBinding.target.ref,
         )
 
         val jumpLatest =
@@ -91,6 +110,49 @@ class VexLifeWebP1Test {
             artifacts.semanticManifest.contains(
                 "\"type\":\"CAPABILITY\",\"capabilityRef\":\"conversation.send\"",
             ),
+        )
+    }
+
+    @Test
+    fun companionCompositionMakesHeadingContentFeedAndContextBoundariesSourceVisible() {
+        val coordinates =
+            VexLifeWebP1.Surface
+                .coordinates()
+                .associateBy {
+                    it.ref
+                }
+
+        assertEquals(
+            VexLifeWebP1.Companion.identity.ref,
+            coordinates
+                .getValue(
+                    VexLifeWebP1.Refs.CompanionHeader.value,
+                )
+                .containerRef,
+        )
+        assertEquals(
+            VexLifeWebP1.Companion.identity.ref,
+            coordinates
+                .getValue(
+                    VexLifeWebP1.Refs.CompanionContent.value,
+                )
+                .containerRef,
+        )
+        assertEquals(
+            VexLifeWebP1.Refs.CompanionContent.value,
+            coordinates
+                .getValue(
+                    VexLifeWebP1.Conversation.identity.ref,
+                )
+                .containerRef,
+        )
+        assertEquals(
+            VexLifeWebP1.Refs.CompanionContent.value,
+            coordinates
+                .getValue(
+                    VexLifeWebP1.Settings.identity.ref,
+                )
+                .containerRef,
         )
     }
 

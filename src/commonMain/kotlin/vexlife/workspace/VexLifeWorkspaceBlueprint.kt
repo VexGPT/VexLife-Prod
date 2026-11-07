@@ -36,6 +36,10 @@ object VexLifeWorkspaceBlueprint :
         Header.region(
             "utilities",
         )
+    val VexSummon =
+        Utilities.control(
+            "vex-summon",
+        )
 
     val Browser =
         region(

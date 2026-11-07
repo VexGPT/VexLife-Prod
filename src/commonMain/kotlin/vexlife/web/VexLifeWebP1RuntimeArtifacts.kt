@@ -66,6 +66,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const refs = Object.freeze({
                 brand: ${jsString(VexLifeWebP1.Brand.identity.ref)},
+                vexSummon: ${jsString(VexLifeWebP1.VexSummon.identity.ref)},
                 bodyFrame: ${jsString(VexLifeWebP1.Refs.BodyFrame.value)},
                 browserRegion: ${jsString(VexLifeWebP1.Refs.BrowserRegion.value)},
                 companionRegion: ${jsString(VexLifeWebP1.Refs.CompanionRegion.value)},
@@ -73,6 +74,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 browserQuery: ${jsString(VexLifeWebP1.BrowserQuery.identity.ref)},
                 browserViewport: ${jsString(VexLifeWebP1.BrowserViewport.identity.ref)},
                 companion: ${jsString(VexLifeWebP1.Companion.identity.ref)},
+                companionHeader: ${jsString(VexLifeWebP1.Refs.CompanionHeader.value)},
+                companionContent: ${jsString(VexLifeWebP1.Refs.CompanionContent.value)},
                 conversation: ${jsString(VexLifeWebP1.Conversation.identity.ref)},
                 conversationTimeline: ${jsString(VexLifeWebP1.ConversationTimeline.identity.ref)},
                 conversationJumpLatest: ${jsString(VexLifeWebP1.ConversationJumpLatest.identity.ref)},
@@ -103,6 +106,7 @@ object VexLifeWebP1RuntimeArtifacts {
               const byRef = (ref) => root.querySelector('[data-vex-ref="' + ref + '"]');
               const generatedPart = (ref, part) => byRef(ref)?.querySelector('[data-vex-generated-part="' + part + '"]') ?? null;
               const brand = byRef(refs.brand);
+              const vexSummonButton = generatedPart(refs.vexSummon, 'control');
               const bodyFrame = byRef(refs.bodyFrame);
               const browserRegion = byRef(refs.browserRegion);
               const companionRegion = byRef(refs.companionRegion);
@@ -110,6 +114,8 @@ object VexLifeWebP1RuntimeArtifacts {
               const browserQuery = generatedPart(refs.browserQuery, 'text-field');
               const browserViewport = byRef(refs.browserViewport);
               const companion = byRef(refs.companion);
+              const companionHeader = byRef(refs.companionHeader);
+              const companionContent = byRef(refs.companionContent);
               const conversation = byRef(refs.conversation);
               const timeline = byRef(refs.conversationTimeline);
               const jumpLatestButton = generatedPart(refs.conversationJumpLatest, 'control');
@@ -124,8 +130,35 @@ object VexLifeWebP1RuntimeArtifacts {
               let pendingSend = null;
 
               if (brand) {
-                brand.textContent = 'VexLife';
                 brand.setAttribute('aria-label', 'VexLife');
+                const brandName = document.createElement('strong');
+                brandName.dataset.vexGeneratedPart = 'brand-name';
+                brandName.textContent = 'VexLife';
+                const brandHome = document.createElement('small');
+                brandHome.dataset.vexGeneratedPart = 'brand-home';
+                brandHome.textContent = 'VEX IS HOME';
+                brand.replaceChildren(brandName, brandHome);
+              }
+              if (vexSummonButton) {
+                vexSummonButton.textContent = 'V';
+                vexSummonButton.setAttribute('aria-label', 'Summon Vex');
+                vexSummonButton.title = 'Summon Vex';
+              }
+              if (companionHeader) {
+                companionHeader.setAttribute('aria-label', 'Vex conversation workspace');
+                const eyebrow = document.createElement('small');
+                eyebrow.dataset.vexGeneratedPart = 'companion-eyebrow';
+                eyebrow.textContent = 'CONVERSATION';
+                const title = document.createElement('strong');
+                title.dataset.vexGeneratedPart = 'companion-title';
+                title.textContent = 'Vex';
+                const status = document.createElement('span');
+                status.dataset.vexGeneratedPart = 'companion-status';
+                status.textContent = 'Local companion';
+                companionHeader.replaceChildren(eyebrow, title, status);
+              }
+              if (companionContent) {
+                companionContent.setAttribute('aria-label', 'Conversation and current context');
               }
               if (browserQuery) {
                 browserQuery.placeholder = 'Open a Vex page URL';
@@ -562,6 +595,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (event.key !== 'Enter' || !(event.metaKey || event.ctrlKey)) return;
                 event.preventDefault();
                 void send();
+              });
+
+              vexSummonButton?.addEventListener('click', () => {
+                if (currentBrowserShare() >= 0.96) {
+                  applyBrowserShare(browser.authoredInitialShare);
+                }
+                composer?.focus();
               });
 
               if (browserCompanionHandle && bodyFrame) {
