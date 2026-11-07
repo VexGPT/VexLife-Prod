@@ -37,6 +37,46 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "allow-scripts allow-same-origin",
             ),
         )
+        assertTrue(
+            bundle.css.contains(
+                "--vex-surface-canvas:#0f1012",
+            ),
+        )
+        assertTrue(
+            bundle.css.contains(
+                "data-vex-generated-part=\"conversation-message\"",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                VexLifeWebP1.ConversationJumpLatest.identity.ref,
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "isNearBottom",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "aria-orientation",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "setPointerCapture",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "authoredInitialShare: 0.5",
+            ),
+        )
+        assertFalse(
+            bundle.css.contains(
+                "--vex-browser-share:",
+            ),
+        )
         assertFalse(
             bundle.javascript.contains(
                 "allow-forms",

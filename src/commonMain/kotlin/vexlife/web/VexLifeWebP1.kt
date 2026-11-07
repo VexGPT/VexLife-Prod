@@ -76,14 +76,18 @@ object VexLifeWebP1 {
         element: vexlife.blueprint.VexUiElementRef,
         placement: VexWeb.Placement =
             VexWeb.Placement.InFlow,
+        depth: VexWeb.Depth =
+            VexWeb.Depth.Content,
+        presentation: VexWeb.Presentation =
+            VexWeb.Presentation.Surface,
         children: List<VexWeb.Node> =
             emptyList(),
     ): VexWeb.Element =
         VexWebAuthoring.element(
             element = element,
             placement = placement,
-            depth = VexWeb.Depth.Content,
-            presentation = VexWeb.Presentation.Surface,
+            depth = depth,
+            presentation = presentation,
             children = children,
         )
 
@@ -111,6 +115,7 @@ object VexLifeWebP1 {
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.Header,
             placement = VexWeb.Placement.FillAvailable,
+            depth = VexWeb.Depth.Chrome,
             children =
                 listOf(
                     Brand,
@@ -139,6 +144,22 @@ object VexLifeWebP1 {
     val ConversationTimeline =
         blueprintSurface(
             VexLifeWorkspaceBlueprint.ConversationTimeline,
+        )
+
+    val ConversationJumpLatest =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.ConversationJumpLatest,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.localInteraction(
+                    ConversationTimeline.identity,
+                ),
         )
 
     val ResponseProgress =
@@ -177,6 +198,7 @@ object VexLifeWebP1 {
             children =
                 listOf(
                     ConversationTimeline,
+                    ConversationJumpLatest,
                     ResponseProgress,
                     Composer,
                 ),

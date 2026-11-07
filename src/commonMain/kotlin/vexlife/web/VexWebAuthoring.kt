@@ -246,6 +246,13 @@ object VexWebAuthoring {
             target,
         )
 
+    fun localInteraction(
+        target: VexWeb.Identity,
+    ): VexWeb.Binding.LocalInteraction =
+        VexWeb.Binding.LocalInteraction(
+            target,
+        )
+
     fun capability(
         capabilityRef: VexWeb.CapabilityRef,
     ): VexWeb.Binding.Capability =

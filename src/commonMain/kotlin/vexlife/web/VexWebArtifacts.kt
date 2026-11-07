@@ -760,6 +760,15 @@ object VexWebArtifacts {
                     binding.target.value
             }
 
+            is VexWeb.Binding.LocalInteraction -> {
+                attributes +=
+                    "data-vex-binding" to
+                    "local-interaction"
+                attributes +=
+                    "data-vex-interaction-target" to
+                    binding.target.ref
+            }
+
             is VexWeb.Binding.Capability -> {
                 attributes +=
                     "data-vex-binding" to
@@ -1076,6 +1085,9 @@ root?.addEventListener('click', (event) => {
 
             is VexWeb.Binding.LocalSpatial ->
                 "{\"type\":\"LOCAL_SPATIAL\",\"target\":\"${json(binding.target.value)}\"}"
+
+            is VexWeb.Binding.LocalInteraction ->
+                "{\"type\":\"LOCAL_INTERACTION\",\"target\":\"${json(binding.target.ref)}\"}"
 
             is VexWeb.Binding.Capability ->
                 "{\"type\":\"CAPABILITY\",\"capabilityRef\":\"${json(binding.capabilityRef.value)}\"}"

@@ -23,8 +23,21 @@ class VexLifeWorkspaceBlueprintTest {
             refs.toSet().size,
         )
         assertEquals(
-            19,
+            20,
             refs.size,
+        )
+
+        assertEquals(
+            "element.vexlife-workspace.companion.conversation.jump-latest",
+            VexLifeWorkspaceBlueprint
+                .ConversationJumpLatest
+                .ref,
+        )
+        assertEquals(
+            VexLifeWorkspaceBlueprint.Conversation.ref,
+            VexLifeWorkspaceBlueprint
+                .ConversationJumpLatest
+                .parentRef,
         )
 
         assertEquals(

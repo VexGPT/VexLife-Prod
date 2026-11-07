@@ -239,6 +239,12 @@ object VexWeb {
             Binding
 
         @ConsistentCopyVisibility
+        data class LocalInteraction internal constructor(
+            val target: Identity,
+        ) :
+            Binding
+
+        @ConsistentCopyVisibility
         data class Capability internal constructor(
             val capabilityRef: CapabilityRef,
         ) :
@@ -1222,6 +1228,15 @@ object VexWeb {
                         ) {
                             "VexWeb spatial binding target is outside this Surface: " +
                                 authoredBinding.target.value
+                        }
+
+                    is Binding.LocalInteraction ->
+                        require(
+                            authoredBinding.target.ref in
+                                byRef,
+                        ) {
+                            "VexWeb local interaction target is outside this Surface: " +
+                                authoredBinding.target.ref
                         }
 
                     is Binding.Capability ->

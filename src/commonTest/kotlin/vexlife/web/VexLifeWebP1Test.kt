@@ -24,12 +24,46 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            19,
+            20,
             blueprint.size,
         )
         assertTrue(
             manifested.containsAll(
                 blueprint,
+            ),
+        )
+
+        val jumpLatest =
+            VexLifeWebP1.Surface
+                .coordinates()
+                .single {
+                    it.ref ==
+                        VexLifeWorkspaceBlueprint.ConversationJumpLatest.ref
+                }
+        assertTrue(
+            VexWeb.Interaction.Activate in
+                jumpLatest.interactions,
+        )
+        val jumpLatestBinding =
+            jumpLatest.binding as
+                VexWeb.Binding.LocalInteraction
+        assertEquals(
+            VexLifeWebP1.ConversationTimeline.identity.ref,
+            jumpLatestBinding.target.ref,
+        )
+
+        val artifacts =
+            VexWebArtifacts.generate(
+                VexLifeWebP1.Surface,
+            )
+        assertTrue(
+            artifacts.html.contains(
+                "data-vex-binding=\"local-interaction\"",
+            ),
+        )
+        assertTrue(
+            artifacts.semanticManifest.contains(
+                "\"type\":\"LOCAL_INTERACTION\",\"target\":\"${VexLifeWebP1.ConversationTimeline.identity.ref}\"",
             ),
         )
 
@@ -53,10 +87,6 @@ class VexLifeWebP1Test {
             ).capabilityRef,
         )
 
-        val artifacts =
-            VexWebArtifacts.generate(
-                VexLifeWebP1.Surface,
-            )
         assertTrue(
             artifacts.semanticManifest.contains(
                 "\"type\":\"CAPABILITY\",\"capabilityRef\":\"conversation.send\"",
