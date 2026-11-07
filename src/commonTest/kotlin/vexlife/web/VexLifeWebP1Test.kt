@@ -95,6 +95,49 @@ class VexLifeWebP1Test {
     }
 
     @Test
+    fun companionCompositionMakesHeadingContentFeedAndContextBoundariesSourceVisible() {
+        val coordinates =
+            VexLifeWebP1.Surface
+                .coordinates()
+                .associateBy {
+                    it.ref
+                }
+
+        assertEquals(
+            VexLifeWebP1.Companion.identity.ref,
+            coordinates
+                .getValue(
+                    VexLifeWebP1.Refs.CompanionHeader.value,
+                )
+                .containerRef,
+        )
+        assertEquals(
+            VexLifeWebP1.Companion.identity.ref,
+            coordinates
+                .getValue(
+                    VexLifeWebP1.Refs.CompanionContent.value,
+                )
+                .containerRef,
+        )
+        assertEquals(
+            VexLifeWebP1.Refs.CompanionContent.value,
+            coordinates
+                .getValue(
+                    VexLifeWebP1.Conversation.identity.ref,
+                )
+                .containerRef,
+        )
+        assertEquals(
+            VexLifeWebP1.Refs.CompanionContent.value,
+            coordinates
+                .getValue(
+                    VexLifeWebP1.Settings.identity.ref,
+                )
+                .containerRef,
+        )
+    }
+
+    @Test
     fun p1UsesNestedRelationalFramesForHeaderBodyAndBrowserCompanionGeometry() {
         val regions =
             VexLifeWebP1.Surface

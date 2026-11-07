@@ -73,6 +73,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 browserQuery: ${jsString(VexLifeWebP1.BrowserQuery.identity.ref)},
                 browserViewport: ${jsString(VexLifeWebP1.BrowserViewport.identity.ref)},
                 companion: ${jsString(VexLifeWebP1.Companion.identity.ref)},
+                companionHeader: ${jsString(VexLifeWebP1.Refs.CompanionHeader.value)},
+                companionContent: ${jsString(VexLifeWebP1.Refs.CompanionContent.value)},
                 conversation: ${jsString(VexLifeWebP1.Conversation.identity.ref)},
                 conversationTimeline: ${jsString(VexLifeWebP1.ConversationTimeline.identity.ref)},
                 conversationJumpLatest: ${jsString(VexLifeWebP1.ConversationJumpLatest.identity.ref)},
@@ -110,6 +112,8 @@ object VexLifeWebP1RuntimeArtifacts {
               const browserQuery = generatedPart(refs.browserQuery, 'text-field');
               const browserViewport = byRef(refs.browserViewport);
               const companion = byRef(refs.companion);
+              const companionHeader = byRef(refs.companionHeader);
+              const companionContent = byRef(refs.companionContent);
               const conversation = byRef(refs.conversation);
               const timeline = byRef(refs.conversationTimeline);
               const jumpLatestButton = generatedPart(refs.conversationJumpLatest, 'control');
@@ -126,6 +130,22 @@ object VexLifeWebP1RuntimeArtifacts {
               if (brand) {
                 brand.textContent = 'VexLife';
                 brand.setAttribute('aria-label', 'VexLife');
+              }
+              if (companionHeader) {
+                companionHeader.setAttribute('aria-label', 'Vex conversation workspace');
+                const eyebrow = document.createElement('small');
+                eyebrow.dataset.vexGeneratedPart = 'companion-eyebrow';
+                eyebrow.textContent = 'CONVERSATION';
+                const title = document.createElement('strong');
+                title.dataset.vexGeneratedPart = 'companion-title';
+                title.textContent = 'Vex';
+                const status = document.createElement('span');
+                status.dataset.vexGeneratedPart = 'companion-status';
+                status.textContent = 'Local companion';
+                companionHeader.replaceChildren(eyebrow, title, status);
+              }
+              if (companionContent) {
+                companionContent.setAttribute('aria-label', 'Conversation and current context');
               }
               if (browserQuery) {
                 browserQuery.placeholder = 'Open a Vex page URL';

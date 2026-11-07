@@ -56,6 +56,16 @@ object VexLifeWebP1 {
                 "vexweb.vexlife-workspace.p1.body.seam.browser-companion.handle",
             )
 
+        val CompanionHeader =
+            VexWeb.StructuralRef.of(
+                "vexweb.vexlife-workspace.p1.body.companion.header",
+            )
+
+        val CompanionContent =
+            VexWeb.StructuralRef.of(
+                "vexweb.vexlife-workspace.p1.body.companion.content",
+            )
+
         val OverlayRoot =
             VexWeb.StructuralRef.of(
                 "vexweb.vexlife-workspace.p1.overlay",
@@ -242,14 +252,35 @@ object VexLifeWebP1 {
                 ),
         )
 
+    val CompanionHeader =
+        VexWebAuthoring.structural(
+            ref = Refs.CompanionHeader,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+        )
+
+    val CompanionContent =
+        VexWebAuthoring.structural(
+            ref = Refs.CompanionContent,
+            placement = VexWeb.Placement.FillAvailable,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            children =
+                listOf(
+                    Conversation,
+                    Settings,
+                ),
+        )
+
     val Companion =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.Companion,
             placement = VexWeb.Placement.FillAvailable,
             children =
                 listOf(
-                    Conversation,
-                    Settings,
+                    CompanionHeader,
+                    CompanionContent,
                 ),
         )
 

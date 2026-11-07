@@ -69,6 +69,26 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
+                "Vex conversation workspace",
+            ),
+        )
+        assertTrue(
+            bundle.css.contains(
+                VexLifeWebP1.Refs.CompanionHeader.value,
+            ),
+        )
+        assertTrue(
+            bundle.css.contains(
+                "grid-template-columns:minmax(0,1.6fr) minmax(210px,.7fr)",
+            ),
+        )
+        assertFalse(
+            bundle.css.contains(
+                "max-height:34%;overflow:auto;border-top",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
                 "authoredInitialShare: 0.5",
             ),
         )
