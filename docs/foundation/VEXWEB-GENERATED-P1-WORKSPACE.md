@@ -143,3 +143,75 @@ P1 GENERATED WORKSPACE ACCEPTED
 ```
 
 <!-- [VXG RealForever][VEXWEB][P1][GENERATED-WORKSPACE] -->
+
+
+## Perceptual composition continuity
+
+Generated-product architecture must preserve a human-perceivable composition, not merely the
+presence of the same semantic nouns.
+
+For the VexLife nested-browser workspace, the direct composition is:
+
+~~~text
+Workspace
+  Chrome
+    Brand
+    BrowserQuery
+    AppSelector
+    Utilities
+      QuickActions
+
+  SplitWorkspace
+    BrowserPane
+      BrowserFrameStatus
+      BrowserViewport
+
+    BrowserCompanionSeam
+
+    CompanionPane
+      CompanionHeader
+        CompanionStatus
+        CompanionViewSwitch
+
+      ActiveCompanionView
+        Conversation
+          Timeline
+            repeated Turn presentation
+          Composer
+            ContextReceipt
+            ContextShare
+            Draft
+            Send / Stop
+
+        Settings
+          ContextWindow
+          Resource status
+          Presentation preferences
+          Home status
+          Continuity status
+          CleanChat
+~~~
+
+Permanent:
+
+~~~text
+ARCHITECTURAL MEANING
+!= VISUAL REINTERPRETATION
+
+GENERATED FROM VEXARCHITECTURE
+!= LICENSE TO REDESIGN THE LIVED COMPOSITION
+~~~
+
+VexWeb owns stable relationships such as Frame / Seam / Region / containment / interactions.
+The renderer owns concrete measurements, colors, typography, bubble geometry and responsive
+breakpoints.
+
+A future renderer or VexBoard projection should be able to recover the composition above from
+source identity and containment without reverse-engineering CSS.
+
+The A003 nested-browser workspace is the perceptual continuity reference for this product body.
+It is evidence of intended shape and interaction composition, not runtime/source authority.
+Current VexLife-Prod service, Conversation, Context, browser-context and runtime owners remain
+authoritative.
+
+<!-- [VXG RealForever][VEXWEB][P1][PERCEPTUAL-CONTINUITY] -->

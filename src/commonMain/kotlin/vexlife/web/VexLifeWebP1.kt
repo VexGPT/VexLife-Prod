@@ -134,12 +134,21 @@ object VexLifeWebP1 {
                 ),
         )
 
+    val QuickActions =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.QuickActions,
+            children =
+                listOf(
+                    VexSummon,
+                ),
+        )
+
     val Utilities =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.Utilities,
             children =
                 listOf(
-                    VexSummon,
+                    QuickActions,
                 ),
         )
 
@@ -157,6 +166,11 @@ object VexLifeWebP1 {
                 ),
         )
 
+    val BrowserFrameStatus =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.BrowserFrameStatus,
+        )
+
     val BrowserViewport =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.BrowserViewport,
@@ -169,6 +183,7 @@ object VexLifeWebP1 {
             placement = VexWeb.Placement.FillAvailable,
             children =
                 listOf(
+                    BrowserFrameStatus,
                     BrowserViewport,
                 ),
         )
@@ -199,6 +214,26 @@ object VexLifeWebP1 {
             VexLifeWorkspaceBlueprint.ResponseProgress,
         )
 
+    val ContextReceipt =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.ContextReceipt,
+        )
+
+    val ContextShare =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.ContextShare,
+        )
+
+    val Stop =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.Stop,
+        )
+
+    val ContextInspector =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.ContextInspector,
+        )
+
     val Send =
         VexWebAuthoring.element(
             element = VexLifeWorkspaceBlueprint.Send,
@@ -220,7 +255,10 @@ object VexLifeWebP1 {
             element = VexLifeWorkspaceBlueprint.Composer,
             children =
                 listOf(
+                    ContextReceipt,
+                    ContextShare,
                     Send,
+                    Stop,
                 ),
         )
 
@@ -233,32 +271,101 @@ object VexLifeWebP1 {
                     ConversationJumpLatest,
                     ResponseProgress,
                     Composer,
+                    ContextInspector,
                 ),
+        )
+
+    val ContextWindow =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.ContextWindow,
         )
 
     val SettingsContext =
         blueprintSurface(
-            VexLifeWorkspaceBlueprint.SettingsContext,
+            element = VexLifeWorkspaceBlueprint.SettingsContext,
+            children =
+                listOf(
+                    ContextWindow,
+                ),
+        )
+
+    val MemoryResource =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.MemoryResource,
+        )
+
+    val LowMemoryAlert =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LowMemoryAlert,
         )
 
     val SettingsResources =
         blueprintSurface(
-            VexLifeWorkspaceBlueprint.SettingsResources,
+            element = VexLifeWorkspaceBlueprint.SettingsResources,
+            children =
+                listOf(
+                    MemoryResource,
+                    LowMemoryAlert,
+                ),
+        )
+
+    val ThoughtVisibility =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.ThoughtVisibility,
+        )
+
+    val HomeDirectories =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.HomeDirectories,
+        )
+
+    val HomeAddDirectory =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.HomeAddDirectory,
         )
 
     val SettingsHome =
         blueprintSurface(
-            VexLifeWorkspaceBlueprint.SettingsHome,
+            element = VexLifeWorkspaceBlueprint.SettingsHome,
+            children =
+                listOf(
+                    HomeDirectories,
+                    HomeAddDirectory,
+                ),
+        )
+
+    val ContinuityMode =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.ContinuityMode,
+        )
+
+    val DreamSync =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.DreamSync,
         )
 
     val SettingsContinuity =
         blueprintSurface(
-            VexLifeWorkspaceBlueprint.SettingsContinuity,
+            element = VexLifeWorkspaceBlueprint.SettingsContinuity,
+            children =
+                listOf(
+                    ContinuityMode,
+                    DreamSync,
+                ),
+        )
+
+    val CleanChat =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.CleanChat,
         )
 
     val SettingsReset =
         blueprintSurface(
-            VexLifeWorkspaceBlueprint.SettingsReset,
+            element = VexLifeWorkspaceBlueprint.SettingsReset,
+            children =
+                listOf(
+                    CleanChat,
+                ),
         )
 
     val Settings =
@@ -268,9 +375,31 @@ object VexLifeWebP1 {
                 listOf(
                     SettingsContext,
                     SettingsResources,
+                    ThoughtVisibility,
                     SettingsHome,
                     SettingsContinuity,
                     SettingsReset,
+                ),
+        )
+
+    val CompanionStatus =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.CompanionStatus,
+        )
+
+    val CompanionViewSwitch =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.CompanionViewSwitch,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.localInteraction(
+                    Settings.identity,
                 ),
         )
 
@@ -280,6 +409,11 @@ object VexLifeWebP1 {
             placement = VexWeb.Placement.InFlow,
             depth = VexWeb.Depth.Chrome,
             presentation = VexWeb.Presentation.Surface,
+            children =
+                listOf(
+                    CompanionStatus,
+                    CompanionViewSwitch,
+                ),
         )
 
     val CompanionContent =
@@ -340,7 +474,10 @@ object VexLifeWebP1 {
             region(
                 ref = Refs.BrowserRegion,
                 start = VexWeb.XBoundary.FrameStart,
-                end = VexWeb.XBoundary.FrameEnd,
+                end =
+                    VexWeb.XBoundary.Seam(
+                        Refs.BrowserCompanionSeam,
+                    ),
                 top = VexWeb.YBoundary.FrameTop,
                 bottom = VexWeb.YBoundary.FrameBottom,
                 content = Browser,
@@ -357,7 +494,7 @@ object VexLifeWebP1 {
                 top = VexWeb.YBoundary.FrameTop,
                 bottom = VexWeb.YBoundary.FrameBottom,
                 content = Companion,
-                depth = VexWeb.Depth.Chrome,
+                depth = VexWeb.Depth.Content,
             )
 
             chrome(

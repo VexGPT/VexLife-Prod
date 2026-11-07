@@ -24,7 +24,7 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            21,
+            39,
             blueprint.size,
         )
         assertTrue(
@@ -154,10 +154,34 @@ class VexLifeWebP1Test {
                 )
                 .containerRef,
         )
+        assertEquals(
+            VexLifeWebP1.Composer.identity.ref,
+            coordinates
+                .getValue(
+                    VexLifeWebP1.ContextReceipt.identity.ref,
+                )
+                .containerRef,
+        )
+        assertEquals(
+            VexLifeWebP1.Composer.identity.ref,
+            coordinates
+                .getValue(
+                    VexLifeWebP1.ContextShare.identity.ref,
+                )
+                .containerRef,
+        )
+        assertEquals(
+            VexLifeWebP1.SettingsContext.identity.ref,
+            coordinates
+                .getValue(
+                    VexLifeWebP1.ContextWindow.identity.ref,
+                )
+                .containerRef,
+        )
     }
 
     @Test
-    fun p1PositionsBrowserAsPrimaryStageAndCompanionAsContextualWorkspace() {
+    fun p1RestoresPeerBrowserAndCompanionRegionsAroundOneSeam() {
         val regions =
             VexLifeWebP1.Surface
                 .spatialRegions()
