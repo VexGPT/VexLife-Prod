@@ -297,6 +297,24 @@ class DirectTurnContextStore(
             decodeAndValidateCanonicalContext(
                 canonicalText,
             )
+        val productRuntimeEvidenceRefs =
+            canonical.contextSourceRefs
+                .filter {
+                    it.startsWith(
+                        "evidence.vexlife-prod.turn-runtime.",
+                    )
+                }
+        if (
+            productRuntimeEvidenceRefs.isEmpty()
+        ) {
+            return null
+        }
+        require(
+            productRuntimeEvidenceRefs.size ==
+                1
+        ) {
+            "product-created canonical turn context must reference exactly one runtime evidence sidecar"
+        }
 
         val evidence =
             requireNotNull(
@@ -320,6 +338,8 @@ class DirectTurnContextStore(
                 canonical.requestEventHash &&
                 evidence.responseEventHash ==
                 canonical.responseEventHash &&
+                evidence.evidenceRef ==
+                productRuntimeEvidenceRefs.single() &&
                 canonical.contextSourceRefs.contains(
                     evidence.evidenceRef,
                 ) &&

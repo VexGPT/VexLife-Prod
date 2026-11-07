@@ -3,6 +3,7 @@ package vexlife.service
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import vexlife.browser.VexLifeProdBrowserContract
 
@@ -46,8 +47,42 @@ class VexLifeProdServiceContractTest {
             VexLifeProdServiceContract.ConversationPath,
         )
         assertEquals(
+            "/api/v1/context",
+            VexLifeProdServiceContract.ContextPath,
+        )
+        assertEquals(
             "/api/v1/conversation/send",
             VexLifeProdServiceContract.ConversationSendPath,
+        )
+    }
+
+    @Test
+    fun emptyContextProjectionIsExplicitlyReadOnly() {
+        val projection =
+            VexLifeProdServiceContract.ContextProjection(
+                schemaVersion =
+                    VexLifeProdServiceContract.ContextProjectionSchema,
+                currentConversationHeadSha256 =
+                    null,
+                turnRef =
+                    null,
+                contextPath =
+                    null,
+                promptContext =
+                    null,
+                effectsPerformed =
+                    false,
+            )
+
+        assertEquals(
+            VexLifeProdServiceContract.ContextProjectionSchema,
+            projection.schemaVersion,
+        )
+        assertNull(
+            projection.promptContext,
+        )
+        assertFalse(
+            projection.effectsPerformed,
         )
     }
 

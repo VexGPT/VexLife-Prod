@@ -14,11 +14,14 @@ import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
+import vexlife.conversation.CanonicalLivedContextFixture
+import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.model.heretic.HereticModelConfiguration
@@ -252,6 +255,30 @@ class VexLifeProdLocalServiceTest {
                     assertTrue(
                         runtimeJavascript.body()
                             .contains(
+                                VexLifeProdServiceContract.ContextPath,
+                            ),
+                    )
+                    assertTrue(
+                        runtimeJavascript.body()
+                            .contains(
+                                "Capabilities Vex received",
+                            ),
+                    )
+                    assertTrue(
+                        runtimeJavascript.body()
+                            .contains(
+                                "OMITTED",
+                            ),
+                    )
+                    assertTrue(
+                        runtimeJavascript.body()
+                            .contains(
+                                "Current Conversation turn predates VexLife-Prod prompt-context evidence.",
+                            ),
+                    )
+                    assertTrue(
+                        runtimeJavascript.body()
+                            .contains(
                                 VexLifeProdBrowserContract.InitialPageUrl,
                             ),
                     )
@@ -282,6 +309,35 @@ class VexLifeProdLocalServiceTest {
                     assertFalse(
                         projection.effectsPerformed,
                     )
+
+                    val contextResponse =
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.ContextPath,
+                        )
+                    assertEquals(
+                        200,
+                        contextResponse.statusCode(),
+                    )
+                    val contextProjection =
+                        json.decodeFromString<VexLifeProdServiceContract.ContextProjection>(
+                            contextResponse.body(),
+                        )
+                    assertNull(
+                        contextProjection.currentConversationHeadSha256,
+                    )
+                    assertNull(
+                        contextProjection.turnRef,
+                    )
+                    assertNull(
+                        contextProjection.contextPath,
+                    )
+                    assertNull(
+                        contextProjection.promptContext,
+                    )
+                    assertFalse(
+                        contextProjection.effectsPerformed,
+                    )
                 }
 
             assertFalse(
@@ -292,6 +348,158 @@ class VexLifeProdLocalServiceTest {
                 ),
                 "read-only service projections must not create Conversation storage",
             )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun historicalCanonicalHeadProjectsWithoutInventingProdPromptEvidence() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-service-historical-context-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            bootstrapHome(
+                root,
+            )
+            val store =
+                DirectConversationStore(
+                    root,
+                )
+            var expectedHeadSha256 =
+                ""
+            var expectedContextPath =
+                ""
+
+            store.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef =
+                            "turn.self-development.historical-context",
+                        requestMessageRef =
+                            "message.self-development.human.historical-context",
+                        content =
+                            "Historical request",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-06T23:30:00Z",
+                            ),
+                    )
+                val response =
+                    appendResponse(
+                        request = request,
+                        responseMessageRef =
+                            "message.self-development.companion.historical-context",
+                        content =
+                            "Historical response",
+                        model =
+                            "default_model",
+                        endpointOrigin =
+                            "http://127.0.0.1:8765",
+                        runtimeObservationRef =
+                            "observation.vexlife-prod.model-runtime.historical-context",
+                        invocationEvidenceRef =
+                            "evidence.vexlife-prod.model-runtime-invocation.historical-context",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-06T23:30:01Z",
+                            ),
+                    )
+                val context =
+                    CanonicalLivedContextFixture.write(
+                        productHome =
+                            root,
+                        request =
+                            request,
+                        response =
+                            response,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-06T23:30:02Z",
+                            ),
+                    )
+                val head =
+                    commitCompletedTurn(
+                        request =
+                            request,
+                        response =
+                            response,
+                        contextSha256 =
+                            context.sha256,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-06T23:30:03Z",
+                            ),
+                    )
+                expectedHeadSha256 =
+                    head.conversationHeadSha256
+                expectedContextPath =
+                    head.contextPath
+            }
+
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha =
+                        "d".repeat(
+                            40,
+                        ),
+                    setup =
+                        setup(
+                            root,
+                        ),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "historical Context GET must not run a turn",
+                            )
+                        },
+                )
+                .use {
+                    service ->
+                    val response =
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.ContextPath,
+                        )
+                    assertEquals(
+                        200,
+                        response.statusCode(),
+                    )
+                    val projection =
+                        json.decodeFromString<VexLifeProdServiceContract.ContextProjection>(
+                            response.body(),
+                        )
+                    assertEquals(
+                        expectedHeadSha256,
+                        projection.currentConversationHeadSha256,
+                    )
+                    assertEquals(
+                        "turn.self-development.historical-context",
+                        projection.turnRef,
+                    )
+                    assertEquals(
+                        expectedContextPath,
+                        projection.contextPath,
+                    )
+                    assertNull(
+                        projection.promptContext,
+                    )
+                    assertFalse(
+                        projection.effectsPerformed,
+                    )
+                }
         } finally {
             parent
                 .toFile()
@@ -440,6 +648,31 @@ class VexLifeProdLocalServiceTest {
                             ) ==
                             true,
                     )
+                    assertTrue(
+                        firstResult.promptContext.capabilityFrameIncluded,
+                    )
+                    val firstCapabilityFrame =
+                        assertNotNull(
+                            firstResult.promptContext.capabilityFrame,
+                        )
+                    assertTrue(
+                        firstCapabilityFrame.availableCapabilityRefs.contains(
+                            "capability.vexlife.companion.local-inference",
+                        ),
+                    )
+                    assertTrue(
+                        firstCapabilityFrame.availableCapabilityRefs.contains(
+                            "capability.vexlife.context.browser-current",
+                        ),
+                    )
+                    assertTrue(
+                        firstCapabilityFrame.heldCapabilityRefs.contains(
+                            "capability.vexlife.context.working-continuity",
+                        ),
+                    )
+                    assertFalse(
+                        firstCapabilityFrame.effectAuthorityGranted,
+                    )
                     assertEquals(
                         1,
                         providerCalls,
@@ -475,6 +708,47 @@ class VexLifeProdLocalServiceTest {
                     assertEquals(
                         firstResult.currentConversationHeadSha256,
                         projection.currentConversationHeadSha256,
+                    )
+
+                    val contextResponse =
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.ContextPath,
+                        )
+                    assertEquals(
+                        200,
+                        contextResponse.statusCode(),
+                    )
+                    val currentContext =
+                        json.decodeFromString<VexLifeProdServiceContract.ContextProjection>(
+                            contextResponse.body(),
+                        )
+                    assertEquals(
+                        firstResult.currentConversationHeadSha256,
+                        currentContext.currentConversationHeadSha256,
+                    )
+                    assertEquals(
+                        firstResult.turnRef,
+                        currentContext.turnRef,
+                    )
+                    assertEquals(
+                        firstResult.contextPath,
+                        currentContext.contextPath,
+                    )
+                    val currentPrompt =
+                        assertNotNull(
+                            currentContext.promptContext,
+                        )
+                    assertEquals(
+                        firstResult.promptContext.receiptRef,
+                        currentPrompt.receiptRef,
+                    )
+                    assertEquals(
+                        firstResult.promptContext.capabilityFrame,
+                        currentPrompt.capabilityFrame,
+                    )
+                    assertFalse(
+                        currentContext.effectsPerformed,
                     )
 
                     val duplicate =

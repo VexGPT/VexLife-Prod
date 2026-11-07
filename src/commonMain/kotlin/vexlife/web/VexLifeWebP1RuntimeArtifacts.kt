@@ -51,11 +51,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 conversationTimeline: ${jsString(VexLifeWebP1.ConversationTimeline.identity.ref)},
                 responseProgress: ${jsString(VexLifeWebP1.ResponseProgress.identity.ref)},
                 composer: ${jsString(VexLifeWebP1.Composer.identity.ref)},
-                send: ${jsString(VexLifeWebP1.Send.identity.ref)}
+                send: ${jsString(VexLifeWebP1.Send.identity.ref)},
+                settingsContext: ${jsString(VexLifeWebP1.SettingsContext.identity.ref)}
               });
               const service = Object.freeze({
                 sourceCurrentnessPath: ${jsString(VexLifeProdServiceContract.SourceCurrentnessPath)},
                 conversationPath: ${jsString(VexLifeProdServiceContract.ConversationPath)},
+                contextPath: ${jsString(VexLifeProdServiceContract.ContextPath)},
                 sendPath: ${jsString(VexLifeProdServiceContract.ConversationSendPath)}
               });
               const browser = Object.freeze({
@@ -78,6 +80,7 @@ object VexLifeWebP1RuntimeArtifacts {
               const responseProgress = byRef(refs.responseProgress);
               const composer = generatedPart(refs.composer, 'text-field');
               const sendButton = generatedPart(refs.send, 'control');
+              const settingsContext = byRef(refs.settingsContext);
 
               let currentBrowserContext = null;
               let frame = null;
@@ -152,6 +155,112 @@ object VexLifeWebP1RuntimeArtifacts {
                 timeline.dataset.vexConversationHead = projection.currentConversationHeadSha256 ?? '';
               };
 
+              const renderContext = (projection) => {
+                if (!settingsContext) return;
+                settingsContext.replaceChildren();
+
+                const heading = document.createElement('h3');
+                heading.textContent = 'Context';
+                settingsContext.append(heading);
+
+                const prompt = projection?.promptContext ?? null;
+                if (!prompt) {
+                  const empty = document.createElement('p');
+                  const hasCurrentConversation = Boolean(projection?.currentConversationHeadSha256);
+                  empty.textContent = hasCurrentConversation
+                    ? 'Current Conversation turn predates VexLife-Prod prompt-context evidence.'
+                    : 'No completed Vex turn context yet.';
+                  settingsContext.append(empty);
+                  settingsContext.dataset.vexContextState = hasCurrentConversation ? 'historical' : 'empty';
+                  settingsContext.dataset.vexPromptReceiptRef = '';
+                  settingsContext.dataset.vexCapabilityFrameRef = '';
+                  return;
+                }
+
+                const facts = document.createElement('dl');
+                const addFact = (label, value) => {
+                  const term = document.createElement('dt');
+                  term.textContent = label;
+                  const detail = document.createElement('dd');
+                  detail.textContent = String(value ?? '');
+                  facts.append(term, detail);
+                };
+                addFact('Mode', prompt.contextMode);
+                addFact('Memory', prompt.memoryIncluded ? 'included' : 'not included');
+                addFact('Browser', prompt.browserContextIncluded ? 'included' : 'not included');
+                addFact('Working continuity', prompt.workingContinuityIncluded ? 'included' : 'not included');
+                settingsContext.append(facts);
+
+                const frameProjection = prompt.capabilityFrame ?? null;
+                const capabilityHeading = document.createElement('h4');
+                capabilityHeading.textContent = 'Capabilities Vex received';
+                settingsContext.append(capabilityHeading);
+
+                if (!frameProjection) {
+                  const unavailable = document.createElement('p');
+                  unavailable.textContent = prompt.capabilityFrameIncluded
+                    ? 'Capability frame recorded; detailed state snapshot is unavailable for this historical receipt.'
+                    : 'No capability frame recorded for this turn.';
+                  settingsContext.append(unavailable);
+                  settingsContext.dataset.vexCapabilityFrameRef = '';
+                } else {
+                  const groups = [
+                    ['AVAILABLE', frameProjection.availableCapabilityRefs],
+                    ['HELD', frameProjection.heldCapabilityRefs],
+                    ['UNAVAILABLE', frameProjection.unavailableCapabilityRefs],
+                    ['UNKNOWN', frameProjection.unknownCapabilityRefs],
+                    ['OMITTED', frameProjection.omittedCapabilityRefs]
+                  ];
+                  for (const [label, refsForState] of groups) {
+                    const group = document.createElement('section');
+                    const title = document.createElement('strong');
+                    title.textContent = label;
+                    group.append(title);
+                    const list = document.createElement('ul');
+                    for (const capabilityRef of refsForState ?? []) {
+                      const item = document.createElement('li');
+                      item.textContent = String(capabilityRef);
+                      list.append(item);
+                    }
+                    if (!list.childElementCount) {
+                      const item = document.createElement('li');
+                      item.textContent = 'None';
+                      list.append(item);
+                    }
+                    group.append(list);
+                    settingsContext.append(group);
+                  }
+
+                  const coverage = document.createElement('p');
+                  coverage.textContent =
+                    'Frame coverage: ' +
+                    String(frameProjection.usedTokens ?? 0) +
+                    ' / ' +
+                    String(frameProjection.tokenBudget ?? 0) +
+                    ' estimated tokens' +
+                    (frameProjection.truncated ? ' (truncated)' : '');
+                  settingsContext.append(coverage);
+
+                  if ((frameProjection.omissionReasons ?? []).length) {
+                    const omissions = document.createElement('p');
+                    omissions.textContent =
+                      'Omission reasons: ' +
+                      frameProjection.omissionReasons.join(', ');
+                    settingsContext.append(omissions);
+                  }
+
+                  const authority = document.createElement('p');
+                  authority.textContent = frameProjection.effectAuthorityGranted
+                    ? 'Effect authority: granted'
+                    : 'Effect authority: not granted';
+                  settingsContext.append(authority);
+                  settingsContext.dataset.vexCapabilityFrameRef = String(frameProjection.frameRef ?? '');
+                }
+
+                settingsContext.dataset.vexContextState = 'current';
+                settingsContext.dataset.vexPromptReceiptRef = String(prompt.receiptRef ?? '');
+              };
+
               const readJson = async (response) => {
                 const value = await response.json();
                 if (!response.ok) {
@@ -170,6 +279,15 @@ object VexLifeWebP1RuntimeArtifacts {
                   cache: 'no-store'
                 });
                 renderConversation(await readJson(response));
+              };
+
+              const loadContext = async () => {
+                const response = await fetch(service.contextPath, {
+                  method: 'GET',
+                  headers: { 'accept': 'application/json' },
+                  cache: 'no-store'
+                });
+                renderContext(await readJson(response));
               };
 
               const loadSourceCurrentness = async () => {
@@ -209,7 +327,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   const result = await readJson(response);
                   pendingSend = null;
                   if (composer) composer.value = '';
-                  await loadConversation();
+                  await Promise.all([
+                    loadConversation(),
+                    loadContext()
+                  ]);
                   root.dataset.vexLastContextPath = String(result.contextPath ?? '');
                   root.dataset.vexLastPromptReceiptRef = String(result.promptContext?.receiptRef ?? '');
                   root.dataset.vexLastBrowserContextRef = String(result.promptContext?.browserContextRef ?? '');
@@ -267,7 +388,8 @@ object VexLifeWebP1RuntimeArtifacts {
 
               void Promise.all([
                 loadSourceCurrentness(),
-                loadConversation()
+                loadConversation(),
+                loadContext()
               ]).catch((error) => {
                 setProgress(error instanceof Error ? error.message : 'Local service is not ready.', 'error');
               });
