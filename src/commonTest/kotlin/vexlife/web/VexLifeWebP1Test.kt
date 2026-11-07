@@ -80,6 +80,28 @@ class VexLifeWebP1Test {
             VexWeb.Interaction.Activate in
                 jumpLatest.interactions,
         )
+        val jumpLatestBinding =
+            jumpLatest.binding as
+                VexWeb.Binding.LocalInteraction
+        assertEquals(
+            VexLifeWebP1.ConversationTimeline.identity.ref,
+            jumpLatestBinding.target.ref,
+        )
+
+        val artifacts =
+            VexWebArtifacts.generate(
+                VexLifeWebP1.Surface,
+            )
+        assertTrue(
+            artifacts.html.contains(
+                "data-vex-binding=\"local-interaction\"",
+            ),
+        )
+        assertTrue(
+            artifacts.semanticManifest.contains(
+                "\"type\":\"LOCAL_INTERACTION\",\"target\":\"${VexLifeWebP1.ConversationTimeline.identity.ref}\"",
+            ),
+        )
 
         val send =
             VexLifeWebP1.Surface

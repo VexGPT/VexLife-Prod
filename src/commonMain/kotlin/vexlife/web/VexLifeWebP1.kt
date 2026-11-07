@@ -160,6 +160,10 @@ object VexLifeWebP1 {
                 setOf(
                     VexWeb.Interaction.Activate,
                 ),
+            binding =
+                VexWebAuthoring.localInteraction(
+                    ConversationTimeline.identity,
+                ),
         )
 
     val ResponseProgress =
