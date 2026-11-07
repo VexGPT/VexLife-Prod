@@ -157,7 +157,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
             ),
         )
         assertTrue(
-            bundle.javascript.contains(
+            bundle.html.contains(
                 "Start clean chat",
             ),
         )
