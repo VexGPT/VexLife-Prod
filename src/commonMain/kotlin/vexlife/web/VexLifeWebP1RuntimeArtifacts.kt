@@ -141,6 +141,7 @@ object VexLifeWebP1RuntimeArtifacts {
               const companionContent = byRef(refs.companionContent);
               const companionStatus = byRef(refs.companionStatus);
               const companionViewSwitchButton = generatedPart(refs.companionViewSwitch, 'control');
+              let companionTitle = null;
               const conversation = byRef(refs.conversation);
               const timeline = byRef(refs.conversationTimeline);
               const jumpLatestButton = generatedPart(refs.conversationJumpLatest, 'control');
@@ -198,6 +199,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 title.dataset.vexGeneratedPart = 'companion-title';
                 title.textContent = 'Converse with Vex';
                 companionHeader.prepend(title);
+                companionTitle = title;
               }
               if (companionStatus) {
                 companionStatus.textContent = 'Checking';
@@ -640,6 +642,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (settings) settings.hidden = activeCompanionView !== 'settings';
                 companionViewSwitchButton.textContent = activeCompanionView === 'conversation' ? 'Settings' : 'Return';
                 companionViewSwitchButton.setAttribute('aria-expanded', String(activeCompanionView === 'settings'));
+                if (companionTitle) {
+                  companionTitle.textContent = activeCompanionView === 'conversation' ? 'Converse with Vex' : 'Settings';
+                }
+                if (companionStatus) {
+                  companionStatus.hidden = activeCompanionView === 'settings';
+                }
               });
 
               composer?.addEventListener('keydown', (event) => {

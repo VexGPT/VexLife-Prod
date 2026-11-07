@@ -52,6 +52,25 @@ class VexLifeWebP1Test {
             vexSummonBinding.target.ref,
         )
 
+        val viewSwitch =
+            VexLifeWebP1.Surface
+                .coordinates()
+                .single {
+                    it.ref ==
+                        VexLifeWorkspaceBlueprint.CompanionViewSwitch.ref
+                }
+        assertTrue(
+            VexWeb.Interaction.Activate in
+                viewSwitch.interactions,
+        )
+        val viewSwitchBinding =
+            viewSwitch.binding as
+                VexWeb.Binding.LocalInteraction
+        assertEquals(
+            VexLifeWebP1.Settings.identity.ref,
+            viewSwitchBinding.target.ref,
+        )
+
         val contextShare =
             VexLifeWebP1.Surface
                 .coordinates()

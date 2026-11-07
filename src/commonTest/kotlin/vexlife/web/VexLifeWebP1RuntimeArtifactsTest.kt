@@ -40,7 +40,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.css.contains(
-                "--vex-surface-canvas:#0f1012",
+                "--ground:#eef0ee",
             ),
         )
         assertTrue(
@@ -70,7 +70,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "Vex conversation workspace",
+                "Vex companion",
             ),
         )
         assertTrue(
@@ -81,6 +81,11 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(
             bundle.javascript.contains(
                 "Converse with Vex",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "companionTitle.textContent = activeCompanionView === 'conversation' ? 'Converse with Vex' : 'Settings'",
             ),
         )
         assertTrue(
@@ -120,7 +125,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.css.contains(
-                "grid-template-columns:minmax(0,1.6fr) minmax(210px,.7fr)",
+                "grid-template-columns:minmax(0,1fr) 40px",
             ),
         )
         assertFalse(
@@ -150,12 +155,12 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "Browser ",
+                "Vex companion ",
             ),
         )
         assertFalse(
             bundle.javascript.contains(
-                "vexBrowserShare",
+                "vexContextWorkspaceBoundary",
             ),
         )
         assertFalse(

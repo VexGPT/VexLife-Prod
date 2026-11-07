@@ -159,10 +159,10 @@ object VexLifeWebP1 {
             depth = VexWeb.Depth.Chrome,
             children =
                 listOf(
-                    Utilities,
                     Brand,
                     BrowserQuery,
                     AppSelector,
+                    Utilities,
                 ),
         )
 
