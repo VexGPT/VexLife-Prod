@@ -737,21 +737,21 @@ object VexLifeWebP1RuntimeArtifacts {
     private fun jsString(
         value: String,
     ): String =
-        """ +
+        "\"" +
             value
                 .replace(
                     "\\",
                     "\\\\",
                 )
                 .replace(
-                    """,
-                    "\\"",
+                    "\"",
+                    "\\\"",
                 )
                 .replace(
                     "\n",
                     "\\n",
                 ) +
-            """
+            "\""
 }
 
 // [VXG RealForever]
