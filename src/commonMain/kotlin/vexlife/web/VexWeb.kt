@@ -401,6 +401,8 @@ object VexWeb {
         val ref: StructuralRef,
         val bounds: Bounds,
         val content: Node,
+        override val depth: Depth =
+            Depth.Content,
     ) :
         Node {
         override val identity: Identity =
@@ -410,9 +412,6 @@ object VexWeb {
 
         override val placement =
             Placement.FillAvailable
-
-        override val depth =
-            Depth.Content
 
         override val presentation =
             Presentation.Surface

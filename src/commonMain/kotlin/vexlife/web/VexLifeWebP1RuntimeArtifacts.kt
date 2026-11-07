@@ -40,7 +40,7 @@ object VexLifeWebP1RuntimeArtifacts {
         val browserCompanionAllocation =
             browserCompanionSeam.allocation as
                 VexWeb.Parameter.Allocation.Ratio
-        val authoredBrowserShare =
+        val authoredWorkspaceBoundary =
             browserCompanionAllocation.beforeParts
                 .toDouble() /
                 browserCompanionAllocation.totalParts
@@ -92,7 +92,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 sendPath: ${jsString(VexLifeProdServiceContract.ConversationSendPath)}
               });
               const browser = Object.freeze({
-                authoredInitialShare: $authoredBrowserShare,
+                authoredWorkspaceBoundary: $authoredWorkspaceBoundary,
                 admittedHosts: $admittedHosts,
                 frameHostSuffix: ${jsString(VexLifeProdBrowserContract.FrameHostSuffix)},
                 frameHostPort: ${VexLifeProdBrowserContract.FrameHostPort},
@@ -193,7 +193,7 @@ object VexLifeWebP1RuntimeArtifacts {
               if (browserCompanionHandle) {
                 browserCompanionHandle.tabIndex = 0;
                 browserCompanionHandle.setAttribute('role', 'separator');
-                browserCompanionHandle.setAttribute('aria-label', 'Resize browser and Vex companion');
+                browserCompanionHandle.setAttribute('aria-label', 'Resize Vex workspace over the primary stage');
                 browserCompanionHandle.setAttribute('aria-orientation', 'vertical');
                 browserCompanionHandle.setAttribute('aria-valuemin', '0');
                 browserCompanionHandle.setAttribute('aria-valuemax', '100');
@@ -461,45 +461,45 @@ object VexLifeWebP1RuntimeArtifacts {
                 root.dataset.vexFrameHostOrigin = String(currentness.frameHostOrigin ?? '');
               };
 
-              const currentBrowserShare = () => {
-                if (!bodyFrame) return browser.authoredInitialShare;
+              const currentWorkspaceBoundary = () => {
+                if (!bodyFrame) return browser.authoredWorkspaceBoundary;
                 const raw = getComputedStyle(bodyFrame)
-                  .getPropertyValue('--vex-browser-share')
+                  .getPropertyValue('--vex-context-workspace-boundary')
                   .trim();
                 const parsed = Number.parseFloat(raw);
-                return Number.isFinite(parsed) ? parsed / 100 : browser.authoredInitialShare;
+                return Number.isFinite(parsed) ? parsed / 100 : browser.authoredWorkspaceBoundary;
               };
 
-              const syncBrowserShareAccessibility = () => {
+              const syncWorkspaceBoundaryAccessibility = () => {
                 if (!browserCompanionHandle) return;
-                const browserPercent = Math.round(currentBrowserShare() * 100);
+                const boundaryPercent = Math.round(currentWorkspaceBoundary() * 100);
                 browserCompanionHandle.setAttribute(
                   'aria-valuenow',
-                  String(browserPercent)
+                  String(boundaryPercent)
                 );
                 browserCompanionHandle.setAttribute(
                   'aria-valuetext',
-                  'Browser ' + browserPercent + '%, Vex companion ' + (100 - browserPercent) + '%'
+                  'Vex workspace width ' + (100 - boundaryPercent) + '% of the primary stage'
                 );
               };
 
-              const applyBrowserShare = (share) => {
+              const applyWorkspaceBoundary = (share) => {
                 if (!bodyFrame) return;
                 const clamped = Math.max(0, Math.min(1, share));
                 bodyFrame.style.setProperty(
-                  '--vex-browser-share',
+                  '--vex-context-workspace-boundary',
                   (clamped * 100).toFixed(3).replace(/0+$/u, '').replace(/\.$/u, '') + '%'
                 );
-                root.dataset.vexBrowserShare = String(clamped);
-                syncBrowserShareAccessibility();
+                root.dataset.vexContextWorkspaceBoundary = String(clamped);
+                syncWorkspaceBoundaryAccessibility();
               };
 
-              const adjustBrowserShare = (delta) => {
-                applyBrowserShare(currentBrowserShare() + delta);
+              const adjustWorkspaceBoundary = (delta) => {
+                applyWorkspaceBoundary(currentWorkspaceBoundary() + delta);
               };
 
-              applyBrowserShare(browser.authoredInitialShare);
-              window.addEventListener('resize', syncBrowserShareAccessibility);
+              applyWorkspaceBoundary(browser.authoredWorkspaceBoundary);
+              window.addEventListener('resize', syncWorkspaceBoundaryAccessibility);
 
               const send = async () => {
                 const content = composer?.value?.trim() ?? '';
@@ -598,8 +598,8 @@ object VexLifeWebP1RuntimeArtifacts {
               });
 
               vexSummonButton?.addEventListener('click', () => {
-                if (currentBrowserShare() >= 0.96) {
-                  applyBrowserShare(browser.authoredInitialShare);
+                if (currentWorkspaceBoundary() >= 0.96) {
+                  applyWorkspaceBoundary(browser.authoredWorkspaceBoundary);
                 }
                 composer?.focus();
               });
@@ -614,7 +614,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   if (!browserCompanionHandle.hasPointerCapture(event.pointerId)) return;
                   const rect = bodyFrame.getBoundingClientRect();
                   if (rect.width <= 0) return;
-                  applyBrowserShare((event.clientX - rect.left) / rect.width);
+                  applyWorkspaceBoundary((event.clientX - rect.left) / rect.width);
                 });
 
                 browserCompanionHandle.addEventListener('pointerup', (event) => {
@@ -626,19 +626,19 @@ object VexLifeWebP1RuntimeArtifacts {
                 browserCompanionHandle.addEventListener('keydown', (event) => {
                   if (event.key === 'ArrowLeft') {
                     event.preventDefault();
-                    adjustBrowserShare(-0.04);
+                    adjustWorkspaceBoundary(-0.04);
                   } else if (event.key === 'ArrowRight') {
                     event.preventDefault();
-                    adjustBrowserShare(0.04);
+                    adjustWorkspaceBoundary(0.04);
                   } else if (event.key === 'Home') {
                     event.preventDefault();
-                    applyBrowserShare(0);
+                    applyWorkspaceBoundary(0);
                   } else if (event.key === 'End') {
                     event.preventDefault();
-                    applyBrowserShare(1);
+                    applyWorkspaceBoundary(1);
                   } else if (event.key === 'Enter') {
                     event.preventDefault();
-                    applyBrowserShare(0.5);
+                    applyWorkspaceBoundary(0.5);
                   }
                 });
               }

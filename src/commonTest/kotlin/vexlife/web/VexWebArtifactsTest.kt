@@ -127,6 +127,72 @@ class VexWebArtifactsTest {
     }
 
     @Test
+    fun regionDepthIsSourceVisibleWithoutChangingItsRelationalGeometry() {
+        val regionRef =
+            VexWeb.StructuralRef.of(
+                "vexweb.test.generated.region.chrome",
+            )
+        val content =
+            VexWebAuthoring.structural(
+                ref =
+                    VexWeb.StructuralRef.of(
+                        "vexweb.test.generated.region.chrome.content",
+                    ),
+                placement = VexWeb.Placement.FillAvailable,
+                depth = VexWeb.Depth.Content,
+                presentation = VexWeb.Presentation.Surface,
+            )
+        val frame =
+            VexWebAuthoring.frame(
+                VexWeb.StructuralRef.of(
+                    "vexweb.test.generated.region-depth.frame",
+                ),
+            ) {
+                region(
+                    ref = regionRef,
+                    start = VexWeb.XBoundary.FrameStart,
+                    end = VexWeb.XBoundary.FrameEnd,
+                    top = VexWeb.YBoundary.FrameTop,
+                    bottom = VexWeb.YBoundary.FrameBottom,
+                    content = content,
+                    depth = VexWeb.Depth.Chrome,
+                )
+            }
+        val surface =
+            VexWebAuthoring.surface(
+                "screen.generated-region-depth",
+            ) {
+                content(frame)
+                overlay(
+                    VexWebAuthoring.structural(
+                        ref =
+                            VexWeb.StructuralRef.of(
+                                "vexweb.test.generated.region-depth.overlay",
+                            ),
+                        placement = VexWeb.Placement.Overlay,
+                        depth = VexWeb.Depth.Transient,
+                        presentation = VexWeb.Presentation.Surface,
+                    ),
+                )
+            }
+        val artifacts =
+            VexWebArtifacts.generate(
+                surface,
+            )
+
+        assertTrue(
+            artifacts.css.contains(
+                "[data-vex-ref=\"vexweb.test.generated.region.chrome\"]{left:0%;top:0%;width:100%;height:100%;}",
+            ),
+        )
+        assertTrue(
+            artifacts.semanticManifest.contains(
+                "\"ref\":\"vexweb.test.generated.region.chrome\",\"nodeKind\":\"REGION\",\"blueprintKind\":null,\"sourceParentRef\":null,\"containerRef\":\"vexweb.test.generated.region-depth.frame\",\"placement\":\"FillAvailable\",\"depth\":\"Chrome\"",
+            ),
+        )
+    }
+
+    @Test
     fun semanticManifestPreservesSourceParentContainerAndFallbackMeaning() {
         val manifest =
             VexWebArtifacts.generate(

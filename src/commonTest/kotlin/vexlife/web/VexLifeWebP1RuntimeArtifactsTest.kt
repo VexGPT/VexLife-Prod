@@ -100,12 +100,27 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "authoredInitialShare: 0.5",
+                "authoredWorkspaceBoundary: 0.5",
             ),
         )
         assertFalse(
             bundle.css.contains(
-                "--vex-browser-share:",
+                "--vex-context-workspace-boundary:",
+            ),
+        )
+        assertTrue(
+            bundle.css.contains(
+                "left:var(--vex-context-workspace-boundary)",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "Vex workspace width ",
+            ),
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "vexBrowserShare",
             ),
         )
         assertFalse(
