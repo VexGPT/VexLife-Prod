@@ -2,6 +2,7 @@ package vexlife.web
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
@@ -24,7 +25,7 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            38,
+            39,
             blueprint.size,
         )
         assertTrue(
@@ -50,6 +51,20 @@ class VexLifeWebP1Test {
         assertEquals(
             VexLifeWebP1.Companion.identity.ref,
             vexSummonBinding.target.ref,
+        )
+
+        val vision =
+            VexLifeWebP1.Surface
+                .coordinates()
+                .single {
+                    it.ref ==
+                        VexLifeWorkspaceBlueprint.Vision.ref
+                }
+        assertTrue(
+            vision.interactions.isEmpty(),
+        )
+        assertNull(
+            vision.binding,
         )
 
         val viewSwitch =

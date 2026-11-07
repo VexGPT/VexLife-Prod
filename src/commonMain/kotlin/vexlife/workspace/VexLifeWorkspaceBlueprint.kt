@@ -62,6 +62,10 @@ object VexLifeWorkspaceBlueprint :
         Companion.content(
             "companion-status",
         )
+    val Vision =
+        Companion.control(
+            "vision",
+        )
     val CompanionViewSwitch =
         Companion.control(
             "view-switch",
