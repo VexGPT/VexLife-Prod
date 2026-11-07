@@ -44,6 +44,11 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
+                "OMITTED",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
                 VexLifeProdBrowserContract.InitialPageUrl,
             ),
         )

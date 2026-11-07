@@ -162,6 +162,8 @@ object VexLifeProdServiceContract {
         val heldCapabilityRefs: List<String>,
         val unavailableCapabilityRefs: List<String>,
         val unknownCapabilityRefs: List<String>,
+        val omittedCapabilityRefs: List<String>,
+        val omissionReasons: List<String>,
         val tokenBudget: Int,
         val usedTokens: Int,
         val truncated: Boolean,

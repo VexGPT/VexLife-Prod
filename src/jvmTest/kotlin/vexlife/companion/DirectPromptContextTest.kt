@@ -1209,6 +1209,15 @@ class DirectPromptContextTest {
                     capabilitySnapshot.usedTokens <=
                         capabilitySnapshot.tokenBudget,
                 )
+                assertTrue(
+                    capabilitySnapshot.omittedCapabilityRefs.isEmpty(),
+                )
+                assertTrue(
+                    capabilitySnapshot.omissionReasons.isEmpty(),
+                )
+                assertFalse(
+                    capabilitySnapshot.truncated,
+                )
                 assertFalse(
                     capabilitySnapshot.effectAuthorityGranted,
                 )

@@ -205,7 +205,8 @@ object VexLifeWebP1RuntimeArtifacts {
                     ['AVAILABLE', frameProjection.availableCapabilityRefs],
                     ['HELD', frameProjection.heldCapabilityRefs],
                     ['UNAVAILABLE', frameProjection.unavailableCapabilityRefs],
-                    ['UNKNOWN', frameProjection.unknownCapabilityRefs]
+                    ['UNKNOWN', frameProjection.unknownCapabilityRefs],
+                    ['OMITTED', frameProjection.omittedCapabilityRefs]
                   ];
                   for (const [label, refsForState] of groups) {
                     const group = document.createElement('section');
@@ -236,6 +237,14 @@ object VexLifeWebP1RuntimeArtifacts {
                     ' estimated tokens' +
                     (frameProjection.truncated ? ' (truncated)' : '');
                   settingsContext.append(coverage);
+
+                  if ((frameProjection.omissionReasons ?? []).length) {
+                    const omissions = document.createElement('p');
+                    omissions.textContent =
+                      'Omission reasons: ' +
+                      frameProjection.omissionReasons.join(', ');
+                    settingsContext.append(omissions);
+                  }
 
                   const authority = document.createElement('p');
                   authority.textContent = frameProjection.effectAuthorityGranted

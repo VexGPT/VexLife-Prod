@@ -642,6 +642,10 @@ class VexLifeProdLocalService private constructor(
                         capabilitySnapshot.unavailableCapabilityRefs,
                     unknownCapabilityRefs =
                         capabilitySnapshot.unknownCapabilityRefs,
+                    omittedCapabilityRefs =
+                        capabilitySnapshot.omittedCapabilityRefs,
+                    omissionReasons =
+                        capabilitySnapshot.omissionReasons,
                     tokenBudget =
                         capabilitySnapshot.tokenBudget,
                     usedTokens =

@@ -113,6 +113,8 @@ object DirectPromptContext {
         val heldCapabilityRefs: List<String>,
         val unavailableCapabilityRefs: List<String>,
         val unknownCapabilityRefs: List<String>,
+        val omittedCapabilityRefs: List<String>,
+        val omissionReasons: List<String>,
         val tokenBudget: Int,
         val usedTokens: Int,
         val truncated: Boolean,
@@ -646,6 +648,10 @@ object DirectPromptContext {
                                     frame.unavailableCapabilityRefs,
                                 unknownCapabilityRefs =
                                     frame.unknownCapabilityRefs,
+                                omittedCapabilityRefs =
+                                    frame.coverage.omittedCapabilityRefs,
+                                omissionReasons =
+                                    frame.coverage.omissionReasons,
                                 tokenBudget =
                                     frame.coverage.tokenBudget,
                                 usedTokens =
