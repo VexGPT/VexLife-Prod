@@ -129,7 +129,7 @@ object VexLifeWebP1 {
             binding =
                 VexWebAuthoring.localInteraction(
                     VexWeb.Identity.Blueprint(
-                        VexLifeWorkspaceBlueprint.Composer,
+                        VexLifeWorkspaceBlueprint.Companion,
                     ),
                 ),
         )

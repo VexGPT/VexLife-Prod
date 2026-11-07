@@ -48,7 +48,7 @@ class VexLifeWebP1Test {
             vexSummon.binding as
                 VexWeb.Binding.LocalInteraction
         assertEquals(
-            VexLifeWebP1.Composer.identity.ref,
+            VexLifeWebP1.Companion.identity.ref,
             vexSummonBinding.target.ref,
         )
 
