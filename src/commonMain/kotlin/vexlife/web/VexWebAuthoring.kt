@@ -164,6 +164,8 @@ object VexWebAuthoring {
             top: VexWeb.YBoundary,
             bottom: VexWeb.YBoundary,
             content: VexWeb.Node,
+            depth: VexWeb.Depth =
+                VexWeb.Depth.Content,
         ) {
             regions +=
                 VexWeb.Region(
@@ -176,6 +178,7 @@ object VexWebAuthoring {
                             bottom = bottom,
                         ),
                     content = content,
+                    depth = depth,
                 )
         }
 

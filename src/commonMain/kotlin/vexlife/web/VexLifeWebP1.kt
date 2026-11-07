@@ -340,13 +340,11 @@ object VexLifeWebP1 {
             region(
                 ref = Refs.BrowserRegion,
                 start = VexWeb.XBoundary.FrameStart,
-                end =
-                    VexWeb.XBoundary.Seam(
-                        Refs.BrowserCompanionSeam,
-                    ),
+                end = VexWeb.XBoundary.FrameEnd,
                 top = VexWeb.YBoundary.FrameTop,
                 bottom = VexWeb.YBoundary.FrameBottom,
                 content = Browser,
+                depth = VexWeb.Depth.Content,
             )
 
             region(
@@ -359,6 +357,7 @@ object VexLifeWebP1 {
                 top = VexWeb.YBoundary.FrameTop,
                 bottom = VexWeb.YBoundary.FrameBottom,
                 content = Companion,
+                depth = VexWeb.Depth.Chrome,
             )
 
             chrome(
