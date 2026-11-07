@@ -17,8 +17,11 @@ object VexLifeProdServiceContract {
     const val ConversationProjectionSchema =
         "vexlife-prod.local-service-conversation-projection/v1"
 
+    const val ContextProjectionSchema =
+        "vexlife-prod.local-service-context-projection/v1"
+
     const val SendResponseSchema =
-        "vexlife-prod.local-service-send-response/v2"
+        "vexlife-prod.local-service-send-response/v3"
 
     const val ErrorSchema =
         "vexlife-prod.local-service-error/v1"
@@ -55,6 +58,9 @@ object VexLifeProdServiceContract {
 
     const val ConversationPath =
         "/api/v1/conversation"
+
+    const val ContextPath =
+        "/api/v1/context"
 
     const val ConversationSendPath =
         "/api/v1/conversation/send"
@@ -146,6 +152,23 @@ object VexLifeProdServiceContract {
     }
 
     @Serializable
+    data class CapabilityFrameProjection(
+        val frameRef: String,
+        val semanticFingerprint: String,
+        val sourceRefs: List<String>,
+        val systemMessageSha256: String,
+        val estimatedSystemMessageTokens: Int,
+        val availableCapabilityRefs: List<String>,
+        val heldCapabilityRefs: List<String>,
+        val unavailableCapabilityRefs: List<String>,
+        val unknownCapabilityRefs: List<String>,
+        val tokenBudget: Int,
+        val usedTokens: Int,
+        val truncated: Boolean,
+        val effectAuthorityGranted: Boolean,
+    )
+
+    @Serializable
     data class PromptContextProjection(
         val receiptRef: String,
         val semanticFingerprint: String,
@@ -174,6 +197,26 @@ object VexLifeProdServiceContract {
         val browserContextSha256: String?,
         val browserContextCharacters: Int?,
         val browserContextCapture: String?,
+        val workingContinuityIncluded: Boolean =
+            false,
+        val workingContinuityContextRef: String? =
+            null,
+        val workingContinuityContextFingerprint: String? =
+            null,
+        val capabilityFrameIncluded: Boolean =
+            false,
+        val capabilityFrame: CapabilityFrameProjection? =
+            null,
+        val effectsPerformed: Boolean,
+    )
+
+    @Serializable
+    data class ContextProjection(
+        val schemaVersion: String,
+        val currentConversationHeadSha256: String?,
+        val turnRef: String?,
+        val contextPath: String?,
+        val promptContext: PromptContextProjection?,
         val effectsPerformed: Boolean,
     )
 

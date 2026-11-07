@@ -29,8 +29,11 @@ object DirectPromptContext {
     const val ReceiptSchemaV3 =
         "vexlife-prod.direct-prompt-materialization-receipt/v3"
 
-    const val ReceiptSchema =
+    const val ReceiptSchemaV4 =
         "vexlife-prod.direct-prompt-materialization-receipt/v4"
+
+    const val ReceiptSchema =
+        "vexlife-prod.direct-prompt-materialization-receipt/v5"
 
     const val InputTokenBudget =
         VexLifeMemoryContract.ContextInputTokenBudget
@@ -104,6 +107,19 @@ object DirectPromptContext {
     )
 
     @Serializable
+    @ConsistentCopyVisibility
+    data class CapabilityFrameSnapshot internal constructor(
+        val availableCapabilityRefs: List<String>,
+        val heldCapabilityRefs: List<String>,
+        val unavailableCapabilityRefs: List<String>,
+        val unknownCapabilityRefs: List<String>,
+        val tokenBudget: Int,
+        val usedTokens: Int,
+        val truncated: Boolean,
+        val effectAuthorityGranted: Boolean,
+    )
+
+    @Serializable
     private data class ReceiptCore(
         val schemaVersion: String,
         val contextMode: String,
@@ -151,6 +167,7 @@ object DirectPromptContext {
         val capabilityFrameSourceRefs: List<String>,
         val capabilityFrameSystemMessageSha256: String?,
         val capabilityFrameEstimatedSystemMessageTokens: Int,
+        val capabilityFrameSnapshot: CapabilityFrameSnapshot?,
         val trainingSelectionPerformed: Boolean,
         val effectsPerformed: Boolean,
     )
@@ -267,6 +284,11 @@ object DirectPromptContext {
         )
         val capabilityFrameEstimatedSystemMessageTokens: Int =
             0,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val capabilityFrameSnapshot: CapabilityFrameSnapshot? =
+            null,
     )
 
     @Serializable
@@ -606,6 +628,34 @@ object DirectPromptContext {
                 capabilityFrameSourceRefs = capabilityFrame?.frame?.sourceRefs ?: emptyList(),
                 capabilityFrameSystemMessageSha256 = capabilityFrame?.systemMessageSha256,
                 capabilityFrameEstimatedSystemMessageTokens = capabilityFrame?.estimatedSystemMessageTokens ?: 0,
+                capabilityFrameSnapshot =
+                    capabilityFrame
+                        ?.frame
+                        ?.let {
+                            frame ->
+                            CapabilityFrameSnapshot(
+                                availableCapabilityRefs =
+                                    frame.availableCapabilityRefs,
+                                heldCapabilityRefs =
+                                    frame.heldCapabilityEntries
+                                        .map {
+                                            it.capabilityRef
+                                        }
+                                        .sorted(),
+                                unavailableCapabilityRefs =
+                                    frame.unavailableCapabilityRefs,
+                                unknownCapabilityRefs =
+                                    frame.unknownCapabilityRefs,
+                                tokenBudget =
+                                    frame.coverage.tokenBudget,
+                                usedTokens =
+                                    frame.coverage.usedTokens,
+                                truncated =
+                                    frame.coverage.truncated,
+                                effectAuthorityGranted =
+                                    frame.effectAuthorityGranted,
+                            )
+                        },
                 trainingSelectionPerformed = false,
                 effectsPerformed = false,
             )
@@ -671,6 +721,7 @@ object DirectPromptContext {
                 capabilityFrameSourceRefs = core.capabilityFrameSourceRefs,
                 capabilityFrameSystemMessageSha256 = core.capabilityFrameSystemMessageSha256,
                 capabilityFrameEstimatedSystemMessageTokens = core.capabilityFrameEstimatedSystemMessageTokens,
+                capabilityFrameSnapshot = core.capabilityFrameSnapshot,
                 effectsPerformed = core.effectsPerformed,
             )
 

@@ -274,6 +274,105 @@ class DirectPromptContextTest {
     }
 
     @Test
+    fun historicalV4ReceiptRoundTripsWithoutCapabilitySnapshotInCanonicalHashShape() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-v4-compat-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val store =
+                DirectConversationStore(
+                    productHome,
+                )
+
+            store.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef =
+                            "turn.self-development.v4-compat",
+                        requestMessageRef =
+                            "message.self-development.human.v4-compat",
+                        content =
+                            "Historical v4 receipt compatibility",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-07T02:00:00Z",
+                            ),
+                    )
+                val receipt =
+                    DirectPromptContext.materialize(
+                        prior = null,
+                        currentRequest = request,
+                        runtimeEvidence = runtimeEvidence(),
+                    )
+                        .receipt
+                val full =
+                    VexContractJson.Strict
+                        .encodeToJsonElement(
+                            receipt,
+                        )
+                        .jsonObject
+                val historical =
+                    JsonObject(
+                        full
+                            .filterKeys {
+                                it !=
+                                    "capabilityFrameSnapshot"
+                            }
+                            .toMutableMap()
+                            .also {
+                                it[
+                                    "schemaVersion"
+                                ] =
+                                    JsonPrimitive(
+                                        DirectPromptContext.ReceiptSchemaV4,
+                                    )
+                            },
+                    )
+                val decoded =
+                    VexContractJson.decode<DirectPromptContext.Receipt>(
+                        historical.toString(),
+                    )
+
+                assertEquals(
+                    DirectPromptContext.ReceiptSchemaV4,
+                    decoded.schemaVersion,
+                )
+                assertTrue(
+                    decoded.capabilityFrameIncluded,
+                )
+                assertNotNull(
+                    decoded.capabilityFrameRef,
+                )
+                assertNull(
+                    decoded.capabilityFrameSnapshot,
+                )
+                assertEquals(
+                    VexContractJson.canonicalEncodeElement(
+                        historical,
+                    ),
+                    VexContractJson.canonicalEncode(
+                        decoded,
+                    ),
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun firstTurnMaterializesOnlyTheCurrentDurableRequestWhenMemoryIsAbsent() {
         val parent =
             Files.createTempDirectory(
@@ -1080,6 +1179,38 @@ class DirectPromptContextTest {
                 assertTrue(
                     materialized.receipt.capabilityFrameEstimatedSystemMessageTokens >
                         0,
+                )
+                val capabilitySnapshot =
+                    assertNotNull(
+                        materialized.receipt.capabilityFrameSnapshot,
+                    )
+                assertTrue(
+                    capabilitySnapshot.availableCapabilityRefs.contains(
+                        "capability.vexlife.companion.local-inference",
+                    ),
+                )
+                assertTrue(
+                    capabilitySnapshot.availableCapabilityRefs.contains(
+                        "capability.vexlife.context.browser-current",
+                    ),
+                )
+                assertTrue(
+                    capabilitySnapshot.availableCapabilityRefs.contains(
+                        "capability.vexlife.context.memory-current",
+                    ),
+                )
+                assertEquals(
+                    listOf(
+                        "capability.vexlife.context.working-continuity",
+                    ),
+                    capabilitySnapshot.heldCapabilityRefs,
+                )
+                assertTrue(
+                    capabilitySnapshot.usedTokens <=
+                        capabilitySnapshot.tokenBudget,
+                )
+                assertFalse(
+                    capabilitySnapshot.effectAuthorityGranted,
                 )
 
                 DirectPromptContext.reverify(

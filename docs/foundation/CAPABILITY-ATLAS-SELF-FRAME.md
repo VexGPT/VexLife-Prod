@@ -200,9 +200,9 @@ runtimeObservationRefOrNull
 
 These refs are context identity, not authority.
 
-## Current candidate boundary
+## Current boundary
 
-This first slice owns only:
+Accepted source now owns:
 
 ~~~text
 product-owned capability registry
@@ -212,14 +212,13 @@ effect-free frame projection
 intersection/currentness semantics
 +
 bounded deterministic selection
++
+live DirectPromptContext inclusion
 ~~~
 
-It does **not yet**:
+It still does **not**:
 
-- add the frame to `DirectPromptContext`;
-- reorder runtime observation;
 - perform capability search/query from model intent;
-- add Settings / Context presentation;
 - add any new executable tool;
 - change Memory, Conversation, browser, working-continuity or runtime owners;
 - grant Dream/training/activation/evolution authority.
@@ -252,6 +251,35 @@ evidence consumed by the provider invocation.
 The frame remains read-only context. It does not grant an effect, change the registered capability
 maturity, or make the prompt owner a runtime/Memory/browser/continuity authority.
 
-Only after this live frame is truthful should Settings / Context project it read-only.
+## Durable read-side projection
+
+The prompt receipt now carries one bounded state snapshot of the exact frame already supplied to Vex:
+
+~~~text
+AVAILABLE refs
+HELD refs
+UNAVAILABLE refs
+UNKNOWN refs
+token budget / used tokens / truncation
+effectAuthorityGranted
+~~~
+
+That snapshot is evidence of **what the current completed turn received**. It is not a new live
+capability query.
+
+The local service may therefore project:
+
+~~~text
+current completed Conversation head
+-> exact DirectTurnContextStore record
+-> exact persisted prompt receipt
+-> exact persisted capability-frame snapshot
+-> GET /api/v1/context
+-> Settings / Context
+~~~
+
+The GET path performs no capability re-formation, runtime observation, provider call or effect. If an
+older prompt receipt predates the persisted state snapshot, the read side reports that detail as
+unavailable rather than reconstructing it from present-day facts.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][CAPABILITY-ATLAS][SELF-FRAME] -->

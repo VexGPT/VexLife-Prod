@@ -14,6 +14,7 @@ import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
@@ -252,6 +253,12 @@ class VexLifeProdLocalServiceTest {
                     assertTrue(
                         runtimeJavascript.body()
                             .contains(
+                                VexLifeProdServiceContract.ContextPath,
+                            ),
+                    )
+                    assertTrue(
+                        runtimeJavascript.body()
+                            .contains(
                                 VexLifeProdBrowserContract.InitialPageUrl,
                             ),
                     )
@@ -281,6 +288,35 @@ class VexLifeProdLocalServiceTest {
                     )
                     assertFalse(
                         projection.effectsPerformed,
+                    )
+
+                    val contextResponse =
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.ContextPath,
+                        )
+                    assertEquals(
+                        200,
+                        contextResponse.statusCode(),
+                    )
+                    val contextProjection =
+                        json.decodeFromString<VexLifeProdServiceContract.ContextProjection>(
+                            contextResponse.body(),
+                        )
+                    assertNull(
+                        contextProjection.currentConversationHeadSha256,
+                    )
+                    assertNull(
+                        contextProjection.turnRef,
+                    )
+                    assertNull(
+                        contextProjection.contextPath,
+                    )
+                    assertNull(
+                        contextProjection.promptContext,
+                    )
+                    assertFalse(
+                        contextProjection.effectsPerformed,
                     )
                 }
 
@@ -440,6 +476,31 @@ class VexLifeProdLocalServiceTest {
                             ) ==
                             true,
                     )
+                    assertTrue(
+                        firstResult.promptContext.capabilityFrameIncluded,
+                    )
+                    val firstCapabilityFrame =
+                        assertNotNull(
+                            firstResult.promptContext.capabilityFrame,
+                        )
+                    assertTrue(
+                        firstCapabilityFrame.availableCapabilityRefs.contains(
+                            "capability.vexlife.companion.local-inference",
+                        ),
+                    )
+                    assertTrue(
+                        firstCapabilityFrame.availableCapabilityRefs.contains(
+                            "capability.vexlife.context.browser-current",
+                        ),
+                    )
+                    assertTrue(
+                        firstCapabilityFrame.heldCapabilityRefs.contains(
+                            "capability.vexlife.context.working-continuity",
+                        ),
+                    )
+                    assertFalse(
+                        firstCapabilityFrame.effectAuthorityGranted,
+                    )
                     assertEquals(
                         1,
                         providerCalls,
@@ -475,6 +536,47 @@ class VexLifeProdLocalServiceTest {
                     assertEquals(
                         firstResult.currentConversationHeadSha256,
                         projection.currentConversationHeadSha256,
+                    )
+
+                    val contextResponse =
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.ContextPath,
+                        )
+                    assertEquals(
+                        200,
+                        contextResponse.statusCode(),
+                    )
+                    val currentContext =
+                        json.decodeFromString<VexLifeProdServiceContract.ContextProjection>(
+                            contextResponse.body(),
+                        )
+                    assertEquals(
+                        firstResult.currentConversationHeadSha256,
+                        currentContext.currentConversationHeadSha256,
+                    )
+                    assertEquals(
+                        firstResult.turnRef,
+                        currentContext.turnRef,
+                    )
+                    assertEquals(
+                        firstResult.contextPath,
+                        currentContext.contextPath,
+                    )
+                    val currentPrompt =
+                        assertNotNull(
+                            currentContext.promptContext,
+                        )
+                    assertEquals(
+                        firstResult.promptContext.receiptRef,
+                        currentPrompt.receiptRef,
+                    )
+                    assertEquals(
+                        firstResult.promptContext.capabilityFrame,
+                        currentPrompt.capabilityFrame,
+                    )
+                    assertFalse(
+                        currentContext.effectsPerformed,
                     )
 
                     val duplicate =

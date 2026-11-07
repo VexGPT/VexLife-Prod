@@ -15,6 +15,7 @@ import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.browser.VexLifeProdFrameHost
 import vexlife.companion.DirectCompanionTurn
 import vexlife.companion.DirectPromptContext
+import vexlife.companion.DirectTurnContextStore
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.local.VexLifeProdLocalSetup
@@ -297,6 +298,11 @@ class VexLifeProdLocalService private constructor(
                         exchange,
                     )
 
+                VexLifeProdServiceContract.ContextPath ->
+                    handleContext(
+                        exchange,
+                    )
+
                 VexLifeProdServiceContract.ConversationSendPath ->
                     handleSend(
                         exchange,
@@ -444,6 +450,22 @@ class VexLifeProdLocalService private constructor(
         )
     }
 
+    private fun handleContext(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "GET",
+        )
+
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value =
+                contextProjection(),
+        )
+    }
+
     private fun handleSend(
         exchange: HttpExchange,
     ) {
@@ -501,51 +523,199 @@ class VexLifeProdLocalService private constructor(
                     currentConversationHeadSha256 = result.currentConversationHeadSha256,
                     contextPath = result.contextPath,
                     promptContext =
-                        VexLifeProdServiceContract.PromptContextProjection(
-                            receiptRef = result.promptContextReceipt.receiptRef,
-                            semanticFingerprint = result.promptContextReceipt.semanticFingerprint,
-                            contextMode = result.promptContextReceipt.contextMode,
-                            priorConversationHeadSha256 =
-                                result.promptContextReceipt.priorConversationHeadSha256,
-                            selectedConversationEventRefs =
-                                result.promptContextReceipt.selectedConversationEventRefs,
-                            providerMessageSetSha256 =
-                                result.promptContextReceipt.providerMessageSetSha256,
-                            providerMaterializedInputTokenEstimate =
-                                result.promptContextReceipt.providerMaterializedInputTokenEstimate,
-                            inputTokenBudget = result.promptContextReceipt.inputTokenBudget,
-                            reservedOutputTokens = result.promptContextReceipt.reservedOutputTokens,
-                            hardTokenLimit = result.promptContextReceipt.hardTokenLimit,
-                            wholeHistoryEventEnumerationPerformed =
-                                result.promptContextReceipt.wholeHistoryEventEnumerationPerformed,
-                            memoryContextRef =
-                                result.promptContextReceipt.memoryContextRef,
-                            memoryContextFingerprint =
-                                result.promptContextReceipt.memoryContextFingerprint,
-                            memorySourceRefs =
-                                result.promptContextReceipt.memorySourceRefs,
-                            memoryIncluded = result.promptContextReceipt.memoryIncluded,
-                            memorySelectionPerformed =
-                                result.promptContextReceipt.memorySelectionPerformed,
-                            trainingSelectionPerformed =
-                                result.promptContextReceipt.trainingSelectionPerformed,
-                            browserContextIncluded =
-                                result.promptContextReceipt.browserContextIncluded,
-                            browserContextRef =
-                                result.promptContextReceipt.browserContextRef,
-                            browserPageUrl =
-                                result.promptContextReceipt.browserPageUrl,
-                            browserTitle =
-                                result.promptContextReceipt.browserTitle,
-                            browserContextSha256 =
-                                result.promptContextReceipt.browserContextSha256,
-                            browserContextCharacters =
-                                result.promptContextReceipt.browserContextCharacters,
-                            browserContextCapture =
-                                result.promptContextReceipt.browserContextCapture,
-                            effectsPerformed = result.promptContextReceipt.effectsPerformed,
+                        promptContextProjection(
+                            result.promptContextReceipt,
                         ),
                 ),
+        )
+    }
+
+    private fun contextProjection(): VexLifeProdServiceContract.ContextProjection {
+        val productHome =
+            Path.of(
+                startupSetup.productHome,
+            )
+        val snapshot =
+            DirectConversationStore(
+                productHome,
+            )
+                .current()
+        val head =
+            snapshot.head
+                ?: return VexLifeProdServiceContract.ContextProjection(
+                    schemaVersion =
+                        VexLifeProdServiceContract.ContextProjectionSchema,
+                    currentConversationHeadSha256 =
+                        null,
+                    turnRef =
+                        null,
+                    contextPath =
+                        null,
+                    promptContext =
+                        null,
+                    effectsPerformed =
+                        false,
+                )
+        val record =
+            requireNotNull(
+                DirectTurnContextStore(
+                    productHome,
+                )
+                    .read(
+                        head.turnRef,
+                    ),
+            ) {
+                "current completed Conversation head is missing its exact turn context"
+            }
+        require(
+            record.turnRef ==
+                head.turnRef &&
+                record.contextSha256 ==
+                head.contextSha256 &&
+                record.contextPath ==
+                head.contextPath &&
+                record.requestEventSha256 ==
+                head.requestEventSha256 &&
+                record.responseEventSha256 ==
+                head.responseEventSha256,
+        ) {
+            "current turn Context does not match the exact completed Conversation head"
+        }
+
+        return VexLifeProdServiceContract.ContextProjection(
+            schemaVersion =
+                VexLifeProdServiceContract.ContextProjectionSchema,
+            currentConversationHeadSha256 =
+                head.conversationHeadSha256,
+            turnRef =
+                head.turnRef,
+            contextPath =
+                record.contextPath,
+            promptContext =
+                promptContextProjection(
+                    record.promptContext,
+                ),
+            effectsPerformed =
+                false,
+        )
+    }
+
+    private fun promptContextProjection(
+        receipt: DirectPromptContext.Receipt,
+    ): VexLifeProdServiceContract.PromptContextProjection {
+        val capabilitySnapshot =
+            receipt.capabilityFrameSnapshot
+        val capabilityFrame =
+            if (
+                receipt.capabilityFrameIncluded &&
+                capabilitySnapshot !=
+                null
+            ) {
+                VexLifeProdServiceContract.CapabilityFrameProjection(
+                    frameRef =
+                        requireNotNull(
+                            receipt.capabilityFrameRef,
+                        ) {
+                            "capability frame snapshot is missing its frame ref"
+                        },
+                    semanticFingerprint =
+                        requireNotNull(
+                            receipt.capabilityFrameFingerprint,
+                        ) {
+                            "capability frame snapshot is missing its fingerprint"
+                        },
+                    sourceRefs =
+                        receipt.capabilityFrameSourceRefs,
+                    systemMessageSha256 =
+                        requireNotNull(
+                            receipt.capabilityFrameSystemMessageSha256,
+                        ) {
+                            "capability frame snapshot is missing its system-message hash"
+                        },
+                    estimatedSystemMessageTokens =
+                        receipt.capabilityFrameEstimatedSystemMessageTokens,
+                    availableCapabilityRefs =
+                        capabilitySnapshot.availableCapabilityRefs,
+                    heldCapabilityRefs =
+                        capabilitySnapshot.heldCapabilityRefs,
+                    unavailableCapabilityRefs =
+                        capabilitySnapshot.unavailableCapabilityRefs,
+                    unknownCapabilityRefs =
+                        capabilitySnapshot.unknownCapabilityRefs,
+                    tokenBudget =
+                        capabilitySnapshot.tokenBudget,
+                    usedTokens =
+                        capabilitySnapshot.usedTokens,
+                    truncated =
+                        capabilitySnapshot.truncated,
+                    effectAuthorityGranted =
+                        capabilitySnapshot.effectAuthorityGranted,
+                )
+            } else {
+                null
+            }
+
+        return VexLifeProdServiceContract.PromptContextProjection(
+            receiptRef =
+                receipt.receiptRef,
+            semanticFingerprint =
+                receipt.semanticFingerprint,
+            contextMode =
+                receipt.contextMode,
+            priorConversationHeadSha256 =
+                receipt.priorConversationHeadSha256,
+            selectedConversationEventRefs =
+                receipt.selectedConversationEventRefs,
+            providerMessageSetSha256 =
+                receipt.providerMessageSetSha256,
+            providerMaterializedInputTokenEstimate =
+                receipt.providerMaterializedInputTokenEstimate,
+            inputTokenBudget =
+                receipt.inputTokenBudget,
+            reservedOutputTokens =
+                receipt.reservedOutputTokens,
+            hardTokenLimit =
+                receipt.hardTokenLimit,
+            wholeHistoryEventEnumerationPerformed =
+                receipt.wholeHistoryEventEnumerationPerformed,
+            memoryContextRef =
+                receipt.memoryContextRef,
+            memoryContextFingerprint =
+                receipt.memoryContextFingerprint,
+            memorySourceRefs =
+                receipt.memorySourceRefs,
+            memoryIncluded =
+                receipt.memoryIncluded,
+            memorySelectionPerformed =
+                receipt.memorySelectionPerformed,
+            trainingSelectionPerformed =
+                receipt.trainingSelectionPerformed,
+            browserContextIncluded =
+                receipt.browserContextIncluded,
+            browserContextRef =
+                receipt.browserContextRef,
+            browserPageUrl =
+                receipt.browserPageUrl,
+            browserTitle =
+                receipt.browserTitle,
+            browserContextSha256 =
+                receipt.browserContextSha256,
+            browserContextCharacters =
+                receipt.browserContextCharacters,
+            browserContextCapture =
+                receipt.browserContextCapture,
+            workingContinuityIncluded =
+                receipt.workingContinuityIncluded,
+            workingContinuityContextRef =
+                receipt.workingContinuityContextRef,
+            workingContinuityContextFingerprint =
+                receipt.workingContinuityContextFingerprint,
+            capabilityFrameIncluded =
+                receipt.capabilityFrameIncluded,
+            capabilityFrame =
+                capabilityFrame,
+            effectsPerformed =
+                receipt.effectsPerformed,
         )
     }
 

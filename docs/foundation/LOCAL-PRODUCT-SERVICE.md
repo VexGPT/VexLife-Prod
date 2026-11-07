@@ -47,6 +47,7 @@ Routes are shared common-Kotlin source:
 ~~~text
 GET  /api/v1/source-currentness
 GET  /api/v1/conversation
+GET  /api/v1/context
 POST /api/v1/conversation/send
 ~~~
 
@@ -86,6 +87,8 @@ fixed host / port / product/service refs
 SourceCurrentness
 ConversationProjection
 ConversationMessage
+ContextProjection
+CapabilityFrameProjection
 SendRequest
 SendResponse
 PromptContextProjection
@@ -184,7 +187,7 @@ same exact completed attempt
 
 The service does not invent another idempotency layer.
 
-## Prompt-context projection
+## Prompt-context + Context read-side projection
 
 The Send response projects the already-earned direct prompt receipt:
 
@@ -195,13 +198,34 @@ selected Conversation-event refs
 provider message-set SHA-256
 input token estimate/budget
 whole-history enumeration flag
-Memory included / selected
+Memory / browser / working-continuity inclusion
+bounded self-capability frame projection
 training selection
 effectsPerformed
 ~~~
 
-This is metadata about what Vex received. It does not expose raw hidden prompt text or model
-reasoning.
+Prompt receipt v5 additionally persists one bounded state snapshot of the exact capability frame
+already supplied to Vex. It carries only state refs/coverage and the explicit effect-authority flag;
+it does not persist hidden prompt text.
+
+The read-only Context route is reload-stable:
+
+~~~text
+GET /api/v1/context
+-> DirectConversationStore.current()
+-> exact current completed head
+-> DirectTurnContextStore.read(head.turnRef)
+-> require context/request/response hashes match that head
+-> exact persisted prompt receipt
+-> ContextProjection
+~~~
+
+An empty Conversation returns an explicit empty Context projection. Historical prompt receipts that
+predate the persisted frame-state snapshot are not reinterpreted from current runtime facts.
+
+This is evidence about what the current completed Vex turn received. The service does not re-run
+Memory selection, working-continuity resolution, capability formation, runtime observation or a
+provider effect while serving the GET.
 
 The continuity realignment gate has earned retirement on the exact source/body evidence that
 established canonical Conversation + Memory compatibility. This does not make the whole product
@@ -380,8 +404,20 @@ LOCAL PRODUCT SERVICE
 != HAND-BUILT EXPLORATION PROMOTION
 ~~~
 
-The next presentation candidate should consume VexLifeProdServiceContract and the accepted
-VexWeb/Blueprint identities.
+The generated P1 runtime now consumes the read-only Context route through the already-accepted
+`SettingsContext` Blueprint coordinate. It renders the exact current completed-turn projection:
+context mode, included context classes, capability state groups, frame coverage and the explicit
+effect-authority flag.
+
+~~~text
+SETTINGS / CONTEXT
+= READ-SIDE OF DURABLE TURN EVIDENCE
+
+SETTINGS / CONTEXT
+!= CAPABILITY OWNER
+!= CURRENTNESS RECOMPUTATION
+!= PROMPT-TEXT INSPECTOR
+~~~
 
 ## Source-formed proof
 
@@ -394,6 +430,9 @@ source currentness projection
 empty Conversation GET with zero storage formation
 HTTP Send -> canonical direct-turn owner
 durable Conversation projection after Send
+empty Context GET -> explicit effect-free empty projection
+completed Send -> exact durable Context/frame projection on reload-style GET
+generated SettingsContext -> Context route + capability-state rendering
 exact duplicate attempt -> zero second provider call
 unknown wire field -> rejected before turn effect
 new inference held when runtime currentness is not exact
