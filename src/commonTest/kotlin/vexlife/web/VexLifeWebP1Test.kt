@@ -24,13 +24,32 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            20,
+            21,
             blueprint.size,
         )
         assertTrue(
             manifested.containsAll(
                 blueprint,
             ),
+        )
+
+        val vexSummon =
+            VexLifeWebP1.Surface
+                .coordinates()
+                .single {
+                    it.ref ==
+                        VexLifeWorkspaceBlueprint.VexSummon.ref
+                }
+        assertTrue(
+            VexWeb.Interaction.Activate in
+                vexSummon.interactions,
+        )
+        val vexSummonBinding =
+            vexSummon.binding as
+                VexWeb.Binding.LocalInteraction
+        assertEquals(
+            VexLifeWebP1.Composer.identity.ref,
+            vexSummonBinding.target.ref,
         )
 
         val jumpLatest =

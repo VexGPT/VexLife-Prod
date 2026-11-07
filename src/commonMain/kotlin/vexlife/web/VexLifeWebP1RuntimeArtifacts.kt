@@ -66,6 +66,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const refs = Object.freeze({
                 brand: ${jsString(VexLifeWebP1.Brand.identity.ref)},
+                vexSummon: ${jsString(VexLifeWebP1.VexSummon.identity.ref)},
                 bodyFrame: ${jsString(VexLifeWebP1.Refs.BodyFrame.value)},
                 browserRegion: ${jsString(VexLifeWebP1.Refs.BrowserRegion.value)},
                 companionRegion: ${jsString(VexLifeWebP1.Refs.CompanionRegion.value)},
@@ -105,6 +106,7 @@ object VexLifeWebP1RuntimeArtifacts {
               const byRef = (ref) => root.querySelector('[data-vex-ref="' + ref + '"]');
               const generatedPart = (ref, part) => byRef(ref)?.querySelector('[data-vex-generated-part="' + part + '"]') ?? null;
               const brand = byRef(refs.brand);
+              const vexSummonButton = generatedPart(refs.vexSummon, 'control');
               const bodyFrame = byRef(refs.bodyFrame);
               const browserRegion = byRef(refs.browserRegion);
               const companionRegion = byRef(refs.companionRegion);
@@ -128,8 +130,19 @@ object VexLifeWebP1RuntimeArtifacts {
               let pendingSend = null;
 
               if (brand) {
-                brand.textContent = 'VexLife';
                 brand.setAttribute('aria-label', 'VexLife');
+                const brandName = document.createElement('strong');
+                brandName.dataset.vexGeneratedPart = 'brand-name';
+                brandName.textContent = 'VexLife';
+                const brandHome = document.createElement('small');
+                brandHome.dataset.vexGeneratedPart = 'brand-home';
+                brandHome.textContent = 'VEX IS HOME';
+                brand.replaceChildren(brandName, brandHome);
+              }
+              if (vexSummonButton) {
+                vexSummonButton.textContent = 'V';
+                vexSummonButton.setAttribute('aria-label', 'Summon Vex');
+                vexSummonButton.title = 'Summon Vex';
               }
               if (companionHeader) {
                 companionHeader.setAttribute('aria-label', 'Vex conversation workspace');
@@ -582,6 +595,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (event.key !== 'Enter' || !(event.metaKey || event.ctrlKey)) return;
                 event.preventDefault();
                 void send();
+              });
+
+              vexSummonButton?.addEventListener('click', () => {
+                if (currentBrowserShare() >= 0.96) {
+                  applyBrowserShare(browser.authoredInitialShare);
+                }
+                composer?.focus();
               });
 
               if (browserCompanionHandle && bodyFrame) {

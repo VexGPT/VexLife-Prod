@@ -5,6 +5,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.service.VexLifeProdServiceContract
+import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexLifeWebP1RuntimeArtifactsTest {
     @Test
@@ -70,6 +71,16 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(
             bundle.javascript.contains(
                 "Vex conversation workspace",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "Summon Vex",
+            ),
+        )
+        assertTrue(
+            bundle.semanticManifest.contains(
+                "\"ref\":\"${VexLifeWorkspaceBlueprint.VexSummon.ref}\"",
             ),
         )
         assertTrue(

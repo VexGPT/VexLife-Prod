@@ -116,9 +116,31 @@ object VexLifeWebP1 {
             VexLifeWorkspaceBlueprint.AppSelector,
         )
 
+    val VexSummon =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.VexSummon,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.localInteraction(
+                    VexWeb.Identity.Blueprint(
+                        VexLifeWorkspaceBlueprint.Composer,
+                    ),
+                ),
+        )
+
     val Utilities =
         blueprintSurface(
-            VexLifeWorkspaceBlueprint.Utilities,
+            element = VexLifeWorkspaceBlueprint.Utilities,
+            children =
+                listOf(
+                    VexSummon,
+                ),
         )
 
     val Header =
@@ -128,10 +150,10 @@ object VexLifeWebP1 {
             depth = VexWeb.Depth.Chrome,
             children =
                 listOf(
+                    Utilities,
                     Brand,
                     BrowserQuery,
                     AppSelector,
-                    Utilities,
                 ),
         )
 
