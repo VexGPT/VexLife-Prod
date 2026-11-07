@@ -223,6 +223,60 @@ It is evidence of intended shape and interaction composition, not runtime/source
 Current VexLife-Prod service, Conversation, Context, browser-context and runtime owners remain
 authoritative.
 
+## Current presentation contract
+
+The generated semantic manifest remains a direct projection of the accepted
+`VexLifeWebP1.Surface`. VexBoard and other semantic consumers read that source-visible graph.
+
+The human product is **not** required to use the generic VexWeb HTML skeleton as its visual template.
+
+Current presentation realization is:
+
+```text
+VexLifeWebP1.Surface
+  -> VexWebArtifacts semanticManifest
+  -> VexLifeWebP1ExperienceMarkup
+       A003-faithful product DOM
+  -> VexLifeWebP1ExperienceStyle
+       A003-faithful product presentation measurements
+  -> VexLifeWebP1RuntimeArtifacts
+       current New-Beginnings sequencing / service bindings
+```
+
+Permanent:
+
+```text
+GENERIC ARTIFACT GENERATOR
+!= PRODUCT VISUAL DESIGN AUTHORITY
+
+A003 PRESENTATION CONTRACT
+!= A003 RUNTIME AUTHORITY
+
+CURRENT NEW-BEGINNINGS SEQUENCING
+!= PERMISSION TO IMPORT UI REGRESSIONS
+```
+
+The product interaction contract therefore preserves:
+
+```text
+Enter        -> Send
+Shift+Enter  -> newline
+
+human Send
+  -> immediate in-flight human presentation
+  -> current idempotent Conversation Send
+  -> current Memory / prompt-context / working-continuity / runtime sequencing
+  -> canonical Conversation commit
+  -> canonical projection replaces in-flight presentation
+```
+
+The in-flight turn is presentation state only. It never claims to be the canonical Conversation
+head before the current durable owner commits that head.
+
+The product template also preserves the visible A003 seam collapse controls, quick-action tray,
+Conversation/Settings view switch, indexed turn layout, context ticket, Settings meters/toggles and
+bottom composer. Unsupported effects remain visibly held or explanatory rather than fabricated.
+
 ## Artifact membrane
 
 The JVM materializer owns only build-artifact custody:
