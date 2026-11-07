@@ -123,10 +123,6 @@ class VexLifeWebP1Test {
             ).capabilityRef,
         )
 
-        val artifacts =
-            VexWebArtifacts.generate(
-                VexLifeWebP1.Surface,
-            )
         assertTrue(
             artifacts.semanticManifest.contains(
                 "\"type\":\"CAPABILITY\",\"capabilityRef\":\"conversation.send\"",
