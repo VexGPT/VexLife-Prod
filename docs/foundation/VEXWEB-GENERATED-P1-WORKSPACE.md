@@ -150,9 +150,11 @@ Conversation, prompt-selection, or provider owner.
 Conversation and Settings are alternate Companion presentations. Their view switch is presentation
 state only and does not mint another product semantic-state owner.
 
-Controls whose current backend effect is not admitted remain visible but held/disabled rather than
-fabricating capability. Current held examples include Stop, Viewable thoughts, low-memory alert,
-Home directory mutation, Continuity/Dream sync, and CleanChat.
+Controls whose current backend effect is not admitted remain non-effecting rather than fabricating
+capability. Home directory mutation, Continuity/Dream sync, Stop, and low-memory alert remain held.
+CleanChat remains a visible explanatory action that performs no reset effect. ThoughtVisibility is
+presentation-local preference only; it does not claim hidden-reasoning data exists in the current
+Conversation projection.
 
 ## Current perceptual composition continuity
 
