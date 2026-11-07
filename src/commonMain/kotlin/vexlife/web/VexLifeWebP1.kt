@@ -93,14 +93,12 @@ object VexLifeWebP1 {
 
     val Brand =
         blueprintSurface(
-            element = VexLifeWorkspaceBlueprint.Brand,
-            presentation = VexWeb.Presentation.Identity,
+            VexLifeWorkspaceBlueprint.Brand,
         )
 
     val BrowserQuery =
         blueprintSurface(
-            element = VexLifeWorkspaceBlueprint.BrowserQuery,
-            presentation = VexWeb.Presentation.Input,
+            VexLifeWorkspaceBlueprint.BrowserQuery,
         )
 
     val AppSelector =
@@ -118,7 +116,6 @@ object VexLifeWebP1 {
             element = VexLifeWorkspaceBlueprint.Header,
             placement = VexWeb.Placement.FillAvailable,
             depth = VexWeb.Depth.Chrome,
-            presentation = VexWeb.Presentation.Chrome,
             children =
                 listOf(
                     Brand,
@@ -146,8 +143,7 @@ object VexLifeWebP1 {
 
     val ConversationTimeline =
         blueprintSurface(
-            element = VexLifeWorkspaceBlueprint.ConversationTimeline,
-            presentation = VexWeb.Presentation.Collection,
+            VexLifeWorkspaceBlueprint.ConversationTimeline,
         )
 
     val ConversationJumpLatest =
@@ -155,7 +151,6 @@ object VexLifeWebP1 {
             element = VexLifeWorkspaceBlueprint.ConversationJumpLatest,
             placement = VexWeb.Placement.InFlow,
             depth = VexWeb.Depth.Chrome,
-            presentation = VexWeb.Presentation.SecondaryAction,
             interactions =
                 setOf(
                     VexWeb.Interaction.Activate,
@@ -168,8 +163,7 @@ object VexLifeWebP1 {
 
     val ResponseProgress =
         blueprintSurface(
-            element = VexLifeWorkspaceBlueprint.ResponseProgress,
-            presentation = VexWeb.Presentation.Status,
+            VexLifeWorkspaceBlueprint.ResponseProgress,
         )
 
     val Send =
@@ -191,7 +185,6 @@ object VexLifeWebP1 {
     val Composer =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.Composer,
-            presentation = VexWeb.Presentation.Composer,
             children =
                 listOf(
                     Send,
@@ -212,8 +205,7 @@ object VexLifeWebP1 {
 
     val SettingsContext =
         blueprintSurface(
-            element = VexLifeWorkspaceBlueprint.SettingsContext,
-            presentation = VexWeb.Presentation.Inspector,
+            VexLifeWorkspaceBlueprint.SettingsContext,
         )
 
     val SettingsResources =
