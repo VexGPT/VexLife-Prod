@@ -5,9 +5,93 @@ import java.net.Socket
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class VexLifeProdFrameHostTest {
+    @Test
+    fun nestedSameOriginFrameContextRelaysThroughTheOuterTrustedFrame() {
+        val script =
+            VexLifeProdFrameHost.reporterScript(
+                "https://vgong24.github.io/Vextreme/pages/terrain-map.html",
+            )
+
+        assertTrue(
+            script.contains(
+                "const FORWARD_TYPE = 'vexlife.browser-context-forward/v1'",
+            ),
+        )
+        assertTrue(
+            script.contains(
+                "if (window.parent === window.top)",
+            ),
+        )
+        assertTrue(
+            script.contains(
+                "event.origin !== location.origin",
+            ),
+        )
+        assertTrue(
+            script.contains(
+                "sendContextUpward(payload)",
+            ),
+        )
+    }
+    @Test
+    fun admittedAbsoluteUrlsStayInsideTheIsolatedFrameProjection() {
+        assertEquals(
+            """
+            {
+              "liveUrl": "http://vgong24.github.io.vex.localhost:18211/Vextreme/pages/restoration-protocol.html",
+              "workUrl": "http://vexgpt.github.io.vex.localhost:18211/VexWork/orientation.html",
+              "external": "https://example.com/"
+            }
+            """.trimIndent(),
+            VexLifeProdFrameHost.projectAdmittedAbsoluteUrls(
+                """
+                {
+                  "liveUrl": "https://vgong24.github.io/Vextreme/pages/restoration-protocol.html",
+                  "workUrl": "https://vexgpt.github.io/VexWork/orientation.html",
+                  "external": "https://example.com/"
+                }
+                """.trimIndent(),
+            ),
+        )
+    }
+
+    @Test
+    fun framePolicyAllowsOnlySameAdmittedFrameOriginNestingInsideTheProduct() {
+        val policy =
+            VexLifeProdFrameHost.FrameContentSecurityPolicy
+
+        assertTrue(
+            policy.contains(
+                "frame-src 'self'",
+            ),
+        )
+        assertTrue(
+            policy.contains(
+                "frame-ancestors 'self' http://127.0.0.1:18210",
+            ),
+        )
+        assertFalse(
+            policy.contains(
+                "frame-src 'none'",
+            ),
+        )
+        assertTrue(
+            policy.contains(
+                "form-action 'none'",
+            ),
+        )
+        assertTrue(
+            policy.contains(
+                "object-src 'none'",
+            ),
+        )
+    }
+
     private fun request(
         port: Int,
         method: String,
