@@ -42,6 +42,27 @@ class VexLifeProdFrameHost private constructor(
                 "connect-src 'self'; form-action 'none'; object-src 'none'; frame-src 'self'; base-uri 'none'; " +
                 "frame-ancestors 'self' http://127.0.0.1:18210"
 
+        internal fun projectAdmittedAbsoluteUrls(
+            value: String,
+        ): String =
+            VexLifeProdBrowserContract.AdmittedHosts
+                .fold(
+                    value,
+                ) {
+                    projected,
+                    upstreamHost,
+                    ->
+                    projected.replace(
+                        "https://" +
+                            upstreamHost,
+                        "http://" +
+                            upstreamHost +
+                            VexLifeProdBrowserContract.FrameHostSuffix +
+                            ":" +
+                            VexLifeProdBrowserContract.FrameHostPort,
+                    )
+                }
+
         fun start(): VexLifeProdFrameHost =
             startAt(
                 InetSocketAddress(
@@ -322,28 +343,45 @@ class VexLifeProdFrameHost private constructor(
             }
 
             val output =
-                if (
+                when {
                     contentType.contains(
                         "text/html",
                         ignoreCase = true,
                     ) ||
+                        contentType.contains(
+                            "application/xhtml+xml",
+                            ignoreCase = true,
+                        ) ->
+                        injectReporter(
+                            html =
+                                bytes.toString(
+                                    StandardCharsets.UTF_8,
+                                ),
+                            sourceUrl = target,
+                        )
+                            .toByteArray(
+                                StandardCharsets.UTF_8,
+                            )
+
                     contentType.contains(
-                        "application/xhtml+xml",
+                        "application/json",
                         ignoreCase = true,
-                    )
-                ) {
-                    injectReporter(
-                        html =
+                    ) ||
+                        contentType.contains(
+                            "+json",
+                            ignoreCase = true,
+                        ) ->
+                        projectAdmittedAbsoluteUrls(
                             bytes.toString(
                                 StandardCharsets.UTF_8,
                             ),
-                        sourceUrl = target,
-                    )
-                        .toByteArray(
-                            StandardCharsets.UTF_8,
                         )
-                } else {
-                    bytes
+                            .toByteArray(
+                                StandardCharsets.UTF_8,
+                            )
+
+                    else ->
+                        bytes
                 }
 
             exchange.responseHeaders.add(
@@ -485,6 +523,14 @@ class VexLifeProdFrameHost private constructor(
 
               const frameUrlFor = (target) => {
                 const url = new URL(target);
+                if (
+                  url.protocol === 'http:' &&
+                  url.port === String(FRAME_PORT) &&
+                  url.hostname.endsWith(FRAME_SUFFIX)
+                ) {
+                  const upstreamHost = url.hostname.slice(0, -FRAME_SUFFIX.length);
+                  return ADMITTED_HOSTS.includes(upstreamHost) ? url.href : null;
+                }
                 if (url.protocol !== 'https:' || url.port || !ADMITTED_HOSTS.includes(url.hostname)) return null;
                 return 'http://' + url.hostname + FRAME_SUFFIX + ':' + FRAME_PORT + url.pathname + url.search + url.hash;
               };

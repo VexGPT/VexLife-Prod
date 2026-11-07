@@ -5,10 +5,33 @@ import java.net.Socket
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class VexLifeProdFrameHostTest {
+    @Test
+    fun admittedAbsoluteUrlsStayInsideTheIsolatedFrameProjection() {
+        assertEquals(
+            """
+            {
+              "liveUrl": "http://vgong24.github.io.vex.localhost:18211/Vextreme/pages/restoration-protocol.html",
+              "workUrl": "http://vexgpt.github.io.vex.localhost:18211/VexWork/orientation.html",
+              "external": "https://example.com/"
+            }
+            """.trimIndent(),
+            VexLifeProdFrameHost.projectAdmittedAbsoluteUrls(
+                """
+                {
+                  "liveUrl": "https://vgong24.github.io/Vextreme/pages/restoration-protocol.html",
+                  "workUrl": "https://vexgpt.github.io/VexWork/orientation.html",
+                  "external": "https://example.com/"
+                }
+                """.trimIndent(),
+            ),
+        )
+    }
+
     @Test
     fun framePolicyAllowsOnlySameAdmittedFrameOriginNestingInsideTheProduct() {
         val policy =
