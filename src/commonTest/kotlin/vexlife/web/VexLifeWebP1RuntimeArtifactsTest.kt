@@ -74,17 +74,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertFalse(
             bundle.css.contains(
-                "--vex-browser-share:50%",
-            ),
-        )
-        assertFalse(
-            bundle.css.contains(
-                "--vex-browser-share:44%",
-            ),
-        )
-        assertFalse(
-            bundle.css.contains(
-                "--vex-browser-share:38%",
+                "--vex-browser-share:",
             ),
         )
         assertFalse(
