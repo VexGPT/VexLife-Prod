@@ -166,9 +166,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 const prompt = projection?.promptContext ?? null;
                 if (!prompt) {
                   const empty = document.createElement('p');
-                  empty.textContent = 'No completed Vex turn context yet.';
+                  const hasCurrentConversation = Boolean(projection?.currentConversationHeadSha256);
+                  empty.textContent = hasCurrentConversation
+                    ? 'Current Conversation turn predates VexLife-Prod prompt-context evidence.'
+                    : 'No completed Vex turn context yet.';
                   settingsContext.append(empty);
-                  settingsContext.dataset.vexContextState = 'empty';
+                  settingsContext.dataset.vexContextState = hasCurrentConversation ? 'historical' : 'empty';
                   settingsContext.dataset.vexPromptReceiptRef = '';
                   settingsContext.dataset.vexCapabilityFrameRef = '';
                   return;

@@ -557,16 +557,26 @@ class VexLifeProdLocalService private constructor(
                         false,
                 )
         val record =
-            requireNotNull(
-                DirectTurnContextStore(
-                    productHome,
+            DirectTurnContextStore(
+                productHome,
+            )
+                .read(
+                    head.turnRef,
                 )
-                    .read(
+                ?: return VexLifeProdServiceContract.ContextProjection(
+                    schemaVersion =
+                        VexLifeProdServiceContract.ContextProjectionSchema,
+                    currentConversationHeadSha256 =
+                        head.conversationHeadSha256,
+                    turnRef =
                         head.turnRef,
-                    ),
-            ) {
-                "current completed Conversation head is missing its exact turn context"
-            }
+                    contextPath =
+                        head.contextPath,
+                    promptContext =
+                        null,
+                    effectsPerformed =
+                        false,
+                )
         require(
             record.turnRef ==
                 head.turnRef &&

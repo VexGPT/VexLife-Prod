@@ -220,8 +220,14 @@ GET /api/v1/context
 -> ContextProjection
 ~~~
 
-An empty Conversation returns an explicit empty Context projection. Historical prompt receipts that
-predate the persisted frame-state snapshot are not reinterpreted from current runtime facts.
+An empty Conversation returns an explicit empty Context projection. If the current canonical
+Conversation head predates VexLife-Prod turn evidence, the route preserves that current head/turn/
+context-path identity while returning no prompt projection; it does not require a product runtime
+sidecar that the historical context never claimed. Conversely, a context that claims the
+VexLife-Prod runtime-evidence marker but has lost that sidecar still fails integrity validation.
+
+Historical prompt receipts that predate the persisted frame-state snapshot are not reinterpreted from
+current runtime facts.
 
 This is evidence about what the current completed Vex turn received. The service does not re-run
 Memory selection, working-continuity resolution, capability formation, runtime observation or a

@@ -49,6 +49,11 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
+                "Current Conversation turn predates VexLife-Prod prompt-context evidence.",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
                 VexLifeProdBrowserContract.InitialPageUrl,
             ),
         )
