@@ -30,6 +30,22 @@ object VexLifeWebP1RuntimeArtifacts {
     }
 
     private fun runtimeJavascript(): String {
+        val browserCompanionSeam =
+            VexLifeWebP1.BodyFrame.seams
+                .filterIsInstance<VexWeb.Seam.Vertical>()
+                .single {
+                    it.ref ==
+                        VexLifeWebP1.Refs.BrowserCompanionSeam
+                }
+        val browserCompanionAllocation =
+            browserCompanionSeam.allocation as
+                VexWeb.Parameter.Allocation.Ratio
+        val authoredBrowserShare =
+            browserCompanionAllocation.beforeParts
+                .toDouble() /
+                browserCompanionAllocation.totalParts
+                    .toDouble()
+
         val admittedHosts =
             VexLifeProdBrowserContract.AdmittedHosts
                 .joinToString(
@@ -73,6 +89,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 sendPath: ${jsString(VexLifeProdServiceContract.ConversationSendPath)}
               });
               const browser = Object.freeze({
+                authoredInitialShare: $authoredBrowserShare,
                 admittedHosts: $admittedHosts,
                 frameHostSuffix: ${jsString(VexLifeProdBrowserContract.FrameHostSuffix)},
                 frameHostPort: ${VexLifeProdBrowserContract.FrameHostPort},
@@ -412,12 +429,12 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const currentBrowserShare = () => {
-                if (!bodyFrame) return 0.5;
+                if (!bodyFrame) return browser.authoredInitialShare;
                 const raw = getComputedStyle(bodyFrame)
                   .getPropertyValue('--vex-browser-share')
                   .trim();
                 const parsed = Number.parseFloat(raw);
-                return Number.isFinite(parsed) ? parsed / 100 : 0.5;
+                return Number.isFinite(parsed) ? parsed / 100 : browser.authoredInitialShare;
               };
 
               const syncBrowserShareAccessibility = () => {
@@ -448,7 +465,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 applyBrowserShare(currentBrowserShare() + delta);
               };
 
-              syncBrowserShareAccessibility();
+              applyBrowserShare(browser.authoredInitialShare);
               window.addEventListener('resize', syncBrowserShareAccessibility);
 
               const send = async () => {

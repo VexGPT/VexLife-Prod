@@ -67,6 +67,26 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "setPointerCapture",
             ),
         )
+        assertTrue(
+            bundle.javascript.contains(
+                "authoredInitialShare: 0.5",
+            ),
+        )
+        assertFalse(
+            bundle.css.contains(
+                "--vex-browser-share:50%",
+            ),
+        )
+        assertFalse(
+            bundle.css.contains(
+                "--vex-browser-share:44%",
+            ),
+        )
+        assertFalse(
+            bundle.css.contains(
+                "--vex-browser-share:38%",
+            ),
+        )
         assertFalse(
             bundle.javascript.contains(
                 "allow-forms",
