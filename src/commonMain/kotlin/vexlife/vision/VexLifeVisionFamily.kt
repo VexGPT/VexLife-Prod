@@ -85,8 +85,7 @@ object VexLifeVisionFamily :
 
                     State.Held,
                     State.Enabled,
-                    State.Looking,
-                    -> null
+                    State.Looking -> null
                 }
 
             Control.Disable ->
@@ -101,8 +100,7 @@ object VexLifeVisionFamily :
                     State.Held,
                     State.PermissionNeeded,
                     State.Ready,
-                    State.Looking,
-                    -> null
+                    State.Looking -> null
                 }
 
             Control.LookNow ->
@@ -117,8 +115,7 @@ object VexLifeVisionFamily :
                     State.Held,
                     State.PermissionNeeded,
                     State.Ready,
-                    State.Looking,
-                    -> null
+                    State.Looking -> null
                 }
         }
 
