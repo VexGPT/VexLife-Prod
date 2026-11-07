@@ -138,6 +138,31 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
+                "const retrying = state.pending !== null",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "const pending = state.pending ?? Object.freeze",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "retrySameSendAttemptAllowed",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "const retireAttempt = status === 400 || retryAllowed === false",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "Turn completed, but the current projection could not be refreshed",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
                 "VexLife Memory contributed through",
             ),
         )

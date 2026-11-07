@@ -153,6 +153,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 allocation: null,
                 collapsed: 'none',
                 pending: null,
+                sendInFlight: false,
                 thoughtsVisible: true,
                 theme: null
               };
@@ -405,8 +406,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.contextShare.dataset.state = canInclude ? 'Ready' : 'Unavailable';
                 ui.contextShare.setAttribute('aria-pressed', String(state.includePage && canInclude));
                 ui.contextShareLabel.textContent = state.includePage && canInclude ? 'Page included' : 'Include this page';
-                ui.composerHold.textContent = !canInclude ? 'Page context becomes available when the opened page reports readable text.' : '';
-                ui.send.disabled = Boolean(state.pending) || !ui.draft.value.trim();
+                ui.composerHold.textContent = !canInclude
+                  ? 'Page context becomes available when the opened page reports readable text.'
+                  : state.pending && !state.sendInFlight
+                    ? 'The prior Send outcome is unresolved. Send again to retry that exact attempt.'
+                    : '';
+                ui.send.disabled = state.sendInFlight || (!state.pending && !ui.draft.value.trim());
                 ui.responseProgress.hidden = true;
                 renderTicket();
               };
@@ -497,19 +502,24 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const send = async () => {
-                if (state.pending) return;
-                const content = ui.draft.value.trim();
+                if (state.sendInFlight) return;
+
+                const retrying = state.pending !== null;
+                const content = retrying ? state.pending.content : ui.draft.value.trim();
                 if (!content) return;
 
-                const pending = Object.freeze({
+                const pending = state.pending ?? Object.freeze({
                   idempotencyKey: 'send.' + crypto.randomUUID().toLowerCase(),
                   content,
                   browserContext: state.includePage ? state.browserContext : null
                 });
                 state.pending = pending;
-                ui.draft.value = '';
-                sizeDraft();
-                setCompanionStatus('Checking', 'Responding', '');
+                state.sendInFlight = true;
+                if (!retrying) {
+                  ui.draft.value = '';
+                  sizeDraft();
+                }
+                setCompanionStatus('Checking', retrying ? 'Retrying exact Send' : 'Responding', '');
                 render();
 
                 try {
@@ -520,16 +530,38 @@ object VexLifeWebP1RuntimeArtifacts {
                   });
                   const result = await readJson(response);
                   state.pending = null;
+                  state.sendInFlight = false;
                   root.dataset.vexLastContextPath = String(result.contextPath ?? '');
                   root.dataset.vexLastPromptReceiptRef = String(result.promptContext?.receiptRef ?? '');
                   root.dataset.vexLastBrowserContextRef = String(result.promptContext?.browserContextRef ?? '');
-                  await Promise.all([loadConversation(), loadContext()]);
+                  setCompanionStatus('Ready', 'Ready', result.model ?? '');
+                  render();
+
+                  try {
+                    await Promise.all([loadConversation(), loadContext()]);
+                  } catch (projectionError) {
+                    notify(
+                      'Turn completed, but the current projection could not be refreshed: ' +
+                      (projectionError instanceof Error ? projectionError.message : 'refresh failed.')
+                    );
+                  }
                 } catch (error) {
-                  state.pending = null;
-                  if (!ui.draft.value) ui.draft.value = pending.content;
+                  state.sendInFlight = false;
+                  const status = Number(error?.vexStatus ?? 0);
+                  const retryAllowed = error?.vexResponse?.retrySameSendAttemptAllowed;
+                  const retireAttempt = status === 400 || retryAllowed === false;
+
+                  if (retireAttempt) {
+                    state.pending = null;
+                    if (!ui.draft.value) ui.draft.value = pending.content;
+                    setCompanionStatus('Unavailable', 'Send failed', '');
+                  } else {
+                    state.pending = pending;
+                    setCompanionStatus('Unavailable', 'Send outcome unresolved', '');
+                  }
+
                   sizeDraft();
                   render();
-                  setCompanionStatus('Unavailable', 'Send failed', '');
                   notify(error instanceof Error ? error.message : 'Send failed.');
                 }
               };
