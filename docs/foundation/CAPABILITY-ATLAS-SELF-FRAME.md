@@ -224,21 +224,34 @@ It does **not yet**:
 - change Memory, Conversation, browser, working-continuity or runtime owners;
 - grant Dream/training/activation/evolution authority.
 
-## Next consumer
+## Live direct-turn consumer
 
-After this semantic owner is accepted, the direct-turn consumer may form a frame from exact live
-source facts already owned by the turn:
+The direct Companion turn now forms the frame only from exact live facts already owned by the turn:
 
 ~~~text
 current Memory context
 current browser context if present
 owner-current working successor if present
-current qualified runtime observation
+current qualified runtime evidence
+        ↓
+DirectPromptContext
+        ↓
+source-formed self-capability Frame
+        ↓
+VEXLIFE_SELF_CAPABILITY_FRAME/v1
+        ↓
+provider-ready system context
 ~~~
 
-The prompt should consume only the frame formed from those source facts; it should not accept a
-detached caller-supplied frame as execution authority.
+No detached caller-supplied Frame is accepted. The prompt owner forms the frame from the live inputs,
+records its exact ref/fingerprint/source descent in prompt receipt v4, and re-forms the same
+materialization at the provider boundary after Memory and working-continuity currentness are rechecked.
+The runtime evidence is freshly observed immediately before materialization and remains the exact
+evidence consumed by the provider invocation.
 
-Only after the live frame is truthful should Settings / Context project it read-only.
+The frame remains read-only context. It does not grant an effect, change the registered capability
+maturity, or make the prompt owner a runtime/Memory/browser/continuity authority.
+
+Only after this live frame is truthful should Settings / Context project it read-only.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][CAPABILITY-ATLAS][SELF-FRAME] -->

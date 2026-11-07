@@ -294,25 +294,6 @@ object DirectCompanionTurn {
                         hooks.currentMemoryContext(
                             productHome,
                         )
-                    val prompt =
-                        DirectPromptContext.materialize(
-                            prior = prior,
-                            currentRequest = request,
-                            memoryContext = memoryContext,
-                            workingContinuityContext =
-                                workingSuccessorContext,
-                            browserContext = intent.browserContext,
-                        )
-                    val workingContinuity =
-                        DirectWorkingContinuity.prepare(
-                            productHome = productHome,
-                            currentRequest = request,
-                            promptContext = prompt.receipt,
-                            memoryContext = memoryContext,
-                            priorSuccessorContext =
-                                workingSuccessorContext,
-                        )
-
                     val currentPrior =
                         immediatePriorCompletedTurn()
                     DirectWorkingContinuity.requireSuccessorContextCurrent(
@@ -321,32 +302,52 @@ object DirectCompanionTurn {
                         currentRequest = request,
                         expected = workingSuccessorContext,
                     )
-                    DirectPromptContext.reverify(
-                        materialization = prompt,
-                        prior = currentPrior,
-                        currentRequest = request,
-                        memoryContext =
-                            hooks.currentMemoryContext(
-                                productHome,
-                            )
-                                .also {
-                                    current ->
-                                    require(
-                                        current ==
-                                            memoryContext,
-                                    ) {
-                                        "VexLife Memory context changed before provider invocation"
-                                    }
-                                },
-                        workingContinuityContext =
-                            workingSuccessorContext,
-                        browserContext = intent.browserContext,
-                    )
-
+                    val currentMemoryContext =
+                        hooks.currentMemoryContext(
+                            productHome,
+                        )
+                            .also {
+                                current ->
+                                require(
+                                    current ==
+                                        memoryContext,
+                                ) {
+                                    "VexLife Memory context changed before provider invocation"
+                                }
+                            }
                     val runtimeEvidence =
                         hooks.currentRuntimeEvidence(
                             setup,
                         )
+                    val prompt =
+                        DirectPromptContext.materialize(
+                            prior = currentPrior,
+                            currentRequest = request,
+                            memoryContext = currentMemoryContext,
+                            workingContinuityContext =
+                                workingSuccessorContext,
+                            browserContext = intent.browserContext,
+                            runtimeEvidence = runtimeEvidence,
+                        )
+                    val workingContinuity =
+                        DirectWorkingContinuity.prepare(
+                            productHome = productHome,
+                            currentRequest = request,
+                            promptContext = prompt.receipt,
+                            memoryContext = currentMemoryContext,
+                            priorSuccessorContext =
+                                workingSuccessorContext,
+                        )
+                    DirectPromptContext.reverify(
+                        materialization = prompt,
+                        prior = currentPrior,
+                        currentRequest = request,
+                        memoryContext = currentMemoryContext,
+                        workingContinuityContext =
+                            workingSuccessorContext,
+                        browserContext = intent.browserContext,
+                        runtimeEvidence = runtimeEvidence,
+                    )
 
                     val inference =
                         DirectCompanionConnection.invoke(

@@ -667,10 +667,12 @@ class DirectTurnContextStore(
                 promptContext.selectedConversationEventRefs +
                     promptContext.memorySourceRefs +
                     promptContext.workingContinuitySourceRefs +
+                    promptContext.capabilityFrameSourceRefs +
                     listOfNotNull(
                         promptContext.workingContinuityContextRef,
                         promptContext.workingContinuityCheckpointRef,
                         promptContext.workingContinuitySuccessorClaimRef,
+                        promptContext.capabilityFrameRef,
                     ) +
                     listOf(
                         promptContext.receiptRef,

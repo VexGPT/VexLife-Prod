@@ -83,6 +83,11 @@ class DirectCompanionTurnTest {
                 call ->
                 calls +=
                     1
+                assertTrue(
+                    call.body.contains(
+                        "VEXLIFE_SELF_CAPABILITY_FRAME/v1",
+                    ),
+                )
                 val content =
                     if (
                         calls ==
@@ -172,6 +177,17 @@ class DirectCompanionTurnTest {
             assertEquals(
                 2,
                 calls,
+            )
+            assertTrue(
+                first.promptContextReceipt.capabilityFrameIncluded,
+            )
+            assertNotNull(
+                first.promptContextReceipt.capabilityFrameRef,
+            )
+            assertTrue(
+                first.promptContextReceipt.capabilityFrameSourceRefs.contains(
+                    "receipt.vexlife-prod.heretic.turn",
+                ),
             )
             assertEquals(
                 "First response",
@@ -488,6 +504,13 @@ class DirectCompanionTurnTest {
                 secondContext.contextSourceRefs.contains(
                     requireNotNull(
                         second.promptContextReceipt.workingContinuitySuccessorClaimRef,
+                    ),
+                ),
+            )
+            assertTrue(
+                secondContext.contextSourceRefs.contains(
+                    requireNotNull(
+                        second.promptContextReceipt.capabilityFrameRef,
                     ),
                 ),
             )
