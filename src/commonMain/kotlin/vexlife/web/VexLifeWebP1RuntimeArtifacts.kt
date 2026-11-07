@@ -375,7 +375,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   heading.className = 'timeline-empty-heading';
                   heading.textContent = 'Converse with Vex';
                   const note = document.createElement('p');
-                  note.textContent = 'Your canonical VexLife Conversation will appear here.';
+                  note.textContent = 'Include the page to hand Vex its text. Enter sends; Shift+Enter starts a new line.';
                   empty.append(heading, note);
                   nodes.push(empty);
                 }

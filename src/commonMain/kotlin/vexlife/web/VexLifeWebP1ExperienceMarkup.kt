@@ -198,7 +198,7 @@ internal object VexLifeWebP1ExperienceMarkup {
 
   <dialog class="sheet" data-vex-ref="${VexLifeWebP1.ContextInspector.identity.ref}" id="inspector" aria-labelledby="inspector-title">
     <div class="sheet-head">
-      <h2 id="inspector-title">Context inspector</h2>
+      <h2 id="inspector-title">What Vex receives</h2>
       <button class="quiet-button" type="button" id="inspector-close">Close</button>
     </div>
     <dl class="facts" id="inspector-facts"></dl>

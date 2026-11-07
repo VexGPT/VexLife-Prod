@@ -186,6 +186,16 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "Start clean chat",
             ),
         )
+        assertTrue(
+            bundle.html.contains(
+                "What Vex receives",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "Include the page to hand Vex its text. Enter sends; Shift+Enter starts a new line.",
+            ),
+        )
 
         assertFalse(
             bundle.javascript.contains(
