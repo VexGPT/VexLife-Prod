@@ -151,6 +151,7 @@ object VexLifeWebP1 {
             element = VexLifeWorkspaceBlueprint.ConversationJumpLatest,
             placement = VexWeb.Placement.InFlow,
             depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
             interactions =
                 setOf(
                     VexWeb.Interaction.Activate,
