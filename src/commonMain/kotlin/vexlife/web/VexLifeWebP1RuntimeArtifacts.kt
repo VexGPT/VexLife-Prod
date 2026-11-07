@@ -17,6 +17,10 @@ object VexLifeWebP1RuntimeArtifacts {
             )
 
         return base.copy(
+            css =
+                base.css.trimEnd() +
+                    "\n\n" +
+                    VexLifeWebP1ExperienceStyle.render(),
             javascript =
                 base.javascript.trimEnd() +
                     "\n\n" +
@@ -46,12 +50,20 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const refs = Object.freeze({
                 brand: ${jsString(VexLifeWebP1.Brand.identity.ref)},
+                bodyFrame: ${jsString(VexLifeWebP1.Refs.BodyFrame.value)},
+                browserRegion: ${jsString(VexLifeWebP1.Refs.BrowserRegion.value)},
+                companionRegion: ${jsString(VexLifeWebP1.Refs.CompanionRegion.value)},
+                browserCompanionHandle: ${jsString(VexLifeWebP1.BrowserCompanionHandle.identity.ref)},
                 browserQuery: ${jsString(VexLifeWebP1.BrowserQuery.identity.ref)},
                 browserViewport: ${jsString(VexLifeWebP1.BrowserViewport.identity.ref)},
+                companion: ${jsString(VexLifeWebP1.Companion.identity.ref)},
+                conversation: ${jsString(VexLifeWebP1.Conversation.identity.ref)},
                 conversationTimeline: ${jsString(VexLifeWebP1.ConversationTimeline.identity.ref)},
+                conversationJumpLatest: ${jsString(VexLifeWebP1.ConversationJumpLatest.identity.ref)},
                 responseProgress: ${jsString(VexLifeWebP1.ResponseProgress.identity.ref)},
                 composer: ${jsString(VexLifeWebP1.Composer.identity.ref)},
                 send: ${jsString(VexLifeWebP1.Send.identity.ref)},
+                settings: ${jsString(VexLifeWebP1.Settings.identity.ref)},
                 settingsContext: ${jsString(VexLifeWebP1.SettingsContext.identity.ref)}
               });
               const service = Object.freeze({
@@ -74,22 +86,73 @@ object VexLifeWebP1RuntimeArtifacts {
               const byRef = (ref) => root.querySelector('[data-vex-ref="' + ref + '"]');
               const generatedPart = (ref, part) => byRef(ref)?.querySelector('[data-vex-generated-part="' + part + '"]') ?? null;
               const brand = byRef(refs.brand);
+              const bodyFrame = byRef(refs.bodyFrame);
+              const browserRegion = byRef(refs.browserRegion);
+              const companionRegion = byRef(refs.companionRegion);
+              const browserCompanionHandle = byRef(refs.browserCompanionHandle);
               const browserQuery = generatedPart(refs.browserQuery, 'text-field');
               const browserViewport = byRef(refs.browserViewport);
+              const companion = byRef(refs.companion);
+              const conversation = byRef(refs.conversation);
               const timeline = byRef(refs.conversationTimeline);
+              const jumpLatestButton = generatedPart(refs.conversationJumpLatest, 'control');
               const responseProgress = byRef(refs.responseProgress);
               const composer = generatedPart(refs.composer, 'text-field');
               const sendButton = generatedPart(refs.send, 'control');
+              const settings = byRef(refs.settings);
               const settingsContext = byRef(refs.settingsContext);
 
               let currentBrowserContext = null;
               let frame = null;
               let pendingSend = null;
 
-              if (brand) brand.textContent = 'VexLife';
-              if (browserQuery) browserQuery.placeholder = 'Open a Vex page URL';
-              if (composer) composer.placeholder = 'Message Vex…';
-              if (sendButton) sendButton.textContent = 'Send';
+              if (brand) {
+                brand.textContent = 'VexLife';
+                brand.setAttribute('aria-label', 'VexLife');
+              }
+              if (browserQuery) {
+                browserQuery.placeholder = 'Open a Vex page URL';
+                browserQuery.rows = 1;
+                browserQuery.setAttribute('aria-label', 'Vex browser URL');
+                browserQuery.setAttribute('spellcheck', 'false');
+              }
+              if (timeline) {
+                timeline.setAttribute('role', 'log');
+                timeline.setAttribute('aria-live', 'polite');
+                timeline.setAttribute('aria-relevant', 'additions text');
+                timeline.setAttribute('aria-label', 'Conversation with Vex');
+              }
+              if (jumpLatestButton) {
+                jumpLatestButton.textContent = 'New messages';
+                jumpLatestButton.hidden = true;
+              }
+              if (responseProgress) {
+                responseProgress.setAttribute('role', 'status');
+                responseProgress.setAttribute('aria-live', 'polite');
+              }
+              if (composer) {
+                composer.placeholder = 'Message Vex…';
+                composer.setAttribute('aria-label', 'Message Vex');
+              }
+              if (sendButton) {
+                sendButton.textContent = 'Send';
+                sendButton.setAttribute('aria-label', 'Send message to Vex');
+              }
+              if (settings) settings.setAttribute('aria-label', 'Current Vex context');
+              if (settingsContext) settingsContext.setAttribute('aria-live', 'polite');
+              if (browserCompanionHandle) {
+                browserCompanionHandle.tabIndex = 0;
+                browserCompanionHandle.setAttribute('role', 'separator');
+                browserCompanionHandle.setAttribute('aria-label', 'Resize browser and Vex companion');
+                browserCompanionHandle.setAttribute('aria-orientation', 'vertical');
+                browserCompanionHandle.setAttribute('aria-valuemin', '0');
+                browserCompanionHandle.setAttribute('aria-valuemax', '100');
+                browserCompanionHandle.setAttribute('aria-valuenow', '50');
+                browserCompanionHandle.setAttribute(
+                  'aria-keyshortcuts',
+                  'ArrowLeft ArrowRight Home End Enter'
+                );
+              }
 
               const setProgress = (message, state = 'idle') => {
                 if (!responseProgress) return;
@@ -138,21 +201,68 @@ object VexLifeWebP1RuntimeArtifacts {
                 setProgress('Loading browser page…', 'browser-loading');
               };
 
+              const isNearBottom = (element) =>
+                element.scrollHeight - element.scrollTop - element.clientHeight < 72;
+
+              const scrollConversationToLatest = () => {
+                if (!timeline) return;
+                timeline.scrollTop = timeline.scrollHeight;
+                if (jumpLatestButton) jumpLatestButton.hidden = true;
+              };
+
+              const createConversationItem = (message) => {
+                const item = document.createElement('article');
+                item.dataset.vexGeneratedPart = 'conversation-message';
+                item.dataset.vexConversationRole = String(message.role ?? 'unknown');
+                item.dataset.vexConversationEventRef = String(message.eventRef ?? '');
+
+                const avatar = document.createElement('span');
+                avatar.dataset.vexGeneratedPart = 'conversation-avatar';
+                avatar.setAttribute('aria-hidden', 'true');
+                avatar.textContent = message.role === 'human' ? 'Y' : 'V';
+
+                const body = document.createElement('div');
+                body.dataset.vexGeneratedPart = 'conversation-message-body';
+
+                const role = document.createElement('strong');
+                role.textContent = message.role === 'human' ? 'You' : 'Vex';
+
+                const content = document.createElement('p');
+                content.textContent = String(message.content ?? '');
+
+                body.append(role, content);
+                item.append(avatar, body);
+                return item;
+              };
+
               const renderConversation = (projection) => {
                 if (!timeline) return;
-                timeline.replaceChildren();
-                for (const message of projection.messages ?? []) {
-                  const item = document.createElement('article');
-                  item.dataset.vexConversationRole = String(message.role ?? 'unknown');
-                  item.dataset.vexConversationEventRef = String(message.eventRef ?? '');
-                  const role = document.createElement('strong');
-                  role.textContent = message.role === 'human' ? 'You' : 'Vex';
-                  const content = document.createElement('p');
-                  content.textContent = String(message.content ?? '');
-                  item.append(role, content);
-                  timeline.append(item);
+                const messages = projection.messages ?? [];
+                const wasNearBottom = isNearBottom(timeline);
+                const existingRefs = [...timeline.children]
+                  .map((item) => item.dataset.vexConversationEventRef ?? '');
+                const desiredRefs = messages.map((message) => String(message.eventRef ?? ''));
+                const prefixMatches =
+                  existingRefs.length <= desiredRefs.length &&
+                  existingRefs.every((ref, index) => ref === desiredRefs[index]);
+
+                if (!prefixMatches) timeline.replaceChildren();
+
+                const startIndex = prefixMatches ? existingRefs.length : 0;
+                let appended = false;
+                for (let index = startIndex; index < messages.length; index += 1) {
+                  timeline.append(createConversationItem(messages[index]));
+                  appended = true;
                 }
-                timeline.dataset.vexConversationHead = projection.currentConversationHeadSha256 ?? '';
+
+                timeline.dataset.vexConversationHead =
+                  projection.currentConversationHeadSha256 ?? '';
+
+                if (wasNearBottom || !prefixMatches) {
+                  scrollConversationToLatest();
+                } else if (appended && jumpLatestButton) {
+                  jumpLatestButton.hidden = false;
+                }
               };
 
               const renderContext = (projection) => {
@@ -302,6 +412,35 @@ object VexLifeWebP1RuntimeArtifacts {
                 root.dataset.vexFrameHostOrigin = String(currentness.frameHostOrigin ?? '');
               };
 
+              const currentBrowserShare = () => {
+                if (!bodyFrame) return 0.5;
+                const raw = getComputedStyle(bodyFrame)
+                  .getPropertyValue('--vex-browser-share')
+                  .trim();
+                const parsed = Number.parseFloat(raw);
+                return Number.isFinite(parsed) ? parsed / 100 : 0.5;
+              };
+
+              const applyBrowserShare = (share) => {
+                if (!bodyFrame) return;
+                const clamped = Math.max(0, Math.min(1, share));
+                bodyFrame.style.setProperty(
+                  '--vex-browser-share',
+                  (clamped * 100).toFixed(3).replace(/0+$/u, '').replace(/\.$/u, '') + '%'
+                );
+                root.dataset.vexBrowserShare = String(clamped);
+                if (browserCompanionHandle) {
+                  browserCompanionHandle.setAttribute(
+                    'aria-valuenow',
+                    String(Math.round(clamped * 100))
+                  );
+                }
+              };
+
+              const adjustBrowserShare = (delta) => {
+                applyBrowserShare(currentBrowserShare() + delta);
+              };
+
               const send = async () => {
                 const content = composer?.value?.trim() ?? '';
                 if ((!content && !pendingSend) || !sendButton) return;
@@ -381,6 +520,61 @@ object VexLifeWebP1RuntimeArtifacts {
                   setProgress(error instanceof Error ? error.message : 'Page is not admitted.', 'browser-error');
                 }
               });
+
+              timeline?.addEventListener('scroll', () => {
+                if (isNearBottom(timeline) && jumpLatestButton) {
+                  jumpLatestButton.hidden = true;
+                }
+              });
+
+              jumpLatestButton?.addEventListener('click', () => {
+                scrollConversationToLatest();
+              });
+
+              composer?.addEventListener('keydown', (event) => {
+                if (event.key !== 'Enter' || !(event.metaKey || event.ctrlKey)) return;
+                event.preventDefault();
+                void send();
+              });
+
+              if (browserCompanionHandle && bodyFrame) {
+                browserCompanionHandle.addEventListener('pointerdown', (event) => {
+                  event.preventDefault();
+                  browserCompanionHandle.setPointerCapture(event.pointerId);
+                });
+
+                browserCompanionHandle.addEventListener('pointermove', (event) => {
+                  if (!browserCompanionHandle.hasPointerCapture(event.pointerId)) return;
+                  const rect = bodyFrame.getBoundingClientRect();
+                  if (rect.width <= 0) return;
+                  applyBrowserShare((event.clientX - rect.left) / rect.width);
+                });
+
+                browserCompanionHandle.addEventListener('pointerup', (event) => {
+                  if (browserCompanionHandle.hasPointerCapture(event.pointerId)) {
+                    browserCompanionHandle.releasePointerCapture(event.pointerId);
+                  }
+                });
+
+                browserCompanionHandle.addEventListener('keydown', (event) => {
+                  if (event.key === 'ArrowLeft') {
+                    event.preventDefault();
+                    adjustBrowserShare(-0.04);
+                  } else if (event.key === 'ArrowRight') {
+                    event.preventDefault();
+                    adjustBrowserShare(0.04);
+                  } else if (event.key === 'Home') {
+                    event.preventDefault();
+                    applyBrowserShare(0);
+                  } else if (event.key === 'End') {
+                    event.preventDefault();
+                    applyBrowserShare(1);
+                  } else if (event.key === 'Enter') {
+                    event.preventDefault();
+                    applyBrowserShare(0.5);
+                  }
+                });
+              }
 
               sendButton?.addEventListener('click', () => {
                 void send();

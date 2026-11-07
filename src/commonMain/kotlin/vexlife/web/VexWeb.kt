@@ -207,8 +207,16 @@ object VexWeb {
 
     enum class Presentation {
         Surface,
+        Chrome,
+        Identity,
+        Input,
+        Collection,
+        Status,
+        Composer,
+        Inspector,
         SeamHandle,
         PrimaryAction,
+        SecondaryAction,
         TransientFeedback,
     }
 

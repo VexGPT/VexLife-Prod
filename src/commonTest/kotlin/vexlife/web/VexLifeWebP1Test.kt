@@ -24,13 +24,61 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            19,
+            20,
             blueprint.size,
         )
         assertTrue(
             manifested.containsAll(
                 blueprint,
             ),
+        )
+
+        val presentationByRef =
+            VexLifeWebP1.Surface
+                .coordinates()
+                .associate {
+                    it.ref to it.presentation
+                }
+
+        assertEquals(
+            VexWeb.Presentation.Identity,
+            presentationByRef[VexLifeWorkspaceBlueprint.Brand.ref],
+        )
+        assertEquals(
+            VexWeb.Presentation.Input,
+            presentationByRef[VexLifeWorkspaceBlueprint.BrowserQuery.ref],
+        )
+        assertEquals(
+            VexWeb.Presentation.Collection,
+            presentationByRef[VexLifeWorkspaceBlueprint.ConversationTimeline.ref],
+        )
+        assertEquals(
+            VexWeb.Presentation.Status,
+            presentationByRef[VexLifeWorkspaceBlueprint.ResponseProgress.ref],
+        )
+        assertEquals(
+            VexWeb.Presentation.Composer,
+            presentationByRef[VexLifeWorkspaceBlueprint.Composer.ref],
+        )
+        assertEquals(
+            VexWeb.Presentation.Inspector,
+            presentationByRef[VexLifeWorkspaceBlueprint.SettingsContext.ref],
+        )
+
+        val jumpLatest =
+            VexLifeWebP1.Surface
+                .coordinates()
+                .single {
+                    it.ref ==
+                        VexLifeWorkspaceBlueprint.ConversationJumpLatest.ref
+                }
+        assertEquals(
+            VexWeb.Presentation.SecondaryAction,
+            jumpLatest.presentation,
+        )
+        assertTrue(
+            VexWeb.Interaction.Activate in
+                jumpLatest.interactions,
         )
 
         val send =

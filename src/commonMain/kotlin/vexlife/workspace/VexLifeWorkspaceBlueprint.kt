@@ -59,6 +59,10 @@ object VexLifeWorkspaceBlueprint :
         Conversation.collection(
             "timeline",
         )
+    val ConversationJumpLatest =
+        Conversation.control(
+            "jump-latest",
+        )
     val ResponseProgress =
         Conversation.content(
             "response-progress",

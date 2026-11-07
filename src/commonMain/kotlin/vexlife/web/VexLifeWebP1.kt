@@ -76,25 +76,31 @@ object VexLifeWebP1 {
         element: vexlife.blueprint.VexUiElementRef,
         placement: VexWeb.Placement =
             VexWeb.Placement.InFlow,
+        depth: VexWeb.Depth =
+            VexWeb.Depth.Content,
+        presentation: VexWeb.Presentation =
+            VexWeb.Presentation.Surface,
         children: List<VexWeb.Node> =
             emptyList(),
     ): VexWeb.Element =
         VexWebAuthoring.element(
             element = element,
             placement = placement,
-            depth = VexWeb.Depth.Content,
-            presentation = VexWeb.Presentation.Surface,
+            depth = depth,
+            presentation = presentation,
             children = children,
         )
 
     val Brand =
         blueprintSurface(
-            VexLifeWorkspaceBlueprint.Brand,
+            element = VexLifeWorkspaceBlueprint.Brand,
+            presentation = VexWeb.Presentation.Identity,
         )
 
     val BrowserQuery =
         blueprintSurface(
-            VexLifeWorkspaceBlueprint.BrowserQuery,
+            element = VexLifeWorkspaceBlueprint.BrowserQuery,
+            presentation = VexWeb.Presentation.Input,
         )
 
     val AppSelector =
@@ -111,6 +117,8 @@ object VexLifeWebP1 {
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.Header,
             placement = VexWeb.Placement.FillAvailable,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Chrome,
             children =
                 listOf(
                     Brand,
@@ -138,12 +146,26 @@ object VexLifeWebP1 {
 
     val ConversationTimeline =
         blueprintSurface(
-            VexLifeWorkspaceBlueprint.ConversationTimeline,
+            element = VexLifeWorkspaceBlueprint.ConversationTimeline,
+            presentation = VexWeb.Presentation.Collection,
+        )
+
+    val ConversationJumpLatest =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.ConversationJumpLatest,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.SecondaryAction,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
         )
 
     val ResponseProgress =
         blueprintSurface(
-            VexLifeWorkspaceBlueprint.ResponseProgress,
+            element = VexLifeWorkspaceBlueprint.ResponseProgress,
+            presentation = VexWeb.Presentation.Status,
         )
 
     val Send =
@@ -165,6 +187,7 @@ object VexLifeWebP1 {
     val Composer =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.Composer,
+            presentation = VexWeb.Presentation.Composer,
             children =
                 listOf(
                     Send,
@@ -177,6 +200,7 @@ object VexLifeWebP1 {
             children =
                 listOf(
                     ConversationTimeline,
+                    ConversationJumpLatest,
                     ResponseProgress,
                     Composer,
                 ),
@@ -184,7 +208,8 @@ object VexLifeWebP1 {
 
     val SettingsContext =
         blueprintSurface(
-            VexLifeWorkspaceBlueprint.SettingsContext,
+            element = VexLifeWorkspaceBlueprint.SettingsContext,
+            presentation = VexWeb.Presentation.Inspector,
         )
 
     val SettingsResources =
