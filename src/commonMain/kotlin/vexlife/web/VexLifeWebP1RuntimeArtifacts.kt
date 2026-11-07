@@ -40,7 +40,7 @@ object VexLifeWebP1RuntimeArtifacts {
         val browserCompanionAllocation =
             browserCompanionSeam.allocation as
                 VexWeb.Parameter.Allocation.Ratio
-        val authoredBrowserShare =
+        val authoredWorkspaceBoundary =
             browserCompanionAllocation.beforeParts
                 .toDouble() /
                 browserCompanionAllocation.totalParts
@@ -92,7 +92,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 sendPath: ${jsString(VexLifeProdServiceContract.ConversationSendPath)}
               });
               const browser = Object.freeze({
-                authoredWorkspaceBoundary: $authoredBrowserShare,
+                authoredWorkspaceBoundary: $authoredWorkspaceBoundary,
                 admittedHosts: $admittedHosts,
                 frameHostSuffix: ${jsString(VexLifeProdBrowserContract.FrameHostSuffix)},
                 frameHostPort: ${VexLifeProdBrowserContract.FrameHostPort},
@@ -472,14 +472,14 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const syncWorkspaceBoundaryAccessibility = () => {
                 if (!browserCompanionHandle) return;
-                const browserPercent = Math.round(currentWorkspaceBoundary() * 100);
+                const boundaryPercent = Math.round(currentWorkspaceBoundary() * 100);
                 browserCompanionHandle.setAttribute(
                   'aria-valuenow',
-                  String(browserPercent)
+                  String(boundaryPercent)
                 );
                 browserCompanionHandle.setAttribute(
                   'aria-valuetext',
-                  'Vex workspace width ' + (100 - browserPercent) + '% of the primary stage'
+                  'Vex workspace width ' + (100 - boundaryPercent) + '% of the primary stage'
                 );
               };
 
