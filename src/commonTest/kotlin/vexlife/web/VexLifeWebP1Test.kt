@@ -52,6 +52,25 @@ class VexLifeWebP1Test {
             vexSummonBinding.target.ref,
         )
 
+        val contextShare =
+            VexLifeWebP1.Surface
+                .coordinates()
+                .single {
+                    it.ref ==
+                        VexLifeWorkspaceBlueprint.ContextShare.ref
+                }
+        assertTrue(
+            VexWeb.Interaction.Activate in
+                contextShare.interactions,
+        )
+        val contextShareBinding =
+            contextShare.binding as
+                VexWeb.Binding.LocalInteraction
+        assertEquals(
+            VexLifeWebP1.ContextReceipt.identity.ref,
+            contextShareBinding.target.ref,
+        )
+
         val jumpLatest =
             VexLifeWebP1.Surface
                 .coordinates()

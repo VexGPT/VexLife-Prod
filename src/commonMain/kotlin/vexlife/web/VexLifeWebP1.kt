@@ -220,8 +220,19 @@ object VexLifeWebP1 {
         )
 
     val ContextShare =
-        blueprintSurface(
-            VexLifeWorkspaceBlueprint.ContextShare,
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.ContextShare,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.localInteraction(
+                    ContextReceipt.identity,
+                ),
         )
 
     val Stop =

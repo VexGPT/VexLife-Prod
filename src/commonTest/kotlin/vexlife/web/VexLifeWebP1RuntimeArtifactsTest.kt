@@ -79,6 +79,36 @@ class VexLifeWebP1RuntimeArtifactsTest {
             ),
         )
         assertTrue(
+            bundle.javascript.contains(
+                "Converse with Vex",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "Include this page",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "Start clean chat",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "includeBrowserContext ? currentBrowserContext : null",
+            ),
+        )
+        assertTrue(
+            bundle.css.contains(
+                "--paper:#efe5cd",
+            ),
+        )
+        assertTrue(
+            bundle.css.contains(
+                "grid-template-columns:auto minmax(220px,520px) auto minmax(0,1fr)",
+            ),
+        )
+        assertTrue(
             bundle.semanticManifest.contains(
                 "\"ref\":\"${VexLifeWorkspaceBlueprint.VexSummon.ref}\"",
             ),
@@ -98,24 +128,29 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "max-height:34%;overflow:auto;border-top",
             ),
         )
-        assertTrue(
-            bundle.javascript.contains(
-                "authoredWorkspaceBoundary: 0.5",
-            ),
-        )
         assertFalse(
             bundle.css.contains(
                 "--vex-context-workspace-boundary:",
             ),
         )
         assertTrue(
+            bundle.javascript.contains(
+                "authoredBrowserShare: 0.5",
+            ),
+        )
+        assertFalse(
             bundle.css.contains(
-                "left:var(--vex-context-workspace-boundary)",
+                "--vex-browser-share:",
+            ),
+        )
+        assertTrue(
+            bundle.css.contains(
+                "left:var(--vex-browser-share)",
             ),
         )
         assertTrue(
             bundle.javascript.contains(
-                "Vex workspace width ",
+                "Browser ",
             ),
         )
         assertFalse(
