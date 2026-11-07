@@ -5,21 +5,21 @@ package vexlife.web
  *
  * This source consumes accepted Blueprint/VexWeb identities. It does not own Conversation,
  * browser/provider behavior, or semantic product state. The visual language is adapted from the
- * current VexLife experience evidence and design-token source while VexLife-Prod remains the
+ * current VexLife `reference/browser/app.css` token/experience source while VexLife-Prod remains the
  * product/runtime authority.
  */
 internal object VexLifeWebP1ExperienceStyle {
     fun render(): String =
         """
         /* Generated VexLife-Prod experience manifestation. Do not edit generated CSS by hand. */
-        html{color-scheme:dark;background:#081016;}
-        body{background:#081016;color:#F4F7FA;}
+        html{color-scheme:dark;background:#0f1012;}
+        body{background:#0f1012;color:#f5f5f4;}
         *,*::before,*::after{box-sizing:border-box;}
-        [data-vex-screen="${VexLifeWebP1.Surface.screenRef}"]{--vex-surface-canvas:#081016;--vex-surface-panel:#101A23;--vex-surface-raised:#172431;--vex-text-primary:#F4F7FA;--vex-text-secondary:#A8BAC9;--vex-accent:#73A8FF;--vex-focus:#8CC2FF;--vex-healthy:#67D792;--vex-attention:#F4C56A;--vex-blocked:#F47B7B;--vex-line:color-mix(in srgb,#A8BAC9 22%,transparent);--vex-shadow:0 22px 70px rgba(0,0,0,.38);background:var(--vex-surface-canvas);color:var(--vex-text-primary);font:400 17px/1.55 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;}
+        [data-vex-screen="${VexLifeWebP1.Surface.screenRef}"]{--vex-surface-canvas:#0f1012;--vex-surface-panel:#17181c;--vex-surface-raised:#202126;--vex-surface-overlay:#272930;--vex-line:#383a42;--vex-strong:#5a5d68;--vex-text-primary:#f5f5f4;--vex-text-secondary:#b7b8bf;--vex-text-faint:#858791;--vex-accent:#f2f2ef;--vex-accent-text:#111216;--vex-attention:#e9c46a;--vex-info:#9bb7d4;--vex-shadow:0 18px 55px rgba(0,0,0,.35);--vex-motion-tactile:90ms;--vex-motion-fast:140ms;--vex-ease-tactile:cubic-bezier(.2,.8,.2,1);background:var(--vex-surface-canvas);color:var(--vex-text-primary);font:400 17px/1.55 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;}
         [data-vex-screen="${VexLifeWebP1.Surface.screenRef}"] button,[data-vex-screen="${VexLifeWebP1.Surface.screenRef}"] textarea{font:inherit;color:inherit;}
-        [data-vex-screen="${VexLifeWebP1.Surface.screenRef}"] button{min-width:44px;min-height:44px;cursor:pointer;transition:transform 120ms ease,background-color 120ms ease,border-color 120ms ease;}
+        [data-vex-screen="${VexLifeWebP1.Surface.screenRef}"] button{min-width:44px;min-height:44px;cursor:pointer;transition:transform var(--vex-motion-tactile) var(--vex-ease-tactile),background-color var(--vex-motion-tactile) linear,border-color var(--vex-motion-tactile) linear;}
         [data-vex-screen="${VexLifeWebP1.Surface.screenRef}"] button:not(:disabled):active{transform:scale(.98);}
-        [data-vex-screen="${VexLifeWebP1.Surface.screenRef}"] button:focus-visible,[data-vex-screen="${VexLifeWebP1.Surface.screenRef}"] textarea:focus-visible,[data-vex-ref="${VexLifeWebP1.BrowserCompanionHandle.identity.ref}"]:focus-visible{outline:3px solid var(--vex-focus);outline-offset:2px;}
+        [data-vex-screen="${VexLifeWebP1.Surface.screenRef}"] button:focus-visible,[data-vex-screen="${VexLifeWebP1.Surface.screenRef}"] textarea:focus-visible,[data-vex-ref="${VexLifeWebP1.BrowserCompanionHandle.identity.ref}"]:focus-visible{outline:2px solid var(--vex-info);outline-offset:2px;}
         [data-vex-ref="${VexLifeWebP1.Refs.HeaderRegion.value}"]{background:color-mix(in srgb,var(--vex-surface-panel) 96%,transparent);border-bottom:1px solid var(--vex-line);}
         [data-vex-ref="${VexLifeWebP1.Header.identity.ref}"]{height:100%;display:flex;align-items:center;gap:12px;padding:10px 14px;}
         [data-vex-ref="${VexLifeWebP1.Brand.identity.ref}"]{display:flex;align-items:center;gap:10px;min-width:max-content;font:700 18px/1 Georgia,"Times New Roman",serif;letter-spacing:-.01em;}
@@ -34,26 +34,26 @@ internal object VexLifeWebP1ExperienceStyle {
         [data-vex-ref="${VexLifeWebP1.BrowserViewport.identity.ref}"]{height:100%;min-height:0;overflow:hidden;border:1px solid var(--vex-line);border-radius:18px;background:var(--vex-surface-panel);box-shadow:var(--vex-shadow);}
         [data-vex-ref="${VexLifeWebP1.BrowserViewport.identity.ref}"] iframe{display:block;width:100%;height:100%;background:#fff;}
         [data-vex-ref="${VexLifeWebP1.BrowserCompanionHandle.identity.ref}"]{left:calc(var(--vex-browser-share) - 6px);top:0;width:12px;height:100%;cursor:col-resize;z-index:18;touch-action:none;background:transparent;}
-        [data-vex-ref="${VexLifeWebP1.BrowserCompanionHandle.identity.ref}"]::before{content:"";position:absolute;left:5px;top:12px;bottom:12px;width:2px;border-radius:999px;background:color-mix(in srgb,var(--vex-text-secondary) 36%,transparent);transition:background-color 120ms ease,box-shadow 120ms ease;}
-        [data-vex-ref="${VexLifeWebP1.BrowserCompanionHandle.identity.ref}"]:hover::before,[data-vex-ref="${VexLifeWebP1.BrowserCompanionHandle.identity.ref}"]:focus-visible::before{background:var(--vex-accent);box-shadow:0 0 18px color-mix(in srgb,var(--vex-accent) 32%,transparent);}
+        [data-vex-ref="${VexLifeWebP1.BrowserCompanionHandle.identity.ref}"]::before{content:"";position:absolute;left:5px;top:12px;bottom:12px;width:2px;border-radius:999px;background:color-mix(in srgb,var(--vex-text-secondary) 36%,transparent);transition:background-color var(--vex-motion-fast) ease,box-shadow var(--vex-motion-fast) ease;}
+        [data-vex-ref="${VexLifeWebP1.BrowserCompanionHandle.identity.ref}"]:hover::before,[data-vex-ref="${VexLifeWebP1.BrowserCompanionHandle.identity.ref}"]:focus-visible::before{background:var(--vex-info);box-shadow:0 0 18px color-mix(in srgb,var(--vex-info) 32%,transparent);}
         [data-vex-ref="${VexLifeWebP1.Companion.identity.ref}"]{height:100%;min-height:0;display:grid;grid-template-rows:minmax(0,1fr) auto;gap:10px;overflow:hidden;border:1px solid var(--vex-line);border-radius:18px;background:var(--vex-surface-panel);box-shadow:var(--vex-shadow);padding:12px;}
         [data-vex-ref="${VexLifeWebP1.Conversation.identity.ref}"]{min-height:0;display:grid;grid-template-rows:minmax(0,1fr) auto auto auto;gap:8px;}
         [data-vex-ref="${VexLifeWebP1.ConversationTimeline.identity.ref}"]{min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding:2px 4px 2px 0;}
         [data-vex-generated-part="conversation-message"]{display:grid;grid-template-columns:34px minmax(0,1fr);gap:9px;padding:10px 8px;border-bottom:1px solid color-mix(in srgb,var(--vex-line) 70%,transparent);}
         [data-vex-generated-part="conversation-message"][data-vex-conversation-role="human"]{margin-left:8%;border-radius:12px;background:color-mix(in srgb,var(--vex-accent) 7%,transparent);}
         [data-vex-generated-part="conversation-avatar"]{width:30px;height:30px;display:grid;place-items:center;border:1px solid var(--vex-line);border-radius:9px;background:var(--vex-surface-raised);color:var(--vex-text-secondary);font:700 11px/1 ui-monospace,"SFMono-Regular",Menlo,monospace;}
-        [data-vex-conversation-role="vex"] [data-vex-generated-part="conversation-avatar"]{color:var(--vex-accent);border-color:color-mix(in srgb,var(--vex-accent) 38%,var(--vex-line));}
+        [data-vex-conversation-role="vex"] [data-vex-generated-part="conversation-avatar"]{color:var(--vex-info);border-color:color-mix(in srgb,var(--vex-info) 38%,var(--vex-line));}
         [data-vex-generated-part="conversation-message-body"] strong{display:block;margin-bottom:3px;font-size:12px;color:var(--vex-text-secondary);}
         [data-vex-generated-part="conversation-message-body"] p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--vex-text-primary);font-size:15px;line-height:1.55;}
         [data-vex-ref="${VexLifeWebP1.ConversationJumpLatest.identity.ref}"]{display:flex;justify-content:center;}
         [data-vex-ref="${VexLifeWebP1.ConversationJumpLatest.identity.ref}"] [data-vex-generated-part="control"]{border:1px solid var(--vex-line);border-radius:999px;background:var(--vex-surface-raised);padding:7px 12px;color:var(--vex-text-secondary);font-size:12px;}
         [data-vex-ref="${VexLifeWebP1.ResponseProgress.identity.ref}"]{min-height:22px;color:var(--vex-text-secondary);font-size:12px;font-style:italic;}
-        [data-vex-ref="${VexLifeWebP1.ResponseProgress.identity.ref}"][data-vex-progress-state="sending"]{color:var(--vex-accent);}
-        [data-vex-ref="${VexLifeWebP1.ResponseProgress.identity.ref}"][data-vex-progress-state="error"],[data-vex-ref="${VexLifeWebP1.ResponseProgress.identity.ref}"][data-vex-progress-state="browser-error"]{color:var(--vex-blocked);}
+        [data-vex-ref="${VexLifeWebP1.ResponseProgress.identity.ref}"][data-vex-progress-state="sending"]{color:var(--vex-info);}
+        [data-vex-ref="${VexLifeWebP1.ResponseProgress.identity.ref}"][data-vex-progress-state="error"],[data-vex-ref="${VexLifeWebP1.ResponseProgress.identity.ref}"][data-vex-progress-state="browser-error"]{color:var(--vex-attention);}
         [data-vex-ref="${VexLifeWebP1.Composer.identity.ref}"]{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:8px;padding-top:10px;border-top:1px solid var(--vex-line);}
         [data-vex-ref="${VexLifeWebP1.Composer.identity.ref}"]>[data-vex-generated-part="text-field"]{min-height:48px;max-height:144px;resize:vertical;border:1px solid var(--vex-line);border-radius:12px;background:var(--vex-surface-raised);padding:11px 12px;color:var(--vex-text-primary);}
         [data-vex-ref="${VexLifeWebP1.Send.identity.ref}"]{display:flex;align-items:flex-end;}
-        [data-vex-ref="${VexLifeWebP1.Send.identity.ref}"] [data-vex-generated-part="control"]{border:0;border-radius:11px;background:var(--vex-accent);padding:10px 16px;color:#081016;font-weight:750;}
+        [data-vex-ref="${VexLifeWebP1.Send.identity.ref}"] [data-vex-generated-part="control"]{border:0;border-radius:11px;background:var(--vex-accent);padding:10px 16px;color:var(--vex-accent-text);font-weight:750;}
         [data-vex-ref="${VexLifeWebP1.Send.identity.ref}"] [data-vex-generated-part="control"]:disabled{cursor:not-allowed;opacity:.5;}
         [data-vex-ref="${VexLifeWebP1.Settings.identity.ref}"]{max-height:34%;overflow:auto;border-top:1px solid var(--vex-line);padding-top:10px;color:var(--vex-text-secondary);font-size:12px;}
         [data-vex-ref="${VexLifeWebP1.SettingsContext.identity.ref}"]{border:1px solid var(--vex-line);border-radius:13px;background:var(--vex-surface-raised);padding:10px 12px;}

@@ -39,7 +39,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.css.contains(
-                "--vex-surface-canvas:#081016",
+                "--vex-surface-canvas:#0f1012",
             ),
         )
         assertTrue(
