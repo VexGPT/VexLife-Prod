@@ -147,7 +147,6 @@ object VexLifeWebP1RuntimeArtifacts {
                 browserCompanionHandle.setAttribute('aria-orientation', 'vertical');
                 browserCompanionHandle.setAttribute('aria-valuemin', '0');
                 browserCompanionHandle.setAttribute('aria-valuemax', '100');
-                browserCompanionHandle.setAttribute('aria-valuenow', '50');
                 browserCompanionHandle.setAttribute(
                   'aria-keyshortcuts',
                   'ArrowLeft ArrowRight Home End Enter'
@@ -421,6 +420,19 @@ object VexLifeWebP1RuntimeArtifacts {
                 return Number.isFinite(parsed) ? parsed / 100 : 0.5;
               };
 
+              const syncBrowserShareAccessibility = () => {
+                if (!browserCompanionHandle) return;
+                const browserPercent = Math.round(currentBrowserShare() * 100);
+                browserCompanionHandle.setAttribute(
+                  'aria-valuenow',
+                  String(browserPercent)
+                );
+                browserCompanionHandle.setAttribute(
+                  'aria-valuetext',
+                  'Browser ' + browserPercent + '%, Vex companion ' + (100 - browserPercent) + '%'
+                );
+              };
+
               const applyBrowserShare = (share) => {
                 if (!bodyFrame) return;
                 const clamped = Math.max(0, Math.min(1, share));
@@ -429,17 +441,15 @@ object VexLifeWebP1RuntimeArtifacts {
                   (clamped * 100).toFixed(3).replace(/0+$/u, '').replace(/\.$/u, '') + '%'
                 );
                 root.dataset.vexBrowserShare = String(clamped);
-                if (browserCompanionHandle) {
-                  browserCompanionHandle.setAttribute(
-                    'aria-valuenow',
-                    String(Math.round(clamped * 100))
-                  );
-                }
+                syncBrowserShareAccessibility();
               };
 
               const adjustBrowserShare = (delta) => {
                 applyBrowserShare(currentBrowserShare() + delta);
               };
+
+              syncBrowserShareAccessibility();
+              window.addEventListener('resize', syncBrowserShareAccessibility);
 
               const send = async () => {
                 const content = composer?.value?.trim() ?? '';
