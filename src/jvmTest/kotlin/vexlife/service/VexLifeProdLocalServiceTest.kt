@@ -261,6 +261,24 @@ class VexLifeProdLocalServiceTest {
                     assertTrue(
                         runtimeJavascript.body()
                             .contains(
+                                "Capabilities Vex received",
+                            ),
+                    )
+                    assertTrue(
+                        runtimeJavascript.body()
+                            .contains(
+                                "OMITTED",
+                            ),
+                    )
+                    assertTrue(
+                        runtimeJavascript.body()
+                            .contains(
+                                "Current Conversation turn predates VexLife-Prod prompt-context evidence.",
+                            ),
+                    )
+                    assertTrue(
+                        runtimeJavascript.body()
+                            .contains(
                                 VexLifeProdBrowserContract.InitialPageUrl,
                             ),
                     )

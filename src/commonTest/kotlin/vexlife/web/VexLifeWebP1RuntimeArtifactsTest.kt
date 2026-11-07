@@ -29,31 +29,6 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                VexLifeProdServiceContract.ContextPath,
-            ),
-        )
-        assertTrue(
-            bundle.javascript.contains(
-                VexLifeWebP1.SettingsContext.identity.ref,
-            ),
-        )
-        assertTrue(
-            bundle.javascript.contains(
-                "Capabilities Vex received",
-            ),
-        )
-        assertTrue(
-            bundle.javascript.contains(
-                "OMITTED",
-            ),
-        )
-        assertTrue(
-            bundle.javascript.contains(
-                "Current Conversation turn predates VexLife-Prod prompt-context evidence.",
-            ),
-        )
-        assertTrue(
-            bundle.javascript.contains(
                 VexLifeProdBrowserContract.InitialPageUrl,
             ),
         )
