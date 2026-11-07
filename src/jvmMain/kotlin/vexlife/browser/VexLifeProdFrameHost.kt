@@ -496,7 +496,7 @@ class VexLifeProdFrameHost private constructor(
         }
     }
 
-    private fun reporterScript(
+    internal fun reporterScript(
         sourceUrl: String,
     ): String {
         val admittedHosts =
@@ -519,6 +519,7 @@ class VexLifeProdFrameHost private constructor(
               const FRAME_PORT = ${VexLifeProdBrowserContract.FrameHostPort};
               const ADMITTED_HOSTS = $admittedHosts;
               const MESSAGE_TYPE = 'vexlife.browser-context/v1';
+              const FORWARD_TYPE = 'vexlife.browser-context-forward/v1';
               const TEXT_LIMIT = ${VexLifeProdBrowserContract.RenderedTextLimit};
 
               const frameUrlFor = (target) => {
@@ -543,21 +544,40 @@ class VexLifeProdFrameHost private constructor(
                 return 'https://' + upstreamHost + location.pathname + location.search + location.hash;
               };
 
+              const sendContextUpward = (payload) => {
+                if (window.parent === window.top) {
+                  window.parent.postMessage(payload, PARENT_ORIGIN);
+                  return;
+                }
+                window.parent.postMessage({
+                  type: FORWARD_TYPE,
+                  payload
+                }, location.origin);
+              };
+
               const report = () => {
                 reportTimer = null;
                 const text = (document.body?.innerText || '').slice(0, TEXT_LIMIT);
-                parent.postMessage({
+                sendContextUpward({
                   type: MESSAGE_TYPE,
                   pageUrl: currentPageUrl(),
                   title: document.title || null,
                   text,
                   capture: 'RENDERED'
-                }, PARENT_ORIGIN);
+                });
               };
               const scheduleReport = () => {
                 if (reportTimer !== null) clearTimeout(reportTimer);
                 reportTimer = setTimeout(report, 120);
               };
+
+              window.addEventListener('message', (event) => {
+                if (event.origin !== location.origin) return;
+                if (!event.data || event.data.type !== FORWARD_TYPE) return;
+                const payload = event.data.payload;
+                if (!payload || payload.type !== MESSAGE_TYPE) return;
+                sendContextUpward(payload);
+              });
 
               document.addEventListener('click', (event) => {
                 const element = event.target instanceof Element ? event.target : null;
