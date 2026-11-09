@@ -12,32 +12,43 @@ import kotlin.test.assertTrue
 class VexLifeProdFrameHostTest {
     @Test
     fun nestedSameOriginFrameContextRelaysThroughTheOuterTrustedFrame() {
-        val script =
-            VexLifeProdFrameHost.reporterScript(
-                "https://vgong24.github.io/Vextreme/pages/terrain-map.html",
+        VexLifeProdFrameHost
+            .startAt(
+                InetSocketAddress(
+                    "127.0.0.1",
+                    0,
+                ),
             )
+            .use {
+                host ->
+                val script =
+                    host.reporterScript(
+                        "https://vgong24.github.io/Vextreme/pages/terrain-map.html",
+                    )
 
-        assertTrue(
-            script.contains(
-                "const FORWARD_TYPE = 'vexlife.browser-context-forward/v1'",
-            ),
-        )
-        assertTrue(
-            script.contains(
-                "if (window.parent === window.top)",
-            ),
-        )
-        assertTrue(
-            script.contains(
-                "event.origin !== location.origin",
-            ),
-        )
-        assertTrue(
-            script.contains(
-                "sendContextUpward(payload)",
-            ),
-        )
+                assertTrue(
+                    script.contains(
+                        "const FORWARD_TYPE = 'vexlife.browser-context-forward/v1'",
+                    ),
+                )
+                assertTrue(
+                    script.contains(
+                        "if (window.parent === window.top)",
+                    ),
+                )
+                assertTrue(
+                    script.contains(
+                        "event.origin !== location.origin",
+                    ),
+                )
+                assertTrue(
+                    script.contains(
+                        "sendContextUpward(payload)",
+                    ),
+                )
+            }
     }
+
     @Test
     fun admittedAbsoluteUrlsStayInsideTheIsolatedFrameProjection() {
         assertEquals(
