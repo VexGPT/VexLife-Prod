@@ -2,7 +2,6 @@ package vexlife.web
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
@@ -63,7 +62,8 @@ class VexLifeWebP1Test {
         assertTrue(
             vision.interactions.isEmpty(),
         )
-        assertNull(
+        assertEquals(
+            VexWeb.Binding.None,
             vision.binding,
         )
 
