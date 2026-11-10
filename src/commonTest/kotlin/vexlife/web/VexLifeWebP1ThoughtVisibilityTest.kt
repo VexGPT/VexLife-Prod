@@ -134,6 +134,24 @@ class VexLifeWebP1ThoughtVisibilityTest {
             "streaming content must not write Conversation scrollTop while the human is reading history",
         )
         assertTrue(
+            bundle.javascript.contains(
+                "state.reasoningViewports.set('live', { followTail: true, scrollTop: 0 });",
+            ),
+            "every fresh Send must begin with a fresh live-reasoning follow state",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "const conversationRenderIdentity = (conversation) =>",
+            ),
+            "idle Conversation polling must compare projection identity before rebuilding the timeline",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "if (renderNow && priorIdentity !== nextIdentity) renderTimeline();",
+            ),
+            "unchanged idle Conversation polls must not pulse the presentation with redundant DOM replacement",
+        )
+        assertTrue(
             bundle.css.contains(
                 "overflow-anchor: none",
             ),

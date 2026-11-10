@@ -713,13 +713,26 @@ object VexLifeWebP1RuntimeArtifacts {
                 setCompanionStatus('Ready', 'Ready', ui.companionStatusModel.textContent);
               };
 
+              const conversationRenderIdentity = (conversation) => {
+                if (!conversation) return 'NONE';
+                const messages = conversation.messages ?? [];
+                return [
+                  String(conversation.currentConversationHeadSha256 ?? 'NONE'),
+                  String(conversation.abandonedAttemptCount ?? 0),
+                  ...messages.map((message) => String(message.eventSha256 ?? ''))
+                ].join(':');
+              };
+
               const loadConversation = async (renderNow = true) => {
                 const response = await fetch(service.conversationPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
-                state.conversation = await readJson(response);
+                const priorIdentity = conversationRenderIdentity(state.conversation);
+                const nextConversation = await readJson(response);
+                const nextIdentity = conversationRenderIdentity(nextConversation);
+                state.conversation = nextConversation;
                 const messages = state.conversation?.messages ?? [];
                 const latest = [...messages].reverse().find((message) => message.role === 'vex' && message.model);
                 setCompanionStatus('Ready', 'Ready', latest?.model ?? '');
-                if (renderNow) renderTimeline();
+                if (renderNow && priorIdentity !== nextIdentity) renderTimeline();
               };
 
               const loadContext = async () => {
@@ -745,6 +758,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.streamPhase = 'CheckingRuntime';
                 state.streamedContent = '';
                 state.streamedReasoning = '';
+                state.reasoningViewports.set('live', { followTail: true, scrollTop: 0 });
                 if (!retrying) {
                   ui.draft.value = '';
                   sizeDraft();
