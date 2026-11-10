@@ -132,6 +132,7 @@ object VexLifeCurrentMemoryReader {
     private data class OpenLoop(
         val ref: String,
         val state: String,
+        val summaryRef: String?,
         val sourceStatementRefs: List<String>,
         val sourceBindings: JsonArray,
         val scoreEventRef: String,
@@ -648,6 +649,7 @@ object VexLifeCurrentMemoryReader {
                         OpenLoop(
                             ref = ref,
                             state = "OPEN",
+                            summaryRef = event.nullableString("summaryRef"),
                             sourceStatementRefs = event.stringList("sourceStatementRefs"),
                             sourceBindings = event.array("sourceBindings"),
                             scoreEventRef = event.string("scoreEventRef"),
@@ -1093,7 +1095,11 @@ object VexLifeCurrentMemoryReader {
                 label = "consent disposition",
             )
         require(
-            consent.string(
+            consent.string("consentDispositionRef") ==
+                statement.consentDispositionRef &&
+                consent.string("consentDispositionSha256") ==
+                statement.consentDispositionSha256 &&
+                consent.string(
                 "candidateRef",
             ) ==
                 statement.candidateRef &&
@@ -1199,7 +1205,9 @@ object VexLifeCurrentMemoryReader {
                 label = "semantic acceptance",
             )
         require(
-            acceptance.string(
+            statement.classificationEvidenceBindings ==
+                JsonArray(evidenceBindings) &&
+                acceptance.string(
                 "contractRef",
             ) ==
                 LiveSemanticContract &&
@@ -1471,7 +1479,11 @@ object VexLifeCurrentMemoryReader {
         ) {
             "STATEMENT" -> {
                 require(
-                    event.string(
+                    event.string("scoreEventRef").isNotEmpty() &&
+                        event.string("subjectRef").isNotEmpty() &&
+                        event.string("consentDispositionRef").isNotEmpty() &&
+                        event.array("classificationEvidenceBindings").isNotEmpty() &&
+                        event.string(
                         "memoryRelation",
                     ) in
                         memoryRelations &&
@@ -1515,7 +1527,8 @@ object VexLifeCurrentMemoryReader {
 
             "OPEN_LOOP" ->
                 require(
-                    event.string(
+                    event.string("scoreEventRef").isNotEmpty() &&
+                        event.string(
                         "openLoopState",
                     ) ==
                         "OPEN" &&
@@ -2931,6 +2944,10 @@ object VexLifeCurrentMemoryReader {
     private fun dreamOpenLoopBinding(loop: OpenLoop): JsonObject =
         buildJsonObject {
             put("openLoopRef", loop.ref)
+            put(
+                "summaryRef",
+                loop.summaryRef?.let(::JsonPrimitive) ?: JsonNull,
+            )
             put("sourceStatementRefs", JsonArray(loop.sourceStatementRefs.map(::JsonPrimitive)))
             put("sourceBindings", loop.sourceBindings)
             put("eventRef", loop.scoreEventRef)

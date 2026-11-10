@@ -46,6 +46,7 @@ class VexLifeDailyMemoryDreamTest {
     private fun loop(): JsonObject =
         buildJsonObject {
             put("openLoopRef", "loop.g03.one")
+            put("summaryRef", "summary.g03.one")
             put("sourceStatementRefs", JsonArray(listOf(JsonPrimitive("statement.g03.active"))))
             put("sourceBindings", JsonArray(emptyList()))
             put("eventRef", "score-event.loop.g03.one")
