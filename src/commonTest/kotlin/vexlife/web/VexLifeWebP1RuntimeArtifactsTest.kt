@@ -212,6 +212,16 @@ class VexLifeWebP1RuntimeArtifactsTest {
             ),
         )
         assertTrue(
+            bundle.html.contains(
+                "Look Now is not connected to the macOS picker yet.",
+            ),
+        )
+        assertFalse(
+            bundle.html.contains(
+                "screen permission and capture are not connected yet.",
+            ),
+        )
+        assertTrue(
             bundle.javascript.contains(
                 "Include the page to hand Vex its text. Enter sends; Shift+Enter starts a new line.",
             ),
