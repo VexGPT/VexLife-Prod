@@ -122,6 +122,18 @@ class VexLifeWebP1ThoughtVisibilityTest {
             "proximity thresholds must not stand in for human follow intent",
         )
         assertTrue(
+            bundle.javascript.contains(
+                "applyReasoningViewport(reasoning, 'live', true, false);",
+            ),
+            "streaming reasoning must not write scrollTop while the human is reading within the nested pane",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "applyTimelineViewport(false);",
+            ),
+            "streaming content must not write Conversation scrollTop while the human is reading history",
+        )
+        assertTrue(
             bundle.css.contains(
                 "overflow-anchor: none",
             ),

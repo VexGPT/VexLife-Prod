@@ -372,11 +372,16 @@ object VexLifeWebP1RuntimeArtifacts {
                 });
               };
 
-              const applyReasoningViewport = (element, key, initialFollowTail = false) => {
+              const applyReasoningViewport = (
+                element,
+                key,
+                initialFollowTail = false,
+                restoreReadingPosition = true
+              ) => {
                 const viewport = reasoningViewport(key, initialFollowTail);
                 if (viewport.followTail) {
                   element.scrollTop = element.scrollHeight;
-                } else {
+                } else if (restoreReadingPosition) {
                   const maxScrollTop = Math.max(0, element.scrollHeight - element.clientHeight);
                   element.scrollTop = Math.min(viewport.scrollTop, maxScrollTop);
                 }
@@ -390,10 +395,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 });
               };
 
-              const applyTimelineViewport = () => {
+              const applyTimelineViewport = (restoreReadingPosition = true) => {
                 if (state.timelineFollowTail) {
                   ui.timeline.scrollTop = ui.timeline.scrollHeight;
-                } else {
+                } else if (restoreReadingPosition) {
                   const maxScrollTop = Math.max(0, ui.timeline.scrollHeight - ui.timeline.clientHeight);
                   ui.timeline.scrollTop = Math.min(state.timelineScrollTop, maxScrollTop);
                 }
@@ -589,7 +594,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     thought?.append(reasoning);
                   }
                   reasoning.textContent = state.streamedReasoning;
-                  applyReasoningViewport(reasoning, 'live', true);
+                  applyReasoningViewport(reasoning, 'live', true, false);
                 } else if (reasoning) {
                   reasoning.remove();
                 }
@@ -606,7 +611,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   paragraph.remove();
                 }
 
-                applyTimelineViewport();
+                applyTimelineViewport(false);
               };
 
               const renderTicket = () => {
