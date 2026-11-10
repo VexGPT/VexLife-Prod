@@ -161,7 +161,8 @@ object DirectCompanionConnection {
         ): HttpResult {
             val request =
                 request(
-                    call,
+                    call = call,
+                    applyOverallTimeout = true,
                 )
             val response =
                 client.send(
@@ -187,7 +188,8 @@ object DirectCompanionConnection {
             val response =
                 client.send(
                     request(
-                        call,
+                        call = call,
+                        applyOverallTimeout = false,
                     ),
                     HttpResponse.BodyHandlers.ofInputStream(),
                 )
@@ -235,16 +237,25 @@ object DirectCompanionConnection {
 
         private fun request(
             call: HttpCall,
-        ): HttpRequest =
-            HttpRequest
-                .newBuilder(
-                    call.uri,
-                )
-                .timeout(
+            applyOverallTimeout: Boolean,
+        ): HttpRequest {
+            val builder =
+                HttpRequest
+                    .newBuilder(
+                        call.uri,
+                    )
+
+            if (
+                applyOverallTimeout
+            ) {
+                builder.timeout(
                     Duration.ofMillis(
                         call.timeoutMs,
                     ),
                 )
+            }
+
+            return builder
                 .header(
                     "content-type",
                     "application/json",
@@ -260,6 +271,7 @@ object DirectCompanionConnection {
                     ),
                 )
                 .build()
+        }
 
         private fun redirectLocation(
             response: HttpResponse<*>,
