@@ -544,7 +544,8 @@ class VexLifeProdLocalServiceTest {
                                   "finish_reason": "stop",
                                   "message": {
                                     "role": "assistant",
-                                    "content": "Hello from Vex."
+                                    "content": "Hello from Vex.",
+                                    "reasoning": "ephemeral service reasoning"
                                   }
                                 }
                               ]
@@ -592,6 +593,7 @@ class VexLifeProdLocalServiceTest {
                                     text = "Current direct-contact terrain context",
                                     capture = VexLifeProdBrowserContract.CaptureRendered,
                                 ),
+                            viewableThoughts = true,
                         )
                     val body =
                         json.encodeToString(
@@ -625,6 +627,21 @@ class VexLifeProdLocalServiceTest {
                     )
                     assertTrue(
                         firstResult.actualHttpCallPerformedNow,
+                    )
+                    assertEquals(
+                        "PRESENT_EPHEMERAL",
+                        firstResult.humanReasoning.state,
+                    )
+                    assertEquals(
+                        "ephemeral service reasoning",
+                        firstResult.humanReasoning.text,
+                    )
+                    assertFalse(
+                        firstResult.humanReasoning.persisted,
+                    )
+                    assertEquals(
+                        "ephemeral service reasoning".length,
+                        firstResult.humanReasoning.characterCount,
                     )
                     assertTrue(
                         firstResult.promptContext.browserContextIncluded,
@@ -709,6 +726,13 @@ class VexLifeProdLocalServiceTest {
                         firstResult.currentConversationHeadSha256,
                         projection.currentConversationHeadSha256,
                     )
+                    assertFalse(
+                        projectionResponse.body()
+                            .contains(
+                                "ephemeral service reasoning",
+                            ),
+                        "canonical Conversation projection must not expose raw reasoning",
+                    )
 
                     val contextResponse =
                         get(
@@ -770,6 +794,24 @@ class VexLifeProdLocalServiceTest {
                     )
                     assertFalse(
                         duplicateResult.actualHttpCallPerformedNow,
+                    )
+                    assertEquals(
+                        "UNAVAILABLE_AFTER_IDEMPOTENT_RECOVERY",
+                        duplicateResult.humanReasoning.state,
+                    )
+                    assertNull(
+                        duplicateResult.humanReasoning.text,
+                    )
+                    assertFalse(
+                        duplicateResult.humanReasoning.persisted,
+                    )
+                    assertEquals(
+                        firstResult.humanReasoning.contentSha256,
+                        duplicateResult.humanReasoning.contentSha256,
+                    )
+                    assertEquals(
+                        firstResult.humanReasoning.characterCount,
+                        duplicateResult.humanReasoning.characterCount,
                     )
                     assertEquals(
                         firstResult.currentConversationHeadSha256,
