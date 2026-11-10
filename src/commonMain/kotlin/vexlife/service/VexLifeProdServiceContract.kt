@@ -138,10 +138,12 @@ object VexLifeProdServiceContract {
         val browserContext: BrowserContextInput? =
             null,
         /**
-         * Local presentation preference bound to this exact Send attempt.
+         * Local human preference sampled into this exact Send attempt.
          *
-         * It requests only a human-facing ephemeral projection when a fresh provider response
-         * contains reasoning. It grants no prompt/model/Memory/training authority.
+         * When true, the Connection requests the existing explicit-open reasoning mode for this
+         * fresh provider inference and may return one human-facing ephemeral reasoning projection.
+         * It does not change DirectPromptContext message selection, canonical Conversation, Context,
+         * Memory, training, publication, or durable reasoning storage.
          */
         val viewableThoughts: Boolean =
             false,
