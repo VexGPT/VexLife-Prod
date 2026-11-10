@@ -186,6 +186,66 @@ It cannot accept a caller-supplied endpoint or model identity.
 Provider observation/evidence values are publicly readable but constructor/copy authority remains
 inside the Connection.
 
+### Explicit-open human reasoning projection
+
+The local model endpoint may return a `reasoning` / `reasoning_content` field beside the final
+assistant content. The Connection still records only content-free durable reasoning evidence:
+
+~~~text
+present
+contentSha256
+characterCount
+rawPersisted = false
+humanProjection = SEALED_EXPLICIT_OPEN_ONLY
+modelProjection = NONE
+trainingProjection = NONE
+~~~
+
+For a **fresh** Send whose local presentation preference explicitly requests Viewable thoughts, the
+Connection may additionally keep that raw reasoning only in the immediate in-memory invocation
+result:
+
+~~~text
+provider response reasoning
+-> DirectCompanionConnection sealedHumanReasoning
+-> DirectCompanionTurn humanReasoning when explicitly requested
+-> one SendResponse HumanReasoningProjection(PRESENT_EPHEMERAL)
+-> current browser-session in-memory map
+-> view thoughts / hide thoughts
+~~~
+
+Permanent:
+
+~~~text
+EPHEMERAL HUMAN REASONING
+!= CANONICAL CONVERSATION
+!= TURN CONTEXT
+!= MEMORY
+!= MODEL INPUT
+!= TRAINING
+!= PUBLICATION
+!= DURABLE STORE
+~~~
+
+The current Product Send remains transactional/non-streaming. This slice restores **completed
+response** reasoning visibility only; it does not yet recreate the historical live `REASONING`
+stream.
+
+An idempotent completed duplicate may recover the durable final response without another model call,
+but it cannot recover raw reasoning that was intentionally not persisted:
+
+~~~text
+fresh response + explicit visibility request
+  -> PRESENT_EPHEMERAL
+
+completed duplicate
+  -> UNAVAILABLE_AFTER_IDEMPOTENT_RECOVERY
+  -> durable hash/count may remain
+  -> raw text = null
+~~~
+
+Reloading the Product presentation also drops the ephemeral reasoning by design.
+
 ### `DirectTurnContextStore`
 
 Persists normalized turn evidence suitable for later Context Inspector projection:
@@ -278,6 +338,8 @@ Tests are source-formed for:
 - numeric-loopback provider call + endpoint/model ownership;
 - provider local-path model normalization;
 - raw provider/reasoning non-persistence;
+- explicit fresh-response reasoning projection without durable storage;
+- idempotent duplicate reasoning unavailability without provider replay;
 - first-turn prompt materialization;
 - immediate-prior CONTINUE selection;
 - prompt token-bound rejection;
@@ -363,7 +425,7 @@ real production-service direct turn
 working-checkpoint successor / rollover continuity
 CLEAN_START presentation/semantic wiring
 streamed response progress
-explicit-open reasoning projection
+live streamed reasoning progress
 product service / presentation
 ordinary fresh-user Mac entry
 ~~~
