@@ -89,6 +89,45 @@ class VexLifeWebP1ThoughtVisibilityTest {
         )
         assertTrue(
             bundle.javascript.contains(
+                "const timelineScrollTop = ui.timeline.scrollTop;",
+            ),
+            "timeline re-renders must preserve deliberate user scroll position",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "const reasoningScroll = captureReasoningScroll();",
+            ),
+            "live reasoning re-renders must remember whether the human was following its tail",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "restoreReasoningScroll(reasoningScroll);",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "reasoning.dataset.scrollKey = 'live';",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "box.dataset.scrollKey = 'response.' + key;",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "ui.jumpLatest.hidden = isNearBottom();",
+            ),
+            "scrolling away from the conversation tail must opt out of automatic following",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "nearBottom || state.pending",
+            ),
+            "an in-flight Send must not override deliberate human scrolling",
+        )
+        assertTrue(
+            bundle.javascript.contains(
                 "vexlife-prod.presentation.thoughts-visible",
             ),
         )

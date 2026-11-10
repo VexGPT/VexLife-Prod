@@ -345,8 +345,35 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderComposer();
               };
 
-              const isNearBottom = () =>
-                ui.timeline.scrollHeight - ui.timeline.scrollTop - ui.timeline.clientHeight < 72;
+              const isElementNearBottom = (element, threshold = 24) =>
+                element.scrollHeight - element.scrollTop - element.clientHeight < threshold;
+
+              const isNearBottom = () => isElementNearBottom(ui.timeline, 72);
+
+              const captureReasoningScroll = () => {
+                const positions = new Map();
+                ui.timeline.querySelectorAll('.reasoning[data-scroll-key]').forEach((element) => {
+                  positions.set(String(element.dataset.scrollKey ?? ''), {
+                    nearBottom: isElementNearBottom(element),
+                    scrollTop: element.scrollTop
+                  });
+                });
+                return positions;
+              };
+
+              const restoreReasoningScroll = (positions) => {
+                ui.timeline.querySelectorAll('.reasoning[data-scroll-key]').forEach((element) => {
+                  const key = String(element.dataset.scrollKey ?? '');
+                  const prior = positions.get(key);
+                  if (!prior) return;
+                  if (prior.nearBottom) {
+                    element.scrollTop = element.scrollHeight;
+                    return;
+                  }
+                  const maxScrollTop = Math.max(0, element.scrollHeight - element.clientHeight);
+                  element.scrollTop = Math.min(prior.scrollTop, maxScrollTop);
+                });
+              };
 
               const nextSequence = () => {
                 const messages = state.conversation?.messages ?? [];
@@ -383,6 +410,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (expanded) {
                   const box = document.createElement('div');
                   box.className = 'reasoning';
+                  box.dataset.scrollKey = 'response.' + key;
                   box.textContent = reasoning;
                   holder.append(box);
                 }
@@ -449,6 +477,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (state.thoughtsVisible && state.streamedReasoning) {
                   const reasoning = document.createElement('div');
                   reasoning.className = 'reasoning live-reasoning';
+                  reasoning.dataset.scrollKey = 'live';
                   reasoning.textContent = state.streamedReasoning;
                   thought.append(reasoning);
                 }
@@ -471,6 +500,8 @@ object VexLifeWebP1RuntimeArtifacts {
               const renderTimeline = () => {
                 if (!ui.timeline) return;
                 const nearBottom = isNearBottom();
+                const timelineScrollTop = ui.timeline.scrollTop;
+                const reasoningScroll = captureReasoningScroll();
                 const messages = state.conversation?.messages ?? [];
                 const nodes = messages.map(messageNode);
 
@@ -498,9 +529,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
 
                 ui.timeline.replaceChildren(...nodes);
-                if (nearBottom || state.pending) {
+                restoreReasoningScroll(reasoningScroll);
+                if (nearBottom) {
                   ui.timeline.scrollTop = ui.timeline.scrollHeight;
                   ui.jumpLatest.hidden = true;
+                } else {
+                  const maxScrollTop = Math.max(0, ui.timeline.scrollHeight - ui.timeline.clientHeight);
+                  ui.timeline.scrollTop = Math.min(timelineScrollTop, maxScrollTop);
+                  ui.jumpLatest.hidden = false;
                 }
               };
 
@@ -865,7 +901,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               ui.draft.addEventListener('input', () => sizeDraft());
               ui.timeline.addEventListener('scroll', () => {
-                if (isNearBottom()) ui.jumpLatest.hidden = true;
+                ui.jumpLatest.hidden = isNearBottom();
               });
               ui.timeline.addEventListener('click', (event) => {
                 const toggle = event.target.closest('.thought-toggle');
