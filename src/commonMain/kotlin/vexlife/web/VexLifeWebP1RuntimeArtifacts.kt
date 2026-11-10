@@ -155,6 +155,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 pending: null,
                 sendInFlight: false,
                 thoughtsVisible: true,
+                humanReasoningByResponse: new Map(),
+                expandedThoughts: new Set(),
                 theme: null
               };
 
@@ -296,6 +298,42 @@ object VexLifeWebP1RuntimeArtifacts {
                 return messages.reduce((max, message) => Math.max(max, Number(message.sequence) || 0), -1) + 1;
               };
 
+              const thoughtMark = () => {
+                const mark = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                mark.setAttribute('class', 'thought-mark');
+                mark.setAttribute('viewBox', '0 0 16 16');
+                mark.innerHTML = '<path d="M8 1.8 14.2 8 8 14.2 1.8 8z"/><path d="M8 5 11 8 8 11 5 8z"/>';
+                return mark;
+              };
+
+              const completedThoughtNode = (message) => {
+                if (!state.thoughtsVisible || message.role !== 'vex') return null;
+                const key = String(message.messageRef ?? '');
+                const reasoning = state.humanReasoningByResponse.get(key);
+                if (!reasoning) return null;
+
+                const holder = document.createElement('div');
+                holder.className = 'thought';
+                const expanded = state.expandedThoughts.has(key);
+                const toggle = document.createElement('button');
+                toggle.type = 'button';
+                toggle.className = 'thought-toggle';
+                toggle.dataset.thoughtKey = key;
+                toggle.setAttribute('aria-expanded', String(expanded));
+                const label = document.createElement('span');
+                label.textContent = expanded ? 'hide thoughts' : 'view thoughts';
+                toggle.append(thoughtMark(), label);
+                holder.append(toggle);
+
+                if (expanded) {
+                  const box = document.createElement('div');
+                  box.className = 'reasoning';
+                  box.textContent = reasoning;
+                  holder.append(box);
+                }
+                return holder;
+              };
+
               const messageNode = (message) => {
                 const item = document.createElement('li');
                 const human = message.role === 'human';
@@ -316,7 +354,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 speaker.className = 'speaker';
                 speaker.textContent = human ? 'You' : 'Vex';
 
-                item.append(index, bubble, speaker);
+                const thought = completedThoughtNode(message);
+                if (thought) item.append(index, thought, bubble, speaker);
+                else item.append(index, bubble, speaker);
                 return item;
               };
 
@@ -511,7 +551,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 const pending = state.pending ?? Object.freeze({
                   idempotencyKey: 'send.' + crypto.randomUUID().toLowerCase(),
                   content,
-                  browserContext: state.includePage ? state.browserContext : null
+                  browserContext: state.includePage ? state.browserContext : null,
+                  viewableThoughts: state.thoughtsVisible
                 });
                 state.pending = pending;
                 state.sendInFlight = true;
@@ -534,6 +575,17 @@ object VexLifeWebP1RuntimeArtifacts {
                   root.dataset.vexLastContextPath = String(result.contextPath ?? '');
                   root.dataset.vexLastPromptReceiptRef = String(result.promptContext?.receiptRef ?? '');
                   root.dataset.vexLastBrowserContextRef = String(result.promptContext?.browserContextRef ?? '');
+                  const reasoning = result.humanReasoning;
+                  if (
+                    reasoning?.state === 'PRESENT_EPHEMERAL' &&
+                    typeof reasoning.text === 'string' &&
+                    reasoning.text.length > 0
+                  ) {
+                    state.humanReasoningByResponse.set(String(result.responseMessageRef ?? ''), reasoning.text);
+                  } else if (result.responseMessageRef) {
+                    state.humanReasoningByResponse.delete(String(result.responseMessageRef));
+                    state.expandedThoughts.delete(String(result.responseMessageRef));
+                  }
                   setCompanionStatus('Ready', 'Ready', result.model ?? '');
                   render();
 
@@ -688,6 +740,15 @@ object VexLifeWebP1RuntimeArtifacts {
               ui.timeline.addEventListener('scroll', () => {
                 if (isNearBottom()) ui.jumpLatest.hidden = true;
               });
+              ui.timeline.addEventListener('click', (event) => {
+                const toggle = event.target.closest('.thought-toggle');
+                if (!toggle) return;
+                const key = String(toggle.dataset.thoughtKey ?? '');
+                if (!key || !state.humanReasoningByResponse.has(key)) return;
+                if (state.expandedThoughts.has(key)) state.expandedThoughts.delete(key);
+                else state.expandedThoughts.add(key);
+                renderTimeline();
+              });
               ui.jumpLatest.addEventListener('click', () => {
                 ui.timeline.scrollTop = ui.timeline.scrollHeight;
                 ui.jumpLatest.hidden = true;
@@ -699,6 +760,7 @@ object VexLifeWebP1RuntimeArtifacts {
               ui.thoughtVisibility.addEventListener('click', () => {
                 state.thoughtsVisible = !state.thoughtsVisible;
                 renderSettings();
+                renderTimeline();
               });
 
               ui.cleanChat.addEventListener('click', () => {
