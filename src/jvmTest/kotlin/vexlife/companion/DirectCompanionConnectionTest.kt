@@ -182,7 +182,7 @@ class DirectCompanionConnectionTest {
 
     @Test
     fun systemStreamingShapeProjectsReasoningAndContentDeltasBeforeFinalResult() {
-        var call: DirectCompanionConnection.HttpCall? =
+        var streamedCall: DirectCompanionConnection.HttpCall? =
             null
         val progress =
             mutableListOf<DirectCompanionConnection.Progress>()
@@ -201,8 +201,7 @@ class DirectCompanionConnectionTest {
                     call: DirectCompanionConnection.HttpCall,
                     onLine: (String) -> Unit,
                 ): DirectCompanionConnection.StreamingHttpResult {
-                    this@DirectCompanionConnectionTest
-                    call =
+                    streamedCall =
                         call
                     onLine(
                         """data: {"model":"default_model","choices":[{"delta":{"role":"assistant","reasoning":"I should "}}]}""",
@@ -266,6 +265,21 @@ class DirectCompanionConnectionTest {
                 },
             )
 
+        assertEquals(
+            "true",
+            Json
+                .parseToJsonElement(
+                    requireNotNull(
+                        streamedCall,
+                    )
+                        .body,
+                )
+                .jsonObject[
+                    "stream"
+                ]
+                ?.jsonPrimitive
+                ?.content,
+        )
         assertEquals(
             "The better choice.",
             result.content,
