@@ -4,27 +4,30 @@ import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.service.VexLifeProdServiceContract
 
 /**
- * Product-specific runtime realization over the accepted generated P1 surface.
+ * Current VexLife-Prod sequencing beneath the canonical A003 presentation contract.
  *
- * The generic VexWeb generator remains transport-agnostic. This projection binds existing P1
- * coordinates/capabilities to the existing local service contract and isolated frame host.
+ * Presentation contract:
+ * - ordinary Enter sends;
+ * - Shift+Enter inserts a newline;
+ * - the human turn appears immediately as in-flight presentation state;
+ * - durable Conversation remains authoritative and replaces the in-flight projection on commit;
+ * - browser Context inclusion is explicit;
+ * - current Send idempotency / Memory / working-continuity / runtime owners remain untouched.
  */
 object VexLifeWebP1RuntimeArtifacts {
     fun generate(): VexWebArtifacts.Bundle {
-        val base =
+        val semantic =
             VexWebArtifacts.generate(
                 VexLifeWebP1.Surface,
             )
 
-        return base.copy(
+        return semantic.copy(
+            html =
+                VexLifeWebP1ExperienceMarkup.render(),
             css =
-                base.css.trimEnd() +
-                    "\n\n" +
-                    VexLifeWebP1ExperienceStyle.render(),
+                VexLifeWebP1ExperienceStyle.render(),
             javascript =
-                base.javascript.trimEnd() +
-                    "\n\n" +
-                    runtimeJavascript().trimIndent() +
+                runtimeJavascript().trimIndent() +
                     "\n",
         )
     }
@@ -37,15 +40,12 @@ object VexLifeWebP1RuntimeArtifacts {
                     it.ref ==
                         VexLifeWebP1.Refs.BrowserCompanionSeam
                 }
-        val browserCompanionAllocation =
+        val allocation =
             browserCompanionSeam.allocation as
                 VexWeb.Parameter.Allocation.Ratio
         val authoredBrowserShare =
-            browserCompanionAllocation.beforeParts
-                .toDouble() /
-                browserCompanionAllocation.totalParts
-                    .toDouble()
-
+            allocation.beforeParts.toDouble() /
+                allocation.totalParts.toDouble()
         val admittedHosts =
             VexLifeProdBrowserContract.AdmittedHosts
                 .joinToString(
@@ -59,52 +59,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
 
         return """
-            // Generated VexLife-Prod P1 runtime projection. Do not edit by hand.
+            // Generated VexLife-Prod A003-faithful presentation over current New-Beginnings owners.
             (() => {
-              const root = document.querySelector('[data-vex-screen="${jsSelectorValue(VexLifeWebP1.Surface.screenRef)}"]');
+              const root = document.getElementById('workspace');
               if (!root) return;
 
-              const refs = Object.freeze({
-                brand: ${jsString(VexLifeWebP1.Brand.identity.ref)},
-                vexSummon: ${jsString(VexLifeWebP1.VexSummon.identity.ref)},
-                bodyFrame: ${jsString(VexLifeWebP1.Refs.BodyFrame.value)},
-                browserRegion: ${jsString(VexLifeWebP1.Refs.BrowserRegion.value)},
-                companionRegion: ${jsString(VexLifeWebP1.Refs.CompanionRegion.value)},
-                browserCompanionHandle: ${jsString(VexLifeWebP1.BrowserCompanionHandle.identity.ref)},
-                browserQuery: ${jsString(VexLifeWebP1.BrowserQuery.identity.ref)},
-                appSelector: ${jsString(VexLifeWebP1.AppSelector.identity.ref)},
-                quickActions: ${jsString(VexLifeWebP1.QuickActions.identity.ref)},
-                browserFrameStatus: ${jsString(VexLifeWebP1.BrowserFrameStatus.identity.ref)},
-                browserViewport: ${jsString(VexLifeWebP1.BrowserViewport.identity.ref)},
-                companion: ${jsString(VexLifeWebP1.Companion.identity.ref)},
-                companionHeader: ${jsString(VexLifeWebP1.Refs.CompanionHeader.value)},
-                companionContent: ${jsString(VexLifeWebP1.Refs.CompanionContent.value)},
-                companionStatus: ${jsString(VexLifeWebP1.CompanionStatus.identity.ref)},
-                companionViewSwitch: ${jsString(VexLifeWebP1.CompanionViewSwitch.identity.ref)},
-                conversation: ${jsString(VexLifeWebP1.Conversation.identity.ref)},
-                conversationTimeline: ${jsString(VexLifeWebP1.ConversationTimeline.identity.ref)},
-                conversationJumpLatest: ${jsString(VexLifeWebP1.ConversationJumpLatest.identity.ref)},
-                responseProgress: ${jsString(VexLifeWebP1.ResponseProgress.identity.ref)},
-                composer: ${jsString(VexLifeWebP1.Composer.identity.ref)},
-                contextReceipt: ${jsString(VexLifeWebP1.ContextReceipt.identity.ref)},
-                contextShare: ${jsString(VexLifeWebP1.ContextShare.identity.ref)},
-                send: ${jsString(VexLifeWebP1.Send.identity.ref)},
-                stop: ${jsString(VexLifeWebP1.Stop.identity.ref)},
-                contextInspector: ${jsString(VexLifeWebP1.ContextInspector.identity.ref)},
-                settings: ${jsString(VexLifeWebP1.Settings.identity.ref)},
-                settingsContext: ${jsString(VexLifeWebP1.SettingsContext.identity.ref)},
-                settingsResources: ${jsString(VexLifeWebP1.SettingsResources.identity.ref)},
-                settingsHome: ${jsString(VexLifeWebP1.SettingsHome.identity.ref)},
-                contextWindow: ${jsString(VexLifeWebP1.ContextWindow.identity.ref)},
-                memoryResource: ${jsString(VexLifeWebP1.MemoryResource.identity.ref)},
-                thoughtVisibility: ${jsString(VexLifeWebP1.ThoughtVisibility.identity.ref)},
-                lowMemoryAlert: ${jsString(VexLifeWebP1.LowMemoryAlert.identity.ref)},
-                homeDirectories: ${jsString(VexLifeWebP1.HomeDirectories.identity.ref)},
-                homeAddDirectory: ${jsString(VexLifeWebP1.HomeAddDirectory.identity.ref)},
-                continuityMode: ${jsString(VexLifeWebP1.ContinuityMode.identity.ref)},
-                dreamSync: ${jsString(VexLifeWebP1.DreamSync.identity.ref)},
-                cleanChat: ${jsString(VexLifeWebP1.CleanChat.identity.ref)}
-              });
               const service = Object.freeze({
                 sourceCurrentnessPath: ${jsString(VexLifeProdServiceContract.SourceCurrentnessPath)},
                 conversationPath: ${jsString(VexLifeProdServiceContract.ConversationPath)},
@@ -112,205 +71,188 @@ object VexLifeWebP1RuntimeArtifacts {
                 sendPath: ${jsString(VexLifeProdServiceContract.ConversationSendPath)}
               });
               const browser = Object.freeze({
-                authoredBrowserShare: $authoredBrowserShare,
+                initialPageUrl: ${jsString(VexLifeProdBrowserContract.InitialPageUrl)},
                 admittedHosts: $admittedHosts,
                 frameHostSuffix: ${jsString(VexLifeProdBrowserContract.FrameHostSuffix)},
                 frameHostPort: ${VexLifeProdBrowserContract.FrameHostPort},
-                initialPageUrl: ${jsString(VexLifeProdBrowserContract.InitialPageUrl)},
                 contextCharacterLimit: ${VexLifeProdBrowserContract.ContextCharacterLimit},
                 maxTitleCharacters: ${VexLifeProdBrowserContract.MaxTitleCharacters},
                 captureRendered: ${jsString(VexLifeProdBrowserContract.CaptureRendered)},
-                messageType: 'vexlife.browser-context/v1'
+                messageType: 'vexlife.browser-context/v1',
+                authoredBrowserShare: $authoredBrowserShare
               });
 
-              const byRef = (ref) => root.querySelector('[data-vex-ref="' + ref + '"]');
-              const generatedPart = (ref, part) => byRef(ref)?.querySelector('[data-vex-generated-part="' + part + '"]') ?? null;
-              const brand = byRef(refs.brand);
-              const vexSummonButton = generatedPart(refs.vexSummon, 'control');
-              const bodyFrame = byRef(refs.bodyFrame);
-              const browserRegion = byRef(refs.browserRegion);
-              const companionRegion = byRef(refs.companionRegion);
-              const browserCompanionHandle = byRef(refs.browserCompanionHandle);
-              const browserQuery = generatedPart(refs.browserQuery, 'text-field');
-              const appSelectorButton = generatedPart(refs.appSelector, 'control');
-              const quickActions = byRef(refs.quickActions);
-              const browserFrameStatus = byRef(refs.browserFrameStatus);
-              const browserViewport = byRef(refs.browserViewport);
-              const companion = byRef(refs.companion);
-              const companionHeader = byRef(refs.companionHeader);
-              const companionContent = byRef(refs.companionContent);
-              const companionStatus = byRef(refs.companionStatus);
-              const companionViewSwitchButton = generatedPart(refs.companionViewSwitch, 'control');
-              let companionTitle = null;
-              const conversation = byRef(refs.conversation);
-              const timeline = byRef(refs.conversationTimeline);
-              const jumpLatestButton = generatedPart(refs.conversationJumpLatest, 'control');
-              const responseProgress = byRef(refs.responseProgress);
-              const composer = generatedPart(refs.composer, 'text-field');
-              const contextReceipt = byRef(refs.contextReceipt);
-              const contextShareButton = generatedPart(refs.contextShare, 'control');
-              const sendButton = generatedPart(refs.send, 'control');
-              const stopButton = generatedPart(refs.stop, 'control');
-              const contextInspector = byRef(refs.contextInspector);
-              const settings = byRef(refs.settings);
-              const settingsContext = byRef(refs.settingsContext);
-              const settingsResources = byRef(refs.settingsResources);
-              const settingsHome = byRef(refs.settingsHome);
-              const contextWindow = byRef(refs.contextWindow);
-              const memoryResource = byRef(refs.memoryResource);
-              const thoughtVisibilityButton = generatedPart(refs.thoughtVisibility, 'control');
-              const lowMemoryAlertButton = generatedPart(refs.lowMemoryAlert, 'control');
-              const homeDirectoriesButton = generatedPart(refs.homeDirectories, 'control');
-              const homeAddDirectoryButton = generatedPart(refs.homeAddDirectory, 'control');
-              const continuityModeButton = generatedPart(refs.continuityMode, 'control');
-              const dreamSyncButton = generatedPart(refs.dreamSync, 'control');
-              const cleanChatButton = generatedPart(refs.cleanChat, 'control');
+              const byId = (id) => document.getElementById(id);
+              const ui = Object.freeze({
+                frame: byId('frame'),
+                seam: byId('seam'),
+                collapseBefore: byId('collapse-before'),
+                collapseAfter: byId('collapse-after'),
+                query: byId('query'),
+                addressForm: byId('address-form'),
+                addressError: byId('address-error'),
+                reload: byId('reload'),
+                appSelector: byId('app-selector'),
+                quickActions: byId('quick-actions'),
+                pageFrame: byId('page-frame'),
+                viewportEmpty: byId('viewport-empty'),
+                frameStatus: byId('frame-status'),
+                companionTitle: byId('companion-title'),
+                companionStatus: byId('companion-status'),
+                companionStatusText: byId('companion-status-text'),
+                companionStatusModel: byId('companion-status-model'),
+                viewSwitch: byId('view-switch'),
+                conversation: byId('view-conversation'),
+                settings: byId('view-settings'),
+                timeline: byId('timeline'),
+                jumpLatest: byId('jump-latest'),
+                responseProgress: byId('response-progress'),
+                contextShare: byId('context-share'),
+                contextShareLabel: byId('context-share-label'),
+                ticket: byId('ticket'),
+                ticketTitle: byId('ticket-title'),
+                ticketLine: byId('ticket-line'),
+                ticketUrl: byId('ticket-url'),
+                ticketHash: byId('ticket-hash'),
+                ticketView: byId('ticket-view'),
+                composerHold: byId('composer-hold'),
+                composeForm: byId('compose-form'),
+                draft: byId('draft'),
+                send: byId('send'),
+                stop: byId('stop'),
+                contextWindow: byId('context-window'),
+                contextCore: byId('context-core'),
+                contextUsed: byId('context-used'),
+                contextRemaining: byId('context-remaining'),
+                contextText: byId('context-text'),
+                contextNote: byId('context-note'),
+                memory: byId('memory'),
+                memoryUsed: byId('memory-used'),
+                memoryRemaining: byId('memory-remaining'),
+                memoryText: byId('memory-text'),
+                memoryNote: byId('memory-note'),
+                thoughtVisibility: byId('thought-visibility'),
+                lowMemoryAlert: byId('low-memory-alert'),
+                alertThreshold: byId('alert-threshold'),
+                cleanChat: byId('clean-chat'),
+                inspector: byId('inspector'),
+                inspectorTitle: byId('inspector-title'),
+                inspectorFacts: byId('inspector-facts'),
+                inspectorText: byId('inspector-text'),
+                inspectorClose: byId('inspector-close'),
+                snackbar: byId('snackbar')
+              });
 
-              let currentBrowserContext = null;
-              let includeBrowserContext = false;
-              let activeCompanionView = 'conversation';
-              let frame = null;
-              let pendingSend = null;
-
-              if (brand) {
-                brand.setAttribute('aria-label', 'VexLife');
-                const mark = document.createElement('span');
-                mark.dataset.vexGeneratedPart = 'brand-mark';
-                mark.textContent = 'ⓥ';
-                const brandName = document.createElement('strong');
-                brandName.dataset.vexGeneratedPart = 'brand-name';
-                brandName.textContent = 'VexLife';
-                brand.replaceChildren(mark, brandName);
-              }
-              if (vexSummonButton) {
-                vexSummonButton.textContent = 'V';
-                vexSummonButton.setAttribute('aria-label', 'Summon Vex');
-                vexSummonButton.title = 'Summon Vex';
-              }
-              if (appSelectorButton) {
-                appSelectorButton.textContent = 'Browser';
-                appSelectorButton.setAttribute('aria-label', 'Current app: Browser');
-                appSelectorButton.disabled = true;
-              }
-              if (quickActions) quickActions.setAttribute('aria-label', 'Quick actions');
-              if (companionHeader) {
-                companionHeader.setAttribute('aria-label', 'Vex companion');
-                const title = document.createElement('h1');
-                title.dataset.vexGeneratedPart = 'companion-title';
-                title.textContent = 'Converse with Vex';
-                companionHeader.prepend(title);
-                companionTitle = title;
-              }
-              if (companionStatus) {
-                companionStatus.textContent = 'Checking';
-                companionStatus.dataset.vexReady = 'false';
-              }
-              if (companionViewSwitchButton) {
-                companionViewSwitchButton.textContent = 'Settings';
-                companionViewSwitchButton.setAttribute('aria-expanded', 'false');
-              }
-              if (browserQuery) {
-                browserQuery.placeholder = 'Open a Vex page URL';
-                browserQuery.rows = 1;
-                browserQuery.setAttribute('aria-label', 'Vex browser URL');
-                browserQuery.setAttribute('spellcheck', 'false');
-              }
-              if (timeline) {
-                timeline.setAttribute('role', 'log');
-                timeline.setAttribute('aria-live', 'polite');
-                timeline.setAttribute('aria-relevant', 'additions text');
-                timeline.setAttribute('aria-label', 'Conversation with Vex');
-              }
-              if (jumpLatestButton) {
-                jumpLatestButton.textContent = 'New messages';
-                jumpLatestButton.hidden = true;
-              }
-              if (responseProgress) {
-                responseProgress.setAttribute('role', 'status');
-                responseProgress.setAttribute('aria-live', 'polite');
-              }
-              if (composer) {
-                composer.placeholder = 'Message Vex…';
-                composer.setAttribute('aria-label', 'Message Vex');
-              }
-              if (contextShareButton) {
-                contextShareButton.textContent = 'Include this page';
-                contextShareButton.setAttribute('aria-pressed', 'false');
-              }
-              if (sendButton) {
-                sendButton.textContent = 'Send';
-                sendButton.setAttribute('aria-label', 'Send message to Vex');
-              }
-              if (settings) {
-                settings.setAttribute('aria-label', 'Settings');
-                settings.hidden = true;
-              }
-              if (settingsContext) settingsContext.setAttribute('aria-live', 'polite');
-              const setHeldControl = (button, label) => {
-                if (!button) return;
-                button.textContent = label;
-                button.disabled = true;
-                button.dataset.vexHeld = 'true';
+              const state = {
+                conversation: null,
+                context: null,
+                currentness: null,
+                browserContext: null,
+                includePage: false,
+                view: 'conversation',
+                allocation: null,
+                collapsed: 'none',
+                pending: null,
+                sendInFlight: false,
+                thoughtsVisible: true,
+                theme: null
               };
-              setHeldControl(stopButton, 'Stop');
-              setHeldControl(thoughtVisibilityButton, 'Viewable thoughts');
-              setHeldControl(lowMemoryAlertButton, 'Low memory alert');
-              setHeldControl(homeDirectoriesButton, 'View accessible directories');
-              setHeldControl(homeAddDirectoryButton, 'Add');
-              setHeldControl(continuityModeButton, 'Continuity mode · Not connected');
-              setHeldControl(dreamSyncButton, 'Dream sync · Not connected');
-              setHeldControl(cleanChatButton, 'Start clean chat');
-              if (browserCompanionHandle) {
-                browserCompanionHandle.tabIndex = 0;
-                browserCompanionHandle.setAttribute('role', 'separator');
-                browserCompanionHandle.setAttribute('aria-label', 'Resize browser and Vex companion');
-                browserCompanionHandle.setAttribute('aria-orientation', 'vertical');
-                browserCompanionHandle.setAttribute('aria-valuemin', '0');
-                browserCompanionHandle.setAttribute('aria-valuemax', '100');
-                browserCompanionHandle.setAttribute(
-                  'aria-keyshortcuts',
-                  'ArrowLeft ArrowRight Home End Enter'
-                );
-              }
 
-              const ensureSettingsHeading = (host, text) => {
-                if (!host || host.querySelector('[data-vex-generated-part="settings-heading"]')) return;
-                const heading = document.createElement('h2');
-                heading.dataset.vexGeneratedPart = 'settings-heading';
-                heading.textContent = text;
-                host.prepend(heading);
+              const QUICK_ACTIONS = [
+                { key: 'journeys', label: 'Journeys', icon: '<path d="M4 15.5c0-2 1.6-3 3.4-3.4l3.4-.8 2.2-4.3c.4-.8 1.4-1 2-.3l.6.6c.5.5.5 1.3 0 1.8l-1 1.2 2.8.8c1.4.4 2.4 1.7 2.4 3.2v1.2H4z"/><path d="M8 12l1.4 2M11 11.4l1.3 2"/>' },
+                { key: 'sound', label: 'Sound', icon: '<path d="M4 9.5h3.2L11.5 6v12l-4.3-3.5H4z"/><path d="M15 9.2a4 4 0 0 1 0 5.6M17.6 6.8a7.3 7.3 0 0 1 0 10.4"/>' },
+                { key: 'theme', label: 'Light or dark', bound: true, icon: '<circle cx="12" cy="12" r="3.8"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/>' },
+                { key: 'language', label: 'Language', icon: '<path d="M5 20.5V4M5 4.5h12.5l-2 3.5 2 3.5H5"/>' },
+                { key: 'evolution', label: 'Evolution', icon: '<path d="M12.2 12.1c.4-.6-.3-1.4-1-1.2-1.3.4-1.3 2.3-.1 3 1.8 1 4-.5 3.9-2.6-.1-3-3.6-4.3-6-2.8-3.1 2-2.6 6.9.7 8.3 3.9 1.6 8.3-1.2 8.2-5.6"/>' }
+              ];
+
+              const readJson = async (response) => {
+                const value = await response.json();
+                if (!response.ok) {
+                  const error = new Error(String(value?.message ?? ('HTTP ' + response.status)));
+                  error.vexStatus = response.status;
+                  error.vexResponse = value;
+                  throw error;
+                }
+                return value;
               };
-              ensureSettingsHeading(settingsContext, 'Context window');
-              ensureSettingsHeading(settingsResources, 'Memory');
-              ensureSettingsHeading(settingsHome, 'VexLife Home');
 
-              const renderMeter = (host, used, total, label) => {
-                if (!host) return;
-                host.replaceChildren();
-                const fill = document.createElement('span');
-                fill.dataset.vexGeneratedPart = 'meter-fill';
-                const safeTotal = Number(total) > 0 ? Number(total) : 0;
-                const safeUsed = Math.max(0, Number(used) || 0);
-                fill.style.width = safeTotal > 0 ? Math.min(100, (safeUsed / safeTotal) * 100) + '%' : '0%';
-                const text = document.createElement('span');
-                text.dataset.vexGeneratedPart = 'meter-text';
-                text.textContent = label;
-                host.append(fill, text);
+              const notify = (message) => {
+                if (!ui.snackbar) return;
+                ui.snackbar.textContent = message;
+                ui.snackbar.hidden = false;
+                clearTimeout(notify.timer);
+                notify.timer = setTimeout(() => { ui.snackbar.hidden = true; }, 4800);
               };
-              renderMeter(memoryResource, 0, 0, 'Memory not connected');
 
-              const setProgress = (message, state = 'idle') => {
-                if (!responseProgress) return;
-                responseProgress.textContent = message ?? '';
-                responseProgress.dataset.vexProgressState = state;
+              const currentTheme = () =>
+                document.documentElement.dataset.theme ||
+                (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+              const applyTheme = () => {
+                try {
+                  state.theme = localStorage.getItem('vexlife-prod.presentation.theme');
+                } catch {
+                  state.theme = null;
+                }
+                if (state.theme === 'light' || state.theme === 'dark') {
+                  document.documentElement.dataset.theme = state.theme;
+                } else {
+                  delete document.documentElement.dataset.theme;
+                }
+              };
+
+              const toggleTheme = () => {
+                state.theme = currentTheme() === 'dark' ? 'light' : 'dark';
+                document.documentElement.dataset.theme = state.theme;
+                try {
+                  localStorage.setItem('vexlife-prod.presentation.theme', state.theme);
+                } catch {}
+              };
+
+              const renderQuickActions = () => {
+                if (!ui.quickActions) return;
+                const sourceOnly = [...ui.quickActions.children].filter((item) => item.hidden);
+                const items = QUICK_ACTIONS.map((action) => {
+                  const item = document.createElement('li');
+                  const button = document.createElement('button');
+                  button.type = 'button';
+                  button.className = 'quick-action';
+                  button.dataset.action = action.key;
+                  button.dataset.bound = String(Boolean(action.bound));
+                  button.setAttribute('aria-label', action.bound ? action.label : action.label + ' (not connected yet)');
+                  button.title = action.bound ? action.label : action.label + ': not connected yet';
+                  button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + action.icon + '</svg>';
+                  item.append(button);
+                  return item;
+                });
+                ui.quickActions.replaceChildren(...sourceOnly, ...items);
+              };
+
+              const setCompanionStatus = (stateName, text, model = '') => {
+                if (!ui.companionStatus) return;
+                ui.companionStatus.dataset.state = stateName;
+                ui.companionStatusText.textContent = text;
+                ui.companionStatusModel.textContent = model;
               };
 
               const frameUrlFor = (pageUrl) => {
-                const parsed = new URL(pageUrl);
-                if (parsed.protocol !== 'https:' || parsed.port || !browser.admittedHosts.includes(parsed.hostname)) {
-                  throw new Error('Page is outside the admitted Vex-owned GitHub Pages boundary.');
+                const page = new URL(pageUrl);
+                if (page.protocol !== 'https:' || page.port || !browser.admittedHosts.includes(page.hostname)) {
+                  throw new Error('This browser opens admitted Vex-owned public pages only.');
                 }
-                return 'http://' + parsed.hostname + browser.frameHostSuffix + ':' + browser.frameHostPort + parsed.pathname + parsed.search + parsed.hash;
+                return 'http://' + page.hostname + browser.frameHostSuffix + ':' + browser.frameHostPort + page.pathname + page.search + page.hash;
+              };
+
+              const admitPageAddress = (value) => {
+                let text = String(value ?? '').trim();
+                if (!text) throw new Error('Type a web address.');
+                if (!/^[a-z][a-z0-9+.-]*:/iu.test(text)) text = 'https://' + text;
+                const page = new URL(text);
+                if (page.protocol !== 'https:' || page.port || !browser.admittedHosts.includes(page.hostname)) {
+                  throw new Error('This page is outside the admitted Vex-owned public boundary.');
+                }
+                return page.href;
               };
 
               const normalizeContext = (value) => {
@@ -321,416 +263,508 @@ object VexLifeWebP1RuntimeArtifacts {
                 } catch {
                   return null;
                 }
-                const text = value.text
-                  .slice(0, browser.contextCharacterLimit)
-                  .replace(/\r\n?/gu, '\n')
-                  .trim();
+                const text = value.text.slice(0, browser.contextCharacterLimit).replace(/\r\n?/gu, '\n').trim();
                 if (!text) return null;
                 const title = typeof value.title === 'string' && value.title.length > 0
                   ? value.title.slice(0, browser.maxTitleCharacters)
                   : null;
-                return Object.freeze({
-                  pageUrl: value.pageUrl,
-                  title,
-                  text,
-                  capture: browser.captureRendered
-                });
+                return Object.freeze({ pageUrl: value.pageUrl, title, text, capture: browser.captureRendered });
               };
 
-              const navigate = (pageUrl) => {
-                if (!frame || !browserQuery) return;
-                const framed = frameUrlFor(pageUrl);
-                currentBrowserContext = null;
-                browserQuery.value = pageUrl;
-                frame.src = framed;
-                setProgress('Loading browser page…', 'browser-loading');
+              const renderFrameStatus = (text = '', stateName = '') => {
+                if (!ui.frameStatus) return;
+                ui.frameStatus.textContent = text;
+                ui.frameStatus.dataset.frame = stateName;
+                ui.frameStatus.hidden = !text;
               };
 
-              const isNearBottom = (element) =>
-                element.scrollHeight - element.scrollTop - element.clientHeight < 72;
-
-              const scrollConversationToLatest = () => {
-                if (!timeline) return;
-                timeline.scrollTop = timeline.scrollHeight;
-                if (jumpLatestButton) jumpLatestButton.hidden = true;
+              const navigate = (value) => {
+                const pageUrl = admitPageAddress(value);
+                state.browserContext = null;
+                ui.query.value = pageUrl;
+                ui.pageFrame.src = frameUrlFor(pageUrl);
+                ui.viewportEmpty.hidden = true;
+                renderFrameStatus('Loading page…', 'Loading');
+                renderComposer();
               };
 
-              const createConversationItem = (message) => {
+              const isNearBottom = () =>
+                ui.timeline.scrollHeight - ui.timeline.scrollTop - ui.timeline.clientHeight < 72;
+
+              const nextSequence = () => {
+                const messages = state.conversation?.messages ?? [];
+                return messages.reduce((max, message) => Math.max(max, Number(message.sequence) || 0), -1) + 1;
+              };
+
+              const messageNode = (message) => {
                 const item = document.createElement('li');
-                item.dataset.vexGeneratedPart = 'conversation-message';
-                item.dataset.vexConversationRole = String(message.role ?? 'unknown');
-                item.dataset.vexConversationEventRef = String(message.eventRef ?? '');
+                const human = message.role === 'human';
+                item.className = 'message ' + (human ? 'message-you' : 'message-vex');
+                item.dataset.eventRef = String(message.eventRef ?? '');
 
-                const index = document.createElement('span');
-                index.dataset.vexGeneratedPart = 'conversation-index';
-                const sequence = Number(message.sequence);
-                index.textContent = '[' + String(Number.isFinite(sequence) ? sequence : 0).padStart(2, '0') + ']';
+                const index = document.createElement('p');
+                index.className = 'message-index';
+                index.textContent = '[' + String(Number(message.sequence) || 0).padStart(2, '0') + ']';
 
                 const bubble = document.createElement('div');
-                bubble.dataset.vexGeneratedPart = 'conversation-bubble';
+                bubble.className = 'bubble';
                 const paragraph = document.createElement('p');
                 paragraph.textContent = String(message.content ?? '');
                 bubble.append(paragraph);
 
-                const speaker = document.createElement('div');
-                speaker.dataset.vexGeneratedPart = 'conversation-speaker';
-                speaker.textContent = message.role === 'human' ? 'You' : 'Vex';
+                const speaker = document.createElement('p');
+                speaker.className = 'speaker';
+                speaker.textContent = human ? 'You' : 'Vex';
 
                 item.append(index, bubble, speaker);
                 return item;
               };
 
-              const renderConversation = (projection) => {
-                if (!timeline) return;
-                const messages = projection.messages ?? [];
-                const wasNearBottom = isNearBottom(timeline);
-                const existingRefs = [...timeline.children]
-                  .map((item) => item.dataset.vexConversationEventRef ?? '');
-                const desiredRefs = messages.map((message) => String(message.eventRef ?? ''));
-                const prefixMatches =
-                  existingRefs.length <= desiredRefs.length &&
-                  existingRefs.every((ref, index) => ref === desiredRefs[index]);
+              const waitingNode = (sequence) => {
+                const item = document.createElement('li');
+                item.className = 'message message-vex waiting';
 
-                if (!prefixMatches) timeline.replaceChildren();
+                const index = document.createElement('p');
+                index.className = 'message-index';
+                index.textContent = '[' + String(sequence).padStart(2, '0') + ']';
 
-                const startIndex = prefixMatches ? existingRefs.length : 0;
-                let appended = false;
-                for (let index = startIndex; index < messages.length; index += 1) {
-                  timeline.append(createConversationItem(messages[index]));
-                  appended = true;
+                const thought = document.createElement('div');
+                thought.className = 'thought thinking-now';
+                const who = document.createElement('span');
+                who.className = 'speaker-inline';
+                who.textContent = 'Vex';
+                const mark = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                mark.setAttribute('class', 'thought-mark');
+                mark.setAttribute('viewBox', '0 0 16 16');
+                mark.innerHTML = '<path d="M8 1.8 14.2 8 8 14.2 1.8 8z"/><path d="M8 5 11 8 8 11 5 8z"/>';
+                const label = document.createElement('span');
+                label.textContent = 'responding…';
+                thought.append(who, mark, label);
+
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                const speaker = document.createElement('p');
+                speaker.className = 'speaker';
+                speaker.textContent = 'Vex';
+
+                item.append(index, thought, bubble, speaker);
+                return item;
+              };
+
+              const renderTimeline = () => {
+                if (!ui.timeline) return;
+                const nearBottom = isNearBottom();
+                const messages = state.conversation?.messages ?? [];
+                const nodes = messages.map(messageNode);
+
+                if (state.pending) {
+                  const sequence = nextSequence();
+                  nodes.push(messageNode({
+                    role: 'human',
+                    content: state.pending.content,
+                    sequence,
+                    eventRef: 'presentation.pending.' + state.pending.idempotencyKey
+                  }));
+                  nodes.push(waitingNode(sequence + 1));
                 }
 
-                timeline.dataset.vexConversationHead =
-                  projection.currentConversationHeadSha256 ?? '';
-                const latestModel = [...messages].reverse().find((message) => message.role === 'vex' && message.model)?.model ?? '';
-                if (companionStatus) {
-                  companionStatus.textContent = latestModel ? 'Ready · ' + latestModel : 'Ready';
-                  companionStatus.dataset.vexReady = 'true';
+                if (!nodes.length) {
+                  const empty = document.createElement('li');
+                  empty.className = 'timeline-empty';
+                  const heading = document.createElement('p');
+                  heading.className = 'timeline-empty-heading';
+                  heading.textContent = 'Converse with Vex';
+                  const note = document.createElement('p');
+                  note.textContent = 'Include the page to hand Vex its text. Enter sends; Shift+Enter starts a new line.';
+                  empty.append(heading, note);
+                  nodes.push(empty);
                 }
 
-                if (wasNearBottom || !prefixMatches) {
-                  scrollConversationToLatest();
-                } else if (appended && jumpLatestButton) {
-                  jumpLatestButton.hidden = false;
+                ui.timeline.replaceChildren(...nodes);
+                if (nearBottom || state.pending) {
+                  ui.timeline.scrollTop = ui.timeline.scrollHeight;
+                  ui.jumpLatest.hidden = true;
                 }
               };
 
-              const renderContext = (projection) => {
-                const prompt = projection?.promptContext ?? null;
+              const renderTicket = () => {
+                const context = state.browserContext;
+                const visible = state.includePage && context;
+                ui.ticket.hidden = !visible;
+                if (!visible) return;
+                ui.ticket.dataset.state = 'Ready';
+                ui.ticketTitle.textContent = context.title || 'Included page';
+                ui.ticketLine.textContent = 'This rendered page text will be given to Vex on the next turn.';
+                ui.ticketUrl.textContent = context.pageUrl;
+                ui.ticketHash.textContent = '';
+                ui.ticketView.dataset.contextReady = 'true';
+              };
+
+              const renderComposer = () => {
+                const canInclude = Boolean(state.browserContext);
+                ui.contextShare.disabled = !canInclude;
+                ui.contextShare.dataset.state = canInclude ? 'Ready' : 'Unavailable';
+                ui.contextShare.setAttribute('aria-pressed', String(state.includePage && canInclude));
+                ui.contextShareLabel.textContent = state.includePage && canInclude ? 'Page included' : 'Include this page';
+                ui.composerHold.textContent = !canInclude
+                  ? 'Page context becomes available when the opened page reports readable text.'
+                  : state.pending && !state.sendInFlight
+                    ? 'The prior Send outcome is unresolved. Send again to retry that exact attempt.'
+                    : '';
+                ui.send.disabled = state.sendInFlight || (!state.pending && !ui.draft.value.trim());
+                ui.responseProgress.hidden = true;
+                renderTicket();
+              };
+
+              const setMeter = (meter, parts, text, label, known = true) => {
+                if (!meter) return;
+                meter.dataset.known = String(known);
+                meter.setAttribute('aria-label', label);
+                parts.forEach(([node, share]) => { if (node) node.style.width = Math.max(0, Math.min(1, share)) * 100 + '%'; });
+                const textNode = meter.querySelector('.meter-text');
+                if (textNode) textNode.textContent = text;
+              };
+
+              const renderSettings = () => {
+                const prompt = state.context?.promptContext ?? null;
                 if (prompt) {
-                  const used = Number(prompt.providerMaterializedInputTokenEstimate ?? 0);
-                  const total = Number(prompt.hardTokenLimit ?? prompt.inputTokenBudget ?? 0);
-                  renderMeter(
-                    contextWindow,
-                    used,
-                    total,
-                    total > 0 ? used.toLocaleString() + ' / ' + total.toLocaleString() + ' tokens used' : 'Context measured'
+                  const hard = Number(prompt.hardTokenLimit) || 0;
+                  const used = Number(prompt.providerMaterializedInputTokenEstimate) || 0;
+                  const reserved = Number(prompt.reservedOutputTokens) || 0;
+                  const coreShare = hard > 0 ? Math.min(1, used / hard) : 0;
+                  const reservedShare = hard > 0 ? Math.min(1 - coreShare, reserved / hard) : 0;
+                  setMeter(
+                    ui.contextWindow,
+                    [[ui.contextCore, coreShare], [ui.contextUsed, reservedShare]],
+                    hard > 0 ? used.toLocaleString() + ' input · ' + reserved.toLocaleString() + ' reserved · ' + Math.max(0, hard - used - reserved).toLocaleString() + ' remaining' : 'Context measured',
+                    'Prompt context from the current canonical turn',
+                    hard > 0
                   );
+                  const priorCount = Array.isArray(prompt.selectedConversationEventRefs) ? prompt.selectedConversationEventRefs.length : 0;
+                  const memoryCount = Array.isArray(prompt.memorySourceRefs) ? prompt.memorySourceRefs.length : 0;
+                  ui.contextNote.textContent =
+                    'Canonical turn receipt: ' + priorCount + ' prior Conversation event' + (priorCount === 1 ? '' : 's') +
+                    ' selected. Whole-history enumeration: ' + (prompt.wholeHistoryEventEnumerationPerformed ? 'yes' : 'no') + '.';
+                  ui.memoryNote.textContent = prompt.memoryIncluded
+                    ? 'VexLife Memory contributed through ' + memoryCount + ' source' + (memoryCount === 1 ? '' : 's') + ' to the current prompt.'
+                    : 'No VexLife Memory packet was included in the current prompt.';
                 } else {
-                  renderMeter(contextWindow, 0, 0, 'Context not measured yet');
+                  setMeter(ui.contextWindow, [[ui.contextCore, 0], [ui.contextUsed, 0]], 'No turn receipt yet', 'No current prompt receipt', false);
+                  ui.contextNote.textContent = 'Send a turn to inspect the current New-Beginnings prompt sequencing.';
+                  ui.memoryNote.textContent = 'Memory inclusion is reported per completed canonical turn.';
                 }
 
-                if (settingsContext) {
-                  settingsContext.dataset.vexContextState = prompt ? 'current' : 'empty';
-                  settingsContext.dataset.vexPromptReceiptRef = String(prompt?.receiptRef ?? '');
-                  settingsContext.dataset.vexCapabilityFrameRef = String(prompt?.capabilityFrame?.frameRef ?? '');
-                }
-
-                if (contextReceipt) {
-                  contextReceipt.dataset.vexContextIncluded = String(includeBrowserContext && currentBrowserContext !== null);
-                  contextReceipt.replaceChildren();
-                  if (includeBrowserContext && currentBrowserContext) {
-                    const title = document.createElement('strong');
-                    title.textContent = currentBrowserContext.title || 'Included page';
-                    const line = document.createElement('div');
-                    line.textContent = currentBrowserContext.pageUrl;
-                    contextReceipt.append(title, line);
-                  }
-                }
+                setMeter(ui.memory, [[ui.memoryUsed, 0]], 'Not measured', 'Mac memory is not exposed by the current service', false);
+                ui.thoughtVisibility.setAttribute('aria-checked', String(state.thoughtsVisible));
+                ui.lowMemoryAlert.setAttribute('aria-checked', 'false');
+                ui.lowMemoryAlert.disabled = true;
+                ui.alertThreshold.textContent = 'not measured';
               };
 
-              const loadConversation = async () => {
-                const response = await fetch(service.conversationPath, {
-                  method: 'GET',
-                  headers: { 'accept': 'application/json' },
-                  cache: 'no-store'
-                });
-                renderConversation(await readJson(response));
+              const renderCompanionHead = () => {
+                const settings = state.view === 'settings';
+                ui.companionTitle.textContent = settings ? 'Settings' : 'Converse with Vex';
+                ui.companionStatus.hidden = settings;
+                ui.viewSwitch.textContent = settings ? 'Return' : 'Settings';
+                ui.viewSwitch.setAttribute('aria-expanded', String(settings));
+                ui.conversation.hidden = settings;
+                ui.settings.hidden = !settings;
               };
 
-              const loadContext = async () => {
-                const response = await fetch(service.contextPath, {
-                  method: 'GET',
-                  headers: { 'accept': 'application/json' },
-                  cache: 'no-store'
-                });
-                renderContext(await readJson(response));
+              const render = () => {
+                renderCompanionHead();
+                renderTimeline();
+                renderComposer();
+                renderSettings();
               };
 
               const loadSourceCurrentness = async () => {
-                const response = await fetch(service.sourceCurrentnessPath, {
-                  method: 'GET',
-                  headers: { 'accept': 'application/json' },
-                  cache: 'no-store'
-                });
-                const currentness = await readJson(response);
-                root.dataset.vexServiceSourceSha = String(currentness.sourceSha ?? '');
-                root.dataset.vexServicePid = String(currentness.processPid ?? '');
-                root.dataset.vexFrameHostOrigin = String(currentness.frameHostOrigin ?? '');
-                if (companionStatus && companionStatus.dataset.vexReady !== 'true') {
-                  companionStatus.textContent = currentness.runtimeCurrentness === 'CURRENT' ? 'Ready' : String(currentness.runtimeCurrentness ?? 'Checking');
-                  companionStatus.dataset.vexReady = String(currentness.runtimeCurrentness === 'CURRENT');
-                }
+                const response = await fetch(service.sourceCurrentnessPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                state.currentness = await readJson(response);
+                root.dataset.vexServiceSourceSha = String(state.currentness.sourceSha ?? '');
+                root.dataset.vexServicePid = String(state.currentness.processPid ?? '');
+                setCompanionStatus('Ready', 'Ready', ui.companionStatusModel.textContent);
               };
 
-              const currentBrowserShare = () => {
-                if (!bodyFrame) return browser.authoredBrowserShare;
-                const raw = getComputedStyle(bodyFrame)
-                  .getPropertyValue('--vex-browser-share')
-                  .trim();
-                const parsed = Number.parseFloat(raw);
-                return Number.isFinite(parsed) ? parsed / 100 : browser.authoredBrowserShare;
+              const loadConversation = async () => {
+                const response = await fetch(service.conversationPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                state.conversation = await readJson(response);
+                const messages = state.conversation?.messages ?? [];
+                const latest = [...messages].reverse().find((message) => message.role === 'vex' && message.model);
+                setCompanionStatus('Ready', 'Ready', latest?.model ?? '');
+                renderTimeline();
               };
 
-              const syncBrowserShareAccessibility = () => {
-                if (!browserCompanionHandle) return;
-                const boundaryPercent = Math.round(currentBrowserShare() * 100);
-                browserCompanionHandle.setAttribute(
-                  'aria-valuenow',
-                  String(boundaryPercent)
-                );
-                browserCompanionHandle.setAttribute(
-                  'aria-valuetext',
-                  'Browser ' + boundaryPercent + '%, Vex companion ' + (100 - boundaryPercent) + '%'
-                );
+              const loadContext = async () => {
+                const response = await fetch(service.contextPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                state.context = await readJson(response);
+                renderSettings();
               };
-
-              const applyBrowserShare = (share) => {
-                if (!bodyFrame) return;
-                const clamped = Math.max(0, Math.min(1, share));
-                bodyFrame.style.setProperty(
-                  '--vex-browser-share',
-                  (clamped * 100).toFixed(3).replace(/0+$/u, '').replace(/\.$/u, '') + '%'
-                );
-                root.dataset.vexBrowserShare = String(clamped);
-                syncBrowserShareAccessibility();
-              };
-
-              const adjustBrowserShare = (delta) => {
-                applyBrowserShare(currentBrowserShare() + delta);
-              };
-
-              applyBrowserShare(browser.authoredBrowserShare);
-              window.addEventListener('resize', syncBrowserShareAccessibility);
 
               const send = async () => {
-                const content = composer?.value?.trim() ?? '';
-                if ((!content && !pendingSend) || !sendButton) return;
-                sendButton.disabled = true;
-                const retrying = pendingSend !== null;
-                if (!pendingSend) {
-                  pendingSend = Object.freeze({
-                    idempotencyKey: 'send.' + crypto.randomUUID().toLowerCase(),
-                    content,
-                    browserContext: includeBrowserContext ? currentBrowserContext : null
-                  });
+                if (state.sendInFlight) return;
+
+                const retrying = state.pending !== null;
+                const content = retrying ? state.pending.content : ui.draft.value.trim();
+                if (!content) return;
+
+                const pending = state.pending ?? Object.freeze({
+                  idempotencyKey: 'send.' + crypto.randomUUID().toLowerCase(),
+                  content,
+                  browserContext: state.includePage ? state.browserContext : null
+                });
+                state.pending = pending;
+                state.sendInFlight = true;
+                if (!retrying) {
+                  ui.draft.value = '';
+                  sizeDraft();
                 }
-                setProgress(retrying ? 'Retrying the prior exact send…' : 'Vex is responding…', 'sending');
+                setCompanionStatus('Checking', retrying ? 'Retrying exact Send' : 'Responding', '');
+                render();
+
                 try {
                   const response = await fetch(service.sendPath, {
                     method: 'POST',
-                    headers: {
-                      'accept': 'application/json',
-                      'content-type': 'application/json'
-                    },
-                    body: JSON.stringify(pendingSend)
+                    headers: { accept: 'application/json', 'content-type': 'application/json' },
+                    body: JSON.stringify(pending)
                   });
                   const result = await readJson(response);
-                  pendingSend = null;
-                  if (composer) composer.value = '';
-                  await Promise.all([
-                    loadConversation(),
-                    loadContext()
-                  ]);
+                  state.pending = null;
+                  state.sendInFlight = false;
                   root.dataset.vexLastContextPath = String(result.contextPath ?? '');
                   root.dataset.vexLastPromptReceiptRef = String(result.promptContext?.receiptRef ?? '');
                   root.dataset.vexLastBrowserContextRef = String(result.promptContext?.browserContextRef ?? '');
-                  setProgress('', 'complete');
+                  setCompanionStatus('Ready', 'Ready', result.model ?? '');
+                  render();
+
+                  try {
+                    await Promise.all([loadConversation(), loadContext()]);
+                  } catch (projectionError) {
+                    notify(
+                      'Turn completed, but the current projection could not be refreshed: ' +
+                      (projectionError instanceof Error ? projectionError.message : 'refresh failed.')
+                    );
+                  }
                 } catch (error) {
+                  state.sendInFlight = false;
                   const status = Number(error?.vexStatus ?? 0);
                   const retryAllowed = error?.vexResponse?.retrySameSendAttemptAllowed;
-                  if (status === 400 || retryAllowed === false) pendingSend = null;
-                  setProgress(error instanceof Error ? error.message : 'Send failed.', 'error');
-                } finally {
-                  sendButton.disabled = false;
+                  const retireAttempt = status === 400 || retryAllowed === false;
+
+                  if (retireAttempt) {
+                    state.pending = null;
+                    if (!ui.draft.value) ui.draft.value = pending.content;
+                    setCompanionStatus('Unavailable', 'Send failed', '');
+                  } else {
+                    state.pending = pending;
+                    setCompanionStatus('Unavailable', 'Send outcome unresolved', '');
+                  }
+
+                  sizeDraft();
+                  render();
+                  notify(error instanceof Error ? error.message : 'Send failed.');
                 }
               };
 
-              if (browserViewport) {
-                frame = document.createElement('iframe');
-                frame.dataset.vexGeneratedPart = 'nested-browser';
-                frame.title = 'Vex browser';
-                frame.referrerPolicy = 'no-referrer';
-                frame.setAttribute('sandbox', 'allow-scripts allow-same-origin');
-                frame.addEventListener('load', () => {
-                  currentBrowserContext = null;
-                  root.dataset.vexCurrentBrowserPage = '';
-                  setProgress('Waiting for browser page context…', 'browser-loading');
-                });
-                frame.style.border = '0';
-                frame.style.width = '100%';
-                frame.style.height = '100%';
-                browserViewport.append(frame);
-              }
+              const sizeDraft = () => {
+                ui.draft.style.height = 'auto';
+                ui.draft.style.height = Math.min(ui.draft.scrollHeight + 2, 220) + 'px';
+                renderComposer();
+              };
 
-              window.addEventListener('message', (event) => {
-                if (!frame || event.source !== frame.contentWindow) return;
-                const next = normalizeContext(event.data);
-                if (!next) return;
-                currentBrowserContext = next;
-                if (browserQuery) browserQuery.value = next.pageUrl;
-                root.dataset.vexCurrentBrowserPage = next.pageUrl;
-                if (browserFrameStatus) {
-                  browserFrameStatus.textContent = '';
-                  browserFrameStatus.dataset.vexFrameState = 'current';
-                }
-                if (contextReceipt && includeBrowserContext) {
-                  contextReceipt.dataset.vexContextIncluded = 'true';
-                  contextReceipt.replaceChildren();
-                  const title = document.createElement('strong');
-                  title.textContent = next.title || 'Included page';
-                  const line = document.createElement('div');
-                  line.textContent = next.pageUrl;
-                  contextReceipt.append(title, line);
-                }
-                setProgress('', 'browser-current');
-              });
+              const applySplit = () => {
+                const share = state.allocation ?? browser.authoredBrowserShare;
+                ui.frame.dataset.collapsed = state.collapsed ?? 'none';
+                ui.frame.style.setProperty('--before', (share * 100).toFixed(2) + '%');
+                ui.seam.setAttribute('aria-valuenow', String(Math.round(share * 100)));
+                ui.seam.setAttribute('aria-valuetext', 'Browser ' + Math.round(share * 100) + ' percent');
+              };
 
-              browserQuery?.addEventListener('keydown', (event) => {
-                if (event.key !== 'Enter' || event.shiftKey) return;
+              const setSplitFromClientX = (clientX) => {
+                const rect = ui.frame.getBoundingClientRect();
+                if (rect.width <= 0) return;
+                state.allocation = Math.min(0.85, Math.max(0.15, (clientX - rect.left) / rect.width));
+                state.collapsed = 'none';
+                applySplit();
+              };
+
+              const showInspector = (title, facts, text) => {
+                ui.inspectorTitle.textContent = title;
+                ui.inspectorFacts.replaceChildren(...facts.flatMap(([term, value]) => {
+                  const dt = document.createElement('dt');
+                  dt.textContent = term;
+                  const dd = document.createElement('dd');
+                  dd.textContent = value;
+                  return [dt, dd];
+                }));
+                ui.inspectorText.textContent = text;
+                ui.inspector.showModal();
+              };
+
+              const openCurrentContext = () => {
+                if (!state.browserContext) return;
+                showInspector(
+                  'Captured page',
+                  [['Page', state.browserContext.pageUrl], ['Title', state.browserContext.title || 'None'], ['Read from', 'Rendered page text']],
+                  state.browserContext.text
+                );
+              };
+
+              applyTheme();
+              renderQuickActions();
+              applySplit();
+              render();
+
+              ui.addressForm.addEventListener('submit', (event) => {
                 event.preventDefault();
                 try {
-                  navigate(browserQuery.value.trim());
+                  navigate(ui.query.value);
+                  ui.query.blur();
+                  ui.addressError.hidden = true;
                 } catch (error) {
-                  setProgress(error instanceof Error ? error.message : 'Page is not admitted.', 'browser-error');
+                  ui.addressError.textContent = error instanceof Error ? error.message : 'Page is not admitted.';
+                  ui.addressError.hidden = false;
                 }
               });
+              ui.query.addEventListener('input', () => { ui.addressError.hidden = true; });
+              ui.reload.addEventListener('click', () => {
+                try { navigate(ui.query.value); } catch (error) { notify(error.message); }
+              });
+              ui.appSelector.addEventListener('change', () => { ui.appSelector.value = 'browser'; });
 
-              timeline?.addEventListener('scroll', () => {
-                if (isNearBottom(timeline) && jumpLatestButton) {
-                  jumpLatestButton.hidden = true;
-                }
+              window.addEventListener('message', (event) => {
+                if (event.source !== ui.pageFrame.contentWindow) return;
+                const next = normalizeContext(event.data);
+                if (!next) return;
+                state.browserContext = next;
+                ui.query.value = next.pageUrl;
+                renderFrameStatus();
+                renderComposer();
               });
 
-              jumpLatestButton?.addEventListener('click', () => {
-                scrollConversationToLatest();
+              ui.pageFrame.addEventListener('load', () => {
+                state.browserContext = null;
+                renderFrameStatus('Waiting for readable page context…', 'Loading');
+                renderComposer();
               });
 
-              contextShareButton?.addEventListener('click', () => {
-                includeBrowserContext = !includeBrowserContext;
-                contextShareButton.setAttribute('aria-pressed', String(includeBrowserContext));
-                contextShareButton.textContent = includeBrowserContext ? 'Page included' : 'Include this page';
-                if (contextReceipt) {
-                  contextReceipt.dataset.vexContextIncluded = String(includeBrowserContext && currentBrowserContext !== null);
+              ui.quickActions.addEventListener('click', (event) => {
+                const button = event.target.closest('.quick-action');
+                if (!button) return;
+                const action = QUICK_ACTIONS.find((candidate) => candidate.key === button.dataset.action);
+                if (!action) return;
+                if (action.key === 'theme') {
+                  toggleTheme();
+                  return;
                 }
-                void loadContext();
+                notify(action.label + " isn't connected in this workspace yet.");
               });
 
-              companionViewSwitchButton?.addEventListener('click', () => {
-                activeCompanionView = activeCompanionView === 'conversation' ? 'settings' : 'conversation';
-                if (conversation) conversation.hidden = activeCompanionView !== 'conversation';
-                if (settings) settings.hidden = activeCompanionView !== 'settings';
-                companionViewSwitchButton.textContent = activeCompanionView === 'conversation' ? 'Settings' : 'Return';
-                companionViewSwitchButton.setAttribute('aria-expanded', String(activeCompanionView === 'settings'));
-                if (companionTitle) {
-                  companionTitle.textContent = activeCompanionView === 'conversation' ? 'Converse with Vex' : 'Settings';
-                }
-                if (companionStatus) {
-                  companionStatus.hidden = activeCompanionView === 'settings';
-                }
+              ui.viewSwitch.addEventListener('click', () => {
+                state.view = state.view === 'settings' ? 'conversation' : 'settings';
+                renderCompanionHead();
+                if (state.view === 'settings') renderSettings();
               });
 
-              composer?.addEventListener('keydown', (event) => {
-                if (event.key !== 'Enter' || !(event.metaKey || event.ctrlKey)) return;
+              ui.contextShare.addEventListener('click', () => {
+                if (!state.browserContext) return;
+                state.includePage = !state.includePage;
+                renderComposer();
+              });
+
+              ui.composeForm.addEventListener('submit', (event) => {
                 event.preventDefault();
                 void send();
               });
 
-              vexSummonButton?.addEventListener('click', () => {
-                if (currentBrowserShare() >= 0.96) {
-                  applyBrowserShare(browser.authoredBrowserShare);
-                }
-                composer?.focus();
-              });
-
-              if (browserCompanionHandle && bodyFrame) {
-                browserCompanionHandle.addEventListener('pointerdown', (event) => {
+              ui.draft.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
                   event.preventDefault();
-                  browserCompanionHandle.setPointerCapture(event.pointerId);
-                });
-
-                browserCompanionHandle.addEventListener('pointermove', (event) => {
-                  if (!browserCompanionHandle.hasPointerCapture(event.pointerId)) return;
-                  const rect = bodyFrame.getBoundingClientRect();
-                  if (rect.width <= 0) return;
-                  applyBrowserShare((event.clientX - rect.left) / rect.width);
-                });
-
-                browserCompanionHandle.addEventListener('pointerup', (event) => {
-                  if (browserCompanionHandle.hasPointerCapture(event.pointerId)) {
-                    browserCompanionHandle.releasePointerCapture(event.pointerId);
-                  }
-                });
-
-                browserCompanionHandle.addEventListener('keydown', (event) => {
-                  if (event.key === 'ArrowLeft') {
-                    event.preventDefault();
-                    adjustBrowserShare(-0.04);
-                  } else if (event.key === 'ArrowRight') {
-                    event.preventDefault();
-                    adjustBrowserShare(0.04);
-                  } else if (event.key === 'Home') {
-                    event.preventDefault();
-                    applyBrowserShare(0);
-                  } else if (event.key === 'End') {
-                    event.preventDefault();
-                    applyBrowserShare(1);
-                  } else if (event.key === 'Enter') {
-                    event.preventDefault();
-                    applyBrowserShare(0.5);
-                  }
-                });
-              }
-
-              sendButton?.addEventListener('click', () => {
-                void send();
+                  void send();
+                }
               });
 
-              void Promise.all([
-                loadSourceCurrentness(),
-                loadConversation(),
-                loadContext()
-              ]).catch((error) => {
-                setProgress(error instanceof Error ? error.message : 'Local service is not ready.', 'error');
+              ui.draft.addEventListener('input', () => sizeDraft());
+              ui.timeline.addEventListener('scroll', () => {
+                if (isNearBottom()) ui.jumpLatest.hidden = true;
+              });
+              ui.jumpLatest.addEventListener('click', () => {
+                ui.timeline.scrollTop = ui.timeline.scrollHeight;
+                ui.jumpLatest.hidden = true;
               });
 
-              if (frame && browserQuery) navigate(browser.initialPageUrl);
+              ui.ticketView.addEventListener('click', openCurrentContext);
+              ui.inspectorClose.addEventListener('click', () => ui.inspector.close());
+
+              ui.thoughtVisibility.addEventListener('click', () => {
+                state.thoughtsVisible = !state.thoughtsVisible;
+                renderSettings();
+              });
+
+              ui.cleanChat.addEventListener('click', () => {
+                notify('Current New-Beginnings Conversation reset/archive semantics are not owned by this presentation yet.');
+              });
+
+              ui.collapseBefore.addEventListener('click', () => {
+                state.collapsed = state.collapsed === 'before' ? 'none' : 'before';
+                applySplit();
+              });
+              ui.collapseAfter.addEventListener('click', () => {
+                state.collapsed = state.collapsed === 'after' ? 'none' : 'after';
+                applySplit();
+              });
+
+              ui.seam.addEventListener('pointerdown', (event) => {
+                if (event.target.closest('button')) return;
+                ui.seam.setPointerCapture(event.pointerId);
+                ui.frame.classList.add('resizing');
+              });
+              ui.seam.addEventListener('pointermove', (event) => {
+                if (!ui.seam.hasPointerCapture(event.pointerId)) return;
+                setSplitFromClientX(event.clientX);
+              });
+              ui.seam.addEventListener('pointerup', (event) => {
+                if (ui.seam.hasPointerCapture(event.pointerId)) ui.seam.releasePointerCapture(event.pointerId);
+                ui.frame.classList.remove('resizing');
+              });
+              ui.seam.addEventListener('pointercancel', () => ui.frame.classList.remove('resizing'));
+              ui.seam.addEventListener('dblclick', () => {
+                state.allocation = null;
+                state.collapsed = 'none';
+                applySplit();
+              });
+              ui.seam.addEventListener('keydown', (event) => {
+                const current = state.allocation ?? browser.authoredBrowserShare;
+                if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                  event.preventDefault();
+                  state.allocation = Math.min(0.85, Math.max(0.15, current + (event.key === 'ArrowLeft' ? -0.05 : 0.05)));
+                  state.collapsed = 'none';
+                  applySplit();
+                } else if (event.key === 'Home' || event.key === 'Enter') {
+                  event.preventDefault();
+                  state.allocation = null;
+                  state.collapsed = 'none';
+                  applySplit();
+                }
+              });
+
+              void Promise.all([loadSourceCurrentness(), loadConversation(), loadContext()])
+                .then(() => {
+                  render();
+                  navigate(browser.initialPageUrl);
+                })
+                .catch((error) => {
+                  setCompanionStatus('Unavailable', 'Unavailable', '');
+                  notify(error instanceof Error ? error.message : 'Local service is not ready.');
+                });
+
+              setInterval(() => {
+                if (state.pending) return;
+                void loadConversation().catch(() => {});
+              }, 2500);
             })();
         """
     }
-
-    private fun jsSelectorValue(
-        value: String,
-    ): String =
-        value
-            .replace(
-                "\\",
-                "\\\\",
-            )
-            .replace(
-                "\"",
-                "\\\"",
-            )
 
     private fun jsString(
         value: String,

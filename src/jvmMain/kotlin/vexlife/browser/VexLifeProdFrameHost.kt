@@ -33,14 +33,35 @@ class VexLifeProdFrameHost private constructor(
         private const val RequestTimeoutSeconds =
             20L
 
-        private const val FrameContentSecurityPolicy =
+        internal const val FrameContentSecurityPolicy =
             "default-src 'self' https://vgong24.github.io https://vexgpt.github.io data: blob:; " +
                 "script-src 'self' 'unsafe-inline' https://vgong24.github.io https://vexgpt.github.io; " +
                 "style-src 'self' 'unsafe-inline' https://vgong24.github.io https://vexgpt.github.io; " +
                 "img-src 'self' https://vgong24.github.io https://vexgpt.github.io data: blob:; " +
                 "font-src 'self' https://vgong24.github.io https://vexgpt.github.io data:; " +
-                "connect-src 'self'; form-action 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; " +
-                "frame-ancestors http://127.0.0.1:18210"
+                "connect-src 'self'; form-action 'none'; object-src 'none'; frame-src 'self'; base-uri 'none'; " +
+                "frame-ancestors 'self' http://127.0.0.1:18210"
+
+        internal fun projectAdmittedAbsoluteUrls(
+            value: String,
+        ): String =
+            VexLifeProdBrowserContract.AdmittedHosts
+                .fold(
+                    value,
+                ) {
+                    projected,
+                    upstreamHost,
+                    ->
+                    projected.replace(
+                        "https://" +
+                            upstreamHost,
+                        "http://" +
+                            upstreamHost +
+                            VexLifeProdBrowserContract.FrameHostSuffix +
+                            ":" +
+                            VexLifeProdBrowserContract.FrameHostPort,
+                    )
+                }
 
         fun start(): VexLifeProdFrameHost =
             startAt(
@@ -322,28 +343,45 @@ class VexLifeProdFrameHost private constructor(
             }
 
             val output =
-                if (
+                when {
                     contentType.contains(
                         "text/html",
                         ignoreCase = true,
                     ) ||
+                        contentType.contains(
+                            "application/xhtml+xml",
+                            ignoreCase = true,
+                        ) ->
+                        injectReporter(
+                            html =
+                                bytes.toString(
+                                    StandardCharsets.UTF_8,
+                                ),
+                            sourceUrl = target,
+                        )
+                            .toByteArray(
+                                StandardCharsets.UTF_8,
+                            )
+
                     contentType.contains(
-                        "application/xhtml+xml",
+                        "application/json",
                         ignoreCase = true,
-                    )
-                ) {
-                    injectReporter(
-                        html =
+                    ) ||
+                        contentType.contains(
+                            "+json",
+                            ignoreCase = true,
+                        ) ->
+                        projectAdmittedAbsoluteUrls(
                             bytes.toString(
                                 StandardCharsets.UTF_8,
                             ),
-                        sourceUrl = target,
-                    )
-                        .toByteArray(
-                            StandardCharsets.UTF_8,
                         )
-                } else {
-                    bytes
+                            .toByteArray(
+                                StandardCharsets.UTF_8,
+                            )
+
+                    else ->
+                        bytes
                 }
 
             exchange.responseHeaders.add(
@@ -458,7 +496,7 @@ class VexLifeProdFrameHost private constructor(
         }
     }
 
-    private fun reporterScript(
+    internal fun reporterScript(
         sourceUrl: String,
     ): String {
         val admittedHosts =
@@ -481,10 +519,19 @@ class VexLifeProdFrameHost private constructor(
               const FRAME_PORT = ${VexLifeProdBrowserContract.FrameHostPort};
               const ADMITTED_HOSTS = $admittedHosts;
               const MESSAGE_TYPE = 'vexlife.browser-context/v1';
+              const FORWARD_TYPE = 'vexlife.browser-context-forward/v1';
               const TEXT_LIMIT = ${VexLifeProdBrowserContract.RenderedTextLimit};
 
               const frameUrlFor = (target) => {
                 const url = new URL(target);
+                if (
+                  url.protocol === 'http:' &&
+                  url.port === String(FRAME_PORT) &&
+                  url.hostname.endsWith(FRAME_SUFFIX)
+                ) {
+                  const upstreamHost = url.hostname.slice(0, -FRAME_SUFFIX.length);
+                  return ADMITTED_HOSTS.includes(upstreamHost) ? url.href : null;
+                }
                 if (url.protocol !== 'https:' || url.port || !ADMITTED_HOSTS.includes(url.hostname)) return null;
                 return 'http://' + url.hostname + FRAME_SUFFIX + ':' + FRAME_PORT + url.pathname + url.search + url.hash;
               };
@@ -497,21 +544,40 @@ class VexLifeProdFrameHost private constructor(
                 return 'https://' + upstreamHost + location.pathname + location.search + location.hash;
               };
 
+              const sendContextUpward = (payload) => {
+                if (window.parent === window.top) {
+                  window.parent.postMessage(payload, PARENT_ORIGIN);
+                  return;
+                }
+                window.parent.postMessage({
+                  type: FORWARD_TYPE,
+                  payload
+                }, location.origin);
+              };
+
               const report = () => {
                 reportTimer = null;
                 const text = (document.body?.innerText || '').slice(0, TEXT_LIMIT);
-                parent.postMessage({
+                sendContextUpward({
                   type: MESSAGE_TYPE,
                   pageUrl: currentPageUrl(),
                   title: document.title || null,
                   text,
                   capture: 'RENDERED'
-                }, PARENT_ORIGIN);
+                });
               };
               const scheduleReport = () => {
                 if (reportTimer !== null) clearTimeout(reportTimer);
                 reportTimer = setTimeout(report, 120);
               };
+
+              window.addEventListener('message', (event) => {
+                if (event.origin !== location.origin) return;
+                if (!event.data || event.data.type !== FORWARD_TYPE) return;
+                const payload = event.data.payload;
+                if (!payload || payload.type !== MESSAGE_TYPE) return;
+                sendContextUpward(payload);
+              });
 
               document.addEventListener('click', (event) => {
                 const element = event.target instanceof Element ? event.target : null;

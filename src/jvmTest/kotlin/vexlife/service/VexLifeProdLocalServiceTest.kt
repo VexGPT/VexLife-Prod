@@ -271,7 +271,7 @@ class VexLifeProdLocalServiceTest {
                             ),
                     )
                     assertTrue(
-                        runtimeJavascript.body()
+                        presentation.body()
                             .contains(
                                 "Start clean chat",
                             ),
