@@ -60,6 +60,23 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
 
         assertTrue(
+            bundle.html.contains(
+                "placeholder=\"Type a Vex-owned web address\"",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "Open a Vex-owned public page from the address field. Pages open signed out.",
+            ),
+        )
+        assertFalse(
+            bundle.html.contains(
+                "Open any public web page from the address field.",
+            ),
+            "Product copy must not promise general-public-web admission while the browser contract is Vex-owned only",
+        )
+
+        assertTrue(
             bundle.css.contains(
                 "grid-template-columns: minmax(0, var(--before)) 12px minmax(0, 1fr)",
             ),
