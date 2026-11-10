@@ -8,8 +8,6 @@ import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.time.Duration
 import java.time.Instant
-import kotlinx.serialization.EncodeDefault
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -30,11 +28,17 @@ import vexlife.model.heretic.HereticRuntimeState
 /**
  * Provider Connection for one direct local Companion inference.
  *
- * The Connection consumes already-qualified Heretic runtime truth. It owns only the numeric-loopback
- * HTTP effect plus normalization of the returned provider observation/invocation evidence.
+ * The Connection consumes already-qualified Heretic runtime truth. The current qualified-runtime
+ * owners admit only the exact ordinary mlx-lm server binding whose process arguments keep
+ * `enable_thinking=false` by default. Over that already-qualified runtime, this Connection ports the
+ * existing server-owned explicit-open Companion relationship by selecting request-local
+ * `chat_template_kwargs.enable_thinking=true` for every fresh inference.
  *
- * It does not own Home, Conversation persistence, prompt-context selection, Memory, runtime
- * construction/lifetime, model identity, or presentation.
+ * This reasoning-mode selection is runtime/Connection meaning, not presentation preference.
+ * The Connection otherwise owns only the numeric-loopback HTTP effect plus normalization of the
+ * returned provider observation/invocation evidence. It does not own Home, Conversation
+ * persistence, prompt-context selection, Memory, runtime construction/lifetime, model identity,
+ * human disclosure, or presentation.
  */
 object DirectCompanionConnection {
     const val OutputTokenLimit =
@@ -44,7 +48,7 @@ object DirectCompanionConnection {
         "vexlife-prod.model-runtime-observation/v1"
 
     const val InvocationEvidenceSchema =
-        "vexlife-prod.model-runtime-invocation-evidence/v2"
+        "vexlife-prod.model-runtime-invocation-evidence/v1"
 
     private const val RequestTimeoutMs =
         30_000L
@@ -229,20 +233,6 @@ object DirectCompanionConnection {
         val runtimeReceiptRef: String,
         val endpointOrigin: String,
         val requestBodySha256: String,
-        /**
-         * Exact explicit-open reasoning selection used for this provider invocation.
-         *
-         * Default false preserves truthful decoding of v1 durable invocation evidence formed before
-         * this field existed.
-         */
-        @OptIn(
-            ExperimentalSerializationApi::class,
-        )
-        @EncodeDefault(
-            EncodeDefault.Mode.NEVER,
-        )
-        val humanReasoningRequested: Boolean =
-            false,
         val responseBodySha256: String,
         val runtimeObservationRef: String,
         val runtimeObservationFingerprint: String,
@@ -272,7 +262,6 @@ object DirectCompanionConnection {
     fun invoke(
         runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
         messages: List<CompanionProviderMessage>,
-        humanReasoningRequested: Boolean = false,
         transport: Transport = SystemTransport,
         now: () -> Instant = {
             Instant.now()
@@ -305,7 +294,7 @@ object DirectCompanionConnection {
                     chat_template_kwargs =
                         mapOf(
                             "enable_thinking" to
-                                humanReasoningRequested,
+                                true,
                         ),
                 ),
             )
@@ -540,7 +529,6 @@ object DirectCompanionConnection {
                 runtime.runtimeReceiptRef,
                 origin.toString(),
                 requestBodySha256,
-                humanReasoningRequested.toString(),
                 responseBodySha256,
                 runtimeObservation.observationRef,
                 runtimeObservation.semanticFingerprint,
@@ -554,7 +542,6 @@ object DirectCompanionConnection {
                 runtimeReceiptRef = runtime.runtimeReceiptRef,
                 endpointOrigin = origin.toString(),
                 requestBodySha256 = requestBodySha256,
-                humanReasoningRequested = humanReasoningRequested,
                 responseBodySha256 = responseBodySha256,
                 runtimeObservationRef = runtimeObservation.observationRef,
                 runtimeObservationFingerprint = runtimeObservation.semanticFingerprint,
