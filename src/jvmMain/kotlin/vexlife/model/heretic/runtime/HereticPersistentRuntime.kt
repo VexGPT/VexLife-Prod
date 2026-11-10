@@ -241,6 +241,18 @@ object HereticPersistentRuntime {
             args: List<String>,
         ): Retirement
 
+        /**
+         * One immediate health observation for an already-qualified runtime.
+         *
+         * Interactive currentness must never reuse startup's long readiness wait. A false result
+         * means the generation engine is not currently available and the rightful runtime owner may
+         * recover/rotate it.
+         */
+        fun healthy(
+            binding: Binding,
+        ): Boolean =
+            true
+
         fun waitUntilHealthy(
             binding: Binding,
             pid: Long,
@@ -479,10 +491,13 @@ object HereticPersistentRuntime {
             platform = platform,
         )
 
-        platform.waitUntilHealthy(
-            binding,
-            receipt.runtime.pid,
-        )
+        require(
+            platform.healthy(
+                binding,
+            ),
+        ) {
+            "qualified Heretic runtime generation engine is not healthy"
+        }
 
         return configurationEvidence(
             binding = binding,
@@ -645,7 +660,8 @@ object HereticPersistentRuntime {
                                 currentPrior,
                             )
                         require(
-                            cleanup.verifiedNotLive,
+                            cleanup.exactOwnershipVerified &&
+                                cleanup.verifiedNotLive,
                         ) {
                             "STARTING runtime recovery failed and cleanup was not verified"
                         }
@@ -655,79 +671,100 @@ object HereticPersistentRuntime {
                 }
 
                 if (
-                    platform.cancellationRequested()
+                    currentPrior.state ==
+                        HereticRuntimeState.Qualified &&
+                        !platform.healthy(
+                            binding,
+                        )
                 ) {
-                    val cleanup =
+                    val retired =
                         platform.retire(
                             currentPrior,
                         )
                     require(
-                        cleanup.verifiedNotLive,
+                        retired.exactOwnershipVerified &&
+                            retired.verifiedNotLive,
                     ) {
-                        "cancelled runtime reuse could not be cleaned up"
+                        "unhealthy qualified Heretic runtime could not be retired before recovery"
                     }
                     store.delete()
-                    error(
-                        "Heretic runtime start was cancelled",
+                } else {
+                    if (
+                        platform.cancellationRequested()
+                    ) {
+                        val cleanup =
+                            platform.retire(
+                                currentPrior,
+                            )
+                        require(
+                            cleanup.exactOwnershipVerified &&
+                                cleanup.verifiedNotLive,
+                        ) {
+                            "cancelled runtime reuse could not be cleaned up"
+                        }
+                        store.delete()
+                        error(
+                            "Heretic runtime start was cancelled",
+                        )
+                    }
+
+                    val qualification =
+                        platform.qualify(
+                            binding,
+                        )
+                    val qualified =
+                        formReceipt(
+                            binding = binding,
+                            pid = pid,
+                            identity =
+                                currentIdentity,
+                            state =
+                                HereticRuntimeState.Qualified,
+                            formedAt =
+                                platform.now(),
+                            receiptRef =
+                                currentPrior.receiptRef,
+                            processSubstrate =
+                                currentPrior.runtime.processSubstrate,
+                            qualification =
+                                qualification,
+                        )
+
+                    store.write(
+                        qualified,
+                    )
+
+                    return StartResult(
+                        disposition =
+                            if (
+                                currentPrior.state ==
+                                    HereticRuntimeState.Starting
+                            ) {
+                                "RECOVERED_EXACT_STARTING_MLX_RUNTIME"
+                            } else {
+                                "REUSED_EXACT_OWNED_MLX_RUNTIME"
+                            },
+                        pid = pid,
+                        endpoint = qualified.endpoint,
+                        requestModel = qualified.requestModel,
+                        receipt = qualified,
+                        receiptWritePerformed = true,
+                        qualification = qualification,
                     )
                 }
-
-                val qualification =
-                    platform.qualify(
-                        binding,
+            } else {
+                val retired =
+                    platform.retire(
+                        currentPrior,
                     )
-                val qualified =
-                    formReceipt(
-                        binding = binding,
-                        pid = pid,
-                        identity =
-                            currentIdentity,
-                        state =
-                            HereticRuntimeState.Qualified,
-                        formedAt =
-                            platform.now(),
-                        receiptRef =
-                            currentPrior.receiptRef,
-                        processSubstrate =
-                            currentPrior.runtime.processSubstrate,
-                        qualification =
-                            qualification,
-                    )
-
-                store.write(
-                    qualified,
-                )
-
-                return StartResult(
-                    disposition =
-                        if (
-                            currentPrior.state ==
-                                HereticRuntimeState.Starting
-                        ) {
-                            "RECOVERED_EXACT_STARTING_MLX_RUNTIME"
-                        } else {
-                            "REUSED_EXACT_OWNED_MLX_RUNTIME"
-                        },
-                    pid = pid,
-                    endpoint = qualified.endpoint,
-                    requestModel = qualified.requestModel,
-                    receipt = qualified,
-                    receiptWritePerformed = true,
-                    qualification = qualification,
-                )
+                require(
+                    retired.exactOwnershipVerified &&
+                        retired.verifiedNotLive,
+                ) {
+                    "dead Heretic runtime substrate could not be retired with exact substrate ownership"
+                }
+                store.delete()
             }
-
-            val retired =
-                platform.retire(
-                    currentPrior,
-                )
-            require(
-                retired.exactOwnershipVerified &&
-                    retired.verifiedNotLive,
-            ) {
-                "dead Heretic runtime substrate could not be retired with exact substrate ownership"
-            }
-            store.delete()
         }
 
         heldIfCancelled(

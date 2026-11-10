@@ -84,6 +84,9 @@ Memory context + working-successor currentness re-read
 before provider invocation
         ↓
 fresh qualified runtime evidence
+  interactive currentness = immediate generation-health observation
+  Product-owned dead generation engine -> exact retire/restart/requalify
+  borrowed stable runtime -> no ownership theft / no Product recovery effect
         ↓
 prompt + self-capability frame materialized and reverified
 while the same writer lease is held
@@ -91,8 +94,26 @@ while the same writer lease is held
 DirectCompanionConnection
   endpoint/model supplied only by QualifiedRuntimeEvidence
   numeric-loopback /v1/chat/completions
-  no redirects
-  actual HTTP invocation
+  stream = true
+  request-local explicit-open reasoning
+  certified generation_config sampling only:
+    temperature = 1.0
+    top_p = 0.95
+    top_k = 20
+  no additional request-owned sampling knobs
+  response-start/header timeout = 120 seconds
+    preserved from the known-working browser Companion path
+  streamed InputStream body may continue beyond that response-start bound
+        ↓
+ephemeral live progress
+  CheckingRuntime
+  Reconnecting (only when Product-owned recovery is required)
+  Generating / Thinking
+  reasoning deltas -> human presentation only
+  content deltas -> progressive Vex answer
+        ↓
+terminal provider stream
+  [DONE]
         ↓
 normalized RuntimeObservation
 + InvocationEvidence
@@ -186,6 +207,168 @@ It cannot accept a caller-supplied endpoint or model identity.
 Provider observation/evidence values are publicly readable but constructor/copy authority remains
 inside the Connection.
 
+### Explicit-open human reasoning projection
+
+The local model endpoint may return a `reasoning` / `reasoning_content` field beside the final
+assistant content. The Connection still records only content-free durable reasoning evidence:
+
+~~~text
+present
+contentSha256
+characterCount
+rawPersisted = false
+humanProjection = SEALED_EXPLICIT_OPEN_ONLY
+modelProjection = NONE
+trainingProjection = NONE
+~~~
+
+The historical VexLife relationship keeps **model reasoning mode** and **human disclosure** separate.
+
+Current qualified Heretic runtime evidence is formed only after its rightful runtime owner verifies the
+exact ordinary mlx-lm process binding, including the safe server default:
+
+~~~text
+--chat-template-args
+{"enable_thinking":false}
+~~~
+
+Over that already-qualified runtime, the direct Companion Connection owns the faithful request-local
+explicit-open realization and the historical live stream:
+
+~~~text
+qualified current Heretic runtime
+-> DirectCompanionConnection
+-> stream = true
+-> chat_template_kwargs.enable_thinking = true
+-> live reasoning / reasoning_content deltas
+-> live content deltas
+-> terminal [DONE]
+-> normalized final result
+
+reasoning deltas
+-> ephemeral browser-session custody
+-> visible while Viewable thoughts is enabled
+-> never canonical Conversation / Memory / training / publication
+
+content deltas
+-> progressive in-flight Vex answer
+-> final canonical RESPONSE still commits only after terminal completion
+-> streamed answer stays visible until canonical Conversation refresh replaces it
+~~~
+
+The human's `Viewable thoughts` preference is a separate local presentation decision:
+
+~~~text
+Viewable thoughts = true
+-> render available ephemeral reasoning
+
+Viewable thoughts = false
+-> keep available ephemeral reasoning hidden
+
+Viewable thoughts
+!= Send request field
+!= reasoning-mode authority
+!= provider prompt selection
+~~~
+
+This model-mode selection remains distinct from DirectPromptContext ownership. It does not add, remove
+or rewrite the canonical provider message set, and it does not grant Memory, training, publication,
+durable reasoning storage or another model/runtime identity.
+
+Permanent:
+
+~~~text
+SERVER-OWNED REASONING MODE
+!= HUMAN DISCLOSURE PREFERENCE
+
+VIEWABLE THOUGHTS
+!= PROVIDER REASONING AUTHORITY
+
+EPHEMERAL HUMAN REASONING
+!= CANONICAL CONVERSATION
+!= TURN CONTEXT
+!= MEMORY
+!= MODEL INPUT
+!= TRAINING
+!= PUBLICATION
+!= DURABLE STORE
+~~~
+
+The Product Send now restores the historical live Companion relationship without weakening the
+transactional durability boundary:
+
+~~~text
+LIVE DELTA
+!= CANONICAL RESPONSE
+
+STREAMING PRESENTATION
+!= EARLY CONVERSATION HEAD COMMIT
+
+REQUEST durable
+-> live provider stream
+-> terminal provider completion
+-> RESPONSE + Context durable
+-> completed Conversation head
+~~~
+
+An idempotent completed duplicate may recover the durable final response without another model call,
+but it cannot recover raw reasoning that was intentionally not persisted:
+
+~~~text
+fresh response + provider reasoning present
+  -> PRESENT_EPHEMERAL
+  -> browser may render or hide from local preference
+
+completed duplicate + durable reasoning trace present
+  -> UNAVAILABLE_AFTER_IDEMPOTENT_RECOVERY
+  -> durable hash/count may remain
+  -> raw text = null
+
+completed duplicate + durable reasoning trace absent
+  -> ABSENT
+  -> no raw/hash/count material
+~~~
+
+The local `Viewable thoughts` preference may persist as one boolean in browser localStorage. That
+stored boolean is not reasoning content or durable model state and is never sent through the Product
+Send contract. Raw reasoning never enters localStorage/sessionStorage.
+
+Streaming viewport ownership is presentation-local and independent from generation:
+
+~~~text
+CONTENT GROWTH != SCROLL AUTHORITY
+
+Conversation viewport:
+  FOLLOWING
+    -> streamed content may keep the viewport at the newest tail
+  human scrolls away
+    -> READING_HISTORY
+    -> streamed content continues without moving the viewport
+  human returns to tail / activates New messages
+    -> FOLLOWING
+
+Live reasoning viewport:
+  first appearance
+    -> FOLLOWING
+  human scrolls away
+    -> READING_HISTORY
+    -> reasoning deltas continue without moving that nested viewport
+  human returns to tail
+    -> FOLLOWING
+
+CONVERSATION FOLLOW STATE != REASONING FOLLOW STATE
+POSITION NEAR TAIL != HUMAN FOLLOW INTENT
+PROVIDER DELTA != VIEWPORT COMMAND
+~~~
+
+The Product presentation disables browser-native scroll anchoring inside those owned scroll containers
+and updates an existing live streamed turn in place. A generated delta must not rebuild the whole
+Conversation merely to append text, and the New messages affordance must not resize the Conversation
+viewport when it appears.
+
+Reloading the Product presentation drops all ephemeral reasoning by design while preserving only the
+human's local disclosure preference.
+
 ### `DirectTurnContextStore`
 
 Persists normalized turn evidence suitable for later Context Inspector projection:
@@ -236,6 +419,46 @@ OS FILE LOCK         = SAME-HOST EXCLUSION
 
 The human REQUEST is durably written before inference.
 
+Interactive runtime currentness deliberately does **not** reuse startup's long readiness loop.
+The exact lived regression that motivated this distinction was:
+
+~~~text
+Product service = responsive
+Product-owned Heretic PID = alive
+mlx-lm /health = 503
+generation thread = unavailable
+old interactive currentness = startup waitUntilHealthy up to 10 minutes
+~~~
+
+Current behavior:
+
+~~~text
+qualified Product-owned runtime + immediate health true
+  -> continue
+
+qualified Product-owned runtime + immediate health false
+  -> Reconnecting Vex…
+  -> exact-owned retire
+  -> restart + startup qualification through runtime owner
+  -> fresh current runtime evidence
+  -> provider stream
+
+borrowed stable VexLife runtime + currentness failure
+  -> fail closed
+  -> Product does not steal recovery ownership
+~~~
+
+The human-facing states are deliberately distinct:
+
+~~~text
+Checking Vex
+!= Thinking
+!= Responding
+
+Reconnecting Vex
+!= model generation
+~~~
+
 If provider/materialization/context/head completion fails after that point:
 
 - the current completed head does not advance;
@@ -278,6 +501,14 @@ Tests are source-formed for:
 - numeric-loopback provider call + endpoint/model ownership;
 - provider local-path model normalization;
 - raw provider/reasoning non-persistence;
+- qualified Direct Companion inference selects `stream=true` plus request-local `enable_thinking=true`;
+- streamed reasoning and content deltas preserve ordering before terminal completion;
+- the actual system streaming transport receives headers within the request bound and remains alive while the streamed body continues beyond that bound;
+- no human/presentation field controls provider reasoning mode;
+- Viewable thoughts remains absent from the Send wire request;
+- live reasoning stays ephemeral while completed-response reasoning remains available in the same browser session;
+- Product-owned unhealthy generation runtime fails currentness immediately and rotates through its rightful owner;
+- idempotent duplicate reasoning unavailability without provider replay;
 - first-turn prompt materialization;
 - immediate-prior CONTINUE selection;
 - prompt token-bound rejection;
@@ -362,8 +593,8 @@ canonical Home/Conversation/Memory read compatibility = A030 PASS
 real production-service direct turn
 working-checkpoint successor / rollover continuity
 CLEAN_START presentation/semantic wiring
-streamed response progress
-explicit-open reasoning projection
+fresh lived streamed-response proof on the current exact candidate
+fresh lived Product-owned dead-runtime recovery proof
 product service / presentation
 ordinary fresh-user Mac entry
 ~~~

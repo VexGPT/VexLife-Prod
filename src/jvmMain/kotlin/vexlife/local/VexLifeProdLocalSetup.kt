@@ -57,14 +57,31 @@ object VexLifeProdLocalSetup {
     internal class Session internal constructor(
         val result: Result,
         private val currentRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
+        private val recoverRuntimeEvidence: (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)? =
+            null,
     ) {
-        fun currentQualifiedRuntimeEvidence(): HereticModelConfiguration.QualifiedRuntimeEvidence =
-            currentRuntimeEvidence()
+        fun currentQualifiedRuntimeEvidence(
+            onRecovery: (() -> Unit)? =
+                null,
+        ): HereticModelConfiguration.QualifiedRuntimeEvidence =
+            try {
+                currentRuntimeEvidence()
+            } catch (
+                original: RuntimeException,
+            ) {
+                val recover =
+                    recoverRuntimeEvidence
+                        ?: throw original
+                onRecovery
+                    ?.invoke()
+                recover()
+            }
     }
 
     private data class Established(
         val result: Result,
         val currentRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
+        val recoverRuntimeEvidence: (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)?,
     )
 
     internal data class Hooks(
@@ -498,6 +515,31 @@ object VexLifeProdLocalSetup {
                 }
             }
 
+        val recoverRuntimeEvidence: (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)? =
+            when (
+                availability.source
+            ) {
+                HereticRuntimeAvailability.Source.VexLifeProdOwned -> {
+                    {
+                        val recovered =
+                            hooks.startRuntime(
+                                canonicalHome,
+                                binding,
+                                FileHereticRuntimeReceiptStore(
+                                    canonicalHome,
+                                ),
+                            )
+                        HereticPersistentRuntime.configurationEvidence(
+                            binding = binding,
+                            receipt = recovered.receipt,
+                        )
+                    }
+                }
+
+                HereticRuntimeAvailability.Source.BorrowedStableVexLife ->
+                    null
+            }
+
         val bound =
             modelConfiguration.bindQualified(
                 manifest = home.manifest,
@@ -523,6 +565,7 @@ object VexLifeProdLocalSetup {
                     requestModel = qualifiedRuntimeEvidence.requestModel,
                 ),
             currentRuntimeEvidence = currentRuntimeEvidence,
+            recoverRuntimeEvidence = recoverRuntimeEvidence,
         )
     }
 
@@ -620,6 +663,7 @@ object VexLifeProdLocalSetup {
         return Session(
             result = established.result,
             currentRuntimeEvidence = established.currentRuntimeEvidence,
+            recoverRuntimeEvidence = established.recoverRuntimeEvidence,
         )
     }
 

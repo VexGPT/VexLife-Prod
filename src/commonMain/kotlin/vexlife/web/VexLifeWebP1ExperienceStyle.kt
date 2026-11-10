@@ -294,13 +294,23 @@ svg { display: block; }
 }
 .quiet-button:hover:not(:disabled) { background: var(--sunken); color: var(--ink); }
 
-.conversation { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.conversation {
+  display: grid; grid-template-rows: minmax(0, 1fr) auto;
+  flex: 1; min-height: 0; position: relative;
+}
 
 /* ------------------------------------------------------------ timeline */
 
 .timeline {
-  flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  grid-column: 1; grid-row: 1;
+  min-height: 0; height: 100%; overflow-y: auto; overscroll-behavior: contain;
+  overflow-anchor: none; scrollbar-gutter: stable;
   margin: 0; padding: 18px 10px 12px 16px; list-style: none;
+}
+.jump-latest {
+  grid-column: 1; grid-row: 1;
+  align-self: end; justify-self: center; z-index: 2;
+  margin: 0 0 12px;
 }
 
 .message {
@@ -362,11 +372,14 @@ svg { display: block; }
 .thinking-now .thought-mark { animation: turn 2.4s linear infinite; }
 .reasoning {
   max-width: min(92%, 640px); max-height: 220px; overflow-y: auto; margin-top: 7px;
+  overflow-anchor: none; scrollbar-gutter: stable;
   padding: 10px 12px; border: 1px solid var(--rule-strong); border-radius: 8px;
   background: var(--raised); color: var(--ink-2);
   font-size: var(--step--1); line-height: 1.5; white-space: pre-wrap;
 }
-.message.waiting .bubble { display: none; }
+.message.waiting[data-has-content="false"] .bubble { display: none; }
+.message.waiting[data-has-content="true"] .bubble { opacity: 0.92; }
+.live-reasoning { margin-left: 0; }
 
 .receipt-line {
   grid-area: receipt; margin: 6px 2px 0; color: var(--ink-3); font-size: var(--step--1);
@@ -384,7 +397,10 @@ svg { display: block; }
 
 /* ------------------------------------------------------------ composer */
 
-.composer { padding: 8px 14px 14px; border-top: 1px solid var(--rule); background: var(--surface); }
+.composer {
+  grid-column: 1; grid-row: 2;
+  padding: 8px 14px 14px; border-top: 1px solid var(--rule); background: var(--surface);
+}
 .response-progress { margin: 0 0 6px; color: var(--ink-2); font-size: var(--step--1); }
 .response-progress[data-state="Failed"] { color: var(--down); }
 

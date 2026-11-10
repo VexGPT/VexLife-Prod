@@ -51,6 +51,7 @@ class HereticPersistentRuntimeTest {
         var spawnedAlive = true
         var qualificationFailure = false
         var healthFailure = false
+        var healthyNow = true
         var cancel = false
         var clock = 0L
         var retireCalls = 0
@@ -135,6 +136,14 @@ class HereticPersistentRuntimeTest {
                 exactOwnershipVerified = true,
                 verifiedNotLive = true,
             )
+        }
+
+        override fun healthy(
+            binding: HereticPersistentRuntime.Binding,
+        ): Boolean {
+            trace +=
+                "HEALTHY"
+            return healthyNow
         }
 
         override fun waitUntilHealthy(
@@ -339,6 +348,10 @@ class HereticPersistentRuntimeTest {
                 trace,
         )
         assertTrue(
+            "HEALTHY" in
+                trace,
+        )
+        assertFalse(
             "WAIT_HEALTHY" in
                 trace,
         )
@@ -408,6 +421,122 @@ class HereticPersistentRuntimeTest {
         assertFalse(
             "QUALIFY" in
                 trace,
+        )
+    }
+
+    @Test
+    fun currentQualifiedObservationRejectsDeadGenerationEngineWithoutStartupWait() {
+        val trace =
+            mutableListOf<String>()
+        val current =
+            binding()
+        val existing =
+            receipt(
+                current,
+            )
+        val store =
+            Store(
+                initial = existing,
+                trace = trace,
+            )
+        val platform =
+            Platform(
+                trace,
+            )
+                .also {
+                    it.alivePids +=
+                        existing.runtime.pid
+                    it.processGroupId =
+                        existing.runtime.processGroupId
+                    it.matching =
+                        listOf(
+                            HereticPersistentRuntime.ProcessIdentity(
+                                pid = existing.runtime.pid,
+                                processGroupId = existing.runtime.processGroupId,
+                                exactOwnedDetachedGroup = true,
+                            ),
+                        )
+                    it.healthyNow =
+                        false
+                }
+
+        assertFailsWith<IllegalArgumentException> {
+            HereticPersistentRuntime.observeCurrentQualified(
+                binding = current,
+                store = store,
+                platform = platform,
+            )
+        }
+
+        assertTrue(
+            "HEALTHY" in
+                trace,
+        )
+        assertFalse(
+            "WAIT_HEALTHY" in
+                trace,
+        )
+        assertFalse(
+            "QUALIFY" in
+                trace,
+        )
+    }
+
+    @Test
+    fun liveButUnhealthyQualifiedRuntimeRotatesBeforeReplacement() {
+        val trace =
+            mutableListOf<String>()
+        val current =
+            binding()
+        val prior =
+            receipt(
+                current,
+            )
+        val store =
+            Store(
+                prior,
+                trace,
+            )
+        val platform =
+            Platform(
+                trace,
+            )
+                .also {
+                    it.alivePids +=
+                        prior.runtime.pid
+                    it.healthyNow =
+                        false
+                    it.spawnedPid =
+                        prior.runtime.pid +
+                            1
+                }
+
+        val result =
+            HereticPersistentRuntime.startOrReuse(
+                current,
+                store,
+                platform,
+            )
+
+        assertEquals(
+            "STARTED_NEW_EXACT_MLX_RUNTIME",
+            result.disposition,
+        )
+        assertTrue(
+            trace.any {
+                it.startsWith(
+                    "RETIRE_",
+                )
+            },
+        )
+        assertTrue(
+            "SPAWN" in
+                trace,
+        )
+        assertEquals(
+            prior.runtime.pid +
+                1,
+            result.pid,
         )
     }
 

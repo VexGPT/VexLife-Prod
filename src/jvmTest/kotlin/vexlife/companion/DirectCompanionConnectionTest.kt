@@ -1,5 +1,9 @@
 package vexlife.companion
 
+import com.sun.net.httpserver.HttpServer
+import java.net.InetSocketAddress
+import java.net.URI
+import java.nio.charset.StandardCharsets
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -84,6 +88,10 @@ class DirectCompanionConnectionTest {
             "http://127.0.0.1:8765/v1/chat/completions",
             request.uri.toString(),
         )
+        assertEquals(
+            120_000L,
+            request.timeoutMs,
+        )
         val body =
             Json
                 .parseToJsonElement(
@@ -106,6 +114,69 @@ class DirectCompanionConnectionTest {
                 ?.jsonPrimitive
                 ?.content
                 ?.toInt(),
+        )
+        assertEquals(
+            "true",
+            body[
+                "stream"
+            ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
+            "1.0",
+            body[
+                "temperature"
+            ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
+            "0.95",
+            body[
+                "top_p"
+            ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
+            "20",
+            body[
+                "top_k"
+            ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertFalse(
+            body.containsKey(
+                "min_p",
+            ),
+        )
+        assertFalse(
+            body.containsKey(
+                "presence_penalty",
+            ),
+        )
+        assertFalse(
+            body.containsKey(
+                "repetition_penalty",
+            ),
+        )
+        assertEquals(
+            "true",
+            body[
+                "chat_template_kwargs"
+            ]
+                ?.jsonObject
+                ?.get(
+                    "enable_thinking",
+                )
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
+            DirectCompanionConnection.InvocationEvidenceSchema,
+            result.invocationEvidence.schemaVersion,
         )
         assertEquals(
             "Hello from Vex.",
@@ -133,7 +204,212 @@ class DirectCompanionConnectionTest {
     }
 
     @Test
+    fun systemStreamingShapeProjectsReasoningAndContentDeltasBeforeFinalResult() {
+        var streamedCall: DirectCompanionConnection.HttpCall? =
+            null
+        val progress =
+            mutableListOf<DirectCompanionConnection.Progress>()
+
+        val transport =
+            object :
+                DirectCompanionConnection.StreamingTransport {
+                override fun post(
+                    call: DirectCompanionConnection.HttpCall,
+                ): DirectCompanionConnection.HttpResult =
+                    error(
+                        "streaming path must not fall back to bulk transport",
+                    )
+
+                override fun postStreaming(
+                    call: DirectCompanionConnection.HttpCall,
+                    onLine: (String) -> Unit,
+                ): DirectCompanionConnection.StreamingHttpResult {
+                    streamedCall =
+                        call
+                    onLine(
+                        """data: {"model":"default_model","choices":[{"delta":{"role":"assistant","reasoning":"I should "}}]}""",
+                    )
+                    onLine(
+                        "",
+                    )
+                    onLine(
+                        """data: {"model":"default_model","choices":[{"delta":{"role":"assistant","reasoning":"compare."}}]}""",
+                    )
+                    onLine(
+                        "",
+                    )
+                    onLine(
+                        """data: {"model":"default_model","choices":[{"delta":{"role":"assistant","content":"The better "}}]}""",
+                    )
+                    onLine(
+                        "",
+                    )
+                    onLine(
+                        """data: {"model":"default_model","choices":[{"finish_reason":"stop","delta":{"role":"assistant","content":"choice."}}]}""",
+                    )
+                    onLine(
+                        "",
+                    )
+                    onLine(
+                        "data: [DONE]",
+                    )
+                    onLine(
+                        "",
+                    )
+                    return DirectCompanionConnection.StreamingHttpResult(
+                        status = 200,
+                        responseBodySha256 = "a".repeat(
+                            64,
+                        ),
+                    )
+                }
+            }
+
+        val result =
+            DirectCompanionConnection.invoke(
+                runtime = qualifiedRuntime(),
+                messages =
+                    listOf(
+                        CompanionProviderMessage(
+                            role = "user",
+                            content = "Compare these approaches",
+                        ),
+                    ),
+                transport = transport,
+                progressObserver =
+                    DirectCompanionConnection.ProgressObserver {
+                        progress +=
+                            it
+                    },
+                now = {
+                    Instant.parse(
+                        "2026-11-10T04:40:00Z",
+                    )
+                },
+            )
+
+        assertEquals(
+            "true",
+            Json
+                .parseToJsonElement(
+                    requireNotNull(
+                        streamedCall,
+                    )
+                        .body,
+                )
+                .jsonObject[
+                    "stream"
+                ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
+            "The better choice.",
+            result.content,
+        )
+        assertEquals(
+            "I should compare.",
+            result.sealedHumanReasoning,
+        )
+        assertEquals(
+            listOf(
+                DirectCompanionConnection.ProgressKind.Reasoning,
+                DirectCompanionConnection.ProgressKind.Reasoning,
+                DirectCompanionConnection.ProgressKind.Content,
+                DirectCompanionConnection.ProgressKind.Content,
+            ),
+            progress.map(
+                DirectCompanionConnection.Progress::kind,
+            ),
+        )
+        assertEquals(
+            "I should ",
+            progress[0].delta,
+        )
+        assertEquals(
+            "The better ",
+            progress[2].delta,
+        )
+    }
+
+    @Test
+    fun systemStreamingTransportRequestTimeoutDoesNotCapActiveBody() {
+        val server =
+            HttpServer.create(
+                InetSocketAddress(
+                    "127.0.0.1",
+                    0,
+                ),
+                0,
+            )
+        server.createContext(
+            "/v1/chat/completions",
+        ) {
+            exchange ->
+            exchange.responseHeaders.set(
+                "content-type",
+                "text/event-stream",
+            )
+            exchange.sendResponseHeaders(
+                200,
+                0,
+            )
+            // Force response-start/header delivery before delaying the body. This proves the
+            // HttpRequest timeout bounds stream establishment rather than active body lifetime.
+            exchange.responseBody.flush()
+            Thread.sleep(
+                1_250,
+            )
+            exchange.responseBody.write(
+                "data: [DONE]\n\n"
+                    .toByteArray(
+                        StandardCharsets.UTF_8,
+                    ),
+            )
+            exchange.close()
+        }
+        server.start()
+
+        try {
+            val lines =
+                mutableListOf<String>()
+            val result =
+                DirectCompanionConnection.SystemTransport.postStreaming(
+                    DirectCompanionConnection.HttpCall(
+                        uri =
+                            URI(
+                                "http://127.0.0.1:" +
+                                    server.address.port +
+                                    "/v1/chat/completions",
+                            ),
+                        body = "{}",
+                        timeoutMs = 1_000,
+                    ),
+                ) {
+                    lines +=
+                        it
+                }
+
+            assertEquals(
+                200,
+                result.status,
+            )
+            assertTrue(
+                "data: [DONE]" in
+                    lines,
+            )
+        } finally {
+            server.stop(
+                0,
+            )
+        }
+    }
+
+    @Test
     fun providerReportedLocalModelPathNeverBecomesProductIdentityOrPersistedRawValue() {
+        var call: DirectCompanionConnection.HttpCall? =
+            null
+
         val result =
             DirectCompanionConnection.invoke(
                 runtime = qualifiedRuntime(),
@@ -146,6 +422,9 @@ class DirectCompanionConnectionTest {
                     ),
                 transport =
                     DirectCompanionConnection.Transport {
+                        observed ->
+                        call =
+                            observed
                         DirectCompanionConnection.HttpResult(
                             status = 200,
                             body =
@@ -172,6 +451,32 @@ class DirectCompanionConnectionTest {
                 },
             )
 
+        val body =
+            Json
+                .parseToJsonElement(
+                    requireNotNull(
+                        call,
+                    )
+                        .body,
+                )
+                .jsonObject
+        assertEquals(
+            "true",
+            body[
+                "chat_template_kwargs"
+            ]
+                ?.jsonObject
+                ?.get(
+                    "enable_thinking",
+                )
+                ?.jsonPrimitive
+                ?.content,
+        )
+
+        assertEquals(
+            DirectCompanionConnection.InvocationEvidenceSchema,
+            result.invocationEvidence.schemaVersion,
+        )
         assertEquals(
             HereticProductIdentity.RequestModel,
             result.model,
@@ -188,6 +493,10 @@ class DirectCompanionConnectionTest {
         )
         assertTrue(
             result.runtimeObservation.reasoningTrace.present,
+        )
+        assertEquals(
+            "private reasoning",
+            result.sealedHumanReasoning,
         )
         assertFalse(
             result.runtimeObservation.reasoningTrace.rawPersisted,

@@ -134,6 +134,39 @@ class VexLifeProdLocalServiceTest {
             ),
         )
 
+    private fun postEventStream(
+        origin: String,
+        path: String,
+        body: String,
+    ): HttpResponse<String> =
+        client.send(
+            HttpRequest
+                .newBuilder(
+                    URI(
+                        origin +
+                            path,
+                    ),
+                )
+                .header(
+                    "accept",
+                    "text/event-stream",
+                )
+                .header(
+                    "content-type",
+                    "application/json",
+                )
+                .POST(
+                    HttpRequest.BodyPublishers.ofString(
+                        body,
+                        StandardCharsets.UTF_8,
+                    ),
+                )
+                .build(),
+            HttpResponse.BodyHandlers.ofString(
+                StandardCharsets.UTF_8,
+            ),
+        )
+
     @Test
     fun sourceCurrentnessAndEmptyConversationAreReadOnlyProjections() {
         val parent =
@@ -544,7 +577,8 @@ class VexLifeProdLocalServiceTest {
                                   "finish_reason": "stop",
                                   "message": {
                                     "role": "assistant",
-                                    "content": "Hello from Vex."
+                                    "content": "Hello from Vex.",
+                                    "reasoning": "ephemeral service reasoning"
                                   }
                                 }
                               ]
@@ -625,6 +659,21 @@ class VexLifeProdLocalServiceTest {
                     )
                     assertTrue(
                         firstResult.actualHttpCallPerformedNow,
+                    )
+                    assertEquals(
+                        "PRESENT_EPHEMERAL",
+                        firstResult.humanReasoning.state,
+                    )
+                    assertEquals(
+                        "ephemeral service reasoning",
+                        firstResult.humanReasoning.text,
+                    )
+                    assertFalse(
+                        firstResult.humanReasoning.persisted,
+                    )
+                    assertEquals(
+                        "ephemeral service reasoning".length,
+                        firstResult.humanReasoning.characterCount,
                     )
                     assertTrue(
                         firstResult.promptContext.browserContextIncluded,
@@ -709,6 +758,13 @@ class VexLifeProdLocalServiceTest {
                         firstResult.currentConversationHeadSha256,
                         projection.currentConversationHeadSha256,
                     )
+                    assertFalse(
+                        projectionResponse.body()
+                            .contains(
+                                "ephemeral service reasoning",
+                            ),
+                        "canonical Conversation projection must not expose raw reasoning",
+                    )
 
                     val contextResponse =
                         get(
@@ -772,6 +828,24 @@ class VexLifeProdLocalServiceTest {
                         duplicateResult.actualHttpCallPerformedNow,
                     )
                     assertEquals(
+                        "UNAVAILABLE_AFTER_IDEMPOTENT_RECOVERY",
+                        duplicateResult.humanReasoning.state,
+                    )
+                    assertNull(
+                        duplicateResult.humanReasoning.text,
+                    )
+                    assertFalse(
+                        duplicateResult.humanReasoning.persisted,
+                    )
+                    assertEquals(
+                        firstResult.humanReasoning.contentSha256,
+                        duplicateResult.humanReasoning.contentSha256,
+                    )
+                    assertEquals(
+                        firstResult.humanReasoning.characterCount,
+                        duplicateResult.humanReasoning.characterCount,
+                    )
+                    assertEquals(
                         firstResult.currentConversationHeadSha256,
                         duplicateResult.currentConversationHeadSha256,
                     )
@@ -779,6 +853,7 @@ class VexLifeProdLocalServiceTest {
                         1,
                         providerCalls,
                     )
+
                 }
         } finally {
             parent
@@ -864,6 +939,353 @@ class VexLifeProdLocalServiceTest {
                 .deleteRecursively()
         }
     }
+
+    @Test
+    fun duplicateWithoutReasoningRemainsAbsentInsteadOfClaimingLostRawValue() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-service-no-reasoning-duplicate-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        var providerCalls =
+            0
+
+        try {
+            bootstrapHome(
+                root,
+            )
+            val setup =
+                setup(
+                    root,
+                )
+            val transport =
+                DirectCompanionConnection.Transport {
+                    providerCalls +=
+                        1
+                    DirectCompanionConnection.HttpResult(
+                        status = 200,
+                        body =
+                            """
+                            {
+                              "model": "default_model",
+                              "choices": [
+                                {
+                                  "message": {
+                                    "role": "assistant",
+                                    "content": "No reasoning field here."
+                                  }
+                                }
+                              ]
+                            }
+                            """.trimIndent(),
+                    )
+                }
+
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha = "e".repeat(
+                        40,
+                    ),
+                    setup = setup,
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            currentSetup,
+                            intent,
+                            ->
+                            DirectCompanionTurn.performWithHooks(
+                                setup = currentSetup,
+                                intent = intent,
+                                hooks =
+                                    DirectCompanionTurn.Hooks(
+                                        transport = transport,
+                                    ),
+                            )
+                        },
+                )
+                .use {
+                    service ->
+                    val request =
+                        VexLifeProdServiceContract.SendRequest(
+                            idempotencyKey =
+                                "send.vexlife.browser.service.no-reasoning",
+                            content =
+                                "Answer without reasoning",
+                        )
+                    val body =
+                        json.encodeToString(
+                            request,
+                        )
+
+                    val first =
+                        json.decodeFromString<VexLifeProdServiceContract.SendResponse>(
+                            postJson(
+                                service.origin,
+                                VexLifeProdServiceContract.ConversationSendPath,
+                                body,
+                            )
+                                .body(),
+                        )
+                    assertEquals(
+                        "ABSENT",
+                        first.humanReasoning.state,
+                    )
+                    assertNull(
+                        first.humanReasoning.text,
+                    )
+                    assertNull(
+                        first.humanReasoning.contentSha256,
+                    )
+                    assertEquals(
+                        0,
+                        first.humanReasoning.characterCount,
+                    )
+
+                    val duplicate =
+                        json.decodeFromString<VexLifeProdServiceContract.SendResponse>(
+                            postJson(
+                                service.origin,
+                                VexLifeProdServiceContract.ConversationSendPath,
+                                body,
+                            )
+                                .body(),
+                        )
+                    assertTrue(
+                        duplicate.recoveredCompletedTurn,
+                    )
+                    assertEquals(
+                        "ABSENT",
+                        duplicate.humanReasoning.state,
+                    )
+                    assertNull(
+                        duplicate.humanReasoning.text,
+                    )
+                    assertNull(
+                        duplicate.humanReasoning.contentSha256,
+                    )
+                    assertEquals(
+                        0,
+                        duplicate.humanReasoning.characterCount,
+                    )
+                    assertEquals(
+                        1,
+                        providerCalls,
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+
+    @Test
+    fun streamingSendProjectsLivePhasesReasoningAndAnswerBeforeCompletedEvent() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-service-stream-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        var providerCalls =
+            0
+
+        try {
+            bootstrapHome(
+                root,
+            )
+            val currentSetup =
+                setup(
+                    root,
+                )
+            val transport =
+                object :
+                    DirectCompanionConnection.StreamingTransport {
+                    override fun post(
+                        call: DirectCompanionConnection.HttpCall,
+                    ): DirectCompanionConnection.HttpResult =
+                        error(
+                            "stream test must use the provider stream",
+                        )
+
+                    override fun postStreaming(
+                        call: DirectCompanionConnection.HttpCall,
+                        onLine: (String) -> Unit,
+                    ): DirectCompanionConnection.StreamingHttpResult {
+                        providerCalls +=
+                            1
+                        onLine(
+                            """data: {"model":"default_model","choices":[{"delta":{"role":"assistant","reasoning":"Compare "}}]}""",
+                        )
+                        onLine(
+                            "",
+                        )
+                        onLine(
+                            """data: {"model":"default_model","choices":[{"delta":{"role":"assistant","reasoning":"carefully."}}]}""",
+                        )
+                        onLine(
+                            "",
+                        )
+                        onLine(
+                            """data: {"model":"default_model","choices":[{"delta":{"role":"assistant","content":"Choose "}}]}""",
+                        )
+                        onLine(
+                            "",
+                        )
+                        onLine(
+                            """data: {"model":"default_model","choices":[{"finish_reason":"stop","delta":{"role":"assistant","content":"A."}}]}""",
+                        )
+                        onLine(
+                            "",
+                        )
+                        onLine(
+                            "data: [DONE]",
+                        )
+                        return DirectCompanionConnection.StreamingHttpResult(
+                            status = 200,
+                            responseBodySha256 = "f".repeat(
+                                64,
+                            ),
+                        )
+                    }
+                }
+
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha = "f".repeat(
+                        40,
+                    ),
+                    setup = currentSetup,
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "event-stream request must not use bulk turn executor",
+                            )
+                        },
+                    streamingTurnExecutor =
+                        VexLifeProdLocalService.StreamingTurnExecutor {
+                            setup,
+                            intent,
+                            observer,
+                            ->
+                            DirectCompanionTurn.performWithHooks(
+                                setup = setup,
+                                intent = intent,
+                                hooks =
+                                    DirectCompanionTurn.Hooks(
+                                        transport = transport,
+                                        progressObserver = observer,
+                                        now = {
+                                            Instant.parse(
+                                                "2026-11-10T04:45:00Z",
+                                            )
+                                        },
+                                    ),
+                            )
+                        },
+                )
+                .use {
+                    service ->
+                    val body =
+                        json.encodeToString(
+                            VexLifeProdServiceContract.SendRequest(
+                                idempotencyKey = "send.vexlife.browser.streaming.001",
+                                content = "Compare A and B",
+                            ),
+                        )
+                    val response =
+                        postEventStream(
+                            service.origin,
+                            VexLifeProdServiceContract.ConversationSendPath,
+                            body,
+                        )
+
+                    assertEquals(
+                        200,
+                        response.statusCode(),
+                    )
+                    assertTrue(
+                        response.headers()
+                            .firstValue(
+                                "content-type",
+                            )
+                            .orElse(
+                                "",
+                            )
+                            .startsWith(
+                                "text/event-stream",
+                            ),
+                    )
+                    val stream =
+                        response.body()
+                    val checking =
+                        stream.indexOf(
+                            "\"phase\":\"CheckingRuntime\"",
+                        )
+                    val generating =
+                        stream.indexOf(
+                            "\"phase\":\"Generating\"",
+                        )
+                    val reasoning =
+                        stream.indexOf(
+                            "\"type\":\"REASONING_DELTA\"",
+                        )
+                    val content =
+                        stream.indexOf(
+                            "\"type\":\"CONTENT_DELTA\"",
+                        )
+                    val completed =
+                        stream.indexOf(
+                            "\"type\":\"COMPLETED\"",
+                        )
+
+                    assertTrue(
+                        checking >=
+                            0,
+                    )
+                    assertTrue(
+                        generating >
+                            checking,
+                    )
+                    assertTrue(
+                        reasoning >
+                            generating,
+                    )
+                    assertTrue(
+                        content >
+                            reasoning,
+                    )
+                    assertTrue(
+                        completed >
+                            content,
+                    )
+                    assertTrue(
+                        stream.contains(
+                            "data: [DONE]",
+                        ),
+                    )
+                    assertEquals(
+                        1,
+                        providerCalls,
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
 }
 
 // [VXG RealForever]
