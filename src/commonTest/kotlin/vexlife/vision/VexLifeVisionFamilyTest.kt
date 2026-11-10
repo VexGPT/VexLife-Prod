@@ -7,7 +7,7 @@ import kotlin.test.assertNull
 
 class VexLifeVisionFamilyTest {
     @Test
-    fun heldVisionCannotInventPermissionOrCaptureAuthority() {
+    fun heldVisionCannotInventReachabilityOrCaptureAuthority() {
         for (control in listOf(
             VexLifeVisionFamily.Control.Enable,
             VexLifeVisionFamily.Control.Disable,
@@ -29,40 +29,26 @@ class VexLifeVisionFamilyTest {
     }
 
     @Test
-    fun enableRequestsEffectsButDoesNotClaimObservedState() {
-        val permission =
-            assertNotNull(
-                VexLifeVisionFamily.resolve(
-                    currentState = VexLifeVisionFamily.State.PermissionNeeded,
-                    control = VexLifeVisionFamily.Control.Enable,
-                ),
-            )
-        assertNull(
-            permission.admittedState,
-        )
-        assertEquals(
-            VexLifeVisionFamily.Effect.RequestHostPermission,
-            permission.effect,
-        )
-
-        val ready =
+    fun enableIsLocalArmingStateAndPerformsNoOutsideEffect() {
+        val act =
             assertNotNull(
                 VexLifeVisionFamily.resolve(
                     currentState = VexLifeVisionFamily.State.Ready,
                     control = VexLifeVisionFamily.Control.Enable,
                 ),
             )
-        assertNull(
-            ready.admittedState,
-        )
+
         assertEquals(
-            VexLifeVisionFamily.Effect.RequestEnable,
-            ready.effect,
+            VexLifeVisionFamily.State.Enabled,
+            act.admittedState,
+        )
+        assertNull(
+            act.effect,
         )
     }
 
     @Test
-    fun lookNowRequestsOneObservationWithoutClaimingFrameArrival() {
+    fun lookNowRequestsOneSnapshotWithoutClaimingFrameArrival() {
         val act =
             assertNotNull(
                 VexLifeVisionFamily.resolve(
