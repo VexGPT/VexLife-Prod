@@ -188,7 +188,7 @@ object DirectCompanionConnection {
                 client.send(
                     request(
                         call = call,
-                        applyOverallTimeout = false,
+                        applyOverallTimeout = true,
                     ),
                     HttpResponse.BodyHandlers.ofInputStream(),
                 )
