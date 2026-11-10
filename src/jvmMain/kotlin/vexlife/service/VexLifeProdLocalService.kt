@@ -500,6 +500,8 @@ class VexLifeProdLocalService private constructor(
                                     capture = it.capture,
                                 )
                             },
+                    humanReasoningRequested =
+                        request.viewableThoughts,
                 ),
             )
 
@@ -526,7 +528,102 @@ class VexLifeProdLocalService private constructor(
                         promptContextProjection(
                             result.promptContextReceipt,
                         ),
+                    humanReasoning =
+                        humanReasoningProjection(
+                            request = request,
+                            result = result,
+                        ),
                 ),
+        )
+    }
+
+    private fun humanReasoningProjection(
+        request: VexLifeProdServiceContract.SendRequest,
+        result: DirectCompanionTurn.Result,
+    ): VexLifeProdServiceContract.HumanReasoningProjection {
+        if (
+            !request.viewableThoughts
+        ) {
+            return VexLifeProdServiceContract.HumanReasoningProjection(
+                state = "NOT_REQUESTED",
+                text = null,
+                contentSha256 = null,
+                characterCount = 0,
+                persisted = false,
+            )
+        }
+
+        val trace =
+            result.runtimeObservation.reasoningTrace
+
+        if (
+            result.recoveredCompletedTurn
+        ) {
+            return VexLifeProdServiceContract.HumanReasoningProjection(
+                state = "UNAVAILABLE_AFTER_IDEMPOTENT_RECOVERY",
+                text = null,
+                contentSha256 =
+                    trace.contentSha256,
+                characterCount =
+                    trace.characterCount,
+                persisted = false,
+            )
+        }
+
+        val reasoning =
+            result.humanReasoning
+
+        if (
+            reasoning ==
+                null
+        ) {
+            require(
+                !trace.present &&
+                    trace.contentSha256 ==
+                    null &&
+                    trace.characterCount ==
+                    0,
+            ) {
+                "fresh requested human reasoning disappeared before local service projection"
+            }
+
+            return VexLifeProdServiceContract.HumanReasoningProjection(
+                state = "ABSENT",
+                text = null,
+                contentSha256 = null,
+                characterCount = 0,
+                persisted = false,
+            )
+        }
+
+        require(
+            trace.present &&
+                trace.contentSha256 !=
+                null &&
+                trace.characterCount ==
+                reasoning.codePointCount(
+                    0,
+                    reasoning.length,
+                ) &&
+                !trace.rawPersisted &&
+                trace.humanProjection ==
+                "SEALED_EXPLICIT_OPEN_ONLY" &&
+                trace.modelProjection ==
+                "NONE" &&
+                trace.trainingProjection ==
+                "NONE",
+        ) {
+            "fresh human reasoning does not match the sealed runtime observation"
+        }
+
+        return VexLifeProdServiceContract.HumanReasoningProjection(
+            state = "PRESENT_EPHEMERAL",
+            text = reasoning,
+            contentSha256 =
+                trace.contentSha256,
+            characterCount =
+                trace.characterCount,
+            persisted = false,
         )
     }
 
