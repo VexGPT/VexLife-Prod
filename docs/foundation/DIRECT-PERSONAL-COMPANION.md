@@ -238,13 +238,21 @@ but it cannot recover raw reasoning that was intentionally not persisted:
 fresh response + explicit visibility request
   -> PRESENT_EPHEMERAL
 
-completed duplicate
+completed duplicate + durable reasoning trace present
   -> UNAVAILABLE_AFTER_IDEMPOTENT_RECOVERY
   -> durable hash/count may remain
   -> raw text = null
+
+completed duplicate + durable reasoning trace absent
+  -> ABSENT
+  -> no raw/hash/count material
 ~~~
 
-Reloading the Product presentation also drops the ephemeral reasoning by design.
+The local `Viewable thoughts` preference is presentation-only and may persist as one boolean in
+browser localStorage. Raw reasoning never enters that preference store.
+
+Reloading the Product presentation drops all ephemeral reasoning by design while preserving only the
+human's local visibility preference.
 
 ### `DirectTurnContextStore`
 
