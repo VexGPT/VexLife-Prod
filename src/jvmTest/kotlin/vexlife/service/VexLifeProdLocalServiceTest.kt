@@ -593,7 +593,6 @@ class VexLifeProdLocalServiceTest {
                                     text = "Current direct-contact terrain context",
                                     capture = VexLifeProdBrowserContract.CaptureRendered,
                                 ),
-                            viewableThoughts = true,
                         )
                     val body =
                         json.encodeToString(
@@ -822,32 +821,6 @@ class VexLifeProdLocalServiceTest {
                         providerCalls,
                     )
 
-                    val mismatchedReasoningMode =
-                        postJson(
-                            service.origin,
-                            VexLifeProdServiceContract.ConversationSendPath,
-                            json.encodeToString(
-                                request.copy(
-                                    viewableThoughts = false,
-                                ),
-                            ),
-                        )
-                    assertEquals(
-                        400,
-                        mismatchedReasoningMode.statusCode(),
-                    )
-                    val mismatchError =
-                        json.decodeFromString<VexLifeProdServiceContract.ErrorResponse>(
-                            mismatchedReasoningMode.body(),
-                        )
-                    assertEquals(
-                        "REQUEST_NOT_ADMITTED",
-                        mismatchError.code,
-                    )
-                    assertEquals(
-                        1,
-                        providerCalls,
-                    )
                 }
         } finally {
             parent
@@ -1008,8 +981,6 @@ class VexLifeProdLocalServiceTest {
                                 "send.vexlife.browser.service.no-reasoning",
                             content =
                                 "Answer without reasoning",
-                            viewableThoughts =
-                                true,
                         )
                     val body =
                         json.encodeToString(
