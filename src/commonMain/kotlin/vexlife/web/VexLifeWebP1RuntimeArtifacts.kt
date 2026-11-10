@@ -603,13 +603,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 setCompanionStatus('Ready', 'Ready', ui.companionStatusModel.textContent);
               };
 
-              const loadConversation = async () => {
+              const loadConversation = async (renderNow = true) => {
                 const response = await fetch(service.conversationPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.conversation = await readJson(response);
                 const messages = state.conversation?.messages ?? [];
                 const latest = [...messages].reverse().find((message) => message.role === 'vex' && message.model);
                 setCompanionStatus('Ready', 'Ready', latest?.model ?? '');
-                renderTimeline();
+                if (renderNow) renderTimeline();
               };
 
               const loadContext = async () => {
@@ -686,7 +686,6 @@ object VexLifeWebP1RuntimeArtifacts {
                     if (event?.type === 'COMPLETED') result = event.response ?? null;
                   });
                   if (!result) throw new Error('Vex stream ended without a completed turn.');
-                  state.pending = null;
                   state.sendInFlight = false;
                   root.dataset.vexLastContextPath = String(result.contextPath ?? '');
                   root.dataset.vexLastPromptReceiptRef = String(result.promptContext?.receiptRef ?? '');
@@ -702,20 +701,25 @@ object VexLifeWebP1RuntimeArtifacts {
                     state.humanReasoningByResponse.delete(String(result.responseMessageRef));
                     state.expandedThoughts.delete(String(result.responseMessageRef));
                   }
-                  state.streamPhase = null;
-                  state.streamedContent = '';
-                  state.streamedReasoning = '';
-                  setCompanionStatus('Ready', 'Ready', result.model ?? '');
-                  render();
 
+                  // Preserve the fully streamed answer on screen until the canonical projection has
+                  // arrived. Live presentation remains non-authoritative; this only prevents a
+                  // visible vanish/reappear gap at the completion boundary.
                   try {
-                    await Promise.all([loadConversation(), loadContext()]);
+                    await Promise.all([loadConversation(false), loadContext()]);
                   } catch (projectionError) {
                     notify(
                       'Turn completed, but the current projection could not be refreshed: ' +
                       (projectionError instanceof Error ? projectionError.message : 'refresh failed.')
                     );
                   }
+
+                  state.pending = null;
+                  state.streamPhase = null;
+                  state.streamedContent = '';
+                  state.streamedReasoning = '';
+                  setCompanionStatus('Ready', 'Ready', result.model ?? '');
+                  render();
                 } catch (error) {
                   state.sendInFlight = false;
                   state.streamPhase = null;
