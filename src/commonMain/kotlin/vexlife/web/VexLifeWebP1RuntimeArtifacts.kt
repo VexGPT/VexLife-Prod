@@ -154,6 +154,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 collapsed: 'none',
                 pending: null,
                 sendInFlight: false,
+                streamPhase: null,
+                streamedContent: '',
+                streamedReasoning: '',
                 thoughtsVisible: true,
                 humanReasoningByResponse: new Map(),
                 expandedThoughts: new Set(),
@@ -177,6 +180,42 @@ object VexLifeWebP1RuntimeArtifacts {
                   throw error;
                 }
                 return value;
+              };
+
+              const readEventStream = async (response, onEvent) => {
+                if (!response.ok) return readJson(response);
+                if (!response.body) throw new Error('Vex stream did not expose a readable response body.');
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                const consume = (raw) => {
+                  const data = raw
+                    .split(/\r?\n/gu)
+                    .filter((line) => line.startsWith('data:'))
+                    .map((line) => line.slice(5).trimStart())
+                    .join('\n');
+                  if (!data || data === '[DONE]') return;
+                  let event;
+                  try { event = JSON.parse(data); }
+                  catch { throw new Error('Vex stream emitted invalid JSON.'); }
+                  onEvent(event);
+                };
+
+                for (;;) {
+                  const next = await reader.read();
+                  if (next.done) break;
+                  buffer += decoder.decode(next.value, { stream: true });
+                  for (;;) {
+                    const match = buffer.match(/\r?\n\r?\n/u);
+                    if (!match || match.index === undefined) break;
+                    const raw = buffer.slice(0, match.index);
+                    buffer = buffer.slice(match.index + match[0].length);
+                    consume(raw);
+                  }
+                }
+                buffer += decoder.decode();
+                if (buffer.trim()) consume(buffer);
               };
 
               const notify = (message) => {
@@ -379,6 +418,7 @@ object VexLifeWebP1RuntimeArtifacts {
               const waitingNode = (sequence) => {
                 const item = document.createElement('li');
                 item.className = 'message message-vex waiting';
+                item.dataset.hasContent = String(Boolean(state.streamedContent));
 
                 const index = document.createElement('p');
                 index.className = 'message-index';
@@ -394,11 +434,30 @@ object VexLifeWebP1RuntimeArtifacts {
                 mark.setAttribute('viewBox', '0 0 16 16');
                 mark.innerHTML = '<path d="M8 1.8 14.2 8 8 14.2 1.8 8z"/><path d="M8 5 11 8 8 11 5 8z"/>';
                 const label = document.createElement('span');
-                label.textContent = 'responding…';
+                label.textContent =
+                  state.streamPhase === 'CheckingRuntime'
+                    ? 'checking Vex…'
+                    : state.streamPhase === 'Generating' || state.streamPhase === 'Reasoning'
+                      ? 'thinking…'
+                      : state.streamPhase === 'Responding'
+                        ? 'responding…'
+                        : 'preparing…';
                 thought.append(who, mark, label);
+
+                if (state.thoughtsVisible && state.streamedReasoning) {
+                  const reasoning = document.createElement('div');
+                  reasoning.className = 'reasoning live-reasoning';
+                  reasoning.textContent = state.streamedReasoning;
+                  thought.append(reasoning);
+                }
 
                 const bubble = document.createElement('div');
                 bubble.className = 'bubble';
+                if (state.streamedContent) {
+                  const paragraph = document.createElement('p');
+                  paragraph.textContent = state.streamedContent;
+                  bubble.append(paragraph);
+                }
                 const speaker = document.createElement('p');
                 speaker.className = 'speaker';
                 speaker.textContent = 'Vex';
@@ -571,20 +630,58 @@ object VexLifeWebP1RuntimeArtifacts {
                 });
                 state.pending = pending;
                 state.sendInFlight = true;
+                state.streamPhase = 'CheckingRuntime';
+                state.streamedContent = '';
+                state.streamedReasoning = '';
                 if (!retrying) {
                   ui.draft.value = '';
                   sizeDraft();
                 }
-                setCompanionStatus('Checking', retrying ? 'Retrying exact Send' : 'Responding', '');
+                setCompanionStatus('Checking', retrying ? 'Retrying exact Send' : 'Checking Vex', '');
                 render();
 
                 try {
                   const response = await fetch(service.sendPath, {
                     method: 'POST',
-                    headers: { accept: 'application/json', 'content-type': 'application/json' },
+                    headers: { accept: 'text/event-stream', 'content-type': 'application/json' },
                     body: JSON.stringify(pending)
                   });
-                  const result = await readJson(response);
+                  let result = null;
+                  await readEventStream(response, (event) => {
+                    if (event?.type === 'PHASE') {
+                      state.streamPhase = String(event.phase ?? '');
+                      if (state.streamPhase === 'CheckingRuntime') {
+                        setCompanionStatus('Checking', 'Checking Vex', '');
+                      } else if (state.streamPhase === 'Generating') {
+                        setCompanionStatus('Checking', 'Thinking', '');
+                      }
+                      renderTimeline();
+                      return;
+                    }
+                    if (event?.type === 'REASONING_DELTA' && typeof event.delta === 'string') {
+                      state.streamPhase = 'Reasoning';
+                      state.streamedReasoning += event.delta;
+                      setCompanionStatus('Checking', 'Thinking', '');
+                      renderTimeline();
+                      return;
+                    }
+                    if (event?.type === 'CONTENT_DELTA' && typeof event.delta === 'string') {
+                      state.streamPhase = 'Responding';
+                      state.streamedContent += event.delta;
+                      setCompanionStatus('Checking', 'Responding', '');
+                      renderTimeline();
+                      return;
+                    }
+                    if (event?.type === 'FAILED') {
+                      const failure = event.error ?? {};
+                      const error = new Error(String(failure.message ?? 'Vex turn failed.'));
+                      error.vexStatus = 409;
+                      error.vexResponse = failure;
+                      throw error;
+                    }
+                    if (event?.type === 'COMPLETED') result = event.response ?? null;
+                  });
+                  if (!result) throw new Error('Vex stream ended without a completed turn.');
                   state.pending = null;
                   state.sendInFlight = false;
                   root.dataset.vexLastContextPath = String(result.contextPath ?? '');
@@ -601,6 +698,9 @@ object VexLifeWebP1RuntimeArtifacts {
                     state.humanReasoningByResponse.delete(String(result.responseMessageRef));
                     state.expandedThoughts.delete(String(result.responseMessageRef));
                   }
+                  state.streamPhase = null;
+                  state.streamedContent = '';
+                  state.streamedReasoning = '';
                   setCompanionStatus('Ready', 'Ready', result.model ?? '');
                   render();
 
@@ -614,6 +714,9 @@ object VexLifeWebP1RuntimeArtifacts {
                   }
                 } catch (error) {
                   state.sendInFlight = false;
+                  state.streamPhase = null;
+                  state.streamedContent = '';
+                  state.streamedReasoning = '';
                   const status = Number(error?.vexStatus ?? 0);
                   const retryAllowed = error?.vexResponse?.retrySameSendAttemptAllowed;
                   const retireAttempt = status === 400 || retryAllowed === false;
