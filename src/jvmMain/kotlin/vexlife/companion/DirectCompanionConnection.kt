@@ -78,6 +78,7 @@ object DirectCompanionConnection {
         val messages: List<CompanionProviderMessage>,
         val max_tokens: Int,
         val stream: Boolean = false,
+        val chat_template_kwargs: Map<String, Boolean>,
     )
 
     data class HttpCall(
@@ -255,6 +256,7 @@ object DirectCompanionConnection {
     fun invoke(
         runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
         messages: List<CompanionProviderMessage>,
+        humanReasoningRequested: Boolean = false,
         transport: Transport = SystemTransport,
         now: () -> Instant = {
             Instant.now()
@@ -284,6 +286,11 @@ object DirectCompanionConnection {
                     messages = messages,
                     max_tokens = OutputTokenLimit,
                     stream = false,
+                    chat_template_kwargs =
+                        mapOf(
+                            "enable_thinking" to
+                                humanReasoningRequested,
+                        ),
                 ),
             )
         val requestBodySha256 =
