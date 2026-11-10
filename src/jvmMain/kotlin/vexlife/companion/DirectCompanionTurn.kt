@@ -37,6 +37,14 @@ object DirectCompanionTurn {
         val content: String,
         val browserContext: DirectPromptContext.BrowserContext? =
             null,
+        /**
+         * Explicit presentation request for one fresh response's sealed human reasoning.
+         *
+         * This flag never changes provider prompt formation, canonical Conversation, Context,
+         * Memory, training, or durable recovery semantics.
+         */
+        val humanReasoningRequested: Boolean =
+            false,
     ) {
         init {
             requireRef(
@@ -68,6 +76,14 @@ object DirectCompanionTurn {
         val promptContextReceipt: DirectPromptContext.Receipt,
         val runtimeObservation: DirectCompanionConnection.RuntimeObservation,
         val invocationEvidence: DirectCompanionConnection.InvocationEvidence,
+        /**
+         * Ephemeral response-local reasoning for the requesting human only.
+         *
+         * A recovered completed duplicate always returns null because raw reasoning is deliberately
+         * absent from durable Conversation/Context evidence.
+         */
+        val humanReasoning: String? =
+            null,
     )
 
     @Serializable
@@ -409,6 +425,14 @@ object DirectCompanionTurn {
                                 promptContextReceipt = prompt.receipt,
                                 runtimeObservation = inference.runtimeObservation,
                                 invocationEvidence = inference.invocationEvidence,
+                                humanReasoning =
+                                    if (
+                                        intent.humanReasoningRequested
+                                    ) {
+                                        inference.sealedHumanReasoning
+                                    } else {
+                                        null
+                                    },
                             ),
                         turnRef = request.turnRef,
                         workingContinuity = workingContinuity,
