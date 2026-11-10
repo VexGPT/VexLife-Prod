@@ -365,7 +365,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.timeline.querySelectorAll('.reasoning[data-scroll-key]').forEach((element) => {
                   const key = String(element.dataset.scrollKey ?? '');
                   const prior = positions.get(key);
-                  if (!prior) return;
+                  if (!prior) {
+                    if (key === 'live') element.scrollTop = element.scrollHeight;
+                    return;
+                  }
                   if (prior.nearBottom) {
                     element.scrollTop = element.scrollHeight;
                     return;

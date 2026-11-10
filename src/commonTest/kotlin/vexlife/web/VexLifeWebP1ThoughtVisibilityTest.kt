@@ -106,6 +106,12 @@ class VexLifeWebP1ThoughtVisibilityTest {
         )
         assertTrue(
             bundle.javascript.contains(
+                "if (key === 'live') element.scrollTop = element.scrollHeight;",
+            ),
+            "a newly appearing live reasoning pane must begin in tail-follow mode until the human scrolls away",
+        )
+        assertTrue(
+            bundle.javascript.contains(
                 "reasoning.dataset.scrollKey = 'live';",
             ),
         )
