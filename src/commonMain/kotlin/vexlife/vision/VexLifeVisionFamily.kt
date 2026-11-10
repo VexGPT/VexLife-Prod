@@ -9,9 +9,9 @@ import vexlife.semantic.VexFamilyContract
  * Recording permission, physical capture, Partner/Connection realization, visual-model input,
  * Conversation Context, Memory, training, or publication.
  *
- * Enable/Disable are local human-facing arming semantics only. They do not request or establish
- * host permission, start a sensor, or make capture reachable. The only outside Vision effect owned
- * by this Family vocabulary is one explicit RequestSnapshot.
+ * The accepted first Product relationship is one explicit Look Now request. There is no standing
+ * enable/permission state in this Family: Ready means the Product route is reachable, Looking means
+ * one Look Now request is in progress, and RequestSnapshot is the sole outside Vision effect.
  */
 object VexLifeVisionFamily :
     VexFamilyContract<
@@ -24,16 +24,11 @@ object VexLifeVisionFamily :
         VexFamilyContract.State<VexLifeVisionFamily> {
         Held,
         Ready,
-        Enabled,
         Looking,
     }
 
     sealed interface Control :
         VexFamilyContract.Control<VexLifeVisionFamily> {
-        data object Enable : Control
-
-        data object Disable : Control
-
         data object LookNow : Control
     }
 
@@ -49,7 +44,6 @@ object VexLifeVisionFamily :
         > {
         Held,
         Ready,
-        Enabled,
         Looking,
     }
 
@@ -64,45 +58,17 @@ object VexLifeVisionFamily :
         when (
             control
         ) {
-            Control.Enable ->
+            Control.LookNow ->
                 when (
                     currentState
                 ) {
                     State.Ready ->
                         admit(
-                            State.Enabled,
+                            state = State.Looking,
+                            effect = Effect.RequestSnapshot,
                         )
 
                     State.Held,
-                    State.Enabled,
-                    State.Looking -> null
-                }
-
-            Control.Disable ->
-                when (
-                    currentState
-                ) {
-                    State.Enabled ->
-                        admit(
-                            State.Ready,
-                        )
-
-                    State.Held,
-                    State.Ready,
-                    State.Looking -> null
-                }
-
-            Control.LookNow ->
-                when (
-                    currentState
-                ) {
-                    State.Enabled ->
-                        stay(
-                            Effect.RequestSnapshot,
-                        )
-
-                    State.Held,
-                    State.Ready,
                     State.Looking -> null
                 }
         }
@@ -115,7 +81,6 @@ object VexLifeVisionFamily :
         ) {
             State.Held -> DisplayState.Held
             State.Ready -> DisplayState.Ready
-            State.Enabled -> DisplayState.Enabled
             State.Looking -> DisplayState.Looking
         }
 }
