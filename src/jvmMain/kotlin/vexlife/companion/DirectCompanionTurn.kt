@@ -32,6 +32,25 @@ object DirectCompanionTurn {
                 .toString()
                 .lowercase()
 
+    enum class ProgressPhase {
+        CheckingRuntime,
+        Generating,
+        Reasoning,
+        Responding,
+    }
+
+    data class Progress(
+        val phase: ProgressPhase,
+        val delta: String? = null,
+        val accumulatedCharacters: Int = 0,
+    )
+
+    fun interface ProgressObserver {
+        fun observe(
+            progress: Progress,
+        )
+    }
+
     data class Intent(
         val idempotencyKey: String,
         val content: String,
@@ -159,6 +178,8 @@ object DirectCompanionTurn {
                 productHome,
             )
         },
+        val progressObserver: ProgressObserver? =
+            null,
         val commitWorkingContinuity: (
             productHome: Path,
             turnRef: String,
@@ -199,6 +220,8 @@ object DirectCompanionTurn {
     internal fun perform(
         session: VexLifeProdLocalSetup.Session,
         intent: Intent,
+        progressObserver: ProgressObserver? =
+            null,
     ): Result =
         performWithHooks(
             setup = session.result,
@@ -208,6 +231,7 @@ object DirectCompanionTurn {
                     currentRuntimeEvidence = {
                         session.currentQualifiedRuntimeEvidence()
                     },
+                    progressObserver = progressObserver,
                 ),
         )
 
@@ -291,6 +315,12 @@ object DirectCompanionTurn {
                             content = intent.content,
                             formedAt = hooks.now(),
                         )
+                    emitProgress(
+                        hooks.progressObserver,
+                        Progress(
+                            phase = ProgressPhase.CheckingRuntime,
+                        ),
+                    )
                     val workingSuccessorContext =
                         DirectWorkingContinuity.resolveSuccessorContext(
                             productHome = productHome,
@@ -327,6 +357,12 @@ object DirectCompanionTurn {
                         hooks.currentRuntimeEvidence(
                             setup,
                         )
+                    emitProgress(
+                        hooks.progressObserver,
+                        Progress(
+                            phase = ProgressPhase.Generating,
+                        ),
+                    )
                     val prompt =
                         DirectPromptContext.materialize(
                             prior = currentPrior,
@@ -362,6 +398,31 @@ object DirectCompanionTurn {
                             runtime = runtimeEvidence,
                             messages = prompt.messages,
                             transport = hooks.transport,
+                            progressObserver =
+                                hooks.progressObserver
+                                    ?.let {
+                                        observer ->
+                                        DirectCompanionConnection.ProgressObserver {
+                                            progress ->
+                                            emitProgress(
+                                                observer,
+                                                Progress(
+                                                    phase =
+                                                        when (
+                                                            progress.kind
+                                                        ) {
+                                                            DirectCompanionConnection.ProgressKind.Reasoning ->
+                                                                ProgressPhase.Reasoning
+
+                                                            DirectCompanionConnection.ProgressKind.Content ->
+                                                                ProgressPhase.Responding
+                                                        },
+                                                    delta = progress.delta,
+                                                    accumulatedCharacters = progress.accumulatedCharacters,
+                                                ),
+                                            )
+                                        }
+                                    },
                             now = hooks.now,
                         )
 
@@ -500,6 +561,23 @@ object DirectCompanionTurn {
                 exactNextSafeRoute = error.route,
                 cause = error,
             )
+        }
+    }
+
+    private fun emitProgress(
+        observer: ProgressObserver?,
+        progress: Progress,
+    ) {
+        try {
+            observer
+                ?.observe(
+                    progress,
+                )
+        } catch (
+            _: Throwable,
+        ) {
+            // Human presentation progress is intentionally non-authoritative. Failure to project a
+            // transient delta must never corrupt or retroactively fail the canonical turn.
         }
     }
 
