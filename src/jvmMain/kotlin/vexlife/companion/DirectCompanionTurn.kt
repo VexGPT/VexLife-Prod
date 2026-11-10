@@ -34,6 +34,7 @@ object DirectCompanionTurn {
 
     enum class ProgressPhase {
         CheckingRuntime,
+        Reconnecting,
         Generating,
         Reasoning,
         Responding,
@@ -229,7 +230,16 @@ object DirectCompanionTurn {
             hooks =
                 Hooks(
                     currentRuntimeEvidence = {
-                        session.currentQualifiedRuntimeEvidence()
+                        session.currentQualifiedRuntimeEvidence(
+                            onRecovery = {
+                                emitProgress(
+                                    progressObserver,
+                                    Progress(
+                                        phase = ProgressPhase.Reconnecting,
+                                    ),
+                                )
+                            },
+                        )
                     },
                     progressObserver = progressObserver,
                 ),
