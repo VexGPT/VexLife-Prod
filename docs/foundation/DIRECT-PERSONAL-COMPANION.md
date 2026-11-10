@@ -101,7 +101,8 @@ DirectCompanionConnection
     top_p = 0.95
     top_k = 20
   no additional request-owned sampling knobs
-  bulk whole-response timeout is not applied to the active stream
+  request timeout bounds response-start/header availability
+  streamed InputStream body may continue beyond that response-start bound
         ↓
 ephemeral live progress
   CheckingRuntime
@@ -468,7 +469,7 @@ Tests are source-formed for:
 - raw provider/reasoning non-persistence;
 - qualified Direct Companion inference selects `stream=true` plus request-local `enable_thinking=true`;
 - streamed reasoning and content deltas preserve ordering before terminal completion;
-- the actual system streaming transport remains alive beyond the bulk whole-response deadline;
+- the actual system streaming transport receives headers within the request bound and remains alive while the streamed body continues beyond that bound;
 - no human/presentation field controls provider reasoning mode;
 - Viewable thoughts remains absent from the Send wire request;
 - live reasoning stays ephemeral while completed-response reasoning remains available in the same browser session;
