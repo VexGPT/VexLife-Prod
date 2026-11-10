@@ -179,6 +179,11 @@ object DirectCompanionConnection {
         val trainingProjection: String,
     )
 
+    private data class ReasoningObservation(
+        val trace: ReasoningTrace,
+        val sealedHumanValue: String?,
+    )
+
     @Serializable
     @ConsistentCopyVisibility
     data class RuntimeObservation internal constructor(
@@ -237,6 +242,12 @@ object DirectCompanionConnection {
     data class Result internal constructor(
         val content: String,
         val model: String,
+        /**
+         * Ephemeral human-only projection candidate. This value is never included in the durable
+         * runtime observation, invocation evidence, canonical Conversation, Context, Memory,
+         * training, or publication surfaces.
+         */
+        val sealedHumanReasoning: String?,
         val runtimeObservation: RuntimeObservation,
         val invocationEvidence: InvocationEvidence,
     )
@@ -413,7 +424,7 @@ object DirectCompanionConnection {
                 reportedModel,
             )
         val reasoning =
-            reasoningTrace(
+            reasoningObservation(
                 message,
             )
         val finishReason =
@@ -454,9 +465,9 @@ object DirectCompanionConnection {
                     ?: "",
                 reportedModelField.pathClass
                     ?: "",
-                reasoning.contentSha256
+                reasoning.trace.contentSha256
                     ?: "",
-                reasoning.characterCount.toString(),
+                reasoning.trace.characterCount.toString(),
             )
         val runtimeObservation =
             RuntimeObservation(
@@ -481,7 +492,7 @@ object DirectCompanionConnection {
                 finishReasonOrNull = finishReason,
                 compatibilityModel = compatibilityModel,
                 reportedModelField = reportedModelField,
-                reasoningTrace = reasoning,
+                reasoningTrace = reasoning.trace,
                 rawProviderResponsePersisted = false,
                 observationRef =
                     "observation.vexlife-prod.model-runtime." +
@@ -538,6 +549,7 @@ object DirectCompanionConnection {
         return Result(
             content = content,
             model = compatibilityModel,
+            sealedHumanReasoning = reasoning.sealedHumanValue,
             runtimeObservation = runtimeObservation,
             invocationEvidence = invocation,
         )
@@ -688,9 +700,9 @@ object DirectCompanionConnection {
         )
     }
 
-    private fun reasoningTrace(
+    private fun reasoningObservation(
         message: JsonObject,
-    ): ReasoningTrace {
+    ): ReasoningObservation {
         val mlx =
             stringOrNull(
                 message[
@@ -727,38 +739,43 @@ object DirectCompanionConnection {
         val value =
             mlx
                 ?: compatibility
+        val trace =
+            if (
+                value ==
+                    null
+            ) {
+                ReasoningTrace(
+                    present = false,
+                    contentSha256 = null,
+                    characterCount = 0,
+                    rawPersisted = false,
+                    humanProjection = "SEALED_EXPLICIT_OPEN_ONLY",
+                    modelProjection = "NONE",
+                    trainingProjection = "NONE",
+                )
+            } else {
+                ReasoningTrace(
+                    present = true,
+                    contentSha256 =
+                        sha256(
+                            value,
+                        ),
+                    characterCount =
+                        value.codePointCount(
+                            0,
+                            value.length,
+                        ),
+                    rawPersisted = false,
+                    humanProjection = "SEALED_EXPLICIT_OPEN_ONLY",
+                    modelProjection = "NONE",
+                    trainingProjection = "NONE",
+                )
+            }
 
-        return if (
-            value ==
-                null
-        ) {
-            ReasoningTrace(
-                present = false,
-                contentSha256 = null,
-                characterCount = 0,
-                rawPersisted = false,
-                humanProjection = "SEALED_EXPLICIT_OPEN_ONLY",
-                modelProjection = "NONE",
-                trainingProjection = "NONE",
-            )
-        } else {
-            ReasoningTrace(
-                present = true,
-                contentSha256 =
-                    sha256(
-                        value,
-                    ),
-                characterCount =
-                    value.codePointCount(
-                        0,
-                        value.length,
-                    ),
-                rawPersisted = false,
-                humanProjection = "SEALED_EXPLICIT_OPEN_ONLY",
-                modelProjection = "NONE",
-                trainingProjection = "NONE",
-            )
-        }
+        return ReasoningObservation(
+            trace = trace,
+            sealedHumanValue = value,
+        )
     }
 
     private fun stringOrNull(
