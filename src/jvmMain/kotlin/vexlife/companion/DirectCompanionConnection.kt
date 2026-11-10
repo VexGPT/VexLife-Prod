@@ -51,8 +51,11 @@ object DirectCompanionConnection {
     const val InvocationEvidenceSchema =
         "vexlife-prod.model-runtime-invocation-evidence/v1"
 
+    // Preserves the known-working browser Companion's bounded inference-establishment window.
+    // With BodyHandlers.ofInputStream(), this bounds response start/headers, not active SSE body
+    // consumption after the stream has been established.
     private const val RequestTimeoutMs =
-        30_000L
+        120_000L
 
     private val JsonCodec =
         Json {
