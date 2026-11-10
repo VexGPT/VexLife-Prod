@@ -3047,20 +3047,42 @@ object VexLifeCurrentMemoryReader {
     private fun authorityContains(
         head: JsonObject,
         statement: Statement,
-    ): Boolean =
-        head.objectList(
+    ): Boolean {
+        val statementBinding =
+            dreamStatementBinding(
+                statement,
+            )
+        return head.objectList(
             "currentAcceptanceBindings",
         )
             .any {
-                it.string(
-                    "acceptanceRef",
-                ) ==
-                    statement.acceptanceRef &&
-                    it.string(
-                        "acceptanceSha256",
-                    ) ==
-                    statement.acceptanceSha256
+                currentAuthorityBindingMatches(
+                    authorityBinding = it,
+                    statementBinding = statementBinding,
+                )
             }
+    }
+
+    internal fun currentAuthorityBindingMatches(
+        authorityBinding: JsonObject,
+        statementBinding: JsonObject,
+    ): Boolean =
+        authorityBinding.string("semanticSubjectFingerprint") ==
+            statementBinding.string("semanticSubjectFingerprint") &&
+            authorityBinding.string("acceptanceRef") ==
+            statementBinding.string("semanticAcceptanceRef") &&
+            authorityBinding.string("acceptanceSha256") ==
+            statementBinding.string("semanticAcceptanceSha256") &&
+            authorityBinding.string("candidateRef") ==
+            statementBinding.string("semanticCandidateRef") &&
+            authorityBinding.string("candidateSha256") ==
+            statementBinding.string("semanticCandidateSha256") &&
+            authorityBinding.objectList("classificationEvidenceBindings") ==
+            statementBinding.objectList("classificationEvidenceBindings") &&
+            authorityBinding.string("consentDispositionRef") ==
+            statementBinding.string("consentDispositionRef") &&
+            authorityBinding.string("consentDispositionSha256") ==
+            statementBinding.string("consentDispositionSha256")
 
     private fun dailyReceipt(
         home: Path,

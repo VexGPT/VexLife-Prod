@@ -93,6 +93,91 @@ class VexLifeDailyMemoryDreamTest {
         )
 
     @Test
+    fun currentAuthorityMembershipRequiresTheWholeSemanticBinding() {
+        val statement =
+            binding(
+                "statement.g03.active",
+                true,
+            )
+        val authority =
+            buildJsonObject {
+                put(
+                    "semanticSubjectFingerprint",
+                    statement["semanticSubjectFingerprint"]!!,
+                )
+                put(
+                    "acceptanceRef",
+                    statement["semanticAcceptanceRef"]!!,
+                )
+                put(
+                    "acceptanceSha256",
+                    statement["semanticAcceptanceSha256"]!!,
+                )
+                put(
+                    "candidateRef",
+                    statement["semanticCandidateRef"]!!,
+                )
+                put(
+                    "candidateSha256",
+                    statement["semanticCandidateSha256"]!!,
+                )
+                put(
+                    "classificationEvidenceBindings",
+                    statement["classificationEvidenceBindings"]!!,
+                )
+                put(
+                    "consentDispositionRef",
+                    statement["consentDispositionRef"]!!,
+                )
+                put(
+                    "consentDispositionSha256",
+                    statement["consentDispositionSha256"]!!,
+                )
+            }
+
+        assertTrue(
+            VexLifeCurrentMemoryReader.currentAuthorityBindingMatches(
+                authorityBinding = authority,
+                statementBinding = statement,
+            ),
+        )
+        assertFalse(
+            VexLifeCurrentMemoryReader.currentAuthorityBindingMatches(
+                authorityBinding =
+                    JsonObject(
+                        authority +
+                            mapOf(
+                                "consentDispositionSha256" to
+                                    JsonPrimitive(
+                                        "0".repeat(
+                                            64,
+                                        ),
+                                    ),
+                            ),
+                    ),
+                statementBinding = statement,
+            ),
+        )
+        assertFalse(
+            VexLifeCurrentMemoryReader.currentAuthorityBindingMatches(
+                authorityBinding =
+                    JsonObject(
+                        authority +
+                            mapOf(
+                                "candidateSha256" to
+                                    JsonPrimitive(
+                                        "0".repeat(
+                                            64,
+                                        ),
+                                    ),
+                            ),
+                    ),
+                statementBinding = statement,
+            ),
+        )
+    }
+
+    @Test
     fun manualMemoryOnlyDreamCommitsReferenceFrontierAndHoldsLaterEffects() {
         val home = Files.createTempDirectory("vexlife-prod-g03-").toAbsolutePath()
         try {
