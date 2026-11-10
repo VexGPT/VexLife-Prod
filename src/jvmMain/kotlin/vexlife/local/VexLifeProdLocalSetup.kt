@@ -57,7 +57,8 @@ object VexLifeProdLocalSetup {
     internal class Session internal constructor(
         val result: Result,
         private val currentRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
-        private val recoverRuntimeEvidence: (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)?,
+        private val recoverRuntimeEvidence: (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)? =
+            null,
     ) {
         fun currentQualifiedRuntimeEvidence(
             onRecovery: (() -> Unit)? =
