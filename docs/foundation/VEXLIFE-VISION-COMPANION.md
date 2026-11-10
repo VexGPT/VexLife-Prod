@@ -11,8 +11,10 @@ separate owners?
 Current product decision:
 
 ~~~text
-PR #53 presentation source is exact-head proved + semantically clear
-while its merge effect remains separately lifecycle-bound
+accepted VexLife-Prod main
+  = 9225477f217da1e86af8d249eab980875f0dc774
+  = PR #53 presentation + PR #55 live Companion/scroll relationship
+  = accepted-main Product source/PID promotion A023 PASS
 
 AND
 
@@ -24,10 +26,12 @@ USER_SELECTED_SESSION system-picker capture
 BUT
 
 SDK_SOURCE_ACCEPTED != PROD_EFFECT_REACHABLE
+ACCEPTED_COMPANION_MAIN != VISION_RUNTIME_BRIDGE
 ~~~
 
-The current VexLife-Prod slice therefore remains a truthful semantic/control surface while the
-ordinary-product runtime bridge is separately source-placed.
+The current VexLife-Prod Vision slice therefore composes over the accepted lived Companion body while
+remaining a truthful semantic/control surface. The ordinary-product Vision runtime bridge is still
+separately source-placed.
 
 ## Current semantic owner
 
