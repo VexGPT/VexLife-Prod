@@ -329,7 +329,7 @@ class DirectCompanionConnectionTest {
     }
 
     @Test
-    fun systemStreamingTransportDoesNotApplyBulkWholeResponseTimeout() {
+    fun systemStreamingTransportRequestTimeoutDoesNotCapActiveBody() {
         val server =
             HttpServer.create(
                 InetSocketAddress(
