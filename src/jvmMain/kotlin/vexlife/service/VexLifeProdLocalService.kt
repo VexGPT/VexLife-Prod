@@ -559,11 +559,36 @@ class VexLifeProdLocalService private constructor(
         if (
             result.recoveredCompletedTurn
         ) {
+            if (
+                !trace.present
+            ) {
+                require(
+                    trace.contentSha256 ==
+                        null &&
+                        trace.characterCount ==
+                        0,
+                ) {
+                    "absent recovered reasoning trace carries unexpected fingerprint material"
+                }
+
+                return VexLifeProdServiceContract.HumanReasoningProjection(
+                    state = "ABSENT",
+                    text = null,
+                    contentSha256 = null,
+                    characterCount = 0,
+                    persisted = false,
+                )
+            }
+
             return VexLifeProdServiceContract.HumanReasoningProjection(
                 state = "UNAVAILABLE_AFTER_IDEMPOTENT_RECOVERY",
                 text = null,
                 contentSha256 =
-                    trace.contentSha256,
+                    requireNotNull(
+                        trace.contentSha256,
+                    ) {
+                        "recovered present reasoning trace is missing its content hash"
+                    },
                 characterCount =
                     trace.characterCount,
                 persisted = false,
