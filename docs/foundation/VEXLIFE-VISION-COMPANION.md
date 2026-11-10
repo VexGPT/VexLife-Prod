@@ -37,25 +37,23 @@ ordinary-product runtime bridge is separately source-placed.
 State
   Held
   Ready
-  Enabled
   Looking
 
 Control
-  Enable
-  Disable
   LookNow
 
 Effect
   RequestSnapshot
 ~~~
 
-Enable/Disable are local human-facing arming semantics only. They do not request host permission,
-start capture, or establish an outside runtime state. The accepted USER_SELECTED_SESSION route does
-not require persistent host permission.
+The accepted first Product relationship is one explicit Look Now request. There is no standing
+enable/disable or permission state in this Family. Ready means the ordinary Product route is
+reachable; Look Now enters Looking and requests one RequestSnapshot; Looking does not claim that a
+frame has arrived.
 
 ~~~text
-VISION_ENABLED != HOST_PERMISSION_GRANTED
-VISION_ENABLED != SCREEN_CAPTURE_AUTHORIZED
+READY != SCREEN_CAPTURE_AUTHORIZED
+LOOKING != SCREEN_CAPTURED
 LOOK_NOW_REQUESTED != SCREEN_CAPTURED
 SCREEN_CAPTURED != ACTIVE_VISUAL_OBSERVATION
 ACTIVE_VISUAL_OBSERVATION != VISUAL_MODEL_INPUT
@@ -75,7 +73,7 @@ PRODUCT EFFECT REACHABLE
 ~~~
 
 Changing the button to Ready merely because SDK source exists would fabricate Product reachability.
-Enabled is a separate local human choice after Ready; it still grants no screen-capture authority.
+Ready is earned only when the ordinary Product bridge is actually reachable.
 
 ## Accepted outside effect owners
 
@@ -115,7 +113,7 @@ Perception
   owns only the content-absent active VISUAL observation cross-binding
 
 VexLifeVisionFamily
-  owns only human-facing Vision meaning and local Ready/Enabled arming state
+  owns only human-facing Held / Ready / Looking meaning and the explicit Look Now request
 ~~~
 
 VexLife-Prod does not need to copy a generic Partner/Signal hierarchy merely because the SDK
