@@ -68,6 +68,12 @@ class VexLifeWebP1ThoughtVisibilityTest {
         )
         assertTrue(
             bundle.javascript.contains(
+                "await Promise.all([loadConversation(false), loadContext()])",
+            ),
+            "completed streamed content must remain visible until canonical Conversation refresh completes",
+        )
+        assertTrue(
+            bundle.javascript.contains(
                 "reasoning?.state === 'PRESENT_EPHEMERAL'",
             ),
         )
