@@ -1600,6 +1600,147 @@ class DirectCompanionTurnTest {
         }
     }
 
+
+    @Test
+    fun explicitHumanReasoningIsEphemeralAndNeverRecoveredFromDurableDuplicate() {
+        val home =
+            productHome()
+        var providerCalls =
+            0
+        val reasoning =
+            "ephemeral human-visible reasoning"
+        val transport =
+            DirectCompanionConnection.Transport {
+                providerCalls +=
+                    1
+                DirectCompanionConnection.HttpResult(
+                    status = 200,
+                    body =
+                        """
+                        {
+                          "model": "default_model",
+                          "choices": [
+                            {
+                              "message": {
+                                "role": "assistant",
+                                "content": "Reasoned response",
+                                "reasoning": "$reasoning"
+                              }
+                            }
+                          ]
+                        }
+                        """.trimIndent(),
+                )
+            }
+        val intent =
+            DirectCompanionTurn.Intent(
+                idempotencyKey =
+                    "send.self-development.viewable-thoughts.001",
+                content =
+                    "Reason about this",
+                humanReasoningRequested =
+                    true,
+            )
+
+        try {
+            val first =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home,
+                        ),
+                    intent = intent,
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            now = {
+                                Instant.parse(
+                                    "2026-11-09T18:30:00Z",
+                                )
+                            },
+                        ),
+                )
+
+            assertEquals(
+                reasoning,
+                first.humanReasoning,
+            )
+            assertFalse(
+                first.recoveredCompletedTurn,
+            )
+            assertTrue(
+                first.runtimeObservation.reasoningTrace.present,
+            )
+            assertFalse(
+                first.runtimeObservation.reasoningTrace.rawPersisted,
+            )
+
+            Files.walk(
+                home,
+            )
+                .use {
+                    paths ->
+                    paths
+                        .filter(
+                            Files::isRegularFile,
+                        )
+                        .forEach {
+                            path ->
+                            val bytes =
+                                Files.readAllBytes(
+                                    path,
+                                )
+                            val text =
+                                bytes.toString(
+                                    Charsets.UTF_8,
+                                )
+                            assertFalse(
+                                text.contains(
+                                    reasoning,
+                                ),
+                                "raw human reasoning must not persist at $path",
+                            )
+                        }
+                }
+
+            val duplicate =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home,
+                        ),
+                    intent = intent,
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            now = {
+                                Instant.parse(
+                                    "2026-11-09T18:31:00Z",
+                                )
+                            },
+                        ),
+                )
+
+            assertTrue(
+                duplicate.recoveredCompletedTurn,
+            )
+            assertFalse(
+                duplicate.actualHttpCallPerformedNow,
+            )
+            assertNull(
+                duplicate.humanReasoning,
+            )
+            assertEquals(
+                1,
+                providerCalls,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
 }
 
 // [VXG RealForever]
