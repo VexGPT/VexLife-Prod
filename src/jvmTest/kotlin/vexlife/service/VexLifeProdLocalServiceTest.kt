@@ -134,6 +134,39 @@ class VexLifeProdLocalServiceTest {
             ),
         )
 
+    private fun postEventStream(
+        origin: String,
+        path: String,
+        body: String,
+    ): HttpResponse<String> =
+        client.send(
+            HttpRequest
+                .newBuilder(
+                    URI(
+                        origin +
+                            path,
+                    ),
+                )
+                .header(
+                    "accept",
+                    "text/event-stream",
+                )
+                .header(
+                    "content-type",
+                    "application/json",
+                )
+                .POST(
+                    HttpRequest.BodyPublishers.ofString(
+                        body,
+                        StandardCharsets.UTF_8,
+                    ),
+                )
+                .build(),
+            HttpResponse.BodyHandlers.ofString(
+                StandardCharsets.UTF_8,
+            ),
+        )
+
     @Test
     fun sourceCurrentnessAndEmptyConversationAreReadOnlyProjections() {
         val parent =
@@ -1036,6 +1069,210 @@ class VexLifeProdLocalServiceTest {
                     assertEquals(
                         0,
                         duplicate.humanReasoning.characterCount,
+                    )
+                    assertEquals(
+                        1,
+                        providerCalls,
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+
+    @Test
+    fun streamingSendProjectsLivePhasesReasoningAndAnswerBeforeCompletedEvent() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-service-stream-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        var providerCalls =
+            0
+
+        try {
+            bootstrapHome(
+                root,
+            )
+            val currentSetup =
+                setup(
+                    root,
+                )
+            val transport =
+                object :
+                    DirectCompanionConnection.StreamingTransport {
+                    override fun post(
+                        call: DirectCompanionConnection.HttpCall,
+                    ): DirectCompanionConnection.HttpResult =
+                        error(
+                            "stream test must use the provider stream",
+                        )
+
+                    override fun postStreaming(
+                        call: DirectCompanionConnection.HttpCall,
+                        onLine: (String) -> Unit,
+                    ): DirectCompanionConnection.StreamingHttpResult {
+                        providerCalls +=
+                            1
+                        onLine(
+                            """data: {"model":"default_model","choices":[{"delta":{"role":"assistant","reasoning":"Compare "}}]}""",
+                        )
+                        onLine(
+                            "",
+                        )
+                        onLine(
+                            """data: {"model":"default_model","choices":[{"delta":{"role":"assistant","reasoning":"carefully."}}]}""",
+                        )
+                        onLine(
+                            "",
+                        )
+                        onLine(
+                            """data: {"model":"default_model","choices":[{"delta":{"role":"assistant","content":"Choose "}}]}""",
+                        )
+                        onLine(
+                            "",
+                        )
+                        onLine(
+                            """data: {"model":"default_model","choices":[{"finish_reason":"stop","delta":{"role":"assistant","content":"A."}}]}""",
+                        )
+                        onLine(
+                            "",
+                        )
+                        onLine(
+                            "data: [DONE]",
+                        )
+                        return DirectCompanionConnection.StreamingHttpResult(
+                            status = 200,
+                            responseBodySha256 = "f".repeat(
+                                64,
+                            ),
+                        )
+                    }
+                }
+
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha = "f".repeat(
+                        40,
+                    ),
+                    setup = currentSetup,
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "event-stream request must not use bulk turn executor",
+                            )
+                        },
+                    streamingTurnExecutor =
+                        VexLifeProdLocalService.StreamingTurnExecutor {
+                            setup,
+                            intent,
+                            observer,
+                            ->
+                            DirectCompanionTurn.performWithHooks(
+                                setup = setup,
+                                intent = intent,
+                                hooks =
+                                    DirectCompanionTurn.Hooks(
+                                        transport = transport,
+                                        progressObserver = observer,
+                                        now = {
+                                            Instant.parse(
+                                                "2026-11-10T04:45:00Z",
+                                            )
+                                        },
+                                    ),
+                            )
+                        },
+                )
+                .use {
+                    service ->
+                    val body =
+                        json.encodeToString(
+                            VexLifeProdServiceContract.SendRequest(
+                                idempotencyKey = "send.vexlife.browser.streaming.001",
+                                content = "Compare A and B",
+                            ),
+                        )
+                    val response =
+                        postEventStream(
+                            service.origin,
+                            VexLifeProdServiceContract.ConversationSendPath,
+                            body,
+                        )
+
+                    assertEquals(
+                        200,
+                        response.statusCode(),
+                    )
+                    assertTrue(
+                        response.headers()
+                            .firstValue(
+                                "content-type",
+                            )
+                            .orElse(
+                                "",
+                            )
+                            .startsWith(
+                                "text/event-stream",
+                            ),
+                    )
+                    val stream =
+                        response.body()
+                    val checking =
+                        stream.indexOf(
+                            "\"phase\":\"CheckingRuntime\"",
+                        )
+                    val generating =
+                        stream.indexOf(
+                            "\"phase\":\"Generating\"",
+                        )
+                    val reasoning =
+                        stream.indexOf(
+                            "\"type\":\"REASONING_DELTA\"",
+                        )
+                    val content =
+                        stream.indexOf(
+                            "\"type\":\"CONTENT_DELTA\"",
+                        )
+                    val completed =
+                        stream.indexOf(
+                            "\"type\":\"COMPLETED\"",
+                        )
+
+                    assertTrue(
+                        checking >=
+                            0,
+                    )
+                    assertTrue(
+                        generating >
+                            checking,
+                    )
+                    assertTrue(
+                        reasoning >
+                            generating,
+                    )
+                    assertTrue(
+                        content >
+                            reasoning,
+                    )
+                    assertTrue(
+                        completed >
+                            content,
+                    )
+                    assertTrue(
+                        stream.contains(
+                            "data: [DONE]",
+                        ),
                     )
                     assertEquals(
                         1,
