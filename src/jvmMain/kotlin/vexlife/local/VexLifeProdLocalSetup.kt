@@ -59,15 +59,21 @@ object VexLifeProdLocalSetup {
         private val currentRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
         private val recoverRuntimeEvidence: (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)?,
     ) {
-        fun currentQualifiedRuntimeEvidence(): HereticModelConfiguration.QualifiedRuntimeEvidence =
+        fun currentQualifiedRuntimeEvidence(
+            onRecovery: (() -> Unit)? =
+                null,
+        ): HereticModelConfiguration.QualifiedRuntimeEvidence =
             try {
                 currentRuntimeEvidence()
             } catch (
                 original: RuntimeException,
             ) {
-                recoverRuntimeEvidence
+                val recover =
+                    recoverRuntimeEvidence
+                        ?: throw original
+                onRecovery
                     ?.invoke()
-                    ?: throw original
+                recover()
             }
     }
 
