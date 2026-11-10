@@ -187,6 +187,22 @@ object VexLifeWebP1RuntimeArtifacts {
                 notify.timer = setTimeout(() => { ui.snackbar.hidden = true; }, 4800);
               };
 
+              const THOUGHT_VISIBILITY_KEY = 'vexlife-prod.presentation.thoughts-visible';
+
+              const loadThoughtVisibility = () => {
+                try {
+                  const stored = localStorage.getItem(THOUGHT_VISIBILITY_KEY);
+                  if (stored === 'false') state.thoughtsVisible = false;
+                  else if (stored === 'true') state.thoughtsVisible = true;
+                } catch {}
+              };
+
+              const saveThoughtVisibility = () => {
+                try {
+                  localStorage.setItem(THOUGHT_VISIBILITY_KEY, String(state.thoughtsVisible));
+                } catch {}
+              };
+
               const currentTheme = () =>
                 document.documentElement.dataset.theme ||
                 (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
@@ -662,6 +678,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 );
               };
 
+              loadThoughtVisibility();
               applyTheme();
               renderQuickActions();
               applySplit();
@@ -759,6 +776,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               ui.thoughtVisibility.addEventListener('click', () => {
                 state.thoughtsVisible = !state.thoughtsVisible;
+                saveThoughtVisibility();
                 renderSettings();
                 renderTimeline();
               });
