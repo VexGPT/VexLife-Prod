@@ -167,7 +167,6 @@ object VexLifeDailyMemoryDream {
                             prior.timeZoneRef == invocation.timeZoneRef &&
                             prior.observedAt == invocation.observedAt.toString() &&
                             prior.restInvocationAuthorityRef == invocation.restInvocationAuthorityRef &&
-                            prior.dailyDreamHeadSha256 == invocation.expectedDailyDreamHeadSha256 &&
                             frontier.conversationHeadSha256 == invocation.expectedConversationHeadSha256 &&
                             frontier.scoreHeadSha256 == invocation.expectedScoreHeadSha256,
                     ) {
@@ -177,6 +176,12 @@ object VexLifeDailyMemoryDream {
                 }
             }
 
+            require(
+                invocation.expectedDailyDreamHeadSha256 ==
+                    frontier.priorDaily?.dailyDreamHeadSha256,
+            ) {
+                "DREAM_HEAD_MISMATCH: expected Daily Dream head differs from current head"
+            }
             require(invocation.dayIndex == (frontier.priorDaily?.dayIndex?.plus(1) ?: 0L)) {
                 "DREAM_DAY_INVALID: dayIndex must advance exactly one committed day"
             }
@@ -646,9 +651,6 @@ object VexLifeDailyMemoryDream {
         }
         require(invocation.expectedScoreHeadSha256 == frontier.scoreHeadSha256) {
             "DREAM_SOURCE_STALE: expected Score head is stale"
-        }
-        require(invocation.expectedDailyDreamHeadSha256 == frontier.priorDaily?.dailyDreamHeadSha256) {
-            "DREAM_HEAD_MISMATCH: expected Daily Dream head differs from current head"
         }
     }
 

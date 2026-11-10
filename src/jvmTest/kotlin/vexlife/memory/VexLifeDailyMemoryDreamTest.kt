@@ -155,6 +155,49 @@ class VexLifeDailyMemoryDreamTest {
     }
 
     @Test
+    fun exactDuplicateGenesisInvocationIsIdempotentWithOriginalNullDreamHead() {
+        val home = Files.createTempDirectory("vexlife-prod-g03-idempotent-").toAbsolutePath()
+        try {
+            val originalSource = frontier()
+            val originalInvocation = invocation()
+            val first =
+                VexLifeDailyMemoryDream.commitWithFrontier(
+                    productHome = home,
+                    invocation = originalInvocation,
+                    sourceProvider = { originalSource },
+                )
+            val committedSource =
+                frontier(
+                    prior =
+                        VexLifeCurrentMemoryReader.DreamPriorDaily(
+                            dailyDreamHeadSha256 = first.dailyDreamHeadSha256,
+                            dailyStratumSha256 = first.dailyStratumSha256,
+                            sequence = 0,
+                            dayRef = originalInvocation.dayRef,
+                            dayIndex = originalInvocation.dayIndex,
+                            calendarDateRef = originalInvocation.calendarDateRef,
+                            timeZoneRef = originalInvocation.timeZoneRef,
+                            observedAt = originalInvocation.observedAt.toString(),
+                            restInvocationAuthorityRef = originalInvocation.restInvocationAuthorityRef,
+                        ),
+                )
+
+            val duplicate =
+                VexLifeDailyMemoryDream.commitWithFrontier(
+                    productHome = home,
+                    invocation = originalInvocation,
+                    sourceProvider = { committedSource },
+                )
+
+            assertEquals("IDEMPOTENT_REPLAY", duplicate.state)
+            assertEquals(first.dailyDreamHeadSha256, duplicate.dailyDreamHeadSha256)
+            assertEquals(first.dailyStratumSha256, duplicate.dailyStratumSha256)
+        } finally {
+            home.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
     fun staleSourceExpectationFailsBeforeDailyMutation() {
         val home = Files.createTempDirectory("vexlife-prod-g03-stale-").toAbsolutePath()
         try {
