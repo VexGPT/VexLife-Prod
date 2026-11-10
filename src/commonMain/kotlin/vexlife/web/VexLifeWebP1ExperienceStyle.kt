@@ -366,7 +366,9 @@ svg { display: block; }
   background: var(--raised); color: var(--ink-2);
   font-size: var(--step--1); line-height: 1.5; white-space: pre-wrap;
 }
-.message.waiting .bubble { display: none; }
+.message.waiting[data-has-content="false"] .bubble { display: none; }
+.message.waiting[data-has-content="true"] .bubble { opacity: 0.92; }
+.live-reasoning { margin-left: 0; }
 
 .receipt-line {
   grid-area: receipt; margin: 6px 2px 0; color: var(--ink-3); font-size: var(--step--1);
