@@ -675,6 +675,7 @@ class VexLifeProdLocalService private constructor(
                                 progress.phase
                             ) {
                                 DirectCompanionTurn.ProgressPhase.CheckingRuntime,
+                                DirectCompanionTurn.ProgressPhase.Reconnecting,
                                 DirectCompanionTurn.ProgressPhase.Generating,
                                 ->
                                     VexLifeProdServiceContract.SendStreamEvent(
