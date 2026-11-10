@@ -201,18 +201,29 @@ modelProjection = NONE
 trainingProjection = NONE
 ~~~
 
-For a **fresh** Send whose local presentation preference explicitly requests Viewable thoughts, the
-Connection may additionally keep that raw reasoning only in the immediate in-memory invocation
-result:
+For a **fresh** Send, the local Viewable thoughts preference is sampled into that exact Send.
+It preserves the historical explicit-open model relationship without changing canonical prompt-message
+selection:
 
 ~~~text
-provider response reasoning
--> DirectCompanionConnection sealedHumanReasoning
--> DirectCompanionTurn humanReasoning when explicitly requested
+Viewable thoughts = true
+-> DirectCompanionTurn humanReasoningRequested
+-> DirectCompanionConnection
+-> chat_template_kwargs.enable_thinking = true
+-> provider reasoning when emitted
+-> sealedHumanReasoning
 -> one SendResponse HumanReasoningProjection(PRESENT_EPHEMERAL)
 -> current browser-session in-memory map
 -> view thoughts / hide thoughts
+
+Viewable thoughts = false
+-> chat_template_kwargs.enable_thinking = false
+-> no human reasoning projection requested
 ~~~
+
+This per-Send model-mode selection is distinct from DirectPromptContext ownership. It does not add,
+remove or rewrite the canonical provider message set, and it does not grant Memory, training,
+publication, durable reasoning storage or another model/runtime identity.
 
 Permanent:
 
@@ -248,11 +259,13 @@ completed duplicate + durable reasoning trace absent
   -> no raw/hash/count material
 ~~~
 
-The local `Viewable thoughts` preference is presentation-only and may persist as one boolean in
-browser localStorage. Raw reasoning never enters that preference store.
+The local `Viewable thoughts` preference may persist as one boolean in browser localStorage.
+That stored boolean is not reasoning content or durable model state. When a fresh Send is formed, its
+current value is sampled into that Send as the explicit-open request described above. Raw reasoning
+never enters localStorage/sessionStorage.
 
 Reloading the Product presentation drops all ephemeral reasoning by design while preserving only the
-human's local visibility preference.
+human's local preference.
 
 ### `DirectTurnContextStore`
 
@@ -346,6 +359,8 @@ Tests are source-formed for:
 - numeric-loopback provider call + endpoint/model ownership;
 - provider local-path model normalization;
 - raw provider/reasoning non-persistence;
+- default provider request selects `enable_thinking=false`;
+- explicit human reasoning request selects `enable_thinking=true` through Turn -> Connection;
 - explicit fresh-response reasoning projection without durable storage;
 - idempotent duplicate reasoning unavailability without provider replay;
 - first-turn prompt materialization;
