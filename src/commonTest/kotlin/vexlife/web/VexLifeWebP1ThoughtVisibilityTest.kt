@@ -15,9 +15,15 @@ class VexLifeWebP1ThoughtVisibilityTest {
                 "Viewable thoughts",
             ),
         )
+        assertFalse(
+            bundle.javascript.contains(
+                "viewableThoughts",
+            ),
+            "Viewable thoughts must remain local presentation state and never enter the Send wire request",
+        )
         assertTrue(
             bundle.javascript.contains(
-                "viewableThoughts: state.thoughtsVisible",
+                "if (!state.thoughtsVisible || message.role !== 'vex') return null;",
             ),
         )
         assertTrue(
