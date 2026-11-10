@@ -42,7 +42,7 @@ object DirectCompanionConnection {
         "vexlife-prod.model-runtime-observation/v1"
 
     const val InvocationEvidenceSchema =
-        "vexlife-prod.model-runtime-invocation-evidence/v1"
+        "vexlife-prod.model-runtime-invocation-evidence/v2"
 
     private const val RequestTimeoutMs =
         30_000L
@@ -227,6 +227,14 @@ object DirectCompanionConnection {
         val runtimeReceiptRef: String,
         val endpointOrigin: String,
         val requestBodySha256: String,
+        /**
+         * Exact explicit-open reasoning selection used for this provider invocation.
+         *
+         * Default false preserves truthful decoding of v1 durable invocation evidence formed before
+         * this field existed.
+         */
+        val humanReasoningRequested: Boolean =
+            false,
         val responseBodySha256: String,
         val runtimeObservationRef: String,
         val runtimeObservationFingerprint: String,
@@ -524,6 +532,7 @@ object DirectCompanionConnection {
                 runtime.runtimeReceiptRef,
                 origin.toString(),
                 requestBodySha256,
+                humanReasoningRequested.toString(),
                 responseBodySha256,
                 runtimeObservation.observationRef,
                 runtimeObservation.semanticFingerprint,
@@ -537,6 +546,7 @@ object DirectCompanionConnection {
                 runtimeReceiptRef = runtime.runtimeReceiptRef,
                 endpointOrigin = origin.toString(),
                 requestBodySha256 = requestBodySha256,
+                humanReasoningRequested = humanReasoningRequested,
                 responseBodySha256 = responseBodySha256,
                 runtimeObservationRef = runtimeObservation.observationRef,
                 runtimeObservationFingerprint = runtimeObservation.semanticFingerprint,
