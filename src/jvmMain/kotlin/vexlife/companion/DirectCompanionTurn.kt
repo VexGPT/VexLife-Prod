@@ -37,16 +37,6 @@ object DirectCompanionTurn {
         val content: String,
         val browserContext: DirectPromptContext.BrowserContext? =
             null,
-        /**
-         * Explicit presentation request for one fresh response's sealed human reasoning.
-         *
-         * This flag does not change DirectPromptContext message selection, canonical Conversation,
-         * Context, Memory, training, or durable recovery semantics. It is consumed only at the
-         * Connection boundary to request the existing explicit-open reasoning mode for this fresh
-         * provider inference.
-         */
-        val humanReasoningRequested: Boolean =
-            false,
     ) {
         init {
             requireRef(
@@ -273,7 +263,6 @@ object DirectCompanionTurn {
                         identity = identity,
                         content = intent.content,
                         browserContext = intent.browserContext,
-                        humanReasoningRequested = intent.humanReasoningRequested,
                         productHome = productHome,
                     )
 
@@ -372,8 +361,6 @@ object DirectCompanionTurn {
                         DirectCompanionConnection.invoke(
                             runtime = runtimeEvidence,
                             messages = prompt.messages,
-                            humanReasoningRequested =
-                                intent.humanReasoningRequested,
                             transport = hooks.transport,
                             now = hooks.now,
                         )
@@ -430,14 +417,7 @@ object DirectCompanionTurn {
                                 promptContextReceipt = prompt.receipt,
                                 runtimeObservation = inference.runtimeObservation,
                                 invocationEvidence = inference.invocationEvidence,
-                                humanReasoning =
-                                    if (
-                                        intent.humanReasoningRequested
-                                    ) {
-                                        inference.sealedHumanReasoning
-                                    } else {
-                                        null
-                                    },
+                                humanReasoning = inference.sealedHumanReasoning,
                             ),
                         turnRef = request.turnRef,
                         workingContinuity = workingContinuity,
@@ -591,7 +571,6 @@ object DirectCompanionTurn {
         identity: Identity,
         content: String,
         browserContext: DirectPromptContext.BrowserContext?,
-        humanReasoningRequested: Boolean,
         productHome: Path,
     ): Result? {
         val canonicalRequest =
@@ -647,12 +626,6 @@ object DirectCompanionTurn {
                 ),
             ) {
                 "idempotencyKey already identifies a completed turn with different browser context"
-            }
-            require(
-                context.invocationEvidence.humanReasoningRequested ==
-                    humanReasoningRequested,
-            ) {
-                "idempotencyKey already identifies a completed turn with different human reasoning request"
             }
 
             return Result(
