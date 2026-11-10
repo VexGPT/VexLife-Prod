@@ -41,6 +41,21 @@ class VexLifeWebP1ThoughtVisibilityTest {
             ),
         )
         assertTrue(
+            bundle.javascript.contains(
+                "vexlife-prod.presentation.thoughts-visible",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "localStorage.getItem(THOUGHT_VISIBILITY_KEY)",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "localStorage.setItem(THOUGHT_VISIBILITY_KEY, String(state.thoughtsVisible))",
+            ),
+        )
+        assertTrue(
             bundle.css.contains(
                 ".thought-toggle",
             ),
