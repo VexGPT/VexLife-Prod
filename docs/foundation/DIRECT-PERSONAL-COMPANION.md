@@ -96,6 +96,11 @@ DirectCompanionConnection
   numeric-loopback /v1/chat/completions
   stream = true
   request-local explicit-open reasoning
+  certified generation_config sampling only:
+    temperature = 1.0
+    top_p = 0.95
+    top_k = 20
+  no additional request-owned sampling knobs
   bulk whole-response timeout is not applied to the active stream
         ↓
 ephemeral live progress
@@ -246,6 +251,7 @@ reasoning deltas
 content deltas
 -> progressive in-flight Vex answer
 -> final canonical RESPONSE still commits only after terminal completion
+-> streamed answer stays visible until canonical Conversation refresh replaces it
 ~~~
 
 The human's `Viewable thoughts` preference is a separate local presentation decision:
