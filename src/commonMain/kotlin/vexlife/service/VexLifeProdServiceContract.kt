@@ -137,16 +137,6 @@ object VexLifeProdServiceContract {
         val content: String,
         val browserContext: BrowserContextInput? =
             null,
-        /**
-         * Local human preference sampled into this exact Send attempt.
-         *
-         * When true, the Connection requests the existing explicit-open reasoning mode for this
-         * fresh provider inference and may return one human-facing ephemeral reasoning projection.
-         * It does not change DirectPromptContext message selection, canonical Conversation, Context,
-         * Memory, training, publication, or durable reasoning storage.
-         */
-        val viewableThoughts: Boolean =
-            false,
     ) {
         init {
             requirePortableRef(
@@ -244,7 +234,6 @@ object VexLifeProdServiceContract {
             require(
                 state in
                     setOf(
-                        "NOT_REQUESTED",
                         "ABSENT",
                         "PRESENT_EPHEMERAL",
                         "UNAVAILABLE_AFTER_IDEMPOTENT_RECOVERY",
