@@ -8,6 +8,8 @@ import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.time.Duration
 import java.time.Instant
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -233,6 +235,12 @@ object DirectCompanionConnection {
          * Default false preserves truthful decoding of v1 durable invocation evidence formed before
          * this field existed.
          */
+        @OptIn(
+            ExperimentalSerializationApi::class,
+        )
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
         val humanReasoningRequested: Boolean =
             false,
         val responseBodySha256: String,
