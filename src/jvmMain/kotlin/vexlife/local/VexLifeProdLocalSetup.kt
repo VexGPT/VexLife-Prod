@@ -63,7 +63,7 @@ object VexLifeProdLocalSetup {
             try {
                 currentRuntimeEvidence()
             } catch (
-                original: IllegalStateException,
+                original: RuntimeException,
             ) {
                 recoverRuntimeEvidence
                     ?.invoke()
