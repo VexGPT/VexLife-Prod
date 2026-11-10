@@ -108,6 +108,18 @@ class DirectCompanionConnectionTest {
                 ?.toInt(),
         )
         assertEquals(
+            "false",
+            body[
+                "chat_template_kwargs"
+            ]
+                ?.jsonObject
+                ?.get(
+                    "enable_thinking",
+                )
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
             "Hello from Vex.",
             result.content,
         )
@@ -134,6 +146,9 @@ class DirectCompanionConnectionTest {
 
     @Test
     fun providerReportedLocalModelPathNeverBecomesProductIdentityOrPersistedRawValue() {
+        var call: DirectCompanionConnection.HttpCall? =
+            null
+
         val result =
             DirectCompanionConnection.invoke(
                 runtime = qualifiedRuntime(),
@@ -144,8 +159,13 @@ class DirectCompanionConnectionTest {
                             content = "Hello",
                         ),
                     ),
+                humanReasoningRequested =
+                    true,
                 transport =
                     DirectCompanionConnection.Transport {
+                        observed ->
+                        call =
+                            observed
                         DirectCompanionConnection.HttpResult(
                             status = 200,
                             body =
@@ -171,6 +191,28 @@ class DirectCompanionConnectionTest {
                     )
                 },
             )
+
+        val body =
+            Json
+                .parseToJsonElement(
+                    requireNotNull(
+                        call,
+                    )
+                        .body,
+                )
+                .jsonObject
+        assertEquals(
+            "true",
+            body[
+                "chat_template_kwargs"
+            ]
+                ?.jsonObject
+                ?.get(
+                    "enable_thinking",
+                )
+                ?.jsonPrimitive
+                ?.content,
+        )
 
         assertEquals(
             HereticProductIdentity.RequestModel,
