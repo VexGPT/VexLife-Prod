@@ -333,6 +333,39 @@ The local `Viewable thoughts` preference may persist as one boolean in browser l
 stored boolean is not reasoning content or durable model state and is never sent through the Product
 Send contract. Raw reasoning never enters localStorage/sessionStorage.
 
+Streaming viewport ownership is presentation-local and independent from generation:
+
+~~~text
+CONTENT GROWTH != SCROLL AUTHORITY
+
+Conversation viewport:
+  FOLLOWING
+    -> streamed content may keep the viewport at the newest tail
+  human scrolls away
+    -> READING_HISTORY
+    -> streamed content continues without moving the viewport
+  human returns to tail / activates New messages
+    -> FOLLOWING
+
+Live reasoning viewport:
+  first appearance
+    -> FOLLOWING
+  human scrolls away
+    -> READING_HISTORY
+    -> reasoning deltas continue without moving that nested viewport
+  human returns to tail
+    -> FOLLOWING
+
+CONVERSATION FOLLOW STATE != REASONING FOLLOW STATE
+POSITION NEAR TAIL != HUMAN FOLLOW INTENT
+PROVIDER DELTA != VIEWPORT COMMAND
+~~~
+
+The Product presentation disables browser-native scroll anchoring inside those owned scroll containers
+and updates an existing live streamed turn in place. A generated delta must not rebuild the whole
+Conversation merely to append text, and the New messages affordance must not resize the Conversation
+viewport when it appears.
+
 Reloading the Product presentation drops all ephemeral reasoning by design while preserving only the
 human's local disclosure preference.
 

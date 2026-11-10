@@ -89,42 +89,49 @@ class VexLifeWebP1ThoughtVisibilityTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "const timelineScrollTop = ui.timeline.scrollTop;",
+                "timelineFollowTail: true",
             ),
-            "timeline re-renders must preserve deliberate user scroll position",
+            "Conversation following must be explicit presentation state rather than inferred from proximity",
         )
         assertTrue(
             bundle.javascript.contains(
-                "const reasoningScroll = captureReasoningScroll();",
-            ),
-            "live reasoning re-renders must remember whether the human was following its tail",
-        )
-        assertTrue(
-            bundle.javascript.contains(
-                "restoreReasoningScroll(reasoningScroll);",
+                "reasoningViewports: new Map()",
             ),
         )
         assertTrue(
             bundle.javascript.contains(
-                "if (key === 'live') element.scrollTop = element.scrollHeight;",
+                "state.timelineFollowTail = isElementAtBottom(ui.timeline);",
             ),
-            "a newly appearing live reasoning pane must begin in tail-follow mode until the human scrolls away",
+            "human scrolling must own Conversation follow mode",
         )
         assertTrue(
             bundle.javascript.contains(
-                "reasoning.dataset.scrollKey = 'live';",
+                "const updateLiveTurn = () =>",
             ),
+            "stream deltas must update the existing live turn instead of rebuilding the whole timeline",
         )
         assertTrue(
             bundle.javascript.contains(
-                "box.dataset.scrollKey = 'response.' + key;",
+                "updateLiveTurn();",
             ),
         )
-        assertTrue(
+        assertFalse(
             bundle.javascript.contains(
-                "ui.jumpLatest.hidden = isNearBottom();",
+                "isElementNearBottom",
             ),
-            "scrolling away from the conversation tail must opt out of automatic following",
+            "proximity thresholds must not stand in for human follow intent",
+        )
+        assertTrue(
+            bundle.css.contains(
+                "overflow-anchor: none",
+            ),
+            "owned scroll containers must not also be moved by browser-native anchoring",
+        )
+        assertTrue(
+            bundle.css.contains(
+                "grid-template-rows: minmax(0, 1fr) auto",
+            ),
+            "New messages must overlay the stable timeline grid rather than resize the Conversation viewport",
         )
         assertFalse(
             bundle.javascript.contains(

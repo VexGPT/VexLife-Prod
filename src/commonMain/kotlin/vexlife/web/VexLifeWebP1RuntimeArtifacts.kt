@@ -160,6 +160,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 thoughtsVisible: true,
                 humanReasoningByResponse: new Map(),
                 expandedThoughts: new Set(),
+                timelineFollowTail: true,
+                timelineScrollTop: 0,
+                reasoningViewports: new Map(),
                 theme: null
               };
 
@@ -345,37 +348,57 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderComposer();
               };
 
-              const isElementNearBottom = (element, threshold = 24) =>
-                element.scrollHeight - element.scrollTop - element.clientHeight < threshold;
+              const SCROLL_END_EPSILON = 2;
 
-              const isNearBottom = () => isElementNearBottom(ui.timeline, 72);
+              const isElementAtBottom = (element) =>
+                element.scrollHeight - element.scrollTop - element.clientHeight <= SCROLL_END_EPSILON;
 
-              const captureReasoningScroll = () => {
-                const positions = new Map();
-                ui.timeline.querySelectorAll('.reasoning[data-scroll-key]').forEach((element) => {
-                  positions.set(String(element.dataset.scrollKey ?? ''), {
-                    nearBottom: isElementNearBottom(element),
-                    scrollTop: element.scrollTop
-                  });
-                });
-                return positions;
+              const reasoningViewport = (key, initialFollowTail = false) => {
+                let viewport = state.reasoningViewports.get(key);
+                if (!viewport) {
+                  viewport = { followTail: initialFollowTail, scrollTop: 0 };
+                  state.reasoningViewports.set(key, viewport);
+                }
+                return viewport;
               };
 
-              const restoreReasoningScroll = (positions) => {
+              const bindReasoningViewport = (element, key, initialFollowTail = false) => {
+                element.dataset.scrollKey = key;
+                reasoningViewport(key, initialFollowTail);
+                element.addEventListener('scroll', () => {
+                  const viewport = reasoningViewport(key, initialFollowTail);
+                  viewport.scrollTop = element.scrollTop;
+                  viewport.followTail = isElementAtBottom(element);
+                });
+              };
+
+              const applyReasoningViewport = (element, key, initialFollowTail = false) => {
+                const viewport = reasoningViewport(key, initialFollowTail);
+                if (viewport.followTail) {
+                  element.scrollTop = element.scrollHeight;
+                } else {
+                  const maxScrollTop = Math.max(0, element.scrollHeight - element.clientHeight);
+                  element.scrollTop = Math.min(viewport.scrollTop, maxScrollTop);
+                }
+                viewport.scrollTop = element.scrollTop;
+              };
+
+              const restoreReasoningViewports = () => {
                 ui.timeline.querySelectorAll('.reasoning[data-scroll-key]').forEach((element) => {
                   const key = String(element.dataset.scrollKey ?? '');
-                  const prior = positions.get(key);
-                  if (!prior) {
-                    if (key === 'live') element.scrollTop = element.scrollHeight;
-                    return;
-                  }
-                  if (prior.nearBottom) {
-                    element.scrollTop = element.scrollHeight;
-                    return;
-                  }
-                  const maxScrollTop = Math.max(0, element.scrollHeight - element.clientHeight);
-                  element.scrollTop = Math.min(prior.scrollTop, maxScrollTop);
+                  applyReasoningViewport(element, key, key === 'live');
                 });
+              };
+
+              const applyTimelineViewport = () => {
+                if (state.timelineFollowTail) {
+                  ui.timeline.scrollTop = ui.timeline.scrollHeight;
+                } else {
+                  const maxScrollTop = Math.max(0, ui.timeline.scrollHeight - ui.timeline.clientHeight);
+                  ui.timeline.scrollTop = Math.min(state.timelineScrollTop, maxScrollTop);
+                }
+                state.timelineScrollTop = ui.timeline.scrollTop;
+                ui.jumpLatest.hidden = state.timelineFollowTail;
               };
 
               const nextSequence = () => {
@@ -413,7 +436,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (expanded) {
                   const box = document.createElement('div');
                   box.className = 'reasoning';
-                  box.dataset.scrollKey = 'response.' + key;
+                  bindReasoningViewport(box, 'response.' + key, false);
                   box.textContent = reasoning;
                   holder.append(box);
                 }
@@ -465,6 +488,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 mark.setAttribute('viewBox', '0 0 16 16');
                 mark.innerHTML = '<path d="M8 1.8 14.2 8 8 14.2 1.8 8z"/><path d="M8 5 11 8 8 11 5 8z"/>';
                 const label = document.createElement('span');
+                label.className = 'thinking-label';
                 label.textContent =
                   state.streamPhase === 'CheckingRuntime'
                     ? 'checking Vex…'
@@ -480,7 +504,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (state.thoughtsVisible && state.streamedReasoning) {
                   const reasoning = document.createElement('div');
                   reasoning.className = 'reasoning live-reasoning';
-                  reasoning.dataset.scrollKey = 'live';
+                  bindReasoningViewport(reasoning, 'live', true);
                   reasoning.textContent = state.streamedReasoning;
                   thought.append(reasoning);
                 }
@@ -502,9 +526,6 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const renderTimeline = () => {
                 if (!ui.timeline) return;
-                const nearBottom = isNearBottom();
-                const timelineScrollTop = ui.timeline.scrollTop;
-                const reasoningScroll = captureReasoningScroll();
                 const messages = state.conversation?.messages ?? [];
                 const nodes = messages.map(messageNode);
 
@@ -532,15 +553,60 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
 
                 ui.timeline.replaceChildren(...nodes);
-                restoreReasoningScroll(reasoningScroll);
-                if (nearBottom) {
-                  ui.timeline.scrollTop = ui.timeline.scrollHeight;
-                  ui.jumpLatest.hidden = true;
-                } else {
-                  const maxScrollTop = Math.max(0, ui.timeline.scrollHeight - ui.timeline.clientHeight);
-                  ui.timeline.scrollTop = Math.min(timelineScrollTop, maxScrollTop);
-                  ui.jumpLatest.hidden = false;
+                restoreReasoningViewports();
+                applyTimelineViewport();
+              };
+
+              const updateLiveTurn = () => {
+                const item = ui.timeline.querySelector('.message.waiting');
+                if (!item) {
+                  renderTimeline();
+                  return;
                 }
+
+                item.dataset.hasContent = String(Boolean(state.streamedContent));
+                const label = item.querySelector('.thinking-label');
+                if (label) {
+                  label.textContent =
+                    state.streamPhase === 'CheckingRuntime'
+                      ? 'checking Vex…'
+                      : state.streamPhase === 'Reconnecting'
+                        ? 'reconnecting Vex…'
+                        : state.streamPhase === 'Generating' || state.streamPhase === 'Reasoning'
+                          ? 'thinking…'
+                          : state.streamPhase === 'Responding'
+                            ? 'responding…'
+                            : 'preparing…';
+                }
+
+                const thought = item.querySelector('.thinking-now');
+                let reasoning = item.querySelector('.live-reasoning');
+                if (state.thoughtsVisible && state.streamedReasoning) {
+                  if (!reasoning) {
+                    reasoning = document.createElement('div');
+                    reasoning.className = 'reasoning live-reasoning';
+                    bindReasoningViewport(reasoning, 'live', true);
+                    thought?.append(reasoning);
+                  }
+                  reasoning.textContent = state.streamedReasoning;
+                  applyReasoningViewport(reasoning, 'live', true);
+                } else if (reasoning) {
+                  reasoning.remove();
+                }
+
+                const bubble = item.querySelector('.bubble');
+                let paragraph = bubble?.querySelector('p');
+                if (state.streamedContent) {
+                  if (!paragraph && bubble) {
+                    paragraph = document.createElement('p');
+                    bubble.append(paragraph);
+                  }
+                  if (paragraph) paragraph.textContent = state.streamedContent;
+                } else if (paragraph) {
+                  paragraph.remove();
+                }
+
+                applyTimelineViewport();
               };
 
               const renderTicket = () => {
@@ -698,21 +764,21 @@ object VexLifeWebP1RuntimeArtifacts {
                       } else if (state.streamPhase === 'Generating') {
                         setCompanionStatus('Checking', 'Thinking', '');
                       }
-                      renderTimeline();
+                      updateLiveTurn();
                       return;
                     }
                     if (event?.type === 'REASONING_DELTA' && typeof event.delta === 'string') {
                       state.streamPhase = 'Reasoning';
                       state.streamedReasoning += event.delta;
                       setCompanionStatus('Checking', 'Thinking', '');
-                      renderTimeline();
+                      updateLiveTurn();
                       return;
                     }
                     if (event?.type === 'CONTENT_DELTA' && typeof event.delta === 'string') {
                       state.streamPhase = 'Responding';
                       state.streamedContent += event.delta;
                       setCompanionStatus('Checking', 'Responding', '');
-                      renderTimeline();
+                      updateLiveTurn();
                       return;
                     }
                     if (event?.type === 'FAILED') {
@@ -904,7 +970,9 @@ object VexLifeWebP1RuntimeArtifacts {
 
               ui.draft.addEventListener('input', () => sizeDraft());
               ui.timeline.addEventListener('scroll', () => {
-                ui.jumpLatest.hidden = isNearBottom();
+                state.timelineScrollTop = ui.timeline.scrollTop;
+                state.timelineFollowTail = isElementAtBottom(ui.timeline);
+                ui.jumpLatest.hidden = state.timelineFollowTail;
               });
               ui.timeline.addEventListener('click', (event) => {
                 const toggle = event.target.closest('.thought-toggle');
@@ -916,8 +984,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderTimeline();
               });
               ui.jumpLatest.addEventListener('click', () => {
-                ui.timeline.scrollTop = ui.timeline.scrollHeight;
-                ui.jumpLatest.hidden = true;
+                state.timelineFollowTail = true;
+                applyTimelineViewport();
               });
 
               ui.ticketView.addEventListener('click', openCurrentContext);
