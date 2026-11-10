@@ -33,6 +33,31 @@ class VexLifeWebP1ThoughtVisibilityTest {
         )
         assertTrue(
             bundle.javascript.contains(
+                "accept: 'text/event-stream'",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "state.streamedReasoning += event.delta",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "state.streamedContent += event.delta",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "state.streamPhase === 'CheckingRuntime'",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "thinking…",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
                 "reasoning?.state === 'PRESENT_EPHEMERAL'",
             ),
         )
