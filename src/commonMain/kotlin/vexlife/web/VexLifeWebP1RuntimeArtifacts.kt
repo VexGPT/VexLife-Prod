@@ -567,8 +567,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const pending = state.pending ?? Object.freeze({
                   idempotencyKey: 'send.' + crypto.randomUUID().toLowerCase(),
                   content,
-                  browserContext: state.includePage ? state.browserContext : null,
-                  viewableThoughts: state.thoughtsVisible
+                  browserContext: state.includePage ? state.browserContext : null
                 });
                 state.pending = pending;
                 state.sendInFlight = true;
