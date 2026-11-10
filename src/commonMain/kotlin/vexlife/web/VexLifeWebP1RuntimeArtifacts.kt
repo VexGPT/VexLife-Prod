@@ -437,7 +437,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 label.textContent =
                   state.streamPhase === 'CheckingRuntime'
                     ? 'checking Vex…'
-                    : state.streamPhase === 'Generating' || state.streamPhase === 'Reasoning'
+                    : state.streamPhase === 'Reconnecting'
+                      ? 'reconnecting Vex…'
+                      : state.streamPhase === 'Generating' || state.streamPhase === 'Reasoning'
                       ? 'thinking…'
                       : state.streamPhase === 'Responding'
                         ? 'responding…'
@@ -652,6 +654,8 @@ object VexLifeWebP1RuntimeArtifacts {
                       state.streamPhase = String(event.phase ?? '');
                       if (state.streamPhase === 'CheckingRuntime') {
                         setCompanionStatus('Checking', 'Checking Vex', '');
+                      } else if (state.streamPhase === 'Reconnecting') {
+                        setCompanionStatus('Checking', 'Reconnecting Vex', '');
                       } else if (state.streamPhase === 'Generating') {
                         setCompanionStatus('Checking', 'Thinking', '');
                       }
