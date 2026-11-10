@@ -76,7 +76,18 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.css.contains(
-                ".composer { padding: 8px 14px 14px",
+                ".composer {",
+            ),
+        )
+        assertTrue(
+            bundle.css.contains(
+                "grid-row: 2;",
+            ),
+            "the composer must remain outside the independently scrolling Conversation viewport",
+        )
+        assertTrue(
+            bundle.css.contains(
+                "padding: 8px 14px 14px",
             ),
         )
         assertTrue(
