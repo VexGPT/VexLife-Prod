@@ -53,6 +53,16 @@ class VexLifeWebP1ThoughtVisibilityTest {
         )
         assertTrue(
             bundle.javascript.contains(
+                "state.streamPhase === 'Reconnecting'",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "reconnecting Vex…",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
                 "thinking…",
             ),
         )
