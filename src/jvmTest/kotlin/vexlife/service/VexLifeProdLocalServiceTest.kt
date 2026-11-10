@@ -906,6 +906,151 @@ class VexLifeProdLocalServiceTest {
                 .deleteRecursively()
         }
     }
+
+    @Test
+    fun duplicateWithoutReasoningRemainsAbsentInsteadOfClaimingLostRawValue() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-service-no-reasoning-duplicate-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        var providerCalls =
+            0
+
+        try {
+            bootstrapHome(
+                root,
+            )
+            val setup =
+                setup(
+                    root,
+                )
+            val transport =
+                DirectCompanionConnection.Transport {
+                    providerCalls +=
+                        1
+                    DirectCompanionConnection.HttpResult(
+                        status = 200,
+                        body =
+                            """
+                            {
+                              "model": "default_model",
+                              "choices": [
+                                {
+                                  "message": {
+                                    "role": "assistant",
+                                    "content": "No reasoning field here."
+                                  }
+                                }
+                              ]
+                            }
+                            """.trimIndent(),
+                    )
+                }
+
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha = "e".repeat(
+                        40,
+                    ),
+                    setup = setup,
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            currentSetup,
+                            intent,
+                            ->
+                            DirectCompanionTurn.performWithHooks(
+                                setup = currentSetup,
+                                intent = intent,
+                                hooks =
+                                    DirectCompanionTurn.Hooks(
+                                        transport = transport,
+                                    ),
+                            )
+                        },
+                )
+                .use {
+                    service ->
+                    val request =
+                        VexLifeProdServiceContract.SendRequest(
+                            idempotencyKey =
+                                "send.vexlife.browser.service.no-reasoning",
+                            content =
+                                "Answer without reasoning",
+                            viewableThoughts =
+                                true,
+                        )
+                    val body =
+                        json.encodeToString(
+                            request,
+                        )
+
+                    val first =
+                        json.decodeFromString<VexLifeProdServiceContract.SendResponse>(
+                            postJson(
+                                service.origin,
+                                VexLifeProdServiceContract.ConversationSendPath,
+                                body,
+                            )
+                                .body(),
+                        )
+                    assertEquals(
+                        "ABSENT",
+                        first.humanReasoning.state,
+                    )
+                    assertNull(
+                        first.humanReasoning.text,
+                    )
+                    assertNull(
+                        first.humanReasoning.contentSha256,
+                    )
+                    assertEquals(
+                        0,
+                        first.humanReasoning.characterCount,
+                    )
+
+                    val duplicate =
+                        json.decodeFromString<VexLifeProdServiceContract.SendResponse>(
+                            postJson(
+                                service.origin,
+                                VexLifeProdServiceContract.ConversationSendPath,
+                                body,
+                            )
+                                .body(),
+                        )
+                    assertTrue(
+                        duplicate.recoveredCompletedTurn,
+                    )
+                    assertEquals(
+                        "ABSENT",
+                        duplicate.humanReasoning.state,
+                    )
+                    assertNull(
+                        duplicate.humanReasoning.text,
+                    )
+                    assertNull(
+                        duplicate.humanReasoning.contentSha256,
+                    )
+                    assertEquals(
+                        0,
+                        duplicate.humanReasoning.characterCount,
+                    )
+                    assertEquals(
+                        1,
+                        providerCalls,
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
 }
 
 // [VXG RealForever]
