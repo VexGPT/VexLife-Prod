@@ -38,6 +38,7 @@ class VexLifeProdLocalService private constructor(
     private val presentation: VexWebArtifacts.Bundle,
     private val executor: ExecutorService,
     private val turnExecutor: TurnExecutor,
+    private val streamingTurnExecutor: StreamingTurnExecutor?,
 ) : AutoCloseable {
     companion object {
         private const val MaxRequestBytes =
@@ -90,12 +91,26 @@ class VexLifeProdLocalService private constructor(
                             intent = intent,
                         )
                     },
+                streamingTurnExecutor =
+                    StreamingTurnExecutor {
+                        _,
+                        intent,
+                        observer,
+                        ->
+                        DirectCompanionTurn.perform(
+                            session = session,
+                            intent = intent,
+                            progressObserver = observer,
+                        )
+                    },
             )
 
         internal fun startForTest(
             sourceSha: String,
             setup: VexLifeProdLocalSetup.Result,
             turnExecutor: TurnExecutor,
+            streamingTurnExecutor: StreamingTurnExecutor? =
+                null,
         ): VexLifeProdLocalService =
             startAt(
                 sourceSha = sourceSha,
@@ -111,6 +126,7 @@ class VexLifeProdLocalService private constructor(
                         0,
                     ),
                 turnExecutor = turnExecutor,
+                streamingTurnExecutor = streamingTurnExecutor,
             )
 
         private fun startAt(
@@ -119,6 +135,7 @@ class VexLifeProdLocalService private constructor(
             address: InetSocketAddress,
             frameAddress: InetSocketAddress,
             turnExecutor: TurnExecutor,
+            streamingTurnExecutor: StreamingTurnExecutor?,
         ): VexLifeProdLocalService {
             require(
                 SourceShaPattern.matches(
@@ -180,6 +197,7 @@ class VexLifeProdLocalService private constructor(
                         presentation = presentation,
                         executor = executor,
                         turnExecutor = turnExecutor,
+                        streamingTurnExecutor = streamingTurnExecutor,
                     )
 
                 server.executor =
@@ -214,6 +232,14 @@ class VexLifeProdLocalService private constructor(
         fun perform(
             setup: VexLifeProdLocalSetup.Result,
             intent: DirectCompanionTurn.Intent,
+        ): DirectCompanionTurn.Result
+    }
+
+    internal fun interface StreamingTurnExecutor {
+        fun perform(
+            setup: VexLifeProdLocalSetup.Result,
+            intent: DirectCompanionTurn.Intent,
+            progressObserver: DirectCompanionTurn.ProgressObserver,
         ): DirectCompanionTurn.Result
     }
 
@@ -484,54 +510,247 @@ class VexLifeProdLocalService private constructor(
                 ),
             )
 
+        val intent =
+            sendIntent(
+                request,
+            )
+        val streaming =
+            streamingTurnExecutor
+        if (
+            acceptsEventStream(
+                exchange,
+            ) &&
+                streaming !=
+                null
+        ) {
+            handleStreamingSend(
+                exchange = exchange,
+                intent = intent,
+                executor = streaming,
+            )
+            return
+        }
+
         val result =
             turnExecutor.perform(
                 startupSetup,
-                DirectCompanionTurn.Intent(
-                    idempotencyKey = request.idempotencyKey,
-                    content = request.content,
-                    browserContext =
-                        request.browserContext
-                            ?.let {
-                                DirectPromptContext.BrowserContext(
-                                    pageUrl = it.pageUrl,
-                                    title = it.title,
-                                    text = it.text,
-                                    capture = it.capture,
-                                )
-                            },
-                ),
+                intent,
             )
 
         respondJson(
             exchange = exchange,
             status = 200,
             value =
-                VexLifeProdServiceContract.SendResponse(
-                    schemaVersion = VexLifeProdServiceContract.SendResponseSchema,
-                    state = result.state,
-                    recoveredCompletedTurn = result.recoveredCompletedTurn,
-                    modelCallPerformed = result.modelCallPerformed,
-                    actualHttpCallPerformedNow = result.actualHttpCallPerformedNow,
-                    turnRef = result.turnRef,
-                    requestMessageRef = result.requestMessageRef,
-                    responseMessageRef = result.responseMessageRef,
-                    requestEventRef = result.requestEventRef,
-                    responseEventRef = result.responseEventRef,
-                    content = result.content,
-                    model = result.model,
-                    currentConversationHeadSha256 = result.currentConversationHeadSha256,
-                    contextPath = result.contextPath,
-                    promptContext =
-                        promptContextProjection(
-                            result.promptContextReceipt,
-                        ),
-                    humanReasoning =
-                        humanReasoningProjection(
-                            result,
-                        ),
+                sendResponse(
+                    result,
                 ),
         )
+    }
+
+    private fun sendIntent(
+        request: VexLifeProdServiceContract.SendRequest,
+    ): DirectCompanionTurn.Intent =
+        DirectCompanionTurn.Intent(
+            idempotencyKey = request.idempotencyKey,
+            content = request.content,
+            browserContext =
+                request.browserContext
+                    ?.let {
+                        DirectPromptContext.BrowserContext(
+                            pageUrl = it.pageUrl,
+                            title = it.title,
+                            text = it.text,
+                            capture = it.capture,
+                        )
+                    },
+        )
+
+    private fun sendResponse(
+        result: DirectCompanionTurn.Result,
+    ): VexLifeProdServiceContract.SendResponse =
+        VexLifeProdServiceContract.SendResponse(
+            schemaVersion = VexLifeProdServiceContract.SendResponseSchema,
+            state = result.state,
+            recoveredCompletedTurn = result.recoveredCompletedTurn,
+            modelCallPerformed = result.modelCallPerformed,
+            actualHttpCallPerformedNow = result.actualHttpCallPerformedNow,
+            turnRef = result.turnRef,
+            requestMessageRef = result.requestMessageRef,
+            responseMessageRef = result.responseMessageRef,
+            requestEventRef = result.requestEventRef,
+            responseEventRef = result.responseEventRef,
+            content = result.content,
+            model = result.model,
+            currentConversationHeadSha256 = result.currentConversationHeadSha256,
+            contextPath = result.contextPath,
+            promptContext =
+                promptContextProjection(
+                    result.promptContextReceipt,
+                ),
+            humanReasoning =
+                humanReasoningProjection(
+                    result,
+                ),
+        )
+
+    private fun acceptsEventStream(
+        exchange: HttpExchange,
+    ): Boolean =
+        exchange.requestHeaders[
+            "accept"
+        ]
+            ?.any {
+                it
+                    .split(
+                        ",",
+                    )
+                    .any {
+                        value ->
+                        value
+                            .substringBefore(
+                                ";",
+                            )
+                            .trim()
+                            .equals(
+                                "text/event-stream",
+                                ignoreCase = true,
+                            )
+                    }
+            } ==
+            true
+
+    private fun handleStreamingSend(
+        exchange: HttpExchange,
+        intent: DirectCompanionTurn.Intent,
+        executor: StreamingTurnExecutor,
+    ) {
+        exchange.responseHeaders.set(
+            "content-type",
+            "text/event-stream; charset=utf-8",
+        )
+        exchange.responseHeaders.set(
+            "cache-control",
+            "no-store",
+        )
+        exchange.responseHeaders.set(
+            "x-accel-buffering",
+            "no",
+        )
+        exchange.sendResponseHeaders(
+            200,
+            0,
+        )
+
+        fun emit(
+            event: VexLifeProdServiceContract.SendStreamEvent,
+        ) {
+            val payload =
+                JsonCodec.encodeToString(
+                    event,
+                )
+            val bytes =
+                (
+                    "data: " +
+                        payload +
+                        "\n\n"
+                )
+                    .toByteArray(
+                        StandardCharsets.UTF_8,
+                    )
+            exchange.responseBody.write(
+                bytes,
+            )
+            exchange.responseBody.flush()
+        }
+
+        try {
+            val result =
+                executor.perform(
+                    startupSetup,
+                    intent,
+                    DirectCompanionTurn.ProgressObserver {
+                        progress ->
+                        val event =
+                            when (
+                                progress.phase
+                            ) {
+                                DirectCompanionTurn.ProgressPhase.CheckingRuntime,
+                                DirectCompanionTurn.ProgressPhase.Generating,
+                                ->
+                                    VexLifeProdServiceContract.SendStreamEvent(
+                                        type = "PHASE",
+                                        phase = progress.phase.name,
+                                    )
+
+                                DirectCompanionTurn.ProgressPhase.Reasoning ->
+                                    VexLifeProdServiceContract.SendStreamEvent(
+                                        type = "REASONING_DELTA",
+                                        delta = progress.delta,
+                                        accumulatedCharacters = progress.accumulatedCharacters,
+                                    )
+
+                                DirectCompanionTurn.ProgressPhase.Responding ->
+                                    VexLifeProdServiceContract.SendStreamEvent(
+                                        type = "CONTENT_DELTA",
+                                        delta = progress.delta,
+                                        accumulatedCharacters = progress.accumulatedCharacters,
+                                    )
+                            }
+                        emit(
+                            event,
+                        )
+                    },
+                )
+
+            emit(
+                VexLifeProdServiceContract.SendStreamEvent(
+                    type = "COMPLETED",
+                    response = sendResponse(
+                        result,
+                    ),
+                ),
+            )
+        } catch (
+            error: DirectCompanionTurn.TurnException,
+        ) {
+            emit(
+                VexLifeProdServiceContract.SendStreamEvent(
+                    type = "FAILED",
+                    error =
+                        VexLifeProdServiceContract.ErrorResponse(
+                            schemaVersion = VexLifeProdServiceContract.ErrorSchema,
+                            code = error.failureCode,
+                            message = "direct Companion turn failed",
+                            retrySameSendAttemptAllowed = error.retrySameSendAttemptAllowed,
+                            exactNextSafeRoute = error.exactNextSafeRoute,
+                        ),
+                ),
+            )
+        } catch (
+            _: Throwable,
+        ) {
+            emit(
+                VexLifeProdServiceContract.SendStreamEvent(
+                    type = "FAILED",
+                    error =
+                        VexLifeProdServiceContract.ErrorResponse(
+                            schemaVersion = VexLifeProdServiceContract.ErrorSchema,
+                            code = "SERVICE_FAILURE",
+                            message = "VexLife local service failed without a completed product result",
+                            retrySameSendAttemptAllowed = null,
+                            exactNextSafeRoute = null,
+                        ),
+                ),
+            )
+        } finally {
+            exchange.responseBody.write(
+                "data: [DONE]\n\n"
+                    .toByteArray(
+                        StandardCharsets.UTF_8,
+                    ),
+            )
+            exchange.responseBody.flush()
+        }
     }
 
     private fun humanReasoningProjection(
