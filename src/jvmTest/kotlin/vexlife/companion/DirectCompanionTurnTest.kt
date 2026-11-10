@@ -1646,8 +1646,6 @@ class DirectCompanionTurnTest {
                     "send.self-development.viewable-thoughts.001",
                 content =
                     "Reason about this",
-                humanReasoningRequested =
-                    true,
             )
 
         try {
@@ -1699,9 +1697,6 @@ class DirectCompanionTurnTest {
             )
             assertTrue(
                 first.runtimeObservation.reasoningTrace.present,
-            )
-            assertTrue(
-                first.invocationEvidence.humanReasoningRequested,
             )
             assertFalse(
                 first.runtimeObservation.reasoningTrace.rawPersisted,
@@ -1762,35 +1757,6 @@ class DirectCompanionTurnTest {
             assertNull(
                 duplicate.humanReasoning,
             )
-            assertTrue(
-                duplicate.invocationEvidence.humanReasoningRequested,
-            )
-            assertEquals(
-                1,
-                providerCalls,
-            )
-
-            assertFailsWith<IllegalArgumentException> {
-                DirectCompanionTurn.performWithHooks(
-                    setup =
-                        setup(
-                            home,
-                        ),
-                    intent =
-                        intent.copy(
-                            humanReasoningRequested = false,
-                        ),
-                    hooks =
-                        DirectCompanionTurn.Hooks(
-                            transport = transport,
-                            now = {
-                                Instant.parse(
-                                    "2026-11-09T18:32:00Z",
-                                )
-                            },
-                        ),
-                )
-            }
             assertEquals(
                 1,
                 providerCalls,
