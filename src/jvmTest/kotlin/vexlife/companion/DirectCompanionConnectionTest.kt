@@ -110,6 +110,38 @@ class DirectCompanionConnectionTest {
         assertEquals(
             "true",
             body[
+                "stream"
+            ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
+            "1.0",
+            body[
+                "temperature"
+            ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
+            "0.95",
+            body[
+                "top_p"
+            ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
+            "20",
+            body[
+                "top_k"
+            ]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
+            "true",
+            body[
                 "chat_template_kwargs"
             ]
                 ?.jsonObject
@@ -145,6 +177,121 @@ class DirectCompanionConnectionTest {
         )
         assertFalse(
             result.runtimeObservation.rawProviderResponsePersisted,
+        )
+    }
+
+    @Test
+    fun systemStreamingShapeProjectsReasoningAndContentDeltasBeforeFinalResult() {
+        var call: DirectCompanionConnection.HttpCall? =
+            null
+        val progress =
+            mutableListOf<DirectCompanionConnection.Progress>()
+
+        val transport =
+            object :
+                DirectCompanionConnection.StreamingTransport {
+                override fun post(
+                    call: DirectCompanionConnection.HttpCall,
+                ): DirectCompanionConnection.HttpResult =
+                    error(
+                        "streaming path must not fall back to bulk transport",
+                    )
+
+                override fun postStreaming(
+                    call: DirectCompanionConnection.HttpCall,
+                    onLine: (String) -> Unit,
+                ): DirectCompanionConnection.StreamingHttpResult {
+                    this@DirectCompanionConnectionTest
+                    call =
+                        call
+                    onLine(
+                        """data: {"model":"default_model","choices":[{"delta":{"role":"assistant","reasoning":"I should "}}]}""",
+                    )
+                    onLine(
+                        "",
+                    )
+                    onLine(
+                        """data: {"model":"default_model","choices":[{"delta":{"role":"assistant","reasoning":"compare."}}]}""",
+                    )
+                    onLine(
+                        "",
+                    )
+                    onLine(
+                        """data: {"model":"default_model","choices":[{"delta":{"role":"assistant","content":"The better "}}]}""",
+                    )
+                    onLine(
+                        "",
+                    )
+                    onLine(
+                        """data: {"model":"default_model","choices":[{"finish_reason":"stop","delta":{"role":"assistant","content":"choice."}}]}""",
+                    )
+                    onLine(
+                        "",
+                    )
+                    onLine(
+                        "data: [DONE]",
+                    )
+                    onLine(
+                        "",
+                    )
+                    return DirectCompanionConnection.StreamingHttpResult(
+                        status = 200,
+                        responseBodySha256 = "a".repeat(
+                            64,
+                        ),
+                    )
+                }
+            }
+
+        val result =
+            DirectCompanionConnection.invoke(
+                runtime = qualifiedRuntime(),
+                messages =
+                    listOf(
+                        CompanionProviderMessage(
+                            role = "user",
+                            content = "Compare these approaches",
+                        ),
+                    ),
+                transport = transport,
+                progressObserver =
+                    DirectCompanionConnection.ProgressObserver {
+                        progress +=
+                            it
+                    },
+                now = {
+                    Instant.parse(
+                        "2026-11-10T04:40:00Z",
+                    )
+                },
+            )
+
+        assertEquals(
+            "The better choice.",
+            result.content,
+        )
+        assertEquals(
+            "I should compare.",
+            result.sealedHumanReasoning,
+        )
+        assertEquals(
+            listOf(
+                DirectCompanionConnection.ProgressKind.Reasoning,
+                DirectCompanionConnection.ProgressKind.Reasoning,
+                DirectCompanionConnection.ProgressKind.Content,
+                DirectCompanionConnection.ProgressKind.Content,
+            ),
+            progress.map(
+                DirectCompanionConnection.Progress::kind,
+            ),
+        )
+        assertEquals(
+            "I should ",
+            progress[0].delta,
+        )
+        assertEquals(
+            "The better ",
+            progress[2].delta,
         )
     }
 
