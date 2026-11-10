@@ -84,6 +84,9 @@ Memory context + working-successor currentness re-read
 before provider invocation
         ↓
 fresh qualified runtime evidence
+  interactive currentness = immediate generation-health observation
+  Product-owned dead generation engine -> exact retire/restart/requalify
+  borrowed stable runtime -> no ownership theft / no Product recovery effect
         ↓
 prompt + self-capability frame materialized and reverified
 while the same writer lease is held
@@ -91,8 +94,18 @@ while the same writer lease is held
 DirectCompanionConnection
   endpoint/model supplied only by QualifiedRuntimeEvidence
   numeric-loopback /v1/chat/completions
-  no redirects
-  actual HTTP invocation
+  stream = true
+  request-local explicit-open reasoning
+        ↓
+ephemeral live progress
+  CheckingRuntime
+  Reconnecting (only when Product-owned recovery is required)
+  Generating / Thinking
+  reasoning deltas -> human presentation only
+  content deltas -> progressive Vex answer
+        ↓
+terminal provider stream
+  [DONE]
         ↓
 normalized RuntimeObservation
 + InvocationEvidence
@@ -212,16 +225,26 @@ exact ordinary mlx-lm process binding, including the safe server default:
 ~~~
 
 Over that already-qualified runtime, the direct Companion Connection owns the faithful request-local
-explicit-open realization:
+explicit-open realization and the historical live stream:
 
 ~~~text
 qualified current Heretic runtime
 -> DirectCompanionConnection
+-> stream = true
 -> chat_template_kwargs.enable_thinking = true
--> provider reasoning when emitted
--> sealedHumanReasoning
--> one SendResponse HumanReasoningProjection(PRESENT_EPHEMERAL)
--> current browser-session in-memory map
+-> live reasoning / reasoning_content deltas
+-> live content deltas
+-> terminal [DONE]
+-> normalized final result
+
+reasoning deltas
+-> ephemeral browser-session custody
+-> visible while Viewable thoughts is enabled
+-> never canonical Conversation / Memory / training / publication
+
+content deltas
+-> progressive in-flight Vex answer
+-> final canonical RESPONSE still commits only after terminal completion
 ~~~
 
 The human's `Viewable thoughts` preference is a separate local presentation decision:
@@ -262,9 +285,22 @@ EPHEMERAL HUMAN REASONING
 != DURABLE STORE
 ~~~
 
-The current Product Send remains transactional/non-streaming. This slice restores **completed
-response** reasoning visibility only; it does not yet recreate the historical live `REASONING`
-stream.
+The Product Send now restores the historical live Companion relationship without weakening the
+transactional durability boundary:
+
+~~~text
+LIVE DELTA
+!= CANONICAL RESPONSE
+
+STREAMING PRESENTATION
+!= EARLY CONVERSATION HEAD COMMIT
+
+REQUEST durable
+-> live provider stream
+-> terminal provider completion
+-> RESPONSE + Context durable
+-> completed Conversation head
+~~~
 
 An idempotent completed duplicate may recover the durable final response without another model call,
 but it cannot recover raw reasoning that was intentionally not persisted:
@@ -341,6 +377,46 @@ OS FILE LOCK         = SAME-HOST EXCLUSION
 
 The human REQUEST is durably written before inference.
 
+Interactive runtime currentness deliberately does **not** reuse startup's long readiness loop.
+The exact lived regression that motivated this distinction was:
+
+~~~text
+Product service = responsive
+Product-owned Heretic PID = alive
+mlx-lm /health = 503
+generation thread = unavailable
+old interactive currentness = startup waitUntilHealthy up to 10 minutes
+~~~
+
+Current behavior:
+
+~~~text
+qualified Product-owned runtime + immediate health true
+  -> continue
+
+qualified Product-owned runtime + immediate health false
+  -> Reconnecting Vex…
+  -> exact-owned retire
+  -> restart + startup qualification through runtime owner
+  -> fresh current runtime evidence
+  -> provider stream
+
+borrowed stable VexLife runtime + currentness failure
+  -> fail closed
+  -> Product does not steal recovery ownership
+~~~
+
+The human-facing states are deliberately distinct:
+
+~~~text
+Checking Vex
+!= Thinking
+!= Responding
+
+Reconnecting Vex
+!= model generation
+~~~
+
 If provider/materialization/context/head completion fails after that point:
 
 - the current completed head does not advance;
@@ -383,10 +459,12 @@ Tests are source-formed for:
 - numeric-loopback provider call + endpoint/model ownership;
 - provider local-path model normalization;
 - raw provider/reasoning non-persistence;
-- qualified Direct Companion inference selects request-local `enable_thinking=true`;
+- qualified Direct Companion inference selects `stream=true` plus request-local `enable_thinking=true`;
+- streamed reasoning and content deltas preserve ordering before terminal completion;
 - no human/presentation field controls provider reasoning mode;
 - Viewable thoughts remains absent from the Send wire request;
-- explicit fresh-response reasoning projection without durable storage;
+- live reasoning stays ephemeral while completed-response reasoning remains available in the same browser session;
+- Product-owned unhealthy generation runtime fails currentness immediately and rotates through its rightful owner;
 - idempotent duplicate reasoning unavailability without provider replay;
 - first-turn prompt materialization;
 - immediate-prior CONTINUE selection;
@@ -472,8 +550,8 @@ canonical Home/Conversation/Memory read compatibility = A030 PASS
 real production-service direct turn
 working-checkpoint successor / rollover continuity
 CLEAN_START presentation/semantic wiring
-streamed response progress
-live streamed reasoning progress
+fresh lived streamed-response proof on the current exact candidate
+fresh lived Product-owned dead-runtime recovery proof
 product service / presentation
 ordinary fresh-user Mac entry
 ~~~
