@@ -273,6 +273,7 @@ object DirectCompanionTurn {
                         identity = identity,
                         content = intent.content,
                         browserContext = intent.browserContext,
+                        humanReasoningRequested = intent.humanReasoningRequested,
                         productHome = productHome,
                     )
 
@@ -590,6 +591,7 @@ object DirectCompanionTurn {
         identity: Identity,
         content: String,
         browserContext: DirectPromptContext.BrowserContext?,
+        humanReasoningRequested: Boolean,
         productHome: Path,
     ): Result? {
         val canonicalRequest =
@@ -645,6 +647,12 @@ object DirectCompanionTurn {
                 ),
             ) {
                 "idempotencyKey already identifies a completed turn with different browser context"
+            }
+            require(
+                context.invocationEvidence.humanReasoningRequested ==
+                    humanReasoningRequested,
+            ) {
+                "idempotencyKey already identifies a completed turn with different human reasoning request"
             }
 
             return Result(
