@@ -146,6 +146,11 @@ object VexLifeCurrentMemoryReader {
         val openLoops: List<OpenLoop>,
     )
 
+    private enum class ScoreAuthorityPolicy {
+        REQUIRE_CURRENT_MEMBERSHIP,
+        ALLOW_HISTORICAL_HELD,
+    }
+
     private data class DailySnapshot(
         val stratum: JsonObject,
         val sourceConversationHeadSha256: String,
@@ -308,6 +313,7 @@ object VexLifeCurrentMemoryReader {
                 identity = identity,
                 conversationStore = conversationStore,
                 conversation = conversation,
+                authorityPolicy = ScoreAuthorityPolicy.REQUIRE_CURRENT_MEMBERSHIP,
             )
         val daily =
             loadDaily(
@@ -372,6 +378,7 @@ object VexLifeCurrentMemoryReader {
                 identity = identity,
                 conversationStore = conversationStore,
                 conversation = conversation,
+                authorityPolicy = ScoreAuthorityPolicy.ALLOW_HISTORICAL_HELD,
             )
         val currentStatements = score.statements.filter(Statement::current).sortedBy(Statement::statementRef)
         val active =
@@ -416,6 +423,7 @@ object VexLifeCurrentMemoryReader {
         identity: Identity,
         conversationStore: DirectConversationStore,
         conversation: DirectConversationStore.Snapshot,
+        authorityPolicy: ScoreAuthorityPolicy,
     ): ScoreSnapshot {
         val root =
             "score/" +
@@ -764,7 +772,9 @@ object VexLifeCurrentMemoryReader {
             )
 
             if (
-                statement.current
+                statement.current &&
+                authorityPolicy ==
+                ScoreAuthorityPolicy.REQUIRE_CURRENT_MEMBERSHIP
             ) {
                 require(
                     authorityContains(
@@ -772,7 +782,7 @@ object VexLifeCurrentMemoryReader {
                         statement,
                     )
                 ) {
-                    "Score statement is absent from its admitted semantic authority head"
+                    "current prompt Memory Score statement is absent from current semantic authority"
                 }
             }
         }
