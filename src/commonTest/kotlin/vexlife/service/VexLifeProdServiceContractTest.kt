@@ -51,6 +51,10 @@ class VexLifeProdServiceContractTest {
             VexLifeProdServiceContract.ContextPath,
         )
         assertEquals(
+            "/api/v1/memory/dream",
+            VexLifeProdServiceContract.MemoryDreamPath,
+        )
+        assertEquals(
             "/api/v1/conversation/send",
             VexLifeProdServiceContract.ConversationSendPath,
         )
@@ -138,6 +142,54 @@ class VexLifeProdServiceContractTest {
                 capture = VexLifeProdBrowserContract.CaptureRendered,
             )
         }
+    }
+    @Test
+    fun memoryDreamRunRequestRequiresExplicitBoundSourceFrontier() {
+        val request =
+            VexLifeProdServiceContract.MemoryDreamRunRequest(
+                restInvocationAuthorityRef = "authority.manual.g03.test",
+                dayRef = "day.g03.000",
+                dayIndex = 0,
+                calendarDateRef = "2026-11-10",
+                timeZoneRef = "America/Los_Angeles",
+                observedAt = "2026-11-10T07:45:00Z",
+                expectedConversationHeadSha256 = "a".repeat(64),
+                expectedScoreHeadSha256 = "b".repeat(64),
+                expectedDailyDreamHeadSha256 = null,
+            )
+
+        assertEquals("day.g03.000", request.dayRef)
+        assertNull(request.expectedDailyDreamHeadSha256)
+
+        assertFailsWith<IllegalArgumentException> {
+            request.copy(expectedConversationHeadSha256 = "stale")
+        }
+        assertFailsWith<IllegalArgumentException> {
+            request.copy(dayIndex = -1)
+        }
+    }
+    @Test
+    fun memoryDreamProjectionExposesScoreConversationCurrentnessWithoutEffect() {
+        val projection =
+            VexLifeProdServiceContract.MemoryDreamProjection(
+                schemaVersion = VexLifeProdServiceContract.MemoryDreamProjectionSchema,
+                state = "SCORE_NOT_CAUGHT_UP",
+                sourceConversationHeadSha256 = "a".repeat(64),
+                sourceScoreHeadSha256 = "b".repeat(64),
+                scoreSourceConversationHeadSha256 = "c".repeat(64),
+                sourceSemanticAuthorityHeadSha256 = "d".repeat(64),
+                currentDailyDreamHeadSha256 = null,
+                currentDailyStratumSha256 = null,
+                currentDayRef = null,
+                currentDayIndex = null,
+                nextDayIndex = 0,
+                activeStatementCount = 0,
+                heldStatementCount = 0,
+                openLoopCount = 0,
+                effectsPerformed = false,
+            )
+        assertEquals("c".repeat(64), projection.scoreSourceConversationHeadSha256)
+        assertFalse(projection.effectsPerformed)
     }
 }
 

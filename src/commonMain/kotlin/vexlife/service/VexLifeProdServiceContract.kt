@@ -20,6 +20,12 @@ object VexLifeProdServiceContract {
     const val ContextProjectionSchema =
         "vexlife-prod.local-service-context-projection/v1"
 
+    const val MemoryDreamProjectionSchema =
+        "vexlife-prod.local-service-memory-dream-projection/v1"
+
+    const val MemoryDreamRunResponseSchema =
+        "vexlife-prod.local-service-memory-dream-run-response/v1"
+
     const val SendResponseSchema =
         "vexlife-prod.local-service-send-response/v4"
 
@@ -65,6 +71,9 @@ object VexLifeProdServiceContract {
     const val ContextPath =
         "/api/v1/context"
 
+    const val MemoryDreamPath =
+        "/api/v1/memory/dream"
+
     const val ConversationSendPath =
         "/api/v1/conversation/send"
 
@@ -108,6 +117,76 @@ object VexLifeProdServiceContract {
         val effectsPerformed: Boolean,
     )
 
+    @Serializable
+    data class MemoryDreamProjection(
+        val schemaVersion: String,
+        val state: String,
+        val sourceConversationHeadSha256: String,
+        val sourceScoreHeadSha256: String,
+        val scoreSourceConversationHeadSha256: String,
+        val sourceSemanticAuthorityHeadSha256: String,
+        val currentDailyDreamHeadSha256: String?,
+        val currentDailyStratumSha256: String?,
+        val currentDayRef: String?,
+        val currentDayIndex: Long?,
+        val nextDayIndex: Long,
+        val activeStatementCount: Int,
+        val heldStatementCount: Int,
+        val openLoopCount: Int,
+        val effectsPerformed: Boolean,
+    )
+
+    @Serializable
+    data class MemoryDreamRunRequest(
+        val restInvocationAuthorityRef: String,
+        val dayRef: String,
+        val dayIndex: Long,
+        val calendarDateRef: String,
+        val timeZoneRef: String,
+        val observedAt: String,
+        val expectedConversationHeadSha256: String,
+        val expectedScoreHeadSha256: String,
+        val expectedDailyDreamHeadSha256: String?,
+    ) {
+        init {
+            requirePortableRef(restInvocationAuthorityRef, "restInvocationAuthorityRef")
+            requirePortableRef(dayRef, "dayRef")
+            require(
+                dayIndex >= 0 &&
+                    calendarDateRef.matches(Regex("\\d{4}-\\d{2}-\\d{2}")) &&
+                    timeZoneRef.isNotBlank() &&
+                    observedAt.isNotBlank(),
+            ) {
+                "memory Dream day/time identity is invalid"
+            }
+            requireSha256(expectedConversationHeadSha256, "expectedConversationHeadSha256")
+            requireSha256(expectedScoreHeadSha256, "expectedScoreHeadSha256")
+            expectedDailyDreamHeadSha256?.let { requireSha256(it, "expectedDailyDreamHeadSha256") }
+        }
+    }
+
+    @Serializable
+    data class MemoryDreamRunResponse(
+        val schemaVersion: String,
+        val state: String,
+        val before: MemoryDreamProjection,
+        val after: MemoryDreamProjection,
+        val dailyDreamHeadSha256: String,
+        val dailyStratumSha256: String,
+        val memoryFrontierMutationPerformed: Boolean,
+        val systemMemoryConsolidationPerformedNow: Boolean,
+        val modelCallPerformed: Boolean,
+        val lineageAwareGenerativeDreamRan: Boolean,
+        val rhythmLearned: Boolean,
+        val trainingRan: Boolean,
+        val modelWeightsChanged: Boolean,
+        val adapterChanged: Boolean,
+        val synchronizationActivated: Boolean,
+        val poweredDown: Boolean,
+        val publicationPerformed: Boolean,
+        val firstPersonAuthorityGranted: Boolean,
+        val effectsPerformed: Boolean,
+    )
     @Serializable
     data class BrowserContextInput(
         val pageUrl: String,
@@ -367,6 +446,14 @@ object VexLifeProdServiceContract {
         val exactNextSafeRoute: String?,
     )
 
+    private fun requireSha256(
+        value: String,
+        label: String,
+    ) {
+        require(value.matches(Regex("[0-9a-f]{64}"))) {
+            "$label must be one lowercase SHA-256"
+        }
+    }
     internal fun requirePortableRef(
         value: String,
         label: String,

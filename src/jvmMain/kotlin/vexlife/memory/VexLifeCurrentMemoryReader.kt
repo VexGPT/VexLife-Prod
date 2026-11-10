@@ -146,6 +146,11 @@ object VexLifeCurrentMemoryReader {
         val openLoops: List<OpenLoop>,
     )
 
+    private enum class ScoreAuthorityPolicy {
+        REQUIRE_CURRENT_MEMBERSHIP,
+        ALLOW_HISTORICAL_HELD,
+    }
+
     private data class DailySnapshot(
         val stratum: JsonObject,
         val sourceConversationHeadSha256: String,
@@ -165,6 +170,12 @@ object VexLifeCurrentMemoryReader {
         val timeZoneRef: String,
         val observedAt: String,
         val restInvocationAuthorityRef: String,
+        val sourceConversationHeadSha256: String,
+        val sourceScoreHeadSha256: String,
+        val sourceSemanticAuthorityHeadSha256: String,
+        val activeStatementRefs: List<String>,
+        val heldStatementRefs: List<String>,
+        val openLoopRefs: List<String>,
     )
 
     internal data class DreamSourceFrontier(
@@ -175,6 +186,7 @@ object VexLifeCurrentMemoryReader {
         val conversationHeadSha256: String,
         val conversationResponseEventHash: String,
         val scoreHeadSha256: String,
+        val scoreSourceConversationHeadSha256: String,
         val scoreEventHash: String,
         val semanticAuthorityHeadSha256: String,
         val selectedRuntimeRef: String,
@@ -301,6 +313,7 @@ object VexLifeCurrentMemoryReader {
                 identity = identity,
                 conversationStore = conversationStore,
                 conversation = conversation,
+                authorityPolicy = ScoreAuthorityPolicy.REQUIRE_CURRENT_MEMBERSHIP,
             )
         val daily =
             loadDaily(
@@ -365,11 +378,8 @@ object VexLifeCurrentMemoryReader {
                 identity = identity,
                 conversationStore = conversationStore,
                 conversation = conversation,
+                authorityPolicy = ScoreAuthorityPolicy.ALLOW_HISTORICAL_HELD,
             )
-        require(score.head.string("sourceConversationHeadSha256") == conversationHead.conversationHeadSha256) {
-            "DREAM_SCORE_NOT_CAUGHT_UP: current Score does not bind the current Conversation head"
-        }
-
         val currentStatements = score.statements.filter(Statement::current).sortedBy(Statement::statementRef)
         val active =
             currentStatements.filter {
@@ -389,6 +399,7 @@ object VexLifeCurrentMemoryReader {
             conversationHeadSha256 = conversationHead.conversationHeadSha256,
             conversationResponseEventHash = response.eventHash,
             scoreHeadSha256 = score.head.string("scoreHeadSha256"),
+            scoreSourceConversationHeadSha256 = score.head.string("sourceConversationHeadSha256"),
             scoreEventHash = score.head.string("eventHash"),
             semanticAuthorityHeadSha256 = score.authority.string("semanticAuthorityHeadSha256"),
             selectedRuntimeRef =
@@ -412,6 +423,7 @@ object VexLifeCurrentMemoryReader {
         identity: Identity,
         conversationStore: DirectConversationStore,
         conversation: DirectConversationStore.Snapshot,
+        authorityPolicy: ScoreAuthorityPolicy,
     ): ScoreSnapshot {
         val root =
             "score/" +
@@ -760,7 +772,9 @@ object VexLifeCurrentMemoryReader {
             )
 
             if (
-                statement.current
+                statement.current &&
+                authorityPolicy ==
+                ScoreAuthorityPolicy.REQUIRE_CURRENT_MEMBERSHIP
             ) {
                 require(
                     authorityContains(
@@ -768,7 +782,7 @@ object VexLifeCurrentMemoryReader {
                         statement,
                     )
                 ) {
-                    "Score statement is absent from its admitted semantic authority head"
+                    "current prompt Memory Score statement is absent from current semantic authority"
                 }
             }
         }
@@ -3016,7 +3030,10 @@ object VexLifeCurrentMemoryReader {
         require(
             stratum.long("sequence") == head.long("sequence") &&
                 stratum.string("dayRef") == head.string("dayRef") &&
-                stratum.long("dayIndex") == head.long("dayIndex"),
+                stratum.long("dayIndex") == head.long("dayIndex") &&
+                stratum.string("sourceConversationHeadSha256") == head.string("sourceConversationHeadSha256") &&
+                stratum.string("sourceScoreHeadSha256") == head.string("sourceScoreHeadSha256") &&
+                stratum.string("sourceSemanticAuthorityHeadSha256") == head.string("sourceSemanticAuthorityHeadSha256"),
         ) {
             "current Daily Memory head/stratum identity is inconsistent"
         }
@@ -3031,6 +3048,21 @@ object VexLifeCurrentMemoryReader {
                 prefix = "pre-rest-orientation",
                 label = "current Daily orientation for Dream",
             )
+        val postDreamSha = stratum.string("postDreamStateSha256")
+        val postDream =
+            readAddressed(
+                home = home,
+                path = inside(home, root + "/post-dream/" + postDreamSha + ".json"),
+                schemaVersion = "vextreme.daily-post-dream-state/v1",
+                refField = "postDreamStateRef",
+                hashField = "postDreamStateSha256",
+                prefix = "post-dream-state",
+                label = "current Daily post-Dream state for replay",
+            )
+        require(postDream.string("sourceConversationHeadSha256") == stratum.string("sourceConversationHeadSha256") &&
+            postDream.string("sourceScoreHeadSha256") == stratum.string("sourceScoreHeadSha256")) {
+            "current Daily post-Dream source identity differs from its stratum"
+        }
         return DreamPriorDaily(
             dailyDreamHeadSha256 = headSha,
             dailyStratumSha256 = stratum.string("dailyStratumSha256"),
@@ -3041,6 +3073,12 @@ object VexLifeCurrentMemoryReader {
             timeZoneRef = stratum.string("timeZoneRef"),
             observedAt = stratum.string("observedAt"),
             restInvocationAuthorityRef = orientation.string("restInvocationAuthorityRef"),
+            sourceConversationHeadSha256 = stratum.string("sourceConversationHeadSha256"),
+            sourceScoreHeadSha256 = stratum.string("sourceScoreHeadSha256"),
+            sourceSemanticAuthorityHeadSha256 = stratum.string("sourceSemanticAuthorityHeadSha256"),
+            activeStatementRefs = postDream.stringList("activeContinuityStatementRefs"),
+            heldStatementRefs = postDream.stringList("heldOrDeferredStatementRefs"),
+            openLoopRefs = postDream.stringList("openLoopRefs"),
         )
     }
 

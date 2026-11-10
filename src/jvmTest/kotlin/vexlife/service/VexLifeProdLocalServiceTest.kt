@@ -24,6 +24,7 @@ import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.memory.VexLifeDailyMemoryDream
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -388,6 +389,159 @@ class VexLifeProdLocalServiceTest {
         }
     }
 
+    @Test
+    fun memoryDreamRouteProjectsCurrentnessAndPerformsOneExplicitManualRun() {
+        val parent = Files.createTempDirectory("vexlife-prod-service-dream-").toAbsolutePath()
+        val root = parent.resolve("VexLife-Prod")
+        var runCount = 0
+        var currentHead: String? = null
+        var currentStratum: String? = null
+        var sourceConversationHead = "a".repeat(64)
+        var scoreHead = "b".repeat(64)
+        var scoreSourceConversationHead = sourceConversationHead
+
+        fun projection(): VexLifeProdServiceContract.MemoryDreamProjection =
+            VexLifeProdServiceContract.MemoryDreamProjection(
+                schemaVersion = VexLifeProdServiceContract.MemoryDreamProjectionSchema,
+                state =
+                    if (scoreSourceConversationHead == sourceConversationHead) {
+                        "SOURCE_FRONTIER_READY"
+                    } else {
+                        "SCORE_NOT_CAUGHT_UP"
+                    },
+                sourceConversationHeadSha256 = sourceConversationHead,
+                sourceScoreHeadSha256 = scoreHead,
+                scoreSourceConversationHeadSha256 = scoreSourceConversationHead,
+                sourceSemanticAuthorityHeadSha256 = "c".repeat(64),
+                currentDailyDreamHeadSha256 = currentHead,
+                currentDailyStratumSha256 = currentStratum,
+                currentDayRef = if (currentHead == null) null else "day.g03.000",
+                currentDayIndex = if (currentHead == null) null else 0L,
+                nextDayIndex = if (currentHead == null) 0L else 1L,
+                activeStatementCount = 2,
+                heldStatementCount = 1,
+                openLoopCount = 1,
+                effectsPerformed = false,
+            )
+
+        try {
+            bootstrapHome(root)
+            val dreamExecutor =
+                object : VexLifeProdLocalService.DreamExecutor {
+                    override fun observe(
+                        setup: VexLifeProdLocalSetup.Result,
+                    ): VexLifeProdServiceContract.MemoryDreamProjection =
+                        projection()
+
+                    override fun perform(
+                        setup: VexLifeProdLocalSetup.Result,
+                        request: VexLifeProdServiceContract.MemoryDreamRunRequest,
+                    ): VexLifeDailyMemoryDream.Result {
+                        runCount += 1
+                        assertEquals("authority.manual.g03.lived", request.restInvocationAuthorityRef)
+                        assertEquals("a".repeat(64), request.expectedConversationHeadSha256)
+                        assertEquals("b".repeat(64), request.expectedScoreHeadSha256)
+                        assertNull(request.expectedDailyDreamHeadSha256)
+                        currentHead = "d".repeat(64)
+                        currentStratum = "e".repeat(64)
+                        return VexLifeDailyMemoryDream.Result(
+                            state = if (runCount == 1) "COMMITTED" else "IDEMPOTENT_REPLAY",
+                            priorDailyDreamHeadSha256 = if (runCount == 1) null else requireNotNull(currentHead),
+                            dailyDreamHeadSha256 = requireNotNull(currentHead),
+                            dailyStratumSha256 = requireNotNull(currentStratum),
+                            sourceConversationHeadSha256 = "a".repeat(64),
+                            sourceScoreHeadSha256 = "b".repeat(64),
+                            sourceSemanticAuthorityHeadSha256 = "c".repeat(64),
+                            activeStatementRefs = listOf("statement.one", "statement.two"),
+                            heldStatementRefs = listOf("statement.held"),
+                            openLoopRefs = listOf("loop.one"),
+                        )
+                    }
+                }
+
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha = "f".repeat(40),
+                    setup = setup(root),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor { _, _ ->
+                            error("memory Dream route must not run a Companion turn")
+                        },
+                    dreamExecutor = dreamExecutor,
+                )
+                .use { service ->
+                    val beforeResponse = get(service.origin, VexLifeProdServiceContract.MemoryDreamPath)
+                    assertEquals(200, beforeResponse.statusCode())
+                    val before =
+                        json.decodeFromString<VexLifeProdServiceContract.MemoryDreamProjection>(
+                            beforeResponse.body(),
+                        )
+                    assertNull(before.currentDailyDreamHeadSha256)
+                    assertEquals(0L, before.nextDayIndex)
+                    assertFalse(before.effectsPerformed)
+
+                    val request =
+                        VexLifeProdServiceContract.MemoryDreamRunRequest(
+                            restInvocationAuthorityRef = "authority.manual.g03.lived",
+                            dayRef = "day.g03.000",
+                            dayIndex = 0,
+                            calendarDateRef = "2026-11-10",
+                            timeZoneRef = "America/Los_Angeles",
+                            observedAt = "2026-11-10T08:00:00Z",
+                            expectedConversationHeadSha256 = "a".repeat(64),
+                            expectedScoreHeadSha256 = "b".repeat(64),
+                            expectedDailyDreamHeadSha256 = null,
+                        )
+                    val runResponse =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.MemoryDreamPath,
+                            json.encodeToString(request),
+                        )
+                    assertEquals(200, runResponse.statusCode())
+                    val result =
+                        json.decodeFromString<VexLifeProdServiceContract.MemoryDreamRunResponse>(
+                            runResponse.body(),
+                        )
+                    assertEquals("COMMITTED", result.state)
+                    assertEquals(1, runCount)
+                    assertNull(result.before.currentDailyDreamHeadSha256)
+                    assertEquals("d".repeat(64), result.after.currentDailyDreamHeadSha256)
+                    assertEquals("e".repeat(64), result.after.currentDailyStratumSha256)
+                    assertTrue(result.memoryFrontierMutationPerformed)
+                    assertTrue(result.systemMemoryConsolidationPerformedNow)
+                    assertFalse(result.modelCallPerformed)
+                    assertFalse(result.rhythmLearned)
+                    assertFalse(result.trainingRan)
+                    assertFalse(result.modelWeightsChanged)
+                    assertTrue(result.effectsPerformed)
+
+                    sourceConversationHead = "1".repeat(64)
+                    scoreHead = "2".repeat(64)
+                    scoreSourceConversationHead = sourceConversationHead
+                    val replayResponse =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.MemoryDreamPath,
+                            json.encodeToString(request),
+                        )
+                    assertEquals(200, replayResponse.statusCode())
+                    val replay =
+                        json.decodeFromString<VexLifeProdServiceContract.MemoryDreamRunResponse>(
+                            replayResponse.body(),
+                        )
+                    assertEquals("IDEMPOTENT_REPLAY", replay.state)
+                    assertEquals(2, runCount)
+                    assertEquals("1".repeat(64), replay.before.sourceConversationHeadSha256)
+                    assertEquals("d".repeat(64), replay.after.currentDailyDreamHeadSha256)
+                    assertFalse(replay.memoryFrontierMutationPerformed)
+                    assertFalse(replay.systemMemoryConsolidationPerformedNow)
+                    assertFalse(replay.effectsPerformed)
+                }
+        } finally {
+            parent.toFile().deleteRecursively()
+        }
+    }
     @Test
     fun historicalCanonicalHeadProjectsWithoutInventingProdPromptEvidence() {
         val parent =

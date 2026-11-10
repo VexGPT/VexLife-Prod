@@ -5,6 +5,10 @@ import com.sun.net.httpserver.HttpServer
 import java.net.InetSocketAddress
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
+import java.time.DateTimeException
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlinx.serialization.SerializationException
@@ -19,6 +23,8 @@ import vexlife.companion.DirectTurnContextStore
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.memory.VexLifeCurrentMemoryReader
+import vexlife.memory.VexLifeDailyMemoryDream
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.web.VexLifeWebP1RuntimeArtifacts
 import vexlife.web.VexWebArtifacts
@@ -39,6 +45,7 @@ class VexLifeProdLocalService private constructor(
     private val executor: ExecutorService,
     private val turnExecutor: TurnExecutor,
     private val streamingTurnExecutor: StreamingTurnExecutor?,
+    private val dreamExecutor: DreamExecutor?,
 ) : AutoCloseable {
     companion object {
         private const val MaxRequestBytes =
@@ -58,6 +65,105 @@ class VexLifeProdLocalService private constructor(
                 allowSpecialFloatingPointValues = false
                 allowStructuredMapKeys = false
             }
+
+        private val ProductDreamExecutor =
+            object : DreamExecutor {
+                override fun observe(
+                    setup: VexLifeProdLocalSetup.Result,
+                ): VexLifeProdServiceContract.MemoryDreamProjection =
+                    VexLifeCurrentMemoryReader
+                        .readDreamSourceFrontier(
+                            Path.of(
+                                setup.productHome,
+                            ),
+                        )
+                        .let(
+                            ::memoryDreamProjection,
+                        )
+
+                override fun perform(
+                    setup: VexLifeProdLocalSetup.Result,
+                    request: VexLifeProdServiceContract.MemoryDreamRunRequest,
+                ): VexLifeDailyMemoryDream.Result {
+                    val observedAt =
+                        try {
+                            Instant.parse(
+                                request.observedAt,
+                            )
+                        } catch (
+                            _: DateTimeException,
+                        ) {
+                            throw IllegalArgumentException(
+                                "memory Dream observedAt must be one ISO-8601 instant",
+                            )
+                        }
+                    try {
+                        LocalDate.parse(
+                            request.calendarDateRef,
+                        )
+                        ZoneId.of(
+                            request.timeZoneRef,
+                        )
+                    } catch (
+                        _: DateTimeException,
+                    ) {
+                        throw IllegalArgumentException(
+                            "memory Dream calendarDateRef/timeZoneRef is invalid",
+                        )
+                    }
+
+                    return VexLifeDailyMemoryDream.commit(
+                        productHome =
+                            Path.of(
+                                setup.productHome,
+                            ),
+                        invocation =
+                            VexLifeDailyMemoryDream.Invocation(
+                                instanceRef =
+                                    "instance.vexlife-prod.memory-dream." +
+                                        ProcessHandle.current()
+                                            .pid(),
+                                restInvocationAuthorityRef = request.restInvocationAuthorityRef,
+                                dayRef = request.dayRef,
+                                dayIndex = request.dayIndex,
+                                calendarDateRef = request.calendarDateRef,
+                                timeZoneRef = request.timeZoneRef,
+                                observedAt = observedAt,
+                                expectedConversationHeadSha256 = request.expectedConversationHeadSha256,
+                                expectedScoreHeadSha256 = request.expectedScoreHeadSha256,
+                                expectedDailyDreamHeadSha256 = request.expectedDailyDreamHeadSha256,
+                            ),
+                    )
+                }
+            }
+
+        private fun memoryDreamProjection(
+            frontier: VexLifeCurrentMemoryReader.DreamSourceFrontier,
+        ): VexLifeProdServiceContract.MemoryDreamProjection {
+            val prior = frontier.priorDaily
+            return VexLifeProdServiceContract.MemoryDreamProjection(
+                schemaVersion = VexLifeProdServiceContract.MemoryDreamProjectionSchema,
+                state =
+                    if (frontier.scoreSourceConversationHeadSha256 == frontier.conversationHeadSha256) {
+                        "SOURCE_FRONTIER_READY"
+                    } else {
+                        "SCORE_NOT_CAUGHT_UP"
+                    },
+                sourceConversationHeadSha256 = frontier.conversationHeadSha256,
+                sourceScoreHeadSha256 = frontier.scoreHeadSha256,
+                scoreSourceConversationHeadSha256 = frontier.scoreSourceConversationHeadSha256,
+                sourceSemanticAuthorityHeadSha256 = frontier.semanticAuthorityHeadSha256,
+                currentDailyDreamHeadSha256 = prior?.dailyDreamHeadSha256,
+                currentDailyStratumSha256 = prior?.dailyStratumSha256,
+                currentDayRef = prior?.dayRef,
+                currentDayIndex = prior?.dayIndex,
+                nextDayIndex = prior?.dayIndex?.plus(1) ?: 0L,
+                activeStatementCount = frontier.activeStatementBindings.size,
+                heldStatementCount = frontier.heldStatementBindings.size,
+                openLoopCount = frontier.openLoopBindings.size,
+                effectsPerformed = false,
+            )
+        }
 
         /**
          * Ordinary product entry consumes the already-qualified Session at the fixed source-owned
@@ -103,6 +209,7 @@ class VexLifeProdLocalService private constructor(
                             progressObserver = observer,
                         )
                     },
+                dreamExecutor = ProductDreamExecutor,
             )
 
         internal fun startForTest(
@@ -110,6 +217,8 @@ class VexLifeProdLocalService private constructor(
             setup: VexLifeProdLocalSetup.Result,
             turnExecutor: TurnExecutor,
             streamingTurnExecutor: StreamingTurnExecutor? =
+                null,
+            dreamExecutor: DreamExecutor? =
                 null,
         ): VexLifeProdLocalService =
             startAt(
@@ -127,6 +236,7 @@ class VexLifeProdLocalService private constructor(
                     ),
                 turnExecutor = turnExecutor,
                 streamingTurnExecutor = streamingTurnExecutor,
+                dreamExecutor = dreamExecutor,
             )
 
         private fun startAt(
@@ -136,6 +246,7 @@ class VexLifeProdLocalService private constructor(
             frameAddress: InetSocketAddress,
             turnExecutor: TurnExecutor,
             streamingTurnExecutor: StreamingTurnExecutor?,
+            dreamExecutor: DreamExecutor?,
         ): VexLifeProdLocalService {
             require(
                 SourceShaPattern.matches(
@@ -198,6 +309,7 @@ class VexLifeProdLocalService private constructor(
                         executor = executor,
                         turnExecutor = turnExecutor,
                         streamingTurnExecutor = streamingTurnExecutor,
+                        dreamExecutor = dreamExecutor,
                     )
 
                 server.executor =
@@ -243,6 +355,16 @@ class VexLifeProdLocalService private constructor(
         ): DirectCompanionTurn.Result
     }
 
+    internal interface DreamExecutor {
+        fun observe(
+            setup: VexLifeProdLocalSetup.Result,
+        ): VexLifeProdServiceContract.MemoryDreamProjection
+
+        fun perform(
+            setup: VexLifeProdLocalSetup.Result,
+            request: VexLifeProdServiceContract.MemoryDreamRunRequest,
+        ): VexLifeDailyMemoryDream.Result
+    }
     val origin: String
         get() =
             "http://" +
@@ -326,6 +448,11 @@ class VexLifeProdLocalService private constructor(
 
                 VexLifeProdServiceContract.ContextPath ->
                     handleContext(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.MemoryDreamPath ->
+                    handleMemoryDream(
                         exchange,
                     )
 
@@ -492,6 +619,136 @@ class VexLifeProdLocalService private constructor(
         )
     }
 
+    private fun handleMemoryDream(
+        exchange: HttpExchange,
+    ) {
+        val executor =
+            requireNotNull(
+                dreamExecutor,
+            ) {
+                "memory Dream route is not configured"
+            }
+
+        when (
+            exchange.requestMethod
+        ) {
+            "GET" ->
+                respondJson(
+                    exchange = exchange,
+                    status = 200,
+                    value = executor.observe(startupSetup),
+                )
+
+            "POST" -> {
+                requireJson(
+                    exchange,
+                )
+                val request =
+                    JsonCodec.decodeFromString<VexLifeProdServiceContract.MemoryDreamRunRequest>(
+                        requestText(
+                            exchange,
+                        ),
+                    )
+                val before =
+                    executor.observe(
+                        startupSetup,
+                    )
+                val sameCommittedDay =
+                    before.currentDayRef ==
+                        request.dayRef
+                if (
+                    !sameCommittedDay
+                ) {
+                    require(
+                        before.state ==
+                            "SOURCE_FRONTIER_READY" &&
+                            before.sourceConversationHeadSha256 ==
+                            request.expectedConversationHeadSha256 &&
+                            before.sourceScoreHeadSha256 ==
+                            request.expectedScoreHeadSha256 &&
+                            before.currentDailyDreamHeadSha256 ==
+                            request.expectedDailyDreamHeadSha256,
+                    ) {
+                        "new memory Dream request does not bind the currently ready source frontier"
+                    }
+                }
+                val result =
+                    executor.perform(
+                        setup = startupSetup,
+                        request = request,
+                    )
+                val after =
+                    executor.observe(
+                        startupSetup,
+                    )
+                require(
+                    after.currentDailyDreamHeadSha256 == result.dailyDreamHeadSha256 &&
+                        after.currentDailyStratumSha256 == result.dailyStratumSha256,
+                ) {
+                    "memory Dream result does not match the observed durable post-Dream head"
+                }
+                if (
+                    result.state ==
+                        "COMMITTED"
+                ) {
+                    require(
+                        result.sourceConversationHeadSha256 == before.sourceConversationHeadSha256 &&
+                            result.sourceScoreHeadSha256 == before.sourceScoreHeadSha256 &&
+                            result.sourceSemanticAuthorityHeadSha256 == before.sourceSemanticAuthorityHeadSha256,
+                    ) {
+                        "new memory Dream result does not bind the observed pre-Dream source frontier"
+                    }
+                }
+                require(
+                    !result.lineageAwareGenerativeDreamRan &&
+                        !result.rhythmLearned &&
+                        !result.trainingRan &&
+                        !result.modelWeightsChanged &&
+                        !result.adapterChanged &&
+                        !result.synchronizationActivated &&
+                        !result.poweredDown &&
+                        !result.publicationPerformed &&
+                        !result.firstPersonAuthorityGranted,
+                ) {
+                    "memory Dream crossed one of its held later-effect boundaries"
+                }
+                val mutated =
+                    result.state ==
+                        "COMMITTED"
+                respondJson(
+                    exchange = exchange,
+                    status = 200,
+                    value =
+                        VexLifeProdServiceContract.MemoryDreamRunResponse(
+                            schemaVersion = VexLifeProdServiceContract.MemoryDreamRunResponseSchema,
+                            state = result.state,
+                            before = before,
+                            after = after,
+                            dailyDreamHeadSha256 = result.dailyDreamHeadSha256,
+                            dailyStratumSha256 = result.dailyStratumSha256,
+                            memoryFrontierMutationPerformed = mutated,
+                            systemMemoryConsolidationPerformedNow = mutated && result.systemMemoryConsolidationRan,
+                            modelCallPerformed = false,
+                            lineageAwareGenerativeDreamRan = false,
+                            rhythmLearned = false,
+                            trainingRan = false,
+                            modelWeightsChanged = false,
+                            adapterChanged = false,
+                            synchronizationActivated = false,
+                            poweredDown = false,
+                            publicationPerformed = false,
+                            firstPersonAuthorityGranted = false,
+                            effectsPerformed = mutated,
+                        ),
+                )
+            }
+
+            else ->
+                throw IllegalArgumentException(
+                    "memory Dream route requires HTTP GET or POST",
+                )
+        }
+    }
     private fun handleSend(
         exchange: HttpExchange,
     ) {
