@@ -101,7 +101,8 @@ DirectCompanionConnection
     top_p = 0.95
     top_k = 20
   no additional request-owned sampling knobs
-  request timeout bounds response-start/header availability
+  response-start/header timeout = 120 seconds
+    preserved from the known-working browser Companion path
   streamed InputStream body may continue beyond that response-start bound
         ↓
 ephemeral live progress
