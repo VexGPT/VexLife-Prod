@@ -88,6 +88,10 @@ class DirectCompanionConnectionTest {
             "http://127.0.0.1:8765/v1/chat/completions",
             request.uri.toString(),
         )
+        assertEquals(
+            120_000L,
+            request.timeoutMs,
+        )
         val body =
             Json
                 .parseToJsonElement(
