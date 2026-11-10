@@ -350,8 +350,11 @@ class DirectCompanionConnectionTest {
                 200,
                 0,
             )
+            // Force response-start/header delivery before delaying the body. This proves the
+            // HttpRequest timeout bounds stream establishment rather than active body lifetime.
+            exchange.responseBody.flush()
             Thread.sleep(
-                75,
+                1_250,
             )
             exchange.responseBody.write(
                 "data: [DONE]\n\n"
@@ -376,7 +379,7 @@ class DirectCompanionConnectionTest {
                                     "/v1/chat/completions",
                             ),
                         body = "{}",
-                        timeoutMs = 10,
+                        timeoutMs = 1_000,
                     ),
                 ) {
                     lines +=
