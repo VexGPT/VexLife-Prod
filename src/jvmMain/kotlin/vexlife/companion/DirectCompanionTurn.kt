@@ -369,6 +369,8 @@ object DirectCompanionTurn {
                         DirectCompanionConnection.invoke(
                             runtime = runtimeEvidence,
                             messages = prompt.messages,
+                            humanReasoningRequested =
+                                intent.humanReasoningRequested,
                             transport = hooks.transport,
                             now = hooks.now,
                         )
