@@ -189,6 +189,10 @@ class DirectCompanionConnectionTest {
         assertTrue(
             result.runtimeObservation.reasoningTrace.present,
         )
+        assertEquals(
+            "private reasoning",
+            result.sealedHumanReasoning,
+        )
         assertFalse(
             result.runtimeObservation.reasoningTrace.rawPersisted,
         )
