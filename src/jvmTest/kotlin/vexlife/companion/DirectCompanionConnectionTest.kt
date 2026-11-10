@@ -1,5 +1,9 @@
 package vexlife.companion
 
+import com.sun.net.httpserver.HttpServer
+import java.net.InetSocketAddress
+import java.net.URI
+import java.nio.charset.StandardCharsets
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -307,6 +311,76 @@ class DirectCompanionConnectionTest {
             "The better ",
             progress[2].delta,
         )
+    }
+
+    @Test
+    fun systemStreamingTransportDoesNotApplyBulkWholeResponseTimeout() {
+        val server =
+            HttpServer.create(
+                InetSocketAddress(
+                    "127.0.0.1",
+                    0,
+                ),
+                0,
+            )
+        server.createContext(
+            "/v1/chat/completions",
+        ) {
+            exchange ->
+            exchange.responseHeaders.set(
+                "content-type",
+                "text/event-stream",
+            )
+            exchange.sendResponseHeaders(
+                200,
+                0,
+            )
+            Thread.sleep(
+                75,
+            )
+            exchange.responseBody.write(
+                "data: [DONE]\n\n"
+                    .toByteArray(
+                        StandardCharsets.UTF_8,
+                    ),
+            )
+            exchange.close()
+        }
+        server.start()
+
+        try {
+            val lines =
+                mutableListOf<String>()
+            val result =
+                DirectCompanionConnection.SystemTransport.postStreaming(
+                    DirectCompanionConnection.HttpCall(
+                        uri =
+                            URI(
+                                "http://127.0.0.1:" +
+                                    server.address.port +
+                                    "/v1/chat/completions",
+                            ),
+                        body = "{}",
+                        timeoutMs = 10,
+                    ),
+                ) {
+                    lines +=
+                        it
+                }
+
+            assertEquals(
+                200,
+                result.status,
+            )
+            assertTrue(
+                "data: [DONE]" in
+                    lines,
+            )
+        } finally {
+            server.stop(
+                0,
+            )
+        }
     }
 
     @Test
