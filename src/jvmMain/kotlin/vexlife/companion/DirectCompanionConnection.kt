@@ -89,12 +89,11 @@ object DirectCompanionConnection {
             mapOf(
                 "include_usage" to true,
             ),
+        // Exact certified generation_config.json sampling projection:
+        // sha256=d0d0ed2e37cdfafef4a5067d5ea2407b05f4fb50526e47c008a5b235d50240fb
         val temperature: Double = 1.0,
         val top_p: Double = 0.95,
         val top_k: Int = 20,
-        val min_p: Double = 0.0,
-        val presence_penalty: Double = 0.0,
-        val repetition_penalty: Double = 1.0,
         val chat_template_kwargs: Map<String, Boolean>,
     )
 
