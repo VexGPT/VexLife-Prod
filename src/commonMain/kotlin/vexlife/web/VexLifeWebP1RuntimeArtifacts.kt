@@ -154,7 +154,15 @@ object VexLifeWebP1RuntimeArtifacts {
                 collapsed: 'none',
                 pending: null,
                 sendInFlight: false,
+                streamPhase: null,
+                streamedContent: '',
+                streamedReasoning: '',
                 thoughtsVisible: true,
+                humanReasoningByResponse: new Map(),
+                expandedThoughts: new Set(),
+                timelineFollowTail: true,
+                timelineScrollTop: 0,
+                reasoningViewports: new Map(),
                 theme: null
               };
 
@@ -177,12 +185,64 @@ object VexLifeWebP1RuntimeArtifacts {
                 return value;
               };
 
+              const readEventStream = async (response, onEvent) => {
+                if (!response.ok) return readJson(response);
+                if (!response.body) throw new Error('Vex stream did not expose a readable response body.');
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                const consume = (raw) => {
+                  const data = raw
+                    .split(/\r?\n/gu)
+                    .filter((line) => line.startsWith('data:'))
+                    .map((line) => line.slice(5).trimStart())
+                    .join('\n');
+                  if (!data || data === '[DONE]') return;
+                  let event;
+                  try { event = JSON.parse(data); }
+                  catch { throw new Error('Vex stream emitted invalid JSON.'); }
+                  onEvent(event);
+                };
+
+                for (;;) {
+                  const next = await reader.read();
+                  if (next.done) break;
+                  buffer += decoder.decode(next.value, { stream: true });
+                  for (;;) {
+                    const match = buffer.match(/\r?\n\r?\n/u);
+                    if (!match || match.index === undefined) break;
+                    const raw = buffer.slice(0, match.index);
+                    buffer = buffer.slice(match.index + match[0].length);
+                    consume(raw);
+                  }
+                }
+                buffer += decoder.decode();
+                if (buffer.trim()) consume(buffer);
+              };
+
               const notify = (message) => {
                 if (!ui.snackbar) return;
                 ui.snackbar.textContent = message;
                 ui.snackbar.hidden = false;
                 clearTimeout(notify.timer);
                 notify.timer = setTimeout(() => { ui.snackbar.hidden = true; }, 4800);
+              };
+
+              const THOUGHT_VISIBILITY_KEY = 'vexlife-prod.presentation.thoughts-visible';
+
+              const loadThoughtVisibility = () => {
+                try {
+                  const stored = localStorage.getItem(THOUGHT_VISIBILITY_KEY);
+                  if (stored === 'false') state.thoughtsVisible = false;
+                  else if (stored === 'true') state.thoughtsVisible = true;
+                } catch {}
+              };
+
+              const saveThoughtVisibility = () => {
+                try {
+                  localStorage.setItem(THOUGHT_VISIBILITY_KEY, String(state.thoughtsVisible));
+                } catch {}
               };
 
               const currentTheme = () =>
@@ -288,12 +348,104 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderComposer();
               };
 
-              const isNearBottom = () =>
-                ui.timeline.scrollHeight - ui.timeline.scrollTop - ui.timeline.clientHeight < 72;
+              const SCROLL_END_EPSILON = 2;
+
+              const isElementAtBottom = (element) =>
+                element.scrollHeight - element.scrollTop - element.clientHeight <= SCROLL_END_EPSILON;
+
+              const reasoningViewport = (key, initialFollowTail = false) => {
+                let viewport = state.reasoningViewports.get(key);
+                if (!viewport) {
+                  viewport = { followTail: initialFollowTail, scrollTop: 0 };
+                  state.reasoningViewports.set(key, viewport);
+                }
+                return viewport;
+              };
+
+              const bindReasoningViewport = (element, key, initialFollowTail = false) => {
+                element.dataset.scrollKey = key;
+                reasoningViewport(key, initialFollowTail);
+                element.addEventListener('scroll', () => {
+                  const viewport = reasoningViewport(key, initialFollowTail);
+                  viewport.scrollTop = element.scrollTop;
+                  viewport.followTail = isElementAtBottom(element);
+                });
+              };
+
+              const applyReasoningViewport = (
+                element,
+                key,
+                initialFollowTail = false,
+                restoreReadingPosition = true
+              ) => {
+                const viewport = reasoningViewport(key, initialFollowTail);
+                if (viewport.followTail) {
+                  element.scrollTop = element.scrollHeight;
+                } else if (restoreReadingPosition) {
+                  const maxScrollTop = Math.max(0, element.scrollHeight - element.clientHeight);
+                  element.scrollTop = Math.min(viewport.scrollTop, maxScrollTop);
+                }
+                viewport.scrollTop = element.scrollTop;
+              };
+
+              const restoreReasoningViewports = () => {
+                ui.timeline.querySelectorAll('.reasoning[data-scroll-key]').forEach((element) => {
+                  const key = String(element.dataset.scrollKey ?? '');
+                  applyReasoningViewport(element, key, key === 'live');
+                });
+              };
+
+              const applyTimelineViewport = (restoreReadingPosition = true) => {
+                if (state.timelineFollowTail) {
+                  ui.timeline.scrollTop = ui.timeline.scrollHeight;
+                } else if (restoreReadingPosition) {
+                  const maxScrollTop = Math.max(0, ui.timeline.scrollHeight - ui.timeline.clientHeight);
+                  ui.timeline.scrollTop = Math.min(state.timelineScrollTop, maxScrollTop);
+                }
+                state.timelineScrollTop = ui.timeline.scrollTop;
+                ui.jumpLatest.hidden = state.timelineFollowTail;
+              };
 
               const nextSequence = () => {
                 const messages = state.conversation?.messages ?? [];
                 return messages.reduce((max, message) => Math.max(max, Number(message.sequence) || 0), -1) + 1;
+              };
+
+              const thoughtMark = () => {
+                const mark = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                mark.setAttribute('class', 'thought-mark');
+                mark.setAttribute('viewBox', '0 0 16 16');
+                mark.innerHTML = '<path d="M8 1.8 14.2 8 8 14.2 1.8 8z"/><path d="M8 5 11 8 8 11 5 8z"/>';
+                return mark;
+              };
+
+              const completedThoughtNode = (message) => {
+                if (!state.thoughtsVisible || message.role !== 'vex') return null;
+                const key = String(message.messageRef ?? '');
+                const reasoning = state.humanReasoningByResponse.get(key);
+                if (!reasoning) return null;
+
+                const holder = document.createElement('div');
+                holder.className = 'thought';
+                const expanded = state.expandedThoughts.has(key);
+                const toggle = document.createElement('button');
+                toggle.type = 'button';
+                toggle.className = 'thought-toggle';
+                toggle.dataset.thoughtKey = key;
+                toggle.setAttribute('aria-expanded', String(expanded));
+                const label = document.createElement('span');
+                label.textContent = expanded ? 'hide thoughts' : 'view thoughts';
+                toggle.append(thoughtMark(), label);
+                holder.append(toggle);
+
+                if (expanded) {
+                  const box = document.createElement('div');
+                  box.className = 'reasoning';
+                  bindReasoningViewport(box, 'response.' + key, false);
+                  box.textContent = reasoning;
+                  holder.append(box);
+                }
+                return holder;
               };
 
               const messageNode = (message) => {
@@ -316,13 +468,16 @@ object VexLifeWebP1RuntimeArtifacts {
                 speaker.className = 'speaker';
                 speaker.textContent = human ? 'You' : 'Vex';
 
-                item.append(index, bubble, speaker);
+                const thought = completedThoughtNode(message);
+                if (thought) item.append(index, thought, bubble, speaker);
+                else item.append(index, bubble, speaker);
                 return item;
               };
 
               const waitingNode = (sequence) => {
                 const item = document.createElement('li');
                 item.className = 'message message-vex waiting';
+                item.dataset.hasContent = String(Boolean(state.streamedContent));
 
                 const index = document.createElement('p');
                 index.className = 'message-index';
@@ -338,11 +493,34 @@ object VexLifeWebP1RuntimeArtifacts {
                 mark.setAttribute('viewBox', '0 0 16 16');
                 mark.innerHTML = '<path d="M8 1.8 14.2 8 8 14.2 1.8 8z"/><path d="M8 5 11 8 8 11 5 8z"/>';
                 const label = document.createElement('span');
-                label.textContent = 'responding…';
+                label.className = 'thinking-label';
+                label.textContent =
+                  state.streamPhase === 'CheckingRuntime'
+                    ? 'checking Vex…'
+                    : state.streamPhase === 'Reconnecting'
+                      ? 'reconnecting Vex…'
+                      : state.streamPhase === 'Generating' || state.streamPhase === 'Reasoning'
+                      ? 'thinking…'
+                      : state.streamPhase === 'Responding'
+                        ? 'responding…'
+                        : 'preparing…';
                 thought.append(who, mark, label);
+
+                if (state.thoughtsVisible && state.streamedReasoning) {
+                  const reasoning = document.createElement('div');
+                  reasoning.className = 'reasoning live-reasoning';
+                  bindReasoningViewport(reasoning, 'live', true);
+                  reasoning.textContent = state.streamedReasoning;
+                  thought.append(reasoning);
+                }
 
                 const bubble = document.createElement('div');
                 bubble.className = 'bubble';
+                if (state.streamedContent) {
+                  const paragraph = document.createElement('p');
+                  paragraph.textContent = state.streamedContent;
+                  bubble.append(paragraph);
+                }
                 const speaker = document.createElement('p');
                 speaker.className = 'speaker';
                 speaker.textContent = 'Vex';
@@ -353,7 +531,6 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const renderTimeline = () => {
                 if (!ui.timeline) return;
-                const nearBottom = isNearBottom();
                 const messages = state.conversation?.messages ?? [];
                 const nodes = messages.map(messageNode);
 
@@ -381,10 +558,60 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
 
                 ui.timeline.replaceChildren(...nodes);
-                if (nearBottom || state.pending) {
-                  ui.timeline.scrollTop = ui.timeline.scrollHeight;
-                  ui.jumpLatest.hidden = true;
+                restoreReasoningViewports();
+                applyTimelineViewport();
+              };
+
+              const updateLiveTurn = () => {
+                const item = ui.timeline.querySelector('.message.waiting');
+                if (!item) {
+                  renderTimeline();
+                  return;
                 }
+
+                item.dataset.hasContent = String(Boolean(state.streamedContent));
+                const label = item.querySelector('.thinking-label');
+                if (label) {
+                  label.textContent =
+                    state.streamPhase === 'CheckingRuntime'
+                      ? 'checking Vex…'
+                      : state.streamPhase === 'Reconnecting'
+                        ? 'reconnecting Vex…'
+                        : state.streamPhase === 'Generating' || state.streamPhase === 'Reasoning'
+                          ? 'thinking…'
+                          : state.streamPhase === 'Responding'
+                            ? 'responding…'
+                            : 'preparing…';
+                }
+
+                const thought = item.querySelector('.thinking-now');
+                let reasoning = item.querySelector('.live-reasoning');
+                if (state.thoughtsVisible && state.streamedReasoning) {
+                  if (!reasoning) {
+                    reasoning = document.createElement('div');
+                    reasoning.className = 'reasoning live-reasoning';
+                    bindReasoningViewport(reasoning, 'live', true);
+                    thought?.append(reasoning);
+                  }
+                  reasoning.textContent = state.streamedReasoning;
+                  applyReasoningViewport(reasoning, 'live', true, false);
+                } else if (reasoning) {
+                  reasoning.remove();
+                }
+
+                const bubble = item.querySelector('.bubble');
+                let paragraph = bubble?.querySelector('p');
+                if (state.streamedContent) {
+                  if (!paragraph && bubble) {
+                    paragraph = document.createElement('p');
+                    bubble.append(paragraph);
+                  }
+                  if (paragraph) paragraph.textContent = state.streamedContent;
+                } else if (paragraph) {
+                  paragraph.remove();
+                }
+
+                applyTimelineViewport(false);
               };
 
               const renderTicket = () => {
@@ -486,13 +713,26 @@ object VexLifeWebP1RuntimeArtifacts {
                 setCompanionStatus('Ready', 'Ready', ui.companionStatusModel.textContent);
               };
 
-              const loadConversation = async () => {
+              const conversationRenderIdentity = (conversation) => {
+                if (!conversation) return 'NONE';
+                const messages = conversation.messages ?? [];
+                return [
+                  String(conversation.currentConversationHeadSha256 ?? 'NONE'),
+                  String(conversation.abandonedAttemptCount ?? 0),
+                  ...messages.map((message) => String(message.eventSha256 ?? ''))
+                ].join(':');
+              };
+
+              const loadConversation = async (renderNow = true) => {
                 const response = await fetch(service.conversationPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
-                state.conversation = await readJson(response);
+                const priorIdentity = conversationRenderIdentity(state.conversation);
+                const nextConversation = await readJson(response);
+                const nextIdentity = conversationRenderIdentity(nextConversation);
+                state.conversation = nextConversation;
                 const messages = state.conversation?.messages ?? [];
                 const latest = [...messages].reverse().find((message) => message.role === 'vex' && message.model);
                 setCompanionStatus('Ready', 'Ready', latest?.model ?? '');
-                renderTimeline();
+                if (renderNow && priorIdentity !== nextIdentity) renderTimeline();
               };
 
               const loadContext = async () => {
@@ -515,38 +755,100 @@ object VexLifeWebP1RuntimeArtifacts {
                 });
                 state.pending = pending;
                 state.sendInFlight = true;
+                state.streamPhase = 'CheckingRuntime';
+                state.streamedContent = '';
+                state.streamedReasoning = '';
+                state.reasoningViewports.set('live', { followTail: true, scrollTop: 0 });
                 if (!retrying) {
                   ui.draft.value = '';
                   sizeDraft();
                 }
-                setCompanionStatus('Checking', retrying ? 'Retrying exact Send' : 'Responding', '');
+                setCompanionStatus('Checking', retrying ? 'Retrying exact Send' : 'Checking Vex', '');
                 render();
 
                 try {
                   const response = await fetch(service.sendPath, {
                     method: 'POST',
-                    headers: { accept: 'application/json', 'content-type': 'application/json' },
+                    headers: { accept: 'text/event-stream', 'content-type': 'application/json' },
                     body: JSON.stringify(pending)
                   });
-                  const result = await readJson(response);
-                  state.pending = null;
+                  let result = null;
+                  await readEventStream(response, (event) => {
+                    if (event?.type === 'PHASE') {
+                      state.streamPhase = String(event.phase ?? '');
+                      if (state.streamPhase === 'CheckingRuntime') {
+                        setCompanionStatus('Checking', 'Checking Vex', '');
+                      } else if (state.streamPhase === 'Reconnecting') {
+                        setCompanionStatus('Checking', 'Reconnecting Vex', '');
+                      } else if (state.streamPhase === 'Generating') {
+                        setCompanionStatus('Checking', 'Thinking', '');
+                      }
+                      updateLiveTurn();
+                      return;
+                    }
+                    if (event?.type === 'REASONING_DELTA' && typeof event.delta === 'string') {
+                      state.streamPhase = 'Reasoning';
+                      state.streamedReasoning += event.delta;
+                      setCompanionStatus('Checking', 'Thinking', '');
+                      updateLiveTurn();
+                      return;
+                    }
+                    if (event?.type === 'CONTENT_DELTA' && typeof event.delta === 'string') {
+                      state.streamPhase = 'Responding';
+                      state.streamedContent += event.delta;
+                      setCompanionStatus('Checking', 'Responding', '');
+                      updateLiveTurn();
+                      return;
+                    }
+                    if (event?.type === 'FAILED') {
+                      const failure = event.error ?? {};
+                      const error = new Error(String(failure.message ?? 'Vex turn failed.'));
+                      error.vexStatus = 409;
+                      error.vexResponse = failure;
+                      throw error;
+                    }
+                    if (event?.type === 'COMPLETED') result = event.response ?? null;
+                  });
+                  if (!result) throw new Error('Vex stream ended without a completed turn.');
                   state.sendInFlight = false;
                   root.dataset.vexLastContextPath = String(result.contextPath ?? '');
                   root.dataset.vexLastPromptReceiptRef = String(result.promptContext?.receiptRef ?? '');
                   root.dataset.vexLastBrowserContextRef = String(result.promptContext?.browserContextRef ?? '');
-                  setCompanionStatus('Ready', 'Ready', result.model ?? '');
-                  render();
+                  const reasoning = result.humanReasoning;
+                  if (
+                    reasoning?.state === 'PRESENT_EPHEMERAL' &&
+                    typeof reasoning.text === 'string' &&
+                    reasoning.text.length > 0
+                  ) {
+                    state.humanReasoningByResponse.set(String(result.responseMessageRef ?? ''), reasoning.text);
+                  } else if (result.responseMessageRef) {
+                    state.humanReasoningByResponse.delete(String(result.responseMessageRef));
+                    state.expandedThoughts.delete(String(result.responseMessageRef));
+                  }
 
+                  // Preserve the fully streamed answer on screen until the canonical projection has
+                  // arrived. Live presentation remains non-authoritative; this only prevents a
+                  // visible vanish/reappear gap at the completion boundary.
                   try {
-                    await Promise.all([loadConversation(), loadContext()]);
+                    await Promise.all([loadConversation(false), loadContext()]);
                   } catch (projectionError) {
                     notify(
                       'Turn completed, but the current projection could not be refreshed: ' +
                       (projectionError instanceof Error ? projectionError.message : 'refresh failed.')
                     );
                   }
+
+                  state.pending = null;
+                  state.streamPhase = null;
+                  state.streamedContent = '';
+                  state.streamedReasoning = '';
+                  setCompanionStatus('Ready', 'Ready', result.model ?? '');
+                  render();
                 } catch (error) {
                   state.sendInFlight = false;
+                  state.streamPhase = null;
+                  state.streamedContent = '';
+                  state.streamedReasoning = '';
                   const status = Number(error?.vexStatus ?? 0);
                   const retryAllowed = error?.vexResponse?.retrySameSendAttemptAllowed;
                   const retireAttempt = status === 400 || retryAllowed === false;
@@ -610,6 +912,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 );
               };
 
+              loadThoughtVisibility();
               applyTheme();
               renderQuickActions();
               applySplit();
@@ -686,11 +989,22 @@ object VexLifeWebP1RuntimeArtifacts {
 
               ui.draft.addEventListener('input', () => sizeDraft());
               ui.timeline.addEventListener('scroll', () => {
-                if (isNearBottom()) ui.jumpLatest.hidden = true;
+                state.timelineScrollTop = ui.timeline.scrollTop;
+                state.timelineFollowTail = isElementAtBottom(ui.timeline);
+                ui.jumpLatest.hidden = state.timelineFollowTail;
+              });
+              ui.timeline.addEventListener('click', (event) => {
+                const toggle = event.target.closest('.thought-toggle');
+                if (!toggle) return;
+                const key = String(toggle.dataset.thoughtKey ?? '');
+                if (!key || !state.humanReasoningByResponse.has(key)) return;
+                if (state.expandedThoughts.has(key)) state.expandedThoughts.delete(key);
+                else state.expandedThoughts.add(key);
+                renderTimeline();
               });
               ui.jumpLatest.addEventListener('click', () => {
-                ui.timeline.scrollTop = ui.timeline.scrollHeight;
-                ui.jumpLatest.hidden = true;
+                state.timelineFollowTail = true;
+                applyTimelineViewport();
               });
 
               ui.ticketView.addEventListener('click', openCurrentContext);
@@ -698,7 +1012,9 @@ object VexLifeWebP1RuntimeArtifacts {
 
               ui.thoughtVisibility.addEventListener('click', () => {
                 state.thoughtsVisible = !state.thoughtsVisible;
+                saveThoughtVisibility();
                 renderSettings();
+                renderTimeline();
               });
 
               ui.cleanChat.addEventListener('click', () => {

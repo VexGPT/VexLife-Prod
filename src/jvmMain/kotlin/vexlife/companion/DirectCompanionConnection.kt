@@ -1,5 +1,6 @@
 package vexlife.companion
 
+import java.security.DigestInputStream
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -28,11 +29,17 @@ import vexlife.model.heretic.HereticRuntimeState
 /**
  * Provider Connection for one direct local Companion inference.
  *
- * The Connection consumes already-qualified Heretic runtime truth. It owns only the numeric-loopback
- * HTTP effect plus normalization of the returned provider observation/invocation evidence.
+ * The Connection consumes already-qualified Heretic runtime truth. The current qualified-runtime
+ * owners admit only the exact ordinary mlx-lm server binding whose process arguments keep
+ * `enable_thinking=false` by default. Over that already-qualified runtime, this Connection ports the
+ * existing server-owned explicit-open Companion relationship by selecting request-local
+ * `chat_template_kwargs.enable_thinking=true` for every fresh inference.
  *
- * It does not own Home, Conversation persistence, prompt-context selection, Memory, runtime
- * construction/lifetime, model identity, or presentation.
+ * This reasoning-mode selection is runtime/Connection meaning, not presentation preference.
+ * The Connection otherwise owns only the numeric-loopback HTTP effect plus normalization of the
+ * returned provider observation/invocation evidence. It does not own Home, Conversation
+ * persistence, prompt-context selection, Memory, runtime construction/lifetime, model identity,
+ * human disclosure, or presentation.
  */
 object DirectCompanionConnection {
     const val OutputTokenLimit =
@@ -44,8 +51,11 @@ object DirectCompanionConnection {
     const val InvocationEvidenceSchema =
         "vexlife-prod.model-runtime-invocation-evidence/v1"
 
+    // Preserves the known-working browser Companion's bounded inference-establishment window.
+    // With BodyHandlers.ofInputStream(), this bounds response start/headers, not active SSE body
+    // consumption after the stream has been established.
     private const val RequestTimeoutMs =
-        30_000L
+        120_000L
 
     private val JsonCodec =
         Json {
@@ -77,7 +87,17 @@ object DirectCompanionConnection {
         val model: String,
         val messages: List<CompanionProviderMessage>,
         val max_tokens: Int,
-        val stream: Boolean = false,
+        val stream: Boolean = true,
+        val stream_options: Map<String, Boolean> =
+            mapOf(
+                "include_usage" to true,
+            ),
+        // Exact certified generation_config.json sampling projection:
+        // sha256=d0d0ed2e37cdfafef4a5067d5ea2407b05f4fb50526e47c008a5b235d50240fb
+        val temperature: Double = 1.0,
+        val top_p: Double = 0.95,
+        val top_k: Int = 20,
+        val chat_template_kwargs: Map<String, Boolean>,
     )
 
     data class HttpCall(
@@ -92,13 +112,44 @@ object DirectCompanionConnection {
         val redirectLocation: String? = null,
     )
 
+    data class StreamingHttpResult(
+        val status: Int,
+        val responseBodySha256: String,
+        val redirectLocation: String? = null,
+    )
+
+    enum class ProgressKind {
+        Reasoning,
+        Content,
+    }
+
+    data class Progress(
+        val kind: ProgressKind,
+        val delta: String,
+        val accumulatedCharacters: Int,
+    )
+
+    fun interface ProgressObserver {
+        fun observe(
+            progress: Progress,
+        )
+    }
+
     fun interface Transport {
         fun post(
             call: HttpCall,
         ): HttpResult
     }
 
-    object SystemTransport : Transport {
+    interface StreamingTransport :
+        Transport {
+        fun postStreaming(
+            call: HttpCall,
+            onLine: (String) -> Unit,
+        ): StreamingHttpResult
+    }
+
+    object SystemTransport : StreamingTransport {
         private val client =
             HttpClient
                 .newBuilder()
@@ -111,27 +162,10 @@ object DirectCompanionConnection {
             call: HttpCall,
         ): HttpResult {
             val request =
-                HttpRequest
-                    .newBuilder(
-                        call.uri,
-                    )
-                    .timeout(
-                        Duration.ofMillis(
-                            call.timeoutMs,
-                        ),
-                    )
-                    .header(
-                        "content-type",
-                        "application/json",
-                    )
-                    .POST(
-                        HttpRequest.BodyPublishers.ofString(
-                            call.body,
-                            StandardCharsets.UTF_8,
-                        ),
-                    )
-                    .build()
-
+                request(
+                    call = call,
+                    applyOverallTimeout = true,
+                )
             val response =
                 client.send(
                     request,
@@ -143,17 +177,115 @@ object DirectCompanionConnection {
             return HttpResult(
                 status = response.statusCode(),
                 body = response.body(),
-                redirectLocation =
-                    response
-                        .headers()
-                        .firstValue(
-                            "location",
-                        )
-                        .orElse(
-                            null,
-                        ),
+                redirectLocation = redirectLocation(
+                    response,
+                ),
             )
         }
+
+        override fun postStreaming(
+            call: HttpCall,
+            onLine: (String) -> Unit,
+        ): StreamingHttpResult {
+            val response =
+                client.send(
+                    request(
+                        call = call,
+                        applyOverallTimeout = true,
+                    ),
+                    HttpResponse.BodyHandlers.ofInputStream(),
+                )
+            val digest =
+                MessageDigest.getInstance(
+                    "SHA-256",
+                )
+
+            DigestInputStream(
+                response.body(),
+                digest,
+            )
+                .bufferedReader(
+                    StandardCharsets.UTF_8,
+                )
+                .use {
+                    reader ->
+                    while (
+                        true
+                    ) {
+                        val line =
+                            reader.readLine()
+                                ?: break
+                        if (
+                            response.statusCode() in
+                                200..299
+                        ) {
+                            onLine(
+                                line,
+                            )
+                        }
+                    }
+                }
+
+            return StreamingHttpResult(
+                status = response.statusCode(),
+                responseBodySha256 = hex(
+                    digest.digest(),
+                ),
+                redirectLocation = redirectLocation(
+                    response,
+                ),
+            )
+        }
+
+        private fun request(
+            call: HttpCall,
+            applyOverallTimeout: Boolean,
+        ): HttpRequest {
+            val builder =
+                HttpRequest
+                    .newBuilder(
+                        call.uri,
+                    )
+
+            if (
+                applyOverallTimeout
+            ) {
+                builder.timeout(
+                    Duration.ofMillis(
+                        call.timeoutMs,
+                    ),
+                )
+            }
+
+            return builder
+                .header(
+                    "content-type",
+                    "application/json",
+                )
+                .header(
+                    "accept",
+                    "text/event-stream",
+                )
+                .POST(
+                    HttpRequest.BodyPublishers.ofString(
+                        call.body,
+                        StandardCharsets.UTF_8,
+                    ),
+                )
+                .build()
+        }
+
+        private fun redirectLocation(
+            response: HttpResponse<*>,
+        ): String? =
+            response
+                .headers()
+                .firstValue(
+                    "location",
+                )
+                .orElse(
+                    null,
+                )
     }
 
     @Serializable
@@ -177,6 +309,21 @@ object DirectCompanionConnection {
         val humanProjection: String,
         val modelProjection: String,
         val trainingProjection: String,
+    )
+
+    private data class ReasoningObservation(
+        val trace: ReasoningTrace,
+        val sealedHumanValue: String?,
+    )
+
+    private data class ProviderCompletion(
+        val httpStatus: Int,
+        val responseBodySha256: String,
+        val content: String,
+        val reportedModel: String?,
+        val reasoning: ReasoningObservation,
+        val finishReason: String?,
+        val assistantRoleObserved: Boolean,
     )
 
     @Serializable
@@ -237,6 +384,12 @@ object DirectCompanionConnection {
     data class Result internal constructor(
         val content: String,
         val model: String,
+        /**
+         * Ephemeral human-only projection candidate. This value is never included in the durable
+         * runtime observation, invocation evidence, canonical Conversation, Context, Memory,
+         * training, or publication surfaces.
+         */
+        val sealedHumanReasoning: String?,
         val runtimeObservation: RuntimeObservation,
         val invocationEvidence: InvocationEvidence,
     )
@@ -245,6 +398,7 @@ object DirectCompanionConnection {
         runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
         messages: List<CompanionProviderMessage>,
         transport: Transport = SystemTransport,
+        progressObserver: ProgressObserver? = null,
         now: () -> Instant = {
             Instant.now()
         },
@@ -272,7 +426,12 @@ object DirectCompanionConnection {
                     model = runtime.requestModel,
                     messages = messages,
                     max_tokens = OutputTokenLimit,
-                    stream = false,
+                    stream = true,
+                    chat_template_kwargs =
+                        mapOf(
+                            "enable_thinking" to
+                                true,
+                        ),
                 ),
             )
         val requestBodySha256 =
@@ -280,155 +439,51 @@ object DirectCompanionConnection {
                 requestBody,
             )
 
-        val http =
-            try {
-                transport.post(
-                    HttpCall(
-                        uri = uri,
-                        body = requestBody,
-                        timeoutMs = RequestTimeoutMs,
-                    ),
-                )
-            } catch (
-                error: java.net.http.HttpTimeoutException,
+        val call =
+            HttpCall(
+                uri = uri,
+                body = requestBody,
+                timeoutMs = RequestTimeoutMs,
+            )
+        val completion =
+            if (
+                transport is
+                    StreamingTransport
             ) {
-                fail(
-                    FailureCode.EndpointTimeout,
-                    "local Companion endpoint request timed out",
-                    error,
+                invokeStreaming(
+                    transport = transport,
+                    call = call,
+                    progressObserver = progressObserver,
                 )
-            } catch (
-                error: java.net.ConnectException,
-            ) {
-                fail(
-                    FailureCode.EndpointUnreachable,
-                    "local Companion endpoint could not be reached",
-                    error,
-                )
-            } catch (
-                error: Exception,
-            ) {
-                fail(
-                    FailureCode.EndpointUnreachable,
-                    "local Companion endpoint invocation failed",
-                    error,
+            } else {
+                invokeBulk(
+                    transport = transport,
+                    call = call,
                 )
             }
-
-        if (
-            http.status in
-            300..399
-        ) {
-            fail(
-                FailureCode.EndpointNotLoopback,
-                "local Companion endpoint redirects are not admitted",
-            )
-        }
-
-        if (
-            http.status !in
-            200..299
-        ) {
-            fail(
-                FailureCode.EndpointHttpError,
-                "local Companion endpoint returned HTTP ${http.status}",
-            )
-        }
-
-        val parsed =
-            try {
-                Json.parseToJsonElement(
-                    http.body,
-                )
-                    .jsonObject
-            } catch (
-                error: Exception,
-            ) {
-                fail(
-                    FailureCode.EndpointResponseInvalid,
-                    "local Companion endpoint returned invalid JSON",
-                    error,
-                )
-            }
-
-        val choice =
-            parsed[
-                "choices"
-            ]
-                ?.let {
-                    it as? JsonArray
-                }
-                ?.firstOrNull()
-                ?.let {
-                    it as? JsonObject
-                }
-                ?: fail(
-                    FailureCode.EndpointResponseInvalid,
-                    "local Companion response has no first choice",
-                )
-
-        val message =
-            choice[
-                "message"
-            ] as? JsonObject
-                ?: fail(
-                    FailureCode.EndpointResponseInvalid,
-                    "local Companion response has no assistant message",
-                )
 
         val content =
-            stringOrNull(
-                message[
-                    "content"
-                ],
-            )
-                ?.takeIf(
-                    String::isNotEmpty,
-                )
-                ?: fail(
-                    FailureCode.EndpointResponseInvalid,
-                    "local Companion response content is empty",
-                )
-
+            completion.content
         val observedAt =
             now()
                 .toString()
         val responseBodySha256 =
-            sha256(
-                http.body,
-            )
-        val reportedModel =
-            stringOrNull(
-                parsed[
-                    "model"
-                ],
-            )
+            completion.responseBodySha256
         val compatibilityModel =
             safeCompatibilityModel(
-                reportedModel,
+                completion.reportedModel,
                 runtime.requestModel,
             )
         val reportedModelField =
             reportedModelField(
-                reportedModel,
+                completion.reportedModel,
             )
         val reasoning =
-            reasoningTrace(
-                message,
-            )
+            completion.reasoning
         val finishReason =
-            stringOrNull(
-                choice[
-                    "finish_reason"
-                ],
-            )
+            completion.finishReason
         val assistantRoleObserved =
-            stringOrNull(
-                message[
-                    "role"
-                ],
-            ) ==
-                "assistant"
+            completion.assistantRoleObserved
 
         val observationFingerprint =
             fingerprint(
@@ -454,9 +509,9 @@ object DirectCompanionConnection {
                     ?: "",
                 reportedModelField.pathClass
                     ?: "",
-                reasoning.contentSha256
+                reasoning.trace.contentSha256
                     ?: "",
-                reasoning.characterCount.toString(),
+                reasoning.trace.characterCount.toString(),
             )
         val runtimeObservation =
             RuntimeObservation(
@@ -481,7 +536,7 @@ object DirectCompanionConnection {
                 finishReasonOrNull = finishReason,
                 compatibilityModel = compatibilityModel,
                 reportedModelField = reportedModelField,
-                reasoningTrace = reasoning,
+                reasoningTrace = reasoning.trace,
                 rawProviderResponsePersisted = false,
                 observationRef =
                     "observation.vexlife-prod.model-runtime." +
@@ -509,7 +564,7 @@ object DirectCompanionConnection {
                 responseBodySha256,
                 runtimeObservation.observationRef,
                 runtimeObservation.semanticFingerprint,
-                http.status.toString(),
+                completion.httpStatus.toString(),
                 observedAt,
             )
         val invocation =
@@ -522,7 +577,7 @@ object DirectCompanionConnection {
                 responseBodySha256 = responseBodySha256,
                 runtimeObservationRef = runtimeObservation.observationRef,
                 runtimeObservationFingerprint = runtimeObservation.semanticFingerprint,
-                httpStatus = http.status,
+                httpStatus = completion.httpStatus,
                 actualHttpCall = true,
                 loopbackOnly = true,
                 observedEffects = effects,
@@ -538,10 +593,467 @@ object DirectCompanionConnection {
         return Result(
             content = content,
             model = compatibilityModel,
+            sealedHumanReasoning = reasoning.sealedHumanValue,
             runtimeObservation = runtimeObservation,
             invocationEvidence = invocation,
         )
     }
+
+    private fun invokeBulk(
+        transport: Transport,
+        call: HttpCall,
+    ): ProviderCompletion {
+        val http =
+            post(
+                transport,
+                call,
+            )
+        validateHttp(
+            status = http.status,
+            redirectLocation = http.redirectLocation,
+        )
+
+        val parsed =
+            try {
+                Json.parseToJsonElement(
+                    http.body,
+                )
+                    .jsonObject
+            } catch (
+                error: Exception,
+            ) {
+                fail(
+                    FailureCode.EndpointResponseInvalid,
+                    "local Companion endpoint returned invalid JSON",
+                    error,
+                )
+            }
+        val choice =
+            parsed[
+                "choices"
+            ]
+                ?.let {
+                    it as? JsonArray
+                }
+                ?.firstOrNull()
+                ?.let {
+                    it as? JsonObject
+                }
+                ?: fail(
+                    FailureCode.EndpointResponseInvalid,
+                    "local Companion response has no first choice",
+                )
+        val message =
+            choice[
+                "message"
+            ] as? JsonObject
+                ?: fail(
+                    FailureCode.EndpointResponseInvalid,
+                    "local Companion response has no assistant message",
+                )
+        val content =
+            stringOrNull(
+                message[
+                    "content"
+                ],
+            )
+                ?.takeIf(
+                    String::isNotEmpty,
+                )
+                ?: fail(
+                    FailureCode.EndpointResponseInvalid,
+                    "local Companion response content is empty",
+                )
+
+        return ProviderCompletion(
+            httpStatus = http.status,
+            responseBodySha256 = sha256(
+                http.body,
+            ),
+            content = content,
+            reportedModel =
+                stringOrNull(
+                    parsed[
+                        "model"
+                    ],
+                ),
+            reasoning = reasoningObservation(
+                message,
+            ),
+            finishReason =
+                stringOrNull(
+                    choice[
+                        "finish_reason"
+                    ],
+                ),
+            assistantRoleObserved =
+                stringOrNull(
+                    message[
+                        "role"
+                    ],
+                ) ==
+                    "assistant",
+        )
+    }
+
+    private fun invokeStreaming(
+        transport: StreamingTransport,
+        call: HttpCall,
+        progressObserver: ProgressObserver?,
+    ): ProviderCompletion {
+        val content =
+            StringBuilder()
+        val reasoning =
+            StringBuilder()
+        var reportedModel: String? =
+            null
+        var finishReason: String? =
+            null
+        var assistantRoleObserved =
+            false
+        var done =
+            false
+
+        val http =
+            postStreaming(
+                transport = transport,
+                call = call,
+            ) {
+                line ->
+                if (
+                    line.isBlank() ||
+                    line.startsWith(
+                        ":",
+                    )
+                ) {
+                    return@postStreaming
+                }
+                if (
+                    !line.startsWith(
+                        "data:",
+                    )
+                ) {
+                    fail(
+                        FailureCode.EndpointResponseInvalid,
+                        "streaming Companion endpoint emitted a non-SSE line",
+                    )
+                }
+                val data =
+                    line.removePrefix(
+                        "data:",
+                    )
+                        .trimStart()
+                if (
+                    data ==
+                        "[DONE]"
+                ) {
+                    done =
+                        true
+                    return@postStreaming
+                }
+
+                val event =
+                    try {
+                        Json.parseToJsonElement(
+                            data,
+                        )
+                            .jsonObject
+                    } catch (
+                        error: Exception,
+                    ) {
+                        fail(
+                            FailureCode.EndpointResponseInvalid,
+                            "streaming Companion endpoint emitted invalid SSE JSON",
+                            error,
+                        )
+                    }
+
+                stringOrNull(
+                    event[
+                        "model"
+                    ],
+                )
+                    ?.let {
+                        reportedModel =
+                            it
+                    }
+                val choice =
+                    (event[
+                        "choices"
+                    ] as? JsonArray)
+                        ?.firstOrNull() as? JsonObject
+                        ?: return@postStreaming
+                stringOrNull(
+                    choice[
+                        "finish_reason"
+                    ],
+                )
+                    ?.let {
+                        finishReason =
+                            it
+                    }
+                val delta =
+                    choice[
+                        "delta"
+                    ] as? JsonObject
+                        ?: return@postStreaming
+                if (
+                    stringOrNull(
+                        delta[
+                            "role"
+                        ],
+                    ) ==
+                        "assistant"
+                ) {
+                    assistantRoleObserved =
+                        true
+                }
+
+                val mlxReasoning =
+                    stringOrNull(
+                        delta[
+                            "reasoning"
+                        ],
+                    )
+                        ?.takeIf(
+                            String::isNotEmpty,
+                        )
+                val compatibilityReasoning =
+                    stringOrNull(
+                        delta[
+                            "reasoning_content"
+                        ],
+                    )
+                        ?.takeIf(
+                            String::isNotEmpty,
+                        )
+                if (
+                    mlxReasoning !=
+                        null &&
+                        compatibilityReasoning !=
+                        null &&
+                        mlxReasoning !=
+                        compatibilityReasoning
+                ) {
+                    fail(
+                        FailureCode.EndpointResponseInvalid,
+                        "streaming Companion endpoint exposed conflicting reasoning fields",
+                    )
+                }
+                val reasoningDelta =
+                    mlxReasoning
+                        ?: compatibilityReasoning
+                if (
+                    reasoningDelta !=
+                        null
+                ) {
+                    reasoning.append(
+                        reasoningDelta,
+                    )
+                    progressObserver
+                        ?.observe(
+                            Progress(
+                                kind = ProgressKind.Reasoning,
+                                delta = reasoningDelta,
+                                accumulatedCharacters =
+                                    reasoning.codePointCount(),
+                            ),
+                        )
+                }
+
+                stringOrNull(
+                    delta[
+                        "content"
+                    ],
+                )
+                    ?.takeIf(
+                        String::isNotEmpty,
+                    )
+                    ?.let {
+                        contentDelta ->
+                        content.append(
+                            contentDelta,
+                        )
+                        progressObserver
+                            ?.observe(
+                                Progress(
+                                    kind = ProgressKind.Content,
+                                    delta = contentDelta,
+                                    accumulatedCharacters =
+                                        content.codePointCount(),
+                                ),
+                            )
+                    }
+            }
+
+        validateHttp(
+            status = http.status,
+            redirectLocation = http.redirectLocation,
+        )
+        if (
+            !done
+        ) {
+            fail(
+                FailureCode.EndpointResponseInvalid,
+                "streaming Companion endpoint closed before [DONE]",
+            )
+        }
+        if (
+            content.isEmpty()
+        ) {
+            fail(
+                FailureCode.EndpointResponseInvalid,
+                "streaming Companion response content is empty",
+            )
+        }
+
+        val reasoningValue =
+            reasoning
+                .toString()
+                .takeIf(
+                    String::isNotEmpty,
+                )
+        val message =
+            buildMap<String, JsonElement> {
+                put(
+                    "content",
+                    JsonPrimitive(
+                        content.toString(),
+                    ),
+                )
+                reasoningValue
+                    ?.let {
+                        put(
+                            "reasoning",
+                            JsonPrimitive(
+                                it,
+                            ),
+                        )
+                    }
+            }
+
+        return ProviderCompletion(
+            httpStatus = http.status,
+            responseBodySha256 = http.responseBodySha256,
+            content = content.toString(),
+            reportedModel = reportedModel,
+            reasoning =
+                reasoningObservation(
+                    JsonObject(
+                        message,
+                    ),
+                ),
+            finishReason = finishReason,
+            assistantRoleObserved = assistantRoleObserved,
+        )
+    }
+
+    private fun post(
+        transport: Transport,
+        call: HttpCall,
+    ): HttpResult =
+        try {
+            transport.post(
+                call,
+            )
+        } catch (
+            error: java.net.http.HttpTimeoutException,
+        ) {
+            fail(
+                FailureCode.EndpointTimeout,
+                "local Companion endpoint request timed out",
+                error,
+            )
+        } catch (
+            error: java.net.ConnectException,
+        ) {
+            fail(
+                FailureCode.EndpointUnreachable,
+                "local Companion endpoint could not be reached",
+                error,
+            )
+        } catch (
+            error: Exception,
+        ) {
+            fail(
+                FailureCode.EndpointUnreachable,
+                "local Companion endpoint invocation failed",
+                error,
+            )
+        }
+
+    private fun postStreaming(
+        transport: StreamingTransport,
+        call: HttpCall,
+        onLine: (String) -> Unit,
+    ): StreamingHttpResult =
+        try {
+            transport.postStreaming(
+                call,
+                onLine,
+            )
+        } catch (
+            error: java.net.http.HttpTimeoutException,
+        ) {
+            fail(
+                FailureCode.EndpointTimeout,
+                "local Companion endpoint did not begin streaming before timeout",
+                error,
+            )
+        } catch (
+            error: java.net.ConnectException,
+        ) {
+            fail(
+                FailureCode.EndpointUnreachable,
+                "local Companion endpoint could not be reached",
+                error,
+            )
+        } catch (
+            error: ConnectionException,
+        ) {
+            throw error
+        } catch (
+            error: Exception,
+        ) {
+            fail(
+                FailureCode.EndpointUnreachable,
+                "local Companion streaming invocation failed",
+                error,
+            )
+        }
+
+    private fun validateHttp(
+        status: Int,
+        redirectLocation: String?,
+    ) {
+        if (
+            status in
+            300..399 ||
+                redirectLocation !=
+                null
+        ) {
+            fail(
+                FailureCode.EndpointNotLoopback,
+                "local Companion endpoint redirects are not admitted",
+            )
+        }
+        if (
+            status !in
+            200..299
+        ) {
+            fail(
+                FailureCode.EndpointHttpError,
+                "local Companion endpoint returned HTTP $status",
+            )
+        }
+    }
+
+    private fun StringBuilder.codePointCount(): Int =
+        toString()
+            .codePointCount(
+                0,
+                length,
+            )
 
     private fun requireQualifiedRuntime(
         runtime: HereticModelConfiguration.QualifiedRuntimeEvidence,
@@ -688,9 +1200,9 @@ object DirectCompanionConnection {
         )
     }
 
-    private fun reasoningTrace(
+    private fun reasoningObservation(
         message: JsonObject,
-    ): ReasoningTrace {
+    ): ReasoningObservation {
         val mlx =
             stringOrNull(
                 message[
@@ -727,38 +1239,43 @@ object DirectCompanionConnection {
         val value =
             mlx
                 ?: compatibility
+        val trace =
+            if (
+                value ==
+                    null
+            ) {
+                ReasoningTrace(
+                    present = false,
+                    contentSha256 = null,
+                    characterCount = 0,
+                    rawPersisted = false,
+                    humanProjection = "SEALED_EXPLICIT_OPEN_ONLY",
+                    modelProjection = "NONE",
+                    trainingProjection = "NONE",
+                )
+            } else {
+                ReasoningTrace(
+                    present = true,
+                    contentSha256 =
+                        sha256(
+                            value,
+                        ),
+                    characterCount =
+                        value.codePointCount(
+                            0,
+                            value.length,
+                        ),
+                    rawPersisted = false,
+                    humanProjection = "SEALED_EXPLICIT_OPEN_ONLY",
+                    modelProjection = "NONE",
+                    trainingProjection = "NONE",
+                )
+            }
 
-        return if (
-            value ==
-                null
-        ) {
-            ReasoningTrace(
-                present = false,
-                contentSha256 = null,
-                characterCount = 0,
-                rawPersisted = false,
-                humanProjection = "SEALED_EXPLICIT_OPEN_ONLY",
-                modelProjection = "NONE",
-                trainingProjection = "NONE",
-            )
-        } else {
-            ReasoningTrace(
-                present = true,
-                contentSha256 =
-                    sha256(
-                        value,
-                    ),
-                characterCount =
-                    value.codePointCount(
-                        0,
-                        value.length,
-                    ),
-                rawPersisted = false,
-                humanProjection = "SEALED_EXPLICIT_OPEN_ONLY",
-                modelProjection = "NONE",
-                trainingProjection = "NONE",
-            )
-        }
+        return ReasoningObservation(
+            trace = trace,
+            sealedHumanValue = value,
+        )
     }
 
     private fun stringOrNull(
@@ -804,23 +1321,29 @@ object DirectCompanionConnection {
     private fun sha256(
         value: String,
     ): String =
-        MessageDigest
-            .getInstance(
-                "SHA-256",
-            )
-            .digest(
-                value.toByteArray(
-                    StandardCharsets.UTF_8,
-                ),
-            )
-            .joinToString(
-                "",
-            ) {
-                "%02x".format(
-                    it.toInt() and
-                        0xff,
+        hex(
+            MessageDigest
+                .getInstance(
+                    "SHA-256",
                 )
-            }
+                .digest(
+                    value.toByteArray(
+                        StandardCharsets.UTF_8,
+                    ),
+                ),
+        )
+
+    private fun hex(
+        value: ByteArray,
+    ): String =
+        value.joinToString(
+            "",
+        ) {
+            "%02x".format(
+                it.toInt() and
+                    0xff,
+            )
+        }
 
     private fun fingerprint(
         vararg values: String,

@@ -21,7 +21,10 @@ object VexLifeProdServiceContract {
         "vexlife-prod.local-service-context-projection/v1"
 
     const val SendResponseSchema =
-        "vexlife-prod.local-service-send-response/v3"
+        "vexlife-prod.local-service-send-response/v4"
+
+    const val SendStreamEventSchema =
+        "vexlife-prod.local-service-send-stream-event/v1"
 
     const val ErrorSchema =
         "vexlife-prod.local-service-error/v1"
@@ -223,6 +226,87 @@ object VexLifeProdServiceContract {
     )
 
     @Serializable
+    data class HumanReasoningProjection(
+        val state: String,
+        val text: String?,
+        val contentSha256: String?,
+        val characterCount: Int,
+        val persisted: Boolean,
+    ) {
+        init {
+            require(
+                state in
+                    setOf(
+                        "ABSENT",
+                        "PRESENT_EPHEMERAL",
+                        "UNAVAILABLE_AFTER_IDEMPOTENT_RECOVERY",
+                    ),
+            ) {
+                "human reasoning projection state is invalid"
+            }
+            require(
+                !persisted,
+            ) {
+                "human reasoning projection must remain ephemeral"
+            }
+
+            when (
+                state
+            ) {
+                "PRESENT_EPHEMERAL" -> {
+                    require(
+                        !text.isNullOrEmpty() &&
+                            contentSha256
+                                ?.matches(
+                                    Regex(
+                                        "[0-9a-f]{64}",
+                                    ),
+                                ) ==
+                            true &&
+                            characterCount >
+                            0,
+                    ) {
+                        "present human reasoning requires exact ephemeral text/hash/count"
+                    }
+                }
+
+                "UNAVAILABLE_AFTER_IDEMPOTENT_RECOVERY" -> {
+                    require(
+                        text ==
+                            null &&
+                            characterCount >=
+                            0 &&
+                            (
+                                contentSha256 ==
+                                    null ||
+                                    contentSha256.matches(
+                                        Regex(
+                                            "[0-9a-f]{64}",
+                                        ),
+                                    )
+                            ),
+                    ) {
+                        "recovered human reasoning may retain only durable hash/count evidence"
+                    }
+                }
+
+                else -> {
+                    require(
+                        text ==
+                            null &&
+                            contentSha256 ==
+                            null &&
+                            characterCount ==
+                            0,
+                    ) {
+                        "non-present human reasoning must carry no raw or fingerprint material"
+                    }
+                }
+            }
+        }
+    }
+
+    @Serializable
     data class SendResponse(
         val schemaVersion: String,
         val state: String,
@@ -239,7 +323,40 @@ object VexLifeProdServiceContract {
         val currentConversationHeadSha256: String,
         val contextPath: String,
         val promptContext: PromptContextProjection,
+        val humanReasoning: HumanReasoningProjection,
     )
+
+    @Serializable
+    data class SendStreamEvent(
+        val schemaVersion: String =
+            SendStreamEventSchema,
+        val type: String,
+        val phase: String? =
+            null,
+        val delta: String? =
+            null,
+        val accumulatedCharacters: Int? =
+            null,
+        val response: SendResponse? =
+            null,
+        val error: ErrorResponse? =
+            null,
+    ) {
+        init {
+            require(
+                type in
+                    setOf(
+                        "PHASE",
+                        "REASONING_DELTA",
+                        "CONTENT_DELTA",
+                        "COMPLETED",
+                        "FAILED",
+                    ),
+            ) {
+                "send stream event type is invalid"
+            }
+        }
+    }
 
     @Serializable
     data class ErrorResponse(

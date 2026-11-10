@@ -432,6 +432,16 @@ class MacHereticRuntimePlatform(
             pid,
         )
 
+    override fun healthy(
+        binding: HereticPersistentRuntime.Binding,
+    ): Boolean {
+        // The caller has already established exact environment currentness for this binding.
+        // Interactive health is intentionally one immediate generation-engine observation.
+        return healthProbe.healthy(
+            HereticProductIdentity.Endpoint,
+        )
+    }
+
     override fun processIdentity(
         pid: Long,
         args: List<String>,
