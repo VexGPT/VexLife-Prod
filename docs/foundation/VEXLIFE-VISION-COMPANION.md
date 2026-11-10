@@ -36,7 +36,6 @@ ordinary-product runtime bridge is separately source-placed.
 ~~~text
 State
   Held
-  PermissionNeeded
   Ready
   Enabled
   Looking
@@ -47,15 +46,16 @@ Control
   LookNow
 
 Effect
-  RequestHostPermission
-  RequestEnable
   RequestSnapshot
 ~~~
 
-Controls request effects; they do not fabricate outside truth.
+Enable/Disable are local human-facing arming semantics only. They do not request host permission,
+start capture, or establish an outside runtime state. The accepted USER_SELECTED_SESSION route does
+not require persistent host permission.
 
 ~~~text
-ENABLE_REQUESTED != HOST_PERMISSION_GRANTED
+VISION_ENABLED != HOST_PERMISSION_GRANTED
+VISION_ENABLED != SCREEN_CAPTURE_AUTHORIZED
 LOOK_NOW_REQUESTED != SCREEN_CAPTURED
 SCREEN_CAPTURED != ACTIVE_VISUAL_OBSERVATION
 ACTIVE_VISUAL_OBSERVATION != VISUAL_MODEL_INPUT
@@ -74,8 +74,8 @@ SDK SOURCE ACCEPTED
 PRODUCT EFFECT REACHABLE
 ~~~
 
-Changing the button to Ready/Enabled merely because SDK source exists would fabricate product
-capability.
+Changing the button to Ready merely because SDK source exists would fabricate Product reachability.
+Enabled is a separate local human choice after Ready; it still grants no screen-capture authority.
 
 ## Accepted outside effect owners
 
@@ -102,7 +102,8 @@ Rightful ownership remains separate:
 
 ~~~text
 Process Factory
-  owns system-picker route, receipt validity and Safety-at-capture truth
+  owns system-picker route, realization session/connection identity, receipt validity and
+  Safety-at-capture truth
 
 Security
   owns exact capture-scoped active-sharing witness identity
@@ -114,7 +115,7 @@ Perception
   owns only the content-absent active VISUAL observation cross-binding
 
 VexLifeVisionFamily
-  owns only human-facing Vision meaning
+  owns only human-facing Vision meaning and local Ready/Enabled arming state
 ~~~
 
 VexLife-Prod does not need to copy a generic Partner/Signal hierarchy merely because the SDK
