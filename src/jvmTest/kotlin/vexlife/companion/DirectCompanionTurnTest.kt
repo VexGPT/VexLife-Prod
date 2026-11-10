@@ -9,6 +9,9 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.conversation.DirectConversationStore
@@ -1607,12 +1610,17 @@ class DirectCompanionTurnTest {
             productHome()
         var providerCalls =
             0
+        var providerRequestBody: String? =
+            null
         val reasoning =
             "ephemeral human-visible reasoning"
         val transport =
             DirectCompanionConnection.Transport {
+                call ->
                 providerCalls +=
                     1
+                providerRequestBody =
+                    call.body
                 DirectCompanionConnection.HttpResult(
                     status = 200,
                     body =
@@ -1660,6 +1668,27 @@ class DirectCompanionTurnTest {
                             },
                         ),
                 )
+
+            val providerRequest =
+                Json
+                    .parseToJsonElement(
+                        requireNotNull(
+                            providerRequestBody,
+                        ),
+                    )
+                    .jsonObject
+            assertEquals(
+                "true",
+                providerRequest[
+                    "chat_template_kwargs"
+                ]
+                    ?.jsonObject
+                    ?.get(
+                        "enable_thinking",
+                    )
+                    ?.jsonPrimitive
+                    ?.content,
+            )
 
             assertEquals(
                 reasoning,
