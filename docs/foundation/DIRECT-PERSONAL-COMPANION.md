@@ -225,6 +225,11 @@ This per-Send model-mode selection is distinct from DirectPromptContext ownershi
 remove or rewrite the canonical provider message set, and it does not grant Memory, training,
 publication, durable reasoning storage or another model/runtime identity.
 
+Because the boolean changes the provider invocation, normalized InvocationEvidence durably records the
+exact `humanReasoningRequested` value. Completed-send idempotent recovery requires that value to match
+the original invocation; the same idempotency key cannot be reinterpreted under a different reasoning
+mode.
+
 Permanent:
 
 ~~~text
@@ -236,6 +241,10 @@ EPHEMERAL HUMAN REASONING
 != TRAINING
 != PUBLICATION
 != DURABLE STORE
+
+SAME IDEMPOTENCY KEY
++ DIFFERENT HUMAN REASONING REQUEST
+!= EXACT COMPLETED DUPLICATE
 ~~~
 
 The current Product Send remains transactional/non-streaming. This slice restores **completed
@@ -361,6 +370,8 @@ Tests are source-formed for:
 - raw provider/reasoning non-persistence;
 - default provider request selects `enable_thinking=false`;
 - explicit human reasoning request selects `enable_thinking=true` through Turn -> Connection;
+- durable invocation evidence records the exact reasoning-mode request;
+- completed duplicate rejects a changed reasoning-mode request without provider replay;
 - explicit fresh-response reasoning projection without durable storage;
 - idempotent duplicate reasoning unavailability without provider replay;
 - first-turn prompt materialization;
