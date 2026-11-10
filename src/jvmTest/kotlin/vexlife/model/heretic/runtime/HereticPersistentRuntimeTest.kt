@@ -348,6 +348,10 @@ class HereticPersistentRuntimeTest {
                 trace,
         )
         assertTrue(
+            "HEALTHY" in
+                trace,
+        )
+        assertFalse(
             "WAIT_HEALTHY" in
                 trace,
         )
@@ -442,6 +446,16 @@ class HereticPersistentRuntimeTest {
                 .also {
                     it.alivePids +=
                         existing.runtime.pid
+                    it.processGroupId =
+                        existing.runtime.processGroupId
+                    it.matching =
+                        listOf(
+                            HereticPersistentRuntime.ProcessIdentity(
+                                pid = existing.runtime.pid,
+                                processGroupId = existing.runtime.processGroupId,
+                                exactOwnedDetachedGroup = true,
+                            ),
+                        )
                     it.healthyNow =
                         false
                 }
