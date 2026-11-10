@@ -143,6 +143,21 @@ class DirectCompanionConnectionTest {
                 ?.jsonPrimitive
                 ?.content,
         )
+        assertFalse(
+            body.containsKey(
+                "min_p",
+            ),
+        )
+        assertFalse(
+            body.containsKey(
+                "presence_penalty",
+            ),
+        )
+        assertFalse(
+            body.containsKey(
+                "repetition_penalty",
+            ),
+        )
         assertEquals(
             "true",
             body[
