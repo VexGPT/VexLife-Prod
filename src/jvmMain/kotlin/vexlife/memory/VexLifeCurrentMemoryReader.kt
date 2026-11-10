@@ -10,7 +10,10 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.put
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
@@ -102,6 +105,7 @@ object VexLifeCurrentMemoryReader {
 
     private data class Statement(
         val statementRef: String,
+        val subjectRef: String,
         val semanticSubjectFingerprint: String,
         val memoryRelation: String,
         val recordedState: String,
@@ -109,20 +113,30 @@ object VexLifeCurrentMemoryReader {
         val summary: String,
         val summaryHash: String,
         val sourceBindings: JsonArray,
+        val classificationEvidenceBindings: JsonArray,
         val sourceConversationHeadSha256: String,
         val acceptedForContinuity: Boolean,
         val consentState: String,
+        val consentDispositionRef: String,
+        val consentDispositionSha256: String,
         val semanticAuthorityHeadSha256: String,
         val acceptanceRef: String,
         val acceptanceSha256: String,
         val candidateRef: String,
         val candidateSha256: String,
+        val scoreEventRef: String,
+        val scoreEventHash: String,
         var current: Boolean,
     )
 
     private data class OpenLoop(
         val ref: String,
         val state: String,
+        val summaryRef: String?,
+        val sourceStatementRefs: List<String>,
+        val sourceBindings: JsonArray,
+        val scoreEventRef: String,
+        val scoreEventHash: String,
     )
 
     private data class ScoreSnapshot(
@@ -139,6 +153,37 @@ object VexLifeCurrentMemoryReader {
         val sourceSemanticAuthorityHeadSha256: String,
         val activeStatementRefs: List<String>,
         val heldStatementRefs: List<String>,
+    )
+
+    internal data class DreamPriorDaily(
+        val dailyDreamHeadSha256: String,
+        val dailyStratumSha256: String,
+        val sequence: Long,
+        val dayRef: String,
+        val dayIndex: Long,
+        val calendarDateRef: String,
+        val timeZoneRef: String,
+        val observedAt: String,
+        val restInvocationAuthorityRef: String,
+    )
+
+    internal data class DreamSourceFrontier(
+        val homeRef: String,
+        val deviceRef: String,
+        val companionLineageRef: String,
+        val threadRef: String,
+        val conversationHeadSha256: String,
+        val conversationResponseEventHash: String,
+        val scoreHeadSha256: String,
+        val scoreEventHash: String,
+        val semanticAuthorityHeadSha256: String,
+        val selectedRuntimeRef: String,
+        val selectedModelProfileRef: String,
+        val currentStatementRefs: List<String>,
+        val activeStatementBindings: List<JsonObject>,
+        val heldStatementBindings: List<JsonObject>,
+        val openLoopBindings: List<JsonObject>,
+        val priorDaily: DreamPriorDaily?,
     )
 
     @Serializable
@@ -284,6 +329,81 @@ object VexLifeCurrentMemoryReader {
         return formContext(
             score = score,
             daily = daily,
+        )
+    }
+
+
+    internal fun readDreamSourceFrontier(
+        productHome: Path,
+        threadRef: String = DirectConversationIdentity.ThreadRef,
+    ): DreamSourceFrontier {
+        val home = VexOwnedPath.requireRoot(productHome, "canonical VexLife Home")
+        val currentHome =
+            requireNotNull(VexLifeProdHomeFiles.observeExisting(home)) {
+                "Daily Memory Dream requires one current canonical VexLife Home"
+            }
+        val identity =
+            Identity(
+                homeRef = currentHome.manifest.homeRef,
+                deviceRef = currentHome.manifest.currentDeviceRef,
+                lineageRef = currentHome.manifest.currentCompanionLineageRef,
+                threadRef = threadRef,
+            )
+        val conversationStore = DirectConversationStore(home)
+        val conversation = conversationStore.current()
+        val conversationHead =
+            requireNotNull(conversation.head) {
+                "Daily Memory Dream requires one current completed Conversation head"
+            }
+        val sourceTurn = conversationStore.historicalCompletedTurn(conversationHead.conversationHeadSha256)
+        require(sourceTurn.currentCommittedLineageVerified) {
+            "Daily Memory Dream current Conversation head is not in the committed lineage"
+        }
+        val score =
+            loadScore(
+                home = home,
+                identity = identity,
+                conversationStore = conversationStore,
+                conversation = conversation,
+            )
+        require(score.head.string("sourceConversationHeadSha256") == conversationHead.conversationHeadSha256) {
+            "DREAM_SCORE_NOT_CAUGHT_UP: current Score does not bind the current Conversation head"
+        }
+
+        val currentStatements = score.statements.filter(Statement::current).sortedBy(Statement::statementRef)
+        val active =
+            currentStatements.filter {
+                it.acceptedForContinuity &&
+                    it.consentState in positiveConsent &&
+                    authorityContains(score.authority, it)
+            }
+        val held = currentStatements.filter { it !in active }
+        val loops = score.openLoops.filter { it.state == "OPEN" }.sortedBy(OpenLoop::ref)
+        val response = sourceTurn.responseEvent
+
+        return DreamSourceFrontier(
+            homeRef = identity.homeRef,
+            deviceRef = identity.deviceRef,
+            companionLineageRef = identity.lineageRef,
+            threadRef = identity.threadRef,
+            conversationHeadSha256 = conversationHead.conversationHeadSha256,
+            conversationResponseEventHash = response.eventHash,
+            scoreHeadSha256 = score.head.string("scoreHeadSha256"),
+            scoreEventHash = score.head.string("eventHash"),
+            semanticAuthorityHeadSha256 = score.authority.string("semanticAuthorityHeadSha256"),
+            selectedRuntimeRef =
+                requireNotNull(response.endpointProfileRef) {
+                    "Daily Memory Dream source response has no runtime profile"
+                },
+            selectedModelProfileRef =
+                requireNotNull(response.modelNameOrBoundedTestProfileRef) {
+                    "Daily Memory Dream source response has no model profile"
+                },
+            currentStatementRefs = currentStatements.map(Statement::statementRef),
+            activeStatementBindings = active.map(::dreamStatementBinding),
+            heldStatementBindings = held.map(::dreamStatementBinding),
+            openLoopBindings = loops.map(::dreamOpenLoopBinding),
+            priorDaily = readPriorDailyForDream(home, identity),
         )
     }
 
@@ -529,6 +649,11 @@ object VexLifeCurrentMemoryReader {
                         OpenLoop(
                             ref = ref,
                             state = "OPEN",
+                            summaryRef = event.nullableString("summaryRef"),
+                            sourceStatementRefs = event.stringList("sourceStatementRefs"),
+                            sourceBindings = event.array("sourceBindings"),
+                            scoreEventRef = event.string("scoreEventRef"),
+                            scoreEventHash = event.string("scoreEventHash"),
                         )
                 }
 
@@ -970,7 +1095,11 @@ object VexLifeCurrentMemoryReader {
                 label = "consent disposition",
             )
         require(
-            consent.string(
+            consent.string("consentDispositionRef") ==
+                statement.consentDispositionRef &&
+                consent.string("consentDispositionSha256") ==
+                statement.consentDispositionSha256 &&
+                consent.string(
                 "candidateRef",
             ) ==
                 statement.candidateRef &&
@@ -1076,7 +1205,9 @@ object VexLifeCurrentMemoryReader {
                 label = "semantic acceptance",
             )
         require(
-            acceptance.string(
+            statement.classificationEvidenceBindings ==
+                JsonArray(evidenceBindings) &&
+                acceptance.string(
                 "contractRef",
             ) ==
                 LiveSemanticContract &&
@@ -1348,7 +1479,11 @@ object VexLifeCurrentMemoryReader {
         ) {
             "STATEMENT" -> {
                 require(
-                    event.string(
+                    event.string("scoreEventRef").isNotEmpty() &&
+                        event.string("subjectRef").isNotEmpty() &&
+                        event.string("consentDispositionRef").isNotEmpty() &&
+                        event.array("classificationEvidenceBindings").isNotEmpty() &&
+                        event.string(
                         "memoryRelation",
                     ) in
                         memoryRelations &&
@@ -1392,7 +1527,8 @@ object VexLifeCurrentMemoryReader {
 
             "OPEN_LOOP" ->
                 require(
-                    event.string(
+                    event.string("scoreEventRef").isNotEmpty() &&
+                        event.string(
                         "openLoopState",
                     ) ==
                         "OPEN" &&
@@ -1710,6 +1846,7 @@ object VexLifeCurrentMemoryReader {
         ] =
             Statement(
                 statementRef = ref,
+                subjectRef = event.string("subjectRef"),
                 semanticSubjectFingerprint =
                     event.string(
                         "semanticSubjectFingerprint",
@@ -1738,6 +1875,7 @@ object VexLifeCurrentMemoryReader {
                     event.array(
                         "sourceBindings",
                     ),
+                classificationEvidenceBindings = event.array("classificationEvidenceBindings"),
                 sourceConversationHeadSha256 =
                     event.string(
                         "sourceConversationHeadSha256",
@@ -1750,6 +1888,8 @@ object VexLifeCurrentMemoryReader {
                     event.string(
                         "consentState",
                     ),
+                consentDispositionRef = event.string("consentDispositionRef"),
+                consentDispositionSha256 = event.string("consentDispositionSha256"),
                 semanticAuthorityHeadSha256 =
                     event.string(
                         "semanticAuthorityHeadSha256",
@@ -1770,6 +1910,8 @@ object VexLifeCurrentMemoryReader {
                     event.string(
                         "semanticCandidateSha256",
                     ),
+                scoreEventRef = event.string("scoreEventRef"),
+                scoreEventHash = event.string("scoreEventHash"),
                 current =
                     event.string(
                         "statementState",
@@ -2737,23 +2879,210 @@ object VexLifeCurrentMemoryReader {
                 "\n",
             )
 
+
+    internal fun formDailyReceipt(
+        schemaVersion: String,
+        refField: String,
+        hashField: String,
+        prefix: String,
+        core: JsonObject,
+    ): JsonObject {
+        val preRef = JsonObject(mapOf("schemaVersion" to JsonPrimitive(schemaVersion)) + core)
+        val ref = prefix + "." + sha256(VexContractJson.canonicalEncodeElement(preRef)).take(32)
+        val withRef = JsonObject(preRef + mapOf(refField to JsonPrimitive(ref)))
+        return JsonObject(
+            withRef +
+                mapOf(
+                    hashField to JsonPrimitive(sha256(VexContractJson.canonicalEncodeElement(withRef))),
+                ),
+        )
+    }
+
+    internal fun readDailyReceiptAt(
+        home: Path,
+        path: Path,
+        schemaVersion: String,
+        refField: String,
+        hashField: String,
+        prefix: String,
+        label: String,
+    ): JsonObject =
+        readAddressed(
+            home = home,
+            path = path,
+            schemaVersion = schemaVersion,
+            refField = refField,
+            hashField = hashField,
+            prefix = prefix,
+            label = label,
+        )
+
+    private fun dreamStatementBinding(statement: Statement): JsonObject =
+        buildJsonObject {
+            put("statementRef", statement.statementRef)
+            put("subjectRef", statement.subjectRef)
+            put("semanticSubjectFingerprint", statement.semanticSubjectFingerprint)
+            put("memoryRelation", statement.memoryRelation)
+            put("statementState", statement.recordedState)
+            put("summaryHash", statement.summaryHash)
+            put("acceptedForContinuity", statement.acceptedForContinuity)
+            put("consentState", statement.consentState)
+            put("semanticAuthorityHeadSha256", statement.semanticAuthorityHeadSha256)
+            put("semanticAcceptanceRef", statement.acceptanceRef)
+            put("semanticAcceptanceSha256", statement.acceptanceSha256)
+            put("semanticCandidateRef", statement.candidateRef)
+            put("semanticCandidateSha256", statement.candidateSha256)
+            put("classificationEvidenceBindings", statement.classificationEvidenceBindings)
+            put("consentDispositionRef", statement.consentDispositionRef)
+            put("consentDispositionSha256", statement.consentDispositionSha256)
+            put("sourceBindings", statement.sourceBindings)
+            put("eventRef", statement.scoreEventRef)
+            put("eventHash", statement.scoreEventHash)
+            put("current", statement.current)
+        }
+
+    private fun dreamOpenLoopBinding(loop: OpenLoop): JsonObject =
+        buildJsonObject {
+            put("openLoopRef", loop.ref)
+            put(
+                "summaryRef",
+                loop.summaryRef?.let(::JsonPrimitive) ?: JsonNull,
+            )
+            put("sourceStatementRefs", JsonArray(loop.sourceStatementRefs.map(::JsonPrimitive)))
+            put("sourceBindings", loop.sourceBindings)
+            put("eventRef", loop.scoreEventRef)
+            put("eventHash", loop.scoreEventHash)
+            put("state", loop.state)
+        }
+
+    private fun readPriorDailyForDream(
+        home: Path,
+        identity: Identity,
+    ): DreamPriorDaily? {
+        val root =
+            "daily-memory-dream/" +
+                identity.lineageRef +
+                "/" +
+                identity.threadRef
+        val headPath = inside(home, root + "/head.json")
+        if (!Files.exists(headPath, LinkOption.NOFOLLOW_LINKS)) return null
+
+        val head =
+            readAddressed(
+                home = home,
+                path = headPath,
+                schemaVersion = "vextreme.daily-memory-dream-head/v1",
+                refField = "dailyDreamHeadRef",
+                hashField = "dailyDreamHeadSha256",
+                prefix = "daily-dream-head",
+                label = "current Daily Memory head for Dream",
+            )
+        require(
+            head.string("homeRef") == identity.homeRef &&
+                head.string("deviceRef") == identity.deviceRef &&
+                head.string("companionLineageRef") == identity.lineageRef &&
+                head.string("threadRef") == identity.threadRef &&
+                head.string("contractRef") == "contract.multivex.g03.daily-memory-only-dream/v1",
+        ) {
+            "current Daily Memory head identity is invalid for Dream continuation"
+        }
+        val headSha = head.string("dailyDreamHeadSha256")
+        val immutable =
+            readAddressed(
+                home = home,
+                path = inside(home, root + "/heads/" + headSha + ".json"),
+                schemaVersion = "vextreme.daily-memory-dream-head/v1",
+                refField = "dailyDreamHeadRef",
+                hashField = "dailyDreamHeadSha256",
+                prefix = "daily-dream-head",
+                label = "immutable Daily Memory head for Dream",
+            )
+        require(immutable == head) {
+            "current Daily Memory head lacks exact immutable receipt"
+        }
+        validateDailyHeadLineage(home = home, root = root, current = head)
+
+        val stratumSha = head.string("dailyStratumSha256")
+        val stratum =
+            readAddressed(
+                home = home,
+                path = inside(home, root + "/strata/" + stratumSha + ".json"),
+                schemaVersion = "vextreme.daily-stratum/v1",
+                refField = "dailyStratumRef",
+                hashField = "dailyStratumSha256",
+                prefix = "daily-stratum",
+                label = "current Daily Stratum for Dream",
+            )
+        require(
+            stratum.long("sequence") == head.long("sequence") &&
+                stratum.string("dayRef") == head.string("dayRef") &&
+                stratum.long("dayIndex") == head.long("dayIndex"),
+        ) {
+            "current Daily Memory head/stratum identity is inconsistent"
+        }
+        val orientationSha = stratum.string("orientationSha256")
+        val orientation =
+            readAddressed(
+                home = home,
+                path = inside(home, root + "/orientations/" + orientationSha + ".json"),
+                schemaVersion = "vextreme.daily-pre-rest-orientation/v1",
+                refField = "preRestOrientationRef",
+                hashField = "orientationSha256",
+                prefix = "pre-rest-orientation",
+                label = "current Daily orientation for Dream",
+            )
+        return DreamPriorDaily(
+            dailyDreamHeadSha256 = headSha,
+            dailyStratumSha256 = stratum.string("dailyStratumSha256"),
+            sequence = head.long("sequence"),
+            dayRef = stratum.string("dayRef"),
+            dayIndex = stratum.long("dayIndex"),
+            calendarDateRef = stratum.string("calendarDateRef"),
+            timeZoneRef = stratum.string("timeZoneRef"),
+            observedAt = stratum.string("observedAt"),
+            restInvocationAuthorityRef = orientation.string("restInvocationAuthorityRef"),
+        )
+    }
+
     private fun authorityContains(
         head: JsonObject,
         statement: Statement,
-    ): Boolean =
-        head.objectList(
+    ): Boolean {
+        val statementBinding =
+            dreamStatementBinding(
+                statement,
+            )
+        return head.objectList(
             "currentAcceptanceBindings",
         )
             .any {
-                it.string(
-                    "acceptanceRef",
-                ) ==
-                    statement.acceptanceRef &&
-                    it.string(
-                        "acceptanceSha256",
-                    ) ==
-                    statement.acceptanceSha256
+                currentAuthorityBindingMatches(
+                    authorityBinding = it,
+                    statementBinding = statementBinding,
+                )
             }
+    }
+
+    internal fun currentAuthorityBindingMatches(
+        authorityBinding: JsonObject,
+        statementBinding: JsonObject,
+    ): Boolean =
+        authorityBinding.string("semanticSubjectFingerprint") ==
+            statementBinding.string("semanticSubjectFingerprint") &&
+            authorityBinding.string("acceptanceRef") ==
+            statementBinding.string("semanticAcceptanceRef") &&
+            authorityBinding.string("acceptanceSha256") ==
+            statementBinding.string("semanticAcceptanceSha256") &&
+            authorityBinding.string("candidateRef") ==
+            statementBinding.string("semanticCandidateRef") &&
+            authorityBinding.string("candidateSha256") ==
+            statementBinding.string("semanticCandidateSha256") &&
+            authorityBinding.objectList("classificationEvidenceBindings") ==
+            statementBinding.objectList("classificationEvidenceBindings") &&
+            authorityBinding.string("consentDispositionRef") ==
+            statementBinding.string("consentDispositionRef") &&
+            authorityBinding.string("consentDispositionSha256") ==
+            statementBinding.string("consentDispositionSha256")
 
     private fun dailyReceipt(
         home: Path,
