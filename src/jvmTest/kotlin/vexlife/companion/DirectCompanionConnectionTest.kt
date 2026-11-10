@@ -119,6 +119,13 @@ class DirectCompanionConnectionTest {
                 ?.jsonPrimitive
                 ?.content,
         )
+        assertFalse(
+            result.invocationEvidence.humanReasoningRequested,
+        )
+        assertEquals(
+            DirectCompanionConnection.InvocationEvidenceSchema,
+            result.invocationEvidence.schemaVersion,
+        )
         assertEquals(
             "Hello from Vex.",
             result.content,
@@ -214,6 +221,13 @@ class DirectCompanionConnectionTest {
                 ?.content,
         )
 
+        assertTrue(
+            result.invocationEvidence.humanReasoningRequested,
+        )
+        assertEquals(
+            DirectCompanionConnection.InvocationEvidenceSchema,
+            result.invocationEvidence.schemaVersion,
+        )
         assertEquals(
             HereticProductIdentity.RequestModel,
             result.model,
