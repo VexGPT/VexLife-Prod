@@ -96,6 +96,7 @@ DirectCompanionConnection
   numeric-loopback /v1/chat/completions
   stream = true
   request-local explicit-open reasoning
+  bulk whole-response timeout is not applied to the active stream
         ↓
 ephemeral live progress
   CheckingRuntime
@@ -461,6 +462,7 @@ Tests are source-formed for:
 - raw provider/reasoning non-persistence;
 - qualified Direct Companion inference selects `stream=true` plus request-local `enable_thinking=true`;
 - streamed reasoning and content deltas preserve ordering before terminal completion;
+- the actual system streaming transport remains alive beyond the bulk whole-response deadline;
 - no human/presentation field controls provider reasoning mode;
 - Viewable thoughts remains absent from the Send wire request;
 - live reasoning stays ephemeral while completed-response reasoning remains available in the same browser session;
