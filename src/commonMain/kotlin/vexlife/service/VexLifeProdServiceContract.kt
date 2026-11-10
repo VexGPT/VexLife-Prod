@@ -23,6 +23,9 @@ object VexLifeProdServiceContract {
     const val SendResponseSchema =
         "vexlife-prod.local-service-send-response/v4"
 
+    const val SendStreamEventSchema =
+        "vexlife-prod.local-service-send-stream-event/v1"
+
     const val ErrorSchema =
         "vexlife-prod.local-service-error/v1"
 
@@ -322,6 +325,38 @@ object VexLifeProdServiceContract {
         val promptContext: PromptContextProjection,
         val humanReasoning: HumanReasoningProjection,
     )
+
+    @Serializable
+    data class SendStreamEvent(
+        val schemaVersion: String =
+            SendStreamEventSchema,
+        val type: String,
+        val phase: String? =
+            null,
+        val delta: String? =
+            null,
+        val accumulatedCharacters: Int? =
+            null,
+        val response: SendResponse? =
+            null,
+        val error: ErrorResponse? =
+            null,
+    ) {
+        init {
+            require(
+                type in
+                    setOf(
+                        "PHASE",
+                        "REASONING_DELTA",
+                        "CONTENT_DELTA",
+                        "COMPLETED",
+                        "FAILED",
+                    ),
+            ) {
+                "send stream event type is invalid"
+            }
+        }
+    }
 
     @Serializable
     data class ErrorResponse(
