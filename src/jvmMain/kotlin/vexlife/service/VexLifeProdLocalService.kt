@@ -500,8 +500,6 @@ class VexLifeProdLocalService private constructor(
                                     capture = it.capture,
                                 )
                             },
-                    humanReasoningRequested =
-                        request.viewableThoughts,
                 ),
             )
 
@@ -530,29 +528,15 @@ class VexLifeProdLocalService private constructor(
                         ),
                     humanReasoning =
                         humanReasoningProjection(
-                            request = request,
-                            result = result,
+                            result,
                         ),
                 ),
         )
     }
 
     private fun humanReasoningProjection(
-        request: VexLifeProdServiceContract.SendRequest,
         result: DirectCompanionTurn.Result,
     ): VexLifeProdServiceContract.HumanReasoningProjection {
-        if (
-            !request.viewableThoughts
-        ) {
-            return VexLifeProdServiceContract.HumanReasoningProjection(
-                state = "NOT_REQUESTED",
-                text = null,
-                contentSha256 = null,
-                characterCount = 0,
-                persisted = false,
-            )
-        }
-
         val trace =
             result.runtimeObservation.reasoningTrace
 
@@ -609,7 +593,7 @@ class VexLifeProdLocalService private constructor(
                     trace.characterCount ==
                     0,
             ) {
-                "fresh requested human reasoning disappeared before local service projection"
+                "fresh human reasoning disappeared before local service projection"
             }
 
             return VexLifeProdServiceContract.HumanReasoningProjection(
