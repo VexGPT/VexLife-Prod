@@ -211,9 +211,14 @@ object DirectCompanionConnection {
                         val line =
                             reader.readLine()
                                 ?: break
-                        onLine(
-                            line,
-                        )
+                        if (
+                            response.statusCode() in
+                                200..299
+                        ) {
+                            onLine(
+                                line,
+                            )
+                        }
                     }
                 }
 
@@ -709,12 +714,15 @@ object DirectCompanionConnection {
                 ) {
                     return@postStreaming
                 }
-                require(
-                    line.startsWith(
+                if (
+                    !line.startsWith(
                         "data:",
-                    ),
+                    )
                 ) {
-                    "streaming Companion endpoint emitted a non-SSE line"
+                    fail(
+                        FailureCode.EndpointResponseInvalid,
+                        "streaming Companion endpoint emitted a non-SSE line",
+                    )
                 }
                 val data =
                     line.removePrefix(
@@ -868,15 +876,21 @@ object DirectCompanionConnection {
             status = http.status,
             redirectLocation = http.redirectLocation,
         )
-        require(
-            done,
+        if (
+            !done
         ) {
-            "streaming Companion endpoint closed before [DONE]"
+            fail(
+                FailureCode.EndpointResponseInvalid,
+                "streaming Companion endpoint closed before [DONE]",
+            )
         }
-        require(
-            content.isNotEmpty(),
+        if (
+            content.isEmpty()
         ) {
-            "streaming Companion response content is empty"
+            fail(
+                FailureCode.EndpointResponseInvalid,
+                "streaming Companion response content is empty",
+            )
         }
 
         val reasoningValue =
