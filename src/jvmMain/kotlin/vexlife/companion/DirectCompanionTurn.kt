@@ -40,8 +40,10 @@ object DirectCompanionTurn {
         /**
          * Explicit presentation request for one fresh response's sealed human reasoning.
          *
-         * This flag never changes provider prompt formation, canonical Conversation, Context,
-         * Memory, training, or durable recovery semantics.
+         * This flag does not change DirectPromptContext message selection, canonical Conversation,
+         * Context, Memory, training, or durable recovery semantics. It is consumed only at the
+         * Connection boundary to request the existing explicit-open reasoning mode for this fresh
+         * provider inference.
          */
         val humanReasoningRequested: Boolean =
             false,
