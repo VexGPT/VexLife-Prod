@@ -9,6 +9,7 @@ import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import vexlife.contract.VexContractJson
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -126,6 +127,19 @@ class DirectCompanionConnectionTest {
             DirectCompanionConnection.InvocationEvidenceSchema,
             result.invocationEvidence.schemaVersion,
         )
+        assertFalse(
+            Json
+                .parseToJsonElement(
+                    VexContractJson.encode(
+                        result.invocationEvidence,
+                    ),
+                )
+                .jsonObject
+                .containsKey(
+                    "humanReasoningRequested",
+                ),
+            "default false reasoning mode must remain absent from durable JSON for v1 hash compatibility",
+        )
         assertEquals(
             "Hello from Vex.",
             result.content,
@@ -227,6 +241,20 @@ class DirectCompanionConnectionTest {
         assertEquals(
             DirectCompanionConnection.InvocationEvidenceSchema,
             result.invocationEvidence.schemaVersion,
+        )
+        assertEquals(
+            "true",
+            Json
+                .parseToJsonElement(
+                    VexContractJson.encode(
+                        result.invocationEvidence,
+                    ),
+                )
+                .jsonObject[
+                    "humanReasoningRequested"
+                ]
+                    ?.jsonPrimitive
+                    ?.content,
         )
         assertEquals(
             HereticProductIdentity.RequestModel,
