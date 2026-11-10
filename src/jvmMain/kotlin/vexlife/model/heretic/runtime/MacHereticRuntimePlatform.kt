@@ -432,6 +432,16 @@ class MacHereticRuntimePlatform(
             pid,
         )
 
+    override fun healthy(
+        binding: HereticPersistentRuntime.Binding,
+    ): Boolean =
+        environmentCurrent(
+            binding,
+        ) &&
+            healthProbe.healthy(
+                HereticProductIdentity.Endpoint,
+            )
+
     override fun processIdentity(
         pid: Long,
         args: List<String>,
