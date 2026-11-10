@@ -821,6 +821,33 @@ class VexLifeProdLocalServiceTest {
                         1,
                         providerCalls,
                     )
+
+                    val mismatchedReasoningMode =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.ConversationSendPath,
+                            json.encodeToString(
+                                request.copy(
+                                    viewableThoughts = false,
+                                ),
+                            ),
+                        )
+                    assertEquals(
+                        400,
+                        mismatchedReasoningMode.statusCode(),
+                    )
+                    val mismatchError =
+                        json.decodeFromString<VexLifeProdServiceContract.ErrorResponse>(
+                            mismatchedReasoningMode.body(),
+                        )
+                    assertEquals(
+                        "REQUEST_NOT_ADMITTED",
+                        mismatchError.code,
+                    )
+                    assertEquals(
+                        1,
+                        providerCalls,
+                    )
                 }
         } finally {
             parent
