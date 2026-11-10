@@ -143,9 +143,15 @@ class VexLifeProdLocalService private constructor(
             val prior = frontier.priorDaily
             return VexLifeProdServiceContract.MemoryDreamProjection(
                 schemaVersion = VexLifeProdServiceContract.MemoryDreamProjectionSchema,
-                state = "SOURCE_FRONTIER_READY",
+                state =
+                    if (frontier.scoreSourceConversationHeadSha256 == frontier.conversationHeadSha256) {
+                        "SOURCE_FRONTIER_READY"
+                    } else {
+                        "SCORE_NOT_CAUGHT_UP"
+                    },
                 sourceConversationHeadSha256 = frontier.conversationHeadSha256,
                 sourceScoreHeadSha256 = frontier.scoreHeadSha256,
+                scoreSourceConversationHeadSha256 = frontier.scoreSourceConversationHeadSha256,
                 sourceSemanticAuthorityHeadSha256 = frontier.semanticAuthorityHeadSha256,
                 currentDailyDreamHeadSha256 = prior?.dailyDreamHeadSha256,
                 currentDailyStratumSha256 = prior?.dailyStratumSha256,
@@ -647,15 +653,24 @@ class VexLifeProdLocalService private constructor(
                     executor.observe(
                         startupSetup,
                     )
-                require(
-                    before.sourceConversationHeadSha256 ==
-                        request.expectedConversationHeadSha256 &&
-                        before.sourceScoreHeadSha256 ==
-                        request.expectedScoreHeadSha256 &&
-                        before.currentDailyDreamHeadSha256 ==
-                        request.expectedDailyDreamHeadSha256,
+                val sameCommittedDay =
+                    before.currentDayRef ==
+                        request.dayRef
+                if (
+                    !sameCommittedDay
                 ) {
-                    "memory Dream request does not bind the currently observed source frontier"
+                    require(
+                        before.state ==
+                            "SOURCE_FRONTIER_READY" &&
+                            before.sourceConversationHeadSha256 ==
+                            request.expectedConversationHeadSha256 &&
+                            before.sourceScoreHeadSha256 ==
+                            request.expectedScoreHeadSha256 &&
+                            before.currentDailyDreamHeadSha256 ==
+                            request.expectedDailyDreamHeadSha256,
+                    ) {
+                        "new memory Dream request does not bind the currently ready source frontier"
+                    }
                 }
                 val result =
                     executor.perform(
@@ -668,12 +683,21 @@ class VexLifeProdLocalService private constructor(
                     )
                 require(
                     after.currentDailyDreamHeadSha256 == result.dailyDreamHeadSha256 &&
-                        after.currentDailyStratumSha256 == result.dailyStratumSha256 &&
-                        result.sourceConversationHeadSha256 == before.sourceConversationHeadSha256 &&
-                        result.sourceScoreHeadSha256 == before.sourceScoreHeadSha256 &&
-                        result.sourceSemanticAuthorityHeadSha256 == before.sourceSemanticAuthorityHeadSha256,
+                        after.currentDailyStratumSha256 == result.dailyStratumSha256,
                 ) {
-                    "memory Dream result does not match the observed post-Dream frontier"
+                    "memory Dream result does not match the observed durable post-Dream head"
+                }
+                if (
+                    result.state ==
+                        "COMMITTED"
+                ) {
+                    require(
+                        result.sourceConversationHeadSha256 == before.sourceConversationHeadSha256 &&
+                            result.sourceScoreHeadSha256 == before.sourceScoreHeadSha256 &&
+                            result.sourceSemanticAuthorityHeadSha256 == before.sourceSemanticAuthorityHeadSha256,
+                    ) {
+                        "new memory Dream result does not bind the observed pre-Dream source frontier"
+                    }
                 }
                 require(
                     !result.lineageAwareGenerativeDreamRan &&

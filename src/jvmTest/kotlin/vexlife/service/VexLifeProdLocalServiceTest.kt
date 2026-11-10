@@ -396,13 +396,22 @@ class VexLifeProdLocalServiceTest {
         var runCount = 0
         var currentHead: String? = null
         var currentStratum: String? = null
+        var sourceConversationHead = "a".repeat(64)
+        var scoreHead = "b".repeat(64)
+        var scoreSourceConversationHead = sourceConversationHead
 
         fun projection(): VexLifeProdServiceContract.MemoryDreamProjection =
             VexLifeProdServiceContract.MemoryDreamProjection(
                 schemaVersion = VexLifeProdServiceContract.MemoryDreamProjectionSchema,
-                state = "SOURCE_FRONTIER_READY",
-                sourceConversationHeadSha256 = "a".repeat(64),
-                sourceScoreHeadSha256 = "b".repeat(64),
+                state =
+                    if (scoreSourceConversationHead == sourceConversationHead) {
+                        "SOURCE_FRONTIER_READY"
+                    } else {
+                        "SCORE_NOT_CAUGHT_UP"
+                    },
+                sourceConversationHeadSha256 = sourceConversationHead,
+                sourceScoreHeadSha256 = scoreHead,
+                scoreSourceConversationHeadSha256 = scoreSourceConversationHead,
                 sourceSemanticAuthorityHeadSha256 = "c".repeat(64),
                 currentDailyDreamHeadSha256 = currentHead,
                 currentDailyStratumSha256 = currentStratum,
@@ -436,8 +445,8 @@ class VexLifeProdLocalServiceTest {
                         currentHead = "d".repeat(64)
                         currentStratum = "e".repeat(64)
                         return VexLifeDailyMemoryDream.Result(
-                            state = "COMMITTED",
-                            priorDailyDreamHeadSha256 = null,
+                            state = if (runCount == 1) "COMMITTED" else "IDEMPOTENT_REPLAY",
+                            priorDailyDreamHeadSha256 = if (runCount == 1) null else requireNotNull(currentHead),
                             dailyDreamHeadSha256 = requireNotNull(currentHead),
                             dailyStratumSha256 = requireNotNull(currentStratum),
                             sourceConversationHeadSha256 = "a".repeat(64),
@@ -506,6 +515,28 @@ class VexLifeProdLocalServiceTest {
                     assertFalse(result.trainingRan)
                     assertFalse(result.modelWeightsChanged)
                     assertTrue(result.effectsPerformed)
+
+                    sourceConversationHead = "1".repeat(64)
+                    scoreHead = "2".repeat(64)
+                    scoreSourceConversationHead = sourceConversationHead
+                    val replayResponse =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.MemoryDreamPath,
+                            json.encodeToString(request),
+                        )
+                    assertEquals(200, replayResponse.statusCode())
+                    val replay =
+                        json.decodeFromString<VexLifeProdServiceContract.MemoryDreamRunResponse>(
+                            replayResponse.body(),
+                        )
+                    assertEquals("IDEMPOTENT_REPLAY", replay.state)
+                    assertEquals(2, runCount)
+                    assertEquals("1".repeat(64), replay.before.sourceConversationHeadSha256)
+                    assertEquals("d".repeat(64), replay.after.currentDailyDreamHeadSha256)
+                    assertFalse(replay.memoryFrontierMutationPerformed)
+                    assertFalse(replay.systemMemoryConsolidationPerformedNow)
+                    assertFalse(replay.effectsPerformed)
                 }
         } finally {
             parent.toFile().deleteRecursively()

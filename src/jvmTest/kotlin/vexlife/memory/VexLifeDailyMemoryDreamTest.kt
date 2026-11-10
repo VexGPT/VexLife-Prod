@@ -56,15 +56,19 @@ class VexLifeDailyMemoryDreamTest {
 
     private fun frontier(
         prior: VexLifeCurrentMemoryReader.DreamPriorDaily? = null,
+        conversationHeadSha256: String = "d".repeat(64),
+        scoreHeadSha256: String = "f".repeat(64),
+        scoreSourceConversationHeadSha256: String = conversationHeadSha256,
     ): VexLifeCurrentMemoryReader.DreamSourceFrontier =
         VexLifeCurrentMemoryReader.DreamSourceFrontier(
             homeRef = "vex-home.device.vexlife.test",
             deviceRef = "device.vexlife.test",
             companionLineageRef = "companion-lineage.vexlife.test",
             threadRef = "thread.self-development.open-conversation",
-            conversationHeadSha256 = "d".repeat(64),
+            conversationHeadSha256 = conversationHeadSha256,
             conversationResponseEventHash = "e".repeat(64),
-            scoreHeadSha256 = "f".repeat(64),
+            scoreHeadSha256 = scoreHeadSha256,
+            scoreSourceConversationHeadSha256 = scoreSourceConversationHeadSha256,
             scoreEventHash = "0".repeat(64),
             semanticAuthorityHeadSha256 = "5".repeat(64),
             selectedRuntimeRef = "endpoint.vexlife.heretic.local",
@@ -253,6 +257,9 @@ class VexLifeDailyMemoryDreamTest {
                 )
             val committedSource =
                 frontier(
+                    conversationHeadSha256 = "1".repeat(64),
+                    scoreHeadSha256 = "2".repeat(64),
+                    scoreSourceConversationHeadSha256 = "1".repeat(64),
                     prior =
                         VexLifeCurrentMemoryReader.DreamPriorDaily(
                             dailyDreamHeadSha256 = first.dailyDreamHeadSha256,
@@ -264,6 +271,12 @@ class VexLifeDailyMemoryDreamTest {
                             timeZoneRef = originalInvocation.timeZoneRef,
                             observedAt = originalInvocation.observedAt.toString(),
                             restInvocationAuthorityRef = originalInvocation.restInvocationAuthorityRef,
+                            sourceConversationHeadSha256 = originalInvocation.expectedConversationHeadSha256,
+                            sourceScoreHeadSha256 = originalInvocation.expectedScoreHeadSha256,
+                            sourceSemanticAuthorityHeadSha256 = "5".repeat(64),
+                            activeStatementRefs = listOf("statement.g03.active"),
+                            heldStatementRefs = listOf("statement.g03.held"),
+                            openLoopRefs = listOf("loop.g03.one"),
                         ),
                 )
 
@@ -277,11 +290,42 @@ class VexLifeDailyMemoryDreamTest {
             assertEquals("IDEMPOTENT_REPLAY", duplicate.state)
             assertEquals(first.dailyDreamHeadSha256, duplicate.dailyDreamHeadSha256)
             assertEquals(first.dailyStratumSha256, duplicate.dailyStratumSha256)
+            assertEquals(originalInvocation.expectedConversationHeadSha256, duplicate.sourceConversationHeadSha256)
+            assertEquals(originalInvocation.expectedScoreHeadSha256, duplicate.sourceScoreHeadSha256)
         } finally {
             home.toFile().deleteRecursively()
         }
     }
 
+    @Test
+    fun newDayRequiresScoreCaughtUpToCurrentConversation() {
+        val home = Files.createTempDirectory("vexlife-prod-g03-score-lag-").toAbsolutePath()
+        try {
+            val lagging =
+                frontier(
+                    conversationHeadSha256 = "d".repeat(64),
+                    scoreHeadSha256 = "f".repeat(64),
+                    scoreSourceConversationHeadSha256 = "1".repeat(64),
+                )
+            assertFailsWith<IllegalArgumentException> {
+                VexLifeDailyMemoryDream.commitWithFrontier(
+                    productHome = home,
+                    invocation = invocation(),
+                    sourceProvider = { lagging },
+                )
+            }
+            assertFalse(
+                Files.exists(
+                    home.resolve(
+                        "daily-memory-dream/companion-lineage.vexlife.test/" +
+                            "thread.self-development.open-conversation/head.json",
+                    ),
+                ),
+            )
+        } finally {
+            home.toFile().deleteRecursively()
+        }
+    }
     @Test
     fun staleSourceExpectationFailsBeforeDailyMutation() {
         val home = Files.createTempDirectory("vexlife-prod-g03-stale-").toAbsolutePath()

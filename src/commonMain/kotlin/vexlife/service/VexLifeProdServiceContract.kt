@@ -123,6 +123,7 @@ object VexLifeProdServiceContract {
         val state: String,
         val sourceConversationHeadSha256: String,
         val sourceScoreHeadSha256: String,
+        val scoreSourceConversationHeadSha256: String,
         val sourceSemanticAuthorityHeadSha256: String,
         val currentDailyDreamHeadSha256: String?,
         val currentDailyStratumSha256: String?,

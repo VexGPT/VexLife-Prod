@@ -168,6 +168,29 @@ class VexLifeProdServiceContractTest {
             request.copy(dayIndex = -1)
         }
     }
+    @Test
+    fun memoryDreamProjectionExposesScoreConversationCurrentnessWithoutEffect() {
+        val projection =
+            VexLifeProdServiceContract.MemoryDreamProjection(
+                schemaVersion = VexLifeProdServiceContract.MemoryDreamProjectionSchema,
+                state = "SCORE_NOT_CAUGHT_UP",
+                sourceConversationHeadSha256 = "a".repeat(64),
+                sourceScoreHeadSha256 = "b".repeat(64),
+                scoreSourceConversationHeadSha256 = "c".repeat(64),
+                sourceSemanticAuthorityHeadSha256 = "d".repeat(64),
+                currentDailyDreamHeadSha256 = null,
+                currentDailyStratumSha256 = null,
+                currentDayRef = null,
+                currentDayIndex = null,
+                nextDayIndex = 0,
+                activeStatementCount = 0,
+                heldStatementCount = 0,
+                openLoopCount = 0,
+                effectsPerformed = false,
+            )
+        assertEquals("c".repeat(64), projection.scoreSourceConversationHeadSha256)
+        assertFalse(projection.effectsPerformed)
+    }
 }
 
 // [VXG RealForever]

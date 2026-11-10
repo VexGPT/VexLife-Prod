@@ -150,7 +150,6 @@ object VexLifeDailyMemoryDream {
         validateInvocation(invocation)
         val home = VexOwnedPath.requireRoot(productHome, "Daily Memory Dream Vex Home")
         val initial = sourceProvider()
-        requireExpectedSources(invocation, initial)
         val root = dreamRoot(home, initial)
 
         acquireWriter(home, root, initial, invocation).use {
@@ -167,15 +166,16 @@ object VexLifeDailyMemoryDream {
                             prior.timeZoneRef == invocation.timeZoneRef &&
                             prior.observedAt == invocation.observedAt.toString() &&
                             prior.restInvocationAuthorityRef == invocation.restInvocationAuthorityRef &&
-                            frontier.conversationHeadSha256 == invocation.expectedConversationHeadSha256 &&
-                            frontier.scoreHeadSha256 == invocation.expectedScoreHeadSha256,
+                            prior.sourceConversationHeadSha256 == invocation.expectedConversationHeadSha256 &&
+                            prior.sourceScoreHeadSha256 == invocation.expectedScoreHeadSha256,
                     ) {
                         "DREAM_DAY_CONFLICT: committed dayRef has different identity"
                     }
-                    return result("IDEMPOTENT_REPLAY", frontier, prior.dailyDreamHeadSha256, prior.dailyStratumSha256)
+                    return resultFromPrior(prior)
                 }
             }
 
+            requireExpectedSources(invocation, frontier)
             require(
                 invocation.expectedDailyDreamHeadSha256 ==
                     frontier.priorDaily?.dailyDreamHeadSha256,
@@ -433,6 +433,21 @@ object VexLifeDailyMemoryDream {
         return VexDurableContractFile.delete(ownedRoot = home, path = lock)
     }
 
+    private fun resultFromPrior(
+        prior: VexLifeCurrentMemoryReader.DreamPriorDaily,
+    ): Result =
+        Result(
+            state = "IDEMPOTENT_REPLAY",
+            priorDailyDreamHeadSha256 = prior.dailyDreamHeadSha256,
+            dailyDreamHeadSha256 = prior.dailyDreamHeadSha256,
+            dailyStratumSha256 = prior.dailyStratumSha256,
+            sourceConversationHeadSha256 = prior.sourceConversationHeadSha256,
+            sourceScoreHeadSha256 = prior.sourceScoreHeadSha256,
+            sourceSemanticAuthorityHeadSha256 = prior.sourceSemanticAuthorityHeadSha256,
+            activeStatementRefs = prior.activeStatementRefs,
+            heldStatementRefs = prior.heldStatementRefs,
+            openLoopRefs = prior.openLoopRefs,
+        )
     private fun result(
         state: String,
         frontier: VexLifeCurrentMemoryReader.DreamSourceFrontier,
@@ -651,6 +666,9 @@ object VexLifeDailyMemoryDream {
         }
         require(invocation.expectedScoreHeadSha256 == frontier.scoreHeadSha256) {
             "DREAM_SOURCE_STALE: expected Score head is stale"
+        }
+        require(frontier.scoreSourceConversationHeadSha256 == frontier.conversationHeadSha256) {
+            "DREAM_SCORE_NOT_CAUGHT_UP: current Score does not bind the current Conversation head"
         }
     }
 
