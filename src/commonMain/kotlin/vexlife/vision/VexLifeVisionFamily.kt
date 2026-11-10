@@ -9,8 +9,9 @@ import vexlife.semantic.VexFamilyContract
  * Recording permission, physical capture, Partner/Connection realization, visual-model input,
  * Conversation Context, Memory, training, or publication.
  *
- * Current Partner architecture pressure is intentionally consumed as relationship guidance rather
- * than copied as an unearned universal root. The physical capture side remains separately owned.
+ * Enable/Disable are local human-facing arming semantics only. They do not request or establish
+ * host permission, start a sensor, or make capture reachable. The only outside Vision effect owned
+ * by this Family vocabulary is one explicit RequestSnapshot.
  */
 object VexLifeVisionFamily :
     VexFamilyContract<
@@ -22,7 +23,6 @@ object VexLifeVisionFamily :
     enum class State :
         VexFamilyContract.State<VexLifeVisionFamily> {
         Held,
-        PermissionNeeded,
         Ready,
         Enabled,
         Looking,
@@ -39,10 +39,6 @@ object VexLifeVisionFamily :
 
     sealed interface Effect :
         VexFamilyContract.Effect<VexLifeVisionFamily> {
-        data object RequestHostPermission : Effect
-
-        data object RequestEnable : Effect
-
         data object RequestSnapshot : Effect
     }
 
@@ -52,7 +48,6 @@ object VexLifeVisionFamily :
             State
         > {
         Held,
-        PermissionNeeded,
         Ready,
         Enabled,
         Looking,
@@ -73,14 +68,9 @@ object VexLifeVisionFamily :
                 when (
                     currentState
                 ) {
-                    State.PermissionNeeded ->
-                        stay(
-                            Effect.RequestHostPermission,
-                        )
-
                     State.Ready ->
-                        stay(
-                            Effect.RequestEnable,
+                        admit(
+                            State.Enabled,
                         )
 
                     State.Held,
@@ -98,7 +88,6 @@ object VexLifeVisionFamily :
                         )
 
                     State.Held,
-                    State.PermissionNeeded,
                     State.Ready,
                     State.Looking -> null
                 }
@@ -113,7 +102,6 @@ object VexLifeVisionFamily :
                         )
 
                     State.Held,
-                    State.PermissionNeeded,
                     State.Ready,
                     State.Looking -> null
                 }
@@ -126,7 +114,6 @@ object VexLifeVisionFamily :
             state
         ) {
             State.Held -> DisplayState.Held
-            State.PermissionNeeded -> DisplayState.PermissionNeeded
             State.Ready -> DisplayState.Ready
             State.Enabled -> DisplayState.Enabled
             State.Looking -> DisplayState.Looking
