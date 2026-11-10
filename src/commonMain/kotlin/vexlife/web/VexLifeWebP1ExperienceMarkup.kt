@@ -95,6 +95,13 @@ internal object VexLifeWebP1ExperienceMarkup {
           <span class="status-model" id="companion-status-model"></span>
         </p>
         <button class="quiet-button" type="button" data-vex-legacy="CompanionCheck" id="companion-check" hidden>Check again</button>
+        <button class="outline-button vision-control" type="button" data-vex-ref="${VexLifeWebP1.Vision.identity.ref}" id="vision-control"
+          aria-describedby="vision-control-status" aria-disabled="true" disabled title="Vision Look Now is not connected yet">
+          <svg class="vision-mark" viewBox="0 0 20 20" aria-hidden="true"><path d="M2.4 10s2.8-4.3 7.6-4.3 7.6 4.3 7.6 4.3-2.8 4.3-7.6 4.3S2.4 10 2.4 10Z"/><circle cx="10" cy="10" r="2.3"/></svg>
+          <span>Vision</span>
+          <span class="vision-state">Held</span>
+        </button>
+        <span class="visually-hidden" id="vision-control-status">Vision is present in VexLife, but Look Now is not connected to the macOS picker yet.</span>
         <button class="outline-button view-switch" type="button" data-vex-ref="${VexLifeWebP1.CompanionViewSwitch.identity.ref}" id="view-switch" aria-controls="view-settings" aria-expanded="false">Settings</button>
       </div>
 

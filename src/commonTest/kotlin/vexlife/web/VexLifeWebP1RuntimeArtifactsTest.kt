@@ -203,6 +203,36 @@ class VexLifeWebP1RuntimeArtifactsTest {
             ),
         )
         assertTrue(
+            bundle.html.contains(
+                "id=\"vision-control\"",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                ">Vision</span>",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "class=\"vision-state\">Held</span>",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "aria-disabled=\"true\" disabled",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "Look Now is not connected to the macOS picker yet.",
+            ),
+        )
+        assertFalse(
+            bundle.html.contains(
+                "screen permission and capture are not connected yet.",
+            ),
+        )
+        assertTrue(
             bundle.javascript.contains(
                 "Include the page to hand Vex its text. Enter sends; Shift+Enter starts a new line.",
             ),
@@ -216,6 +246,26 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertFalse(
             bundle.javascript.contains(
                 "/v1/chat/completions",
+            ),
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "vision-control",
+            ),
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "getDisplayMedia",
+            ),
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "mediaDevices",
+            ),
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "ScreenCaptureKit",
             ),
         )
         assertFalse(

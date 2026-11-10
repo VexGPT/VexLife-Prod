@@ -278,7 +278,26 @@ svg { display: block; }
 .companion-status[data-state="Checking"] .status-dot { background: var(--pending); }
 .companion-status[data-state="Unavailable"] .status-dot { background: var(--down); }
 .status-model { color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.view-switch { margin-left: auto; }
+.vision-control {
+  margin-left: auto;
+  display: inline-flex; align-items: center; gap: 6px;
+  min-width: 112px; justify-content: center;
+}
+.vision-control:disabled {
+  color: var(--ink-2);
+  background: var(--raised);
+  opacity: 1;
+}
+.vision-mark {
+  width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.5;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.vision-state {
+  color: var(--ink-3);
+  font-size: 11px; font-weight: 650;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.view-switch { margin-left: 0; }
 
 .outline-button {
   height: 30px; padding: 0 12px;
