@@ -321,6 +321,20 @@ class DirectWorkingCarryFormationTest {
             formation.binding.providerOutputSha256,
         )
         assertTrue(
+            formation.binding.refreshInputSha256.matches(
+                Regex(
+                    "[0-9a-f]{64}",
+                ),
+            ),
+        )
+        assertTrue(
+            formation.binding.draftSha256.matches(
+                Regex(
+                    "[0-9a-f]{64}",
+                ),
+            ),
+        )
+        assertTrue(
             formation.binding.formationRef.startsWith(
                 "working-carry-formation.",
             ),
