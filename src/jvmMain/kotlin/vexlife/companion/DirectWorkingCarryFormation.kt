@@ -173,6 +173,18 @@ object DirectWorkingCarryFormation {
                             32,
                         ),
                 formationFingerprint = formationFingerprint,
+                refreshInputSha256 =
+                    sha256(
+                        VexContractJson.canonicalEncode(
+                            input,
+                        ),
+                    ),
+                draftSha256 =
+                    sha256(
+                        VexContractJson.canonicalEncode(
+                            draft,
+                        ),
+                    ),
                 runtimeObservationRef = formationCore.runtimeObservationRef,
                 runtimeObservationFingerprint = formationCore.runtimeObservationFingerprint,
                 invocationRef = formationCore.invocationRef,
