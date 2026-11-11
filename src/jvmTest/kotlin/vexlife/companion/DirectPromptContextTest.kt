@@ -538,6 +538,107 @@ class DirectPromptContextTest {
     }
 
     @Test
+    fun historicalV6ReceiptRoundTripsWithoutV7AttentionOrCarryProvenance() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-v6-compat-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val store =
+                DirectConversationStore(
+                    productHome,
+                )
+
+            store.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef =
+                            "turn.self-development.v6-compat",
+                        requestMessageRef =
+                            "message.self-development.human.v6-compat",
+                        content =
+                            "Historical v6 receipt compatibility",
+                    )
+                val receipt =
+                    DirectPromptContext.materialize(
+                        prior = null,
+                        currentRequest = request,
+                    )
+                        .receipt
+                val full =
+                    VexContractJson.Strict
+                        .encodeToJsonElement(
+                            receipt,
+                        )
+                        .jsonObject
+                val v7Keys =
+                    setOf(
+                        "memoryAvailabilityContextRef",
+                        "memoryAvailabilityContextFingerprint",
+                        "attentionPlanSnapshot",
+                        "workingCarrySnapshot",
+                    )
+                val historical =
+                    JsonObject(
+                        full
+                            .filterKeys {
+                                it !in
+                                    v7Keys
+                            }
+                            .toMutableMap()
+                            .also {
+                                it[
+                                    "schemaVersion"
+                                ] =
+                                    JsonPrimitive(
+                                        DirectPromptContext.ReceiptSchemaV6,
+                                    )
+                            },
+                    )
+                val decoded =
+                    VexContractJson.decode<DirectPromptContext.Receipt>(
+                        historical.toString(),
+                    )
+
+                assertEquals(
+                    DirectPromptContext.ReceiptSchemaV6,
+                    decoded.schemaVersion,
+                )
+                assertNull(
+                    decoded.memoryAvailabilityContextRef,
+                )
+                assertNull(
+                    decoded.attentionPlanSnapshot,
+                )
+                assertNull(
+                    decoded.workingCarrySnapshot,
+                )
+                assertEquals(
+                    VexContractJson.canonicalEncodeElement(
+                        historical,
+                    ),
+                    VexContractJson.canonicalEncode(
+                        decoded,
+                    ),
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun fixedContextMeasuresCurrentTurnWithoutCreatingMemoryPromptBytesOrASecondReceipt() {
         val parent =
             Files.createTempDirectory(
@@ -763,6 +864,208 @@ class DirectPromptContextTest {
                     memoryContext = selected,
                     memoryAvailabilityContext = availability,
                     runtimeEvidence = runtimeEvidence(),
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun plannedPromptRebindsFixedConversationCarryAndMemoryIntoOneV7Receipt() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-planned-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val store =
+                DirectConversationStore(
+                    productHome,
+                )
+            val memory =
+                VexLifeMemoryContextFixture.current()
+            val runtime =
+                runtimeEvidence()
+
+            store.withWriterLease {
+                val firstRequest =
+                    beginRequest(
+                        turnRef =
+                            "turn.self-development.planned.001",
+                        requestMessageRef =
+                            "message.self-development.human.planned.001",
+                        content =
+                            "First exact Conversation request.",
+                    )
+                val firstResponse =
+                    appendResponse(
+                        request = firstRequest,
+                        responseMessageRef =
+                            "message.self-development.companion.planned.001",
+                        content =
+                            "First exact Conversation response.",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef =
+                            "observation.vexlife-prod.planned.001",
+                        invocationEvidenceRef =
+                            "evidence.vexlife-prod.planned.001",
+                    )
+                val firstContext =
+                    CanonicalLivedContextFixture.write(
+                        productHome = productHome,
+                        request = firstRequest,
+                        response = firstResponse,
+                    )
+                commitCompletedTurn(
+                    request = firstRequest,
+                    response = firstResponse,
+                    contextSha256 = firstContext.sha256,
+                )
+
+                val prior =
+                    requireNotNull(
+                        immediatePriorCompletedTurn(),
+                    )
+                val secondRequest =
+                    beginRequest(
+                        turnRef =
+                            "turn.self-development.planned.002",
+                        requestMessageRef =
+                            "message.self-development.human.planned.002",
+                        content =
+                            "Continue with one finite-attention plan.",
+                    )
+                val fixed =
+                    DirectPromptContext.prepareFixed(
+                        prior = prior,
+                        currentRequest = secondRequest,
+                        memoryAvailabilityContext = memory,
+                        runtimeEvidence = runtime,
+                    )
+                val recent =
+                    recentCompletedConversation(
+                        availableTokens =
+                            DirectPromptContext.InputTokenBudget -
+                                fixed.fixedInputTokenEstimate,
+                        estimatedMessageTokens =
+                            DirectPromptContext::estimatedMessageTokens,
+                    )
+                val selectedConversationTokens =
+                    recent.events.sumOf {
+                        DirectPromptContext.estimatedMessageTokens(
+                            it.content,
+                        )
+                    }
+                val plan =
+                    DirectPromptAttentionPlan.form(
+                        DirectPromptAttentionPlan.Input(
+                            fixedCurrentTurnTokens =
+                                fixed.fixedInputTokenEstimate,
+                            selectedExactConversationTokens =
+                                selectedConversationTokens,
+                            carryRequested = false,
+                            carryEstimatedSystemMessageTokens = 0,
+                        ),
+                    )
+
+                assertEquals(
+                    memory.memoryTokenCap,
+                    plan.memoryTokenCap,
+                )
+
+                val materialized =
+                    DirectPromptContext.materializePlanned(
+                        conversationOwner = this,
+                        prior = prior,
+                        currentRequest = secondRequest,
+                        memoryContext = memory,
+                        memoryAvailabilityContext = memory,
+                        attentionPlan = plan,
+                        runtimeEvidence = runtime,
+                    )
+
+                assertEquals(
+                    DirectPromptContext.ReceiptSchema,
+                    materialized.receipt.schemaVersion,
+                )
+                assertEquals(
+                    listOf(
+                        firstRequest.eventRef,
+                        firstResponse.eventRef,
+                    ),
+                    materialized.receipt.selectedConversationEventRefs,
+                )
+                assertEquals(
+                    memory.memoryContextRef,
+                    materialized.receipt.memoryContextRef,
+                )
+                assertEquals(
+                    memory.memoryContextRef,
+                    materialized.receipt.memoryAvailabilityContextRef,
+                )
+                val attention =
+                    requireNotNull(
+                        materialized.receipt.attentionPlanSnapshot,
+                    )
+                assertEquals(
+                    plan.fixedCurrentTurnTokens,
+                    attention.fixedCurrentTurnTokens,
+                )
+                assertEquals(
+                    plan.selectedExactConversationTokens,
+                    attention.selectedExactConversationTokens,
+                )
+                assertEquals(
+                    plan.memoryTokenCap,
+                    attention.memoryTokenCap,
+                )
+                val carry =
+                    requireNotNull(
+                        materialized.receipt.workingCarrySnapshot,
+                    )
+                assertEquals(
+                    DirectWorkingCarryPromptContext.NoCurrentCarry,
+                    carry.state,
+                )
+                assertFalse(
+                    carry.included,
+                )
+                assertTrue(
+                    materialized.messages.any {
+                        it.content.startsWith(
+                            "VEXLIFE_CURRENT_MEMORY_CONTEXT/v1\n",
+                        )
+                    },
+                )
+                assertTrue(
+                    materialized.messages.none {
+                        it.content.startsWith(
+                            "VEXLIFE_PRESENT_WORKING_CARRY/v1\n",
+                        )
+                    },
+                )
+
+                DirectPromptContext.reverifyPlanned(
+                    materialization = materialized,
+                    conversationOwner = this,
+                    prior = prior,
+                    currentRequest = secondRequest,
+                    memoryContext = memory,
+                    memoryAvailabilityContext = memory,
+                    attentionPlan = plan,
+                    runtimeEvidence = runtime,
                 )
             }
         } finally {
