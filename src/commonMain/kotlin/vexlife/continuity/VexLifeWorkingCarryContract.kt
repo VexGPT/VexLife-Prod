@@ -43,6 +43,7 @@ object VexLifeWorkingCarryContract {
     data class SourceBinding(
         val eventRef: String,
         val eventHash: String,
+        val sequence: Long,
     )
 
     @Serializable
@@ -219,6 +220,12 @@ object VexLifeWorkingCarryContract {
                 binding.eventRef,
                 "$label.eventRef",
             )
+            require(
+                binding.sequence >=
+                    0,
+            ) {
+                "$label.sequence must be non-negative"
+            }
             require(
                 binding.eventHash.matches(
                     Regex(
