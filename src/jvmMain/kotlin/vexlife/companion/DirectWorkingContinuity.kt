@@ -309,7 +309,6 @@ object DirectWorkingContinuity {
                 currentRequest.eventRef &&
                 promptContext.currentRequestEventSha256 ==
                 currentRequest.eventSha256 &&
-                !promptContext.wholeHistoryEventEnumerationPerformed &&
                 !promptContext.trainingSelectionPerformed &&
                 !promptContext.effectsPerformed,
         ) {
