@@ -12,7 +12,7 @@ class VexLifeWorkingCarryContractTest {
             eventHash = "1".repeat(
                 64,
             ),
-            sequence = 0,
+            sequence = 2,
         )
 
     private val second =
@@ -21,7 +21,7 @@ class VexLifeWorkingCarryContractTest {
             eventHash = "2".repeat(
                 64,
             ),
-            sequence = 1,
+            sequence = 3,
         )
 
     private val priorCarrySource =
@@ -60,7 +60,7 @@ class VexLifeWorkingCarryContractTest {
         )
 
     @Test
-    fun releaseMeansNothingFromTheLeavingRangeStillBearsOnPresentCarry() {
+    fun releaseMeansNothingFromTheRefreshedSourcesStillBearsOnPresentCarry() {
         val value =
             VexLifeWorkingCarryContract.requireDraftShape(
                 draft(
@@ -186,7 +186,7 @@ class VexLifeWorkingCarryContractTest {
     }
 
     @Test
-    fun carryCannotUseSourceOutsideTheObservedLeavingRange() {
+    fun carryCannotUseSourceOutsideTheAvailableRefreshedSources() {
         val outside =
             VexLifeWorkingCarryContract.SourceBinding(
                 eventRef = "event.vexlife.request.outside",
@@ -213,6 +213,36 @@ class VexLifeWorkingCarryContractTest {
                         ),
                     releaseReason = null,
                 ),
+            )
+        }
+    }
+
+    @Test
+    fun refreshedCarryRejectsDifferentEventsClaimingTheSameConversationSequence() {
+        val conflict =
+            first.copy(
+                eventRef = "event.vexlife.request.conflicting",
+                eventHash = "5".repeat(
+                    64,
+                ),
+            )
+        val base =
+            draft(
+                disposition = VexLifeWorkingCarryContract.Release,
+                items = emptyList(),
+                releaseReason =
+                    VexLifeWorkingCarryContract.ReleaseReasonNoPresentCarry,
+            )
+                .copy(
+                    previousCarrySourceBindings =
+                        listOf(
+                            conflict,
+                        ),
+                )
+
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeWorkingCarryContract.requireDraftShape(
+                base,
             )
         }
     }
