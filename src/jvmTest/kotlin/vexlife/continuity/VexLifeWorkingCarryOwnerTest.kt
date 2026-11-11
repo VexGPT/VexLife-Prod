@@ -501,6 +501,10 @@ class VexLifeWorkingCarryOwnerTest {
                     carry,
                     committed.current.revision.carry,
                 )
+                assertEquals(
+                    VexLifeWorkingCarryContract.GradualAging,
+                    committed.current.revision.refreshMoment,
+                )
                 firstCarryRevisionRefOrNull =
                     committed.current.revision.revisionRef
 
