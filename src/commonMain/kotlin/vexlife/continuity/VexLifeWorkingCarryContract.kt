@@ -83,7 +83,7 @@ object VexLifeWorkingCarryContract {
                 value.perspective ==
                 Perspective,
         ) {
-            "working carry schema/truth class is invalid"
+            "working carry schema/truth class/perspective is invalid"
         }
         requireStableRef(
             value.companionLineageRef,
@@ -99,7 +99,7 @@ object VexLifeWorkingCarryContract {
         )
 
         val observed =
-            canonicalBindings(
+            requireBindings(
                 value.observedSourceBindings,
                 "observedSourceBindings",
             )
@@ -151,7 +151,7 @@ object VexLifeWorkingCarryContract {
                 "working carry item content must be non-empty"
             }
             val sources =
-                canonicalBindings(
+                requireBindings(
                     item.sourceBindings,
                     "carryItem.sourceBindings",
                 )
@@ -201,7 +201,10 @@ object VexLifeWorkingCarryContract {
         return value
     }
 
-    private fun canonicalBindings(
+    /**
+     * Preserve the exact observed Conversation order. Determinism must not reorder lived source.
+     */
+    private fun requireBindings(
         values: List<SourceBinding>,
         label: String,
     ): List<SourceBinding> {
@@ -237,12 +240,7 @@ object VexLifeWorkingCarryContract {
             "$label must not repeat an eventRef"
         }
 
-        return values.sortedWith(
-            compareBy(
-                SourceBinding::eventRef,
-                SourceBinding::eventHash,
-            ),
-        )
+        return values
     }
 
     private fun requireStableRef(
