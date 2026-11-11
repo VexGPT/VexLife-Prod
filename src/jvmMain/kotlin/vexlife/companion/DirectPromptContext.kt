@@ -1211,6 +1211,8 @@ object DirectPromptContext {
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
         browserContext: BrowserContext?,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
+        sourceReturnProtocolEnabled: Boolean =
+            false,
     ): VerifiedFixedContext {
         require(
             currentRequest.eventKind ==
@@ -1251,6 +1253,37 @@ object DirectPromptContext {
             verifyMemoryContext(
                 memoryAvailabilityContext,
             )
+        val successorPriorResponse =
+            if (
+                workingContinuity !=
+                    null
+            ) {
+                requireNotNull(
+                    prior,
+                ) {
+                    "working-checkpoint successor fixed context requires one exact prior completed turn"
+                }
+                    .responseEvent
+                    .also {
+                        response ->
+                        require(
+                            response.eventKind ==
+                                "RESPONSE"
+                        ) {
+                            "working-checkpoint successor prior response is not one exact RESPONSE"
+                        }
+                    }
+            } else {
+                null
+            }
+        val sourceReturnProtocol =
+            if (
+                sourceReturnProtocolEnabled
+            ) {
+                DirectConversationSourceReturn.protocolMessage()
+            } else {
+                null
+            }
         val browserContextSha256 =
             browserContext
                 ?.let {
@@ -1305,9 +1338,23 @@ object DirectPromptContext {
                             ),
                         )
                     }
+                sourceReturnProtocol
+                    ?.let(
+                        ::add,
+                    )
             }
         val suffixMessages =
             buildList {
+                successorPriorResponse
+                    ?.let {
+                        response ->
+                        add(
+                            CompanionProviderMessage(
+                                role = "assistant",
+                                content = response.content,
+                            ),
+                        )
+                    }
                 if (
                     browserContext !=
                         null
@@ -1356,6 +1403,21 @@ object DirectPromptContext {
             browserContextSha256 = browserContextSha256,
             browserContextRef = browserContextRef,
             capabilityFrame = capabilityFrame,
+            successorPriorResponse = successorPriorResponse,
+            sourceReturnProtocolEnabled = sourceReturnProtocolEnabled,
+            sourceReturnProtocolSystemMessageSha256 =
+                sourceReturnProtocol
+                    ?.content
+                    ?.let(
+                        ::sha256,
+                    ),
+            sourceReturnProtocolEstimatedSystemMessageTokens =
+                sourceReturnProtocol
+                    ?.content
+                    ?.let(
+                        ::estimatedMessageTokens,
+                    )
+                    ?: 0,
             prefixMessages = prefixMessages,
             suffixMessages = suffixMessages,
             fixedInputTokenEstimate = fixedEstimate,
