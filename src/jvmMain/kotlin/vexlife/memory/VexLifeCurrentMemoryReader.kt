@@ -2681,6 +2681,7 @@ object VexLifeCurrentMemoryReader {
                 boundedOut = boundedOut,
                 tokenBoundedOut = tokenBoundedOut,
                 reasons = emptyList(),
+                memoryTokenCap = memoryTokenCap,
             )
         val included =
             pages.isNotEmpty()
