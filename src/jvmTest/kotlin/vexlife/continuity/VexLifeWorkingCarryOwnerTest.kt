@@ -1,0 +1,502 @@
+package vexlife.continuity
+
+import java.nio.file.Files
+import java.time.Instant
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import vexlife.conversation.CanonicalLivedContextFixture
+import vexlife.conversation.DirectConversationStore
+import vexlife.home.CanonicalVexLifeHomeFixture
+
+class VexLifeWorkingCarryOwnerTest {
+    private fun source(
+        event: DirectConversationStore.Event,
+    ) =
+        VexLifeWorkingCarryContract.SourceEvent(
+            source =
+                VexLifeWorkingCarryContract.SourceBinding(
+                    eventRef = event.eventRef,
+                    eventHash = event.eventHash,
+                    sequence = event.sequence,
+                ),
+            eventKind = event.eventKind,
+            speakerRef = event.speakerRef,
+            recipientRefs = event.recipientRefs,
+            content = event.content,
+        )
+
+    private fun carry(
+        lineageRef: String,
+        threadRef: String,
+        source: VexLifeWorkingCarryContract.SourceBinding,
+        text: String =
+            "I still owe this continuation.",
+        carryTokenCap: Int =
+            16_000,
+    ): VexLifeWorkingCarryContract.Draft {
+        val item =
+            VexLifeWorkingCarryContract.CarryItem(
+                kind = "OWED_CONTINUATION",
+                content = text,
+                sourceBindings =
+                    listOf(
+                        source,
+                    ),
+            )
+        return VexLifeWorkingCarryContract.Draft(
+            schemaVersion = VexLifeWorkingCarryContract.Schema,
+            truthClass = VexLifeWorkingCarryContract.TruthClass,
+            perspective = VexLifeWorkingCarryContract.Perspective,
+            companionLineageRef = lineageRef,
+            threadRef = threadRef,
+            authoredByRef = "companion.vex.current",
+            sourceBindings =
+                listOf(
+                    source,
+                ),
+            disposition = VexLifeWorkingCarryContract.Carry,
+            carryItems =
+                listOf(
+                    item,
+                ),
+            releaseReason = null,
+            carryTokenCap = carryTokenCap,
+            estimatedCarryTokens =
+                VexLifeWorkingCarryContract.estimateCarryContentTokens(
+                    listOf(
+                        item,
+                    ),
+                ),
+        )
+    }
+
+    private fun release(
+        lineageRef: String,
+        threadRef: String,
+        carryTokenCap: Int =
+            0,
+    ) =
+        VexLifeWorkingCarryContract.Draft(
+            schemaVersion = VexLifeWorkingCarryContract.Schema,
+            truthClass = VexLifeWorkingCarryContract.TruthClass,
+            perspective = VexLifeWorkingCarryContract.Perspective,
+            companionLineageRef = lineageRef,
+            threadRef = threadRef,
+            authoredByRef = "companion.vex.current",
+            sourceBindings = emptyList(),
+            disposition = VexLifeWorkingCarryContract.Release,
+            carryItems = emptyList(),
+            releaseReason =
+                VexLifeWorkingCarryContract.ReleaseReasonNoPresentCarry,
+            carryTokenCap = carryTokenCap,
+            estimatedCarryTokens = 0,
+        )
+
+    private fun refresh(
+        lineageRef: String,
+        threadRef: String,
+        previousCarry: VexLifeWorkingCarryContract.Draft?,
+        newlyLeaving: List<DirectConversationStore.Event>,
+        currentRequest: DirectConversationStore.Event,
+        carryTokenCap: Int,
+    ) =
+        VexLifeWorkingCarryContract.RefreshInput(
+            schemaVersion = VexLifeWorkingCarryContract.RefreshInputSchema,
+            perspective = VexLifeWorkingCarryContract.Perspective,
+            companionLineageRef = lineageRef,
+            threadRef = threadRef,
+            previousCarry = previousCarry,
+            newlyLeavingEvents =
+                newlyLeaving.map(
+                    ::source,
+                ),
+            retainedDirectEvents = emptyList(),
+            currentRequest =
+                source(
+                    currentRequest,
+                ),
+            carryTokenCap = carryTokenCap,
+        )
+
+    @Test
+    fun preparedCarryBecomesCurrentOnlyAfterItsExactConversationTurnCompletes() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-working-carry-owner-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            val formed =
+                CanonicalVexLifeHomeFixture.form(
+                    home = home,
+                    deviceSuffix = "working-carry-owner-device",
+                    lineageSuffix = "working-carry-owner-lineage",
+                )
+            val store =
+                DirectConversationStore(
+                    home,
+                )
+            val owner =
+                VexLifeWorkingCarryOwner(
+                    home,
+                )
+
+            var firstRequestOrNull: DirectConversationStore.Event? =
+                null
+            var firstResponseOrNull: DirectConversationStore.Event? =
+                null
+            var firstHeadOrNull: DirectConversationStore.Head? =
+                null
+            var secondRequestOrNull: DirectConversationStore.Event? =
+                null
+            var secondResponseOrNull: DirectConversationStore.Event? =
+                null
+            var secondHeadOrNull: DirectConversationStore.Head? =
+                null
+            var firstCarryRevisionRefOrNull: String? =
+                null
+
+            store.withWriterLease {
+                val firstRequest =
+                    beginRequest(
+                        turnRef = "turn.working-carry.001",
+                        requestMessageRef = "message.working-carry.human.001",
+                        content = "First request that may later leave direct presence.",
+                        formedAt = Instant.parse(
+                            "2026-11-10T20:00:00Z",
+                        ),
+                    )
+                firstRequestOrNull =
+                    firstRequest
+                val firstResponse =
+                    appendResponse(
+                        request = firstRequest,
+                        responseMessageRef = "message.working-carry.companion.001",
+                        content = "First response with an unfinished continuation.",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef = "observation.working-carry.runtime.001",
+                        invocationEvidenceRef = "evidence.working-carry.invocation.001",
+                        formedAt = Instant.parse(
+                            "2026-11-10T20:00:01Z",
+                        ),
+                    )
+                firstResponseOrNull =
+                    firstResponse
+                val firstContext =
+                    CanonicalLivedContextFixture.write(
+                        productHome = home,
+                        request = firstRequest,
+                        response = firstResponse,
+                        formedAt = Instant.parse(
+                            "2026-11-10T20:00:02Z",
+                        ),
+                    )
+                val firstHead =
+                    commitCompletedTurn(
+                        request = firstRequest,
+                        response = firstResponse,
+                        contextSha256 = firstContext.sha256,
+                        formedAt = Instant.parse(
+                            "2026-11-10T20:00:03Z",
+                        ),
+                    )
+                firstHeadOrNull =
+                    firstHead
+
+                val secondRequest =
+                    beginRequest(
+                        turnRef = "turn.working-carry.002",
+                        requestMessageRef = "message.working-carry.human.002",
+                        content = "Second request causes the older pair to leave direct presence.",
+                        formedAt = Instant.parse(
+                            "2026-11-10T20:01:00Z",
+                        ),
+                    )
+                secondRequestOrNull =
+                    secondRequest
+
+                val firstRequestSource =
+                    requireNotNull(
+                        firstRequestOrNull,
+                    )
+                val firstResponseSource =
+                    requireNotNull(
+                        firstResponseOrNull,
+                    )
+                val carry =
+                    carry(
+                        lineageRef = formed.manifest.currentCompanionLineageRef,
+                        threadRef = secondRequest.threadRef,
+                        source =
+                            VexLifeWorkingCarryContract.SourceBinding(
+                                eventRef = firstRequestSource.eventRef,
+                                eventHash = firstRequestSource.eventHash,
+                                sequence = firstRequestSource.sequence,
+                            ),
+                    )
+                val refresh =
+                    refresh(
+                        lineageRef = formed.manifest.currentCompanionLineageRef,
+                        threadRef = secondRequest.threadRef,
+                        previousCarry = null,
+                        newlyLeaving =
+                            listOf(
+                                firstRequestSource,
+                                firstResponseSource,
+                            ),
+                        currentRequest = secondRequest,
+                        carryTokenCap = carry.carryTokenCap,
+                    )
+                val prepared =
+                    owner.prepare(
+                        priorConversationHeadSha256 =
+                            requireNotNull(
+                                firstHeadOrNull,
+                            )
+                                .conversationHeadSha256,
+                        currentRequest = secondRequest,
+                        refreshInput = refresh,
+                        carry = carry,
+                    )
+
+                assertNull(
+                    owner.readCurrent(),
+                )
+
+                val secondResponse =
+                    appendResponse(
+                        request = secondRequest,
+                        responseMessageRef = "message.working-carry.companion.002",
+                        content = "Second response formed with the refreshed carry.",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef = "observation.working-carry.runtime.002",
+                        invocationEvidenceRef = "evidence.working-carry.invocation.002",
+                        formedAt = Instant.parse(
+                            "2026-11-10T20:01:01Z",
+                        ),
+                    )
+                secondResponseOrNull =
+                    secondResponse
+                val secondContext =
+                    CanonicalLivedContextFixture.write(
+                        productHome = home,
+                        request = secondRequest,
+                        response = secondResponse,
+                        formedAt = Instant.parse(
+                            "2026-11-10T20:01:02Z",
+                        ),
+                    )
+                val secondHead =
+                    commitCompletedTurn(
+                        request = secondRequest,
+                        response = secondResponse,
+                        contextSha256 = secondContext.sha256,
+                        formedAt = Instant.parse(
+                            "2026-11-10T20:01:03Z",
+                        ),
+                    )
+                secondHeadOrNull =
+                    secondHead
+
+                val committed =
+                    owner.commitCompletedTurn(
+                        prepared = prepared,
+                        completedHead = secondHead,
+                    )
+                assertEquals(
+                    "COMMITTED",
+                    committed.state,
+                )
+                assertEquals(
+                    carry,
+                    committed.current.revision.carry,
+                )
+                firstCarryRevisionRefOrNull =
+                    committed.current.revision.revisionRef
+
+                val replay =
+                    owner.commitCompletedTurn(
+                        prepared = prepared,
+                        completedHead = secondHead,
+                    )
+                assertEquals(
+                    "IDEMPOTENT_CURRENT",
+                    replay.state,
+                )
+                assertEquals(
+                    committed.current,
+                    replay.current,
+                )
+
+                val thirdRequest =
+                    beginRequest(
+                        turnRef = "turn.working-carry.003",
+                        requestMessageRef = "message.working-carry.human.003",
+                        content = "Third request resolves what remained.",
+                        formedAt = Instant.parse(
+                            "2026-11-10T20:02:00Z",
+                        ),
+                    )
+                val currentCarry =
+                    requireNotNull(
+                        owner.readCurrent(),
+                    )
+                        .revision
+                        .carry
+                val released =
+                    release(
+                        lineageRef = formed.manifest.currentCompanionLineageRef,
+                        threadRef = thirdRequest.threadRef,
+                    )
+                val releaseRefresh =
+                    refresh(
+                        lineageRef = formed.manifest.currentCompanionLineageRef,
+                        threadRef = thirdRequest.threadRef,
+                        previousCarry = currentCarry,
+                        newlyLeaving =
+                            listOf(
+                                requireNotNull(
+                                    secondRequestOrNull,
+                                ),
+                                requireNotNull(
+                                    secondResponseOrNull,
+                                ),
+                            ),
+                        currentRequest = thirdRequest,
+                        carryTokenCap = released.carryTokenCap,
+                    )
+                val releasePrepared =
+                    owner.prepare(
+                        priorConversationHeadSha256 =
+                            requireNotNull(
+                                secondHeadOrNull,
+                            )
+                                .conversationHeadSha256,
+                        currentRequest = thirdRequest,
+                        refreshInput = releaseRefresh,
+                        carry = released,
+                    )
+
+                val thirdResponse =
+                    appendResponse(
+                        request = thirdRequest,
+                        responseMessageRef = "message.working-carry.companion.003",
+                        content = "Third response completes the unfinished carry.",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef = "observation.working-carry.runtime.003",
+                        invocationEvidenceRef = "evidence.working-carry.invocation.003",
+                        formedAt = Instant.parse(
+                            "2026-11-10T20:02:01Z",
+                        ),
+                    )
+                val thirdContext =
+                    CanonicalLivedContextFixture.write(
+                        productHome = home,
+                        request = thirdRequest,
+                        response = thirdResponse,
+                        formedAt = Instant.parse(
+                            "2026-11-10T20:02:02Z",
+                        ),
+                    )
+                val thirdHead =
+                    commitCompletedTurn(
+                        request = thirdRequest,
+                        response = thirdResponse,
+                        contextSha256 = thirdContext.sha256,
+                        formedAt = Instant.parse(
+                            "2026-11-10T20:02:03Z",
+                        ),
+                    )
+                val releasedCurrent =
+                    owner.commitCompletedTurn(
+                        prepared = releasePrepared,
+                        completedHead = thirdHead,
+                    )
+                        .current
+
+                assertEquals(
+                    VexLifeWorkingCarryContract.Release,
+                    releasedCurrent.revision.carry.disposition,
+                )
+                assertEquals(
+                    firstCarryRevisionRefOrNull,
+                    releasedCurrent.revision.priorRevisionRefOrNull,
+                )
+
+                val fourthRequest =
+                    beginRequest(
+                        turnRef = "turn.working-carry.004",
+                        requestMessageRef = "message.working-carry.human.004",
+                        content = "Fourth request will fail before completion.",
+                        formedAt = Instant.parse(
+                            "2026-11-10T20:03:00Z",
+                        ),
+                    )
+                val failedCarry =
+                    carry(
+                        lineageRef = formed.manifest.currentCompanionLineageRef,
+                        threadRef = fourthRequest.threadRef,
+                        source =
+                            VexLifeWorkingCarryContract.SourceBinding(
+                                eventRef = thirdRequest.eventRef,
+                                eventHash = thirdRequest.eventHash,
+                                sequence = thirdRequest.sequence,
+                            ),
+                        text = "This candidate must not become current without a completed turn.",
+                    )
+                val failedRefresh =
+                    refresh(
+                        lineageRef = formed.manifest.currentCompanionLineageRef,
+                        threadRef = fourthRequest.threadRef,
+                        previousCarry = releasedCurrent.revision.carry,
+                        newlyLeaving =
+                            listOf(
+                                thirdRequest,
+                                thirdResponse,
+                            ),
+                        currentRequest = fourthRequest,
+                        carryTokenCap = failedCarry.carryTokenCap,
+                    )
+                val failedPrepared =
+                    owner.prepare(
+                        priorConversationHeadSha256 = thirdHead.conversationHeadSha256,
+                        currentRequest = fourthRequest,
+                        refreshInput = failedRefresh,
+                        carry = failedCarry,
+                    )
+
+                assertEquals(
+                    releasedCurrent,
+                    owner.readCurrent(),
+                )
+                assertFailsWith<IllegalArgumentException> {
+                    owner.commitCompletedTurn(
+                        prepared = failedPrepared,
+                        completedHead = thirdHead,
+                    )
+                }
+                assertEquals(
+                    releasedCurrent,
+                    owner.readCurrent(),
+                )
+            }
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+}
+
+// [VXG RealForever]
