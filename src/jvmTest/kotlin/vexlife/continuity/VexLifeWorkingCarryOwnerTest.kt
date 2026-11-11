@@ -400,6 +400,7 @@ class VexLifeWorkingCarryOwnerTest {
                     )
                 val prepared =
                     owner.prepare(
+                        conversationOwner = this,
                         priorConversationHeadSha256 =
                             requireNotNull(
                                 firstHeadOrNull,
@@ -436,6 +437,7 @@ class VexLifeWorkingCarryOwnerTest {
                 )
                 assertFailsWith<IllegalArgumentException> {
                     owner.prepare(
+                        conversationOwner = this,
                         priorConversationHeadSha256 =
                             requireNotNull(
                                 firstHeadOrNull,
@@ -561,6 +563,7 @@ class VexLifeWorkingCarryOwnerTest {
                     )
                 val releasePrepared =
                     owner.prepare(
+                        conversationOwner = this,
                         priorConversationHeadSha256 =
                             requireNotNull(
                                 secondHeadOrNull,
@@ -660,6 +663,7 @@ class VexLifeWorkingCarryOwnerTest {
                     )
                 val failedPrepared =
                     owner.prepare(
+                        conversationOwner = this,
                         priorConversationHeadSha256 = thirdHead.conversationHeadSha256,
                         currentRequest = fourthRequest,
                         refreshInput = failedRefresh,
