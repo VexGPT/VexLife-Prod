@@ -184,7 +184,8 @@ REQUEST A SUCCESSOR EVIDENCE
 
 ## Live working-checkpoint successor prompt
 
-The live next-turn consumer is now source-bounded as:
+The live next-turn consumer keeps the non-semantic successor Context separate from recent exact
+Conversation presence:
 
 ~~~text
 next durable REQUEST
@@ -197,11 +198,13 @@ request-scoped SuccessorContext
         ↓
 DirectWorkingContinuity.CurrentSuccessor
         ↓
-DirectPromptContext v3
+DirectPromptContext v7 finite-attention composition
         ↓
-current Memory
-+ bounded non-semantic WorkingSet packet
-+ optional browser context
+fixed current-turn / capability / successor context
++ maximum recent exact Conversation that still fits
++ present working carry only from remaining slack
++ caller-bounded current Memory from the remainder
++ optional browser/reference context
 + current request
         ↓
 provider
@@ -216,16 +219,21 @@ Conversation currentness is independently re-bound at prompt materialization:
 - exact prior Conversation head SHA-256;
 - exact checkpoint cursor request ref;
 - exact current durable request event ref/hash/sequence;
-- exact lineage/thread/channel adjacency.
+- exact lineage/thread/channel adjacency;
+- exact recent Conversation suffix selected again through the held Conversation owner.
 
-In `WORKING_CHECKPOINT_SUCCESSOR` mode the prior REQUEST/RESPONSE pair is **not** selected for the
-provider. The provider receives the current attributed Memory plus a compact working-continuity
-packet of refs/working coordinates plus the current request.
+The checkpoint and SuccessorContext themselves remain reference-only and carry no raw transcript.
+That does **not** require the provider prompt to discard recent exact Conversation. In
+`WORKING_CHECKPOINT_SUCCESSOR` mode, v7 may still include the newest exact completed
+REQUEST/RESPONSE suffix that fits after fixed current-turn context.
 
-Prompt receipt v3 records the exact successor Context/checkpoint/claim/source identities and the
-working packet hash/token estimate. Historical v2 receipts remain hash-shape compatible: new
-working-continuity fields use non-default-only encoding, so decoding and re-encoding old v2 durable
-evidence does not inject new default fields into its canonical hash preimage.
+Any older direct source that genuinely crosses out of that bounded suffix is handled by the separate
+present-working-carry relationship; the successor boundary itself does not manufacture an all-source
+semantic cliff.
+
+Prompt receipt v7 records the exact successor Context/checkpoint/claim/source identities together
+with finite-attention, Memory-availability/selection and working-carry provenance. Historical receipt
+versions remain separately decodable under their accepted default-omission compatibility rules.
 
 ## Failed successor recovery
 
@@ -302,28 +310,30 @@ WORKING CONTINUITY HELD
 
 ## Current candidate boundary
 
-The current live-consumer slice closes the working-context rollover loop through the real direct
-Companion path:
+The current live-consumer trajectory keeps rollover mechanical and semantic relationships distinct:
 
 ~~~text
 completed high-pressure turn
--> ROLLOVER_COMMITTED
+-> ROLLOVER_COMMITTED reference-only checkpoint
 
 next durable request
 -> request-scoped claim + Context
 -> WORKING_CHECKPOINT_SUCCESSOR
--> Memory + working coordinates + current request
+-> recent exact Conversation remains eligible under finite attention
+-> only source that actually leaves direct presence may refresh present working carry
+-> Memory uses the remaining caller-bounded capacity
 -> provider
 ~~~
 
 It preserves the existing failed-send recovery law by allowing a fresh request-scoped successor
 claim/Context after an abandoned failed successor attempt.
 
-It does **not yet**:
+It does **not**:
 
-- add the Capability Atlas/self-capability frame;
-- expose the current prompt/working/Memory inputs through Settings / Context;
+- copy raw Conversation into the checkpoint/SuccessorContext artifact;
+- turn present working carry into semantic Memory or an authoritative human profile;
 - change Memory acceptance or mutation authority;
+- imply that current Memory/carry must be selected into every prompt merely because they are available;
 - authorize Dream/training/activation/evolution.
 
 Those are the next trajectory edges after this live rollover loop is accepted.
