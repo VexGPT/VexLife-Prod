@@ -7,94 +7,398 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class VexLifeWorkingCarryContractTest {
-    private val first =
+    private fun binding(
+        sequence: Long,
+        suffix: String =
+            sequence.toString(),
+    ) =
         VexLifeWorkingCarryContract.SourceBinding(
-            eventRef = "event.vexlife.request.001",
-            eventHash = "1".repeat(
-                64,
-            ),
-            sequence = 2,
+            eventRef =
+                "event.vexlife." +
+                    suffix,
+            eventHash =
+                sequence
+                    .toString(
+                        16,
+                    )
+                    .padStart(
+                        64,
+                        '0',
+                    ),
+            sequence = sequence,
         )
 
-    private val second =
-        VexLifeWorkingCarryContract.SourceBinding(
-            eventRef = "event.vexlife.response.001",
-            eventHash = "2".repeat(
-                64,
-            ),
-            sequence = 3,
+    private fun event(
+        sequence: Long,
+        kind: String,
+        content: String =
+            "Conversation source " +
+                sequence,
+    ) =
+        VexLifeWorkingCarryContract.SourceEvent(
+            source =
+                binding(
+                    sequence,
+                ),
+            eventKind = kind,
+            speakerRef =
+                if (
+                    kind ==
+                        "REQUEST"
+                ) {
+                    "person.victor"
+                } else {
+                    "companion.vex"
+                },
+            recipientRefs =
+                listOf(
+                    if (
+                        kind ==
+                            "REQUEST"
+                    ) {
+                        "companion.vex"
+                    } else {
+                        "person.victor"
+                    },
+                ),
+            content = content,
         )
 
-    private val priorCarrySource =
-        VexLifeWorkingCarryContract.SourceBinding(
-            eventRef = "event.vexlife.request.prior",
-            eventHash = "4".repeat(
-                64,
-            ),
-            sequence = 0,
+    private val older =
+        binding(
+            0,
+            "prior",
+        )
+
+    private val leavingRequest =
+        binding(
+            2,
+            "request.001",
+        )
+
+    private val leavingResponse =
+        binding(
+            3,
+            "response.001",
+        )
+
+    private fun carryItem(
+        source: VexLifeWorkingCarryContract.SourceBinding =
+            leavingRequest,
+        kind: String =
+            "OPEN_UNDERSTANDING",
+        content: String =
+            "I am still trying to understand this.",
+    ) =
+        VexLifeWorkingCarryContract.CarryItem(
+            kind = kind,
+            content = content,
+            sourceBindings =
+                listOf(
+                    source,
+                ),
         )
 
     private fun draft(
-        disposition: String,
         items: List<VexLifeWorkingCarryContract.CarryItem>,
-        releaseReason: String?,
-    ) =
-        VexLifeWorkingCarryContract.Draft(
+        disposition: String =
+            if (
+                items.isEmpty()
+            ) {
+                VexLifeWorkingCarryContract.Release
+            } else {
+                VexLifeWorkingCarryContract.Carry
+            },
+        releaseReason: String? =
+            if (
+                items.isEmpty()
+            ) {
+                VexLifeWorkingCarryContract.ReleaseReasonNoPresentCarry
+            } else {
+                null
+            },
+        carryTokenCap: Int =
+            16_000,
+    ): VexLifeWorkingCarryContract.Draft {
+        val source =
+            items.flatMap {
+                it.sourceBindings
+            }
+                .distinct()
+                .sortedBy {
+                    it.sequence
+                }
+        return VexLifeWorkingCarryContract.Draft(
             schemaVersion = VexLifeWorkingCarryContract.Schema,
             truthClass = VexLifeWorkingCarryContract.TruthClass,
             perspective = VexLifeWorkingCarryContract.Perspective,
             companionLineageRef = "companion-lineage.vexlife.test",
             threadRef = "thread.self-development.open-conversation",
             authoredByRef = "companion.vex.current",
-            previousCarrySourceBindings =
-                listOf(
-                    priorCarrySource,
-                ),
-            leavingSourceBindings =
-                listOf(
-                    first,
-                    second,
-                ),
+            sourceBindings = source,
             disposition = disposition,
             carryItems = items,
             releaseReason = releaseReason,
-            carryTokenCap = 16_000,
+            carryTokenCap = carryTokenCap,
             estimatedCarryTokens =
                 VexLifeWorkingCarryContract.estimateCarryContentTokens(
                     items,
                 ),
         )
+    }
+
+    private fun refresh(
+        previousCarry: VexLifeWorkingCarryContract.Draft? =
+            draft(
+                listOf(
+                    carryItem(
+                        source = older,
+                        content = "I still carry the older open question.",
+                    ),
+                ),
+            ),
+        carryTokenCap: Int =
+            16_000,
+    ) =
+        VexLifeWorkingCarryContract.RefreshInput(
+            schemaVersion = VexLifeWorkingCarryContract.RefreshInputSchema,
+            perspective = VexLifeWorkingCarryContract.Perspective,
+            companionLineageRef = "companion-lineage.vexlife.test",
+            threadRef = "thread.self-development.open-conversation",
+            previousCarry = previousCarry,
+            newlyLeavingEvents =
+                listOf(
+                    VexLifeWorkingCarryContract.SourceEvent(
+                        source = leavingRequest,
+                        eventKind = "REQUEST",
+                        speakerRef = "person.victor",
+                        recipientRefs =
+                            listOf(
+                                "companion.vex",
+                            ),
+                        content = "A leaving human request.",
+                    ),
+                    VexLifeWorkingCarryContract.SourceEvent(
+                        source = leavingResponse,
+                        eventKind = "RESPONSE",
+                        speakerRef = "companion.vex",
+                        recipientRefs =
+                            listOf(
+                                "person.victor",
+                            ),
+                        content = "A leaving Vex response.",
+                    ),
+                ),
+            retainedDirectEvents =
+                listOf(
+                    event(
+                        4,
+                        "REQUEST",
+                    ),
+                    event(
+                        5,
+                        "RESPONSE",
+                    ),
+                ),
+            currentRequest =
+                event(
+                    6,
+                    "REQUEST",
+                    "Current human request.",
+                ),
+            carryTokenCap = carryTokenCap,
+        )
+
+    @Test
+    fun refreshedReleaseCarriesNoSemanticOrSourceResidue() {
+        val value =
+            VexLifeWorkingCarryContract.requireDraftShape(
+                draft(
+                    items = emptyList(),
+                    carryTokenCap = 0,
+                ),
+            )
+
+        assertEquals(
+            VexLifeWorkingCarryContract.Release,
+            value.disposition,
+        )
+        assertTrue(
+            value.sourceBindings.isEmpty(),
+        )
+        assertFalse(
+            value.durableMemoryAuthorityGranted,
+        )
+        assertFalse(
+            value.humanProfileAuthorityGranted,
+        )
+        assertFalse(
+            value.relationshipAgreementAuthorityGranted,
+        )
+        assertFalse(
+            value.canonicalConversationAuthorityGranted,
+        )
+        assertFalse(
+            value.memoryPromotionPerformed,
+        )
+        assertFalse(
+            value.effectsPerformed,
+        )
+    }
+
+    @Test
+    fun carryAdmitsOnlySelfRelativeKindsAndOnlySourceStillUsedNow() {
+        val items =
+            VexLifeWorkingCarryContract.CarryKinds
+                .sorted()
+                .map {
+                    kind ->
+                    carryItem(
+                        kind = kind,
+                        content =
+                            "Vex still carries this " +
+                                kind +
+                                " relationship to the present Conversation.",
+                    )
+                }
+
+        val value =
+            VexLifeWorkingCarryContract.requireDraftShape(
+                draft(
+                    items,
+                ),
+            )
+
+        assertEquals(
+            listOf(
+                leavingRequest,
+            ),
+            value.sourceBindings,
+        )
+        assertEquals(
+            items,
+            value.carryItems,
+        )
+
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeWorkingCarryContract.requireDraftShape(
+                draft(
+                    items =
+                        listOf(
+                            carryItem(
+                                kind = "HUMAN_PROFILE_FACT",
+                            ),
+                        ),
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun refreshedCarryMayRetainOlderStillLiveSourceAndReleaseNewLeavingMaterial() {
+        val priorItem =
+            carryItem(
+                source = older,
+                content = "I still carry the older open question.",
+            )
+        val input =
+            refresh(
+                previousCarry =
+                    draft(
+                        listOf(
+                            priorItem,
+                        ),
+                    ),
+            )
+        val output =
+            draft(
+                listOf(
+                    priorItem,
+                ),
+            )
+
+        assertEquals(
+            output,
+            VexLifeWorkingCarryContract.requireDraftFromRefresh(
+                refresh = input,
+                draft = output,
+            ),
+        )
+    }
+
+    @Test
+    fun refreshReviewContextCannotSilentlyBecomeCarrySourceBeforeItLeaves() {
+        val input =
+            refresh(
+                previousCarry = null,
+            )
+        val retained =
+            input.retainedDirectEvents
+                .first()
+                .source
+        val output =
+            draft(
+                listOf(
+                    carryItem(
+                        source = retained,
+                    ),
+                ),
+            )
+
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeWorkingCarryContract.requireDraftFromRefresh(
+                refresh = input,
+                draft = output,
+            )
+        }
+    }
+
+    @Test
+    fun refreshInputIsConversationLocalAndExcludesDurableMemoryAndEffects() {
+        val input =
+            refresh()
+
+        assertEquals(
+            input,
+            VexLifeWorkingCarryContract.requireRefreshInputShape(
+                input,
+            ),
+        )
+
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeWorkingCarryContract.requireRefreshInputShape(
+                input.copy(
+                    durableMemoryIncluded = true,
+                ),
+            )
+        }
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeWorkingCarryContract.requireRefreshInputShape(
+                input.copy(
+                    persistencePerformed = true,
+                ),
+            )
+        }
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeWorkingCarryContract.requireRefreshInputShape(
+                input.copy(
+                    effectsPerformed = true,
+                ),
+            )
+        }
+    }
 
     @Test
     fun newlyLeavingDirectPresenceIsOnlyTheOldestContiguousPriorPrefix() {
-        fun source(
-            sequence: Long,
-        ) =
-            VexLifeWorkingCarryContract.SourceBinding(
-                eventRef =
-                    "event.vexlife." +
-                        sequence,
-                eventHash =
-                    sequence
-                        .toString(
-                            16,
-                        )
-                        .padStart(
-                            64,
-                            '0',
-                        ),
-                sequence = sequence,
-            )
-
         val previous =
             (0L..3L)
                 .map(
-                    ::source,
+                    ::binding,
                 )
         val current =
             (2L..5L)
                 .map(
-                    ::source,
+                    ::binding,
                 )
 
         assertEquals(
@@ -123,7 +427,7 @@ class VexLifeWorkingCarryContractTest {
                 currentDirectPresence =
                     (4L..5L)
                         .map(
-                            ::source,
+                            ::binding,
                         ),
             ),
         )
@@ -131,29 +435,10 @@ class VexLifeWorkingCarryContractTest {
 
     @Test
     fun directPresenceTransitionRejectsHolesAndSourceGenerationSubstitution() {
-        fun source(
-            sequence: Long,
-        ) =
-            VexLifeWorkingCarryContract.SourceBinding(
-                eventRef =
-                    "event.vexlife." +
-                        sequence,
-                eventHash =
-                    sequence
-                        .toString(
-                            16,
-                        )
-                        .padStart(
-                            64,
-                            '0',
-                        ),
-                sequence = sequence,
-            )
-
         val previous =
             (0L..5L)
                 .map(
-                    ::source,
+                    ::binding,
                 )
 
         assertFailsWith<IllegalArgumentException> {
@@ -161,16 +446,16 @@ class VexLifeWorkingCarryContractTest {
                 previousDirectPresence = previous,
                 currentDirectPresence =
                     listOf(
-                        source(
+                        binding(
                             0,
                         ),
-                        source(
+                        binding(
                             1,
                         ),
-                        source(
+                        binding(
                             4,
                         ),
-                        source(
+                        binding(
                             5,
                         ),
                     ),
@@ -178,7 +463,7 @@ class VexLifeWorkingCarryContractTest {
         }
 
         val substituted =
-            source(
+            binding(
                 4,
             )
                 .copy(
@@ -196,7 +481,7 @@ class VexLifeWorkingCarryContractTest {
                 currentDirectPresence =
                     listOf(
                         substituted,
-                        source(
+                        binding(
                             5,
                         ),
                     ),
@@ -205,249 +490,14 @@ class VexLifeWorkingCarryContractTest {
     }
 
     @Test
-    fun releaseMeansNothingFromTheRefreshedSourcesStillBearsOnPresentCarry() {
-        val value =
-            VexLifeWorkingCarryContract.requireDraftShape(
-                draft(
-                    disposition = VexLifeWorkingCarryContract.Release,
-                    items = emptyList(),
-                    releaseReason =
-                        VexLifeWorkingCarryContract.ReleaseReasonNoPresentCarry,
-                ),
-            )
-
-        assertEquals(
-            VexLifeWorkingCarryContract.Release,
-            value.disposition,
-        )
-        assertFalse(
-            value.durableMemoryAuthorityGranted,
-        )
-        assertFalse(
-            value.humanProfileAuthorityGranted,
-        )
-        assertFalse(
-            value.relationshipAgreementAuthorityGranted,
-        )
-        assertFalse(
-            value.canonicalConversationAuthorityGranted,
-        )
-        assertFalse(
-            value.memoryPromotionPerformed,
-        )
-        assertFalse(
-            value.effectsPerformed,
-        )
-    }
-
-    @Test
-    fun carryAdmitsOnlySelfRelativeUnfinishedKindsFromAvailablePresentSource() {
-        val items =
-            VexLifeWorkingCarryContract.CarryKinds
-                .sorted()
-                .map {
-                    kind ->
-                    VexLifeWorkingCarryContract.CarryItem(
-                        kind = kind,
-                        content =
-                            "Vex still carries this " +
-                                kind +
-                                " relationship to the present Conversation.",
-                        sourceBindings =
-                            listOf(
-                                first,
-                            ),
-                    )
-                }
-
-        val value =
-            VexLifeWorkingCarryContract.requireDraftShape(
-                draft(
-                    disposition = VexLifeWorkingCarryContract.Carry,
-                    items = items,
-                    releaseReason = null,
-                ),
-            )
-
-        assertEquals(
-            items,
-            value.carryItems,
-        )
-    }
-
-    @Test
-    fun refreshedCarryMayRetainOlderStillLiveSourceWhileReleasingNewLeavingMaterial() {
-        val item =
-            VexLifeWorkingCarryContract.CarryItem(
-                kind = "OPEN_UNDERSTANDING",
-                content = "I am still trying to understand the older open question.",
-                sourceBindings =
-                    listOf(
-                        priorCarrySource,
-                    ),
-            )
-
-        val value =
-            VexLifeWorkingCarryContract.requireDraftShape(
-                draft(
-                    disposition = VexLifeWorkingCarryContract.Carry,
-                    items =
-                        listOf(
-                            item,
-                        ),
-                    releaseReason = null,
-                ),
-            )
-
-        assertEquals(
-            listOf(
-                item,
-            ),
-            value.carryItems,
-        )
-    }
-
-    @Test
-    fun profileLikeOrUnregisteredCarryKindIsNotAdmitted() {
-        assertFailsWith<IllegalArgumentException> {
-            VexLifeWorkingCarryContract.requireDraftShape(
-                draft(
-                    disposition = VexLifeWorkingCarryContract.Carry,
-                    items =
-                        listOf(
-                            VexLifeWorkingCarryContract.CarryItem(
-                                kind = "HUMAN_PROFILE_FACT",
-                                content = "Define the human from above.",
-                                sourceBindings =
-                                    listOf(
-                                        first,
-                                    ),
-                            ),
-                        ),
-                    releaseReason = null,
-                ),
-            )
-        }
-    }
-
-    @Test
-    fun carryCannotUseSourceOutsideTheAvailableRefreshedSources() {
-        val outside =
-            VexLifeWorkingCarryContract.SourceBinding(
-                eventRef = "event.vexlife.request.outside",
-                eventHash = "3".repeat(
-                    64,
-                ),
-                sequence = 9,
-            )
-
-        assertFailsWith<IllegalArgumentException> {
-            VexLifeWorkingCarryContract.requireDraftShape(
-                draft(
-                    disposition = VexLifeWorkingCarryContract.Carry,
-                    items =
-                        listOf(
-                            VexLifeWorkingCarryContract.CarryItem(
-                                kind = "OPEN_UNDERSTANDING",
-                                content = "I am still trying to understand this.",
-                                sourceBindings =
-                                    listOf(
-                                        outside,
-                                    ),
-                            ),
-                        ),
-                    releaseReason = null,
-                ),
-            )
-        }
-    }
-
-    @Test
-    fun refreshedCarryRejectsDifferentEventsClaimingTheSameConversationSequence() {
-        val conflict =
-            first.copy(
-                eventRef = "event.vexlife.request.conflicting",
-                eventHash = "5".repeat(
-                    64,
-                ),
-            )
-        val base =
-            draft(
-                disposition = VexLifeWorkingCarryContract.Release,
-                items = emptyList(),
-                releaseReason =
-                    VexLifeWorkingCarryContract.ReleaseReasonNoPresentCarry,
-            )
-                .copy(
-                    previousCarrySourceBindings =
-                        listOf(
-                            conflict,
-                        ),
-                )
-
-        assertFailsWith<IllegalArgumentException> {
-            VexLifeWorkingCarryContract.requireDraftShape(
-                base,
-            )
-        }
-    }
-
-    @Test
-    fun releaseCannotHideCarryItemsAndCarryCannotBeEmpty() {
-        val item =
-            VexLifeWorkingCarryContract.CarryItem(
-                kind = "OWED_CONTINUATION",
-                content = "I still owe a continuation.",
-                sourceBindings =
-                    listOf(
-                        first,
-                    ),
-            )
-
-        assertFailsWith<IllegalArgumentException> {
-            VexLifeWorkingCarryContract.requireDraftShape(
-                draft(
-                    disposition = VexLifeWorkingCarryContract.Release,
-                    items =
-                        listOf(
-                            item,
-                        ),
-                    releaseReason =
-                        VexLifeWorkingCarryContract.ReleaseReasonNoPresentCarry,
-                ),
-            )
-        }
-
-        assertFailsWith<IllegalArgumentException> {
-            VexLifeWorkingCarryContract.requireDraftShape(
-                draft(
-                    disposition = VexLifeWorkingCarryContract.Carry,
-                    items = emptyList(),
-                    releaseReason = null,
-                ),
-            )
-        }
-    }
-
-    @Test
     fun refreshedCarryMustFitTheCallerSuppliedFiniteAllowance() {
         val item =
-            VexLifeWorkingCarryContract.CarryItem(
-                kind = "OWED_CONTINUATION",
-                content = "I still owe this continuation.",
-                sourceBindings =
-                    listOf(
-                        first,
-                    ),
-            )
+            carryItem()
         val base =
             draft(
-                disposition = VexLifeWorkingCarryContract.Carry,
-                items =
-                    listOf(
-                        item,
-                    ),
-                releaseReason = null,
+                listOf(
+                    item,
+                ),
             )
 
         assertFailsWith<IllegalArgumentException> {
@@ -466,36 +516,30 @@ class VexLifeWorkingCarryContractTest {
                 ),
             )
         }
-
-        val release =
-            draft(
-                disposition = VexLifeWorkingCarryContract.Release,
-                items = emptyList(),
-                releaseReason =
-                    VexLifeWorkingCarryContract.ReleaseReasonNoPresentCarry,
-            )
-                .copy(
-                    carryTokenCap = 0,
-                )
-
-        assertEquals(
-            0,
-            VexLifeWorkingCarryContract.requireDraftShape(
-                release,
-            )
-                .estimatedCarryTokens,
-        )
     }
 
     @Test
-    fun workingCarryCannotPromoteItselfIntoMemoryProfileAgreementOrEffectAuthority() {
+    fun workingCarryCannotRetainUnusedSourceOrPromoteAuthority() {
+        val item =
+            carryItem()
         val base =
             draft(
-                disposition = VexLifeWorkingCarryContract.Release,
-                items = emptyList(),
-                releaseReason =
-                    VexLifeWorkingCarryContract.ReleaseReasonNoPresentCarry,
+                listOf(
+                    item,
+                ),
             )
+
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeWorkingCarryContract.requireDraftShape(
+                base.copy(
+                    sourceBindings =
+                        listOf(
+                            leavingRequest,
+                            leavingResponse,
+                        ),
+                ),
+            )
+        }
 
         listOf(
             base.copy(
