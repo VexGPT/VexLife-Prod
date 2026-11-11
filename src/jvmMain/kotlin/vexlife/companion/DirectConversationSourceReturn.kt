@@ -579,6 +579,10 @@ object DirectConversationSourceReturn {
             discoveredMatchCount = discovery.matches.size,
             returnedMatchCount = selected.size,
             estimatedSystemMessageTokens = estimate,
+            systemMessageSha256 =
+                sha256(
+                    content,
+                ),
             systemContent = content,
             sourceEventRefs =
                 selected
