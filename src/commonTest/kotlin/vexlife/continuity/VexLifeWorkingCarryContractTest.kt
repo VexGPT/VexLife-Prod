@@ -12,6 +12,7 @@ class VexLifeWorkingCarryContractTest {
             eventHash = "1".repeat(
                 64,
             ),
+            sequence = 0,
         )
 
     private val second =
@@ -20,6 +21,7 @@ class VexLifeWorkingCarryContractTest {
             eventHash = "2".repeat(
                 64,
             ),
+            sequence = 1,
         )
 
     private fun draft(
@@ -146,6 +148,7 @@ class VexLifeWorkingCarryContractTest {
                 eventHash = "3".repeat(
                     64,
                 ),
+                sequence = 2,
             )
 
         assertFailsWith<IllegalArgumentException> {
