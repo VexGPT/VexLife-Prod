@@ -24,7 +24,7 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            39,
+            40,
             blueprint.size,
         )
         assertTrue(
@@ -50,6 +50,25 @@ class VexLifeWebP1Test {
         assertEquals(
             VexLifeWebP1.Companion.identity.ref,
             vexSummonBinding.target.ref,
+        )
+
+        val visionQuickAccess =
+            VexLifeWebP1.Surface
+                .coordinates()
+                .single {
+                    it.ref ==
+                        VexLifeWorkspaceBlueprint.VisionQuickAccess.ref
+                }
+        assertTrue(
+            VexWeb.Interaction.Activate in
+                visionQuickAccess.interactions,
+        )
+        val visionQuickAccessBinding =
+            visionQuickAccess.binding as
+                VexWeb.Binding.LocalInteraction
+        assertEquals(
+            VexLifeWebP1.Vision.identity.ref,
+            visionQuickAccessBinding.target.ref,
         )
 
         val vision =
