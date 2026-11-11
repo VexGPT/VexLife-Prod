@@ -43,6 +43,27 @@ class DirectConversationSourceReturnTest {
             "\"}"
 
     @Test
+    fun protocolMessageOffersOneConditionalReturnWithoutChangingTheHumanAnswerPath() {
+        val protocol =
+            DirectConversationSourceReturn.protocolMessage()
+
+        assertEquals(
+            "system",
+            protocol.role,
+        )
+        assertTrue(
+            protocol.content.startsWith(
+                DirectConversationSourceReturn.ProtocolHeader,
+            ),
+        )
+        assertTrue(
+            protocol.content.contains(
+                "Only one source-return request",
+            ),
+        )
+    }
+
+    @Test
     fun normalModelAnswerIsNotReinterpretedAsSourceReturn() {
         assertNull(
             DirectConversationSourceReturn.parseRequestOrNull(
@@ -320,6 +341,101 @@ class DirectConversationSourceReturnTest {
                         .contains(
                             "Alpha and beta",
                         ),
+                )
+            }
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun noMatchReturnsTruthfulBoundedContextInsteadOfInventingRecall() {
+        val home =
+            productHome()
+        val store =
+            DirectConversationStore(
+                home,
+            )
+
+        try {
+            store.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef = "turn.source-return.no-match",
+                        requestMessageRef = "message.source-return.human.no-match",
+                        content = "A completely unrelated source sentence.",
+                    )
+                val response =
+                    appendResponse(
+                        request = request,
+                        responseMessageRef = "message.source-return.companion.no-match",
+                        content = "Nothing here mentions the requested rare phrase.",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef = "observation.source-return.no-match",
+                        invocationEvidenceRef = "evidence.source-return.no-match",
+                    )
+                val context =
+                    CanonicalLivedContextFixture.write(
+                        productHome = home,
+                        request = request,
+                        response = response,
+                    )
+                commitCompletedTurn(
+                    request = request,
+                    response = response,
+                    contextSha256 = context.sha256,
+                )
+
+                val discovery =
+                    DirectConversationSourceReturn.discover(
+                        conversationOwner = this,
+                        request =
+                            DirectConversationSourceReturn.Request(
+                                schemaVersion =
+                                    DirectConversationSourceReturn.RequestSchema,
+                                queryTerms =
+                                    listOf(
+                                        "unfindable-zebra-orbit-phrase",
+                                    ),
+                                speakerScope =
+                                    DirectConversationSourceReturn.AnySpeaker,
+                            ),
+                    )
+                val projected =
+                    DirectConversationSourceReturn.project(
+                        discovery = discovery,
+                        availableTokens =
+                            DirectPromptContext.InputTokenBudget,
+                    )
+
+                assertTrue(
+                    discovery.matches.isEmpty(),
+                )
+                assertEquals(
+                    DirectConversationSourceReturn.NoMatch,
+                    projected.state,
+                )
+                assertEquals(
+                    0,
+                    projected.returnedMatchCount,
+                )
+                assertTrue(
+                    projected.systemContent.contains(
+                        DirectConversationSourceReturn.NoMatch,
+                    ),
+                )
+                assertFalse(
+                    projected.systemContent.contains(
+                        request.content,
+                    ),
+                )
+                assertFalse(
+                    projected.systemContent.contains(
+                        response.content,
+                    ),
                 )
             }
         } finally {
