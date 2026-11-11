@@ -1281,6 +1281,131 @@ class DirectPromptContextTest {
     }
 
     @Test
+    fun currentMemoryRemainsCapabilityAvailableWhenFiniteAttentionSelectsZeroMemoryPages() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-memory-available-unselected-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val store =
+                DirectConversationStore(
+                    productHome,
+                )
+
+            store.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef =
+                            "turn.self-development.memory-available-unselected",
+                        requestMessageRef =
+                            "message.self-development.human.memory-available-unselected",
+                        content =
+                            "Keep the current turn present even if Memory yields its prompt space.",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-10T22:00:00Z",
+                            ),
+                    )
+                val memory =
+                    VexLifeMemoryContextFixture.currentUnselectedForPrompt()
+                val runtime =
+                    runtimeEvidence(
+                        "receipt.vexlife-prod.heretic.memory-available-unselected",
+                    )
+                val materialized =
+                    DirectPromptContext.materialize(
+                        prior = null,
+                        currentRequest = request,
+                        memoryContext = memory,
+                        runtimeEvidence = runtime,
+                    )
+
+                assertEquals(
+                    listOf(
+                        "system",
+                        "user",
+                    ),
+                    materialized.messages.map {
+                        it.role
+                    },
+                )
+                assertTrue(
+                    materialized.messages.first()
+                        .content
+                        .startsWith(
+                            "VEXLIFE_SELF_CAPABILITY_FRAME/v1",
+                        ),
+                )
+                assertFalse(
+                    materialized.messages.any {
+                        it.content.startsWith(
+                            "VEXLIFE_CURRENT_MEMORY_CONTEXT/v1",
+                        )
+                    },
+                )
+                assertFalse(
+                    materialized.receipt.memoryIncluded,
+                )
+                assertFalse(
+                    materialized.receipt.memorySelectionPerformed,
+                )
+                assertEquals(
+                    memory.memoryContextRef,
+                    materialized.receipt.memoryContextRef,
+                )
+                assertEquals(
+                    0,
+                    memory.memoryTokenCap,
+                )
+                assertTrue(
+                    memory.tokenBoundedOutPageRefs.isNotEmpty(),
+                )
+
+                val capabilitySnapshot =
+                    assertNotNull(
+                        materialized.receipt.capabilityFrameSnapshot,
+                    )
+                assertTrue(
+                    capabilitySnapshot.availableCapabilityRefs.contains(
+                        "capability.vexlife.context.memory-current",
+                    ),
+                )
+                assertFalse(
+                    capabilitySnapshot.heldCapabilityRefs.contains(
+                        "capability.vexlife.context.memory-current",
+                    ),
+                )
+                assertFalse(
+                    capabilitySnapshot.unavailableCapabilityRefs.contains(
+                        "capability.vexlife.context.memory-current",
+                    ),
+                )
+
+                DirectPromptContext.reverify(
+                    materialization = materialized,
+                    prior = null,
+                    currentRequest = request,
+                    memoryContext = memory,
+                    runtimeEvidence = runtime,
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun liveCapabilityFrameIsFormedFromCurrentPromptFactsAndReverified() {
         val parent =
             Files.createTempDirectory(
