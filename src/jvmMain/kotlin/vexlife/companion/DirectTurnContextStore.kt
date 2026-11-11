@@ -685,10 +685,13 @@ class DirectTurnContextStore(
         val preceding =
             (
                 promptContext.selectedConversationEventRefs +
+                    promptContext.sourceReturnSourceEventRefs +
                     promptContext.memorySourceRefs +
                     promptContext.workingContinuitySourceRefs +
                     promptContext.capabilityFrameSourceRefs +
                     listOfNotNull(
+                        promptContext.successorPriorResponseEventRef,
+                        promptContext.memoryAvailabilityContextRef,
                         promptContext.workingContinuityContextRef,
                         promptContext.workingContinuityCheckpointRef,
                         promptContext.workingContinuitySuccessorClaimRef,
