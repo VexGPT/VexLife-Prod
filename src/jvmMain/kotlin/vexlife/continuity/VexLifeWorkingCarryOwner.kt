@@ -16,9 +16,13 @@ import vexlife.home.VexLifeProdHomeFiles
 /**
  * Durable custody for one current Vex present working carry.
  *
- * A refreshed carry may be prepared before provider invocation so the same turn can use it, but
- * currentness advances only after the exact matching Conversation turn is completed. Durable bytes
- * here are working-state custody, not semantic Memory acceptance.
+ * Gradual-aging refresh may be prepared before provider invocation so the same turn can use the
+ * candidate, but currentness advances only after the exact matching Conversation turn completes.
+ *
+ * Rollover-handoff refresh is formed only after a completed high-pressure turn and may advance
+ * currentness only while that completed head remains the exact current Conversation edge.
+ *
+ * Durable bytes here are working-state custody, not semantic Memory acceptance.
  */
 class VexLifeWorkingCarryOwner(
     productHome: Path,
