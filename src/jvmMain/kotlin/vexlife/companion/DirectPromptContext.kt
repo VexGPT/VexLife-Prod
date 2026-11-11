@@ -1090,6 +1090,252 @@ object DirectPromptContext {
         )
     }
 
+    fun materializeContinuity(
+        conversationOwner: DirectConversationStore.Locked,
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
+        memoryAvailabilityContext: VexLifeMemoryContract.Context? =
+            null,
+        memoryContextAtCap: ((
+            memoryTokenCap: Int,
+        ) -> VexLifeMemoryContract.Context)? =
+            null,
+        workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
+            null,
+        browserContext: BrowserContext? =
+            null,
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
+            null,
+        sourceReturnProtocolEnabled: Boolean =
+            false,
+        sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
+            null,
+    ): Materialization {
+        require(
+            !(
+                sourceReturnProtocolEnabled &&
+                    sourceReturnDiscovery !=
+                    null
+                ),
+        ) {
+            "direct continuity prompt cannot advertise another source return while projecting returned source"
+        }
+
+        val fixed =
+            verifyFixedContext(
+                prior = prior,
+                currentRequest = currentRequest,
+                memoryAvailabilityContext =
+                    memoryAvailabilityContext,
+                workingContinuityContext =
+                    workingContinuityContext,
+                browserContext = browserContext,
+                runtimeEvidence = runtimeEvidence,
+                sourceReturnProtocolEnabled =
+                    sourceReturnProtocolEnabled,
+            )
+        val afterFixed =
+            InputTokenBudget -
+                fixed.fixedInputTokenEstimate
+        require(
+            afterFixed >=
+                0,
+        ) {
+            "direct continuity prompt fixed context exceeds the admitted input budget"
+        }
+
+        val sourceReturnProjection =
+            sourceReturnDiscovery
+                ?.let {
+                    discovery ->
+                    DirectConversationSourceReturn.project(
+                        discovery = discovery,
+                        availableTokens = afterFixed,
+                    )
+                }
+        val afterSourceReturn =
+            afterFixed -
+                (
+                    sourceReturnProjection
+                        ?.estimatedSystemMessageTokens
+                        ?: 0
+                    )
+        require(
+            afterSourceReturn >=
+                0,
+        ) {
+            "direct continuity source-return context exceeds remaining prompt attention"
+        }
+
+        val recentConversation =
+            if (
+                prior ==
+                    null ||
+                fixed.workingContinuity !=
+                    null
+            ) {
+                null
+            } else {
+                conversationOwner.recentCompletedConversation(
+                    availableTokens =
+                        afterSourceReturn,
+                    estimatedMessageTokens =
+                        ::estimatedMessageTokens,
+                )
+            }
+        val selected =
+            if (
+                prior ==
+                    null ||
+                fixed.workingContinuity !=
+                    null
+            ) {
+                emptyList()
+            } else {
+                val source =
+                    requireNotNull(
+                        recentConversation,
+                    )
+                requireRecentConversationHistory(
+                    events = source.events,
+                    prior =
+                        requireNotNull(
+                            prior,
+                        ),
+                )
+                source.events
+            }
+        val selectedConversationTokens =
+            selected.sumOf {
+                estimatedMessageTokens(
+                    it.content,
+                )
+            }
+        require(
+            selectedConversationTokens <=
+                afterSourceReturn,
+        ) {
+            "direct continuity exact Conversation selection exceeds remaining prompt attention"
+        }
+
+        val memoryTokenCap =
+            minOf(
+                VexLifeMemoryContract.MaximumMemoryTokens,
+                afterSourceReturn -
+                    selectedConversationTokens,
+            )
+        val memory =
+            fixed.memoryAvailability
+                ?.context
+                ?.let {
+                    availability ->
+                    val selectedMemory =
+                        if (
+                            availability.memoryTokenCap ==
+                                memoryTokenCap
+                        ) {
+                            availability
+                        } else {
+                            requireNotNull(
+                                memoryContextAtCap,
+                            ) {
+                                "direct continuity prompt requires caller-bounded Memory source for the selected cap"
+                            }
+                                .invoke(
+                                    memoryTokenCap,
+                                )
+                        }
+                    val verified =
+                        requireNotNull(
+                            verifyMemoryContext(
+                                selectedMemory,
+                            ),
+                        )
+                    requireSameMemoryFrontier(
+                        availability = availability,
+                        selected = verified.context,
+                    )
+                    require(
+                        verified.context.memoryTokenCap ==
+                            memoryTokenCap,
+                    ) {
+                        "direct continuity selected Memory does not bind the exact remaining prompt cap"
+                    }
+                    verified
+                }
+        require(
+            (
+                fixed.memoryAvailability ==
+                    null
+                ) ==
+                (
+                    memory ==
+                    null
+                ),
+        ) {
+            "direct continuity Memory availability/selection relationship is inconsistent"
+        }
+
+        return formMaterialization(
+            prior = prior,
+            currentRequest = currentRequest,
+            browserContext = browserContext,
+            fixed = fixed,
+            memory = memory,
+            selected = selected,
+            recentConversation = recentConversation,
+            sourceReturnProjection = sourceReturnProjection,
+        )
+    }
+
+    fun reverifyContinuity(
+        materialization: Materialization,
+        conversationOwner: DirectConversationStore.Locked,
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
+        memoryAvailabilityContext: VexLifeMemoryContract.Context? =
+            null,
+        memoryContextAtCap: ((
+            memoryTokenCap: Int,
+        ) -> VexLifeMemoryContract.Context)? =
+            null,
+        workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
+            null,
+        browserContext: BrowserContext? =
+            null,
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
+            null,
+        sourceReturnProtocolEnabled: Boolean =
+            false,
+        sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
+            null,
+    ) {
+        val current =
+            materializeContinuity(
+                conversationOwner = conversationOwner,
+                prior = prior,
+                currentRequest = currentRequest,
+                memoryAvailabilityContext =
+                    memoryAvailabilityContext,
+                memoryContextAtCap =
+                    memoryContextAtCap,
+                workingContinuityContext =
+                    workingContinuityContext,
+                browserContext = browserContext,
+                runtimeEvidence = runtimeEvidence,
+                sourceReturnProtocolEnabled =
+                    sourceReturnProtocolEnabled,
+                sourceReturnDiscovery =
+                    sourceReturnDiscovery,
+            )
+        require(
+            current ==
+                materialization,
+        ) {
+            "direct continuity prompt materialization is no longer current at the provider boundary"
+        }
+    }
+
     fun reverify(
         materialization: Materialization,
         prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
