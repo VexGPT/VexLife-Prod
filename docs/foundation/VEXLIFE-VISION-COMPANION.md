@@ -31,8 +31,9 @@ ACCEPTED_COMPANION_MAIN != VISION_RUNTIME_BRIDGE
 
 The current VexLife-Prod Vision slice therefore composes over the accepted lived Companion body while
 remaining a truthful semantic/control surface. The SDK runtime artifact and Product private-image
-carriage are now accepted. The remaining Product gap is the ordinary local-service bridge that makes
-that already-carried runtime reachable from the existing Vision relationship.
+carriage are accepted, and this source now defines the ordinary local-service bridge to that carried
+runtime. Product manifestation remains Held until accepted-main/lived service currentness and the
+existing Vision presentation consume that reachability truth.
 
 ## Current semantic owner
 
@@ -141,12 +142,12 @@ Accepted Product carriage:
 github.pull.vexlife-prod.77
 ~~~
 
-The remaining gap is now narrower and Product-owned:
+The Product-owned source bridge is:
 
 ~~~text
 VexLifeVisionFamily.LookNow
 -> RequestSnapshot
--> Product local-service bridge                 MISSING
+-> Product local-service bridge
 -> carried vision-runtime/bin/vexlife-vision-runtime
 -> current SDK/Safety execution custody
 -> OS-owned system picker
@@ -156,15 +157,23 @@ VexLifeVisionFamily.LookNow
 -> bounded Product result
 ~~~
 
-The Product bridge must consume the carried runtime rather than reproduce SDK owner algorithms in
-Kotlin. The service process may consume only a Vision runtime executable already verified by the
+The Product bridge consumes the carried runtime rather than reproducing SDK owner algorithms in
+Kotlin. The service process consumes only a Vision runtime executable already verified by the
 source-bound private-image observer.
+
+Source acceptance of this bridge does not by itself claim that the currently running Product has
+already rotated onto a Vision-carrying accepted-main image, nor does it make the web projection Ready.
+Those are lived/currentness and presentation-consumption predicates, not missing bridge source.
 
 Permanent:
 
 ~~~text
 PRIVATE_IMAGE_CARRIAGE_ACCEPTED
-!= PRODUCT_SERVICE_ROUTE_REACHABLE
+!= RUNNING_PRODUCT_VISION_ROUTE_CURRENT
+
+PRODUCT_SERVICE_BRIDGE_SOURCE_ACCEPTED
+!= RUNNING_PRODUCT_VISION_ROUTE_CURRENT
+!= WEB_VISION_READY
 
 PRODUCT_SERVICE_BRIDGE
 != SECOND VISION RUNTIME
