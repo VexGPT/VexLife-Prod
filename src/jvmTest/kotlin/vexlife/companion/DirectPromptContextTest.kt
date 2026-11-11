@@ -985,6 +985,41 @@ class DirectPromptContextTest {
                     plan.memoryTokenCap,
                 )
 
+                val underSelectedPlan =
+                    DirectPromptAttentionPlan.form(
+                        DirectPromptAttentionPlan.Input(
+                            fixedCurrentTurnTokens =
+                                fixed.fixedInputTokenEstimate,
+                            selectedExactConversationTokens = 0,
+                            carryRequested = false,
+                            carryEstimatedSystemMessageTokens = 0,
+                        ),
+                    )
+                assertFailsWith<IllegalArgumentException> {
+                    DirectPromptContext.materializePlanned(
+                        conversationOwner = this,
+                        prior = prior,
+                        currentRequest = secondRequest,
+                        memoryContext = memory,
+                        memoryAvailabilityContext = memory,
+                        attentionPlan = underSelectedPlan,
+                        runtimeEvidence = runtime,
+                    )
+                }
+
+                assertFailsWith<IllegalArgumentException> {
+                    DirectPromptContext.materializePlanned(
+                        conversationOwner = this,
+                        prior = prior,
+                        currentRequest = secondRequest,
+                        memoryContext =
+                            VexLifeMemoryContextFixture.currentUnselectedForPrompt(),
+                        memoryAvailabilityContext = memory,
+                        attentionPlan = plan,
+                        runtimeEvidence = runtime,
+                    )
+                }
+
                 val materialized =
                     DirectPromptContext.materializePlanned(
                         conversationOwner = this,
