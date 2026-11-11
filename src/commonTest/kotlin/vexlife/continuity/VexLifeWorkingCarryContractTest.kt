@@ -24,6 +24,15 @@ class VexLifeWorkingCarryContractTest {
             sequence = 1,
         )
 
+    private val priorCarrySource =
+        VexLifeWorkingCarryContract.SourceBinding(
+            eventRef = "event.vexlife.request.prior",
+            eventHash = "4".repeat(
+                64,
+            ),
+            sequence = 0,
+        )
+
     private fun draft(
         disposition: String,
         items: List<VexLifeWorkingCarryContract.CarryItem>,
@@ -36,7 +45,11 @@ class VexLifeWorkingCarryContractTest {
             companionLineageRef = "companion-lineage.vexlife.test",
             threadRef = "thread.self-development.open-conversation",
             authoredByRef = "companion.vex.current",
-            observedSourceBindings =
+            previousCarrySourceBindings =
+                listOf(
+                    priorCarrySource,
+                ),
+            leavingSourceBindings =
                 listOf(
                     first,
                     second,
@@ -83,7 +96,7 @@ class VexLifeWorkingCarryContractTest {
     }
 
     @Test
-    fun carryAdmitsOnlySelfRelativeUnfinishedKindsBoundToExactLeavingSource() {
+    fun carryAdmitsOnlySelfRelativeUnfinishedKindsFromAvailablePresentSource() {
         val items =
             VexLifeWorkingCarryContract.CarryKinds
                 .sorted()
@@ -113,6 +126,38 @@ class VexLifeWorkingCarryContractTest {
 
         assertEquals(
             items,
+            value.carryItems,
+        )
+    }
+
+    @Test
+    fun refreshedCarryMayRetainOlderStillLiveSourceWhileReleasingNewLeavingMaterial() {
+        val item =
+            VexLifeWorkingCarryContract.CarryItem(
+                kind = "OPEN_UNDERSTANDING",
+                content = "I am still trying to understand the older open question.",
+                sourceBindings =
+                    listOf(
+                        priorCarrySource,
+                    ),
+            )
+
+        val value =
+            VexLifeWorkingCarryContract.requireDraftShape(
+                draft(
+                    disposition = VexLifeWorkingCarryContract.Carry,
+                    items =
+                        listOf(
+                            item,
+                        ),
+                    releaseReason = null,
+                ),
+            )
+
+        assertEquals(
+            listOf(
+                item,
+            ),
             value.carryItems,
         )
     }
@@ -148,7 +193,7 @@ class VexLifeWorkingCarryContractTest {
                 eventHash = "3".repeat(
                     64,
                 ),
-                sequence = 2,
+                sequence = 9,
             )
 
         assertFailsWith<IllegalArgumentException> {
