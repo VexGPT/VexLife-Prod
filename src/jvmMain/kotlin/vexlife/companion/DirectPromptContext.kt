@@ -9,6 +9,7 @@ import kotlinx.serialization.Serializable
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.contract.VexContractJson
+import vexlife.continuity.VexLifeWorkingCarryContract
 import vexlife.continuity.VexLifeWorkingCarryOwner
 import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.conversation.DirectConversationIdentity
