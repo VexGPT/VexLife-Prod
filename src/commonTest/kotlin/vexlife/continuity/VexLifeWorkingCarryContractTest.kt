@@ -30,6 +30,7 @@ class VexLifeWorkingCarryContractTest {
         VexLifeWorkingCarryContract.Draft(
             schemaVersion = VexLifeWorkingCarryContract.Schema,
             truthClass = VexLifeWorkingCarryContract.TruthClass,
+            perspective = VexLifeWorkingCarryContract.Perspective,
             companionLineageRef = "companion-lineage.vexlife.test",
             threadRef = "thread.self-development.open-conversation",
             authoredByRef = "companion.vex.current",
@@ -46,12 +47,12 @@ class VexLifeWorkingCarryContractTest {
     @Test
     fun releaseMeansNothingFromTheLeavingRangeStillBearsOnPresentCarry() {
         val value =
-            VexLifeWorkingCarryContract.validateDraft(
+            VexLifeWorkingCarryContract.requireDraftShape(
                 draft(
                     disposition = VexLifeWorkingCarryContract.Release,
                     items = emptyList(),
                     releaseReason =
-                        VexLifeWorkingCarryContract.ReleaseReasonNoPresentClaim,
+                        VexLifeWorkingCarryContract.ReleaseReasonNoPresentCarry,
                 ),
             )
 
@@ -100,7 +101,7 @@ class VexLifeWorkingCarryContractTest {
                 }
 
         val value =
-            VexLifeWorkingCarryContract.validateDraft(
+            VexLifeWorkingCarryContract.requireDraftShape(
                 draft(
                     disposition = VexLifeWorkingCarryContract.Carry,
                     items = items,
@@ -117,7 +118,7 @@ class VexLifeWorkingCarryContractTest {
     @Test
     fun profileLikeOrUnregisteredCarryKindIsNotAdmitted() {
         assertFailsWith<IllegalArgumentException> {
-            VexLifeWorkingCarryContract.validateDraft(
+            VexLifeWorkingCarryContract.requireDraftShape(
                 draft(
                     disposition = VexLifeWorkingCarryContract.Carry,
                     items =
@@ -148,7 +149,7 @@ class VexLifeWorkingCarryContractTest {
             )
 
         assertFailsWith<IllegalArgumentException> {
-            VexLifeWorkingCarryContract.validateDraft(
+            VexLifeWorkingCarryContract.requireDraftShape(
                 draft(
                     disposition = VexLifeWorkingCarryContract.Carry,
                     items =
@@ -181,7 +182,7 @@ class VexLifeWorkingCarryContractTest {
             )
 
         assertFailsWith<IllegalArgumentException> {
-            VexLifeWorkingCarryContract.validateDraft(
+            VexLifeWorkingCarryContract.requireDraftShape(
                 draft(
                     disposition = VexLifeWorkingCarryContract.Release,
                     items =
@@ -189,13 +190,13 @@ class VexLifeWorkingCarryContractTest {
                             item,
                         ),
                     releaseReason =
-                        VexLifeWorkingCarryContract.ReleaseReasonNoPresentClaim,
+                        VexLifeWorkingCarryContract.ReleaseReasonNoPresentCarry,
                 ),
             )
         }
 
         assertFailsWith<IllegalArgumentException> {
-            VexLifeWorkingCarryContract.validateDraft(
+            VexLifeWorkingCarryContract.requireDraftShape(
                 draft(
                     disposition = VexLifeWorkingCarryContract.Carry,
                     items = emptyList(),
@@ -212,7 +213,7 @@ class VexLifeWorkingCarryContractTest {
                 disposition = VexLifeWorkingCarryContract.Release,
                 items = emptyList(),
                 releaseReason =
-                    VexLifeWorkingCarryContract.ReleaseReasonNoPresentClaim,
+                    VexLifeWorkingCarryContract.ReleaseReasonNoPresentCarry,
             )
 
         listOf(
@@ -238,7 +239,7 @@ class VexLifeWorkingCarryContractTest {
             .forEach {
                 invalid ->
                 assertFailsWith<IllegalArgumentException> {
-                    VexLifeWorkingCarryContract.validateDraft(
+                    VexLifeWorkingCarryContract.requireDraftShape(
                         invalid,
                     )
                 }
