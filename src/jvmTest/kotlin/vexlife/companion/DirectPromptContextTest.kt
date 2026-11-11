@@ -1280,6 +1280,7 @@ class DirectPromptContextTest {
                     )
                 val prepared =
                     carryOwner.prepare(
+                        conversationOwner = this,
                         priorConversationHeadSha256 =
                             firstHead.conversationHeadSha256,
                         currentRequest = secondRequest,
