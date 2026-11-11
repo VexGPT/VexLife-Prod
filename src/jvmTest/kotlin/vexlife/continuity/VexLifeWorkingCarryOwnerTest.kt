@@ -398,6 +398,43 @@ class VexLifeWorkingCarryOwnerTest {
                         carry = carry,
                         hex = 'a',
                     )
+                val tamperedRefresh =
+                    refresh.copy(
+                        newlyLeavingEvents =
+                            listOf(
+                                refresh.newlyLeavingEvents
+                                    .first()
+                                    .copy(
+                                        content =
+                                            "Altered text with the same canonical source address.",
+                                    ),
+                                refresh.newlyLeavingEvents
+                                    .last(),
+                            ),
+                    )
+                assertFailsWith<IllegalArgumentException> {
+                    owner.prepare(
+                        conversationOwner = this,
+                        priorConversationHeadSha256 =
+                            requireNotNull(
+                                firstHeadOrNull,
+                            )
+                                .conversationHeadSha256,
+                        currentRequest = secondRequest,
+                        refreshInput = tamperedRefresh,
+                        carry = carry,
+                        formationBinding =
+                            formationBinding(
+                                refresh = tamperedRefresh,
+                                carry = carry,
+                                hex = 'c',
+                            ),
+                    )
+                }
+                assertNull(
+                    owner.readCurrent(),
+                )
+
                 val prepared =
                     owner.prepare(
                         conversationOwner = this,
@@ -798,6 +835,37 @@ class VexLifeWorkingCarryOwnerTest {
                         carry = output,
                         hex = 'd',
                     )
+                val tamperedTextRefresh =
+                    refresh.copy(
+                        handoffEvents =
+                            listOf(
+                                refresh.handoffEvents
+                                    .first(),
+                                refresh.handoffEvents
+                                    .last()
+                                    .copy(
+                                        content =
+                                            "Altered rollover response text with the same source address.",
+                                    ),
+                            ),
+                    )
+                assertFailsWith<IllegalArgumentException> {
+                    owner.commitCompletedRolloverHandoff(
+                        conversationOwner = this,
+                        completedHead = completedHead,
+                        refreshInput = tamperedTextRefresh,
+                        carry = output,
+                        formationBinding =
+                            rolloverFormationBinding(
+                                refresh = tamperedTextRefresh,
+                                carry = output,
+                                hex = 'c',
+                            ),
+                    )
+                }
+                assertNull(
+                    owner.readCurrent(),
+                )
 
                 val committed =
                     owner.commitCompletedRolloverHandoff(
