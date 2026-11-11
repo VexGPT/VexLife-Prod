@@ -895,6 +895,10 @@ class DirectPromptContextTest {
                 DirectConversationStore(
                     productHome,
                 )
+            val carryOwner =
+                VexLifeWorkingCarryOwner(
+                    productHome,
+                )
             val memory =
                 VexLifeMemoryContextFixture.current()
             val runtime =
@@ -1005,6 +1009,7 @@ class DirectPromptContextTest {
                         memoryContext = memory,
                         memoryAvailabilityContext = memory,
                         attentionPlan = underSelectedPlan,
+                        workingCarryOwner = carryOwner,
                         runtimeEvidence = runtime,
                     )
                 }
@@ -1018,6 +1023,7 @@ class DirectPromptContextTest {
                             VexLifeMemoryContextFixture.currentUnselectedForPrompt(),
                         memoryAvailabilityContext = memory,
                         attentionPlan = plan,
+                        workingCarryOwner = carryOwner,
                         runtimeEvidence = runtime,
                     )
                 }
@@ -1030,6 +1036,7 @@ class DirectPromptContextTest {
                         memoryContext = memory,
                         memoryAvailabilityContext = memory,
                         attentionPlan = plan,
+                        workingCarryOwner = carryOwner,
                         runtimeEvidence = runtime,
                     )
 
@@ -1102,6 +1109,7 @@ class DirectPromptContextTest {
                     memoryContext = memory,
                     memoryAvailabilityContext = memory,
                     attentionPlan = plan,
+                    workingCarryOwner = carryOwner,
                     runtimeEvidence = runtime,
                 )
             }
@@ -1378,6 +1386,7 @@ class DirectPromptContextTest {
                         memoryContext = memory,
                         memoryAvailabilityContext = memory,
                         attentionPlan = staleCandidatePlan,
+                        workingCarryOwner = carryOwner,
                         workingCarryCandidate = formation,
                         runtimeEvidence = runtime,
                     )
@@ -1414,6 +1423,33 @@ class DirectPromptContextTest {
                     plan.memoryTokenCap,
                 )
 
+                assertFailsWith<IllegalArgumentException> {
+                    DirectPromptContext.materializePlanned(
+                        conversationOwner = this,
+                        prior = prior,
+                        currentRequest = thirdRequest,
+                        memoryContext = memory,
+                        memoryAvailabilityContext = memory,
+                        attentionPlan =
+                            DirectPromptAttentionPlan.form(
+                                DirectPromptAttentionPlan.Input(
+                                    fixedCurrentTurnTokens =
+                                        fixed.fixedInputTokenEstimate,
+                                    selectedExactConversationTokens =
+                                        recent.events.sumOf {
+                                            DirectPromptContext.estimatedMessageTokens(
+                                                it.content,
+                                            )
+                                        },
+                                    carryRequested = false,
+                                    carryEstimatedSystemMessageTokens = 0,
+                                ),
+                            ),
+                        workingCarryOwner = carryOwner,
+                        runtimeEvidence = runtime,
+                    )
+                }
+
                 val materialized =
                     DirectPromptContext.materializePlanned(
                         conversationOwner = this,
@@ -1422,6 +1458,7 @@ class DirectPromptContextTest {
                         memoryContext = memory,
                         memoryAvailabilityContext = memory,
                         attentionPlan = plan,
+                        workingCarryOwner = carryOwner,
                         currentWorkingCarry = committed.current,
                         runtimeEvidence = runtime,
                     )
@@ -1465,6 +1502,7 @@ class DirectPromptContextTest {
                     memoryContext = memory,
                     memoryAvailabilityContext = memory,
                     attentionPlan = plan,
+                    workingCarryOwner = carryOwner,
                     currentWorkingCarry = committed.current,
                     runtimeEvidence = runtime,
                 )
