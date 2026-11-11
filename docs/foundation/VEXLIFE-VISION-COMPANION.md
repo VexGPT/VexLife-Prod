@@ -187,20 +187,31 @@ No Vision Store is earned merely for symmetry.
 
 ## Product manifestation
 
-The current Blueprint adds one stable Companion coordinate:
+The current Blueprint keeps the stable Companion Vision coordinate and adds one quick-access projection:
 
 ~~~text
 element.vexlife-workspace.companion.vision
+element.vexlife-workspace.header.utilities.quick-actions.vision
 ~~~
 
-VexWeb manifests that coordinate in the Companion header without an interaction binding. The canonical
-generated product renders:
+These are two presentations of one Vision relationship, not two Vision owners. The Companion-header
+surface remains the richer state projection and currently renders:
 
 ~~~text
 Vision · Held
 ~~~
 
-as a disabled control. This is current capability truth, not incomplete event wiring.
+as a disabled control. The header utility row also renders an eye-shaped Vision shortcut beside the
+other workspace quick actions so a human has a persistent, low-friction place to reference current
+focus for Vex.
+
+While Product Vision is still `Held`, activating the quick-access icon may surface that held state but
+must not fabricate `LookNow`, picker presentation, capture, or observation. Once the ordinary Product
+route earns `Ready`, the same quick-access coordinate should converge on the existing
+`VexLifeVisionFamily.Control.LookNow` relationship rather than introducing a second capture/control
+path.
+
+This is current capability truth, not incomplete event wiring.
 
 ## Held from the ordinary Product route
 

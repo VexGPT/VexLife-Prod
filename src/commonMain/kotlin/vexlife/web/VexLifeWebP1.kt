@@ -134,12 +134,31 @@ object VexLifeWebP1 {
                 ),
         )
 
+    val VisionQuickAccess =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.VisionQuickAccess,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.localInteraction(
+                    VexWeb.Identity.Blueprint(
+                        VexLifeWorkspaceBlueprint.Vision,
+                    ),
+                ),
+        )
+
     val QuickActions =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.QuickActions,
             children =
                 listOf(
                     VexSummon,
+                    VisionQuickAccess,
                 ),
         )
 
