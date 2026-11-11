@@ -48,7 +48,43 @@ class VexLifeWorkingCarryOwner(
         val invocationRef: String,
         val invocationFingerprint: String,
         val providerOutputSha256: String,
-    )
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    FormationBindingSchema &&
+                    formationFingerprint.matches(
+                        Regex(
+                            "[0-9a-f]{64}",
+                        ),
+                    ) &&
+                    formationRef ==
+                    "working-carry-formation." +
+                    formationFingerprint.take(
+                        32,
+                    ) &&
+                    runtimeObservationRef.isNotBlank() &&
+                    runtimeObservationFingerprint.matches(
+                        Regex(
+                            "[0-9a-f]{64}",
+                        ),
+                    ) &&
+                    invocationRef.isNotBlank() &&
+                    invocationFingerprint.matches(
+                        Regex(
+                            "[0-9a-f]{64}",
+                        ),
+                    ) &&
+                    providerOutputSha256.matches(
+                        Regex(
+                            "[0-9a-f]{64}",
+                        ),
+                    ),
+            ) {
+                "working carry formation binding is invalid"
+            }
+        }
+    }
 
     @Serializable
     private data class RevisionCore(
