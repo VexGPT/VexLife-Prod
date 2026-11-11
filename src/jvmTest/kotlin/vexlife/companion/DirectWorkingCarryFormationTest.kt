@@ -183,6 +183,37 @@ class DirectWorkingCarryFormationTest {
             carryTokenCap = carryTokenCap,
         )
 
+    private fun rolloverRefresh(
+        carryTokenCap: Int =
+            512,
+        previousCarry: VexLifeWorkingCarryContract.Draft? =
+            priorCarry(),
+    ) =
+        VexLifeWorkingCarryContract.RolloverRefreshInput(
+            schemaVersion =
+                VexLifeWorkingCarryContract.RolloverRefreshInputSchema,
+            perspective = VexLifeWorkingCarryContract.Perspective,
+            companionLineageRef = "companion-lineage.vexlife.working-carry-test",
+            threadRef = DirectConversationIdentity.ThreadRef,
+            previousCarry = previousCarry,
+            handoffEvents =
+                listOf(
+                    event(
+                        sequence = 2,
+                        suffix = "rollover.request",
+                        kind = "REQUEST",
+                        content = "Keep the distinction alive across the rollover.",
+                    ),
+                    event(
+                        sequence = 3,
+                        suffix = "rollover.response",
+                        kind = "RESPONSE",
+                        content = "I still owe continuity on that distinction after this completed turn.",
+                    ),
+                ),
+            carryTokenCap = carryTokenCap,
+        )
+
     private fun transport(
         content: String,
         inspectRequest: (
@@ -223,6 +254,82 @@ class DirectWorkingCarryFormationTest {
                 body = responseBody,
             )
         }
+
+    @Test
+    fun localVexFormsRolloverCarryFromCompletedHandoffWithoutFutureRequest() {
+        val input =
+            rolloverRefresh()
+        var sawRolloverInput =
+            false
+        val formation =
+            DirectWorkingCarryFormation.formRollover(
+                runtime = runtimeEvidence(),
+                refreshInput = input,
+                transport =
+                    transport(
+                        content =
+                            """
+                            {
+                              "disposition": "CARRY",
+                              "carryItems": [
+                                {
+                                  "kind": "OWED_CONTINUATION",
+                                  "content": "I still owe continuity on the distinction after rollover.",
+                                  "sourceEventRefs": ["event.vexlife.rollover.response"]
+                                }
+                              ],
+                              "releaseReason": null
+                            }
+                            """.trimIndent(),
+                        inspectRequest = {
+                            call ->
+                            sawRolloverInput =
+                                call.body.contains(
+                                    "VEXLIFE_WORKING_CARRY_ROLLOVER_REFRESH/v1",
+                                ) &&
+                                    call.body.contains(
+                                        "\"handoffEvents\"",
+                                    ) &&
+                                    call.body.contains(
+                                        "Keep the distinction alive across the rollover.",
+                                    ) &&
+                                    call.body.contains(
+                                        "I still owe continuity on that distinction after this completed turn.",
+                                    )
+                        },
+                    ),
+                now = {
+                    Instant.parse(
+                        "2026-11-11T04:30:00Z",
+                    )
+                },
+            )
+
+        assertTrue(
+            sawRolloverInput,
+        )
+        assertEquals(
+            VexLifeWorkingCarryContract.Carry,
+            formation.draft.disposition,
+        )
+        assertEquals(
+            listOf(
+                "event.vexlife.rollover.response",
+            ),
+            formation.draft.sourceBindings.map {
+                it.eventRef
+            },
+        )
+        assertFalse(
+            formation.rawProviderOutputPersisted,
+        )
+        assertFalse(
+            formation.rawReasoningPersisted,
+        )
+        assertFalse(
+            formation.humanAnswerProduced,
+        )
+    }
 
     @Test
     fun localVexFormsBoundedSelfRelativeCarryWithoutHumanAnswerOrRawReasoningPersistence() {
