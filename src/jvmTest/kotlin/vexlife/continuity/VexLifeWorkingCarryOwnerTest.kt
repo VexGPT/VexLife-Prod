@@ -832,6 +832,59 @@ class VexLifeWorkingCarryOwnerTest {
                     replay.current,
                 )
 
+                val laterRequest =
+                    beginRequest(
+                        turnRef = "turn.working-carry.rollover.002",
+                        requestMessageRef = "message.working-carry.rollover.human.002",
+                        content = "A later completed turn moves the Conversation edge.",
+                        formedAt = Instant.parse(
+                            "2026-11-11T04:41:00Z",
+                        ),
+                    )
+                val laterResponse =
+                    appendResponse(
+                        request = laterRequest,
+                        responseMessageRef = "message.working-carry.rollover.companion.002",
+                        content = "The old rollover handoff must now be stale.",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef = "observation.working-carry.rollover.runtime.002",
+                        invocationEvidenceRef = "evidence.working-carry.rollover.invocation.002",
+                        formedAt = Instant.parse(
+                            "2026-11-11T04:41:01Z",
+                        ),
+                    )
+                val laterContext =
+                    CanonicalLivedContextFixture.write(
+                        productHome = home,
+                        request = laterRequest,
+                        response = laterResponse,
+                        formedAt = Instant.parse(
+                            "2026-11-11T04:41:02Z",
+                        ),
+                    )
+                commitCompletedTurn(
+                    request = laterRequest,
+                    response = laterResponse,
+                    contextSha256 = laterContext.sha256,
+                    formedAt = Instant.parse(
+                        "2026-11-11T04:41:03Z",
+                    ),
+                )
+
+                assertFailsWith<IllegalArgumentException> {
+                    owner.commitCompletedRolloverHandoff(
+                        completedHead = completedHead,
+                        refreshInput = refresh,
+                        carry = output,
+                        formationBinding = binding,
+                    )
+                }
+                assertEquals(
+                    committed.current,
+                    owner.readCurrent(),
+                )
+
                 val mismatched =
                     refresh.copy(
                         handoffEvents =
