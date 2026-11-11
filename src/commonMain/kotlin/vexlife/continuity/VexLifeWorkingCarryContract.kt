@@ -3,17 +3,21 @@ package vexlife.continuity
 import kotlinx.serialization.Serializable
 
 /**
- * Portable semantic shape for a refreshed Vex present working carry when exact Conversation material
- * is about to leave direct model presence.
+ * Portable semantic shapes for Vex's present working carry when exact Conversation material is about
+ * to leave direct model presence.
  *
- * This contract does not decide provider invocation, persistence, currentness ownership, prompt
- * inclusion, Memory admission, relationship agreement or human-profile truth. It only distinguishes
- * a source-bound RELEASE from a source-bound Vex-self-relative CARRY. The draft is a refreshed
- * present state, not an append-only semantic ledger.
+ * Refresh input may contain raw local Conversation needed to decide what still bears on the present.
+ * The refreshed Draft retains only the source that still supports what Vex is actually carrying now.
+ *
+ * These contracts do not decide provider invocation, persistence, currentness ownership, prompt
+ * inclusion, Memory admission, relationship agreement or human-profile truth.
  */
 object VexLifeWorkingCarryContract {
     const val Schema =
         "vexlife.working-carry/v1"
+
+    const val RefreshInputSchema =
+        "vexlife.working-carry-refresh-input/v1"
 
     const val TruthClass =
         "VEX_PRESENT_WORKING_CARRY"
@@ -48,6 +52,15 @@ object VexLifeWorkingCarryContract {
     )
 
     @Serializable
+    data class SourceEvent(
+        val source: SourceBinding,
+        val eventKind: String,
+        val speakerRef: String,
+        val recipientRefs: List<String>,
+        val content: String,
+    )
+
+    @Serializable
     data class CarryItem(
         val kind: String,
         val content: String,
@@ -62,8 +75,7 @@ object VexLifeWorkingCarryContract {
         val companionLineageRef: String,
         val threadRef: String,
         val authoredByRef: String,
-        val previousCarrySourceBindings: List<SourceBinding>,
-        val leavingSourceBindings: List<SourceBinding>,
+        val sourceBindings: List<SourceBinding>,
         val disposition: String,
         val carryItems: List<CarryItem>,
         val releaseReason: String?,
@@ -74,6 +86,22 @@ object VexLifeWorkingCarryContract {
         val relationshipAgreementAuthorityGranted: Boolean = false,
         val canonicalConversationAuthorityGranted: Boolean = false,
         val memoryPromotionPerformed: Boolean = false,
+        val effectsPerformed: Boolean = false,
+    )
+
+    @Serializable
+    data class RefreshInput(
+        val schemaVersion: String,
+        val perspective: String,
+        val companionLineageRef: String,
+        val threadRef: String,
+        val previousCarry: Draft?,
+        val newlyLeavingEvents: List<SourceEvent>,
+        val retainedDirectEvents: List<SourceEvent>,
+        val currentRequest: SourceEvent,
+        val carryTokenCap: Int,
+        val durableMemoryIncluded: Boolean = false,
+        val persistencePerformed: Boolean = false,
         val effectsPerformed: Boolean = false,
     )
 
@@ -176,6 +204,103 @@ object VexLifeWorkingCarryContract {
         }
     }
 
+    fun requireRefreshInputShape(
+        value: RefreshInput,
+    ): RefreshInput {
+        require(
+            value.schemaVersion ==
+                RefreshInputSchema &&
+                value.perspective ==
+                Perspective,
+        ) {
+            "working carry refresh schema/perspective is invalid"
+        }
+        requireIdentity(
+            companionLineageRef = value.companionLineageRef,
+            threadRef = value.threadRef,
+        )
+        require(
+            value.carryTokenCap >=
+                0 &&
+                !value.durableMemoryIncluded &&
+                !value.persistencePerformed &&
+                !value.effectsPerformed,
+        ) {
+            "working carry refresh cannot include durable Memory, persist state, perform effects, or use a negative carry allowance"
+        }
+
+        value.previousCarry
+            ?.let {
+                prior ->
+                requireDraftShape(
+                    prior,
+                )
+                require(
+                    prior.companionLineageRef ==
+                        value.companionLineageRef &&
+                        prior.threadRef ==
+                        value.threadRef,
+                ) {
+                    "previous working carry belongs to a different lineage/thread"
+                }
+            }
+
+        val leaving =
+            requireSourceEventRange(
+                value.newlyLeavingEvents,
+                "newlyLeavingEvents",
+                allowEmpty = false,
+                requireCompletePairs = true,
+            )
+        val retained =
+            requireSourceEventRange(
+                value.retainedDirectEvents,
+                "retainedDirectEvents",
+                allowEmpty = true,
+                requireCompletePairs = true,
+            )
+        val current =
+            requireSourceEvent(
+                value.currentRequest,
+                "currentRequest",
+            )
+        require(
+            current.eventKind ==
+                "REQUEST",
+        ) {
+            "working carry refresh currentRequest must be one exact REQUEST"
+        }
+
+        val all =
+            leaving +
+                retained +
+                listOf(
+                    current,
+                )
+        requireOneSourceGeneration(
+            all.map(
+                SourceEvent::source,
+            ),
+            "working carry refresh source",
+        )
+        require(
+            all
+                .map {
+                    it.source.sequence
+                }
+                .zipWithNext()
+                .all {
+                    pair ->
+                    pair.first <
+                        pair.second
+                },
+        ) {
+            "working carry refresh sources must remain in strict lived Conversation order"
+        }
+
+        return value
+    }
+
     fun requireDraftShape(
         value: Draft,
     ): Draft {
@@ -189,87 +314,39 @@ object VexLifeWorkingCarryContract {
         ) {
             "working carry schema/truth class/perspective is invalid"
         }
-        requireStableRef(
-            value.companionLineageRef,
-            "companionLineageRef",
-        )
-        requireStableRef(
-            value.threadRef,
-            "threadRef",
+        requireIdentity(
+            companionLineageRef = value.companionLineageRef,
+            threadRef = value.threadRef,
         )
         requireStableRef(
             value.authoredByRef,
             "authoredByRef",
         )
 
-        val previous =
+        val source =
             requireBindings(
-                value.previousCarrySourceBindings,
-                "previousCarrySourceBindings",
+                value.sourceBindings,
+                "sourceBindings",
                 allowEmpty = true,
             )
-        require(
-            previous ==
-                value.previousCarrySourceBindings,
-        ) {
-            "working carry previous source bindings must preserve exact order and remain duplicate-free"
-        }
-        val leaving =
-            requireBindings(
-                value.leavingSourceBindings,
-                "leavingSourceBindings",
-                allowEmpty = false,
-            )
-        require(
-            leaving ==
-                value.leavingSourceBindings,
-        ) {
-            "working carry leaving source bindings must preserve exact order and remain duplicate-free"
-        }
-
-        val availableByRef =
-            linkedMapOf<String, SourceBinding>()
-        val availableBySequence =
-            linkedMapOf<Long, SourceBinding>()
-        (
-            previous +
-                leaving
+        requireOneSourceGeneration(
+            source,
+            "working carry source",
         )
-            .forEach {
-                binding ->
-                val priorByRef =
-                    availableByRef[
-                        binding.eventRef
-                    ]
-                val priorBySequence =
-                    availableBySequence[
-                        binding.sequence
-                    ]
-                require(
-                    (
-                        priorByRef ==
-                            null ||
-                            priorByRef ==
-                            binding
-                    ) &&
-                        (
-                            priorBySequence ==
-                                null ||
-                                priorBySequence ==
-                                binding
-                        ),
-                ) {
-                    "working carry source generations conflict by eventRef or Conversation sequence"
-                }
-                availableByRef[
-                    binding.eventRef
-                ] =
-                    binding
-                availableBySequence[
-                    binding.sequence
-                ] =
-                    binding
-            }
+        require(
+            source
+                .map(
+                    SourceBinding::sequence,
+                )
+                .zipWithNext()
+                .all {
+                    pair ->
+                    pair.first <
+                        pair.second
+                },
+        ) {
+            "working carry source bindings must remain in lived Conversation order"
+        }
 
         require(
             value.carryTokenCap >=
@@ -311,6 +388,13 @@ object VexLifeWorkingCarryContract {
             "working carry disposition is not admitted"
         }
 
+        val sourceByRef =
+            source.associateBy(
+                SourceBinding::eventRef,
+            )
+        val used =
+            linkedMapOf<String, SourceBinding>()
+
         value.carryItems.forEach {
             item ->
             require(
@@ -325,29 +409,46 @@ object VexLifeWorkingCarryContract {
             ) {
                 "working carry item content must be non-empty"
             }
-            val sources =
+            val itemSources =
                 requireBindings(
                     item.sourceBindings,
                     "carryItem.sourceBindings",
                     allowEmpty = false,
                 )
+            requireOneSourceGeneration(
+                itemSources,
+                "working carry item source",
+            )
             require(
-                sources ==
-                    item.sourceBindings,
-            ) {
-                "working carry item source bindings must be canonical and duplicate-free"
-            }
-            require(
-                sources.all {
-                    source ->
-                    availableByRef[
-                        source.eventRef
+                itemSources.all {
+                    binding ->
+                    sourceByRef[
+                        binding.eventRef
                     ] ==
-                        source
+                        binding
                 },
             ) {
-                "working carry item source must come from the prior present carry or exact newly leaving range"
+                "working carry item source must belong to the refreshed present carry source"
             }
+            itemSources.forEach {
+                binding ->
+                used[
+                    binding.eventRef
+                ] =
+                    binding
+            }
+        }
+
+        val usedInSourceOrder =
+            used.values
+                .sortedBy(
+                    SourceBinding::sequence,
+                )
+        require(
+            source ==
+                usedInSourceOrder,
+        ) {
+            "working carry must not retain source that no current carry item still uses"
         }
 
         when (
@@ -355,28 +456,99 @@ object VexLifeWorkingCarryContract {
         ) {
             Release -> {
                 require(
-                    value.carryItems.isEmpty() &&
+                    value.sourceBindings.isEmpty() &&
+                        value.carryItems.isEmpty() &&
                         value.estimatedCarryTokens ==
                         0 &&
                         value.releaseReason ==
                         ReleaseReasonNoPresentCarry,
                 ) {
-                    "RELEASE means no present working carry remains after refreshing prior carry with the leaving range"
+                    "RELEASE means no present working carry or retained carry source remains"
                 }
             }
 
             Carry -> {
                 require(
-                    value.carryItems.isNotEmpty() &&
+                    value.sourceBindings.isNotEmpty() &&
+                        value.carryItems.isNotEmpty() &&
                         value.releaseReason ==
                         null,
                 ) {
-                    "CARRY requires one or more self-relative carry items and no release reason"
+                    "CARRY requires self-relative carry items, exact used source, and no release reason"
                 }
             }
         }
 
         return value
+    }
+
+    fun requireDraftFromRefresh(
+        refresh: RefreshInput,
+        draft: Draft,
+    ): Draft {
+        val input =
+            requireRefreshInputShape(
+                refresh,
+            )
+        val output =
+            requireDraftShape(
+                draft,
+            )
+
+        require(
+            output.companionLineageRef ==
+                input.companionLineageRef &&
+                output.threadRef ==
+                input.threadRef &&
+                output.carryTokenCap ==
+                input.carryTokenCap,
+        ) {
+            "refreshed working carry identity or token allowance differs from its exact refresh input"
+        }
+
+        val allowed =
+            linkedMapOf<String, SourceBinding>()
+        input.previousCarry
+            ?.sourceBindings
+            .orEmpty()
+            .plus(
+                input.newlyLeavingEvents.map {
+                    it.source
+                },
+            )
+            .forEach {
+                binding ->
+                val prior =
+                    allowed[
+                        binding.eventRef
+                    ]
+                require(
+                    prior ==
+                        null ||
+                        prior ==
+                        binding,
+                ) {
+                    "working carry refresh has conflicting eligible source generations"
+                }
+                allowed[
+                    binding.eventRef
+                ] =
+                    binding
+            }
+
+        require(
+            output.sourceBindings.all {
+                binding ->
+                allowed[
+                    binding.eventRef
+                ] ==
+                    binding
+            },
+        ) {
+            "refreshed carry may use only prior carry source or exact newly leaving source"
+        }
+
+        return output
     }
 
     fun estimateCarryContentTokens(
@@ -407,6 +579,119 @@ object VexLifeWorkingCarryContract {
             "working carry content token estimate exceeds supported integer range"
         }
         return estimate.toInt()
+    }
+
+    private fun requireSourceEventRange(
+        values: List<SourceEvent>,
+        label: String,
+        allowEmpty: Boolean,
+        requireCompletePairs: Boolean,
+    ): List<SourceEvent> {
+        require(
+            allowEmpty ||
+                values.isNotEmpty(),
+        ) {
+            "$label must not be empty"
+        }
+        values.forEachIndexed {
+            index,
+            value,
+            ->
+            requireSourceEvent(
+                value,
+                "$label[$index]",
+            )
+        }
+        require(
+            values
+                .map {
+                    it.source.sequence
+                }
+                .zipWithNext()
+                .all {
+                    pair ->
+                    pair.second ==
+                        pair.first +
+                        1
+                },
+        ) {
+            "$label must be one contiguous Conversation sequence range"
+        }
+        if (
+            requireCompletePairs &&
+            values.isNotEmpty()
+        ) {
+            require(
+                values.size %
+                    2 ==
+                    0 &&
+                    values.first()
+                        .source
+                        .sequence %
+                    2 ==
+                    0L
+            ) {
+                "$label must contain complete REQUEST/RESPONSE pairs"
+            }
+            values.chunked(
+                2,
+            )
+                .forEach {
+                    pair ->
+                    require(
+                        pair[0].eventKind ==
+                            "REQUEST" &&
+                            pair[1].eventKind ==
+                            "RESPONSE",
+                    ) {
+                        "$label must preserve REQUEST/RESPONSE pair order"
+                    }
+                }
+        }
+        return values
+    }
+
+    private fun requireSourceEvent(
+        value: SourceEvent,
+        label: String,
+    ): SourceEvent {
+        requireBindings(
+            listOf(
+                value.source,
+            ),
+            "$label.source",
+            allowEmpty = false,
+        )
+        require(
+            value.eventKind in
+                setOf(
+                    "REQUEST",
+                    "RESPONSE",
+                ) &&
+                value.content.isNotEmpty(),
+        ) {
+            "$label event kind/content is invalid"
+        }
+        requireStableRef(
+            value.speakerRef,
+            "$label.speakerRef",
+        )
+        require(
+            value.recipientRefs.isNotEmpty() &&
+                value.recipientRefs
+                    .distinct()
+                    .size ==
+                    value.recipientRefs.size,
+        ) {
+            "$label recipient refs must be non-empty and duplicate-free"
+        }
+        value.recipientRefs.forEach {
+            requireStableRef(
+                it,
+                "$label.recipientRef",
+            )
+        }
+        return value
     }
 
     private fun requireDirectPresenceBindings(
@@ -456,7 +741,7 @@ object VexLifeWorkingCarryContract {
     }
 
     /**
-     * Preserve the exact observed Conversation order. Determinism must not reorder lived source.
+     * Preserve exact lived source order. Determinism must not alphabetize Conversation source.
      */
     private fun requireBindings(
         values: List<SourceBinding>,
@@ -497,12 +782,77 @@ object VexLifeWorkingCarryContract {
             )
                 .distinct()
                 .size ==
-                values.size,
+                values.size &&
+                values.map(
+                    SourceBinding::sequence,
+                )
+                    .distinct()
+                    .size ==
+                    values.size,
         ) {
-            "$label must not repeat an eventRef"
+            "$label must not repeat an eventRef or Conversation sequence"
         }
 
         return values
+    }
+
+    private fun requireOneSourceGeneration(
+        values: List<SourceBinding>,
+        label: String,
+    ) {
+        val byRef =
+            linkedMapOf<String, SourceBinding>()
+        val bySequence =
+            linkedMapOf<Long, SourceBinding>()
+        values.forEach {
+            binding ->
+            val priorByRef =
+                byRef[
+                    binding.eventRef
+                ]
+            val priorBySequence =
+                bySequence[
+                    binding.sequence
+                ]
+            require(
+                (
+                    priorByRef ==
+                        null ||
+                        priorByRef ==
+                        binding
+                ) &&
+                    (
+                        priorBySequence ==
+                            null ||
+                            priorBySequence ==
+                            binding
+                    ),
+            ) {
+                "$label conflicts by eventRef or Conversation sequence"
+            }
+            byRef[
+                binding.eventRef
+            ] =
+                binding
+            bySequence[
+                binding.sequence
+            ] =
+                binding
+        }
+    }
+
+    private fun requireIdentity(
+        companionLineageRef: String,
+        threadRef: String,
+    ) {
+        requireStableRef(
+            companionLineageRef,
+            "companionLineageRef",
+        )
+        requireStableRef(
+            threadRef,
+            "threadRef",
+        )
     }
 
     private fun requireStableRef(
