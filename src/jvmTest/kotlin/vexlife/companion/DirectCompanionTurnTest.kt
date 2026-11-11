@@ -14,6 +14,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.continuity.VexLifeWorkingContinuityOwner
+import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
@@ -74,6 +75,522 @@ class DirectCompanionTurnTest {
             endpoint = HereticProductIdentity.Endpoint,
             requestModel = HereticProductIdentity.RequestModel,
         )
+
+    @Test
+    fun conditionalSourceReturnUsesTwoProviderCallsButOnlyFinalInferenceBecomesHumanTurn() {
+        val home =
+            productHome()
+        val conversation =
+            DirectConversationStore(
+                home,
+            )
+
+        conversation.withWriterLease {
+            val oldRequest =
+                beginRequest(
+                    turnRef = "turn.source-return.live.old",
+                    requestMessageRef = "message.source-return.live.human.old",
+                    content =
+                        "lantern-garden exact older source " +
+                            "O".repeat(
+                                40_000,
+                            ),
+                )
+            val oldResponse =
+                appendResponse(
+                    request = oldRequest,
+                    responseMessageRef = "message.source-return.live.companion.old",
+                    content = "I received the lantern-garden detail.",
+                    model = "default_model",
+                    endpointOrigin = "http://127.0.0.1:8765",
+                    runtimeObservationRef = "observation.source-return.live.old",
+                    invocationEvidenceRef = "evidence.source-return.live.old",
+                )
+            val oldContext =
+                CanonicalLivedContextFixture.write(
+                    productHome = home,
+                    request = oldRequest,
+                    response = oldResponse,
+                )
+            commitCompletedTurn(
+                request = oldRequest,
+                response = oldResponse,
+                contextSha256 = oldContext.sha256,
+            )
+
+            val newerRequestTokens =
+                190_000
+            val newerRequest =
+                beginRequest(
+                    turnRef = "turn.source-return.live.newer",
+                    requestMessageRef = "message.source-return.live.human.newer",
+                    content =
+                        "N".repeat(
+                            (
+                                newerRequestTokens -
+                                    4
+                            ) *
+                                4,
+                        ),
+                )
+            val newerResponse =
+                appendResponse(
+                    request = newerRequest,
+                    responseMessageRef = "message.source-return.live.companion.newer",
+                    content = "Recent response without the old query term.",
+                    model = "default_model",
+                    endpointOrigin = "http://127.0.0.1:8765",
+                    runtimeObservationRef = "observation.source-return.live.newer",
+                    invocationEvidenceRef = "evidence.source-return.live.newer",
+                )
+            val newerContext =
+                CanonicalLivedContextFixture.write(
+                    productHome = home,
+                    request = newerRequest,
+                    response = newerResponse,
+                )
+            commitCompletedTurn(
+                request = newerRequest,
+                response = newerResponse,
+                contextSha256 = newerContext.sha256,
+            )
+        }
+
+        var calls =
+            0
+        val progress =
+            mutableListOf<DirectCompanionTurn.Progress>()
+        val sourceReturnRequest =
+            "VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1" +
+                "\n" +
+                """{"schemaVersion":"vexlife-prod.conversation-source-return-request/v1","queryTerms":["lantern-garden"],"speakerScope":"ANY"}"""
+        val transport =
+            object :
+                DirectCompanionConnection.StreamingTransport {
+                override fun post(
+                    call: DirectCompanionConnection.HttpCall,
+                ): DirectCompanionConnection.HttpResult =
+                    error(
+                        "source-return live test must use streaming transport",
+                    )
+
+                override fun postStreaming(
+                    call: DirectCompanionConnection.HttpCall,
+                    onLine: (String) -> Unit,
+                ): DirectCompanionConnection.StreamingHttpResult {
+                    calls +=
+                        1
+
+                    fun emit(
+                        field: String,
+                        delta: String,
+                        finish: Boolean =
+                            false,
+                    ) {
+                        val finishPart =
+                            if (
+                                finish
+                            ) {
+                                ""","finish_reason":"stop""""
+                            } else {
+                                ""
+                            }
+                        onLine(
+                            (
+                                """data: {"model":"default_model","choices":[{__FINISH__,"delta":{"role":"assistant","__FIELD__":__DELTA__}}]}"""
+                            )
+                                .replace(
+                                    "__FINISH__",
+                                    finishPart,
+                                )
+                                .replace(
+                                    "__FIELD__",
+                                    field,
+                                )
+                                .replace(
+                                    "__DELTA__",
+                                    kotlinx.serialization.json.JsonPrimitive(
+                                        delta,
+                                    )
+                                        .toString(),
+                                ),
+                        )
+                        onLine(
+                            "",
+                        )
+                    }
+
+                    when (
+                        calls
+                    ) {
+                        1 -> {
+                            assertTrue(
+                                call.body.contains(
+                                    "VEXLIFE_CONVERSATION_SOURCE_RETURN_PROTOCOL/v1",
+                                ),
+                            )
+                            assertTrue(
+                                call.body.contains(
+                                    "What was the exact older lantern-garden detail?",
+                                ),
+                            )
+                            assertFalse(
+                                call.body.contains(
+                                    "lantern-garden exact older source",
+                                ),
+                            )
+
+                            emit(
+                                field = "reasoning_content",
+                                delta =
+                                    "PRIVATE_INTERNAL_SOURCE_RETURN_REASONING",
+                            )
+                            emit(
+                                field = "content",
+                                delta =
+                                    "VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1".take(
+                                        22,
+                                    ),
+                            )
+                            emit(
+                                field = "content",
+                                delta =
+                                    sourceReturnRequest.substring(
+                                        22,
+                                    ),
+                                finish = true,
+                            )
+                        }
+
+                        2 -> {
+                            assertTrue(
+                                call.body.contains(
+                                    "VEXLIFE_CONVERSATION_SOURCE_RETURN/v1",
+                                ),
+                            )
+                            assertTrue(
+                                call.body.contains(
+                                    "lantern-garden exact older source",
+                                ),
+                            )
+                            assertTrue(
+                                call.body.contains(
+                                    "What was the exact older lantern-garden detail?",
+                                ),
+                            )
+                            assertFalse(
+                                call.body.contains(
+                                    "VEXLIFE_CONVERSATION_SOURCE_RETURN_PROTOCOL/v1",
+                                ),
+                            )
+
+                            emit(
+                                field = "reasoning_content",
+                                delta =
+                                    "final visible source-grounded reasoning",
+                            )
+                            emit(
+                                field = "content",
+                                delta =
+                                    "The exact lantern-garden detail is now grounded in returned source.",
+                                finish = true,
+                            )
+                        }
+
+                        else ->
+                            error(
+                                "unexpected source-return provider call",
+                            )
+                    }
+
+                    onLine(
+                        "data: [DONE]",
+                    )
+                    onLine(
+                        "",
+                    )
+                    return DirectCompanionConnection.StreamingHttpResult(
+                        status = 200,
+                        responseBodySha256 =
+                            if (
+                                calls ==
+                                    1
+                            ) {
+                                "a".repeat(
+                                    64,
+                                )
+                            } else {
+                                "b".repeat(
+                                    64,
+                                )
+                            },
+                    )
+                }
+            }
+
+        try {
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup =
+                        setup(
+                            home,
+                        ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey =
+                                "send.self-development.source-return.live.001",
+                            content =
+                                "What was the exact older lantern-garden detail?",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            progressObserver =
+                                DirectCompanionTurn.ProgressObserver {
+                                    progress +=
+                                        it
+                                },
+                            now = {
+                                Instant.parse(
+                                    "2026-11-11T06:05:00Z",
+                                )
+                            },
+                        ),
+                )
+
+            assertEquals(
+                2,
+                calls,
+            )
+            assertEquals(
+                "The exact lantern-garden detail is now grounded in returned source.",
+                result.content,
+            )
+            assertEquals(
+                "final visible source-grounded reasoning",
+                result.humanReasoning,
+            )
+            assertEquals(
+                "RETURNED",
+                result.promptContextReceipt.sourceReturnState,
+            )
+            assertFalse(
+                result.promptContextReceipt.sourceReturnProtocolEnabled,
+            )
+
+            val projectedProgress =
+                progress
+                    .mapNotNull(
+                        DirectCompanionTurn.Progress::delta,
+                    )
+                    .joinToString(
+                        "",
+                    )
+            assertTrue(
+                projectedProgress.contains(
+                    "final visible source-grounded reasoning",
+                ),
+            )
+            assertTrue(
+                projectedProgress.contains(
+                    "The exact lantern-garden detail is now grounded in returned source.",
+                ),
+            )
+            assertFalse(
+                projectedProgress.contains(
+                    "PRIVATE_INTERNAL_SOURCE_RETURN_REASONING",
+                ),
+            )
+            assertFalse(
+                projectedProgress.contains(
+                    "VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1",
+                ),
+            )
+
+            val snapshot =
+                DirectConversationStore(
+                    home,
+                )
+                    .current()
+            val currentTurnEvents =
+                snapshot.canonicalEvents.filter {
+                    it.turnRef ==
+                        result.turnRef
+                }
+            assertEquals(
+                2,
+                currentTurnEvents.size,
+            )
+            assertEquals(
+                listOf(
+                    "REQUEST",
+                    "RESPONSE",
+                ),
+                currentTurnEvents.map {
+                    it.eventKind
+                },
+            )
+            assertFalse(
+                currentTurnEvents.any {
+                    it.content.contains(
+                        "VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1",
+                    )
+                },
+            )
+
+            val context =
+                assertNotNull(
+                    DirectTurnContextStore(
+                        home,
+                    )
+                        .read(
+                            result.turnRef,
+                        ),
+                )
+            val trace =
+                assertNotNull(
+                    context.sourceReturnTrace,
+                )
+            assertEquals(
+                result.promptContextReceipt.receiptRef,
+                trace.finalPromptReceiptRef,
+            )
+            assertEquals(
+                "RETURNED",
+                trace.attempt.sourceReturnState,
+            )
+            assertTrue(
+                trace.attempt.returnedSourceEventRefs.isNotEmpty(),
+            )
+            assertFalse(
+                trace.rawProviderOutputPersisted,
+            )
+            assertFalse(
+                trace.rawReasoningPersisted,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun finalSourceReturnInferenceCannotRequestSourceAgainOrBecomeCanonicalResponse() {
+        val home =
+            productHome()
+        var calls =
+            0
+        val sourceReturnRequest =
+            "VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1" +
+                "\n" +
+                """{"schemaVersion":"vexlife-prod.conversation-source-return-request/v1","queryTerms":["missing-detail"],"speakerScope":"ANY"}"""
+        val transport =
+            DirectCompanionConnection.Transport {
+                calls +=
+                    1
+                DirectCompanionConnection.HttpResult(
+                    status = 200,
+                    body =
+                        """
+                        {
+                          "model": "default_model",
+                          "choices": [
+                            {
+                              "message": {
+                                "role": "assistant",
+                                "content": __CONTENT__
+                              }
+                            }
+                          ]
+                        }
+                        """.trimIndent()
+                            .replace(
+                                "__CONTENT__",
+                                kotlinx.serialization.json.JsonPrimitive(
+                                    sourceReturnRequest,
+                                )
+                                    .toString(),
+                            ),
+                )
+            }
+
+        try {
+            val failure =
+                assertFailsWith<DirectCompanionTurn.TurnException> {
+                    DirectCompanionTurn.performWithHooks(
+                        setup =
+                            setup(
+                                home,
+                            ),
+                        intent =
+                            DirectCompanionTurn.Intent(
+                                idempotencyKey =
+                                    "send.self-development.source-return.recursion.001",
+                                content =
+                                    "Find an older detail if needed.",
+                            ),
+                        hooks =
+                            DirectCompanionTurn.Hooks(
+                                transport = transport,
+                            ),
+                    )
+                }
+
+            assertEquals(
+                2,
+                calls,
+            )
+            assertEquals(
+                "SOURCE_RETURN_RECURSION_NOT_ADMITTED",
+                failure.failureCode,
+            )
+            val receipt =
+                assertNotNull(
+                    failure.failureReceipt,
+                )
+            assertTrue(
+                receipt.requestDurablyRecorded,
+            )
+            assertFalse(
+                receipt.responseDurablyRecorded,
+            )
+            assertFalse(
+                receipt.contextDurablyRecorded,
+            )
+            assertFalse(
+                receipt.currentHeadCommitted,
+            )
+
+            val snapshot =
+                DirectConversationStore(
+                    home,
+                )
+                    .current()
+            assertNull(
+                snapshot.head,
+            )
+            assertTrue(
+                snapshot.canonicalEvents.isEmpty(),
+            )
+            val abandoned =
+                snapshot.abandonedAttempts
+                    .single()
+                    .requestEvent
+            assertNull(
+                DirectTurnContextStore(
+                    home,
+                )
+                    .read(
+                        abandoned.turnRef,
+                    ),
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
 
     @Test
     fun threeTurnsCarryRecentCanonicalConversationAndRemainCanonical() {
