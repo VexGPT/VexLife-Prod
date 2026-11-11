@@ -91,6 +91,10 @@ class VexLifeCurrentMemoryReaderTest {
                 current.estimatedSystemMessageTokens,
             )
             assertEquals(
+                VexLifeMemoryContract.MaximumMemoryTokens,
+                current.memoryTokenCap,
+            )
+            assertEquals(
                 listOf(
                     VexLifeCurrentMemoryReader.LivingJournalMemoryOwnerRef,
                     VexLifeCurrentMemoryReader.LivingJournalDailyRecordOwnerRef,
@@ -98,6 +102,80 @@ class VexLifeCurrentMemoryReaderTest {
                     .sorted(),
                 current.sourceOwnerRefs,
             )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun promptMemoryCapMayYieldToTheCurrentTurnWithoutChangingMemoryOwnership() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-memory-reader-bounded-cap-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home,
+            )
+
+            val zero =
+                VexLifeCurrentMemoryReader.readCurrent(
+                    productHome = home,
+                    memoryTokenCap = 0,
+                )
+            val bounded =
+                VexLifeCurrentMemoryReader.readCurrent(
+                    productHome = home,
+                    memoryTokenCap = 4_096,
+                )
+
+            assertEquals(
+                0,
+                zero.memoryTokenCap,
+            )
+            assertEquals(
+                4_096,
+                bounded.memoryTokenCap,
+            )
+            assertFalse(
+                zero.included,
+            )
+            assertFalse(
+                bounded.included,
+            )
+            assertEquals(
+                listOf(
+                    "NO_COMMITTED_DAILY_MEMORY",
+                ),
+                zero.reasons,
+            )
+            assertEquals(
+                zero.reasons,
+                bounded.reasons,
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                VexLifeCurrentMemoryReader.readCurrent(
+                    productHome = home,
+                    memoryTokenCap = -1,
+                )
+            }
+            assertFailsWith<IllegalArgumentException> {
+                VexLifeCurrentMemoryReader.readCurrent(
+                    productHome = home,
+                    memoryTokenCap =
+                        VexLifeMemoryContract.MaximumMemoryTokens +
+                            1,
+                )
+            }
         } finally {
             parent
                 .toFile()

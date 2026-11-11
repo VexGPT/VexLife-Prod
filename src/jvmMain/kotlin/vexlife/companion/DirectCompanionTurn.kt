@@ -377,6 +377,14 @@ object DirectCompanionTurn {
                         DirectPromptContext.materialize(
                             prior = currentPrior,
                             currentRequest = request,
+                            recentConversationSource = {
+                                availableTokens ->
+                                recentCompletedConversation(
+                                    availableTokens = availableTokens,
+                                    estimatedMessageTokens =
+                                        DirectPromptContext::estimatedMessageTokens,
+                                )
+                            },
                             memoryContext = currentMemoryContext,
                             workingContinuityContext =
                                 workingSuccessorContext,
@@ -396,6 +404,14 @@ object DirectCompanionTurn {
                         materialization = prompt,
                         prior = currentPrior,
                         currentRequest = request,
+                        recentConversationSource = {
+                            availableTokens ->
+                            recentCompletedConversation(
+                                availableTokens = availableTokens,
+                                estimatedMessageTokens =
+                                    DirectPromptContext::estimatedMessageTokens,
+                            )
+                        },
                         memoryContext = currentMemoryContext,
                         workingContinuityContext =
                             workingSuccessorContext,
