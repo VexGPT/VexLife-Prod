@@ -673,7 +673,10 @@ object DirectPromptContext {
                 inputTokenBudget = InputTokenBudget,
                 reservedOutputTokens = ReservedOutputTokens,
                 hardTokenLimit = HardTokenLimit,
-                wholeHistoryEventEnumerationPerformed = false,
+                wholeHistoryEventEnumerationPerformed =
+                    recentConversation
+                        ?.wholeHistoryEventEnumerationPerformed
+                        ?: false,
                 memoryContextRef =
                     memoryValue
                         ?.memoryContextRef,
