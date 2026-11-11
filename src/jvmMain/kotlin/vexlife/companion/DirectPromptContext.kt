@@ -9,6 +9,7 @@ import kotlinx.serialization.Serializable
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.contract.VexContractJson
+import vexlife.continuity.VexLifeWorkingCarryOwner
 import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
@@ -1039,6 +1040,287 @@ object DirectPromptContext {
             effectAuthorityGranted = projection.effectAuthorityGranted,
             effectsPerformed = projection.effectsPerformed,
         )
+
+    fun materializePlanned(
+        conversationOwner: DirectConversationStore.Locked,
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
+        memoryContext: VexLifeMemoryContract.Context,
+        memoryAvailabilityContext: VexLifeMemoryContract.Context,
+        attentionPlan: DirectPromptAttentionPlan.Plan,
+        workingCarryCandidate: DirectWorkingCarryFormation.Formation? =
+            null,
+        currentWorkingCarry: VexLifeWorkingCarryOwner.Current? =
+            null,
+        workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
+            null,
+        browserContext: BrowserContext? =
+            null,
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
+            null,
+    ): Materialization {
+        require(
+            workingCarryCandidate ==
+                null ||
+                currentWorkingCarry ==
+                null,
+        ) {
+            "planned prompt may project either the refreshed turn carry candidate or the durable current carry, not both"
+        }
+
+        val plan =
+            DirectPromptAttentionPlan.validate(
+                attentionPlan,
+            )
+        require(
+            plan.inputTokenBudget ==
+                InputTokenBudget,
+        ) {
+            "planned prompt attention budget differs from the Product input budget"
+        }
+
+        val fixed =
+            verifyFixedContext(
+                prior = prior,
+                currentRequest = currentRequest,
+                memoryAvailabilityContext = memoryAvailabilityContext,
+                workingContinuityContext = workingContinuityContext,
+                browserContext = browserContext,
+                runtimeEvidence = runtimeEvidence,
+            )
+        require(
+            plan.fixedCurrentTurnTokens ==
+                fixed.fixedInputTokenEstimate &&
+                plan.conversationSelectionBudget ==
+                InputTokenBudget -
+                fixed.fixedInputTokenEstimate,
+        ) {
+            "planned prompt fixed-context arithmetic differs from current source"
+        }
+
+        val recentConversation =
+            if (
+                prior ==
+                    null ||
+                fixed.workingContinuity !=
+                    null
+            ) {
+                null
+            } else {
+                conversationOwner.recentCompletedConversation(
+                    availableTokens =
+                        plan.conversationSelectionBudget,
+                    estimatedMessageTokens =
+                        ::estimatedMessageTokens,
+                )
+            }
+        val selected =
+            if (
+                prior ==
+                    null ||
+                fixed.workingContinuity !=
+                    null
+            ) {
+                emptyList()
+            } else {
+                val source =
+                    requireNotNull(
+                        recentConversation,
+                    )
+                requireRecentConversationHistory(
+                    events = source.events,
+                    prior =
+                        requireNotNull(
+                            prior,
+                        ),
+                )
+                source.events
+            }
+        val selectedConversationTokens =
+            selected.sumOf {
+                estimatedMessageTokens(
+                    it.content,
+                )
+            }
+        require(
+            selectedConversationTokens ==
+                plan.selectedExactConversationTokens,
+        ) {
+            "planned prompt exact Conversation selection differs from the source-owned attention plan"
+        }
+
+        val fullCarryProjection =
+            when {
+                workingCarryCandidate !=
+                    null ->
+                    DirectWorkingCarryPromptContext.projectCandidate(
+                        formation = workingCarryCandidate,
+                        availableTokens = InputTokenBudget,
+                    )
+
+                currentWorkingCarry !=
+                    null ->
+                    DirectWorkingCarryPromptContext.projectCurrent(
+                        current = currentWorkingCarry,
+                        availableTokens = InputTokenBudget,
+                    )
+
+                else ->
+                    DirectWorkingCarryPromptContext.projectCurrent(
+                        current = null,
+                        availableTokens = InputTokenBudget,
+                    )
+            }
+        val carryRequested =
+            fullCarryProjection.carryDisposition ==
+                VexLifeWorkingCarryContract.Carry
+        val carryEstimate =
+            if (
+                carryRequested
+            ) {
+                fullCarryProjection.estimatedSystemMessageTokens
+            } else {
+                0
+            }
+        require(
+            plan.carryRequested ==
+                carryRequested &&
+                plan.carryEstimatedSystemMessageTokens ==
+                carryEstimate,
+        ) {
+            "planned prompt carry request/cost differs from the exact carry source"
+        }
+
+        val carryProjection =
+            when {
+                workingCarryCandidate !=
+                    null ->
+                    DirectWorkingCarryPromptContext.projectCandidate(
+                        formation = workingCarryCandidate,
+                        availableTokens =
+                            plan.carryTokenAllowance,
+                    )
+
+                currentWorkingCarry !=
+                    null ->
+                    DirectWorkingCarryPromptContext.projectCurrent(
+                        current = currentWorkingCarry,
+                        availableTokens =
+                            plan.carryTokenAllowance,
+                    )
+
+                else ->
+                    DirectWorkingCarryPromptContext.projectCurrent(
+                        current = null,
+                        availableTokens =
+                            plan.carryTokenAllowance,
+                    )
+            }
+        require(
+            carryProjection.included ==
+                plan.carryIncluded &&
+                (
+                    if (
+                        carryProjection.included
+                    ) {
+                        carryProjection.estimatedSystemMessageTokens
+                    } else {
+                        0
+                    }
+                ) ==
+                plan.carrySelectedTokens,
+        ) {
+            "planned prompt carry projection differs from finite-attention selection"
+        }
+
+        val memory =
+            requireNotNull(
+                verifyMemoryContext(
+                    memoryContext,
+                ),
+            )
+        val memoryAvailability =
+            requireNotNull(
+                verifyMemoryContext(
+                    memoryAvailabilityContext,
+                ),
+            )
+        requireSameMemoryFrontier(
+            availability = memoryAvailability.context,
+            selected = memory.context,
+        )
+        require(
+            memory.context.memoryTokenCap ==
+                plan.memoryTokenCap,
+        ) {
+            "planned prompt selected Memory cap differs from finite-attention remainder"
+        }
+        require(
+            fixed.memoryAvailability
+                ?.context ==
+                memoryAvailability.context,
+        ) {
+            "planned prompt fixed capability context changed before final materialization"
+        }
+
+        return formMaterialization(
+            prior = prior,
+            currentRequest = currentRequest,
+            browserContext = browserContext,
+            fixed = fixed,
+            memory = memory,
+            selected = selected,
+            recentConversation = recentConversation,
+            workingCarryProjection = carryProjection,
+            attentionPlan = plan,
+        )
+    }
+
+    fun reverifyPlanned(
+        materialization: Materialization,
+        conversationOwner: DirectConversationStore.Locked,
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
+        memoryContext: VexLifeMemoryContract.Context,
+        memoryAvailabilityContext: VexLifeMemoryContract.Context,
+        attentionPlan: DirectPromptAttentionPlan.Plan,
+        workingCarryCandidate: DirectWorkingCarryFormation.Formation? =
+            null,
+        currentWorkingCarry: VexLifeWorkingCarryOwner.Current? =
+            null,
+        workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
+            null,
+        browserContext: BrowserContext? =
+            null,
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
+            null,
+    ) {
+        val current =
+            materializePlanned(
+                conversationOwner = conversationOwner,
+                prior = prior,
+                currentRequest = currentRequest,
+                memoryContext = memoryContext,
+                memoryAvailabilityContext =
+                    memoryAvailabilityContext,
+                attentionPlan = attentionPlan,
+                workingCarryCandidate =
+                    workingCarryCandidate,
+                currentWorkingCarry =
+                    currentWorkingCarry,
+                workingContinuityContext =
+                    workingContinuityContext,
+                browserContext = browserContext,
+                runtimeEvidence = runtimeEvidence,
+            )
+
+        require(
+            current ==
+                materialization,
+        ) {
+            "planned prompt materialization is no longer current at the provider boundary"
+        }
+    }
 
     fun reverify(
         materialization: Materialization,
