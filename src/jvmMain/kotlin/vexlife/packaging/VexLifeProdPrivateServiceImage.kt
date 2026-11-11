@@ -623,12 +623,20 @@ object VexLifeProdPrivateServiceImage {
         }
 
         require(
-            manifest.schemaVersion !=
-                LegacySchema ||
-                manifest.visionRuntime ==
-                null,
+            (
+                manifest.schemaVersion ==
+                    LegacySchema &&
+                    manifest.visionRuntime ==
+                    null
+            ) ||
+                (
+                    manifest.schemaVersion ==
+                        Schema &&
+                        manifest.visionRuntime !=
+                        null
+                ),
         ) {
-            "legacy private service-image schema cannot claim a Vision runtime"
+            "private service-image schema/Vision runtime relationship is invalid"
         }
 
         manifest.visionRuntime?.let {
