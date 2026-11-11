@@ -1049,6 +1049,7 @@ object DirectPromptContext {
         memoryContext: VexLifeMemoryContract.Context,
         memoryAvailabilityContext: VexLifeMemoryContract.Context,
         attentionPlan: DirectPromptAttentionPlan.Plan,
+        workingCarryOwner: VexLifeWorkingCarryOwner,
         workingCarryCandidate: DirectWorkingCarryFormation.Formation? =
             null,
         currentWorkingCarry: VexLifeWorkingCarryOwner.Current? =
@@ -1067,6 +1068,38 @@ object DirectPromptContext {
                 null,
         ) {
             "planned prompt may project either the refreshed turn carry candidate or the durable current carry, not both"
+        }
+
+        val ownerCurrentCarry =
+            workingCarryOwner.readCurrent()
+        when {
+            workingCarryCandidate !=
+                null ->
+                require(
+                    workingCarryCandidate.refreshInput.previousCarry ==
+                        ownerCurrentCarry
+                            ?.revision
+                            ?.carry,
+                ) {
+                    "planned prompt working-carry candidate previous carry is no longer owner-current"
+                }
+
+            currentWorkingCarry !=
+                null ->
+                require(
+                    currentWorkingCarry ==
+                        ownerCurrentCarry,
+                ) {
+                    "planned prompt durable working carry is no longer owner-current"
+                }
+
+            else ->
+                require(
+                    ownerCurrentCarry ==
+                        null,
+                ) {
+                    "planned prompt omitted an owner-current working carry"
+                }
         }
 
         val plan =
@@ -1294,6 +1327,7 @@ object DirectPromptContext {
         memoryContext: VexLifeMemoryContract.Context,
         memoryAvailabilityContext: VexLifeMemoryContract.Context,
         attentionPlan: DirectPromptAttentionPlan.Plan,
+        workingCarryOwner: VexLifeWorkingCarryOwner,
         workingCarryCandidate: DirectWorkingCarryFormation.Formation? =
             null,
         currentWorkingCarry: VexLifeWorkingCarryOwner.Current? =
@@ -1314,6 +1348,8 @@ object DirectPromptContext {
                 memoryAvailabilityContext =
                     memoryAvailabilityContext,
                 attentionPlan = attentionPlan,
+                workingCarryOwner =
+                    workingCarryOwner,
                 workingCarryCandidate =
                     workingCarryCandidate,
                 currentWorkingCarry =
