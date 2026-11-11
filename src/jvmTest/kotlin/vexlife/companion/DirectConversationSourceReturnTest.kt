@@ -1,6 +1,7 @@
 package vexlife.companion
 
 import java.nio.file.Files
+import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -10,6 +11,10 @@ import kotlin.test.assertTrue
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.HereticProductIdentity
+import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeState
 
 class DirectConversationSourceReturnTest {
     private fun productHome(): java.nio.file.Path {
@@ -27,6 +32,23 @@ class DirectConversationSourceReturnTest {
         )
         return home
     }
+
+    private fun runtimeEvidence() =
+        HereticModelConfiguration.QualifiedRuntimeEvidence(
+            runtimeReceiptRef =
+                "receipt.vexlife-prod.heretic.source-return-test",
+            runtimeState = HereticRuntimeState.Qualified,
+            modelRef = HereticProductIdentity.ModelRef,
+            modelProfileRef = HereticProductIdentity.ModelProfileRef,
+            artifactRef = HereticProductIdentity.ArtifactSetRef,
+            artifactContentSetSha256 =
+                HereticProductIdentity.ArtifactContentSetSha256,
+            runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
+            runtimeClass = HereticProductIdentity.RuntimeClass,
+            endpoint = HereticProductIdentity.Endpoint,
+            requestModel = HereticProductIdentity.RequestModel,
+            qualification = HereticRuntimeQualification.qualified(),
+        )
 
     private fun requestText(
         queryTermsJson: String,
@@ -341,6 +363,188 @@ class DirectConversationSourceReturnTest {
                         .contains(
                             "Alpha and beta",
                         ),
+                )
+            }
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun compactTraceBindsTheInternalRequestToNormalizedInferenceWithoutPersistingReasoning() {
+        val home =
+            productHome()
+        val store =
+            DirectConversationStore(
+                home,
+            )
+
+        try {
+            store.withWriterLease {
+                val oldRequest =
+                    beginRequest(
+                        turnRef = "turn.source-return.trace.old",
+                        requestMessageRef = "message.source-return.human.trace.old",
+                        content = "The exact lantern-garden detail lives in this older source.",
+                    )
+                val oldResponse =
+                    appendResponse(
+                        request = oldRequest,
+                        responseMessageRef = "message.source-return.companion.trace.old",
+                        content = "I received the lantern-garden detail.",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef = "observation.source-return.trace.old",
+                        invocationEvidenceRef = "evidence.source-return.trace.old",
+                    )
+                val oldContext =
+                    CanonicalLivedContextFixture.write(
+                        productHome = home,
+                        request = oldRequest,
+                        response = oldResponse,
+                    )
+                commitCompletedTurn(
+                    request = oldRequest,
+                    response = oldResponse,
+                    contextSha256 = oldContext.sha256,
+                )
+
+                val prior =
+                    requireNotNull(
+                        immediatePriorCompletedTurn(),
+                    )
+                val current =
+                    beginRequest(
+                        turnRef = "turn.source-return.trace.current",
+                        requestMessageRef = "message.source-return.human.trace.current",
+                        content = "What was that older lantern detail?",
+                    )
+                val initialPrompt =
+                    DirectPromptContext.materialize(
+                        prior = prior,
+                        currentRequest = current,
+                        recentConversationSource = {
+                            availableTokens ->
+                            recentCompletedConversation(
+                                availableTokens = availableTokens,
+                                estimatedMessageTokens =
+                                    DirectPromptContext::estimatedMessageTokens,
+                            )
+                        },
+                    )
+                val requestText =
+                    requestText(
+                        queryTermsJson =
+                            "[\"lantern-garden\"]",
+                        speakerScope =
+                            DirectConversationSourceReturn.AnySpeaker,
+                    )
+                val inference =
+                    DirectCompanionConnection.invoke(
+                        runtime = runtimeEvidence(),
+                        messages =
+                            initialPrompt.messages +
+                                DirectConversationSourceReturn.protocolMessage(),
+                        transport =
+                            DirectCompanionConnection.Transport {
+                                DirectCompanionConnection.HttpResult(
+                                    status = 200,
+                                    body =
+                                        """
+                                        {
+                                          "model": "default_model",
+                                          "choices": [
+                                            {
+                                              "finish_reason": "stop",
+                                              "message": {
+                                                "role": "assistant",
+                                                "reasoning_content": "private retrieval reasoning that must not persist",
+                                                "content": __CONTENT__
+                                              }
+                                            }
+                                          ]
+                                        }
+                                        """.trimIndent()
+                                            .replace(
+                                                "__CONTENT__",
+                                                kotlinx.serialization.json.JsonPrimitive(
+                                                    requestText,
+                                                )
+                                                    .toString(),
+                                            ),
+                                )
+                            },
+                        now = {
+                            Instant.parse(
+                                "2026-11-11T05:25:00Z",
+                            )
+                        },
+                    )
+                val request =
+                    requireNotNull(
+                        DirectConversationSourceReturn.parseRequestOrNull(
+                            inference.content,
+                        ),
+                    )
+                val discovery =
+                    DirectConversationSourceReturn.discover(
+                        conversationOwner = this,
+                        request = request,
+                    )
+                val projection =
+                    DirectConversationSourceReturn.project(
+                        discovery = discovery,
+                        availableTokens =
+                            DirectPromptContext.InputTokenBudget,
+                    )
+                val attempt =
+                    DirectConversationSourceReturn.formAttemptTrace(
+                        initialPrompt = initialPrompt.receipt,
+                        inference = inference,
+                        discovery = discovery,
+                        projection = projection,
+                    )
+                val trace =
+                    DirectConversationSourceReturn.formTrace(
+                        attempt = attempt,
+                        finalPrompt = initialPrompt.receipt,
+                    )
+
+                assertEquals(
+                    DirectConversationSourceReturn.AttemptTraceSchema,
+                    attempt.schemaVersion,
+                )
+                assertEquals(
+                    request,
+                    attempt.request,
+                )
+                assertEquals(
+                    projection.sourceEventRefs,
+                    attempt.returnedSourceEventRefs,
+                )
+                assertFalse(
+                    attempt.rawProviderOutputPersisted,
+                )
+                assertFalse(
+                    attempt.rawReasoningPersisted,
+                )
+                assertEquals(
+                    DirectConversationSourceReturn.TraceSchema,
+                    trace.schemaVersion,
+                )
+                assertFalse(
+                    trace.rawProviderOutputPersisted,
+                )
+                assertFalse(
+                    trace.rawReasoningPersisted,
+                )
+                assertFalse(
+                    trace.effectAuthorityGranted,
+                )
+                assertFalse(
+                    trace.effectsPerformed,
                 )
             }
         } finally {
