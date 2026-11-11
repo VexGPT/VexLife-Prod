@@ -791,6 +791,16 @@ object DirectPromptContext {
                 schemaVersion = ReceiptSchema,
                 contextMode =
                     when {
+                        sourceReturnProjection !=
+                            null &&
+                            workingContinuity !=
+                            null ->
+                            "SOURCE_RETURN_WORKING_CHECKPOINT_SUCCESSOR"
+
+                        sourceReturnProjection !=
+                            null ->
+                            "SOURCE_RETURN"
+
                         prior ==
                             null ->
                             "FIRST_TURN"
@@ -1196,14 +1206,26 @@ object DirectPromptContext {
                     requireNotNull(
                         recentConversation,
                     )
-                requireRecentConversationHistory(
-                    events = source.events,
-                    prior =
-                        requireNotNull(
-                            prior,
-                        ),
-                )
-                source.events
+                if (
+                    source.events.isEmpty()
+                ) {
+                    require(
+                        sourceReturnProjection !=
+                            null,
+                    ) {
+                        "ordinary continuity prompt requires the exact immediate prior completed turn to remain present"
+                    }
+                    emptyList()
+                } else {
+                    requireRecentConversationHistory(
+                        events = source.events,
+                        prior =
+                            requireNotNull(
+                                prior,
+                            ),
+                    )
+                    source.events
+                }
             }
         val selectedConversationRefs =
             selected
