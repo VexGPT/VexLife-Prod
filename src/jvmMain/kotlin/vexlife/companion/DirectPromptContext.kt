@@ -332,6 +332,7 @@ object DirectPromptContext {
 
     fun materialize(
         prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
         recentConversationEvents: List<DirectConversationStore.Event> =
             prior
                 ?.let {
@@ -341,7 +342,6 @@ object DirectPromptContext {
                     )
                 }
                 ?: emptyList(),
-        currentRequest: DirectConversationStore.Event,
         memoryContext: VexLifeMemoryContract.Context? =
             null,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
@@ -799,6 +799,7 @@ object DirectPromptContext {
     fun reverify(
         materialization: Materialization,
         prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
         recentConversationEvents: List<DirectConversationStore.Event> =
             prior
                 ?.let {
@@ -808,7 +809,6 @@ object DirectPromptContext {
                     )
                 }
                 ?: emptyList(),
-        currentRequest: DirectConversationStore.Event,
         memoryContext: VexLifeMemoryContract.Context? =
             null,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
