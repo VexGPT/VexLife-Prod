@@ -1,5 +1,7 @@
 package vexlife.companion
 
+import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
 import kotlinx.serialization.Serializable
 import vexlife.contract.VexContractJson
 import vexlife.conversation.DirectConversationStore
@@ -30,6 +32,12 @@ object DirectConversationSourceReturn {
 
     const val ContextSchema =
         "vexlife-prod.conversation-source-return-context/v1"
+
+    const val AttemptTraceSchema =
+        "vexlife-prod.conversation-source-return-attempt/v1"
+
+    const val TraceSchema =
+        "vexlife-prod.conversation-source-return-trace/v1"
 
     const val AnySpeaker =
         "ANY"
@@ -118,8 +126,45 @@ object DirectConversationSourceReturn {
         val discoveredMatchCount: Int,
         val returnedMatchCount: Int,
         val estimatedSystemMessageTokens: Int,
+        val systemMessageSha256: String,
         val systemContent: String,
         val sourceEventRefs: List<String>,
+        val effectAuthorityGranted: Boolean,
+        val effectsPerformed: Boolean,
+    )
+
+    @Serializable
+    @ConsistentCopyVisibility
+    data class AttemptTrace internal constructor(
+        val schemaVersion: String,
+        val truthClass: String,
+        val initialPromptReceiptRef: String,
+        val initialPromptReceiptFingerprint: String,
+        val request: Request,
+        val modelOutputSha256: String,
+        val runtimeObservationRef: String,
+        val runtimeObservationFingerprint: String,
+        val invocationRef: String,
+        val invocationFingerprint: String,
+        val sourceReturnState: String,
+        val returnedSourceEventRefs: List<String>,
+        val sourceReturnSystemMessageSha256: String,
+        val rawProviderOutputPersisted: Boolean,
+        val rawReasoningPersisted: Boolean,
+        val effectAuthorityGranted: Boolean,
+        val effectsPerformed: Boolean,
+    )
+
+    @Serializable
+    @ConsistentCopyVisibility
+    data class Trace internal constructor(
+        val schemaVersion: String,
+        val truthClass: String,
+        val attempt: AttemptTrace,
+        val finalPromptReceiptRef: String,
+        val finalPromptReceiptFingerprint: String,
+        val rawProviderOutputPersisted: Boolean,
+        val rawReasoningPersisted: Boolean,
         val effectAuthorityGranted: Boolean,
         val effectsPerformed: Boolean,
     )
@@ -442,6 +487,10 @@ object DirectConversationSourceReturn {
                 discoveredMatchCount = 0,
                 returnedMatchCount = 0,
                 estimatedSystemMessageTokens = estimate,
+                systemMessageSha256 =
+                    sha256(
+                        content,
+                    ),
                 systemContent = content,
                 sourceEventRefs = emptyList(),
                 effectAuthorityGranted = false,
@@ -503,6 +552,10 @@ object DirectConversationSourceReturn {
                 discoveredMatchCount = discovery.matches.size,
                 returnedMatchCount = 0,
                 estimatedSystemMessageTokens = estimate,
+                systemMessageSha256 =
+                    sha256(
+                        content,
+                    ),
                 systemContent = content,
                 sourceEventRefs = emptyList(),
                 effectAuthorityGranted = false,
@@ -535,6 +588,151 @@ object DirectConversationSourceReturn {
                             it.responseEvent.eventRef,
                         )
                     },
+            effectAuthorityGranted = false,
+            effectsPerformed = false,
+        )
+    }
+
+    fun formAttemptTrace(
+        initialPrompt: DirectPromptContext.Receipt,
+        inference: DirectCompanionConnection.Result,
+        discovery: Discovery,
+        projection: Projection,
+    ): AttemptTrace {
+        val request =
+            requireNotNull(
+                parseRequestOrNull(
+                    inference.content,
+                ),
+            ) {
+                "Conversation source-return attempt requires one exact model source-return request"
+            }
+        require(
+            request ==
+                discovery.request &&
+                projection.state in
+                setOf(
+                    Returned,
+                    NoMatch,
+                    HeldTokenBudget,
+                ) &&
+                projection.discoveredMatchCount ==
+                discovery.matches.size &&
+                projection.returnedMatchCount <=
+                projection.discoveredMatchCount &&
+                !projection.effectAuthorityGranted &&
+                !projection.effectsPerformed &&
+                inference.runtimeObservation.contentSha256 ==
+                sha256(
+                    inference.content,
+                ) &&
+                inference.invocationEvidence.runtimeObservationRef ==
+                inference.runtimeObservation.observationRef &&
+                inference.invocationEvidence.runtimeObservationFingerprint ==
+                inference.runtimeObservation.semanticFingerprint &&
+                inference.invocationEvidence.responseBodySha256 ==
+                inference.runtimeObservation.responseBodySha256 &&
+                inference.invocationEvidence.actualHttpCall &&
+                inference.invocationEvidence.loopbackOnly &&
+                !inference.runtimeObservation.rawProviderResponsePersisted &&
+                !inference.runtimeObservation.reasoningTrace.rawPersisted,
+        ) {
+            "Conversation source-return attempt evidence is not bound to one exact internal inference and source return"
+        }
+
+        return AttemptTrace(
+            schemaVersion = AttemptTraceSchema,
+            truthClass =
+                "CONDITIONAL_EXACT_CONVERSATION_SOURCE_RETURN_ATTEMPT",
+            initialPromptReceiptRef =
+                initialPrompt.receiptRef,
+            initialPromptReceiptFingerprint =
+                initialPrompt.semanticFingerprint,
+            request = request,
+            modelOutputSha256 =
+                inference.runtimeObservation.contentSha256,
+            runtimeObservationRef =
+                inference.runtimeObservation.observationRef,
+            runtimeObservationFingerprint =
+                inference.runtimeObservation.semanticFingerprint,
+            invocationRef =
+                inference.invocationEvidence.invocationRef,
+            invocationFingerprint =
+                inference.invocationEvidence.semanticFingerprint,
+            sourceReturnState = projection.state,
+            returnedSourceEventRefs =
+                projection.sourceEventRefs,
+            sourceReturnSystemMessageSha256 =
+                projection.systemMessageSha256,
+            rawProviderOutputPersisted = false,
+            rawReasoningPersisted = false,
+            effectAuthorityGranted = false,
+            effectsPerformed = false,
+        )
+    }
+
+    fun formTrace(
+        attempt: AttemptTrace,
+        finalPrompt: DirectPromptContext.Receipt,
+    ): Trace {
+        require(
+            attempt.schemaVersion ==
+                AttemptTraceSchema &&
+                attempt.truthClass ==
+                "CONDITIONAL_EXACT_CONVERSATION_SOURCE_RETURN_ATTEMPT" &&
+                attempt.initialPromptReceiptRef.isNotBlank() &&
+                attempt.initialPromptReceiptFingerprint.matches(
+                    Regex(
+                        "[0-9a-f]{64}",
+                    ),
+                ) &&
+                attempt.modelOutputSha256.matches(
+                    Regex(
+                        "[0-9a-f]{64}",
+                    ),
+                ) &&
+                attempt.runtimeObservationRef.isNotBlank() &&
+                attempt.runtimeObservationFingerprint.matches(
+                    Regex(
+                        "[0-9a-f]{64}",
+                    ),
+                ) &&
+                attempt.invocationRef.isNotBlank() &&
+                attempt.invocationFingerprint.matches(
+                    Regex(
+                        "[0-9a-f]{64}",
+                    ),
+                ) &&
+                attempt.sourceReturnState in
+                setOf(
+                    Returned,
+                    NoMatch,
+                    HeldTokenBudget,
+                ) &&
+                attempt.sourceReturnSystemMessageSha256.matches(
+                    Regex(
+                        "[0-9a-f]{64}",
+                    ),
+                ) &&
+                !attempt.rawProviderOutputPersisted &&
+                !attempt.rawReasoningPersisted &&
+                !attempt.effectAuthorityGranted &&
+                !attempt.effectsPerformed,
+        ) {
+            "Conversation source-return attempt trace is invalid"
+        }
+
+        return Trace(
+            schemaVersion = TraceSchema,
+            truthClass =
+                "CONDITIONAL_EXACT_CONVERSATION_SOURCE_RETURN_TRACE",
+            attempt = attempt,
+            finalPromptReceiptRef =
+                finalPrompt.receiptRef,
+            finalPromptReceiptFingerprint =
+                finalPrompt.semanticFingerprint,
+            rawProviderOutputPersisted = false,
+            rawReasoningPersisted = false,
             effectAuthorityGranted = false,
             effectsPerformed = false,
         )
@@ -689,6 +887,27 @@ object DirectConversationSourceReturn {
             "Conversation source-return scan encountered a non-canonical completed pair"
         }
     }
+
+    private fun sha256(
+        value: String,
+    ): String =
+        MessageDigest
+            .getInstance(
+                "SHA-256",
+            )
+            .digest(
+                value.toByteArray(
+                    StandardCharsets.UTF_8,
+                ),
+            )
+            .joinToString(
+                "",
+            ) {
+                "%02x".format(
+                    it.toInt() and
+                        0xff,
+                )
+            }
 
     private fun normalize(
         value: String,
