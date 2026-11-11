@@ -132,6 +132,7 @@ object DirectPromptContext {
         val priorConversationHeadSha256: String?,
         val selectedConversationEventRefs: List<String>,
         val selectedConversationEventSha256: List<String>,
+        val selectedConversationEventSequences: List<Long>,
         val currentRequestEventRef: String,
         val currentRequestEventSha256: String,
         val browserContextIncluded: Boolean =
@@ -191,6 +192,11 @@ object DirectPromptContext {
         val priorConversationHeadSha256: String?,
         val selectedConversationEventRefs: List<String>,
         val selectedConversationEventSha256: List<String>,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val selectedConversationEventSequences: List<Long> =
+            emptyList(),
         val currentRequestEventRef: String,
         val currentRequestEventSha256: String,
         val browserContextIncluded: Boolean =
@@ -648,6 +654,10 @@ object DirectPromptContext {
                     selected.map {
                         it.eventSha256
                     },
+                selectedConversationEventSequences =
+                    selected.map {
+                        it.sequence
+                    },
                 currentRequestEventRef = currentRequest.eventRef,
                 currentRequestEventSha256 = currentRequest.eventSha256,
                 browserContextIncluded =
@@ -780,6 +790,7 @@ object DirectPromptContext {
                 priorConversationHeadSha256 = core.priorConversationHeadSha256,
                 selectedConversationEventRefs = core.selectedConversationEventRefs,
                 selectedConversationEventSha256 = core.selectedConversationEventSha256,
+                selectedConversationEventSequences = core.selectedConversationEventSequences,
                 currentRequestEventRef = core.currentRequestEventRef,
                 currentRequestEventSha256 = core.currentRequestEventSha256,
                 browserContextIncluded = core.browserContextIncluded,
