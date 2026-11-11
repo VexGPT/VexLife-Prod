@@ -202,7 +202,9 @@ class VexLifeWorkingCarryOwner(
                 revision.companionLineageRef ==
                 head.companionLineageRef &&
                 revision.threadRef ==
-                head.threadRef,
+                head.threadRef &&
+                revision.formedAt ==
+                head.committedAt,
         ) {
             "working carry current head does not bind its exact immutable revision"
         }
@@ -266,6 +268,14 @@ class VexLifeWorkingCarryOwner(
             refresh = input,
             currentRequest = currentRequest,
         )
+        require(
+            input.companionLineageRef ==
+                currentRequest.companionLineageRef &&
+                input.threadRef ==
+                currentRequest.threadRef,
+        ) {
+            "working carry refresh identity differs from the exact durable request"
+        }
 
         val current =
             readCurrent(
@@ -356,7 +366,10 @@ class VexLifeWorkingCarryOwner(
                 ) {
                     return@use CommitResult(
                         state = "IDEMPOTENT_CURRENT",
-                        current = current,
+                        current =
+                            requireNotNull(
+                                current,
+                            ),
                     )
                 }
 
@@ -460,6 +473,14 @@ class VexLifeWorkingCarryOwner(
             refresh = input,
             currentRequest = prepared.currentRequest,
         )
+        require(
+            input.companionLineageRef ==
+                prepared.companionLineageRef &&
+                input.threadRef ==
+                prepared.threadRef,
+        ) {
+            "prepared working carry refresh identity differs from its request"
+        }
     }
 
     private fun requirePriorStillCurrent(
@@ -479,12 +500,16 @@ class VexLifeWorkingCarryOwner(
             return
         }
 
+        val exactCurrent =
+            requireNotNull(
+                current,
+            ) {
+                "working carry current revision disappeared after prepare"
+            }
         require(
-            current
-                ?.revision
-                ?.revisionRef ==
+            exactCurrent.revision.revisionRef ==
                 prepared.priorRevisionRefOrNull &&
-                current.revision.semanticFingerprint ==
+                exactCurrent.revision.semanticFingerprint ==
                 prepared.priorRevisionFingerprintOrNull,
         ) {
             "working carry current revision changed after prepare"
