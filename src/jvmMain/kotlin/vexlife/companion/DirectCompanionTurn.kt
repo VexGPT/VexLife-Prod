@@ -334,6 +334,18 @@ object DirectCompanionTurn {
 
                 val prior =
                     immediatePriorCompletedTurn()
+                val priorPromptContext =
+                    prior
+                        ?.let {
+                            contextStore.read(
+                                it.head.turnRef,
+                            )
+                                ?.promptContext
+                        }
+                val carryOwner =
+                    VexLifeWorkingCarryOwner(
+                        productHome,
+                    )
                 var request: DirectConversationStore.Event? =
                     null
                 var response: DirectConversationStore.Event? =
@@ -363,7 +375,7 @@ object DirectCompanionTurn {
                             currentRequest = request,
                             issuedAt = hooks.now(),
                         )
-                    val memoryContext =
+                    val memoryAvailabilityContext =
                         hooks.currentMemoryContext(
                             productHome,
                         )
@@ -375,7 +387,123 @@ object DirectCompanionTurn {
                         currentRequest = request,
                         expected = workingSuccessorContext,
                     )
-                    val currentMemoryContext =
+                    val runtimeEvidence =
+                        hooks.currentRuntimeEvidence(
+                            setup,
+                        )
+                    val fixed =
+                        DirectPromptContext.prepareFixed(
+                            prior = currentPrior,
+                            currentRequest = request,
+                            memoryAvailabilityContext =
+                                memoryAvailabilityContext,
+                            workingContinuityContext =
+                                workingSuccessorContext,
+                            browserContext = intent.browserContext,
+                            runtimeEvidence = runtimeEvidence,
+                        )
+                    val recentConversation =
+                        if (
+                            currentPrior ==
+                                null ||
+                            workingSuccessorContext !=
+                                null
+                        ) {
+                            null
+                        } else {
+                            recentCompletedConversation(
+                                availableTokens =
+                                    DirectPromptContext.InputTokenBudget -
+                                        fixed.fixedInputTokenEstimate,
+                                estimatedMessageTokens =
+                                    DirectPromptContext::estimatedMessageTokens,
+                            )
+                        }
+                    val selectedConversationTokens =
+                        recentConversation
+                            ?.events
+                            .orEmpty()
+                            .sumOf {
+                                DirectPromptContext.estimatedMessageTokens(
+                                    it.content,
+                                )
+                            }
+                    val currentCarry =
+                        carryOwner.readCurrent()
+                    val gradualCarry =
+                        if (
+                            workingSuccessorContext ==
+                                null
+                        ) {
+                            formGradualCarryIfNeeded(
+                                conversationOwner = this,
+                                priorConversationHeadSha256 =
+                                    currentPrior
+                                        ?.head
+                                        ?.conversationHeadSha256,
+                                priorPromptContext = priorPromptContext,
+                                currentRecentConversation =
+                                    recentConversation,
+                                currentRequest = request,
+                                currentCarry = currentCarry,
+                                carryOwner = carryOwner,
+                                runtimeEvidence = runtimeEvidence,
+                                transport =
+                                    hooks.workingCarryTransport
+                                        ?: hooks.transport,
+                                now = hooks.now,
+                            )
+                        } else {
+                            null
+                        }
+                    val fullCarryProjection =
+                        if (
+                            gradualCarry !=
+                                null
+                        ) {
+                            DirectWorkingCarryPromptContext.projectCandidate(
+                                formation = gradualCarry.formation,
+                                availableTokens =
+                                    DirectPromptContext.InputTokenBudget,
+                            )
+                        } else {
+                            DirectWorkingCarryPromptContext.projectCurrent(
+                                current = currentCarry,
+                                availableTokens =
+                                    DirectPromptContext.InputTokenBudget,
+                            )
+                        }
+                    val carryRequested =
+                        fullCarryProjection.carryDisposition ==
+                            VexLifeWorkingCarryContract.Carry
+                    val attentionPlan =
+                        DirectPromptAttentionPlan.form(
+                            DirectPromptAttentionPlan.Input(
+                                fixedCurrentTurnTokens =
+                                    fixed.fixedInputTokenEstimate,
+                                selectedExactConversationTokens =
+                                    selectedConversationTokens,
+                                carryRequested = carryRequested,
+                                carryEstimatedSystemMessageTokens =
+                                    if (
+                                        carryRequested
+                                    ) {
+                                        fullCarryProjection.estimatedSystemMessageTokens
+                                    } else {
+                                        0
+                                    },
+                            ),
+                        )
+                    val selectedMemoryContext =
+                        selectedMemoryContext(
+                            hooks = hooks,
+                            productHome = productHome,
+                            availability =
+                                memoryAvailabilityContext,
+                            memoryTokenCap =
+                                attentionPlan.memoryTokenCap,
+                        )
+                    val currentMemoryAvailability =
                         hooks.currentMemoryContext(
                             productHome,
                         )
@@ -383,15 +511,29 @@ object DirectCompanionTurn {
                                 current ->
                                 require(
                                     current ==
-                                        memoryContext,
+                                        memoryAvailabilityContext,
                                 ) {
-                                    "VexLife Memory context changed before provider invocation"
+                                    "VexLife Memory availability changed before prompt materialization"
                                 }
                             }
-                    val runtimeEvidence =
-                        hooks.currentRuntimeEvidence(
-                            setup,
+                    val currentSelectedMemory =
+                        selectedMemoryContext(
+                            hooks = hooks,
+                            productHome = productHome,
+                            availability =
+                                currentMemoryAvailability,
+                            memoryTokenCap =
+                                attentionPlan.memoryTokenCap,
                         )
+                            .also {
+                                current ->
+                                require(
+                                    current ==
+                                        selectedMemoryContext,
+                                ) {
+                                    "VexLife selected Memory changed before prompt materialization"
+                                }
+                            }
                     emitProgress(
                         hooks.progressObserver,
                         Progress(
@@ -399,18 +541,28 @@ object DirectCompanionTurn {
                         ),
                     )
                     val prompt =
-                        DirectPromptContext.materialize(
+                        DirectPromptContext.materializePlanned(
+                            conversationOwner = this,
                             prior = currentPrior,
                             currentRequest = request,
-                            recentConversationSource = {
-                                availableTokens ->
-                                recentCompletedConversation(
-                                    availableTokens = availableTokens,
-                                    estimatedMessageTokens =
-                                        DirectPromptContext::estimatedMessageTokens,
-                                )
-                            },
-                            memoryContext = currentMemoryContext,
+                            memoryContext =
+                                currentSelectedMemory,
+                            memoryAvailabilityContext =
+                                currentMemoryAvailability,
+                            attentionPlan = attentionPlan,
+                            workingCarryOwner = carryOwner,
+                            workingCarryCandidate =
+                                gradualCarry
+                                    ?.formation,
+                            currentWorkingCarry =
+                                if (
+                                    gradualCarry ==
+                                        null
+                                ) {
+                                    currentCarry
+                                } else {
+                                    null
+                                },
                             workingContinuityContext =
                                 workingSuccessorContext,
                             browserContext = intent.browserContext,
@@ -421,23 +573,71 @@ object DirectCompanionTurn {
                             productHome = productHome,
                             currentRequest = request,
                             promptContext = prompt.receipt,
-                            memoryContext = currentMemoryContext,
+                            memoryContext =
+                                currentSelectedMemory,
                             priorSuccessorContext =
                                 workingSuccessorContext,
                         )
-                    DirectPromptContext.reverify(
-                        materialization = prompt,
+                    DirectWorkingContinuity.requireSuccessorContextCurrent(
+                        productHome = productHome,
                         prior = currentPrior,
                         currentRequest = request,
-                        recentConversationSource = {
-                            availableTokens ->
-                            recentCompletedConversation(
-                                availableTokens = availableTokens,
-                                estimatedMessageTokens =
-                                    DirectPromptContext::estimatedMessageTokens,
-                            )
-                        },
-                        memoryContext = currentMemoryContext,
+                        expected = workingSuccessorContext,
+                    )
+                    val providerMemoryAvailability =
+                        hooks.currentMemoryContext(
+                            productHome,
+                        )
+                            .also {
+                                current ->
+                                require(
+                                    current ==
+                                        memoryAvailabilityContext,
+                                ) {
+                                    "VexLife Memory availability changed before provider invocation"
+                                }
+                            }
+                    val providerSelectedMemory =
+                        selectedMemoryContext(
+                            hooks = hooks,
+                            productHome = productHome,
+                            availability =
+                                providerMemoryAvailability,
+                            memoryTokenCap =
+                                attentionPlan.memoryTokenCap,
+                        )
+                            .also {
+                                current ->
+                                require(
+                                    current ==
+                                        selectedMemoryContext,
+                                ) {
+                                    "VexLife selected Memory changed before provider invocation"
+                                }
+                            }
+                    DirectPromptContext.reverifyPlanned(
+                        materialization = prompt,
+                        conversationOwner = this,
+                        prior = currentPrior,
+                        currentRequest = request,
+                        memoryContext =
+                            providerSelectedMemory,
+                        memoryAvailabilityContext =
+                            providerMemoryAvailability,
+                        attentionPlan = attentionPlan,
+                        workingCarryOwner = carryOwner,
+                        workingCarryCandidate =
+                            gradualCarry
+                                ?.formation,
+                        currentWorkingCarry =
+                            if (
+                                gradualCarry ==
+                                    null
+                            ) {
+                                currentCarry
+                            } else {
+                                null
+                            },
                         workingContinuityContext =
                             workingSuccessorContext,
                         browserContext = intent.browserContext,
