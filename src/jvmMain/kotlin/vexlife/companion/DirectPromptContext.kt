@@ -36,8 +36,11 @@ object DirectPromptContext {
     const val ReceiptSchemaV5 =
         "vexlife-prod.direct-prompt-materialization-receipt/v5"
 
-    const val ReceiptSchema =
+    const val ReceiptSchemaV6 =
         "vexlife-prod.direct-prompt-materialization-receipt/v6"
+
+    const val ReceiptSchema =
+        "vexlife-prod.direct-prompt-materialization-receipt/v7"
 
     const val InputTokenBudget =
         VexLifeMemoryContract.ContextInputTokenBudget
@@ -116,6 +119,10 @@ object DirectPromptContext {
         val browserContextSha256: String?,
         val browserContextRef: String?,
         val capabilityFrame: VerifiedCapabilityFrame?,
+        val successorPriorResponse: DirectConversationStore.Event?,
+        val sourceReturnProtocolEnabled: Boolean,
+        val sourceReturnProtocolSystemMessageSha256: String?,
+        val sourceReturnProtocolEstimatedSystemMessageTokens: Int,
         val prefixMessages: List<CompanionProviderMessage>,
         val suffixMessages: List<CompanionProviderMessage>,
         val fixedInputTokenEstimate: Int,
@@ -146,6 +153,18 @@ object DirectPromptContext {
         val selectedConversationEventSequences: List<Long>,
         val currentRequestEventRef: String,
         val currentRequestEventSha256: String,
+        val successorPriorResponseEventRef: String?,
+        val successorPriorResponseEventSha256: String?,
+        val successorPriorResponseEventSequence: Long?,
+        val sourceReturnProtocolEnabled: Boolean,
+        val sourceReturnProtocolSystemMessageSha256: String?,
+        val sourceReturnProtocolEstimatedSystemMessageTokens: Int,
+        val sourceReturnState: String?,
+        val sourceReturnSourceEventRefs: List<String>,
+        val sourceReturnSystemMessageSha256: String?,
+        val sourceReturnEstimatedSystemMessageTokens: Int,
+        val memoryAvailabilityContextRef: String?,
+        val memoryAvailabilityContextFingerprint: String?,
         val browserContextIncluded: Boolean =
             false,
         val browserContextRef: String? =
@@ -210,6 +229,66 @@ object DirectPromptContext {
             emptyList(),
         val currentRequestEventRef: String,
         val currentRequestEventSha256: String,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val successorPriorResponseEventRef: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val successorPriorResponseEventSha256: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val successorPriorResponseEventSequence: Long? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val sourceReturnProtocolEnabled: Boolean =
+            false,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val sourceReturnProtocolSystemMessageSha256: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val sourceReturnProtocolEstimatedSystemMessageTokens: Int =
+            0,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val sourceReturnState: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val sourceReturnSourceEventRefs: List<String> =
+            emptyList(),
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val sourceReturnSystemMessageSha256: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val sourceReturnEstimatedSystemMessageTokens: Int =
+            0,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val memoryAvailabilityContextRef: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val memoryAvailabilityContextFingerprint: String? =
+            null,
         val browserContextIncluded: Boolean =
             false,
         val browserContextRef: String? =
@@ -359,6 +438,12 @@ object DirectPromptContext {
         val browserContextSha256: String?,
         val capabilityFrameRef: String?,
         val capabilityFrameFingerprint: String?,
+        val successorPriorResponseEventRef: String?,
+        val successorPriorResponseEventSha256: String?,
+        val successorPriorResponseEventSequence: Long?,
+        val sourceReturnProtocolEnabled: Boolean,
+        val sourceReturnProtocolSystemMessageSha256: String?,
+        val sourceReturnProtocolEstimatedSystemMessageTokens: Int,
         val prefixMessages: List<CompanionProviderMessage>,
         val suffixMessages: List<CompanionProviderMessage>,
         val fixedInputTokenEstimate: Int,
@@ -376,6 +461,8 @@ object DirectPromptContext {
             null,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
+        sourceReturnProtocolEnabled: Boolean =
+            false,
     ): FixedContext {
         val fixed =
             verifyFixedContext(
@@ -385,6 +472,8 @@ object DirectPromptContext {
                 workingContinuityContext = workingContinuityContext,
                 browserContext = browserContext,
                 runtimeEvidence = runtimeEvidence,
+                sourceReturnProtocolEnabled =
+                    sourceReturnProtocolEnabled,
             )
 
         return FixedContext(
@@ -416,6 +505,21 @@ object DirectPromptContext {
                 fixed.capabilityFrame
                     ?.frame
                     ?.semanticFingerprint,
+            successorPriorResponseEventRef =
+                fixed.successorPriorResponse
+                    ?.eventRef,
+            successorPriorResponseEventSha256 =
+                fixed.successorPriorResponse
+                    ?.eventHash,
+            successorPriorResponseEventSequence =
+                fixed.successorPriorResponse
+                    ?.sequence,
+            sourceReturnProtocolEnabled =
+                fixed.sourceReturnProtocolEnabled,
+            sourceReturnProtocolSystemMessageSha256 =
+                fixed.sourceReturnProtocolSystemMessageSha256,
+            sourceReturnProtocolEstimatedSystemMessageTokens =
+                fixed.sourceReturnProtocolEstimatedSystemMessageTokens,
             prefixMessages = fixed.prefixMessages,
             suffixMessages = fixed.suffixMessages,
             fixedInputTokenEstimate = fixed.fixedInputTokenEstimate,
