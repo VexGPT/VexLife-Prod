@@ -511,7 +511,6 @@ object DirectCompanionTurn {
                             conversationOwner = this,
                             productHome = productHome,
                             setup = setup,
-                            prior = prior,
                             currentRequest = request,
                             workingContinuityContext =
                                 workingSuccessorContext,
@@ -670,7 +669,6 @@ object DirectCompanionTurn {
         conversationOwner: DirectConversationStore.Locked,
         productHome: Path,
         setup: VexLifeProdLocalSetup.Result,
-        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
         currentRequest: DirectConversationStore.Event,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
         browserContext: DirectPromptContext.BrowserContext?,
