@@ -11,10 +11,10 @@ separate owners?
 Current product decision:
 
 ~~~text
-accepted VexLife-Prod main
-  = 9d17afee048438d2132b7d874b6139b63c8dbec1
-  = PR #77 accepted local-qualified Vision private-image carriage
-  = PR #84 explicit local user-selected Vision != distribution-gate rule
+accepted VexLife-Prod source includes:
+  PR #77 local-qualified Vision private-image carriage
+  PR #84 explicit local user-selected Vision != distribution-gate rule
+  this source edge: Product local-service bridge to the carried Vision runtime
 
 AND
 
@@ -68,26 +68,31 @@ OBSERVATION != STORE
 OBSERVATION != MEMORY
 ~~~
 
-The current generated product manifestation deliberately projects `Held`. The button is visible but
-disabled because VexLife-Prod still has no accepted ordinary-product runtime path that can invoke and
-consume the accepted SDK effect chain.
+The generated product manifestation deliberately remains `Held` in this source slice. This bridge
+makes the carried runtime source-reachable through the local Product service, but the currently
+running accepted-main service and the existing Vision presentation have not yet consumed that
+reachability truth.
 
 ~~~text
-SDK SOURCE ACCEPTED
-!=
-PRODUCT EFFECT REACHABLE
+PRODUCT_SERVICE_BRIDGE_SOURCE
+!= RUNNING_PRODUCT_VISION_ROUTE_CURRENT
+!= WEB_VISION_READY
 ~~~
 
-Changing the button to Ready merely because SDK source exists would fabricate Product reachability.
-Ready is earned only when the ordinary Product bridge is actually reachable.
+Changing the button to Ready merely because bridge source exists would fabricate lived Product
+currentness. Ready is earned when the accepted-main Product service is actually running with the
+Vision-carrying image and the presentation consumes that reachable route.
 
 ## Accepted outside effect owners
 
-Current accepted Vextreme-SDK main/checkpoint:
+The carried Product runtime artifact is source-bound to accepted Vextreme-SDK source:
 
 ~~~text
-c39951fe260e505b4a3c5b8f606cc8da14c985c0
+commit = 38de26eb9df4ccef5a3d8f1c05c708bbd6b16f51
+tree   = 46d29d57c5a0ef6e7107b4dca19b40e643ee7f55
 ~~~
+
+These are artifact provenance coordinates, not a claim that SDK `main` must remain at that commit.
 
 The accepted one-shot SCREEN relationship is:
 
