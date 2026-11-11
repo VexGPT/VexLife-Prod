@@ -3,12 +3,13 @@ package vexlife.continuity
 import kotlinx.serialization.Serializable
 
 /**
- * Portable semantic shape for Vex's present working carry when exact Conversation material is about
- * to leave direct model presence.
+ * Portable semantic shape for a refreshed Vex present working carry when exact Conversation material
+ * is about to leave direct model presence.
  *
  * This contract does not decide provider invocation, persistence, currentness ownership, prompt
  * inclusion, Memory admission, relationship agreement or human-profile truth. It only distinguishes
- * a source-bound RELEASE from a source-bound Vex-self-relative CARRY.
+ * a source-bound RELEASE from a source-bound Vex-self-relative CARRY. The draft is a refreshed
+ * present state, not an append-only semantic ledger.
  */
 object VexLifeWorkingCarryContract {
     const val Schema =
@@ -61,7 +62,8 @@ object VexLifeWorkingCarryContract {
         val companionLineageRef: String,
         val threadRef: String,
         val authoredByRef: String,
-        val observedSourceBindings: List<SourceBinding>,
+        val previousCarrySourceBindings: List<SourceBinding>,
+        val leavingSourceBindings: List<SourceBinding>,
         val disposition: String,
         val carryItems: List<CarryItem>,
         val releaseReason: String?,
@@ -99,17 +101,56 @@ object VexLifeWorkingCarryContract {
             "authoredByRef",
         )
 
-        val observed =
+        val previous =
             requireBindings(
-                value.observedSourceBindings,
-                "observedSourceBindings",
+                value.previousCarrySourceBindings,
+                "previousCarrySourceBindings",
+                allowEmpty = true,
             )
         require(
-            observed ==
-                value.observedSourceBindings,
+            previous ==
+                value.previousCarrySourceBindings,
         ) {
-            "working carry observed source bindings must be canonical and duplicate-free"
+            "working carry previous source bindings must preserve exact order and remain duplicate-free"
         }
+        val leaving =
+            requireBindings(
+                value.leavingSourceBindings,
+                "leavingSourceBindings",
+                allowEmpty = false,
+            )
+        require(
+            leaving ==
+                value.leavingSourceBindings,
+        ) {
+            "working carry leaving source bindings must preserve exact order and remain duplicate-free"
+        }
+
+        val availableByRef =
+            linkedMapOf<String, SourceBinding>()
+        (
+            previous +
+                leaving
+        )
+            .forEach {
+                binding ->
+                val prior =
+                    availableByRef[
+                        binding.eventRef
+                    ]
+                require(
+                    prior ==
+                        null ||
+                        prior ==
+                        binding,
+                ) {
+                    "working carry source generations conflict for the same eventRef"
+                }
+                availableByRef[
+                    binding.eventRef
+                ] =
+                    binding
+            }
 
         require(
             !value.durableMemoryAuthorityGranted &&
@@ -131,11 +172,6 @@ object VexLifeWorkingCarryContract {
         ) {
             "working carry disposition is not admitted"
         }
-
-        val observedByRef =
-            observed.associateBy(
-                SourceBinding::eventRef,
-            )
 
         value.carryItems.forEach {
             item ->
@@ -165,13 +201,13 @@ object VexLifeWorkingCarryContract {
             require(
                 sources.all {
                     source ->
-                    observedByRef[
+                    availableByRef[
                         source.eventRef
                     ] ==
                         source
                 },
             ) {
-                "working carry item source must be part of the exact observed leaving range"
+                "working carry item source must come from the prior present carry or exact newly leaving range"
             }
         }
 
@@ -184,7 +220,7 @@ object VexLifeWorkingCarryContract {
                         value.releaseReason ==
                         ReleaseReasonNoPresentCarry,
                 ) {
-                    "RELEASE means no semantic carry remains from the observed range"
+                    "RELEASE means no present working carry remains after refreshing prior carry with the leaving range"
                 }
             }
 
@@ -208,9 +244,11 @@ object VexLifeWorkingCarryContract {
     private fun requireBindings(
         values: List<SourceBinding>,
         label: String,
+        allowEmpty: Boolean,
     ): List<SourceBinding> {
         require(
-            values.isNotEmpty(),
+            allowEmpty ||
+                values.isNotEmpty(),
         ) {
             "$label must contain at least one exact Conversation source binding"
         }
