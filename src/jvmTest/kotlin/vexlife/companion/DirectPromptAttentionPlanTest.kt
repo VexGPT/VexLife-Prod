@@ -139,6 +139,41 @@ class DirectPromptAttentionPlanTest {
     }
 
     @Test
+    fun copiedPlanCannotRewriteTheMemoryRemainderAfterFormation() {
+        val plan =
+            DirectPromptAttentionPlan.form(
+                DirectPromptAttentionPlan.Input(
+                    inputTokenBudget = 100,
+                    fixedCurrentTurnTokens = 20,
+                    selectedExactConversationTokens = 50,
+                    carryRequested = true,
+                    carryEstimatedSystemMessageTokens = 10,
+                    maximumMemoryTokens = 50,
+                ),
+            )
+
+        assertFailsWith<IllegalArgumentException> {
+            DirectPromptAttentionPlan.validate(
+                plan.copy(
+                    memoryTokenCap =
+                        plan.memoryTokenCap -
+                            1,
+                ),
+            )
+        }
+
+        assertFailsWith<IllegalArgumentException> {
+            DirectPromptAttentionPlan.validate(
+                plan.copy(
+                    maximumMemoryTokens =
+                        plan.maximumMemoryTokens +
+                            1,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun invalidInputsCannotMakeCarryOrConversationOverdrawFiniteAttention() {
         assertFailsWith<IllegalArgumentException> {
             DirectPromptAttentionPlan.form(
