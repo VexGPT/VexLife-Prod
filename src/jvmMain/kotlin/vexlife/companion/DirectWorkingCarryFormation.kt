@@ -1,8 +1,11 @@
 package vexlife.companion
 
+import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
 import java.time.Instant
 import kotlinx.serialization.Serializable
 import vexlife.continuity.VexLifeWorkingCarryContract
+import vexlife.continuity.VexLifeWorkingCarryOwner
 import vexlife.contract.VexContractJson
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.model.heretic.HereticModelConfiguration
@@ -32,10 +35,27 @@ object DirectWorkingCarryFormation {
         val releaseReason: String?,
     )
 
+    @Serializable
+    private data class FormationCore(
+        val schemaVersion: String,
+        val truthClass: String,
+        val refreshInput: VexLifeWorkingCarryContract.RefreshInput,
+        val draft: VexLifeWorkingCarryContract.Draft,
+        val runtimeObservationRef: String,
+        val runtimeObservationFingerprint: String,
+        val invocationRef: String,
+        val invocationFingerprint: String,
+        val providerOutputSha256: String,
+        val rawProviderOutputPersisted: Boolean,
+        val rawReasoningPersisted: Boolean,
+        val humanAnswerProduced: Boolean,
+    )
+
     @ConsistentCopyVisibility
     data class Formation internal constructor(
         val refreshInput: VexLifeWorkingCarryContract.RefreshInput,
         val draft: VexLifeWorkingCarryContract.Draft,
+        val binding: VexLifeWorkingCarryOwner.FormationBinding,
         val runtimeObservation: DirectCompanionConnection.RuntimeObservation,
         val invocationEvidence: DirectCompanionConnection.InvocationEvidence,
         val providerOutputSha256: String,
@@ -114,13 +134,62 @@ object DirectWorkingCarryFormation {
                 output = modelOutput,
             )
 
+        require(
+            inference.invocationEvidence.runtimeObservationRef ==
+                inference.runtimeObservation.observationRef &&
+                inference.invocationEvidence.runtimeObservationFingerprint ==
+                inference.runtimeObservation.semanticFingerprint,
+        ) {
+            "working carry formation invocation evidence is detached from its runtime observation"
+        }
+
+        val formationCore =
+            FormationCore(
+                schemaVersion = "vexlife-prod.working-carry-formation/v1",
+                truthClass = "LOCAL_VEX_WORKING_CARRY_FORMATION",
+                refreshInput = input,
+                draft = draft,
+                runtimeObservationRef = inference.runtimeObservation.observationRef,
+                runtimeObservationFingerprint = inference.runtimeObservation.semanticFingerprint,
+                invocationRef = inference.invocationEvidence.invocationRef,
+                invocationFingerprint = inference.invocationEvidence.semanticFingerprint,
+                providerOutputSha256 = inference.runtimeObservation.contentSha256,
+                rawProviderOutputPersisted = false,
+                rawReasoningPersisted = false,
+                humanAnswerProduced = false,
+            )
+        val formationFingerprint =
+            sha256(
+                VexContractJson.canonicalEncode(
+                    formationCore,
+                ),
+            )
+        val binding =
+            VexLifeWorkingCarryOwner.FormationBinding(
+                schemaVersion = VexLifeWorkingCarryOwner.FormationBindingSchema,
+                formationRef =
+                    "working-carry-formation." +
+                        formationFingerprint.take(
+                            32,
+                        ),
+                formationFingerprint = formationFingerprint,
+                runtimeObservationRef = formationCore.runtimeObservationRef,
+                runtimeObservationFingerprint = formationCore.runtimeObservationFingerprint,
+                invocationRef = formationCore.invocationRef,
+                invocationFingerprint = formationCore.invocationFingerprint,
+                providerOutputSha256 = formationCore.providerOutputSha256,
+            )
+                .let(
+                    VexLifeWorkingCarryOwner::requireFormationBinding,
+                )
+
         return Formation(
             refreshInput = input,
             draft = draft,
+            binding = binding,
             runtimeObservation = inference.runtimeObservation,
             invocationEvidence = inference.invocationEvidence,
-            providerOutputSha256 =
-                inference.runtimeObservation.contentSha256,
+            providerOutputSha256 = formationCore.providerOutputSha256,
             rawProviderOutputPersisted = false,
             rawReasoningPersisted = false,
             humanAnswerProduced = false,
@@ -274,6 +343,27 @@ object DirectWorkingCarryFormation {
             }
         return byRef
     }
+
+    private fun sha256(
+        value: String,
+    ): String =
+        MessageDigest
+            .getInstance(
+                "SHA-256",
+            )
+            .digest(
+                value.toByteArray(
+                    StandardCharsets.UTF_8,
+                ),
+            )
+            .joinToString(
+                "",
+            ) {
+                "%02x".format(
+                    it.toInt() and
+                        0xff,
+                )
+            }
 
     private fun systemContent(
         eligibleEventRefs: List<String>,
