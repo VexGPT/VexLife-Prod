@@ -52,9 +52,6 @@ class VexLifeWorkingCarryOwnerTest {
                     64,
                 ),
         )
-            .let(
-                VexLifeWorkingCarryOwner::requireFormationBinding,
-            )
     }
 
     private fun source(
