@@ -13,9 +13,14 @@ import vexlife.model.heretic.HereticModelConfiguration
 /**
  * Conditional local-Vex formation of one refreshed present working carry.
  *
- * This is not a human-facing Companion answer. Raw Conversation in the refresh input is local prompt
- * material only. The model chooses only disposition, self-relative carry text/kind, and eligible
- * source event refs; Product code reconstructs the exact source bindings and authority-false Draft.
+ * Gradual-aging formation happens before the human-facing response from source that is leaving the
+ * bounded recent verbatim window. Rollover-handoff formation happens after an exact completed turn
+ * whose raw Conversation will be suppressed by the successor prompt.
+ *
+ * Neither path is a human-facing Companion answer. Raw Conversation in the refresh input is local
+ * prompt material only. The model chooses only disposition, self-relative carry text/kind, and
+ * eligible source event refs; Product code reconstructs the exact source bindings and authority-false
+ * Draft.
  */
 object DirectWorkingCarryFormation {
     private const val SystemHeader =
