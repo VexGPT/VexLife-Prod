@@ -1,18 +1,23 @@
 package vexlife.continuity
 
 import java.nio.file.Files
+import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import vexlife.contract.VexContractJson
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 
 class VexLifeWorkingCarryOwnerTest {
     private fun formationBinding(
+        refresh: VexLifeWorkingCarryContract.RefreshInput,
+        carry: VexLifeWorkingCarryContract.Draft,
         hex: Char,
     ): VexLifeWorkingCarryOwner.FormationBinding {
         require(
@@ -33,6 +38,18 @@ class VexLifeWorkingCarryOwnerTest {
                         32,
                     ),
             formationFingerprint = fingerprint,
+            refreshInputSha256 =
+                sha256(
+                    VexContractJson.canonicalEncode(
+                        refresh,
+                    ),
+                ),
+            draftSha256 =
+                sha256(
+                    VexContractJson.canonicalEncode(
+                        carry,
+                    ),
+                ),
             runtimeObservationRef =
                 "observation.working-carry.formation." +
                     hex,
@@ -310,7 +327,9 @@ class VexLifeWorkingCarryOwnerTest {
                         carry = carry,
                         formationBinding =
                             formationBinding(
-                                'a',
+                                refresh = refresh,
+                                carry = carry,
+                                hex = 'a',
                             ),
                     )
 
@@ -433,7 +452,9 @@ class VexLifeWorkingCarryOwnerTest {
                         carry = released,
                         formationBinding =
                             formationBinding(
-                                'b',
+                                refresh = releaseRefresh,
+                                carry = released,
+                                hex = 'b',
                             ),
                     )
 
@@ -526,7 +547,9 @@ class VexLifeWorkingCarryOwnerTest {
                         carry = failedCarry,
                         formationBinding =
                             formationBinding(
-                                'c',
+                                refresh = failedRefresh,
+                                carry = failedCarry,
+                                hex = 'c',
                             ),
                     )
 
@@ -550,7 +573,28 @@ class VexLifeWorkingCarryOwnerTest {
                 .toFile()
                 .deleteRecursively()
         }
-    }
+    }    private fun sha256(
+        value: String,
+    ): String =
+        MessageDigest
+            .getInstance(
+                "SHA-256",
+            )
+            .digest(
+                value.toByteArray(
+                    StandardCharsets.UTF_8,
+                ),
+            )
+            .joinToString(
+                "",
+            ) {
+                "%02x".format(
+                    it.toInt() and
+                        0xff,
+                )
+            }
+
+
 }
 
 // [VXG RealForever]
