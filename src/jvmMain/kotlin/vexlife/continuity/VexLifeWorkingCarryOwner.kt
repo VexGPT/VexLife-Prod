@@ -214,7 +214,7 @@ class VexLifeWorkingCarryOwner(
         )
     }
 
-    fun prepare(
+    internal fun prepare(
         priorConversationHeadSha256: String?,
         currentRequest: DirectConversationStore.Event,
         refreshInput: VexLifeWorkingCarryContract.RefreshInput,
@@ -320,7 +320,7 @@ class VexLifeWorkingCarryOwner(
         )
     }
 
-    fun commitCompletedTurn(
+    internal fun commitCompletedTurn(
         prepared: Prepared,
         completedHead: DirectConversationStore.Head,
     ): CommitResult {
