@@ -119,11 +119,11 @@ object VexLifeProdPrivateServiceImage {
         val setupWindowPath: String,
         val javaPath: String,
         val runtimeModules: List<String>,
-        val visionRuntimeExecutablePathOrNull: String?,
-        val visionRuntimeHelperExecutablePathOrNull: String?,
-        val visionRuntimeTruthClassOrNull: String?,
-        val visionRuntimeReleaseDispositionOrNull: String?,
-        val visionRuntimeSdkSourceCommitOrNull: String?,
+        val visionRuntimeExecutablePathOrNull: String? = null,
+        val visionRuntimeHelperExecutablePathOrNull: String? = null,
+        val visionRuntimeTruthClassOrNull: String? = null,
+        val visionRuntimeReleaseDispositionOrNull: String? = null,
+        val visionRuntimeSdkSourceCommitOrNull: String? = null,
         val effectsPerformed: Boolean,
     )
 
