@@ -159,6 +159,139 @@ object DirectCompanionTurn {
         "same failed send attempt must not replay; form a new idempotencyKey",
     )
 
+    private class RepeatedSourceReturnRequestException :
+        IllegalStateException(
+            "final source-return inference cannot request Conversation source again in the same human turn",
+        )
+
+    private enum class SourceReturnProgressMode {
+        Pending,
+        HumanAnswer,
+        InternalControl,
+    }
+
+    private class SourceReturnProgressGate(
+        private val observer: ProgressObserver?,
+    ) {
+        private val buffered =
+            mutableListOf<DirectCompanionConnection.Progress>()
+        private val contentPrefix =
+            StringBuilder()
+        private var mode =
+            SourceReturnProgressMode.Pending
+
+        fun connectionObserver(): DirectCompanionConnection.ProgressObserver? =
+            observer
+                ?.let {
+                    DirectCompanionConnection.ProgressObserver {
+                        progress ->
+                        observe(
+                            progress,
+                        )
+                    }
+                }
+
+        fun finish(
+            finalContent: String,
+        ): Boolean {
+            val header =
+                DirectConversationSourceReturn.RequestHeader
+            val controlLike =
+                finalContent.startsWith(
+                    header,
+                ) ||
+                    header.startsWith(
+                        finalContent,
+                    )
+
+            if (
+                mode ==
+                    SourceReturnProgressMode.Pending
+            ) {
+                if (
+                    controlLike
+                ) {
+                    mode =
+                        SourceReturnProgressMode.InternalControl
+                    buffered.clear()
+                } else {
+                    mode =
+                        SourceReturnProgressMode.HumanAnswer
+                    flush()
+                }
+            }
+
+            return controlLike
+        }
+
+        private fun observe(
+            progress: DirectCompanionConnection.Progress,
+        ) {
+            when (
+                mode
+            ) {
+                SourceReturnProgressMode.HumanAnswer ->
+                    projectProviderProgress(
+                        observer,
+                        progress,
+                    )
+
+                SourceReturnProgressMode.InternalControl ->
+                    Unit
+
+                SourceReturnProgressMode.Pending -> {
+                    buffered +=
+                        progress
+                    if (
+                        progress.kind ==
+                            DirectCompanionConnection.ProgressKind.Content
+                    ) {
+                        contentPrefix.append(
+                            progress.delta,
+                        )
+                        val observed =
+                            contentPrefix.toString()
+                        val header =
+                            DirectConversationSourceReturn.RequestHeader
+                        when {
+                            observed.startsWith(
+                                header,
+                            ) -> {
+                                mode =
+                                    SourceReturnProgressMode.InternalControl
+                                buffered.clear()
+                            }
+
+                            header.startsWith(
+                                observed,
+                            ) ->
+                                Unit
+
+                            else -> {
+                                mode =
+                                    SourceReturnProgressMode.HumanAnswer
+                                flush()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private fun flush() {
+            val pending =
+                buffered.toList()
+            buffered.clear()
+            pending.forEach {
+                progress ->
+                projectProviderProgress(
+                    observer,
+                    progress,
+                )
+            }
+        }
+    }
+
     internal data class Hooks(
         val transport: DirectCompanionConnection.Transport =
             DirectCompanionConnection.SystemTransport,
@@ -177,6 +310,18 @@ object DirectCompanionTurn {
             productHome ->
             VexLifeCurrentMemoryReader.readCurrent(
                 productHome,
+            )
+        },
+        val memoryContextAtCap: (
+            productHome: Path,
+            memoryTokenCap: Int,
+        ) -> VexLifeMemoryContract.Context = {
+            productHome,
+            memoryTokenCap,
+            ->
+            VexLifeCurrentMemoryReader.readCurrent(
+                productHome = productHome,
+                memoryTokenCap = memoryTokenCap,
             )
         },
         val progressObserver: ProgressObserver? =
@@ -206,6 +351,16 @@ object DirectCompanionTurn {
         val result: Result,
         val turnRef: String,
         val workingContinuity: DirectWorkingContinuity.Prepared,
+    )
+
+    private data class ContinuityPromptSelection(
+        val materialization: DirectPromptContext.Materialization,
+        val memoryContext: VexLifeMemoryContract.Context,
+    )
+
+    private data class ProviderStage(
+        val inference: DirectCompanionConnection.Result,
+        val sourceReturnRequest: DirectConversationSourceReturn.Request?,
     )
 
     fun perform(
