@@ -500,119 +500,32 @@ object DirectCompanionTurn {
                             currentRequest = request,
                             issuedAt = hooks.now(),
                         )
-                    val memoryContext =
-                        hooks.currentMemoryContext(
-                            productHome,
-                        )
-                    val currentPrior =
-                        immediatePriorCompletedTurn()
-                    DirectWorkingContinuity.requireSuccessorContextCurrent(
-                        productHome = productHome,
-                        prior = currentPrior,
-                        currentRequest = request,
-                        expected = workingSuccessorContext,
-                    )
-                    val currentMemoryContext =
-                        hooks.currentMemoryContext(
-                            productHome,
-                        )
-                            .also {
-                                current ->
-                                require(
-                                    current ==
-                                        memoryContext,
-                                ) {
-                                    "VexLife Memory context changed before provider invocation"
-                                }
-                            }
-                    val runtimeEvidence =
-                        hooks.currentRuntimeEvidence(
-                            setup,
-                        )
                     emitProgress(
                         hooks.progressObserver,
                         Progress(
                             phase = ProgressPhase.Generating,
                         ),
                     )
-                    val prompt =
-                        DirectPromptContext.materialize(
-                            prior = currentPrior,
+                    val providerTurn =
+                        performProviderTurn(
+                            conversationOwner = this,
+                            productHome = productHome,
+                            setup = setup,
+                            prior = prior,
                             currentRequest = request,
-                            recentConversationSource = {
-                                availableTokens ->
-                                recentCompletedConversation(
-                                    availableTokens = availableTokens,
-                                    estimatedMessageTokens =
-                                        DirectPromptContext::estimatedMessageTokens,
-                                )
-                            },
-                            memoryContext = currentMemoryContext,
                             workingContinuityContext =
                                 workingSuccessorContext,
                             browserContext = intent.browserContext,
-                            runtimeEvidence = runtimeEvidence,
+                            hooks = hooks,
                         )
-                    val workingContinuity =
-                        DirectWorkingContinuity.prepare(
-                            productHome = productHome,
-                            currentRequest = request,
-                            promptContext = prompt.receipt,
-                            memoryContext = currentMemoryContext,
-                            priorSuccessorContext =
-                                workingSuccessorContext,
-                        )
-                    DirectPromptContext.reverify(
-                        materialization = prompt,
-                        prior = currentPrior,
-                        currentRequest = request,
-                        recentConversationSource = {
-                            availableTokens ->
-                            recentCompletedConversation(
-                                availableTokens = availableTokens,
-                                estimatedMessageTokens =
-                                    DirectPromptContext::estimatedMessageTokens,
-                            )
-                        },
-                        memoryContext = currentMemoryContext,
-                        workingContinuityContext =
-                            workingSuccessorContext,
-                        browserContext = intent.browserContext,
-                        runtimeEvidence = runtimeEvidence,
-                    )
-
+                    val prompt =
+                        providerTurn.prompt.materialization
                     val inference =
-                        DirectCompanionConnection.invoke(
-                            runtime = runtimeEvidence,
-                            messages = prompt.messages,
-                            transport = hooks.transport,
-                            progressObserver =
-                                hooks.progressObserver
-                                    ?.let {
-                                        observer ->
-                                        DirectCompanionConnection.ProgressObserver {
-                                            progress ->
-                                            emitProgress(
-                                                observer,
-                                                Progress(
-                                                    phase =
-                                                        when (
-                                                            progress.kind
-                                                        ) {
-                                                            DirectCompanionConnection.ProgressKind.Reasoning ->
-                                                                ProgressPhase.Reasoning
-
-                                                            DirectCompanionConnection.ProgressKind.Content ->
-                                                                ProgressPhase.Responding
-                                                        },
-                                                    delta = progress.delta,
-                                                    accumulatedCharacters = progress.accumulatedCharacters,
-                                                ),
-                                            )
-                                        }
-                                    },
-                            now = hooks.now,
-                        )
+                        providerTurn.inference
+                    val workingContinuity =
+                        providerTurn.workingContinuity
+                    val sourceReturnTrace =
+                        providerTurn.sourceReturnTrace
 
                     response =
                         appendResponse(
@@ -633,6 +546,7 @@ object DirectCompanionTurn {
                             promptContext = prompt.receipt,
                             runtimeObservation = inference.runtimeObservation,
                             invocationEvidence = inference.invocationEvidence,
+                            sourceReturnTrace = sourceReturnTrace,
                             formedAt = hooks.now(),
                         )
 
