@@ -1191,74 +1191,49 @@ object DirectPromptContext {
             "direct prompt recent Conversation history must contain complete request/response pairs"
         }
 
-        var priorResponse: DirectConversationStore.Event? =
-            null
-        var index =
-            0
-        while (
-            index <
-                events.size
-        ) {
-            val request =
-                events[index]
-            val response =
-                events[index + 1]
+        val request =
+            events[events.size - 2]
+        val response =
+            events.last()
 
-            require(
-                request.eventKind ==
-                    "REQUEST" &&
-                    response.eventKind ==
-                    "RESPONSE" &&
-                    response.priorEventSha256 ==
-                    request.eventSha256 &&
-                    response.sequence ==
-                    request.sequence +
-                    1 &&
-                    response.turnRef ==
-                    request.turnRef &&
-                    response.companionLineageRef ==
-                    request.companionLineageRef &&
-                    response.threadRef ==
-                    request.threadRef &&
-                    response.channelRef ==
-                    request.channelRef,
-            ) {
-                "direct prompt recent Conversation history contains an invalid completed pair"
-            }
-
-            priorResponse
-                ?.let {
-                    previous ->
-                    require(
-                        request.priorEventSha256 ==
-                            previous.eventSha256 &&
-                            request.sequence ==
-                            previous.sequence +
-                            1 &&
-                            request.companionLineageRef ==
-                            previous.companionLineageRef &&
-                            request.threadRef ==
-                            previous.threadRef &&
-                            request.channelRef ==
-                            previous.channelRef,
-                    ) {
-                        "direct prompt recent Conversation history is not one contiguous canonical suffix"
-                    }
-                }
-
-            priorResponse =
-                response
-            index +=
-                2
-        }
-
+        requireCompletedConversationPair(
+            request = request,
+            response = response,
+        )
         require(
-            events[events.size - 2] ==
+            request ==
                 prior.requestEvent &&
-                events.last() ==
+                response ==
                 prior.responseEvent,
         ) {
             "direct prompt recent Conversation history does not end at the exact immediate prior completed turn"
+        }
+    }
+
+    private fun requireCompletedConversationPair(
+        request: DirectConversationStore.Event,
+        response: DirectConversationStore.Event,
+    ) {
+        require(
+            request.eventKind ==
+                "REQUEST" &&
+                response.eventKind ==
+                "RESPONSE" &&
+                response.priorEventSha256 ==
+                request.eventSha256 &&
+                response.sequence ==
+                request.sequence +
+                1 &&
+                response.turnRef ==
+                request.turnRef &&
+                response.companionLineageRef ==
+                request.companionLineageRef &&
+                response.threadRef ==
+                request.threadRef &&
+                response.channelRef ==
+                request.channelRef,
+        ) {
+            "direct prompt recent Conversation history contains an invalid completed pair"
         }
     }
 
@@ -1277,6 +1252,8 @@ object DirectPromptContext {
             mutableListOf<List<DirectConversationStore.Event>>()
         var remaining =
             availableTokens
+        var newerRequest: DirectConversationStore.Event? =
+            null
         var index =
             events.size -
                 2
@@ -1285,17 +1262,17 @@ object DirectPromptContext {
             index >=
                 0
         ) {
-            val pair =
-                listOf(
-                    events[index],
-                    events[index + 1],
-                )
+            val request =
+                events[index]
+            val response =
+                events[index + 1]
             val pairEstimate =
-                pair.sumOf {
+                estimatedMessageTokens(
+                    request.content,
+                ) +
                     estimatedMessageTokens(
-                        it.content,
+                        response.content,
                     )
-                }
 
             if (
                 pairEstimate >
@@ -1304,10 +1281,39 @@ object DirectPromptContext {
                 break
             }
 
+            requireCompletedConversationPair(
+                request = request,
+                response = response,
+            )
+            newerRequest
+                ?.let {
+                    newer ->
+                    require(
+                        newer.priorEventSha256 ==
+                            response.eventSha256 &&
+                            newer.sequence ==
+                            response.sequence +
+                            1 &&
+                            newer.companionLineageRef ==
+                            response.companionLineageRef &&
+                            newer.threadRef ==
+                            response.threadRef &&
+                            newer.channelRef ==
+                            response.channelRef,
+                    ) {
+                        "direct prompt recent Conversation selection is not one contiguous canonical suffix"
+                    }
+                }
+
             newestFirstPairs +=
-                pair
+                listOf(
+                    request,
+                    response,
+                )
             remaining -=
                 pairEstimate
+            newerRequest =
+                request
             index -=
                 2
         }
