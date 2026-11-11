@@ -378,6 +378,41 @@ class DirectWorkingCarryFormationTest {
                                 "Continue with what is still alive now.",
                             ),
                         )
+                        assertTrue(
+                            call.body.contains(
+                                "Please keep this distinction open; we have not resolved it yet.",
+                            ),
+                        )
+                        assertTrue(
+                            call.body.contains(
+                                "\"retainedDirectSourceBindings\"",
+                            ),
+                        )
+                        assertTrue(
+                            call.body.contains(
+                                "event.vexlife.retained.request",
+                            ),
+                        )
+                        assertTrue(
+                            call.body.contains(
+                                "event.vexlife.retained.response",
+                            ),
+                        )
+                        assertFalse(
+                            call.body.contains(
+                                "We are still working through the same subject.",
+                            ),
+                        )
+                        assertFalse(
+                            call.body.contains(
+                                "The later exchange has not resolved the earlier distinction.",
+                            ),
+                        )
+                        assertFalse(
+                            call.body.contains(
+                                "\"retainedDirectEvents\"",
+                            ),
+                        )
                         assertFalse(
                             call.body.contains(
                                 "VEXLIFE_CURRENT_MEMORY_CONTEXT/v1",
