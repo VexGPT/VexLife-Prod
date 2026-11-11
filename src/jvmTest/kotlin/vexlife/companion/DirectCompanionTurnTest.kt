@@ -886,7 +886,7 @@ class DirectCompanionTurnTest {
                                 "statement.score.continuity.001",
                             ),
                         )
-                        assertFalse(
+                        assertTrue(
                             call.body.contains(
                                 "Rollover producer response",
                             ),
@@ -909,7 +909,7 @@ class DirectCompanionTurnTest {
                                     {
                                       "message": {
                                         "role": "assistant",
-                                        "content": "Successor response without prior-pair replay"
+                                        "content": "Successor response with prior Vex response bridge"
                                       }
                                     }
                                   ]
@@ -1065,7 +1065,7 @@ class DirectCompanionTurnTest {
                 providerCalls,
             )
             assertEquals(
-                "Successor response without prior-pair replay",
+                "Successor response with prior Vex response bridge",
                 second.content,
             )
             assertEquals(
@@ -1077,6 +1077,16 @@ class DirectCompanionTurnTest {
             )
             assertTrue(
                 second.promptContextReceipt.selectedConversationEventSha256.isEmpty(),
+            )
+            assertEquals(
+                first.responseEventRef,
+                second.promptContextReceipt.successorPriorResponseEventRef,
+            )
+            assertNotNull(
+                second.promptContextReceipt.successorPriorResponseEventSha256,
+            )
+            assertNotNull(
+                second.promptContextReceipt.successorPriorResponseEventSequence,
             )
             assertTrue(
                 second.promptContextReceipt.workingContinuityIncluded,
@@ -1129,6 +1139,11 @@ class DirectCompanionTurnTest {
                     requireNotNull(
                         second.promptContextReceipt.capabilityFrameRef,
                     ),
+                ),
+            )
+            assertTrue(
+                secondContext.contextSourceRefs.contains(
+                    first.responseEventRef,
                 ),
             )
         } finally {
@@ -1197,6 +1212,18 @@ class DirectCompanionTurnTest {
                                 "Failed successor request",
                             ),
                         )
+                        assertTrue(
+                            call.body.contains(
+                                "Rollover recovery baseline",
+                            ),
+                        )
+                        assertFalse(
+                            call.body.contains(
+                                "y".repeat(
+                                    1024,
+                                ),
+                            ),
+                        )
                         DirectCompanionConnection.HttpResult(
                             status = 503,
                             body = "",
@@ -1219,9 +1246,16 @@ class DirectCompanionTurnTest {
                                 "Failed successor request",
                             ),
                         )
-                        assertFalse(
+                        assertTrue(
                             call.body.contains(
                                 "Rollover recovery baseline",
+                            ),
+                        )
+                        assertFalse(
+                            call.body.contains(
+                                "y".repeat(
+                                    1024,
+                                ),
                             ),
                         )
                         DirectCompanionConnection.HttpResult(
@@ -1412,6 +1446,13 @@ class DirectCompanionTurnTest {
             )
             assertTrue(
                 recovered.promptContextReceipt.selectedConversationEventRefs.isEmpty(),
+            )
+            assertEquals(
+                first.responseEventRef,
+                recovered.promptContextReceipt.successorPriorResponseEventRef,
+            )
+            assertNotNull(
+                recovered.promptContextReceipt.successorPriorResponseEventSha256,
             )
 
             val afterRecovery =
