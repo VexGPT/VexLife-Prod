@@ -19,6 +19,15 @@ object VexLifeWorkingCarryContract {
     const val RefreshInputSchema =
         "vexlife.working-carry-refresh-input/v1"
 
+    const val RolloverRefreshInputSchema =
+        "vexlife.working-carry-rollover-refresh-input/v1"
+
+    const val GradualAging =
+        "GRADUAL_AGING"
+
+    const val RolloverHandoff =
+        "ROLLOVER_HANDOFF"
+
     const val TruthClass =
         "VEX_PRESENT_WORKING_CARRY"
 
@@ -99,6 +108,20 @@ object VexLifeWorkingCarryContract {
         val newlyLeavingEvents: List<SourceEvent>,
         val retainedDirectEvents: List<SourceEvent>,
         val currentRequest: SourceEvent,
+        val carryTokenCap: Int,
+        val durableMemoryIncluded: Boolean = false,
+        val persistencePerformed: Boolean = false,
+        val effectsPerformed: Boolean = false,
+    )
+
+    @Serializable
+    data class RolloverRefreshInput(
+        val schemaVersion: String,
+        val perspective: String,
+        val companionLineageRef: String,
+        val threadRef: String,
+        val previousCarry: Draft?,
+        val handoffEvents: List<SourceEvent>,
         val carryTokenCap: Int,
         val durableMemoryIncluded: Boolean = false,
         val persistencePerformed: Boolean = false,
@@ -300,6 +323,67 @@ object VexLifeWorkingCarryContract {
         ) {
             "working carry refresh sources must remain in strict lived Conversation order"
         }
+
+        return value
+    }
+
+    fun requireRolloverRefreshInputShape(
+        value: RolloverRefreshInput,
+    ): RolloverRefreshInput {
+        require(
+            value.schemaVersion ==
+                RolloverRefreshInputSchema &&
+                value.perspective ==
+                Perspective,
+        ) {
+            "working carry rollover refresh schema/perspective is invalid"
+        }
+        requireIdentity(
+            companionLineageRef = value.companionLineageRef,
+            threadRef = value.threadRef,
+        )
+        require(
+            value.carryTokenCap >=
+                0 &&
+                !value.durableMemoryIncluded &&
+                !value.persistencePerformed &&
+                !value.effectsPerformed,
+        ) {
+            "working carry rollover refresh cannot include durable Memory, persist state, perform effects, or use a negative carry allowance"
+        }
+
+        value.previousCarry
+            ?.let {
+                prior ->
+                requireDraftShape(
+                    prior,
+                )
+                require(
+                    prior.companionLineageRef ==
+                        value.companionLineageRef &&
+                        prior.threadRef ==
+                        value.threadRef,
+                ) {
+                    "previous working carry belongs to a different lineage/thread"
+                }
+            }
+
+        val handoff =
+            requireSourceEventRange(
+                value.handoffEvents,
+                "handoffEvents",
+                allowEmpty = false,
+                requireCompletePairs = true,
+            )
+        requireOneSourceGeneration(
+            value.previousCarry
+                ?.sourceBindings
+                .orEmpty() +
+                handoff.map(
+                    SourceEvent::source,
+                ),
+            "working carry rollover refresh source",
+        )
 
         return value
     }
@@ -549,6 +633,75 @@ object VexLifeWorkingCarryContract {
             },
         ) {
             "refreshed carry may use only prior carry source or exact newly leaving source"
+        }
+
+        return output
+    }
+
+    fun requireDraftFromRolloverRefresh(
+        refresh: RolloverRefreshInput,
+        draft: Draft,
+    ): Draft {
+        val input =
+            requireRolloverRefreshInputShape(
+                refresh,
+            )
+        val output =
+            requireDraftShape(
+                draft,
+            )
+
+        require(
+            output.companionLineageRef ==
+                input.companionLineageRef &&
+                output.threadRef ==
+                input.threadRef &&
+                output.carryTokenCap ==
+                input.carryTokenCap,
+        ) {
+            "rollover-refreshed working carry identity or token allowance differs from its exact refresh input"
+        }
+
+        val allowed =
+            linkedMapOf<String, SourceBinding>()
+        (
+            input.previousCarry
+                ?.sourceBindings
+                .orEmpty() +
+                input.handoffEvents.map {
+                    it.source
+                }
+        )
+            .forEach {
+                binding ->
+                val prior =
+                    allowed[
+                        binding.eventRef
+                    ]
+                require(
+                    prior ==
+                        null ||
+                        prior ==
+                        binding,
+                ) {
+                    "working carry rollover refresh has conflicting eligible source generations"
+                }
+                allowed[
+                    binding.eventRef
+                ] =
+                    binding
+            }
+
+        require(
+            output.sourceBindings.all {
+                binding ->
+                allowed[
+                    binding.eventRef
+                ] ==
+                    binding
+            },
+        ) {
+            "rollover-refreshed carry may use only prior carry source or exact handoff source"
         }
 
         return output
