@@ -836,6 +836,205 @@ object DirectCompanionTurn {
         }
     }
 
+    private fun selectedMemoryContext(
+        hooks: Hooks,
+        productHome: Path,
+        availability: VexLifeMemoryContract.Context,
+        memoryTokenCap: Int,
+    ): VexLifeMemoryContract.Context =
+        if (
+            availability.memoryTokenCap ==
+                memoryTokenCap
+        ) {
+            availability
+        } else {
+            hooks.memoryContextAtCap(
+                productHome,
+                memoryTokenCap,
+            )
+        }
+
+    private fun formGradualCarryIfNeeded(
+        conversationOwner: DirectConversationStore.Locked,
+        priorConversationHeadSha256: String?,
+        priorPromptContext: DirectPromptContext.Receipt?,
+        currentRecentConversation: DirectConversationStore.RecentCompletedConversation?,
+        currentRequest: DirectConversationStore.Event,
+        currentCarry: VexLifeWorkingCarryOwner.Current?,
+        carryOwner: VexLifeWorkingCarryOwner,
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        transport: DirectCompanionConnection.Transport,
+        now: () -> Instant,
+    ): GradualCarry? {
+        val previousDirectPresence =
+            selectedDirectPresenceBindings(
+                priorPromptContext,
+            )
+        if (
+            previousDirectPresence.isEmpty()
+        ) {
+            return null
+        }
+
+        val retainedEvents =
+            currentRecentConversation
+                ?.events
+                .orEmpty()
+        val retainedDirectPresence =
+            retainedEvents.map {
+                event ->
+                VexLifeWorkingCarryContract.SourceBinding(
+                    eventRef = event.eventRef,
+                    eventHash = event.eventHash,
+                    sequence = event.sequence,
+                )
+            }
+        val newlyLeaving =
+            VexLifeWorkingCarryContract.newlyLeavingDirectPresence(
+                previousDirectPresence = previousDirectPresence,
+                currentDirectPresence = retainedDirectPresence,
+            )
+        if (
+            newlyLeaving.isEmpty()
+        ) {
+            return null
+        }
+
+        val exactLeaving =
+            conversationOwner.exactCommittedConversationEvents(
+                newlyLeaving.map {
+                    source ->
+                    DirectConversationStore.EventAddress(
+                        sequence = source.sequence,
+                        eventRef = source.eventRef,
+                        eventHash = source.eventHash,
+                    )
+                },
+            )
+        require(
+            !exactLeaving.effectsPerformed,
+        ) {
+            "gradual working-carry source return performed an effect"
+        }
+
+        val previousCarry =
+            currentCarry
+                ?.revision
+                ?.carry
+        val refresh =
+            VexLifeWorkingCarryContract.RefreshInput(
+                schemaVersion =
+                    VexLifeWorkingCarryContract.RefreshInputSchema,
+                perspective =
+                    VexLifeWorkingCarryContract.Perspective,
+                companionLineageRef =
+                    currentRequest.companionLineageRef,
+                threadRef =
+                    currentRequest.threadRef,
+                previousCarry = previousCarry,
+                newlyLeavingEvents =
+                    exactLeaving.events.map(
+                        ::workingCarrySourceEvent,
+                    ),
+                retainedDirectEvents =
+                    retainedEvents.map(
+                        ::workingCarrySourceEvent,
+                    ),
+                currentRequest =
+                    workingCarrySourceEvent(
+                        currentRequest,
+                    ),
+                carryTokenCap =
+                    previousCarry
+                        ?.carryTokenCap
+                        ?: DirectCompanionConnection.OutputTokenLimit,
+            )
+                .let(
+                    VexLifeWorkingCarryContract::requireRefreshInputShape,
+                )
+        val formation =
+            DirectWorkingCarryFormation.form(
+                runtime = runtimeEvidence,
+                refreshInput = refresh,
+                transport = transport,
+                now = now,
+            )
+        val prepared =
+            carryOwner.prepare(
+                conversationOwner = conversationOwner,
+                priorConversationHeadSha256 =
+                    requireNotNull(
+                        priorConversationHeadSha256,
+                    ) {
+                        "gradual working-carry refresh requires one exact prior completed Conversation head"
+                    },
+                currentRequest = currentRequest,
+                refreshInput = formation.refreshInput,
+                carry = formation.draft,
+                formationBinding = formation.binding,
+            )
+
+        return GradualCarry(
+            formation = formation,
+            prepared = prepared,
+        )
+    }
+
+    private fun selectedDirectPresenceBindings(
+        receipt: DirectPromptContext.Receipt?,
+    ): List<VexLifeWorkingCarryContract.SourceBinding> {
+        if (
+            receipt ==
+                null ||
+            receipt.selectedConversationEventRefs.isEmpty()
+        ) {
+            return emptyList()
+        }
+        val refs =
+            receipt.selectedConversationEventRefs
+        val hashes =
+            receipt.selectedConversationEventSha256
+        val sequences =
+            receipt.selectedConversationEventSequences
+
+        if (
+            hashes.size !=
+                refs.size ||
+            sequences.size !=
+                refs.size
+        ) {
+            // Historical prompt receipts before sequence-addressed recent selection cannot safely
+            // drive a semantic carry refresh. Canonical Conversation remains available for later
+            // source return; do not infer missing source coordinates.
+            return emptyList()
+        }
+
+        return refs.indices.map {
+            index ->
+            VexLifeWorkingCarryContract.SourceBinding(
+                eventRef = refs[index],
+                eventHash = hashes[index],
+                sequence = sequences[index],
+            )
+        }
+    }
+
+    private fun workingCarrySourceEvent(
+        event: DirectConversationStore.Event,
+    ): VexLifeWorkingCarryContract.SourceEvent =
+        VexLifeWorkingCarryContract.SourceEvent(
+            source =
+                VexLifeWorkingCarryContract.SourceBinding(
+                    eventRef = event.eventRef,
+                    eventHash = event.eventHash,
+                    sequence = event.sequence,
+                ),
+            eventKind = event.eventKind,
+            speakerRef = event.speakerRef,
+            recipientRefs = event.recipientRefs,
+            content = event.content,
+        )
+
     private fun emitProgress(
         observer: ProgressObserver?,
         progress: Progress,
