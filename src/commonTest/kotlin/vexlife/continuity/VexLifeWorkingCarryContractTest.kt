@@ -209,6 +209,132 @@ class VexLifeWorkingCarryContractTest {
             carryTokenCap = carryTokenCap,
         )
 
+    private fun rolloverRefresh(
+        previousCarry: VexLifeWorkingCarryContract.Draft? =
+            draft(
+                listOf(
+                    carryItem(
+                        source = older,
+                        content = "I still carry the older open question.",
+                    ),
+                ),
+            ),
+        carryTokenCap: Int =
+            16_000,
+    ) =
+        VexLifeWorkingCarryContract.RolloverRefreshInput(
+            schemaVersion =
+                VexLifeWorkingCarryContract.RolloverRefreshInputSchema,
+            perspective = VexLifeWorkingCarryContract.Perspective,
+            companionLineageRef = "companion-lineage.vexlife.test",
+            threadRef = "thread.self-development.open-conversation",
+            previousCarry = previousCarry,
+            handoffEvents =
+                listOf(
+                    VexLifeWorkingCarryContract.SourceEvent(
+                        source = leavingRequest,
+                        eventKind = "REQUEST",
+                        speakerRef = "person.victor",
+                        recipientRefs =
+                            listOf(
+                                "companion.vex",
+                            ),
+                        content = "A completed rollover human request.",
+                    ),
+                    VexLifeWorkingCarryContract.SourceEvent(
+                        source = leavingResponse,
+                        eventKind = "RESPONSE",
+                        speakerRef = "companion.vex",
+                        recipientRefs =
+                            listOf(
+                                "person.victor",
+                            ),
+                        content = "A completed rollover Vex response.",
+                    ),
+                ),
+            carryTokenCap = carryTokenCap,
+        )
+
+    @Test
+    fun rolloverRefreshHasNoFutureRequestAndAllHandoffSourceMayRemainAlive() {
+        val input =
+            VexLifeWorkingCarryContract.requireRolloverRefreshInputShape(
+                rolloverRefresh(),
+            )
+        val output =
+            draft(
+                listOf(
+                    carryItem(
+                        source = older,
+                        content = "I still owe the older continuation.",
+                    ),
+                    carryItem(
+                        source = leavingResponse,
+                        kind = "DISTINCTION_TO_PRESERVE",
+                        content = "I must preserve the distinction from the completed rollover turn.",
+                    ),
+                ),
+            )
+
+        val refreshed =
+            VexLifeWorkingCarryContract.requireDraftFromRolloverRefresh(
+                refresh = input,
+                draft = output,
+            )
+
+        assertEquals(
+            listOf(
+                older,
+                leavingResponse,
+            ),
+            refreshed.sourceBindings,
+        )
+        assertEquals(
+            VexLifeWorkingCarryContract.Carry,
+            refreshed.disposition,
+        )
+    }
+
+    @Test
+    fun rolloverRefreshRejectsIncompleteHandoffPairsAndUnrelatedCarrySource() {
+        val incomplete =
+            rolloverRefresh()
+                .copy(
+                    handoffEvents =
+                        listOf(
+                            event(
+                                2,
+                                "REQUEST",
+                            ),
+                        ),
+                )
+
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeWorkingCarryContract.requireRolloverRefreshInputShape(
+                incomplete,
+            )
+        }
+
+        val unrelated =
+            draft(
+                listOf(
+                    carryItem(
+                        source =
+                            binding(
+                                10,
+                                "unrelated",
+                            ),
+                    ),
+                ),
+            )
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeWorkingCarryContract.requireDraftFromRolloverRefresh(
+                refresh = rolloverRefresh(),
+                draft = unrelated,
+            )
+        }
+    }
+
     @Test
     fun refreshedReleaseCarriesNoSemanticOrSourceResidue() {
         val value =

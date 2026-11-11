@@ -71,6 +71,62 @@ class VexLifeWorkingCarryOwnerTest {
         )
     }
 
+    private fun rolloverFormationBinding(
+        refresh: VexLifeWorkingCarryContract.RolloverRefreshInput,
+        carry: VexLifeWorkingCarryContract.Draft,
+        hex: Char,
+    ): VexLifeWorkingCarryOwner.FormationBinding {
+        require(
+            hex in
+                "0123456789abcdef",
+        )
+        val fingerprint =
+            hex
+                .toString()
+                .repeat(
+                    64,
+                )
+        return VexLifeWorkingCarryOwner.FormationBinding(
+            schemaVersion = VexLifeWorkingCarryOwner.FormationBindingSchema,
+            formationRef =
+                "working-carry-formation." +
+                    fingerprint.take(
+                        32,
+                    ),
+            formationFingerprint = fingerprint,
+            refreshInputSha256 =
+                sha256(
+                    VexContractJson.canonicalEncode(
+                        refresh,
+                    ),
+                ),
+            draftSha256 =
+                sha256(
+                    VexContractJson.canonicalEncode(
+                        carry,
+                    ),
+                ),
+            runtimeObservationRef =
+                "observation.working-carry.rollover-formation." +
+                    hex,
+            runtimeObservationFingerprint =
+                "d".repeat(
+                    64,
+                ),
+            invocationRef =
+                "evidence.working-carry.rollover-formation." +
+                    hex,
+            invocationFingerprint =
+                "e".repeat(
+                    64,
+                ),
+            providerOutputSha256 =
+                "f".repeat(
+                    64,
+                ),
+        )
+    }
+
     private fun source(
         event: DirectConversationStore.Event,
     ) =
@@ -176,6 +232,27 @@ class VexLifeWorkingCarryOwnerTest {
             currentRequest =
                 source(
                     currentRequest,
+                ),
+            carryTokenCap = carryTokenCap,
+        )
+
+    private fun rolloverRefresh(
+        lineageRef: String,
+        threadRef: String,
+        previousCarry: VexLifeWorkingCarryContract.Draft?,
+        handoff: List<DirectConversationStore.Event>,
+        carryTokenCap: Int,
+    ) =
+        VexLifeWorkingCarryContract.RolloverRefreshInput(
+            schemaVersion =
+                VexLifeWorkingCarryContract.RolloverRefreshInputSchema,
+            perspective = VexLifeWorkingCarryContract.Perspective,
+            companionLineageRef = lineageRef,
+            threadRef = threadRef,
+            previousCarry = previousCarry,
+            handoffEvents =
+                handoff.map(
+                    ::source,
                 ),
             carryTokenCap = carryTokenCap,
         )
@@ -424,6 +501,10 @@ class VexLifeWorkingCarryOwnerTest {
                     carry,
                     committed.current.revision.carry,
                 )
+                assertEquals(
+                    VexLifeWorkingCarryContract.GradualAging,
+                    committed.current.revision.refreshMoment,
+                )
                 firstCarryRevisionRefOrNull =
                     committed.current.revision.revisionRef
 
@@ -611,7 +692,246 @@ class VexLifeWorkingCarryOwnerTest {
                 .toFile()
                 .deleteRecursively()
         }
-    }    private fun sha256(
+    }
+
+    @Test
+    fun completedRolloverHandoffCommitsOnlyAgainstItsExactCompletedHeadAndReplaysIdempotently() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-working-carry-rollover-owner-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            val formed =
+                CanonicalVexLifeHomeFixture.form(
+                    home = home,
+                    deviceSuffix = "working-carry-rollover-owner-device",
+                    lineageSuffix = "working-carry-rollover-owner-lineage",
+                )
+            val store =
+                DirectConversationStore(
+                    home,
+                )
+            val owner =
+                VexLifeWorkingCarryOwner(
+                    home,
+                )
+
+            store.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef = "turn.working-carry.rollover.001",
+                        requestMessageRef = "message.working-carry.rollover.human.001",
+                        content = "Carry what is still alive after this rollover.",
+                        formedAt = Instant.parse(
+                            "2026-11-11T04:40:00Z",
+                        ),
+                    )
+                val response =
+                    appendResponse(
+                        request = request,
+                        responseMessageRef = "message.working-carry.rollover.companion.001",
+                        content = "I still owe the distinction after the rollover.",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef = "observation.working-carry.rollover.runtime.001",
+                        invocationEvidenceRef = "evidence.working-carry.rollover.invocation.001",
+                        formedAt = Instant.parse(
+                            "2026-11-11T04:40:01Z",
+                        ),
+                    )
+                val context =
+                    CanonicalLivedContextFixture.write(
+                        productHome = home,
+                        request = request,
+                        response = response,
+                        formedAt = Instant.parse(
+                            "2026-11-11T04:40:02Z",
+                        ),
+                    )
+                val completedHead =
+                    commitCompletedTurn(
+                        request = request,
+                        response = response,
+                        contextSha256 = context.sha256,
+                        formedAt = Instant.parse(
+                            "2026-11-11T04:40:03Z",
+                        ),
+                    )
+
+                val output =
+                    carry(
+                        lineageRef = formed.manifest.currentCompanionLineageRef,
+                        threadRef = request.threadRef,
+                        source =
+                            VexLifeWorkingCarryContract.SourceBinding(
+                                eventRef = response.eventRef,
+                                eventHash = response.eventHash,
+                                sequence = response.sequence,
+                            ),
+                        text = "I still owe the distinction after the rollover.",
+                    )
+                val refresh =
+                    rolloverRefresh(
+                        lineageRef = formed.manifest.currentCompanionLineageRef,
+                        threadRef = request.threadRef,
+                        previousCarry = null,
+                        handoff =
+                            listOf(
+                                request,
+                                response,
+                            ),
+                        carryTokenCap = output.carryTokenCap,
+                    )
+                val binding =
+                    rolloverFormationBinding(
+                        refresh = refresh,
+                        carry = output,
+                        hex = 'd',
+                    )
+
+                val committed =
+                    owner.commitCompletedRolloverHandoff(
+                        completedHead = completedHead,
+                        refreshInput = refresh,
+                        carry = output,
+                        formationBinding = binding,
+                    )
+
+                assertEquals(
+                    "COMMITTED",
+                    committed.state,
+                )
+                assertEquals(
+                    VexLifeWorkingCarryContract.RolloverHandoff,
+                    committed.current.revision.refreshMoment,
+                )
+                assertEquals(
+                    completedHead.conversationHeadSha256,
+                    committed.current.revision.sourceConversationHeadSha256,
+                )
+
+                val replay =
+                    owner.commitCompletedRolloverHandoff(
+                        completedHead = completedHead,
+                        refreshInput = refresh,
+                        carry = output,
+                        formationBinding = binding,
+                    )
+                assertEquals(
+                    "IDEMPOTENT_CURRENT",
+                    replay.state,
+                )
+                assertEquals(
+                    committed.current,
+                    replay.current,
+                )
+
+                val mismatched =
+                    refresh.copy(
+                        handoffEvents =
+                            listOf(
+                                source(
+                                    request,
+                                ),
+                                source(
+                                    response,
+                                )
+                                    .copy(
+                                        source =
+                                            source(
+                                                response,
+                                            )
+                                                .source
+                                                .copy(
+                                                    eventHash =
+                                                        "0".repeat(
+                                                            64,
+                                                        ),
+                                                ),
+                                    ),
+                            ),
+                    )
+                assertFailsWith<IllegalArgumentException> {
+                    owner.commitCompletedRolloverHandoff(
+                        completedHead = completedHead,
+                        refreshInput = mismatched,
+                        carry = output,
+                        formationBinding = binding,
+                    )
+                }
+                assertEquals(
+                    committed.current,
+                    owner.readCurrent(),
+                )
+
+                val laterRequest =
+                    beginRequest(
+                        turnRef = "turn.working-carry.rollover.002",
+                        requestMessageRef = "message.working-carry.rollover.human.002",
+                        content = "A later completed turn moves the Conversation edge.",
+                        formedAt = Instant.parse(
+                            "2026-11-11T04:41:00Z",
+                        ),
+                    )
+                val laterResponse =
+                    appendResponse(
+                        request = laterRequest,
+                        responseMessageRef = "message.working-carry.rollover.companion.002",
+                        content = "The old rollover handoff must now be stale.",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef = "observation.working-carry.rollover.runtime.002",
+                        invocationEvidenceRef = "evidence.working-carry.rollover.invocation.002",
+                        formedAt = Instant.parse(
+                            "2026-11-11T04:41:01Z",
+                        ),
+                    )
+                val laterContext =
+                    CanonicalLivedContextFixture.write(
+                        productHome = home,
+                        request = laterRequest,
+                        response = laterResponse,
+                        formedAt = Instant.parse(
+                            "2026-11-11T04:41:02Z",
+                        ),
+                    )
+                commitCompletedTurn(
+                    request = laterRequest,
+                    response = laterResponse,
+                    contextSha256 = laterContext.sha256,
+                    formedAt = Instant.parse(
+                        "2026-11-11T04:41:03Z",
+                    ),
+                )
+
+                assertFailsWith<IllegalArgumentException> {
+                    owner.commitCompletedRolloverHandoff(
+                        completedHead = completedHead,
+                        refreshInput = refresh,
+                        carry = output,
+                        formationBinding = binding,
+                    )
+                }
+                assertEquals(
+                    committed.current,
+                    owner.readCurrent(),
+                )
+
+            }
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    private fun sha256(
         value: String,
     ): String =
         MessageDigest

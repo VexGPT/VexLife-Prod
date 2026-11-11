@@ -16,16 +16,20 @@ import vexlife.home.VexLifeProdHomeFiles
 /**
  * Durable custody for one current Vex present working carry.
  *
- * A refreshed carry may be prepared before provider invocation so the same turn can use it, but
- * currentness advances only after the exact matching Conversation turn is completed. Durable bytes
- * here are working-state custody, not semantic Memory acceptance.
+ * Gradual-aging refresh may be prepared before provider invocation so the same turn can use the
+ * candidate, but currentness advances only after the exact matching Conversation turn completes.
+ *
+ * Rollover-handoff refresh is formed only after a completed high-pressure turn and may advance
+ * currentness only while that completed head remains the exact current Conversation edge.
+ *
+ * Durable bytes here are working-state custody, not semantic Memory acceptance.
  */
 class VexLifeWorkingCarryOwner(
     productHome: Path,
 ) {
     companion object {
         const val RevisionSchema =
-            "vexlife-prod.working-carry-revision/v2"
+            "vexlife-prod.working-carry-revision/v3"
 
         const val FormationBindingSchema =
             "vexlife-prod.working-carry-formation-binding/v1"
@@ -105,6 +109,7 @@ class VexLifeWorkingCarryOwner(
         val ownerRef: String,
         val companionLineageRef: String,
         val threadRef: String,
+        val refreshMoment: String,
         val carry: VexLifeWorkingCarryContract.Draft,
         val formationBinding: FormationBinding,
         val priorRevisionRefOrNull: String?,
@@ -125,6 +130,7 @@ class VexLifeWorkingCarryOwner(
         val ownerRef: String,
         val companionLineageRef: String,
         val threadRef: String,
+        val refreshMoment: String,
         val carry: VexLifeWorkingCarryContract.Draft,
         val formationBinding: FormationBinding,
         val priorRevisionRefOrNull: String?,
@@ -506,6 +512,195 @@ class VexLifeWorkingCarryOwner(
             }
     }
 
+    internal fun commitCompletedRolloverHandoff(
+        completedHead: DirectConversationStore.Head,
+        refreshInput: VexLifeWorkingCarryContract.RolloverRefreshInput,
+        carry: VexLifeWorkingCarryContract.Draft,
+        formationBinding: FormationBinding,
+    ): CommitResult {
+        require(
+            completedHead.companionLineageRef ==
+                manifest.currentCompanionLineageRef &&
+                completedHead.threadRef ==
+                DirectConversationIdentity.ThreadRef,
+        ) {
+            "working carry rollover handoff completed head is outside the current Product lineage/thread"
+        }
+        requireSha256(
+            completedHead.conversationHeadSha256,
+            "completedHead.conversationHeadSha256",
+        )
+        val currentConversationHead =
+            requireNotNull(
+                DirectConversationStore(
+                    home,
+                )
+                    .current()
+                    .head,
+            ) {
+                "working carry rollover handoff requires one current completed Conversation head"
+            }
+        require(
+            currentConversationHead ==
+                completedHead,
+        ) {
+            "working carry rollover handoff completed head is no longer Conversation-current"
+        }
+
+        val input =
+            VexLifeWorkingCarryContract.requireRolloverRefreshInputShape(
+                refreshInput,
+            )
+        val output =
+            VexLifeWorkingCarryContract.requireDraftFromRolloverRefresh(
+                refresh = input,
+                draft = carry,
+            )
+        require(
+            input.companionLineageRef ==
+                completedHead.companionLineageRef &&
+                input.threadRef ==
+                completedHead.threadRef,
+        ) {
+            "working carry rollover refresh identity differs from the exact completed Conversation head"
+        }
+        requireRolloverRefreshMatchesCompletedHead(
+            refresh = input,
+            completedHead = completedHead,
+        )
+        requireFormationBinding(
+            formationBinding,
+        )
+        require(
+            formationBinding.refreshInputSha256 ==
+                sha256(
+                    VexContractJson.canonicalEncode(
+                        input,
+                    ),
+                ) &&
+                formationBinding.draftSha256 ==
+                sha256(
+                    VexContractJson.canonicalEncode(
+                        output,
+                    ),
+                ),
+        ) {
+            "working carry rollover formation binding does not belong to the exact refresh input and Draft"
+        }
+
+        val paths =
+            paths(
+                completedHead.companionLineageRef,
+                completedHead.threadRef,
+            )
+        VexOwnedPath.ensureDirectory(
+            home,
+            paths.root,
+        )
+
+        return VexExclusiveFileLease
+            .acquire(
+                paths.lock,
+            )
+            .use {
+                val current =
+                    readCurrent(
+                        companionLineageRef = completedHead.companionLineageRef,
+                        threadRef = completedHead.threadRef,
+                    )
+
+                val currentRevision =
+                    current
+                        ?.revision
+                if (
+                    currentRevision !=
+                        null &&
+                    currentRevision.refreshMoment ==
+                        VexLifeWorkingCarryContract.RolloverHandoff &&
+                    currentRevision.sourceConversationHeadSha256 ==
+                        completedHead.conversationHeadSha256 &&
+                    currentRevision.carry ==
+                        output &&
+                    currentRevision.formationBinding ==
+                        formationBinding
+                ) {
+                    return@use CommitResult(
+                        state = "IDEMPOTENT_CURRENT",
+                        current =
+                            requireNotNull(
+                                current,
+                            ),
+                    )
+                }
+
+                if (
+                    current ==
+                        null
+                ) {
+                    require(
+                        input.previousCarry ==
+                            null,
+                    ) {
+                        "working carry rollover refresh supplies a previous carry while no current carry exists"
+                    }
+                } else {
+                    require(
+                        input.previousCarry ==
+                            current.revision.carry,
+                    ) {
+                        "working carry rollover refresh previous carry is not the exact owner-current carry"
+                    }
+                }
+
+                val candidate =
+                    formRolloverRevision(
+                        current = current,
+                        refresh = input,
+                        carry = output,
+                        formationBinding = formationBinding,
+                        completedHead = completedHead,
+                    )
+                writeImmutableOrRequireExact(
+                    path =
+                        paths.revisions.resolve(
+                            candidate.semanticFingerprint +
+                                ".json",
+                        ),
+                    value = candidate,
+                )
+                val head =
+                    formHead(
+                        revision = candidate,
+                    )
+                VexDurableContractFile.write(
+                    ownedRoot = home,
+                    path = paths.head,
+                    value = head,
+                )
+
+                val rebound =
+                    requireNotNull(
+                        readCurrent(
+                            companionLineageRef = completedHead.companionLineageRef,
+                            threadRef = completedHead.threadRef,
+                        ),
+                    ) {
+                        "working carry rollover revision did not become current"
+                    }
+                require(
+                    rebound.revision ==
+                        candidate,
+                ) {
+                    "working carry rollover current readback differs from the committed revision"
+                }
+
+                CommitResult(
+                    state = "COMMITTED",
+                    current = rebound,
+                )
+            }
+    }
+
     private fun validatePrepared(
         prepared: Prepared,
     ) {
@@ -687,6 +882,7 @@ class VexLifeWorkingCarryOwner(
                 ownerRef = OwnerRef,
                 companionLineageRef = prepared.companionLineageRef,
                 threadRef = prepared.threadRef,
+                refreshMoment = VexLifeWorkingCarryContract.GradualAging,
                 carry = prepared.carry,
                 formationBinding = prepared.formationBinding,
                 priorRevisionRefOrNull = prepared.priorRevisionRefOrNull,
@@ -711,6 +907,112 @@ class VexLifeWorkingCarryOwner(
             ownerRef = core.ownerRef,
             companionLineageRef = core.companionLineageRef,
             threadRef = core.threadRef,
+            refreshMoment = core.refreshMoment,
+            carry = core.carry,
+            formationBinding = core.formationBinding,
+            priorRevisionRefOrNull = core.priorRevisionRefOrNull,
+            priorRevisionFingerprintOrNull = core.priorRevisionFingerprintOrNull,
+            sourceConversationHeadSha256 = core.sourceConversationHeadSha256,
+            sourceTurnRef = core.sourceTurnRef,
+            sourceRequestEventRef = core.sourceRequestEventRef,
+            sourceRequestEventHash = core.sourceRequestEventHash,
+            sourceRequestSequence = core.sourceRequestSequence,
+            sourceResponseEventHash = core.sourceResponseEventHash,
+            formedAt = core.formedAt,
+            revisionRef =
+                "working-carry-revision." +
+                    fingerprint.take(
+                        32,
+                    ),
+            semanticFingerprint = fingerprint,
+        )
+            .also(
+                ::validateRevision,
+            )
+    }
+
+    private fun requireRolloverRefreshMatchesCompletedHead(
+        refresh: VexLifeWorkingCarryContract.RolloverRefreshInput,
+        completedHead: DirectConversationStore.Head,
+    ) {
+        val request =
+            refresh.handoffEvents[
+                refresh.handoffEvents.size -
+                    2
+            ]
+        val response =
+            refresh.handoffEvents.last()
+
+        require(
+            request.eventKind ==
+                "REQUEST" &&
+                response.eventKind ==
+                "RESPONSE" &&
+                request.source.eventHash ==
+                completedHead.requestEventHash &&
+                request.source.sequence ==
+                completedHead.sequence -
+                    1 &&
+                response.source.eventHash ==
+                completedHead.eventHash &&
+                response.source.sequence ==
+                completedHead.sequence,
+        ) {
+            "working carry rollover handoff does not end at the exact completed Conversation pair"
+        }
+    }
+
+    private fun formRolloverRevision(
+        current: Current?,
+        refresh: VexLifeWorkingCarryContract.RolloverRefreshInput,
+        carry: VexLifeWorkingCarryContract.Draft,
+        formationBinding: FormationBinding,
+        completedHead: DirectConversationStore.Head,
+    ): Revision {
+        val request =
+            refresh.handoffEvents[
+                refresh.handoffEvents.size -
+                    2
+            ]
+        val core =
+            RevisionCore(
+                schemaVersion = RevisionSchema,
+                truthClass = "VEX_PRESENT_WORKING_CARRY_REVISION",
+                ownerRef = OwnerRef,
+                companionLineageRef = completedHead.companionLineageRef,
+                threadRef = completedHead.threadRef,
+                refreshMoment = VexLifeWorkingCarryContract.RolloverHandoff,
+                carry = carry,
+                formationBinding = formationBinding,
+                priorRevisionRefOrNull =
+                    current
+                        ?.revision
+                        ?.revisionRef,
+                priorRevisionFingerprintOrNull =
+                    current
+                        ?.revision
+                        ?.semanticFingerprint,
+                sourceConversationHeadSha256 = completedHead.conversationHeadSha256,
+                sourceTurnRef = completedHead.turnRef,
+                sourceRequestEventRef = request.source.eventRef,
+                sourceRequestEventHash = request.source.eventHash,
+                sourceRequestSequence = request.source.sequence,
+                sourceResponseEventHash = completedHead.eventHash,
+                formedAt = completedHead.formedAt,
+            )
+        val fingerprint =
+            sha256(
+                VexContractJson.canonicalEncode(
+                    core,
+                ),
+            )
+        return Revision(
+            schemaVersion = core.schemaVersion,
+            truthClass = core.truthClass,
+            ownerRef = core.ownerRef,
+            companionLineageRef = core.companionLineageRef,
+            threadRef = core.threadRef,
+            refreshMoment = core.refreshMoment,
             carry = core.carry,
             formationBinding = core.formationBinding,
             priorRevisionRefOrNull = core.priorRevisionRefOrNull,
@@ -780,6 +1082,11 @@ class VexLifeWorkingCarryOwner(
                 "VEX_PRESENT_WORKING_CARRY_REVISION" &&
                 value.ownerRef ==
                 OwnerRef &&
+                value.refreshMoment in
+                setOf(
+                    VexLifeWorkingCarryContract.GradualAging,
+                    VexLifeWorkingCarryContract.RolloverHandoff,
+                ) &&
                 (
                     value.priorRevisionRefOrNull ==
                         null
@@ -861,6 +1168,7 @@ class VexLifeWorkingCarryOwner(
                 ownerRef = value.ownerRef,
                 companionLineageRef = value.companionLineageRef,
                 threadRef = value.threadRef,
+                refreshMoment = value.refreshMoment,
                 carry = value.carry,
                 formationBinding = value.formationBinding,
                 priorRevisionRefOrNull = value.priorRevisionRefOrNull,
