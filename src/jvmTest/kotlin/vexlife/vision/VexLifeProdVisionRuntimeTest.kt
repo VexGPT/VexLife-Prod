@@ -163,7 +163,7 @@ class VexLifeProdVisionRuntimeTest {
             )
 
         try {
-            assertFailsWith<IllegalArgumentException> {
+            assertFailsWith<IllegalStateException> {
                 VexLifeProdVisionRuntime.lookNow(
                     executable = executable,
                     requestRef = requestRef,
@@ -186,7 +186,7 @@ class VexLifeProdVisionRuntimeTest {
                 )
             }
 
-            assertFailsWith<IllegalArgumentException> {
+            assertFailsWith<IllegalStateException> {
                 VexLifeProdVisionRuntime.lookNow(
                     executable = executable,
                     requestRef = requestRef,
@@ -210,7 +210,7 @@ class VexLifeProdVisionRuntimeTest {
                 )
             }
 
-            assertFailsWith<IllegalArgumentException> {
+            assertFailsWith<IllegalStateException> {
                 VexLifeProdVisionRuntime.lookNow(
                     executable = executable,
                     requestRef = requestRef,
