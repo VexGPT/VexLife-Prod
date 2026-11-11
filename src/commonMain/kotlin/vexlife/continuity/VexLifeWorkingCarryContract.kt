@@ -209,6 +209,7 @@ object VexLifeWorkingCarryContract {
                 requireBindings(
                     item.sourceBindings,
                     "carryItem.sourceBindings",
+                    allowEmpty = false,
                 )
             require(
                 sources ==
