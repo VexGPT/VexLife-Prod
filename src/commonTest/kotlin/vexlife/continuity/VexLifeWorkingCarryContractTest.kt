@@ -58,6 +58,11 @@ class VexLifeWorkingCarryContractTest {
             disposition = disposition,
             carryItems = items,
             releaseReason = releaseReason,
+            carryTokenCap = 16_000,
+            estimatedCarryTokens =
+                VexLifeWorkingCarryContract.estimateCarryContentTokens(
+                    items,
+                ),
         )
 
     @Test
@@ -422,6 +427,64 @@ class VexLifeWorkingCarryContractTest {
                 ),
             )
         }
+    }
+
+    @Test
+    fun refreshedCarryMustFitTheCallerSuppliedFiniteAllowance() {
+        val item =
+            VexLifeWorkingCarryContract.CarryItem(
+                kind = "OWED_CONTINUATION",
+                content = "I still owe this continuation.",
+                sourceBindings =
+                    listOf(
+                        first,
+                    ),
+            )
+        val base =
+            draft(
+                disposition = VexLifeWorkingCarryContract.Carry,
+                items =
+                    listOf(
+                        item,
+                    ),
+                releaseReason = null,
+            )
+
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeWorkingCarryContract.requireDraftShape(
+                base.copy(
+                    carryTokenCap = 0,
+                ),
+            )
+        }
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeWorkingCarryContract.requireDraftShape(
+                base.copy(
+                    estimatedCarryTokens =
+                        base.estimatedCarryTokens +
+                            1,
+                ),
+            )
+        }
+
+        val release =
+            draft(
+                disposition = VexLifeWorkingCarryContract.Release,
+                items = emptyList(),
+                releaseReason =
+                    VexLifeWorkingCarryContract.ReleaseReasonNoPresentCarry,
+            )
+                .copy(
+                    carryTokenCap = 0,
+                )
+
+        assertEquals(
+            0,
+            VexLifeWorkingCarryContract.requireDraftShape(
+                release,
+            )
+                .estimatedCarryTokens,
+        )
     }
 
     @Test
