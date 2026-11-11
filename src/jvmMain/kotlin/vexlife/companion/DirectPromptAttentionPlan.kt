@@ -138,6 +138,28 @@ object DirectPromptAttentionPlan {
     fun validate(
         value: Plan,
     ): Plan {
+        val expectedConversationBudget =
+            value.inputTokenBudget -
+                value.fixedCurrentTurnTokens
+        val expectedCarryAllowance =
+            expectedConversationBudget -
+                value.selectedExactConversationTokens
+        val expectedCarryIncluded =
+            value.carryRequested &&
+                value.carryEstimatedSystemMessageTokens <=
+                expectedCarryAllowance
+        val expectedCarrySelected =
+            if (
+                expectedCarryIncluded
+            ) {
+                value.carryEstimatedSystemMessageTokens
+            } else {
+                0
+            }
+        val afterCarry =
+            expectedCarryAllowance -
+                expectedCarrySelected
+
         require(
             value.inputTokenBudget >=
                 0 &&
@@ -145,44 +167,30 @@ object DirectPromptAttentionPlan {
                 DirectPromptContext.InputTokenBudget &&
                 value.fixedCurrentTurnTokens >=
                 0 &&
+                value.fixedCurrentTurnTokens <=
+                value.inputTokenBudget &&
                 value.conversationSelectionBudget ==
-                value.inputTokenBudget -
-                value.fixedCurrentTurnTokens &&
+                expectedConversationBudget &&
                 value.selectedExactConversationTokens >=
                 0 &&
                 value.selectedExactConversationTokens <=
-                value.conversationSelectionBudget &&
+                expectedConversationBudget &&
                 value.carryTokenAllowance ==
-                value.conversationSelectionBudget -
-                value.selectedExactConversationTokens &&
+                expectedCarryAllowance &&
                 value.carryEstimatedSystemMessageTokens >=
                 0 &&
-                (
-                    value.carryIncluded ==
-                        (
-                            value.carryRequested &&
-                                value.carryEstimatedSystemMessageTokens <=
-                                value.carryTokenAllowance
-                        )
-                ) &&
+                value.carryIncluded ==
+                expectedCarryIncluded &&
                 value.carrySelectedTokens ==
-                if (
-                    value.carryIncluded
-                ) {
-                    value.carryEstimatedSystemMessageTokens
-                } else {
-                    0
-                } &&
+                expectedCarrySelected &&
                 value.memoryTokenCap >=
                 0 &&
                 value.memoryTokenCap <=
                 VexLifeMemoryContract.MaximumMemoryTokens &&
                 value.memoryTokenCap <=
-                value.carryTokenAllowance -
-                value.carrySelectedTokens &&
+                afterCarry &&
                 value.unallocatedAfterMemoryCap ==
-                value.carryTokenAllowance -
-                value.carrySelectedTokens -
+                afterCarry -
                 value.memoryTokenCap &&
                 value.unallocatedAfterMemoryCap >=
                 0 &&
@@ -192,6 +200,7 @@ object DirectPromptAttentionPlan {
         }
         return value
     }
+
 }
 
 // [VXG RealForever]
