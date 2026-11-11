@@ -12,6 +12,51 @@ import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 
 class VexLifeWorkingCarryOwnerTest {
+    private fun formationBinding(
+        hex: Char,
+    ): VexLifeWorkingCarryOwner.FormationBinding {
+        require(
+            hex in
+                "0123456789abcdef",
+        )
+        val fingerprint =
+            hex
+                .toString()
+                .repeat(
+                    64,
+                )
+        return VexLifeWorkingCarryOwner.FormationBinding(
+            schemaVersion = VexLifeWorkingCarryOwner.FormationBindingSchema,
+            formationRef =
+                "working-carry-formation." +
+                    fingerprint.take(
+                        32,
+                    ),
+            formationFingerprint = fingerprint,
+            runtimeObservationRef =
+                "observation.working-carry.formation." +
+                    hex,
+            runtimeObservationFingerprint =
+                "d".repeat(
+                    64,
+                ),
+            invocationRef =
+                "evidence.working-carry.formation." +
+                    hex,
+            invocationFingerprint =
+                "e".repeat(
+                    64,
+                ),
+            providerOutputSha256 =
+                "f".repeat(
+                    64,
+                ),
+        )
+            .let(
+                VexLifeWorkingCarryOwner::requireFormationBinding,
+            )
+    }
+
     private fun source(
         event: DirectConversationStore.Event,
     ) =
@@ -266,6 +311,10 @@ class VexLifeWorkingCarryOwnerTest {
                         currentRequest = secondRequest,
                         refreshInput = refresh,
                         carry = carry,
+                        formationBinding =
+                            formationBinding(
+                                'a',
+                            ),
                     )
 
                 assertNull(
@@ -385,6 +434,10 @@ class VexLifeWorkingCarryOwnerTest {
                         currentRequest = thirdRequest,
                         refreshInput = releaseRefresh,
                         carry = released,
+                        formationBinding =
+                            formationBinding(
+                                'b',
+                            ),
                     )
 
                 val thirdResponse =
@@ -474,6 +527,10 @@ class VexLifeWorkingCarryOwnerTest {
                         currentRequest = fourthRequest,
                         refreshInput = failedRefresh,
                         carry = failedCarry,
+                        formationBinding =
+                            formationBinding(
+                                'c',
+                            ),
                     )
 
                 assertEquals(
