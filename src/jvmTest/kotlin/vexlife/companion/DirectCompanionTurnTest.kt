@@ -191,13 +191,13 @@ class DirectCompanionTurnTest {
                             if (
                                 finish
                             ) {
-                                ""","finish_reason":"stop""""
+                                """"finish_reason":"stop","""
                             } else {
                                 ""
                             }
                         onLine(
                             (
-                                """data: {"model":"default_model","choices":[{__FINISH__,"delta":{"role":"assistant","__FIELD__":__DELTA__}}]}"""
+                                """data: {"model":"default_model","choices":[{__FINISH__"delta":{"role":"assistant","__FIELD__":__DELTA__}}]}"""
                             )
                                 .replace(
                                     "__FINISH__",
