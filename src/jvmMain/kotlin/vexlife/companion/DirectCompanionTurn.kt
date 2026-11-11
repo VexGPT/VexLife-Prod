@@ -376,6 +376,8 @@ object DirectCompanionTurn {
                     val prompt =
                         DirectPromptContext.materialize(
                             prior = currentPrior,
+                            recentConversationEvents =
+                                before.canonicalEvents,
                             currentRequest = request,
                             memoryContext = currentMemoryContext,
                             workingContinuityContext =
@@ -395,6 +397,8 @@ object DirectCompanionTurn {
                     DirectPromptContext.reverify(
                         materialization = prompt,
                         prior = currentPrior,
+                        recentConversationEvents =
+                            before.canonicalEvents,
                         currentRequest = request,
                         memoryContext = currentMemoryContext,
                         workingContinuityContext =
