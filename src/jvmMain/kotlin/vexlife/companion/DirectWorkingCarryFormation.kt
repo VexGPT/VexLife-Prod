@@ -46,6 +46,9 @@ object DirectWorkingCarryFormation {
         val invocationRef: String,
         val invocationFingerprint: String,
         val providerOutputSha256: String,
+        val carryPromptIncluded: Boolean,
+        val carryPromptSystemMessageSha256: String?,
+        val carryPromptEstimatedSystemMessageTokens: Int,
         val rawProviderOutputPersisted: Boolean,
         val rawReasoningPersisted: Boolean,
         val humanAnswerProduced: Boolean,
@@ -55,6 +58,7 @@ object DirectWorkingCarryFormation {
     data class Formation internal constructor(
         val refreshInput: VexLifeWorkingCarryContract.RefreshInput,
         val draft: VexLifeWorkingCarryContract.Draft,
+        val promptProjection: DirectWorkingCarryPromptContext.Projection,
         val binding: VexLifeWorkingCarryOwner.FormationBinding,
         val runtimeObservation: DirectCompanionConnection.RuntimeObservation,
         val invocationEvidence: DirectCompanionConnection.InvocationEvidence,
@@ -77,6 +81,12 @@ object DirectWorkingCarryFormation {
             VexLifeWorkingCarryContract.requireRefreshInputShape(
                 refreshInput,
             )
+        require(
+            input.carryTokenCap <=
+                DirectCompanionConnection.OutputTokenLimit,
+        ) {
+            "working carry refresh allowance exceeds the current local-model output ceiling"
+        }
         val eligible =
             eligibleSources(
                 input,
@@ -133,6 +143,11 @@ object DirectWorkingCarryFormation {
                 eligible = eligible,
                 output = modelOutput,
             )
+        val promptProjection =
+            DirectWorkingCarryPromptContext.materialize(
+                draft = draft,
+                sourceState = DirectWorkingCarryPromptContext.TurnCandidate,
+            )
 
         require(
             inference.invocationEvidence.runtimeObservationRef ==
@@ -154,6 +169,9 @@ object DirectWorkingCarryFormation {
                 invocationRef = inference.invocationEvidence.invocationRef,
                 invocationFingerprint = inference.invocationEvidence.semanticFingerprint,
                 providerOutputSha256 = inference.runtimeObservation.contentSha256,
+                carryPromptIncluded = promptProjection.included,
+                carryPromptSystemMessageSha256 = promptProjection.systemMessageSha256,
+                carryPromptEstimatedSystemMessageTokens = promptProjection.estimatedSystemMessageTokens,
                 rawProviderOutputPersisted = false,
                 rawReasoningPersisted = false,
                 humanAnswerProduced = false,
@@ -195,6 +213,7 @@ object DirectWorkingCarryFormation {
         return Formation(
             refreshInput = input,
             draft = draft,
+            promptProjection = promptProjection,
             binding = binding,
             runtimeObservation = inference.runtimeObservation,
             invocationEvidence = inference.invocationEvidence,
