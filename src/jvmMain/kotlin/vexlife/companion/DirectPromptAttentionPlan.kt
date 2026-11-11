@@ -35,6 +35,7 @@ object DirectPromptAttentionPlan {
         val carryEstimatedSystemMessageTokens: Int,
         val carryIncluded: Boolean,
         val carrySelectedTokens: Int,
+        val maximumMemoryTokens: Int,
         val memoryTokenCap: Int,
         val unallocatedAfterMemoryCap: Int,
         val effectsPerformed: Boolean,
@@ -126,6 +127,7 @@ object DirectPromptAttentionPlan {
             carryEstimatedSystemMessageTokens = input.carryEstimatedSystemMessageTokens,
             carryIncluded = carryIncluded,
             carrySelectedTokens = carrySelectedTokens,
+            maximumMemoryTokens = input.maximumMemoryTokens,
             memoryTokenCap = memoryTokenCap,
             unallocatedAfterMemoryCap = unallocated,
             effectsPerformed = false,
@@ -179,16 +181,24 @@ object DirectPromptAttentionPlan {
                 expectedCarryAllowance &&
                 value.carryEstimatedSystemMessageTokens >=
                 0 &&
+                (
+                    value.carryRequested ||
+                        value.carryEstimatedSystemMessageTokens ==
+                        0
+                ) &&
                 value.carryIncluded ==
                 expectedCarryIncluded &&
                 value.carrySelectedTokens ==
                 expectedCarrySelected &&
-                value.memoryTokenCap >=
+                value.maximumMemoryTokens >=
                 0 &&
-                value.memoryTokenCap <=
+                value.maximumMemoryTokens <=
                 VexLifeMemoryContract.MaximumMemoryTokens &&
-                value.memoryTokenCap <=
-                afterCarry &&
+                value.memoryTokenCap ==
+                minOf(
+                    value.maximumMemoryTokens,
+                    afterCarry,
+                ) &&
                 value.unallocatedAfterMemoryCap ==
                 afterCarry -
                 value.memoryTokenCap &&
