@@ -17,14 +17,17 @@ object VexLifeWorkingCarryContract {
     const val TruthClass =
         "VEX_PRESENT_WORKING_CARRY"
 
+    const val Perspective =
+        "VEX_SELF_RELATIVE_PRESENT_CONVERSATION"
+
     const val Carry =
         "CARRY"
 
     const val Release =
         "RELEASE"
 
-    const val ReleaseReasonNoPresentClaim =
-        "NO_PRESENT_RELATIONAL_CLAIM"
+    const val ReleaseReasonNoPresentCarry =
+        "NO_PRESENT_CARRY_REMAINS"
 
     val CarryKinds =
         setOf(
@@ -53,6 +56,7 @@ object VexLifeWorkingCarryContract {
     data class Draft(
         val schemaVersion: String,
         val truthClass: String,
+        val perspective: String,
         val companionLineageRef: String,
         val threadRef: String,
         val authoredByRef: String,
@@ -68,14 +72,16 @@ object VexLifeWorkingCarryContract {
         val effectsPerformed: Boolean = false,
     )
 
-    fun validateDraft(
+    fun requireDraftShape(
         value: Draft,
     ): Draft {
         require(
             value.schemaVersion ==
                 Schema &&
                 value.truthClass ==
-                TruthClass,
+                TruthClass &&
+                value.perspective ==
+                Perspective,
         ) {
             "working carry schema/truth class is invalid"
         }
@@ -175,7 +181,7 @@ object VexLifeWorkingCarryContract {
                 require(
                     value.carryItems.isEmpty() &&
                         value.releaseReason ==
-                        ReleaseReasonNoPresentClaim,
+                        ReleaseReasonNoPresentCarry,
                 ) {
                     "RELEASE means no semantic carry remains from the observed range"
                 }
