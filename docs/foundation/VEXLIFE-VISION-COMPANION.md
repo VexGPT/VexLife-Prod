@@ -11,10 +11,10 @@ separate owners?
 Current product decision:
 
 ~~~text
-accepted VexLife-Prod main
-  = 9225477f217da1e86af8d249eab980875f0dc774
-  = PR #53 presentation + PR #55 live Companion/scroll relationship
-  = accepted-main Product source/PID promotion A023 PASS
+accepted VexLife-Prod source includes:
+  PR #77 local-qualified Vision private-image carriage
+  PR #84 explicit local user-selected Vision != distribution-gate rule
+  this source edge: Product local-service bridge to the carried Vision runtime
 
 AND
 
@@ -30,8 +30,10 @@ ACCEPTED_COMPANION_MAIN != VISION_RUNTIME_BRIDGE
 ~~~
 
 The current VexLife-Prod Vision slice therefore composes over the accepted lived Companion body while
-remaining a truthful semantic/control surface. The ordinary-product Vision runtime bridge is still
-separately source-placed.
+remaining a truthful semantic/control surface. The SDK runtime artifact and Product private-image
+carriage are accepted, and this source now defines the ordinary local-service bridge to that carried
+runtime. Product manifestation remains Held until accepted-main/lived service currentness and the
+existing Vision presentation consume that reachability truth.
 
 ## Current semantic owner
 
@@ -66,26 +68,31 @@ OBSERVATION != STORE
 OBSERVATION != MEMORY
 ~~~
 
-The current generated product manifestation deliberately projects `Held`. The button is visible but
-disabled because VexLife-Prod still has no accepted ordinary-product runtime path that can invoke and
-consume the accepted SDK effect chain.
+The generated product manifestation deliberately remains `Held` in this source slice. This bridge
+makes the carried runtime source-reachable through the local Product service, but the currently
+running accepted-main service and the existing Vision presentation have not yet consumed that
+reachability truth.
 
 ~~~text
-SDK SOURCE ACCEPTED
-!=
-PRODUCT EFFECT REACHABLE
+PRODUCT_SERVICE_BRIDGE_SOURCE
+!= RUNNING_PRODUCT_VISION_ROUTE_CURRENT
+!= WEB_VISION_READY
 ~~~
 
-Changing the button to Ready merely because SDK source exists would fabricate Product reachability.
-Ready is earned only when the ordinary Product bridge is actually reachable.
+Changing the button to Ready merely because bridge source exists would fabricate lived Product
+currentness. Ready is earned when the accepted-main Product service is actually running with the
+Vision-carrying image and the presentation consumes that reachable route.
 
 ## Accepted outside effect owners
 
-Current accepted Vextreme-SDK main/checkpoint:
+The carried Product runtime artifact is source-bound to accepted Vextreme-SDK source:
 
 ~~~text
-c39951fe260e505b4a3c5b8f606cc8da14c985c0
+commit = 38de26eb9df4ccef5a3d8f1c05c708bbd6b16f51
+tree   = 46d29d57c5a0ef6e7107b4dca19b40e643ee7f55
 ~~~
+
+These are artifact provenance coordinates, not a claim that SDK `main` must remain at that commit.
 
 The accepted one-shot SCREEN relationship is:
 
@@ -126,11 +133,27 @@ outside result once a product-carriage contract exists.
 
 ## Current Product realization gap
 
-The accepted SDK surfaces are source/library owners plus the native one-shot helper. VexLife-Prod
-does not yet have one ordinary-product consumable artifact/entrypoint that can perform:
+The previously missing runtime/artifact/carriage chain is now accepted:
 
 ~~~text
-RequestSnapshot
+accepted Process Factory Product runtime
+-> accepted darwin-arm64 local-qualified artifact
+-> accepted VexLife-Prod private-image carriage
+~~~
+
+Accepted Product carriage:
+
+~~~text
+github.pull.vexlife-prod.77
+~~~
+
+The Product-owned source bridge is:
+
+~~~text
+VexLifeVisionFamily.LookNow
+-> RequestSnapshot
+-> Product local-service bridge
+-> carried vision-runtime/bin/vexlife-vision-runtime
 -> current SDK/Safety execution custody
 -> OS-owned system picker
 -> exact capture receipt
@@ -139,23 +162,32 @@ RequestSnapshot
 -> bounded Product result
 ~~~
 
-without either requiring a developer Vextreme-SDK checkout or reproducing SDK owner algorithms in
-Kotlin.
+The Product bridge consumes the carried runtime rather than reproducing SDK owner algorithms in
+Kotlin. The service process consumes only a Vision runtime executable already verified by the
+source-bound private-image observer.
 
-That dependency is source-placed at the existing Process Factory owner:
+Source acceptance of this bridge does not by itself claim that the currently running Product has
+already rotated onto a Vision-carrying accepted-main image, nor does it make the web projection Ready.
+Those are lived/currentness and presentation-consumption predicates, not missing bridge source.
+
+Permanent:
 
 ~~~text
-github.issue.vextreme-sdk.241.comment.6742540586
+PRIVATE_IMAGE_CARRIAGE_ACCEPTED
+!= RUNNING_PRODUCT_VISION_ROUTE_CURRENT
+
+PRODUCT_SERVICE_BRIDGE_SOURCE_ACCEPTED
+!= RUNNING_PRODUCT_VISION_ROUTE_CURRENT
+!= WEB_VISION_READY
+
+PRODUCT_SERVICE_BRIDGE
+!= SECOND VISION RUNTIME
+!= SECOND PICKER OWNER
+!= DISTRIBUTION WORK
 ~~~
 
-Product source placement is recorded on:
-
-~~~text
-github.pull.vexlife-prod.54.comment.6742546875
-~~~
-
-Until that exact artifact/carriage contract exists, do not widen this Product source lane into
-service/process/packaging code merely to invent an adapter against an undefined dependency.
+Do not reopen artifact formation, Developer ID, notarization, App Store, GitHub Release or a developer
+SDK checkout as prerequisites for this local Product bridge.
 
 ## Local user-selected Vision is not a distribution gate
 

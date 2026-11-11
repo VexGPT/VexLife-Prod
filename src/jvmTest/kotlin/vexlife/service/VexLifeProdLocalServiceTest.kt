@@ -11,6 +11,7 @@ import java.time.Instant
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -382,6 +383,244 @@ class VexLifeProdLocalServiceTest {
                 ),
                 "read-only service projections must not create Conversation storage",
             )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun visionRouteIsHeldWithoutOneVerifiedRuntime() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-service-vision-held-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            bootstrapHome(
+                root,
+            )
+
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha =
+                        "a".repeat(
+                            40,
+                        ),
+                    setup =
+                        setup(
+                            root,
+                        ),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "turn must not run during Vision projection",
+                            )
+                        },
+                )
+                .use {
+                    service ->
+                    val vision =
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.VisionPath,
+                        )
+                    assertEquals(
+                        200,
+                        vision.statusCode(),
+                    )
+                    val projection =
+                        json.decodeFromString<VexLifeProdServiceContract.VisionProjection>(
+                            vision.body(),
+                        )
+                    assertEquals(
+                        "HELD",
+                        projection.state,
+                    )
+                    assertFalse(
+                        projection.routeReachable,
+                    )
+                    assertFalse(
+                        projection.effectsPerformed,
+                    )
+
+                    val lookNow =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.VisionLookNowPath,
+                            json.encodeToString(
+                                VexLifeProdServiceContract.VisionLookNowRequest(
+                                    requestRef =
+                                        "request.vexlife-prod.vision.held.001",
+                                ),
+                            ),
+                        )
+                    assertEquals(
+                        409,
+                        lookNow.statusCode(),
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun visionRouteIsReadyAndInvokesOneExactRuntimeRequest() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-service-vision-ready-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        val requestRef =
+            "request.vexlife-prod.vision.ready.001"
+        var invocationCount =
+            0
+
+        try {
+            bootstrapHome(
+                root,
+            )
+
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha =
+                        "a".repeat(
+                            40,
+                        ),
+                    setup =
+                        setup(
+                            root,
+                        ),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "turn must not run during Vision request",
+                            )
+                        },
+                    visionExecutor =
+                        VexLifeProdLocalService.VisionExecutor {
+                            observedRequestRef ->
+                            invocationCount +=
+                                1
+                            assertEquals(
+                                requestRef,
+                                observedRequestRef,
+                            )
+                            VexLifeProdServiceContract.VisionRuntimeResult(
+                                schemaVersion =
+                                    VexLifeProdServiceContract.VisionRuntimeResultSchema,
+                                state = "USER_CANCELLED",
+                                requestRef = observedRequestRef,
+                                sessionRefOrNull =
+                                    "session.macos-screen-system-picker.product-runtime.test",
+                                connectionIdOrNull =
+                                    "connection.macos-screen-system-picker.product-runtime.test",
+                                selectionMode = "SINGLE_WINDOW",
+                                osOwnsSelectionUi = true,
+                                helperLaunched = true,
+                                projectionOrNull =
+                                    JsonObject(
+                                        emptyMap(),
+                                    ),
+                                activeSharingWitnessOrNull = null,
+                                activeVisualObservationOrNull = null,
+                                rawBytesIncluded = false,
+                                rawRetentionAllowed = false,
+                                visualModelInputAuthorized = false,
+                                memoryAccepted = false,
+                                trainingEligible = false,
+                                publicationEligible = false,
+                                continuousCaptureAllowed = false,
+                                backgroundCaptureAllowed = false,
+                                persistentHostPermissionEstablished = false,
+                            )
+                        },
+                )
+                .use {
+                    service ->
+                    val vision =
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.VisionPath,
+                        )
+                    assertEquals(
+                        200,
+                        vision.statusCode(),
+                    )
+                    val projection =
+                        json.decodeFromString<VexLifeProdServiceContract.VisionProjection>(
+                            vision.body(),
+                        )
+                    assertEquals(
+                        "READY",
+                        projection.state,
+                    )
+                    assertTrue(
+                        projection.routeReachable,
+                    )
+                    assertFalse(
+                        projection.effectsPerformed,
+                    )
+
+                    val lookNow =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.VisionLookNowPath,
+                            json.encodeToString(
+                                VexLifeProdServiceContract.VisionLookNowRequest(
+                                    requestRef = requestRef,
+                                ),
+                            ),
+                        )
+                    assertEquals(
+                        200,
+                        lookNow.statusCode(),
+                    )
+                    val result =
+                        json.decodeFromString<VexLifeProdServiceContract.VisionRuntimeResult>(
+                            lookNow.body(),
+                        )
+                    assertEquals(
+                        "USER_CANCELLED",
+                        result.state,
+                    )
+                    assertEquals(
+                        requestRef,
+                        result.requestRef,
+                    )
+                    assertEquals(
+                        1,
+                        invocationCount,
+                    )
+                    assertTrue(
+                        result.helperLaunched,
+                    )
+                    assertNull(
+                        result.activeSharingWitnessOrNull,
+                    )
+                    assertNull(
+                        result.activeVisualObservationOrNull,
+                    )
+                }
         } finally {
             parent
                 .toFile()

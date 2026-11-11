@@ -129,6 +129,16 @@ class VexLifeProdServiceProcessTest {
             arguments = arguments,
             hooks =
                 VexLifeProdServiceProcess.Hooks(
+                    resolveVisionRuntimeExecutablePath = {
+                        sourceSha ->
+                        trace +=
+                            "OBSERVE_IMAGE"
+                        assertEquals(
+                            arguments.sourceSha,
+                            sourceSha,
+                        )
+                        "/tmp/vexlife-prod-service-process-test/vision-runtime/bin/vexlife-vision-runtime"
+                    },
                     establishSession = {
                         allowAcquisition ->
                         trace +=
@@ -142,6 +152,7 @@ class VexLifeProdServiceProcessTest {
                     startService = {
                         sourceSha,
                         currentSession,
+                        visionRuntimeExecutablePathOrNull,
                         ->
                         trace +=
                             "START"
@@ -152,6 +163,10 @@ class VexLifeProdServiceProcessTest {
                         assertSame(
                             session,
                             currentSession,
+                        )
+                        assertEquals(
+                            "/tmp/vexlife-prod-service-process-test/vision-runtime/bin/vexlife-vision-runtime",
+                            visionRuntimeExecutablePathOrNull,
                         )
                         service
                     },
@@ -179,6 +194,7 @@ class VexLifeProdServiceProcessTest {
 
         assertEquals(
             listOf(
+                "OBSERVE_IMAGE",
                 "ESTABLISH",
                 "START",
                 "READY",
