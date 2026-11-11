@@ -333,15 +333,10 @@ object DirectPromptContext {
     fun materialize(
         prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
         currentRequest: DirectConversationStore.Event,
-        recentConversationEvents: List<DirectConversationStore.Event> =
-            prior
-                ?.let {
-                    listOf(
-                        it.requestEvent,
-                        it.responseEvent,
-                    )
-                }
-                ?: emptyList(),
+        recentConversationSource: ((
+            availableTokens: Int,
+        ) -> DirectConversationStore.RecentCompletedConversation)? =
+            null,
         memoryContext: VexLifeMemoryContract.Context? =
             null,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
@@ -372,7 +367,6 @@ object DirectPromptContext {
             require(
                 workingContinuity ==
                     null &&
-                    recentConversationEvents.isEmpty() &&
                     currentRequest.sequence ==
                     0L &&
                     currentRequest.priorEventSha256 ==
@@ -384,10 +378,6 @@ object DirectPromptContext {
             requireImmediatePriorBinding(
                 prior = prior,
                 currentRequest = currentRequest,
-            )
-            requireRecentConversationHistory(
-                events = recentConversationEvents,
-                prior = prior,
             )
         }
 
@@ -500,6 +490,21 @@ object DirectPromptContext {
             "direct prompt non-Conversation context exceeds the admitted input/output token budget"
         }
 
+        val recentConversation =
+            if (
+                prior ==
+                    null ||
+                workingContinuity !=
+                    null
+            ) {
+                null
+            } else {
+                recentConversationSource
+                    ?.invoke(
+                        InputTokenBudget -
+                            fixedEstimate,
+                    )
+            }
         val selected =
             if (
                 prior ==
@@ -509,12 +514,41 @@ object DirectPromptContext {
             ) {
                 emptyList()
             } else {
-                selectRecentConversationEvents(
-                    events = recentConversationEvents,
-                    availableTokens =
-                        InputTokenBudget -
-                            fixedEstimate,
+                val exactPrior =
+                    requireNotNull(
+                        prior,
+                    )
+                val source =
+                    recentConversation
+                        ?: DirectConversationStore.RecentCompletedConversation(
+                            events =
+                                listOf(
+                                    exactPrior.requestEvent,
+                                    exactPrior.responseEvent,
+                                ),
+                            exactEventFileReadCount = 2,
+                            exactHeadFileReadCount = 1,
+                            wholeHistoryEventEnumerationPerformed =
+                    recentConversation
+                        ?.wholeHistoryEventEnumerationPerformed
+                        ?: false,
+                        )
+                requireRecentConversationHistory(
+                    events = source.events,
+                    prior = exactPrior,
                 )
+                require(
+                    source.events.sumOf {
+                        estimatedMessageTokens(
+                            it.content,
+                        )
+                    } <=
+                        InputTokenBudget -
+                        fixedEstimate,
+                ) {
+                    "direct prompt recent Conversation source exceeds the remaining input token budget"
+                }
+                source.events
             }
 
         val messages =
@@ -800,15 +834,10 @@ object DirectPromptContext {
         materialization: Materialization,
         prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
         currentRequest: DirectConversationStore.Event,
-        recentConversationEvents: List<DirectConversationStore.Event> =
-            prior
-                ?.let {
-                    listOf(
-                        it.requestEvent,
-                        it.responseEvent,
-                    )
-                }
-                ?: emptyList(),
+        recentConversationSource: ((
+            availableTokens: Int,
+        ) -> DirectConversationStore.RecentCompletedConversation)? =
+            null,
         memoryContext: VexLifeMemoryContract.Context? =
             null,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
@@ -821,9 +850,9 @@ object DirectPromptContext {
         val current =
             materialize(
                 prior = prior,
-                recentConversationEvents =
-                    recentConversationEvents,
                 currentRequest = currentRequest,
+                recentConversationSource =
+                    recentConversationSource,
                 memoryContext = memoryContext,
                 workingContinuityContext =
                     workingContinuityContext,
@@ -1235,102 +1264,6 @@ object DirectPromptContext {
         ) {
             "direct prompt recent Conversation history contains an invalid completed pair"
         }
-    }
-
-    private fun selectRecentConversationEvents(
-        events: List<DirectConversationStore.Event>,
-        availableTokens: Int,
-    ): List<DirectConversationStore.Event> {
-        require(
-            availableTokens >=
-                0,
-        ) {
-            "direct prompt recent Conversation token budget is negative"
-        }
-
-        val newestFirstPairs =
-            mutableListOf<List<DirectConversationStore.Event>>()
-        var remaining =
-            availableTokens
-        var newerRequest: DirectConversationStore.Event? =
-            null
-        var index =
-            events.size -
-                2
-
-        while (
-            index >=
-                0
-        ) {
-            val request =
-                events[index]
-            val response =
-                events[index + 1]
-            val pairEstimate =
-                estimatedMessageTokens(
-                    request.content,
-                ) +
-                    estimatedMessageTokens(
-                        response.content,
-                    )
-
-            if (
-                pairEstimate >
-                    remaining
-            ) {
-                break
-            }
-
-            requireCompletedConversationPair(
-                request = request,
-                response = response,
-            )
-            newerRequest
-                ?.let {
-                    newer ->
-                    require(
-                        newer.priorEventSha256 ==
-                            response.eventSha256 &&
-                            newer.sequence ==
-                            response.sequence +
-                            1 &&
-                            newer.companionLineageRef ==
-                            response.companionLineageRef &&
-                            newer.threadRef ==
-                            response.threadRef &&
-                            newer.channelRef ==
-                            response.channelRef,
-                    ) {
-                        "direct prompt recent Conversation selection is not one contiguous canonical suffix"
-                    }
-                }
-
-            newestFirstPairs +=
-                listOf(
-                    request,
-                    response,
-                )
-            remaining -=
-                pairEstimate
-            newerRequest =
-                request
-            index -=
-                2
-        }
-
-        val selected =
-            newestFirstPairs
-                .asReversed()
-                .flatten()
-
-        require(
-            selected.size >=
-                2,
-        ) {
-            "direct prompt immediate prior completed turn does not fit the admitted input token budget"
-        }
-
-        return selected
     }
 
     fun estimatedMessageTokens(
