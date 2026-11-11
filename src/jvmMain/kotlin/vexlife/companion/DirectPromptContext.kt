@@ -629,6 +629,60 @@ object DirectPromptContext {
                 source.events
             }
 
+        return formMaterialization(
+            prior = prior,
+            currentRequest = currentRequest,
+            browserContext = browserContext,
+            fixed = fixed,
+            memory = memory,
+            selected = selected,
+            recentConversation = recentConversation,
+            workingCarryProjection = null,
+            attentionPlan = null,
+        )
+    }
+
+    private fun formMaterialization(
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
+        browserContext: BrowserContext?,
+        fixed: VerifiedFixedContext,
+        memory: VerifiedMemory?,
+        selected: List<DirectConversationStore.Event>,
+        recentConversation: DirectConversationStore.RecentCompletedConversation?,
+        workingCarryProjection: DirectWorkingCarryPromptContext.Projection?,
+        attentionPlan: DirectPromptAttentionPlan.Plan?,
+    ): Materialization {
+        val workingContinuity =
+            fixed.workingContinuity
+        val capabilityFrame =
+            fixed.capabilityFrame
+        val prefixMessages =
+            buildList {
+                memory
+                    ?.systemContent
+                    ?.let {
+                        add(
+                            CompanionProviderMessage(
+                                role = "system",
+                                content = it,
+                            ),
+                        )
+                    }
+                workingCarryProjection
+                    ?.systemContent
+                    ?.let {
+                        add(
+                            CompanionProviderMessage(
+                                role = "system",
+                                content = it,
+                            ),
+                        )
+                    }
+                addAll(
+                    fixed.prefixMessages,
+                )
+            }
         val messages =
             buildList {
                 addAll(
@@ -660,17 +714,15 @@ object DirectPromptContext {
                     )
                 }
                 addAll(
-                    suffixMessages,
+                    fixed.suffixMessages,
                 )
             }
-
         val estimate =
             messages.sumOf {
                 estimatedMessageTokens(
                     it.content,
                 )
             }
-
         require(
             estimate <=
                 InputTokenBudget &&
@@ -694,6 +746,10 @@ object DirectPromptContext {
             memoryValue
                 ?.included ==
                 true
+        val browserContextSha256 =
+            fixed.browserContextSha256
+        val browserContextRef =
+            fixed.browserContextRef
         val core =
             ReceiptCore(
                 schemaVersion = ReceiptSchema,
@@ -848,8 +904,16 @@ object DirectPromptContext {
                     fixed.memoryAvailability
                         ?.context
                         ?.semanticFingerprint,
-                attentionPlanSnapshot = null,
-                workingCarrySnapshot = null,
+                attentionPlanSnapshot =
+                    attentionPlan
+                        ?.let(
+                            ::attentionPlanSnapshot,
+                        ),
+                workingCarrySnapshot =
+                    workingCarryProjection
+                        ?.let(
+                            ::workingCarrySnapshot,
+                        ),
                 trainingSelectionPerformed = false,
                 effectsPerformed = false,
             )
@@ -933,6 +997,48 @@ object DirectPromptContext {
             receipt = receipt,
         )
     }
+
+    private fun attentionPlanSnapshot(
+        plan: DirectPromptAttentionPlan.Plan,
+    ): AttentionPlanSnapshot {
+        val value =
+            DirectPromptAttentionPlan.validate(
+                plan,
+            )
+        return AttentionPlanSnapshot(
+            inputTokenBudget = value.inputTokenBudget,
+            fixedCurrentTurnTokens = value.fixedCurrentTurnTokens,
+            conversationSelectionBudget = value.conversationSelectionBudget,
+            selectedExactConversationTokens = value.selectedExactConversationTokens,
+            carryRequested = value.carryRequested,
+            carryTokenAllowance = value.carryTokenAllowance,
+            carryEstimatedSystemMessageTokens = value.carryEstimatedSystemMessageTokens,
+            carryIncluded = value.carryIncluded,
+            carrySelectedTokens = value.carrySelectedTokens,
+            maximumMemoryTokens = value.maximumMemoryTokens,
+            memoryTokenCap = value.memoryTokenCap,
+            unallocatedAfterMemoryCap = value.unallocatedAfterMemoryCap,
+            effectsPerformed = value.effectsPerformed,
+        )
+    }
+
+    private fun workingCarrySnapshot(
+        projection: DirectWorkingCarryPromptContext.Projection,
+    ): WorkingCarrySnapshot =
+        WorkingCarrySnapshot(
+            state = projection.state,
+            sourceClass = projection.sourceClass,
+            sourceRef = projection.sourceRef,
+            sourceFingerprint = projection.sourceFingerprint,
+            draftSha256 = projection.draftSha256,
+            carryDisposition = projection.carryDisposition,
+            included = projection.included,
+            availableTokens = projection.availableTokens,
+            estimatedSystemMessageTokens = projection.estimatedSystemMessageTokens,
+            systemMessageSha256 = projection.systemMessageSha256,
+            effectAuthorityGranted = projection.effectAuthorityGranted,
+            effectsPerformed = projection.effectsPerformed,
+        )
 
     fun reverify(
         materialization: Materialization,
