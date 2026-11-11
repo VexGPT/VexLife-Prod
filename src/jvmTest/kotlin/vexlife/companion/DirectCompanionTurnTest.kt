@@ -423,6 +423,14 @@ class DirectCompanionTurnTest {
                             currentMemoryContext = {
                                 memory
                             },
+                            memoryContextAtCap = {
+                                _,
+                                memoryTokenCap,
+                                ->
+                                VexLifeMemoryContextFixture.current(
+                                    memoryTokenCap,
+                                )
+                            },
                             now = {
                                 Instant.parse(
                                     "2026-11-06T11:10:00Z",
@@ -518,6 +526,14 @@ class DirectCompanionTurnTest {
                             transport = transport,
                             currentMemoryContext = {
                                 memory
+                            },
+                            memoryContextAtCap = {
+                                _,
+                                memoryTokenCap,
+                                ->
+                                VexLifeMemoryContextFixture.current(
+                                    memoryTokenCap,
+                                )
                             },
                             now = {
                                 Instant.parse(
@@ -732,6 +748,14 @@ class DirectCompanionTurnTest {
                             currentMemoryContext = {
                                 memory
                             },
+                            memoryContextAtCap = {
+                                _,
+                                memoryTokenCap,
+                                ->
+                                VexLifeMemoryContextFixture.current(
+                                    memoryTokenCap,
+                                )
+                            },
                         ),
                 )
 
@@ -779,6 +803,14 @@ class DirectCompanionTurnTest {
                             transport = transport,
                             currentMemoryContext = {
                                 memory
+                            },
+                            memoryContextAtCap = {
+                                _,
+                                memoryTokenCap,
+                                ->
+                                VexLifeMemoryContextFixture.current(
+                                    memoryTokenCap,
+                                )
                             },
                         ),
                 )
@@ -837,6 +869,14 @@ class DirectCompanionTurnTest {
                             transport = transport,
                             currentMemoryContext = {
                                 memory
+                            },
+                            memoryContextAtCap = {
+                                _,
+                                memoryTokenCap,
+                                ->
+                                VexLifeMemoryContextFixture.current(
+                                    memoryTokenCap,
+                                )
                             },
                         ),
                 )
