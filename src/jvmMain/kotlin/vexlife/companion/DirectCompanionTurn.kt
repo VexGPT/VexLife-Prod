@@ -363,6 +363,13 @@ object DirectCompanionTurn {
         val sourceReturnRequest: DirectConversationSourceReturn.Request?,
     )
 
+    private data class FinalProviderTurn(
+        val prompt: ContinuityPromptSelection,
+        val inference: DirectCompanionConnection.Result,
+        val workingContinuity: DirectWorkingContinuity.Prepared,
+        val sourceReturnTrace: DirectConversationSourceReturn.Trace?,
+    )
+
     fun perform(
         setup: VexLifeProdLocalSetup.Result,
         intent: Intent,
@@ -743,6 +750,277 @@ object DirectCompanionTurn {
                 cause = error,
             )
         }
+    }
+
+    private fun performProviderTurn(
+        conversationOwner: DirectConversationStore.Locked,
+        productHome: Path,
+        setup: VexLifeProdLocalSetup.Result,
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
+        workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        browserContext: DirectPromptContext.BrowserContext?,
+        hooks: Hooks,
+    ): FinalProviderTurn {
+        val initialMemoryAvailability =
+            hooks.currentMemoryContext(
+                productHome,
+            )
+        val initialRuntimeEvidence =
+            hooks.currentRuntimeEvidence(
+                setup,
+            )
+        val initialPrior =
+            conversationOwner.immediatePriorCompletedTurn()
+        DirectWorkingContinuity.requireSuccessorContextCurrent(
+            productHome = productHome,
+            prior = initialPrior,
+            currentRequest = currentRequest,
+            expected = workingContinuityContext,
+        )
+        val currentInitialMemoryAvailability =
+            hooks.currentMemoryContext(
+                productHome,
+            )
+                .also {
+                    current ->
+                    require(
+                        current ==
+                            initialMemoryAvailability,
+                    ) {
+                        "VexLife Memory availability changed before initial provider invocation"
+                    }
+                }
+        val initialPrompt =
+            materializeContinuityPrompt(
+                conversationOwner = conversationOwner,
+                productHome = productHome,
+                prior = initialPrior,
+                currentRequest = currentRequest,
+                memoryAvailability =
+                    currentInitialMemoryAvailability,
+                memoryContextAtCap =
+                    hooks.memoryContextAtCap,
+                workingContinuityContext =
+                    workingContinuityContext,
+                browserContext = browserContext,
+                runtimeEvidence = initialRuntimeEvidence,
+                sourceReturnProtocolEnabled = true,
+            )
+        val initialWorkingContinuity =
+            DirectWorkingContinuity.prepare(
+                productHome = productHome,
+                currentRequest = currentRequest,
+                promptContext =
+                    initialPrompt.materialization.receipt,
+                memoryContext =
+                    initialPrompt.memoryContext,
+                priorSuccessorContext =
+                    workingContinuityContext,
+            )
+        reverifyContinuityPrompt(
+            selection = initialPrompt,
+            conversationOwner = conversationOwner,
+            productHome = productHome,
+            prior =
+                conversationOwner.immediatePriorCompletedTurn(),
+            currentRequest = currentRequest,
+            memoryAvailability =
+                hooks.currentMemoryContext(
+                    productHome,
+                )
+                    .also {
+                        current ->
+                        require(
+                            current ==
+                                initialMemoryAvailability,
+                        ) {
+                            "VexLife Memory availability changed at the initial provider boundary"
+                        }
+                    },
+            memoryContextAtCap =
+                hooks.memoryContextAtCap,
+            workingContinuityContext =
+                workingContinuityContext,
+            browserContext = browserContext,
+            runtimeEvidence = initialRuntimeEvidence,
+            sourceReturnProtocolEnabled = true,
+        )
+        val initialStage =
+            invokeProviderStage(
+                runtimeEvidence = initialRuntimeEvidence,
+                messages =
+                    initialPrompt.materialization.messages,
+                hooks = hooks,
+                sourceReturnRequestAllowed = true,
+            )
+        val sourceReturnRequest =
+            initialStage.sourceReturnRequest
+                ?: return FinalProviderTurn(
+                    prompt = initialPrompt,
+                    inference = initialStage.inference,
+                    workingContinuity =
+                        initialWorkingContinuity,
+                    sourceReturnTrace = null,
+                )
+
+        val excludedSourceRefs =
+            buildSet {
+                addAll(
+                    initialPrompt.materialization.receipt.selectedConversationEventRefs,
+                )
+                initialPrompt.materialization.receipt.successorPriorResponseEventRef
+                    ?.let(
+                        ::add,
+                    )
+            }
+        val discovery =
+            DirectConversationSourceReturn.discover(
+                conversationOwner = conversationOwner,
+                request = sourceReturnRequest,
+                excludedEventRefs = excludedSourceRefs,
+            )
+
+        val finalMemoryAvailability =
+            hooks.currentMemoryContext(
+                productHome,
+            )
+        val finalRuntimeEvidence =
+            hooks.currentRuntimeEvidence(
+                setup,
+            )
+        val finalPrior =
+            conversationOwner.immediatePriorCompletedTurn()
+        DirectWorkingContinuity.requireSuccessorContextCurrent(
+            productHome = productHome,
+            prior = finalPrior,
+            currentRequest = currentRequest,
+            expected = workingContinuityContext,
+        )
+        val currentFinalMemoryAvailability =
+            hooks.currentMemoryContext(
+                productHome,
+            )
+                .also {
+                    current ->
+                    require(
+                        current ==
+                            finalMemoryAvailability,
+                    ) {
+                        "VexLife Memory availability changed before final source-return provider invocation"
+                    }
+                }
+        val finalPrompt =
+            materializeContinuityPrompt(
+                conversationOwner = conversationOwner,
+                productHome = productHome,
+                prior = finalPrior,
+                currentRequest = currentRequest,
+                memoryAvailability =
+                    currentFinalMemoryAvailability,
+                memoryContextAtCap =
+                    hooks.memoryContextAtCap,
+                workingContinuityContext =
+                    workingContinuityContext,
+                browserContext = browserContext,
+                runtimeEvidence = finalRuntimeEvidence,
+                sourceReturnProtocolEnabled = false,
+                sourceReturnDiscovery = discovery,
+            )
+        val finalWorkingContinuity =
+            DirectWorkingContinuity.prepare(
+                productHome = productHome,
+                currentRequest = currentRequest,
+                promptContext =
+                    finalPrompt.materialization.receipt,
+                memoryContext =
+                    finalPrompt.memoryContext,
+                priorSuccessorContext =
+                    workingContinuityContext,
+            )
+        reverifyContinuityPrompt(
+            selection = finalPrompt,
+            conversationOwner = conversationOwner,
+            productHome = productHome,
+            prior =
+                conversationOwner.immediatePriorCompletedTurn(),
+            currentRequest = currentRequest,
+            memoryAvailability =
+                hooks.currentMemoryContext(
+                    productHome,
+                )
+                    .also {
+                        current ->
+                        require(
+                            current ==
+                                finalMemoryAvailability,
+                        ) {
+                            "VexLife Memory availability changed at the final source-return provider boundary"
+                        }
+                    },
+            memoryContextAtCap =
+                hooks.memoryContextAtCap,
+            workingContinuityContext =
+                workingContinuityContext,
+            browserContext = browserContext,
+            runtimeEvidence = finalRuntimeEvidence,
+            sourceReturnProtocolEnabled = false,
+            sourceReturnDiscovery = discovery,
+        )
+
+        val sourceReturnTokens =
+            finalPrompt.materialization.receipt.sourceReturnEstimatedSystemMessageTokens
+        require(
+            sourceReturnTokens >
+                0,
+        ) {
+            "final source-return prompt has no exact source-return projection"
+        }
+        val projection =
+            DirectConversationSourceReturn.project(
+                discovery = discovery,
+                availableTokens = sourceReturnTokens,
+            )
+        require(
+            projection.state ==
+                finalPrompt.materialization.receipt.sourceReturnState &&
+                projection.sourceEventRefs ==
+                finalPrompt.materialization.receipt.sourceReturnSourceEventRefs &&
+                projection.systemMessageSha256 ==
+                finalPrompt.materialization.receipt.sourceReturnSystemMessageSha256,
+        ) {
+            "source-return attempt projection differs from the exact final prompt projection"
+        }
+        val attemptTrace =
+            DirectConversationSourceReturn.formAttemptTrace(
+                initialPrompt =
+                    initialPrompt.materialization.receipt,
+                inference = initialStage.inference,
+                discovery = discovery,
+                projection = projection,
+            )
+        val finalStage =
+            invokeProviderStage(
+                runtimeEvidence = finalRuntimeEvidence,
+                messages =
+                    finalPrompt.materialization.messages,
+                hooks = hooks,
+                sourceReturnRequestAllowed = false,
+            )
+        val sourceReturnTrace =
+            DirectConversationSourceReturn.formTrace(
+                attempt = attemptTrace,
+                finalPrompt =
+                    finalPrompt.materialization.receipt,
+            )
+
+        return FinalProviderTurn(
+            prompt = finalPrompt,
+            inference = finalStage.inference,
+            workingContinuity =
+                finalWorkingContinuity,
+            sourceReturnTrace = sourceReturnTrace,
+        )
     }
 
     private fun materializeContinuityPrompt(
