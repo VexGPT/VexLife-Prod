@@ -840,6 +840,16 @@ object DirectPromptContext {
                                     frame.effectAuthorityGranted,
                             )
                         },
+                memoryAvailabilityContextRef =
+                    fixed.memoryAvailability
+                        ?.context
+                        ?.memoryContextRef,
+                memoryAvailabilityContextFingerprint =
+                    fixed.memoryAvailability
+                        ?.context
+                        ?.semanticFingerprint,
+                attentionPlanSnapshot = null,
+                workingCarrySnapshot = null,
                 trainingSelectionPerformed = false,
                 effectsPerformed = false,
             )
@@ -907,6 +917,14 @@ object DirectPromptContext {
                 capabilityFrameSystemMessageSha256 = core.capabilityFrameSystemMessageSha256,
                 capabilityFrameEstimatedSystemMessageTokens = core.capabilityFrameEstimatedSystemMessageTokens,
                 capabilityFrameSnapshot = core.capabilityFrameSnapshot,
+                memoryAvailabilityContextRef =
+                    core.memoryAvailabilityContextRef,
+                memoryAvailabilityContextFingerprint =
+                    core.memoryAvailabilityContextFingerprint,
+                attentionPlanSnapshot =
+                    core.attentionPlanSnapshot,
+                workingCarrySnapshot =
+                    core.workingCarrySnapshot,
                 effectsPerformed = core.effectsPerformed,
             )
 
