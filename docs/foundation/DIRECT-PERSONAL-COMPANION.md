@@ -47,9 +47,8 @@ VexLifeProdLocalSetup.Result
         ↓
 DirectConversationStore writer lease
         ↓
-exact immediate prior completed turn
-  addressed read of exactly two events
-  whole-history prompt enumeration = false
+canonical completed Conversation snapshot
++ exact immediate-prior currentness binding
         ↓
 REQUEST event durable
         ↓
@@ -67,7 +66,8 @@ DirectPromptContext
   current source-attributed Memory when source-current
   + owner-current working-checkpoint successor when present
   + source-formed bounded self-capability frame
-  + immediate prior REQUEST/RESPONSE only when not in successor mode
+  + newest contiguous completed REQUEST/RESPONSE suffix that fits the remaining input budget
+    when not in successor mode
   + optional admitted browser context
   + current request
 
@@ -165,13 +165,24 @@ turn context durable
 
 Owns bounded provider materialization.
 
-Current ordinary CONTINUE behavior is intentionally small and source-aligned:
+Current ordinary CONTINUE behavior preserves exact recent language while it still fits the admitted
+input budget:
 
 ~~~text
-IMMEDIATE_PRIOR_COMPLETED_TURN
+one prior completed pair fits
+-> IMMEDIATE_PRIOR_COMPLETED_TURN
+
+multiple contiguous prior completed pairs fit
+-> RECENT_COMPLETED_TURNS
 ~~~
 
-It does not enumerate whole history for prompt selection.
+Selection starts at the exact immediate prior completed pair and walks backward by complete
+REQUEST/RESPONSE pairs. It stops at the first older pair that no longer fits and does not skip over
+that pair to cherry-pick still-older fragments. The selected suffix is then restored to chronological
+order before provider materialization.
+
+This remains bounded prompt selection rather than an instruction to replay whole Conversation
+history. Canonical Conversation remains durable source even when older pairs leave the active prompt.
 
 Memory is supplied by `VexLifeCurrentMemoryReader` from the canonical Home. Score may remain a
 valid structurally-current owner while its exact Conversation source is a verified historical
@@ -510,7 +521,9 @@ Tests are source-formed for:
 - Product-owned unhealthy generation runtime fails currentness immediately and rotates through its rightful owner;
 - idempotent duplicate reasoning unavailability without provider replay;
 - first-turn prompt materialization;
-- immediate-prior CONTINUE selection;
+- immediate-prior CONTINUE compatibility when exactly one prior pair is selected;
+- bounded contiguous recent-Conversation selection when more than one prior pair fits;
+- stop-before-oversized-older-pair behavior without noncontiguous cherry-picking;
 - prompt token-bound rejection;
 - request durable before response/head;
 - immutable head lineage;
@@ -518,7 +531,8 @@ Tests are source-formed for:
 - whole-turn writer exclusion;
 - exact completed-send duplicate suppression;
 - provider failure receipt + non-replaying failed-attempt recovery;
-- two consecutive direct turns where turn 2 receives the immediately prior pair.
+- two consecutive direct turns where turn 2 receives the immediately prior pair;
+- three consecutive direct turns where turn 3 retains both completed prior pairs while they fit.
 
 ## VexBoard projectability horizon
 
