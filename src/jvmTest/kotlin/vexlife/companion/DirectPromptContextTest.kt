@@ -1347,6 +1347,41 @@ class DirectPromptContextTest {
                         estimatedMessageTokens =
                             DirectPromptContext::estimatedMessageTokens,
                     )
+                val staleCandidateProjection =
+                    DirectWorkingCarryPromptContext.projectCandidate(
+                        formation = formation,
+                        availableTokens =
+                            DirectPromptContext.InputTokenBudget,
+                    )
+                val staleCandidatePlan =
+                    DirectPromptAttentionPlan.form(
+                        DirectPromptAttentionPlan.Input(
+                            fixedCurrentTurnTokens =
+                                fixed.fixedInputTokenEstimate,
+                            selectedExactConversationTokens =
+                                recent.events.sumOf {
+                                    DirectPromptContext.estimatedMessageTokens(
+                                        it.content,
+                                    )
+                                },
+                            carryRequested = true,
+                            carryEstimatedSystemMessageTokens =
+                                staleCandidateProjection.estimatedSystemMessageTokens,
+                        ),
+                    )
+                assertFailsWith<IllegalArgumentException> {
+                    DirectPromptContext.materializePlanned(
+                        conversationOwner = this,
+                        prior = prior,
+                        currentRequest = thirdRequest,
+                        memoryContext = memory,
+                        memoryAvailabilityContext = memory,
+                        attentionPlan = staleCandidatePlan,
+                        workingCarryCandidate = formation,
+                        runtimeEvidence = runtime,
+                    )
+                }
+
                 val fullCarry =
                     DirectWorkingCarryPromptContext.projectCurrent(
                         current = committed.current,
