@@ -47,8 +47,7 @@ VexLifeProdLocalSetup.Result
         ↓
 DirectConversationStore writer lease
         ↓
-canonical completed Conversation snapshot
-+ exact immediate-prior currentness binding
+exact immediate-prior currentness binding
         ↓
 REQUEST event durable
         ↓
@@ -66,8 +65,8 @@ DirectPromptContext
   current source-attributed Memory when source-current
   + owner-current working-checkpoint successor when present
   + source-formed bounded self-capability frame
-  + newest contiguous completed REQUEST/RESPONSE suffix that fits the remaining input budget
-    when not in successor mode
+  + Conversation-owned backward read of the newest contiguous completed REQUEST/RESPONSE suffix
+    that fits the remaining input budget when not in successor mode
   + optional admitted browser context
   + current request
 
@@ -176,13 +175,18 @@ multiple contiguous prior completed pairs fit
 -> RECENT_COMPLETED_TURNS
 ~~~
 
-Selection starts at the exact immediate prior completed pair and walks backward by complete
-REQUEST/RESPONSE pairs. It stops at the first older pair that no longer fits and does not skip over
-that pair to cherry-pick still-older fragments. The selected suffix is then restored to chronological
-order before provider materialization.
+Selection starts at the exact current completed head and asks `DirectConversationStore` to walk its
+immutable completed-head lineage backward one complete REQUEST/RESPONSE pair at a time. It stops at
+the first older pair that no longer fits and does not skip over that pair to cherry-pick still-older
+fragments. The selected suffix is then restored to chronological order before provider materialization.
 
-This remains bounded prompt selection rather than an instruction to replay whole Conversation
-history. Canonical Conversation remains durable source even when older pairs leave the active prompt.
+The prompt receipt reports whether this bounded walk actually reached the genesis completed turn.
+When the whole Conversation itself fits, whole-history enumeration may therefore truthfully be
+`true`; when the budget boundary stops the walk, it is `false`.
+
+This remains bounded source descent and prompt selection rather than an obligation to replay or
+retain whole Conversation history. Canonical Conversation remains durable source even when older
+pairs leave active model attention.
 
 Memory is supplied by `VexLifeCurrentMemoryReader` from the canonical Home. Score may remain a
 valid structurally-current owner while its exact Conversation source is a verified historical
