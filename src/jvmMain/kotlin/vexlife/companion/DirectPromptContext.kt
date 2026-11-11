@@ -110,6 +110,17 @@ object DirectPromptContext {
         val estimatedSystemMessageTokens: Int,
     )
 
+    private data class VerifiedFixedContext(
+        val memoryAvailability: VerifiedMemory?,
+        val workingContinuity: VerifiedWorkingContinuity?,
+        val browserContextSha256: String?,
+        val browserContextRef: String?,
+        val capabilityFrame: VerifiedCapabilityFrame?,
+        val prefixMessages: List<CompanionProviderMessage>,
+        val suffixMessages: List<CompanionProviderMessage>,
+        val fixedInputTokenEstimate: Int,
+    )
+
     @Serializable
     @ConsistentCopyVisibility
     data class CapabilityFrameSnapshot internal constructor(
@@ -336,6 +347,82 @@ object DirectPromptContext {
         val receipt: Receipt,
     )
 
+    @ConsistentCopyVisibility
+    data class FixedContext internal constructor(
+        val currentRequestEventRef: String,
+        val currentRequestEventSha256: String,
+        val memoryAvailabilityContextRef: String?,
+        val memoryAvailabilityContextFingerprint: String?,
+        val workingContinuityContextRef: String?,
+        val workingContinuityContextFingerprint: String?,
+        val browserContextRef: String?,
+        val browserContextSha256: String?,
+        val capabilityFrameRef: String?,
+        val capabilityFrameFingerprint: String?,
+        val prefixMessages: List<CompanionProviderMessage>,
+        val suffixMessages: List<CompanionProviderMessage>,
+        val fixedInputTokenEstimate: Int,
+        val effectsPerformed: Boolean,
+    )
+
+    fun prepareFixed(
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
+        memoryAvailabilityContext: VexLifeMemoryContract.Context? =
+            null,
+        workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
+            null,
+        browserContext: BrowserContext? =
+            null,
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
+            null,
+    ): FixedContext {
+        val fixed =
+            verifyFixedContext(
+                prior = prior,
+                currentRequest = currentRequest,
+                memoryAvailabilityContext = memoryAvailabilityContext,
+                workingContinuityContext = workingContinuityContext,
+                browserContext = browserContext,
+                runtimeEvidence = runtimeEvidence,
+            )
+
+        return FixedContext(
+            currentRequestEventRef = currentRequest.eventRef,
+            currentRequestEventSha256 = currentRequest.eventSha256,
+            memoryAvailabilityContextRef =
+                fixed.memoryAvailability
+                    ?.context
+                    ?.memoryContextRef,
+            memoryAvailabilityContextFingerprint =
+                fixed.memoryAvailability
+                    ?.context
+                    ?.semanticFingerprint,
+            workingContinuityContextRef =
+                fixed.workingContinuity
+                    ?.context
+                    ?.successorContextRef,
+            workingContinuityContextFingerprint =
+                fixed.workingContinuity
+                    ?.context
+                    ?.semanticFingerprint,
+            browserContextRef = fixed.browserContextRef,
+            browserContextSha256 = fixed.browserContextSha256,
+            capabilityFrameRef =
+                fixed.capabilityFrame
+                    ?.frame
+                    ?.selfCapabilityFrameRef,
+            capabilityFrameFingerprint =
+                fixed.capabilityFrame
+                    ?.frame
+                    ?.semanticFingerprint,
+            prefixMessages = fixed.prefixMessages,
+            suffixMessages = fixed.suffixMessages,
+            fixedInputTokenEstimate = fixed.fixedInputTokenEstimate,
+            effectsPerformed = false,
+        )
+    }
+
     fun materialize(
         prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
         currentRequest: DirectConversationStore.Event,
@@ -345,6 +432,8 @@ object DirectPromptContext {
             null,
         memoryContext: VexLifeMemoryContract.Context? =
             null,
+        memoryAvailabilityContext: VexLifeMemoryContract.Context? =
+            memoryContext,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
             null,
         browserContext: BrowserContext? =
@@ -352,73 +441,35 @@ object DirectPromptContext {
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
     ): Materialization {
-        require(
-            currentRequest.eventKind ==
-                "REQUEST",
-        ) {
-            "direct prompt context requires one durable current REQUEST"
-        }
-
-        val workingContinuity =
-            verifyWorkingContinuityContext(
-                value = workingContinuityContext,
+        val fixed =
+            verifyFixedContext(
                 prior = prior,
                 currentRequest = currentRequest,
+                memoryAvailabilityContext = memoryAvailabilityContext,
+                workingContinuityContext = workingContinuityContext,
+                browserContext = browserContext,
+                runtimeEvidence = runtimeEvidence,
             )
-
-        if (
-            prior ==
-                null
-        ) {
-            require(
-                workingContinuity ==
-                    null &&
-                    currentRequest.sequence ==
-                    0L &&
-                    currentRequest.priorEventSha256 ==
-                    null,
-            ) {
-                "first-turn prompt context requires one genesis request without prior Conversation history or working rollover"
-            }
-        } else {
-            requireImmediatePriorBinding(
-                prior = prior,
-                currentRequest = currentRequest,
-            )
-        }
-
         val memory =
             verifyMemoryContext(
                 memoryContext,
             )
+        requireSameMemoryFrontier(
+            availability =
+                fixed.memoryAvailability
+                    ?.context,
+            selected =
+                memory
+                    ?.context,
+        )
+        val workingContinuity =
+            fixed.workingContinuity
         val browserContextSha256 =
-            browserContext
-                ?.let {
-                    sha256(
-                        VexContractJson.canonicalEncode(
-                            it,
-                        ),
-                    )
-                }
+            fixed.browserContextSha256
         val browserContextRef =
-            browserContextSha256
-                ?.let {
-                    "browser-context.vexlife-prod." +
-                        it.take(
-                            32,
-                        )
-                }
+            fixed.browserContextRef
         val capabilityFrame =
-            runtimeEvidence
-                ?.let {
-                    formCapabilityFrame(
-                        currentRequest = currentRequest,
-                        memoryContext = memory?.context,
-                        workingContinuityContext = workingContinuity?.context,
-                        browserContextRef = browserContextRef,
-                        runtimeEvidence = it,
-                    )
-                }
+            fixed.capabilityFrame
         val prefixMessages =
             buildList {
                 memory
@@ -431,51 +482,13 @@ object DirectPromptContext {
                             ),
                         )
                     }
-                workingContinuity
-                    ?.systemContent
-                    ?.let {
-                        add(
-                            CompanionProviderMessage(
-                                role = "system",
-                                content = it,
-                            ),
-                        )
-                    }
-                capabilityFrame
-                    ?.systemContent
-                    ?.let {
-                        add(
-                            CompanionProviderMessage(
-                                role = "system",
-                                content = it,
-                            ),
-                        )
-                    }
-            }
-        val suffixMessages =
-            buildList {
-                if (
-                    browserContext !=
-                        null
-                ) {
-                    add(
-                        CompanionProviderMessage(
-                            role = "user",
-                            content =
-                                browserContextMessage(
-                                    browserContext,
-                                ),
-                        ),
-                    )
-                }
-                add(
-                    CompanionProviderMessage(
-                        role = "user",
-                        content = currentRequest.content,
-                    ),
+                addAll(
+                    fixed.prefixMessages,
                 )
             }
-        val fixedEstimate =
+        val suffixMessages =
+            fixed.suffixMessages
+        val selectionFixedEstimate =
             (
                 prefixMessages +
                     suffixMessages
@@ -487,9 +500,9 @@ object DirectPromptContext {
                 }
 
         require(
-            fixedEstimate <=
+            selectionFixedEstimate <=
                 InputTokenBudget &&
-                fixedEstimate +
+                selectionFixedEstimate +
                 ReservedOutputTokens <=
                 HardTokenLimit,
         ) {
@@ -508,7 +521,7 @@ object DirectPromptContext {
                 recentConversationSource
                     ?.invoke(
                         InputTokenBudget -
-                            fixedEstimate,
+                            selectionFixedEstimate,
                     )
             }
         val selected =
@@ -534,10 +547,7 @@ object DirectPromptContext {
                                 ),
                             exactEventFileReadCount = 2,
                             exactHeadFileReadCount = 1,
-                            wholeHistoryEventEnumerationPerformed =
-                    recentConversation
-                        ?.wholeHistoryEventEnumerationPerformed
-                        ?: false,
+                            wholeHistoryEventEnumerationPerformed = false,
                         )
                 requireRecentConversationHistory(
                     events = source.events,
@@ -550,7 +560,7 @@ object DirectPromptContext {
                         )
                     } <=
                         InputTokenBudget -
-                        fixedEstimate,
+                        selectionFixedEstimate,
                 ) {
                     "direct prompt recent Conversation source exceeds the remaining input token budget"
                 }
@@ -854,6 +864,8 @@ object DirectPromptContext {
             null,
         memoryContext: VexLifeMemoryContract.Context? =
             null,
+        memoryAvailabilityContext: VexLifeMemoryContract.Context? =
+            memoryContext,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
             null,
         browserContext: BrowserContext? =
@@ -868,6 +880,8 @@ object DirectPromptContext {
                 recentConversationSource =
                     recentConversationSource,
                 memoryContext = memoryContext,
+                memoryAvailabilityContext =
+                    memoryAvailabilityContext,
                 workingContinuityContext =
                     workingContinuityContext,
                 browserContext = browserContext,
@@ -1020,6 +1034,228 @@ object DirectPromptContext {
         ) {
             "direct prompt context current request does not immediately follow the exact prior completed turn"
         }
+    }
+
+    private fun requireSameMemoryFrontier(
+        availability: VexLifeMemoryContract.Context?,
+        selected: VexLifeMemoryContract.Context?,
+    ) {
+        if (
+            availability ==
+                null &&
+            selected ==
+                null
+        ) {
+            return
+        }
+
+        val available =
+            requireNotNull(
+                availability,
+            ) {
+                "selected Memory requires one explicit current Memory availability context"
+            }
+                .let(
+                    VexLifeMemoryContract::validateContext,
+                )
+        val actual =
+            requireNotNull(
+                selected,
+            ) {
+                "current Memory availability requires one explicit selected/unselected Memory projection"
+            }
+                .let(
+                    VexLifeMemoryContract::validateContext,
+                )
+
+        require(
+            available.schemaVersion ==
+                actual.schemaVersion &&
+                available.truthClass ==
+                actual.truthClass &&
+                available.projectionState ==
+                actual.projectionState &&
+                available.projectionCurrentness ==
+                actual.projectionCurrentness &&
+                available.sourceOwnerRefs ==
+                actual.sourceOwnerRefs &&
+                available.currentDailyStratumRef ==
+                actual.currentDailyStratumRef &&
+                available.currentDailyStratumSha256 ==
+                actual.currentDailyStratumSha256 &&
+                available.sourceConversationHeadSha256 ==
+                actual.sourceConversationHeadSha256 &&
+                available.sourceScoreHeadSha256 ==
+                actual.sourceScoreHeadSha256 &&
+                available.sourceSemanticAuthorityHeadSha256 ==
+                actual.sourceSemanticAuthorityHeadSha256 &&
+                available.heldOrDeferredStatementRefs ==
+                actual.heldOrDeferredStatementRefs &&
+                available.boundedOutStatementRefs ==
+                actual.boundedOutStatementRefs &&
+                available.reasons ==
+                actual.reasons,
+        ) {
+            "selected Memory packet and Memory availability do not bind the same source frontier"
+        }
+    }
+
+    private fun verifyFixedContext(
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
+        memoryAvailabilityContext: VexLifeMemoryContract.Context?,
+        workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        browserContext: BrowserContext?,
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
+    ): VerifiedFixedContext {
+        require(
+            currentRequest.eventKind ==
+                "REQUEST",
+        ) {
+            "direct prompt fixed context requires one durable current REQUEST"
+        }
+
+        val workingContinuity =
+            verifyWorkingContinuityContext(
+                value = workingContinuityContext,
+                prior = prior,
+                currentRequest = currentRequest,
+            )
+
+        if (
+            prior ==
+                null
+        ) {
+            require(
+                workingContinuity ==
+                    null &&
+                    currentRequest.sequence ==
+                    0L &&
+                    currentRequest.priorEventSha256 ==
+                    null,
+            ) {
+                "first-turn fixed context requires one genesis request without working rollover"
+            }
+        } else {
+            requireImmediatePriorBinding(
+                prior = prior,
+                currentRequest = currentRequest,
+            )
+        }
+
+        val memoryAvailability =
+            verifyMemoryContext(
+                memoryAvailabilityContext,
+            )
+        val browserContextSha256 =
+            browserContext
+                ?.let {
+                    sha256(
+                        VexContractJson.canonicalEncode(
+                            it,
+                        ),
+                    )
+                }
+        val browserContextRef =
+            browserContextSha256
+                ?.let {
+                    "browser-context.vexlife-prod." +
+                        it.take(
+                            32,
+                        )
+                }
+        val capabilityFrame =
+            runtimeEvidence
+                ?.let {
+                    formCapabilityFrame(
+                        currentRequest = currentRequest,
+                        memoryContext =
+                            memoryAvailability
+                                ?.context,
+                        workingContinuityContext =
+                            workingContinuity
+                                ?.context,
+                        browserContextRef = browserContextRef,
+                        runtimeEvidence = it,
+                    )
+                }
+        val prefixMessages =
+            buildList {
+                workingContinuity
+                    ?.systemContent
+                    ?.let {
+                        add(
+                            CompanionProviderMessage(
+                                role = "system",
+                                content = it,
+                            ),
+                        )
+                    }
+                capabilityFrame
+                    ?.systemContent
+                    ?.let {
+                        add(
+                            CompanionProviderMessage(
+                                role = "system",
+                                content = it,
+                            ),
+                        )
+                    }
+            }
+        val suffixMessages =
+            buildList {
+                if (
+                    browserContext !=
+                        null
+                ) {
+                    add(
+                        CompanionProviderMessage(
+                            role = "user",
+                            content =
+                                browserContextMessage(
+                                    browserContext,
+                                ),
+                        ),
+                    )
+                }
+                add(
+                    CompanionProviderMessage(
+                        role = "user",
+                        content = currentRequest.content,
+                    ),
+                )
+            }
+        val fixedEstimate =
+            (
+                prefixMessages +
+                    suffixMessages
+            )
+                .sumOf {
+                    estimatedMessageTokens(
+                        it.content,
+                    )
+                }
+
+        require(
+            fixedEstimate <=
+                InputTokenBudget &&
+                fixedEstimate +
+                ReservedOutputTokens <=
+                HardTokenLimit,
+        ) {
+            "direct prompt fixed current-turn context exceeds the admitted input/output token budget"
+        }
+
+        return VerifiedFixedContext(
+            memoryAvailability = memoryAvailability,
+            workingContinuity = workingContinuity,
+            browserContextSha256 = browserContextSha256,
+            browserContextRef = browserContextRef,
+            capabilityFrame = capabilityFrame,
+            prefixMessages = prefixMessages,
+            suffixMessages = suffixMessages,
+            fixedInputTokenEstimate = fixedEstimate,
+        )
     }
 
     private fun formCapabilityFrame(
