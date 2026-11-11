@@ -42,10 +42,16 @@ class VexLifeProdPrivateServiceImageTest {
             "a".repeat(
                 40,
             ),
-        schemaVersion: String =
-            VexLifeProdPrivateServiceImage.Schema,
         includeVisionRuntime: Boolean =
             false,
+        schemaVersion: String =
+            if (
+                includeVisionRuntime
+            ) {
+                VexLifeProdPrivateServiceImage.Schema
+            } else {
+                VexLifeProdPrivateServiceImage.LegacySchema
+            },
     ): VexLifeProdPrivateServiceImage.Manifest {
         Files.createDirectories(
             root.resolve(
@@ -435,6 +441,47 @@ class VexLifeProdPrivateServiceImageTest {
                 null,
                 observed.visionRuntimeTruthClassOrNull,
             )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun currentV4SchemaRequiresVisionRuntime() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-private-service-image-v4-without-vision-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "image",
+            )
+        val sourceSha =
+            "a".repeat(
+                40,
+            )
+
+        try {
+            Files.createDirectory(
+                root,
+            )
+            formImage(
+                root = root,
+                sourceSha = sourceSha,
+                schemaVersion =
+                    VexLifeProdPrivateServiceImage.Schema,
+                includeVisionRuntime = false,
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                VexLifeProdPrivateServiceImage.observe(
+                    imageRoot = root,
+                    expectedSourceSha = sourceSha,
+                )
+            }
         } finally {
             parent
                 .toFile()
