@@ -1205,6 +1205,23 @@ object DirectPromptContext {
                 )
                 source.events
             }
+        val selectedConversationRefs =
+            selected
+                .map(
+                    DirectConversationStore.Event::eventRef,
+                )
+                .toSet()
+        require(
+            sourceReturnProjection
+                ?.sourceEventRefs
+                .orEmpty()
+                .none {
+                    it in
+                        selectedConversationRefs
+                },
+        ) {
+            "direct continuity returned historical source overlaps exact recent Conversation already selected"
+        }
         val selectedConversationTokens =
             selected.sumOf {
                 estimatedMessageTokens(
