@@ -43,6 +43,8 @@ class VexLifeWorkingCarryOwner(
         val schemaVersion: String,
         val formationRef: String,
         val formationFingerprint: String,
+        val refreshInputSha256: String,
+        val draftSha256: String,
         val runtimeObservationRef: String,
         val runtimeObservationFingerprint: String,
         val invocationRef: String,
@@ -62,6 +64,16 @@ class VexLifeWorkingCarryOwner(
                     "working-carry-formation." +
                     formationFingerprint.take(
                         32,
+                    ) &&
+                    refreshInputSha256.matches(
+                        Regex(
+                            "[0-9a-f]{64}",
+                        ),
+                    ) &&
+                    draftSha256.matches(
+                        Regex(
+                            "[0-9a-f]{64}",
+                        ),
                     ) &&
                     runtimeObservationRef.isNotBlank() &&
                     runtimeObservationFingerprint.matches(
@@ -335,6 +347,22 @@ class VexLifeWorkingCarryOwner(
         requireFormationBinding(
             formationBinding,
         )
+        require(
+            formationBinding.refreshInputSha256 ==
+                sha256(
+                    VexContractJson.canonicalEncode(
+                        input,
+                    ),
+                ) &&
+                formationBinding.draftSha256 ==
+                sha256(
+                    VexContractJson.canonicalEncode(
+                        output,
+                    ),
+                ),
+        ) {
+            "working carry formation binding does not belong to the exact refresh input and Draft"
+        }
 
         val current =
             readCurrent(
@@ -544,6 +572,22 @@ class VexLifeWorkingCarryOwner(
         requireFormationBinding(
             prepared.formationBinding,
         )
+        require(
+            prepared.formationBinding.refreshInputSha256 ==
+                sha256(
+                    VexContractJson.canonicalEncode(
+                        input,
+                    ),
+                ) &&
+                prepared.formationBinding.draftSha256 ==
+                sha256(
+                    VexContractJson.canonicalEncode(
+                        prepared.carry,
+                    ),
+                ),
+        ) {
+            "prepared working carry formation binding is detached from its refresh input or Draft"
+        }
     }
 
     private fun requirePriorStillCurrent(
@@ -916,6 +960,14 @@ class VexLifeWorkingCarryOwner(
         requireSha256(
             value.formationFingerprint,
             "formationBinding.formationFingerprint",
+        )
+        requireSha256(
+            value.refreshInputSha256,
+            "formationBinding.refreshInputSha256",
+        )
+        requireSha256(
+            value.draftSha256,
+            "formationBinding.draftSha256",
         )
         require(
             value.formationRef ==
