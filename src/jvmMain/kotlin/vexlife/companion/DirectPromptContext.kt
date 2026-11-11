@@ -1152,6 +1152,7 @@ object DirectPromptContext {
         workingCarryCandidate
             ?.let {
                 requireCarryCandidateMatchesSelection(
+                    conversationOwner = conversationOwner,
                     formation = it,
                     currentRequest = currentRequest,
                     selected = selected,
@@ -1514,6 +1515,7 @@ object DirectPromptContext {
     }
 
     private fun requireCarryCandidateMatchesSelection(
+        conversationOwner: DirectConversationStore.Locked,
         formation: DirectWorkingCarryFormation.Formation,
         currentRequest: DirectConversationStore.Event,
         selected: List<DirectConversationStore.Event>,
@@ -1527,40 +1529,29 @@ object DirectPromptContext {
                 currentRequest.companionLineageRef &&
                 refresh.threadRef ==
                 currentRequest.threadRef &&
-                refresh.currentRequest.source.eventRef ==
-                currentRequest.eventRef &&
-                refresh.currentRequest.source.eventHash ==
-                currentRequest.eventHash &&
-                refresh.currentRequest.source.sequence ==
-                currentRequest.sequence,
+                refresh.currentRequest ==
+                workingCarrySourceEvent(
+                    currentRequest,
+                ),
         ) {
             "working carry candidate belongs to a different current request"
         }
 
-        val selectedBindings =
-            selected.map {
-                event ->
-                VexLifeWorkingCarryContract.SourceBinding(
-                    eventRef = event.eventRef,
-                    eventHash = event.eventHash,
-                    sequence = event.sequence,
-                )
-            }
-        val retainedBindings =
-            refresh.retainedDirectEvents.map {
-                it.source
-            }
+        val retained =
+            selected.map(
+                ::workingCarrySourceEvent,
+            )
         require(
-            retainedBindings ==
-                selectedBindings,
+            refresh.retainedDirectEvents ==
+                retained,
         ) {
             "working carry candidate retained-direct source differs from the exact selected Conversation suffix"
         }
 
         val selectedRefs =
-            selectedBindings
+            selected
                 .map(
-                    VexLifeWorkingCarryContract.SourceBinding::eventRef,
+                    DirectConversationStore.Event::eventRef,
                 )
                 .toSet()
         require(
@@ -1571,7 +1562,46 @@ object DirectPromptContext {
         ) {
             "working carry candidate cites source as newly leaving while it remains directly selected"
         }
+
+        val leavingAddresses =
+            refresh.newlyLeavingEvents.map {
+                source ->
+                DirectConversationStore.EventAddress(
+                    sequence = source.source.sequence,
+                    eventRef = source.source.eventRef,
+                    eventHash = source.source.eventHash,
+                )
+            }
+        val canonicalLeaving =
+            conversationOwner.exactCommittedConversationEvents(
+                leavingAddresses,
+            )
+        require(
+            !canonicalLeaving.effectsPerformed &&
+                refresh.newlyLeavingEvents ==
+                canonicalLeaving.events.map(
+                    ::workingCarrySourceEvent,
+                ),
+        ) {
+            "working carry candidate newly-leaving material differs from exact canonical Conversation source"
+        }
     }
+
+    private fun workingCarrySourceEvent(
+        event: DirectConversationStore.Event,
+    ): VexLifeWorkingCarryContract.SourceEvent =
+        VexLifeWorkingCarryContract.SourceEvent(
+            source =
+                VexLifeWorkingCarryContract.SourceBinding(
+                    eventRef = event.eventRef,
+                    eventHash = event.eventHash,
+                    sequence = event.sequence,
+                ),
+            eventKind = event.eventKind,
+            speakerRef = event.speakerRef,
+            recipientRefs = event.recipientRefs,
+            content = event.content,
+        )
 
     private fun requireSameMemoryFrontier(
         availability: VexLifeMemoryContract.Context?,
