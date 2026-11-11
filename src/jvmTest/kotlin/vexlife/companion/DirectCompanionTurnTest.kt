@@ -369,7 +369,7 @@ class DirectCompanionTurnTest {
                                 "statement.score.continuity.001",
                             ),
                         )
-                        assertFalse(
+                        assertTrue(
                             call.body.contains(
                                 "Rollover producer response",
                             ),
@@ -422,6 +422,14 @@ class DirectCompanionTurnTest {
                             transport = transport,
                             currentMemoryContext = {
                                 memory
+                            },
+                            memoryContextAtCap = {
+                                _,
+                                memoryTokenCap,
+                                ->
+                                VexLifeMemoryContextFixture.current(
+                                    memoryTokenCap,
+                                )
                             },
                             now = {
                                 Instant.parse(
@@ -519,6 +527,14 @@ class DirectCompanionTurnTest {
                             currentMemoryContext = {
                                 memory
                             },
+                            memoryContextAtCap = {
+                                _,
+                                memoryTokenCap,
+                                ->
+                                VexLifeMemoryContextFixture.current(
+                                    memoryTokenCap,
+                                )
+                            },
                             now = {
                                 Instant.parse(
                                     "2026-11-06T11:11:00Z",
@@ -544,6 +560,10 @@ class DirectCompanionTurnTest {
             )
             assertTrue(
                 second.promptContextReceipt.selectedConversationEventSha256.isEmpty(),
+            )
+            assertEquals(
+                first.responseEventRef,
+                second.promptContextReceipt.successorPriorResponseEventRef,
             )
             assertTrue(
                 second.promptContextReceipt.workingContinuityIncluded,
@@ -661,6 +681,11 @@ class DirectCompanionTurnTest {
                         )
                         assertTrue(
                             call.body.contains(
+                                "Rollover recovery baseline",
+                            ),
+                        )
+                        assertTrue(
+                            call.body.contains(
                                 "Failed successor request",
                             ),
                         )
@@ -686,7 +711,7 @@ class DirectCompanionTurnTest {
                                 "Failed successor request",
                             ),
                         )
-                        assertFalse(
+                        assertTrue(
                             call.body.contains(
                                 "Rollover recovery baseline",
                             ),
@@ -731,6 +756,14 @@ class DirectCompanionTurnTest {
                             transport = transport,
                             currentMemoryContext = {
                                 memory
+                            },
+                            memoryContextAtCap = {
+                                _,
+                                memoryTokenCap,
+                                ->
+                                VexLifeMemoryContextFixture.current(
+                                    memoryTokenCap,
+                                )
                             },
                         ),
                 )
@@ -779,6 +812,14 @@ class DirectCompanionTurnTest {
                             transport = transport,
                             currentMemoryContext = {
                                 memory
+                            },
+                            memoryContextAtCap = {
+                                _,
+                                memoryTokenCap,
+                                ->
+                                VexLifeMemoryContextFixture.current(
+                                    memoryTokenCap,
+                                )
                             },
                         ),
                 )
@@ -837,6 +878,14 @@ class DirectCompanionTurnTest {
                             transport = transport,
                             currentMemoryContext = {
                                 memory
+                            },
+                            memoryContextAtCap = {
+                                _,
+                                memoryTokenCap,
+                                ->
+                                VexLifeMemoryContextFixture.current(
+                                    memoryTokenCap,
+                                )
                             },
                         ),
                 )
