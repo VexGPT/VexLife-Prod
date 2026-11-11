@@ -613,8 +613,9 @@ class VexLifeWorkingCarryOwner(
                     current
                         ?.revision
                 if (
-                    currentRevision
-                        ?.refreshMoment ==
+                    currentRevision !=
+                        null &&
+                    currentRevision.refreshMoment ==
                         VexLifeWorkingCarryContract.RolloverHandoff &&
                     currentRevision.sourceConversationHeadSha256 ==
                         completedHead.conversationHeadSha256 &&
