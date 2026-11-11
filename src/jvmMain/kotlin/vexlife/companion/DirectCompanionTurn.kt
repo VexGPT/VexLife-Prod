@@ -8,6 +8,8 @@ import java.util.UUID
 import kotlinx.serialization.Serializable
 import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
+import vexlife.continuity.VexLifeWorkingCarryContract
+import vexlife.continuity.VexLifeWorkingCarryOwner
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.filesystem.VexOwnedPath
@@ -179,6 +181,20 @@ object DirectCompanionTurn {
                 productHome,
             )
         },
+        val memoryContextAtCap: (
+            productHome: Path,
+            memoryTokenCap: Int,
+        ) -> VexLifeMemoryContract.Context = {
+            productHome,
+            memoryTokenCap,
+            ->
+            VexLifeCurrentMemoryReader.readCurrent(
+                productHome = productHome,
+                memoryTokenCap = memoryTokenCap,
+            )
+        },
+        val workingCarryTransport: DirectCompanionConnection.Transport? =
+            null,
         val progressObserver: ProgressObserver? =
             null,
         val commitWorkingContinuity: (
@@ -202,10 +218,19 @@ object DirectCompanionTurn {
         },
     )
 
+    private data class GradualCarry(
+        val formation: DirectWorkingCarryFormation.Formation,
+        val prepared: VexLifeWorkingCarryOwner.Prepared,
+    )
+
     private data class CompletedTurn(
         val result: Result,
         val turnRef: String,
+        val request: DirectConversationStore.Event,
+        val response: DirectConversationStore.Event,
+        val completedHead: DirectConversationStore.Head,
         val workingContinuity: DirectWorkingContinuity.Prepared,
+        val gradualCarry: GradualCarry?,
     )
 
     fun perform(
