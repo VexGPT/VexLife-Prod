@@ -167,6 +167,29 @@ class DirectConversationStore(
         val currentCommittedLineageVerified: Boolean,
     )
 
+    @ConsistentCopyVisibility
+    data class RecentCompletedConversation internal constructor(
+        val events: List<Event>,
+        val exactEventFileReadCount: Int,
+        val exactHeadFileReadCount: Int,
+        val wholeHistoryEventEnumerationPerformed: Boolean,
+    )
+
+    data class EventAddress(
+        val sequence: Long,
+        val eventRef: String,
+        val eventHash: String,
+    )
+
+    @ConsistentCopyVisibility
+    data class ExactConversationReturn internal constructor(
+        val events: List<Event>,
+        val exactEventFileReadCount: Int,
+        val exactHeadFileReadCount: Int,
+        val wholeHistoryHeadTraversalPerformed: Boolean,
+        val effectsPerformed: Boolean = false,
+    )
+
     @Serializable
     private data class ThreadWriterLeaseCore(
         val schemaVersion: String,
@@ -249,6 +272,22 @@ class DirectConversationStore(
 
         fun immediatePriorCompletedTurn(): ImmediatePriorCompletedTurn? =
             readImmediatePriorCompletedTurn()
+
+        fun recentCompletedConversation(
+            availableTokens: Int,
+            estimatedMessageTokens: (String) -> Int,
+        ): RecentCompletedConversation =
+            readRecentCompletedConversation(
+                availableTokens = availableTokens,
+                estimatedMessageTokens = estimatedMessageTokens,
+            )
+
+        fun exactCommittedConversationEvents(
+            addresses: List<EventAddress>,
+        ): ExactConversationReturn =
+            readExactCommittedConversationEvents(
+                addresses,
+            )
 
         fun beginRequest(
             turnRef: String,
@@ -1570,6 +1609,490 @@ class DirectConversationStore(
             responseEvent = response,
             exactEventFileReadCount = 2,
             wholeHistoryEventEnumerationPerformed = false,
+        )
+    }
+
+    private fun readRecentCompletedConversation(
+        availableTokens: Int,
+        estimatedMessageTokens: (String) -> Int,
+    ): RecentCompletedConversation {
+        require(
+            availableTokens >=
+                0,
+        ) {
+            "recent completed Conversation token budget must be non-negative"
+        }
+
+        val currentHead =
+            readHeadRecord()
+                ?: return RecentCompletedConversation(
+                    events = emptyList(),
+                    exactEventFileReadCount = 0,
+                    exactHeadFileReadCount = 0,
+                    wholeHistoryEventEnumerationPerformed = true,
+                )
+
+        val newestFirst =
+            mutableListOf<List<Event>>()
+        val visitedHeads =
+            mutableSetOf<String>()
+        var remaining =
+            availableTokens
+        var cursorSha =
+            currentHead.conversationHeadSha256
+        var expectedCurrentHead: VexLifeConversationContract.Head? =
+            currentHead
+        var newerHead: VexLifeConversationContract.Head? =
+            null
+        var eventReads =
+            0
+        var headReads =
+            0
+        var wholeHistoryEnumerated =
+            false
+
+        while (
+            true
+        ) {
+            require(
+                visitedHeads.add(
+                    cursorSha,
+                ),
+            ) {
+                "recent completed Conversation head lineage contains a cycle"
+            }
+
+            val head =
+                requireNotNull(
+                    VexDurableContractFile.read<VexLifeConversationContract.Head>(
+                        ownedRoot = productHome,
+                        path =
+                            immutableHeadPath(
+                                cursorSha,
+                            ),
+                    ),
+                ) {
+                    "recent completed Conversation is missing an immutable head receipt"
+                }
+                    .also(
+                        ::validateCanonicalHeadRecord,
+                    )
+            headReads +=
+                1
+
+            expectedCurrentHead
+                ?.let {
+                    expected ->
+                    require(
+                        head ==
+                            expected,
+                    ) {
+                        "recent completed Conversation current head differs from its immutable receipt"
+                    }
+                    expectedCurrentHead =
+                        null
+                }
+
+            newerHead
+                ?.let {
+                    newer ->
+                    require(
+                        newer.priorConversationHeadSha256 ==
+                            head.conversationHeadSha256 &&
+                            head.sequence ==
+                            newer.sequence -
+                            2 &&
+                            head.homeRef ==
+                            newer.homeRef &&
+                            head.deviceRef ==
+                            newer.deviceRef &&
+                            head.companionLineageRef ==
+                            newer.companionLineageRef &&
+                            head.threadRef ==
+                            newer.threadRef,
+                    ) {
+                        "recent completed Conversation prior head does not continue the same canonical lineage"
+                    }
+                }
+
+            val response =
+                requireNotNull(
+                    readEventAt(
+                        eventPath(
+                            sequence = head.sequence,
+                            eventHash = head.eventHash,
+                        ),
+                    ),
+                ) {
+                    "recent completed Conversation response event is missing"
+                }
+            val requestHash =
+                requireNotNull(
+                    response.priorEventHash,
+                ) {
+                    "recent completed Conversation response has no request predecessor"
+                }
+            val request =
+                requireNotNull(
+                    readEventAt(
+                        eventPath(
+                            sequence =
+                                head.sequence -
+                                    1,
+                            eventHash = requestHash,
+                        ),
+                    ),
+                ) {
+                    "recent completed Conversation request event is missing"
+                }
+            eventReads +=
+                2
+
+            validateHeadAgainstPair(
+                head = head,
+                request = request,
+                response = response,
+            )
+            validateContextBinding(
+                relativePath = head.contextPath,
+                expectedContextSha256 = head.contextSha256,
+                request = request,
+                response = response,
+            )
+
+            val pairTokens =
+                estimatedMessageTokens(
+                    request.content,
+                ) +
+                    estimatedMessageTokens(
+                        response.content,
+                    )
+            require(
+                pairTokens >=
+                    0,
+            ) {
+                "recent completed Conversation token estimator returned a negative value"
+            }
+
+            if (
+                pairTokens >
+                    remaining
+            ) {
+                break
+            }
+
+            newestFirst +=
+                listOf(
+                    request,
+                    response,
+                )
+            remaining -=
+                pairTokens
+
+            val priorHeadSha =
+                head.priorConversationHeadSha256
+            if (
+                priorHeadSha ==
+                    null
+            ) {
+                wholeHistoryEnumerated =
+                    true
+                break
+            }
+
+            newerHead =
+                head
+            cursorSha =
+                priorHeadSha
+        }
+
+        return RecentCompletedConversation(
+            events =
+                newestFirst
+                    .asReversed()
+                    .flatten(),
+            exactEventFileReadCount = eventReads,
+            exactHeadFileReadCount = headReads,
+            wholeHistoryEventEnumerationPerformed =
+                wholeHistoryEnumerated,
+        )
+    }
+
+    private fun readExactCommittedConversationEvents(
+        addresses: List<EventAddress>,
+    ): ExactConversationReturn {
+        require(
+            addresses.isNotEmpty(),
+        ) {
+            "exact Conversation return requires at least one event address"
+        }
+        addresses.forEach {
+            address ->
+            require(
+                address.sequence >=
+                    0,
+            ) {
+                "exact Conversation return sequence must be non-negative"
+            }
+            requireNonEmpty(
+                address.eventRef,
+                "exact Conversation return eventRef",
+            )
+            requireSha256(
+                address.eventHash,
+                "exact Conversation return eventHash",
+            )
+        }
+        require(
+            addresses
+                .map(
+                    EventAddress::sequence,
+                )
+                .zipWithNext()
+                .all {
+                    pair ->
+                    pair.first <
+                        pair.second
+                },
+        ) {
+            "exact Conversation return addresses must be strictly source-ordered by sequence"
+        }
+
+        val currentHead =
+            requireNotNull(
+                readHeadRecord(),
+            ) {
+                "exact Conversation return requires one current completed head"
+            }
+        require(
+            addresses.last()
+                .sequence <=
+                currentHead.sequence,
+        ) {
+            "exact Conversation return requests an event newer than the current completed head"
+        }
+
+        val addressesByHeadSequence =
+            addresses.groupBy {
+                address ->
+                if (
+                    address.sequence %
+                    2 ==
+                    0L
+                ) {
+                    address.sequence +
+                        1
+                } else {
+                    address.sequence
+                }
+            }
+        val targetHeadSequences =
+            addressesByHeadSequence.keys
+        val resolved =
+            mutableMapOf<Long, Event>()
+        val visitedHeads =
+            mutableSetOf<String>()
+        var cursorSha =
+            currentHead.conversationHeadSha256
+        var expectedCurrentHead: VexLifeConversationContract.Head? =
+            currentHead
+        var newerHead: VexLifeConversationContract.Head? =
+            null
+        var eventReads =
+            0
+        var headReads =
+            0
+        var reachedGenesis =
+            false
+
+        while (
+            resolved.size <
+                addresses.size
+        ) {
+            require(
+                visitedHeads.add(
+                    cursorSha,
+                ),
+            ) {
+                "exact Conversation return head lineage contains a cycle"
+            }
+
+            val head =
+                requireNotNull(
+                    VexDurableContractFile.read<VexLifeConversationContract.Head>(
+                        ownedRoot = productHome,
+                        path =
+                            immutableHeadPath(
+                                cursorSha,
+                            ),
+                    ),
+                ) {
+                    "exact Conversation return is missing an immutable head receipt"
+                }
+                    .also(
+                        ::validateCanonicalHeadRecord,
+                    )
+            headReads +=
+                1
+
+            expectedCurrentHead
+                ?.let {
+                    expected ->
+                    require(
+                        head ==
+                            expected,
+                    ) {
+                        "exact Conversation return current head differs from its immutable receipt"
+                    }
+                    expectedCurrentHead =
+                        null
+                }
+
+            newerHead
+                ?.let {
+                    newer ->
+                    require(
+                        newer.priorConversationHeadSha256 ==
+                            head.conversationHeadSha256 &&
+                            head.sequence ==
+                            newer.sequence -
+                            2 &&
+                            head.homeRef ==
+                            newer.homeRef &&
+                            head.deviceRef ==
+                            newer.deviceRef &&
+                            head.companionLineageRef ==
+                            newer.companionLineageRef &&
+                            head.threadRef ==
+                            newer.threadRef,
+                    ) {
+                        "exact Conversation return head ancestry is not one canonical lineage"
+                    }
+                }
+
+            if (
+                head.sequence in
+                    targetHeadSequences
+            ) {
+                val response =
+                    requireNotNull(
+                        readEventAt(
+                            eventPath(
+                                sequence = head.sequence,
+                                eventHash = head.eventHash,
+                            ),
+                        ),
+                    ) {
+                        "exact Conversation return response event is missing"
+                    }
+                val requestHash =
+                    requireNotNull(
+                        response.priorEventHash,
+                    ) {
+                        "exact Conversation return response has no request predecessor"
+                    }
+                val request =
+                    requireNotNull(
+                        readEventAt(
+                            eventPath(
+                                sequence =
+                                    head.sequence -
+                                        1,
+                                eventHash = requestHash,
+                            ),
+                        ),
+                    ) {
+                        "exact Conversation return request event is missing"
+                    }
+                eventReads +=
+                    2
+
+                validateHeadAgainstPair(
+                    head = head,
+                    request = request,
+                    response = response,
+                )
+                validateContextBinding(
+                    relativePath = head.contextPath,
+                    expectedContextSha256 = head.contextSha256,
+                    request = request,
+                    response = response,
+                )
+
+                addressesByHeadSequence[
+                    head.sequence
+                ]
+                    .orEmpty()
+                    .forEach {
+                        address ->
+                        val event =
+                            when (
+                                address.sequence
+                            ) {
+                                request.sequence ->
+                                    request
+
+                                response.sequence ->
+                                    response
+
+                                else ->
+                                    error(
+                                        "exact Conversation return address does not belong to its completed turn",
+                                    )
+                            }
+                        require(
+                            event.eventRef ==
+                                address.eventRef &&
+                                event.eventHash ==
+                                address.eventHash
+                        ) {
+                            "exact Conversation return address does not match canonical committed source"
+                        }
+                        resolved[
+                            address.sequence
+                        ] =
+                            event
+                    }
+            }
+
+            reachedGenesis =
+                head.priorConversationHeadSha256 ==
+                null
+            if (
+                resolved.size ==
+                    addresses.size
+            ) {
+                break
+            }
+            require(
+                !reachedGenesis
+            ) {
+                "exact Conversation return source is not present in the current committed lineage"
+            }
+
+            newerHead =
+                head
+            cursorSha =
+                requireNotNull(
+                    head.priorConversationHeadSha256,
+                )
+        }
+
+        return ExactConversationReturn(
+            events =
+                addresses.map {
+                    address ->
+                    requireNotNull(
+                        resolved[
+                            address.sequence
+                        ],
+                    )
+                },
+            exactEventFileReadCount = eventReads,
+            exactHeadFileReadCount = headReads,
+            wholeHistoryHeadTraversalPerformed =
+                reachedGenesis,
+            effectsPerformed = false,
         )
     }
 

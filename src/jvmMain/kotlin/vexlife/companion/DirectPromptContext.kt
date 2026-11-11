@@ -18,9 +18,10 @@ import vexlife.model.heretic.HereticModelConfiguration
 /**
  * Bounded direct Companion prompt materialization.
  *
- * CONTINUE selects exactly the immediate prior completed REQUEST/RESPONSE pair. Current attributed
- * Memory may be supplied only through the exact source-owned Memory contract and is reverified before
- * provider materialization. This owner performs no provider call and no durable mutation.
+ * CONTINUE selects a contiguous recent suffix of completed REQUEST/RESPONSE pairs within the admitted
+ * prompt budget. Current attributed Memory may be supplied only through the exact source-owned Memory
+ * contract and is reverified before provider materialization. A working-checkpoint successor selects
+ * no raw prior Conversation pair. This owner performs no provider call and no durable mutation.
  */
 object DirectPromptContext {
     const val ReceiptSchemaV2 =
@@ -32,8 +33,11 @@ object DirectPromptContext {
     const val ReceiptSchemaV4 =
         "vexlife-prod.direct-prompt-materialization-receipt/v4"
 
-    const val ReceiptSchema =
+    const val ReceiptSchemaV5 =
         "vexlife-prod.direct-prompt-materialization-receipt/v5"
+
+    const val ReceiptSchema =
+        "vexlife-prod.direct-prompt-materialization-receipt/v6"
 
     const val InputTokenBudget =
         VexLifeMemoryContract.ContextInputTokenBudget
@@ -128,6 +132,7 @@ object DirectPromptContext {
         val priorConversationHeadSha256: String?,
         val selectedConversationEventRefs: List<String>,
         val selectedConversationEventSha256: List<String>,
+        val selectedConversationEventSequences: List<Long>,
         val currentRequestEventRef: String,
         val currentRequestEventSha256: String,
         val browserContextIncluded: Boolean =
@@ -187,6 +192,11 @@ object DirectPromptContext {
         val priorConversationHeadSha256: String?,
         val selectedConversationEventRefs: List<String>,
         val selectedConversationEventSha256: List<String>,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val selectedConversationEventSequences: List<Long> =
+            emptyList(),
         val currentRequestEventRef: String,
         val currentRequestEventSha256: String,
         val browserContextIncluded: Boolean =
@@ -329,6 +339,10 @@ object DirectPromptContext {
     fun materialize(
         prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
         currentRequest: DirectConversationStore.Event,
+        recentConversationSource: ((
+            availableTokens: Int,
+        ) -> DirectConversationStore.RecentCompletedConversation)? =
+            null,
         memoryContext: VexLifeMemoryContract.Context? =
             null,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
@@ -352,39 +366,26 @@ object DirectPromptContext {
                 currentRequest = currentRequest,
             )
 
-        val selected =
-            if (
-                prior ==
-                    null
+        if (
+            prior ==
+                null
+        ) {
+            require(
+                workingContinuity ==
+                    null &&
+                    currentRequest.sequence ==
+                    0L &&
+                    currentRequest.priorEventSha256 ==
+                    null,
             ) {
-                require(
-                    workingContinuity ==
-                        null &&
-                        currentRequest.sequence ==
-                        0L &&
-                        currentRequest.priorEventSha256 ==
-                        null,
-                ) {
-                    "first-turn prompt context requires one genesis request without working rollover"
-                }
-                emptyList()
-            } else {
-                requireImmediatePriorBinding(
-                    prior = prior,
-                    currentRequest = currentRequest,
-                )
-                if (
-                    workingContinuity ==
-                        null
-                ) {
-                    listOf(
-                        prior.requestEvent,
-                        prior.responseEvent,
-                    )
-                } else {
-                    emptyList()
-                }
+                "first-turn prompt context requires one genesis request without prior Conversation history or working rollover"
             }
+        } else {
+            requireImmediatePriorBinding(
+                prior = prior,
+                currentRequest = currentRequest,
+            )
+        }
 
         val memory =
             verifyMemoryContext(
@@ -418,7 +419,7 @@ object DirectPromptContext {
                         runtimeEvidence = it,
                     )
                 }
-        val messages =
+        val prefixMessages =
             buildList {
                 memory
                     ?.systemContent
@@ -450,6 +451,117 @@ object DirectPromptContext {
                             ),
                         )
                     }
+            }
+        val suffixMessages =
+            buildList {
+                if (
+                    browserContext !=
+                        null
+                ) {
+                    add(
+                        CompanionProviderMessage(
+                            role = "user",
+                            content =
+                                browserContextMessage(
+                                    browserContext,
+                                ),
+                        ),
+                    )
+                }
+                add(
+                    CompanionProviderMessage(
+                        role = "user",
+                        content = currentRequest.content,
+                    ),
+                )
+            }
+        val fixedEstimate =
+            (
+                prefixMessages +
+                    suffixMessages
+            )
+                .sumOf {
+                    estimatedMessageTokens(
+                        it.content,
+                    )
+                }
+
+        require(
+            fixedEstimate <=
+                InputTokenBudget &&
+                fixedEstimate +
+                ReservedOutputTokens <=
+                HardTokenLimit,
+        ) {
+            "direct prompt non-Conversation context exceeds the admitted input/output token budget"
+        }
+
+        val recentConversation =
+            if (
+                prior ==
+                    null ||
+                workingContinuity !=
+                    null
+            ) {
+                null
+            } else {
+                recentConversationSource
+                    ?.invoke(
+                        InputTokenBudget -
+                            fixedEstimate,
+                    )
+            }
+        val selected =
+            if (
+                prior ==
+                    null ||
+                workingContinuity !=
+                    null
+            ) {
+                emptyList()
+            } else {
+                val exactPrior =
+                    requireNotNull(
+                        prior,
+                    )
+                val source =
+                    recentConversation
+                        ?: DirectConversationStore.RecentCompletedConversation(
+                            events =
+                                listOf(
+                                    exactPrior.requestEvent,
+                                    exactPrior.responseEvent,
+                                ),
+                            exactEventFileReadCount = 2,
+                            exactHeadFileReadCount = 1,
+                            wholeHistoryEventEnumerationPerformed =
+                    recentConversation
+                        ?.wholeHistoryEventEnumerationPerformed
+                        ?: false,
+                        )
+                requireRecentConversationHistory(
+                    events = source.events,
+                    prior = exactPrior,
+                )
+                require(
+                    source.events.sumOf {
+                        estimatedMessageTokens(
+                            it.content,
+                        )
+                    } <=
+                        InputTokenBudget -
+                        fixedEstimate,
+                ) {
+                    "direct prompt recent Conversation source exceeds the remaining input token budget"
+                }
+                source.events
+            }
+
+        val messages =
+            buildList {
+                addAll(
+                    prefixMessages,
+                )
                 for (
                     event in
                     selected
@@ -475,25 +587,8 @@ object DirectPromptContext {
                         ),
                     )
                 }
-                if (
-                    browserContext !=
-                        null
-                ) {
-                    add(
-                        CompanionProviderMessage(
-                            role = "user",
-                            content =
-                                browserContextMessage(
-                                    browserContext,
-                                ),
-                        ),
-                    )
-                }
-                add(
-                    CompanionProviderMessage(
-                        role = "user",
-                        content = currentRequest.content,
-                    ),
+                addAll(
+                    suffixMessages,
                 )
             }
 
@@ -540,6 +635,10 @@ object DirectPromptContext {
                             null ->
                             "WORKING_CHECKPOINT_SUCCESSOR"
 
+                        selected.size >
+                            2 ->
+                            "RECENT_COMPLETED_TURNS"
+
                         else ->
                             "IMMEDIATE_PRIOR_COMPLETED_TURN"
                     },
@@ -554,6 +653,10 @@ object DirectPromptContext {
                 selectedConversationEventSha256 =
                     selected.map {
                         it.eventSha256
+                    },
+                selectedConversationEventSequences =
+                    selected.map {
+                        it.sequence
                     },
                 currentRequestEventRef = currentRequest.eventRef,
                 currentRequestEventSha256 = currentRequest.eventSha256,
@@ -580,7 +683,10 @@ object DirectPromptContext {
                 inputTokenBudget = InputTokenBudget,
                 reservedOutputTokens = ReservedOutputTokens,
                 hardTokenLimit = HardTokenLimit,
-                wholeHistoryEventEnumerationPerformed = false,
+                wholeHistoryEventEnumerationPerformed =
+                    recentConversation
+                        ?.wholeHistoryEventEnumerationPerformed
+                        ?: false,
                 memoryContextRef =
                     memoryValue
                         ?.memoryContextRef,
@@ -684,6 +790,7 @@ object DirectPromptContext {
                 priorConversationHeadSha256 = core.priorConversationHeadSha256,
                 selectedConversationEventRefs = core.selectedConversationEventRefs,
                 selectedConversationEventSha256 = core.selectedConversationEventSha256,
+                selectedConversationEventSequences = core.selectedConversationEventSequences,
                 currentRequestEventRef = core.currentRequestEventRef,
                 currentRequestEventSha256 = core.currentRequestEventSha256,
                 browserContextIncluded = core.browserContextIncluded,
@@ -741,6 +848,10 @@ object DirectPromptContext {
         materialization: Materialization,
         prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
         currentRequest: DirectConversationStore.Event,
+        recentConversationSource: ((
+            availableTokens: Int,
+        ) -> DirectConversationStore.RecentCompletedConversation)? =
+            null,
         memoryContext: VexLifeMemoryContract.Context? =
             null,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
@@ -754,6 +865,8 @@ object DirectPromptContext {
             materialize(
                 prior = prior,
                 currentRequest = currentRequest,
+                recentConversationSource =
+                    recentConversationSource,
                 memoryContext = memoryContext,
                 workingContinuityContext =
                     workingContinuityContext,
@@ -929,7 +1042,12 @@ object DirectPromptContext {
                             VexLifeCapabilityAtlas.ResourceFact(
                                 resourceRef = "resource.vexlife-prod.memory.current-context",
                                 state =
-                                    if (memoryContext?.included == true) {
+                                    if (
+                                        memoryContext?.projectionState ==
+                                            "CURRENT" &&
+                                        memoryContext.projectionCurrentness ==
+                                            "CURRENT"
+                                    ) {
                                         VexLifeCapabilityAtlas.ResourceState.AVAILABLE
                                     } else {
                                         VexLifeCapabilityAtlas.ResourceState.UNAVAILABLE
@@ -1105,6 +1223,100 @@ object DirectPromptContext {
                 context.text.length &&
             receipt.browserContextCapture ==
                 context.capture
+    }
+
+    private fun requireRecentConversationHistory(
+        events: List<DirectConversationStore.Event>,
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn,
+    ) {
+        require(
+            events.size >=
+                2 &&
+                events.size %
+                2 ==
+                0,
+        ) {
+            "direct prompt recent Conversation history must contain complete request/response pairs"
+        }
+
+        var priorResponse: DirectConversationStore.Event? =
+            null
+        var index =
+            0
+        while (
+            index <
+                events.size
+        ) {
+            val request =
+                events[index]
+            val response =
+                events[index + 1]
+
+            requireCompletedConversationPair(
+                request = request,
+                response = response,
+            )
+            priorResponse
+                ?.let {
+                    previous ->
+                    require(
+                        request.priorEventSha256 ==
+                            previous.eventSha256 &&
+                            request.sequence ==
+                            previous.sequence +
+                            1 &&
+                            request.companionLineageRef ==
+                            previous.companionLineageRef &&
+                            request.threadRef ==
+                            previous.threadRef &&
+                            request.channelRef ==
+                            previous.channelRef,
+                    ) {
+                        "direct prompt recent Conversation history is not one contiguous selected suffix"
+                    }
+                }
+
+            priorResponse =
+                response
+            index +=
+                2
+        }
+
+        require(
+            events[events.size - 2] ==
+                prior.requestEvent &&
+                events.last() ==
+                prior.responseEvent,
+        ) {
+            "direct prompt recent Conversation history does not end at the exact immediate prior completed turn"
+        }
+    }
+
+    private fun requireCompletedConversationPair(
+        request: DirectConversationStore.Event,
+        response: DirectConversationStore.Event,
+    ) {
+        require(
+            request.eventKind ==
+                "REQUEST" &&
+                response.eventKind ==
+                "RESPONSE" &&
+                response.priorEventSha256 ==
+                request.eventSha256 &&
+                response.sequence ==
+                request.sequence +
+                1 &&
+                response.turnRef ==
+                request.turnRef &&
+                response.companionLineageRef ==
+                request.companionLineageRef &&
+                response.threadRef ==
+                request.threadRef &&
+                response.channelRef ==
+                request.channelRef,
+        ) {
+            "direct prompt recent Conversation history contains an invalid completed pair"
+        }
     }
 
     fun estimatedMessageTokens(

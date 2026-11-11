@@ -166,6 +166,88 @@ object VexLifeMemoryContextFixture {
         )
     }
 
+    fun currentUnselectedForPrompt(): VexLifeMemoryContract.Context {
+        val selected =
+            current()
+        val boundedPageRefs =
+            selected.pages
+                .map(
+                    VexLifeMemoryContract.Page::pageRef,
+                )
+                .sorted()
+        val core =
+            VexLifeMemoryContract.PacketCore(
+                schemaVersion = selected.schemaVersion,
+                truthClass = selected.truthClass,
+                projectionState = selected.projectionState,
+                projectionCurrentness = selected.projectionCurrentness,
+                sourceOwnerRefs = selected.sourceOwnerRefs,
+                currentDailyStratumRef = selected.currentDailyStratumRef,
+                currentDailyStratumSha256 = selected.currentDailyStratumSha256,
+                sourceConversationHeadSha256 = selected.sourceConversationHeadSha256,
+                sourceScoreHeadSha256 = selected.sourceScoreHeadSha256,
+                sourceSemanticAuthorityHeadSha256 = selected.sourceSemanticAuthorityHeadSha256,
+                pages = emptyList(),
+                heldOrDeferredStatementRefs = selected.heldOrDeferredStatementRefs,
+                boundedOutStatementRefs = selected.boundedOutStatementRefs,
+                tokenBoundedOutPageRefs = boundedPageRefs,
+                reasons = selected.reasons,
+                memoryTokenCap = 0,
+                systemMessageSha256 = null,
+                estimatedSystemMessageTokens = 0,
+            )
+        val fingerprint =
+            sha256(
+                VexContractJson.canonicalEncode(
+                    core,
+                ),
+            )
+        val sourceRefs =
+            buildList {
+                addAll(
+                    core.sourceOwnerRefs,
+                )
+                core.currentDailyStratumRef
+                    ?.let(
+                        ::add,
+                    )
+            }
+                .distinct()
+                .sorted()
+
+        return VexLifeMemoryContract.Context(
+            schemaVersion = core.schemaVersion,
+            truthClass = core.truthClass,
+            projectionState = core.projectionState,
+            projectionCurrentness = core.projectionCurrentness,
+            sourceOwnerRefs = core.sourceOwnerRefs,
+            currentDailyStratumRef = core.currentDailyStratumRef,
+            currentDailyStratumSha256 = core.currentDailyStratumSha256,
+            sourceConversationHeadSha256 = core.sourceConversationHeadSha256,
+            sourceScoreHeadSha256 = core.sourceScoreHeadSha256,
+            sourceSemanticAuthorityHeadSha256 = core.sourceSemanticAuthorityHeadSha256,
+            pages = core.pages,
+            heldOrDeferredStatementRefs = core.heldOrDeferredStatementRefs,
+            boundedOutStatementRefs = core.boundedOutStatementRefs,
+            tokenBoundedOutPageRefs = core.tokenBoundedOutPageRefs,
+            reasons = core.reasons,
+            memoryTokenCap = core.memoryTokenCap,
+            systemMessageSha256 = null,
+            estimatedSystemMessageTokens = 0,
+            memoryContextRef =
+                "memory-context.vexlife.prompt." +
+                    fingerprint.take(
+                        32,
+                    ),
+            semanticFingerprint = fingerprint,
+            sourceRefs = sourceRefs,
+            included = false,
+        )
+            .let(
+                VexLifeMemoryContract::validateContext,
+            )
+    }
+
     private fun estimatedMessageTokens(
         content: String,
     ): Int {

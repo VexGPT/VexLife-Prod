@@ -8,6 +8,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.memory.VexLifeMemoryContextFixture
@@ -101,6 +102,107 @@ class DirectWorkingContinuityTest {
                         memoryContext = otherMemory,
                     )
                 }
+            }
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun boundedRecentSelectionMayReachGenesisWithoutInvalidatingWorkingContinuity() {
+        val home =
+            productHome()
+
+        try {
+            val store =
+                DirectConversationStore(
+                    home,
+                )
+            val memory =
+                VexLifeMemoryContextFixture.current()
+
+            store.withWriterLease {
+                val firstRequest =
+                    beginRequest(
+                        turnRef =
+                            "turn.vexlife.working.genesis.001",
+                        requestMessageRef =
+                            "message.vexlife.working.genesis.human.001",
+                        content =
+                            "First short request.",
+                    )
+                val firstResponse =
+                    appendResponse(
+                        request = firstRequest,
+                        responseMessageRef =
+                            "message.vexlife.working.genesis.companion.001",
+                        content =
+                            "First short response.",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef =
+                            "observation.vexlife.working.genesis.001",
+                        invocationEvidenceRef =
+                            "evidence.vexlife.working.genesis.001",
+                    )
+                val firstContext =
+                    CanonicalLivedContextFixture.write(
+                        productHome = home,
+                        request = firstRequest,
+                        response = firstResponse,
+                    )
+                commitCompletedTurn(
+                    request = firstRequest,
+                    response = firstResponse,
+                    contextSha256 = firstContext.sha256,
+                )
+
+                val prior =
+                    requireNotNull(
+                        immediatePriorCompletedTurn(),
+                    )
+                val secondRequest =
+                    beginRequest(
+                        turnRef =
+                            "turn.vexlife.working.genesis.002",
+                        requestMessageRef =
+                            "message.vexlife.working.genesis.human.002",
+                        content =
+                            "Second short request.",
+                    )
+                val prompt =
+                    DirectPromptContext.materialize(
+                        prior = prior,
+                        currentRequest = secondRequest,
+                        recentConversationSource = {
+                            availableTokens ->
+                            recentCompletedConversation(
+                                availableTokens = availableTokens,
+                                estimatedMessageTokens =
+                                    DirectPromptContext::estimatedMessageTokens,
+                            )
+                        },
+                        memoryContext = memory,
+                    )
+
+                assertTrue(
+                    prompt.receipt.wholeHistoryEventEnumerationPerformed,
+                )
+
+                val prepared =
+                    DirectWorkingContinuity.prepare(
+                        productHome = home,
+                        currentRequest = secondRequest,
+                        promptContext = prompt.receipt,
+                        memoryContext = memory,
+                    )
+
+                assertEquals(
+                    prompt.receipt.receiptRef,
+                    prepared.promptReceiptRef,
+                )
             }
         } finally {
             home.parent

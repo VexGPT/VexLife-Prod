@@ -76,7 +76,7 @@ class DirectCompanionTurnTest {
         )
 
     @Test
-    fun twoTurnsUseImmediatePriorContextAndSecondSendRemainsCanonical() {
+    fun threeTurnsCarryRecentCanonicalConversationAndRemainCanonical() {
         val home =
             productHome()
         var calls =
@@ -92,28 +92,64 @@ class DirectCompanionTurnTest {
                     ),
                 )
                 val content =
-                    if (
-                        calls ==
-                            1
+                    when (
+                        calls
                     ) {
-                        "First response"
-                    } else {
-                        assertTrue(
-                            call.body.contains(
-                                "First request",
-                            ),
-                        )
-                        assertTrue(
-                            call.body.contains(
-                                "First response",
-                            ),
-                        )
-                        assertTrue(
-                            call.body.contains(
-                                "Second request",
-                            ),
-                        )
-                        "Second response"
+                        1 ->
+                            "First response"
+
+                        2 -> {
+                            assertTrue(
+                                call.body.contains(
+                                    "First request",
+                                ),
+                            )
+                            assertTrue(
+                                call.body.contains(
+                                    "First response",
+                                ),
+                            )
+                            assertTrue(
+                                call.body.contains(
+                                    "Second request",
+                                ),
+                            )
+                            "Second response"
+                        }
+
+                        3 -> {
+                            assertTrue(
+                                call.body.contains(
+                                    "First request",
+                                ),
+                            )
+                            assertTrue(
+                                call.body.contains(
+                                    "First response",
+                                ),
+                            )
+                            assertTrue(
+                                call.body.contains(
+                                    "Second request",
+                                ),
+                            )
+                            assertTrue(
+                                call.body.contains(
+                                    "Second response",
+                                ),
+                            )
+                            assertTrue(
+                                call.body.contains(
+                                    "Third request",
+                                ),
+                            )
+                            "Third response"
+                        }
+
+                        else ->
+                            error(
+                                "unexpected provider call",
+                            )
                     }
 
                 DirectCompanionConnection.HttpResult(
@@ -176,9 +212,29 @@ class DirectCompanionTurnTest {
                             },
                         ),
                 )
+            val third =
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup(
+                        home,
+                    ),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey = "send.self-development.003",
+                            content = "Third request",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            now = {
+                                Instant.parse(
+                                    "2026-11-05T05:03:00Z",
+                                )
+                            },
+                        ),
+                )
 
             assertEquals(
-                2,
+                3,
                 calls,
             )
             assertTrue(
@@ -208,9 +264,34 @@ class DirectCompanionTurnTest {
                 2,
                 second.promptContextReceipt.selectedConversationEventRefs.size,
             )
+            assertEquals(
+                "Third response",
+                third.content,
+            )
+            assertEquals(
+                "RECENT_COMPLETED_TURNS",
+                third.promptContextReceipt.contextMode,
+            )
+            assertEquals(
+                4,
+                third.promptContextReceipt.selectedConversationEventRefs.size,
+            )
+            assertEquals(
+                listOf(
+                    0L,
+                    1L,
+                    2L,
+                    3L,
+                ),
+                third.promptContextReceipt.selectedConversationEventSequences,
+            )
             assertTrue(
                 first.currentConversationHeadSha256 !=
                     second.currentConversationHeadSha256,
+            )
+            assertTrue(
+                second.currentConversationHeadSha256 !=
+                    third.currentConversationHeadSha256,
             )
         } finally {
             home.parent
