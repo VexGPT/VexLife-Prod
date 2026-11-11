@@ -476,9 +476,11 @@ source-return first inference
 ~~~
 
 A progress gate buffers only long enough to distinguish an ordinary answer from the exact
-source-return header. Internal retrieval reasoning/control JSON is never projected as the human
-answer. If the final inference attempts another source-return request, the turn fails closed before
-RESPONSE/context/head commit.
+source-return header. On an ordinary answer, early reasoning may therefore be delayed until the first
+content bytes prove the output is not internal control; the buffered reasoning then flushes and live
+streaming continues. It is delayed, not persisted or discarded. Internal retrieval reasoning/control
+JSON is never projected as the human answer. If the final inference attempts another source-return
+request, the turn fails closed before RESPONSE/context/head commit.
 
 ## Writer serialization
 
