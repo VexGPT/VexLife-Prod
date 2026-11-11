@@ -1149,6 +1149,14 @@ object DirectPromptContext {
         ) {
             "planned prompt exact Conversation selection differs from the source-owned attention plan"
         }
+        workingCarryCandidate
+            ?.let {
+                requireCarryCandidateMatchesSelection(
+                    formation = it,
+                    currentRequest = currentRequest,
+                    selected = selected,
+                )
+            }
 
         val fullCarryProjection =
             when {
@@ -1502,6 +1510,66 @@ object DirectPromptContext {
                 prior.responseEvent.channelRef,
         ) {
             "direct prompt context current request does not immediately follow the exact prior completed turn"
+        }
+    }
+
+    private fun requireCarryCandidateMatchesSelection(
+        formation: DirectWorkingCarryFormation.Formation,
+        currentRequest: DirectConversationStore.Event,
+        selected: List<DirectConversationStore.Event>,
+    ) {
+        val refresh =
+            VexLifeWorkingCarryContract.requireRefreshInputShape(
+                formation.refreshInput,
+            )
+        require(
+            refresh.companionLineageRef ==
+                currentRequest.companionLineageRef &&
+                refresh.threadRef ==
+                currentRequest.threadRef &&
+                refresh.currentRequest.source.eventRef ==
+                currentRequest.eventRef &&
+                refresh.currentRequest.source.eventHash ==
+                currentRequest.eventHash &&
+                refresh.currentRequest.source.sequence ==
+                currentRequest.sequence,
+        ) {
+            "working carry candidate belongs to a different current request"
+        }
+
+        val selectedBindings =
+            selected.map {
+                event ->
+                VexLifeWorkingCarryContract.SourceBinding(
+                    eventRef = event.eventRef,
+                    eventHash = event.eventHash,
+                    sequence = event.sequence,
+                )
+            }
+        val retainedBindings =
+            refresh.retainedDirectEvents.map {
+                it.source
+            }
+        require(
+            retainedBindings ==
+                selectedBindings,
+        ) {
+            "working carry candidate retained-direct source differs from the exact selected Conversation suffix"
+        }
+
+        val selectedRefs =
+            selectedBindings
+                .map(
+                    VexLifeWorkingCarryContract.SourceBinding::eventRef,
+                )
+                .toSet()
+        require(
+            refresh.newlyLeavingEvents.none {
+                it.source.eventRef in
+                    selectedRefs
+            },
+        ) {
+            "working carry candidate cites source as newly leaving while it remains directly selected"
         }
     }
 
