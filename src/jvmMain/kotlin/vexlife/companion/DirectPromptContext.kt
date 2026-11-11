@@ -432,6 +432,8 @@ object DirectPromptContext {
             null,
         memoryContext: VexLifeMemoryContract.Context? =
             null,
+        memoryAvailabilityContext: VexLifeMemoryContract.Context? =
+            memoryContext,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
             null,
         browserContext: BrowserContext? =
@@ -443,13 +445,23 @@ object DirectPromptContext {
             verifyFixedContext(
                 prior = prior,
                 currentRequest = currentRequest,
-                memoryAvailabilityContext = memoryContext,
+                memoryAvailabilityContext = memoryAvailabilityContext,
                 workingContinuityContext = workingContinuityContext,
                 browserContext = browserContext,
                 runtimeEvidence = runtimeEvidence,
             )
         val memory =
-            fixed.memoryAvailability
+            verifyMemoryContext(
+                memoryContext,
+            )
+        requireSameMemoryFrontier(
+            availability =
+                fixed.memoryAvailability
+                    ?.context,
+            selected =
+                memory
+                    ?.context,
+        )
         val workingContinuity =
             fixed.workingContinuity
         val browserContextSha256 =
@@ -852,6 +864,8 @@ object DirectPromptContext {
             null,
         memoryContext: VexLifeMemoryContract.Context? =
             null,
+        memoryAvailabilityContext: VexLifeMemoryContract.Context? =
+            memoryContext,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
             null,
         browserContext: BrowserContext? =
@@ -866,6 +880,8 @@ object DirectPromptContext {
                 recentConversationSource =
                     recentConversationSource,
                 memoryContext = memoryContext,
+                memoryAvailabilityContext =
+                    memoryAvailabilityContext,
                 workingContinuityContext =
                     workingContinuityContext,
                 browserContext = browserContext,
@@ -1017,6 +1033,70 @@ object DirectPromptContext {
                 prior.responseEvent.channelRef,
         ) {
             "direct prompt context current request does not immediately follow the exact prior completed turn"
+        }
+    }
+
+    private fun requireSameMemoryFrontier(
+        availability: VexLifeMemoryContract.Context?,
+        selected: VexLifeMemoryContract.Context?,
+    ) {
+        if (
+            availability ==
+                null &&
+            selected ==
+                null
+        ) {
+            return
+        }
+
+        val available =
+            requireNotNull(
+                availability,
+            ) {
+                "selected Memory requires one explicit current Memory availability context"
+            }
+                .let(
+                    VexLifeMemoryContract::validateContext,
+                )
+        val actual =
+            requireNotNull(
+                selected,
+            ) {
+                "current Memory availability requires one explicit selected/unselected Memory projection"
+            }
+                .let(
+                    VexLifeMemoryContract::validateContext,
+                )
+
+        require(
+            available.schemaVersion ==
+                actual.schemaVersion &&
+                available.truthClass ==
+                actual.truthClass &&
+                available.projectionState ==
+                actual.projectionState &&
+                available.projectionCurrentness ==
+                actual.projectionCurrentness &&
+                available.sourceOwnerRefs ==
+                actual.sourceOwnerRefs &&
+                available.currentDailyStratumRef ==
+                actual.currentDailyStratumRef &&
+                available.currentDailyStratumSha256 ==
+                actual.currentDailyStratumSha256 &&
+                available.sourceConversationHeadSha256 ==
+                actual.sourceConversationHeadSha256 &&
+                available.sourceScoreHeadSha256 ==
+                actual.sourceScoreHeadSha256 &&
+                available.sourceSemanticAuthorityHeadSha256 ==
+                actual.sourceSemanticAuthorityHeadSha256 &&
+                available.heldOrDeferredStatementRefs ==
+                actual.heldOrDeferredStatementRefs &&
+                available.boundedOutStatementRefs ==
+                actual.boundedOutStatementRefs &&
+                available.reasons ==
+                actual.reasons,
+        ) {
+            "selected Memory packet and Memory availability do not bind the same source frontier"
         }
     }
 
