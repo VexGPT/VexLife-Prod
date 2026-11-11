@@ -1644,7 +1644,7 @@ class DirectPromptContextTest {
     }
 
     @Test
-    fun workingCheckpointSuccessorUsesMemoryWorkingSetAndCurrentRequestWithoutPriorPairReplay() {
+    fun workingCheckpointSuccessorKeepsExactPriorVexResponseWithoutReplayingPriorHumanRequest() {
         val parent =
             Files.createTempDirectory(
                 "vexlife-prod-direct-prompt-working-successor-",
@@ -1845,6 +1845,7 @@ class DirectPromptContextTest {
                     listOf(
                         "system",
                         "system",
+                        "assistant",
                         "user",
                     ),
                     materialized.messages.map {
@@ -1873,6 +1874,14 @@ class DirectPromptContextTest {
                         ),
                 )
                 assertEquals(
+                    "Prior response that must not replay",
+                    materialized.messages[
+                        materialized.messages.size -
+                            2
+                    ]
+                        .content,
+                )
+                assertEquals(
                     "Current successor request",
                     materialized.messages.last()
                         .content,
@@ -1881,11 +1890,20 @@ class DirectPromptContextTest {
                     materialized.messages.any {
                         it.content.contains(
                             "Prior request that must not replay",
-                        ) ||
-                            it.content.contains(
-                                "Prior response that must not replay",
-                            )
+                        )
                     },
+                )
+                assertEquals(
+                    prior.responseEvent.eventRef,
+                    materialized.receipt.successorPriorResponseEventRef,
+                )
+                assertEquals(
+                    prior.responseEvent.eventHash,
+                    materialized.receipt.successorPriorResponseEventSha256,
+                )
+                assertEquals(
+                    prior.responseEvent.sequence,
+                    materialized.receipt.successorPriorResponseEventSequence,
                 )
                 assertEquals(
                     "WORKING_CHECKPOINT_SUCCESSOR",
