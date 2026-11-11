@@ -422,6 +422,7 @@ class VexLifeWorkingCarryOwner(
     }
 
     internal fun commitCompletedTurn(
+        conversationOwner: DirectConversationStore.Locked,
         prepared: Prepared,
         completedHead: DirectConversationStore.Head,
     ): CommitResult {
@@ -429,6 +430,11 @@ class VexLifeWorkingCarryOwner(
             prepared,
         )
         requireCompletedHead(
+            prepared = prepared,
+            completedHead = completedHead,
+        )
+        requireGradualCommitMatchesConversation(
+            conversationOwner = conversationOwner,
             prepared = prepared,
             completedHead = completedHead,
         )
@@ -825,6 +831,52 @@ class VexLifeWorkingCarryOwner(
                 prepared.priorRevisionFingerprintOrNull,
         ) {
             "working carry current revision changed after prepare"
+        }
+    }
+
+    private fun requireGradualCommitMatchesConversation(
+        conversationOwner: DirectConversationStore.Locked,
+        prepared: Prepared,
+        completedHead: DirectConversationStore.Head,
+    ) {
+        val snapshot =
+            conversationOwner.current()
+        require(
+            snapshot.head ==
+                completedHead,
+        ) {
+            "working carry gradual commit completed head is no longer Conversation-current"
+        }
+
+        val refresh =
+            VexLifeWorkingCarryContract.requireRefreshInputShape(
+                prepared.refreshInput,
+            )
+        val expected =
+            refresh.newlyLeavingEvents +
+                refresh.retainedDirectEvents +
+                listOf(
+                    refresh.currentRequest,
+                )
+        val exact =
+            conversationOwner.exactCommittedConversationEvents(
+                expected.map {
+                    source ->
+                    DirectConversationStore.EventAddress(
+                        sequence = source.source.sequence,
+                        eventRef = source.source.eventRef,
+                        eventHash = source.source.eventHash,
+                    )
+                },
+            )
+        require(
+            !exact.effectsPerformed &&
+                exact.events.map(
+                    ::workingCarrySourceEvent,
+                ) ==
+                expected,
+        ) {
+            "working carry gradual commit source differs from exact canonical completed Conversation"
         }
     }
 
