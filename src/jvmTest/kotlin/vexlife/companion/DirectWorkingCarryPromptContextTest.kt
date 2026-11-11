@@ -481,6 +481,7 @@ class DirectWorkingCarryPromptContextTest {
                     )
                 val prepared =
                     owner.prepare(
+                        conversationOwner = this,
                         priorConversationHeadSha256 = firstHead.conversationHeadSha256,
                         currentRequest = secondRequest,
                         refreshInput = formation.refreshInput,
@@ -521,6 +522,7 @@ class DirectWorkingCarryPromptContextTest {
                     )
                 val committed =
                     owner.commitCompletedTurn(
+                        conversationOwner = this,
                         prepared = prepared,
                         completedHead = secondHead,
                     )

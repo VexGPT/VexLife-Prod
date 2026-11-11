@@ -288,6 +288,7 @@ class VexLifeWorkingCarryOwner(
     }
 
     internal fun prepare(
+        conversationOwner: DirectConversationStore.Locked,
         priorConversationHeadSha256: String?,
         currentRequest: DirectConversationStore.Event,
         refreshInput: VexLifeWorkingCarryContract.RefreshInput,
@@ -341,6 +342,12 @@ class VexLifeWorkingCarryOwner(
         requireRefreshRequestMatches(
             refresh = input,
             currentRequest = currentRequest,
+        )
+        requireGradualRefreshMatchesConversation(
+            conversationOwner = conversationOwner,
+            priorConversationHeadSha256 = priorConversationHeadSha256,
+            currentRequest = currentRequest,
+            refresh = input,
         )
         require(
             input.companionLineageRef ==
@@ -415,6 +422,7 @@ class VexLifeWorkingCarryOwner(
     }
 
     internal fun commitCompletedTurn(
+        conversationOwner: DirectConversationStore.Locked,
         prepared: Prepared,
         completedHead: DirectConversationStore.Head,
     ): CommitResult {
@@ -422,6 +430,11 @@ class VexLifeWorkingCarryOwner(
             prepared,
         )
         requireCompletedHead(
+            prepared = prepared,
+            completedHead = completedHead,
+        )
+        requireGradualCommitMatchesConversation(
+            conversationOwner = conversationOwner,
             prepared = prepared,
             completedHead = completedHead,
         )
@@ -513,6 +526,7 @@ class VexLifeWorkingCarryOwner(
     }
 
     internal fun commitCompletedRolloverHandoff(
+        conversationOwner: DirectConversationStore.Locked,
         completedHead: DirectConversationStore.Head,
         refreshInput: VexLifeWorkingCarryContract.RolloverRefreshInput,
         carry: VexLifeWorkingCarryContract.Draft,
@@ -530,13 +544,11 @@ class VexLifeWorkingCarryOwner(
             completedHead.conversationHeadSha256,
             "completedHead.conversationHeadSha256",
         )
+        val currentConversation =
+            conversationOwner.current()
         val currentConversationHead =
             requireNotNull(
-                DirectConversationStore(
-                    home,
-                )
-                    .current()
-                    .head,
+                currentConversation.head,
             ) {
                 "working carry rollover handoff requires one current completed Conversation head"
             }
@@ -567,6 +579,10 @@ class VexLifeWorkingCarryOwner(
         requireRolloverRefreshMatchesCompletedHead(
             refresh = input,
             completedHead = completedHead,
+        )
+        requireRolloverRefreshMatchesConversation(
+            conversationOwner = conversationOwner,
+            refresh = input,
         )
         requireFormationBinding(
             formationBinding,
@@ -818,6 +834,52 @@ class VexLifeWorkingCarryOwner(
         }
     }
 
+    private fun requireGradualCommitMatchesConversation(
+        conversationOwner: DirectConversationStore.Locked,
+        prepared: Prepared,
+        completedHead: DirectConversationStore.Head,
+    ) {
+        val snapshot =
+            conversationOwner.current()
+        require(
+            snapshot.head ==
+                completedHead,
+        ) {
+            "working carry gradual commit completed head is no longer Conversation-current"
+        }
+
+        val refresh =
+            VexLifeWorkingCarryContract.requireRefreshInputShape(
+                prepared.refreshInput,
+            )
+        val expected =
+            refresh.newlyLeavingEvents +
+                refresh.retainedDirectEvents +
+                listOf(
+                    refresh.currentRequest,
+                )
+        val exact =
+            conversationOwner.exactCommittedConversationEvents(
+                expected.map {
+                    source ->
+                    DirectConversationStore.EventAddress(
+                        sequence = source.source.sequence,
+                        eventRef = source.source.eventRef,
+                        eventHash = source.source.eventHash,
+                    )
+                },
+            )
+        require(
+            !exact.effectsPerformed &&
+                exact.events.map(
+                    ::workingCarrySourceEvent,
+                ) ==
+                expected,
+        ) {
+            "working carry gradual commit source differs from exact canonical completed Conversation"
+        }
+    }
+
     private fun requireCompletedHead(
         prepared: Prepared,
         completedHead: DirectConversationStore.Head,
@@ -870,6 +932,114 @@ class VexLifeWorkingCarryOwner(
             "working carry refresh current request differs from the exact durable request"
         }
     }
+
+    private fun requireGradualRefreshMatchesConversation(
+        conversationOwner: DirectConversationStore.Locked,
+        priorConversationHeadSha256: String?,
+        currentRequest: DirectConversationStore.Event,
+        refresh: VexLifeWorkingCarryContract.RefreshInput,
+    ) {
+        val snapshot =
+            conversationOwner.current()
+        require(
+            snapshot.head
+                ?.conversationHeadSha256 ==
+                priorConversationHeadSha256,
+        ) {
+            "working carry gradual refresh prior Conversation head is no longer current"
+        }
+        require(
+            currentRequest.sequence ==
+                (
+                    snapshot.head
+                        ?.sequence
+                        ?.plus(
+                            1,
+                        )
+                        ?: 0L
+                ) &&
+                currentRequest.priorEventHash ==
+                snapshot.head
+                    ?.eventHash &&
+                snapshot.events.singleOrNull {
+                    it.eventHash ==
+                        currentRequest.eventHash
+                } ==
+                currentRequest &&
+                snapshot.canonicalEvents.none {
+                    it.eventHash ==
+                        currentRequest.eventHash
+                },
+        ) {
+            "working carry gradual refresh current request is not the exact durable pending Conversation request"
+        }
+
+        val expected =
+            refresh.newlyLeavingEvents +
+                refresh.retainedDirectEvents
+        val exact =
+            conversationOwner.exactCommittedConversationEvents(
+                expected.map {
+                    source ->
+                    DirectConversationStore.EventAddress(
+                        sequence = source.source.sequence,
+                        eventRef = source.source.eventRef,
+                        eventHash = source.source.eventHash,
+                    )
+                },
+            )
+        require(
+            !exact.effectsPerformed &&
+                exact.events.map(
+                    ::workingCarrySourceEvent,
+                ) ==
+                expected,
+        ) {
+            "working carry gradual refresh source differs from exact canonical committed Conversation"
+        }
+    }
+
+    private fun requireRolloverRefreshMatchesConversation(
+        conversationOwner: DirectConversationStore.Locked,
+        refresh: VexLifeWorkingCarryContract.RolloverRefreshInput,
+    ) {
+        val exact =
+            conversationOwner.exactCommittedConversationEvents(
+                refresh.handoffEvents.map {
+                    source ->
+                    DirectConversationStore.EventAddress(
+                        sequence = source.source.sequence,
+                        eventRef = source.source.eventRef,
+                        eventHash = source.source.eventHash,
+                    )
+                },
+            )
+        require(
+            !exact.effectsPerformed &&
+                exact.events.map(
+                    ::workingCarrySourceEvent,
+                ) ==
+                refresh.handoffEvents,
+        ) {
+            "working carry rollover handoff source differs from exact canonical committed Conversation"
+        }
+    }
+
+    private fun workingCarrySourceEvent(
+        event: DirectConversationStore.Event,
+    ): VexLifeWorkingCarryContract.SourceEvent =
+        VexLifeWorkingCarryContract.SourceEvent(
+            source =
+                VexLifeWorkingCarryContract.SourceBinding(
+                    eventRef = event.eventRef,
+                    eventHash = event.eventHash,
+                    sequence = event.sequence,
+                ),
+            eventKind = event.eventKind,
+            speakerRef = event.speakerRef,
+            recipientRefs = event.recipientRefs,
+            content = event.content,
+        )
 
     private fun formRevision(
         prepared: Prepared,
