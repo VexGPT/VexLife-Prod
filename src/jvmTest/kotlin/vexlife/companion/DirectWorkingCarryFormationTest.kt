@@ -133,7 +133,7 @@ class DirectWorkingCarryFormationTest {
 
     private fun refresh(
         carryTokenCap: Int =
-            512,
+            4_096,
         previousCarry: VexLifeWorkingCarryContract.Draft? =
             priorCarry(),
     ) =
@@ -300,6 +300,17 @@ class DirectWorkingCarryFormationTest {
             ),
             formation.draft.sourceBindings,
         )
+        assertTrue(
+            formation.promptProjection.included,
+        )
+        assertEquals(
+            DirectWorkingCarryPromptContext.TurnCandidate,
+            formation.promptProjection.sourceState,
+        )
+        assertTrue(
+            formation.promptProjection.estimatedSystemMessageTokens <=
+                input.carryTokenCap,
+        )
         assertEquals(
             formation.runtimeObservation.observationRef,
             formation.binding.runtimeObservationRef,
@@ -406,6 +417,13 @@ class DirectWorkingCarryFormationTest {
         assertEquals(
             0,
             formation.draft.estimatedCarryTokens,
+        )
+        assertFalse(
+            formation.promptProjection.included,
+        )
+        assertEquals(
+            0,
+            formation.promptProjection.estimatedSystemMessageTokens,
         )
     }
 
