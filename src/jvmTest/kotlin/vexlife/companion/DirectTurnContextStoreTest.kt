@@ -1,12 +1,19 @@
 package vexlife.companion
 
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.security.MessageDigest
 import java.time.Instant
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import vexlife.contract.VexContractJson
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
@@ -427,6 +434,280 @@ class DirectTurnContextStoreTest {
     }
 
     @Test
+    fun historicalV1RuntimeEvidenceRemainsReadableAfterV2SourceReturnSchema() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-context-v1-runtime-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val conversation =
+                DirectConversationStore(
+                    productHome,
+                )
+            val context =
+                DirectTurnContextStore(
+                    productHome,
+                )
+
+            conversation.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef =
+                            "turn.self-development.context-v1-runtime",
+                        requestMessageRef =
+                            "message.self-development.human.context-v1-runtime",
+                        content =
+                            "Preserve historical runtime evidence compatibility.",
+                    )
+                val prompt =
+                    DirectPromptContext.materialize(
+                        prior = null,
+                        currentRequest = request,
+                    )
+                val inference =
+                    DirectCompanionConnection.invoke(
+                        runtime = runtime(),
+                        messages = prompt.messages,
+                        transport =
+                            DirectCompanionConnection.Transport {
+                                DirectCompanionConnection.HttpResult(
+                                    status = 200,
+                                    body =
+                                        """
+                                        {
+                                          "model": "default_model",
+                                          "choices": [
+                                            {
+                                              "message": {
+                                                "role": "assistant",
+                                                "content": "Historical evidence response."
+                                              }
+                                            }
+                                          ]
+                                        }
+                                        """.trimIndent(),
+                                )
+                            },
+                    )
+                val response =
+                    appendResponse(
+                        request = request,
+                        responseMessageRef =
+                            "message.self-development.companion.context-v1-runtime",
+                        content = inference.content,
+                        model = inference.model,
+                        endpointOrigin = inference.invocationEvidence.endpointOrigin,
+                        runtimeObservationRef =
+                            inference.runtimeObservation.observationRef,
+                        invocationEvidenceRef =
+                            inference.invocationEvidence.invocationRef,
+                    )
+                val record =
+                    context.record(
+                        request = request,
+                        response = response,
+                        promptContext = prompt.receipt,
+                        runtimeObservation = inference.runtimeObservation,
+                        invocationEvidence = inference.invocationEvidence,
+                    )
+
+                val evidencePath =
+                    productHome
+                        .resolve(
+                            "runtime",
+                        )
+                        .resolve(
+                            "vexlife-prod",
+                        )
+                        .resolve(
+                            "turn-evidence",
+                        )
+                        .resolve(
+                            request.turnRef +
+                                ".json",
+                        )
+                val evidenceObject =
+                    VexContractJson.Strict
+                        .parseToJsonElement(
+                            Files.readString(
+                                evidencePath,
+                            ),
+                        )
+                        .jsonObject
+                val legacyCore =
+                    JsonObject(
+                        evidenceObject
+                            .filterKeys {
+                                it !=
+                                    "evidenceRef" &&
+                                    it !=
+                                    "evidenceSha256"
+                            }
+                            .toMutableMap()
+                            .also {
+                                it[
+                                    "schemaVersion"
+                                ] =
+                                    JsonPrimitive(
+                                        DirectTurnContextStore.RuntimeEvidenceSchemaV1,
+                                    )
+                            },
+                    )
+                val legacyEvidenceSha256 =
+                    sha256(
+                        VexContractJson.canonicalEncodeElement(
+                            legacyCore,
+                        ),
+                    )
+                val legacyEvidenceRef =
+                    "evidence.vexlife-prod.turn-runtime." +
+                        legacyEvidenceSha256.take(
+                            32,
+                        )
+                val legacyEvidence =
+                    JsonObject(
+                        legacyCore
+                            .toMutableMap()
+                            .also {
+                                it[
+                                    "evidenceRef"
+                                ] =
+                                    JsonPrimitive(
+                                        legacyEvidenceRef,
+                                    )
+                                it[
+                                    "evidenceSha256"
+                                ] =
+                                    JsonPrimitive(
+                                        legacyEvidenceSha256,
+                                    )
+                            },
+                    )
+                Files.writeString(
+                    evidencePath,
+                    VexContractJson.canonicalEncodeElement(
+                        legacyEvidence,
+                    ),
+                )
+
+                val contextPath =
+                    productHome
+                        .resolve(
+                            "context",
+                        )
+                        .resolve(
+                            record.companionLineageRef,
+                        )
+                        .resolve(
+                            record.threadRef,
+                        )
+                        .resolve(
+                            request.turnRef +
+                                ".json",
+                        )
+                val contextObject =
+                    VexContractJson.Strict
+                        .parseToJsonElement(
+                            Files.readString(
+                                contextPath,
+                            ),
+                        )
+                        .jsonObject
+                val legacyContextCore =
+                    JsonObject(
+                        contextObject
+                            .filterKeys {
+                                it !=
+                                    "serializedContextSha256"
+                            }
+                            .toMutableMap()
+                            .also {
+                                it[
+                                    "contextSourceRefs"
+                                ] =
+                                    JsonArray(
+                                        record.contextSourceRefs.map {
+                                            sourceRef ->
+                                            JsonPrimitive(
+                                                if (
+                                                    sourceRef ==
+                                                        record.runtimeEvidenceRef
+                                                ) {
+                                                    legacyEvidenceRef
+                                                } else {
+                                                    sourceRef
+                                                },
+                                            )
+                                        },
+                                    )
+                            },
+                    )
+                val legacyContextSha256 =
+                    sha256(
+                        VexContractJson.canonicalEncodeElement(
+                            legacyContextCore,
+                        ),
+                    )
+                val legacyContext =
+                    JsonObject(
+                        legacyContextCore
+                            .toMutableMap()
+                            .also {
+                                it[
+                                    "serializedContextSha256"
+                                ] =
+                                    JsonPrimitive(
+                                        legacyContextSha256,
+                                    )
+                            },
+                    )
+                Files.writeString(
+                    contextPath,
+                    VexContractJson.canonicalEncodeElement(
+                        legacyContext,
+                    ),
+                )
+
+                val reread =
+                    assertNotNull(
+                        context.read(
+                            request.turnRef,
+                        ),
+                    )
+                assertEquals(
+                    legacyEvidenceRef,
+                    reread.runtimeEvidenceRef,
+                )
+                assertEquals(
+                    prompt.receipt,
+                    reread.promptContext,
+                )
+                assertEquals(
+                    null,
+                    reread.sourceReturnTrace,
+                )
+                assertEquals(
+                    legacyContextSha256,
+                    reread.contextSha256,
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun normalizedPromptAndInvocationEvidenceRoundTripWithoutRawProviderSecrets() {
         val parent =
             Files.createTempDirectory(
@@ -578,6 +859,27 @@ class DirectTurnContextStoreTest {
                 .deleteRecursively()
         }
     }
+    private fun sha256(
+        value: String,
+    ): String =
+        MessageDigest
+            .getInstance(
+                "SHA-256",
+            )
+            .digest(
+                value.toByteArray(
+                    StandardCharsets.UTF_8,
+                ),
+            )
+            .joinToString(
+                "",
+            ) {
+                "%02x".format(
+                    it.toInt() and
+                        0xff,
+                )
+            }
+
 }
 
 // [VXG RealForever]
