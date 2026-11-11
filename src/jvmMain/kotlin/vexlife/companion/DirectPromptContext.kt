@@ -20,8 +20,10 @@ import vexlife.model.heretic.HereticModelConfiguration
  *
  * CONTINUE selects a contiguous recent suffix of completed REQUEST/RESPONSE pairs within the admitted
  * prompt budget. Current attributed Memory may be supplied only through the exact source-owned Memory
- * contract and is reverified before provider materialization. A working-checkpoint successor selects
- * no raw prior Conversation pair. This owner performs no provider call and no durable mutation.
+ * contract and is reverified before provider materialization. A working-checkpoint successor does
+ * not replay the prior human request or full prior Conversation pair; it may carry the exact immediately
+ * prior Vex RESPONSE as a bounded assistant-role bridge. This owner performs no provider call and no
+ * durable mutation.
  */
 object DirectPromptContext {
     const val ReceiptSchemaV2 =
