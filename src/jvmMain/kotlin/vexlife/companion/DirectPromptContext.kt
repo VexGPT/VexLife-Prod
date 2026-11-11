@@ -1223,19 +1223,53 @@ object DirectPromptContext {
             "direct prompt recent Conversation history must contain complete request/response pairs"
         }
 
-        val request =
-            events[events.size - 2]
-        val response =
-            events.last()
+        var priorResponse: DirectConversationStore.Event? =
+            null
+        var index =
+            0
+        while (
+            index <
+                events.size
+        ) {
+            val request =
+                events[index]
+            val response =
+                events[index + 1]
 
-        requireCompletedConversationPair(
-            request = request,
-            response = response,
-        )
+            requireCompletedConversationPair(
+                request = request,
+                response = response,
+            )
+            priorResponse
+                ?.let {
+                    previous ->
+                    require(
+                        request.priorEventSha256 ==
+                            previous.eventSha256 &&
+                            request.sequence ==
+                            previous.sequence +
+                            1 &&
+                            request.companionLineageRef ==
+                            previous.companionLineageRef &&
+                            request.threadRef ==
+                            previous.threadRef &&
+                            request.channelRef ==
+                            previous.channelRef,
+                    ) {
+                        "direct prompt recent Conversation history is not one contiguous selected suffix"
+                    }
+                }
+
+            priorResponse =
+                response
+            index +=
+                2
+        }
+
         require(
-            request ==
+            events[events.size - 2] ==
                 prior.requestEvent &&
-                response ==
+                events.last() ==
                 prior.responseEvent,
         ) {
             "direct prompt recent Conversation history does not end at the exact immediate prior completed turn"
