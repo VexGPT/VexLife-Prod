@@ -288,6 +288,7 @@ class VexLifeWorkingCarryOwner(
     }
 
     internal fun prepare(
+        conversationOwner: DirectConversationStore.Locked,
         priorConversationHeadSha256: String?,
         currentRequest: DirectConversationStore.Event,
         refreshInput: VexLifeWorkingCarryContract.RefreshInput,
@@ -328,6 +329,17 @@ class VexLifeWorkingCarryOwner(
                     "priorConversationHeadSha256",
                 )
             }
+        val currentConversationHead =
+            conversationOwner
+                .current()
+                .head
+                ?.conversationHeadSha256
+        require(
+            currentConversationHead ==
+                priorConversationHeadSha256,
+        ) {
+            "working carry prepare prior Conversation head is not the exact current completed edge"
+        }
 
         val input =
             VexLifeWorkingCarryContract.requireRefreshInputShape(
@@ -341,6 +353,13 @@ class VexLifeWorkingCarryOwner(
         requireRefreshRequestMatches(
             refresh = input,
             currentRequest = currentRequest,
+        )
+        requireCanonicalCommittedSource(
+            conversationOwner = conversationOwner,
+            values =
+                input.newlyLeavingEvents +
+                    input.retainedDirectEvents,
+            label = "working carry gradual refresh source",
         )
         require(
             input.companionLineageRef ==
@@ -513,6 +532,7 @@ class VexLifeWorkingCarryOwner(
     }
 
     internal fun commitCompletedRolloverHandoff(
+        conversationOwner: DirectConversationStore.Locked,
         completedHead: DirectConversationStore.Head,
         refreshInput: VexLifeWorkingCarryContract.RolloverRefreshInput,
         carry: VexLifeWorkingCarryContract.Draft,
@@ -532,9 +552,7 @@ class VexLifeWorkingCarryOwner(
         )
         val currentConversationHead =
             requireNotNull(
-                DirectConversationStore(
-                    home,
-                )
+                conversationOwner
                     .current()
                     .head,
             ) {
@@ -556,6 +574,11 @@ class VexLifeWorkingCarryOwner(
                 refresh = input,
                 draft = carry,
             )
+        requireCanonicalCommittedSource(
+            conversationOwner = conversationOwner,
+            values = input.handoffEvents,
+            label = "working carry rollover handoff source",
+        )
         require(
             input.companionLineageRef ==
                 completedHead.companionLineageRef &&
@@ -844,6 +867,54 @@ class VexLifeWorkingCarryOwner(
             "working carry commit does not bind the exact successfully completed Conversation turn"
         }
     }
+
+    private fun requireCanonicalCommittedSource(
+        conversationOwner: DirectConversationStore.Locked,
+        values: List<VexLifeWorkingCarryContract.SourceEvent>,
+        label: String,
+    ) {
+        require(
+            values.isNotEmpty(),
+        ) {
+            "$label must not be empty"
+        }
+        val returned =
+            conversationOwner.exactCommittedConversationEvents(
+                values.map {
+                    source ->
+                    DirectConversationStore.EventAddress(
+                        sequence = source.source.sequence,
+                        eventRef = source.source.eventRef,
+                        eventHash = source.source.eventHash,
+                    )
+                },
+            )
+        require(
+            !returned.effectsPerformed &&
+                returned.events.map(
+                    ::workingCarrySourceEvent,
+                ) ==
+                values,
+        ) {
+            "$label differs from exact canonical committed Conversation"
+        }
+    }
+
+    private fun workingCarrySourceEvent(
+        event: DirectConversationStore.Event,
+    ): VexLifeWorkingCarryContract.SourceEvent =
+        VexLifeWorkingCarryContract.SourceEvent(
+            source =
+                VexLifeWorkingCarryContract.SourceBinding(
+                    eventRef = event.eventRef,
+                    eventHash = event.eventHash,
+                    sequence = event.sequence,
+                ),
+            eventKind = event.eventKind,
+            speakerRef = event.speakerRef,
+            recipientRefs = event.recipientRefs,
+            content = event.content,
+        )
 
     private fun requireRefreshRequestMatches(
         refresh: VexLifeWorkingCarryContract.RefreshInput,

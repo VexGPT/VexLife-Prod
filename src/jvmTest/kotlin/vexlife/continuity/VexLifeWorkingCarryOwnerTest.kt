@@ -398,8 +398,49 @@ class VexLifeWorkingCarryOwnerTest {
                         carry = carry,
                         hex = 'a',
                     )
+                val tamperedRefresh =
+                    refresh.copy(
+                        newlyLeavingEvents =
+                            refresh.newlyLeavingEvents.mapIndexed {
+                                index,
+                                source,
+                                ->
+                                if (
+                                    index ==
+                                        0
+                                ) {
+                                    source.copy(
+                                        content =
+                                            source.content +
+                                                " altered",
+                                    )
+                                } else {
+                                    source
+                                }
+                            },
+                    )
+                assertFailsWith<IllegalArgumentException> {
+                    owner.prepare(
+                        conversationOwner = this,
+                        priorConversationHeadSha256 =
+                            requireNotNull(
+                                firstHeadOrNull,
+                            )
+                                .conversationHeadSha256,
+                        currentRequest = secondRequest,
+                        refreshInput = tamperedRefresh,
+                        carry = carry,
+                        formationBinding =
+                            formationBinding(
+                                refresh = tamperedRefresh,
+                                carry = carry,
+                                hex = '9',
+                            ),
+                    )
+                }
                 val prepared =
                     owner.prepare(
+                        conversationOwner = this,
                         priorConversationHeadSha256 =
                             requireNotNull(
                                 firstHeadOrNull,
@@ -436,6 +477,7 @@ class VexLifeWorkingCarryOwnerTest {
                 )
                 assertFailsWith<IllegalArgumentException> {
                     owner.prepare(
+                        conversationOwner = this,
                         priorConversationHeadSha256 =
                             requireNotNull(
                                 firstHeadOrNull,
@@ -561,6 +603,7 @@ class VexLifeWorkingCarryOwnerTest {
                     )
                 val releasePrepared =
                     owner.prepare(
+                        conversationOwner = this,
                         priorConversationHeadSha256 =
                             requireNotNull(
                                 secondHeadOrNull,
@@ -660,6 +703,7 @@ class VexLifeWorkingCarryOwnerTest {
                     )
                 val failedPrepared =
                     owner.prepare(
+                        conversationOwner = this,
                         priorConversationHeadSha256 = thirdHead.conversationHeadSha256,
                         currentRequest = fourthRequest,
                         refreshInput = failedRefresh,
@@ -794,9 +838,45 @@ class VexLifeWorkingCarryOwnerTest {
                         carry = output,
                         hex = 'd',
                     )
+                val tamperedRefresh =
+                    refresh.copy(
+                        handoffEvents =
+                            refresh.handoffEvents.mapIndexed {
+                                index,
+                                source,
+                                ->
+                                if (
+                                    index ==
+                                        1
+                                ) {
+                                    source.copy(
+                                        content =
+                                            source.content +
+                                                " altered",
+                                    )
+                                } else {
+                                    source
+                                }
+                            },
+                    )
+                assertFailsWith<IllegalArgumentException> {
+                    owner.commitCompletedRolloverHandoff(
+                        conversationOwner = this,
+                        completedHead = completedHead,
+                        refreshInput = tamperedRefresh,
+                        carry = output,
+                        formationBinding =
+                            rolloverFormationBinding(
+                                refresh = tamperedRefresh,
+                                carry = output,
+                                hex = '8',
+                            ),
+                    )
+                }
 
                 val committed =
                     owner.commitCompletedRolloverHandoff(
+                        conversationOwner = this,
                         completedHead = completedHead,
                         refreshInput = refresh,
                         carry = output,
@@ -818,6 +898,7 @@ class VexLifeWorkingCarryOwnerTest {
 
                 val replay =
                     owner.commitCompletedRolloverHandoff(
+                        conversationOwner = this,
                         completedHead = completedHead,
                         refreshInput = refresh,
                         carry = output,
@@ -859,6 +940,7 @@ class VexLifeWorkingCarryOwnerTest {
                     )
                 assertFailsWith<IllegalArgumentException> {
                     owner.commitCompletedRolloverHandoff(
+                        conversationOwner = this,
                         completedHead = completedHead,
                         refreshInput = mismatched,
                         carry = output,
@@ -912,6 +994,7 @@ class VexLifeWorkingCarryOwnerTest {
 
                 assertFailsWith<IllegalArgumentException> {
                     owner.commitCompletedRolloverHandoff(
+                        conversationOwner = this,
                         completedHead = completedHead,
                         refreshInput = refresh,
                         carry = output,
