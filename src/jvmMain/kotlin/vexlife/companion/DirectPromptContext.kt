@@ -18,9 +18,10 @@ import vexlife.model.heretic.HereticModelConfiguration
 /**
  * Bounded direct Companion prompt materialization.
  *
- * CONTINUE selects exactly the immediate prior completed REQUEST/RESPONSE pair. Current attributed
- * Memory may be supplied only through the exact source-owned Memory contract and is reverified before
- * provider materialization. This owner performs no provider call and no durable mutation.
+ * CONTINUE selects a contiguous recent suffix of completed REQUEST/RESPONSE pairs within the admitted
+ * prompt budget. Current attributed Memory may be supplied only through the exact source-owned Memory
+ * contract and is reverified before provider materialization. A working-checkpoint successor selects
+ * no raw prior Conversation pair. This owner performs no provider call and no durable mutation.
  */
 object DirectPromptContext {
     const val ReceiptSchemaV2 =
@@ -32,8 +33,11 @@ object DirectPromptContext {
     const val ReceiptSchemaV4 =
         "vexlife-prod.direct-prompt-materialization-receipt/v4"
 
-    const val ReceiptSchema =
+    const val ReceiptSchemaV5 =
         "vexlife-prod.direct-prompt-materialization-receipt/v5"
+
+    const val ReceiptSchema =
+        "vexlife-prod.direct-prompt-materialization-receipt/v6"
 
     const val InputTokenBudget =
         VexLifeMemoryContract.ContextInputTokenBudget
