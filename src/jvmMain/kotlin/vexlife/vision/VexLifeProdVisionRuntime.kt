@@ -178,7 +178,7 @@ object VexLifeProdVisionRuntime {
                     '/',
                 )
 
-        require(
+        check(
             portable.endsWith(
                 RuntimeExecutableSuffix,
             ) &&
@@ -202,7 +202,7 @@ object VexLifeProdVisionRuntime {
                 requestRef,
             )
 
-        require(
+        check(
             !execution.timedOut &&
                 !execution.stdoutLimitExceeded &&
                 !execution.stderrLimitExceeded &&
@@ -235,7 +235,7 @@ object VexLifeProdVisionRuntime {
                 )
                 .toList()
 
-        require(
+        check(
             lines.size ==
                 1,
         ) {
@@ -243,11 +243,20 @@ object VexLifeProdVisionRuntime {
         }
 
         val result =
-            VexContractJson.decode<VexLifeProdServiceContract.VisionRuntimeResult>(
-                lines.single(),
-            )
+            runCatching {
+                VexContractJson.decode<VexLifeProdServiceContract.VisionRuntimeResult>(
+                    lines.single(),
+                )
+            }
+                .getOrElse {
+                    error ->
+                    throw IllegalStateException(
+                        "VexLife-Prod Vision runtime result is not one valid bounded Product result",
+                        error,
+                    )
+                }
 
-        require(
+        check(
             result.requestRef ==
                 requestRef,
         ) {
