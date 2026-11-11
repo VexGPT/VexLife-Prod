@@ -765,6 +765,9 @@ object DirectPromptContext {
                             null ->
                             "WORKING_CHECKPOINT_SUCCESSOR"
 
+                        selected.isEmpty() ->
+                            "BOUNDED_CURRENT_REQUEST_ONLY"
+
                         selected.size >
                             2 ->
                             "RECENT_COMPLETED_TURNS"
@@ -1128,13 +1131,17 @@ object DirectPromptContext {
                     requireNotNull(
                         recentConversation,
                     )
-                requireRecentConversationHistory(
-                    events = source.events,
-                    prior =
-                        requireNotNull(
-                            prior,
-                        ),
-                )
+                if (
+                    source.events.isNotEmpty()
+                ) {
+                    requireRecentConversationHistory(
+                        events = source.events,
+                        prior =
+                            requireNotNull(
+                                prior,
+                            ),
+                    )
+                }
                 source.events
             }
         val selectedConversationTokens =
