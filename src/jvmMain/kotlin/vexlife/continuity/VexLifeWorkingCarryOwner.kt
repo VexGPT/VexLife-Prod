@@ -526,6 +526,22 @@ class VexLifeWorkingCarryOwner(
             completedHead.conversationHeadSha256,
             "completedHead.conversationHeadSha256",
         )
+        val currentConversationHead =
+            requireNotNull(
+                DirectConversationStore(
+                    home,
+                )
+                    .current()
+                    .head,
+            ) {
+                "working carry rollover handoff requires one current completed Conversation head"
+            }
+        require(
+            currentConversationHead ==
+                completedHead,
+        ) {
+            "working carry rollover handoff completed head is no longer Conversation-current"
+        }
 
         val input =
             VexLifeWorkingCarryContract.requireRolloverRefreshInputShape(
