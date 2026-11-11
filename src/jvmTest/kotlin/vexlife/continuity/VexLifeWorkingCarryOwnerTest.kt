@@ -315,6 +315,12 @@ class VexLifeWorkingCarryOwnerTest {
                         currentRequest = secondRequest,
                         carryTokenCap = carry.carryTokenCap,
                     )
+                val firstFormationBinding =
+                    formationBinding(
+                        refresh = refresh,
+                        carry = carry,
+                        hex = 'a',
+                    )
                 val prepared =
                     owner.prepare(
                         priorConversationHeadSha256 =
@@ -325,13 +331,45 @@ class VexLifeWorkingCarryOwnerTest {
                         currentRequest = secondRequest,
                         refreshInput = refresh,
                         carry = carry,
-                        formationBinding =
-                            formationBinding(
-                                refresh = refresh,
-                                carry = carry,
-                                hex = 'a',
+                        formationBinding = firstFormationBinding,
+                    )
+
+                val changedItem =
+                    carry.carryItems
+                        .single()
+                        .copy(
+                            content = "I still owe a differently worded continuation.",
+                        )
+                val changedCarry =
+                    carry.copy(
+                        carryItems =
+                            listOf(
+                                changedItem,
+                            ),
+                        estimatedCarryTokens =
+                            VexLifeWorkingCarryContract.estimateCarryContentTokens(
+                                listOf(
+                                    changedItem,
+                                ),
                             ),
                     )
+                VexLifeWorkingCarryContract.requireDraftFromRefresh(
+                    refresh = refresh,
+                    draft = changedCarry,
+                )
+                assertFailsWith<IllegalArgumentException> {
+                    owner.prepare(
+                        priorConversationHeadSha256 =
+                            requireNotNull(
+                                firstHeadOrNull,
+                            )
+                                .conversationHeadSha256,
+                        currentRequest = secondRequest,
+                        refreshInput = refresh,
+                        carry = changedCarry,
+                        formationBinding = firstFormationBinding,
+                    )
+                }
 
                 assertNull(
                     owner.readCurrent(),
