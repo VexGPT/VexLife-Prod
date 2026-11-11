@@ -214,7 +214,7 @@ object DirectConversationSourceReturn {
             admitted.queryTerms.map(
                 ::normalize,
             )
-        val matches =
+        val ranked =
             buildList {
                 var index =
                     0
@@ -268,28 +268,6 @@ object DirectConversationSourceReturn {
                         if (
                             matched.isNotEmpty()
                         ) {
-                            val exact =
-                                conversationOwner.exactCommittedConversationEvents(
-                                    listOf(
-                                        address(
-                                            requestEvent,
-                                        ),
-                                        address(
-                                            responseEvent,
-                                        ),
-                                    ),
-                                )
-                            require(
-                                !exact.effectsPerformed &&
-                                    exact.events ==
-                                    listOf(
-                                        requestEvent,
-                                        responseEvent,
-                                    ),
-                            ) {
-                                "Conversation source-return match changed during exact canonical re-open"
-                            }
-
                             add(
                                 Match(
                                     requestEvent = requestEvent,
@@ -332,6 +310,82 @@ object DirectConversationSourceReturn {
                 .take(
                     MaximumReturnedTurns,
                 )
+
+        val matches =
+            if (
+                ranked.isEmpty()
+            ) {
+                emptyList()
+            } else {
+                val addresses =
+                    ranked
+                        .flatMap {
+                            match ->
+                            listOf(
+                                address(
+                                    match.requestEvent,
+                                ),
+                                address(
+                                    match.responseEvent,
+                                ),
+                            )
+                        }
+                        .sortedBy(
+                            DirectConversationStore.EventAddress::sequence,
+                        )
+                val exact =
+                    conversationOwner.exactCommittedConversationEvents(
+                        addresses,
+                    )
+                require(
+                    !exact.effectsPerformed
+                ) {
+                    "Conversation source-return exact source re-open performed an effect"
+                }
+                val exactByRef =
+                    exact.events.associateBy(
+                        DirectConversationStore.Event::eventRef,
+                    )
+                ranked.map {
+                    match ->
+                    match.copy(
+                        requestEvent =
+                            requireNotNull(
+                                exactByRef[
+                                    match.requestEvent.eventRef
+                                ],
+                            ),
+                        responseEvent =
+                            requireNotNull(
+                                exactByRef[
+                                    match.responseEvent.eventRef
+                                ],
+                            ),
+                    )
+                }
+                    .also {
+                        exactMatches ->
+                        require(
+                            exactMatches.all {
+                                exactMatch ->
+                                exactMatch.requestEvent ==
+                                    ranked.single {
+                                        it.requestEvent.eventRef ==
+                                            exactMatch.requestEvent.eventRef
+                                    }
+                                        .requestEvent &&
+                                    exactMatch.responseEvent ==
+                                    ranked.single {
+                                        it.responseEvent.eventRef ==
+                                            exactMatch.responseEvent.eventRef
+                                    }
+                                        .responseEvent
+                            },
+                        ) {
+                            "Conversation source-return ranked source changed during exact canonical re-open"
+                        }
+                    }
+            }
 
         return Discovery(
             request = admitted,
