@@ -25,13 +25,77 @@ class VexLifeWorkingCarryOwner(
 ) {
     companion object {
         const val RevisionSchema =
-            "vexlife-prod.working-carry-revision/v1"
+            "vexlife-prod.working-carry-revision/v2"
+
+        const val FormationBindingSchema =
+            "vexlife-prod.working-carry-formation-binding/v1"
 
         const val HeadSchema =
             "vexlife-prod.working-carry-head/v1"
 
         const val OwnerRef =
             "owner.vexlife-prod.working-carry.001"
+    }
+
+    @Serializable
+    @ConsistentCopyVisibility
+    data class FormationBinding internal constructor(
+        val schemaVersion: String,
+        val formationRef: String,
+        val formationFingerprint: String,
+        val refreshInputSha256: String,
+        val draftSha256: String,
+        val runtimeObservationRef: String,
+        val runtimeObservationFingerprint: String,
+        val invocationRef: String,
+        val invocationFingerprint: String,
+        val providerOutputSha256: String,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    FormationBindingSchema &&
+                    formationFingerprint.matches(
+                        Regex(
+                            "[0-9a-f]{64}",
+                        ),
+                    ) &&
+                    formationRef ==
+                    "working-carry-formation." +
+                    formationFingerprint.take(
+                        32,
+                    ) &&
+                    refreshInputSha256.matches(
+                        Regex(
+                            "[0-9a-f]{64}",
+                        ),
+                    ) &&
+                    draftSha256.matches(
+                        Regex(
+                            "[0-9a-f]{64}",
+                        ),
+                    ) &&
+                    runtimeObservationRef.isNotBlank() &&
+                    runtimeObservationFingerprint.matches(
+                        Regex(
+                            "[0-9a-f]{64}",
+                        ),
+                    ) &&
+                    invocationRef.isNotBlank() &&
+                    invocationFingerprint.matches(
+                        Regex(
+                            "[0-9a-f]{64}",
+                        ),
+                    ) &&
+                    providerOutputSha256.matches(
+                        Regex(
+                            "[0-9a-f]{64}",
+                        ),
+                    ),
+            ) {
+                "working carry formation binding is invalid"
+            }
+        }
     }
 
     @Serializable
@@ -42,6 +106,7 @@ class VexLifeWorkingCarryOwner(
         val companionLineageRef: String,
         val threadRef: String,
         val carry: VexLifeWorkingCarryContract.Draft,
+        val formationBinding: FormationBinding,
         val priorRevisionRefOrNull: String?,
         val priorRevisionFingerprintOrNull: String?,
         val sourceConversationHeadSha256: String,
@@ -61,6 +126,7 @@ class VexLifeWorkingCarryOwner(
         val companionLineageRef: String,
         val threadRef: String,
         val carry: VexLifeWorkingCarryContract.Draft,
+        val formationBinding: FormationBinding,
         val priorRevisionRefOrNull: String?,
         val priorRevisionFingerprintOrNull: String?,
         val sourceConversationHeadSha256: String,
@@ -113,6 +179,7 @@ class VexLifeWorkingCarryOwner(
         val currentRequest: DirectConversationStore.Event,
         val refreshInput: VexLifeWorkingCarryContract.RefreshInput,
         val carry: VexLifeWorkingCarryContract.Draft,
+        val formationBinding: FormationBinding,
     )
 
     data class CommitResult(
@@ -219,6 +286,7 @@ class VexLifeWorkingCarryOwner(
         currentRequest: DirectConversationStore.Event,
         refreshInput: VexLifeWorkingCarryContract.RefreshInput,
         carry: VexLifeWorkingCarryContract.Draft,
+        formationBinding: FormationBinding,
     ): Prepared {
         requireRequest(
             currentRequest,
@@ -276,6 +344,25 @@ class VexLifeWorkingCarryOwner(
         ) {
             "working carry refresh identity differs from the exact durable request"
         }
+        requireFormationBinding(
+            formationBinding,
+        )
+        require(
+            formationBinding.refreshInputSha256 ==
+                sha256(
+                    VexContractJson.canonicalEncode(
+                        input,
+                    ),
+                ) &&
+                formationBinding.draftSha256 ==
+                sha256(
+                    VexContractJson.canonicalEncode(
+                        output,
+                    ),
+                ),
+        ) {
+            "working carry formation binding does not belong to the exact refresh input and Draft"
+        }
 
         val current =
             readCurrent(
@@ -317,6 +404,7 @@ class VexLifeWorkingCarryOwner(
             currentRequest = currentRequest,
             refreshInput = input,
             carry = output,
+            formationBinding = formationBinding,
         )
     }
 
@@ -481,6 +569,25 @@ class VexLifeWorkingCarryOwner(
         ) {
             "prepared working carry refresh identity differs from its request"
         }
+        requireFormationBinding(
+            prepared.formationBinding,
+        )
+        require(
+            prepared.formationBinding.refreshInputSha256 ==
+                sha256(
+                    VexContractJson.canonicalEncode(
+                        input,
+                    ),
+                ) &&
+                prepared.formationBinding.draftSha256 ==
+                sha256(
+                    VexContractJson.canonicalEncode(
+                        prepared.carry,
+                    ),
+                ),
+        ) {
+            "prepared working carry formation binding is detached from its refresh input or Draft"
+        }
     }
 
     private fun requirePriorStillCurrent(
@@ -581,6 +688,7 @@ class VexLifeWorkingCarryOwner(
                 companionLineageRef = prepared.companionLineageRef,
                 threadRef = prepared.threadRef,
                 carry = prepared.carry,
+                formationBinding = prepared.formationBinding,
                 priorRevisionRefOrNull = prepared.priorRevisionRefOrNull,
                 priorRevisionFingerprintOrNull = prepared.priorRevisionFingerprintOrNull,
                 sourceConversationHeadSha256 = completedHead.conversationHeadSha256,
@@ -604,6 +712,7 @@ class VexLifeWorkingCarryOwner(
             companionLineageRef = core.companionLineageRef,
             threadRef = core.threadRef,
             carry = core.carry,
+            formationBinding = core.formationBinding,
             priorRevisionRefOrNull = core.priorRevisionRefOrNull,
             priorRevisionFingerprintOrNull = core.priorRevisionFingerprintOrNull,
             sourceConversationHeadSha256 = core.sourceConversationHeadSha256,
@@ -689,6 +798,9 @@ class VexLifeWorkingCarryOwner(
         VexLifeWorkingCarryContract.requireDraftShape(
             value.carry,
         )
+        requireFormationBinding(
+            value.formationBinding,
+        )
         require(
             value.carry.companionLineageRef ==
                 value.companionLineageRef &&
@@ -750,6 +862,7 @@ class VexLifeWorkingCarryOwner(
                 companionLineageRef = value.companionLineageRef,
                 threadRef = value.threadRef,
                 carry = value.carry,
+                formationBinding = value.formationBinding,
                 priorRevisionRefOrNull = value.priorRevisionRefOrNull,
                 priorRevisionFingerprintOrNull = value.priorRevisionFingerprintOrNull,
                 sourceConversationHeadSha256 = value.sourceConversationHeadSha256,
@@ -829,6 +942,63 @@ class VexLifeWorkingCarryOwner(
         ) {
             "working carry head semantic identity is invalid"
         }
+    }
+
+    internal fun requireFormationBinding(
+        value: FormationBinding,
+    ): FormationBinding {
+        require(
+            value.schemaVersion ==
+                FormationBindingSchema,
+        ) {
+            "working carry formation binding schema is invalid"
+        }
+        requireStableRef(
+            value.formationRef,
+            "formationBinding.formationRef",
+        )
+        requireSha256(
+            value.formationFingerprint,
+            "formationBinding.formationFingerprint",
+        )
+        requireSha256(
+            value.refreshInputSha256,
+            "formationBinding.refreshInputSha256",
+        )
+        requireSha256(
+            value.draftSha256,
+            "formationBinding.draftSha256",
+        )
+        require(
+            value.formationRef ==
+                "working-carry-formation." +
+                value.formationFingerprint.take(
+                    32,
+                ),
+        ) {
+            "working carry formation ref does not bind its fingerprint"
+        }
+        requireStableRef(
+            value.runtimeObservationRef,
+            "formationBinding.runtimeObservationRef",
+        )
+        requireSha256(
+            value.runtimeObservationFingerprint,
+            "formationBinding.runtimeObservationFingerprint",
+        )
+        requireStableRef(
+            value.invocationRef,
+            "formationBinding.invocationRef",
+        )
+        requireSha256(
+            value.invocationFingerprint,
+            "formationBinding.invocationFingerprint",
+        )
+        requireSha256(
+            value.providerOutputSha256,
+            "formationBinding.providerOutputSha256",
+        )
+        return value
     }
 
     private fun requireRequest(

@@ -300,6 +300,46 @@ class DirectWorkingCarryFormationTest {
             ),
             formation.draft.sourceBindings,
         )
+        assertEquals(
+            formation.runtimeObservation.observationRef,
+            formation.binding.runtimeObservationRef,
+        )
+        assertEquals(
+            formation.runtimeObservation.semanticFingerprint,
+            formation.binding.runtimeObservationFingerprint,
+        )
+        assertEquals(
+            formation.invocationEvidence.invocationRef,
+            formation.binding.invocationRef,
+        )
+        assertEquals(
+            formation.invocationEvidence.semanticFingerprint,
+            formation.binding.invocationFingerprint,
+        )
+        assertEquals(
+            formation.providerOutputSha256,
+            formation.binding.providerOutputSha256,
+        )
+        assertTrue(
+            formation.binding.refreshInputSha256.matches(
+                Regex(
+                    "[0-9a-f]{64}",
+                ),
+            ),
+        )
+        assertTrue(
+            formation.binding.draftSha256.matches(
+                Regex(
+                    "[0-9a-f]{64}",
+                ),
+            ),
+        )
+        assertTrue(
+            formation.binding.formationRef.startsWith(
+                "working-carry-formation.",
+            ),
+        )
+
         assertFalse(
             formation.rawProviderOutputPersisted,
         )

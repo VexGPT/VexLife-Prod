@@ -1,17 +1,76 @@
 package vexlife.continuity
 
 import java.nio.file.Files
+import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import vexlife.contract.VexContractJson
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 
 class VexLifeWorkingCarryOwnerTest {
+    private fun formationBinding(
+        refresh: VexLifeWorkingCarryContract.RefreshInput,
+        carry: VexLifeWorkingCarryContract.Draft,
+        hex: Char,
+    ): VexLifeWorkingCarryOwner.FormationBinding {
+        require(
+            hex in
+                "0123456789abcdef",
+        )
+        val fingerprint =
+            hex
+                .toString()
+                .repeat(
+                    64,
+                )
+        return VexLifeWorkingCarryOwner.FormationBinding(
+            schemaVersion = VexLifeWorkingCarryOwner.FormationBindingSchema,
+            formationRef =
+                "working-carry-formation." +
+                    fingerprint.take(
+                        32,
+                    ),
+            formationFingerprint = fingerprint,
+            refreshInputSha256 =
+                sha256(
+                    VexContractJson.canonicalEncode(
+                        refresh,
+                    ),
+                ),
+            draftSha256 =
+                sha256(
+                    VexContractJson.canonicalEncode(
+                        carry,
+                    ),
+                ),
+            runtimeObservationRef =
+                "observation.working-carry.formation." +
+                    hex,
+            runtimeObservationFingerprint =
+                "d".repeat(
+                    64,
+                ),
+            invocationRef =
+                "evidence.working-carry.formation." +
+                    hex,
+            invocationFingerprint =
+                "e".repeat(
+                    64,
+                ),
+            providerOutputSha256 =
+                "f".repeat(
+                    64,
+                ),
+        )
+    }
+
     private fun source(
         event: DirectConversationStore.Event,
     ) =
@@ -256,6 +315,12 @@ class VexLifeWorkingCarryOwnerTest {
                         currentRequest = secondRequest,
                         carryTokenCap = carry.carryTokenCap,
                     )
+                val firstFormationBinding =
+                    formationBinding(
+                        refresh = refresh,
+                        carry = carry,
+                        hex = 'a',
+                    )
                 val prepared =
                     owner.prepare(
                         priorConversationHeadSha256 =
@@ -266,7 +331,45 @@ class VexLifeWorkingCarryOwnerTest {
                         currentRequest = secondRequest,
                         refreshInput = refresh,
                         carry = carry,
+                        formationBinding = firstFormationBinding,
                     )
+
+                val changedItem =
+                    carry.carryItems
+                        .single()
+                        .copy(
+                            content = "I still owe a differently worded continuation.",
+                        )
+                val changedCarry =
+                    carry.copy(
+                        carryItems =
+                            listOf(
+                                changedItem,
+                            ),
+                        estimatedCarryTokens =
+                            VexLifeWorkingCarryContract.estimateCarryContentTokens(
+                                listOf(
+                                    changedItem,
+                                ),
+                            ),
+                    )
+                VexLifeWorkingCarryContract.requireDraftFromRefresh(
+                    refresh = refresh,
+                    draft = changedCarry,
+                )
+                assertFailsWith<IllegalArgumentException> {
+                    owner.prepare(
+                        priorConversationHeadSha256 =
+                            requireNotNull(
+                                firstHeadOrNull,
+                            )
+                                .conversationHeadSha256,
+                        currentRequest = secondRequest,
+                        refreshInput = refresh,
+                        carry = changedCarry,
+                        formationBinding = firstFormationBinding,
+                    )
+                }
 
                 assertNull(
                     owner.readCurrent(),
@@ -385,6 +488,12 @@ class VexLifeWorkingCarryOwnerTest {
                         currentRequest = thirdRequest,
                         refreshInput = releaseRefresh,
                         carry = released,
+                        formationBinding =
+                            formationBinding(
+                                refresh = releaseRefresh,
+                                carry = released,
+                                hex = 'b',
+                            ),
                     )
 
                 val thirdResponse =
@@ -474,6 +583,12 @@ class VexLifeWorkingCarryOwnerTest {
                         currentRequest = fourthRequest,
                         refreshInput = failedRefresh,
                         carry = failedCarry,
+                        formationBinding =
+                            formationBinding(
+                                refresh = failedRefresh,
+                                carry = failedCarry,
+                                hex = 'c',
+                            ),
                     )
 
                 assertEquals(
@@ -496,7 +611,28 @@ class VexLifeWorkingCarryOwnerTest {
                 .toFile()
                 .deleteRecursively()
         }
-    }
+    }    private fun sha256(
+        value: String,
+    ): String =
+        MessageDigest
+            .getInstance(
+                "SHA-256",
+            )
+            .digest(
+                value.toByteArray(
+                    StandardCharsets.UTF_8,
+                ),
+            )
+            .joinToString(
+                "",
+            ) {
+                "%02x".format(
+                    it.toInt() and
+                        0xff,
+                )
+            }
+
+
 }
 
 // [VXG RealForever]
