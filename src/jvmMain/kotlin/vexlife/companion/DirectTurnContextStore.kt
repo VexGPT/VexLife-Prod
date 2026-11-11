@@ -689,6 +689,7 @@ class DirectTurnContextStore(
                     promptContext.workingContinuitySourceRefs +
                     promptContext.capabilityFrameSourceRefs +
                     listOfNotNull(
+                        promptContext.successorPriorResponseEventRef,
                         promptContext.workingContinuityContextRef,
                         promptContext.workingContinuityCheckpointRef,
                         promptContext.workingContinuitySuccessorClaimRef,
