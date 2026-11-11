@@ -121,6 +121,7 @@ object DirectPromptContext {
         val browserContextSha256: String?,
         val browserContextRef: String?,
         val capabilityFrame: VerifiedCapabilityFrame?,
+        val successorPriorResponse: DirectConversationStore.Event?,
         val prefixMessages: List<CompanionProviderMessage>,
         val suffixMessages: List<CompanionProviderMessage>,
         val fixedInputTokenEstimate: Int,
@@ -186,6 +187,9 @@ object DirectPromptContext {
         val selectedConversationEventSequences: List<Long>,
         val currentRequestEventRef: String,
         val currentRequestEventSha256: String,
+        val successorPriorResponseEventRef: String?,
+        val successorPriorResponseEventSha256: String?,
+        val successorPriorResponseEventSequence: Long?,
         val browserContextIncluded: Boolean =
             false,
         val browserContextRef: String? =
@@ -254,6 +258,21 @@ object DirectPromptContext {
             emptyList(),
         val currentRequestEventRef: String,
         val currentRequestEventSha256: String,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val successorPriorResponseEventRef: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val successorPriorResponseEventSha256: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val successorPriorResponseEventSequence: Long? =
+            null,
         val browserContextIncluded: Boolean =
             false,
         val browserContextRef: String? =
@@ -423,6 +442,9 @@ object DirectPromptContext {
         val browserContextSha256: String?,
         val capabilityFrameRef: String?,
         val capabilityFrameFingerprint: String?,
+        val successorPriorResponseEventRef: String?,
+        val successorPriorResponseEventSha256: String?,
+        val successorPriorResponseEventSequence: Long?,
         val prefixMessages: List<CompanionProviderMessage>,
         val suffixMessages: List<CompanionProviderMessage>,
         val fixedInputTokenEstimate: Int,
@@ -480,6 +502,15 @@ object DirectPromptContext {
                 fixed.capabilityFrame
                     ?.frame
                     ?.semanticFingerprint,
+            successorPriorResponseEventRef =
+                fixed.successorPriorResponse
+                    ?.eventRef,
+            successorPriorResponseEventSha256 =
+                fixed.successorPriorResponse
+                    ?.eventHash,
+            successorPriorResponseEventSequence =
+                fixed.successorPriorResponse
+                    ?.sequence,
             prefixMessages = fixed.prefixMessages,
             suffixMessages = fixed.suffixMessages,
             fixedInputTokenEstimate = fixed.fixedInputTokenEstimate,
@@ -790,6 +821,15 @@ object DirectPromptContext {
                     },
                 currentRequestEventRef = currentRequest.eventRef,
                 currentRequestEventSha256 = currentRequest.eventSha256,
+                successorPriorResponseEventRef =
+                    fixed.successorPriorResponse
+                        ?.eventRef,
+                successorPriorResponseEventSha256 =
+                    fixed.successorPriorResponse
+                        ?.eventHash,
+                successorPriorResponseEventSequence =
+                    fixed.successorPriorResponse
+                        ?.sequence,
                 browserContextIncluded =
                     browserContext !=
                         null,
@@ -941,6 +981,12 @@ object DirectPromptContext {
                 selectedConversationEventSequences = core.selectedConversationEventSequences,
                 currentRequestEventRef = core.currentRequestEventRef,
                 currentRequestEventSha256 = core.currentRequestEventSha256,
+                successorPriorResponseEventRef =
+                    core.successorPriorResponseEventRef,
+                successorPriorResponseEventSha256 =
+                    core.successorPriorResponseEventSha256,
+                successorPriorResponseEventSequence =
+                    core.successorPriorResponseEventSequence,
                 browserContextIncluded = core.browserContextIncluded,
                 browserContextRef = core.browserContextRef,
                 browserPageUrl = core.browserPageUrl,
@@ -1767,6 +1813,29 @@ object DirectPromptContext {
                             32,
                         )
                 }
+        val successorPriorResponse =
+            if (
+                workingContinuity !=
+                    null
+            ) {
+                requireNotNull(
+                    prior,
+                ) {
+                    "working-checkpoint successor fixed context requires one exact prior completed turn"
+                }
+                    .responseEvent
+                    .also {
+                        response ->
+                        require(
+                            response.eventKind ==
+                                "RESPONSE"
+                        ) {
+                            "working-checkpoint successor prior response is not one exact RESPONSE"
+                        }
+                    }
+            } else {
+                null
+            }
         val capabilityFrame =
             runtimeEvidence
                 ?.let {
@@ -1807,6 +1876,16 @@ object DirectPromptContext {
             }
         val suffixMessages =
             buildList {
+                successorPriorResponse
+                    ?.let {
+                        response ->
+                        add(
+                            CompanionProviderMessage(
+                                role = "assistant",
+                                content = response.content,
+                            ),
+                        )
+                    }
                 if (
                     browserContext !=
                         null
@@ -1855,6 +1934,7 @@ object DirectPromptContext {
             browserContextSha256 = browserContextSha256,
             browserContextRef = browserContextRef,
             capabilityFrame = capabilityFrame,
+            successorPriorResponse = successorPriorResponse,
             prefixMessages = prefixMessages,
             suffixMessages = suffixMessages,
             fixedInputTokenEstimate = fixedEstimate,
