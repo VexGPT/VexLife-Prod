@@ -75,6 +75,105 @@ object VexLifeWorkingCarryContract {
         val effectsPerformed: Boolean = false,
     )
 
+    /**
+     * Derive only the oldest contiguous source that crossed out of direct verbatim presence.
+     *
+     * These inputs are prompt-presence coordinates, not arbitrary carry-item source subsets. Each
+     * non-empty list must therefore contain complete contiguous Conversation pairs.
+     */
+    fun newlyLeavingDirectPresence(
+        previousDirectPresence: List<SourceBinding>,
+        currentDirectPresence: List<SourceBinding>,
+    ): List<SourceBinding> {
+        val previous =
+            requireDirectPresenceBindings(
+                previousDirectPresence,
+                "previousDirectPresence",
+            )
+        val current =
+            requireDirectPresenceBindings(
+                currentDirectPresence,
+                "currentDirectPresence",
+            )
+
+        val previousByRef =
+            previous.associateBy(
+                SourceBinding::eventRef,
+            )
+        val previousBySequence =
+            previous.associateBy(
+                SourceBinding::sequence,
+            )
+
+        current.forEach {
+            binding ->
+            previousByRef[
+                binding.eventRef
+            ]
+                ?.let {
+                    prior ->
+                    require(
+                        prior ==
+                            binding,
+                    ) {
+                        "current direct presence changes the source generation of a prior eventRef"
+                    }
+                }
+            previousBySequence[
+                binding.sequence
+            ]
+                ?.let {
+                    prior ->
+                    require(
+                        prior ==
+                            binding,
+                    ) {
+                        "current direct presence changes the source generation at a prior Conversation sequence"
+                    }
+                }
+        }
+
+        val currentExact =
+            current.toSet()
+        val retained =
+            previous.map {
+                it in
+                    currentExact
+            }
+        val firstRetained =
+            retained.indexOfFirst {
+                it
+            }
+
+        if (
+            firstRetained >=
+                0
+        ) {
+            require(
+                retained
+                    .drop(
+                        firstRetained,
+                    )
+                    .all {
+                        it
+                    },
+            ) {
+                "direct Conversation presence may release only one oldest contiguous prefix"
+            }
+        }
+
+        return if (
+            firstRetained <
+                0
+        ) {
+            previous
+        } else {
+            previous.take(
+                firstRetained,
+            )
+        }
+    }
+
     fun requireDraftShape(
         value: Draft,
     ): Draft {
@@ -255,6 +354,52 @@ object VexLifeWorkingCarryContract {
         }
 
         return value
+    }
+
+    private fun requireDirectPresenceBindings(
+        values: List<SourceBinding>,
+        label: String,
+    ): List<SourceBinding> {
+        val source =
+            requireBindings(
+                values,
+                label,
+                allowEmpty = true,
+            )
+        if (
+            source.isEmpty()
+        ) {
+            return source
+        }
+
+        require(
+            source.size %
+                2 ==
+                0 &&
+                source.first()
+                    .sequence %
+                2 ==
+                0L,
+        ) {
+            "$label must contain complete Conversation REQUEST/RESPONSE sequence pairs"
+        }
+        require(
+            source
+                .map(
+                    SourceBinding::sequence,
+                )
+                .zipWithNext()
+                .all {
+                    pair ->
+                    pair.second ==
+                        pair.first +
+                        1
+                },
+        ) {
+            "$label must be one contiguous Conversation sequence range"
+        }
+
+        return source
     }
 
     /**
