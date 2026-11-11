@@ -166,15 +166,63 @@ object VexLifeMemoryContextFixture {
         )
     }
 
-    fun currentUnselectedForPrompt(): VexLifeMemoryContract.Context {
+    fun currentWithPromptCap(
+        memoryTokenCap: Int,
+    ): VexLifeMemoryContract.Context {
+        require(
+            memoryTokenCap in
+                0..VexLifeMemoryContract.MaximumMemoryTokens,
+        ) {
+            "test Memory prompt token cap is outside the admitted range"
+        }
+
         val selected =
             current()
-        val boundedPageRefs =
+        val pageRefs =
             selected.pages
                 .map(
                     VexLifeMemoryContract.Page::pageRef,
                 )
                 .sorted()
+        val providerPacket =
+            ProviderPacket(
+                schemaVersion = selected.schemaVersion,
+                truthClass = selected.truthClass,
+                projectionState = selected.projectionState,
+                projectionCurrentness = selected.projectionCurrentness,
+                sourceOwnerRefs = selected.sourceOwnerRefs,
+                currentDailyStratumRef = selected.currentDailyStratumRef,
+                currentDailyStratumSha256 = selected.currentDailyStratumSha256,
+                sourceConversationHeadSha256 = selected.sourceConversationHeadSha256,
+                sourceScoreHeadSha256 = selected.sourceScoreHeadSha256,
+                sourceSemanticAuthorityHeadSha256 = selected.sourceSemanticAuthorityHeadSha256,
+                pages = selected.pages,
+                heldOrDeferredStatementRefs = selected.heldOrDeferredStatementRefs,
+                boundedOutStatementRefs = selected.boundedOutStatementRefs,
+                tokenBoundedOutPageRefs = emptyList(),
+                reasons = selected.reasons,
+                memoryTokenCap = memoryTokenCap,
+            )
+        val systemContent =
+            listOf(
+                "VEXLIFE_CURRENT_MEMORY_CONTEXT/v1",
+                "These are current source-attributed Memory references, not proof of subjective recall or original wording by this model.",
+                "Use them as bounded continuity context. If they conflict with current source or the human, preserve the conflict rather than inventing reconciliation.",
+                VexContractJson.compactEncode(
+                    providerPacket,
+                ),
+            )
+                .joinToString(
+                    "\n",
+                )
+        val systemTokens =
+            estimatedMessageTokens(
+                systemContent,
+            )
+        val included =
+            systemTokens <=
+                memoryTokenCap
+
         val core =
             VexLifeMemoryContract.PacketCore(
                 schemaVersion = selected.schemaVersion,
@@ -187,14 +235,44 @@ object VexLifeMemoryContextFixture {
                 sourceConversationHeadSha256 = selected.sourceConversationHeadSha256,
                 sourceScoreHeadSha256 = selected.sourceScoreHeadSha256,
                 sourceSemanticAuthorityHeadSha256 = selected.sourceSemanticAuthorityHeadSha256,
-                pages = emptyList(),
+                pages =
+                    if (
+                        included
+                    ) {
+                        selected.pages
+                    } else {
+                        emptyList()
+                    },
                 heldOrDeferredStatementRefs = selected.heldOrDeferredStatementRefs,
                 boundedOutStatementRefs = selected.boundedOutStatementRefs,
-                tokenBoundedOutPageRefs = boundedPageRefs,
+                tokenBoundedOutPageRefs =
+                    if (
+                        included
+                    ) {
+                        emptyList()
+                    } else {
+                        pageRefs
+                    },
                 reasons = selected.reasons,
-                memoryTokenCap = 0,
-                systemMessageSha256 = null,
-                estimatedSystemMessageTokens = 0,
+                memoryTokenCap = memoryTokenCap,
+                systemMessageSha256 =
+                    if (
+                        included
+                    ) {
+                        sha256(
+                            systemContent,
+                        )
+                    } else {
+                        null
+                    },
+                estimatedSystemMessageTokens =
+                    if (
+                        included
+                    ) {
+                        systemTokens
+                    } else {
+                        0
+                    },
             )
         val fingerprint =
             sha256(
@@ -203,17 +281,23 @@ object VexLifeMemoryContextFixture {
                 ),
             )
         val sourceRefs =
-            buildList {
-                addAll(
-                    core.sourceOwnerRefs,
-                )
-                core.currentDailyStratumRef
-                    ?.let(
-                        ::add,
+            if (
+                included
+            ) {
+                selected.sourceRefs
+            } else {
+                buildList {
+                    addAll(
+                        core.sourceOwnerRefs,
                     )
+                    core.currentDailyStratumRef
+                        ?.let(
+                            ::add,
+                        )
+                }
+                    .distinct()
+                    .sorted()
             }
-                .distinct()
-                .sorted()
 
         return VexLifeMemoryContract.Context(
             schemaVersion = core.schemaVersion,
@@ -232,8 +316,8 @@ object VexLifeMemoryContextFixture {
             tokenBoundedOutPageRefs = core.tokenBoundedOutPageRefs,
             reasons = core.reasons,
             memoryTokenCap = core.memoryTokenCap,
-            systemMessageSha256 = null,
-            estimatedSystemMessageTokens = 0,
+            systemMessageSha256 = core.systemMessageSha256,
+            estimatedSystemMessageTokens = core.estimatedSystemMessageTokens,
             memoryContextRef =
                 "memory-context.vexlife.prompt." +
                     fingerprint.take(
@@ -241,12 +325,17 @@ object VexLifeMemoryContextFixture {
                     ),
             semanticFingerprint = fingerprint,
             sourceRefs = sourceRefs,
-            included = false,
+            included = included,
         )
             .let(
                 VexLifeMemoryContract::validateContext,
             )
     }
+
+    fun currentUnselectedForPrompt(): VexLifeMemoryContract.Context =
+        currentWithPromptCap(
+            0,
+        )
 
     private fun estimatedMessageTokens(
         content: String,
