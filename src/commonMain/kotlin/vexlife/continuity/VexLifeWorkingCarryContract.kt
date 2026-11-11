@@ -67,6 +67,8 @@ object VexLifeWorkingCarryContract {
         val disposition: String,
         val carryItems: List<CarryItem>,
         val releaseReason: String?,
+        val carryTokenCap: Int,
+        val estimatedCarryTokens: Int,
         val durableMemoryAuthorityGranted: Boolean = false,
         val humanProfileAuthorityGranted: Boolean = false,
         val relationshipAgreementAuthorityGranted: Boolean = false,
@@ -270,6 +272,25 @@ object VexLifeWorkingCarryContract {
             }
 
         require(
+            value.carryTokenCap >=
+                0,
+        ) {
+            "working carry token allowance must be non-negative"
+        }
+        val estimatedCarryTokens =
+            estimateCarryContentTokens(
+                value.carryItems,
+            )
+        require(
+            value.estimatedCarryTokens ==
+                estimatedCarryTokens &&
+                estimatedCarryTokens <=
+                value.carryTokenCap,
+        ) {
+            "working carry content exceeds or misstates its caller-supplied token allowance"
+        }
+
+        require(
             !value.durableMemoryAuthorityGranted &&
                 !value.humanProfileAuthorityGranted &&
                 !value.relationshipAgreementAuthorityGranted &&
@@ -335,6 +356,8 @@ object VexLifeWorkingCarryContract {
             Release -> {
                 require(
                     value.carryItems.isEmpty() &&
+                        value.estimatedCarryTokens ==
+                        0 &&
                         value.releaseReason ==
                         ReleaseReasonNoPresentCarry,
                 ) {
@@ -354,6 +377,36 @@ object VexLifeWorkingCarryContract {
         }
 
         return value
+    }
+
+    fun estimateCarryContentTokens(
+        items: List<CarryItem>,
+    ): Int {
+        val estimate =
+            items.sumOf {
+                item ->
+                val bytes =
+                    item.content
+                        .encodeToByteArray()
+                        .size
+                        .toLong()
+                maxOf(
+                    1L,
+                    (
+                        bytes +
+                            3L
+                    ) /
+                        4L,
+                ) +
+                    4L
+            }
+        require(
+            estimate <=
+                Int.MAX_VALUE.toLong(),
+        ) {
+            "working carry content token estimate exceeds supported integer range"
+        }
+        return estimate.toInt()
     }
 
     private fun requireDirectPresenceBindings(
