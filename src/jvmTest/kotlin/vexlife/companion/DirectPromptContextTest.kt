@@ -457,6 +457,115 @@ class DirectPromptContextTest {
     }
 
     @Test
+    fun historicalV6ReceiptRoundTripsWithoutSourceReturnOrPriorResponseFields() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-v6-compat-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val store =
+                DirectConversationStore(
+                    productHome,
+                )
+
+            store.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef =
+                            "turn.self-development.v6-compat",
+                        requestMessageRef =
+                            "message.self-development.human.v6-compat",
+                        content =
+                            "Historical v6 receipt compatibility",
+                    )
+                val receipt =
+                    DirectPromptContext.materialize(
+                        prior = null,
+                        currentRequest = request,
+                    )
+                        .receipt
+                val full =
+                    VexContractJson.Strict
+                        .encodeToJsonElement(
+                            receipt,
+                        )
+                        .jsonObject
+                val v7Keys =
+                    setOf(
+                        "successorPriorResponseEventRef",
+                        "successorPriorResponseEventSha256",
+                        "successorPriorResponseEventSequence",
+                        "sourceReturnProtocolEnabled",
+                        "sourceReturnProtocolSystemMessageSha256",
+                        "sourceReturnProtocolEstimatedSystemMessageTokens",
+                        "sourceReturnState",
+                        "sourceReturnSourceEventRefs",
+                        "sourceReturnSystemMessageSha256",
+                        "sourceReturnEstimatedSystemMessageTokens",
+                        "memoryAvailabilityContextRef",
+                        "memoryAvailabilityContextFingerprint",
+                    )
+                val historical =
+                    JsonObject(
+                        full
+                            .filterKeys {
+                                it !in
+                                    v7Keys
+                            }
+                            .toMutableMap()
+                            .also {
+                                it[
+                                    "schemaVersion"
+                                ] =
+                                    JsonPrimitive(
+                                        DirectPromptContext.ReceiptSchemaV6,
+                                    )
+                            },
+                    )
+                val decoded =
+                    VexContractJson.decode<DirectPromptContext.Receipt>(
+                        historical.toString(),
+                    )
+
+                assertEquals(
+                    DirectPromptContext.ReceiptSchemaV6,
+                    decoded.schemaVersion,
+                )
+                assertNull(
+                    decoded.successorPriorResponseEventRef,
+                )
+                assertFalse(
+                    decoded.sourceReturnProtocolEnabled,
+                )
+                assertNull(
+                    decoded.sourceReturnState,
+                )
+                assertEquals(
+                    VexContractJson.canonicalEncodeElement(
+                        historical,
+                    ),
+                    VexContractJson.canonicalEncode(
+                        decoded,
+                    ),
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun firstTurnMaterializesOnlyTheCurrentDurableRequestWhenMemoryIsAbsent() {
         val parent =
             Files.createTempDirectory(
@@ -528,6 +637,109 @@ class DirectPromptContextTest {
                 )
                 assertTrue(
                     materialized.receipt.memorySourceRefs.isEmpty(),
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun continuityFirstPassAdvertisesOneSourceReturnAndAllocatesMemoryAfterExactSource() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-source-return-first-pass-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val store =
+                DirectConversationStore(
+                    productHome,
+                )
+            val memory =
+                VexLifeMemoryContextFixture.current()
+
+            store.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef =
+                            "turn.self-development.source-return.first-pass",
+                        requestMessageRef =
+                            "message.self-development.human.source-return.first-pass",
+                        content =
+                            "Answer normally unless older exact source is genuinely needed.",
+                    )
+                val materialized =
+                    DirectPromptContext.materializeContinuity(
+                        conversationOwner = this,
+                        prior = null,
+                        currentRequest = request,
+                        memoryAvailabilityContext = memory,
+                        memoryContextAtCap = {
+                            cap ->
+                            VexLifeMemoryContextFixture.current(
+                                cap,
+                            )
+                        },
+                        runtimeEvidence = runtimeEvidence(),
+                        sourceReturnProtocolEnabled = true,
+                    )
+
+                assertTrue(
+                    materialized.receipt.sourceReturnProtocolEnabled,
+                )
+                assertNotNull(
+                    materialized.receipt.sourceReturnProtocolSystemMessageSha256,
+                )
+                assertTrue(
+                    materialized.receipt.sourceReturnProtocolEstimatedSystemMessageTokens >
+                        0,
+                )
+                assertNull(
+                    materialized.receipt.sourceReturnState,
+                )
+                assertTrue(
+                    materialized.messages.any {
+                        it.content.startsWith(
+                            DirectConversationSourceReturn.ProtocolHeader,
+                        )
+                    },
+                )
+                assertEquals(
+                    memory.memoryContextRef,
+                    materialized.receipt.memoryAvailabilityContextRef,
+                )
+                assertTrue(
+                    requireNotNull(
+                        materialized.receipt.memoryContextRef,
+                    )
+                        .isNotBlank(),
+                )
+
+                DirectPromptContext.reverifyContinuity(
+                    materialization = materialized,
+                    conversationOwner = this,
+                    prior = null,
+                    currentRequest = request,
+                    memoryAvailabilityContext = memory,
+                    memoryContextAtCap = {
+                        cap ->
+                        VexLifeMemoryContextFixture.current(
+                            cap,
+                        )
+                    },
+                    runtimeEvidence = runtimeEvidence(),
+                    sourceReturnProtocolEnabled = true,
                 )
             }
         } finally {
@@ -763,6 +975,265 @@ class DirectPromptContextTest {
                     memoryContext = selected,
                     memoryAvailabilityContext = availability,
                     runtimeEvidence = runtimeEvidence(),
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun finalSourceReturnGetsExactOlderSourceBeforeRecentConversationAndMemoryRemainder() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-source-return-final-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val store =
+                DirectConversationStore(
+                    productHome,
+                )
+
+            store.withWriterLease {
+                val oldRequestContent =
+                    "orchard-lantern exact older source " +
+                        "O".repeat(
+                            2_000,
+                        )
+                val oldResponseContent =
+                    "Vex received orchard-lantern " +
+                        "R".repeat(
+                            2_000,
+                        )
+                val oldRequest =
+                    beginRequest(
+                        turnRef =
+                            "turn.source-return.final.old",
+                        requestMessageRef =
+                            "message.source-return.final.human.old",
+                        content = oldRequestContent,
+                    )
+                val oldResponse =
+                    appendResponse(
+                        request = oldRequest,
+                        responseMessageRef =
+                            "message.source-return.final.companion.old",
+                        content = oldResponseContent,
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef =
+                            "observation.source-return.final.old",
+                        invocationEvidenceRef =
+                            "evidence.source-return.final.old",
+                    )
+                val oldContext =
+                    CanonicalLivedContextFixture.write(
+                        productHome = productHome,
+                        request = oldRequest,
+                        response = oldResponse,
+                    )
+                commitCompletedTurn(
+                    request = oldRequest,
+                    response = oldResponse,
+                    contextSha256 = oldContext.sha256,
+                )
+
+                val query =
+                    DirectConversationSourceReturn.Request(
+                        schemaVersion =
+                            DirectConversationSourceReturn.RequestSchema,
+                        queryTerms =
+                            listOf(
+                                "orchard-lantern",
+                            ),
+                        speakerScope =
+                            DirectConversationSourceReturn.AnySpeaker,
+                    )
+                val earlyDiscovery =
+                    DirectConversationSourceReturn.discover(
+                        conversationOwner = this,
+                        request = query,
+                    )
+                val earlyProjection =
+                    DirectConversationSourceReturn.project(
+                        discovery = earlyDiscovery,
+                        availableTokens =
+                            DirectPromptContext.InputTokenBudget,
+                    )
+                val oldPairTokens =
+                    DirectPromptContext.estimatedMessageTokens(
+                        oldRequestContent,
+                    ) +
+                        DirectPromptContext.estimatedMessageTokens(
+                            oldResponseContent,
+                        )
+                val currentRequestText =
+                    "Return the exact older orchard-lantern source."
+                val fixedCurrentTokens =
+                    DirectPromptContext.estimatedMessageTokens(
+                        currentRequestText,
+                    )
+                val targetNewerPairTokens =
+                    DirectPromptContext.InputTokenBudget -
+                        fixedCurrentTokens -
+                        earlyProjection.estimatedSystemMessageTokens -
+                        (
+                            oldPairTokens /
+                                2
+                            )
+                require(
+                    targetNewerPairTokens >
+                        1_000
+                )
+                val newerResponseText =
+                    "Recent response."
+                val newerResponseTokens =
+                    DirectPromptContext.estimatedMessageTokens(
+                        newerResponseText,
+                    )
+                val newerRequestTarget =
+                    targetNewerPairTokens -
+                        newerResponseTokens
+                val newerRequestText =
+                    "N".repeat(
+                        maxOf(
+                            4,
+                            (
+                                newerRequestTarget -
+                                    4
+                                ) *
+                                4,
+                        ),
+                    )
+
+                val newerRequest =
+                    beginRequest(
+                        turnRef =
+                            "turn.source-return.final.newer",
+                        requestMessageRef =
+                            "message.source-return.final.human.newer",
+                        content = newerRequestText,
+                    )
+                val newerResponse =
+                    appendResponse(
+                        request = newerRequest,
+                        responseMessageRef =
+                            "message.source-return.final.companion.newer",
+                        content = newerResponseText,
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef =
+                            "observation.source-return.final.newer",
+                        invocationEvidenceRef =
+                            "evidence.source-return.final.newer",
+                    )
+                val newerContext =
+                    CanonicalLivedContextFixture.write(
+                        productHome = productHome,
+                        request = newerRequest,
+                        response = newerResponse,
+                    )
+                commitCompletedTurn(
+                    request = newerRequest,
+                    response = newerResponse,
+                    contextSha256 = newerContext.sha256,
+                )
+
+                val prior =
+                    requireNotNull(
+                        immediatePriorCompletedTurn(),
+                    )
+                val currentRequest =
+                    beginRequest(
+                        turnRef =
+                            "turn.source-return.final.current",
+                        requestMessageRef =
+                            "message.source-return.final.human.current",
+                        content = currentRequestText,
+                    )
+                val discovery =
+                    DirectConversationSourceReturn.discover(
+                        conversationOwner = this,
+                        request = query,
+                        excludedEventRefs =
+                            setOf(
+                                newerRequest.eventRef,
+                                newerResponse.eventRef,
+                            ),
+                    )
+                val materialized =
+                    DirectPromptContext.materializeContinuity(
+                        conversationOwner = this,
+                        prior = prior,
+                        currentRequest = currentRequest,
+                        sourceReturnDiscovery = discovery,
+                    )
+
+                assertEquals(
+                    DirectConversationSourceReturn.Returned,
+                    materialized.receipt.sourceReturnState,
+                )
+                assertEquals(
+                    listOf(
+                        oldRequest.eventRef,
+                        oldResponse.eventRef,
+                    ),
+                    materialized.receipt.sourceReturnSourceEventRefs,
+                )
+                assertEquals(
+                    listOf(
+                        newerRequest.eventRef,
+                        newerResponse.eventRef,
+                    ),
+                    materialized.receipt.selectedConversationEventRefs,
+                )
+                assertTrue(
+                    materialized.receipt.sourceReturnSourceEventRefs
+                        .none {
+                            it in
+                                materialized.receipt.selectedConversationEventRefs
+                        },
+                )
+                assertTrue(
+                    materialized.messages.any {
+                        it.content.startsWith(
+                            DirectConversationSourceReturn.ContextHeader,
+                        ) &&
+                            it.content.contains(
+                                "orchard-lantern",
+                            )
+                    },
+                )
+                assertTrue(
+                    materialized.messages.none {
+                        it.content.startsWith(
+                            DirectConversationSourceReturn.ProtocolHeader,
+                        )
+                    },
+                )
+                assertEquals(
+                    currentRequest.content,
+                    materialized.messages.last()
+                        .content,
+                )
+
+                DirectPromptContext.reverifyContinuity(
+                    materialization = materialized,
+                    conversationOwner = this,
+                    prior = prior,
+                    currentRequest = currentRequest,
+                    sourceReturnDiscovery = discovery,
                 )
             }
         } finally {
