@@ -1316,6 +1316,7 @@ class DirectPromptContextTest {
                     )
                 val committed =
                     carryOwner.commitCompletedTurn(
+                        conversationOwner = this,
                         prepared = prepared,
                         completedHead = secondHead,
                     )
