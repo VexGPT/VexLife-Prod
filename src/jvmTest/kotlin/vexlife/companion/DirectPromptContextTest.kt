@@ -538,6 +538,131 @@ class DirectPromptContextTest {
     }
 
     @Test
+    fun fixedContextMeasuresCurrentTurnWithoutCreatingMemoryPromptBytesOrASecondReceipt() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-fixed-context-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val store =
+                DirectConversationStore(
+                    productHome,
+                )
+            val memory =
+                VexLifeMemoryContextFixture.current()
+
+            store.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef =
+                            "turn.self-development.fixed-context.001",
+                        requestMessageRef =
+                            "message.self-development.human.fixed-context.001",
+                        content =
+                            "Measure the fixed current-turn context before selecting Memory bytes.",
+                    )
+                val fixed =
+                    DirectPromptContext.prepareFixed(
+                        prior = null,
+                        currentRequest = request,
+                        memoryAvailabilityContext = memory,
+                        runtimeEvidence = runtimeEvidence(),
+                    )
+
+                assertEquals(
+                    request.eventRef,
+                    fixed.currentRequestEventRef,
+                )
+                assertEquals(
+                    memory.memoryContextRef,
+                    fixed.memoryAvailabilityContextRef,
+                )
+                assertNotNull(
+                    fixed.capabilityFrameRef,
+                )
+                assertTrue(
+                    fixed.prefixMessages.any {
+                        it.content.startsWith(
+                            "VEXLIFE_SELF_CAPABILITY_FRAME/v1\n",
+                        )
+                    },
+                )
+                assertTrue(
+                    fixed.prefixMessages.none {
+                        it.content.startsWith(
+                            "VEXLIFE_CURRENT_MEMORY_CONTEXT/v1\n",
+                        )
+                    },
+                )
+                assertEquals(
+                    listOf(
+                        request.content,
+                    ),
+                    fixed.suffixMessages.map {
+                        it.content
+                    },
+                )
+                assertEquals(
+                    (
+                        fixed.prefixMessages +
+                            fixed.suffixMessages
+                    )
+                        .sumOf {
+                            DirectPromptContext.estimatedMessageTokens(
+                                it.content,
+                            )
+                        },
+                    fixed.fixedInputTokenEstimate,
+                )
+                assertFalse(
+                    fixed.effectsPerformed,
+                )
+
+                val actual =
+                    DirectPromptContext.materialize(
+                        prior = null,
+                        currentRequest = request,
+                        memoryContext = memory,
+                        runtimeEvidence = runtimeEvidence(),
+                    )
+
+                assertEquals(
+                    fixed.capabilityFrameRef,
+                    actual.receipt.capabilityFrameRef,
+                )
+                assertEquals(
+                    fixed.capabilityFrameFingerprint,
+                    actual.receipt.capabilityFrameFingerprint,
+                )
+                assertTrue(
+                    actual.receipt.providerMaterializedInputTokenEstimate >
+                        fixed.fixedInputTokenEstimate,
+                )
+                assertTrue(
+                    actual.messages.any {
+                        it.content.startsWith(
+                            "VEXLIFE_CURRENT_MEMORY_CONTEXT/v1\n",
+                        )
+                    },
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun currentAttributedMemoryPrecedesConversationAndCurrentRequest() {
         val parent =
             Files.createTempDirectory(
