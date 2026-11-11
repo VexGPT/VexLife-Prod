@@ -1244,6 +1244,189 @@ class DirectPromptContextTest {
     }
 
     @Test
+    fun requestedHistoricalSourceMayDisplaceAnOversizedImmediatePriorPairWithoutTruncation() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-source-return-displaces-recent-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val store =
+                DirectConversationStore(
+                    productHome,
+                )
+
+            store.withWriterLease {
+                val oldRequest =
+                    beginRequest(
+                        turnRef =
+                            "turn.source-return.displace.old",
+                        requestMessageRef =
+                            "message.source-return.displace.human.old",
+                        content =
+                            "rare-copper-bird exact older source.",
+                    )
+                val oldResponse =
+                    appendResponse(
+                        request = oldRequest,
+                        responseMessageRef =
+                            "message.source-return.displace.companion.old",
+                        content =
+                            "I received the rare-copper-bird source.",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef =
+                            "observation.source-return.displace.old",
+                        invocationEvidenceRef =
+                            "evidence.source-return.displace.old",
+                    )
+                val oldContext =
+                    CanonicalLivedContextFixture.write(
+                        productHome = productHome,
+                        request = oldRequest,
+                        response = oldResponse,
+                    )
+                commitCompletedTurn(
+                    request = oldRequest,
+                    response = oldResponse,
+                    contextSha256 = oldContext.sha256,
+                )
+
+                val hugeRequest =
+                    beginRequest(
+                        turnRef =
+                            "turn.source-return.displace.huge",
+                        requestMessageRef =
+                            "message.source-return.displace.human.huge",
+                        content =
+                            "H".repeat(
+                                780_000,
+                            ),
+                    )
+                val hugeResponse =
+                    appendResponse(
+                        request = hugeRequest,
+                        responseMessageRef =
+                            "message.source-return.displace.companion.huge",
+                        content =
+                            "Huge prior response.",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef =
+                            "observation.source-return.displace.huge",
+                        invocationEvidenceRef =
+                            "evidence.source-return.displace.huge",
+                    )
+                val hugeContext =
+                    CanonicalLivedContextFixture.write(
+                        productHome = productHome,
+                        request = hugeRequest,
+                        response = hugeResponse,
+                    )
+                commitCompletedTurn(
+                    request = hugeRequest,
+                    response = hugeResponse,
+                    contextSha256 = hugeContext.sha256,
+                )
+
+                val prior =
+                    requireNotNull(
+                        immediatePriorCompletedTurn(),
+                    )
+                val current =
+                    beginRequest(
+                        turnRef =
+                            "turn.source-return.displace.current",
+                        requestMessageRef =
+                            "message.source-return.displace.human.current",
+                        content =
+                            "Return the rare-copper-bird source.",
+                    )
+                val discovery =
+                    DirectConversationSourceReturn.discover(
+                        conversationOwner = this,
+                        request =
+                            DirectConversationSourceReturn.Request(
+                                schemaVersion =
+                                    DirectConversationSourceReturn.RequestSchema,
+                                queryTerms =
+                                    listOf(
+                                        "rare-copper-bird",
+                                    ),
+                                speakerScope =
+                                    DirectConversationSourceReturn.AnySpeaker,
+                            ),
+                        excludedEventRefs =
+                            setOf(
+                                hugeRequest.eventRef,
+                                hugeResponse.eventRef,
+                            ),
+                    )
+                val materialized =
+                    DirectPromptContext.materializeContinuity(
+                        conversationOwner = this,
+                        prior = prior,
+                        currentRequest = current,
+                        sourceReturnDiscovery = discovery,
+                    )
+
+                assertEquals(
+                    "SOURCE_RETURN",
+                    materialized.receipt.contextMode,
+                )
+                assertEquals(
+                    DirectConversationSourceReturn.Returned,
+                    materialized.receipt.sourceReturnState,
+                )
+                assertEquals(
+                    listOf(
+                        oldRequest.eventRef,
+                        oldResponse.eventRef,
+                    ),
+                    materialized.receipt.sourceReturnSourceEventRefs,
+                )
+                assertTrue(
+                    materialized.receipt.selectedConversationEventRefs.isEmpty(),
+                )
+                assertTrue(
+                    materialized.messages.any {
+                        it.content.startsWith(
+                            DirectConversationSourceReturn.ContextHeader,
+                        ) &&
+                            it.content.contains(
+                                "rare-copper-bird",
+                            )
+                    },
+                )
+                assertFalse(
+                    materialized.messages.any {
+                        it.content.contains(
+                            hugeRequest.content,
+                        )
+                    },
+                )
+                assertEquals(
+                    current.content,
+                    materialized.messages.last()
+                        .content,
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun currentAttributedMemoryPrecedesConversationAndCurrentRequest() {
         val parent =
             Files.createTempDirectory(
