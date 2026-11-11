@@ -276,6 +276,15 @@ class DirectCompanionTurnTest {
                 4,
                 third.promptContextReceipt.selectedConversationEventRefs.size,
             )
+            assertEquals(
+                listOf(
+                    0L,
+                    1L,
+                    2L,
+                    3L,
+                ),
+                third.promptContextReceipt.selectedConversationEventSequences,
+            )
             assertTrue(
                 first.currentConversationHeadSha256 !=
                     second.currentConversationHeadSha256,
