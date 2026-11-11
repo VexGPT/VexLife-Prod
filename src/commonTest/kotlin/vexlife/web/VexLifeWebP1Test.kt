@@ -79,11 +79,19 @@ class VexLifeWebP1Test {
                         VexLifeWorkspaceBlueprint.Vision.ref
                 }
         assertTrue(
-            vision.interactions.isEmpty(),
+            VexWeb.Interaction.Activate in
+                vision.interactions,
+        )
+        assertTrue(
+            vision.binding is
+                VexWeb.Binding.Capability,
         )
         assertEquals(
-            VexWeb.Binding.None,
-            vision.binding,
+            VexLifeWebP1.Refs.VisionLookNowCapability,
+            (
+                vision.binding as
+                    VexWeb.Binding.Capability
+            ).capabilityRef,
         )
 
         val viewSwitch =
@@ -181,6 +189,11 @@ class VexLifeWebP1Test {
         assertTrue(
             artifacts.semanticManifest.contains(
                 "\"type\":\"CAPABILITY\",\"capabilityRef\":\"conversation.send\"",
+            ),
+        )
+        assertTrue(
+            artifacts.semanticManifest.contains(
+                "\"type\":\"CAPABILITY\",\"capabilityRef\":\"vision.look-now\"",
             ),
         )
     }
