@@ -529,6 +529,7 @@ class VexLifeWorkingCarryOwnerTest {
 
                 val committed =
                     owner.commitCompletedTurn(
+                        conversationOwner = this,
                         prepared = prepared,
                         completedHead = secondHead,
                     )
@@ -549,6 +550,7 @@ class VexLifeWorkingCarryOwnerTest {
 
                 val replay =
                     owner.commitCompletedTurn(
+                        conversationOwner = this,
                         prepared = prepared,
                         completedHead = secondHead,
                     )
@@ -650,6 +652,7 @@ class VexLifeWorkingCarryOwnerTest {
                     )
                 val releasedCurrent =
                     owner.commitCompletedTurn(
+                        conversationOwner = this,
                         prepared = releasePrepared,
                         completedHead = thirdHead,
                     )
@@ -719,6 +722,7 @@ class VexLifeWorkingCarryOwnerTest {
                 )
                 assertFailsWith<IllegalArgumentException> {
                     owner.commitCompletedTurn(
+                        conversationOwner = this,
                         prepared = failedPrepared,
                         completedHead = thirdHead,
                     )
