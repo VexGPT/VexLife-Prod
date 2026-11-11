@@ -179,9 +179,6 @@ object DirectWorkingCarryFormation {
                 invocationFingerprint = formationCore.invocationFingerprint,
                 providerOutputSha256 = formationCore.providerOutputSha256,
             )
-                .let(
-                    VexLifeWorkingCarryOwner::requireFormationBinding,
-                )
 
         return Formation(
             refreshInput = input,
