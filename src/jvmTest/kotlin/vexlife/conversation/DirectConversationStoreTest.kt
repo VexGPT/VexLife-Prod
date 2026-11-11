@@ -154,6 +154,160 @@ class DirectConversationStoreTest {
     }
 
     @Test
+    fun recentCompletedConversationWalksBackwardOnlyUntilTheBudgetBoundary() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-conversation-recent-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val store =
+                DirectConversationStore(
+                    productHome,
+                )
+
+            store.withWriterLease {
+                val olderRequest =
+                    beginRequest(
+                        turnRef = "turn.self-development.recent.001",
+                        requestMessageRef = "message.self-development.human.recent.001",
+                        content = "Older request",
+                    )
+                val olderResponse =
+                    appendResponse(
+                        request = olderRequest,
+                        responseMessageRef = "message.self-development.companion.recent.001",
+                        content = "Older response",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef = "observation.vexlife-prod.model-runtime.recent.001",
+                        invocationEvidenceRef = "evidence.vexlife-prod.model-runtime-invocation.recent.001",
+                    )
+                val olderContext =
+                    CanonicalLivedContextFixture.write(
+                        productHome = productHome,
+                        request = olderRequest,
+                        response = olderResponse,
+                    )
+                commitCompletedTurn(
+                    request = olderRequest,
+                    response = olderResponse,
+                    contextSha256 = olderContext.sha256,
+                )
+
+                val newerRequest =
+                    beginRequest(
+                        turnRef = "turn.self-development.recent.002",
+                        requestMessageRef = "message.self-development.human.recent.002",
+                        content = "Newer request",
+                    )
+                val newerResponse =
+                    appendResponse(
+                        request = newerRequest,
+                        responseMessageRef = "message.self-development.companion.recent.002",
+                        content = "Newer response",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef = "observation.vexlife-prod.model-runtime.recent.002",
+                        invocationEvidenceRef = "evidence.vexlife-prod.model-runtime-invocation.recent.002",
+                    )
+                val newerContext =
+                    CanonicalLivedContextFixture.write(
+                        productHome = productHome,
+                        request = newerRequest,
+                        response = newerResponse,
+                    )
+                commitCompletedTurn(
+                    request = newerRequest,
+                    response = newerResponse,
+                    contextSha256 = newerContext.sha256,
+                )
+
+                val bounded =
+                    recentCompletedConversation(
+                        availableTokens = 50,
+                        estimatedMessageTokens = {
+                            content ->
+                            if (
+                                content.startsWith(
+                                    "Older",
+                                )
+                            ) {
+                                100
+                            } else {
+                                10
+                            }
+                        },
+                    )
+
+                assertEquals(
+                    listOf(
+                        "Newer request",
+                        "Newer response",
+                    ),
+                    bounded.events.map {
+                        it.content
+                    },
+                )
+                assertEquals(
+                    4,
+                    bounded.exactEventFileReadCount,
+                )
+                assertEquals(
+                    2,
+                    bounded.exactHeadFileReadCount,
+                )
+                assertTrue(
+                    !bounded.wholeHistoryEventEnumerationPerformed,
+                )
+
+                val complete =
+                    recentCompletedConversation(
+                        availableTokens = 1_000,
+                        estimatedMessageTokens = {
+                            10
+                        },
+                    )
+
+                assertEquals(
+                    listOf(
+                        "Older request",
+                        "Older response",
+                        "Newer request",
+                        "Newer response",
+                    ),
+                    complete.events.map {
+                        it.content
+                    },
+                )
+                assertEquals(
+                    4,
+                    complete.exactEventFileReadCount,
+                )
+                assertEquals(
+                    2,
+                    complete.exactHeadFileReadCount,
+                )
+                assertTrue(
+                    complete.wholeHistoryEventEnumerationPerformed,
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun offHeadFailedRequestRemainsDurableWhileNewTurnMayBranchFromLastValidHead() {
         val parent =
             Files.createTempDirectory(
