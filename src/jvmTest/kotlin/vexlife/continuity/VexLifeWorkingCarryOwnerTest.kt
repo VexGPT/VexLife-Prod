@@ -832,6 +832,44 @@ class VexLifeWorkingCarryOwnerTest {
                     replay.current,
                 )
 
+                val mismatched =
+                    refresh.copy(
+                        handoffEvents =
+                            listOf(
+                                source(
+                                    request,
+                                ),
+                                source(
+                                    response,
+                                )
+                                    .copy(
+                                        source =
+                                            source(
+                                                response,
+                                            )
+                                                .source
+                                                .copy(
+                                                    eventHash =
+                                                        "0".repeat(
+                                                            64,
+                                                        ),
+                                                ),
+                                    ),
+                            ),
+                    )
+                assertFailsWith<IllegalArgumentException> {
+                    owner.commitCompletedRolloverHandoff(
+                        completedHead = completedHead,
+                        refreshInput = mismatched,
+                        carry = output,
+                        formationBinding = binding,
+                    )
+                }
+                assertEquals(
+                    committed.current,
+                    owner.readCurrent(),
+                )
+
                 val laterRequest =
                     beginRequest(
                         turnRef = "turn.working-carry.rollover.002",
@@ -885,43 +923,6 @@ class VexLifeWorkingCarryOwnerTest {
                     owner.readCurrent(),
                 )
 
-                val mismatched =
-                    refresh.copy(
-                        handoffEvents =
-                            listOf(
-                                source(
-                                    request,
-                                ),
-                                source(
-                                    response,
-                                )
-                                    .copy(
-                                        source =
-                                            source(
-                                                response,
-                                            )
-                                                .source
-                                                .copy(
-                                                    eventHash =
-                                                        "0".repeat(
-                                                            64,
-                                                        ),
-                                                ),
-                                    ),
-                            ),
-                    )
-                assertFailsWith<IllegalArgumentException> {
-                    owner.commitCompletedRolloverHandoff(
-                        completedHead = completedHead,
-                        refreshInput = mismatched,
-                        carry = output,
-                        formationBinding = binding,
-                    )
-                }
-                assertEquals(
-                    committed.current,
-                    owner.readCurrent(),
-                )
             }
         } finally {
             home.parent
