@@ -36,8 +36,11 @@ object DirectPromptContext {
     const val ReceiptSchemaV5 =
         "vexlife-prod.direct-prompt-materialization-receipt/v5"
 
-    const val ReceiptSchema =
+    const val ReceiptSchemaV6 =
         "vexlife-prod.direct-prompt-materialization-receipt/v6"
+
+    const val ReceiptSchema =
+        "vexlife-prod.direct-prompt-materialization-receipt/v7"
 
     const val InputTokenBudget =
         VexLifeMemoryContract.ContextInputTokenBudget
@@ -137,6 +140,41 @@ object DirectPromptContext {
     )
 
     @Serializable
+    @ConsistentCopyVisibility
+    data class AttentionPlanSnapshot internal constructor(
+        val inputTokenBudget: Int,
+        val fixedCurrentTurnTokens: Int,
+        val conversationSelectionBudget: Int,
+        val selectedExactConversationTokens: Int,
+        val carryRequested: Boolean,
+        val carryTokenAllowance: Int,
+        val carryEstimatedSystemMessageTokens: Int,
+        val carryIncluded: Boolean,
+        val carrySelectedTokens: Int,
+        val maximumMemoryTokens: Int,
+        val memoryTokenCap: Int,
+        val unallocatedAfterMemoryCap: Int,
+        val effectsPerformed: Boolean,
+    )
+
+    @Serializable
+    @ConsistentCopyVisibility
+    data class WorkingCarrySnapshot internal constructor(
+        val state: String,
+        val sourceClass: String?,
+        val sourceRef: String?,
+        val sourceFingerprint: String?,
+        val draftSha256: String?,
+        val carryDisposition: String?,
+        val included: Boolean,
+        val availableTokens: Int,
+        val estimatedSystemMessageTokens: Int,
+        val systemMessageSha256: String?,
+        val effectAuthorityGranted: Boolean,
+        val effectsPerformed: Boolean,
+    )
+
+    @Serializable
     private data class ReceiptCore(
         val schemaVersion: String,
         val contextMode: String,
@@ -186,6 +224,10 @@ object DirectPromptContext {
         val capabilityFrameSystemMessageSha256: String?,
         val capabilityFrameEstimatedSystemMessageTokens: Int,
         val capabilityFrameSnapshot: CapabilityFrameSnapshot?,
+        val memoryAvailabilityContextRef: String?,
+        val memoryAvailabilityContextFingerprint: String?,
+        val attentionPlanSnapshot: AttentionPlanSnapshot?,
+        val workingCarrySnapshot: WorkingCarrySnapshot?,
         val trainingSelectionPerformed: Boolean,
         val effectsPerformed: Boolean,
     )
@@ -311,6 +353,26 @@ object DirectPromptContext {
             EncodeDefault.Mode.NEVER,
         )
         val capabilityFrameSnapshot: CapabilityFrameSnapshot? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val memoryAvailabilityContextRef: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val memoryAvailabilityContextFingerprint: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val attentionPlanSnapshot: AttentionPlanSnapshot? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val workingCarrySnapshot: WorkingCarrySnapshot? =
             null,
     )
 
