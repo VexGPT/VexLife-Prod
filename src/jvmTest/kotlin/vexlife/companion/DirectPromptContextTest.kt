@@ -373,6 +373,90 @@ class DirectPromptContextTest {
     }
 
     @Test
+    fun historicalV5ReceiptRoundTripsBeforeRecentConversationModeWasAdded() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-v5-compat-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val store =
+                DirectConversationStore(
+                    productHome,
+                )
+
+            store.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef =
+                            "turn.self-development.v5-compat",
+                        requestMessageRef =
+                            "message.self-development.human.v5-compat",
+                        content =
+                            "Historical v5 receipt compatibility",
+                    )
+                val receipt =
+                    DirectPromptContext.materialize(
+                        prior = null,
+                        currentRequest = request,
+                        runtimeEvidence = runtimeEvidence(),
+                    )
+                        .receipt
+                val historical =
+                    JsonObject(
+                        VexContractJson.Strict
+                            .encodeToJsonElement(
+                                receipt,
+                            )
+                            .jsonObject
+                            .toMutableMap()
+                            .also {
+                                it[
+                                    "schemaVersion"
+                                ] =
+                                    JsonPrimitive(
+                                        DirectPromptContext.ReceiptSchemaV5,
+                                    )
+                            },
+                    )
+                val decoded =
+                    VexContractJson.decode<DirectPromptContext.Receipt>(
+                        historical.toString(),
+                    )
+
+                assertEquals(
+                    DirectPromptContext.ReceiptSchemaV5,
+                    decoded.schemaVersion,
+                )
+                assertEquals(
+                    "FIRST_TURN",
+                    decoded.contextMode,
+                )
+                assertEquals(
+                    VexContractJson.canonicalEncodeElement(
+                        historical,
+                    ),
+                    VexContractJson.canonicalEncode(
+                        decoded,
+                    ),
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun firstTurnMaterializesOnlyTheCurrentDurableRequestWhenMemoryIsAbsent() {
         val parent =
             Files.createTempDirectory(
