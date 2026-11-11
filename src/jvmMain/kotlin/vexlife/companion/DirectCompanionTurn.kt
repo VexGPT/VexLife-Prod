@@ -745,6 +745,180 @@ object DirectCompanionTurn {
         }
     }
 
+    private fun materializeContinuityPrompt(
+        conversationOwner: DirectConversationStore.Locked,
+        productHome: Path,
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
+        memoryAvailability: VexLifeMemoryContract.Context,
+        memoryContextAtCap: (
+            productHome: Path,
+            memoryTokenCap: Int,
+        ) -> VexLifeMemoryContract.Context,
+        workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        browserContext: DirectPromptContext.BrowserContext?,
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        sourceReturnProtocolEnabled: Boolean,
+        sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
+            null,
+    ): ContinuityPromptSelection {
+        var selectedMemoryAtCap: VexLifeMemoryContract.Context? =
+            null
+        val materialization =
+            DirectPromptContext.materializeContinuity(
+                conversationOwner = conversationOwner,
+                prior = prior,
+                currentRequest = currentRequest,
+                memoryAvailabilityContext = memoryAvailability,
+                memoryContextAtCap = {
+                    memoryTokenCap ->
+                    memoryContextAtCap(
+                        productHome,
+                        memoryTokenCap,
+                    )
+                        .also {
+                            selectedMemoryAtCap =
+                                it
+                        }
+                },
+                workingContinuityContext = workingContinuityContext,
+                browserContext = browserContext,
+                runtimeEvidence = runtimeEvidence,
+                sourceReturnProtocolEnabled =
+                    sourceReturnProtocolEnabled,
+                sourceReturnDiscovery = sourceReturnDiscovery,
+            )
+        val selectedMemory =
+            selectedMemoryAtCap
+                ?: memoryAvailability
+        require(
+            materialization.receipt.memoryContextRef ==
+                selectedMemory.memoryContextRef &&
+                materialization.receipt.memoryContextFingerprint ==
+                selectedMemory.semanticFingerprint,
+        ) {
+            "direct Companion continuity prompt does not bind the exact selected Memory projection"
+        }
+
+        return ContinuityPromptSelection(
+            materialization = materialization,
+            memoryContext = selectedMemory,
+        )
+    }
+
+    private fun reverifyContinuityPrompt(
+        selection: ContinuityPromptSelection,
+        conversationOwner: DirectConversationStore.Locked,
+        productHome: Path,
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
+        memoryAvailability: VexLifeMemoryContract.Context,
+        memoryContextAtCap: (
+            productHome: Path,
+            memoryTokenCap: Int,
+        ) -> VexLifeMemoryContract.Context,
+        workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        browserContext: DirectPromptContext.BrowserContext?,
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        sourceReturnProtocolEnabled: Boolean,
+        sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
+            null,
+    ) {
+        DirectPromptContext.reverifyContinuity(
+            materialization =
+                selection.materialization,
+            conversationOwner = conversationOwner,
+            prior = prior,
+            currentRequest = currentRequest,
+            memoryAvailabilityContext = memoryAvailability,
+            memoryContextAtCap = {
+                memoryTokenCap ->
+                memoryContextAtCap(
+                    productHome,
+                    memoryTokenCap,
+                )
+            },
+            workingContinuityContext = workingContinuityContext,
+            browserContext = browserContext,
+            runtimeEvidence = runtimeEvidence,
+            sourceReturnProtocolEnabled =
+                sourceReturnProtocolEnabled,
+            sourceReturnDiscovery = sourceReturnDiscovery,
+        )
+    }
+
+    private fun invokeProviderStage(
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        messages: List<CompanionProviderMessage>,
+        hooks: Hooks,
+        sourceReturnRequestAllowed: Boolean,
+    ): ProviderStage {
+        val progressGate =
+            SourceReturnProgressGate(
+                hooks.progressObserver,
+            )
+        val inference =
+            DirectCompanionConnection.invoke(
+                runtime = runtimeEvidence,
+                messages = messages,
+                transport = hooks.transport,
+                progressObserver =
+                    progressGate.connectionObserver(),
+                now = hooks.now,
+            )
+        val controlLike =
+            progressGate.finish(
+                inference.content,
+            )
+        val sourceReturnRequest =
+            DirectConversationSourceReturn.parseRequestOrNull(
+                inference.content,
+            )
+        require(
+            !controlLike ||
+                sourceReturnRequest !=
+                null,
+        ) {
+            "provider output resembles an incomplete Conversation source-return control request"
+        }
+        if (
+            !sourceReturnRequestAllowed &&
+            sourceReturnRequest !=
+                null
+        ) {
+            throw RepeatedSourceReturnRequestException()
+        }
+
+        return ProviderStage(
+            inference = inference,
+            sourceReturnRequest = sourceReturnRequest,
+        )
+    }
+
+    private fun projectProviderProgress(
+        observer: ProgressObserver?,
+        progress: DirectCompanionConnection.Progress,
+    ) {
+        emitProgress(
+            observer,
+            Progress(
+                phase =
+                    when (
+                        progress.kind
+                    ) {
+                        DirectCompanionConnection.ProgressKind.Reasoning ->
+                            ProgressPhase.Reasoning
+
+                        DirectCompanionConnection.ProgressKind.Content ->
+                            ProgressPhase.Responding
+                    },
+                delta = progress.delta,
+                accumulatedCharacters =
+                    progress.accumulatedCharacters,
+            ),
+        )
+    }
+
     private fun emitProgress(
         observer: ProgressObserver?,
         progress: Progress,
@@ -1235,6 +1409,9 @@ object DirectCompanionTurn {
             is DirectCompanionConnection.ConnectionException ->
                 "CONNECTION_" +
                     error.code.name
+
+            is RepeatedSourceReturnRequestException ->
+                "SOURCE_RETURN_RECURSION_NOT_ADMITTED"
 
             is IllegalArgumentException ->
                 "ADMISSION_FAILED"
