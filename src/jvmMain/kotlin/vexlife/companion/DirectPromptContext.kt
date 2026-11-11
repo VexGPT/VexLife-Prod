@@ -1042,7 +1042,12 @@ object DirectPromptContext {
                             VexLifeCapabilityAtlas.ResourceFact(
                                 resourceRef = "resource.vexlife-prod.memory.current-context",
                                 state =
-                                    if (memoryContext?.included == true) {
+                                    if (
+                                        memoryContext?.projectionState ==
+                                            "CURRENT" &&
+                                        memoryContext.projectionCurrentness ==
+                                            "CURRENT"
+                                    ) {
                                         VexLifeCapabilityAtlas.ResourceState.AVAILABLE
                                     } else {
                                         VexLifeCapabilityAtlas.ResourceState.UNAVAILABLE
