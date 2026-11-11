@@ -106,7 +106,7 @@ class VexLifeProdVisionRuntimeTest {
                                 exitCode = 0,
                                 timedOut = false,
                                 stdout =
-                                    VexContractJson.encode(
+                                    VexContractJson.compactEncode(
                                         held(
                                             requestRef,
                                         ),
@@ -156,7 +156,7 @@ class VexLifeProdVisionRuntimeTest {
         val requestRef =
             "request.vexlife-prod.vision.test.002"
         val valid =
-            VexContractJson.encode(
+            VexContractJson.compactEncode(
                 held(
                     requestRef,
                 ),
@@ -199,7 +199,7 @@ class VexLifeProdVisionRuntimeTest {
                                 exitCode = 0,
                                 timedOut = false,
                                 stdout =
-                                    VexContractJson.encode(
+                                    VexContractJson.compactEncode(
                                         held(
                                             "request.vexlife-prod.vision.other",
                                         ),
