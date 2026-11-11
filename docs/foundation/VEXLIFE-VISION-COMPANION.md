@@ -12,9 +12,9 @@ Current product decision:
 
 ~~~text
 accepted VexLife-Prod main
-  = 9225477f217da1e86af8d249eab980875f0dc774
-  = PR #53 presentation + PR #55 live Companion/scroll relationship
-  = accepted-main Product source/PID promotion A023 PASS
+  = 9d17afee048438d2132b7d874b6139b63c8dbec1
+  = PR #77 accepted local-qualified Vision private-image carriage
+  = PR #84 explicit local user-selected Vision != distribution-gate rule
 
 AND
 
@@ -30,8 +30,9 @@ ACCEPTED_COMPANION_MAIN != VISION_RUNTIME_BRIDGE
 ~~~
 
 The current VexLife-Prod Vision slice therefore composes over the accepted lived Companion body while
-remaining a truthful semantic/control surface. The ordinary-product Vision runtime bridge is still
-separately source-placed.
+remaining a truthful semantic/control surface. The SDK runtime artifact and Product private-image
+carriage are now accepted. The remaining Product gap is the ordinary local-service bridge that makes
+that already-carried runtime reachable from the existing Vision relationship.
 
 ## Current semantic owner
 
@@ -126,11 +127,27 @@ outside result once a product-carriage contract exists.
 
 ## Current Product realization gap
 
-The accepted SDK surfaces are source/library owners plus the native one-shot helper. VexLife-Prod
-does not yet have one ordinary-product consumable artifact/entrypoint that can perform:
+The previously missing runtime/artifact/carriage chain is now accepted:
 
 ~~~text
-RequestSnapshot
+accepted Process Factory Product runtime
+-> accepted darwin-arm64 local-qualified artifact
+-> accepted VexLife-Prod private-image carriage
+~~~
+
+Accepted Product carriage:
+
+~~~text
+github.pull.vexlife-prod.77
+~~~
+
+The remaining gap is now narrower and Product-owned:
+
+~~~text
+VexLifeVisionFamily.LookNow
+-> RequestSnapshot
+-> Product local-service bridge                 MISSING
+-> carried vision-runtime/bin/vexlife-vision-runtime
 -> current SDK/Safety execution custody
 -> OS-owned system picker
 -> exact capture receipt
@@ -139,23 +156,24 @@ RequestSnapshot
 -> bounded Product result
 ~~~
 
-without either requiring a developer Vextreme-SDK checkout or reproducing SDK owner algorithms in
-Kotlin.
+The Product bridge must consume the carried runtime rather than reproduce SDK owner algorithms in
+Kotlin. The service process may consume only a Vision runtime executable already verified by the
+source-bound private-image observer.
 
-That dependency is source-placed at the existing Process Factory owner:
-
-~~~text
-github.issue.vextreme-sdk.241.comment.6742540586
-~~~
-
-Product source placement is recorded on:
+Permanent:
 
 ~~~text
-github.pull.vexlife-prod.54.comment.6742546875
+PRIVATE_IMAGE_CARRIAGE_ACCEPTED
+!= PRODUCT_SERVICE_ROUTE_REACHABLE
+
+PRODUCT_SERVICE_BRIDGE
+!= SECOND VISION RUNTIME
+!= SECOND PICKER OWNER
+!= DISTRIBUTION WORK
 ~~~
 
-Until that exact artifact/carriage contract exists, do not widen this Product source lane into
-service/process/packaging code merely to invent an adapter against an undefined dependency.
+Do not reopen artifact formation, Developer ID, notarization, App Store, GitHub Release or a developer
+SDK checkout as prerequisites for this local Product bridge.
 
 ## Local user-selected Vision is not a distribution gate
 
