@@ -2165,6 +2165,92 @@ class DirectPromptContextTest {
                     workingContinuityContext =
                         successor,
                 )
+
+                val fixed =
+                    DirectPromptContext.prepareFixed(
+                        prior = prior,
+                        currentRequest = current,
+                        memoryAvailabilityContext = memory,
+                        workingContinuityContext = successor,
+                    )
+                val recent =
+                    recentCompletedConversation(
+                        availableTokens =
+                            DirectPromptContext.InputTokenBudget -
+                                fixed.fixedInputTokenEstimate,
+                        estimatedMessageTokens =
+                            DirectPromptContext::estimatedMessageTokens,
+                    )
+                val selectedTokens =
+                    recent.events.sumOf {
+                        DirectPromptContext.estimatedMessageTokens(
+                            it.content,
+                        )
+                    }
+                val plan =
+                    DirectPromptAttentionPlan.form(
+                        DirectPromptAttentionPlan.Input(
+                            fixedCurrentTurnTokens =
+                                fixed.fixedInputTokenEstimate,
+                            selectedExactConversationTokens =
+                                selectedTokens,
+                            carryRequested = false,
+                            carryEstimatedSystemMessageTokens = 0,
+                        ),
+                    )
+                assertEquals(
+                    memory.memoryTokenCap,
+                    plan.memoryTokenCap,
+                )
+
+                val planned =
+                    DirectPromptContext.materializePlanned(
+                        conversationOwner = this,
+                        prior = prior,
+                        currentRequest = current,
+                        memoryContext = memory,
+                        memoryAvailabilityContext = memory,
+                        attentionPlan = plan,
+                        workingContinuityContext = successor,
+                    )
+
+                assertEquals(
+                    "WORKING_CHECKPOINT_SUCCESSOR",
+                    planned.receipt.contextMode,
+                )
+                assertEquals(
+                    listOf(
+                        prior.requestEvent.eventRef,
+                        prior.responseEvent.eventRef,
+                    ),
+                    planned.receipt.selectedConversationEventRefs,
+                )
+                assertTrue(
+                    planned.messages.any {
+                        it.content ==
+                            "Prior request that must not replay"
+                    },
+                )
+                assertTrue(
+                    planned.messages.any {
+                        it.content ==
+                            "Prior response that must not replay"
+                    },
+                )
+                assertTrue(
+                    planned.receipt.workingContinuityIncluded,
+                )
+
+                DirectPromptContext.reverifyPlanned(
+                    materialization = planned,
+                    conversationOwner = this,
+                    prior = prior,
+                    currentRequest = current,
+                    memoryContext = memory,
+                    memoryAvailabilityContext = memory,
+                    attentionPlan = plan,
+                    workingContinuityContext = successor,
+                )
             }
         } finally {
             parent
