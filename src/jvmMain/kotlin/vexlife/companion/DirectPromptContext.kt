@@ -1105,8 +1105,6 @@ object DirectPromptContext {
         val recentConversation =
             if (
                 prior ==
-                    null ||
-                fixed.workingContinuity !=
                     null
             ) {
                 null
@@ -1121,8 +1119,6 @@ object DirectPromptContext {
         val selected =
             if (
                 prior ==
-                    null ||
-                fixed.workingContinuity !=
                     null
             ) {
                 emptyList()
