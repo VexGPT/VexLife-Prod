@@ -1616,8 +1616,12 @@ class DirectConversationStore(
             mutableSetOf<String>()
         var remaining =
             availableTokens
-        var head =
+        var cursorSha =
+            currentHead.conversationHeadSha256
+        var expectedCurrentHead: VexLifeConversationContract.Head? =
             currentHead
+        var newerHead: VexLifeConversationContract.Head? =
+            null
         var eventReads =
             0
         var headReads =
@@ -1630,19 +1634,19 @@ class DirectConversationStore(
         ) {
             require(
                 visitedHeads.add(
-                    head.conversationHeadSha256,
+                    cursorSha,
                 ),
             ) {
                 "recent completed Conversation head lineage contains a cycle"
             }
 
-            val immutable =
+            val head =
                 requireNotNull(
                     VexDurableContractFile.read<VexLifeConversationContract.Head>(
                         ownedRoot = productHome,
                         path =
                             immutableHeadPath(
-                                head.conversationHeadSha256,
+                                cursorSha,
                             ),
                     ),
                 ) {
@@ -1653,12 +1657,41 @@ class DirectConversationStore(
                     )
             headReads +=
                 1
-            require(
-                immutable ==
-                    head,
-            ) {
-                "recent completed Conversation head differs from its immutable receipt"
-            }
+
+            expectedCurrentHead
+                ?.let {
+                    expected ->
+                    require(
+                        head ==
+                            expected,
+                    ) {
+                        "recent completed Conversation current head differs from its immutable receipt"
+                    }
+                    expectedCurrentHead =
+                        null
+                }
+
+            newerHead
+                ?.let {
+                    newer ->
+                    require(
+                        newer.priorConversationHeadSha256 ==
+                            head.conversationHeadSha256 &&
+                            head.sequence ==
+                            newer.sequence -
+                            2 &&
+                            head.homeRef ==
+                            newer.homeRef &&
+                            head.deviceRef ==
+                            newer.deviceRef &&
+                            head.companionLineageRef ==
+                            newer.companionLineageRef &&
+                            head.threadRef ==
+                            newer.threadRef,
+                    ) {
+                        "recent completed Conversation prior head does not continue the same canonical lineage"
+                    }
+                }
 
             val response =
                 requireNotNull(
@@ -1745,41 +1778,10 @@ class DirectConversationStore(
                 break
             }
 
-            val priorHead =
-                requireNotNull(
-                    VexDurableContractFile.read<VexLifeConversationContract.Head>(
-                        ownedRoot = productHome,
-                        path =
-                            immutableHeadPath(
-                                priorHeadSha,
-                            ),
-                    ),
-                ) {
-                    "recent completed Conversation prior immutable head is missing"
-                }
-                    .also(
-                        ::validateCanonicalHeadRecord,
-                    )
-            require(
-                priorHead.conversationHeadSha256 ==
-                    priorHeadSha &&
-                    priorHead.sequence ==
-                    head.sequence -
-                    2 &&
-                    priorHead.homeRef ==
-                    head.homeRef &&
-                    priorHead.deviceRef ==
-                    head.deviceRef &&
-                    priorHead.companionLineageRef ==
-                    head.companionLineageRef &&
-                    priorHead.threadRef ==
-                    head.threadRef,
-            ) {
-                "recent completed Conversation prior head does not continue the same canonical lineage"
-            }
-
-            head =
-                priorHead
+            newerHead =
+                head
+            cursorSha =
+                priorHeadSha
         }
 
         return RecentCompletedConversation(
