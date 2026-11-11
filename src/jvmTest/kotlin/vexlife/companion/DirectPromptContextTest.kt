@@ -803,6 +803,137 @@ class DirectPromptContextTest {
     }
 
     @Test
+    fun recentConversationTailStopsBeforeAnOlderPairThatDoesNotFit() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-recent-tail-budget-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val store =
+                DirectConversationStore(
+                    productHome,
+                )
+
+            store.withWriterLease {
+                val first =
+                    beginRequest(
+                        turnRef = "turn.self-development.large.001",
+                        requestMessageRef = "message.self-development.human.large.001",
+                        content = "A".repeat(
+                            800_000,
+                        ),
+                    )
+                val firstResponse =
+                    appendResponse(
+                        request = first,
+                        responseMessageRef = "message.self-development.companion.large.001",
+                        content = "Large-pair response",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef = "observation.vexlife-prod.model-runtime.large.001",
+                        invocationEvidenceRef = "evidence.vexlife-prod.model-runtime-invocation.large.001",
+                    )
+                val firstContext =
+                    CanonicalLivedContextFixture.write(
+                        productHome = productHome,
+                        request = first,
+                        response = firstResponse,
+                    )
+                commitCompletedTurn(
+                    request = first,
+                    response = firstResponse,
+                    contextSha256 = firstContext.sha256,
+                )
+
+                val second =
+                    beginRequest(
+                        turnRef = "turn.self-development.large.002",
+                        requestMessageRef = "message.self-development.human.large.002",
+                        content = "Second request",
+                    )
+                val secondResponse =
+                    appendResponse(
+                        request = second,
+                        responseMessageRef = "message.self-development.companion.large.002",
+                        content = "Second response",
+                        model = "default_model",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef = "observation.vexlife-prod.model-runtime.large.002",
+                        invocationEvidenceRef = "evidence.vexlife-prod.model-runtime-invocation.large.002",
+                    )
+                val secondContext =
+                    CanonicalLivedContextFixture.write(
+                        productHome = productHome,
+                        request = second,
+                        response = secondResponse,
+                    )
+                commitCompletedTurn(
+                    request = second,
+                    response = secondResponse,
+                    contextSha256 = secondContext.sha256,
+                )
+            }
+
+            store.withWriterLease {
+                val history =
+                    current()
+                        .canonicalEvents
+                val prior =
+                    requireNotNull(
+                        immediatePriorCompletedTurn(),
+                    )
+                val third =
+                    beginRequest(
+                        turnRef = "turn.self-development.large.003",
+                        requestMessageRef = "message.self-development.human.large.003",
+                        content = "Third request",
+                    )
+                val materialized =
+                    DirectPromptContext.materialize(
+                        prior = prior,
+                        recentConversationEvents = history,
+                        currentRequest = third,
+                    )
+
+                assertEquals(
+                    listOf(
+                        "Second request",
+                        "Second response",
+                        "Third request",
+                    ),
+                    materialized.messages.map {
+                        it.content
+                    },
+                )
+                assertEquals(
+                    "IMMEDIATE_PRIOR_COMPLETED_TURN",
+                    materialized.receipt.contextMode,
+                )
+                assertEquals(
+                    2,
+                    materialized.receipt.selectedConversationEventRefs.size,
+                )
+                assertFalse(
+                    materialized.receipt.wholeHistoryEventEnumerationPerformed,
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun workingCheckpointSuccessorUsesMemoryWorkingSetAndCurrentRequestWithoutPriorPairReplay() {
         val parent =
             Files.createTempDirectory(
