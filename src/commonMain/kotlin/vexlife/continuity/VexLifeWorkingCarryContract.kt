@@ -278,9 +278,12 @@ object VexLifeWorkingCarryContract {
                     current,
                 )
         requireOneSourceGeneration(
-            all.map(
-                SourceEvent::source,
-            ),
+            value.previousCarry
+                ?.sourceBindings
+                .orEmpty() +
+                all.map(
+                    SourceEvent::source,
+                ),
             "working carry refresh source",
         )
         require(
