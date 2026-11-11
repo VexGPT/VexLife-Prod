@@ -17,10 +17,12 @@ import vexlife.model.heretic.HereticModelConfiguration
  * bounded recent verbatim window. Rollover-handoff formation happens after an exact completed turn
  * whose raw Conversation will be suppressed by the successor prompt.
  *
- * Neither path is a human-facing Companion answer. Raw Conversation in the refresh input is local
- * prompt material only. The model chooses only disposition, self-relative carry text/kind, and
- * eligible source event refs; Product code reconstructs the exact source bindings and authority-false
- * Draft.
+ * Neither path is a human-facing Companion answer. Gradual formation sends raw newly-leaving source
+ * and the current request, but only exact source bindings for Conversation that remains directly
+ * present; rollover formation sends the exact handoff source that will all leave direct presence.
+ *
+ * The model chooses only disposition, self-relative carry text/kind, and eligible source event refs;
+ * Product code reconstructs the exact source bindings and authority-false Draft.
  */
 object DirectWorkingCarryFormation {
     private const val SystemHeader =
@@ -41,6 +43,19 @@ object DirectWorkingCarryFormation {
         val disposition: String,
         val carryItems: List<ModelCarryItem>,
         val releaseReason: String?,
+    )
+
+    @Serializable
+    private data class ProviderRefreshInput(
+        val schemaVersion: String,
+        val perspective: String,
+        val companionLineageRef: String,
+        val threadRef: String,
+        val previousCarry: VexLifeWorkingCarryContract.Draft?,
+        val newlyLeavingEvents: List<VexLifeWorkingCarryContract.SourceEvent>,
+        val retainedDirectSourceBindings: List<VexLifeWorkingCarryContract.SourceBinding>,
+        val currentRequest: VexLifeWorkingCarryContract.SourceEvent,
+        val carryTokenCap: Int,
     )
 
     @Serializable
@@ -118,6 +133,22 @@ object DirectWorkingCarryFormation {
             eligibleSources(
                 input,
             )
+        val providerInput =
+            ProviderRefreshInput(
+                schemaVersion =
+                    "vexlife-prod.working-carry-provider-refresh-input/v1",
+                perspective = input.perspective,
+                companionLineageRef = input.companionLineageRef,
+                threadRef = input.threadRef,
+                previousCarry = input.previousCarry,
+                newlyLeavingEvents = input.newlyLeavingEvents,
+                retainedDirectSourceBindings =
+                    input.retainedDirectEvents.map {
+                        it.source
+                    },
+                currentRequest = input.currentRequest,
+                carryTokenCap = input.carryTokenCap,
+            )
         val messages =
             listOf(
                 CompanionProviderMessage(
@@ -140,7 +171,7 @@ object DirectWorkingCarryFormation {
                         SystemHeader +
                             "_INPUT\n" +
                             VexContractJson.compactEncode(
-                                input,
+                                providerInput,
                             ),
                 ),
             )
@@ -717,7 +748,13 @@ object DirectWorkingCarryFormation {
                 "Ask only: from what is leaving direct presence, what still changes how I should be present in this Conversation?",
             )
             appendLine(
-                "Use retainedDirectEvents and currentRequest only to judge what is still alive. They are not eligible carry source until they themselves leave direct presence.",
+                "Use newlyLeavingEvents, previousCarry, and currentRequest to judge what is still alive.",
+            )
+            appendLine(
+                "retainedDirectSourceBindings identify exact Conversation source that remains directly present. Their raw content is intentionally not repeated here; do not infer or invent content behind those bindings.",
+            )
+            appendLine(
+                "Retained bindings and currentRequest are not eligible carry source until they themselves leave direct presence.",
             )
             appendLine(
                 "Do not profile the human, create biography, promote Memory, create agreement, or preserve something merely because it is notable.",
