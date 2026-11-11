@@ -95,8 +95,22 @@ object DirectWorkingCarryPromptContext {
                 ),
             )
         require(
-            formation.binding.draftSha256 ==
+            formation.binding.refreshInputSha256 ==
+                sha256(
+                    VexContractJson.canonicalEncode(
+                        formation.refreshInput,
+                    ),
+                ) &&
+                formation.binding.draftSha256 ==
                 draftSha &&
+                formation.binding.runtimeObservationRef ==
+                formation.runtimeObservation.observationRef &&
+                formation.binding.runtimeObservationFingerprint ==
+                formation.runtimeObservation.semanticFingerprint &&
+                formation.binding.invocationRef ==
+                formation.invocationEvidence.invocationRef &&
+                formation.binding.invocationFingerprint ==
+                formation.invocationEvidence.semanticFingerprint &&
                 formation.binding.providerOutputSha256 ==
                 formation.providerOutputSha256,
         ) {
