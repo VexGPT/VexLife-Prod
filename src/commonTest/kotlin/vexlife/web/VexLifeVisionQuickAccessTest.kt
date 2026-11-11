@@ -27,7 +27,22 @@ class VexLifeVisionQuickAccessTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "Vision · Held — Look Now isn't connected to the macOS picker yet.",
+                "action.key === 'vision'",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "void lookNow();",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "Vision · Ready — Look Now",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "Vision · Held — the local Product route is not reachable.",
             ),
         )
     }
