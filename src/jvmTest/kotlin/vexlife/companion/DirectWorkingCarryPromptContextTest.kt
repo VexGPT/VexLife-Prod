@@ -522,6 +522,7 @@ class DirectWorkingCarryPromptContextTest {
                     )
                 val committed =
                     owner.commitCompletedTurn(
+                        conversationOwner = this,
                         prepared = prepared,
                         completedHead = secondHead,
                     )
