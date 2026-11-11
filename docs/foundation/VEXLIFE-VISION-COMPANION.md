@@ -298,15 +298,11 @@ element.vexlife-workspace.header.utilities.quick-actions.vision
 ~~~
 
 These are two presentations of one Vision relationship, not two Vision owners. The Companion-header
-surface remains the richer state projection and currently renders:
-
-~~~text
-Vision · Held
-~~~
-
-as a disabled control. The header utility row also renders an eye-shaped Vision shortcut beside the
-other workspace quick actions so a human has a persistent, low-friction place to reference current
-focus for Vex.
+surface remains the richer state projection. Its initial static markup starts Held/disabled until the
+live Product Vision projection is loaded; the runtime then renders Held or Ready from that service
+truth rather than from a source constant. The header utility row renders an eye-shaped Vision shortcut
+beside the other workspace quick actions so a human has a persistent, low-friction place to reference
+current focus for Vex.
 
 When the Product Vision projection is `Held`, activating the quick-access icon may surface that held
 state but must not fabricate `LookNow`, picker presentation, capture, or observation. When the
@@ -316,24 +312,38 @@ capture/control path.
 
 This is dynamic Product capability truth, not a source-hardcoded availability promise.
 
-## Held from the ordinary Product route
+## Reachable and still held effects
 
-The following remain held **from VexLife-Prod's current ordinary product path**:
+The ordinary Product route may now reach these effects only through one explicit human Look Now
+request and the accepted SDK-owned route:
 
 ~~~text
-invoking the macOS system picker
-screen/window selection through Product
-screen capture through Product
-consuming active visual observation through Product
+Product Vision READY
++ explicit LookNow
++ current SCREEN Safety
+-> macOS system picker
+-> one user-selected window
+-> at most one screen capture
+-> canonical Security witness
+-> canonical active VISUAL observation
+~~~
+
+Reachability does not make those effects automatic, standing, already performed, or model input.
+
+The following remain held from the ordinary Product Vision path:
+
+~~~text
 continuous/background capture
+automatic picker activation
 visual-model input
+raw-frame persistence
 browser control
 Memory
 training
 publication
 ~~~
 
-This does not deny the already-accepted SDK source/physical evidence. It preserves the distinction
-between an accepted outside owner and a Product effect that is actually reachable.
+The Product presentation consumes bounded reachability and terminal runtime result truth. It does not
+take ownership of the SDK picker, capture, Security, Perception or Safety meanings.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][VISION-COMPANION][SDK-CURRENTIZED] -->
