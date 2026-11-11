@@ -732,7 +732,11 @@ object DirectCompanionTurn {
                                 humanReasoning = inference.sealedHumanReasoning,
                             ),
                         turnRef = request.turnRef,
+                        request = request,
+                        response = response,
+                        completedHead = head,
                         workingContinuity = workingContinuity,
+                        gradualCarry = gradualCarry,
                     )
                 } catch (
                     error: Throwable,
@@ -785,6 +789,23 @@ object DirectCompanionTurn {
                         cause = error,
                     )
                 }
+
+                completed.gradualCarry
+                    ?.let {
+                        gradual ->
+                        try {
+                            carryOwner.commitCompletedTurn(
+                                prepared = gradual.prepared,
+                                completedHead =
+                                    completed.completedHead,
+                            )
+                        } catch (
+                            _: Throwable,
+                        ) {
+                            // The human turn is already canonical. Working-carry custody is
+                            // post-completion stewardship and cannot retroactively fail the send.
+                        }
+                    }
 
                 try {
                     hooks.commitWorkingContinuity(
