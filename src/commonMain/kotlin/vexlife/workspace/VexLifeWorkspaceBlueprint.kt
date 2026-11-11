@@ -40,6 +40,10 @@ object VexLifeWorkspaceBlueprint :
         QuickActions.control(
             "vex-summon",
         )
+    val VisionQuickAccess =
+        QuickActions.control(
+            "vision",
+        )
 
     val Browser =
         region(
