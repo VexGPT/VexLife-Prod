@@ -128,26 +128,44 @@ object VexLifeWorkingCarryContract {
 
         val availableByRef =
             linkedMapOf<String, SourceBinding>()
+        val availableBySequence =
+            linkedMapOf<Long, SourceBinding>()
         (
             previous +
                 leaving
         )
             .forEach {
                 binding ->
-                val prior =
+                val priorByRef =
                     availableByRef[
                         binding.eventRef
                     ]
+                val priorBySequence =
+                    availableBySequence[
+                        binding.sequence
+                    ]
                 require(
-                    prior ==
-                        null ||
-                        prior ==
-                        binding,
+                    (
+                        priorByRef ==
+                            null ||
+                            priorByRef ==
+                            binding
+                    ) &&
+                        (
+                            priorBySequence ==
+                                null ||
+                                priorBySequence ==
+                                binding
+                        ),
                 ) {
-                    "working carry source generations conflict for the same eventRef"
+                    "working carry source generations conflict by eventRef or Conversation sequence"
                 }
                 availableByRef[
                     binding.eventRef
+                ] =
+                    binding
+                availableBySequence[
+                    binding.sequence
                 ] =
                     binding
             }
@@ -296,9 +314,9 @@ object VexLifeWorkingCarryContract {
             value.isNotBlank() &&
                 value.length <=
                 512 &&
-                value.none(
-                    Char::isWhitespace,
-                ),
+                value.none {
+                    it.isWhitespace()
+                },
         ) {
             "$label must be one non-empty stable ref"
         }
