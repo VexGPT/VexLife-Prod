@@ -4,6 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class VexLifeWorkingCarryContractTest {
     private val first =
@@ -58,6 +59,145 @@ class VexLifeWorkingCarryContractTest {
             carryItems = items,
             releaseReason = releaseReason,
         )
+
+    @Test
+    fun newlyLeavingDirectPresenceIsOnlyTheOldestContiguousPriorPrefix() {
+        fun source(
+            sequence: Long,
+        ) =
+            VexLifeWorkingCarryContract.SourceBinding(
+                eventRef =
+                    "event.vexlife." +
+                        sequence,
+                eventHash =
+                    sequence
+                        .toString(
+                            16,
+                        )
+                        .padStart(
+                            64,
+                            '0',
+                        ),
+                sequence = sequence,
+            )
+
+        val previous =
+            (0L..3L)
+                .map(
+                    ::source,
+                )
+        val current =
+            (2L..5L)
+                .map(
+                    ::source,
+                )
+
+        assertEquals(
+            previous.take(
+                2,
+            ),
+            VexLifeWorkingCarryContract.newlyLeavingDirectPresence(
+                previousDirectPresence = previous,
+                currentDirectPresence = current,
+            ),
+        )
+        assertTrue(
+            VexLifeWorkingCarryContract.newlyLeavingDirectPresence(
+                previousDirectPresence =
+                    previous.take(
+                        2,
+                    ),
+                currentDirectPresence = previous,
+            )
+                .isEmpty(),
+        )
+        assertEquals(
+            previous,
+            VexLifeWorkingCarryContract.newlyLeavingDirectPresence(
+                previousDirectPresence = previous,
+                currentDirectPresence =
+                    (4L..5L)
+                        .map(
+                            ::source,
+                        ),
+            ),
+        )
+    }
+
+    @Test
+    fun directPresenceTransitionRejectsHolesAndSourceGenerationSubstitution() {
+        fun source(
+            sequence: Long,
+        ) =
+            VexLifeWorkingCarryContract.SourceBinding(
+                eventRef =
+                    "event.vexlife." +
+                        sequence,
+                eventHash =
+                    sequence
+                        .toString(
+                            16,
+                        )
+                        .padStart(
+                            64,
+                            '0',
+                        ),
+                sequence = sequence,
+            )
+
+        val previous =
+            (0L..5L)
+                .map(
+                    ::source,
+                )
+
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeWorkingCarryContract.newlyLeavingDirectPresence(
+                previousDirectPresence = previous,
+                currentDirectPresence =
+                    listOf(
+                        source(
+                            0,
+                        ),
+                        source(
+                            1,
+                        ),
+                        source(
+                            4,
+                        ),
+                        source(
+                            5,
+                        ),
+                    ),
+            )
+        }
+
+        val substituted =
+            source(
+                4,
+            )
+                .copy(
+                    eventRef =
+                        "event.vexlife.substituted",
+                    eventHash =
+                        "f".repeat(
+                            64,
+                        ),
+                )
+
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeWorkingCarryContract.newlyLeavingDirectPresence(
+                previousDirectPresence = previous,
+                currentDirectPresence =
+                    listOf(
+                        substituted,
+                        source(
+                            5,
+                        ),
+                    ),
+            )
+        }
+    }
 
     @Test
     fun releaseMeansNothingFromTheRefreshedSourcesStillBearsOnPresentCarry() {
