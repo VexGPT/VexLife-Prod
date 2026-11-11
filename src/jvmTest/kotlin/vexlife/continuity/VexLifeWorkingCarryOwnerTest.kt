@@ -527,6 +527,27 @@ class VexLifeWorkingCarryOwnerTest {
                 secondHeadOrNull =
                     secondHead
 
+                val forgedPrepared =
+                    prepared.copy(
+                        refreshInput = tamperedRefresh,
+                        formationBinding =
+                            formationBinding(
+                                refresh = tamperedRefresh,
+                                carry = carry,
+                                hex = 'e',
+                            ),
+                    )
+                assertFailsWith<IllegalArgumentException> {
+                    owner.commitCompletedTurn(
+                        conversationOwner = this,
+                        prepared = forgedPrepared,
+                        completedHead = secondHead,
+                    )
+                }
+                assertNull(
+                    owner.readCurrent(),
+                )
+
                 val committed =
                     owner.commitCompletedTurn(
                         conversationOwner = this,
