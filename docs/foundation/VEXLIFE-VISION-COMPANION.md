@@ -157,6 +157,65 @@ github.pull.vexlife-prod.54.comment.6742546875
 Until that exact artifact/carriage contract exists, do not widen this Product source lane into
 service/process/packaging code merely to invent an adapter against an undefined dependency.
 
+## Local user-selected Vision is not a distribution gate
+
+The accepted macOS Product route is the SDK-owned user-selected session path:
+
+~~~text
+USER_SELECTED_SESSION
+-> SCContentSharingPicker
+-> SINGLE_WINDOW
+-> at most one user-directed snapshot
+~~~
+
+Its accepted contract explicitly preserves:
+
+~~~text
+persistentHostPermissionRequired=false
+stableSignerRequiredForSession=false
+~~~
+
+Therefore local VexVision capability must not be gated on public-distribution trust:
+
+~~~text
+LOCAL_USER_SELECTED_VISION
+!= DEVELOPER_ID_SIGNING_REQUIRED
+!= NOTARIZATION_REQUIRED
+!= APP_STORE_DISTRIBUTION_REQUIRED
+!= GITHUB_RELEASE_REQUIRED
+
+LOCAL_ONLY_NO_RELEASE
+!= LOCAL_EXECUTION_FORBIDDEN
+~~~
+
+A person may run the local/private VexLife-Prod route and use the accepted system-picker relationship
+with the permissions and selection macOS asks that person to grant for that session. That local
+user/OS consent remains real authority; it is not replaced by repository source, Product state or an
+Apple distribution account.
+
+Developer ID signing, notarization and public release are separate distribution/persistent-package
+concerns. The accepted stable-signer permission agent also remains a separate route for persistent
+host-permission semantics. Neither route is a prerequisite merely to let a person choose one window
+through the accepted `USER_SELECTED_SESSION` relationship.
+
+Permanent routing rule for future Product work:
+
+~~~text
+PRODUCT_VISION_LOCAL_REACHABILITY
+-> current Safety
+-> accepted local Product runtime
+-> USER_SELECTED_SESSION
+-> OS-owned picker / person selection
+
+PRODUCT_VISION_LOCAL_REACHABILITY
+!= ONB-DIST
+!= DEVELOPER_ID
+!= NOTARIZATION
+~~~
+
+Do not send ordinary local VexVision enablement back through signing/notarization/distribution work
+unless the actual selected outcome is public distribution or persistent stable-signer semantics.
+
 ## No premature Store or model input
 
 The accepted SCREEN observation remains content-absent.
