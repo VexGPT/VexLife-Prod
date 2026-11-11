@@ -62,11 +62,14 @@ VexLifeCurrentMemoryReader
 current qualified runtime evidence
         ↓
 DirectPromptContext
-  current source-attributed Memory when source-current
+  current Memory availability truth when source-current
+  + caller-bounded selected Memory from remaining prompt capacity
   + owner-current working-checkpoint successor when present
+  + exact prior Vex RESPONSE bridge when successor mode is current
   + source-formed bounded self-capability frame
   + Conversation-owned backward read of the newest contiguous completed REQUEST/RESPONSE suffix
-    that fits the remaining input budget when not in successor mode
+    that fits ordinary prompt attention
+  + conditional Conversation source-return protocol on the first inference
   + optional admitted browser context
   + current request
 
@@ -79,7 +82,7 @@ DirectPromptContext
   16,000 reserved output tokens
   208,000 hard limit
         ↓
-Memory context + working-successor currentness re-read
+Memory availability + selected Memory + working-successor currentness re-read
 before provider invocation
         ↓
 fresh qualified runtime evidence
@@ -87,7 +90,7 @@ fresh qualified runtime evidence
   Product-owned dead generation engine -> exact retire/restart/requalify
   borrowed stable runtime -> no ownership theft / no Product recovery effect
         ↓
-prompt + self-capability frame materialized and reverified
+initial prompt materialized and reverified
 while the same writer lease is held
         ↓
 DirectCompanionConnection
@@ -104,23 +107,39 @@ DirectCompanionConnection
     preserved from the known-working browser Companion path
   streamed InputStream body may continue beyond that response-start bound
         ↓
+first inference
+  ordinary Vex answer
+    -> human progress/answer continues normally
+
+  exact VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1
+    -> internal control output only
+    -> no human-visible request JSON/private retrieval reasoning
+    -> deterministic local canonical Conversation discovery
+    -> exact selected source reopened through Conversation owner
+    -> final prompt prioritizes returned exact source
+    -> current Memory/runtime/working-successor re-read
+    -> second and final inference
+        ↓
 ephemeral live progress
   CheckingRuntime
   Reconnecting (only when Product-owned recovery is required)
   Generating / Thinking
-  reasoning deltas -> human presentation only
-  content deltas -> progressive Vex answer
+  ordinary/final reasoning deltas -> human presentation only
+  ordinary/final content deltas -> progressive Vex answer
+  internal source-return control deltas -> suppressed
         ↓
-terminal provider stream
+terminal human-answer provider stream
   [DONE]
         ↓
-normalized RuntimeObservation
-+ InvocationEvidence
+normalized final RuntimeObservation
++ final InvocationEvidence
++ optional compact source-return Trace
   raw provider body not persisted
   raw model path not persisted
   raw reasoning not persisted
+  internal control response not persisted as Conversation
         ↓
-RESPONSE event durable
+one RESPONSE event durable
         ↓
 DirectTurnContextStore
   prompt materialization receipt
@@ -192,14 +211,40 @@ Memory is supplied by `VexLifeCurrentMemoryReader` from the canonical Home. Scor
 valid structurally-current owner while its exact Conversation source is a verified historical
 ancestor. Prompt Memory is CURRENT only when the committed Daily Memory source Conversation frontier
 still equals the current canonical Conversation head; otherwise the reader returns
-`DAILY_MEMORY_SOURCE_FRONTIER_STALE` as HELD and supplies no Memory provider content. The reader is
-re-run under the same Conversation writer lease before provider invocation and must return the exact
-same context used to form the prompt receipt.
+`DAILY_MEMORY_SOURCE_FRONTIER_STALE` as HELD and supplies no Memory provider content.
 
-The fresh direct circuit now also carries the separately-owned
-`WORKING_CHECKPOINT_SUCCESSOR` mode when one exact working-rollover owner is current. In that mode
-the prior REQUEST/RESPONSE pair is not replayed; the prompt receives current Memory plus bounded
-working coordinates, the live capability frame, optional browser context and the current request.
+Current Memory **availability** is distinct from per-prompt Memory **selection**. The prompt owner
+may ask the Memory reader for the same current source frontier at a smaller caller-supplied token cap.
+Availability/currentness must remain the same source generation even when the selected packet includes
+fewer or zero Memory pages.
+
+The fresh direct circuit also carries the separately-owned
+`WORKING_CHECKPOINT_SUCCESSOR` mode when one exact working-rollover owner is current. The durable
+checkpoint/SuccessorContext remains reference-only and transcript-free. The provider prompt does not
+therefore need to become relationally blank: it carries the exact immediately prior Vex RESPONSE as
+an assistant-role bridge, plus current Memory/working coordinates, the live capability frame,
+optional browser context and the current request. The prior human request is not replayed.
+
+The first inference also receives a bounded source-return protocol. If exact older Conversation
+source that is not already present is necessary, Vex may return one exact internal
+`VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1` instead of guessing or answering prematurely.
+Product then performs deterministic local discovery over canonical completed turns, reopens selected
+matches through exact Conversation-return authority, and forms one final prompt.
+
+Final source-return allocation is:
+
+~~~text
+fixed current-turn / successor / capability context
++ exact requested historical Conversation source
++ exact prior Vex response bridge when successor mode is current
+-> newest exact recent Conversation from the remaining capacity
+-> current Memory from the remaining caller-bounded capacity
+-> current human request
+~~~
+
+`NO_MATCH` and `HELD_TOKEN_BUDGET` remain explicit final-source states so Vex can preserve
+uncertainty instead of inventing recall. A returned-source final inference may not request source
+again in the same human turn.
 
 The self-capability frame is formed from live owner facts inside the prompt materialization path. It
 is context about what is currently available, not a second authority owner and not an executable
@@ -389,11 +434,16 @@ human's local disclosure preference.
 Persists normalized turn evidence suitable for later Context Inspector projection:
 
 ~~~text
-prompt materialization receipt
+final prompt materialization receipt
 request / response refs
-runtime observation
-invocation evidence
+final runtime observation
+final invocation evidence
+optional normalized source-return Trace
 ~~~
+
+When conditional source return occurs, the compact Trace binds the internal first-stage prompt/request/
+runtime identities, exact returned source refs and the final prompt identity. Canonical
+`contextSourceRefs` also include the exact returned Conversation event refs.
 
 It never persists:
 
@@ -401,6 +451,7 @@ It never persists:
 raw provider response
 raw reported model path
 raw reasoning
+raw internal source-return control response
 ~~~
 
 ### `DirectCompanionTurn`
@@ -409,6 +460,25 @@ Composition owner only.
 
 It derives deterministic turn/message identities from one `idempotencyKey`. Repeating the exact
 already-completed send returns the durable canonical response without another model invocation.
+
+For an ordinary turn it still performs one provider inference. Conditional source return adds a
+second inference only when the first inference emits the exact source-return control request.
+
+~~~text
+ordinary first inference
+-> canonical human RESPONSE
+
+source-return first inference
+-> internal control only
+-> local exact-source return
+-> final inference
+-> canonical human RESPONSE
+~~~
+
+A progress gate buffers only long enough to distinguish an ordinary answer from the exact
+source-return header. Internal retrieval reasoning/control JSON is never projected as the human
+answer. If the final inference attempts another source-return request, the turn fails closed before
+RESPONSE/context/head commit.
 
 ## Writer serialization
 
@@ -536,7 +606,13 @@ Tests are source-formed for:
 - exact completed-send duplicate suppression;
 - provider failure receipt + non-replaying failed-attempt recovery;
 - two consecutive direct turns where turn 2 receives the immediately prior pair;
-- three consecutive direct turns where turn 3 retains both completed prior pairs while they fit.
+- three consecutive direct turns where turn 3 retains both completed prior pairs while they fit;
+- conditional exact-source return: first internal inference -> deterministic canonical source return -> one final human-answer inference;
+- internal source-return reasoning/control text never becomes human progress or canonical Conversation;
+- compact source-return Trace round-trips through turn runtime evidence without raw reasoning/provider persistence;
+- historical runtime-evidence v1 remains readable after the optional v2 source-return trace field;
+- final inference cannot request source again in the same human turn;
+- working-checkpoint successor retains the exact prior Vex response bridge while the prior human request stays out.
 
 ## VexBoard projectability horizon
 
