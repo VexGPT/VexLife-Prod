@@ -41,6 +41,10 @@ class VexLifeProdPrivateServiceImageTest {
             "a".repeat(
                 40,
             ),
+        schemaVersion: String =
+            VexLifeProdPrivateServiceImage.Schema,
+        includeVisionRuntime: Boolean =
+            false,
     ): VexLifeProdPrivateServiceImage.Manifest {
         Files.createDirectories(
             root.resolve(
@@ -151,6 +155,106 @@ class VexLifeProdPrivateServiceImageTest {
             ),
         )
 
+        val visionRuntime =
+            if (
+                includeVisionRuntime
+            ) {
+                val visionRoot =
+                    root.resolve(
+                        "vision-runtime",
+                    )
+                val visionBin =
+                    visionRoot.resolve(
+                        "bin",
+                    )
+                val visionHelper =
+                    visionRoot.resolve(
+                        "helper/VexLifeVisionSystemPickerAgent.app/Contents/MacOS",
+                    )
+                Files.createDirectories(
+                    visionBin,
+                )
+                Files.createDirectories(
+                    visionHelper,
+                )
+                val visionManifest =
+                    visionRoot.resolve(
+                        "vision-runtime.json",
+                    )
+                val runtimeExecutable =
+                    visionBin.resolve(
+                        "vexlife-vision-runtime",
+                    )
+                val helperExecutable =
+                    visionHelper.resolve(
+                        "VexLifeVisionSystemPickerAgent",
+                    )
+                Files.writeString(
+                    visionManifest,
+                    "{\"truthClass\":\"LOCAL_QUALIFIED_NOT_DISTRIBUTABLE\"}\n",
+                )
+                Files.writeString(
+                    runtimeExecutable,
+                    "fake-vision-runtime",
+                )
+                Files.writeString(
+                    helperExecutable,
+                    "fake-vision-helper",
+                )
+                Files.setPosixFilePermissions(
+                    runtimeExecutable,
+                    setOf(
+                        PosixFilePermission.OWNER_READ,
+                        PosixFilePermission.OWNER_WRITE,
+                        PosixFilePermission.OWNER_EXECUTE,
+                    ),
+                )
+                Files.setPosixFilePermissions(
+                    helperExecutable,
+                    setOf(
+                        PosixFilePermission.OWNER_READ,
+                        PosixFilePermission.OWNER_WRITE,
+                        PosixFilePermission.OWNER_EXECUTE,
+                    ),
+                )
+                VexLifeProdPrivateServiceImage.VisionRuntime(
+                    truthClass =
+                        VexLifeProdPrivateServiceImage.VisionRuntimeTruthClass,
+                    releaseDisposition =
+                        VexLifeProdPrivateServiceImage.VisionRuntimeReleaseDisposition,
+                    sdkSourceCommit =
+                        "b".repeat(
+                            40,
+                        ),
+                    sdkSourceTree =
+                        "c".repeat(
+                            40,
+                        ),
+                    archiveSha256 =
+                        "d".repeat(
+                            64,
+                        ),
+                    manifestSha256 =
+                        sha256(
+                            visionManifest,
+                        ),
+                    runtimeExecutable =
+                        VexLifeProdPrivateServiceImage.VisionRuntimeExecutableRelativePath,
+                    runtimeExecutableSha256 =
+                        sha256(
+                            runtimeExecutable,
+                        ),
+                    helperExecutable =
+                        VexLifeProdPrivateServiceImage.VisionRuntimeHelperExecutableRelativePath,
+                    helperExecutableSha256 =
+                        sha256(
+                            helperExecutable,
+                        ),
+                )
+            } else {
+                null
+            }
+
         val artifacts =
             listOf(
                 app,
@@ -183,7 +287,7 @@ class VexLifeProdPrivateServiceImageTest {
             )
         val manifest =
             VexLifeProdPrivateServiceImage.Manifest(
-                schemaVersion = VexLifeProdPrivateServiceImage.Schema,
+                schemaVersion = schemaVersion,
                 truthClass = VexLifeProdPrivateServiceImage.TruthClass,
                 sourceSha = sourceSha,
                 platform = VexLifeProdPrivateServiceImage.Platform,
@@ -201,6 +305,7 @@ class VexLifeProdPrivateServiceImageTest {
                     ),
                 payloadSha256 = payload,
                 artifacts = artifacts,
+                visionRuntime = visionRuntime,
             )
 
         Files.writeString(
@@ -281,6 +386,201 @@ class VexLifeProdPrivateServiceImageTest {
             assertFalse(
                 observed.effectsPerformed,
             )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun legacyV3ImageWithoutVisionRuntimeRemainsObservable() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-private-service-image-legacy-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "image",
+            )
+        val sourceSha =
+            "a".repeat(
+                40,
+            )
+
+        try {
+            Files.createDirectory(
+                root,
+            )
+            formImage(
+                root = root,
+                sourceSha = sourceSha,
+                schemaVersion =
+                    VexLifeProdPrivateServiceImage.LegacySchema,
+            )
+
+            val observed =
+                VexLifeProdPrivateServiceImage.observe(
+                    imageRoot = root,
+                    expectedSourceSha = sourceSha,
+                )
+
+            assertEquals(
+                null,
+                observed.visionRuntimeExecutablePathOrNull,
+            )
+            assertEquals(
+                null,
+                observed.visionRuntimeTruthClassOrNull,
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun localQualifiedVisionRuntimeIsExplicitlyObserved() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-private-service-image-vision-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "image",
+            )
+        val sourceSha =
+            "a".repeat(
+                40,
+            )
+
+        try {
+            Files.createDirectory(
+                root,
+            )
+            formImage(
+                root = root,
+                sourceSha = sourceSha,
+                includeVisionRuntime = true,
+            )
+
+            val observed =
+                VexLifeProdPrivateServiceImage.observe(
+                    imageRoot = root,
+                    expectedSourceSha = sourceSha,
+                )
+
+            assertTrue(
+                requireNotNull(
+                    observed.visionRuntimeExecutablePathOrNull,
+                )
+                    .endsWith(
+                        VexLifeProdPrivateServiceImage.VisionRuntimeExecutableRelativePath,
+                    ),
+            )
+            assertEquals(
+                VexLifeProdPrivateServiceImage.VisionRuntimeTruthClass,
+                observed.visionRuntimeTruthClassOrNull,
+            )
+            assertEquals(
+                VexLifeProdPrivateServiceImage.VisionRuntimeReleaseDisposition,
+                observed.visionRuntimeReleaseDispositionOrNull,
+            )
+            assertEquals(
+                "b".repeat(
+                    40,
+                ),
+                observed.visionRuntimeSdkSourceCommitOrNull,
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun VisionRuntimeExecutableTamperIsRejected() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-private-service-image-vision-tamper-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "image",
+            )
+        val sourceSha =
+            "a".repeat(
+                40,
+            )
+
+        try {
+            Files.createDirectory(
+                root,
+            )
+            formImage(
+                root = root,
+                sourceSha = sourceSha,
+                includeVisionRuntime = true,
+            )
+            Files.writeString(
+                root.resolve(
+                    VexLifeProdPrivateServiceImage.VisionRuntimeExecutableRelativePath,
+                ),
+                "tampered-vision-runtime",
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                VexLifeProdPrivateServiceImage.observe(
+                    imageRoot = root,
+                    expectedSourceSha = sourceSha,
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun legacySchemaCannotClaimVisionRuntime() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-private-service-image-legacy-vision-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "image",
+            )
+        val sourceSha =
+            "a".repeat(
+                40,
+            )
+
+        try {
+            Files.createDirectory(
+                root,
+            )
+            formImage(
+                root = root,
+                sourceSha = sourceSha,
+                schemaVersion =
+                    VexLifeProdPrivateServiceImage.LegacySchema,
+                includeVisionRuntime = true,
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                VexLifeProdPrivateServiceImage.observe(
+                    imageRoot = root,
+                    expectedSourceSha = sourceSha,
+                )
+            }
         } finally {
             parent
                 .toFile()
