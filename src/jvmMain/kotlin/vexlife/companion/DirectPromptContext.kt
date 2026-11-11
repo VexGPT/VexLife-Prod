@@ -671,6 +671,58 @@ object DirectPromptContext {
                 source.events
             }
 
+        return formMaterialization(
+            prior = prior,
+            currentRequest = currentRequest,
+            browserContext = browserContext,
+            fixed = fixed,
+            memory = memory,
+            selected = selected,
+            recentConversation = recentConversation,
+            sourceReturnProjection = null,
+        )
+    }
+
+    private fun formMaterialization(
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
+        browserContext: BrowserContext?,
+        fixed: VerifiedFixedContext,
+        memory: VerifiedMemory?,
+        selected: List<DirectConversationStore.Event>,
+        recentConversation: DirectConversationStore.RecentCompletedConversation?,
+        sourceReturnProjection: DirectConversationSourceReturn.Projection?,
+    ): Materialization {
+        val workingContinuity =
+            fixed.workingContinuity
+        val capabilityFrame =
+            fixed.capabilityFrame
+        val prefixMessages =
+            buildList {
+                memory
+                    ?.systemContent
+                    ?.let {
+                        add(
+                            CompanionProviderMessage(
+                                role = "system",
+                                content = it,
+                            ),
+                        )
+                    }
+                addAll(
+                    fixed.prefixMessages,
+                )
+                sourceReturnProjection
+                    ?.systemContent
+                    ?.let {
+                        add(
+                            CompanionProviderMessage(
+                                role = "system",
+                                content = it,
+                            ),
+                        )
+                    }
+            }
         val messages =
             buildList {
                 addAll(
@@ -702,17 +754,15 @@ object DirectPromptContext {
                     )
                 }
                 addAll(
-                    suffixMessages,
+                    fixed.suffixMessages,
                 )
             }
-
         val estimate =
             messages.sumOf {
                 estimatedMessageTokens(
                     it.content,
                 )
             }
-
         require(
             estimate <=
                 InputTokenBudget &&
@@ -774,17 +824,56 @@ object DirectPromptContext {
                     },
                 currentRequestEventRef = currentRequest.eventRef,
                 currentRequestEventSha256 = currentRequest.eventSha256,
+                successorPriorResponseEventRef =
+                    fixed.successorPriorResponse
+                        ?.eventRef,
+                successorPriorResponseEventSha256 =
+                    fixed.successorPriorResponse
+                        ?.eventHash,
+                successorPriorResponseEventSequence =
+                    fixed.successorPriorResponse
+                        ?.sequence,
+                sourceReturnProtocolEnabled =
+                    fixed.sourceReturnProtocolEnabled,
+                sourceReturnProtocolSystemMessageSha256 =
+                    fixed.sourceReturnProtocolSystemMessageSha256,
+                sourceReturnProtocolEstimatedSystemMessageTokens =
+                    fixed.sourceReturnProtocolEstimatedSystemMessageTokens,
+                sourceReturnState =
+                    sourceReturnProjection
+                        ?.state,
+                sourceReturnSourceEventRefs =
+                    sourceReturnProjection
+                        ?.sourceEventRefs
+                        ?: emptyList(),
+                sourceReturnSystemMessageSha256 =
+                    sourceReturnProjection
+                        ?.systemMessageSha256,
+                sourceReturnEstimatedSystemMessageTokens =
+                    sourceReturnProjection
+                        ?.estimatedSystemMessageTokens
+                        ?: 0,
+                memoryAvailabilityContextRef =
+                    fixed.memoryAvailability
+                        ?.context
+                        ?.memoryContextRef,
+                memoryAvailabilityContextFingerprint =
+                    fixed.memoryAvailability
+                        ?.context
+                        ?.semanticFingerprint,
                 browserContextIncluded =
                     browserContext !=
                         null,
-                browserContextRef = browserContextRef,
+                browserContextRef =
+                    fixed.browserContextRef,
                 browserPageUrl =
                     browserContext
                         ?.pageUrl,
                 browserTitle =
                     browserContext
                         ?.title,
-                browserContextSha256 = browserContextSha256,
+                browserContextSha256 =
+                    fixed.browserContextSha256,
                 browserContextCharacters =
                     browserContext
                         ?.text
@@ -844,12 +933,29 @@ object DirectPromptContext {
                     workingContinuity
                         ?.estimatedSystemMessageTokens
                         ?: 0,
-                capabilityFrameIncluded = capabilityFrame != null,
-                capabilityFrameRef = capabilityFrame?.frame?.selfCapabilityFrameRef,
-                capabilityFrameFingerprint = capabilityFrame?.frame?.semanticFingerprint,
-                capabilityFrameSourceRefs = capabilityFrame?.frame?.sourceRefs ?: emptyList(),
-                capabilityFrameSystemMessageSha256 = capabilityFrame?.systemMessageSha256,
-                capabilityFrameEstimatedSystemMessageTokens = capabilityFrame?.estimatedSystemMessageTokens ?: 0,
+                capabilityFrameIncluded =
+                    capabilityFrame !=
+                    null,
+                capabilityFrameRef =
+                    capabilityFrame
+                        ?.frame
+                        ?.selfCapabilityFrameRef,
+                capabilityFrameFingerprint =
+                    capabilityFrame
+                        ?.frame
+                        ?.semanticFingerprint,
+                capabilityFrameSourceRefs =
+                    capabilityFrame
+                        ?.frame
+                        ?.sourceRefs
+                        ?: emptyList(),
+                capabilityFrameSystemMessageSha256 =
+                    capabilityFrame
+                        ?.systemMessageSha256,
+                capabilityFrameEstimatedSystemMessageTokens =
+                    capabilityFrame
+                        ?.estimatedSystemMessageTokens
+                        ?: 0,
                 capabilityFrameSnapshot =
                     capabilityFrame
                         ?.frame
@@ -907,6 +1013,30 @@ object DirectPromptContext {
                 selectedConversationEventSequences = core.selectedConversationEventSequences,
                 currentRequestEventRef = core.currentRequestEventRef,
                 currentRequestEventSha256 = core.currentRequestEventSha256,
+                successorPriorResponseEventRef =
+                    core.successorPriorResponseEventRef,
+                successorPriorResponseEventSha256 =
+                    core.successorPriorResponseEventSha256,
+                successorPriorResponseEventSequence =
+                    core.successorPriorResponseEventSequence,
+                sourceReturnProtocolEnabled =
+                    core.sourceReturnProtocolEnabled,
+                sourceReturnProtocolSystemMessageSha256 =
+                    core.sourceReturnProtocolSystemMessageSha256,
+                sourceReturnProtocolEstimatedSystemMessageTokens =
+                    core.sourceReturnProtocolEstimatedSystemMessageTokens,
+                sourceReturnState =
+                    core.sourceReturnState,
+                sourceReturnSourceEventRefs =
+                    core.sourceReturnSourceEventRefs,
+                sourceReturnSystemMessageSha256 =
+                    core.sourceReturnSystemMessageSha256,
+                sourceReturnEstimatedSystemMessageTokens =
+                    core.sourceReturnEstimatedSystemMessageTokens,
+                memoryAvailabilityContextRef =
+                    core.memoryAvailabilityContextRef,
+                memoryAvailabilityContextFingerprint =
+                    core.memoryAvailabilityContextFingerprint,
                 browserContextIncluded = core.browserContextIncluded,
                 browserContextRef = core.browserContextRef,
                 browserPageUrl = core.browserPageUrl,
@@ -946,8 +1076,10 @@ object DirectPromptContext {
                 capabilityFrameRef = core.capabilityFrameRef,
                 capabilityFrameFingerprint = core.capabilityFrameFingerprint,
                 capabilityFrameSourceRefs = core.capabilityFrameSourceRefs,
-                capabilityFrameSystemMessageSha256 = core.capabilityFrameSystemMessageSha256,
-                capabilityFrameEstimatedSystemMessageTokens = core.capabilityFrameEstimatedSystemMessageTokens,
+                capabilityFrameSystemMessageSha256 =
+                    core.capabilityFrameSystemMessageSha256,
+                capabilityFrameEstimatedSystemMessageTokens =
+                    core.capabilityFrameEstimatedSystemMessageTokens,
                 capabilityFrameSnapshot = core.capabilityFrameSnapshot,
                 effectsPerformed = core.effectsPerformed,
             )
