@@ -609,21 +609,26 @@ class VexLifeWorkingCarryOwner(
                         threadRef = completedHead.threadRef,
                     )
 
-                if (
+                val currentRevision =
                     current
                         ?.revision
+                if (
+                    currentRevision
                         ?.refreshMoment ==
                         VexLifeWorkingCarryContract.RolloverHandoff &&
-                    current.revision.sourceConversationHeadSha256 ==
+                    currentRevision.sourceConversationHeadSha256 ==
                         completedHead.conversationHeadSha256 &&
-                    current.revision.carry ==
+                    currentRevision.carry ==
                         output &&
-                    current.revision.formationBinding ==
+                    currentRevision.formationBinding ==
                         formationBinding
                 ) {
                     return@use CommitResult(
                         state = "IDEMPOTENT_CURRENT",
-                        current = current,
+                        current =
+                            requireNotNull(
+                                current,
+                            ),
                     )
                 }
 
