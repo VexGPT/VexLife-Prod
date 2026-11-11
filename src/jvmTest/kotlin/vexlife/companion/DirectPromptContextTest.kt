@@ -884,9 +884,6 @@ class DirectPromptContextTest {
             }
 
             store.withWriterLease {
-                val history =
-                    current()
-                        .canonicalEvents
                 val prior =
                     requireNotNull(
                         immediatePriorCompletedTurn(),
@@ -900,8 +897,15 @@ class DirectPromptContextTest {
                 val materialized =
                     DirectPromptContext.materialize(
                         prior = prior,
-                        recentConversationEvents = history,
                         currentRequest = third,
+                        recentConversationSource = {
+                            availableTokens ->
+                            recentCompletedConversation(
+                                availableTokens = availableTokens,
+                                estimatedMessageTokens =
+                                    DirectPromptContext::estimatedMessageTokens,
+                            )
+                        },
                     )
 
                 assertEquals(
