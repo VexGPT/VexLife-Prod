@@ -111,6 +111,10 @@ class DirectCompanionTurnTest {
                     productHome = home,
                     request = oldRequest,
                     response = oldResponse,
+                    formedAt =
+                        Instant.parse(
+                            "2026-11-12T00:00:00Z",
+                        ),
                 )
             commitCompletedTurn(
                 request = oldRequest,
@@ -148,6 +152,10 @@ class DirectCompanionTurnTest {
                     productHome = home,
                     request = newerRequest,
                     response = newerResponse,
+                    formedAt =
+                        Instant.parse(
+                            "2026-11-12T00:00:01Z",
+                        ),
                 )
             commitCompletedTurn(
                 request = newerRequest,
