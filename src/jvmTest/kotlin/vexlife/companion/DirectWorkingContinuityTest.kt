@@ -152,6 +152,10 @@ class DirectWorkingContinuityTest {
                         productHome = home,
                         request = firstRequest,
                         response = firstResponse,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-12T00:00:15Z",
+                            ),
                     )
                 commitCompletedTurn(
                     request = firstRequest,
@@ -201,7 +205,7 @@ class DirectWorkingContinuityTest {
 
                 assertEquals(
                     prompt.receipt.receiptRef,
-                    prepared.promptReceiptRef,
+                    prepared.pressureInput.promptReceiptRef,
                 )
             }
         } finally {
