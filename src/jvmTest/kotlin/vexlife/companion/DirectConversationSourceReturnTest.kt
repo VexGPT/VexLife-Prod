@@ -166,6 +166,10 @@ class DirectConversationSourceReturnTest {
                             productHome = home,
                             request = request,
                             response = response,
+                            formedAt =
+                                Instant.parse(
+                                    "2026-11-12T00:00:02Z",
+                                ),
                         )
                     commitCompletedTurn(
                         request = request,
@@ -314,6 +318,10 @@ class DirectConversationSourceReturnTest {
                             productHome = home,
                             request = request,
                             response = response,
+                            formedAt =
+                                Instant.parse(
+                                    "2026-11-12T00:00:03Z",
+                                ),
                         )
                     commitCompletedTurn(
                         request = request,
@@ -404,6 +412,10 @@ class DirectConversationSourceReturnTest {
                         productHome = home,
                         request = oldRequest,
                         response = oldResponse,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-12T00:00:04Z",
+                            ),
                     )
                 commitCompletedTurn(
                     request = oldRequest,
@@ -586,6 +598,10 @@ class DirectConversationSourceReturnTest {
                         productHome = home,
                         request = request,
                         response = response,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-12T00:00:05Z",
+                            ),
                     )
                 commitCompletedTurn(
                     request = request,
@@ -681,6 +697,10 @@ class DirectConversationSourceReturnTest {
                         productHome = home,
                         request = request,
                         response = response,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-12T00:00:06Z",
+                            ),
                     )
                 commitCompletedTurn(
                     request = request,
