@@ -30,10 +30,9 @@ ACCEPTED_COMPANION_MAIN != VISION_RUNTIME_BRIDGE
 ~~~
 
 The current VexLife-Prod Vision slice therefore composes over the accepted lived Companion body while
-remaining a truthful semantic/control surface. The SDK runtime artifact and Product private-image
-carriage are accepted, and this source now defines the ordinary local-service bridge to that carried
-runtime. Product manifestation remains Held until accepted-main/lived service currentness and the
-existing Vision presentation consume that reachability truth.
+remaining a truthful semantic/control surface. The SDK runtime artifact, Product private-image
+carriage and ordinary local-service bridge are accepted. The presentation consumes Product Vision
+reachability dynamically from the local service rather than hardcoding Ready or Held.
 
 ## Current semantic owner
 
@@ -68,20 +67,33 @@ OBSERVATION != STORE
 OBSERVATION != MEMORY
 ~~~
 
-The generated product manifestation deliberately remains `Held` in this source slice. This bridge
-makes the carried runtime source-reachable through the local Product service, but the currently
-running accepted-main service and the existing Vision presentation have not yet consumed that
-reachability truth.
+The generated product manifestation does not decide Vision state from source presence alone. It asks
+the local Product service for the current Vision projection:
+
+~~~text
+GET /api/v1/vision
+  HELD  -> Vision control remains held
+  READY -> Vision control becomes available for one explicit Look Now request
+~~~
+
+The Companion Vision control owns the one `vision.look-now` capability. The global Vision quick
+action remains a local shortcut to that same Companion Vision identity; both activations converge on
+one presentation `lookNow()` path and one Product service request.
 
 ~~~text
 PRODUCT_SERVICE_BRIDGE_SOURCE
 != RUNNING_PRODUCT_VISION_ROUTE_CURRENT
-!= WEB_VISION_READY
+
+RUNNING_PRODUCT_VISION_ROUTE_CURRENT
+-> Product Vision projection may report READY
+
+WEB_VISION_READY
+= consumes Product READY truth
+!= capture authorization
 ~~~
 
-Changing the button to Ready merely because bridge source exists would fabricate lived Product
-currentness. Ready is earned when the accepted-main Product service is actually running with the
-Vision-carrying image and the presentation consumes that reachable route.
+While one explicit Look Now request is in flight, presentation may show `Looking`. That transient
+presentation state does not claim a frame arrived.
 
 ## Accepted outside effect owners
 
@@ -286,42 +298,52 @@ element.vexlife-workspace.header.utilities.quick-actions.vision
 ~~~
 
 These are two presentations of one Vision relationship, not two Vision owners. The Companion-header
-surface remains the richer state projection and currently renders:
+surface remains the richer state projection. Its initial static markup starts Held/disabled until the
+live Product Vision projection is loaded; the runtime then renders Held or Ready from that service
+truth rather than from a source constant. The header utility row renders an eye-shaped Vision shortcut
+beside the other workspace quick actions so a human has a persistent, low-friction place to reference
+current focus for Vex.
+
+When the Product Vision projection is `Held`, activating the quick-access icon may surface that held
+state but must not fabricate `LookNow`, picker presentation, capture, or observation. When the
+Product projection is `Ready`, both the quick-access coordinate and Companion Vision control converge
+on the existing `VexLifeVisionFamily.Control.LookNow` relationship rather than introducing a second
+capture/control path.
+
+This is dynamic Product capability truth, not a source-hardcoded availability promise.
+
+## Reachable and still held effects
+
+The ordinary Product route may now reach these effects only through one explicit human Look Now
+request and the accepted SDK-owned route:
 
 ~~~text
-Vision · Held
+Product Vision READY
++ explicit LookNow
++ current SCREEN Safety
+-> macOS system picker
+-> one user-selected window
+-> at most one screen capture
+-> canonical Security witness
+-> canonical active VISUAL observation
 ~~~
 
-as a disabled control. The header utility row also renders an eye-shaped Vision shortcut beside the
-other workspace quick actions so a human has a persistent, low-friction place to reference current
-focus for Vex.
+Reachability does not make those effects automatic, standing, already performed, or model input.
 
-While Product Vision is still `Held`, activating the quick-access icon may surface that held state but
-must not fabricate `LookNow`, picker presentation, capture, or observation. Once the ordinary Product
-route earns `Ready`, the same quick-access coordinate should converge on the existing
-`VexLifeVisionFamily.Control.LookNow` relationship rather than introducing a second capture/control
-path.
-
-This is current capability truth, not incomplete event wiring.
-
-## Held from the ordinary Product route
-
-The following remain held **from VexLife-Prod's current ordinary product path**:
+The following remain held from the ordinary Product Vision path:
 
 ~~~text
-invoking the macOS system picker
-screen/window selection through Product
-screen capture through Product
-consuming active visual observation through Product
 continuous/background capture
+automatic picker activation
 visual-model input
+raw-frame persistence
 browser control
 Memory
 training
 publication
 ~~~
 
-This does not deny the already-accepted SDK source/physical evidence. It preserves the distinction
-between an accepted outside owner and a Product effect that is actually reachable.
+The Product presentation consumes bounded reachability and terminal runtime result truth. It does not
+take ownership of the SDK picker, capture, Security, Perception or Safety meanings.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][VISION-COMPANION][SDK-CURRENTIZED] -->
