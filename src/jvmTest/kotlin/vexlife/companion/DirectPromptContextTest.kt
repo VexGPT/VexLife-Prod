@@ -1042,6 +1042,10 @@ class DirectPromptContextTest {
                         productHome = productHome,
                         request = oldRequest,
                         response = oldResponse,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-12T00:00:07Z",
+                            ),
                     )
                 commitCompletedTurn(
                     request = oldRequest,
@@ -1143,6 +1147,10 @@ class DirectPromptContextTest {
                         productHome = productHome,
                         request = newerRequest,
                         response = newerResponse,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-12T00:00:08Z",
+                            ),
                     )
                 commitCompletedTurn(
                     request = newerRequest,
@@ -1293,6 +1301,10 @@ class DirectPromptContextTest {
                         productHome = productHome,
                         request = oldRequest,
                         response = oldResponse,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-12T00:00:09Z",
+                            ),
                     )
                 commitCompletedTurn(
                     request = oldRequest,
@@ -1330,6 +1342,10 @@ class DirectPromptContextTest {
                         productHome = productHome,
                         request = hugeRequest,
                         response = hugeResponse,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-12T00:00:10Z",
+                            ),
                     )
                 commitCompletedTurn(
                     request = hugeRequest,
@@ -1736,6 +1752,10 @@ class DirectPromptContextTest {
                         productHome = productHome,
                         request = first,
                         response = firstResponse,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-12T00:00:11Z",
+                            ),
                     )
                 commitCompletedTurn(
                     request = first,
@@ -1764,6 +1784,10 @@ class DirectPromptContextTest {
                         productHome = productHome,
                         request = second,
                         response = secondResponse,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-12T00:00:12Z",
+                            ),
                     )
                 commitCompletedTurn(
                     request = second,
