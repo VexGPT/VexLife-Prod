@@ -14,7 +14,9 @@ Current product decision:
 accepted VexLife-Prod source includes:
   PR #77 local-qualified Vision private-image carriage
   PR #84 explicit local user-selected Vision != distribution-gate rule
-  this source edge: Product local-service bridge to the carried Vision runtime
+  PR #86 Product local-service bridge to the carried Vision runtime
+  PR #90 dynamic Product Vision presentation binding
+  this source edge: exact Product artifact-contract currentization to the accepted SDK Safety source
 
 AND
 
@@ -97,14 +99,23 @@ presentation state does not claim a frame arrived.
 
 ## Accepted outside effect owners
 
-The carried Product runtime artifact is source-bound to accepted Vextreme-SDK source:
+The Product artifact contract in this source binds the local-qualified runtime artifact to accepted
+Vextreme-SDK source:
 
 ~~~text
-commit = 38de26eb9df4ccef5a3d8f1c05c708bbd6b16f51
-tree   = 46d29d57c5a0ef6e7107b4dca19b40e643ee7f55
+commit        = 55a9cd5a99eaaf9f17f7c3875b109548fdc31d81
+tree          = d21986beadea0cbada372b41b93ac56693cb0cdd
+archiveSha256 = 0e5a9b268ab854d6fa0dcc57ad92953536de53d34c52cbe46ca45a4110e76bc6
+manifestSha256= a496dd1b259239963b79fa4b7683ab8e902b4e38a727dfbad05ebee3ab3f1fb2
 ~~~
 
-These are artifact provenance coordinates, not a claim that SDK `main` must remain at that commit.
+The artifact refresh evidence is
+`github.issue.vextreme-sdk.241.comment.6819165573`.
+
+The runtime/helper binaries and their owning source remain byte-identical to the prior qualified build;
+the carried SDK closure is currentized to the accepted SCREEN Safety source. These are artifact
+provenance coordinates, not a claim that SDK `main` must remain at that commit or that the running
+Product has already rotated to this artifact.
 
 The accepted one-shot SCREEN relationship is:
 
@@ -143,9 +154,10 @@ VexLife-Prod does not need to copy a generic Partner/Signal hierarchy merely bec
 implementation earned this concrete relationship. Product should consume the smallest accepted
 outside result once a product-carriage contract exists.
 
-## Current Product realization gap
+## Current Product realization state
 
-The previously missing runtime/artifact/carriage chain is now accepted:
+The previously missing runtime/artifact/carriage chain is accepted, and the Product source now binds
+the refreshed local artifact tuple:
 
 ~~~text
 accepted Process Factory Product runtime
@@ -153,10 +165,11 @@ accepted Process Factory Product runtime
 -> accepted VexLife-Prod private-image carriage
 ~~~
 
-Accepted Product carriage:
+Accepted Product carriage and current artifact provenance:
 
 ~~~text
 github.pull.vexlife-prod.77
+github.issue.vextreme-sdk.241.comment.6819165573
 ~~~
 
 The Product-owned source bridge is:
