@@ -390,6 +390,135 @@ class HereticArtifactMaterializationTest {
             ),
         )
     }
+    @Test
+    fun presenceObservationIsReadOnlyWhenModelDirectoryIsAbsent() {
+        val home =
+            Files.createTempDirectory(
+                "vexlife-heretic-presence-absent-",
+            )
+                .toAbsolutePath()
+
+        try {
+            val observation =
+                HereticArtifactMaterialization.observePresence(
+                    home,
+                )
+
+            assertEquals(
+                "ABSENT",
+                observation.state,
+            )
+            assertEquals(
+                15_153_242_506L,
+                observation.totalBytes,
+            )
+            assertEquals(
+                0L,
+                observation.presentBySizeBytes,
+            )
+            assertEquals(
+                observation.totalBytes,
+                observation.missingBytes,
+            )
+            assertEquals(
+                0L,
+                observation.invalidSizeBytes,
+            )
+            assertFalse(
+                observation.effectsPerformed,
+            )
+            assertFalse(
+                Files.exists(
+                    home.resolve(
+                        "models",
+                    ),
+                ),
+                "read-only presence observation must not form model directories",
+            )
+        } finally {
+            home
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun presenceObservationReportsWrongSizedMemberWithoutRepairOrHashQualification() {
+        val home =
+            Files.createTempDirectory(
+                "vexlife-heretic-presence-invalid-size-",
+            )
+                .toAbsolutePath()
+        val plan =
+            HereticArtifactMaterialization.plan()
+        val member =
+            plan.members.first()
+        val modelPath =
+            home.resolve(
+                HereticArtifactMaterialization.ModelRootRelativePath,
+            )
+                .resolve(
+                    plan.providerRevision,
+                )
+        val memberPath =
+            modelPath.resolve(
+                member.logicalPath,
+            )
+
+        try {
+            Files.createDirectories(
+                modelPath,
+            )
+            Files.writeString(
+                memberPath,
+                "wrong-size",
+            )
+            val before =
+                Files.readAllBytes(
+                    memberPath,
+                )
+
+            val observation =
+                HereticArtifactMaterialization.observePresence(
+                    home,
+                )
+
+            assertEquals(
+                "INVALID_SIZE",
+                observation.state,
+            )
+            assertEquals(
+                member.byteLength,
+                observation.invalidSizeBytes,
+            )
+            assertEquals(
+                0L,
+                observation.presentBySizeBytes,
+            )
+            assertEquals(
+                plan.totalBytes -
+                    member.byteLength,
+                observation.missingBytes,
+            )
+            assertFalse(
+                observation.effectsPerformed,
+            )
+            assertTrue(
+                Files.readAllBytes(
+                    memberPath,
+                )
+                    .contentEquals(
+                        before,
+                    ),
+                "presence observation must not repair or replace the wrong-sized member",
+            )
+        } finally {
+            home
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
 }
 
 // [VXG RealForever]
