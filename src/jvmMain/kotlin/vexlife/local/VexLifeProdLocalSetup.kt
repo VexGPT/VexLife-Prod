@@ -26,13 +26,11 @@ import vexlife.platform.python.ManagedPython
  *
  * This owner contributes sequencing only. Explicit first setup may form the canonical VexLife Home,
  * device and Companion lineage; it never mints a parallel Product identity. Every artifact fact,
- * environment rule,
- * process/lifetime effect and runtime-binding transition remains owned by the component that answers
- * that question.
+ * environment rule, process/lifetime effect and runtime-binding transition remains owned by the
+ * component that answers that question.
  */
 object VexLifeProdLocalSetup {
-    const val RuntimeAuthorityRef =
-        "authority.vexlife-prod.local-setup.heretic-runtime.001"
+    const val RuntimeAuthorityRef = "authority.vexlife-prod.local-setup.heretic-runtime.001"
 
     data class Result(
         val state: String,
@@ -56,26 +54,23 @@ object VexLifeProdLocalSetup {
      * The public result remains the setup projection. This Session retains only the capability to
      * ask the rightful Heretic runtime owner for fresh currentness before later effects.
      */
-    internal class Session internal constructor(
+    internal class Session
+    internal constructor(
         val result: Result,
-        private val currentRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
-        private val recoverRuntimeEvidence: (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)? =
+        private val currentRuntimeEvidence:
+            () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
+        private val recoverRuntimeEvidence:
+            (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)? =
             null,
     ) {
         fun currentQualifiedRuntimeEvidence(
-            onRecovery: (() -> Unit)? =
-                null,
+            onRecovery: (() -> Unit)? = null
         ): HereticModelConfiguration.QualifiedRuntimeEvidence =
             try {
                 currentRuntimeEvidence()
-            } catch (
-                original: RuntimeException,
-            ) {
-                val recover =
-                    recoverRuntimeEvidence
-                        ?: throw original
-                onRecovery
-                    ?.invoke()
+            } catch (original: RuntimeException) {
+                val recover = recoverRuntimeEvidence ?: throw original
+                onRecovery?.invoke()
                 recover()
             }
     }
@@ -87,8 +82,7 @@ object VexLifeProdLocalSetup {
     )
 
     internal data class Hooks(
-        val progress: VexLifeProdSetupProgress =
-            VexLifeProdSetupProgress.Silent,
+        val progress: VexLifeProdSetupProgress = VexLifeProdSetupProgress.Silent,
         val observeHost: () -> HereticMacHostProfile.Result = {
             HereticMacHostProfile.observeCurrent()
         },
@@ -96,132 +90,91 @@ object VexLifeProdLocalSetup {
             currentDeviceName()
         },
         val now: () -> String = {
-            OffsetDateTime.now()
-                .toString()
+            OffsetDateTime.now().toString()
         },
-        val observeConversationWriter: (
-            productHome: Path,
-        ) -> DirectConversationStore.ThreadWriterCurrentness = {
-            productHome ->
-            DirectConversationStore(
-                productHome,
-            )
-                .threadWriterCurrentness()
-        },
-        val recoverConversationWriter: (
-            productHome: Path,
-            instanceRef: String,
-            leaseSha256: String,
-        ) -> Boolean = {
-            productHome,
-            instanceRef,
-            leaseSha256,
-            ->
-            DirectConversationStore(
-                productHome,
-            )
-                .recoverAbandonedWriterLease(
-                    expectedAbandonedInstanceRef = instanceRef,
-                    expectedLeaseSha256 = leaseSha256,
+        val observeConversationWriter:
+            (productHome: Path) -> DirectConversationStore.ThreadWriterCurrentness =
+            { productHome ->
+                DirectConversationStore(productHome).threadWriterCurrentness()
+            },
+        val recoverConversationWriter:
+            (productHome: Path, instanceRef: String, leaseSha256: String) -> Boolean =
+            { productHome, instanceRef, leaseSha256 ->
+                DirectConversationStore(productHome)
+                    .recoverAbandonedWriterLease(
+                        expectedAbandonedInstanceRef = instanceRef,
+                        expectedLeaseSha256 = leaseSha256,
+                    )
+            },
+        val ensureManagedPython:
+            (productHome: Path, allowAcquisition: Boolean) -> ManagedPython.Result =
+            { productHome, allowAcquisition ->
+                ManagedPython.ensure(
+                    productHome = productHome,
+                    pythonVersion = HereticProductIdentity.PythonVersion,
+                    allowAcquisition = allowAcquisition,
                 )
-        },
-        val ensureManagedPython: (
-            productHome: Path,
-            allowAcquisition: Boolean,
-        ) -> ManagedPython.Result = {
-            productHome,
-            allowAcquisition,
-            ->
-            ManagedPython.ensure(
-                productHome = productHome,
-                pythonVersion = HereticProductIdentity.PythonVersion,
-                allowAcquisition = allowAcquisition,
-            )
-        },
-        val materializeArtifacts: (
-            productHome: Path,
-            allowAcquisition: Boolean,
-        ) -> HereticArtifactMaterialization.Result = {
-            productHome,
-            allowAcquisition,
-            ->
-            HereticArtifactMaterialization.materializeCurrent(
-                productHome = productHome,
-                allowAcquisition = allowAcquisition,
-                acquirer =
-                    artifactAcquirerReporting(
-                        productHome = productHome,
-                        progress = progress,
-                    ),
-            )
-        },
-        val ensureHereticEnvironment: (
-            managedPython: ManagedPython.Result,
-            productHome: Path,
-            allowCreation: Boolean,
-        ) -> HereticPythonEnvironment.Result = {
-            managedPython,
-            productHome,
-            allowCreation,
-            ->
-            HereticPythonEnvironment.ensure(
-                managedPython = managedPython,
-                productHome = productHome,
-                allowCreation = allowCreation,
-            )
-        },
-        val observeStableRuntime: (
-            productHome: Path,
-            binding: HereticPersistentRuntime.Binding,
-        ) -> StableVexLifeHereticRuntimeCompatibility.Observation? = {
-            productHome,
-            binding,
-            ->
-            StableVexLifeHereticRuntimeCompatibility.observe(
-                productHome = productHome,
-                binding = binding,
-                platform =
-                    MacHereticRuntimePlatform(
-                        productHome = productHome,
-                    ),
-            )
-        },
-        val observeCurrentProductRuntime: (
-            productHome: Path,
-            binding: HereticPersistentRuntime.Binding,
-            store: HereticPersistentRuntime.ReceiptStore,
-        ) -> HereticModelConfiguration.QualifiedRuntimeEvidence = {
-            productHome,
-            binding,
-            store,
-            ->
-            HereticPersistentRuntime.observeCurrentQualified(
-                binding = binding,
-                store = store,
-                platform =
-                    MacHereticRuntimePlatform(
-                        productHome = productHome,
-                    ),
-            )
-        },
-        val startRuntime: (
-            productHome: Path,
-            binding: HereticPersistentRuntime.Binding,
-            store: HereticPersistentRuntime.ReceiptStore,
-        ) -> HereticPersistentRuntime.StartResult = {
-            productHome,
-            binding,
-            store,
-            ->
-            HereticPersistentRuntime.startOrReuse(
-                binding = binding,
-                store = store,
-                platform =
-                    MacHereticRuntimePlatform(
-                        productHome = productHome,
-                    ),
-            )
-        },
+            },
+        val materializeArtifacts:
+            (
+                productHome: Path, allowAcquisition: Boolean,
+            ) -> HereticArtifactMaterialization.Result =
+            { productHome, allowAcquisition ->
+                HereticArtifactMaterialization.materializeCurrent(
+                    productHome = productHome,
+                    allowAcquisition = allowAcquisition,
+                    acquirer =
+                        artifactAcquirerReporting(productHome = productHome, progress = progress),
+                )
+            },
+        val ensureHereticEnvironment:
+            (
+                managedPython: ManagedPython.Result, productHome: Path, allowCreation: Boolean,
+            ) -> HereticPythonEnvironment.Result =
+            { managedPython, productHome, allowCreation ->
+                HereticPythonEnvironment.ensure(
+                    managedPython = managedPython,
+                    productHome = productHome,
+                    allowCreation = allowCreation,
+                )
+            },
+        val observeStableRuntime:
+            (
+                productHome: Path, binding: HereticPersistentRuntime.Binding,
+            ) -> StableVexLifeHereticRuntimeCompatibility.Observation? =
+            { productHome, binding ->
+                StableVexLifeHereticRuntimeCompatibility.observe(
+                    productHome = productHome,
+                    binding = binding,
+                    platform = MacHereticRuntimePlatform(productHome = productHome),
+                )
+            },
+        val observeCurrentProductRuntime:
+            (
+                productHome: Path,
+                binding: HereticPersistentRuntime.Binding,
+                store: HereticPersistentRuntime.ReceiptStore,
+            ) -> HereticModelConfiguration.QualifiedRuntimeEvidence =
+            { productHome, binding, store ->
+                HereticPersistentRuntime.observeCurrentQualified(
+                    binding = binding,
+                    store = store,
+                    platform = MacHereticRuntimePlatform(productHome = productHome),
+                )
+            },
+        val startRuntime:
+            (
+                productHome: Path,
+                binding: HereticPersistentRuntime.Binding,
+                store: HereticPersistentRuntime.ReceiptStore,
+            ) -> HereticPersistentRuntime.StartResult =
+            { productHome, binding, store ->
+                HereticPersistentRuntime.startOrReuse(
+                    binding = binding,
+                    store = store,
+                    platform = MacHereticRuntimePlatform(productHome = productHome),
+                )
+            },
     )
 
     /**
@@ -231,121 +184,64 @@ object VexLifeProdLocalSetup {
      * eligibility. It performs no model/runtime acquisition and does not install/start Product.
      */
     fun formFreshHome(): VexLifeProdHomeFiles.Result =
-        formFreshHome(
-            VexLifeProdHomeFiles.defaultMacRoot(
-                Path.of(
-                    System.getProperty(
-                        "user.home",
-                    ),
-                ),
-            ),
-        )
+        formFreshHome(VexLifeProdHomeFiles.defaultMacRoot(Path.of(System.getProperty("user.home"))))
 
-    fun formFreshHome(
-        productHome: Path,
-    ): VexLifeProdHomeFiles.Result {
+    fun formFreshHome(productHome: Path): VexLifeProdHomeFiles.Result {
         require(productHome.isAbsolute) {
             "selected Vex Home path must be absolute"
         }
         val selectedHome = productHome.normalize()
-        return VexLifeProdLocalSetupLease
-            .acquire(selectedHome)
-            .use {
-                formFreshHomeAt(
-                    productHome = selectedHome,
-                    hooks = Hooks(),
-                )
-            }
+        return VexLifeProdLocalSetupLease.acquire(selectedHome).use {
+            formFreshHomeAt(productHome = selectedHome, hooks = Hooks())
+        }
     }
 
-    internal fun formFreshHomeAt(
-        productHome: Path,
-        hooks: Hooks,
-    ): VexLifeProdHomeFiles.Result {
-        val host =
-            hooks.observeHost()
+    internal fun formFreshHomeAt(productHome: Path, hooks: Hooks): VexLifeProdHomeFiles.Result {
+        val host = hooks.observeHost()
 
-        require(
-            host.state ==
-                HereticMacHostProfile.State.Eligible &&
-                !host.effectsPerformed,
-        ) {
+        require(host.state == HereticMacHostProfile.State.Eligible && !host.effectsPerformed) {
             "current Mac does not satisfy the certified VexLife-Prod host profile for fresh Home formation: " +
-                (
-                    host.reason
-                        ?: "UNKNOWN"
-                )
+                (host.reason ?: "UNKNOWN")
         }
 
-        when (
-            val location =
-                VexLifeProdHomeFiles.observeLocation(
-                    productHome,
-                )
-        ) {
-            is VexLifeProdHomeFiles.Location.Existing ->
-                return location.home
+        when (val location = VexLifeProdHomeFiles.observeLocation(productHome)) {
+            is VexLifeProdHomeFiles.Location.Existing -> return location.home
 
             is VexLifeProdHomeFiles.Location.Held ->
                 throw IllegalArgumentException(
                     "selected Vex Home is preserved and cannot be formed: " +
                         location.disposition.wireValue +
                         " — " +
-                        location.detail,
+                        location.detail
                 )
 
-            is VexLifeProdHomeFiles.Location.Formable ->
-                Unit
+            is VexLifeProdHomeFiles.Location.Formable -> Unit
         }
 
         val plan =
             VexLifeProdHome.plan(
-                personRef =
-                    VexLifeProdHome.DefaultPersonRef,
-                familyRef =
-                    VexLifeProdHome.DefaultFamilyRef,
-                deviceName =
-                    hooks.deviceName(),
-                platform =
-                    host.observation.platform,
-                architecture =
-                    host.observation.architecture,
-                ids =
-                    VexLifeProdHomeFiles.newInstallationIds(),
-                createdAt =
-                    hooks.now(),
+                personRef = VexLifeProdHome.DefaultPersonRef,
+                familyRef = VexLifeProdHome.DefaultFamilyRef,
+                deviceName = hooks.deviceName(),
+                platform = host.observation.platform,
+                architecture = host.observation.architecture,
+                ids = VexLifeProdHomeFiles.newInstallationIds(),
+                createdAt = hooks.now(),
             )
 
-        return VexLifeProdHomeFiles.bootstrap(
-            productHome = productHome,
-            plan = plan,
-        )
+        return VexLifeProdHomeFiles.bootstrap(productHome = productHome, plan = plan)
     }
 
     /**
      * Ordinary product route. The selected Vex Home coordinate is carried explicitly through the
      * Product relationship; [allowAcquisition] authorizes only missing model/runtime prerequisites.
      */
-    fun establish(
-        allowAcquisition: Boolean,
-    ): Result =
-        establishSession(
-            allowAcquisition,
-        )
-            .result
+    fun establish(allowAcquisition: Boolean): Result = establishSession(allowAcquisition).result
 
-    internal fun establishSession(
-        allowAcquisition: Boolean,
-    ): Session =
+    internal fun establishSession(allowAcquisition: Boolean): Session =
         establishSession(
             productHome =
-                VexLifeProdHomeFiles.defaultMacRoot(
-                    Path.of(
-                        System.getProperty(
-                            "user.home",
-                        ),
-                    ),
-                ),
+                VexLifeProdHomeFiles.defaultMacRoot(Path.of(System.getProperty("user.home"))),
             allowAcquisition = allowAcquisition,
         )
 
@@ -358,36 +254,26 @@ object VexLifeProdLocalSetup {
     internal fun establishSession(
         productHome: Path,
         allowAcquisition: Boolean,
-        allowRuntimeStart: Boolean =
-            allowAcquisition,
-        progress: VexLifeProdSetupProgress =
-            VexLifeProdSetupProgress.Silent,
+        allowRuntimeStart: Boolean = allowAcquisition,
+        progress: VexLifeProdSetupProgress = VexLifeProdSetupProgress.Silent,
     ): Session {
         require(productHome.isAbsolute) {
             "selected Vex Home path must be absolute"
         }
-        require(
-            !allowAcquisition ||
-                allowRuntimeStart,
-        ) {
+        require(!allowAcquisition || allowRuntimeStart) {
             "acquisition authority without runtime-start authority is not one lawful setup relationship"
         }
         val selectedHome = productHome.normalize()
-        return VexLifeProdLocalSetupLease
-            .acquire(selectedHome)
-            .use {
-                formSession(
-                    establishDetailedAt(
-                        productHome = selectedHome,
-                        allowAcquisition = allowAcquisition,
-                        allowRuntimeStart = allowRuntimeStart,
-                        hooks =
-                            Hooks(
-                                progress = progress,
-                            ),
-                    ),
+        return VexLifeProdLocalSetupLease.acquire(selectedHome).use {
+            formSession(
+                establishDetailedAt(
+                    productHome = selectedHome,
+                    allowAcquisition = allowAcquisition,
+                    allowRuntimeStart = allowRuntimeStart,
+                    hooks = Hooks(progress = progress),
                 )
-            }
+            )
+        }
     }
 
     internal fun establishSerializedAt(
@@ -395,33 +281,28 @@ object VexLifeProdLocalSetup {
         allowAcquisition: Boolean,
         hooks: Hooks,
     ): Result =
-        VexLifeProdLocalSetupLease
-            .acquire(
-                productHome,
-            )
-            .use {
-                establishDetailedAt(
+        VexLifeProdLocalSetupLease.acquire(productHome).use {
+            establishDetailedAt(
                     productHome = productHome,
                     allowAcquisition = allowAcquisition,
                     allowRuntimeStart = allowAcquisition,
                     hooks = hooks,
                 )
-                    .result
-            }
+                .result
+        }
 
     internal fun establishAt(
         productHome: Path,
         allowAcquisition: Boolean,
         hooks: Hooks,
-        allowRuntimeStart: Boolean =
-            allowAcquisition,
+        allowRuntimeStart: Boolean = allowAcquisition,
     ): Result =
         establishDetailedAt(
-            productHome = productHome,
-            allowAcquisition = allowAcquisition,
-            allowRuntimeStart = allowRuntimeStart,
-            hooks = hooks,
-        )
+                productHome = productHome,
+                allowAcquisition = allowAcquisition,
+                allowRuntimeStart = allowRuntimeStart,
+                hooks = hooks,
+            )
             .result
 
     private fun establishDetailedAt(
@@ -430,90 +311,41 @@ object VexLifeProdLocalSetup {
         allowRuntimeStart: Boolean,
         hooks: Hooks,
     ): Established {
-        require(
-            !allowAcquisition ||
-                allowRuntimeStart,
-        ) {
+        require(!allowAcquisition || allowRuntimeStart) {
             "acquisition authority without runtime-start authority is not one lawful setup relationship"
         }
-        hooks.progress.phase(
-            VexLifeProdSetupProgress.Phase.CheckingHome,
-        )
-        val host =
-            hooks.observeHost()
+        hooks.progress.phase(VexLifeProdSetupProgress.Phase.CheckingHome)
+        val host = hooks.observeHost()
 
-        require(
-            host.state ==
-                HereticMacHostProfile.State.Eligible &&
-                !host.effectsPerformed,
-        ) {
+        require(host.state == HereticMacHostProfile.State.Eligible && !host.effectsPerformed) {
             "current Mac does not satisfy the certified VexLife-Prod Heretic host profile: " +
-                (
-                    host.reason
-                        ?: "UNKNOWN"
-                )
+                (host.reason ?: "UNKNOWN")
         }
 
         val home =
-            requireNotNull(
-                VexLifeProdHomeFiles.observeExisting(
-                    productHome,
-                ),
-            ) {
+            requireNotNull(VexLifeProdHomeFiles.observeExisting(productHome)) {
                 "selected canonical Vex Home is absent at $productHome; Product setup requires the separate Home-formation effect first"
             }
 
-        val canonicalHome =
-            Path.of(
-                home.productHome,
-            )
+        val canonicalHome = Path.of(home.productHome)
 
-        convergeConversationWriter(
-            productHome = canonicalHome,
-            hooks = hooks,
-        )
+        convergeConversationWriter(productHome = canonicalHome, hooks = hooks)
 
-        val modelConfiguration =
-            FileHereticModelConfigurationStore(
-                canonicalHome,
-            )
+        val modelConfiguration = FileHereticModelConfigurationStore(canonicalHome)
 
-        val selected =
-            modelConfiguration.selectHeretic(
-                home.manifest,
-            )
+        val selected = modelConfiguration.selectHeretic(home.manifest)
 
-        hooks.progress.phase(
-            VexLifeProdSetupProgress.Phase.PreparingPython,
-        )
-        val managedPython =
-            hooks.ensureManagedPython(
-                Path.of(
-                    home.productHome,
-                ),
-                allowAcquisition,
-            )
+        hooks.progress.phase(VexLifeProdSetupProgress.Phase.PreparingPython)
+        val managedPython = hooks.ensureManagedPython(Path.of(home.productHome), allowAcquisition)
 
-        hooks.progress.phase(
-            VexLifeProdSetupProgress.Phase.CheckingModelFiles,
-        )
-        val materialized =
-            hooks.materializeArtifacts(
-                Path.of(
-                    home.productHome,
-                ),
-                allowAcquisition,
-            )
+        hooks.progress.phase(VexLifeProdSetupProgress.Phase.CheckingModelFiles)
+        val materialized = hooks.materializeArtifacts(Path.of(home.productHome), allowAcquisition)
 
-        hooks.progress.phase(
-            VexLifeProdSetupProgress.Phase.PreparingModelRuntime,
-        )
+        hooks.progress.phase(VexLifeProdSetupProgress.Phase.PreparingModelRuntime)
         val environment =
             hooks.ensureHereticEnvironment(
                 managedPython,
-                Path.of(
-                    home.productHome,
-                ),
+                Path.of(home.productHome),
                 allowAcquisition,
             )
 
@@ -524,27 +356,18 @@ object VexLifeProdLocalSetup {
                 environment = environment,
             )
 
-        val borrowedStableRuntime =
-            hooks.observeStableRuntime(
-                canonicalHome,
-                binding,
-            )
+        val borrowedStableRuntime = hooks.observeStableRuntime(canonicalHome, binding)
 
         val availabilityAct =
             requireNotNull(
                 HereticRuntimeAvailability.resolve(
                     currentState =
-                        borrowedStableRuntime
-                            ?.let {
-                                stable ->
-                                HereticRuntimeAvailability.State.StableBorrowable(
-                                    evidence =
-                                        stable.evidence,
-                                    runtimeReceiptPath =
-                                        stable.receiptRelativePath,
-                                )
-                            }
-                            ?: HereticRuntimeAvailability.State.StablePredecessorUnavailable,
+                        borrowedStableRuntime?.let { stable ->
+                            HereticRuntimeAvailability.State.StableBorrowable(
+                                evidence = stable.evidence,
+                                runtimeReceiptPath = stable.receiptRelativePath,
+                            )
+                        } ?: HereticRuntimeAvailability.State.StablePredecessorUnavailable,
                     control =
                         HereticRuntimeAvailability.Control.EnsureAvailable(
                             // Runtime availability's AcquisitionAllowed mode authorizes the
@@ -552,65 +375,46 @@ object VexLifeProdLocalSetup {
                             // the already-ensured environment above. No download happens at this
                             // step, so it follows runtime-start authority, not download authority.
                             productOwnedMode =
-                                if (
-                                    allowRuntimeStart
-                                ) {
+                                if (allowRuntimeStart) {
                                     HereticRuntimeAvailability.ProductOwnedMode.AcquisitionAllowed
                                 } else {
                                     HereticRuntimeAvailability.ProductOwnedMode.ObservationOnly
-                                },
+                                }
                         ),
-                ),
+                )
             ) {
                 "Heretic runtime availability did not resolve one lawful relationship"
             }
 
         val availabilityAndDisposition =
-            when (
-                val admitted =
-                    availabilityAct.admittedState
-            ) {
+            when (val admitted = availabilityAct.admittedState) {
                 is HereticRuntimeAvailability.State.Qualified -> {
                     require(
-                        availabilityAct.effect ==
-                            null &&
+                        availabilityAct.effect == null &&
                             admitted.source ==
-                            HereticRuntimeAvailability.Source.BorrowedStableVexLife,
+                                HereticRuntimeAvailability.Source.BorrowedStableVexLife
                     ) {
                         "borrowed stable Heretic runtime availability must not request a product-owned effect"
                     }
 
-                    admitted to
-                        "BORROWED_STABLE_VEXLIFE_QUALIFIED_RUNTIME"
+                    admitted to "BORROWED_STABLE_VEXLIFE_QUALIFIED_RUNTIME"
                 }
 
                 null -> {
-                    val productRuntimeStore =
-                        FileHereticRuntimeReceiptStore(
-                            canonicalHome,
-                        )
+                    val productRuntimeStore = FileHereticRuntimeReceiptStore(canonicalHome)
 
-                    when (
-                        availabilityAct.effect
-                    ) {
+                    when (availabilityAct.effect) {
                         HereticRuntimeAvailability.Effect.EnsureProductOwnedRuntime -> {
-                            hooks.progress.phase(
-                                VexLifeProdSetupProgress.Phase.StartingLocalModel,
-                            )
+                            hooks.progress.phase(VexLifeProdSetupProgress.Phase.StartingLocalModel)
                             val runtime =
-                                hooks.startRuntime(
-                                    canonicalHome,
-                                    binding,
-                                    productRuntimeStore,
-                                )
+                                hooks.startRuntime(canonicalHome, binding, productRuntimeStore)
 
                             HereticRuntimeAvailability.interpretProductOwnedQualified(
                                 HereticPersistentRuntime.configurationEvidence(
                                     binding = binding,
                                     receipt = runtime.receipt,
-                                ),
-                            ) to
-                                runtime.disposition
+                                )
+                            ) to runtime.disposition
                         }
 
                         HereticRuntimeAvailability.Effect.ObserveCurrentProductOwnedRuntime -> {
@@ -621,48 +425,33 @@ object VexLifeProdLocalSetup {
                                     productRuntimeStore,
                                 )
 
-                            HereticRuntimeAvailability.interpretProductOwnedQualified(
-                                evidence,
-                            ) to
+                            HereticRuntimeAvailability.interpretProductOwnedQualified(evidence) to
                                 "REOBSERVED_CURRENT_PRODUCT_QUALIFIED_RUNTIME"
                         }
 
                         null ->
                             error(
-                                "unresolved Heretic runtime availability lacks one product-owned effect",
+                                "unresolved Heretic runtime availability lacks one product-owned effect"
                             )
                     }
                 }
 
                 else ->
-                    error(
-                        "Heretic runtime availability admitted a non-qualified terminal state",
-                    )
+                    error("Heretic runtime availability admitted a non-qualified terminal state")
             }
 
-        val availability =
-            availabilityAndDisposition.first
-        val runtimeDisposition =
-            availabilityAndDisposition.second
-        val qualifiedRuntimeEvidence =
-            availability.evidence
-        val runtimeReceiptPath =
-            availability.runtimeReceiptPath
+        val availability = availabilityAndDisposition.first
+        val runtimeDisposition = availabilityAndDisposition.second
+        val qualifiedRuntimeEvidence = availability.evidence
+        val runtimeReceiptPath = availability.runtimeReceiptPath
 
         val currentRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence =
-            when (
-                availability.source
-            ) {
+            when (availability.source) {
                 HereticRuntimeAvailability.Source.BorrowedStableVexLife -> {
                     {
-                        requireNotNull(
-                            hooks.observeStableRuntime(
-                                canonicalHome,
-                                binding,
-                            ),
-                        ) {
-                            "borrowed stable VexLife Heretic runtime is no longer current"
-                        }
+                        requireNotNull(hooks.observeStableRuntime(canonicalHome, binding)) {
+                                "borrowed stable VexLife Heretic runtime is no longer current"
+                            }
                             .evidence
                     }
                 }
@@ -672,27 +461,21 @@ object VexLifeProdLocalSetup {
                         hooks.observeCurrentProductRuntime(
                             canonicalHome,
                             binding,
-                            FileHereticRuntimeReceiptStore(
-                                canonicalHome,
-                            ),
+                            FileHereticRuntimeReceiptStore(canonicalHome),
                         )
                     }
                 }
             }
 
         val recoverRuntimeEvidence: (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)? =
-            when (
-                availability.source
-            ) {
+            when (availability.source) {
                 HereticRuntimeAvailability.Source.VexLifeProdOwned -> {
                     {
                         val recovered =
                             hooks.startRuntime(
                                 canonicalHome,
                                 binding,
-                                FileHereticRuntimeReceiptStore(
-                                    canonicalHome,
-                                ),
+                                FileHereticRuntimeReceiptStore(canonicalHome),
                             )
                         HereticPersistentRuntime.configurationEvidence(
                             binding = binding,
@@ -701,8 +484,7 @@ object VexLifeProdLocalSetup {
                     }
                 }
 
-                HereticRuntimeAvailability.Source.BorrowedStableVexLife ->
-                    null
+                HereticRuntimeAvailability.Source.BorrowedStableVexLife -> null
             }
 
         val bound =
@@ -734,27 +516,15 @@ object VexLifeProdLocalSetup {
         )
     }
 
-    private fun convergeConversationWriter(
-        productHome: Path,
-        hooks: Hooks,
-    ) {
-        val before =
-            hooks.observeConversationWriter(
-                productHome,
-            )
+    private fun convergeConversationWriter(productHome: Path, hooks: Hooks) {
+        val before = hooks.observeConversationWriter(productHome)
 
-        if (
-            before.state ==
-                "IDLE"
-        ) {
+        if (before.state == "IDLE") {
             require(
                 !before.recoveryRequired &&
-                    before.ownerState ==
-                    null &&
-                    before.instanceRef ==
-                    null &&
-                    before.leaseSha256 ==
-                    null,
+                    before.ownerState == null &&
+                    before.instanceRef == null &&
+                    before.leaseSha256 == null
             ) {
                 "idle VexLife Conversation writer currentness is internally inconsistent"
             }
@@ -762,49 +532,30 @@ object VexLifeProdLocalSetup {
         }
 
         if (
-            before.state ==
-                "RECOVERY_REQUIRED" &&
-                before.ownerState ==
-                "ABSENT" &&
+            before.state == "RECOVERY_REQUIRED" &&
+                before.ownerState == "ABSENT" &&
                 before.recoveryRequired
         ) {
             val instanceRef =
-                requireNotNull(
-                    before.instanceRef,
-                ) {
+                requireNotNull(before.instanceRef) {
                     "abandoned VexLife Conversation writer lacks exact instance identity"
                 }
             val leaseSha256 =
-                requireNotNull(
-                    before.leaseSha256,
-                ) {
+                requireNotNull(before.leaseSha256) {
                     "abandoned VexLife Conversation writer lacks exact lease identity"
                 }
 
-            require(
-                hooks.recoverConversationWriter(
-                    productHome,
-                    instanceRef,
-                    leaseSha256,
-                ),
-            ) {
+            require(hooks.recoverConversationWriter(productHome, instanceRef, leaseSha256)) {
                 "abandoned VexLife Conversation writer recovery did not perform the exact effect"
             }
 
-            val after =
-                hooks.observeConversationWriter(
-                    productHome,
-                )
+            val after = hooks.observeConversationWriter(productHome)
             require(
-                after.state ==
-                    "IDLE" &&
+                after.state == "IDLE" &&
                     !after.recoveryRequired &&
-                    after.ownerState ==
-                    null &&
-                    after.instanceRef ==
-                    null &&
-                    after.leaseSha256 ==
-                    null,
+                    after.ownerState == null &&
+                    after.instanceRef == null &&
+                    after.leaseSha256 == null
             ) {
                 "abandoned VexLife Conversation writer recovery did not converge to IDLE"
             }
@@ -815,16 +566,11 @@ object VexLifeProdLocalSetup {
             "Open Vex thread writer is not safely startable: " +
                 before.state +
                 "/" +
-                (
-                    before.ownerState
-                        ?: "NONE"
-                    ),
+                (before.ownerState ?: "NONE")
         )
     }
 
-    private fun formSession(
-        established: Established,
-    ): Session {
+    private fun formSession(established: Established): Session {
         return Session(
             result = established.result,
             currentRuntimeEvidence = established.currentRuntimeEvidence,
@@ -842,80 +588,44 @@ object VexLifeProdLocalSetup {
         productHome: Path,
         progress: VexLifeProdSetupProgress,
     ): HereticArtifactDelivery.Acquirer {
-        if (
-            progress ===
-            VexLifeProdSetupProgress.Silent
-        ) {
+        if (progress === VexLifeProdSetupProgress.Silent) {
             return HereticArtifactDelivery.Acquirer()
         }
-        val presentAtStart =
-            runCatching {
-                HereticArtifactMaterialization.observePresence(
-                    productHome,
-                )
-            }.getOrNull()
+        val presentAtStart = runCatching {
+            HereticArtifactMaterialization.observePresence(productHome)
+        }
+            .getOrNull()
         val totalBytes =
-            presentAtStart?.totalBytes
-                ?: HereticArtifactMaterialization.plan().totalBytes
-        val baseBytes =
-            presentAtStart?.presentBySizeBytes
-                ?: 0L
-        val inFlight =
-            mutableMapOf<String, Long>()
+            presentAtStart?.totalBytes ?: HereticArtifactMaterialization.plan().totalBytes
+        val baseBytes = presentAtStart?.presentBySizeBytes ?: 0L
+        val inFlight = mutableMapOf<String, Long>()
         return HereticArtifactDelivery.Acquirer(
-            onProgress = {
-                member,
-                delivered,
-                ->
-                inFlight[member.artifactRef] =
-                    delivered.bytes
+            onProgress = { member, delivered ->
+                inFlight[member.artifactRef] = delivered.bytes
                 progress.artifactBytes(
-                    completedBytes =
-                        baseBytes +
-                            inFlight.values.sum(),
+                    completedBytes = baseBytes + inFlight.values.sum(),
                     totalBytes = totalBytes,
                 )
-            },
+            }
         )
     }
 
     private fun currentDeviceName(): String {
         val computerName =
             try {
-                val process =
-                    ProcessBuilder(
-                        "/usr/sbin/scutil",
-                        "--get",
-                        "ComputerName",
-                    )
-                        .start()
-                val value =
-                    process.inputStream
-                        .bufferedReader()
-                        .readText()
-                        .trim()
-                process.errorStream
-                    .bufferedReader()
-                    .readText()
+                val process = ProcessBuilder("/usr/sbin/scutil", "--get", "ComputerName").start()
+                val value = process.inputStream.bufferedReader().readText().trim()
+                process.errorStream.bufferedReader().readText()
 
                 value.takeIf {
-                    process.waitFor() ==
-                        0 &&
-                        it.isNotBlank()
+                    process.waitFor() == 0 && it.isNotBlank()
                 }
-            } catch (
-                _: Exception,
-            ) {
+            } catch (_: Exception) {
                 null
             }
 
         return computerName
-            ?: InetAddress
-                .getLocalHost()
-                .hostName
-                .takeIf(
-                    String::isNotBlank,
-                )
+            ?: InetAddress.getLocalHost().hostName.takeIf(String::isNotBlank)
             ?: "VexLife-Prod Mac"
     }
 }

@@ -7,165 +7,79 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class VexLifeProdEntryFamilyTest {
-    private val sourceSha =
-        "a".repeat(
-            40,
-        )
+    private val sourceSha = "a".repeat(40)
 
     @Test
     fun updateAvailableProjectsHumanChoiceAndConvergesWithoutAcquisition() {
-        val state =
-            VexLifeProdEntryFamily.UpdateAvailable(
-                sourceSha,
-            )
-        val display =
-            VexLifeProdEntryFamily.Semantics.displayStateFor(
-                state,
-            )
+        val state = VexLifeProdEntryFamily.UpdateAvailable(sourceSha)
+        val display = VexLifeProdEntryFamily.Semantics.displayStateFor(state)
         val act =
-            VexLifeProdEntryFamily.Semantics.resolve(
-                state,
-                VexLifeProdEntryFamily.ConvergeDesired,
-            )
-        val effect =
-            act
-                ?.effect as VexLifeProdEntryFamily.ConvergeProduct
+            VexLifeProdEntryFamily.Semantics.resolve(state, VexLifeProdEntryFamily.ConvergeDesired)
+        val effect = act?.effect as VexLifeProdEntryFamily.ConvergeProduct
 
-        assertEquals(
-            VexLifeProdEntryFamily.ControlConvergeDesired,
-            display.primaryControlRef,
-        )
-        assertEquals(
-            "Update & Restart",
-            display.primaryLabel,
-        )
-        assertEquals(
-            VexLifeProdEntryFamily.ControlOpenCurrent,
-            display.secondaryControlRef,
-        )
-        assertEquals(
-            sourceSha,
-            effect.desiredSourceSha,
-        )
-        assertFalse(
-            effect.allowAcquisition,
-        )
+        assertEquals(VexLifeProdEntryFamily.ControlConvergeDesired, display.primaryControlRef)
+        assertEquals("Update & Restart", display.primaryLabel)
+        assertEquals(VexLifeProdEntryFamily.ControlOpenCurrent, display.secondaryControlRef)
+        assertEquals(sourceSha, effect.desiredSourceSha)
+        assertFalse(effect.allowAcquisition)
     }
 
     @Test
     fun repairAndUpdateRepairShareConvergenceMeaningButNotDisplayMeaning() {
-        val repair =
-            VexLifeProdEntryFamily.RepairRequired(
-                sourceSha,
-            )
-        val updateRepair =
-            VexLifeProdEntryFamily.UpdateRepairRequired(
-                sourceSha,
-            )
+        val repair = VexLifeProdEntryFamily.RepairRequired(sourceSha)
+        val updateRepair = VexLifeProdEntryFamily.UpdateRepairRequired(sourceSha)
 
         assertEquals(
             "Repair & Restart",
-            VexLifeProdEntryFamily.Semantics
-                .displayStateFor(
-                    repair,
-                )
-                .primaryLabel,
+            VexLifeProdEntryFamily.Semantics.displayStateFor(repair).primaryLabel,
         )
         assertEquals(
             "Update & Restart",
-            VexLifeProdEntryFamily.Semantics
-                .displayStateFor(
-                    updateRepair,
-                )
-                .primaryLabel,
+            VexLifeProdEntryFamily.Semantics.displayStateFor(updateRepair).primaryLabel,
         )
 
-        for (
-            state in
-            listOf(
-                repair,
-                updateRepair,
-            )
-        ) {
+        for (state in listOf(repair, updateRepair)) {
             val effect =
-                VexLifeProdEntryFamily.Semantics
-                    .resolve(
+                VexLifeProdEntryFamily.Semantics.resolve(
                         state,
                         VexLifeProdEntryFamily.ConvergeDesired,
                     )
                     ?.effect as VexLifeProdEntryFamily.ConvergeProduct
-            assertFalse(
-                effect.allowAcquisition,
-            )
+            assertFalse(effect.allowAcquisition)
         }
     }
 
     @Test
     fun HomeFormationIsDistinctFromProductAcquisition() {
-        val state =
-            VexLifeProdEntryFamily.HomeFormationRequired(
-                sourceSha,
-            )
-        val display =
-            VexLifeProdEntryFamily.Semantics.displayStateFor(
-                state,
-            )
+        val state = VexLifeProdEntryFamily.HomeFormationRequired(sourceSha)
+        val display = VexLifeProdEntryFamily.Semantics.displayStateFor(state)
         val effect =
-            VexLifeProdEntryFamily.Semantics
-                .resolve(
-                    state,
-                    VexLifeProdEntryFamily.FormHome,
-                )
-                ?.effect
+            VexLifeProdEntryFamily.Semantics.resolve(state, VexLifeProdEntryFamily.FormHome)?.effect
 
-        assertEquals(
-            "Create Vex Home",
-            display.primaryLabel,
-        )
-        assertEquals(
-            VexLifeProdEntryFamily.FormCanonicalHome,
-            effect,
-        )
-        assertNull(
-            VexLifeProdEntryFamily.Semantics.resolve(
-                state,
-                VexLifeProdEntryFamily.SetUp,
-            ),
-        )
+        assertEquals("Create Vex Home", display.primaryLabel)
+        assertEquals(VexLifeProdEntryFamily.FormCanonicalHome, effect)
+        assertNull(VexLifeProdEntryFamily.Semantics.resolve(state, VexLifeProdEntryFamily.SetUp))
     }
 
     @Test
     fun setupIsTheOnlyEntryStateThatCanAuthorizeAcquisition() {
-        val state =
-            VexLifeProdEntryFamily.SetupRequired(
-                sourceSha,
-            )
+        val state = VexLifeProdEntryFamily.SetupRequired(sourceSha)
         val effect =
-            VexLifeProdEntryFamily.Semantics
-                .resolve(
-                    state,
-                    VexLifeProdEntryFamily.SetUp,
-                )
-                ?.effect as VexLifeProdEntryFamily.ConvergeProduct
+            VexLifeProdEntryFamily.Semantics.resolve(state, VexLifeProdEntryFamily.SetUp)?.effect
+                as VexLifeProdEntryFamily.ConvergeProduct
 
-        assertTrue(
-            effect.allowAcquisition,
+        assertTrue(effect.allowAcquisition)
+        assertNull(
+            VexLifeProdEntryFamily.Semantics.resolve(
+                VexLifeProdEntryFamily.HomeFormationRequired(sourceSha),
+                VexLifeProdEntryFamily.SetUp,
+            )
         )
         assertNull(
             VexLifeProdEntryFamily.Semantics.resolve(
-                VexLifeProdEntryFamily.HomeFormationRequired(
-                    sourceSha,
-                ),
+                VexLifeProdEntryFamily.UpdateAvailable(sourceSha),
                 VexLifeProdEntryFamily.SetUp,
-            ),
-        )
-        assertNull(
-            VexLifeProdEntryFamily.Semantics.resolve(
-                VexLifeProdEntryFamily.UpdateAvailable(
-                    sourceSha,
-                ),
-                VexLifeProdEntryFamily.SetUp,
-            ),
+            )
         )
     }
 
@@ -178,26 +92,10 @@ class VexLifeProdEntryFamilyTest {
             )
 
         assertNull(
-            VexLifeProdEntryFamily.Semantics.resolve(
-                state,
-                VexLifeProdEntryFamily.ConvergeDesired,
-            ),
+            VexLifeProdEntryFamily.Semantics.resolve(state, VexLifeProdEntryFamily.ConvergeDesired)
         )
-        assertNull(
-            VexLifeProdEntryFamily.Semantics
-                .displayStateFor(
-                    state,
-                )
-                .primaryControlRef,
-        )
-        assertEquals(
-            "Close",
-            VexLifeProdEntryFamily.Semantics
-                .displayStateFor(
-                    state,
-                )
-                .cancelLabel,
-        )
+        assertNull(VexLifeProdEntryFamily.Semantics.displayStateFor(state).primaryControlRef)
+        assertEquals("Close", VexLifeProdEntryFamily.Semantics.displayStateFor(state).cancelLabel)
     }
 
     private fun allStates(): List<VexLifeProdEntryFamily.EntryState> =
@@ -208,7 +106,11 @@ class VexLifeProdEntryFamilyTest {
             VexLifeProdEntryFamily.UpdateRepairRequired(sourceSha),
             VexLifeProdEntryFamily.StartRequired(sourceSha, priorServiceSourceSha = null),
             VexLifeProdEntryFamily.HomeFormationRequired(sourceSha),
-            VexLifeProdEntryFamily.HomeHeld(sourceSha, "HELD_NONCANONICAL_CONTENT", "folder has other files"),
+            VexLifeProdEntryFamily.HomeHeld(
+                sourceSha,
+                "HELD_NONCANONICAL_CONTENT",
+                "folder has other files",
+            ),
             VexLifeProdEntryFamily.HostHeld(
                 desiredSourceSha = sourceSha,
                 reasonRef = "CHIP_MODEL_UNSUPPORTED",
@@ -219,7 +121,11 @@ class VexLifeProdEntryFamilyTest {
                 homePresent = false,
             ),
             VexLifeProdEntryFamily.SetupRequired(sourceSha),
-            VexLifeProdEntryFamily.StorageHeld(sourceSha, requiredFreeBytes = 20L shl 30, freeBytes = 5L shl 30),
+            VexLifeProdEntryFamily.StorageHeld(
+                sourceSha,
+                requiredFreeBytes = 20L shl 30,
+                freeBytes = 5L shl 30,
+            ),
             VexLifeProdEntryFamily.ModelFilesHeld(sourceSha, invalidBytes = 1L shl 30),
             VexLifeProdEntryFamily.HeldUnknown(sourceSha, "receipt/PID ownership is not exact"),
         )
@@ -236,17 +142,13 @@ class VexLifeProdEntryFamilyTest {
 
     @Test
     fun everyStateRefIsDeclaredAndEveryStateProjectsOneValidJourney() {
-        val states =
-            allStates()
+        val states = allStates()
         assertEquals(
             VexLifeProdEntryFamily.StateRefs,
             states.map { it.stateRef }.toSet(),
         )
-        for (
-            state in states
-        ) {
-            val display =
-                VexLifeProdEntryFamily.Semantics.displayStateFor(state)
+        for (state in states) {
+            val display = VexLifeProdEntryFamily.Semantics.displayStateFor(state)
             assertEquals(
                 VexLifeProdEntryFamily.JourneyStepRefs,
                 display.journey.map { it.stepRef },
@@ -265,16 +167,9 @@ class VexLifeProdEntryFamilyTest {
 
     @Test
     fun displayedControlsAreExactlyTheControlsTheFamilyAdmits() {
-        for (
-            state in allStates()
-        ) {
-            val display =
-                VexLifeProdEntryFamily.Semantics.displayStateFor(state)
-            val displayed =
-                setOfNotNull(
-                    display.primaryControlRef,
-                    display.secondaryControlRef,
-                )
+        for (state in allStates()) {
+            val display = VexLifeProdEntryFamily.Semantics.displayStateFor(state)
+            val displayed = setOfNotNull(display.primaryControlRef, display.secondaryControlRef)
             val admitted =
                 allControls
                     .filter { it != VexLifeProdEntryFamily.Cancel }
@@ -287,24 +182,24 @@ class VexLifeProdEntryFamilyTest {
                 "presentation must neither invent nor hide a lawful Control: ${state.stateRef}",
             )
             assertTrue(
-                VexLifeProdEntryFamily.Semantics.resolve(state, VexLifeProdEntryFamily.Cancel) != null,
+                VexLifeProdEntryFamily.Semantics.resolve(state, VexLifeProdEntryFamily.Cancel) !=
+                    null
             )
         }
     }
 
     @Test
     fun heldStatesAdmitNoEffectAndCloseRatherThanCancel() {
-        for (
-            state in allStates().filter { it.stateRef.contains("HELD") || it.stateRef == VexLifeProdEntryFamily.StateHeldUnknown }
-        ) {
-            val display =
-                VexLifeProdEntryFamily.Semantics.displayStateFor(state)
+        for (state in
+            allStates().filter {
+                it.stateRef.contains("HELD") ||
+                    it.stateRef == VexLifeProdEntryFamily.StateHeldUnknown
+            }) {
+            val display = VexLifeProdEntryFamily.Semantics.displayStateFor(state)
             assertNull(display.primaryControlRef, state.stateRef)
             assertNull(display.secondaryControlRef, state.stateRef)
             assertEquals("Close", display.cancelLabel, state.stateRef)
-            for (
-                control in allControls.filter { it != VexLifeProdEntryFamily.Cancel }
-            ) {
+            for (control in allControls.filter { it != VexLifeProdEntryFamily.Cancel }) {
                 assertNull(
                     VexLifeProdEntryFamily.Semantics.resolve(state, control),
                     "${state.stateRef} must not admit ${control.controlRef}",
@@ -320,36 +215,32 @@ class VexLifeProdEntryFamilyTest {
                 desiredSourceSha = sourceSha,
                 priorServiceSourceSha = "b".repeat(40),
             )
-        val display =
-            VexLifeProdEntryFamily.Semantics.displayStateFor(state)
+        val display = VexLifeProdEntryFamily.Semantics.displayStateFor(state)
         val effect =
-            VexLifeProdEntryFamily.Semantics
-                .resolve(state, VexLifeProdEntryFamily.Start)
-                ?.effect as VexLifeProdEntryFamily.ConvergeProduct
+            VexLifeProdEntryFamily.Semantics.resolve(state, VexLifeProdEntryFamily.Start)?.effect
+                as VexLifeProdEntryFamily.ConvergeProduct
 
         assertEquals("Start VexLife", display.primaryLabel)
         assertTrue(display.detail.contains("Nothing will be downloaded"))
         assertTrue(display.detail.contains("newer version"))
         assertFalse(effect.allowAcquisition)
         assertTrue(effect.allowRuntimeStart)
-        assertNull(
-            VexLifeProdEntryFamily.Semantics.resolve(state, VexLifeProdEntryFamily.SetUp),
-        )
+        assertNull(VexLifeProdEntryFamily.Semantics.resolve(state, VexLifeProdEntryFamily.SetUp))
     }
 
     @Test
     fun repairAndUpdateMayStartTheLocalRuntimeButNeverAcquire() {
-        for (
-            state in
+        for (state in
             listOf(
                 VexLifeProdEntryFamily.UpdateAvailable(sourceSha),
                 VexLifeProdEntryFamily.RepairRequired(sourceSha),
                 VexLifeProdEntryFamily.UpdateRepairRequired(sourceSha),
-            )
-        ) {
+            )) {
             val effect =
-                VexLifeProdEntryFamily.Semantics
-                    .resolve(state, VexLifeProdEntryFamily.ConvergeDesired)
+                VexLifeProdEntryFamily.Semantics.resolve(
+                        state,
+                        VexLifeProdEntryFamily.ConvergeDesired,
+                    )
                     ?.effect as VexLifeProdEntryFamily.ConvergeProduct
             assertFalse(effect.allowAcquisition, state.stateRef)
             assertTrue(effect.allowRuntimeStart, state.stateRef)
@@ -358,27 +249,24 @@ class VexLifeProdEntryFamilyTest {
 
     @Test
     fun acquisitionWithoutRuntimeStartIsNotALawfulEffect() {
-        val rejected =
-            runCatching {
-                VexLifeProdEntryFamily.ConvergeProduct(
-                    desiredSourceSha = sourceSha,
-                    allowAcquisition = true,
-                    allowRuntimeStart = false,
-                )
-            }
+        val rejected = runCatching {
+            VexLifeProdEntryFamily.ConvergeProduct(
+                desiredSourceSha = sourceSha,
+                allowAcquisition = true,
+                allowRuntimeStart = false,
+            )
+        }
         assertTrue(rejected.isFailure)
     }
 
     @Test
     fun onlySetupRequiredAuthorizesAcquisitionAcrossEveryState() {
-        for (
-            state in allStates()
-        ) {
-            val acquiring =
-                allControls.mapNotNull {
-                    (VexLifeProdEntryFamily.Semantics.resolve(state, it)?.effect as? VexLifeProdEntryFamily.ConvergeProduct)
-                        ?.takeIf { effect -> effect.allowAcquisition }
-                }
+        for (state in allStates()) {
+            val acquiring = allControls.mapNotNull {
+                (VexLifeProdEntryFamily.Semantics.resolve(state, it)?.effect
+                        as? VexLifeProdEntryFamily.ConvergeProduct)
+                    ?.takeIf { effect -> effect.allowAcquisition }
+            }
             assertEquals(
                 state is VexLifeProdEntryFamily.SetupRequired,
                 acquiring.isNotEmpty(),
@@ -391,7 +279,9 @@ class VexLifeProdEntryFamilyTest {
     fun homeChoiceIsOfferedWhereChoosingAnotherLocationCanHelp() {
         val offered =
             allStates()
-                .filter { VexLifeProdEntryFamily.Semantics.displayStateFor(it).homeChoiceLabel != null }
+                .filter {
+                    VexLifeProdEntryFamily.Semantics.displayStateFor(it).homeChoiceLabel != null
+                }
                 .map { it.stateRef }
                 .toSet()
         assertEquals(
@@ -407,10 +297,8 @@ class VexLifeProdEntryFamilyTest {
 
     @Test
     fun hostHoldNamesTheObservedMacAndTheCertifiedRequirement() {
-        val state =
-            allStates().filterIsInstance<VexLifeProdEntryFamily.HostHeld>().single()
-        val detail =
-            VexLifeProdEntryFamily.Semantics.displayStateFor(state).detail
+        val state = allStates().filterIsInstance<VexLifeProdEntryFamily.HostHeld>().single()
+        val detail = VexLifeProdEntryFamily.Semantics.displayStateFor(state).detail
         assertTrue(detail.contains("Apple M2"))
         assertTrue(detail.contains("16.0 GiB"))
         assertTrue(detail.contains("Apple M4 Pro"))
@@ -421,9 +309,12 @@ class VexLifeProdEntryFamilyTest {
     @Test
     fun storageHoldStatesRequiredAndAvailableSpace() {
         val detail =
-            VexLifeProdEntryFamily.Semantics
-                .displayStateFor(
-                    VexLifeProdEntryFamily.StorageHeld(sourceSha, requiredFreeBytes = 17L shl 30, freeBytes = 9L shl 30),
+            VexLifeProdEntryFamily.Semantics.displayStateFor(
+                    VexLifeProdEntryFamily.StorageHeld(
+                        sourceSha,
+                        requiredFreeBytes = 17L shl 30,
+                        freeBytes = 9L shl 30,
+                    )
                 )
                 .detail
         assertTrue(detail.contains("17.0 GiB"))

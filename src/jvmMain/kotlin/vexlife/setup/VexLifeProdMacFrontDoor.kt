@@ -23,36 +23,25 @@ import vexlife.service.VexLifeProdServiceContract
  * macOS observer/adapter for the portable Product-entry Family.
  *
  * Mac-specific Home-location / host / model-presence / launchd / receipt / PID truth is mapped into
- * common Product-entry State. The Family owns lawful Controls / Effects / DisplayState; this adapter
- * owns no duplicate human decision tree.
+ * common Product-entry State. The Family owns lawful Controls / Effects / DisplayState; this
+ * adapter owns no duplicate human decision tree.
  *
  * Mapping order (each step is no-effect observation):
  *
- *   selected Home location   formable -> host? -> HOME_FORMATION_REQUIRED | HOST_HELD
- *                            held     -> HOME_HELD
- *                            canonical:
- *   Product-service ownership  unknown -> HOLD_UNKNOWN (never act on unproven ownership)
- *                              running owned -> CURRENT | UPDATE_AVAILABLE
- *                              stopped / absent / loaded-not-ready:
- *   host                       ineligible -> HOST_HELD
- *   model + runtime presence   invalid files -> MODEL_FILES_HELD
- *                              acquisition needed -> storage? -> SETUP_REQUIRED | STORAGE_HELD
- *                              all present -> START_REQUIRED | REPAIR_REQUIRED | UPDATE_REPAIR_REQUIRED
+ * selected Home location formable -> host? -> HOME_FORMATION_REQUIRED | HOST_HELD held -> HOME_HELD
+ * canonical: Product-service ownership unknown -> HOLD_UNKNOWN (never act on unproven ownership)
+ * running owned -> CURRENT | UPDATE_AVAILABLE stopped / absent / loaded-not-ready: host ineligible
+ * -> HOST_HELD model + runtime presence invalid files -> MODEL_FILES_HELD acquisition needed ->
+ * storage? -> SETUP_REQUIRED | STORAGE_HELD all present -> START_REQUIRED | REPAIR_REQUIRED |
+ * UPDATE_REPAIR_REQUIRED
  */
 object VexLifeProdMacFrontDoor {
-    const val Schema =
-        "vexlife-prod.macos-front-door/v3"
+    const val Schema = "vexlife-prod.macos-front-door/v3"
 
-    private val GitSha =
-        Regex(
-            "[0-9a-f]{40}",
-        )
+    private val GitSha = Regex("[0-9a-f]{40}")
 
     private val PlanStates =
-        setOf(
-            VexLifeProdEntryFamily.StateSetupRequired,
-            VexLifeProdEntryFamily.StateStorageHeld,
-        )
+        setOf(VexLifeProdEntryFamily.StateSetupRequired, VexLifeProdEntryFamily.StateStorageHeld)
 
     private val OwnedServiceStates =
         setOf(
@@ -79,22 +68,16 @@ object VexLifeProdMacFrontDoor {
     ) {
         init {
             require(
-                modelRef ==
-                    HereticProductIdentity.ModelRef &&
-                    modelProfileRef ==
-                    HereticProductIdentity.ModelProfileRef &&
+                modelRef == HereticProductIdentity.ModelRef &&
+                    modelProfileRef == HereticProductIdentity.ModelProfileRef &&
                     modelLabel.isNotBlank() &&
-                    modelArtifactTotalBytes >
-                    0 &&
-                    modelArtifactMissingBytes in
-                    0..modelArtifactTotalBytes &&
-                    modelMinimumMemoryBytes >
-                    0 &&
-                    requiredFreeStorageBytes >=
-                    modelArtifactMissingBytes &&
+                    modelArtifactTotalBytes > 0 &&
+                    modelArtifactMissingBytes in 0..modelArtifactTotalBytes &&
+                    modelMinimumMemoryBytes > 0 &&
+                    requiredFreeStorageBytes >= modelArtifactMissingBytes &&
                     acquisitionDisposition ==
-                    "MAY_ACQUIRE_MISSING_MODEL_AND_RUNTIME_PREREQUISITES" &&
-                    !effectsPerformed,
+                        "MAY_ACQUIRE_MISSING_MODEL_AND_RUNTIME_PREREQUISITES" &&
+                    !effectsPerformed
             ) {
                 "VexLife-Prod setup plan is invalid"
             }
@@ -118,72 +101,45 @@ object VexLifeProdMacFrontDoor {
     ) {
         init {
             require(
-                schemaVersion ==
-                    Schema &&
-                    GitSha.matches(
-                        desiredSourceSha,
-                    ) &&
-                    semanticStateRef in
-                    VexLifeProdEntryFamily.StateRefs &&
+                schemaVersion == Schema &&
+                    GitSha.matches(desiredSourceSha) &&
+                    semanticStateRef in VexLifeProdEntryFamily.StateRefs &&
                     !effectsPerformed &&
                     !currentState.effectsPerformed &&
-                    (
-                        (
-                            semanticStateRef in
-                                PlanStates
-                        ) ==
-                            (
-                                setupPlan !=
-                                    null
-                            )
-                    ),
+                    ((semanticStateRef in PlanStates) == (setupPlan != null))
             ) {
                 "VexLife-Prod Mac front-door projection is invalid"
             }
 
-            when (
-                semanticStateRef
-            ) {
+            when (semanticStateRef) {
                 in OwnedServiceStates ->
                     require(
                         !currentServiceSourceSha.isNullOrBlank() &&
-                            currentServicePid !=
-                            null &&
-                            currentServicePid >
-                            0,
+                            currentServicePid != null &&
+                            currentServicePid > 0
                     ) {
                         "Mac front-door owned-service state requires exact source/PID projection"
                     }
 
                 VexLifeProdEntryFamily.StateStartRequired ->
-                    require(
-                        currentServicePid ==
-                            null &&
-                            serviceDetail ==
-                            null,
-                    ) {
+                    require(currentServicePid == null && serviceDetail == null) {
                         "start-required projection must not claim a live owned service"
                     }
 
                 VexLifeProdEntryFamily.StateHeldUnknown ->
                     require(
-                        currentServiceSourceSha ==
-                            null &&
-                            currentServicePid ==
-                            null &&
-                            !serviceDetail.isNullOrBlank(),
+                        currentServiceSourceSha == null &&
+                            currentServicePid == null &&
+                            !serviceDetail.isNullOrBlank()
                     ) {
                         "held front-door projection requires only bounded diagnostic detail"
                     }
 
                 else ->
                     require(
-                        currentServiceSourceSha ==
-                            null &&
-                            currentServicePid ==
-                            null &&
-                            serviceDetail ==
-                            null,
+                        currentServiceSourceSha == null &&
+                            currentServicePid == null &&
+                            serviceDetail == null
                     ) {
                         "setup/held projection must not invent existing-service truth"
                     }
@@ -192,60 +148,37 @@ object VexLifeProdMacFrontDoor {
     }
 
     internal data class Hooks(
-        val observeCurrentState: (
-            Path,
-        ) -> VexLifeProdServiceContract.CurrentStateProjection = {
-            productHome ->
-            VexLifeProdCurrentState.observeCurrentMac(productHome)
+        val observeCurrentState: (Path) -> VexLifeProdServiceContract.CurrentStateProjection =
+            { productHome ->
+                VexLifeProdCurrentState.observeCurrentMac(productHome)
+            },
+        val observeHomeLocation: (Path) -> VexLifeProdHomeFiles.Location = { productHome ->
+            VexLifeProdHomeFiles.observeLocation(productHome)
         },
-        val observeHomeLocation: (
-            Path,
-        ) -> VexLifeProdHomeFiles.Location = {
-            productHome ->
-            VexLifeProdHomeFiles.observeLocation(
-                productHome,
-            )
-        },
-        val observeExistingService: (
-            Path,
-        ) -> VexLifeProdMacServiceLifetime.ExistingObservation = {
-            productHome ->
-            VexLifeProdMacServiceLifetime.observeExisting(
-                productHome,
-            )
-        },
+        val observeExistingService: (Path) -> VexLifeProdMacServiceLifetime.ExistingObservation =
+            { productHome ->
+                VexLifeProdMacServiceLifetime.observeExisting(productHome)
+            },
         /**
          * No-effect presence of the private managed Python and the Heretic environment directories.
          * Validity is still verified by their owners during convergence; absence alone means a
          * start without acquisition authority cannot succeed.
          */
-        val observeRuntimeEnvironmentPresent: (
-            Path,
-        ) -> Boolean = {
-            productHome ->
+        val observeRuntimeEnvironmentPresent: (Path) -> Boolean = { productHome ->
             runCatching {
-                Files.isDirectory(
-                    productHome.resolve(
-                        ManagedPython.PythonInstallRelativePath,
-                    ),
-                    LinkOption.NOFOLLOW_LINKS,
-                ) &&
                     Files.isDirectory(
-                        HereticPythonEnvironment.environmentRoot(
-                            productHome,
-                        ),
+                        productHome.resolve(ManagedPython.PythonInstallRelativePath),
                         LinkOption.NOFOLLOW_LINKS,
-                    )
-            }.getOrDefault(
-                false,
-            )
+                    ) &&
+                        Files.isDirectory(
+                            HereticPythonEnvironment.environmentRoot(productHome),
+                            LinkOption.NOFOLLOW_LINKS,
+                        )
+                }
+                .getOrDefault(false)
         },
         val userHome: () -> Path = {
-            Path.of(
-                System.getProperty(
-                    "user.home",
-                ),
-            )
+            Path.of(System.getProperty("user.home"))
         },
     )
 
@@ -263,14 +196,10 @@ object VexLifeProdMacFrontDoor {
         val semanticStateRef: String,
         val controlRef: String,
         val effect: VexLifeProdEntryFamily.EntryEffect?,
-        val lawful: Boolean =
-            true,
+        val lawful: Boolean = true,
     )
 
-    fun observe(
-        desiredSourceSha: String,
-        productHome: Path,
-    ): Projection =
+    fun observe(desiredSourceSha: String, productHome: Path): Projection =
         observeWithHooks(
             desiredSourceSha = desiredSourceSha,
             productHome = productHome,
@@ -288,44 +217,25 @@ object VexLifeProdMacFrontDoor {
                 productHome = productHome,
                 hooks = hooks,
             )
-        val display =
-            VexLifeProdEntryFamily.Semantics.displayStateFor(
-                observed.entryState,
-            )
+        val display = VexLifeProdEntryFamily.Semantics.displayStateFor(observed.entryState)
         val setupPlan =
-            if (
-                observed.entryState.stateRef in
-                PlanStates
-            ) {
+            if (observed.entryState.stateRef in PlanStates) {
                 val storage =
-                    requireNotNull(
-                        observed.storage,
-                    ) {
+                    requireNotNull(observed.storage) {
                         "setup plan requires one storage requirement"
                     }
                 SetupPlan(
-                    modelRef =
-                        HereticProductIdentity.ModelRef,
-                    modelProfileRef =
-                        HereticProductIdentity.ModelProfileRef,
-                    modelLabel =
-                        HereticProductIdentity.HumanModelLabel,
-                    modelArtifactTotalBytes =
-                        HereticArtifactMaterialization.plan().totalBytes,
-                    modelArtifactMissingBytes =
-                        storage.missingModelBytes,
-                    modelMinimumMemoryBytes =
-                        HereticMacHostProfile.MinimumMemoryBytes,
-                    currentTotalMemoryBytes =
-                        observed.currentState.totalMemoryBytes,
-                    currentFreeStorageBytes =
-                        observed.currentState.freeStorageBytes,
-                    requiredFreeStorageBytes =
-                        storage.requiredFreeBytes,
-                    storageShortfallObserved =
-                        storage.shortfallObserved,
-                    acquisitionDisposition =
-                        "MAY_ACQUIRE_MISSING_MODEL_AND_RUNTIME_PREREQUISITES",
+                    modelRef = HereticProductIdentity.ModelRef,
+                    modelProfileRef = HereticProductIdentity.ModelProfileRef,
+                    modelLabel = HereticProductIdentity.HumanModelLabel,
+                    modelArtifactTotalBytes = HereticArtifactMaterialization.plan().totalBytes,
+                    modelArtifactMissingBytes = storage.missingModelBytes,
+                    modelMinimumMemoryBytes = HereticMacHostProfile.MinimumMemoryBytes,
+                    currentTotalMemoryBytes = observed.currentState.totalMemoryBytes,
+                    currentFreeStorageBytes = observed.currentState.freeStorageBytes,
+                    requiredFreeStorageBytes = storage.requiredFreeBytes,
+                    storageShortfallObserved = storage.shortfallObserved,
+                    acquisitionDisposition = "MAY_ACQUIRE_MISSING_MODEL_AND_RUNTIME_PREREQUISITES",
                     effectsPerformed = false,
                 )
             } else {
@@ -341,15 +251,11 @@ object VexLifeProdMacFrontDoor {
                     location = observed.location,
                     setupPlan = setupPlan,
                     formationPreview =
-                        if (
-                            observed.entryState is
-                                VexLifeProdEntryFamily.HomeFormationRequired
-                        ) {
+                        if (observed.entryState is VexLifeProdEntryFamily.HomeFormationRequired) {
                             HereticSetupStorage.requirement(
                                 missingModelBytes =
                                     HereticArtifactMaterialization.plan().totalBytes,
-                                observedFreeBytes =
-                                    observed.currentState.freeStorageBytes,
+                                observedFreeBytes = observed.currentState.freeStorageBytes,
                             )
                         } else {
                             null
@@ -362,7 +268,7 @@ object VexLifeProdMacFrontDoor {
                             userHome = hooks.userHome(),
                             selectedHome = productHome.normalize(),
                         ),
-                ),
+                )
             )
 
         return Projection(
@@ -394,9 +300,9 @@ object VexLifeProdMacFrontDoor {
         )
 
     /**
-     * Currentness re-check before any effect (predecessor law: ACTION WAS OFFERED != ACTION IS STILL
-     * LAWFUL NOW). A Control that the freshly re-observed State no longer admits is reported as
-     * not lawful instead of being realized.
+     * Currentness re-check before any effect (predecessor law: ACTION WAS OFFERED != ACTION IS
+     * STILL LAWFUL NOW). A Control that the freshly re-observed State no longer admits is reported
+     * as not lawful instead of being realized.
      */
     internal fun resolveTypedControlWithHooks(
         desiredSourceSha: String,
@@ -410,17 +316,13 @@ object VexLifeProdMacFrontDoor {
                 productHome = productHome,
                 hooks = hooks,
             )
-        val control =
-            VexLifeProdEntryFamily.controlForRef(
-                controlRef,
+        val control = VexLifeProdEntryFamily.controlForRef(controlRef)
+        val act = control?.let {
+            VexLifeProdEntryFamily.Semantics.resolve(
+                currentState = observed.entryState,
+                control = it,
             )
-        val act =
-            control?.let {
-                VexLifeProdEntryFamily.Semantics.resolve(
-                    currentState = observed.entryState,
-                    control = it,
-                )
-            }
+        }
 
         return ResolvedControl(
             semanticStateRef = observed.entryState.stateRef,
@@ -435,11 +337,7 @@ object VexLifeProdMacFrontDoor {
         productHome: Path,
         hooks: Hooks,
     ): Observed {
-        require(
-            GitSha.matches(
-                desiredSourceSha,
-            ),
-        ) {
+        require(GitSha.matches(desiredSourceSha)) {
             "Mac front door requires one exact desired Product source SHA"
         }
 
@@ -448,24 +346,15 @@ object VexLifeProdMacFrontDoor {
         }
         val selectedHome = productHome.normalize()
         val current = hooks.observeCurrentState(selectedHome)
-        require(
-            Path.of(current.homePath).normalize() == selectedHome
-        ) {
+        require(Path.of(current.homePath).normalize() == selectedHome) {
             "Product-entry current-state projection changed the selected Vex Home coordinate"
         }
-        require(
-            !current.effectsPerformed,
-        ) {
+        require(!current.effectsPerformed) {
             "Mac front door requires no-effect current-state awareness"
         }
 
-        val location =
-            hooks.observeHomeLocation(
-                selectedHome,
-            )
-        require(
-            Path.of(location.productHome).normalize() == selectedHome
-        ) {
+        val location = hooks.observeHomeLocation(selectedHome)
+        require(Path.of(location.productHome).normalize() == selectedHome) {
             "Product-entry Home location changed the selected Vex Home coordinate"
         }
 
@@ -486,10 +375,7 @@ object VexLifeProdMacFrontDoor {
                 storage = storage,
             )
 
-        if (
-            current.homeDisposition !=
-            location.disposition.wireValue
-        ) {
+        if (current.homeDisposition != location.disposition.wireValue) {
             // Two no-effect reads of the same coordinate disagreed: something changed it meanwhile.
             val detail =
                 "the selected Home changed while VexLife was looking (" +
@@ -506,13 +392,9 @@ object VexLifeProdMacFrontDoor {
             )
         }
 
-        val hostEligible =
-            current.hostEligibilityState ==
-                "ELIGIBLE"
+        val hostEligible = current.hostEligibilityState == "ELIGIBLE"
 
-        fun hostHeld(
-            homePresent: Boolean,
-        ) =
+        fun hostHeld(homePresent: Boolean) =
             VexLifeProdEntryFamily.HostHeld(
                 desiredSourceSha = desiredSourceSha,
                 reasonRef = current.hostEligibilityReason ?: "HOST_UNSUPPORTED",
@@ -523,32 +405,21 @@ object VexLifeProdMacFrontDoor {
                 homePresent = homePresent,
             )
 
-        when (
-            location
-        ) {
+        when (location) {
             is VexLifeProdHomeFiles.Location.Formable -> {
                 require(
-                    current.homeRef ==
-                        null &&
-                        current.deviceRef ==
-                        null &&
-                        current.companionLineageRef ==
-                        null,
+                    current.homeRef == null &&
+                        current.deviceRef == null &&
+                        current.companionLineageRef == null
                 ) {
                     "absent Home current-state projection cannot claim Home/device/Companion identity"
                 }
                 return observed(
-                    if (
-                        hostEligible
-                    ) {
-                        VexLifeProdEntryFamily.HomeFormationRequired(
-                            desiredSourceSha,
-                        )
+                    if (hostEligible) {
+                        VexLifeProdEntryFamily.HomeFormationRequired(desiredSourceSha)
                     } else {
-                        hostHeld(
-                            homePresent = false,
-                        )
-                    },
+                        hostHeld(homePresent = false)
+                    }
                 )
             }
 
@@ -558,21 +429,15 @@ object VexLifeProdMacFrontDoor {
                         desiredSourceSha = desiredSourceSha,
                         dispositionRef = location.disposition.wireValue,
                         detail = location.detail,
-                    ),
+                    )
                 )
 
-            is VexLifeProdHomeFiles.Location.Existing ->
-                Unit
+            is VexLifeProdHomeFiles.Location.Existing -> Unit
         }
 
-        val existing =
-            hooks.observeExistingService(
-                selectedHome,
-            )
+        val existing = hooks.observeExistingService(selectedHome)
 
-        when (
-            existing
-        ) {
+        when (existing) {
             is VexLifeProdMacServiceLifetime.ExistingObservation.HeldUnknown ->
                 return observed(
                     VexLifeProdEntryFamily.HeldUnknown(
@@ -583,49 +448,31 @@ object VexLifeProdMacFrontDoor {
                 )
 
             is VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned -> {
-                val sourceSha =
-                    existing.receipt.sourceSha
+                val sourceSha = existing.receipt.sourceSha
                 return observed(
-                    if (
-                        sourceSha ==
-                        desiredSourceSha
-                    ) {
-                        VexLifeProdEntryFamily.Current(
-                            desiredSourceSha,
-                        )
+                    if (sourceSha == desiredSourceSha) {
+                        VexLifeProdEntryFamily.Current(desiredSourceSha)
                     } else {
-                        VexLifeProdEntryFamily.UpdateAvailable(
-                            desiredSourceSha,
-                        )
+                        VexLifeProdEntryFamily.UpdateAvailable(desiredSourceSha)
                     },
                     sourceSha = sourceSha,
                     pid = existing.receipt.launchd.pid,
                 )
             }
 
-            else ->
-                Unit
+            else -> Unit
         }
 
-        if (
-            !hostEligible
-        ) {
-            return observed(
-                hostHeld(
-                    homePresent = true,
-                ),
-            )
+        if (!hostEligible) {
+            return observed(hostHeld(homePresent = true))
         }
 
-        if (
-            current.modelArtifactState ==
-            "INVALID_SIZE"
-        ) {
+        if (current.modelArtifactState == "INVALID_SIZE") {
             return observed(
                 VexLifeProdEntryFamily.ModelFilesHeld(
                     desiredSourceSha = desiredSourceSha,
                     invalidBytes = current.modelArtifactInvalidSizeBytes ?: 0L,
-                ),
+                )
             )
         }
 
@@ -633,21 +480,12 @@ object VexLifeProdMacFrontDoor {
         // download finished) needs runtime start + qualification, not acquisition.
         val modelReady =
             current.modelSelectionState in
-                setOf(
-                    "HERETIC_ESTABLISHMENT_PENDING",
-                    "BOUND_HERETIC_PRODUCT_MODEL",
-                ) &&
-                current.modelArtifactState ==
-                "COMPLETE_BY_SIZE_NOT_HASHED"
+                setOf("HERETIC_ESTABLISHMENT_PENDING", "BOUND_HERETIC_PRODUCT_MODEL") &&
+                current.modelArtifactState == "COMPLETE_BY_SIZE_NOT_HASHED"
         val runtimeEnvironmentPresent =
-            modelReady &&
-                hooks.observeRuntimeEnvironmentPresent(
-                    selectedHome,
-                )
+            modelReady && hooks.observeRuntimeEnvironmentPresent(selectedHome)
 
-        if (
-            !runtimeEnvironmentPresent
-        ) {
+        if (!runtimeEnvironmentPresent) {
             val missingModelBytes =
                 current.modelArtifactMissingBytes
                     ?: HereticArtifactMaterialization.plan().totalBytes
@@ -657,41 +495,31 @@ object VexLifeProdMacFrontDoor {
                     observedFreeBytes = current.freeStorageBytes,
                 )
             return observed(
-                if (
-                    storage.shortfallObserved
-                ) {
+                if (storage.shortfallObserved) {
                     VexLifeProdEntryFamily.StorageHeld(
                         desiredSourceSha = desiredSourceSha,
                         requiredFreeBytes = storage.requiredFreeBytes,
                         freeBytes = requireNotNull(current.freeStorageBytes),
                     )
                 } else {
-                    VexLifeProdEntryFamily.SetupRequired(
-                        desiredSourceSha,
-                    )
+                    VexLifeProdEntryFamily.SetupRequired(desiredSourceSha)
                 },
                 storage = storage,
             )
         }
 
-        return when (
-            existing
-        ) {
+        return when (existing) {
             VexLifeProdMacServiceLifetime.ExistingObservation.Absent ->
                 observed(
                     VexLifeProdEntryFamily.StartRequired(
                         desiredSourceSha = desiredSourceSha,
                         priorServiceSourceSha = null,
-                    ),
+                    )
                 )
 
             is VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady -> {
-                val sourceSha =
-                    existing.receipt.sourceSha
-                if (
-                    existing.launchdObservation ==
-                    MacUserLaunchdProcess.Observation.Absent
-                ) {
+                val sourceSha = existing.receipt.sourceSha
+                if (existing.launchdObservation == MacUserLaunchdProcess.Observation.Absent) {
                     // The exact owned receipt survives but launchd no longer carries the service
                     // (for example after the Mac restarted). That is stopped, not broken.
                     observed(
@@ -703,17 +531,10 @@ object VexLifeProdMacFrontDoor {
                     )
                 } else {
                     observed(
-                        if (
-                            sourceSha ==
-                            desiredSourceSha
-                        ) {
-                            VexLifeProdEntryFamily.RepairRequired(
-                                desiredSourceSha,
-                            )
+                        if (sourceSha == desiredSourceSha) {
+                            VexLifeProdEntryFamily.RepairRequired(desiredSourceSha)
                         } else {
-                            VexLifeProdEntryFamily.UpdateRepairRequired(
-                                desiredSourceSha,
-                            )
+                            VexLifeProdEntryFamily.UpdateRepairRequired(desiredSourceSha)
                         },
                         sourceSha = sourceSha,
                         pid = existing.receipt.launchd.pid,
@@ -722,26 +543,18 @@ object VexLifeProdMacFrontDoor {
             }
 
             is VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned,
-            is VexLifeProdMacServiceLifetime.ExistingObservation.HeldUnknown,
-            ->
-                error(
-                    "running/held service observation was already mapped",
-                )
+            is VexLifeProdMacServiceLifetime.ExistingObservation.HeldUnknown ->
+                error("running/held service observation was already mapped")
         }
     }
 }
 
 object VexLifeProdMacFrontDoorProcess {
-    const val ActivationSchema =
-        "vexlife-prod.macos-front-door-activation/v2"
-    const val ManifestationRefreshEntry =
-        "REFRESH_ENTRY"
-    const val ManifestationOpenProduct =
-        "OPEN_PRODUCT"
-    const val ManifestationNoAction =
-        "NO_ACTION"
-    const val StateUnobserved =
-        "UNOBSERVED"
+    const val ActivationSchema = "vexlife-prod.macos-front-door-activation/v2"
+    const val ManifestationRefreshEntry = "REFRESH_ENTRY"
+    const val ManifestationOpenProduct = "OPEN_PRODUCT"
+    const val ManifestationNoAction = "NO_ACTION"
+    const val StateUnobserved = "UNOBSERVED"
 
     @Serializable
     data class ActivationProjection(
@@ -749,41 +562,23 @@ object VexLifeProdMacFrontDoorProcess {
         val controlRef: String,
         val semanticStateRef: String,
         val manifestationRef: String,
-        val failure: VexLifeProdSetupFailure.Failure? =
-            null,
-        val productOrigin: String? =
-            null,
-        val notice: Notice? =
-            null,
+        val failure: VexLifeProdSetupFailure.Failure? = null,
+        val productOrigin: String? = null,
+        val notice: Notice? = null,
     ) {
         init {
             require(
-                schemaVersion ==
-                    ActivationSchema &&
+                schemaVersion == ActivationSchema &&
                     controlRef.isNotBlank() &&
                     semanticStateRef.isNotBlank() &&
                     manifestationRef in
-                    setOf(
-                        ManifestationRefreshEntry,
-                        ManifestationOpenProduct,
-                        ManifestationNoAction,
-                    ) &&
-                    (
-                        failure ==
-                            null ||
-                            manifestationRef ==
-                            ManifestationRefreshEntry
-                    ) &&
-                    (
-                        (
-                            manifestationRef ==
-                                ManifestationOpenProduct
-                        ) ==
-                            (
-                                productOrigin !=
-                                    null
-                            )
-                    ),
+                        setOf(
+                            ManifestationRefreshEntry,
+                            ManifestationOpenProduct,
+                            ManifestationNoAction,
+                        ) &&
+                    (failure == null || manifestationRef == ManifestationRefreshEntry) &&
+                    ((manifestationRef == ManifestationOpenProduct) == (productOrigin != null))
             ) {
                 "VexLife-Prod Mac front-door activation projection is invalid"
             }
@@ -791,11 +586,7 @@ object VexLifeProdMacFrontDoorProcess {
     }
 
     /** Completion copy shown once after an Effect reached a freshly observed CURRENT State. */
-    @Serializable
-    data class Notice(
-        val title: String,
-        val detail: String,
-    )
+    @Serializable data class Notice(val title: String, val detail: String)
 
     internal val ReadyNotice =
         Notice(
@@ -809,71 +600,53 @@ object VexLifeProdMacFrontDoorProcess {
         )
 
     internal data class ActivationHooks(
-        val progress: VexLifeProdSetupProgress =
-            VexLifeProdSetupProgress.standardError(),
-        val resolveControl: (
-            desiredSourceSha: String,
-            controlRef: String,
-            productHome: Path,
-        ) -> VexLifeProdMacFrontDoor.ResolvedControl = {
-            desiredSourceSha,
-            controlRef,
-            productHome,
-            ->
-            VexLifeProdMacFrontDoor.resolveTypedControl(
-                desiredSourceSha = desiredSourceSha,
-                controlRef = controlRef,
-                productHome = productHome,
-            )
-        },
-        val formHome: (
-            desiredSourceSha: String,
-            productHome: Path,
-        ) -> Unit = {
-            desiredSourceSha,
-            productHome,
-            ->
-            VexLifeProdSetupProcess.realizeHomeFormation(
-                desiredSourceSha = desiredSourceSha,
-                productHome = productHome,
-                progress = progress,
-            )
-        },
-        val convergeProduct: (
-            desiredSourceSha: String,
-            allowAcquisition: Boolean,
-            allowRuntimeStart: Boolean,
-            productHome: Path,
-        ) -> Unit = {
-            desiredSourceSha,
-            allowAcquisition,
-            allowRuntimeStart,
-            productHome,
-            ->
-            VexLifeProdSetupProcess.realizeProductConvergence(
-                desiredSourceSha = desiredSourceSha,
-                allowAcquisition = allowAcquisition,
-                allowRuntimeStart = allowRuntimeStart,
-                productHome = productHome,
-                progress = progress,
-            )
-        },
-        val observeSemanticStateRef: (
-            desiredSourceSha: String,
-            productHome: Path,
-        ) -> String = {
-            desiredSourceSha,
-            productHome,
-            ->
-            VexLifeProdMacFrontDoor.observe(
-                desiredSourceSha = desiredSourceSha,
-                productHome = productHome,
-            ).semanticStateRef
-        },
+        val progress: VexLifeProdSetupProgress = VexLifeProdSetupProgress.standardError(),
+        val resolveControl:
+            (
+                desiredSourceSha: String, controlRef: String, productHome: Path,
+            ) -> VexLifeProdMacFrontDoor.ResolvedControl =
+            { desiredSourceSha, controlRef, productHome ->
+                VexLifeProdMacFrontDoor.resolveTypedControl(
+                    desiredSourceSha = desiredSourceSha,
+                    controlRef = controlRef,
+                    productHome = productHome,
+                )
+            },
+        val formHome: (desiredSourceSha: String, productHome: Path) -> Unit =
+            { desiredSourceSha, productHome ->
+                VexLifeProdSetupProcess.realizeHomeFormation(
+                    desiredSourceSha = desiredSourceSha,
+                    productHome = productHome,
+                    progress = progress,
+                )
+            },
+        val convergeProduct:
+            (
+                desiredSourceSha: String,
+                allowAcquisition: Boolean,
+                allowRuntimeStart: Boolean,
+                productHome: Path,
+            ) -> Unit =
+            { desiredSourceSha, allowAcquisition, allowRuntimeStart, productHome ->
+                VexLifeProdSetupProcess.realizeProductConvergence(
+                    desiredSourceSha = desiredSourceSha,
+                    allowAcquisition = allowAcquisition,
+                    allowRuntimeStart = allowRuntimeStart,
+                    productHome = productHome,
+                    progress = progress,
+                )
+            },
+        val observeSemanticStateRef: (desiredSourceSha: String, productHome: Path) -> String =
+            { desiredSourceSha, productHome ->
+                VexLifeProdMacFrontDoor.observe(
+                        desiredSourceSha = desiredSourceSha,
+                        productHome = productHome,
+                    )
+                    .semanticStateRef
+            },
     )
 
-    const val InspectionFailureSchema =
-        "vexlife-prod.macos-front-door-inspection-failure/v1"
+    const val InspectionFailureSchema = "vexlife-prod.macos-front-door-inspection-failure/v1"
 
     /**
      * Observation itself could not be formed (an unexpected outside condition, not a held State).
@@ -889,28 +662,19 @@ object VexLifeProdMacFrontDoorProcess {
     ) {
         init {
             require(
-                schemaVersion ==
-                    InspectionFailureSchema &&
+                schemaVersion == InspectionFailureSchema &&
                     card.buttons.none {
-                        it.actionRef.startsWith(
-                            VexLifeProdMacSetupCard.ActionControlPrefix,
-                        )
+                        it.actionRef.startsWith(VexLifeProdMacSetupCard.ActionControlPrefix)
                     } &&
-                    !effectsPerformed,
+                    !effectsPerformed
             ) {
                 "front-door inspection failure projection is invalid"
             }
         }
     }
 
-    internal fun inspectionFailure(
-        productHome: Path,
-        error: Throwable,
-    ): InspectionFailure {
-        val failure =
-            VexLifeProdSetupFailure.classify(
-                error,
-            )
+    internal fun inspectionFailure(productHome: Path, error: Throwable): InspectionFailure {
+        val failure = VexLifeProdSetupFailure.classify(error)
         return InspectionFailure(
             schemaVersion = InspectionFailureSchema,
             failure = failure,
@@ -926,48 +690,41 @@ object VexLifeProdMacFrontDoorProcess {
                             (failure.technicalDetail ?: failure.detail),
                     buttons =
                         listOf(
-                            VexLifeProdMacSetupCard.Button("Check Again", VexLifeProdMacSetupCard.ActionRecheck),
-                            VexLifeProdMacSetupCard.Button("Choose Another Location…", VexLifeProdMacSetupCard.ActionChooseHome),
-                            VexLifeProdMacSetupCard.Button("Close", VexLifeProdMacSetupCard.ActionClose),
+                            VexLifeProdMacSetupCard.Button(
+                                "Check Again",
+                                VexLifeProdMacSetupCard.ActionRecheck,
+                            ),
+                            VexLifeProdMacSetupCard.Button(
+                                "Choose Another Location…",
+                                VexLifeProdMacSetupCard.ActionChooseHome,
+                            ),
+                            VexLifeProdMacSetupCard.Button(
+                                "Close",
+                                VexLifeProdMacSetupCard.ActionClose,
+                            ),
                         ),
                 ),
             effectsPerformed = false,
         )
     }
 
-    fun inspect(
-        desiredSourceSha: String,
-        productHome: Path,
-    ) {
+    fun inspect(desiredSourceSha: String, productHome: Path) {
         val encoded =
             try {
                 VexContractJson.encode(
                     VexLifeProdMacFrontDoor.observe(
                         desiredSourceSha = desiredSourceSha,
                         productHome = productHome,
-                    ),
+                    )
                 )
-            } catch (
-                error: Exception,
-            ) {
-                VexContractJson.encode(
-                    inspectionFailure(
-                        productHome = productHome,
-                        error = error,
-                    ),
-                )
+            } catch (error: Exception) {
+                VexContractJson.encode(inspectionFailure(productHome = productHome, error = error))
             }
-        utf8StandardOutput.println(
-            encoded,
-        )
+        utf8StandardOutput.println(encoded)
         utf8StandardOutput.flush()
     }
 
-    fun activate(
-        controlRef: String,
-        desiredSourceSha: String,
-        productHome: Path,
-    ) {
+    fun activate(controlRef: String, desiredSourceSha: String, productHome: Path) {
         utf8StandardOutput.println(
             VexContractJson.encode(
                 activateWithHooks(
@@ -975,8 +732,8 @@ object VexLifeProdMacFrontDoorProcess {
                     desiredSourceSha = desiredSourceSha,
                     productHome = productHome,
                     hooks = ActivationHooks(),
-                ),
-            ),
+                )
+            )
         )
         utf8StandardOutput.flush()
     }
@@ -987,9 +744,7 @@ object VexLifeProdMacFrontDoorProcess {
      */
     private val utf8StandardOutput: java.io.PrintStream by lazy {
         java.io.PrintStream(
-            java.io.FileOutputStream(
-                java.io.FileDescriptor.out,
-            ),
+            java.io.FileOutputStream(java.io.FileDescriptor.out),
             true,
             Charsets.UTF_8,
         )
@@ -1013,20 +768,12 @@ object VexLifeProdMacFrontDoorProcess {
         }
         val selectedHome = productHome.normalize()
 
-        fun reobserve(): String =
-            runCatching {
-                hooks.observeSemanticStateRef(
-                    desiredSourceSha,
-                    selectedHome,
-                )
-            }.getOrDefault(
-                StateUnobserved,
-            )
+        fun reobserve(): String = runCatching {
+            hooks.observeSemanticStateRef(desiredSourceSha, selectedHome)
+        }
+            .getOrDefault(StateUnobserved)
 
-        fun failed(
-            resolvedControlRef: String,
-            failure: VexLifeProdSetupFailure.Failure,
-        ) =
+        fun failed(resolvedControlRef: String, failure: VexLifeProdSetupFailure.Failure) =
             ActivationProjection(
                 schemaVersion = ActivationSchema,
                 controlRef = resolvedControlRef,
@@ -1037,25 +784,12 @@ object VexLifeProdMacFrontDoorProcess {
 
         val resolved =
             try {
-                hooks.resolveControl(
-                    desiredSourceSha,
-                    controlRef,
-                    selectedHome,
-                )
-            } catch (
-                error: Exception,
-            ) {
-                return failed(
-                    controlRef,
-                    VexLifeProdSetupFailure.classify(
-                        error,
-                    ),
-                )
+                hooks.resolveControl(desiredSourceSha, controlRef, selectedHome)
+            } catch (error: Exception) {
+                return failed(controlRef, VexLifeProdSetupFailure.classify(error))
             }
 
-        if (
-            !resolved.lawful
-        ) {
+        if (!resolved.lawful) {
             return ActivationProjection(
                 schemaVersion = ActivationSchema,
                 controlRef = resolved.controlRef,
@@ -1065,10 +799,7 @@ object VexLifeProdMacFrontDoorProcess {
             )
         }
 
-        return when (
-            val effect =
-                resolved.effect
-        ) {
+        return when (val effect = resolved.effect) {
             null ->
                 ActivationProjection(
                     schemaVersion = ActivationSchema,
@@ -1088,19 +819,9 @@ object VexLifeProdMacFrontDoorProcess {
 
             VexLifeProdEntryFamily.FormCanonicalHome -> {
                 try {
-                    hooks.formHome(
-                        desiredSourceSha,
-                        selectedHome,
-                    )
-                } catch (
-                    error: Exception,
-                ) {
-                    return failed(
-                        resolved.controlRef,
-                        VexLifeProdSetupFailure.classify(
-                            error,
-                        ),
-                    )
+                    hooks.formHome(desiredSourceSha, selectedHome)
+                } catch (error: Exception) {
+                    return failed(resolved.controlRef, VexLifeProdSetupFailure.classify(error))
                 }
                 ActivationProjection(
                     schemaVersion = ActivationSchema,
@@ -1111,10 +832,7 @@ object VexLifeProdMacFrontDoorProcess {
             }
 
             is VexLifeProdEntryFamily.ConvergeProduct -> {
-                require(
-                    effect.desiredSourceSha ==
-                        desiredSourceSha,
-                ) {
+                require(effect.desiredSourceSha == desiredSourceSha) {
                     "Product-entry convergence Effect source differs from the activation source"
                 }
                 try {
@@ -1124,25 +842,12 @@ object VexLifeProdMacFrontDoorProcess {
                         effect.allowRuntimeStart,
                         selectedHome,
                     )
-                } catch (
-                    error: Exception,
-                ) {
-                    return failed(
-                        resolved.controlRef,
-                        VexLifeProdSetupFailure.classify(
-                            error,
-                        ),
-                    )
+                } catch (error: Exception) {
+                    return failed(resolved.controlRef, VexLifeProdSetupFailure.classify(error))
                 }
-                hooks.progress.phase(
-                    VexLifeProdSetupProgress.Phase.ConfirmingVexLife,
-                )
-                val reobserved =
-                    reobserve()
-                if (
-                    reobserved ==
-                    VexLifeProdEntryFamily.StateCurrent
-                ) {
+                hooks.progress.phase(VexLifeProdSetupProgress.Phase.ConfirmingVexLife)
+                val reobserved = reobserve()
+                if (reobserved == VexLifeProdEntryFamily.StateCurrent) {
                     ActivationProjection(
                         schemaVersion = ActivationSchema,
                         controlRef = resolved.controlRef,

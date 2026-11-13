@@ -16,20 +16,11 @@ import vexlife.service.VexLifeProdMacServiceLifetime
 import vexlife.service.VexLifeProdServiceContract
 
 class VexLifeProdMacFrontDoorTest {
-    private val selectedHome =
-        Path.of(
-            "/tmp/.vexlife",
-        )
+    private val selectedHome = Path.of("/tmp/.vexlife")
 
-    private val desired =
-        "a".repeat(
-            40,
-        )
+    private val desired = "a".repeat(40)
 
-    private val prior =
-        "b".repeat(
-            40,
-        )
+    private val prior = "b".repeat(40)
 
     private fun currentState(): VexLifeProdServiceContract.CurrentStateProjection =
         VexLifeProdServiceContract.CurrentStateProjection(
@@ -95,19 +86,13 @@ class VexLifeProdMacFrontDoorTest {
 
     private fun receipt(
         sourceSha: String,
-        pid: Long =
-            4242L,
+        pid: Long = 4242L,
     ): VexLifeProdMacServiceLifetime.Receipt =
         VexLifeProdMacServiceLifetime.Receipt(
             schemaVersion = VexLifeProdMacServiceLifetime.ReceiptSchema,
             sourceSha = sourceSha,
-            imagePayloadSha256 =
-                "c".repeat(
-                    64,
-                ),
-            imagePath =
-                "/tmp/.vexlife/runtime/product-service/images/" +
-                    sourceSha,
+            imagePayloadSha256 = "c".repeat(64),
+            imagePath = "/tmp/.vexlife/runtime/product-service/images/" + sourceSha,
             serviceOrigin = VexLifeProdServiceContract.Origin,
             launchd =
                 MacUserLaunchdProcess.Receipt(
@@ -115,21 +100,15 @@ class VexLifeProdMacFrontDoorTest {
                     substrateRef = MacUserLaunchdProcess.SubstrateRef,
                     label = VexLifeProdMacServiceLifetime.Label,
                     domainTarget = "gui/501",
-                    plistPath = "/tmp/.vexlife/runtime/product-service/launchd/com.vexlife.prod.service.plist",
+                    plistPath =
+                        "/tmp/.vexlife/runtime/product-service/launchd/com.vexlife.prod.service.plist",
                     programPath =
                         "/tmp/.vexlife/runtime/product-service/images/" +
                             sourceSha +
                             "/bin/vexlife-prod-service",
                     programArguments =
-                        listOf(
-                            "--source-sha",
-                            sourceSha,
-                            "--home",
-                            selectedHome.toString(),
-                        ),
-                    workingDirectory =
-                        "/tmp/.vexlife/runtime/product-service/images/" +
-                            sourceSha,
+                        listOf("--source-sha", sourceSha, "--home", selectedHome.toString()),
+                    workingDirectory = "/tmp/.vexlife/runtime/product-service/images/" + sourceSha,
                     stdoutPath = "/tmp/.vexlife/runtime/product-service/logs/service.out.log",
                     stderrPath = "/tmp/.vexlife/runtime/product-service/logs/service.err.log",
                     environment = emptyMap(),
@@ -140,8 +119,7 @@ class VexLifeProdMacFrontDoorTest {
 
     private fun currentness(
         sourceSha: String,
-        pid: Long =
-            4242L,
+        pid: Long = 4242L,
     ): VexLifeProdServiceContract.SourceCurrentness =
         VexLifeProdServiceContract.SourceCurrentness(
             schemaVersion = VexLifeProdServiceContract.SourceCurrentnessSchema,
@@ -166,19 +144,16 @@ class VexLifeProdMacFrontDoorTest {
             architecture = "arm64",
             ids =
                 VexLifeProdHome.InstallationIds(
-                    deviceRef =
-                        "device.vexlife.00000000-0000-0000-0000-000000000001",
+                    deviceRef = "device.vexlife.00000000-0000-0000-0000-000000000001",
                     companionLineageRef =
                         "companion-lineage.vexlife.00000000-0000-0000-0000-000000000002",
                 ),
             createdAt = "2026-11-13T04:00:00-08:00",
         )
 
-    private val testManifest =
-        testPlan.manifest
+    private val testManifest = testPlan.manifest
 
-    private val testInstallation =
-        testPlan.installation
+    private val testInstallation = testPlan.installation
 
     private fun existingLocation(): VexLifeProdHomeFiles.Location =
         VexLifeProdHomeFiles.Location.Existing(
@@ -188,7 +163,7 @@ class VexLifeProdMacFrontDoorTest {
                 manifest = testManifest,
                 installation = testInstallation,
                 effectsPerformed = false,
-            ),
+            )
         )
 
     private fun absentLocation(): VexLifeProdHomeFiles.Location =
@@ -201,18 +176,12 @@ class VexLifeProdMacFrontDoorTest {
 
     private fun hooks(
         existing: VexLifeProdMacServiceLifetime.ExistingObservation,
-        runtimeEnvironmentPresent: Boolean =
-            true,
-        current: VexLifeProdServiceContract.CurrentStateProjection =
-            currentState(),
+        runtimeEnvironmentPresent: Boolean = true,
+        current: VexLifeProdServiceContract.CurrentStateProjection = currentState(),
     ): VexLifeProdMacFrontDoor.Hooks =
         VexLifeProdMacFrontDoor.Hooks(
-            observeCurrentState = {
-                productHome ->
-                assertEquals(
-                    selectedHome,
-                    productHome,
-                )
+            observeCurrentState = { productHome ->
+                assertEquals(selectedHome, productHome)
                 current
             },
             observeHomeLocation = {
@@ -225,35 +194,25 @@ class VexLifeProdMacFrontDoorTest {
                 runtimeEnvironmentPresent
             },
             userHome = {
-                Path.of(
-                    "/Users/vex",
-                )
+                Path.of("/Users/vex")
             },
         )
 
     @Test
     fun absentHomeMapsToHomeFormationBeforeServiceLifetimeObservation() {
-        var serviceObserved =
-            false
+        var serviceObserved = false
         val hooks =
             VexLifeProdMacFrontDoor.Hooks(
-                observeCurrentState = {
-                    productHome ->
-                    assertEquals(
-                        selectedHome,
-                        productHome,
-                    )
+                observeCurrentState = { productHome ->
+                    assertEquals(selectedHome, productHome)
                     absentHomeCurrentState()
                 },
                 observeHomeLocation = {
                     absentLocation()
                 },
                 observeExistingService = {
-                    serviceObserved =
-                        true
-                    error(
-                        "absent Home must not descend into service lifetime observation",
-                    )
+                    serviceObserved = true
+                    error("absent Home must not descend into service lifetime observation")
                 },
             )
 
@@ -271,21 +230,10 @@ class VexLifeProdMacFrontDoorTest {
                 hooks = hooks,
             )
 
-        assertEquals(
-            VexLifeProdEntryFamily.StateHomeFormationRequired,
-            projection.semanticStateRef,
-        )
-        assertEquals(
-            "Create Vex Home",
-            projection.displayState.primaryLabel,
-        )
-        assertEquals(
-            VexLifeProdEntryFamily.FormCanonicalHome,
-            resolved.effect,
-        )
-        assertFalse(
-            serviceObserved,
-        )
+        assertEquals(VexLifeProdEntryFamily.StateHomeFormationRequired, projection.semanticStateRef)
+        assertEquals("Create Vex Home", projection.displayState.primaryLabel)
+        assertEquals(VexLifeProdEntryFamily.FormCanonicalHome, resolved.effect)
+        assertFalse(serviceObserved)
     }
 
     @Test
@@ -299,25 +247,17 @@ class VexLifeProdMacFrontDoorTest {
                         VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned(
                             receipt = receipt(desired),
                             sourceCurrentness = currentness(desired),
-                        ),
+                        )
                     ),
             )
 
-        assertEquals(
-            VexLifeProdEntryFamily.StateCurrent,
-            value.semanticStateRef,
-        )
+        assertEquals(VexLifeProdEntryFamily.StateCurrent, value.semanticStateRef)
         assertEquals(
             VexLifeProdEntryFamily.ControlOpenCurrent,
             value.displayState.primaryControlRef,
         )
-        assertEquals(
-            "Open VexLife",
-            value.displayState.primaryLabel,
-        )
-        assertFalse(
-            value.effectsPerformed,
-        )
+        assertEquals("Open VexLife", value.displayState.primaryLabel)
+        assertFalse(value.effectsPerformed)
     }
 
     @Test
@@ -341,26 +281,11 @@ class VexLifeProdMacFrontDoorTest {
                 hooks = hooks(observed),
             )
 
-        assertEquals(
-            VexLifeProdEntryFamily.StateUpdateAvailable,
-            projection.semanticStateRef,
-        )
-        assertEquals(
-            prior,
-            projection.currentServiceSourceSha,
-        )
-        assertEquals(
-            "Update & Restart",
-            projection.displayState.primaryLabel,
-        )
-        val converge =
-            requireNotNull(
-                resolved.effect as?
-                    VexLifeProdEntryFamily.ConvergeProduct,
-            )
-        assertFalse(
-            converge.allowAcquisition,
-        )
+        assertEquals(VexLifeProdEntryFamily.StateUpdateAvailable, projection.semanticStateRef)
+        assertEquals(prior, projection.currentServiceSourceSha)
+        assertEquals("Update & Restart", projection.displayState.primaryLabel)
+        val converge = requireNotNull(resolved.effect as? VexLifeProdEntryFamily.ConvergeProduct)
+        assertFalse(converge.allowAcquisition)
     }
 
     @Test
@@ -378,8 +303,7 @@ class VexLifeProdMacFrontDoorTest {
 
         assertEquals(
             VexLifeProdEntryFamily.StateRepairRequired,
-            VexLifeProdMacFrontDoor
-                .observeWithHooks(
+            VexLifeProdMacFrontDoor.observeWithHooks(
                     desiredSourceSha = desired,
                     productHome = selectedHome,
                     hooks = hooks(currentRepair),
@@ -388,8 +312,7 @@ class VexLifeProdMacFrontDoorTest {
         )
         assertEquals(
             VexLifeProdEntryFamily.StateUpdateRepairRequired,
-            VexLifeProdMacFrontDoor
-                .observeWithHooks(
+            VexLifeProdMacFrontDoor.observeWithHooks(
                     desiredSourceSha = desired,
                     productHome = selectedHome,
                     hooks = hooks(priorRepair),
@@ -400,8 +323,7 @@ class VexLifeProdMacFrontDoorTest {
 
     @Test
     fun existingHomeWithoutServiceShowsResourcePlanBeforeAcquisition() {
-        val absentService =
-            VexLifeProdMacServiceLifetime.ExistingObservation.Absent
+        val absentService = VexLifeProdMacServiceLifetime.ExistingObservation.Absent
         val projection =
             VexLifeProdMacFrontDoor.observeWithHooks(
                 desiredSourceSha = desired,
@@ -416,48 +338,22 @@ class VexLifeProdMacFrontDoorTest {
                 hooks = hooks(absentService, runtimeEnvironmentPresent = false),
             )
 
-        assertEquals(
-            VexLifeProdEntryFamily.StateSetupRequired,
-            projection.semanticStateRef,
-        )
-        val setupPlan =
-            requireNotNull(
-                projection.setupPlan,
-            )
-        assertTrue(
-            setupPlan.modelArtifactTotalBytes >
-                0,
-        )
-        assertTrue(
-            setupPlan.modelMinimumMemoryBytes >
-                0,
-        )
-        assertEquals(
-            48L * 1024L * 1024L * 1024L,
-            setupPlan.currentTotalMemoryBytes,
-        )
-        assertEquals(
-            3L * 1024L * 1024L * 1024L,
-            setupPlan.currentFreeStorageBytes,
-        )
-        assertFalse(
-            setupPlan.effectsPerformed,
-        )
-        val converge =
-            requireNotNull(
-                resolved.effect as?
-                    VexLifeProdEntryFamily.ConvergeProduct,
-            )
-        assertTrue(
-            converge.allowAcquisition,
-        )
+        assertEquals(VexLifeProdEntryFamily.StateSetupRequired, projection.semanticStateRef)
+        val setupPlan = requireNotNull(projection.setupPlan)
+        assertTrue(setupPlan.modelArtifactTotalBytes > 0)
+        assertTrue(setupPlan.modelMinimumMemoryBytes > 0)
+        assertEquals(48L * 1024L * 1024L * 1024L, setupPlan.currentTotalMemoryBytes)
+        assertEquals(3L * 1024L * 1024L * 1024L, setupPlan.currentFreeStorageBytes)
+        assertFalse(setupPlan.effectsPerformed)
+        val converge = requireNotNull(resolved.effect as? VexLifeProdEntryFamily.ConvergeProduct)
+        assertTrue(converge.allowAcquisition)
     }
 
     @Test
     fun unknownOwnershipProjectsHeldAndRejectsConvergeControl() {
         val unknown =
             VexLifeProdMacServiceLifetime.ExistingObservation.HeldUnknown(
-                "receipt/PID ownership is not exact",
+                "receipt/PID ownership is not exact"
             )
         val projection =
             VexLifeProdMacFrontDoor.observeWithHooks(
@@ -466,135 +362,72 @@ class VexLifeProdMacFrontDoorTest {
                 hooks = hooks(unknown),
             )
 
-        assertEquals(
-            VexLifeProdEntryFamily.StateHeldUnknown,
-            projection.semanticStateRef,
-        )
-        assertEquals(
-            "receipt/PID ownership is not exact",
-            projection.serviceDetail,
-        )
-        assertNull(
-            projection.displayState.primaryControlRef,
-        )
+        assertEquals(VexLifeProdEntryFamily.StateHeldUnknown, projection.semanticStateRef)
+        assertEquals("receipt/PID ownership is not exact", projection.serviceDetail)
+        assertNull(projection.displayState.primaryControlRef)
     }
 
     @Test
     fun HomeActivationDelegatesSetupEffectAndRequestsEntryRefresh() {
-        var homeCalls =
-            0
-        var setupCalls =
-            0
+        var homeCalls = 0
+        var setupCalls = 0
 
         val result =
             VexLifeProdMacFrontDoorProcess.activateWithHooks(
                 productHome = selectedHome,
-                controlRef =
-                    VexLifeProdEntryFamily.ControlFormHome,
+                controlRef = VexLifeProdEntryFamily.ControlFormHome,
                 desiredSourceSha = desired,
                 hooks =
                     VexLifeProdMacFrontDoorProcess.ActivationHooks(
-                        resolveControl = {
-                            sourceSha,
-                            controlRef,
-                            productHome,
-                            ->
-                            assertEquals(
-                                selectedHome,
-                                productHome,
-                            )
-                            assertEquals(
-                                desired,
-                                sourceSha,
-                            )
+                        resolveControl = { sourceSha, controlRef, productHome ->
+                            assertEquals(selectedHome, productHome)
+                            assertEquals(desired, sourceSha)
                             VexLifeProdMacFrontDoor.ResolvedControl(
                                 semanticStateRef =
                                     VexLifeProdEntryFamily.StateHomeFormationRequired,
                                 controlRef = controlRef,
-                                effect =
-                                    VexLifeProdEntryFamily.FormCanonicalHome,
+                                effect = VexLifeProdEntryFamily.FormCanonicalHome,
                             )
                         },
-                        formHome = {
-                            sourceSha,
-                            productHome,
-                            ->
-                            assertEquals(
-                                selectedHome,
-                                productHome,
-                            )
-                            assertEquals(
-                                desired,
-                                sourceSha,
-                            )
-                            homeCalls +=
-                                1
+                        formHome = { sourceSha, productHome ->
+                            assertEquals(selectedHome, productHome)
+                            assertEquals(desired, sourceSha)
+                            homeCalls += 1
                         },
-                        convergeProduct = {
-                            _,
-                            _,
-                            _,
-                            _,
-                            ->
-                            setupCalls +=
-                                1
+                        convergeProduct = { _, _, _, _ ->
+                            setupCalls += 1
                         },
-                        observeSemanticStateRef = {
-                            _,
-                            productHome,
-                            ->
-                            assertEquals(
-                                selectedHome,
-                                productHome,
-                            )
+                        observeSemanticStateRef = { _, productHome ->
+                            assertEquals(selectedHome, productHome)
                             VexLifeProdEntryFamily.StateSetupRequired
                         },
                     ),
             )
 
-        assertEquals(
-            1,
-            homeCalls,
-        )
-        assertEquals(
-            0,
-            setupCalls,
-        )
+        assertEquals(1, homeCalls)
+        assertEquals(0, setupCalls)
         assertEquals(
             VexLifeProdMacFrontDoorProcess.ManifestationRefreshEntry,
             result.manifestationRef,
         )
-        assertEquals(
-            VexLifeProdEntryFamily.StateSetupRequired,
-            result.semanticStateRef,
-        )
+        assertEquals(VexLifeProdEntryFamily.StateSetupRequired, result.semanticStateRef)
     }
 
     @Test
     fun setupActivationCarriesAcquisitionAuthorityAndOpensOnlyAfterCurrentReobservation() {
-        var observedAllowAcquisition: Boolean? =
-            null
+        var observedAllowAcquisition: Boolean? = null
 
         val result =
             VexLifeProdMacFrontDoorProcess.activateWithHooks(
                 productHome = selectedHome,
-                controlRef =
-                    VexLifeProdEntryFamily.ControlSetUp,
+                controlRef = VexLifeProdEntryFamily.ControlSetUp,
                 desiredSourceSha = desired,
                 hooks =
                     VexLifeProdMacFrontDoorProcess.ActivationHooks(
-                        resolveControl = {
-                            _,
-                            controlRef,
-                            productHome,
-                            ->
-                            assertEquals(
-                                selectedHome,
-                                productHome,
-                            )
+                        resolveControl = { _, controlRef, productHome ->
+                            assertEquals(selectedHome, productHome)
                             VexLifeProdMacFrontDoor.ResolvedControl(
-                                semanticStateRef =
-                                    VexLifeProdEntryFamily.StateSetupRequired,
+                                semanticStateRef = VexLifeProdEntryFamily.StateSetupRequired,
                                 controlRef = controlRef,
                                 effect =
                                     VexLifeProdEntryFamily.ConvergeProduct(
@@ -604,56 +437,27 @@ class VexLifeProdMacFrontDoorTest {
                                     ),
                             )
                         },
-                        formHome = {
-                            _,
-                            _,
-                            ->
-                            error(
-                                "setup activation must not form Home",
-                            )
+                        formHome = { _, _ ->
+                            error("setup activation must not form Home")
                         },
-                        convergeProduct = {
-                            sourceSha,
-                            allowAcquisition,
-                            _,
-                            productHome,
-                            ->
-                            assertEquals(
-                                selectedHome,
-                                productHome,
-                            )
-                            assertEquals(
-                                desired,
-                                sourceSha,
-                            )
-                            observedAllowAcquisition =
-                                allowAcquisition
+                        convergeProduct = { sourceSha, allowAcquisition, _, productHome ->
+                            assertEquals(selectedHome, productHome)
+                            assertEquals(desired, sourceSha)
+                            observedAllowAcquisition = allowAcquisition
                         },
-                        observeSemanticStateRef = {
-                            _,
-                            productHome,
-                            ->
-                            assertEquals(
-                                selectedHome,
-                                productHome,
-                            )
+                        observeSemanticStateRef = { _, productHome ->
+                            assertEquals(selectedHome, productHome)
                             VexLifeProdEntryFamily.StateCurrent
                         },
                     ),
             )
 
-        assertEquals(
-            true,
-            observedAllowAcquisition,
-        )
+        assertEquals(true, observedAllowAcquisition)
         assertEquals(
             VexLifeProdMacFrontDoorProcess.ManifestationOpenProduct,
             result.manifestationRef,
         )
-        assertEquals(
-            VexLifeProdEntryFamily.StateCurrent,
-            result.semanticStateRef,
-        )
+        assertEquals(VexLifeProdEntryFamily.StateCurrent, result.semanticStateRef)
     }
 
     @Test
@@ -661,52 +465,27 @@ class VexLifeProdMacFrontDoorTest {
         val result =
             VexLifeProdMacFrontDoorProcess.activateWithHooks(
                 productHome = selectedHome,
-                controlRef =
-                    VexLifeProdEntryFamily.ControlOpenCurrent,
+                controlRef = VexLifeProdEntryFamily.ControlOpenCurrent,
                 desiredSourceSha = desired,
                 hooks =
                     VexLifeProdMacFrontDoorProcess.ActivationHooks(
-                        resolveControl = {
-                            _,
-                            controlRef,
-                            productHome,
-                            ->
-                            assertEquals(
-                                selectedHome,
-                                productHome,
-                            )
+                        resolveControl = { _, controlRef, productHome ->
+                            assertEquals(selectedHome, productHome)
                             VexLifeProdMacFrontDoor.ResolvedControl(
-                                semanticStateRef =
-                                    VexLifeProdEntryFamily.StateCurrent,
+                                semanticStateRef = VexLifeProdEntryFamily.StateCurrent,
                                 controlRef = controlRef,
-                                effect =
-                                    VexLifeProdEntryFamily.OpenPresentation,
+                                effect = VexLifeProdEntryFamily.OpenPresentation,
                             )
                         },
-                        formHome = {
-                            _,
-                            _,
-                            ->
-                            error(
-                                "open-current activation must not form Home",
-                            )
+                        formHome = { _, _ ->
+                            error("open-current activation must not form Home")
                         },
-                        convergeProduct = {
-                            _,
-                            _,
-                            _,
-                            _,
-                            ->
-                            error(
-                                "open-current activation must not run setup",
-                            )
+                        convergeProduct = { _, _, _, _ ->
+                            error("open-current activation must not run setup")
                         },
-                        observeSemanticStateRef = {
-                            _,
-                            _,
-                            ->
+                        observeSemanticStateRef = { _, _ ->
                             error(
-                                "open-current activation must not re-observe after a no-effect presentation request",
+                                "open-current activation must not re-observe after a no-effect presentation request"
                             )
                         },
                     ),
@@ -716,10 +495,7 @@ class VexLifeProdMacFrontDoorTest {
             VexLifeProdMacFrontDoorProcess.ManifestationOpenProduct,
             result.manifestationRef,
         )
-        assertEquals(
-            VexLifeProdEntryFamily.StateCurrent,
-            result.semanticStateRef,
-        )
+        assertEquals(VexLifeProdEntryFamily.StateCurrent, result.semanticStateRef)
     }
 
     @Test
@@ -727,15 +503,12 @@ class VexLifeProdMacFrontDoorTest {
         val source =
             Files.readString(
                 Path.of(
-                    System.getProperty(
-                        "user.dir",
-                    ),
+                    System.getProperty("user.dir"),
                     "packaging/private-service-image/setup/vexlife-prod-setup-window.applescript",
-                ),
+                )
             )
 
-        for (
-            required in
+        for (required in
             listOf(
                 "--activate-front-door-control",
                 "--inspect-front-door",
@@ -745,17 +518,10 @@ class VexLifeProdMacFrontDoorTest {
                 "Cancel safely",
                 "property progressPrefix : \"[VexLife] \"",
                 "NSOpenPanel",
-            )
-        ) {
-            assertTrue(
-                source.contains(
-                    required,
-                ),
-                "native window must keep: $required",
-            )
+            )) {
+            assertTrue(source.contains(required), "native window must keep: $required")
         }
-        for (
-            forbidden in
+        for (forbidden in
             listOf(
                 "effectRef",
                 "FORM_CANONICAL_HOME",
@@ -774,90 +540,55 @@ class VexLifeProdMacFrontDoorTest {
                 "Start VexLife",
                 "Repair & Restart",
                 "Update & Restart",
-                // One shared stdout/stderr pipe read only after exit can deadlock on a long setup and
+                // One shared stdout/stderr pipe read only after exit can deadlock on a long setup
+                // and
                 // lets JVM diagnostics corrupt the JSON channel.
                 "setStandardError:outputPipe",
-            )
-        ) {
+            )) {
             assertFalse(
-                source.contains(
-                    forbidden,
-                ),
+                source.contains(forbidden),
                 "native window must not own semantic Effect routing: $forbidden",
             )
         }
     }
-
 
     @Test
     fun HomeActivationRefreshesWhateverStateRealityReobserves() {
         val result =
             VexLifeProdMacFrontDoorProcess.activateWithHooks(
                 productHome = selectedHome,
-                controlRef =
-                    VexLifeProdEntryFamily.ControlFormHome,
+                controlRef = VexLifeProdEntryFamily.ControlFormHome,
                 desiredSourceSha = desired,
                 hooks =
                     VexLifeProdMacFrontDoorProcess.ActivationHooks(
-                        resolveControl = {
-                            _,
-                            controlRef,
-                            productHome,
-                            ->
-                            assertEquals(
-                                selectedHome,
-                                productHome,
-                            )
+                        resolveControl = { _, controlRef, productHome ->
+                            assertEquals(selectedHome, productHome)
                             VexLifeProdMacFrontDoor.ResolvedControl(
                                 semanticStateRef =
                                     VexLifeProdEntryFamily.StateHomeFormationRequired,
                                 controlRef = controlRef,
-                                effect =
-                                    VexLifeProdEntryFamily.FormCanonicalHome,
+                                effect = VexLifeProdEntryFamily.FormCanonicalHome,
                             )
                         },
-                        formHome = {
-                            _,
-                            productHome,
-                            ->
-                            assertEquals(
-                                selectedHome,
-                                productHome,
-                            )
+                        formHome = { _, productHome ->
+                            assertEquals(selectedHome, productHome)
                         },
-                        convergeProduct = {
-                            _,
-                            _,
-                            _,
-                            _,
-                            ->
-                            error(
-                                "Home activation must not converge Product",
-                            )
+                        convergeProduct = { _, _, _, _ ->
+                            error("Home activation must not converge Product")
                         },
-                        observeSemanticStateRef = {
-                            _,
-                            productHome,
-                            ->
-                            assertEquals(
-                                selectedHome,
-                                productHome,
-                            )
+                        observeSemanticStateRef = { _, productHome ->
+                            assertEquals(selectedHome, productHome)
                             VexLifeProdEntryFamily.StateHeldUnknown
                         },
                     ),
             )
 
-        assertEquals(
-            VexLifeProdEntryFamily.StateHeldUnknown,
-            result.semanticStateRef,
-        )
+        assertEquals(VexLifeProdEntryFamily.StateHeldUnknown, result.semanticStateRef)
         assertEquals(
             VexLifeProdMacFrontDoorProcess.ManifestationRefreshEntry,
             result.manifestationRef,
         )
     }
-
 }
 
 // [VXG RealForever]

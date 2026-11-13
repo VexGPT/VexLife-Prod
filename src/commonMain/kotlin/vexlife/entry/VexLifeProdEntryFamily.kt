@@ -6,9 +6,9 @@ import vexlife.semantic.VexFamilyContract
 /**
  * Portable Product-entry semantics.
  *
- * Platform adapters observe their own process/lifecycle truth and map it into [EntryState]. Renderers
- * consume [EntryDisplayState] and emit [EntryControl]. Only this Family decides which Effect a
- * Control means under the current State.
+ * Platform adapters observe their own process/lifecycle truth and map it into [EntryState].
+ * Renderers consume [EntryDisplayState] and emit [EntryControl]. Only this Family decides which
+ * Effect a Control means under the current State.
  *
  * Platform process syntax, launchd/Windows service mechanics, Home, model acquisition and browser
  * opening remain outside this semantic owner.
@@ -26,41 +26,28 @@ class VexLifeProdEntryFamily private constructor() :
         VexLifeProdEntryFamily,
         VexLifeProdEntryFamily.EntryState,
         VexLifeProdEntryFamily.EntryControl,
-        VexLifeProdEntryFamily.EntryEffect
+        VexLifeProdEntryFamily.EntryEffect,
     >() {
 
-    sealed interface EntryState :
-        VexFamilyContract.State<VexLifeProdEntryFamily> {
+    sealed interface EntryState : VexFamilyContract.State<VexLifeProdEntryFamily> {
         val desiredSourceSha: String
         val stateRef: String
     }
 
-    data class Current(
-        override val desiredSourceSha: String,
-    ) : EntryState {
-        override val stateRef: String =
-            StateCurrent
+    data class Current(override val desiredSourceSha: String) : EntryState {
+        override val stateRef: String = StateCurrent
     }
 
-    data class UpdateAvailable(
-        override val desiredSourceSha: String,
-    ) : EntryState {
-        override val stateRef: String =
-            StateUpdateAvailable
+    data class UpdateAvailable(override val desiredSourceSha: String) : EntryState {
+        override val stateRef: String = StateUpdateAvailable
     }
 
-    data class RepairRequired(
-        override val desiredSourceSha: String,
-    ) : EntryState {
-        override val stateRef: String =
-            StateRepairRequired
+    data class RepairRequired(override val desiredSourceSha: String) : EntryState {
+        override val stateRef: String = StateRepairRequired
     }
 
-    data class UpdateRepairRequired(
-        override val desiredSourceSha: String,
-    ) : EntryState {
-        override val stateRef: String =
-            StateUpdateRepairRequired
+    data class UpdateRepairRequired(override val desiredSourceSha: String) : EntryState {
+        override val stateRef: String = StateUpdateRepairRequired
     }
 
     /**
@@ -74,15 +61,11 @@ class VexLifeProdEntryFamily private constructor() :
         override val desiredSourceSha: String,
         val priorServiceSourceSha: String?,
     ) : EntryState {
-        override val stateRef: String =
-            StateStartRequired
+        override val stateRef: String = StateStartRequired
     }
 
-    data class HomeFormationRequired(
-        override val desiredSourceSha: String,
-    ) : EntryState {
-        override val stateRef: String =
-            StateHomeFormationRequired
+    data class HomeFormationRequired(override val desiredSourceSha: String) : EntryState {
+        override val stateRef: String = StateHomeFormationRequired
     }
 
     /**
@@ -94,16 +77,10 @@ class VexLifeProdEntryFamily private constructor() :
         val dispositionRef: String,
         val detail: String,
     ) : EntryState {
-        override val stateRef: String =
-            StateHomeHeld
+        override val stateRef: String = StateHomeHeld
 
         init {
-            require(
-                dispositionRef.startsWith(
-                    "HELD_",
-                ) &&
-                    detail.isNotBlank(),
-            ) {
+            require(dispositionRef.startsWith("HELD_") && detail.isNotBlank()) {
                 "held Home entry state requires one held disposition and bounded detail"
             }
         }
@@ -122,26 +99,19 @@ class VexLifeProdEntryFamily private constructor() :
         val requiredMemoryBytes: Long,
         val homePresent: Boolean,
     ) : EntryState {
-        override val stateRef: String =
-            StateHostHeld
+        override val stateRef: String = StateHostHeld
 
         init {
             require(
-                reasonRef.isNotBlank() &&
-                    requiredChipModel.isNotBlank() &&
-                    requiredMemoryBytes >
-                    0,
+                reasonRef.isNotBlank() && requiredChipModel.isNotBlank() && requiredMemoryBytes > 0
             ) {
                 "held host entry state requires one reason and the certified requirement it failed"
             }
         }
     }
 
-    data class SetupRequired(
-        override val desiredSourceSha: String,
-    ) : EntryState {
-        override val stateRef: String =
-            StateSetupRequired
+    data class SetupRequired(override val desiredSourceSha: String) : EntryState {
+        override val stateRef: String = StateSetupRequired
     }
 
     /**
@@ -152,16 +122,10 @@ class VexLifeProdEntryFamily private constructor() :
         val requiredFreeBytes: Long,
         val freeBytes: Long,
     ) : EntryState {
-        override val stateRef: String =
-            StateStorageHeld
+        override val stateRef: String = StateStorageHeld
 
         init {
-            require(
-                requiredFreeBytes >
-                    freeBytes &&
-                    freeBytes >=
-                    0,
-            ) {
+            require(requiredFreeBytes > freeBytes && freeBytes >= 0) {
                 "storage hold requires observed free space below the requirement"
             }
         }
@@ -172,78 +136,59 @@ class VexLifeProdEntryFamily private constructor() :
      * and requires an explicit repair owner before reacquisition; setup must not offer acquisition
      * that would stop on them.
      */
-    data class ModelFilesHeld(
-        override val desiredSourceSha: String,
-        val invalidBytes: Long,
-    ) : EntryState {
-        override val stateRef: String =
-            StateModelFilesHeld
+    data class ModelFilesHeld(override val desiredSourceSha: String, val invalidBytes: Long) :
+        EntryState {
+        override val stateRef: String = StateModelFilesHeld
     }
 
-    data class HeldUnknown(
-        override val desiredSourceSha: String,
-        val detail: String,
-    ) : EntryState {
-        override val stateRef: String =
-            StateHeldUnknown
+    data class HeldUnknown(override val desiredSourceSha: String, val detail: String) : EntryState {
+        override val stateRef: String = StateHeldUnknown
 
         init {
-            require(
-                detail.isNotBlank(),
-            ) {
+            require(detail.isNotBlank()) {
                 "held Product-entry state requires bounded detail"
             }
         }
     }
 
-    sealed interface EntryControl :
-        VexFamilyContract.Control<VexLifeProdEntryFamily> {
+    sealed interface EntryControl : VexFamilyContract.Control<VexLifeProdEntryFamily> {
         val controlRef: String
     }
 
     data object OpenCurrent : EntryControl {
-        override val controlRef: String =
-            ControlOpenCurrent
+        override val controlRef: String = ControlOpenCurrent
     }
 
     data object ConvergeDesired : EntryControl {
-        override val controlRef: String =
-            ControlConvergeDesired
+        override val controlRef: String = ControlConvergeDesired
     }
 
     data object Start : EntryControl {
-        override val controlRef: String =
-            ControlStart
+        override val controlRef: String = ControlStart
     }
 
     data object FormHome : EntryControl {
-        override val controlRef: String =
-            ControlFormHome
+        override val controlRef: String = ControlFormHome
     }
 
     data object SetUp : EntryControl {
-        override val controlRef: String =
-            ControlSetUp
+        override val controlRef: String = ControlSetUp
     }
 
     data object Cancel : EntryControl {
-        override val controlRef: String =
-            ControlCancel
+        override val controlRef: String = ControlCancel
     }
 
-    sealed interface EntryEffect :
-        VexFamilyContract.Effect<VexLifeProdEntryFamily> {
+    sealed interface EntryEffect : VexFamilyContract.Effect<VexLifeProdEntryFamily> {
         val effectRef: String
     }
 
     data object OpenPresentation : EntryEffect {
-        override val effectRef: String =
-            EffectOpenPresentation
+        override val effectRef: String = EffectOpenPresentation
     }
 
     data object FormCanonicalHome : EntryEffect {
-        override val effectRef: String =
-            EffectFormCanonicalHome
+        override val effectRef: String = EffectFormCanonicalHome
     }
 
     /**
@@ -256,30 +201,20 @@ class VexLifeProdEntryFamily private constructor() :
         val allowAcquisition: Boolean,
         val allowRuntimeStart: Boolean,
     ) : EntryEffect {
-        override val effectRef: String =
-            EffectConvergeProduct
+        override val effectRef: String = EffectConvergeProduct
 
         init {
-            require(
-                !allowAcquisition ||
-                    allowRuntimeStart,
-            ) {
+            require(!allowAcquisition || allowRuntimeStart) {
                 "acquisition authority without runtime-start authority is not lawful"
             }
         }
     }
 
     @Serializable
-    data class JourneyStep(
-        val stepRef: String,
-        val label: String,
-        val statusRef: String,
-    ) {
+    data class JourneyStep(val stepRef: String, val label: String, val statusRef: String) {
         init {
             require(
-                stepRef in JourneyStepRefs &&
-                    label.isNotBlank() &&
-                    statusRef in JourneyStatusRefs,
+                stepRef in JourneyStepRefs && label.isNotBlank() && statusRef in JourneyStatusRefs
             ) {
                 "Setup Journey step is invalid"
             }
@@ -307,44 +242,23 @@ class VexLifeProdEntryFamily private constructor() :
     ) :
         VexFamilyContract.DisplayState<
             VexLifeProdEntryFamily,
-            EntryState
+            EntryState,
         > {
         init {
             require(
                 title.isNotBlank() &&
                     detail.isNotBlank() &&
                     cancelLabel.isNotBlank() &&
-                    (
-                        (
-                            primaryControlRef ==
-                                null
-                        ) ==
-                            (
-                                primaryLabel ==
-                                    null
-                            )
-                    ) &&
-                    (
-                        (
-                            secondaryControlRef ==
-                                null
-                        ) ==
-                            (
-                                secondaryLabel ==
-                                    null
-                            )
-                    ) &&
+                    ((primaryControlRef == null) == (primaryLabel == null)) &&
+                    ((secondaryControlRef == null) == (secondaryLabel == null)) &&
                     journey.map {
                         it.stepRef
                     } == JourneyStepRefs &&
                     journey.count {
-                        it.statusRef ==
-                            JourneyCurrent ||
-                            it.statusRef ==
-                            JourneyHeld
+                        it.statusRef == JourneyCurrent || it.statusRef == JourneyHeld
                     } <= 1 &&
                     homeChoiceLabel?.isNotBlank() != false &&
-                    recheckLabel?.isNotBlank() != false,
+                    recheckLabel?.isNotBlank() != false
             ) {
                 "Product-entry DisplayState is invalid"
             }
@@ -357,157 +271,96 @@ class VexLifeProdEntryFamily private constructor() :
     ): Act<
         VexLifeProdEntryFamily,
         EntryState,
-        EntryEffect
+        EntryEffect,
     >? =
-        when (
-            currentState
-        ) {
+        when (currentState) {
             is Current ->
-                when (
-                    control
-                ) {
-                    OpenCurrent ->
-                        stay(
-                            OpenPresentation,
-                        )
+                when (control) {
+                    OpenCurrent -> stay(OpenPresentation)
 
-                    Cancel ->
-                        stay()
+                    Cancel -> stay()
 
-                    else ->
-                        null
+                    else -> null
                 }
 
             is UpdateAvailable ->
-                when (
-                    control
-                ) {
-                    OpenCurrent ->
-                        stay(
-                            OpenPresentation,
-                        )
+                when (control) {
+                    OpenCurrent -> stay(OpenPresentation)
 
                     ConvergeDesired ->
-                        stay(
-                            restartWithoutAcquisition(
-                                currentState.desiredSourceSha,
-                            ),
-                        )
+                        stay(restartWithoutAcquisition(currentState.desiredSourceSha))
 
-                    Cancel ->
-                        stay()
+                    Cancel -> stay()
 
-                    else ->
-                        null
+                    else -> null
                 }
 
             is RepairRequired,
-            is UpdateRepairRequired,
-            ->
-                when (
-                    control
-                ) {
+            is UpdateRepairRequired ->
+                when (control) {
                     ConvergeDesired ->
-                        stay(
-                            restartWithoutAcquisition(
-                                currentState.desiredSourceSha,
-                            ),
-                        )
+                        stay(restartWithoutAcquisition(currentState.desiredSourceSha))
 
-                    Cancel ->
-                        stay()
+                    Cancel -> stay()
 
-                    else ->
-                        null
+                    else -> null
                 }
 
             is StartRequired ->
-                when (
-                    control
-                ) {
-                    Start ->
-                        stay(
-                            restartWithoutAcquisition(
-                                currentState.desiredSourceSha,
-                            ),
-                        )
+                when (control) {
+                    Start -> stay(restartWithoutAcquisition(currentState.desiredSourceSha))
 
-                    Cancel ->
-                        stay()
+                    Cancel -> stay()
 
-                    else ->
-                        null
+                    else -> null
                 }
 
             is HomeFormationRequired ->
-                when (
-                    control
-                ) {
-                    FormHome ->
-                        stay(
-                            FormCanonicalHome,
-                        )
+                when (control) {
+                    FormHome -> stay(FormCanonicalHome)
 
-                    Cancel ->
-                        stay()
+                    Cancel -> stay()
 
-                    else ->
-                        null
+                    else -> null
                 }
 
             is SetupRequired ->
-                when (
-                    control
-                ) {
+                when (control) {
                     SetUp ->
                         stay(
                             ConvergeProduct(
-                                desiredSourceSha =
-                                    currentState.desiredSourceSha,
+                                desiredSourceSha = currentState.desiredSourceSha,
                                 allowAcquisition = true,
                                 allowRuntimeStart = true,
-                            ),
+                            )
                         )
 
-                    Cancel ->
-                        stay()
+                    Cancel -> stay()
 
-                    else ->
-                        null
+                    else -> null
                 }
 
             is HomeHeld,
             is HostHeld,
             is StorageHeld,
             is ModelFilesHeld,
-            is HeldUnknown,
-            ->
-                when (
-                    control
-                ) {
-                    Cancel ->
-                        stay()
+            is HeldUnknown ->
+                when (control) {
+                    Cancel -> stay()
 
-                    else ->
-                        null
+                    else -> null
                 }
         }
 
-    private fun restartWithoutAcquisition(
-        desiredSourceSha: String,
-    ): ConvergeProduct =
+    private fun restartWithoutAcquisition(desiredSourceSha: String): ConvergeProduct =
         ConvergeProduct(
             desiredSourceSha = desiredSourceSha,
             allowAcquisition = false,
             allowRuntimeStart = true,
         )
 
-    override fun displayStateFor(
-        state: EntryState,
-    ): EntryDisplayState =
-        when (
-            state
-        ) {
+    override fun displayStateFor(state: EntryState): EntryDisplayState =
+        when (state) {
             is Current ->
                 display(
                     title = "VexLife is running.",
@@ -556,10 +409,8 @@ class VexLifeProdEntryFamily private constructor() :
                         "Your Vex Home and local model are already on this Mac. Starting checks those files, " +
                             "then starts the local model and VexLife. Nothing will be downloaded." +
                             if (
-                                state.priorServiceSourceSha !=
-                                    null &&
-                                state.priorServiceSourceSha !=
-                                state.desiredSourceSha
+                                state.priorServiceSourceSha != null &&
+                                    state.priorServiceSourceSha != state.desiredSourceSha
                             ) {
                                 " This also moves VexLife to the newer version you just opened."
                             } else {
@@ -585,9 +436,7 @@ class VexLifeProdEntryFamily private constructor() :
                 display(
                     title = "This folder is being preserved.",
                     detail =
-                        homeHeldExplanation(
-                            state.dispositionRef,
-                        ) +
+                        homeHeldExplanation(state.dispositionRef) +
                             " Nothing in it was changed, moved or deleted.",
                     journey = journey(Complete, JourneyHeld, Upcoming, Upcoming, Upcoming),
                     homeChoice = true,
@@ -599,12 +448,8 @@ class VexLifeProdEntryFamily private constructor() :
                 display(
                     title = "This Mac can't run VexLife's local model yet.",
                     detail =
-                        hostHeldExplanation(
-                            state,
-                        ) +
-                            if (
-                                state.homePresent
-                            ) {
+                        hostHeldExplanation(state) +
+                            if (state.homePresent) {
                                 " Your existing Vex Home was left untouched."
                             } else {
                                 " Nothing was created or downloaded."
@@ -677,16 +522,11 @@ class VexLifeProdEntryFamily private constructor() :
         title: String,
         detail: String,
         journey: List<JourneyStep>,
-        primary: Pair<String, String>? =
-            null,
-        secondary: Pair<String, String>? =
-            null,
-        homeChoice: Boolean =
-            false,
-        recheck: Boolean =
-            false,
-        cancelLabel: String =
-            "Cancel",
+        primary: Pair<String, String>? = null,
+        secondary: Pair<String, String>? = null,
+        homeChoice: Boolean = false,
+        recheck: Boolean = false,
+        cancelLabel: String = "Cancel",
     ): EntryDisplayState =
         EntryDisplayState(
             title = title,
@@ -697,10 +537,8 @@ class VexLifeProdEntryFamily private constructor() :
             secondaryLabel = secondary?.second,
             cancelLabel = cancelLabel,
             journey = journey,
-            homeChoiceLabel =
-                if (homeChoice) "Choose Another Location…" else null,
-            recheckLabel =
-                if (recheck) "Check Again" else null,
+            homeChoiceLabel = if (homeChoice) "Choose Another Location…" else null,
+            recheckLabel = if (recheck) "Check Again" else null,
         )
 
     private fun journey(
@@ -718,12 +556,8 @@ class VexLifeProdEntryFamily private constructor() :
             JourneyStep(JourneyStepReady, "Ready", ready),
         )
 
-    private fun homeHeldExplanation(
-        dispositionRef: String,
-    ): String =
-        when (
-            dispositionRef
-        ) {
+    private fun homeHeldExplanation(dispositionRef: String): String =
+        when (dispositionRef) {
             "HELD_NONCANONICAL_CONTENT" ->
                 "The folder you chose already contains other files, so VexLife will not use it as a Vex Home. " +
                     "Choose an empty folder, or type a new folder name."
@@ -747,13 +581,10 @@ class VexLifeProdEntryFamily private constructor() :
                 "VexLife could not read that location. If macOS asked for permission, you can allow it and choose " +
                     "Check Again, or choose another location."
 
-            else ->
-                "VexLife could not safely identify the selected folder as a Vex Home."
+            else -> "VexLife could not safely identify the selected folder as a Vex Home."
         }
 
-    private fun hostHeldExplanation(
-        state: HostHeld,
-    ): String {
+    private fun hostHeldExplanation(state: HostHeld): String {
         val requirement =
             "VexLife's local model currently runs on Macs with an ${state.requiredChipModel} chip and at least " +
                 "${gib(state.requiredMemoryBytes)} GiB of memory."
@@ -764,52 +595,34 @@ class VexLifeProdEntryFamily private constructor() :
                 (state.totalMemoryBytes?.let { gib(it) + " GiB memory" } ?: "unknown memory") +
                 "."
         val reason =
-            when (
-                state.reasonRef
-            ) {
-                "PLATFORM_UNSUPPORTED" ->
-                    "VexLife setup currently runs on macOS only."
+            when (state.reasonRef) {
+                "PLATFORM_UNSUPPORTED" -> "VexLife setup currently runs on macOS only."
 
-                "ARCHITECTURE_UNSUPPORTED" ->
-                    "This Mac does not use Apple silicon."
+                "ARCHITECTURE_UNSUPPORTED" -> "This Mac does not use Apple silicon."
 
-                "SYSTEM_MEMORY_UNKNOWN" ->
-                    "VexLife could not read how much memory this Mac has."
+                "SYSTEM_MEMORY_UNKNOWN" -> "VexLife could not read how much memory this Mac has."
 
                 "INSUFFICIENT_SYSTEM_MEMORY" ->
                     "This Mac has less memory than the local model needs."
 
-                else ->
-                    "This Mac's chip is not yet certified for the local model."
+                else -> "This Mac's chip is not yet certified for the local model."
             }
         return "$reason $requirement $observed"
     }
 
     companion object {
-        const val StateCurrent =
-            "CURRENT"
-        const val StateUpdateAvailable =
-            "UPDATE_AVAILABLE"
-        const val StateRepairRequired =
-            "REPAIR_REQUIRED"
-        const val StateUpdateRepairRequired =
-            "UPDATE_REPAIR_REQUIRED"
-        const val StateStartRequired =
-            "START_REQUIRED"
-        const val StateHomeFormationRequired =
-            "HOME_FORMATION_REQUIRED"
-        const val StateHomeHeld =
-            "HOME_HELD"
-        const val StateHostHeld =
-            "HOST_HELD"
-        const val StateSetupRequired =
-            "SETUP_REQUIRED"
-        const val StateStorageHeld =
-            "STORAGE_HELD"
-        const val StateModelFilesHeld =
-            "MODEL_FILES_HELD"
-        const val StateHeldUnknown =
-            "HOLD_UNKNOWN"
+        const val StateCurrent = "CURRENT"
+        const val StateUpdateAvailable = "UPDATE_AVAILABLE"
+        const val StateRepairRequired = "REPAIR_REQUIRED"
+        const val StateUpdateRepairRequired = "UPDATE_REPAIR_REQUIRED"
+        const val StateStartRequired = "START_REQUIRED"
+        const val StateHomeFormationRequired = "HOME_FORMATION_REQUIRED"
+        const val StateHomeHeld = "HOME_HELD"
+        const val StateHostHeld = "HOST_HELD"
+        const val StateSetupRequired = "SETUP_REQUIRED"
+        const val StateStorageHeld = "STORAGE_HELD"
+        const val StateModelFilesHeld = "MODEL_FILES_HELD"
+        const val StateHeldUnknown = "HOLD_UNKNOWN"
 
         val StateRefs =
             setOf(
@@ -827,36 +640,22 @@ class VexLifeProdEntryFamily private constructor() :
                 StateHeldUnknown,
             )
 
-        const val ControlOpenCurrent =
-            "OPEN_CURRENT"
-        const val ControlConvergeDesired =
-            "CONVERGE_DESIRED"
-        const val ControlStart =
-            "START"
-        const val ControlFormHome =
-            "FORM_HOME"
-        const val ControlSetUp =
-            "SET_UP"
-        const val ControlCancel =
-            "CANCEL"
+        const val ControlOpenCurrent = "OPEN_CURRENT"
+        const val ControlConvergeDesired = "CONVERGE_DESIRED"
+        const val ControlStart = "START"
+        const val ControlFormHome = "FORM_HOME"
+        const val ControlSetUp = "SET_UP"
+        const val ControlCancel = "CANCEL"
 
-        const val EffectOpenPresentation =
-            "OPEN_PRESENTATION"
-        const val EffectFormCanonicalHome =
-            "FORM_CANONICAL_HOME"
-        const val EffectConvergeProduct =
-            "CONVERGE_PRODUCT"
+        const val EffectOpenPresentation = "OPEN_PRESENTATION"
+        const val EffectFormCanonicalHome = "FORM_CANONICAL_HOME"
+        const val EffectConvergeProduct = "CONVERGE_PRODUCT"
 
-        const val JourneyStepMac =
-            "MAC"
-        const val JourneyStepHome =
-            "HOME"
-        const val JourneyStepModel =
-            "MODEL"
-        const val JourneyStepStart =
-            "START"
-        const val JourneyStepReady =
-            "READY"
+        const val JourneyStepMac = "MAC"
+        const val JourneyStepHome = "HOME"
+        const val JourneyStepModel = "MODEL"
+        const val JourneyStepStart = "START"
+        const val JourneyStepReady = "READY"
 
         val JourneyStepRefs =
             listOf(
@@ -867,65 +666,36 @@ class VexLifeProdEntryFamily private constructor() :
                 JourneyStepReady,
             )
 
-        const val Complete =
-            "COMPLETE"
-        const val JourneyCurrent =
-            "CURRENT"
-        const val Upcoming =
-            "UPCOMING"
-        const val JourneyHeld =
-            "HELD"
+        const val Complete = "COMPLETE"
+        const val JourneyCurrent = "CURRENT"
+        const val Upcoming = "UPCOMING"
+        const val JourneyHeld = "HELD"
 
-        val JourneyStatusRefs =
-            setOf(
-                Complete,
-                JourneyCurrent,
-                Upcoming,
-                JourneyHeld,
-            )
+        val JourneyStatusRefs = setOf(Complete, JourneyCurrent, Upcoming, JourneyHeld)
 
-        val Semantics =
-            VexLifeProdEntryFamily()
+        val Semantics = VexLifeProdEntryFamily()
 
-        fun controlForRef(
-            controlRef: String,
-        ): EntryControl? =
-            when (
-                controlRef
-            ) {
-                ControlOpenCurrent ->
-                    OpenCurrent
+        fun controlForRef(controlRef: String): EntryControl? =
+            when (controlRef) {
+                ControlOpenCurrent -> OpenCurrent
 
-                ControlConvergeDesired ->
-                    ConvergeDesired
+                ControlConvergeDesired -> ConvergeDesired
 
-                ControlStart ->
-                    Start
+                ControlStart -> Start
 
-                ControlFormHome ->
-                    FormHome
+                ControlFormHome -> FormHome
 
-                ControlSetUp ->
-                    SetUp
+                ControlSetUp -> SetUp
 
-                ControlCancel ->
-                    Cancel
+                ControlCancel -> Cancel
 
-                else ->
-                    null
+                else -> null
             }
 
         /** Binary GiB with one decimal, for human copy. */
-        fun gib(
-            bytes: Long,
-        ): String {
-            val gibibyte =
-                1024L *
-                    1024L *
-                    1024L
-            val tenths =
-                (bytes.coerceAtLeast(0L) * 10L + gibibyte / 2L) /
-                    gibibyte
+        fun gib(bytes: Long): String {
+            val gibibyte = 1024L * 1024L * 1024L
+            val tenths = (bytes.coerceAtLeast(0L) * 10L + gibibyte / 2L) / gibibyte
             return "${tenths / 10L}.${tenths % 10L}"
         }
     }

@@ -29,17 +29,13 @@ import vexlife.service.VexLifeProdServiceContract
  * observation before any Control is offered.
  */
 class VexLifeProdSetupJourneyTest {
-    private val desired =
-        "a".repeat(40)
+    private val desired = "a".repeat(40)
 
-    private val prior =
-        "b".repeat(40)
+    private val prior = "b".repeat(40)
 
-    private val gib =
-        1024L * 1024L * 1024L
+    private val gib = 1024L * 1024L * 1024L
 
-    private val totalModelBytes =
-        HereticArtifactMaterialization.plan().totalBytes
+    private val totalModelBytes = HereticArtifactMaterialization.plan().totalBytes
 
     private fun host(
         chip: String = "Apple M4 Pro",
@@ -51,7 +47,7 @@ class VexLifeProdSetupJourneyTest {
                 architecture = "arm64",
                 chipModel = chip,
                 totalMemoryBytes = memoryGiB * gib,
-            ),
+            )
         )
 
     /** Real Home-location classification + real current-state composition; stubbed host/space. */
@@ -61,15 +57,14 @@ class VexLifeProdSetupJourneyTest {
         userHome: Path = Path.of("/Users/vex"),
     ): VexLifeProdMacFrontDoor.Hooks =
         VexLifeProdMacFrontDoor.Hooks(
-            observeCurrentState = {
-                productHome ->
+            observeCurrentState = { productHome ->
                 VexLifeProdCurrentState.observeWithHooks(
                     VexLifeProdCurrentState.Hooks(
                         resolveProductHome = { productHome },
                         observeHost = { host },
                         observeFreeStorageBytes = { freeBytes },
                         now = { Instant.parse("2026-11-13T12:00:00Z") },
-                    ),
+                    )
                 )
             },
             observeExistingService = {
@@ -79,9 +74,7 @@ class VexLifeProdSetupJourneyTest {
             userHome = { userHome },
         )
 
-    private fun existingLocation(
-        home: Path,
-    ): VexLifeProdHomeFiles.Location {
+    private fun existingLocation(home: Path): VexLifeProdHomeFiles.Location {
         val plan =
             VexLifeProdHome.plan(
                 personRef = "person.local-user",
@@ -92,7 +85,8 @@ class VexLifeProdSetupJourneyTest {
                 ids =
                     VexLifeProdHome.InstallationIds(
                         deviceRef = "device.vexlife.00000000-0000-0000-0000-000000000011",
-                        companionLineageRef = "companion-lineage.vexlife.00000000-0000-0000-0000-000000000012",
+                        companionLineageRef =
+                            "companion-lineage.vexlife.00000000-0000-0000-0000-000000000012",
                     ),
                 createdAt = "2026-11-13T04:00:00-08:00",
             )
@@ -103,12 +97,11 @@ class VexLifeProdSetupJourneyTest {
                 manifest = plan.manifest,
                 installation = plan.installation,
                 effectsPerformed = false,
-            ),
+            )
         )
     }
 
-    private val existingHome =
-        Path.of("/tmp/.vexlife-journey")
+    private val existingHome = Path.of("/tmp/.vexlife-journey")
 
     private fun existingState(
         hostResult: HereticMacHostProfile.Result = host(),
@@ -118,8 +111,7 @@ class VexLifeProdSetupJourneyTest {
         invalidBytes: Long = 0L,
         freeBytes: Long? = 100L * gib,
     ): VexLifeProdServiceContract.CurrentStateProjection {
-        val unconfigured =
-            modelSelectionState == "UNCONFIGURED"
+        val unconfigured = modelSelectionState == "UNCONFIGURED"
         return VexLifeProdServiceContract.CurrentStateProjection(
             schemaVersion = VexLifeProdServiceContract.CurrentStateProjectionSchema,
             observedAt = "2026-11-13T12:00:00Z",
@@ -134,7 +126,8 @@ class VexLifeProdSetupJourneyTest {
             hostEligibilityState = hostResult.state.name.uppercase(),
             hostEligibilityReason = hostResult.reason,
             totalMemoryBytes = hostResult.observation.totalMemoryBytes,
-            modelMinimumMemoryBytes = if (unconfigured) null else HereticMacHostProfile.MinimumMemoryBytes,
+            modelMinimumMemoryBytes =
+                if (unconfigured) null else HereticMacHostProfile.MinimumMemoryBytes,
             freeStorageBytes = freeBytes,
             modelSelectionState = modelSelectionState,
             activeModelRef = if (unconfigured) null else "model.journey",
@@ -145,20 +138,20 @@ class VexLifeProdSetupJourneyTest {
                     "HERETIC_ESTABLISHMENT_PENDING" -> "ESTABLISHMENT_PENDING"
                     else -> "BOUND_PRODUCT_MODEL"
                 },
-            runtimeCurrentness = if (unconfigured) "NOT_APPLICABLE" else "CONFIGURATION_ONLY_NOT_REOBSERVED",
+            runtimeCurrentness =
+                if (unconfigured) "NOT_APPLICABLE" else "CONFIGURATION_ONLY_NOT_REOBSERVED",
             runtimeReceiptPath = if (unconfigured) null else "runtime/vexlife-prod/heretic.json",
             modelArtifactState = if (unconfigured) "NOT_SELECTED" else artifactState,
             modelArtifactTotalBytes = if (unconfigured) null else totalModelBytes,
             modelArtifactPresentBySizeBytes = if (unconfigured) null else presentBytes,
-            modelArtifactMissingBytes = if (unconfigured) null else totalModelBytes - presentBytes - invalidBytes,
+            modelArtifactMissingBytes =
+                if (unconfigured) null else totalModelBytes - presentBytes - invalidBytes,
             modelArtifactInvalidSizeBytes = if (unconfigured) null else invalidBytes,
             effectsPerformed = false,
         )
     }
 
-    private fun receipt(
-        sourceSha: String,
-    ): VexLifeProdMacServiceLifetime.Receipt =
+    private fun receipt(sourceSha: String): VexLifeProdMacServiceLifetime.Receipt =
         VexLifeProdMacServiceLifetime.Receipt(
             schemaVersion = VexLifeProdMacServiceLifetime.ReceiptSchema,
             sourceSha = sourceSha,
@@ -171,9 +164,12 @@ class VexLifeProdSetupJourneyTest {
                     substrateRef = MacUserLaunchdProcess.SubstrateRef,
                     label = VexLifeProdMacServiceLifetime.Label,
                     domainTarget = "gui/501",
-                    plistPath = "$existingHome/runtime/product-service/launchd/com.vexlife.prod.service.plist",
-                    programPath = "$existingHome/runtime/product-service/images/$sourceSha/bin/vexlife-prod-service",
-                    programArguments = listOf("--source-sha", sourceSha, "--home", existingHome.toString()),
+                    plistPath =
+                        "$existingHome/runtime/product-service/launchd/com.vexlife.prod.service.plist",
+                    programPath =
+                        "$existingHome/runtime/product-service/images/$sourceSha/bin/vexlife-prod-service",
+                    programArguments =
+                        listOf("--source-sha", sourceSha, "--home", existingHome.toString()),
                     workingDirectory = "$existingHome/runtime/product-service/images/$sourceSha",
                     stdoutPath = "$existingHome/runtime/product-service/logs/service.out.log",
                     stderrPath = "$existingHome/runtime/product-service/logs/service.err.log",
@@ -219,11 +215,8 @@ class VexLifeProdSetupJourneyTest {
             hooks = hooks,
         )
 
-    private fun assertCardMirrorsFamily(
-        projection: VexLifeProdMacFrontDoor.Projection,
-    ) {
-        val display =
-            projection.displayState
+    private fun assertCardMirrorsFamily(projection: VexLifeProdMacFrontDoor.Projection) {
+        val display = projection.displayState
         val cardControls =
             projection.card.buttons
                 .map { it.actionRef }
@@ -248,12 +241,17 @@ class VexLifeProdSetupJourneyTest {
         try {
             val projection = observe(home, realLocationHooks())
 
-            assertEquals(VexLifeProdEntryFamily.StateHomeFormationRequired, projection.semanticStateRef)
+            assertEquals(
+                VexLifeProdEntryFamily.StateHomeFormationRequired,
+                projection.semanticStateRef,
+            )
             assertEquals(
                 VexLifeProdHome.LocationDisposition.EmptyDirectory.wireValue,
                 projection.currentState.homeDisposition,
             )
-            assertTrue(projection.card.body.contains("an empty folder VexLife can set up as your Home"))
+            assertTrue(
+                projection.card.body.contains("an empty folder VexLife can set up as your Home")
+            )
             assertTrue(projection.card.rail.startsWith("✓ This Mac   ● Vex Home"))
             assertCardMirrorsFamily(projection)
         } finally {
@@ -307,9 +305,15 @@ class VexLifeProdSetupJourneyTest {
         val home = parent.resolve("VexLife").resolve("Homes").resolve("Victor")
         try {
             val projection = observe(home, realLocationHooks())
-            assertEquals(VexLifeProdEntryFamily.StateHomeFormationRequired, projection.semanticStateRef)
+            assertEquals(
+                VexLifeProdEntryFamily.StateHomeFormationRequired,
+                projection.semanticStateRef,
+            )
             assertTrue(projection.card.body.contains("will also create 2 folders"))
-            assertFalse(Files.exists(parent.resolve("VexLife")), "observation must not create folders")
+            assertFalse(
+                Files.exists(parent.resolve("VexLife")),
+                "observation must not create folders",
+            )
         } finally {
             parent.toFile().deleteRecursively()
         }
@@ -319,7 +323,11 @@ class VexLifeProdSetupJourneyTest {
     fun existingCanonicalHomeAtAlternateLocationIsRecognized() {
         val home = Files.createTempDirectory("vexlife-journey-canonical-").toAbsolutePath()
         try {
-            CanonicalVexLifeHomeFixture.form(home = home, deviceSuffix = "journey", lineageSuffix = "journey")
+            CanonicalVexLifeHomeFixture.form(
+                home = home,
+                deviceSuffix = "journey",
+                lineageSuffix = "journey",
+            )
             val projection = observe(home, realLocationHooks())
 
             assertEquals(VexLifeProdEntryFamily.StateSetupRequired, projection.semanticStateRef)
@@ -338,14 +346,23 @@ class VexLifeProdSetupJourneyTest {
         Files.createDirectories(parent.resolve("Documents"))
         try {
             val projection = observe(home, realLocationHooks(userHome = fakeUserHome))
-            assertEquals(VexLifeProdEntryFamily.StateHomeFormationRequired, projection.semanticStateRef)
+            assertEquals(
+                VexLifeProdEntryFamily.StateHomeFormationRequired,
+                projection.semanticStateRef,
+            )
             assertTrue(projection.card.body.contains("your Documents folder, which macOS protects"))
             assertEquals(
                 "an external or network drive",
-                VexLifeProdMacSetupCard.protectedLocationName(Path.of("/Users/vex"), Path.of("/Volumes/T7/Vex")),
+                VexLifeProdMacSetupCard.protectedLocationName(
+                    Path.of("/Users/vex"),
+                    Path.of("/Volumes/T7/Vex"),
+                ),
             )
             assertNull(
-                VexLifeProdMacSetupCard.protectedLocationName(Path.of("/Users/vex"), Path.of("/Users/vex/.vexlife")),
+                VexLifeProdMacSetupCard.protectedLocationName(
+                    Path.of("/Users/vex"),
+                    Path.of("/Users/vex/.vexlife"),
+                )
             )
         } finally {
             parent.toFile().deleteRecursively()
@@ -359,7 +376,10 @@ class VexLifeProdSetupJourneyTest {
         try {
             val hooks = realLocationHooks(freeBytes = 6L * gib)
             val projection = observe(home, hooks)
-            assertEquals(VexLifeProdEntryFamily.StateHomeFormationRequired, projection.semanticStateRef)
+            assertEquals(
+                VexLifeProdEntryFamily.StateHomeFormationRequired,
+                projection.semanticStateRef,
+            )
             assertTrue(projection.card.body.contains("will need about"))
             assertTrue(resolve(home, VexLifeProdEntryFamily.ControlFormHome, hooks).lawful)
         } finally {
@@ -393,7 +413,10 @@ class VexLifeProdSetupJourneyTest {
         val projection =
             observe(
                 existingHome,
-                existingHooks(current = existingState(hostResult = host(chip = "Apple M3 Max", memoryGiB = 64L))),
+                existingHooks(
+                    current =
+                        existingState(hostResult = host(chip = "Apple M3 Max", memoryGiB = 64L))
+                ),
             )
         assertEquals(VexLifeProdEntryFamily.StateHostHeld, projection.semanticStateRef)
         assertTrue(projection.displayState.detail.contains("existing Vex Home was left untouched"))
@@ -411,13 +434,15 @@ class VexLifeProdSetupJourneyTest {
                             receipt = receipt(desired),
                             sourceCurrentness =
                                 VexLifeProdServiceContract.SourceCurrentness(
-                                    schemaVersion = VexLifeProdServiceContract.SourceCurrentnessSchema,
+                                    schemaVersion =
+                                        VexLifeProdServiceContract.SourceCurrentnessSchema,
                                     serviceRef = VexLifeProdServiceContract.ServiceRef,
                                     productRef = VexLifeProdServiceContract.ProductRef,
                                     serviceState = "SOURCE_BOUND_LISTENING",
                                     sourceSha = desired,
                                     processPid = 4242L,
-                                    frameHostOrigin = vexlife.browser.VexLifeProdBrowserContract.FrameHostOrigin,
+                                    frameHostOrigin =
+                                        vexlife.browser.VexLifeProdBrowserContract.FrameHostOrigin,
                                     runtimeCurrentness = "NOT_REOBSERVED_BY_SERVICE",
                                     startupQualifiedRuntimeReceiptRef = "receipt.journey",
                                     currentConversationHeadSha256 = null,
@@ -436,7 +461,12 @@ class VexLifeProdSetupJourneyTest {
     fun insufficientFreeSpaceHoldsAcquisitionAndShowsTheNumbers() {
         val hooks =
             existingHooks(
-                current = existingState(artifactState = "ABSENT", presentBytes = 0L, freeBytes = 5L * gib),
+                current =
+                    existingState(
+                        artifactState = "ABSENT",
+                        presentBytes = 0L,
+                        freeBytes = 5L * gib,
+                    ),
                 runtimeEnvironmentPresent = false,
             )
         val projection = observe(existingHome, hooks)
@@ -444,7 +474,10 @@ class VexLifeProdSetupJourneyTest {
         assertEquals(VexLifeProdEntryFamily.StateStorageHeld, projection.semanticStateRef)
         val plan = assertNotNull(projection.setupPlan)
         assertTrue(plan.storageShortfallObserved)
-        assertEquals(totalModelBytes + HereticSetupStorage.RuntimeAllowanceBytes, plan.requiredFreeStorageBytes)
+        assertEquals(
+            totalModelBytes + HereticSetupStorage.RuntimeAllowanceBytes,
+            plan.requiredFreeStorageBytes,
+        )
         assertFalse(resolve(existingHome, VexLifeProdEntryFamily.ControlSetUp, hooks).lawful)
         assertTrue(projection.card.body.contains("What setup will do"))
         assertCardMirrorsFamily(projection)
@@ -456,7 +489,12 @@ class VexLifeProdSetupJourneyTest {
             observe(
                 existingHome,
                 existingHooks(
-                    current = existingState(artifactState = "ABSENT", presentBytes = 0L, freeBytes = null),
+                    current =
+                        existingState(
+                            artifactState = "ABSENT",
+                            presentBytes = 0L,
+                            freeBytes = null,
+                        ),
                     runtimeEnvironmentPresent = false,
                 ),
             )
@@ -490,7 +528,12 @@ class VexLifeProdSetupJourneyTest {
     fun invalidModelFilesAreHeldRatherThanOfferingAnAcquisitionThatWouldStop() {
         val hooks =
             existingHooks(
-                current = existingState(artifactState = "INVALID_SIZE", presentBytes = 0L, invalidBytes = 2L * gib),
+                current =
+                    existingState(
+                        artifactState = "INVALID_SIZE",
+                        presentBytes = 0L,
+                        invalidBytes = 2L * gib,
+                    )
             )
         val projection = observe(existingHome, hooks)
         assertEquals(VexLifeProdEntryFamily.StateModelFilesHeld, projection.semanticStateRef)
@@ -530,7 +573,7 @@ class VexLifeProdSetupJourneyTest {
                         VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(
                             receipt = receipt(prior),
                             launchdObservation = MacUserLaunchdProcess.Observation.Absent,
-                        ),
+                        )
                 ),
             )
         assertEquals(VexLifeProdEntryFamily.StateStartRequired, projection.semanticStateRef)
@@ -547,7 +590,7 @@ class VexLifeProdSetupJourneyTest {
                         VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(
                             receipt = receipt(desired),
                             launchdObservation = MacUserLaunchdProcess.Observation.LoadedStopped,
-                        ),
+                        )
                 ),
             )
         assertEquals(VexLifeProdEntryFamily.StateRepairRequired, projection.semanticStateRef)
@@ -575,7 +618,9 @@ class VexLifeProdSetupJourneyTest {
         val projection =
             observe(
                 existingHome,
-                existingHooks(current = existingState(modelSelectionState = "HERETIC_ESTABLISHMENT_PENDING")),
+                existingHooks(
+                    current = existingState(modelSelectionState = "HERETIC_ESTABLISHMENT_PENDING")
+                ),
             )
         assertEquals(VexLifeProdEntryFamily.StateStartRequired, projection.semanticStateRef)
     }
@@ -588,12 +633,14 @@ class VexLifeProdSetupJourneyTest {
                 existingHooks(
                     service =
                         VexLifeProdMacServiceLifetime.ExistingObservation.HeldUnknown(
-                            "stable product-service launchd label is present without a product lifetime receipt",
-                        ),
+                            "stable product-service launchd label is present without a product lifetime receipt"
+                        )
                 ),
             )
         assertEquals(VexLifeProdEntryFamily.StateHeldUnknown, projection.semanticStateRef)
-        assertTrue(projection.card.buttons.any { it.actionRef == VexLifeProdMacSetupCard.ActionChooseHome })
+        assertTrue(
+            projection.card.buttons.any { it.actionRef == VexLifeProdMacSetupCard.ActionChooseHome }
+        )
         assertTrue(projection.displayState.detail.contains("Vex Home somewhere else"))
     }
 
@@ -602,16 +649,17 @@ class VexLifeProdSetupJourneyTest {
         val projection =
             observe(
                 existingHome,
-                existingHooks().copy(
-                    observeHomeLocation = {
-                        VexLifeProdHomeFiles.Location.Formable(
-                            productHome = existingHome.toString(),
-                            disposition = VexLifeProdHome.LocationDisposition.Absent,
-                            nearestExistingAncestor = "/tmp",
-                            missingAncestorCount = 0,
-                        )
-                    },
-                ),
+                existingHooks()
+                    .copy(
+                        observeHomeLocation = {
+                            VexLifeProdHomeFiles.Location.Formable(
+                                productHome = existingHome.toString(),
+                                disposition = VexLifeProdHome.LocationDisposition.Absent,
+                                nearestExistingAncestor = "/tmp",
+                                missingAncestorCount = 0,
+                            )
+                        }
+                    ),
             )
         assertEquals(VexLifeProdEntryFamily.StateHeldUnknown, projection.semanticStateRef)
         assertTrue(projection.serviceDetail!!.contains("changed while VexLife was looking"))
@@ -622,7 +670,9 @@ class VexLifeProdSetupJourneyTest {
     private fun activation(
         resolved: VexLifeProdMacFrontDoor.ResolvedControl,
         formHome: (String, Path) -> Unit = { _, _ -> error("unexpected Home formation") },
-        convergeProduct: (String, Boolean, Boolean, Path) -> Unit = { _, _, _, _ -> error("unexpected convergence") },
+        convergeProduct: (String, Boolean, Boolean, Path) -> Unit = { _, _, _, _ ->
+            error("unexpected convergence")
+        },
         reobserved: String = VexLifeProdEntryFamily.StateCurrent,
         lines: MutableList<String> = mutableListOf(),
     ): VexLifeProdMacFrontDoorProcess.ActivationProjection =
@@ -649,9 +699,12 @@ class VexLifeProdSetupJourneyTest {
                     controlRef = VexLifeProdEntryFamily.ControlFormHome,
                     effect = null,
                     lawful = false,
-                ),
+                )
             )
-        assertEquals(VexLifeProdMacFrontDoorProcess.ManifestationRefreshEntry, result.manifestationRef)
+        assertEquals(
+            VexLifeProdMacFrontDoorProcess.ManifestationRefreshEntry,
+            result.manifestationRef,
+        )
         assertEquals(VexLifeProdSetupFailure.StateChanged, result.failure?.failureRef)
         assertEquals(VexLifeProdEntryFamily.StateCurrent, result.semanticStateRef)
     }
@@ -663,14 +716,25 @@ class VexLifeProdSetupJourneyTest {
                 VexLifeProdMacFrontDoor.ResolvedControl(
                     semanticStateRef = VexLifeProdEntryFamily.StateSetupRequired,
                     controlRef = VexLifeProdEntryFamily.ControlSetUp,
-                    effect = VexLifeProdEntryFamily.ConvergeProduct(desired, allowAcquisition = true, allowRuntimeStart = true),
+                    effect =
+                        VexLifeProdEntryFamily.ConvergeProduct(
+                            desired,
+                            allowAcquisition = true,
+                            allowRuntimeStart = true,
+                        ),
                 ),
                 convergeProduct = { _, _, _, _ ->
-                    throw IllegalStateException("artifact delivery stopped", ConnectException("Connection refused"))
+                    throw IllegalStateException(
+                        "artifact delivery stopped",
+                        ConnectException("Connection refused"),
+                    )
                 },
                 reobserved = VexLifeProdEntryFamily.StateSetupRequired,
             )
-        assertEquals(VexLifeProdMacFrontDoorProcess.ManifestationRefreshEntry, result.manifestationRef)
+        assertEquals(
+            VexLifeProdMacFrontDoorProcess.ManifestationRefreshEntry,
+            result.manifestationRef,
+        )
         assertEquals(VexLifeProdEntryFamily.StateSetupRequired, result.semanticStateRef)
         val failure = assertNotNull(result.failure)
         assertEquals(VexLifeProdSetupFailure.NetworkUnavailable, failure.failureRef)
@@ -688,7 +752,12 @@ class VexLifeProdSetupJourneyTest {
                 VexLifeProdMacFrontDoor.ResolvedControl(
                     semanticStateRef = VexLifeProdEntryFamily.StateStartRequired,
                     controlRef = VexLifeProdEntryFamily.ControlStart,
-                    effect = VexLifeProdEntryFamily.ConvergeProduct(desired, allowAcquisition = false, allowRuntimeStart = true),
+                    effect =
+                        VexLifeProdEntryFamily.ConvergeProduct(
+                            desired,
+                            allowAcquisition = false,
+                            allowRuntimeStart = true,
+                        ),
                 ),
                 convergeProduct = { _, acquire, start, home ->
                     assertEquals(existingHome, home)
@@ -697,7 +766,10 @@ class VexLifeProdSetupJourneyTest {
                 lines = lines,
             )
         assertEquals(false to true, authority)
-        assertEquals(VexLifeProdMacFrontDoorProcess.ManifestationOpenProduct, result.manifestationRef)
+        assertEquals(
+            VexLifeProdMacFrontDoorProcess.ManifestationOpenProduct,
+            result.manifestationRef,
+        )
         assertEquals(VexLifeProdServiceContract.Origin, result.productOrigin)
         assertTrue(lines.any { it.startsWith(VexLifeProdSetupProgress.LinePrefix + "Confirming") })
     }
@@ -709,12 +781,20 @@ class VexLifeProdSetupJourneyTest {
                 VexLifeProdMacFrontDoor.ResolvedControl(
                     semanticStateRef = VexLifeProdEntryFamily.StateStartRequired,
                     controlRef = VexLifeProdEntryFamily.ControlStart,
-                    effect = VexLifeProdEntryFamily.ConvergeProduct(desired, allowAcquisition = false, allowRuntimeStart = true),
+                    effect =
+                        VexLifeProdEntryFamily.ConvergeProduct(
+                            desired,
+                            allowAcquisition = false,
+                            allowRuntimeStart = true,
+                        ),
                 ),
                 convergeProduct = { _, _, _, _ -> },
                 reobserved = VexLifeProdEntryFamily.StateHeldUnknown,
             )
-        assertEquals(VexLifeProdMacFrontDoorProcess.ManifestationRefreshEntry, result.manifestationRef)
+        assertEquals(
+            VexLifeProdMacFrontDoorProcess.ManifestationRefreshEntry,
+            result.manifestationRef,
+        )
         assertEquals(VexLifeProdEntryFamily.StateHeldUnknown, result.semanticStateRef)
         assertNull(result.failure)
     }
@@ -726,36 +806,50 @@ class VexLifeProdSetupJourneyTest {
                 productHome = existingHome,
                 error = IllegalStateException("launchctl print timed out"),
             )
-        assertTrue(failure.card.buttons.none { it.actionRef.startsWith(VexLifeProdMacSetupCard.ActionControlPrefix) })
+        assertTrue(
+            failure.card.buttons.none {
+                it.actionRef.startsWith(VexLifeProdMacSetupCard.ActionControlPrefix)
+            }
+        )
         assertTrue(failure.card.body.contains("launchctl print timed out"))
     }
 
-    // ---------------------------------------------------------------- failure + progress projection
+    // ---------------------------------------------------------------- failure + progress
+    // projection
 
     @Test
     fun failureClassificationNamesWhatWasPreserved() {
         assertEquals(
             VexLifeProdSetupFailure.SetupAlreadyRunning,
             VexLifeProdSetupFailure.classify(
-                IllegalArgumentException("another VexLife-Prod local setup is already in progress or the setup lease is invalid"),
-            ).failureRef,
+                    IllegalArgumentException(
+                        "another VexLife-Prod local setup is already in progress or the setup lease is invalid"
+                    )
+                )
+                .failureRef,
         )
         assertEquals(
             VexLifeProdSetupFailure.StorageExhausted,
-            VexLifeProdSetupFailure.classify(java.io.IOException("No space left on device")).failureRef,
+            VexLifeProdSetupFailure.classify(java.io.IOException("No space left on device"))
+                .failureRef,
         )
         assertEquals(
             VexLifeProdSetupFailure.PrerequisiteMissing,
             VexLifeProdSetupFailure.classify(
-                IllegalArgumentException("Heretic artifact model.safetensors is missing and acquisition was not authorized"),
-            ).failureRef,
+                    IllegalArgumentException(
+                        "Heretic artifact model.safetensors is missing and acquisition was not authorized"
+                    )
+                )
+                .failureRef,
         )
         assertEquals(
             VexLifeProdSetupFailure.StoppedSafely,
             VexLifeProdSetupFailure.classify(IllegalStateException("x".repeat(5_000))).failureRef,
         )
         assertTrue(
-            VexLifeProdSetupFailure.classify(IllegalStateException("x".repeat(5_000))).technicalDetail!!.length <= 1_500,
+            VexLifeProdSetupFailure.classify(IllegalStateException("x".repeat(5_000)))
+                .technicalDetail!!
+                .length <= 1_500
         )
     }
 

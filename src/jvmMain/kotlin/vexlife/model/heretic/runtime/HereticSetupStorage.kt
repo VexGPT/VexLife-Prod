@@ -16,11 +16,7 @@ package vexlife.model.heretic.runtime
  * Delivery still fails closed and resumes from verified partial bytes if the disk fills later.
  */
 object HereticSetupStorage {
-    const val RuntimeAllowanceBytes =
-        3L *
-            1024L *
-            1024L *
-            1024L
+    const val RuntimeAllowanceBytes = 3L * 1024L * 1024L * 1024L
 
     data class Requirement(
         val missingModelBytes: Long,
@@ -28,37 +24,23 @@ object HereticSetupStorage {
         val observedFreeBytes: Long?,
     ) {
         val shortfallObserved: Boolean =
-            observedFreeBytes !=
-                null &&
-                observedFreeBytes <
-                requiredFreeBytes
+            observedFreeBytes != null && observedFreeBytes < requiredFreeBytes
 
         init {
             require(
-                missingModelBytes >=
-                    0 &&
-                    requiredFreeBytes ==
-                    missingModelBytes +
-                    RuntimeAllowanceBytes,
+                missingModelBytes >= 0 &&
+                    requiredFreeBytes == missingModelBytes + RuntimeAllowanceBytes
             ) {
                 "Heretic setup storage requirement is invalid"
             }
         }
     }
 
-    fun requirement(
-        missingModelBytes: Long,
-        observedFreeBytes: Long?,
-    ): Requirement {
-        val missing =
-            missingModelBytes.coerceAtLeast(
-                0L,
-            )
+    fun requirement(missingModelBytes: Long, observedFreeBytes: Long?): Requirement {
+        val missing = missingModelBytes.coerceAtLeast(0L)
         return Requirement(
             missingModelBytes = missing,
-            requiredFreeBytes =
-                missing +
-                    RuntimeAllowanceBytes,
+            requiredFreeBytes = missing + RuntimeAllowanceBytes,
             observedFreeBytes = observedFreeBytes,
         )
     }

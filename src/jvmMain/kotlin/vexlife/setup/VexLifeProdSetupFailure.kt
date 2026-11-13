@@ -16,23 +16,15 @@ import kotlinx.serialization.Serializable
  * technical detail is kept (bounded) for diagnosis.
  */
 object VexLifeProdSetupFailure {
-    const val StateChanged =
-        "STATE_CHANGED_BEFORE_EFFECT"
-    const val SetupAlreadyRunning =
-        "SETUP_ALREADY_RUNNING"
-    const val StorageExhausted =
-        "STORAGE_EXHAUSTED"
-    const val NetworkUnavailable =
-        "NETWORK_UNAVAILABLE"
-    const val PrerequisiteMissing =
-        "PREREQUISITE_MISSING"
-    const val HomePreserved =
-        "HOME_PRESERVED"
-    const val StoppedSafely =
-        "STOPPED_SAFELY"
+    const val StateChanged = "STATE_CHANGED_BEFORE_EFFECT"
+    const val SetupAlreadyRunning = "SETUP_ALREADY_RUNNING"
+    const val StorageExhausted = "STORAGE_EXHAUSTED"
+    const val NetworkUnavailable = "NETWORK_UNAVAILABLE"
+    const val PrerequisiteMissing = "PREREQUISITE_MISSING"
+    const val HomePreserved = "HOME_PRESERVED"
+    const val StoppedSafely = "STOPPED_SAFELY"
 
-    private const val TechnicalLimit =
-        1_500
+    private const val TechnicalLimit = 1_500
 
     @Serializable
     data class Failure(
@@ -46,8 +38,7 @@ object VexLifeProdSetupFailure {
                 failureRef.isNotBlank() &&
                     title.isNotBlank() &&
                     detail.isNotBlank() &&
-                    (technicalDetail?.length ?: 0) <=
-                    TechnicalLimit,
+                    (technicalDetail?.length ?: 0) <= TechnicalLimit
             ) {
                 "setup failure projection is invalid"
             }
@@ -68,61 +59,35 @@ object VexLifeProdSetupFailure {
             technicalDetail = null,
         )
 
-    fun classify(
-        error: Throwable,
-    ): Failure {
+    fun classify(error: Throwable): Failure {
         val chain =
-            generateSequence(
-                error,
-            ) {
-                it.cause?.takeIf { cause -> cause !== it }
-            }.take(
-                8,
-            ).toList()
+            generateSequence(error) {
+                    it.cause?.takeIf { cause -> cause !== it }
+                }
+                .take(8)
+                .toList()
         val messages =
-            chain.joinToString(
-                " | ",
-            ) {
+            chain.joinToString(" | ") {
                 (it.message ?: "")
             }
         val technical =
             chain
-                .joinToString(
-                    "\ncaused by ",
-                ) {
-                    it.javaClass.simpleName +
-                        ": " +
-                        (it.message ?: "")
+                .joinToString("\ncaused by ") {
+                    it.javaClass.simpleName + ": " + (it.message ?: "")
                 }
                 .let {
-                    if (
-                        it.length >
-                        TechnicalLimit
-                    ) {
-                        it.takeLast(
-                            TechnicalLimit,
-                        )
+                    if (it.length > TechnicalLimit) {
+                        it.takeLast(TechnicalLimit)
                     } else {
                         it
                     }
                 }
 
-        fun failure(
-            ref: String,
-            title: String,
-            detail: String,
-        ) =
-            Failure(
-                failureRef = ref,
-                title = title,
-                detail = detail,
-                technicalDetail = technical,
-            )
+        fun failure(ref: String, title: String, detail: String) =
+            Failure(failureRef = ref, title = title, detail = detail, technicalDetail = technical)
 
         return when {
-            messages.contains(
-                "already in progress",
-            ) ->
+            messages.contains("already in progress") ->
                 failure(
                     SetupAlreadyRunning,
                     "Another VexLife setup is already running for this Home.",
@@ -130,10 +95,7 @@ object VexLifeProdSetupFailure {
                         "then choose Check Again.",
                 )
 
-            messages.contains(
-                "No space left on device",
-                ignoreCase = true,
-            ) ->
+            messages.contains("No space left on device", ignoreCase = true) ->
                 failure(
                     StorageExhausted,
                     "The drive ran out of space.",
@@ -146,10 +108,7 @@ object VexLifeProdSetupFailure {
                     it is ConnectException ||
                     it is HttpTimeoutException ||
                     it is SocketException
-            } ||
-                messages.contains(
-                    "download failed: HTTP",
-                ) ->
+            } || messages.contains("download failed: HTTP") ->
                 failure(
                     NetworkUnavailable,
                     "VexLife couldn't download what it needed.",
@@ -157,12 +116,8 @@ object VexLifeProdSetupFailure {
                         "kept, and an unfinished download resumes where it stopped.",
                 )
 
-            messages.contains(
-                "not authorized",
-            ) ||
-                messages.contains(
-                    "creation was not authorized",
-                ) ->
+            messages.contains("not authorized") ||
+                messages.contains("creation was not authorized") ->
                 failure(
                     PrerequisiteMissing,
                     "Something VexLife needs is missing from your Home.",
@@ -170,9 +125,7 @@ object VexLifeProdSetupFailure {
                         "Nothing was deleted. Choose Check Again to see what needs to be set up.",
                 )
 
-            messages.contains(
-                "preserved and cannot be formed",
-            ) ->
+            messages.contains("preserved and cannot be formed") ->
                 failure(
                     HomePreserved,
                     "VexLife left that folder as it was.",
@@ -187,16 +140,9 @@ object VexLifeProdSetupFailure {
                     "Nothing in your Vex Home was deleted. You can try again. If it keeps happening, the " +
                         "technical detail below explains where it stopped.",
                 )
-        }.let {
-            failure ->
-            if (
-                error is IOException &&
-                failure.failureRef ==
-                StoppedSafely
-            ) {
-                failure.copy(
-                    title = "VexLife couldn't read or write a file it needed.",
-                )
+        }.let { failure ->
+            if (error is IOException && failure.failureRef == StoppedSafely) {
+                failure.copy(title = "VexLife couldn't read or write a file it needed.")
             } else {
                 failure
             }

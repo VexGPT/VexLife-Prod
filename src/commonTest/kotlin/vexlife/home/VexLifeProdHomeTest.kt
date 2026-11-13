@@ -16,8 +16,7 @@ class VexLifeProdHomeTest {
             architecture = "arm64",
             ids =
                 VexLifeProdHome.InstallationIds(
-                    deviceRef =
-                        "device.vexlife.00000000-0000-0000-0000-000000000001",
+                    deviceRef = "device.vexlife.00000000-0000-0000-0000-000000000001",
                     companionLineageRef =
                         "companion-lineage.vexlife.00000000-0000-0000-0000-000000000002",
                 ),
@@ -26,134 +25,62 @@ class VexLifeProdHomeTest {
 
     @Test
     fun newImplementationPreservesCanonicalVexLifeHomeAndLineageIdentity() {
-        assertEquals(
-            "vexlife.home/v0",
-            plan.manifest.schemaVersion,
-        )
-        assertEquals(
-            "vex-home.${plan.installation.deviceRef}",
-            plan.manifest.homeRef,
-        )
-        assertTrue(
-            plan.installation.deviceRef.startsWith(
-                "device.vexlife.",
-            ),
-        )
-        assertTrue(
-            plan.installation.companionLineageRef.startsWith(
-                "companion-lineage.vexlife.",
-            ),
-        )
+        assertEquals("vexlife.home/v0", plan.manifest.schemaVersion)
+        assertEquals("vex-home.${plan.installation.deviceRef}", plan.manifest.homeRef)
+        assertTrue(plan.installation.deviceRef.startsWith("device.vexlife."))
+        assertTrue(plan.installation.companionLineageRef.startsWith("companion-lineage.vexlife."))
 
+        assertFalse(plan.manifest.homeRef.startsWith("vex-home.prod."))
+        assertFalse(plan.installation.deviceRef.startsWith("device.vexlife-prod."))
         assertFalse(
-            plan.manifest.homeRef.startsWith(
-                "vex-home.prod.",
-            ),
-        )
-        assertFalse(
-            plan.installation.deviceRef.startsWith(
-                "device.vexlife-prod.",
-            ),
-        )
-        assertFalse(
-            plan.installation.companionLineageRef.startsWith(
-                "companion-lineage.vexlife-prod.",
-            ),
+            plan.installation.companionLineageRef.startsWith("companion-lineage.vexlife-prod.")
         )
     }
 
     @Test
     fun productRuntimeCoordinatesDoNotReplaceCanonicalHomeConfiguration() {
-        assertEquals(
-            listOf(
-                "config",
-                "devices",
-                "runtime",
-                "recovery",
-            ),
-            plan.directories,
-        )
-        assertEquals(
-            "config/model.json",
-            plan.manifest.modelConfigurationRef,
-        )
-        assertEquals(
-            null,
-            plan.manifest.cultureManifestRef,
-        )
+        assertEquals(listOf("config", "devices", "runtime", "recovery"), plan.directories)
+        assertEquals("config/model.json", plan.manifest.modelConfigurationRef)
+        assertEquals(null, plan.manifest.cultureManifestRef)
         assertEquals(
             "runtime/vexlife-prod/model-binding.json",
             VexLifeProdHome.ModelConfigurationRelativePath,
         )
-        assertTrue(
-            plan.writes.contains(
-                VexLifeProdHome.CanonicalModelConfigurationRelativePath,
-            ),
-        )
-        assertTrue(
-            plan.writes.contains(
-                VexLifeProdHome.ModelConfigurationRelativePath,
-            ),
-        )
+        assertTrue(plan.writes.contains(VexLifeProdHome.CanonicalModelConfigurationRelativePath))
+        assertTrue(plan.writes.contains(VexLifeProdHome.ModelConfigurationRelativePath))
         assertEquals(
             VexLifeProdHome.CanonicalModelConfigurationSchema,
             plan.canonicalModelConfiguration.schemaVersion,
         )
-        assertEquals(
-            "UNCONFIGURED",
-            plan.canonicalModelConfiguration.state,
-        )
+        assertEquals("UNCONFIGURED", plan.canonicalModelConfiguration.state)
     }
 
     @Test
     fun productRuntimeBindingCannotSilentlyDownloadFallbackOrActivate() {
-        val model =
-            plan.initialModelConfiguration
+        val model = plan.initialModelConfiguration
 
-        assertEquals(
-            "UNCONFIGURED",
-            model.state,
-        )
-        assertFalse(
-            model.automaticFallback,
-        )
-        assertFalse(
-            model.automaticDownload,
-        )
-        assertFalse(
-            model.automaticActivation,
-        )
+        assertEquals("UNCONFIGURED", model.state)
+        assertFalse(model.automaticFallback)
+        assertFalse(model.automaticDownload)
+        assertFalse(model.automaticActivation)
     }
 
     @Test
     fun bootstrapPlanPreservesExistingHumanContinuityAndDeletesNothing() {
-        val receipt =
-            plan.receipt
+        val receipt = plan.receipt
 
-        assertFalse(
-            receipt.legacyVexLifeHomeImported,
-        )
-        assertFalse(
-            receipt.personalMemoryImported,
-        )
-        assertFalse(
-            receipt.modelArtifactDownloaded,
-        )
-        assertFalse(
-            receipt.existingDataDeleted,
-        )
-        assertEquals(
-            "PRESERVE_AND_CLASSIFY",
-            plan.manifest.existingHomePolicy,
-        )
+        assertFalse(receipt.legacyVexLifeHomeImported)
+        assertFalse(receipt.personalMemoryImported)
+        assertFalse(receipt.modelArtifactDownloaded)
+        assertFalse(receipt.existingDataDeleted)
+        assertEquals("PRESERVE_AND_CLASSIFY", plan.manifest.existingHomePolicy)
     }
 
     @Test
     fun repositoryProductNameCannotMintAnotherVexIdentity() {
         assertFailsWith<IllegalArgumentException> {
             VexLifeProdHome.InstallationIds(
-                deviceRef =
-                    "device.vexlife-prod.00000000-0000-0000-0000-000000000001",
+                deviceRef = "device.vexlife-prod.00000000-0000-0000-0000-000000000001",
                 companionLineageRef =
                     "companion-lineage.vexlife-prod.00000000-0000-0000-0000-000000000002",
             )
@@ -162,22 +89,10 @@ class VexLifeProdHomeTest {
 
     @Test
     fun homeAndCompanionRefsRemainOneBorrowedBindingScope() {
-        val (
-            homeRef,
-            lineageRef,
-        ) =
-            VexLifeProdHome.bindingScope(
-                plan.manifest,
-            )
+        val (homeRef, lineageRef) = VexLifeProdHome.bindingScope(plan.manifest)
 
-        assertEquals(
-            plan.manifest.homeRef,
-            homeRef,
-        )
-        assertEquals(
-            plan.manifest.currentCompanionLineageRef,
-            lineageRef,
-        )
+        assertEquals(plan.manifest.homeRef, homeRef)
+        assertEquals(plan.manifest.currentCompanionLineageRef, lineageRef)
     }
 }
 

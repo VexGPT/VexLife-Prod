@@ -19,159 +19,120 @@ import vexlife.service.VexLifeProdMacServiceLifetime
  * completion. It does not open presentation or own the long-lived service process.
  */
 object VexLifeProdSetupProcess {
-    private val GitSha =
-        Regex(
-            "[0-9a-f]{40}",
-        )
+    private val GitSha = Regex("[0-9a-f]{40}")
 
     data class Arguments(
         val productHome: Path,
         val expectedSourceSha: String,
         val allowAcquisition: Boolean,
-        val allowRuntimeStart: Boolean =
-            allowAcquisition,
+        val allowRuntimeStart: Boolean = allowAcquisition,
     ) {
         init {
-            require(
-                !allowAcquisition ||
-                    allowRuntimeStart,
-            ) {
+            require(!allowAcquisition || allowRuntimeStart) {
                 "acquisition authority without runtime-start authority is not lawful"
             }
         }
     }
 
-    data class HomeArguments(
-        val productHome: Path,
-        val expectedSourceSha: String,
-    )
+    data class HomeArguments(val productHome: Path, val expectedSourceSha: String)
 
     internal data class Hooks(
-        val progress: VexLifeProdSetupProgress =
-            VexLifeProdSetupProgress.Silent,
-        val locateImageRoot: () -> Path =
-            ::currentImageRoot,
-        val observeImage: (
-            imageRoot: Path,
-            expectedSourceSha: String,
-        ) -> VexLifeProdPrivateServiceImage.Observation = {
-            imageRoot,
-            expectedSourceSha,
-            ->
-            VexLifeProdPrivateServiceImage.observe(
-                imageRoot = imageRoot,
-                expectedSourceSha = expectedSourceSha,
-            )
-        },
-        val formFreshHome: (
-            productHome: Path,
-        ) -> VexLifeProdHomeFiles.Result = {
-            productHome ->
+        val progress: VexLifeProdSetupProgress = VexLifeProdSetupProgress.Silent,
+        val locateImageRoot: () -> Path = ::currentImageRoot,
+        val observeImage:
+            (
+                imageRoot: Path, expectedSourceSha: String,
+            ) -> VexLifeProdPrivateServiceImage.Observation =
+            { imageRoot, expectedSourceSha ->
+                VexLifeProdPrivateServiceImage.observe(
+                    imageRoot = imageRoot,
+                    expectedSourceSha = expectedSourceSha,
+                )
+            },
+        val formFreshHome: (productHome: Path) -> VexLifeProdHomeFiles.Result = { productHome ->
             VexLifeProdLocalSetup.formFreshHome(productHome)
         },
-        val establishSession: (
-            productHome: Path,
-            allowAcquisition: Boolean,
-            allowRuntimeStart: Boolean,
-        ) -> VexLifeProdLocalSetup.Session = {
-            productHome,
-            allowAcquisition,
-            allowRuntimeStart,
-            ->
-            VexLifeProdLocalSetup.establishSession(
-                productHome = productHome,
-                allowAcquisition = allowAcquisition,
-                allowRuntimeStart = allowRuntimeStart,
-                progress = progress,
-            )
-        },
-        val installImage: (
-            sourceImageRoot: Path,
-            productHome: Path,
-            expectedSourceSha: String,
-        ) -> VexLifeProdPrivateServiceImageInstaller.Result = {
-            sourceImageRoot,
-            productHome,
-            expectedSourceSha,
-            ->
-            VexLifeProdPrivateServiceImageInstaller.install(
-                sourceImageRoot = sourceImageRoot,
-                productHome = productHome,
-                expectedSourceSha = expectedSourceSha,
-            )
-        },
-        val startService: (
-            productHome: Path,
-            expectedSourceSha: String,
-        ) -> VexLifeProdMacServiceLifetime.Result = {
-            productHome,
-            expectedSourceSha,
-            ->
-            VexLifeProdMacServiceLifetime.startOrReuse(
-                productHome = productHome,
-                desiredSourceSha = expectedSourceSha,
-            )
-        },
-        val reportImageVerified: (
-            VexLifeProdPrivateServiceImage.Observation,
-        ) -> Unit = {
-            observation ->
-            println(
-                "VEXLIFE_PROD_SETUP_IMAGE_VERIFIED\t" +
-                    observation.sourceSha +
-                    "\t" +
-                    observation.payloadSha256,
-            )
-            System.out.flush()
-        },
-        val reportHomeReady: (
-            HomeArguments,
-            VexLifeProdHomeFiles.Result,
-        ) -> Unit = {
-            arguments,
-            home,
-            ->
-            println(
-                "VEXLIFE_PROD_HOME_READY\t" +
-                    arguments.expectedSourceSha +
-                    "\t" +
-                    home.productHome +
-                    "\t" +
-                    home.manifest.homeRef +
-                    "\t" +
-                    home.installation.deviceRef +
-                    "\t" +
-                    home.installation.companionLineageRef,
-            )
-            System.out.flush()
-        },
-        val reportReady: (
-            arguments: Arguments,
-            session: VexLifeProdLocalSetup.Session,
-            installed: VexLifeProdPrivateServiceImageInstaller.Result,
-            service: VexLifeProdMacServiceLifetime.Result,
-        ) -> Unit = {
-            arguments,
-            session,
-            installed,
-            service,
-            ->
-            println(
-                "VEXLIFE_PROD_SETUP_READY\t" +
-                    arguments.expectedSourceSha +
-                    "\t" +
-                    session.result.productHome +
-                    "\t" +
-                    installed.imagePath +
-                    "\t" +
-                    session.result.qualifiedRuntimeEvidence.runtimeReceiptRef +
-                    "\t" +
-                    service.pid +
-                    "\t" +
-                    service.serviceOrigin,
-            )
-            System.out.flush()
-        },
+        val establishSession:
+            (
+                productHome: Path, allowAcquisition: Boolean, allowRuntimeStart: Boolean,
+            ) -> VexLifeProdLocalSetup.Session =
+            { productHome, allowAcquisition, allowRuntimeStart ->
+                VexLifeProdLocalSetup.establishSession(
+                    productHome = productHome,
+                    allowAcquisition = allowAcquisition,
+                    allowRuntimeStart = allowRuntimeStart,
+                    progress = progress,
+                )
+            },
+        val installImage:
+            (
+                sourceImageRoot: Path, productHome: Path, expectedSourceSha: String,
+            ) -> VexLifeProdPrivateServiceImageInstaller.Result =
+            { sourceImageRoot, productHome, expectedSourceSha ->
+                VexLifeProdPrivateServiceImageInstaller.install(
+                    sourceImageRoot = sourceImageRoot,
+                    productHome = productHome,
+                    expectedSourceSha = expectedSourceSha,
+                )
+            },
+        val startService:
+            (productHome: Path, expectedSourceSha: String) -> VexLifeProdMacServiceLifetime.Result =
+            { productHome, expectedSourceSha ->
+                VexLifeProdMacServiceLifetime.startOrReuse(
+                    productHome = productHome,
+                    desiredSourceSha = expectedSourceSha,
+                )
+            },
+        val reportImageVerified: (VexLifeProdPrivateServiceImage.Observation) -> Unit =
+            { observation ->
+                println(
+                    "VEXLIFE_PROD_SETUP_IMAGE_VERIFIED\t" +
+                        observation.sourceSha +
+                        "\t" +
+                        observation.payloadSha256
+                )
+                System.out.flush()
+            },
+        val reportHomeReady: (HomeArguments, VexLifeProdHomeFiles.Result) -> Unit =
+            { arguments, home ->
+                println(
+                    "VEXLIFE_PROD_HOME_READY\t" +
+                        arguments.expectedSourceSha +
+                        "\t" +
+                        home.productHome +
+                        "\t" +
+                        home.manifest.homeRef +
+                        "\t" +
+                        home.installation.deviceRef +
+                        "\t" +
+                        home.installation.companionLineageRef
+                )
+                System.out.flush()
+            },
+        val reportReady:
+            (
+                arguments: Arguments,
+                session: VexLifeProdLocalSetup.Session,
+                installed: VexLifeProdPrivateServiceImageInstaller.Result,
+                service: VexLifeProdMacServiceLifetime.Result,
+            ) -> Unit =
+            { arguments, session, installed, service ->
+                println(
+                    "VEXLIFE_PROD_SETUP_READY\t" +
+                        arguments.expectedSourceSha +
+                        "\t" +
+                        session.result.productHome +
+                        "\t" +
+                        installed.imagePath +
+                        "\t" +
+                        session.result.qualifiedRuntimeEvidence.runtimeReceiptRef +
+                        "\t" +
+                        service.pid +
+                        "\t" +
+                        service.serviceOrigin
+                )
+                System.out.flush()
+            },
     )
 
     private fun selectedHome(value: String): Path {
@@ -187,7 +148,7 @@ object VexLifeProdSetupProcess {
             args.size == 5 &&
                 args[0] == "--home" &&
                 args[2] == "--expected-source-sha" &&
-                args[4] in setOf("--allow-acquisition", "--reuse-existing"),
+                args[4] in setOf("--allow-acquisition", "--reuse-existing")
         ) {
             "VexLife-Prod setup requires exactly --home <absolute-path> --expected-source-sha <git-sha> (--allow-acquisition|--reuse-existing)"
         }
@@ -207,7 +168,7 @@ object VexLifeProdSetupProcess {
             args.size == 5 &&
                 args[0] == "--form-home" &&
                 args[1] == "--home" &&
-                args[3] == "--expected-source-sha",
+                args[3] == "--expected-source-sha"
         ) {
             "VexLife-Prod fresh Home formation requires exactly --form-home --home <absolute-path> --expected-source-sha <git-sha>"
         }
@@ -215,69 +176,34 @@ object VexLifeProdSetupProcess {
         require(GitSha.matches(sourceSha)) {
             "VexLife-Prod fresh Home formation expected source SHA must be one exact lowercase Git commit"
         }
-        return HomeArguments(
-            productHome = selectedHome(args[2]),
-            expectedSourceSha = sourceSha,
-        )
+        return HomeArguments(productHome = selectedHome(args[2]), expectedSourceSha = sourceSha)
     }
 
-    fun formHome(
-        args: Array<String>,
-    ) {
-        formHomeWithHooks(
-            arguments =
-                parseHome(
-                    args,
-                ),
-            hooks = Hooks(),
-        )
+    fun formHome(args: Array<String>) {
+        formHomeWithHooks(arguments = parseHome(args), hooks = Hooks())
     }
 
-    internal fun formHomeWithHooks(
-        arguments: HomeArguments,
-        hooks: Hooks,
-    ) {
-        hooks.progress.phase(
-            VexLifeProdSetupProgress.Phase.VerifyingProduct,
-        )
-        val imageRoot =
-            hooks.locateImageRoot()
-                .toAbsolutePath()
-                .normalize()
-        val observed =
-            hooks.observeImage(
-                imageRoot,
-                arguments.expectedSourceSha,
-            )
+    internal fun formHomeWithHooks(arguments: HomeArguments, hooks: Hooks) {
+        hooks.progress.phase(VexLifeProdSetupProgress.Phase.VerifyingProduct)
+        val imageRoot = hooks.locateImageRoot().toAbsolutePath().normalize()
+        val observed = hooks.observeImage(imageRoot, arguments.expectedSourceSha)
 
-        hooks.reportImageVerified(
-            observed,
-        )
+        hooks.reportImageVerified(observed)
 
-        hooks.progress.phase(
-            VexLifeProdSetupProgress.Phase.FormingHome,
-        )
-        val home =
-            hooks.formFreshHome(arguments.productHome)
+        hooks.progress.phase(VexLifeProdSetupProgress.Phase.FormingHome)
+        val home = hooks.formFreshHome(arguments.productHome)
 
-        hooks.reportHomeReady(
-            arguments,
-            home,
-        )
+        hooks.reportHomeReady(arguments, home)
     }
 
     internal fun realizeHomeFormation(
         desiredSourceSha: String,
         productHome: Path,
-        progress: VexLifeProdSetupProgress =
-            VexLifeProdSetupProgress.Silent,
+        progress: VexLifeProdSetupProgress = VexLifeProdSetupProgress.Silent,
     ) {
         formHomeWithHooks(
             arguments =
-                HomeArguments(
-                    productHome = productHome,
-                    expectedSourceSha = desiredSourceSha,
-                ),
+                HomeArguments(productHome = productHome, expectedSourceSha = desiredSourceSha),
             hooks =
                 Hooks(
                     progress = progress,
@@ -292,8 +218,7 @@ object VexLifeProdSetupProcess {
         allowAcquisition: Boolean,
         allowRuntimeStart: Boolean,
         productHome: Path,
-        progress: VexLifeProdSetupProgress =
-            VexLifeProdSetupProgress.Silent,
+        progress: VexLifeProdSetupProgress = VexLifeProdSetupProgress.Silent,
     ) {
         runWithHooks(
             arguments =
@@ -312,38 +237,16 @@ object VexLifeProdSetupProcess {
         )
     }
 
-    fun run(
-        args: Array<String>,
-    ) {
-        runWithHooks(
-            arguments =
-                parse(
-                    args,
-                ),
-            hooks = Hooks(),
-        )
+    fun run(args: Array<String>) {
+        runWithHooks(arguments = parse(args), hooks = Hooks())
     }
 
-    internal fun runWithHooks(
-        arguments: Arguments,
-        hooks: Hooks,
-    ) {
-        hooks.progress.phase(
-            VexLifeProdSetupProgress.Phase.VerifyingProduct,
-        )
-        val imageRoot =
-            hooks.locateImageRoot()
-                .toAbsolutePath()
-                .normalize()
-        val observed =
-            hooks.observeImage(
-                imageRoot,
-                arguments.expectedSourceSha,
-            )
+    internal fun runWithHooks(arguments: Arguments, hooks: Hooks) {
+        hooks.progress.phase(VexLifeProdSetupProgress.Phase.VerifyingProduct)
+        val imageRoot = hooks.locateImageRoot().toAbsolutePath().normalize()
+        val observed = hooks.observeImage(imageRoot, arguments.expectedSourceSha)
 
-        hooks.reportImageVerified(
-            observed,
-        )
+        hooks.reportImageVerified(observed)
 
         val session =
             hooks.establishSession(
@@ -352,107 +255,66 @@ object VexLifeProdSetupProcess {
                 arguments.allowRuntimeStart,
             )
 
-        hooks.progress.phase(
-            VexLifeProdSetupProgress.Phase.InstallingProduct,
-        )
+        hooks.progress.phase(VexLifeProdSetupProgress.Phase.InstallingProduct)
         val installed =
             hooks.installImage(
                 imageRoot,
-                Path.of(
-                    session.result.productHome,
-                ),
+                Path.of(session.result.productHome),
                 arguments.expectedSourceSha,
             )
 
         require(
-            installed.sourceSha ==
-                observed.sourceSha &&
-                installed.payloadSha256 ==
-                observed.payloadSha256,
+            installed.sourceSha == observed.sourceSha &&
+                installed.payloadSha256 == observed.payloadSha256
         ) {
             "installed VexLife-Prod private image differs from verified setup image"
         }
 
-        hooks.progress.phase(
-            VexLifeProdSetupProgress.Phase.StartingVexLife,
-        )
+        hooks.progress.phase(VexLifeProdSetupProgress.Phase.StartingVexLife)
         val service =
-            hooks.startService(
-                Path.of(
-                    session.result.productHome,
-                ),
-                arguments.expectedSourceSha,
-            )
+            hooks.startService(Path.of(session.result.productHome), arguments.expectedSourceSha)
 
         require(
-            service.sourceSha ==
-                installed.sourceSha &&
-                service.imagePayloadSha256 ==
-                installed.payloadSha256,
+            service.sourceSha == installed.sourceSha &&
+                service.imagePayloadSha256 == installed.payloadSha256
         ) {
             "started VexLife-Prod service differs from the verified installed image"
         }
 
-        hooks.reportReady(
-            arguments,
-            session,
-            installed,
-            service,
-        )
+        hooks.reportReady(arguments, session, installed, service)
     }
 
     private fun currentImageRoot(): Path {
         val codeSource =
             Path.of(
-                VexLifeProdSetupProcess::class
-                    .java
-                    .protectionDomain
-                    .codeSource
-                    .location
-                    .toURI(),
-            )
+                    VexLifeProdSetupProcess::class.java.protectionDomain.codeSource.location.toURI()
+                )
                 .toAbsolutePath()
                 .normalize()
 
         require(
-            Files.isRegularFile(
-                codeSource,
-                LinkOption.NOFOLLOW_LINKS,
-            ) &&
-                !Files.isSymbolicLink(
-                    codeSource,
-                ) &&
-                codeSource.fileName
-                    .toString() ==
-                "vexlife-prod.jar",
+            Files.isRegularFile(codeSource, LinkOption.NOFOLLOW_LINKS) &&
+                !Files.isSymbolicLink(codeSource) &&
+                codeSource.fileName.toString() == "vexlife-prod.jar"
         ) {
             "VexLife-Prod setup must execute from the packaged vexlife-prod.jar"
         }
 
-        val libRoot =
-            requireNotNull(
-                codeSource.parent,
-            )
-        require(
-            libRoot.fileName
-                .toString() ==
-                "lib",
-        ) {
+        val libRoot = requireNotNull(codeSource.parent)
+        require(libRoot.fileName.toString() == "lib") {
             "VexLife-Prod setup JAR is not inside the private image lib directory"
         }
 
-        return requireNotNull(
-            libRoot.parent,
-        )
+        return requireNotNull(libRoot.parent)
     }
 }
 
 fun main(args: Array<String>) {
     if (
         args.size == 5 &&
-        args[0] == "--form-home" &&
-        args[1] == "--home" &&
-        args[3] == "--expected-source-sha"
+            args[0] == "--form-home" &&
+            args[1] == "--home" &&
+            args[3] == "--expected-source-sha"
     ) {
         VexLifeProdSetupProcess.formHome(args)
         return
@@ -460,9 +322,9 @@ fun main(args: Array<String>) {
 
     if (
         args.size == 5 &&
-        args[0] == "--inspect-front-door" &&
-        args[1] == "--home" &&
-        args[3] == "--expected-source-sha"
+            args[0] == "--inspect-front-door" &&
+            args[1] == "--home" &&
+            args[3] == "--expected-source-sha"
     ) {
         VexLifeProdMacFrontDoorProcess.inspect(
             desiredSourceSha = args[4],
@@ -473,9 +335,9 @@ fun main(args: Array<String>) {
 
     if (
         args.size == 6 &&
-        args[0] == "--activate-front-door-control" &&
-        args[2] == "--home" &&
-        args[4] == "--expected-source-sha"
+            args[0] == "--activate-front-door-control" &&
+            args[2] == "--home" &&
+            args[4] == "--expected-source-sha"
     ) {
         VexLifeProdMacFrontDoorProcess.activate(
             controlRef = args[1],

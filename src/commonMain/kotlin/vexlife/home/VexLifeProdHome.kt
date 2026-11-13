@@ -11,52 +11,33 @@ import vexlife.continuity.VexLifeContinuity
  * construction/runtime records live beneath the canonical Home without replacing its manifest.
  */
 object VexLifeProdHome {
-    const val HomeSchema =
-        VexLifeContinuity.HomeSchema
+    const val HomeSchema = VexLifeContinuity.HomeSchema
 
-    const val InstallationSchema =
-        VexLifeContinuity.DeviceInstallationSchema
+    const val InstallationSchema = VexLifeContinuity.DeviceInstallationSchema
 
-    const val BootstrapReceiptSchema =
-        "vexlife.bootstrap-receipt/v0"
+    const val BootstrapReceiptSchema = "vexlife.bootstrap-receipt/v0"
 
-    const val CanonicalModelConfigurationSchema =
-        "vexlife.model-configuration/v0"
+    const val CanonicalModelConfigurationSchema = "vexlife.model-configuration/v0"
 
-    const val InitialModelConfigurationSchema =
-        "vexlife-prod.runtime-model-binding/v1"
+    const val InitialModelConfigurationSchema = "vexlife-prod.runtime-model-binding/v1"
 
-    const val DefaultPersonRef =
-        "person.local-user"
+    const val DefaultPersonRef = "person.local-user"
 
-    const val DefaultFamilyRef =
-        "vex-family.local-user"
+    const val DefaultFamilyRef = "vex-family.local-user"
 
-    const val ExistingHomePolicy =
-        "PRESERVE_AND_CLASSIFY"
+    const val ExistingHomePolicy = "PRESERVE_AND_CLASSIFY"
 
-    const val DefaultMacRelativeRoot =
-        VexLifeContinuity.CanonicalMacHomeRelativeRoot
+    const val DefaultMacRelativeRoot = VexLifeContinuity.CanonicalMacHomeRelativeRoot
 
-    const val HomeManifestRelativePath =
-        VexLifeContinuity.HomeManifestRelativePath
+    const val HomeManifestRelativePath = VexLifeContinuity.HomeManifestRelativePath
 
-    const val CanonicalModelConfigurationRelativePath =
-        "config/model.json"
+    const val CanonicalModelConfigurationRelativePath = "config/model.json"
 
-    const val ModelConfigurationRelativePath =
-        VexLifeContinuity.ProductModelBindingRelativePath
+    const val ModelConfigurationRelativePath = VexLifeContinuity.ProductModelBindingRelativePath
 
-    const val BootstrapReceiptRelativePath =
-        "recovery/bootstrap-receipt.json"
+    const val BootstrapReceiptRelativePath = "recovery/bootstrap-receipt.json"
 
-    val BaseDirectories =
-        listOf(
-            "config",
-            "devices",
-            "runtime",
-            "recovery",
-        )
+    val BaseDirectories = listOf("config", "devices", "runtime", "recovery")
 
     /**
      * No-effect classification of one human-selected Vex Home coordinate.
@@ -74,11 +55,7 @@ object VexLifeProdHome {
         val formationAllowed: Boolean,
         val identityPresent: Boolean,
     ) {
-        Absent(
-            "ABSENT_CANONICAL_VEXLIFE_HOME",
-            formationAllowed = true,
-            identityPresent = false,
-        ),
+        Absent("ABSENT_CANONICAL_VEXLIFE_HOME", formationAllowed = true, identityPresent = false),
         EmptyDirectory(
             "EMPTY_DIRECTORY_VEXLIFE_HOME_FORMABLE",
             formationAllowed = true,
@@ -99,16 +76,8 @@ object VexLifeProdHome {
             formationAllowed = false,
             identityPresent = false,
         ),
-        HeldNotDirectory(
-            "HELD_NOT_A_DIRECTORY",
-            formationAllowed = false,
-            identityPresent = false,
-        ),
-        HeldSymbolicLink(
-            "HELD_SYMBOLIC_LINK",
-            formationAllowed = false,
-            identityPresent = false,
-        ),
+        HeldNotDirectory("HELD_NOT_A_DIRECTORY", formationAllowed = false, identityPresent = false),
+        HeldSymbolicLink("HELD_SYMBOLIC_LINK", formationAllowed = false, identityPresent = false),
         HeldLocationNotWritable(
             "HELD_LOCATION_NOT_WRITABLE",
             formationAllowed = false,
@@ -118,50 +87,26 @@ object VexLifeProdHome {
             "HELD_LOCATION_UNREADABLE",
             formationAllowed = false,
             identityPresent = false,
-        ),
-        ;
+        );
 
         val held: Boolean
-            get() =
-                !formationAllowed &&
-                    !identityPresent
+            get() = !formationAllowed && !identityPresent
 
         companion object {
-            fun forWireValue(
-                wireValue: String,
-            ): LocationDisposition? =
-                entries.firstOrNull {
-                    it.wireValue ==
-                        wireValue
-                }
+            fun forWireValue(wireValue: String): LocationDisposition? = entries.firstOrNull {
+                it.wireValue == wireValue
+            }
         }
     }
 
-    data class InstallationIds(
-        val deviceRef: String,
-        val companionLineageRef: String,
-    ) {
+    data class InstallationIds(val deviceRef: String, val companionLineageRef: String) {
         init {
-            requireRef(
-                deviceRef,
-                "deviceRef",
-            )
-            requireRef(
-                companionLineageRef,
-                "companionLineageRef",
-            )
-            require(
-                deviceRef.startsWith(
-                    "device.vexlife.",
-                ),
-            ) {
+            requireRef(deviceRef, "deviceRef")
+            requireRef(companionLineageRef, "companionLineageRef")
+            require(deviceRef.startsWith("device.vexlife.")) {
                 "deviceRef must preserve the canonical VexLife installation namespace"
             }
-            require(
-                companionLineageRef.startsWith(
-                    "companion-lineage.vexlife.",
-                ),
-            ) {
+            require(companionLineageRef.startsWith("companion-lineage.vexlife.")) {
                 "companionLineageRef must preserve the canonical VexLife lineage namespace"
             }
         }
@@ -177,12 +122,9 @@ object VexLifeProdHome {
         val platform: String,
         val architecture: String,
         val companionLineageRef: String,
-        val rhythmRef: String? =
-            null,
-        val scoreProjectionRef: String? =
-            null,
-        val currentInstanceRef: String? =
-            null,
+        val rhythmRef: String? = null,
+        val scoreProjectionRef: String? = null,
+        val currentInstanceRef: String? = null,
         val createdAt: String,
         val identityStatement: String,
     )
@@ -195,12 +137,9 @@ object VexLifeProdHome {
         val createdAt: String,
         val currentDeviceRef: String,
         val currentCompanionLineageRef: String,
-        val cultureManifestRef: String? =
-            null,
-        val modelConfigurationRef: String =
-            CanonicalModelConfigurationRelativePath,
-        val existingHomePolicy: String =
-            ExistingHomePolicy,
+        val cultureManifestRef: String? = null,
+        val modelConfigurationRef: String = CanonicalModelConfigurationRelativePath,
+        val existingHomePolicy: String = ExistingHomePolicy,
     )
 
     @Serializable
@@ -236,13 +175,10 @@ object VexLifeProdHome {
         val deviceRef: String,
         val companionLineageRef: String,
         val familyRef: String,
-        val culturePackRef: String? =
-            null,
-        val cultureSha256: String? =
-            null,
+        val culturePackRef: String? = null,
+        val cultureSha256: String? = null,
         val formedAt: String,
-        val legacyVexLifeHomeImported: Boolean =
-            false,
+        val legacyVexLifeHomeImported: Boolean = false,
         val personalMemoryImported: Boolean,
         val modelArtifactDownloaded: Boolean,
         val existingDataDeleted: Boolean,
@@ -273,28 +209,15 @@ object VexLifeProdHome {
         ids: InstallationIds,
         createdAt: String,
     ): BootstrapPlan {
-        requireRef(
-            personRef,
-            "personRef",
-        )
-        requireRef(
-            familyRef,
-            "familyRef",
-        )
-        require(
-            deviceName.isNotBlank(),
-        ) {
+        requireRef(personRef, "personRef")
+        requireRef(familyRef, "familyRef")
+        require(deviceName.isNotBlank()) {
             "deviceName must be non-empty"
         }
-        require(
-            platform.isNotBlank() &&
-                architecture.isNotBlank(),
-        ) {
+        require(platform.isNotBlank() && architecture.isNotBlank()) {
             "platform/architecture must be non-empty"
         }
-        require(
-            createdAt.isNotBlank(),
-        ) {
+        require(createdAt.isNotBlank()) {
             "createdAt must be non-empty"
         }
 
@@ -313,8 +236,7 @@ object VexLifeProdHome {
                     "Canonical VexLife device Companion lineage preserved across implementation replacement.",
             )
 
-        val homeRef =
-            "vex-home.${ids.deviceRef}"
+        val homeRef = "vex-home.${ids.deviceRef}"
 
         val manifest =
             Manifest(
@@ -329,10 +251,8 @@ object VexLifeProdHome {
                 existingHomePolicy = ExistingHomePolicy,
             )
 
-        val canonicalModel =
-            initialCanonicalModelConfiguration()
-        val initialModel =
-            initialProductModelConfiguration()
+        val canonicalModel = initialCanonicalModelConfiguration()
+        val initialModel = initialProductModelConfiguration()
 
         val receipt =
             BootstrapReceipt(
@@ -366,181 +286,95 @@ object VexLifeProdHome {
         )
     }
 
-    fun validateBootstrapPlan(
-        plan: BootstrapPlan,
-    ): BootstrapPlan {
-        val installation =
-            validateInstallation(
-                plan.installation,
-            )
-        val manifest =
-            validateManifest(
-                plan.manifest,
-            )
-        val canonicalModel =
-            validateCanonicalModelConfiguration(
-                plan.canonicalModelConfiguration,
-            )
-        val initialModel =
-            validateInitialModelConfiguration(
-                plan.initialModelConfiguration,
-            )
-        val receipt =
-            plan.receipt
+    fun validateBootstrapPlan(plan: BootstrapPlan): BootstrapPlan {
+        val installation = validateInstallation(plan.installation)
+        val manifest = validateManifest(plan.manifest)
+        val canonicalModel = validateCanonicalModelConfiguration(plan.canonicalModelConfiguration)
+        val initialModel = validateInitialModelConfiguration(plan.initialModelConfiguration)
+        val receipt = plan.receipt
 
         require(
-            manifest.homeRef ==
-                "vex-home.${installation.deviceRef}" &&
-                manifest.familyRef ==
-                installation.familyRef &&
-                manifest.createdAt ==
-                installation.createdAt &&
-                manifest.currentDeviceRef ==
-                installation.deviceRef &&
-                manifest.currentCompanionLineageRef ==
-                installation.companionLineageRef,
+            manifest.homeRef == "vex-home.${installation.deviceRef}" &&
+                manifest.familyRef == installation.familyRef &&
+                manifest.createdAt == installation.createdAt &&
+                manifest.currentDeviceRef == installation.deviceRef &&
+                manifest.currentCompanionLineageRef == installation.companionLineageRef
         ) {
             "VexLife installation and Home manifest identities disagree"
         }
 
         require(
-            receipt.schemaVersion ==
-                BootstrapReceiptSchema &&
-                receipt.homeRef ==
-                manifest.homeRef &&
-                receipt.deviceRef ==
-                installation.deviceRef &&
-                receipt.companionLineageRef ==
-                installation.companionLineageRef &&
-                receipt.familyRef ==
-                installation.familyRef &&
-                receipt.formedAt ==
-                installation.createdAt &&
+            receipt.schemaVersion == BootstrapReceiptSchema &&
+                receipt.homeRef == manifest.homeRef &&
+                receipt.deviceRef == installation.deviceRef &&
+                receipt.companionLineageRef == installation.companionLineageRef &&
+                receipt.familyRef == installation.familyRef &&
+                receipt.formedAt == installation.createdAt &&
                 !receipt.legacyVexLifeHomeImported &&
                 !receipt.personalMemoryImported &&
                 !receipt.modelArtifactDownloaded &&
-                !receipt.existingDataDeleted,
+                !receipt.existingDataDeleted
         ) {
             "bootstrap receipt does not describe exact preservation-safe Home formation"
         }
 
         require(
-            plan.directories ==
-                BaseDirectories &&
+            plan.directories == BaseDirectories &&
                 plan.writes ==
-                listOf(
-                    HomeManifestRelativePath,
-                    "devices/${installation.deviceRef}.json",
-                    CanonicalModelConfigurationRelativePath,
-                    ModelConfigurationRelativePath,
-                    BootstrapReceiptRelativePath,
-                ),
+                    listOf(
+                        HomeManifestRelativePath,
+                        "devices/${installation.deviceRef}.json",
+                        CanonicalModelConfigurationRelativePath,
+                        ModelConfigurationRelativePath,
+                        BootstrapReceiptRelativePath,
+                    )
         ) {
             "VexLife bootstrap filesystem plan drift"
         }
 
-        require(
-            canonicalModel.state ==
-                "UNCONFIGURED" &&
-                initialModel.state ==
-                "UNCONFIGURED",
-        )
+        require(canonicalModel.state == "UNCONFIGURED" && initialModel.state == "UNCONFIGURED")
 
         return plan
     }
 
-    fun validateManifest(
-        manifest: Manifest,
-    ): Manifest {
-        require(
-            manifest.schemaVersion ==
-                HomeSchema,
-        ) {
+    fun validateManifest(manifest: Manifest): Manifest {
+        require(manifest.schemaVersion == HomeSchema) {
             "VexLife Home manifest schema is not current"
         }
-        requireRef(
-            manifest.homeRef,
-            "homeRef",
-        )
-        requireRef(
-            manifest.familyRef,
-            "familyRef",
-        )
-        require(
-            manifest.createdAt.isNotBlank(),
-        ) {
+        requireRef(manifest.homeRef, "homeRef")
+        requireRef(manifest.familyRef, "familyRef")
+        require(manifest.createdAt.isNotBlank()) {
             "VexLife Home manifest requires formed time"
         }
-        requireRef(
-            manifest.currentDeviceRef,
-            "currentDeviceRef",
-        )
-        require(
-            manifest.currentDeviceRef.startsWith(
-                "device.vexlife.",
-            ),
-        ) {
+        requireRef(manifest.currentDeviceRef, "currentDeviceRef")
+        require(manifest.currentDeviceRef.startsWith("device.vexlife.")) {
             "currentDeviceRef must preserve the canonical VexLife installation namespace"
         }
-        requireRef(
-            manifest.currentCompanionLineageRef,
-            "currentCompanionLineageRef",
-        )
-        require(
-            manifest.currentCompanionLineageRef.startsWith(
-                "companion-lineage.vexlife.",
-            ),
-        ) {
+        requireRef(manifest.currentCompanionLineageRef, "currentCompanionLineageRef")
+        require(manifest.currentCompanionLineageRef.startsWith("companion-lineage.vexlife.")) {
             "currentCompanionLineageRef must preserve the canonical VexLife lineage namespace"
         }
-        require(
-            manifest.homeRef ==
-                "vex-home.${manifest.currentDeviceRef}",
-        ) {
+        require(manifest.homeRef == "vex-home.${manifest.currentDeviceRef}") {
             "homeRef must preserve the canonical VexLife Home/device relationship"
         }
-        require(
-            manifest.modelConfigurationRef ==
-                CanonicalModelConfigurationRelativePath,
-        ) {
+        require(manifest.modelConfigurationRef == CanonicalModelConfigurationRelativePath) {
             "canonical VexLife model configuration coordinate drift"
         }
-        require(
-            manifest.existingHomePolicy ==
-                ExistingHomePolicy,
-        ) {
+        require(manifest.existingHomePolicy == ExistingHomePolicy) {
             "VexLife Home preservation policy drift"
         }
 
         return manifest
     }
 
-    fun validateInstallation(
-        installation: Installation,
-    ): Installation {
-        require(
-            installation.schemaVersion ==
-                InstallationSchema,
-        ) {
+    fun validateInstallation(installation: Installation): Installation {
+        require(installation.schemaVersion == InstallationSchema) {
             "VexLife device installation schema is not current"
         }
-        requireRef(
-            installation.personRef,
-            "installation.personRef",
-        )
-        requireRef(
-            installation.familyRef,
-            "installation.familyRef",
-        )
-        requireRef(
-            installation.deviceRef,
-            "installation.deviceRef",
-        )
-        require(
-            installation.deviceRef.startsWith(
-                "device.vexlife.",
-            ),
-        ) {
+        requireRef(installation.personRef, "installation.personRef")
+        requireRef(installation.familyRef, "installation.familyRef")
+        requireRef(installation.deviceRef, "installation.deviceRef")
+        require(installation.deviceRef.startsWith("device.vexlife.")) {
             "installation.deviceRef is outside the canonical VexLife namespace"
         }
         require(
@@ -548,42 +382,23 @@ object VexLifeProdHome {
                 installation.platform.isNotBlank() &&
                 installation.architecture.isNotBlank() &&
                 installation.createdAt.isNotBlank() &&
-                installation.identityStatement.isNotBlank(),
+                installation.identityStatement.isNotBlank()
         ) {
             "VexLife installation identity is incomplete"
         }
-        requireRef(
-            installation.companionLineageRef,
-            "installation.companionLineageRef",
-        )
-        require(
-            installation.companionLineageRef.startsWith(
-                "companion-lineage.vexlife.",
-            ),
-        ) {
+        requireRef(installation.companionLineageRef, "installation.companionLineageRef")
+        require(installation.companionLineageRef.startsWith("companion-lineage.vexlife.")) {
             "installation Companion lineage is outside the canonical VexLife namespace"
         }
-        installation.rhythmRef
-            ?.let {
-                requireRef(
-                    it,
-                    "installation.rhythmRef",
-                )
-            }
-        installation.scoreProjectionRef
-            ?.let {
-                requireRef(
-                    it,
-                    "installation.scoreProjectionRef",
-                )
-            }
-        installation.currentInstanceRef
-            ?.let {
-                requireRef(
-                    it,
-                    "installation.currentInstanceRef",
-                )
-            }
+        installation.rhythmRef?.let {
+            requireRef(it, "installation.rhythmRef")
+        }
+        installation.scoreProjectionRef?.let {
+            requireRef(it, "installation.scoreProjectionRef")
+        }
+        installation.currentInstanceRef?.let {
+            requireRef(it, "installation.currentInstanceRef")
+        }
 
         return installation
     }
@@ -599,19 +414,15 @@ object VexLifeProdHome {
         )
 
     fun validateCanonicalModelConfiguration(
-        value: CanonicalModelConfiguration,
+        value: CanonicalModelConfiguration
     ): CanonicalModelConfiguration {
         require(
-            value.schemaVersion ==
-                CanonicalModelConfigurationSchema &&
-                value.state ==
-                "UNCONFIGURED" &&
-                value.endpoint ==
-                null &&
-                value.activeArtifactRef ==
-                null &&
+            value.schemaVersion == CanonicalModelConfigurationSchema &&
+                value.state == "UNCONFIGURED" &&
+                value.endpoint == null &&
+                value.activeArtifactRef == null &&
                 !value.automaticDownload &&
-                !value.automaticActivation,
+                !value.automaticActivation
         ) {
             "initial canonical VexLife model configuration is not the exact unconfigured state"
         }
@@ -631,20 +442,16 @@ object VexLifeProdHome {
         )
 
     fun validateInitialModelConfiguration(
-        value: InitialModelConfiguration,
+        value: InitialModelConfiguration
     ): InitialModelConfiguration {
         require(
-            value.schemaVersion ==
-                InitialModelConfigurationSchema &&
-                value.state ==
-                "UNCONFIGURED" &&
-                value.endpoint ==
-                null &&
-                value.activeArtifactRef ==
-                null &&
+            value.schemaVersion == InitialModelConfigurationSchema &&
+                value.state == "UNCONFIGURED" &&
+                value.endpoint == null &&
+                value.activeArtifactRef == null &&
                 !value.automaticFallback &&
                 !value.automaticDownload &&
-                !value.automaticActivation,
+                !value.automaticActivation
         ) {
             "initial VexLife-Prod runtime model binding is not the exact unconfigured state"
         }
@@ -652,29 +459,14 @@ object VexLifeProdHome {
         return value
     }
 
-    fun bindingScope(
-        manifest: Manifest,
-    ): Pair<String, String> {
-        val current =
-            validateManifest(
-                manifest,
-            )
+    fun bindingScope(manifest: Manifest): Pair<String, String> {
+        val current = validateManifest(manifest)
 
-        return current.homeRef to
-            current.currentCompanionLineageRef
+        return current.homeRef to current.currentCompanionLineageRef
     }
 
-    private fun requireRef(
-        value: String,
-        label: String,
-    ) {
-        require(
-            value.matches(
-                Regex(
-                    "[A-Za-z0-9][A-Za-z0-9._:/-]*",
-                ),
-            ),
-        ) {
+    private fun requireRef(value: String, label: String) {
+        require(value.matches(Regex("[A-Za-z0-9][A-Za-z0-9._:/-]*"))) {
             "$label must be one portable ref"
         }
     }
