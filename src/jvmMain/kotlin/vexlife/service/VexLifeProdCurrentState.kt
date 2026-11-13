@@ -70,9 +70,21 @@ object VexLifeProdCurrentState {
         ) -> Long? = {
             productHome ->
             try {
+                val observedPath =
+                    if (
+                        Files.exists(
+                            productHome,
+                        )
+                    ) {
+                        productHome
+                    } else {
+                        requireNotNull(
+                            productHome.parent,
+                        )
+                    }
                 Files
                     .getFileStore(
-                        productHome,
+                        observedPath,
                     )
                     .usableSpace
             } catch (
@@ -98,14 +110,68 @@ object VexLifeProdCurrentState {
             hooks.resolveProductHome()
                 .toAbsolutePath()
                 .normalize()
+        val host =
+            hooks.observeHost()
         val home =
-            requireNotNull(
-                hooks.observeHome(
-                    productHome,
-                ),
-            ) {
-                "current-state awareness requires one existing canonical VexLife Home"
-            }
+            hooks.observeHome(
+                productHome,
+            )
+
+        if (
+            home ==
+                null
+        ) {
+            return VexLifeProdServiceContract.CurrentStateProjection(
+                schemaVersion =
+                    VexLifeProdServiceContract.CurrentStateProjectionSchema,
+                observedAt =
+                    hooks.now()
+                        .toString(),
+                homePath =
+                    productHome.toString(),
+                homeDisposition =
+                    "ABSENT_CANONICAL_VEXLIFE_HOME",
+                homeRef = null,
+                deviceRef = null,
+                companionLineageRef = null,
+                platform =
+                    host.observation.platform,
+                architecture =
+                    host.observation.architecture,
+                chipModel =
+                    host.observation.chipModel,
+                hostEligibilityState =
+                    host.state
+                        .name
+                        .uppercase(),
+                hostEligibilityReason =
+                    host.reason,
+                totalMemoryBytes =
+                    host.observation.totalMemoryBytes,
+                modelMinimumMemoryBytes = null,
+                freeStorageBytes =
+                    hooks.observeFreeStorageBytes(
+                        productHome,
+                    ),
+                modelSelectionState =
+                    "UNCONFIGURED",
+                activeModelRef = null,
+                activeModelProfileRef = null,
+                runtimeState =
+                    "NOT_SELECTED",
+                runtimeCurrentness =
+                    "NOT_APPLICABLE",
+                runtimeReceiptPath = null,
+                modelArtifactState =
+                    "NOT_SELECTED",
+                modelArtifactTotalBytes = null,
+                modelArtifactPresentBySizeBytes = null,
+                modelArtifactMissingBytes = null,
+                modelArtifactInvalidSizeBytes = null,
+                effectsPerformed = false,
+            )
+        }
+
         require(
             !home.effectsPerformed &&
                 Path.of(
@@ -116,8 +182,6 @@ object VexLifeProdCurrentState {
             "current-state Home observation is not one no-effect exact-path projection"
         }
 
-        val host =
-            hooks.observeHost()
         val model =
             hooks.observeModel(
                 productHome,
