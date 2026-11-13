@@ -4,6 +4,9 @@ import java.nio.file.Path
 import kotlinx.serialization.Serializable
 import vexlife.contract.VexContractJson
 import vexlife.entry.VexLifeProdEntryFamily
+import vexlife.model.heretic.HereticProductIdentity
+import vexlife.model.heretic.runtime.HereticArtifactMaterialization
+import vexlife.model.heretic.runtime.HereticMacHostProfile
 import vexlife.service.VexLifeProdCurrentState
 import vexlife.service.VexLifeProdMacServiceLifetime
 import vexlife.service.VexLifeProdServiceContract
@@ -27,6 +30,36 @@ object VexLifeProdMacFrontDoor {
         )
 
     @Serializable
+    data class SetupPlan(
+        val modelRef: String,
+        val modelProfileRef: String,
+        val modelArtifactTotalBytes: Long,
+        val modelMinimumMemoryBytes: Long,
+        val currentTotalMemoryBytes: Long?,
+        val currentFreeStorageBytes: Long?,
+        val acquisitionDisposition: String,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                modelRef ==
+                    HereticProductIdentity.ModelRef &&
+                    modelProfileRef ==
+                    HereticProductIdentity.ModelProfileRef &&
+                    modelArtifactTotalBytes >
+                    0 &&
+                    modelMinimumMemoryBytes >
+                    0 &&
+                    acquisitionDisposition ==
+                    "MAY_ACQUIRE_MISSING_MODEL_AND_RUNTIME_PREREQUISITES" &&
+                    !effectsPerformed,
+            ) {
+                "VexLife-Prod setup plan is invalid"
+            }
+        }
+    }
+
+    @Serializable
     data class Projection(
         val schemaVersion: String,
         val observedAt: String,
@@ -36,6 +69,7 @@ object VexLifeProdMacFrontDoor {
         val currentServicePid: Long?,
         val serviceDetail: String?,
         val displayState: VexLifeProdEntryFamily.EntryDisplayState,
+        val setupPlan: SetupPlan?,
         val currentState: VexLifeProdServiceContract.CurrentStateProjection,
         val effectsPerformed: Boolean,
     ) {
@@ -57,7 +91,17 @@ object VexLifeProdMacFrontDoor {
                         VexLifeProdEntryFamily.StateHeldUnknown,
                     ) &&
                     !effectsPerformed &&
-                    !currentState.effectsPerformed,
+                    !currentState.effectsPerformed &&
+                    (
+                        (
+                            semanticStateRef ==
+                                VexLifeProdEntryFamily.StateSetupRequired
+                        ) ==
+                            (
+                                setupPlan !=
+                                    null
+                            )
+                    ),
             ) {
                 "VexLife-Prod Mac front-door projection is invalid"
             }
@@ -216,6 +260,33 @@ object VexLifeProdMacFrontDoor {
             VexLifeProdEntryFamily.Semantics.displayStateFor(
                 observed.entryState,
             )
+        val setupPlan =
+            if (
+                observed.entryState is
+                    VexLifeProdEntryFamily.SetupRequired
+            ) {
+                val artifactPlan =
+                    HereticArtifactMaterialization.plan()
+                SetupPlan(
+                    modelRef =
+                        HereticProductIdentity.ModelRef,
+                    modelProfileRef =
+                        HereticProductIdentity.ModelProfileRef,
+                    modelArtifactTotalBytes =
+                        artifactPlan.totalBytes,
+                    modelMinimumMemoryBytes =
+                        HereticMacHostProfile.MinimumMemoryBytes,
+                    currentTotalMemoryBytes =
+                        observed.currentState.totalMemoryBytes,
+                    currentFreeStorageBytes =
+                        observed.currentState.freeStorageBytes,
+                    acquisitionDisposition =
+                        "MAY_ACQUIRE_MISSING_MODEL_AND_RUNTIME_PREREQUISITES",
+                    effectsPerformed = false,
+                )
+            } else {
+                null
+            }
 
         return Projection(
             schemaVersion = Schema,
@@ -226,6 +297,7 @@ object VexLifeProdMacFrontDoor {
             currentServicePid = observed.currentServicePid,
             serviceDetail = observed.serviceDetail,
             displayState = display,
+            setupPlan = setupPlan,
             currentState = observed.currentState,
             effectsPerformed = false,
         )
