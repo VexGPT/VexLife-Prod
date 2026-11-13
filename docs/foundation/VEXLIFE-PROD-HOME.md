@@ -71,7 +71,9 @@ Score / daily Memory
 current heads / source descent
 ~~~
 
-## Admission sequence
+## Admission and fresh-formation sequence
+
+Existing Home admission remains unchanged:
 
 ~~~text
 canonical ~/.vexlife exists
@@ -87,16 +89,81 @@ currentCompanionLineageRef exact agreement
 VexLife-Prod runtime setup may continue
 ~~~
 
-An absent canonical Home currently holds VexLife-Prod setup before mutation.
+The current source candidate also ports the missing fresh-user edge from the accepted VexLife
+bootstrap relationship without resurrecting the superseded isolated Prod Home:
+
+~~~text
+canonical ~/.vexlife absent
+        ↓
+read-only current-state projection
+  ABSENT_CANONICAL_VEXLIFE_HOME
+        ↓
+Product-entry SETUP_REQUIRED
+        ↓
+human selects Set Up VexLife
+        ↓
+CONVERGE_PRODUCT(allowAcquisition=true)
+        ↓
+per-Home setup lease
+        ↓
+host eligibility
+        ↓
+canonical bootstrap plan
+        ↓
+private sibling staging root
+        ↓
+exact canonical identity nucleus
+        ↓
+re-observe staged Home
+        ↓
+atomic publish to ~/.vexlife
+        ↓
+existing LocalSetup model/runtime path continues
+~~~
+
+Fresh formation writes only the minimum identity/runtime nucleus currently consumed by New
+Beginnings:
+
+~~~text
+config/home.json
+config/model.json
+devices/<currentDeviceRef>.json
+runtime/vexlife-prod/model-binding.json
+recovery/bootstrap-receipt.json
+~~~
+
+The canonical model configuration begins UNCONFIGURED. The Product runtime binding separately begins
+UNCONFIGURED. No model artifact is downloaded by Home formation itself. Conversation, Memory, Score,
+Dream, culture projection and other domain state are not fabricated merely because a fresh Home is
+formed; their rightful owners form their own state when needed.
+
+The candidate preserves these boundaries:
 
 ~~~text
 HOME ABSENT
-!= PERMISSION TO MINT PARALLEL HOME
++ EXPLICIT FIRST-SETUP AUTHORITY
+= MAY FORM CANONICAL vex-home.<device.vexlife.*>
+
+HOME ABSENT
++ UPDATE / REPAIR / REUSE-ONLY AUTHORITY
+= HOLD
+
+HOME ABSENT
+!= PERMISSION TO MINT vex-home.prod.*
+
+FRESH CANONICAL HOME FORMATION
+!= MODEL/RUNTIME ACQUISITION
+!= PRODUCT SERVICE START
+!= CONVERSATION OR MEMORY FORMATION
 ~~~
 
-Fresh Home formation remains held until the accepted current VexLife bootstrap pathway is ported as
-its own exact Kotlin/VexArchitecture candidate. It must not be recreated from the superseded isolated
-Home draft.
+The fresh Home is assembled under a private sibling staging root and is published only through an
+atomic move after the staged Home/device/model relationships re-observe successfully. If formation
+stops before publication, the staging root is removed and the canonical Home coordinate remains
+absent.
+
+This is source-candidate behavior until exact Kotlin proof and a bounded lived fresh-Home exercise
+clear it.
 
 ## Canonical configuration preservation
 
@@ -153,19 +220,29 @@ Source tests now target:
 - default product Home resolves to `~/.vexlife`;
 - current Home/device/lineage bytes are observed without mutation;
 - `.prod` identity namespaces are rejected;
-- missing canonical Home cannot become parallel-bootstrap authority;
-- product runtime binding is written only under `runtime/vexlife-prod`;
-- canonical `config/home.json`, current device bytes and `config/model.json` remain unchanged;
-- setup reuse preserves the same canonical identity.
+- absent Home current-state awareness remains read-only and carries no invented identity;
+- absent Home reaches Product-entry `SETUP_REQUIRED` without descending into service-lifetime
+  observation;
+- explicit first setup may form one canonical Home/device/Companion lineage;
+- reuse/update/repair authority cannot form a missing Home;
+- fresh formation writes canonical `config/model.json` plus the separate Product runtime binding;
+- staging is re-observed before atomic publication;
+- rerun preserves the same canonical identity;
+- product runtime binding remains under `runtime/vexlife-prod`;
+- existing canonical `config/home.json`, current device bytes and `config/model.json` remain unchanged
+  on ordinary reuse.
 
-Still required before acceptance:
+Still required before this candidate can be accepted:
 
 ~~~text
 exact Kotlin JVM + JS/common proof
-canonical Conversation store conversion
-current Score/daily/Living-Journal Memory reader + prompt packet
-browser-context reconnection
-real Mac whole-circuit proof
+exact candidate path review
+fresh semantic Assurance
+bounded lived absent-Home proof on a disposable Home coordinate
+integration/lifecycle currentness
 ~~~
+
+A lived disposable-Home proof must not touch Victor's current canonical `~/.vexlife`. Full public
+onboarding, first Product Release and public-page deployment remain later edges.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][CANONICAL-HOME-COMPATIBILITY] -->
