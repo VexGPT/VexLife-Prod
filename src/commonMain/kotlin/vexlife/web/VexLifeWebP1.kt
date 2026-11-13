@@ -80,6 +80,11 @@ object VexLifeWebP1 {
             VexWeb.CapabilityRef.of(
                 "conversation.send",
             )
+
+        val VisionLookNowCapability =
+            VexWeb.CapabilityRef.of(
+                "vision.look-now",
+            )
     }
 
     private fun blueprintSurface(
@@ -418,8 +423,19 @@ object VexLifeWebP1 {
         )
 
     val Vision =
-        blueprintSurface(
-            VexLifeWorkspaceBlueprint.Vision,
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.Vision,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.capability(
+                    Refs.VisionLookNowCapability,
+                ),
         )
 
     val CompanionViewSwitch =

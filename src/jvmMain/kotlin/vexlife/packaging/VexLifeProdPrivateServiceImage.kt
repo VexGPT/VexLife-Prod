@@ -17,8 +17,11 @@ import vexlife.filesystem.VexOwnedPath
  * not build, install, start, stop, update, or select the image.
  */
 object VexLifeProdPrivateServiceImage {
-    const val Schema =
+    const val LegacySchema =
         "vexlife-prod.private-service-image/v3"
+
+    const val Schema =
+        "vexlife-prod.private-service-image/v4"
 
     const val TruthClass =
         "SOURCE_BOUND_PRIVATE_SERVICE_IMAGE"
@@ -44,6 +47,21 @@ object VexLifeProdPrivateServiceImage {
     const val ManifestRelativePath =
         "service-image.json"
 
+    const val VisionRuntimeTruthClass =
+        "LOCAL_QUALIFIED_NOT_DISTRIBUTABLE"
+
+    const val VisionRuntimeReleaseDisposition =
+        "LOCAL_ONLY_NO_RELEASE"
+
+    const val VisionRuntimeManifestRelativePath =
+        "vision-runtime/vision-runtime.json"
+
+    const val VisionRuntimeExecutableRelativePath =
+        "vision-runtime/bin/vexlife-vision-runtime"
+
+    const val VisionRuntimeHelperExecutableRelativePath =
+        "vision-runtime/helper/VexLifeVisionSystemPickerAgent.app/Contents/MacOS/VexLifeVisionSystemPickerAgent"
+
     private val GitSha =
         Regex(
             "[0-9a-f]{40}",
@@ -62,6 +80,20 @@ object VexLifeProdPrivateServiceImage {
     )
 
     @Serializable
+    data class VisionRuntime(
+        val truthClass: String,
+        val releaseDisposition: String,
+        val sdkSourceCommit: String,
+        val sdkSourceTree: String,
+        val archiveSha256: String,
+        val manifestSha256: String,
+        val runtimeExecutable: String,
+        val runtimeExecutableSha256: String,
+        val helperExecutable: String,
+        val helperExecutableSha256: String,
+    )
+
+    @Serializable
     data class Manifest(
         val schemaVersion: String,
         val truthClass: String,
@@ -75,6 +107,7 @@ object VexLifeProdPrivateServiceImage {
         val runtimeModules: List<String>,
         val payloadSha256: String,
         val artifacts: List<Artifact>,
+        val visionRuntime: VisionRuntime? = null,
     )
 
     data class Observation(
@@ -86,6 +119,11 @@ object VexLifeProdPrivateServiceImage {
         val setupWindowPath: String,
         val javaPath: String,
         val runtimeModules: List<String>,
+        val visionRuntimeExecutablePathOrNull: String? = null,
+        val visionRuntimeHelperExecutablePathOrNull: String? = null,
+        val visionRuntimeTruthClassOrNull: String? = null,
+        val visionRuntimeReleaseDispositionOrNull: String? = null,
+        val visionRuntimeSdkSourceCommitOrNull: String? = null,
         val effectsPerformed: Boolean,
     )
 
@@ -248,6 +286,14 @@ object VexLifeProdPrivateServiceImage {
             }
         }
 
+        manifest.visionRuntime?.let {
+            visionRuntime ->
+            validateVisionRuntimeFiles(
+                root = root,
+                visionRuntime = visionRuntime,
+            )
+        }
+
         validateSymlinkContainment(
             root,
         )
@@ -276,6 +322,28 @@ object VexLifeProdPrivateServiceImage {
             setupWindowPath = setupWindow.toString(),
             javaPath = java.toString(),
             runtimeModules = manifest.runtimeModules,
+            visionRuntimeExecutablePathOrNull =
+                manifest.visionRuntime?.let {
+                    VexOwnedPath.resolveInside(
+                        root,
+                        it.runtimeExecutable,
+                    )
+                        .toString()
+                },
+            visionRuntimeHelperExecutablePathOrNull =
+                manifest.visionRuntime?.let {
+                    VexOwnedPath.resolveInside(
+                        root,
+                        it.helperExecutable,
+                    )
+                        .toString()
+                },
+            visionRuntimeTruthClassOrNull =
+                manifest.visionRuntime?.truthClass,
+            visionRuntimeReleaseDispositionOrNull =
+                manifest.visionRuntime?.releaseDisposition,
+            visionRuntimeSdkSourceCommitOrNull =
+                manifest.visionRuntime?.sdkSourceCommit,
             effectsPerformed = false,
         )
     }
@@ -469,8 +537,11 @@ object VexLifeProdPrivateServiceImage {
         manifest: Manifest,
     ) {
         require(
-            manifest.schemaVersion ==
-                Schema &&
+            manifest.schemaVersion in
+                setOf(
+                    LegacySchema,
+                    Schema,
+                ) &&
                 manifest.truthClass ==
                 TruthClass &&
                 GitSha.matches(
@@ -549,6 +620,127 @@ object VexLifeProdPrivateServiceImage {
             ) {
                 "private service-image artifact descriptor is invalid"
             }
+        }
+
+        require(
+            (
+                manifest.schemaVersion ==
+                    LegacySchema &&
+                    manifest.visionRuntime ==
+                    null
+            ) ||
+                (
+                    manifest.schemaVersion ==
+                        Schema &&
+                        manifest.visionRuntime !=
+                        null
+                ),
+        ) {
+            "private service-image schema/Vision runtime relationship is invalid"
+        }
+
+        manifest.visionRuntime?.let {
+            visionRuntime ->
+            require(
+                manifest.schemaVersion ==
+                    Schema &&
+                    visionRuntime.truthClass ==
+                    VisionRuntimeTruthClass &&
+                    visionRuntime.releaseDisposition ==
+                    VisionRuntimeReleaseDisposition &&
+                    GitSha.matches(
+                        visionRuntime.sdkSourceCommit,
+                    ) &&
+                    GitSha.matches(
+                        visionRuntime.sdkSourceTree,
+                    ) &&
+                    Sha256.matches(
+                        visionRuntime.archiveSha256,
+                    ) &&
+                    Sha256.matches(
+                        visionRuntime.manifestSha256,
+                    ) &&
+                    visionRuntime.runtimeExecutable ==
+                    VisionRuntimeExecutableRelativePath &&
+                    Sha256.matches(
+                        visionRuntime.runtimeExecutableSha256,
+                    ) &&
+                    visionRuntime.helperExecutable ==
+                    VisionRuntimeHelperExecutableRelativePath &&
+                    Sha256.matches(
+                        visionRuntime.helperExecutableSha256,
+                    )
+            ) {
+                "private service-image Vision runtime descriptor is invalid"
+            }
+        }
+    }
+
+    private fun validateVisionRuntimeFiles(
+        root: Path,
+        visionRuntime: VisionRuntime,
+    ) {
+        val artifactManifest =
+            VexOwnedPath.resolveInside(
+                root,
+                VisionRuntimeManifestRelativePath,
+            )
+        requireRegularFile(
+            root = root,
+            path = artifactManifest,
+            label = "private service-image Vision runtime manifest",
+        )
+        require(
+            sha256(
+                artifactManifest,
+            ) ==
+                visionRuntime.manifestSha256,
+        ) {
+            "private service-image Vision runtime manifest SHA-256 drift"
+        }
+
+        val runtimeExecutable =
+            VexOwnedPath.resolveInside(
+                root,
+                visionRuntime.runtimeExecutable,
+            )
+        requireRegularFile(
+            root = root,
+            path = runtimeExecutable,
+            label = "private service-image Vision runtime executable",
+        )
+        require(
+            Files.isExecutable(
+                runtimeExecutable,
+            ) &&
+                sha256(
+                    runtimeExecutable,
+                ) ==
+                visionRuntime.runtimeExecutableSha256,
+        ) {
+            "private service-image Vision runtime executable identity drift"
+        }
+
+        val helperExecutable =
+            VexOwnedPath.resolveInside(
+                root,
+                visionRuntime.helperExecutable,
+            )
+        requireRegularFile(
+            root = root,
+            path = helperExecutable,
+            label = "private service-image Vision helper executable",
+        )
+        require(
+            Files.isExecutable(
+                helperExecutable,
+            ) &&
+                sha256(
+                    helperExecutable,
+                ) ==
+                visionRuntime.helperExecutableSha256,
+        ) {
+            "private service-image Vision helper executable identity drift"
         }
     }
 

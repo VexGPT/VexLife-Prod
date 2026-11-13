@@ -1,8 +1,10 @@
 package vexlife.service
 
+import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.packaging.VexLifeProdPrivateServiceImage
 
 /**
  * Long-lived JVM entry for the isolated local product service.
@@ -23,6 +25,22 @@ object VexLifeProdServiceProcess {
     )
 
     internal data class Hooks(
+        val resolveVisionRuntimeExecutablePath: (
+            sourceSha: String,
+        ) -> String? = {
+            sourceSha ->
+            VexLifeProdPrivateServiceImage
+                .observe(
+                    imageRoot =
+                        Path.of(
+                            "",
+                        )
+                            .toAbsolutePath()
+                            .normalize(),
+                    expectedSourceSha = sourceSha,
+                )
+                .visionRuntimeExecutablePathOrNull
+        },
         val establishSession: (
             allowAcquisition: Boolean,
         ) -> VexLifeProdLocalSetup.Session = {
@@ -34,13 +52,17 @@ object VexLifeProdServiceProcess {
         val startService: (
             sourceSha: String,
             session: VexLifeProdLocalSetup.Session,
+            visionRuntimeExecutablePathOrNull: String?,
         ) -> AutoCloseable = {
             sourceSha,
             session,
+            visionRuntimeExecutablePathOrNull,
             ->
             VexLifeProdLocalService.start(
                 sourceSha = sourceSha,
                 session = session,
+                visionRuntimeExecutablePathOrNull =
+                    visionRuntimeExecutablePathOrNull,
             )
         },
         val reportReady: (
@@ -103,6 +125,11 @@ object VexLifeProdServiceProcess {
         arguments: Arguments,
         hooks: Hooks,
     ) {
+        val visionRuntimeExecutablePathOrNull =
+            hooks.resolveVisionRuntimeExecutablePath(
+                arguments.sourceSha,
+            )
+
         val session =
             hooks.establishSession(
                 false,
@@ -112,6 +139,7 @@ object VexLifeProdServiceProcess {
             hooks.startService(
                 arguments.sourceSha,
                 session,
+                visionRuntimeExecutablePathOrNull,
             )
 
         hooks.reportReady(

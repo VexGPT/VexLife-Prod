@@ -386,6 +386,16 @@ val releaseContractSource =
         "packaging/private-service-image/release-contract.json",
     )
 
+val visionRuntimeContractSource =
+    layout.projectDirectory.file(
+        "packaging/private-service-image/vision-runtime-contract.json",
+    )
+
+val visionRuntimeArtifactProperty =
+    providers.gradleProperty(
+        "vexVisionRuntimeArtifact",
+    )
+
 val releaseContractText =
     releaseContractSource
         .asFile
@@ -480,6 +490,155 @@ val bootstrapTemplateSource =
             "bootstrapTemplateRelativePath",
         ),
     )
+
+val visionRuntimeContractText =
+    visionRuntimeContractSource
+        .asFile
+        .readText(
+            StandardCharsets.UTF_8,
+        )
+
+val visionRuntimeSchemaVersion =
+    requiredJsonString(
+        visionRuntimeContractText,
+        "schemaVersion",
+    )
+val visionRuntimePlatform =
+    requiredJsonString(
+        visionRuntimeContractText,
+        "platform",
+    )
+val visionRuntimeArtifactTruthClass =
+    requiredJsonString(
+        visionRuntimeContractText,
+        "artifactTruthClass",
+    )
+val visionRuntimeReleaseDisposition =
+    requiredJsonString(
+        visionRuntimeContractText,
+        "releaseDisposition",
+    )
+val visionRuntimeArchiveName =
+    requiredJsonString(
+        visionRuntimeContractText,
+        "archiveName",
+    )
+val visionRuntimeArchiveSha256 =
+    requiredJsonString(
+        visionRuntimeContractText,
+        "archiveSha256",
+    )
+val visionRuntimeArtifactManifestRelativePath =
+    requiredJsonString(
+        visionRuntimeContractText,
+        "artifactManifestRelativePath",
+    )
+val visionRuntimeArtifactManifestSha256 =
+    requiredJsonString(
+        visionRuntimeContractText,
+        "artifactManifestSha256",
+    )
+val visionRuntimeSdkSourceCommit =
+    requiredJsonString(
+        visionRuntimeContractText,
+        "sdkSourceCommit",
+    )
+val visionRuntimeSdkSourceTree =
+    requiredJsonString(
+        visionRuntimeContractText,
+        "sdkSourceTree",
+    )
+val visionRuntimeExecutableRelativePath =
+    requiredJsonString(
+        visionRuntimeContractText,
+        "runtimeExecutableRelativePath",
+    )
+val visionRuntimeExecutableSha256 =
+    requiredJsonString(
+        visionRuntimeContractText,
+        "runtimeExecutableSha256",
+    )
+val visionRuntimeHelperExecutableRelativePath =
+    requiredJsonString(
+        visionRuntimeContractText,
+        "helperExecutableRelativePath",
+    )
+val visionRuntimeHelperExecutableSha256 =
+    requiredJsonString(
+        visionRuntimeContractText,
+        "helperExecutableSha256",
+    )
+val visionRuntimeNodeVersion =
+    requiredJsonString(
+        visionRuntimeContractText,
+        "nodeVersion",
+    )
+val visionRuntimeNodeArchiveSha256 =
+    requiredJsonString(
+        visionRuntimeContractText,
+        "nodeArchiveSha256",
+    )
+
+require(
+    visionRuntimeSchemaVersion ==
+        "vexlife-prod.vision-runtime-input/v1" &&
+        visionRuntimePlatform ==
+        "darwin-arm64" &&
+        visionRuntimeArtifactTruthClass ==
+        "LOCAL_QUALIFIED_NOT_DISTRIBUTABLE" &&
+        visionRuntimeReleaseDisposition ==
+        "LOCAL_ONLY_NO_RELEASE" &&
+        visionRuntimeArchiveName.matches(
+            Regex(
+                "[A-Za-z0-9._-]+\\.tar\\.xz",
+            ),
+        ) &&
+        visionRuntimeArchiveSha256.matches(
+            Regex(
+                "[0-9a-f]{64}",
+            ),
+        ) &&
+        visionRuntimeArtifactManifestRelativePath ==
+        "vision-runtime/vision-runtime.json" &&
+        visionRuntimeArtifactManifestSha256.matches(
+            Regex(
+                "[0-9a-f]{64}",
+            ),
+        ) &&
+        visionRuntimeSdkSourceCommit.matches(
+            Regex(
+                "[0-9a-f]{40}",
+            ),
+        ) &&
+        visionRuntimeSdkSourceTree.matches(
+            Regex(
+                "[0-9a-f]{40}",
+            ),
+        ) &&
+        visionRuntimeExecutableRelativePath ==
+        "vision-runtime/bin/vexlife-vision-runtime" &&
+        visionRuntimeExecutableSha256.matches(
+            Regex(
+                "[0-9a-f]{64}",
+            ),
+        ) &&
+        visionRuntimeHelperExecutableRelativePath ==
+        "vision-runtime/helper/VexLifeVisionSystemPickerAgent.app/Contents/MacOS/VexLifeVisionSystemPickerAgent" &&
+        visionRuntimeHelperExecutableSha256.matches(
+            Regex(
+                "[0-9a-f]{64}",
+            ),
+        ) &&
+        visionRuntimeNodeVersion ==
+        "v26.8.1" &&
+        visionRuntimeNodeArchiveSha256.matches(
+            Regex(
+                "[0-9a-f]{64}",
+            ),
+        )
+) {
+    "VexLife-Prod Vision runtime input contract identity drift"
+}
 
 require(
     releaseSchemaVersion ==
@@ -634,6 +793,15 @@ tasks.register(
     )
     inputs.file(
         setupWindowSource,
+    )
+    inputs.file(
+        visionRuntimeContractSource,
+    )
+    inputs.property(
+        "vexVisionRuntimeArtifact",
+        visionRuntimeArtifactProperty.orElse(
+            "",
+        ),
     )
     outputs.dir(
         serviceImageOutputRoot,
@@ -1031,6 +1199,272 @@ tasks.register(
             StandardCopyOption.REPLACE_EXISTING,
         )
 
+        var visionRuntimeManifestJson =
+            "null"
+        val visionRuntimeArtifactInput =
+            visionRuntimeArtifactProperty
+                .orNull
+                ?.trim()
+                ?.takeIf(
+                    String::isNotEmpty,
+                )
+
+        if (
+            visionRuntimeArtifactInput !=
+            null
+        ) {
+            val visionArchive =
+                Path.of(
+                    visionRuntimeArtifactInput,
+                )
+                    .toAbsolutePath()
+                    .normalize()
+
+            require(
+                Files.isRegularFile(
+                    visionArchive,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) &&
+                    !Files.isSymbolicLink(
+                        visionArchive,
+                    ) &&
+                    visionArchive.fileName
+                        .toString() ==
+                    visionRuntimeArchiveName &&
+                    sha256(
+                        visionArchive,
+                    ) ==
+                    visionRuntimeArchiveSha256
+            ) {
+                "Vision runtime artifact does not match the exact committed input contract"
+            }
+
+            val archiveMembers =
+                runExactCommand(
+                    listOf(
+                        "/usr/bin/tar",
+                        "-tJf",
+                        visionArchive.toString(),
+                    ),
+                )
+                    .lineSequence()
+                    .map(
+                        String::trim,
+                    )
+                    .filter(
+                        String::isNotEmpty,
+                    )
+                    .toList()
+
+            require(
+                archiveMembers.isNotEmpty() &&
+                    archiveMembers.all {
+                        member ->
+                        (
+                            member ==
+                            "vision-runtime" ||
+                                member.startsWith(
+                                    "vision-runtime/",
+                                )
+                        ) &&
+                            !member.startsWith(
+                                "/",
+                            ) &&
+                            !member.contains(
+                                "\\",
+                            ) &&
+                            !member.contains(
+                                "//",
+                            ) &&
+                            member
+                                .split(
+                                    "/",
+                                )
+                                .none {
+                                    segment ->
+                                    segment ==
+                                        ".."
+                                }
+                    }
+            ) {
+                "Vision runtime archive contains a path outside vision-runtime/"
+            }
+
+            runExactCommand(
+                listOf(
+                    "/usr/bin/tar",
+                    "-xJf",
+                    visionArchive.toString(),
+                    "-C",
+                    output.toString(),
+                ),
+            )
+
+            val artifactManifest =
+                output.resolve(
+                    visionRuntimeArtifactManifestRelativePath,
+                )
+            require(
+                Files.isRegularFile(
+                    artifactManifest,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) &&
+                    !Files.isSymbolicLink(
+                        artifactManifest,
+                    ) &&
+                    sha256(
+                        artifactManifest,
+                    ) ==
+                    visionRuntimeArtifactManifestSha256
+            ) {
+                "Vision runtime internal manifest identity drift"
+            }
+
+            val artifactManifestText =
+                Files.readString(
+                    artifactManifest,
+                    StandardCharsets.UTF_8,
+                )
+            require(
+                requiredJsonString(
+                    artifactManifestText,
+                    "schemaVersion",
+                ) ==
+                    "vexlife-vision.product-runtime-artifact/v1" &&
+                    requiredJsonString(
+                        artifactManifestText,
+                        "truthClass",
+                    ) ==
+                    visionRuntimeArtifactTruthClass &&
+                    requiredJsonString(
+                        artifactManifestText,
+                        "platform",
+                    ) ==
+                    visionRuntimePlatform &&
+                    requiredJsonString(
+                        artifactManifestText,
+                        "sourceCommit",
+                    ) ==
+                    visionRuntimeSdkSourceCommit &&
+                    requiredJsonString(
+                        artifactManifestText,
+                        "sourceTree",
+                    ) ==
+                    visionRuntimeSdkSourceTree &&
+                    requiredJsonString(
+                        artifactManifestText,
+                        "nodeVersion",
+                    ) ==
+                    visionRuntimeNodeVersion &&
+                    requiredJsonString(
+                        artifactManifestText,
+                        "nodeArchiveSha256",
+                    ) ==
+                    visionRuntimeNodeArchiveSha256
+            ) {
+                "Vision runtime internal manifest does not match the committed Product contract"
+            }
+
+            val visionRuntimeExecutable =
+                output.resolve(
+                    visionRuntimeExecutableRelativePath,
+                )
+            val visionRuntimeHelperExecutable =
+                output.resolve(
+                    visionRuntimeHelperExecutableRelativePath,
+                )
+
+            require(
+                Files.isRegularFile(
+                    visionRuntimeExecutable,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) &&
+                    !Files.isSymbolicLink(
+                        visionRuntimeExecutable,
+                    ) &&
+                    Files.isExecutable(
+                        visionRuntimeExecutable,
+                    ) &&
+                    sha256(
+                        visionRuntimeExecutable,
+                    ) ==
+                    visionRuntimeExecutableSha256 &&
+                    Files.isRegularFile(
+                        visionRuntimeHelperExecutable,
+                        LinkOption.NOFOLLOW_LINKS,
+                    ) &&
+                    !Files.isSymbolicLink(
+                        visionRuntimeHelperExecutable,
+                    ) &&
+                    Files.isExecutable(
+                        visionRuntimeHelperExecutable,
+                    ) &&
+                    sha256(
+                        visionRuntimeHelperExecutable,
+                    ) ==
+                    visionRuntimeHelperExecutableSha256
+            ) {
+                "Vision runtime executable/helper identity drift"
+            }
+
+            visionRuntimeManifestJson =
+                buildString {
+                    appendLine(
+                        "{",
+                    )
+                    appendLine(
+                        "    \"truthClass\": \"" +
+                            visionRuntimeArtifactTruthClass +
+                            "\",",
+                    )
+                    appendLine(
+                        "    \"releaseDisposition\": \"" +
+                            visionRuntimeReleaseDisposition +
+                            "\",",
+                    )
+                    appendLine(
+                        "    \"sdkSourceCommit\": \"" +
+                            visionRuntimeSdkSourceCommit +
+                            "\",",
+                    )
+                    appendLine(
+                        "    \"sdkSourceTree\": \"" +
+                            visionRuntimeSdkSourceTree +
+                            "\",",
+                    )
+                    appendLine(
+                        "    \"archiveSha256\": \"" +
+                            visionRuntimeArchiveSha256 +
+                            "\",",
+                    )
+                    appendLine(
+                        "    \"manifestSha256\": \"" +
+                            visionRuntimeArtifactManifestSha256 +
+                            "\",",
+                    )
+                    appendLine(
+                        "    \"runtimeExecutable\": \"" +
+                            visionRuntimeExecutableRelativePath +
+                            "\",",
+                    )
+                    appendLine(
+                        "    \"runtimeExecutableSha256\": \"" +
+                            visionRuntimeExecutableSha256 +
+                            "\",",
+                    )
+                    appendLine(
+                        "    \"helperExecutable\": \"" +
+                            visionRuntimeHelperExecutableRelativePath +
+                            "\",",
+                    )
+                    append(
+                        "    \"helperExecutableSha256\": \"" +
+                            visionRuntimeHelperExecutableSha256 +
+                            "\"\n  }",
+                    )
+                }
+        }
+
         val payloadSha256 =
             payloadFingerprint(
                 output,
@@ -1093,7 +1527,18 @@ tasks.register(
                     "{",
                 )
                 appendLine(
-                    "  \"schemaVersion\": \"vexlife-prod.private-service-image/v3\",",
+                    "  \"schemaVersion\": \"" +
+                        (
+                            if (
+                                visionRuntimeArtifactInput ==
+                                null
+                            ) {
+                                "vexlife-prod.private-service-image/v3"
+                            } else {
+                                "vexlife-prod.private-service-image/v4"
+                            }
+                        ) +
+                        "\",",
                 )
                 appendLine(
                     "  \"truthClass\": \"SOURCE_BOUND_PRIVATE_SERVICE_IMAGE\",",
@@ -1138,7 +1583,11 @@ tasks.register(
                     artifactJson,
                 )
                 appendLine(
-                    "  ]",
+                    "  ],",
+                )
+                appendLine(
+                    "  \"visionRuntime\": " +
+                        visionRuntimeManifestJson,
                 )
                 appendLine(
                     "}",
@@ -1272,6 +1721,19 @@ tasks.register(
                 ?.get(
                     1,
                 )
+        val localOnlyVisionRuntime =
+            Regex(
+                "\\\"releaseDisposition\\\"\\s*:\\s*\\\"LOCAL_ONLY_NO_RELEASE\\\"",
+            )
+                .containsMatchIn(
+                    imageManifest,
+                )
+
+        require(
+            !localOnlyVisionRuntime,
+        ) {
+            "local-only VexVision runtime cannot enter a GitHub release archive"
+        }
 
         require(
             manifestSourceSha ==
