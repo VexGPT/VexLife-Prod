@@ -98,15 +98,15 @@ canonical ~/.vexlife absent
 read-only current-state projection
   ABSENT_CANONICAL_VEXLIFE_HOME
         ↓
-Product-entry SETUP_REQUIRED
+Product-entry HOME_FORMATION_REQUIRED
         ↓
-human selects Set Up VexLife
+human selects Create Vex Home
         ↓
-CONVERGE_PRODUCT(allowAcquisition=true)
+FORM_CANONICAL_HOME
         ↓
-per-Home setup lease
+source-bound Home-only setup process
         ↓
-host eligibility
+per-Home setup lease + host eligibility
         ↓
 canonical bootstrap plan
         ↓
@@ -117,6 +117,16 @@ exact canonical identity nucleus
 re-observe staged Home
         ↓
 atomic publish to ~/.vexlife
+        ↓
+re-observe Product entry
+        ↓
+SETUP_REQUIRED
+        ↓
+show model/runtime resource plan
+        ↓
+human separately selects Set Up VexLife
+        ↓
+CONVERGE_PRODUCT(allowAcquisition=true)
         ↓
 existing LocalSetup model/runtime path continues
 ~~~
@@ -141,8 +151,12 @@ The candidate preserves these boundaries:
 
 ~~~text
 HOME ABSENT
-+ EXPLICIT FIRST-SETUP AUTHORITY
++ FORM_CANONICAL_HOME
 = MAY FORM CANONICAL vex-home.<device.vexlife.*>
+
+HOME ABSENT
++ MODEL/RUNTIME ACQUISITION AUTHORITY
+= HOLD
 
 HOME ABSENT
 + UPDATE / REPAIR / REUSE-ONLY AUTHORITY
@@ -221,10 +235,13 @@ Source tests now target:
 - current Home/device/lineage bytes are observed without mutation;
 - `.prod` identity namespaces are rejected;
 - absent Home current-state awareness remains read-only and carries no invented identity;
-- absent Home reaches Product-entry `SETUP_REQUIRED` without descending into service-lifetime
+- absent Home reaches Product-entry `HOME_FORMATION_REQUIRED` without descending into service-lifetime
   observation;
-- explicit first setup may form one canonical Home/device/Companion lineage;
-- reuse/update/repair authority cannot form a missing Home;
+- Home formation is one distinct effect and performs no model/runtime acquisition;
+- after Home publication, Product entry re-observes and only then exposes `SETUP_REQUIRED`;
+- `SETUP_REQUIRED` projects model-file size, minimum memory, current memory and free storage before
+  acquisition authority is available;
+- model/runtime acquisition, reuse/update/repair authority cannot form a missing Home;
 - fresh formation writes canonical `config/model.json` plus the separate Product runtime binding;
 - staging is re-observed before atomic publication;
 - rerun preserves the same canonical identity;
