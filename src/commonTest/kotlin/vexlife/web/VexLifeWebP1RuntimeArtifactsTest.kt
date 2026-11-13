@@ -409,6 +409,9 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         // Memory is projected by the service's Memory Family; the renderer only shows its DisplayState.
         assertTrue(bundle.javascript.contains("const loadMemory = async () =>"))
+        // Read aloud reads the canonical Conversation projection and offers only on-device voices.
+        assertTrue(bundle.javascript.contains("const readablePlan = () => (state.conversation?.messages ?? [])"))
+        assertTrue(bundle.javascript.contains("voice.localService &&"))
         assertTrue(bundle.javascript.contains("state.memory?.display"))
         assertFalse(bundle.html.contains(">Not connected</button>"), "unbuilt controls say what they are, not 'Not connected'")
         assertTrue(

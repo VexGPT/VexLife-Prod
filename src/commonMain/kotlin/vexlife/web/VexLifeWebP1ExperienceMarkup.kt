@@ -68,7 +68,19 @@ internal object VexLifeWebP1ExperienceMarkup {
     </label>
 
     <div class="utilities" data-vex-ref="${VexLifeWebP1.Utilities.identity.ref}">
-      <ul class="quick-actions" data-vex-ref="${VexLifeWebP1.QuickActions.identity.ref}" id="quick-actions" aria-label="Quick actions"><li hidden data-vex-ref="${VexLifeWebP1.VexSummon.identity.ref}"><button type="button" id="vex-summon" hidden></button></li><li hidden data-vex-ref="${VexLifeWebP1.VisionQuickAccess.identity.ref}"><button type="button" id="vision-quick-access-source" hidden></button></li></ul>
+      <ul class="quick-actions" data-vex-ref="${VexLifeWebP1.QuickActions.identity.ref}" id="quick-actions" aria-label="Quick actions"><li hidden data-vex-ref="${VexLifeWebP1.VexSummon.identity.ref}"><button type="button" id="vex-summon" hidden></button></li><li hidden data-vex-ref="${VexLifeWebP1.VisionQuickAccess.identity.ref}"><button type="button" id="vision-quick-access-source" hidden></button></li><li hidden data-vex-ref="${VexLifeWebP1.ReadAloud.identity.ref}"><button type="button" id="read-aloud-source" hidden></button></li></ul>
+      <section class="read-aloud" id="read-aloud" aria-label="Read aloud" hidden>
+        <p class="read-aloud-status" id="read-aloud-status" role="status">Reads Vex's latest reply, or choose where to start.</p>
+        <div class="read-aloud-controls">
+          <button class="icon-button" type="button" id="read-aloud-previous" aria-label="Previous message" title="Previous message"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M14 4.5 7 10l7 5.5z"/><path d="M5.5 4.5v11"/></svg></button>
+          <button class="icon-button read-aloud-play" type="button" id="read-aloud-play" aria-label="Play" title="Play"><svg viewBox="0 0 20 20" aria-hidden="true"><path class="glyph-play" d="M6.5 4.5 15 10l-8.5 5.5z"/><path class="glyph-pause" d="M7 4.5v11M13 4.5v11"/></svg></button>
+          <button class="icon-button" type="button" id="read-aloud-stop" aria-label="Stop" title="Stop"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="5.5" y="5.5" width="9" height="9" rx="1"/></svg></button>
+          <button class="icon-button" type="button" id="read-aloud-next" aria-label="Next message" title="Next message"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4.5 13 10l-7 5.5z"/><path d="M14.5 4.5v11"/></svg></button>
+          <button class="quiet-button" type="button" id="read-aloud-choose" aria-pressed="false">Start here…</button>
+        </div>
+        <label class="read-aloud-field"><span>Speed</span><input type="range" id="read-aloud-rate" min="0.7" max="1.6" step="0.1" value="1"><output id="read-aloud-rate-value">1.0×</output></label>
+        <label class="read-aloud-field"><span>Voice</span><select id="read-aloud-voice"></select></label>
+      </section>
     </div>
   </header>
 

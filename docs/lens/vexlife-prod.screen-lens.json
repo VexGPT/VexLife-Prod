@@ -110,7 +110,7 @@
           "parentRef": "element.vexlife-workspace.header.utilities.quick-actions",
           "symbol": "VexLifeWorkspaceBlueprint.VexSummon",
           "declared": "QuickActions.control(\"vex-summon\")",
-          "intent": "reveal element.vexlife-workspace.companion",
+          "intent": "local element.vexlife-workspace.companion",
           "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.vex-summon",
           "style": "Surface",
           "slot": "InFlow"
@@ -122,8 +122,20 @@
           "parentRef": "element.vexlife-workspace.header.utilities.quick-actions",
           "symbol": "VexLifeWorkspaceBlueprint.VisionQuickAccess",
           "declared": "QuickActions.control(\"vision\")",
-          "intent": "reveal element.vexlife-workspace.companion.vision",
+          "intent": "local element.vexlife-workspace.companion.vision",
           "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.vision",
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.header.utilities.quick-actions.read-aloud",
+          "kind": "BUTTON",
+          "label": "Read aloud",
+          "parentRef": "element.vexlife-workspace.header.utilities.quick-actions",
+          "symbol": "VexLifeWorkspaceBlueprint.ReadAloud",
+          "declared": "QuickActions.control(\"read-aloud\")",
+          "intent": "local element.vexlife-workspace.companion.conversation.timeline",
+          "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.read-aloud",
           "style": "Surface",
           "slot": "InFlow"
         },
@@ -206,7 +218,7 @@
           "parentRef": "element.vexlife-workspace.companion",
           "symbol": "VexLifeWorkspaceBlueprint.CompanionViewSwitch",
           "declared": "Companion.control(\"view-switch\")",
-          "intent": "reveal element.vexlife-workspace.companion.settings",
+          "intent": "local element.vexlife-workspace.companion.settings",
           "pathwayRef": "pathway.vexlife-prod.local.companion.view-switch",
           "style": "Surface",
           "slot": "Trailing"
@@ -242,7 +254,7 @@
           "parentRef": "element.vexlife-workspace.companion.conversation",
           "symbol": "VexLifeWorkspaceBlueprint.ConversationJumpLatest",
           "declared": "Conversation.control(\"jump-latest\")",
-          "intent": "reveal element.vexlife-workspace.companion.conversation.timeline",
+          "intent": "local element.vexlife-workspace.companion.conversation.timeline",
           "pathwayRef": "pathway.vexlife-prod.local.companion.conversation.jump-latest",
           "style": "Surface",
           "slot": "InFlow"
@@ -290,7 +302,7 @@
           "parentRef": "element.vexlife-workspace.companion.conversation",
           "symbol": "VexLifeWorkspaceBlueprint.ContextShare",
           "declared": "Conversation.control(\"context-share\")",
-          "intent": "reveal element.vexlife-workspace.companion.conversation.context-receipt",
+          "intent": "local element.vexlife-workspace.companion.conversation.context-receipt",
           "pathwayRef": "pathway.vexlife-prod.local.companion.conversation.context-share",
           "style": "Surface",
           "slot": "InFlow"
@@ -529,9 +541,9 @@
   "pathways": [
     {
       "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.vex-summon",
-      "label": "Reveal Companion",
+      "label": "Presentation over Companion",
       "disposition": "TYPED_PRESENTATION",
-      "summary": "A presentation-local interaction; it reveals another coordinate and decides nothing.",
+      "summary": "A presentation-local interaction over another coordinate; it decides nothing.",
       "returns": null,
       "returnRef": null,
       "nodes": [
@@ -565,9 +577,9 @@
     },
     {
       "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.vision",
-      "label": "Reveal Vision",
+      "label": "Presentation over Vision",
       "disposition": "TYPED_PRESENTATION",
-      "summary": "A presentation-local interaction; it reveals another coordinate and decides nothing.",
+      "summary": "A presentation-local interaction over another coordinate; it decides nothing.",
       "returns": null,
       "returnRef": null,
       "nodes": [
@@ -594,6 +606,42 @@
         {
           "from": "vexlife-prod.local.header.utilities.quick-actions.vision.intent",
           "to": "vexlife-prod.local.header.utilities.quick-actions.vision.reveal",
+          "label": null,
+          "kind": "FLOW"
+        }
+      ]
+    },
+    {
+      "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.read-aloud",
+      "label": "Presentation over Timeline",
+      "disposition": "TYPED_PRESENTATION",
+      "summary": "A presentation-local interaction over another coordinate; it decides nothing.",
+      "returns": null,
+      "returnRef": null,
+      "nodes": [
+        {
+          "ref": "vexlife-prod.local.header.utilities.quick-actions.read-aloud.intent",
+          "face": "BEHAVIOR",
+          "role": "INTENT",
+          "label": "Activate",
+          "symbol": "VexWeb.Binding.LocalInteraction",
+          "summary": null,
+          "source": "common:web/VexLifeWebP1.kt"
+        },
+        {
+          "ref": "vexlife-prod.local.header.utilities.quick-actions.read-aloud.reveal",
+          "face": "BEHAVIOR",
+          "role": "NAVIGATION",
+          "label": "Timeline",
+          "symbol": "element.vexlife-workspace.companion.conversation.timeline",
+          "summary": null,
+          "source": "common:workspace/VexLifeWorkspaceBlueprint.kt"
+        }
+      ],
+      "edges": [
+        {
+          "from": "vexlife-prod.local.header.utilities.quick-actions.read-aloud.intent",
+          "to": "vexlife-prod.local.header.utilities.quick-actions.read-aloud.reveal",
           "label": null,
           "kind": "FLOW"
         }
@@ -757,9 +805,9 @@
     },
     {
       "pathwayRef": "pathway.vexlife-prod.local.companion.view-switch",
-      "label": "Reveal Settings",
+      "label": "Presentation over Settings",
       "disposition": "TYPED_PRESENTATION",
-      "summary": "A presentation-local interaction; it reveals another coordinate and decides nothing.",
+      "summary": "A presentation-local interaction over another coordinate; it decides nothing.",
       "returns": null,
       "returnRef": null,
       "nodes": [
@@ -793,9 +841,9 @@
     },
     {
       "pathwayRef": "pathway.vexlife-prod.local.companion.conversation.jump-latest",
-      "label": "Reveal Timeline",
+      "label": "Presentation over Timeline",
       "disposition": "TYPED_PRESENTATION",
-      "summary": "A presentation-local interaction; it reveals another coordinate and decides nothing.",
+      "summary": "A presentation-local interaction over another coordinate; it decides nothing.",
       "returns": null,
       "returnRef": null,
       "nodes": [
@@ -829,9 +877,9 @@
     },
     {
       "pathwayRef": "pathway.vexlife-prod.local.companion.conversation.context-share",
-      "label": "Reveal Context receipt",
+      "label": "Presentation over Context receipt",
       "disposition": "TYPED_PRESENTATION",
-      "summary": "A presentation-local interaction; it reveals another coordinate and decides nothing.",
+      "summary": "A presentation-local interaction over another coordinate; it decides nothing.",
       "returns": null,
       "returnRef": null,
       "nodes": [

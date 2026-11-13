@@ -44,6 +44,7 @@ object VexLifeWorkspaceBlueprint :
         QuickActions.control(
             "vision",
         )
+    val ReadAloud = QuickActions.control("read-aloud")
 
     val Browser =
         region(
