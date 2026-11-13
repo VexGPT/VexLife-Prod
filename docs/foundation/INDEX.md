@@ -17,6 +17,26 @@ FRESH REPOSITORY
 != FRESH HOME / FRESH VEX / BLANK MEMORY
 ~~~
 
+Current product-authority rule:
+
+~~~text
+VexLife-Prod
+= current VexLife product body
+
+vgong24/VexLife
+= predecessor / provenance source
+
+PREDECESSOR REFERENCE
+!= LIVE RUNTIME DEPENDENCY
+
+LIVE PREDECESSOR DEPENDENCY
+= exact current bridge owner + exact bounded meaning
+~~~
+
+A once-valid transitional dependency must be retired from present-tense entry source when successor
+ownership becomes current. Preserve its evidence/history, but do not allow the old statement to
+remain a competing current authority.
+
 The current behavioral reference for continuity realignment is `vgong24/VexLife` at
 `7d59753687ff12726b0d309ee2dde028b5f89e8a`. Historical JavaScript is provenance for earned
 relationships, not a runtime dependency of the Kotlin product.
