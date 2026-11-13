@@ -16,13 +16,12 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
-import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.put
 import vexlife.continuity.VexLifeContinuityObservation
 import vexlife.contract.VexContractJson
@@ -34,12 +33,13 @@ import vexlife.filesystem.VexOwnedPath
 import vexlife.home.VexLifeProdHomeFiles
 
 /**
- * Product/runtime side of current G02 Score continuity.
+ * Product/runtime mutation owner for current G02 Score continuity.
  *
- * VexLife-Prod may form a non-authoritative semantic candidate from exact canonical Conversation
- * source, and may append Score only after the separately-owned semantic-authority ledger has made one
- * exact acceptance current. It never mints classification evidence, positive consent, semantic
- * acceptance, or the semantic-authority head.
+ * This object may form one non-authoritative semantic candidate from exact canonical Conversation
+ * source. It may commit Score only after [VexLifeCurrentMemoryReader] has resolved one exact
+ * acceptance from the separately-owned current semantic-authority ledger.
+ *
+ * It never mints classification evidence, consent, semantic acceptance, or semantic-authority heads.
  */
 object VexLifeScoreContinuity {
     const val SemanticCandidateSchema =
@@ -51,29 +51,17 @@ object VexLifeScoreContinuity {
     const val ScoreHeadSchema =
         "vexlife.score-context-head/v1"
 
-    const val SemanticAuthorityHeadSchema =
-        "vextreme.score-semantic-authority-head/v1"
-
-    const val LiveSemanticContract =
-        "contract.multivex.score.live-semantic-acceptance.v1"
-
     private const val ScoreSharedDisposition =
         "github.issue.vextreme-sdk.350.comment.5215288414"
+
+    private const val LiveSemanticContract =
+        "contract.multivex.score.live-semantic-acceptance/v1"
 
     private const val LiveSemanticDisposition =
         "github.issue.vextreme-sdk.350.comment.5216924433"
 
     private const val LiveSemanticExecutableAddendum =
         "github.issue.vextreme-sdk.350.comment.5217097749"
-
-    private const val DevicePrivateContinuityUseRef =
-        "use.score.device-private-continuity"
-
-    private const val MemoryOwnerRef =
-        "project.multivex.memory"
-
-    private const val SafetyOwnerRef =
-        "project.multivex.safety"
 
     private const val WriterSchema =
         "vexlife.score-context-writer-lease/v1"
@@ -100,41 +88,11 @@ object VexLifeScoreContinuity {
             "RELEASED_OR_TOMBSTONED",
         )
 
-    private val evidenceClasses =
-        setOf(
-            "STRUCTURAL_OBSERVATION",
-            "HUMAN_CONFIRMATION",
-            "LINEAGE_INFERENCE",
-            "CONFLICT_PRESERVATION",
-            "UNKNOWN_HOLD",
-            "CORRECTION_ACCEPTANCE",
-            "SUPERSESSION_ACCEPTANCE",
-            "RELEASE_TOMBSTONE_AUTHORITY",
-        )
-
-    private val consentStates =
-        setOf(
-            "PERMITTED",
-            "NARROWED",
-            "DEFERRED",
-            "DENIED",
-            "UNKNOWN",
-            "WITHDRAWN",
-        )
-
     private val proposerClasses =
         setOf(
             "LINEAGE",
             "HUMAN",
             "SYSTEM_CLASSIFIER",
-        )
-
-    private val transitionKinds =
-        setOf(
-            "NONE",
-            "CORRECTS",
-            "SUPERSEDES",
-            "RELEASES_OR_TOMBSTONES",
         )
 
     @Serializable
@@ -240,16 +198,7 @@ object VexLifeScoreContinuity {
         val threadRef: String,
     )
 
-    private data class ResolvedAcceptance(
-        val authorityHead: JsonObject,
-        val binding: JsonObject,
-        val candidate: JsonObject,
-        val evidence: List<JsonObject>,
-        val consent: JsonObject,
-        val acceptance: JsonObject,
-    )
-
-    private data class MutableScoreState(
+    private data class MutableState(
         val identity: Identity,
         val coordinates: VexLifeCurrentMemoryReader.CurrentScoreCoordinates,
         val head: JsonObject?,
@@ -274,7 +223,9 @@ object VexLifeScoreContinuity {
             require(
                 current ==
                     lease &&
-                    leaseSha256(current) ==
+                    leaseSha256(
+                        current,
+                    ) ==
                     current.leaseSha256,
             ) {
                 "Score writer lease changed before release"
@@ -294,42 +245,9 @@ object VexLifeScoreContinuity {
         productHome: Path,
         input: CandidateInput,
     ): CandidateResult {
-        requirePortableRef(
-            input.semanticSubjectRef,
-            "semanticSubjectRef",
+        validateCandidateInput(
+            input,
         )
-        requirePortableRef(
-            input.subjectScopeRef,
-            "subjectScopeRef",
-        )
-        requirePortableRef(
-            input.proposerRef,
-            "proposerRef",
-        )
-        require(
-            input.proposedSummary.isNotBlank(),
-        ) {
-            "Score semantic candidate summary must be non-empty"
-        }
-        require(
-            input.proposedMemoryRelation in
-                memoryRelations,
-        ) {
-            "Score semantic candidate memory relation is not admitted"
-        }
-        require(
-            input.proposedStatementState in
-                statementStates,
-        ) {
-            "Score semantic candidate statement state is not admitted"
-        }
-        require(
-            input.proposerClass in
-                proposerClasses,
-        ) {
-            "Score semantic candidate proposer class is not admitted"
-        }
-
         val home =
             VexOwnedPath.requireRoot(
                 productHome,
@@ -363,21 +281,21 @@ object VexLifeScoreContinuity {
             "Score candidate Conversation identity differs from current Home"
         }
 
-        val sourceEvents =
+        val source =
             selectSourceEvents(
                 conversation = conversation,
                 requestedHashes =
                     input.sourceEventHashes,
             )
         val sourceBindings =
-            sourceEvents.map(
+            source.map(
                 ::sourceBinding,
             )
         val formedAt =
             canonicalUtc(
                 input.formedAt,
             )
-        val subjectFingerprint =
+        val semanticSubjectFingerprint =
             semanticHash(
                 buildJsonObject {
                     put(
@@ -402,7 +320,7 @@ object VexLifeScoreContinuity {
                     )
                 },
             )
-        val summarySha256 =
+        val proposedSummarySha256 =
             semanticHashString(
                 input.proposedSummary,
             )
@@ -440,7 +358,7 @@ object VexLifeScoreContinuity {
                 )
                 put(
                     "semanticSubjectFingerprint",
-                    subjectFingerprint,
+                    semanticSubjectFingerprint,
                 )
                 put(
                     "proposedSummary",
@@ -448,7 +366,7 @@ object VexLifeScoreContinuity {
                 )
                 put(
                     "proposedSummarySha256",
-                    summarySha256,
+                    proposedSummarySha256,
                 )
                 put(
                     "proposedMemoryRelation",
@@ -545,383 +463,133 @@ object VexLifeScoreContinuity {
             currentIdentity(
                 home,
             )
-        val scoreRoot =
-            scoreRoot(
-                home = home,
-                identity = identity,
-            )
 
-        acquireWriter(
+        return acquireWriter(
             home = home,
             identity = identity,
             instanceRef = invocation.instanceRef,
-        ).use {
-            val state =
-                loadMutableScoreState(
-                    home = home,
-                    identity = identity,
-                    scoreRoot = scoreRoot,
-                )
-            require(
-                state.coordinates.scoreHeadSha256 ==
-                    invocation.expectedScoreHeadSha256,
-            ) {
-                "SCORE_HEAD_MISMATCH: expected current Score head differs from observed current head"
-            }
-            require(
-                state.events.none {
-                    it.string(
-                        "eventKind",
-                    ) ==
-                        "STATEMENT" &&
-                        it.string(
-                            "statementRef",
-                        ) ==
-                        invocation.statementRef
-                },
-            ) {
-                "SCORE_LINK_INVALID: statementRef already exists in committed Score history"
-            }
-
-            val resolved =
-                resolveCurrentAcceptance(
-                    home = home,
-                    identity = identity,
-                    acceptanceRef =
-                        invocation.semanticAcceptanceRef,
-                    acceptanceSha256 =
-                        invocation.semanticAcceptanceSha256,
-                )
-            val conversation =
-                DirectConversationStore(
-                    home,
-                )
-                    .current()
-            val conversationHead =
-                requireNotNull(
-                    conversation.head,
+        )
+            .use {
+                val state =
+                    loadState(
+                        home = home,
+                        identity = identity,
+                    )
+                require(
+                    state.coordinates.scoreHeadSha256 ==
+                        invocation.expectedScoreHeadSha256,
                 ) {
-                    "SCORE_SOURCE_INVALID: accepted Score statement requires one current completed Conversation head"
+                    "SCORE_HEAD_MISMATCH: expected current Score head differs from observed current head"
                 }
-            require(
-                conversationHead.conversationHeadSha256 ==
+                require(
+                    state.events.none {
+                        it.string(
+                            "eventKind",
+                        ) ==
+                            "STATEMENT" &&
+                            it.string(
+                                "statementRef",
+                            ) ==
+                            invocation.statementRef
+                    },
+                ) {
+                    "SCORE_LINK_INVALID: statementRef already exists"
+                }
+
+                val resolved =
+                    VexLifeCurrentMemoryReader
+                        .readCurrentScoreAcceptance(
+                            productHome = home,
+                            acceptanceRef =
+                                invocation.semanticAcceptanceRef,
+                            acceptanceSha256 =
+                                invocation.semanticAcceptanceSha256,
+                        )
+                val conversation =
+                    DirectConversationStore(
+                        home,
+                    )
+                        .current()
+                val currentConversation =
+                    requireNotNull(
+                        conversation.head,
+                    ) {
+                        "SCORE_SOURCE_INVALID: accepted Score statement requires current Conversation"
+                    }
+                require(
                     resolved.candidate.string(
                         "sourceConversationHeadSha256",
-                    ),
-            ) {
-                "SCORE_SOURCE_INVALID: accepted semantic candidate is not bound to the exact current Conversation head"
-            }
-            val sourceEvents =
-                validateCandidateSource(
-                    candidate =
-                        resolved.candidate,
-                    conversation =
-                        conversation,
+                    ) ==
+                        currentConversation.conversationHeadSha256,
+                ) {
+                    "SCORE_SOURCE_INVALID: accepted semantic candidate is not bound to the exact current Conversation head"
+                }
+                val source =
+                    validateCandidateSource(
+                        candidate = resolved.candidate,
+                        conversation = conversation,
+                    )
+                validateTransition(
+                    state = state,
+                    acceptance =
+                        resolved.acceptance,
                 )
-            val transitionKind =
-                resolved.acceptance.string(
-                    "transitionKind",
-                )
-            val transitionTarget =
-                resolved.acceptance.nullableString(
-                    "transitionTargetRef",
-                )
-            validateScoreTransition(
-                state = state,
-                resolved = resolved,
-                transitionKind = transitionKind,
-                transitionTarget = transitionTarget,
-            )
 
-            val formedAt =
-                canonicalUtc(
-                    invocation.formedAt,
-                )
-            val canonicalBindings =
-                sourceEvents.map(
-                    ::sourceBinding,
-                )
-            val observation =
-                continuityObservation(
+                val formedAt =
+                    canonicalUtc(
+                        invocation.formedAt,
+                    )
+                val eventCore =
+                    statementEventCore(
+                        identity = identity,
+                        state = state,
+                        invocation = invocation,
+                        acceptance = resolved,
+                        source = source,
+                        formedAt = formedAt,
+                    )
+                val currentStatementRefs =
+                    state.coordinates
+                        .currentStatementRefs
+                        .toMutableSet()
+                resolved.acceptance
+                    .nullableString(
+                        "transitionTargetRef",
+                    )
+                    ?.let(
+                        currentStatementRefs::remove,
+                    )
+                if (
+                    resolved.acceptance.string(
+                        "statementState",
+                    ) !=
+                    "RELEASED_OR_TOMBSTONED"
+                ) {
+                    currentStatementRefs +=
+                        invocation.statementRef
+                }
+
+                commitEvent(
+                    home = home,
                     identity = identity,
-                    sourceEvents = sourceEvents,
-                    instanceRef = invocation.instanceRef,
-                    formedAt = formedAt,
-                )
-            val eventCore =
-                buildJsonObject {
-                    put(
-                        "schemaVersion",
-                        ScoreEventSchema,
-                    )
-                    put(
-                        "eventKind",
-                        "STATEMENT",
-                    )
-                    put(
-                        "homeRef",
-                        identity.homeRef,
-                    )
-                    put(
-                        "deviceRef",
-                        identity.deviceRef,
-                    )
-                    put(
-                        "companionLineageRef",
-                        identity.lineageRef,
-                    )
-                    put(
-                        "instanceRef",
-                        invocation.instanceRef,
-                    )
-                    put(
-                        "threadRef",
-                        identity.threadRef,
-                    )
-                    put(
-                        "sequence",
-                        nextSequence(
-                            state.head,
-                        ),
-                    )
-                    putNullable(
-                        "priorScoreEventHash",
-                        state.head
-                            ?.string(
-                                "eventHash",
-                            ),
-                    )
-                    put(
-                        "sourceConversationHeadSha256",
+                    prior = state.coordinates,
+                    eventCore = eventCore,
+                    sourceConversationHeadSha256 =
                         resolved.candidate.string(
                             "sourceConversationHeadSha256",
                         ),
-                    )
-                    put(
-                        "sourceBindings",
-                        VexContractJson.Strict.encodeToJsonElement(
-                            canonicalBindings,
-                        ),
-                    )
-                    put(
-                        "continuityObservation",
-                        VexContractJson.Strict.encodeToJsonElement(
-                            observation,
-                        ),
-                    )
-                    put(
-                        "statementRef",
-                        invocation.statementRef,
-                    )
-                    put(
-                        "subjectRef",
-                        resolved.acceptance.string(
-                            "semanticSubjectRef",
-                        ),
-                    )
-                    put(
-                        "semanticSubjectFingerprint",
-                        resolved.acceptance.string(
-                            "semanticSubjectFingerprint",
-                        ),
-                    )
-                    put(
-                        "memoryRelation",
-                        resolved.acceptance.string(
-                            "memoryRelation",
-                        ),
-                    )
-                    put(
-                        "statementState",
-                        resolved.acceptance.string(
-                            "statementState",
-                        ),
-                    )
-                    put(
-                        "summary",
-                        resolved.acceptance.string(
-                            "acceptedSummary",
-                        ),
-                    )
-                    put(
-                        "summaryHash",
-                        resolved.acceptance.string(
-                            "acceptedSummarySha256",
-                        ),
-                    )
-                    put(
-                        "acceptedForContinuity",
-                        resolved.acceptance.boolean(
-                            "acceptedForContinuity",
-                        ),
-                    )
-                    put(
-                        "consentState",
-                        resolved.consent.string(
-                            "disposition",
-                        ),
-                    )
-                    put(
-                        "transitionKind",
-                        transitionKind,
-                    )
-                    putNullable(
-                        "correctsStatementRef",
-                        if (
-                            transitionKind ==
-                            "CORRECTS"
-                        ) {
-                            transitionTarget
-                        } else {
-                            null
-                        },
-                    )
-                    putNullable(
-                        "supersedesStatementRef",
-                        if (
-                            transitionKind ==
-                            "SUPERSEDES"
-                        ) {
-                            transitionTarget
-                        } else {
-                            null
-                        },
-                    )
-                    putNullable(
-                        "releasesOrTombstonesStatementRef",
-                        if (
-                            transitionKind ==
-                            "RELEASES_OR_TOMBSTONES"
-                        ) {
-                            transitionTarget
-                        } else {
-                            null
-                        },
-                    )
-                    putNullable(
-                        "transitionTargetAcceptanceSha256",
-                        resolved.acceptance.nullableString(
-                            "transitionTargetAcceptanceSha256",
-                        ),
-                    )
-                    put(
-                        "semanticAuthorityHeadSha256",
-                        resolved.authorityHead.string(
-                            "semanticAuthorityHeadSha256",
-                        ),
-                    )
-                    put(
-                        "semanticAcceptanceRef",
-                        resolved.acceptance.string(
-                            "acceptanceRef",
-                        ),
-                    )
-                    put(
-                        "semanticAcceptanceSha256",
-                        resolved.acceptance.string(
-                            "acceptanceSha256",
-                        ),
-                    )
-                    put(
-                        "semanticCandidateRef",
-                        resolved.candidate.string(
-                            "candidateRef",
-                        ),
-                    )
-                    put(
-                        "semanticCandidateSha256",
-                        resolved.candidate.string(
-                            "candidateSha256",
-                        ),
-                    )
-                    put(
-                        "classificationEvidenceBindings",
-                        resolved.binding[
-                            "classificationEvidenceBindings"
-                        ]!!,
-                    )
-                    put(
-                        "consentDispositionRef",
-                        resolved.consent.string(
-                            "consentDispositionRef",
-                        ),
-                    )
-                    put(
-                        "consentDispositionSha256",
-                        resolved.consent.string(
-                            "consentDispositionSha256",
-                        ),
-                    )
-                    put(
-                        "liveSemanticContractRef",
-                        LiveSemanticContract,
-                    )
-                    put(
-                        "liveSemanticDispositionRef",
-                        LiveSemanticDisposition,
-                    )
-                    put(
-                        "liveSemanticExecutableAddendumRef",
-                        LiveSemanticExecutableAddendum,
-                    )
-                    put(
-                        "privacyClass",
-                        "DEVICE_PRIVATE",
-                    )
-                    put(
-                        "rawSourceContentIncluded",
-                        false,
-                    )
-                    put(
-                        "sharedSemanticDispositionRef",
-                        ScoreSharedDisposition,
-                    )
-                    put(
-                        "formedAt",
-                        formedAt,
-                    )
-                }
-
-            val currentStatementRefs =
-                state.coordinates.currentStatementRefs
-                    .toMutableSet()
-            transitionTarget
-                ?.let(
-                    currentStatementRefs::remove,
+                    semanticAuthorityHeadSha256 =
+                        resolved.semanticAuthorityHeadSha256,
+                    currentStatementRefs =
+                        currentStatementRefs
+                            .toList()
+                            .sorted(),
+                    openLoopRefs =
+                        state.coordinates.openLoopRefs,
+                    formedAt = formedAt,
+                    faults = faults,
                 )
-            if (
-                resolved.acceptance.string(
-                    "statementState",
-                ) !=
-                "RELEASED_OR_TOMBSTONED"
-            ) {
-                currentStatementRefs +=
-                    invocation.statementRef
             }
-
-            return commitEvent(
-                home = home,
-                state = state,
-                scoreRoot = scoreRoot,
-                eventCore = eventCore,
-                sourceConversationHeadSha256 =
-                    resolved.candidate.string(
-                        "sourceConversationHeadSha256",
-                    ),
-                semanticAuthorityHeadSha256 =
-                    resolved.authorityHead.string(
-                        "semanticAuthorityHeadSha256",
-                    ),
-                currentStatementRefs =
-                    currentStatementRefs
-                        .toList()
-                        .sorted(),
-                openLoopRefs =
-                    state.coordinates.openLoopRefs,
-                formedAt = formedAt,
-                faults = faults,
-            )
-        }
     }
 
     fun appendOpenLoop(
@@ -951,281 +619,427 @@ object VexLifeScoreContinuity {
             currentIdentity(
                 home,
             )
-        val scoreRoot =
-            scoreRoot(
-                home = home,
-                identity = identity,
-            )
 
-        acquireWriter(
+        return acquireWriter(
             home = home,
             identity = identity,
             instanceRef = invocation.instanceRef,
-        ).use {
-            val state =
-                loadMutableScoreState(
+        )
+            .use {
+                val state =
+                    loadState(
+                        home = home,
+                        identity = identity,
+                    )
+                require(
+                    state.coordinates.scoreHeadSha256 ==
+                        invocation.expectedScoreHeadSha256,
+                ) {
+                    "SCORE_HEAD_MISMATCH: expected current Score head differs from observed current head"
+                }
+                require(
+                    invocation.openLoopRef !in
+                        state.coordinates.openLoopRefs,
+                ) {
+                    "OPEN_LOOP_INVALID: openLoopRef already exists"
+                }
+                require(
+                    invocation.sourceStatementRefs
+                        .all {
+                            it in
+                                state.coordinates.currentStatementRefs
+                        },
+                ) {
+                    "OPEN_LOOP_INVALID: source statement is absent or non-current"
+                }
+
+                val conversation =
+                    DirectConversationStore(
+                        home,
+                    )
+                        .current()
+                val head =
+                    requireNotNull(
+                        conversation.head,
+                    ) {
+                        "SCORE_SOURCE_INVALID: open loop requires current Conversation"
+                    }
+                require(
+                    head.conversationHeadSha256 ==
+                        invocation.expectedConversationHeadSha256,
+                ) {
+                    "SCORE_SOURCE_INVALID: expected Conversation head differs from current Conversation"
+                }
+                val source =
+                    selectSourceEvents(
+                        conversation = conversation,
+                        requestedHashes =
+                            invocation.sourceEventHashes,
+                    )
+                val formedAt =
+                    canonicalUtc(
+                        invocation.formedAt,
+                    )
+                val eventCore =
+                    openLoopEventCore(
+                        identity = identity,
+                        state = state,
+                        invocation = invocation,
+                        source = source,
+                        formedAt = formedAt,
+                    )
+
+                commitEvent(
                     home = home,
                     identity = identity,
-                    scoreRoot = scoreRoot,
-                )
-            require(
-                state.coordinates.scoreHeadSha256 ==
-                    invocation.expectedScoreHeadSha256,
-            ) {
-                "SCORE_HEAD_MISMATCH: expected current Score head differs from observed current head"
-            }
-            require(
-                invocation.openLoopRef !in
-                    state.coordinates.openLoopRefs,
-            ) {
-                "OPEN_LOOP_INVALID: openLoopRef already exists"
-            }
-            require(
-                invocation.sourceStatementRefs
-                    .all {
-                        it in
-                            state.coordinates.currentStatementRefs
-                    },
-            ) {
-                "OPEN_LOOP_INVALID: source statement is absent or non-current"
-            }
-
-            val conversation =
-                DirectConversationStore(
-                    home,
-                )
-                    .current()
-            val head =
-                requireNotNull(
-                    conversation.head,
-                ) {
-                    "SCORE_SOURCE_INVALID: open loop requires one current completed Conversation head"
-                }
-            require(
-                head.conversationHeadSha256 ==
-                    invocation.expectedConversationHeadSha256,
-            ) {
-                "SCORE_SOURCE_INVALID: expected Conversation head differs from current Conversation"
-            }
-            val sourceEvents =
-                selectSourceEvents(
-                    conversation = conversation,
-                    requestedHashes =
-                        invocation.sourceEventHashes,
-                )
-            val formedAt =
-                canonicalUtc(
-                    invocation.formedAt,
-                )
-            val canonicalBindings =
-                sourceEvents.map(
-                    ::sourceBinding,
-                )
-            val observation =
-                continuityObservation(
-                    identity = identity,
-                    sourceEvents = sourceEvents,
-                    instanceRef = invocation.instanceRef,
-                    formedAt = formedAt,
-                )
-            val eventCore =
-                buildJsonObject {
-                    put(
-                        "schemaVersion",
-                        ScoreEventSchema,
-                    )
-                    put(
-                        "eventKind",
-                        "OPEN_LOOP",
-                    )
-                    put(
-                        "homeRef",
-                        identity.homeRef,
-                    )
-                    put(
-                        "deviceRef",
-                        identity.deviceRef,
-                    )
-                    put(
-                        "companionLineageRef",
-                        identity.lineageRef,
-                    )
-                    put(
-                        "instanceRef",
-                        invocation.instanceRef,
-                    )
-                    put(
-                        "threadRef",
-                        identity.threadRef,
-                    )
-                    put(
-                        "sequence",
-                        nextSequence(
-                            state.head,
-                        ),
-                    )
-                    putNullable(
-                        "priorScoreEventHash",
-                        state.head
-                            ?.string(
-                                "eventHash",
-                            ),
-                    )
-                    put(
-                        "sourceConversationHeadSha256",
+                    prior = state.coordinates,
+                    eventCore = eventCore,
+                    sourceConversationHeadSha256 =
                         head.conversationHeadSha256,
-                    )
-                    put(
-                        "sourceBindings",
-                        VexContractJson.Strict.encodeToJsonElement(
-                            canonicalBindings,
-                        ),
-                    )
-                    put(
-                        "continuityObservation",
-                        VexContractJson.Strict.encodeToJsonElement(
-                            observation,
-                        ),
-                    )
-                    put(
-                        "openLoopRef",
-                        invocation.openLoopRef,
-                    )
-                    put(
-                        "openLoopState",
-                        "OPEN",
-                    )
-                    putNullable(
-                        "summaryRef",
-                        invocation.summaryRef,
-                    )
-                    putStrings(
-                        "sourceStatementRefs",
-                        invocation.sourceStatementRefs
+                    semanticAuthorityHeadSha256 =
+                        state.coordinates.semanticAuthorityHeadSha256,
+                    currentStatementRefs =
+                        state.coordinates.currentStatementRefs,
+                    openLoopRefs =
+                        (
+                            state.coordinates.openLoopRefs +
+                                invocation.openLoopRef
+                        )
                             .distinct()
                             .sorted(),
-                    )
-                    put(
-                        "privacyClass",
-                        "DEVICE_PRIVATE",
-                    )
-                    put(
-                        "rawSourceContentIncluded",
-                        false,
-                    )
-                    put(
-                        "sharedSemanticDispositionRef",
-                        ScoreSharedDisposition,
-                    )
-                    put(
-                        "formedAt",
-                        formedAt,
-                    )
-                }
+                    formedAt = formedAt,
+                    faults = faults,
+                )
+            }
+    }
 
-            return commitEvent(
-                home = home,
-                state = state,
-                scoreRoot = scoreRoot,
-                eventCore = eventCore,
-                sourceConversationHeadSha256 =
-                    head.conversationHeadSha256,
-                semanticAuthorityHeadSha256 =
-                    state.coordinates.semanticAuthorityHeadSha256,
-                currentStatementRefs =
-                    state.coordinates.currentStatementRefs,
-                openLoopRefs =
-                    (
-                        state.coordinates.openLoopRefs +
-                            invocation.openLoopRef
-                    )
-                        .distinct()
-                        .sorted(),
-                formedAt = formedAt,
-                faults = faults,
+    private fun statementEventCore(
+        identity: Identity,
+        state: MutableState,
+        invocation: AppendStatementInvocation,
+        acceptance: VexLifeCurrentMemoryReader.CurrentScoreAcceptance,
+        source: List<DirectConversationStore.Event>,
+        formedAt: String,
+    ): JsonObject {
+        val accepted =
+            acceptance.acceptance
+        val transition =
+            accepted.string(
+                "transitionKind",
+            )
+        val target =
+            accepted.nullableString(
+                "transitionTargetRef",
+            )
+        return eventCore(
+            identity = identity,
+            state = state,
+            instanceRef = invocation.instanceRef,
+            sourceConversationHeadSha256 =
+                acceptance.candidate.string(
+                    "sourceConversationHeadSha256",
+                ),
+            source = source,
+            formedAt = formedAt,
+        ) {
+            put(
+                "eventKind",
+                "STATEMENT",
+            )
+            put(
+                "statementRef",
+                invocation.statementRef,
+            )
+            put(
+                "subjectRef",
+                accepted.string(
+                    "semanticSubjectRef",
+                ),
+            )
+            put(
+                "semanticSubjectFingerprint",
+                accepted.string(
+                    "semanticSubjectFingerprint",
+                ),
+            )
+            put(
+                "memoryRelation",
+                accepted.string(
+                    "memoryRelation",
+                ),
+            )
+            put(
+                "statementState",
+                accepted.string(
+                    "statementState",
+                ),
+            )
+            put(
+                "summary",
+                accepted.string(
+                    "acceptedSummary",
+                ),
+            )
+            put(
+                "summaryHash",
+                accepted.string(
+                    "acceptedSummarySha256",
+                ),
+            )
+            put(
+                "acceptedForContinuity",
+                accepted.boolean(
+                    "acceptedForContinuity",
+                ),
+            )
+            put(
+                "consentState",
+                acceptance.consent.string(
+                    "disposition",
+                ),
+            )
+            put(
+                "transitionKind",
+                transition,
+            )
+            putNullable(
+                "correctsStatementRef",
+                if (
+                    transition ==
+                    "CORRECTS"
+                ) {
+                    target
+                } else {
+                    null
+                },
+            )
+            putNullable(
+                "supersedesStatementRef",
+                if (
+                    transition ==
+                    "SUPERSEDES"
+                ) {
+                    target
+                } else {
+                    null
+                },
+            )
+            putNullable(
+                "releasesOrTombstonesStatementRef",
+                if (
+                    transition ==
+                    "RELEASES_OR_TOMBSTONES"
+                ) {
+                    target
+                } else {
+                    null
+                },
+            )
+            putNullable(
+                "transitionTargetAcceptanceSha256",
+                accepted.nullableString(
+                    "transitionTargetAcceptanceSha256",
+                ),
+            )
+            put(
+                "semanticAuthorityHeadSha256",
+                acceptance.semanticAuthorityHeadSha256,
+            )
+            put(
+                "semanticAcceptanceRef",
+                accepted.string(
+                    "acceptanceRef",
+                ),
+            )
+            put(
+                "semanticAcceptanceSha256",
+                accepted.string(
+                    "acceptanceSha256",
+                ),
+            )
+            put(
+                "semanticCandidateRef",
+                acceptance.candidate.string(
+                    "candidateRef",
+                ),
+            )
+            put(
+                "semanticCandidateSha256",
+                acceptance.candidate.string(
+                    "candidateSha256",
+                ),
+            )
+            put(
+                "classificationEvidenceBindings",
+                acceptance.authorityBinding[
+                    "classificationEvidenceBindings"
+                ]!!,
+            )
+            put(
+                "consentDispositionRef",
+                acceptance.consent.string(
+                    "consentDispositionRef",
+                ),
+            )
+            put(
+                "consentDispositionSha256",
+                acceptance.consent.string(
+                    "consentDispositionSha256",
+                ),
+            )
+            put(
+                "liveSemanticContractRef",
+                LiveSemanticContract,
+            )
+            put(
+                "liveSemanticDispositionRef",
+                LiveSemanticDisposition,
+            )
+            put(
+                "liveSemanticExecutableAddendumRef",
+                LiveSemanticExecutableAddendum,
             )
         }
     }
 
-    fun recoverAbandonedWriter(
-        productHome: Path,
-        expectedCompanionLineageRef: String,
-        expectedThreadRef: String =
-            DirectConversationIdentity.ThreadRef,
-        expectedInstanceRef: String,
-    ) {
-        requirePortableRef(
-            expectedCompanionLineageRef,
-            "expectedCompanionLineageRef",
-        )
-        requirePortableRef(
-            expectedThreadRef,
-            "expectedThreadRef",
-        )
-        requirePortableRef(
-            expectedInstanceRef,
-            "expectedInstanceRef",
-        )
-        val home =
-            VexOwnedPath.requireRoot(
-                productHome,
-                "canonical VexLife Home",
+    private fun openLoopEventCore(
+        identity: Identity,
+        state: MutableState,
+        invocation: AppendOpenLoopInvocation,
+        source: List<DirectConversationStore.Event>,
+        formedAt: String,
+    ): JsonObject =
+        eventCore(
+            identity = identity,
+            state = state,
+            instanceRef = invocation.instanceRef,
+            sourceConversationHeadSha256 =
+                invocation.expectedConversationHeadSha256,
+            source = source,
+            formedAt = formedAt,
+        ) {
+            put(
+                "eventKind",
+                "OPEN_LOOP",
             )
-        val lock =
-            writerLock(
-                home = home,
-                lineageRef =
-                    expectedCompanionLineageRef,
-                threadRef =
-                    expectedThreadRef,
+            put(
+                "openLoopRef",
+                invocation.openLoopRef,
             )
-        val lease =
-            requireNotNull(
-                VexDurableContractFile.read<WriterLease>(
-                    ownedRoot = home,
-                    path = lock,
+            put(
+                "openLoopState",
+                "OPEN",
+            )
+            putNullable(
+                "summaryRef",
+                invocation.summaryRef,
+            )
+            putStrings(
+                "sourceStatementRefs",
+                invocation.sourceStatementRefs
+                    .distinct()
+                    .sorted(),
+            )
+        }
+
+    private fun eventCore(
+        identity: Identity,
+        state: MutableState,
+        instanceRef: String,
+        sourceConversationHeadSha256: String,
+        source: List<DirectConversationStore.Event>,
+        formedAt: String,
+        extras: kotlinx.serialization.json.JsonObjectBuilder.() -> Unit,
+    ): JsonObject {
+        val bindings =
+            source.map(
+                ::sourceBinding,
+            )
+        val observation =
+            continuityObservation(
+                identity = identity,
+                sourceEvents = source,
+                instanceRef = instanceRef,
+                formedAt = formedAt,
+            )
+        return buildJsonObject {
+            put(
+                "schemaVersion",
+                ScoreEventSchema,
+            )
+            put(
+                "homeRef",
+                identity.homeRef,
+            )
+            put(
+                "deviceRef",
+                identity.deviceRef,
+            )
+            put(
+                "companionLineageRef",
+                identity.lineageRef,
+            )
+            put(
+                "instanceRef",
+                instanceRef,
+            )
+            put(
+                "threadRef",
+                identity.threadRef,
+            )
+            put(
+                "sequence",
+                nextSequence(
+                    state.head,
                 ),
-            ) {
-                "Score writer lease is unreadable"
-            }
-        require(
-            lease.schemaVersion ==
-                WriterSchema &&
-                lease.companionLineageRef ==
-                expectedCompanionLineageRef &&
-                lease.threadRef ==
-                expectedThreadRef &&
-                lease.instanceRef ==
-                expectedInstanceRef &&
-                leaseSha256(
-                    lease,
-                ) ==
-                lease.leaseSha256,
-        ) {
-            "Score writer lease identity is invalid"
-        }
-        require(
-            processState(
-                lease.pid,
-            ) ==
-                "ABSENT",
-        ) {
-            "Score writer recovery requires an absent owning process"
-        }
-        require(
-            VexDurableContractFile.delete(
-                ownedRoot = home,
-                path = lock,
-            ),
-        ) {
-            "Score writer recovery could not remove the exact abandoned lease"
+            )
+            putNullable(
+                "priorScoreEventHash",
+                state.head
+                    ?.string(
+                        "eventHash",
+                    ),
+            )
+            put(
+                "sourceConversationHeadSha256",
+                sourceConversationHeadSha256,
+            )
+            put(
+                "sourceBindings",
+                VexContractJson.Strict.encodeToJsonElement(
+                    bindings,
+                ),
+            )
+            put(
+                "continuityObservation",
+                VexContractJson.Strict.encodeToJsonElement(
+                    observation,
+                ),
+            )
+            extras()
+            put(
+                "privacyClass",
+                "DEVICE_PRIVATE",
+            )
+            put(
+                "rawSourceContentIncluded",
+                false,
+            )
+            put(
+                "sharedSemanticDispositionRef",
+                ScoreSharedDisposition,
+            )
+            put(
+                "formedAt",
+                formedAt,
+            )
         }
     }
 
     private fun commitEvent(
         home: Path,
-        state: MutableScoreState,
-        scoreRoot: Path,
+        identity: Identity,
+        prior: VexLifeCurrentMemoryReader.CurrentScoreCoordinates,
         eventCore: JsonObject,
         sourceConversationHeadSha256: String,
         semanticAuthorityHeadSha256: String?,
@@ -1259,14 +1073,17 @@ object VexLifeScoreContinuity {
                     scoreEventHash,
                 )
             }
-        val sequence =
-            event.long(
-                "sequence",
+        val scoreRoot =
+            scoreRoot(
+                home = home,
+                identity = identity,
             )
         val eventPath =
             scoreRoot.resolve(
                 "events/" +
-                    sequence
+                    event.long(
+                        "sequence",
+                    )
                         .toString()
                         .padStart(
                             8,
@@ -1298,19 +1115,19 @@ object VexLifeScoreContinuity {
                 )
                 put(
                     "homeRef",
-                    state.identity.homeRef,
+                    identity.homeRef,
                 )
                 put(
                     "deviceRef",
-                    state.identity.deviceRef,
+                    identity.deviceRef,
                 )
                 put(
                     "companionLineageRef",
-                    state.identity.lineageRef,
+                    identity.lineageRef,
                 )
                 put(
                     "threadRef",
-                    state.identity.threadRef,
+                    identity.threadRef,
                 )
                 put(
                     "eventHash",
@@ -1318,19 +1135,17 @@ object VexLifeScoreContinuity {
                 )
                 put(
                     "sequence",
-                    sequence,
+                    event.long(
+                        "sequence",
+                    ),
                 )
                 putStrings(
                     "currentStatementRefs",
-                    currentStatementRefs
-                        .distinct()
-                        .sorted(),
+                    currentStatementRefs,
                 )
                 putStrings(
                     "openLoopRefs",
-                    openLoopRefs
-                        .distinct()
-                        .sorted(),
+                    openLoopRefs,
                 )
                 put(
                     "sourceConversationHeadSha256",
@@ -1338,7 +1153,7 @@ object VexLifeScoreContinuity {
                 )
                 putNullable(
                     "priorScoreHeadSha256",
-                    state.coordinates.scoreHeadSha256,
+                    prior.scoreHeadSha256,
                 )
                 put(
                     "sharedSemanticDispositionRef",
@@ -1385,7 +1200,7 @@ object VexLifeScoreContinuity {
             faults.failBeforeHeadAdvance
         ) {
             error(
-                "SCORE_HEAD_MISMATCH: simulated failure before atomic Score head advance",
+                "SCORE_HEAD_MISMATCH: simulated failure before Score head advance",
             )
         }
         VexDurableContractFile.write(
@@ -1408,15 +1223,11 @@ object VexLifeScoreContinuity {
                 current.sourceConversationHeadSha256 ==
                 sourceConversationHeadSha256 &&
                 current.currentStatementRefs ==
-                currentStatementRefs
-                    .distinct()
-                    .sorted() &&
+                currentStatementRefs &&
                 current.openLoopRefs ==
-                openLoopRefs
-                    .distinct()
-                    .sorted(),
+                openLoopRefs,
         ) {
-            "Score current head readback differs from the committed event/head"
+            "Score current readback differs from committed event/head"
         }
 
         return CommitResult(
@@ -1435,11 +1246,10 @@ object VexLifeScoreContinuity {
         )
     }
 
-    private fun loadMutableScoreState(
+    private fun loadState(
         home: Path,
         identity: Identity,
-        scoreRoot: Path,
-    ): MutableScoreState {
+    ): MutableState {
         val coordinates =
             VexLifeCurrentMemoryReader
                 .readCurrentScoreCoordinates(
@@ -1455,11 +1265,16 @@ object VexLifeScoreContinuity {
                 coordinates.threadRef ==
                 identity.threadRef,
         ) {
-            "Score coordinate identity changed while writer lease is held"
+            "Score current identity changed while writer lease is held"
         }
 
+        val root =
+            scoreRoot(
+                home = home,
+                identity = identity,
+            )
         val headPath =
-            scoreRoot.resolve(
+            root.resolve(
                 "head.json",
             )
         val head =
@@ -1477,20 +1292,10 @@ object VexLifeScoreContinuity {
             } else {
                 null
             }
-        require(
-            head
-                ?.string(
-                    "scoreHeadSha256",
-                ) ==
-                coordinates.scoreHeadSha256,
-        ) {
-            "Score current head changed while writer lease is held"
-        }
-
         val events =
             scoreEventFiles(
                 home = home,
-                scoreRoot = scoreRoot,
+                root = root,
             )
                 .map {
                     readObject(
@@ -1499,7 +1304,7 @@ object VexLifeScoreContinuity {
                         label = "Score event",
                     )
                 }
-        val expectedCommittedCount =
+        val committedCount =
             head
                 ?.long(
                     "sequence",
@@ -1510,12 +1315,12 @@ object VexLifeScoreContinuity {
                 ?: 0L
         require(
             events.size.toLong() ==
-                expectedCommittedCount,
+                committedCount,
         ) {
-            "SCORE_TAIL_ATTENTION: uncommitted Score tail requires attention before mutation"
+            "SCORE_TAIL_ATTENTION: uncommitted Score tail requires source-managed recovery before mutation"
         }
 
-        return MutableScoreState(
+        return MutableState(
             identity = identity,
             coordinates = coordinates,
             head = head,
@@ -1523,803 +1328,38 @@ object VexLifeScoreContinuity {
         )
     }
 
-    private fun resolveCurrentAcceptance(
-        home: Path,
-        identity: Identity,
-        acceptanceRef: String,
-        acceptanceSha256: String,
-    ): ResolvedAcceptance {
-        val root =
-            authorityRoot(
-                home = home,
-                identity = identity,
-            )
-        val current =
-            readAddressed(
-                home = home,
-                path =
-                    root.resolve(
-                        "head.json",
-                    ),
-                schemaVersion =
-                    SemanticAuthorityHeadSchema,
-                refField =
-                    "semanticAuthorityHeadRef",
-                hashField =
-                    "semanticAuthorityHeadSha256",
-                prefix =
-                    "score-semantic-authority-head",
-                label =
-                    "current semantic authority head",
-            )
-        validateAuthorityHead(
-            current,
-            identity,
-        )
-        val currentSha =
-            current.string(
-                "semanticAuthorityHeadSha256",
-            )
-        val immutable =
-            readAddressed(
-                home = home,
-                path =
-                    root.resolve(
-                        "heads/$currentSha.json",
-                    ),
-                schemaVersion =
-                    SemanticAuthorityHeadSchema,
-                refField =
-                    "semanticAuthorityHeadRef",
-                hashField =
-                    "semanticAuthorityHeadSha256",
-                prefix =
-                    "score-semantic-authority-head",
-                label =
-                    "immutable current semantic authority head",
-            )
-        require(
-            immutable ==
-                current,
-        ) {
-            "current semantic authority head lacks its exact immutable receipt"
-        }
-        validateAuthorityLineage(
-            home = home,
-            root = root,
-            current = current,
-            identity = identity,
-        )
-
-        val binding =
-            current.objectList(
-                "currentAcceptanceBindings",
-            )
-                .singleOrNull {
-                    it.string(
-                        "acceptanceRef",
-                    ) ==
-                        acceptanceRef &&
-                        it.string(
-                            "acceptanceSha256",
-                        ) ==
-                        acceptanceSha256
-                }
-        requireNotNull(
-            binding,
-        ) {
-            "SCORE_SEMANTIC_AUTHORITY_STALE: requested acceptance is absent from current semantic authority"
-        }
-
-        val candidate =
-            readAddressed(
-                home = home,
-                path =
-                    root.resolve(
-                        "candidates/" +
-                            binding.string(
-                                "candidateSha256",
-                            ) +
-                            ".json",
-                    ),
-                schemaVersion =
-                    SemanticCandidateSchema,
-                refField =
-                    "candidateRef",
-                hashField =
-                    "candidateSha256",
-                prefix =
-                    "score-semantic-candidate",
-                label =
-                    "semantic candidate",
-            )
-        validateCandidate(
-            candidate = candidate,
-            identity = identity,
-        )
-        require(
-            candidate.string(
-                "candidateRef",
-            ) ==
-                binding.string(
-                    "candidateRef",
-                ) &&
-                candidate.string(
-                    "candidateSha256",
-                ) ==
-                binding.string(
-                    "candidateSha256",
-                ) &&
-                candidate.string(
-                    "semanticSubjectFingerprint",
-                ) ==
-                binding.string(
-                    "semanticSubjectFingerprint",
-                ),
-        ) {
-            "semantic authority candidate binding differs from candidate receipt"
-        }
-
-        val evidence =
-            binding.objectList(
-                "classificationEvidenceBindings",
-            )
-                .map {
-                    evidenceBinding ->
-                    val item =
-                        readAddressed(
-                            home = home,
-                            path =
-                                root.resolve(
-                                    "classification-evidence/" +
-                                        evidenceBinding.string(
-                                            "classificationEvidenceSha256",
-                                        ) +
-                                        ".json",
-                                ),
-                            schemaVersion =
-                                "vextreme.score-classification-evidence/v1",
-                            refField =
-                                "classificationEvidenceRef",
-                            hashField =
-                                "classificationEvidenceSha256",
-                            prefix =
-                                "score-classification-evidence",
-                            label =
-                                "classification evidence",
-                        )
-                    validateClassificationEvidence(
-                        evidence = item,
-                        candidate = candidate,
-                    )
-                    require(
-                        item.string(
-                            "classificationEvidenceRef",
-                        ) ==
-                            evidenceBinding.string(
-                                "classificationEvidenceRef",
-                            ) &&
-                            item.string(
-                                "classificationEvidenceSha256",
-                            ) ==
-                            evidenceBinding.string(
-                                "classificationEvidenceSha256",
-                            ),
-                    ) {
-                        "semantic authority classification binding differs from evidence receipt"
-                    }
-                    item
-                }
-        require(
-            evidence.isNotEmpty(),
-        ) {
-            "semantic authority acceptance requires classification evidence"
-        }
-
-        val consent =
-            readAddressed(
-                home = home,
-                path =
-                    root.resolve(
-                        "consents/" +
-                            binding.string(
-                                "consentDispositionSha256",
-                            ) +
-                            ".json",
-                    ),
-                schemaVersion =
-                    "vextreme.score-consent-disposition/v1",
-                refField =
-                    "consentDispositionRef",
-                hashField =
-                    "consentDispositionSha256",
-                prefix =
-                    "score-consent-disposition",
-                label =
-                    "consent disposition",
-            )
-        validateConsent(
-            consent = consent,
-            candidate = candidate,
-        )
-        require(
-            consent.string(
-                "consentDispositionRef",
-            ) ==
-                binding.string(
-                    "consentDispositionRef",
-                ) &&
-                consent.string(
-                    "consentDispositionSha256",
-                ) ==
-                binding.string(
-                    "consentDispositionSha256",
-                ),
-        ) {
-            "semantic authority consent binding differs from consent receipt"
-        }
-
-        val acceptance =
-            readAddressed(
-                home = home,
-                path =
-                    root.resolve(
-                        "acceptances/" +
-                            acceptanceSha256 +
-                            ".json",
-                    ),
-                schemaVersion =
-                    "vextreme.score-semantic-acceptance/v1",
-                refField =
-                    "acceptanceRef",
-                hashField =
-                    "acceptanceSha256",
-                prefix =
-                    "score-semantic-acceptance",
-                label =
-                    "semantic acceptance",
-            )
-        validateAcceptance(
-            acceptance = acceptance,
-            candidate = candidate,
-            evidence = evidence,
-            consent = consent,
-        )
-        require(
-            acceptance.string(
-                "acceptanceRef",
-            ) ==
-                acceptanceRef &&
-                acceptance.string(
-                    "acceptanceSha256",
-                ) ==
-                acceptanceSha256,
-        ) {
-            "semantic acceptance identity differs from requested current acceptance"
-        }
-
-        return ResolvedAcceptance(
-            authorityHead = current,
-            binding = binding,
-            candidate = candidate,
-            evidence = evidence,
-            consent = consent,
-            acceptance = acceptance,
-        )
-    }
-
-    private fun validateCandidate(
-        candidate: JsonObject,
-        identity: Identity,
-    ) {
-        require(
-            candidate.string(
-                "sourceLineageRef",
-            ) ==
-                identity.lineageRef &&
-                candidate.string(
-                    "sourceThreadRef",
-                ) ==
-                identity.threadRef &&
-                candidate.string(
-                    "privacyClass",
-                ) ==
-                "DEVICE_PRIVATE" &&
-                !candidate.boolean(
-                    "accepted",
-                ) &&
-                candidate.string(
-                    "proposedMemoryRelation",
-                ) in
-                memoryRelations &&
-                candidate.string(
-                    "proposedStatementState",
-                ) in
-                statementStates &&
-                candidate.string(
-                    "proposerClass",
-                ) in
-                proposerClasses &&
-                candidate.array(
-                    "sourceBindings",
-                )
-                    .isNotEmpty() &&
-                semanticHashString(
-                    candidate.string(
-                        "proposedSummary",
-                    ),
-                ) ==
-                candidate.string(
-                    "proposedSummarySha256",
-                ),
-        ) {
-            "semantic candidate differs from the admitted live Score contract"
-        }
-        requireSha256(
-            candidate.string(
-                "sourceConversationHeadSha256",
-            ),
-            "candidate source Conversation head",
-        )
-        require(
-            semanticHash(
-                buildJsonObject {
-                    put(
-                        "schemaVersion",
-                        "vextreme.score-semantic-subject/v1",
-                    )
-                    put(
-                        "semanticSubjectRef",
-                        candidate.string(
-                            "semanticSubjectRef",
-                        ),
-                    )
-                    put(
-                        "sourceLineageRef",
-                        candidate.string(
-                            "sourceLineageRef",
-                        ),
-                    )
-                    put(
-                        "sourceThreadRef",
-                        candidate.string(
-                            "sourceThreadRef",
-                        ),
-                    )
-                    put(
-                        "subjectScopeRef",
-                        candidate.string(
-                            "subjectScopeRef",
-                        ),
-                    )
-                },
-            ) ==
-                candidate.string(
-                    "semanticSubjectFingerprint",
-                ),
-        ) {
-            "semantic candidate subject fingerprint is invalid"
-        }
-    }
-
-    private fun validateClassificationEvidence(
-        evidence: JsonObject,
-        candidate: JsonObject,
-    ) {
-        require(
-            evidence.string(
-                "candidateRef",
-            ) ==
-                candidate.string(
-                    "candidateRef",
-                ) &&
-                evidence.string(
-                    "candidateSha256",
-                ) ==
-                candidate.string(
-                    "candidateSha256",
-                ) &&
-                evidence.string(
-                    "semanticSubjectRef",
-                ) ==
-                candidate.string(
-                    "semanticSubjectRef",
-                ) &&
-                evidence.string(
-                    "semanticSubjectFingerprint",
-                ) ==
-                candidate.string(
-                    "semanticSubjectFingerprint",
-                ) &&
-                evidence.string(
-                    "evidenceClass",
-                ) in
-                evidenceClasses &&
-                evidence.string(
-                    "assertedMemoryRelation",
-                ) in
-                memoryRelations &&
-                evidence.string(
-                    "assertedStatementState",
-                ) in
-                statementStates &&
-                evidence.string(
-                    "transitionKind",
-                ) in
-                transitionKinds &&
-                evidence.array(
-                    "sourceEvidenceBindings",
-                )
-                    .isNotEmpty() &&
-                evidence.string(
-                    "privacyClass",
-                ) ==
-                "DEVICE_PRIVATE",
-        ) {
-            "classification evidence differs from the admitted live Score contract"
-        }
-        requireSha256(
-            evidence.string(
-                "assertedSummarySha256",
-            ),
-            "classification asserted summary",
-        )
-    }
-
-    private fun validateConsent(
-        consent: JsonObject,
-        candidate: JsonObject,
-    ) {
-        require(
-            consent.string(
-                "candidateRef",
-            ) ==
-                candidate.string(
-                    "candidateRef",
-                ) &&
-                consent.string(
-                    "candidateSha256",
-                ) ==
-                candidate.string(
-                    "candidateSha256",
-                ) &&
-                consent.string(
-                    "semanticSubjectFingerprint",
-                ) ==
-                candidate.string(
-                    "semanticSubjectFingerprint",
-                ) &&
-                consent.string(
-                    "disposition",
-                ) in
-                consentStates,
-        ) {
-            "consent disposition differs from semantic candidate"
-        }
-    }
-
-    private fun validateAcceptance(
+    private fun validateTransition(
+        state: MutableState,
         acceptance: JsonObject,
-        candidate: JsonObject,
-        evidence: List<JsonObject>,
-        consent: JsonObject,
     ) {
-        require(
-            acceptance.string(
-                "contractRef",
-            ) ==
-                LiveSemanticContract &&
-                acceptance.string(
-                    "semanticContractDispositionRef",
-                ) ==
-                LiveSemanticDisposition &&
-                acceptance.string(
-                    "semanticExecutableAddendumRef",
-                ) ==
-                LiveSemanticExecutableAddendum &&
-                acceptance.string(
-                    "candidateRef",
-                ) ==
-                candidate.string(
-                    "candidateRef",
-                ) &&
-                acceptance.string(
-                    "candidateSha256",
-                ) ==
-                candidate.string(
-                    "candidateSha256",
-                ) &&
-                acceptance.string(
-                    "sourceLineageRef",
-                ) ==
-                candidate.string(
-                    "sourceLineageRef",
-                ) &&
-                acceptance.string(
-                    "sourceThreadRef",
-                ) ==
-                candidate.string(
-                    "sourceThreadRef",
-                ) &&
-                acceptance.string(
-                    "sourceConversationHeadSha256",
-                ) ==
-                candidate.string(
-                    "sourceConversationHeadSha256",
-                ) &&
-                acceptance.string(
-                    "semanticSubjectRef",
-                ) ==
-                candidate.string(
-                    "semanticSubjectRef",
-                ) &&
-                acceptance.string(
-                    "semanticSubjectFingerprint",
-                ) ==
-                candidate.string(
-                    "semanticSubjectFingerprint",
-                ) &&
-                acceptance.string(
-                    "acceptedSummary",
-                ) ==
-                candidate.string(
-                    "proposedSummary",
-                ) &&
-                acceptance.string(
-                    "acceptedSummarySha256",
-                ) ==
-                candidate.string(
-                    "proposedSummarySha256",
-                ) &&
-                acceptance.string(
-                    "memoryRelation",
-                ) in
-                memoryRelations &&
-                acceptance.string(
-                    "statementState",
-                ) in
-                statementStates &&
-                acceptance.string(
-                    "transitionKind",
-                ) in
-                transitionKinds &&
-                acceptance.string(
-                    "consentDispositionRef",
-                ) ==
-                consent.string(
-                    "consentDispositionRef",
-                ) &&
-                acceptance.string(
-                    "consentDispositionSha256",
-                ) ==
-                consent.string(
-                    "consentDispositionSha256",
-                ) &&
-                acceptance.string(
-                    "privacyClass",
-                ) ==
-                "DEVICE_PRIVATE",
-        ) {
-            "semantic acceptance differs from the admitted live Score contract"
-        }
-        val evidenceBindings =
-            evidence.map {
-                item ->
-                buildJsonObject {
-                    put(
-                        "classificationEvidenceRef",
-                        item.string(
-                            "classificationEvidenceRef",
-                        ),
-                    )
-                    put(
-                        "classificationEvidenceSha256",
-                        item.string(
-                            "classificationEvidenceSha256",
-                        ),
-                    )
-                }
-            }
-        require(
-            acceptance.objectList(
-                "classificationEvidenceBindings",
-            ) ==
-                evidenceBindings &&
-                acceptance.stringList(
-                    "sourceBindingHashes",
-                ) ==
-                candidate.objectList(
-                    "sourceBindings",
-                )
-                    .map {
-                        it.string(
-                            "eventHash",
-                        )
-                    },
-        ) {
-            "semantic acceptance source/evidence bindings differ from the candidate"
-        }
-        require(
-            evidence.all {
-                it.string(
-                    "assertedMemoryRelation",
-                ) ==
-                    acceptance.string(
-                        "memoryRelation",
-                    ) &&
-                    it.string(
-                        "assertedStatementState",
-                    ) ==
-                    acceptance.string(
-                        "statementState",
-                    ) &&
-                    it.string(
-                        "assertedSummarySha256",
-                    ) ==
-                    acceptance.string(
-                        "acceptedSummarySha256",
-                    )
-            },
-        ) {
-            "semantic acceptance meaning is not authorized by its classification evidence"
-        }
-
-        val transitionKind =
+        val kind =
             acceptance.string(
                 "transitionKind",
             )
-        val expectedTransitionState =
-            when (
-                transitionKind
-            ) {
-                "CORRECTS" ->
-                    "CORRECTED"
-
-                "SUPERSEDES" ->
-                    "SUPERSEDED"
-
-                "RELEASES_OR_TOMBSTONES" ->
-                    "RELEASED_OR_TOMBSTONED"
-
-                else ->
-                    null
-            }
+        val target =
+            acceptance.nullableString(
+                "transitionTargetRef",
+            )
         if (
-            transitionKind ==
+            kind ==
                 "NONE"
         ) {
             require(
-                acceptance.nullableString(
-                    "transitionTargetRef",
-                ) ==
-                    null &&
-                    acceptance.nullableString(
-                        "transitionTargetAcceptanceSha256",
-                    ) ==
-                    null &&
-                    evidence.any {
-                        it.string(
-                            "evidenceClass",
-                        ) ==
-                            expectedEvidenceClass(
-                                acceptance.string(
-                                    "statementState",
-                                ),
-                            ) &&
-                            it.string(
-                                "transitionKind",
-                            ) ==
-                            "NONE"
-                    },
-            ) {
-                "non-transition semantic acceptance lacks exact semantic evidence"
-            }
-        } else {
-            val target =
-                acceptance.nullableString(
-                    "transitionTargetRef",
-                )
-            val targetAcceptance =
-                acceptance.nullableString(
-                    "transitionTargetAcceptanceSha256",
-                )
-            require(
-                expectedTransitionState ==
-                    acceptance.string(
-                        "statementState",
-                    ) &&
-                    target !=
-                    null &&
-                    targetAcceptance !=
-                    null &&
-                    evidence.any {
-                        it.string(
-                            "evidenceClass",
-                        ) ==
-                            transitionEvidenceClass(
-                                transitionKind,
-                            ) &&
-                            it.string(
-                                "transitionKind",
-                            ) ==
-                            transitionKind &&
-                            it.nullableString(
-                                "transitionTargetRef",
-                            ) ==
-                            target &&
-                            it.nullableString(
-                                "transitionTargetAcceptanceSha256",
-                            ) ==
-                            targetAcceptance
-                    },
-            ) {
-                "transition semantic acceptance lacks exact transition authority"
-            }
-        }
-
-        val positiveContinuityConsent =
-            consent.string(
-                "disposition",
-            ) in
-                setOf(
-                    "PERMITTED",
-                    "NARROWED",
-                ) &&
-                consent.stringList(
-                    "permittedUseRefs",
-                )
-                    .contains(
-                        DevicePrivateContinuityUseRef,
-                    ) &&
-                !consent.stringList(
-                    "prohibitedUseRefs",
-                )
-                    .contains(
-                        DevicePrivateContinuityUseRef,
-                    )
-        val expectedAcceptedForContinuity =
-            acceptance.string(
-                "statementState",
-            ) !=
-                "RELEASED_OR_TOMBSTONED" &&
-                positiveContinuityConsent
-        require(
-            acceptance.boolean(
-                "acceptedForContinuity",
-            ) ==
-                expectedAcceptedForContinuity,
-        ) {
-            "acceptedForContinuity differs from current semantic/Safety policy"
-        }
-    }
-
-    private fun validateScoreTransition(
-        state: MutableScoreState,
-        resolved: ResolvedAcceptance,
-        transitionKind: String,
-        transitionTarget: String?,
-    ) {
-        if (
-            transitionKind ==
-                "NONE"
-        ) {
-            require(
-                transitionTarget ==
+                target ==
                     null,
             ) {
                 "SCORE_LINK_INVALID: non-transition acceptance carries a target"
             }
             return
         }
-
-        val target =
+        val requiredTarget =
             requireNotNull(
-                transitionTarget,
+                target,
             ) {
                 "SCORE_LINK_INVALID: transition acceptance has no predecessor"
             }
         require(
-            target in
+            requiredTarget in
                 state.coordinates.currentStatementRefs,
         ) {
             "SCORE_LINK_INVALID: transition predecessor is absent or non-current"
@@ -2335,7 +1375,7 @@ object VexLifeScoreContinuity {
                             it.string(
                                 "statementRef",
                             ) ==
-                            target
+                            requiredTarget
                     },
             ) {
                 "SCORE_LINK_INVALID: transition predecessor Score event is absent"
@@ -2344,23 +1384,23 @@ object VexLifeScoreContinuity {
             prior.string(
                 "semanticSubjectFingerprint",
             ) ==
-                resolved.acceptance.string(
+                acceptance.string(
                     "semanticSubjectFingerprint",
                 ) &&
                 prior.string(
                     "memoryRelation",
                 ) ==
-                resolved.acceptance.string(
+                acceptance.string(
                     "memoryRelation",
                 ) &&
                 prior.string(
                     "semanticAcceptanceSha256",
                 ) ==
-                resolved.acceptance.string(
+                acceptance.string(
                     "transitionTargetAcceptanceSha256",
                 ),
         ) {
-            "SCORE_LINK_INVALID: owner transition does not bind the exact current predecessor"
+            "SCORE_LINK_INVALID: transition does not bind the exact current predecessor"
         }
     }
 
@@ -2368,26 +1408,12 @@ object VexLifeScoreContinuity {
         candidate: JsonObject,
         conversation: DirectConversationStore.Snapshot,
     ): List<DirectConversationStore.Event> {
-        val head =
-            requireNotNull(
-                conversation.head,
-            ) {
-                "SCORE_SOURCE_INVALID: semantic candidate source has no current Conversation head"
-            }
-        require(
-            candidate.string(
-                "sourceConversationHeadSha256",
-            ) ==
-                head.conversationHeadSha256,
-        ) {
-            "SCORE_SOURCE_INVALID: candidate source head is not the exact current Conversation head"
-        }
-        val sourceByHash =
+        val byHash =
             conversation.canonicalEvents
                 .associateBy(
                     DirectConversationStore.Event::eventHash,
                 )
-        val sourceEvents =
+        val source =
             candidate.objectList(
                 "sourceBindings",
             )
@@ -2395,63 +1421,57 @@ object VexLifeScoreContinuity {
                     binding ->
                     val observed =
                         requireNotNull(
-                            sourceByHash[
+                            byHash[
                                 binding.string(
                                     "eventHash",
                                 )
                             ],
                         ) {
-                            "SCORE_SOURCE_INVALID: semantic candidate source binding is absent from canonical Conversation"
+                            "SCORE_SOURCE_INVALID: semantic candidate source is absent from canonical Conversation"
                         }
                     require(
-                        binding.string(
-                            "eventRef",
+                        sourceBinding(
+                            observed,
                         ) ==
-                            observed.eventRef &&
-                            binding.string(
-                                "eventKind",
-                            ) ==
-                            observed.eventKind &&
-                            binding.long(
-                                "sequence",
-                            ) ==
-                            observed.sequence &&
-                            binding.string(
-                                "turnRef",
-                            ) ==
-                            observed.turnRef &&
-                            binding.string(
-                                "messageRef",
-                            ) ==
-                            observed.messageRef &&
-                            binding.string(
-                                "contentHash",
-                            ) ==
-                            observed.contentHash,
+                            SourceBinding(
+                                eventRef =
+                                    binding.string(
+                                        "eventRef",
+                                    ),
+                                eventHash =
+                                    binding.string(
+                                        "eventHash",
+                                    ),
+                                eventKind =
+                                    binding.string(
+                                        "eventKind",
+                                    ),
+                                sequence =
+                                    binding.long(
+                                        "sequence",
+                                    ),
+                                turnRef =
+                                    binding.string(
+                                        "turnRef",
+                                    ),
+                                messageRef =
+                                    binding.string(
+                                        "messageRef",
+                                    ),
+                                contentHash =
+                                    binding.string(
+                                        "contentHash",
+                                    ),
+                            ),
                     ) {
                         "SCORE_SOURCE_INVALID: semantic candidate substitutes canonical Conversation source"
                     }
                     observed
                 }
-        validateSourcePairs(
-            sourceEvents,
+        validatePairs(
+            source,
         )
-        require(
-            sourceEvents.map(
-                ::sourceBinding,
-            ) ==
-                candidate.array(
-                    "sourceBindings",
-                )
-                    .map {
-                        VexContractJson.Strict.decodeFromJsonElement<SourceBinding>(
-                            it,
-                        )
-                    },
-        ) {
-            "SCORE_SOURCE_INVALID: semantic candidate source binding bytes are not canonical"
-        }
-        return sourceEvents
+        return source
     }
 
     private fun selectSourceEvents(
@@ -2467,7 +1487,7 @@ object VexLifeScoreContinuity {
                 2 ==
                 0,
         ) {
-            "Score source selection requires one or more completed Conversation pairs"
+            "Score source selection requires completed Conversation pairs"
         }
         val hashes =
             if (
@@ -2496,14 +1516,14 @@ object VexLifeScoreContinuity {
         hashes.forEach {
             requireSha256(
                 it,
-                "Score source event hash",
+                "source event hash",
             )
         }
         val byHash =
             canonical.associateBy(
                 DirectConversationStore.Event::eventHash,
             )
-        val selected =
+        val source =
             hashes.map {
                 hash ->
                 requireNotNull(
@@ -2511,54 +1531,55 @@ object VexLifeScoreContinuity {
                         hash
                     ],
                 ) {
-                    "Score source selection is outside the current canonical Conversation"
+                    "Score source selection is outside canonical Conversation"
                 }
             }
-        validateSourcePairs(
-            selected,
+        validatePairs(
+            source,
         )
-        return selected
+        return source
     }
 
-    private fun validateSourcePairs(
-        sourceEvents: List<DirectConversationStore.Event>,
+    private fun validatePairs(
+        source: List<DirectConversationStore.Event>,
     ) {
-        require(
-            sourceEvents.isNotEmpty() &&
-                sourceEvents.size %
-                2 ==
-                0,
-        ) {
-            "Score source intake requires complete committed request/response pairs"
-        }
-        sourceEvents
-            .chunked(
-                2,
-            )
+        source.chunked(
+            2,
+        )
             .forEach {
                 pair ->
-                val request =
-                    pair[
-                        0
-                    ]
-                val response =
-                    pair[
-                        1
-                    ]
                 require(
-                    request.eventKind ==
+                    pair.size ==
+                        2 &&
+                        pair[
+                            0
+                        ].eventKind ==
                         VexLifeConversationContract.RequestKind &&
-                        response.eventKind ==
+                        pair[
+                            1
+                        ].eventKind ==
                         VexLifeConversationContract.ResponseKind &&
-                        response.sequence ==
-                        request.sequence +
+                        pair[
+                            1
+                        ].sequence ==
+                        pair[
+                            0
+                        ].sequence +
                         1 &&
-                        response.priorEventHash ==
-                        request.eventHash &&
-                        response.turnRef ==
-                        request.turnRef,
+                        pair[
+                            1
+                        ].priorEventHash ==
+                        pair[
+                            0
+                        ].eventHash &&
+                        pair[
+                            1
+                        ].turnRef ==
+                        pair[
+                            0
+                        ].turnRef,
                 ) {
-                    "Score source selection is not composed of exact committed Conversation pairs"
+                    "Score source selection is not exact completed Conversation pairs"
                 }
             }
     }
@@ -2589,16 +1610,15 @@ object VexLifeScoreContinuity {
                         identity.lineageRef,
                     sourceEvents =
                         sourceEvents.map {
-                            source ->
                             VexLifeContinuityObservation.ConversationEventFact(
                                 eventRef =
-                                    source.eventRef,
+                                    it.eventRef,
                                 eventHash =
-                                    source.eventHash,
+                                    it.eventHash,
                                 speakerRef =
-                                    source.speakerRef,
+                                    it.speakerRef,
                                 recipientRefs =
-                                    source.recipientRefs,
+                                    it.recipientRefs,
                             )
                         },
                     threadRef =
@@ -2627,192 +1647,10 @@ object VexLifeScoreContinuity {
             )
     }
 
-    private fun validateAuthorityHead(
-        head: JsonObject,
-        identity: Identity,
-    ) {
-        require(
-            head.string(
-                "contractRef",
-            ) ==
-                LiveSemanticContract &&
-                head.string(
-                    "semanticExecutableAddendumRef",
-                ) ==
-                LiveSemanticExecutableAddendum &&
-                head.string(
-                    "sourceLineageRef",
-                ) ==
-                identity.lineageRef &&
-                head.string(
-                    "sourceThreadRef",
-                ) ==
-                identity.threadRef &&
-                head.stringList(
-                    "ownerRefs",
-                ) ==
-                listOf(
-                    MemoryOwnerRef,
-                    SafetyOwnerRef,
-                ) &&
-                head.long(
-                    "sequence",
-                ) >=
-                0,
-        ) {
-            "semantic authority head identity is invalid"
-        }
-        val prior =
-            head.nullableString(
-                "priorSemanticAuthorityHeadSha256",
-            )
-        if (
-            head.long(
-                "sequence",
-            ) ==
-                0L
-        ) {
-            require(
-                prior ==
-                    null,
-            ) {
-                "semantic authority genesis head has a predecessor"
-            }
-        } else {
-            requireNotNull(
-                prior,
-            ) {
-                "semantic authority non-genesis head has no predecessor"
-            }
-            requireSha256(
-                prior,
-                "priorSemanticAuthorityHeadSha256",
-            )
-        }
-        val seen =
-            mutableSetOf<String>()
-        head.objectList(
-            "currentAcceptanceBindings",
-        )
-            .forEach {
-                binding ->
-                require(
-                    seen.add(
-                        binding.string(
-                            "semanticSubjectFingerprint",
-                        ),
-                    ) &&
-                        binding.objectList(
-                            "classificationEvidenceBindings",
-                        )
-                            .isNotEmpty(),
-                ) {
-                    "semantic authority head contains duplicate/malformed current subject"
-                }
-                listOf(
-                    "semanticSubjectFingerprint",
-                    "acceptanceSha256",
-                    "candidateSha256",
-                    "consentDispositionSha256",
-                )
-                    .forEach {
-                        field ->
-                        requireSha256(
-                            binding.string(
-                                field,
-                            ),
-                            field,
-                        )
-                    }
-            }
-    }
-
-    private fun validateAuthorityLineage(
-        home: Path,
-        root: Path,
-        current: JsonObject,
-        identity: Identity,
-    ) {
-        val visited =
-            mutableSetOf<String>()
-        var cursor =
-            current
-        while (
-            true
-        ) {
-            val currentSha =
-                cursor.string(
-                    "semanticAuthorityHeadSha256",
-                )
-            require(
-                visited.add(
-                    currentSha,
-                ),
-            ) {
-                "semantic authority head lineage contains a cycle"
-            }
-            val sequence =
-                cursor.long(
-                    "sequence",
-                )
-            val priorSha =
-                cursor.nullableString(
-                    "priorSemanticAuthorityHeadSha256",
-                )
-            if (
-                sequence ==
-                    0L
-            ) {
-                require(
-                    priorSha ==
-                        null,
-                )
-                return
-            }
-            val prior =
-                readAddressed(
-                    home = home,
-                    path =
-                        root.resolve(
-                            "heads/" +
-                                requireNotNull(
-                                    priorSha,
-                                ) +
-                                ".json",
-                        ),
-                    schemaVersion =
-                        SemanticAuthorityHeadSchema,
-                    refField =
-                        "semanticAuthorityHeadRef",
-                    hashField =
-                        "semanticAuthorityHeadSha256",
-                    prefix =
-                        "score-semantic-authority-head",
-                    label =
-                        "prior semantic authority head",
-                )
-            validateAuthorityHead(
-                prior,
-                identity,
-            )
-            require(
-                prior.long(
-                    "sequence",
-                ) ==
-                    sequence -
-                    1,
-            ) {
-                "semantic authority head sequence is not contiguous"
-            }
-            cursor =
-                prior
-        }
-    }
-
     private fun currentIdentity(
         home: Path,
     ): Identity {
-        val currentHome =
+        val current =
             requireNotNull(
                 VexLifeProdHomeFiles.observeExisting(
                     home,
@@ -2822,11 +1660,11 @@ object VexLifeScoreContinuity {
             }
         return Identity(
             homeRef =
-                currentHome.manifest.homeRef,
+                current.manifest.homeRef,
             deviceRef =
-                currentHome.manifest.currentDeviceRef,
+                current.manifest.currentDeviceRef,
             lineageRef =
-                currentHome.manifest.currentCompanionLineageRef,
+                current.manifest.currentCompanionLineageRef,
             threadRef =
                 DirectConversationIdentity.ThreadRef,
         )
@@ -2844,29 +1682,16 @@ object VexLifeScoreContinuity {
                 identity.threadRef,
         )
 
-    private fun authorityRoot(
+    private fun writerLock(
         home: Path,
         identity: Identity,
     ): Path =
         VexOwnedPath.resolveInside(
             home,
-            "semantic-authority/score/" +
+            "runtime/score-writer-locks/" +
                 identity.lineageRef +
                 "/" +
-                identity.threadRef,
-        )
-
-    private fun writerLock(
-        home: Path,
-        lineageRef: String,
-        threadRef: String,
-    ): Path =
-        VexOwnedPath.resolveInside(
-            home,
-            "runtime/score-writer-locks/" +
-                lineageRef +
-                "/" +
-                threadRef +
+                identity.threadRef +
                 ".lock",
         )
 
@@ -2882,10 +1707,7 @@ object VexLifeScoreContinuity {
         val lock =
             writerLock(
                 home = home,
-                lineageRef =
-                    identity.lineageRef,
-                threadRef =
-                    identity.threadRef,
+                identity = identity,
             )
         VexOwnedPath.ensureParent(
             home,
@@ -2977,7 +1799,7 @@ object VexLifeScoreContinuity {
                 "ABSENT"
             ) {
                 error(
-                    "SCORE_WRITER_RECOVERY_REQUIRED: prior Score writer is absent; explicit recovery is required",
+                    "SCORE_WRITER_RECOVERY_REQUIRED: prior Score writer is absent; source-managed recovery is required",
                 )
             }
             error(
@@ -2991,83 +1813,12 @@ object VexLifeScoreContinuity {
         )
     }
 
-    private fun validateStatementInvocation(
-        invocation: AppendStatementInvocation,
-    ) {
-        requirePortableRef(
-            invocation.instanceRef,
-            "instanceRef",
-        )
-        requirePortableRef(
-            invocation.statementRef,
-            "statementRef",
-        )
-        requirePortableRef(
-            invocation.semanticAcceptanceRef,
-            "semanticAcceptanceRef",
-        )
-        requireSha256(
-            invocation.semanticAcceptanceSha256,
-            "semanticAcceptanceSha256",
-        )
-        invocation.expectedScoreHeadSha256
-            ?.let {
-                requireSha256(
-                    it,
-                    "expectedScoreHeadSha256",
-                )
-            }
-    }
-
-    private fun validateOpenLoopInvocation(
-        invocation: AppendOpenLoopInvocation,
-    ) {
-        requirePortableRef(
-            invocation.instanceRef,
-            "instanceRef",
-        )
-        requirePortableRef(
-            invocation.openLoopRef,
-            "openLoopRef",
-        )
-        invocation.sourceStatementRefs
-            .forEach {
-                requirePortableRef(
-                    it,
-                    "sourceStatementRef",
-                )
-            }
-        require(
-            invocation.sourceStatementRefs.isNotEmpty(),
-        ) {
-            "OPEN_LOOP_INVALID: open loop requires source statement refs"
-        }
-        invocation.expectedScoreHeadSha256
-            ?.let {
-                requireSha256(
-                    it,
-                    "expectedScoreHeadSha256",
-                )
-            }
-        requireSha256(
-            invocation.expectedConversationHeadSha256,
-            "expectedConversationHeadSha256",
-        )
-        invocation.summaryRef
-            ?.let {
-                requirePortableRef(
-                    it,
-                    "summaryRef",
-                )
-            }
-    }
-
     private fun scoreEventFiles(
         home: Path,
-        scoreRoot: Path,
+        root: Path,
     ): List<Path> {
         val directory =
-            scoreRoot.resolve(
+            root.resolve(
                 "events",
             )
         return when (
@@ -3132,79 +1883,6 @@ object VexLifeScoreContinuity {
         }
     }
 
-    private fun readAddressed(
-        home: Path,
-        path: Path,
-        schemaVersion: String,
-        refField: String,
-        hashField: String,
-        prefix: String,
-        label: String,
-    ): JsonObject {
-        val value =
-            readObject(
-                home = home,
-                path = path,
-                label = label,
-            )
-        require(
-            value.string(
-                "schemaVersion",
-            ) ==
-                schemaVersion,
-        ) {
-            "$label schema is not current"
-        }
-        val ref =
-            value.string(
-                refField,
-            )
-        val hash =
-            value.string(
-                hashField,
-            )
-        requireSha256(
-            hash,
-            "$label hash",
-        )
-        val withoutIdentity =
-            JsonObject(
-                value.filterKeys {
-                    it !=
-                        refField &&
-                        it !=
-                        hashField
-                },
-            )
-        val expectedRef =
-            prefix +
-                "." +
-                semanticHash(
-                    withoutIdentity,
-                )
-                    .take(
-                        32,
-                    )
-        val withoutHash =
-            JsonObject(
-                value.filterKeys {
-                    it !=
-                        hashField
-                },
-            )
-        require(
-            ref ==
-                expectedRef &&
-                semanticHash(
-                    withoutHash,
-                ) ==
-                hash,
-        ) {
-            "$label content-addressed identity is invalid"
-        }
-        return value
-    }
-
     private fun readObject(
         home: Path,
         path: Path,
@@ -3226,6 +1904,117 @@ object VexLifeScoreContinuity {
             .jsonObject
     }
 
+    private fun validateCandidateInput(
+        input: CandidateInput,
+    ) {
+        requirePortableRef(
+            input.semanticSubjectRef,
+            "semanticSubjectRef",
+        )
+        requirePortableRef(
+            input.subjectScopeRef,
+            "subjectScopeRef",
+        )
+        requirePortableRef(
+            input.proposerRef,
+            "proposerRef",
+        )
+        require(
+            input.proposedSummary.isNotBlank(),
+        ) {
+            "Score semantic candidate summary must be non-empty"
+        }
+        require(
+            input.proposedMemoryRelation in
+                memoryRelations,
+        ) {
+            "Score semantic candidate memory relation is not admitted"
+        }
+        require(
+            input.proposedStatementState in
+                statementStates,
+        ) {
+            "Score semantic candidate statement state is not admitted"
+        }
+        require(
+            input.proposerClass in
+                proposerClasses,
+        ) {
+            "Score semantic candidate proposer class is not admitted"
+        }
+    }
+
+    private fun validateStatementInvocation(
+        value: AppendStatementInvocation,
+    ) {
+        requirePortableRef(
+            value.instanceRef,
+            "instanceRef",
+        )
+        requirePortableRef(
+            value.statementRef,
+            "statementRef",
+        )
+        requirePortableRef(
+            value.semanticAcceptanceRef,
+            "semanticAcceptanceRef",
+        )
+        requireSha256(
+            value.semanticAcceptanceSha256,
+            "semanticAcceptanceSha256",
+        )
+        value.expectedScoreHeadSha256
+            ?.let {
+                requireSha256(
+                    it,
+                    "expectedScoreHeadSha256",
+                )
+            }
+    }
+
+    private fun validateOpenLoopInvocation(
+        value: AppendOpenLoopInvocation,
+    ) {
+        requirePortableRef(
+            value.instanceRef,
+            "instanceRef",
+        )
+        requirePortableRef(
+            value.openLoopRef,
+            "openLoopRef",
+        )
+        require(
+            value.sourceStatementRefs.isNotEmpty(),
+        ) {
+            "OPEN_LOOP_INVALID: open loop requires source statement refs"
+        }
+        value.sourceStatementRefs
+            .forEach {
+                requirePortableRef(
+                    it,
+                    "sourceStatementRef",
+                )
+            }
+        value.expectedScoreHeadSha256
+            ?.let {
+                requireSha256(
+                    it,
+                    "expectedScoreHeadSha256",
+                )
+            }
+        requireSha256(
+            value.expectedConversationHeadSha256,
+            "expectedConversationHeadSha256",
+        )
+        value.summaryRef
+            ?.let {
+                requirePortableRef(
+                    it,
+                    "summaryRef",
+                )
+            }
+    }
+
     private fun nextSequence(
         head: JsonObject?,
     ): Long =
@@ -3238,56 +2027,17 @@ object VexLifeScoreContinuity {
             )
             ?: 0L
 
-    private fun expectedEvidenceClass(
-        statementState: String,
+    private fun canonicalUtc(
+        instant: Instant,
     ): String =
-        when (
-            statementState
-        ) {
-            "OBSERVED" ->
-                "STRUCTURAL_OBSERVATION"
-
-            "HUMAN_CONFIRMED" ->
-                "HUMAN_CONFIRMATION"
-
-            "INFERRED" ->
-                "LINEAGE_INFERENCE"
-
-            "CONFLICTED" ->
-                "CONFLICT_PRESERVATION"
-
-            "UNKNOWN" ->
-                "UNKNOWN_HOLD"
-
-            "RELEASED_OR_TOMBSTONED" ->
-                "RELEASE_TOMBSTONE_AUTHORITY"
-
-            else ->
-                error(
-                    "statement state requires transition evidence",
-                )
-        }
-
-    private fun transitionEvidenceClass(
-        transitionKind: String,
-    ): String =
-        when (
-            transitionKind
-        ) {
-            "CORRECTS" ->
-                "CORRECTION_ACCEPTANCE"
-
-            "SUPERSEDES" ->
-                "SUPERSESSION_ACCEPTANCE"
-
-            "RELEASES_OR_TOMBSTONES" ->
-                "RELEASE_TOMBSTONE_AUTHORITY"
-
-            else ->
-                error(
-                    "transition kind has no transition evidence class",
-                )
-        }
+        DateTimeFormatterBuilder()
+            .appendInstant(
+                3,
+            )
+            .toFormatter()
+            .format(
+                instant,
+            )
 
     private fun leaseSha256(
         lease: WriterLease,
@@ -3338,18 +2088,6 @@ object VexLifeScoreContinuity {
         ) {
             "UNVERIFIABLE"
         }
-
-    private fun canonicalUtc(
-        instant: Instant,
-    ): String =
-        DateTimeFormatterBuilder()
-            .appendInstant(
-                3,
-            )
-            .toFormatter()
-            .format(
-                instant,
-            )
 
     private fun semanticHash(
         value: JsonObject,
@@ -3419,22 +2157,6 @@ object VexLifeScoreContinuity {
         }
     }
 
-    private fun JsonObject.extend(
-        block: kotlinx.serialization.json.JsonObjectBuilder.() -> Unit,
-    ): JsonObject =
-        buildJsonObject {
-            this@extend.forEach {
-                key,
-                value,
-                ->
-                put(
-                    key,
-                    value,
-                )
-            }
-            block()
-        }
-
     private fun kotlinx.serialization.json.JsonObjectBuilder.putNullable(
         key: String,
         value: String?,
@@ -3456,12 +2178,31 @@ object VexLifeScoreContinuity {
         put(
             key,
             JsonArray(
-                values.map(
-                    ::JsonPrimitive,
-                ),
+                values
+                    .distinct()
+                    .sorted()
+                    .map(
+                        ::JsonPrimitive,
+                    ),
             ),
         )
     }
+
+    private fun JsonObject.extend(
+        block: kotlinx.serialization.json.JsonObjectBuilder.() -> Unit,
+    ): JsonObject =
+        buildJsonObject {
+            this@extend.forEach {
+                key,
+                value,
+                ->
+                put(
+                    key,
+                    value,
+                )
+            }
+            block()
+        }
 
     private fun JsonObject.string(
         field: String,
@@ -3504,48 +2245,6 @@ object VexLifeScoreContinuity {
         )
             .jsonPrimitive
             .long
-
-    private fun JsonObject.boolean(
-        field: String,
-    ): Boolean =
-        requireNotNull(
-            this[
-                field
-            ],
-        )
-            .jsonPrimitive
-            .boolean
-
-    private fun JsonObject.array(
-        field: String,
-    ): JsonArray =
-        requireNotNull(
-            this[
-                field
-            ],
-        )
-            .jsonArray
-
-    private fun JsonObject.objectList(
-        field: String,
-    ): List<JsonObject> =
-        array(
-            field,
-        )
-            .map {
-                it.jsonObject
-            }
-
-    private fun JsonObject.stringList(
-        field: String,
-    ): List<String> =
-        array(
-            field,
-        )
-            .map {
-                it.jsonPrimitive
-                    .content
-            }
 }
 
 // [VXG RealForever]
