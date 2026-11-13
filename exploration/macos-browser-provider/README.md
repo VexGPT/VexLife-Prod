@@ -80,6 +80,7 @@ The process emits tab-separated observation lines such as:
 VEXLIFE_BROWSER_PROBE_READY	<url>
 VEXLIFE_BROWSER_PROBE_NAVIGATION	COMMIT	<url>	canGoBack=<true|false>	canGoForward=<true|false>
 VEXLIFE_BROWSER_PROBE_NAVIGATION	FINISH	<url>	canGoBack=<true|false>	canGoForward=<true|false>
+VEXLIFE_BROWSER_PROBE_VEXTREME_CHROME	{"present":true,"links":[...]}
 VEXLIFE_BROWSER_PROBE_FAILURE	<phase>	<message>
 ```
 
@@ -89,8 +90,8 @@ These lines are proof observations only. They are not a new receipt schema or du
 
 The first Mac proof should answer, in order:
 
-1. Does Vextreme load at its real `https://vgong24.github.io/...` URL with its canonical
-   Vextreme / VexLife / VexWork family chrome?
+1. Does Vextreme load at its real `https://vgong24.github.io/...` URL, and does the probe observe
+   the canonical `#vex-site-nav` family shell and its Vextreme / VexLife / VexWork links?
 2. Do ordinary page links navigate normally?
 3. Does the native provider expose the exact current URL after navigation?
 4. Do Back / Forward / Reload follow the same browsing history?
