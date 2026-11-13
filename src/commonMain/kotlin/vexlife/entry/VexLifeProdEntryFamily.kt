@@ -55,6 +55,13 @@ class VexLifeProdEntryFamily private constructor() :
             StateUpdateRepairRequired
     }
 
+    data class HomeFormationRequired(
+        override val desiredSourceSha: String,
+    ) : EntryState {
+        override val stateRef: String =
+            StateHomeFormationRequired
+    }
+
     data class SetupRequired(
         override val desiredSourceSha: String,
     ) : EntryState {
@@ -93,6 +100,11 @@ class VexLifeProdEntryFamily private constructor() :
             ControlConvergeDesired
     }
 
+    data object FormHome : EntryControl {
+        override val controlRef: String =
+            ControlFormHome
+    }
+
     data object SetUp : EntryControl {
         override val controlRef: String =
             ControlSetUp
@@ -111,6 +123,11 @@ class VexLifeProdEntryFamily private constructor() :
     data object OpenPresentation : EntryEffect {
         override val effectRef: String =
             EffectOpenPresentation
+    }
+
+    data object FormCanonicalHome : EntryEffect {
+        override val effectRef: String =
+            EffectFormCanonicalHome
     }
 
     data class ConvergeProduct(
@@ -240,6 +257,22 @@ class VexLifeProdEntryFamily private constructor() :
                         null
                 }
 
+            is HomeFormationRequired ->
+                when (
+                    control
+                ) {
+                    FormHome ->
+                        stay(
+                            FormCanonicalHome,
+                        )
+
+                    Cancel ->
+                        stay()
+
+                    else ->
+                        null
+                }
+
             is SetupRequired ->
                 when (
                     control
@@ -326,11 +359,23 @@ class VexLifeProdEntryFamily private constructor() :
                     cancelLabel = "Cancel",
                 )
 
+            is HomeFormationRequired ->
+                EntryDisplayState(
+                    title = "Create your Vex Home.",
+                    detail =
+                        "No canonical VexLife Home exists yet. This creates only your local Vex Home, device identity, and Companion lineage. It does not download or start a model.",
+                    primaryControlRef = ControlFormHome,
+                    primaryLabel = "Create Vex Home",
+                    secondaryControlRef = null,
+                    secondaryLabel = null,
+                    cancelLabel = "Cancel",
+                )
+
             is SetupRequired ->
                 EntryDisplayState(
                     title = "Set up VexLife.",
                     detail =
-                        "No owned Product service is established. Initial setup is the only Product-entry choice that may explicitly authorize missing prerequisite acquisition.",
+                        "Your Vex Home exists, but no owned Product service is established. Continue only after reviewing the model/runtime requirements shown here.",
                     primaryControlRef = ControlSetUp,
                     primaryLabel = "Set Up VexLife",
                     secondaryControlRef = null,
@@ -360,6 +405,8 @@ class VexLifeProdEntryFamily private constructor() :
             "REPAIR_REQUIRED"
         const val StateUpdateRepairRequired =
             "UPDATE_REPAIR_REQUIRED"
+        const val StateHomeFormationRequired =
+            "HOME_FORMATION_REQUIRED"
         const val StateSetupRequired =
             "SETUP_REQUIRED"
         const val StateHeldUnknown =
@@ -369,6 +416,8 @@ class VexLifeProdEntryFamily private constructor() :
             "OPEN_CURRENT"
         const val ControlConvergeDesired =
             "CONVERGE_DESIRED"
+        const val ControlFormHome =
+            "FORM_HOME"
         const val ControlSetUp =
             "SET_UP"
         const val ControlCancel =
@@ -376,6 +425,8 @@ class VexLifeProdEntryFamily private constructor() :
 
         const val EffectOpenPresentation =
             "OPEN_PRESENTATION"
+        const val EffectFormCanonicalHome =
+            "FORM_CANONICAL_HOME"
         const val EffectConvergeProduct =
             "CONVERGE_PRODUCT"
 
@@ -393,6 +444,9 @@ class VexLifeProdEntryFamily private constructor() :
 
                 ControlConvergeDesired ->
                     ConvergeDesired
+
+                ControlFormHome ->
+                    FormHome
 
                 ControlSetUp ->
                     SetUp
