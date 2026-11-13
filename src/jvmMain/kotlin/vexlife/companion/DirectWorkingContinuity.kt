@@ -11,6 +11,7 @@ import vexlife.continuity.VexLifeWorkingContinuity
 import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.conversation.DirectConversationStore
 import vexlife.filesystem.VexOwnedPath
+import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.memory.VexLifeMemoryContract
 
 /**
@@ -79,6 +80,7 @@ object DirectWorkingContinuity {
     data class Prepared internal constructor(
         val pressureInput: VexLifeWorkingContinuity.PromptPressureInput,
         val workingSet: VexLifeWorkingContinuity.WorkingSet,
+        val scoreCoordinates: VexLifeCurrentMemoryReader.CurrentScoreCoordinates?,
         val plan: VexLifeWorkingContinuity.Plan?,
         val formationFailureClassOrNull: String?,
     )
@@ -390,19 +392,26 @@ object DirectWorkingContinuity {
                 ?.let(
                     VexLifeWorkingContinuity::validateWorkingSet,
                 )
-        val memoryStatementRefs =
-            if (
-                validatedMemory.included
-            ) {
-                validatedMemory.sourceRefs
-                    .filter {
-                        it.startsWith(
-                            "statement.",
-                        )
-                    }
-            } else {
-                emptyList()
-            }
+        var scoreCoordinates:
+            VexLifeCurrentMemoryReader.CurrentScoreCoordinates? =
+            null
+        var scoreFailureClassOrNull: String? =
+            null
+        try {
+            scoreCoordinates =
+                VexLifeCurrentMemoryReader.readCurrentScoreCoordinates(
+                    productHome = productHome,
+                    threadRef = currentRequest.threadRef,
+                )
+        } catch (
+            error: Exception,
+        ) {
+            scoreFailureClassOrNull =
+                failureClass(
+                    error,
+                )
+        }
+
         val workingSet =
             VexLifeWorkingContinuity.WorkingSet(
                 lineageRef =
@@ -420,18 +429,13 @@ object DirectWorkingContinuity {
                         ?.currentIntentReceiptRefs
                         ?: emptyList(),
                 openLoopRefs =
-                    previousWorkingSet
+                    scoreCoordinates
                         ?.openLoopRefs
                         ?: emptyList(),
                 currentStatementRefs =
-                    (
-                        previousWorkingSet
-                            ?.currentStatementRefs
-                            .orEmpty() +
-                            memoryStatementRefs
-                    )
-                        .distinct()
-                        .sorted(),
+                    scoreCoordinates
+                        ?.currentStatementRefs
+                        ?: emptyList(),
                 currentContinuityRecordRefs =
                     previousWorkingSet
                         ?.currentContinuityRecordRefs
@@ -457,6 +461,9 @@ object DirectWorkingContinuity {
                                 ?.sourceRefs
                                 .orEmpty() +
                             validatedMemory.sourceRefs +
+                            scoreCoordinates
+                                ?.sourceRefs
+                                .orEmpty() +
                             listOf(
                                 promptContext.receiptRef,
                             )
@@ -496,6 +503,9 @@ object DirectWorkingContinuity {
                                         it.successorContextRef,
                                     )
                                 }
+                                .orEmpty() +
+                            scoreCoordinates
+                                ?.sourceRefs
                                 .orEmpty()
                     )
                         .distinct()
@@ -503,45 +513,66 @@ object DirectWorkingContinuity {
             )
 
         val formation =
-            try {
-                val owner =
-                    VexLifeWorkingContinuityOwner(
-                        productHome,
-                    )
-                val priorCheckpoint =
-                    owner.readCurrent(
-                        lineageRef =
-                            currentRequest.companionLineageRef,
-                        threadRef =
-                            currentRequest.threadRef,
-                    )
-                        ?.checkpoint
-                Prepared(
-                    pressureInput = pressureInput,
-                    workingSet = workingSet,
-                    plan =
-                        VexLifeWorkingContinuity.formPlan(
-                            pressureInput = pressureInput,
-                            workingSet = workingSet,
-                            priorCheckpoint = priorCheckpoint,
-                        )
-                            .let(
-                                VexLifeWorkingContinuity::validatePlan,
-                            ),
-                    formationFailureClassOrNull = null,
-                )
-            } catch (
-                error: Exception,
+            if (
+                scoreFailureClassOrNull !=
+                    null
             ) {
                 Prepared(
                     pressureInput = pressureInput,
                     workingSet = workingSet,
+                    scoreCoordinates = null,
                     plan = null,
                     formationFailureClassOrNull =
-                        failureClass(
-                            error,
-                        ),
+                        scoreFailureClassOrNull,
                 )
+            } else {
+                try {
+                    val owner =
+                        VexLifeWorkingContinuityOwner(
+                            productHome,
+                        )
+                    val priorCheckpoint =
+                        owner.readCurrent(
+                            lineageRef =
+                                currentRequest.companionLineageRef,
+                            threadRef =
+                                currentRequest.threadRef,
+                        )
+                            ?.checkpoint
+                    Prepared(
+                        pressureInput = pressureInput,
+                        workingSet = workingSet,
+                        scoreCoordinates =
+                            requireNotNull(
+                                scoreCoordinates,
+                            ) {
+                                "current Score coordinates disappeared after successful read"
+                            },
+                        plan =
+                            VexLifeWorkingContinuity.formPlan(
+                                pressureInput = pressureInput,
+                                workingSet = workingSet,
+                                priorCheckpoint = priorCheckpoint,
+                            )
+                                .let(
+                                    VexLifeWorkingContinuity::validatePlan,
+                                ),
+                        formationFailureClassOrNull = null,
+                    )
+                } catch (
+                    error: Exception,
+                ) {
+                    Prepared(
+                        pressureInput = pressureInput,
+                        workingSet = workingSet,
+                        scoreCoordinates = scoreCoordinates,
+                        plan = null,
+                        formationFailureClassOrNull =
+                            failureClass(
+                                error,
+                            ),
+                    )
+                }
             }
 
         return formation
@@ -615,6 +646,24 @@ object DirectWorkingContinuity {
                     VexLifeWorkingContinuity.PlanState.RolloverReady,
                     ->
                         try {
+                            val expectedScoreCoordinates =
+                                requireNotNull(
+                                    prepared.scoreCoordinates,
+                                ) {
+                                    "committable working continuity plan lacks current Score coordinates"
+                                }
+                            val observedScoreCoordinates =
+                                VexLifeCurrentMemoryReader.readCurrentScoreCoordinates(
+                                    productHome = productHome,
+                                    threadRef = prepared.workingSet.threadRef,
+                                )
+                            require(
+                                observedScoreCoordinates ==
+                                    expectedScoreCoordinates,
+                            ) {
+                                "current Score coordinates changed before working-continuity commit"
+                            }
+
                             val committed =
                                 VexLifeWorkingContinuityOwner(
                                     productHome,
