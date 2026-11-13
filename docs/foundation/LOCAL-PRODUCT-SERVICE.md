@@ -189,42 +189,72 @@ The service does not invent another idempotency layer.
 
 ## Current-state awareness read side
 
-The local service now exposes one bounded read-only route:
+The local service exposes one bounded read-only route:
 
 ~~~text
 GET /api/v1/current-state
 ~~~
 
-Its purpose is human awareness before later consequential choices. It composes current observations
-without becoming the owner of Home, model selection, runtime lifetime or artifact acquisition.
+The same read-side owner also exposes a repository-native host probe:
+
+~~~text
+./gradlew observeVexLifeProdCurrentState
+~~~
+
+Its purpose is human awareness **before** later consequential choices. The projection is deliberately
+independent of `VexLifeProdLocalSetup`: forming current state must not first select/bind a model,
+recover an abandoned Conversation writer, acquire artifacts, establish a runtime or mutate Home.
 
 Current patient-zero projection:
 
 ~~~text
+read-only canonical Home observation
+  Home / device / Companion-lineage identity
+
 fresh host observation
   platform / architecture / chip / total system memory
 
 fresh Home-volume observation
   usable storage bytes
 
-accepted startup setup evidence
-  Home coordinate / disposition
-  active model + profile
-  qualified runtime receipt/state
-  exact current-model artifact-set byte total
+read-only product model-binding observation
+  UNCONFIGURED
+  or selected Heretic identity + configured runtime-receipt coordinate
+
+lightweight selected-model artifact presence
+  expected manifest bytes
+  missing bytes
+  wrong-sized bytes
+  present-by-declared-size bytes
+  NO multi-GiB hashing
         ↓
 CurrentStateProjection
         ↓
 Settings / Resources + Home
 ~~~
 
-The current model artifact bytes and runtime are deliberately labeled
-`VERIFIED_AT_SETUP` / `STARTUP_QUALIFIED_NOT_REOBSERVED`. Ordinary Settings refresh does not
-SHA-256 the multi-GiB model or requalify/recover the runtime.
+The ordinary awareness view intentionally distinguishes **presence** from **qualification**:
+
+~~~text
+COMPLETE_BY_SIZE_NOT_HASHED
+!= EXACT ARTIFACT HASH VERIFIED
+
+BOUND_PRODUCT_MODEL
+!= RUNTIME LIVE / QUALIFIED NOW
+
+CONFIGURATION_ONLY_NOT_REOBSERVED
+!= RUNTIME CURRENTNESS
+~~~
+
+Exact artifact hashing, process/lifetime observation and runtime qualification remain with the owners
+that need those predicates for Repair, model change, Send or another consequential effect.
 
 Permanent:
 
 ~~~text
+CURRENT-STATE AWARENESS
+!= SETUP
+
 CURRENT-STATE AWARENESS
 != REPAIR
 
@@ -232,13 +262,16 @@ CURRENT-STATE AWARENESS
 != MODEL CHANGE
 
 CURRENT-STATE AWARENESS
-!= RUNTIME REQUALIFICATION
+!= RUNTIME RECOVERY / REQUALIFICATION
 
-CURRENT-STATE AWARENESS
-!= ARTIFACT REVERIFICATION
+SIZE-PRESENT
+!= HASH-VERIFIED
+
+MODEL CONFIGURATION BOUND
+!= MODEL RUNTIME CURRENT
 ~~~
 
-A later Repair or model-change preflight may earn deeper exact re-observation because that operation
+A later operation-specific preflight may earn deeper exact re-observation because that operation
 actually depends on those predicates. The ordinary read side does not create that cost or authority
 in advance.
 
