@@ -414,6 +414,9 @@ class VexLifeWebP1RuntimeArtifactsTest {
         // A private message goes only to the private route.
         assertTrue(bundle.javascript.contains("await sendPrivate();"))
         assertTrue(bundle.javascript.contains("voice.localService &&"))
+        // Speech follows the stream and runs Kokoro off the main thread.
+        assertTrue(bundle.javascript.contains("followStreamSpeech(true);"))
+        assertTrue(bundle.javascript.contains("new Worker(url, { type: 'module' })"))
         assertTrue(bundle.javascript.contains("state.memory?.display"))
         assertFalse(bundle.html.contains(">Not connected</button>"), "unbuilt controls say what they are, not 'Not connected'")
         assertTrue(

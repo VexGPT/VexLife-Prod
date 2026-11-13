@@ -162,13 +162,13 @@ object VexLifeWebP1 {
         )
 
     /**
-     * Read aloud: presentation accessibility over the Conversation timeline, ported from the
-     * Vextreme Spiral FAB's Read Aloud orb. It reads the canonical Conversation projection and
-     * decides nothing; speech is the browser's own local voice, with no network provider.
+     * Speech: Vex read aloud, ported from the Vextreme Spiral FAB's Read Aloud orb. Presentation over
+     * the Conversation timeline; it reads projections and decides nothing. Natural (Kokoro) voices run
+     * on this machine after a one-time download; system voices are limited to on-device ones.
      */
-    val ReadAloud =
+    val Speech =
         VexWebAuthoring.element(
-            element = VexLifeWorkspaceBlueprint.ReadAloud,
+            element = VexLifeWorkspaceBlueprint.Speech,
             placement = VexWeb.Placement.InFlow,
             depth = VexWeb.Depth.Chrome,
             presentation = VexWeb.Presentation.Surface,
@@ -186,7 +186,7 @@ object VexLifeWebP1 {
                 listOf(
                     VexSummon,
                     VisionQuickAccess,
-                    ReadAloud,
+                    Speech,
                 ),
         )
 

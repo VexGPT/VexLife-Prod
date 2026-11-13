@@ -128,14 +128,14 @@
           "slot": "InFlow"
         },
         {
-          "ref": "element.vexlife-workspace.header.utilities.quick-actions.read-aloud",
+          "ref": "element.vexlife-workspace.header.utilities.quick-actions.speech",
           "kind": "BUTTON",
-          "label": "Read aloud",
+          "label": "Speech",
           "parentRef": "element.vexlife-workspace.header.utilities.quick-actions",
-          "symbol": "VexLifeWorkspaceBlueprint.ReadAloud",
-          "declared": "QuickActions.control(\"read-aloud\")",
+          "symbol": "VexLifeWorkspaceBlueprint.Speech",
+          "declared": "QuickActions.control(\"speech\")",
           "intent": "local element.vexlife-workspace.companion.conversation.timeline",
-          "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.read-aloud",
+          "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.speech",
           "style": "Surface",
           "slot": "InFlow"
         },
@@ -648,7 +648,7 @@
       ]
     },
     {
-      "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.read-aloud",
+      "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.speech",
       "label": "Presentation over Timeline",
       "disposition": "TYPED_PRESENTATION",
       "summary": "A presentation-local interaction over another coordinate; it decides nothing.",
@@ -656,7 +656,7 @@
       "returnRef": null,
       "nodes": [
         {
-          "ref": "vexlife-prod.local.header.utilities.quick-actions.read-aloud.intent",
+          "ref": "vexlife-prod.local.header.utilities.quick-actions.speech.intent",
           "face": "BEHAVIOR",
           "role": "INTENT",
           "label": "Activate",
@@ -665,7 +665,7 @@
           "source": "common:web/VexLifeWebP1.kt"
         },
         {
-          "ref": "vexlife-prod.local.header.utilities.quick-actions.read-aloud.reveal",
+          "ref": "vexlife-prod.local.header.utilities.quick-actions.speech.reveal",
           "face": "BEHAVIOR",
           "role": "NAVIGATION",
           "label": "Timeline",
@@ -676,8 +676,8 @@
       ],
       "edges": [
         {
-          "from": "vexlife-prod.local.header.utilities.quick-actions.read-aloud.intent",
-          "to": "vexlife-prod.local.header.utilities.quick-actions.read-aloud.reveal",
+          "from": "vexlife-prod.local.header.utilities.quick-actions.speech.intent",
+          "to": "vexlife-prod.local.header.utilities.quick-actions.speech.reveal",
           "label": null,
           "kind": "FLOW"
         }

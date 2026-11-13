@@ -139,16 +139,18 @@ object VexLifeWebP1RuntimeArtifacts {
                 archivesSummary: byId('archives-summary'),
                 archivesTimeline: byId('archives-timeline'),
                 quickActions: byId('quick-actions'),
-                readAloud: byId('read-aloud'),
-                readAloudStatus: byId('read-aloud-status'),
-                readAloudPlay: byId('read-aloud-play'),
-                readAloudStop: byId('read-aloud-stop'),
-                readAloudPrevious: byId('read-aloud-previous'),
-                readAloudNext: byId('read-aloud-next'),
-                readAloudChoose: byId('read-aloud-choose'),
-                readAloudRate: byId('read-aloud-rate'),
-                readAloudRateValue: byId('read-aloud-rate-value'),
-                readAloudVoice: byId('read-aloud-voice'),
+                speech: byId('speech'),
+                speechSwitch: byId('speech-switch'),
+                speechStatus: byId('speech-status'),
+                speechVoice: byId('speech-voice'),
+                speechThoughts: byId('speech-thoughts'),
+                speechRate: byId('speech-rate'),
+                speechRateValue: byId('speech-rate-value'),
+                speechPlay: byId('speech-play'),
+                speechStop: byId('speech-stop'),
+                speechPrevious: byId('speech-previous'),
+                speechNext: byId('speech-next'),
+                speechChoose: byId('speech-choose'),
                 pageFrame: byId('page-frame'),
                 contextFrame: byId('context-frame'),
                 viewportEmpty: byId('viewport-empty'),
@@ -257,7 +259,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const QUICK_ACTIONS = [
                 { key: 'journeys', label: 'Journeys', icon: '<path d="M4 15.5c0-2 1.6-3 3.4-3.4l3.4-.8 2.2-4.3c.4-.8 1.4-1 2-.3l.6.6c.5.5.5 1.3 0 1.8l-1 1.2 2.8.8c1.4.4 2.4 1.7 2.4 3.2v1.2H4z"/><path d="M8 12l1.4 2M11 11.4l1.3 2"/>' },
-                { key: 'read-aloud', label: 'Read aloud', bound: true, icon: '<path d="M4 9.5h3.2L11.5 6v12l-4.3-3.5H4z"/><path d="M15 9.2a4 4 0 0 1 0 5.6M17.6 6.8a7.3 7.3 0 0 1 0 10.4"/>' },
+                { key: 'speech', label: 'Speech', bound: true, icon: '<path d="M4 9.5h3.2L11.5 6v12l-4.3-3.5H4z"/><path d="M15 9.2a4 4 0 0 1 0 5.6M17.6 6.8a7.3 7.3 0 0 1 0 10.4"/>' },
                 { key: 'theme', label: 'Light or dark', bound: true, icon: '<circle cx="12" cy="12" r="3.8"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/>' },
                 { key: 'language', label: 'Language', icon: '<path d="M5 20.5V4M5 4.5h12.5l-2 3.5 2 3.5H5"/>' },
                 { key: 'evolution', label: 'Evolution', icon: '<path d="M12.2 12.1c.4-.6-.3-1.4-1-1.2-1.3.4-1.3 2.3-.1 3 1.8 1 4-.5 3.9-2.6-.1-3-3.6-4.3-6-2.8-3.1 2-2.6 6.9.7 8.3 3.9 1.6 8.3-1.2 8.2-5.6"/>' },
@@ -360,38 +362,85 @@ object VexLifeWebP1RuntimeArtifacts {
                 } catch {}
               };
 
-              // Read aloud, ported from the Vextreme Spiral FAB's Read Aloud orb. It reads the canonical
-              // Conversation projection message by message and continues forward. Only voices that
-              // run on this machine are offered, so Conversation text is never sent to a speech service.
-              const READ_ALOUD_SETTINGS = 'vexlife-prod.presentation.read-aloud/v1';
-              const readAloud = {
-                supported: 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window,
+              // Speech: the Vextreme Spiral FAB's Read Aloud, ported and extended. When Speech is on, Vex
+              // is read aloud as it streams, and its thoughts too if the person chooses. It reads the
+              // Conversation projections, never the DOM. Kokoro voices run on this machine after a
+              // one-time model download; system voices are limited to those that run on this machine.
+              // Either way the words are never sent to a speech service.
+              const SPEECH_SETTINGS = 'vexlife-prod.presentation.speech/v1';
+              const KOKORO_MODULE_URL = 'https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/+esm';
+              const KOKORO_MODEL_ID = 'onnx-community/Kokoro-82M-v1.0-ONNX';
+              const KOKORO_VOICES = [
+                { id: 'af_heart', name: 'Heart' },
+                { id: 'af_bella', name: 'Bella' },
+                { id: 'af_nicole', name: 'Nicole' },
+                { id: 'bf_emma', name: 'Emma (UK)' },
+                { id: 'am_michael', name: 'Michael' },
+                { id: 'am_fenrir', name: 'Fenrir' },
+                { id: 'am_puck', name: 'Puck' },
+                { id: 'bm_george', name: 'George (UK)' }
+              ];
+              const speech = {
+                systemSupported: 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window,
                 open: false,
-                mode: 'idle',
                 choosing: false,
-                plan: [],
-                index: 0,
+                queue: [],
+                current: null,
+                paused: false,
                 generation: 0,
-                settings: { rate: 1, voiceURI: '' }
+                stream: { reply: 0, thought: 0 },
+                kokoro: { worker: null, state: 'idle', jobs: new Map(), nextId: 1, cache: new Map(), context: null, source: null },
+                settings: { enabled: false, voice: 'kokoro:af_heart', readThoughts: false, rate: 1 }
               };
 
-              const loadReadAloudSettings = () => {
+              const loadSpeechSettings = () => {
                 try {
-                  const saved = JSON.parse(localStorage.getItem(READ_ALOUD_SETTINGS) || '{}');
+                  const saved = JSON.parse(localStorage.getItem(SPEECH_SETTINGS) || '{}');
+                  speech.settings.enabled = saved.enabled === true;
+                  speech.settings.readThoughts = saved.readThoughts === true;
+                  if (typeof saved.voice === 'string' && saved.voice) speech.settings.voice = saved.voice;
                   const rate = Number(saved.rate);
-                  if (Number.isFinite(rate)) readAloud.settings.rate = Math.min(1.6, Math.max(0.7, rate));
-                  if (typeof saved.voiceURI === 'string') readAloud.settings.voiceURI = saved.voiceURI;
+                  if (Number.isFinite(rate)) speech.settings.rate = Math.min(1.6, Math.max(0.7, rate));
                 } catch {}
               };
 
-              const saveReadAloudSettings = () => {
+              const saveSpeechSettings = () => {
                 try {
-                  localStorage.setItem(READ_ALOUD_SETTINGS, JSON.stringify(readAloud.settings));
+                  localStorage.setItem(SPEECH_SETTINGS, JSON.stringify(speech.settings));
                 } catch {}
               };
+
+              const speechLanguage = () => (document.documentElement.lang || 'en').slice(0, 2).toLowerCase();
+
+              const localVoices = () => {
+                if (!speech.systemSupported) return [];
+                const language = speechLanguage();
+                return window.speechSynthesis.getVoices().filter((voice) =>
+                  voice.localService && String(voice.lang || '').toLowerCase().startsWith(language));
+              };
+
+              // Kokoro voices are English; other languages use this machine's own voices.
+              const voiceChoices = () => {
+                const natural = speechLanguage() === 'en'
+                  ? KOKORO_VOICES.map((voice) => ({ value: 'kokoro:' + voice.id, label: voice.name, group: 'natural' }))
+                  : [];
+                const system = localVoices().map((voice) => ({ value: 'system:' + voice.voiceURI, label: voice.name, group: 'system' }));
+                return natural.concat(system);
+              };
+
+              const chosenVoice = () => {
+                const choices = voiceChoices();
+                return choices.find((choice) => choice.value === speech.settings.voice) ?? choices[0] ?? null;
+              };
+
+              const speechText = (text) => String(text ?? '')
+                .replace(/[*_#>~|]+/gu, ' ')
+                .replace(/\[([^\]]+)\]\([^)]*\)/gu, (match, label) => label)
+                .replace(/\s+/gu, ' ')
+                .trim();
 
               const speechChunks = (text) => {
-                const sentences = String(text).replace(/\s+/gu, ' ').trim().match(/[^.!?]+[.!?]*\s*/gu) || [];
+                const sentences = String(text).match(/[^.!?]+[.!?]*\s*/gu) || [];
                 const chunks = [];
                 let current = '';
                 for (const sentence of sentences) {
@@ -405,6 +454,288 @@ object VexLifeWebP1RuntimeArtifacts {
                 return chunks;
               };
 
+              // Runs inside a module Worker so the page stays responsive while Kokoro loads and speaks.
+              function kokoroWorkerMain(moduleUrl, modelId) {
+                let engine = null;
+                let preparing = null;
+                let generation = 0;
+                let active = false;
+                const queue = [];
+                const options = async () => {
+                  try {
+                    if (self.navigator && self.navigator.gpu) {
+                      const adapter = await self.navigator.gpu.requestAdapter();
+                      if (adapter) return { device: 'webgpu', dtype: 'fp32' };
+                    }
+                  } catch (error) {}
+                  return { device: 'wasm', dtype: 'q8' };
+                };
+                const ready = () => {
+                  if (engine) return Promise.resolve(engine);
+                  if (preparing) return preparing;
+                  self.postMessage({ type: 'preparing' });
+                  preparing = import(moduleUrl).then(async (module) => {
+                    const chosen = await options();
+                    try {
+                      engine = await module.KokoroTTS.from_pretrained(modelId, chosen);
+                    } catch (error) {
+                      if (chosen.device !== 'webgpu') throw error;
+                      engine = await module.KokoroTTS.from_pretrained(modelId, { device: 'wasm', dtype: 'q8' });
+                    }
+                    self.postMessage({ type: 'ready' });
+                    return engine;
+                  }).catch((error) => {
+                    preparing = null;
+                    throw error;
+                  });
+                  return preparing;
+                };
+                const drain = async () => {
+                  if (active) return;
+                  active = true;
+                  try {
+                    while (queue.length) {
+                      const job = queue.shift();
+                      if (job.generation !== generation) continue;
+                      try {
+                        const tts = await ready();
+                        if (job.generation !== generation) continue;
+                        const raw = await tts.generate(job.text, { voice: job.voice, speed: 1 });
+                        const samples = raw && raw.audio;
+                        if (!samples || !samples.length) throw new Error('KOKORO_AUDIO_EMPTY');
+                        self.postMessage({ type: 'audio', id: job.id, sampleRate: raw.sampling_rate, samples: samples.buffer }, [samples.buffer]);
+                      } catch (error) {
+                        self.postMessage({ type: 'error', id: job.id, message: String((error && error.message) || error) });
+                      }
+                    }
+                  } finally {
+                    active = false;
+                  }
+                };
+                self.onmessage = (event) => {
+                  const value = event.data || {};
+                  if (value.type === 'cancel') {
+                    generation = value.generation;
+                    queue.length = 0;
+                    return;
+                  }
+                  if (value.type === 'prepare') {
+                    ready().catch((error) => self.postMessage({ type: 'error', id: null, message: String((error && error.message) || error) }));
+                    return;
+                  }
+                  if (value.type === 'generate') {
+                    generation = value.generation;
+                    queue.push(value);
+                    void drain();
+                  }
+                };
+              }
+
+              const kokoroWorker = () => {
+                const kokoro = speech.kokoro;
+                if (kokoro.worker) return kokoro.worker;
+                const source = '(' + kokoroWorkerMain.toString() + ')(' + JSON.stringify(KOKORO_MODULE_URL) + ', ' + JSON.stringify(KOKORO_MODEL_ID) + ');';
+                const url = URL.createObjectURL(new Blob([source], { type: 'text/javascript' }));
+                kokoro.worker = new Worker(url, { type: 'module' });
+                kokoro.state = 'loading';
+                kokoro.worker.onmessage = (event) => {
+                  const value = event.data || {};
+                  if (value.type === 'preparing' || value.type === 'ready') {
+                    kokoro.state = value.type === 'ready' ? 'ready' : 'loading';
+                    renderSpeech();
+                    return;
+                  }
+                  const job = kokoro.jobs.get(value.id);
+                  if (value.type === 'audio' && job) {
+                    kokoro.jobs.delete(value.id);
+                    job.resolve({ samples: new Float32Array(value.samples), sampleRate: value.sampleRate });
+                  } else if (value.type === 'error') {
+                    if (job) {
+                      kokoro.jobs.delete(value.id);
+                      job.reject(new Error(value.message));
+                    }
+                    if (kokoro.state !== 'ready') kokoro.state = 'failed';
+                    renderSpeech();
+                  }
+                };
+                kokoro.worker.onerror = () => {
+                  kokoro.state = 'failed';
+                  for (const job of kokoro.jobs.values()) job.reject(new Error('The natural voice stopped.'));
+                  kokoro.jobs.clear();
+                  renderSpeech();
+                };
+                return kokoro.worker;
+              };
+
+              const kokoroAudio = (text, voiceId) => {
+                const kokoro = speech.kokoro;
+                const key = voiceId + '|' + text;
+                if (kokoro.cache.has(key)) return kokoro.cache.get(key);
+                const id = kokoro.nextId++;
+                const promise = new Promise((resolve, reject) => kokoro.jobs.set(id, { resolve, reject }));
+                kokoroWorker().postMessage({ type: 'generate', id, text, voice: voiceId, generation: speech.generation });
+                kokoro.cache.set(key, promise);
+                if (kokoro.cache.size > 24) kokoro.cache.delete(kokoro.cache.keys().next().value);
+                promise.catch(() => kokoro.cache.delete(key));
+                return promise;
+              };
+
+              const audioContext = () => {
+                const kokoro = speech.kokoro;
+                if (!kokoro.context) {
+                  const Context = window.AudioContext || window.webkitAudioContext;
+                  if (!Context) return null;
+                  kokoro.context = new Context();
+                }
+                if (kokoro.context.state === 'suspended' && !speech.paused) kokoro.context.resume().catch(() => {});
+                return kokoro.context;
+              };
+
+              const speakItem = (item, generation) => new Promise((resolve, reject) => {
+                const voice = chosenVoice();
+                if (!voice) {
+                  reject(new Error('No voice on this Mac can read aloud.'));
+                  return;
+                }
+                if (voice.value.startsWith('kokoro:')) {
+                  const voiceId = voice.value.slice('kokoro:'.length);
+                  const next = speech.queue[1];
+                  kokoroAudio(item.text, voiceId).then(({ samples, sampleRate }) => {
+                    if (generation !== speech.generation) {
+                      resolve();
+                      return;
+                    }
+                    const context = audioContext();
+                    if (!context) {
+                      reject(new Error('This browser cannot play the natural voice.'));
+                      return;
+                    }
+                    const buffer = context.createBuffer(1, samples.length, sampleRate);
+                    buffer.copyToChannel(samples, 0);
+                    const source = context.createBufferSource();
+                    source.buffer = buffer;
+                    source.playbackRate.value = speech.settings.rate;
+                    source.connect(context.destination);
+                    speech.kokoro.source = source;
+                    source.onended = () => {
+                      if (speech.kokoro.source === source) speech.kokoro.source = null;
+                      resolve();
+                    };
+                    source.start();
+                    if (next) kokoroAudio(next.text, voiceId).catch(() => {});
+                  }, reject);
+                  return;
+                }
+                const system = localVoices().find((candidate) => candidate.voiceURI === voice.value.slice('system:'.length));
+                const utterance = new SpeechSynthesisUtterance(item.text);
+                if (system) {
+                  utterance.voice = system;
+                  utterance.lang = system.lang;
+                }
+                utterance.rate = speech.settings.rate;
+                utterance.onend = () => resolve();
+                utterance.onerror = (event) => (event.error === 'interrupted' || event.error === 'canceled'
+                  ? resolve()
+                  : reject(new Error(String(event.error))));
+                window.speechSynthesis.speak(utterance);
+              });
+
+              const pumpSpeech = () => {
+                if (speech.current || speech.paused || !speech.queue.length) {
+                  renderSpeech();
+                  return;
+                }
+                const generation = speech.generation;
+                speech.current = speech.queue[0];
+                renderSpeech();
+                speakItem(speech.current, generation).then(() => {
+                  if (generation !== speech.generation) return;
+                  speech.queue.shift();
+                  speech.current = null;
+                  pumpSpeech();
+                }, () => {
+                  if (generation !== speech.generation) return;
+                  speech.current = null;
+                  const fallback = localVoices()[0];
+                  if (chosenVoice()?.group === 'natural' && fallback) {
+                    speech.settings.voice = 'system:' + fallback.voiceURI;
+                    saveSpeechSettings();
+                    renderSpeechVoices();
+                    notify("The natural voice couldn't load, so this Mac's voice is reading instead.");
+                    pumpSpeech();
+                    return;
+                  }
+                  stopSpeech();
+                  notify("Speech stopped because the voice couldn't continue.");
+                });
+              };
+
+              const enqueueSpeech = (text, eventRef) => {
+                for (const chunk of speechChunks(speechText(text))) speech.queue.push({ text: chunk, eventRef });
+                pumpSpeech();
+              };
+
+              const stopSpeech = () => {
+                speech.generation += 1;
+                speech.queue = [];
+                speech.current = null;
+                speech.paused = false;
+                speech.choosing = false;
+                if (speech.systemSupported) window.speechSynthesis.cancel();
+                const kokoro = speech.kokoro;
+                if (kokoro.source) {
+                  try {
+                    kokoro.source.onended = null;
+                    kokoro.source.stop();
+                  } catch {}
+                  kokoro.source = null;
+                }
+                if (kokoro.context?.state === 'suspended') kokoro.context.resume().catch(() => {});
+                if (kokoro.worker) kokoro.worker.postMessage({ type: 'cancel', generation: speech.generation });
+                for (const job of kokoro.jobs.values()) job.reject(new Error('cancelled'));
+                kokoro.jobs.clear();
+                kokoro.cache.clear();
+                renderSpeech();
+              };
+
+              const pauseOrResumeSpeech = () => {
+                if (!speech.current && !speech.queue.length) {
+                  startReading(null);
+                  return;
+                }
+                speech.paused = !speech.paused;
+                if (speech.systemSupported) {
+                  if (speech.paused) window.speechSynthesis.pause();
+                  else window.speechSynthesis.resume();
+                }
+                const context = speech.kokoro.context;
+                if (context) {
+                  if (speech.paused) context.suspend().catch(() => {});
+                  else context.resume().catch(() => {});
+                }
+                if (!speech.paused) pumpSpeech();
+                renderSpeech();
+              };
+
+              // Live speech follows the stream sentence by sentence; the tail is spoken on completion.
+              const speakFresh = (text, offset, final) => {
+                const pending = String(text ?? '').slice(offset);
+                if (!pending.trim()) return offset + pending.length;
+                const match = final ? null : pending.match(/^[\s\S]*[.!?:;](?=\s)|^[\s\S]*\n/u);
+                const end = final ? pending.length : (match ? match[0].length : 0);
+                if (end <= 0) return offset;
+                enqueueSpeech(pending.slice(0, end), 'live');
+                return offset + end;
+              };
+
+              const followStreamSpeech = (final) => {
+                if (!speech.settings.enabled) return;
+                if (speech.settings.readThoughts) {
+                  speech.stream.thought = speakFresh(state.streamedReasoning, speech.stream.thought, final || Boolean(state.streamedContent));
+                }
+                speech.stream.reply = speakFresh(state.streamedContent, speech.stream.reply, final);
+              };
+
               const readablePlan = () => (isPrivate()
                 ? (state.privateMode?.exchanges ?? []).flatMap((exchange, index) => [
                     { role: 'human', content: exchange.human, eventRef: 'private.' + (index * 2 + 1) },
@@ -412,153 +743,108 @@ object VexLifeWebP1RuntimeArtifacts {
                   ])
                 : (state.conversation?.messages ?? []))
                 .filter((message) => String(message.content ?? '').trim())
-                .map((message) => ({
-                  eventRef: String(message.eventRef ?? ''),
-                  speaker: message.role === 'human' ? 'You' : 'Vex',
-                  chunks: speechChunks(message.content)
-                }));
+                .map((message) => ({ eventRef: String(message.eventRef ?? ''), vex: message.role !== 'human', text: message.content }));
 
-              const localVoices = () => {
-                if (!readAloud.supported) return [];
-                const language = (document.documentElement.lang || 'en').slice(0, 2).toLowerCase();
-                return window.speechSynthesis.getVoices().filter((voice) =>
-                  voice.localService && String(voice.lang || '').toLowerCase().startsWith(language));
+              const startReading = (eventRef) => {
+                const plan = readablePlan();
+                stopSpeech();
+                if (!plan.length) {
+                  notify('There is nothing to read yet.');
+                  return;
+                }
+                let index = eventRef ? plan.findIndex((message) => message.eventRef === eventRef) : -1;
+                if (index < 0) {
+                  const vex = plan.map((message, at) => (message.vex ? at : -1)).filter((at) => at >= 0);
+                  index = vex.length ? vex[vex.length - 1] : plan.length - 1;
+                }
+                audioContext();
+                for (const message of plan.slice(index)) enqueueSpeech(message.text, message.eventRef);
               };
 
-              const chosenVoice = () => {
-                const voices = localVoices();
-                return voices.find((voice) => voice.voiceURI === readAloud.settings.voiceURI)
-                  ?? voices.find((voice) => voice.default)
-                  ?? voices[0]
-                  ?? null;
-              };
-
-              const renderReadAloudVoices = () => {
-                if (!ui.readAloudVoice) return;
-                const chosen = chosenVoice();
-                const options = localVoices().map((voice) => {
-                  const option = document.createElement('option');
-                  option.value = voice.voiceURI;
-                  option.textContent = voice.name;
-                  return option;
-                });
-                ui.readAloudVoice.replaceChildren(...options);
-                if (chosen) ui.readAloudVoice.value = chosen.voiceURI;
-                ui.readAloudVoice.disabled = !options.length;
+              const stepReading = (direction) => {
+                const plan = readablePlan();
+                const at = plan.findIndex((message) => message.eventRef === speech.current?.eventRef);
+                const target = plan[at + direction];
+                if (at < 0 || !target) return;
+                startReading(target.eventRef);
               };
 
               const markReading = () => {
                 if (!ui.timeline) return;
-                const current = readAloud.mode === 'idle' ? null : readAloud.plan[readAloud.index]?.eventRef;
+                const current = speech.current?.eventRef;
                 for (const item of ui.timeline.querySelectorAll('.message')) {
-                  item.classList.toggle('reading', Boolean(current) && item.dataset.eventRef === current);
+                  item.classList.toggle('reading', Boolean(current) && current !== 'live' && item.dataset.eventRef === current);
                 }
-                ui.timeline.dataset.choosing = String(readAloud.choosing);
+                ui.timeline.dataset.choosing = String(speech.choosing);
               };
 
-              const renderReadAloud = () => {
-                if (!ui.readAloud) return;
-                ui.readAloud.hidden = !readAloud.open;
-                ui.readAloud.dataset.mode = readAloud.mode;
-                const action = ui.quickActions?.querySelector('.quick-action[data-action="read-aloud"]');
+              const renderSpeechVoices = () => {
+                if (!ui.speechVoice) return;
+                const choices = voiceChoices();
+                const groups = [
+                  ['natural', 'Natural voices · downloaded once, made on this Mac'],
+                  ['system', "This Mac's voices"]
+                ].map(([group, label]) => {
+                  const members = choices.filter((choice) => choice.group === group);
+                  if (!members.length) return null;
+                  const node = document.createElement('optgroup');
+                  node.label = label;
+                  for (const choice of members) {
+                    const option = document.createElement('option');
+                    option.value = choice.value;
+                    option.textContent = choice.label;
+                    node.append(option);
+                  }
+                  return node;
+                }).filter(Boolean);
+                ui.speechVoice.replaceChildren(...groups);
+                const chosen = chosenVoice();
+                if (chosen) ui.speechVoice.value = chosen.value;
+                ui.speechVoice.disabled = !choices.length;
+              };
+
+              const renderSpeech = () => {
+                if (!ui.speech) return;
+                ui.speech.hidden = !speech.open;
+                const playing = Boolean(speech.current) && !speech.paused;
+                const busy = Boolean(speech.current) || speech.queue.length > 0;
+                ui.speech.dataset.mode = playing ? 'playing' : busy ? 'paused' : 'idle';
+                const action = ui.quickActions?.querySelector('.quick-action[data-action="speech"]');
                 if (action) {
-                  action.setAttribute('aria-expanded', String(readAloud.open));
-                  action.dataset.active = String(readAloud.mode !== 'idle');
+                  action.setAttribute('aria-expanded', String(speech.open));
+                  action.setAttribute('aria-pressed', String(speech.settings.enabled));
+                  action.dataset.active = String(speech.settings.enabled);
                 }
-                const playing = readAloud.mode === 'playing';
-                ui.readAloudPlay.setAttribute('aria-label', playing ? 'Pause' : 'Play');
-                ui.readAloudPlay.title = playing ? 'Pause' : 'Play';
-                ui.readAloudChoose.setAttribute('aria-pressed', String(readAloud.choosing));
-                ui.readAloudRate.value = String(readAloud.settings.rate);
-                ui.readAloudRateValue.textContent = readAloud.settings.rate.toFixed(1) + '×';
-                const usable = readAloud.supported && localVoices().length > 0;
-                ui.readAloudPlay.disabled = !usable;
-                ui.readAloudChoose.disabled = !usable;
-                ui.readAloudStop.disabled = readAloud.mode === 'idle';
-                ui.readAloudPrevious.disabled = readAloud.mode === 'idle' || readAloud.index <= 0;
-                ui.readAloudNext.disabled = readAloud.mode === 'idle' || readAloud.index >= readAloud.plan.length - 1;
-                const current = readAloud.plan[readAloud.index];
-                ui.readAloudStatus.textContent = !readAloud.supported
-                  ? "This browser can't read aloud."
-                  : !usable
-                    ? 'No voice on this Mac is available for reading aloud.'
-                    : readAloud.choosing
-                      ? 'Choose a message to start from. Esc cancels.'
-                      : readAloud.mode === 'idle' || !current
-                        ? "Reads Vex's latest reply, or choose where to start."
-                        : (playing ? 'Reading ' : 'Paused · ') + current.speaker +
-                          ' · message ' + (readAloud.index + 1) + ' of ' + readAloud.plan.length;
+                ui.speechSwitch.setAttribute('aria-checked', String(speech.settings.enabled));
+                ui.speechThoughts.checked = speech.settings.readThoughts;
+                ui.speechRate.value = String(speech.settings.rate);
+                ui.speechRateValue.textContent = speech.settings.rate.toFixed(1) + '×';
+                ui.speechPlay.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+                ui.speechPlay.title = playing ? 'Pause' : 'Play';
+                ui.speechChoose.setAttribute('aria-pressed', String(speech.choosing));
+                const usable = voiceChoices().length > 0;
+                ui.speechSwitch.disabled = !usable;
+                ui.speechPlay.disabled = !usable;
+                ui.speechChoose.disabled = !usable;
+                ui.speechStop.disabled = !busy;
+                ui.speechPrevious.disabled = !busy || !speech.current || speech.current.eventRef === 'live';
+                ui.speechNext.disabled = ui.speechPrevious.disabled;
+                const natural = chosenVoice()?.group === 'natural';
+                const kokoroState = speech.kokoro.state;
+                ui.speechStatus.textContent = !usable
+                  ? 'No voice on this Mac is available for speech.'
+                  : speech.choosing
+                    ? 'Choose a message to start from. Esc cancels.'
+                    : natural && kokoroState === 'loading'
+                      ? 'Getting the natural voice ready. The first time, it downloads once (about 90 MB); speech is made on this Mac.'
+                      : natural && kokoroState === 'failed'
+                        ? "The natural voice couldn't load; this Mac's voices still work."
+                        : busy
+                          ? (playing ? 'Reading Vex…' : 'Paused.')
+                          : speech.settings.enabled
+                            ? (speech.settings.readThoughts ? "Vex's thoughts and replies will be read aloud." : "Vex's replies will be read aloud.")
+                            : 'Speech is off. You can still choose where to start reading.';
                 markReading();
-              };
-
-              const stopReading = () => {
-                readAloud.generation += 1;
-                if (readAloud.supported) window.speechSynthesis.cancel();
-                readAloud.mode = 'idle';
-                renderReadAloud();
-              };
-
-              const speakFrom = (index, chunk) => {
-                const generation = ++readAloud.generation;
-                window.speechSynthesis.cancel();
-                const message = readAloud.plan[index];
-                if (!message) {
-                  stopReading();
-                  return;
-                }
-                readAloud.index = index;
-                if (chunk >= message.chunks.length) {
-                  speakFrom(index + 1, 0);
-                  return;
-                }
-                const utterance = new SpeechSynthesisUtterance(message.chunks[chunk]);
-                utterance.rate = readAloud.settings.rate;
-                const voice = chosenVoice();
-                if (voice) {
-                  utterance.voice = voice;
-                  utterance.lang = voice.lang;
-                }
-                utterance.onend = () => {
-                  if (generation === readAloud.generation && readAloud.mode === 'playing') speakFrom(index, chunk + 1);
-                };
-                utterance.onerror = (event) => {
-                  if (generation !== readAloud.generation || event.error === 'interrupted' || event.error === 'canceled') return;
-                  stopReading();
-                  notify("Read aloud stopped because the voice couldn't continue.");
-                };
-                readAloud.mode = 'playing';
-                renderReadAloud();
-                window.speechSynthesis.speak(utterance);
-              };
-
-              const startReading = (eventRef) => {
-                readAloud.plan = readablePlan();
-                readAloud.choosing = false;
-                if (!readAloud.plan.length) {
-                  renderReadAloud();
-                  notify('There is nothing to read yet.');
-                  return;
-                }
-                let index = eventRef ? readAloud.plan.findIndex((message) => message.eventRef === eventRef) : -1;
-                if (index < 0) {
-                  const vexIndexes = readAloud.plan.map((message, at) => (message.speaker === 'Vex' ? at : -1)).filter((at) => at >= 0);
-                  index = vexIndexes.length ? vexIndexes[vexIndexes.length - 1] : readAloud.plan.length - 1;
-                }
-                speakFrom(index, 0);
-              };
-
-              const toggleReading = () => {
-                if (readAloud.mode === 'playing') {
-                  window.speechSynthesis.pause();
-                  readAloud.mode = 'paused';
-                } else if (readAloud.mode === 'paused') {
-                  window.speechSynthesis.resume();
-                  readAloud.mode = 'playing';
-                } else {
-                  startReading(null);
-                  return;
-                }
-                renderReadAloud();
               };
 
               const renderQuickActions = () => {
@@ -589,7 +875,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   return item;
                 });
                 ui.quickActions.replaceChildren(...sourceOnly, ...items);
-                renderReadAloud();
+                renderSpeech();
               };
 
               // Vision copy, state and the one lawful Control come from the Product (VexLifeVisionFamily);
@@ -1098,7 +1384,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 sizeDraft();
                 renderTimeline();
                 try {
+                  if (speech.settings.enabled) audioContext();
                   await privatePost(service.privateSendPath, { content });
+                  const exchanges = state.privateMode?.exchanges ?? [];
+                  if (speech.settings.enabled && exchanges.length) {
+                    enqueueSpeech(exchanges[exchanges.length - 1].vex, 'private.' + exchanges.length * 2);
+                  }
                 } catch (error) {
                   if (!ui.draft.value) ui.draft.value = content;
                   sizeDraft();
@@ -1523,6 +1814,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.streamPhase = 'CheckingRuntime';
                 state.streamedContent = '';
                 state.streamedReasoning = '';
+                speech.stream = { reply: 0, thought: 0 };
+                if (speech.settings.enabled) audioContext();
                 state.reasoningViewports.set('live', { followTail: true, scrollTop: 0 });
                 if (!retrying) {
                   ui.draft.value = '';
@@ -1556,6 +1849,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       state.streamedReasoning += event.delta;
                       setCompanionStatus('Checking', 'Thinking', '');
                       updateLiveTurn();
+                      followStreamSpeech(false);
                       return;
                     }
                     if (event?.type === 'CONTENT_DELTA' && typeof event.delta === 'string') {
@@ -1563,6 +1857,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       state.streamedContent += event.delta;
                       setCompanionStatus('Checking', 'Responding', '');
                       updateLiveTurn();
+                      followStreamSpeech(false);
                       return;
                     }
                     if (event?.type === 'FAILED') {
@@ -1575,6 +1870,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     if (event?.type === 'COMPLETED') result = event.response ?? null;
                   });
                   if (!result) throw new Error('Vex stream ended without a completed turn.');
+                  followStreamSpeech(true);
                   state.sendInFlight = false;
                   root.dataset.vexLastContextPath = String(result.contextPath ?? '');
                   root.dataset.vexLastPromptReceiptRef = String(result.promptContext?.receiptRef ?? '');
@@ -1767,11 +2063,11 @@ object VexLifeWebP1RuntimeArtifacts {
                   toggleTheme();
                   return;
                 }
-                if (action.key === 'read-aloud') {
-                  readAloud.open = !readAloud.open;
-                  if (!readAloud.open) readAloud.choosing = false;
-                  renderReadAloudVoices();
-                  renderReadAloud();
+                if (action.key === 'speech') {
+                  speech.open = !speech.open;
+                  if (!speech.open) speech.choosing = false;
+                  renderSpeechVoices();
+                  renderSpeech();
                   return;
                 }
                 if (action.key === 'vision') {
@@ -1785,32 +2081,54 @@ object VexLifeWebP1RuntimeArtifacts {
                 void activateVision();
               });
 
-              loadReadAloudSettings();
-              if (readAloud.supported) {
+              loadSpeechSettings();
+              if (speech.systemSupported) {
                 window.speechSynthesis.addEventListener('voiceschanged', () => {
-                  renderReadAloudVoices();
-                  renderReadAloud();
+                  renderSpeechVoices();
+                  renderSpeech();
                 });
               }
-              ui.readAloudPlay.addEventListener('click', toggleReading);
-              ui.readAloudStop.addEventListener('click', stopReading);
-              ui.readAloudPrevious.addEventListener('click', () => speakFrom(Math.max(0, readAloud.index - 1), 0));
-              ui.readAloudNext.addEventListener('click', () => speakFrom(readAloud.index + 1, 0));
-              ui.readAloudChoose.addEventListener('click', () => {
-                readAloud.choosing = !readAloud.choosing;
-                renderReadAloud();
+              ui.speechSwitch.addEventListener('click', () => {
+                speech.settings.enabled = !speech.settings.enabled;
+                saveSpeechSettings();
+                if (speech.settings.enabled) {
+                  audioContext();
+                  if (chosenVoice()?.group === 'natural') kokoroWorker().postMessage({ type: 'prepare' });
+                } else {
+                  stopSpeech();
+                }
+                renderSpeech();
               });
-              ui.readAloudRate.addEventListener('input', () => {
-                readAloud.settings.rate = Math.min(1.6, Math.max(0.7, Number(ui.readAloudRate.value) || 1));
-                saveReadAloudSettings();
-                renderReadAloud();
+              ui.speechVoice.addEventListener('change', () => {
+                speech.settings.voice = ui.speechVoice.value;
+                saveSpeechSettings();
+                if (chosenVoice()?.group === 'natural') {
+                  audioContext();
+                  kokoroWorker().postMessage({ type: 'prepare' });
+                }
+                renderSpeech();
               });
-              ui.readAloudVoice.addEventListener('change', () => {
-                readAloud.settings.voiceURI = ui.readAloudVoice.value;
-                saveReadAloudSettings();
+              ui.speechThoughts.addEventListener('change', () => {
+                speech.settings.readThoughts = ui.speechThoughts.checked;
+                saveSpeechSettings();
+                renderSpeech();
+              });
+              ui.speechRate.addEventListener('input', () => {
+                speech.settings.rate = Math.min(1.6, Math.max(0.7, Number(ui.speechRate.value) || 1));
+                saveSpeechSettings();
+                if (speech.kokoro.source) speech.kokoro.source.playbackRate.value = speech.settings.rate;
+                renderSpeech();
+              });
+              ui.speechPlay.addEventListener('click', pauseOrResumeSpeech);
+              ui.speechStop.addEventListener('click', stopSpeech);
+              ui.speechPrevious.addEventListener('click', () => stepReading(-1));
+              ui.speechNext.addEventListener('click', () => stepReading(1));
+              ui.speechChoose.addEventListener('click', () => {
+                speech.choosing = !speech.choosing;
+                renderSpeech();
               });
               ui.timeline.addEventListener('click', (event) => {
-                if (!readAloud.choosing) return;
+                if (!speech.choosing) return;
                 const item = event.target.closest('.message');
                 if (!item?.dataset.eventRef) return;
                 event.preventDefault();
@@ -1818,12 +2136,12 @@ object VexLifeWebP1RuntimeArtifacts {
               });
               document.addEventListener('keydown', (event) => {
                 if (event.key !== 'Escape') return;
-                if (readAloud.choosing) {
-                  readAloud.choosing = false;
-                  renderReadAloud();
-                } else if (readAloud.open) {
-                  readAloud.open = false;
-                  renderReadAloud();
+                if (speech.choosing) {
+                  speech.choosing = false;
+                  renderSpeech();
+                } else if (speech.open) {
+                  speech.open = false;
+                  renderSpeech();
                 }
               });
 
