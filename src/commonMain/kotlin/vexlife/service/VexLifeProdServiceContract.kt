@@ -117,9 +117,9 @@ object VexLifeProdServiceContract {
         val observedAt: String,
         val homePath: String,
         val homeDisposition: String,
-        val homeRef: String,
-        val deviceRef: String,
-        val companionLineageRef: String,
+        val homeRef: String?,
+        val deviceRef: String?,
+        val companionLineageRef: String?,
         val platform: String,
         val architecture: String,
         val chipModel: String?,
@@ -142,15 +142,30 @@ object VexLifeProdServiceContract {
         val effectsPerformed: Boolean,
     ) {
         init {
+            val homeIdentityValid =
+                if (
+                    homeDisposition ==
+                        "ABSENT_CANONICAL_VEXLIFE_HOME"
+                ) {
+                    homeRef ==
+                        null &&
+                        deviceRef ==
+                        null &&
+                        companionLineageRef ==
+                        null
+                } else {
+                    !homeRef.isNullOrBlank() &&
+                        !deviceRef.isNullOrBlank() &&
+                        !companionLineageRef.isNullOrBlank()
+                }
+
             require(
                 schemaVersion ==
                     CurrentStateProjectionSchema &&
                     observedAt.isNotBlank() &&
                     homePath.isNotBlank() &&
                     homeDisposition.isNotBlank() &&
-                    homeRef.isNotBlank() &&
-                    deviceRef.isNotBlank() &&
-                    companionLineageRef.isNotBlank() &&
+                    homeIdentityValid &&
                     platform.isNotBlank() &&
                     architecture.isNotBlank() &&
                     hostEligibilityState in
