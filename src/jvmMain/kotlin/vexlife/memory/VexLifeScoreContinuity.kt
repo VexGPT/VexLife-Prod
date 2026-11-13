@@ -2245,6 +2245,37 @@ object VexLifeScoreContinuity {
         )
             .jsonPrimitive
             .long
+
+    private fun JsonObject.boolean(
+        field: String,
+    ): Boolean =
+        requireNotNull(
+            this[
+                field
+            ],
+        )
+            .jsonPrimitive
+            .boolean
+
+    private fun JsonObject.array(
+        field: String,
+    ): JsonArray =
+        requireNotNull(
+            this[
+                field
+            ],
+        )
+            .jsonArray
+
+    private fun JsonObject.objectList(
+        field: String,
+    ): List<JsonObject> =
+        array(
+            field,
+        )
+            .map {
+                it.jsonObject
+            }
 }
 
 // [VXG RealForever]
