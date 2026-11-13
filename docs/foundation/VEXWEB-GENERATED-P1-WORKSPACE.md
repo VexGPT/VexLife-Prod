@@ -349,26 +349,30 @@ context is off while it is open. Showing an archive to Vex, sorting the conversa
 Vex's commentary, Private mode and changes made together with Vex come next (see
 `docs/work/claude-next-stages/README.md`).
 
-## Read aloud
+## Speech
 
-The header's Read aloud orb is the Vextreme Spiral FAB's Read Aloud behavior, ported rather than
-loaded: VexLife-Prod has no runtime dependency on Vextreme.
+The header's Speech orb carries the Vextreme Spiral FAB's Read Aloud behavior, ported rather than
+loaded (no runtime dependency on Vextreme), and extended into speech for Vex as it talks. It opens a
+popover beneath the orb:
 
 ~~~text
-canonical Conversation projection (state.conversation.messages)
--> plan: one entry per message, sentence chunks up to ~300 characters
--> start: Vex's latest reply, or "Start here…" then a message (Esc cancels)
--> continue forward message by message; play / pause / stop / previous / next; speed; voice
--> browser speechSynthesis, on-device voices only (voice.localService)
+Speak Vex aloud     on: Vex's reply is read as it streams, sentence by sentence, tail on completion
+Voice               Natural (Kokoro, English) or this Mac's own voices (other languages)
+Read out thoughts   also read Vex's streamed thinking, before its reply
+Speed · transport   play / pause / stop / previous / next; "Start here…" reads from any message
 ~~~
 
-It reads the projection rather than the DOM, so a timeline re-render only moves the highlight. Only
-on-device voices are offered, so Conversation text never goes to an online speech service; with none
-available the panel says so and does not play. Vextreme's lazy Kokoro neural provider is deliberately
-not ported because it fetches a model from a CDN. Speed and voice persist per browser
-(`vexlife-prod.presentation.read-aloud/v1`); speech never starts on its own.
+What it reads is the Conversation projection (or the private one), never the DOM. Speech never starts
+before the person has turned it on or chosen where to start.
 
-The other unbound orbs (Journeys, Language, Evolution) stay as they were: visibly held, not wired.
+Privacy: Kokoro runs in a module Worker on this machine. The first use downloads `kokoro-js@1.2.1`
+(jsDelivr) and `onnx-community/Kokoro-82M-v1.0-ONNX` (Hugging Face) once, and the popover says so.
+The words themselves never leave the machine. System voices are limited to on-device ones
+(`voice.localService`). If the natural voice can't load, this Mac's voice takes over and the person is
+told. Settings persist per browser (`vexlife-prod.presentation.speech/v1`).
+
+Speech follows the selected output language once Language becomes a Home setting (next slice). The
+other unbound orbs (Journeys, Evolution) stay as they were: visibly held, not wired.
 
 ## VexBoard Screen Lens export
 
