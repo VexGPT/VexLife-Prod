@@ -2,9 +2,12 @@ package vexlife.home
 
 import java.nio.file.Files
 import java.nio.file.LinkOption
+import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.UUID
+import vexlife.contract.VexDurableContractFile
 import vexlife.contract.VexDurableContractFile
 import vexlife.filesystem.VexOwnedPath
 
@@ -160,29 +163,224 @@ object VexLifeProdHomeFiles {
     }
 
     /**
-     * Preserve the historical method boundary while refusing the old parallel-Home behavior.
+     * Form one fresh canonical VexLife Home from the portable bootstrap plan.
      *
-     * Fresh Home formation must be ported from the accepted VexLife bootstrap as its own exact
-     * candidate. Until then, absence holds setup before any identity or filesystem mutation.
+     * This is not authority to replace or migrate an existing Home. The target must be absent.
+     * Formation happens in one sibling staging root and publishes by atomic rename only after the
+     * exact Home/device/model/receipt relationships re-observe successfully.
      */
     fun bootstrap(
         productHome: Path,
         plan: VexLifeProdHome.BootstrapPlan,
     ): Result {
-        observeExisting(
-            productHome,
+        require(
+            productHome.isAbsolute,
+        ) {
+            "canonical VexLife Home path must be absolute"
+        }
+
+        val home =
+            productHome.normalize()
+
+        if (
+            Files.exists(
+                home,
+                LinkOption.NOFOLLOW_LINKS,
+            )
+        ) {
+            return requireNotNull(
+                observeExisting(
+                    home,
+                ),
+            ) {
+                "existing VexLife Home path is not one current canonical Home"
+            }
+        }
+
+        val currentPlan =
+            VexLifeProdHome.validateBootstrapPlan(
+                plan,
+            )
+        val parent =
+            requireNotNull(
+                home.parent,
+            ) {
+                "canonical VexLife Home requires one parent directory"
+            }
+        requireRealDirectory(
+            parent,
         )
-            ?.let {
-                return it
+
+        val staging =
+            parent.resolve(
+                "." +
+                    home.fileName +
+                    ".bootstrap-" +
+                    UUID.randomUUID(),
+            )
+                .normalize()
+
+        require(
+            !Files.exists(
+                staging,
+                LinkOption.NOFOLLOW_LINKS,
+            ),
+        ) {
+            "fresh VexLife Home staging coordinate already exists"
+        }
+
+        Files.createDirectory(
+            staging,
+        )
+        requireRealDirectory(
+            staging,
+        )
+
+        var published =
+            false
+        try {
+            currentPlan.directories.forEach {
+                relative ->
+                VexOwnedPath.ensureDirectory(
+                    staging,
+                    VexOwnedPath.resolveInside(
+                        staging,
+                        relative,
+                    ),
+                )
             }
 
-        VexLifeProdHome.validateBootstrapPlan(
-            plan,
-        )
+            VexDurableContractFile.write(
+                ownedRoot = staging,
+                path =
+                    VexOwnedPath.resolveInside(
+                        staging,
+                        VexLifeProdHome.HomeManifestRelativePath,
+                    ),
+                value = currentPlan.manifest,
+            )
+            VexDurableContractFile.write(
+                ownedRoot = staging,
+                path =
+                    VexOwnedPath.resolveInside(
+                        staging,
+                        "devices/${currentPlan.installation.deviceRef}.json",
+                    ),
+                value = currentPlan.installation,
+            )
+            VexDurableContractFile.write(
+                ownedRoot = staging,
+                path =
+                    VexOwnedPath.resolveInside(
+                        staging,
+                        VexLifeProdHome.CanonicalModelConfigurationRelativePath,
+                    ),
+                value = currentPlan.canonicalModelConfiguration,
+            )
+            VexDurableContractFile.write(
+                ownedRoot = staging,
+                path =
+                    VexOwnedPath.resolveInside(
+                        staging,
+                        VexLifeProdHome.ModelConfigurationRelativePath,
+                    ),
+                value = currentPlan.initialModelConfiguration,
+            )
+            VexDurableContractFile.write(
+                ownedRoot = staging,
+                path =
+                    VexOwnedPath.resolveInside(
+                        staging,
+                        VexLifeProdHome.BootstrapReceiptRelativePath,
+                    ),
+                value = currentPlan.receipt,
+            )
 
-        error(
-            "canonical VexLife Home is absent; VexLife-Prod must not mint a parallel Home or Companion lineage",
+            val staged =
+                requireNotNull(
+                    observeExisting(
+                        staging,
+                    ),
+                ) {
+                    "fresh VexLife Home staging did not re-observe as canonical"
+                }
+            require(
+                staged.manifest ==
+                    currentPlan.manifest &&
+                    staged.installation ==
+                    currentPlan.installation &&
+                    !staged.effectsPerformed,
+            ) {
+                "fresh VexLife Home staging identity differs from the admitted bootstrap plan"
+            }
+
+            try {
+                Files.move(
+                    staging,
+                    home,
+                    StandardCopyOption.ATOMIC_MOVE,
+                )
+            } catch (
+                _: AtomicMoveNotSupportedException,
+            ) {
+                error(
+                    "atomic fresh VexLife Home publication is unavailable for $home",
+                )
+            }
+            published =
+                true
+
+            val formed =
+                requireNotNull(
+                    observeExisting(
+                        home,
+                    ),
+                ) {
+                    "published fresh VexLife Home did not re-observe as canonical"
+                }
+
+            return formed.copy(
+                state = "FRESH_CANONICAL_VEXLIFE_HOME_FORMED",
+                effectsPerformed = true,
+            )
+        } finally {
+            if (
+                !published &&
+                Files.exists(
+                    staging,
+                    LinkOption.NOFOLLOW_LINKS,
+                )
+            ) {
+                deleteOwnedTree(
+                    staging,
+                )
+            }
+        }
+    }
+
+    private fun deleteOwnedTree(
+        root: Path,
+    ) {
+        requireRealDirectory(
+            root,
         )
+        Files.walk(
+            root,
+        )
+            .use {
+                stream ->
+                stream
+                    .toList()
+                    .sortedByDescending {
+                        it.nameCount
+                    }
+                    .forEach {
+                        path ->
+                        Files.deleteIfExists(
+                            path,
+                        )
+                    }
+            }
     }
 
     private fun requireRealDirectory(
