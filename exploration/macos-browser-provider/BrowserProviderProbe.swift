@@ -6,6 +6,7 @@ private enum ProbeEvent {
     static let ready = "VEXLIFE_BROWSER_PROBE_READY"
     static let navigation = "VEXLIFE_BROWSER_PROBE_NAVIGATION"
     static let failure = "VEXLIFE_BROWSER_PROBE_FAILURE"
+    static let vextremeChrome = "VEXLIFE_BROWSER_PROBE_VEXTREME_CHROME"
     static let terminated = "VEXLIFE_BROWSER_PROBE_CONTENT_PROCESS_TERMINATED"
 }
 
@@ -196,6 +197,7 @@ private final class BrowserProbeController: NSObject, NSApplicationDelegate, WKN
         publishNavigation(
             phase: "FINISH"
         )
+        publishVextremeChromeIfApplicable()
     }
 
     func webView(
@@ -262,6 +264,58 @@ private final class BrowserProbeController: NSObject, NSApplicationDelegate, WKN
             "canGoBack=\(webView.canGoBack)",
             "canGoForward=\(webView.canGoForward)"
         )
+    }
+
+    private func publishVextremeChromeIfApplicable() {
+        guard
+            let current = webView.url,
+            current.host?.lowercased() == "vgong24.github.io",
+            current.path == "/Vextreme/pages/terrain-map.html"
+        else {
+            return
+        }
+
+        let script =
+            """
+            (() => {
+              const nav = document.querySelector('#vex-site-nav');
+              const links = nav
+                ? Array.from(nav.querySelectorAll('a')).map((link) => ({
+                    text: String(link.textContent || '').trim(),
+                    href: String(link.href || '')
+                  }))
+                : [];
+              return JSON.stringify({
+                present: Boolean(nav),
+                links
+              });
+            })()
+            """
+
+        webView.evaluateJavaScript(
+            script
+        ) {
+            [weak self] value,
+            error in
+
+            guard let self else {
+                return
+            }
+
+            if let error {
+                self.emit(
+                    ProbeEvent.failure,
+                    "VEXTREME_CHROME_OBSERVATION",
+                    error.localizedDescription
+                )
+                return
+            }
+
+            self.emit(
+                ProbeEvent.vextremeChrome,
+                value as? String ?? "{\"present\":false,\"links\":[]}"
+            )
+        }
     }
 
     private func publishFailure(
