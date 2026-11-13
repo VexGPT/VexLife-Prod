@@ -471,6 +471,11 @@ class VexLifeProdLocalService private constructor(
                         exchange,
                     )
 
+                VexLifeProdServiceContract.CurrentStatePath ->
+                    handleCurrentState(
+                        exchange,
+                    )
+
                 VexLifeProdServiceContract.ConversationPath ->
                     handleConversation(
                         exchange,
@@ -586,6 +591,24 @@ class VexLifeProdLocalService private constructor(
                     currentConversationHeadSha256 =
                         conversation.currentConversationHeadSha256,
                     effectsPerformed = false,
+                ),
+        )
+    }
+
+    private fun handleCurrentState(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "GET",
+        )
+
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value =
+                VexLifeProdCurrentState.observe(
+                    startupSetup,
                 ),
         )
     }
