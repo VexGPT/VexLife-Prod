@@ -85,7 +85,7 @@ end dictionaryText
 on formatGiB(value)
     if value is missing value or value is (app's NSNull's null()) then return "Unknown"
     set gib to (value as real) / 1073741824
-    set tenth to (round (gib * 10)) / 10
+    set tenth to gib
     return (tenth as text) & " GB"
 end formatGiB
 
