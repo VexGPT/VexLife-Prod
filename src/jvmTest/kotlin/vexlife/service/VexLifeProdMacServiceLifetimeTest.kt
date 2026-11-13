@@ -498,6 +498,92 @@ class VexLifeProdMacServiceLifetimeTest {
         )
 
     @Test
+    fun existingServiceObservationSeparatesAbsentExactOwnedAndUnownedCoordinates() {
+        fixture()
+            .use {
+                fixture ->
+                val probe =
+                    Probe(
+                        fixture.sourceSha,
+                        fixture.host,
+                    )
+                        .also {
+                            it.available =
+                                false
+                        }
+
+                val absent =
+                    VexLifeProdMacServiceLifetime.observeExisting(
+                        productHome = fixture.home,
+                        host = fixture.host,
+                        probe = probe,
+                    )
+                assertIs<VexLifeProdMacServiceLifetime.ExistingObservation.Absent>(
+                    absent,
+                )
+
+                fixture.host.servicePresent =
+                    true
+                fixture.host.running =
+                    true
+                fixture.host.alive =
+                    true
+
+                val unowned =
+                    VexLifeProdMacServiceLifetime.observeExisting(
+                        productHome = fixture.home,
+                        host = fixture.host,
+                        probe = probe,
+                    )
+                assertIs<VexLifeProdMacServiceLifetime.ExistingObservation.HeldUnknown>(
+                    unowned,
+                )
+
+                fixture.host.servicePresent =
+                    false
+                fixture.host.running =
+                    false
+                fixture.host.alive =
+                    false
+
+                val liveProbe =
+                    Probe(
+                        fixture.sourceSha,
+                        fixture.host,
+                    )
+                val started =
+                    VexLifeProdMacServiceLifetime.startOrReuse(
+                        productHome = fixture.home,
+                        desiredSourceSha = fixture.sourceSha,
+                        host = fixture.host,
+                        probe = liveProbe,
+                    )
+                assertEquals(
+                    "STARTED_CURRENT_SERVICE",
+                    started.disposition,
+                )
+
+                val owned =
+                    VexLifeProdMacServiceLifetime.observeExisting(
+                        productHome = fixture.home,
+                        host = fixture.host,
+                        probe = liveProbe,
+                    )
+                assertIs<VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned>(
+                    owned,
+                )
+                assertEquals(
+                    fixture.sourceSha,
+                    owned.receipt.sourceSha,
+                )
+                assertEquals(
+                    fixture.host.currentPid,
+                    owned.receipt.launchd.pid,
+                )
+            }
+    }
+
+    @Test
     fun noReceiptAndNoStableLaunchdJobIsAbsentButPresentLabelIsHeldUnknown() {
         fixture()
             .use {

@@ -88,6 +88,39 @@ class VexLifeProdLocalServiceTest {
         )
     }
 
+    private fun currentState(
+        root: Path,
+    ): VexLifeProdServiceContract.CurrentStateProjection =
+        VexLifeProdServiceContract.CurrentStateProjection(
+            schemaVersion = VexLifeProdServiceContract.CurrentStateProjectionSchema,
+            observedAt = "2026-11-12T18:00:00Z",
+            homePath = root.toString(),
+            homeDisposition = "TEST_CURRENT",
+            homeRef = "vex-home.device.vexlife.test-service",
+            deviceRef = "device.vexlife.test-service",
+            companionLineageRef = "companion-lineage.vexlife.test-service",
+            platform = "darwin",
+            architecture = "arm64",
+            chipModel = "Apple M4 Pro",
+            hostEligibilityState = "ELIGIBLE",
+            hostEligibilityReason = null,
+            totalMemoryBytes = 36L * 1024L * 1024L * 1024L,
+            modelMinimumMemoryBytes = 12L * 1024L * 1024L * 1024L,
+            freeStorageBytes = 100L * 1024L * 1024L * 1024L,
+            modelSelectionState = "BOUND_HERETIC_PRODUCT_MODEL",
+            activeModelRef = HereticProductIdentity.ModelRef,
+            activeModelProfileRef = HereticProductIdentity.ModelProfileRef,
+            runtimeState = "BOUND_PRODUCT_MODEL",
+            runtimeCurrentness = "CONFIGURATION_ONLY_NOT_REOBSERVED",
+            runtimeReceiptPath = HereticProductIdentity.StableRuntimeReceiptRelativePath,
+            modelArtifactState = "COMPLETE_BY_SIZE_NOT_HASHED",
+            modelArtifactTotalBytes = 15_153_242_506L,
+            modelArtifactPresentBySizeBytes = 15_153_242_506L,
+            modelArtifactMissingBytes = 0,
+            modelArtifactInvalidSizeBytes = 0,
+            effectsPerformed = false,
+        )
+
     private fun get(
         origin: String,
         path: String,
@@ -205,6 +238,11 @@ class VexLifeProdLocalServiceTest {
                                 "turn must not run during read-only projection",
                             )
                         },
+                    currentStateObserver = {
+                        currentState(
+                            root,
+                        )
+                    },
                 )
                 .use {
                     service ->
@@ -255,6 +293,47 @@ class VexLifeProdLocalServiceTest {
                     )
                     assertFalse(
                         source.effectsPerformed,
+                    )
+
+                    val currentStateResponse =
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.CurrentStatePath,
+                        )
+                    assertEquals(
+                        200,
+                        currentStateResponse.statusCode(),
+                    )
+                    val currentState =
+                        json.decodeFromString<VexLifeProdServiceContract.CurrentStateProjection>(
+                            currentStateResponse.body(),
+                        )
+                    assertEquals(
+                        root.toString(),
+                        currentState.homePath,
+                    )
+                    assertEquals(
+                        HereticProductIdentity.ModelRef,
+                        currentState.activeModelRef,
+                    )
+                    assertEquals(
+                        "COMPLETE_BY_SIZE_NOT_HASHED",
+                        currentState.modelArtifactState,
+                    )
+                    assertEquals(
+                        15_153_242_506L,
+                        currentState.modelArtifactTotalBytes,
+                    )
+                    assertEquals(
+                        currentState.modelArtifactTotalBytes,
+                        currentState.modelArtifactPresentBySizeBytes,
+                    )
+                    assertEquals(
+                        "CONFIGURATION_ONLY_NOT_REOBSERVED",
+                        currentState.runtimeCurrentness,
+                    )
+                    assertFalse(
+                        currentState.effectsPerformed,
                     )
 
                     val presentation =

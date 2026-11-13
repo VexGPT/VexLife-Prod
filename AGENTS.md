@@ -16,6 +16,13 @@ README.md
 -> proof matching the claim
 ~~~
 
+## Current product route
+
+`VexGPT/VexLife-Prod` is the current New Beginnings product repository. `vgong24/VexLife` is
+predecessor/lineage source and a bounded bridge source only where the current foundation names it.
+For each effect, descend through the foundation index + VexWork; do not infer repository-level
+parenthood and do not erase an exact still-current bridge.
+
 Do not broad-copy historical VexLife or Android architecture into this repository.
 
 Before creating a new abstraction or foundation, ask:
@@ -74,7 +81,7 @@ REUSED_PROCESS_PRIMITIVE != REUSED_LIFECYCLE_MEANING
 
 Before changing or adding a Mac front door:
 
-1. trace the current VexLife startup sequence to its existing lifecycle/process/currentness owners;
+1. start from the current VexLife-Prod product-entry intention and descend to the exact current lifecycle/process/currentness owner for each required effect; that owner may be Prod source or an exact bounded predecessor compatibility bridge;
 2. reuse the lowest rightful owner that provides the needed effect—do not call a higher-level human action merely because it eventually reaches the same state;
 3. preserve the ordinary windowed human route unless the human explicitly selects a terminal/recovery route;
 4. keep lifecycle readiness and presentation selection as distinct effects;
@@ -100,8 +107,8 @@ CONSTANT PRODUCT TOPOLOGY
   Home preservation / recovery semantics
 
 RELEASE-VARIABLE IDENTITIES
-  exact VexLife source commit
   exact VexLife-Prod source commit
+  exact predecessor identity only when an exact current compatibility bridge explicitly requires it
 
 DERIVED CURRENTNESS
   Source Manifest records
@@ -117,12 +124,9 @@ When one source identity changes, recompute only its true dependents. A new comm
 
 ## Current route
 
-This front door routes the repository; VexWork carries lifecycle/current work position.
-
-VexWeb F1 relational authoring and F2 deterministic browser-artifact generation are accepted source. The current construction edge is the generated P1 workspace: manifest the existing Blueprint through accepted VexWeb relationships and materialize the exact generated artifact set without copying the hand-built exploration into source authority.
-
-A lived exploration threshold is retained under `exploration/web-workspace/`: it proves that the intended nested-browser shell can project the current canonical VexLife Conversation and complete a real human↔Vex turn without becoming Conversation/model authority. It is evidence and a runnable threshold, not the accepted generated renderer or permission to skip F1/F2.
-
-Do not copy the hand-built exploration as product authoring precedent. Harvest earned behavior back through the accepted semantic/VexWeb owners.
+`docs/foundation/INDEX.md` owns current product-source state. VexWork
+`project.vexlife.new-beginnings` owns current work/lifecycle. This router does not duplicate a moving
+phase label. `exploration/web-workspace/` remains evidence/oracle where current source still points to
+it; it is not product authoring authority.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][AGENTS] -->

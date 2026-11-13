@@ -43,6 +43,10 @@ class VexLifeProdServiceContractTest {
             VexLifeProdServiceContract.SourceCurrentnessPath,
         )
         assertEquals(
+            "/api/v1/current-state",
+            VexLifeProdServiceContract.CurrentStatePath,
+        )
+        assertEquals(
             "/api/v1/conversation",
             VexLifeProdServiceContract.ConversationPath,
         )
@@ -57,6 +61,57 @@ class VexLifeProdServiceContractTest {
         assertEquals(
             "/api/v1/conversation/send",
             VexLifeProdServiceContract.ConversationSendPath,
+        )
+    }
+
+    @Test
+    fun currentStateProjectionRequiresBoundedReadOnlyTruth() {
+        val projection =
+            VexLifeProdServiceContract.CurrentStateProjection(
+                schemaVersion =
+                    VexLifeProdServiceContract.CurrentStateProjectionSchema,
+                observedAt = "2026-11-12T18:00:00Z",
+                homePath = "/Users/victor/.vexlife",
+                homeDisposition = "EXISTING_CURRENT",
+                homeRef = "vex-home.device.vexlife.test",
+                deviceRef = "device.vexlife.test",
+                companionLineageRef = "companion-lineage.vexlife.test",
+                platform = "darwin",
+                architecture = "arm64",
+                chipModel = "Apple M4 Pro",
+                hostEligibilityState = "ELIGIBLE",
+                hostEligibilityReason = null,
+                totalMemoryBytes = 36L * 1024L * 1024L * 1024L,
+                modelMinimumMemoryBytes = 12L * 1024L * 1024L * 1024L,
+                freeStorageBytes = 100L * 1024L * 1024L * 1024L,
+                modelSelectionState = "BOUND_HERETIC_PRODUCT_MODEL",
+                activeModelRef = "model.heretic.test",
+                activeModelProfileRef = "model-profile.heretic.test",
+                runtimeState = "BOUND_PRODUCT_MODEL",
+                runtimeCurrentness = "CONFIGURATION_ONLY_NOT_REOBSERVED",
+                runtimeReceiptPath = "runtime/heretic/receipt.json",
+                modelArtifactState = "COMPLETE_BY_SIZE_NOT_HASHED",
+                modelArtifactTotalBytes = 15_000L,
+                modelArtifactPresentBySizeBytes = 15_000L,
+                modelArtifactMissingBytes = 0,
+                modelArtifactInvalidSizeBytes = 0,
+                effectsPerformed = false,
+            )
+
+        assertEquals(
+            "COMPLETE_BY_SIZE_NOT_HASHED",
+            projection.modelArtifactState,
+        )
+        assertEquals(
+            "CONFIGURATION_ONLY_NOT_REOBSERVED",
+            projection.runtimeCurrentness,
+        )
+        assertEquals(
+            100L * 1024L * 1024L * 1024L,
+            projection.freeStorageBytes,
+        )
+        assertFalse(
+            projection.effectsPerformed,
         )
     }
 
