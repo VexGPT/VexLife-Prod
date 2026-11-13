@@ -142,7 +142,7 @@ object VexLifeCurrentMemoryReader {
 
     private data class ScoreSnapshot(
         val head: JsonObject,
-        val authority: JsonObject,
+        val authority: JsonObject?,
         val statements: List<Statement>,
         val openLoops: List<OpenLoop>,
     )
@@ -486,9 +486,10 @@ object VexLifeCurrentMemoryReader {
                 "sourceConversationHeadSha256",
             )
         val semanticAuthorityHeadSha256 =
-            score.authority.string(
-                "semanticAuthorityHeadSha256",
-            )
+            score.authority
+                ?.string(
+                    "semanticAuthorityHeadSha256",
+                )
         val currentStatementRefs =
             score.statements
                 .filter(
@@ -522,10 +523,13 @@ object VexLifeCurrentMemoryReader {
             currentStatementRefs = currentStatementRefs,
             openLoopRefs = openLoopRefs,
             sourceRefs =
-                listOf(
+                listOfNotNull(
                     "sha256:$scoreHeadSha256",
                     "sha256:$sourceConversationHeadSha256",
-                    "sha256:$semanticAuthorityHeadSha256",
+                    semanticAuthorityHeadSha256
+                        ?.let {
+                            "sha256:$it"
+                        },
                 )
                     .sorted(),
         )
@@ -566,12 +570,17 @@ object VexLifeCurrentMemoryReader {
                 conversation = conversation,
                 authorityPolicy = ScoreAuthorityPolicy.ALLOW_HISTORICAL_HELD,
             )
+        val currentAuthority =
+            requireCurrentScoreAuthority(
+                score = score,
+                label = "Daily Memory Dream",
+            )
         val currentStatements = score.statements.filter(Statement::current).sortedBy(Statement::statementRef)
         val active =
             currentStatements.filter {
                 it.acceptedForContinuity &&
                     it.consentState in positiveConsent &&
-                    authorityContains(score.authority, it)
+                    authorityContains(currentAuthority, it)
             }
         val held = currentStatements.filter { it !in active }
         val loops = score.openLoops.filter { it.state == "OPEN" }.sortedBy(OpenLoop::ref)
@@ -587,7 +596,7 @@ object VexLifeCurrentMemoryReader {
             scoreHeadSha256 = score.head.string("scoreHeadSha256"),
             scoreSourceConversationHeadSha256 = score.head.string("sourceConversationHeadSha256"),
             scoreEventHash = score.head.string("eventHash"),
-            semanticAuthorityHeadSha256 = score.authority.string("semanticAuthorityHeadSha256"),
+            semanticAuthorityHeadSha256 = currentAuthority.string("semanticAuthorityHeadSha256"),
             selectedRuntimeRef =
                 requireNotNull(response.endpointProfileRef) {
                     "Daily Memory Dream source response has no runtime profile"
@@ -936,7 +945,7 @@ object VexLifeCurrentMemoryReader {
             }
 
         val authority =
-            loadAuthority(
+            loadAuthorityOrNull(
                 home,
                 identity,
             )
@@ -962,9 +971,15 @@ object VexLifeCurrentMemoryReader {
                 authorityPolicy ==
                 ScoreAuthorityPolicy.REQUIRE_CURRENT_MEMBERSHIP
             ) {
+                val currentAuthority =
+                    requireNotNull(
+                        authority,
+                    ) {
+                        "current prompt Memory requires one current semantic authority head"
+                    }
                 require(
                     authorityContains(
-                        authority,
+                        currentAuthority,
                         statement,
                     )
                 ) {
@@ -980,6 +995,43 @@ object VexLifeCurrentMemoryReader {
             openLoops = loops.values.toList(),
         )
     }
+
+    private fun loadAuthorityOrNull(
+        home: Path,
+        identity: Identity,
+    ): JsonObject? {
+        val head =
+            inside(
+                home,
+                "semantic-authority/score/" +
+                    identity.lineageRef +
+                    "/" +
+                    identity.threadRef +
+                    "/head.json",
+            )
+        if (
+            !Files.exists(
+                head,
+                LinkOption.NOFOLLOW_LINKS,
+            )
+        ) {
+            return null
+        }
+        return loadAuthority(
+            home = home,
+            identity = identity,
+        )
+    }
+
+    private fun requireCurrentScoreAuthority(
+        score: ScoreSnapshot,
+        label: String,
+    ): JsonObject =
+        requireNotNull(
+            score.authority,
+        ) {
+            "$label requires one current semantic authority head"
+        }
 
     private fun loadAuthority(
         home: Path,
@@ -2209,6 +2261,11 @@ object VexLifeCurrentMemoryReader {
         score: ScoreSnapshot,
         conversationStore: DirectConversationStore,
     ): DailySnapshot {
+        val currentAuthority =
+            requireCurrentScoreAuthority(
+                score = score,
+                label = "Daily Memory",
+            )
         val root =
             "daily-memory-dream/" +
                 identity.lineageRef +
@@ -2263,7 +2320,7 @@ object VexLifeCurrentMemoryReader {
                 head.string(
                     "sourceSemanticAuthorityHeadSha256",
                 ) ==
-                score.authority.string(
+                currentAuthority.string(
                     "semanticAuthorityHeadSha256",
                 ),
         ) {
@@ -2365,7 +2422,7 @@ object VexLifeCurrentMemoryReader {
                 stratum.string(
                     "sourceSemanticAuthorityHeadSha256",
                 ) ==
-                score.authority.string(
+                currentAuthority.string(
                     "semanticAuthorityHeadSha256",
                 ) &&
                 !stratum.boolean(
@@ -2613,7 +2670,7 @@ object VexLifeCurrentMemoryReader {
                         it.consentState in
                         positiveConsent &&
                         authorityContains(
-                            score.authority,
+                            currentAuthority,
                             it,
                         )
                 }
