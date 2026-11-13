@@ -126,10 +126,13 @@ object VexLifeProdSetupProcess {
                 3 &&
                 args[0] ==
                 "--expected-source-sha" &&
-                args[2] ==
-                "--allow-acquisition",
+                args[2] in
+                setOf(
+                    "--allow-acquisition",
+                    "--reuse-existing",
+                ),
         ) {
-            "VexLife-Prod setup requires exactly --expected-source-sha <git-sha> --allow-acquisition"
+            "VexLife-Prod setup requires exactly --expected-source-sha <git-sha> (--allow-acquisition|--reuse-existing)"
         }
 
         val sourceSha =
@@ -144,7 +147,9 @@ object VexLifeProdSetupProcess {
 
         return Arguments(
             expectedSourceSha = sourceSha,
-            allowAcquisition = true,
+            allowAcquisition =
+                args[2] ==
+                    "--allow-acquisition",
         )
     }
 
@@ -164,12 +169,6 @@ object VexLifeProdSetupProcess {
         arguments: Arguments,
         hooks: Hooks,
     ) {
-        require(
-            arguments.allowAcquisition,
-        ) {
-            "VexLife-Prod setup process requires explicit acquisition authorization"
-        }
-
         val imageRoot =
             hooks.locateImageRoot()
                 .toAbsolutePath()
@@ -186,7 +185,7 @@ object VexLifeProdSetupProcess {
 
         val session =
             hooks.establishSession(
-                true,
+                arguments.allowAcquisition,
             )
 
         val installed =
@@ -281,6 +280,35 @@ object VexLifeProdSetupProcess {
 fun main(
     args: Array<String>,
 ) {
+    if (
+        args.size ==
+            3 &&
+        args[0] ==
+            "--inspect-front-door" &&
+        args[1] ==
+            "--expected-source-sha"
+    ) {
+        VexLifeProdMacFrontDoorProcess.inspect(
+            args[2],
+        )
+        return
+    }
+
+    if (
+        args.size ==
+            4 &&
+        args[0] ==
+            "--resolve-front-door-control" &&
+        args[2] ==
+            "--expected-source-sha"
+    ) {
+        VexLifeProdMacFrontDoorProcess.resolve(
+            controlRef = args[1],
+            desiredSourceSha = args[3],
+        )
+        return
+    }
+
     VexLifeProdSetupProcess.run(
         args,
     )
