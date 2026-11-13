@@ -698,7 +698,7 @@ class VexLifeProdLocalSetupTest {
     }
 
     @Test
-    fun explicitFirstSetupFormsCanonicalHomeBeforeRuntimeEffects() {
+    fun explicitHomeFormationCreatesIdentityWithoutRuntimeEffects() {
         val parent =
             Files.createTempDirectory(
                 "vexlife-prod-local-setup-home-absent-",
@@ -712,10 +712,9 @@ class VexLifeProdLocalSetupTest {
             mutableListOf<String>()
 
         try {
-            val result =
-                VexLifeProdLocalSetup.establishAt(
+            val formed =
+                VexLifeProdLocalSetup.formFreshHomeAt(
                     productHome = home,
-                    allowAcquisition = true,
                     hooks = hooks(
                         trace,
                     ),
@@ -723,31 +722,16 @@ class VexLifeProdLocalSetupTest {
 
             assertEquals(
                 "FRESH_CANONICAL_VEXLIFE_HOME_FORMED",
-                result.homeDisposition,
-            )
-            assertEquals(
-                "LOCAL_HERETIC_FOUNDATION_READY",
-                result.state,
+                formed.state,
             )
             assertEquals(
                 listOf(
                     "HOST",
                     "DEVICE",
                     "NOW",
-                    "WRITER_CURRENTNESS",
-                    "MANAGED_PYTHON",
-                    "ARTIFACTS",
-                    "HERETIC_ENVIRONMENT",
-                    "RUNTIME",
                 ),
                 trace,
             )
-            val formed =
-                requireNotNull(
-                    VexLifeProdHomeFiles.observeExisting(
-                        home,
-                    ),
-                )
             assertTrue(
                 formed.manifest.homeRef.startsWith(
                     "vex-home.device.vexlife.",
@@ -770,6 +754,13 @@ class VexLifeProdLocalSetupTest {
                     ),
                 ),
             )
+            assertFalse(
+                Files.exists(
+                    home.resolve(
+                        "models",
+                    ),
+                ),
+            )
         } finally {
             parent
                 .toFile()
@@ -778,46 +769,59 @@ class VexLifeProdLocalSetupTest {
     }
 
     @Test
-    fun absentCanonicalHomeStillHoldsWithoutExplicitFirstSetupAuthority() {
+    fun acquisitionAuthorityCannotMintMissingHome() {
         val parent =
             Files.createTempDirectory(
-                "vexlife-prod-local-setup-home-absent-no-authority-",
+                "vexlife-prod-local-setup-home-absent-no-identity-authority-",
             )
                 .toAbsolutePath()
         val home =
             parent.resolve(
                 ".vexlife",
             )
-        val trace =
-            mutableListOf<String>()
 
-        try {
-            assertFailsWith<IllegalArgumentException> {
-                VexLifeProdLocalSetup.establishAt(
-                    productHome = home,
-                    allowAcquisition = false,
-                    hooks = hooks(
-                        trace,
+        for (
+            allowAcquisition in
+            listOf(
+                false,
+                true,
+            )
+        ) {
+            val trace =
+                mutableListOf<String>()
+
+            try {
+                assertFailsWith<IllegalArgumentException> {
+                    VexLifeProdLocalSetup.establishAt(
+                        productHome = home,
+                        allowAcquisition = allowAcquisition,
+                        hooks = hooks(
+                            trace,
+                        ),
+                    )
+                }
+
+                assertEquals(
+                    listOf(
+                        "HOST",
+                    ),
+                    trace,
+                )
+                assertFalse(
+                    Files.exists(
+                        home,
                     ),
                 )
+            } finally {
+                home
+                    .toFile()
+                    .deleteRecursively()
             }
-
-            assertEquals(
-                listOf(
-                    "HOST",
-                ),
-                trace,
-            )
-            assertFalse(
-                Files.exists(
-                    home,
-                ),
-            )
-        } finally {
-            parent
-                .toFile()
-                .deleteRecursively()
         }
+
+        parent
+            .toFile()
+            .deleteRecursively()
     }
 
     @Test
