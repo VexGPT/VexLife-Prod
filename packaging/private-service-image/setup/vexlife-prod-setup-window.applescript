@@ -85,8 +85,8 @@ end dictionaryText
 on formatGiB(value)
     if value is missing value or value is (app's NSNull's null()) then return "Unknown"
     set gib to (value as real) / 1073741824
-    set tenth to gib
-    return (tenth as text) & " GB"
+    set gibText to gib as text
+    return gibText & " GB"
 end formatGiB
 
 on projectionSummary(projection)
