@@ -997,6 +997,12 @@ object VexLifeCurrentMemoryReader {
                     "sourceConversationHeadSha256",
                 ) &&
                 acceptance.string(
+                    "semanticSubjectRef",
+                ) ==
+                candidate.string(
+                    "semanticSubjectRef",
+                ) &&
+                acceptance.string(
                     "semanticSubjectFingerprint",
                 ) ==
                 candidate.string(
@@ -1004,27 +1010,32 @@ object VexLifeCurrentMemoryReader {
                 ) &&
                 acceptance.string(
                     "acceptedSummary",
+                )
+                    .isNotBlank() &&
+                semanticHashString(
+                    acceptance.string(
+                        "acceptedSummary",
+                    ),
                 ) ==
-                candidate.string(
-                    "proposedSummary",
-                ) &&
                 acceptance.string(
                     "acceptedSummarySha256",
-                ) ==
-                candidate.string(
-                    "proposedSummarySha256",
                 ) &&
                 acceptance.string(
                     "memoryRelation",
-                ) ==
-                candidate.string(
-                    "proposedMemoryRelation",
-                ) &&
+                ) in
+                memoryRelations &&
                 acceptance.string(
                     "statementState",
-                ) ==
-                candidate.string(
-                    "proposedStatementState",
+                ) in
+                statementStates &&
+                acceptance.string(
+                    "transitionKind",
+                ) in
+                setOf(
+                    "NONE",
+                    "CORRECTS",
+                    "SUPERSEDES",
+                    "RELEASES_OR_TOMBSTONES",
                 ) &&
                 acceptance.string(
                     "consentDispositionRef",
