@@ -88,6 +88,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 conversationPath: ${jsString(VexLifeProdServiceContract.ConversationPath)},
                 contextPath: ${jsString(VexLifeProdServiceContract.ContextPath)},
                 memoryPath: ${jsString(VexLifeProdServiceContract.MemoryPath)},
+                privatePath: ${jsString(VexLifeProdServiceContract.PrivatePath)},
+                privateControlPath: ${jsString(VexLifeProdServiceContract.PrivateControlPath)},
+                privateSendPath: ${jsString(VexLifeProdServiceContract.PrivateSendPath)},
+                privateNoteProposePath: ${jsString(VexLifeProdServiceContract.PrivateNoteProposePath)},
+                privateNoteKeepPath: ${jsString(VexLifeProdServiceContract.PrivateNoteKeepPath)},
+                privateNoteDeclinePath: ${jsString(VexLifeProdServiceContract.PrivateNoteDeclinePath)},
                 visionPath: ${jsString(VexLifeProdServiceContract.VisionPath)},
                 visionControlPath: ${jsString(VexLifeProdServiceContract.VisionControlPath)},
                 sendPath: ${jsString(VexLifeProdServiceContract.ConversationSendPath)}
@@ -190,7 +196,16 @@ object VexLifeWebP1RuntimeArtifacts {
                 thoughtVisibility: byId('thought-visibility'),
                 lowMemoryAlert: byId('low-memory-alert'),
                 alertThreshold: byId('alert-threshold'),
-                cleanChat: byId('clean-chat'),
+                privateMode: byId('private-mode'),
+                privateModeLabel: byId('private-mode-label'),
+                privateBanner: byId('private-banner'),
+                privateBannerText: byId('private-banner-text'),
+                privateNotes: byId('private-notes'),
+                privateProposal: byId('private-proposal'),
+                privateProposalText: byId('private-proposal-text'),
+                privateKeep: byId('private-keep'),
+                privateDecline: byId('private-decline'),
+                privatePropose: byId('private-propose'),
                 inspector: byId('inspector'),
                 inspectorTitle: byId('inspector-title'),
                 inspectorFacts: byId('inspector-facts'),
@@ -206,6 +221,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 currentState: null,
                 vision: null,
                 visionInFlight: false,
+                privateMode: null,
+                privateInFlight: false,
+                privatePending: null,
                 app: (() => {
                   try {
                     const saved = localStorage.getItem(apps.storageKey);
@@ -387,7 +405,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 return chunks;
               };
 
-              const readablePlan = () => (state.conversation?.messages ?? [])
+              const readablePlan = () => (isPrivate()
+                ? (state.privateMode?.exchanges ?? []).flatMap((exchange, index) => [
+                    { role: 'human', content: exchange.human, eventRef: 'private.' + (index * 2 + 1) },
+                    { role: 'vex', content: exchange.vex, eventRef: 'private.' + (index * 2 + 2) }
+                  ])
+                : (state.conversation?.messages ?? []))
                 .filter((message) => String(message.content ?? '').trim())
                 .map((message) => ({
                   eventRef: String(message.eventRef ?? ''),
@@ -865,6 +888,33 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const renderTimeline = () => {
                 if (!ui.timeline) return;
+                ui.timeline.dataset.private = String(isPrivate());
+                if (isPrivate()) {
+                  const exchanges = state.privateMode?.exchanges ?? [];
+                  const nodes = exchanges.flatMap((exchange, index) => [
+                    messageNode({ role: 'human', content: exchange.human, sequence: index * 2 + 1, eventRef: 'private.' + (index * 2 + 1) }),
+                    messageNode({ role: 'vex', content: exchange.vex, sequence: index * 2 + 2, eventRef: 'private.' + (index * 2 + 2) })
+                  ]);
+                  if (state.privatePending) {
+                    nodes.push(messageNode({ role: 'human', content: state.privatePending, sequence: exchanges.length * 2 + 1, eventRef: 'private.pending' }));
+                    nodes.push(waitingNode(exchanges.length * 2 + 2));
+                  }
+                  if (!nodes.length) {
+                    const empty = document.createElement('li');
+                    empty.className = 'timeline-empty';
+                    const heading = document.createElement('p');
+                    heading.className = 'timeline-empty-heading';
+                    heading.textContent = 'Private conversation';
+                    const note = document.createElement('p');
+                    note.textContent = 'Nothing you say here is kept. Vex still knows what it knew.';
+                    empty.append(heading, note);
+                    nodes.push(empty);
+                  }
+                  ui.timeline.replaceChildren(...nodes);
+                  applyTimelineViewport();
+                  markReading();
+                  return;
+                }
                 const messages = state.conversation?.messages ?? [];
                 const nodes = messages.map(messageNode);
 
@@ -962,6 +1012,104 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.ticketView.dataset.contextReady = 'true';
               };
 
+              // Private mode: semantics and copy come from the service (VexLifePrivateModeFamily). The
+              // private transcript exists only in the running service; this renderer only shows it.
+              const isPrivate = () => state.privateMode?.state === 'PRIVATE';
+
+              const renderPrivate = () => {
+                const display = state.privateMode?.display;
+                const privateNow = isPrivate();
+                ui.privateMode.setAttribute('aria-pressed', String(privateNow));
+                ui.privateMode.dataset.private = String(privateNow);
+                ui.privateModeLabel.textContent = String(display?.label ?? 'Kept in your archives');
+                ui.privateMode.title = String(display?.detail ?? '') + (display?.primaryLabel ? ' (' + display.primaryLabel + ')' : '');
+                ui.privateMode.disabled = !display || state.privateInFlight;
+                root.dataset.vexPrivate = String(privateNow);
+                ui.privateBanner.hidden = !privateNow;
+                if (!privateNow) return;
+                ui.privateBannerText.textContent = String(display?.detail ?? '');
+                const notes = (state.privateMode?.keptNotes ?? []).map((note) => {
+                  const item = document.createElement('li');
+                  item.textContent = 'Kept: ' + note;
+                  return item;
+                });
+                ui.privateNotes.replaceChildren(...notes);
+                const proposal = state.privateMode?.proposedNoteOrNull;
+                ui.privateProposal.hidden = !proposal;
+                ui.privateProposalText.textContent = proposal ? 'Vex would keep: “' + proposal + '”' : '';
+                ui.privatePropose.hidden = Boolean(proposal);
+                ui.privatePropose.disabled = state.privateInFlight || !(state.privateMode?.exchanges ?? []).length;
+                ui.privateKeep.disabled = state.privateInFlight;
+                ui.privateDecline.disabled = state.privateInFlight;
+              };
+
+              const loadPrivate = async () => {
+                const response = await fetch(service.privatePath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const wasPrivate = isPrivate();
+                state.privateMode = await readJson(response);
+                renderPrivate();
+                if (wasPrivate !== isPrivate()) renderTimeline();
+                if (state.app === apps.archives) renderArchives();
+                return state.privateMode;
+              };
+
+              const privatePost = async (path, body) => {
+                state.privateInFlight = true;
+                renderPrivate();
+                try {
+                  const response = await fetch(path, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', accept: 'application/json' },
+                    body: JSON.stringify(body ?? {})
+                  });
+                  const value = await readJson(response);
+                  state.privateMode = value?.private ?? value;
+                } finally {
+                  state.privateInFlight = false;
+                }
+                renderPrivate();
+                renderTimeline();
+                renderComposer();
+                if (state.app === apps.archives) renderArchives();
+              };
+
+              const togglePrivate = async () => {
+                const controlRef = state.privateMode?.display?.primaryControlRef;
+                if (!controlRef || state.privateInFlight || state.sendInFlight) return;
+                try {
+                  await privatePost(service.privateControlPath, {
+                    controlRef,
+                    requestRef: 'request.vexlife-prod.private.' + crypto.randomUUID().toLowerCase()
+                  });
+                  notify(isPrivate()
+                    ? 'Private mode is on. Nothing here is kept unless you keep a note.'
+                    : 'Private mode is off. Vex will know a private conversation happened.');
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : 'Private mode could not change.');
+                  await loadPrivate().catch(() => {});
+                }
+              };
+
+              const sendPrivate = async () => {
+                const content = ui.draft.value.trim();
+                if (!content || state.privateInFlight) return;
+                state.privatePending = content;
+                ui.draft.value = '';
+                sizeDraft();
+                renderTimeline();
+                try {
+                  await privatePost(service.privateSendPath, { content });
+                } catch (error) {
+                  if (!ui.draft.value) ui.draft.value = content;
+                  sizeDraft();
+                  notify(error instanceof Error ? error.message : 'Vex could not reply. Nothing was kept.');
+                } finally {
+                  state.privatePending = null;
+                  renderTimeline();
+                  renderComposer();
+                }
+              };
+
               // The left pane shows one app at a time. Choosing an app is presentation state only.
               const inSourceTemplate = (pageUrl) =>
                 Boolean(pageUrl) && apps.sourceTemplateScopes.some((scope) => String(pageUrl).startsWith(scope));
@@ -999,12 +1147,18 @@ object VexLifeWebP1RuntimeArtifacts {
                   return;
                 }
                 const days = new Map();
-                for (const message of messages) {
-                  const at = new Date(message.formedAt);
+                const place = (at, entry) => {
                   const key = archiveDayKey(at);
                   if (!days.has(key)) days.set(key, { date: at, messages: [] });
-                  days.get(key).messages.push(message);
+                  days.get(key).messages.push(entry);
+                };
+                for (const message of messages) place(new Date(message.formedAt), message);
+                for (const interval of state.privateMode?.intervals ?? []) {
+                  if (!Number.isNaN(Date.parse(interval.startedAt))) {
+                    place(new Date(interval.startedAt), { privateInterval: interval, formedAt: interval.startedAt });
+                  }
                 }
+                for (const day of days.values()) day.messages.sort((a, b) => Date.parse(a.formedAt) - Date.parse(b.formedAt));
                 const first = new Date(messages[0].formedAt);
                 ui.archivesSummary.textContent =
                   messages.length + ' message' + (messages.length === 1 ? '' : 's') + ' over ' + days.size + ' day' + (days.size === 1 ? '' : 's') +
@@ -1017,12 +1171,33 @@ object VexLifeWebP1RuntimeArtifacts {
                   const heading = document.createElement('h3');
                   heading.textContent = day.date.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
                   const count = document.createElement('span');
-                  count.textContent = day.messages.length + ' message' + (day.messages.length === 1 ? '' : 's');
+                  const spoken = day.messages.filter((entry) => !entry.privateInterval).length;
+                  count.textContent = spoken + ' message' + (spoken === 1 ? '' : 's');
                   heading.append(count);
                   const entries = document.createElement('ol');
                   entries.className = 'archives-entries';
                   for (const message of day.messages) {
                     const entry = document.createElement('li');
+                    if (message.privateInterval) {
+                      const interval = message.privateInterval;
+                      const from = new Date(interval.startedAt);
+                      const to = new Date(interval.endedAt);
+                      entry.className = 'archives-entry archives-private';
+                      const time = document.createElement('time');
+                      time.dateTime = String(interval.startedAt);
+                      time.textContent = from.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+                      const who = document.createElement('span');
+                      who.className = 'who';
+                      who.textContent = 'Private';
+                      const text = document.createElement('p');
+                      text.textContent =
+                        'Private conversation until ' + to.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) +
+                        ' · ' + interval.exchangeCount + ' exchange' + (interval.exchangeCount === 1 ? '' : 's') + ' · not kept' +
+                        (interval.keptNotes.length ? '\nKept: ' + interval.keptNotes.join('\nKept: ') : '');
+                      entry.append(time, who, text);
+                      entries.append(entry);
+                      continue;
+                    }
                     entry.className = 'archives-entry';
                     entry.dataset.eventRef = String(message.eventRef ?? '');
                     const time = document.createElement('time');
@@ -1062,7 +1237,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 const contextEligible = Boolean(state.contextTargetPageUrl);
                 const contextReady = Boolean(state.browserContext);
                 const archivesOpen = state.app === apps.archives;
-                const canInclude = !archivesOpen && (contextEligible || contextReady);
+                const privateNow = isPrivate();
+                const canInclude = !archivesOpen && !privateNow && (contextEligible || contextReady);
                 ui.contextShare.disabled = !canInclude || state.contextLoading;
                 ui.contextShare.dataset.state = state.contextLoading
                   ? 'Loading'
@@ -1079,6 +1255,8 @@ object VexLifeWebP1RuntimeArtifacts {
                     : 'Include this page';
                 ui.composerHold.textContent = state.contextLoading
                   ? 'Reading the current page separately for Vex…'
+                  : privateNow
+                    ? (state.privateInFlight ? 'Vex is replying privately…' : 'Private · nothing here is kept unless you keep a note.')
                   : archivesOpen
                     ? "Vex doesn't see your archives yet."
                   : !canInclude
@@ -1088,7 +1266,9 @@ object VexLifeWebP1RuntimeArtifacts {
                       : state.pending && !state.sendInFlight
                         ? 'The prior Send outcome is unresolved. Send again to retry that exact attempt.'
                         : '';
-                ui.send.disabled = state.sendInFlight || (!state.pending && !ui.draft.value.trim());
+                ui.send.disabled = privateNow
+                  ? state.privateInFlight || !ui.draft.value.trim()
+                  : state.sendInFlight || (!state.pending && !ui.draft.value.trim());
                 ui.responseProgress.hidden = true;
                 renderTicket();
               };
@@ -1323,6 +1503,10 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const send = async () => {
+                if (isPrivate()) {
+                  await sendPrivate();
+                  return;
+                }
                 if (state.sendInFlight) return;
 
                 const retrying = state.pending !== null;
@@ -1515,6 +1699,20 @@ object VexLifeWebP1RuntimeArtifacts {
                 try { navigate(ui.query.value); } catch (error) { notify(error.message); }
               });
               ui.appSelector.addEventListener('change', () => chooseApp(ui.appSelector.value));
+              ui.privateMode.addEventListener('click', () => void togglePrivate());
+              ui.privatePropose.addEventListener('click', () => {
+                void privatePost(service.privateNoteProposePath, {}).catch((error) =>
+                  notify(error instanceof Error ? error.message : 'Vex could not propose a note.'));
+              });
+              ui.privateKeep.addEventListener('click', () => {
+                const text = state.privateMode?.proposedNoteOrNull;
+                if (!text) return;
+                void privatePost(service.privateNoteKeepPath, { text }).catch((error) =>
+                  notify(error instanceof Error ? error.message : 'The note was not kept.'));
+              });
+              ui.privateDecline.addEventListener('click', () => {
+                void privatePost(service.privateNoteDeclinePath, {}).catch(() => {});
+              });
               ui.family.addEventListener('click', (event) => {
                 const member = event.target.closest('.family-member');
                 if (member?.dataset.familyHome) navigate(member.dataset.familyHome);
@@ -1749,6 +1947,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   render();
                   navigate(browser.initialPageUrl);
                   renderApp();
+                  void loadPrivate().catch(() => {});
                   void loadMemory().catch(() => {});
                 })
                 .catch((error) => {
@@ -1760,6 +1959,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (state.pending) return;
                 void loadConversation().catch(() => {});
                 if (!state.visionInFlight) void loadVision().catch(() => {});
+                if (!state.privateInFlight) void loadPrivate().catch(() => {});
               }, 2500);
             })();
         """

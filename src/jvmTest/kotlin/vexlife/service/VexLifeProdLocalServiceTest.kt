@@ -26,6 +26,7 @@ import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.memory.VexLifeDailyMemoryDream
 import vexlife.memory.VexLifeMemoryContextFixture
 import vexlife.memory.VexLifeMemoryFamily
@@ -603,7 +604,7 @@ class VexLifeProdLocalServiceTest {
                     assertTrue(
                         presentation.body()
                             .contains(
-                                "Start clean chat",
+                                "Kept in your archives",
                             ),
                     )
                     assertTrue(
@@ -682,6 +683,90 @@ class VexLifeProdLocalServiceTest {
             parent
                 .toFile()
                 .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun privateModeKeepsNothingButTheIntervalAndTheAgreedNote() {
+        val root = Files.createTempDirectory("vexlife-prod-service-private-").toAbsolutePath().resolve("VexLife-Prod")
+        val calls = mutableListOf<List<vexlife.companion.CompanionProviderMessage>>()
+        val completion =
+            vexlife.continuity.VexLifePrivateConversation.Completion { messages ->
+                calls += messages
+                if (messages.first().content.startsWith("VEXLIFE_PRIVATE_NOTE/v1")) "Victor is nervous about Friday." else "I hear you."
+            }
+        val secret = "something only for this private conversation"
+
+        fun private(origin: String) =
+            json.decodeFromString<VexLifeProdServiceContract.PrivateProjection>(get(origin, VexLifeProdServiceContract.PrivatePath).body())
+
+        fun control(origin: String, ref: String) =
+            postJson(
+                origin,
+                VexLifeProdServiceContract.PrivateControlPath,
+                json.encodeToString(VexLifeProdServiceContract.PrivateControlRequest(ref, "request.vexlife-prod.private.${ref.lowercase()}")),
+            )
+
+        try {
+            bootstrapHome(root)
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha = "a".repeat(40),
+                    setup = setup(root),
+                    turnExecutor = VexLifeProdLocalService.TurnExecutor { _, _ -> error("a private message must never become a canonical turn") },
+                    memoryReader = { VexLifeMemoryContextFixture.current() },
+                    privateCompletion = completion,
+                )
+                .use { service ->
+                    assertEquals(VexLifePrivateModeFamily.StateKept, private(service.origin).state)
+                    assertEquals(409, postJson(service.origin, VexLifeProdServiceContract.PrivateSendPath, json.encodeToString(VexLifeProdServiceContract.PrivateSendRequest("hi"))).statusCode())
+
+                    assertEquals(200, control(service.origin, VexLifePrivateModeFamily.ControlBegin).statusCode())
+                    assertEquals(409, control(service.origin, VexLifePrivateModeFamily.ControlBegin).statusCode(), "already private")
+
+                    val canonical =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.ConversationSendPath,
+                            json.encodeToString(VexLifeProdServiceContract.SendRequest(idempotencyKey = "send.private-guard", content = secret)),
+                        )
+                    assertEquals(409, canonical.statusCode(), "canonical Send is refused while private")
+
+                    val afterSend =
+                        json.decodeFromString<VexLifeProdServiceContract.PrivateProjection>(
+                            postJson(service.origin, VexLifeProdServiceContract.PrivateSendPath, json.encodeToString(VexLifeProdServiceContract.PrivateSendRequest(secret))).body(),
+                        )
+                    assertEquals(listOf(secret), afterSend.exchanges.map { it.human })
+                    assertEquals("I hear you.", afterSend.exchanges.single().vex)
+                    val system = calls.last().first().content
+                    assertTrue(system.startsWith("VEXLIFE_PRIVATE_CONVERSATION/v1"))
+                    assertTrue("VEXLIFE_CURRENT_MEMORY_CONTEXT/v1" in system, "Vex still knows what it knew")
+
+                    val proposed =
+                        json.decodeFromString<VexLifeProdServiceContract.PrivateProjection>(
+                            postJson(service.origin, VexLifeProdServiceContract.PrivateNoteProposePath, "{}").body(),
+                        )
+                    assertEquals("Victor is nervous about Friday.", proposed.proposedNoteOrNull)
+                    assertEquals(
+                        400,
+                        postJson(service.origin, VexLifeProdServiceContract.PrivateNoteKeepPath, json.encodeToString(VexLifeProdServiceContract.PrivateNoteKeepRequest("different words"))).statusCode(),
+                        "only the exact proposed words can be kept",
+                    )
+                    postJson(service.origin, VexLifeProdServiceContract.PrivateNoteKeepPath, json.encodeToString(VexLifeProdServiceContract.PrivateNoteKeepRequest("Victor is nervous about Friday.")))
+
+                    val ended = json.decodeFromString<VexLifeProdServiceContract.PrivateControlResult>(control(service.origin, VexLifePrivateModeFamily.ControlEnd).body())
+                    assertEquals(VexLifePrivateModeFamily.StateKept, ended.private.state)
+                    assertTrue(ended.private.exchanges.isEmpty())
+                    val interval = ended.private.intervals.single()
+                    assertEquals(1, interval.exchangeCount)
+                    assertEquals(listOf("Victor is nervous about Friday."), interval.keptNotes)
+                }
+
+            val written = Files.walk(root).use { paths -> paths.filter { Files.isRegularFile(it) }.toList() }
+            assertTrue(written.none { secret in Files.readString(it, Charsets.ISO_8859_1) }, "the private transcript is never written")
+            assertTrue(written.any { it.toString().contains("private-intervals") })
+        } finally {
+            root.parent.toFile().deleteRecursively()
         }
     }
 

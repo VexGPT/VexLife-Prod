@@ -85,10 +85,9 @@ Workspace
         HomeDirectories
         HomeAddDirectory
       SettingsContinuity
+        ContinuityMemory
         ContinuityMode
         DreamSync
-      SettingsReset
-        CleanChat
 ```
 
 The current geometry uses the accepted relational grammar only:
@@ -235,11 +234,8 @@ CONFIGURATION_ONLY_NOT_REOBSERVED
 DISPLAYED CURRENT STATE
 != EFFECT ADMISSION
 ~~~
-CleanChat is disabled as "Not available yet" and says what it will be: the predecessor's `CLEAN_START`
-Send mode (vgong24/VexLife #975 candidate), a prompt-selection boundary, not deletion, archive, a
-new Conversation or Memory erasure. It is not wired because Product selects *recent* completed turns,
-so a one-turn mode would quietly expire on the next Send; it needs a durable boundary in canonical
-Conversation that later selection respects, which is a Conversation contract change of its own. ThoughtVisibility is
+"Clean chat" is gone. Private mode replaces it (see "Private mode" below), and the Settings reset
+section with it. ThoughtVisibility is
 presentation-local preference only; it does not claim hidden-reasoning data exists in the current
 Conversation projection.
 
@@ -287,7 +283,6 @@ Workspace
           Presentation preferences
           Home status
           Continuity status
-          CleanChat
 ~~~
 
 Permanent:
@@ -311,6 +306,26 @@ The A003 nested-browser workspace is the perceptual continuity reference for thi
 It is evidence of intended shape and interaction composition, not runtime/source authority.
 Current VexLife-Prod service, Conversation, Context, browser-context and runtime owners remain
 authoritative.
+
+## Private mode
+
+The Companion header shows whether the conversation is being kept: **Kept in your archives**
+(ordinary) or **Private**. `VexLifePrivateModeFamily` owns that meaning and the Begin/End Controls;
+`VexLifePrivateConversation` realizes them in the service.
+
+~~~text
+Go private      -> an in-memory private conversation opens; nothing is written
+private message -> POST /api/v1/private/send: private system note + the Memory Vex already had +
+                   this private conversation so far -> local runtime -> reply held in memory only
+canonical Send  -> refused with 409 while private, so a private message can never become a kept turn
+Keep something… -> Vex proposes one short note; only those exact words can be kept (POST note/keep)
+Leave private   -> transcript dropped; runtime/vexlife-prod/continuity/private-intervals/<ref>.json
+                   records only when, how many exchanges, and the kept notes
+service restart -> an open private conversation is lost entirely
+~~~
+
+Archives shows each ended private conversation on its day as "Private conversation · not kept",
+with its kept notes. Telling Vex about the gap in ordinary prompts is the next slice.
 
 ## Apps: Source template, Archives, Browser
 

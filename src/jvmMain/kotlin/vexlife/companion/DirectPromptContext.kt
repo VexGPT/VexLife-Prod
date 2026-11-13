@@ -2212,6 +2212,13 @@ object DirectPromptContext {
             4
     }
 
+    /**
+     * The exact Memory system message an ordinary turn would carry for [context], or null when Memory
+     * is not included. Private conversations use it so Vex still knows what it knew.
+     */
+    internal fun memorySystemMessage(context: VexLifeMemoryContract.Context): String? =
+        verifyMemoryContext(context)?.systemContent
+
     private fun verifyMemoryContext(
         value: VexLifeMemoryContract.Context?,
     ): VerifiedMemory? {

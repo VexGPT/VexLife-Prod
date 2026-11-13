@@ -17,6 +17,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.browser.VexLifeProdFrameHost
+import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
 import vexlife.companion.DirectPromptContext
 import vexlife.companion.DirectTurnContextStore
@@ -24,6 +25,8 @@ import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.memory.VexLifeCurrentMemoryReader
+import vexlife.continuity.VexLifePrivateConversation
+import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.memory.VexLifeDailyMemoryDream
 import vexlife.memory.VexLifeMemoryContract
 import vexlife.memory.VexLifeMemoryFamily
@@ -53,7 +56,16 @@ class VexLifeProdLocalService private constructor(
     private val visionRuntime: VisionRuntime?,
     private val currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
     private val memoryReader: (Path) -> VexLifeMemoryContract.Context,
+    privateCompletionOverride: VexLifePrivateConversation.Completion? = null,
 ) : AutoCloseable {
+    private val privateConversation = VexLifePrivateConversation(Path.of(startupSetup.productHome))
+
+    private val privateCompletion =
+        privateCompletionOverride
+            ?: VexLifePrivateConversation.Completion { messages ->
+                DirectCompanionConnection.invoke(runtime = startupSetup.qualifiedRuntimeEvidence, messages = messages).content
+            }
+
     companion object {
         private const val MaxRequestBytes =
             256 * 1024
@@ -72,6 +84,8 @@ class VexLifeProdLocalService private constructor(
                 allowSpecialFloatingPointValues = false
                 allowStructuredMapKeys = false
             }
+
+        private const val PrivateIntervalProjectionLimit = 50
 
         private val ProductMemoryReader: (Path) -> VexLifeMemoryContract.Context = {
             VexLifeCurrentMemoryReader.readCurrent(it)
@@ -281,6 +295,7 @@ class VexLifeProdLocalService private constructor(
             currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)? =
                 null,
             memoryReader: ((Path) -> VexLifeMemoryContract.Context)? = null,
+            privateCompletion: VexLifePrivateConversation.Completion? = null,
         ): VexLifeProdLocalService =
             startAt(
                 sourceSha = sourceSha,
@@ -301,6 +316,7 @@ class VexLifeProdLocalService private constructor(
                 visionRuntime = visionRuntime,
                 currentStateObserver = currentStateObserver,
                 memoryReader = memoryReader ?: ProductMemoryReader,
+                privateCompletion = privateCompletion,
             )
 
         private fun startAt(
@@ -314,6 +330,7 @@ class VexLifeProdLocalService private constructor(
             visionRuntime: VisionRuntime?,
             currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
             memoryReader: (Path) -> VexLifeMemoryContract.Context = ProductMemoryReader,
+            privateCompletion: VexLifePrivateConversation.Completion? = null,
         ): VexLifeProdLocalService {
             require(
                 SourceShaPattern.matches(
@@ -380,6 +397,7 @@ class VexLifeProdLocalService private constructor(
                         visionRuntime = visionRuntime,
                         currentStateObserver = currentStateObserver,
                         memoryReader = memoryReader,
+                        privateCompletionOverride = privateCompletion,
                     )
 
                 server.executor =
@@ -596,6 +614,18 @@ class VexLifeProdLocalService private constructor(
                     )
 
                 VexLifeProdServiceContract.MemoryPath -> handleMemory(exchange)
+
+                VexLifeProdServiceContract.PrivatePath -> handlePrivate(exchange)
+
+                VexLifeProdServiceContract.PrivateControlPath -> handlePrivateControl(exchange)
+
+                VexLifeProdServiceContract.PrivateSendPath -> handlePrivateSend(exchange)
+
+                VexLifeProdServiceContract.PrivateNoteProposePath -> handlePrivateNotePropose(exchange)
+
+                VexLifeProdServiceContract.PrivateNoteKeepPath -> handlePrivateNoteKeep(exchange)
+
+                VexLifeProdServiceContract.PrivateNoteDeclinePath -> handlePrivateNoteDecline(exchange)
 
                 VexLifeProdServiceContract.MemoryDreamPath ->
                     handleMemoryDream(
@@ -1068,6 +1098,112 @@ class VexLifeProdLocalService private constructor(
         )
     }
 
+    private fun observePrivate(): VexLifeProdServiceContract.PrivateProjection {
+        val state = privateConversation.state()
+        val snapshot = privateConversation.snapshot()
+        return VexLifeProdServiceContract.PrivateProjection(
+            schemaVersion = VexLifeProdServiceContract.PrivateProjectionSchema,
+            state = state.stateRef,
+            display = VexLifePrivateModeFamily.displayStateFor(state),
+            startedAtOrNull = snapshot?.startedAt?.toString(),
+            exchanges = snapshot?.exchanges.orEmpty().map { VexLifeProdServiceContract.PrivateExchange(it.human, it.vex, it.at.toString()) },
+            keptNotes = snapshot?.keptNotes.orEmpty(),
+            proposedNoteOrNull = snapshot?.proposedNote,
+            intervals =
+                privateConversation.intervals().takeLast(PrivateIntervalProjectionLimit).map {
+                    VexLifeProdServiceContract.PrivateInterval(it.intervalRef, it.startedAt, it.endedAt, it.exchangeCount, it.keptNotes)
+                },
+            effectsPerformed = false,
+        )
+    }
+
+    private fun handlePrivate(exchange: HttpExchange) {
+        requireMethod(exchange, "GET")
+        respondJson(exchange = exchange, status = 200, value = observePrivate())
+    }
+
+    private fun handlePrivateControl(exchange: HttpExchange) {
+        requireMethod(exchange, "POST")
+        requireJson(exchange)
+        val request = JsonCodec.decodeFromString<VexLifeProdServiceContract.PrivateControlRequest>(requestText(exchange))
+        val control = requireNotNull(VexLifePrivateModeFamily.controlForRef(request.controlRef))
+        val act = VexLifePrivateModeFamily.resolve(privateConversation.state(), control)
+        val outcome =
+            when (act?.effect) {
+                VexLifePrivateModeFamily.Effect.BeginPrivate -> {
+                    privateConversation.begin()
+                    VexLifeProdServiceContract.PrivateRealized
+                }
+                VexLifePrivateModeFamily.Effect.EndPrivate -> {
+                    privateConversation.end()
+                    VexLifeProdServiceContract.PrivateRealized
+                }
+                null -> VexLifeProdServiceContract.PrivateNotLawfulNow
+            }
+        respondJson(
+            exchange = exchange,
+            status = if (outcome == VexLifeProdServiceContract.PrivateRealized) 200 else 409,
+            value =
+                VexLifeProdServiceContract.PrivateControlResult(
+                    schemaVersion = VexLifeProdServiceContract.PrivateControlResultSchema,
+                    requestRef = request.requestRef,
+                    controlRef = request.controlRef,
+                    outcome = outcome,
+                    private = observePrivate(),
+                ),
+        )
+    }
+
+    /** Runs one private effect; a state conflict or an unreachable Vex is reported, never a 500. */
+    private fun privateEffect(exchange: HttpExchange, effect: () -> Unit) {
+        try {
+            effect()
+        } catch (_: DirectCompanionConnection.ConnectionException) {
+            respondError(exchange, 503, "VEX_UNAVAILABLE", "Vex couldn't reply just now. Nothing was kept.")
+            return
+        } catch (conflict: IllegalStateException) {
+            respondError(exchange, 409, "PRIVATE_NOT_NOW", conflict.message ?: "That isn't possible in Private mode right now.")
+            return
+        }
+        respondJson(exchange = exchange, status = 200, value = observePrivate())
+    }
+
+    private fun requirePrivateOpen(exchange: HttpExchange): Boolean {
+        if (privateConversation.state() is VexLifePrivateModeFamily.Private) return true
+        respondError(exchange, 409, "PRIVATE_MODE_NOT_OPEN", "Private mode is not on.")
+        return false
+    }
+
+    private fun handlePrivateSend(exchange: HttpExchange) {
+        requireMethod(exchange, "POST")
+        requireJson(exchange)
+        val request = JsonCodec.decodeFromString<VexLifeProdServiceContract.PrivateSendRequest>(requestText(exchange))
+        if (!requirePrivateOpen(exchange)) return
+        val memory = runCatching { memoryReader(Path.of(startupSetup.productHome)) }.getOrNull()
+        val memoryMessage = memory?.let { runCatching { DirectPromptContext.memorySystemMessage(it) }.getOrNull() }
+        privateEffect(exchange) { privateConversation.send(request.content, memoryMessage, privateCompletion) }
+    }
+
+    private fun handlePrivateNotePropose(exchange: HttpExchange) {
+        requireMethod(exchange, "POST")
+        if (!requirePrivateOpen(exchange)) return
+        privateEffect(exchange) { privateConversation.proposeNote(privateCompletion) }
+    }
+
+    private fun handlePrivateNoteKeep(exchange: HttpExchange) {
+        requireMethod(exchange, "POST")
+        requireJson(exchange)
+        val request = JsonCodec.decodeFromString<VexLifeProdServiceContract.PrivateNoteKeepRequest>(requestText(exchange))
+        if (!requirePrivateOpen(exchange)) return
+        privateEffect(exchange) { privateConversation.keepNote(request.text) }
+    }
+
+    private fun handlePrivateNoteDecline(exchange: HttpExchange) {
+        requireMethod(exchange, "POST")
+        if (!requirePrivateOpen(exchange)) return
+        privateEffect(exchange) { privateConversation.declineNote() }
+    }
+
     private fun handleMemory(exchange: HttpExchange) {
         requireMethod(exchange, "GET")
         respondJson(exchange = exchange, status = 200, value = observeMemory())
@@ -1232,6 +1368,11 @@ class VexLifeProdLocalService private constructor(
             exchange,
             "POST",
         )
+        // A message written while Private mode is on must never reach canonical Conversation.
+        if (privateConversation.state() is VexLifePrivateModeFamily.Private) {
+            respondError(exchange, 409, "PRIVATE_MODE_ON", "Private mode is on; this message was not kept.")
+            return
+        }
         requireJson(
             exchange,
         )
