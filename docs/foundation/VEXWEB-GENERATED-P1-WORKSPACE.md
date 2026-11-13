@@ -147,6 +147,58 @@ ContextShare is a local interaction with ContextReceipt. It controls whether an 
 browser-context observation is included in the next current Send request; it does not become a
 Conversation, prompt-selection, or provider owner.
 
+Human page display and Vex page context are now explicitly separate relationships:
+
+```text
+BrowserViewport
+  -> direct ordinary HTTP(S) navigation
+  -> visible page retains its own URL/origin/site behavior
+  -> browser-pane sandbox permits ordinary in-pane scripts/forms/popups/downloads
+     without granting top-level VexLife navigation authority
+
+Vex BrowserContext
+  -> separate isolated context frame
+  -> current admitted context-provider boundary
+  -> not loaded merely because the human opened a page
+  -> explicit Include page starts context acquisition
+  -> current Send only when an exact current observation exists
+```
+
+Permanent:
+
+```text
+HUMAN PAGE DISPLAY != CONTEXT PROXY
+VISIBLE PAGE != VEX CONTEXT CURRENT
+HUMAN NAVIGATION SCOPE != VEX CONTEXT-ADMISSION SCOPE
+```
+
+The context frame remains isolated implementation topology and must not redefine what the human
+Browser is allowed to display. It is lazy: opening a human page does not also fetch the page through
+the context proxy. Explicit Include-page intent starts that separate acquisition. A page may therefore
+be human-visible while Vex page context is truthfully unavailable.
+
+Because the current web-hosted implementation cannot inspect an arbitrary cross-origin human frame,
+the context receipt describes the context provider's separate rendering of the same entered URL; it
+does not counterfeit that rendering as the exact DOM of the visible frame.
+
+Direct human web display also does not grant local Product effect authority. The loopback service
+accepts only its exact loopback Host, and browser-originated non-read requests must remain same-origin
+with the Product presentation. Non-browser local clients may continue to omit browser provenance
+headers.
+
+```text
+HUMAN WEB ACCESS != LOCAL PRODUCT EFFECT AUTHORITY
+CROSS-ORIGIN PAGE != VEXLIFE SERVICE CLIENT
+```
+
+The current web-hosted presentation still uses an HTML iframe as its human renderer. Its human-frame
+sandbox preserves ordinary in-pane interaction while withholding top-navigation authority from the
+page; this is container protection, not origin virtualization. Sites may still deny iframe embedding, and a cross-origin child navigation performed inside that iframe does not expose
+its exact new URL to the parent presentation. When the presentation cannot truthfully identify that
+new page, it clears BrowserContext / Include-page state rather than carrying stale context. A later
+native/browser-engine provider may replace this human rendering limitation without changing the
+Conversation or BrowserContext ownership boundaries.
+
 Conversation and Settings are alternate Companion presentations. Their view switch is presentation
 state only and does not mint another product semantic-state owner.
 
@@ -329,6 +381,9 @@ Browser + Companion remain peer Regions around exact authored Seam
 Send remains Capability(conversation.send)
 local interactions remain explicitly bound
 held controls do not fabricate effects
+visible human page URL/origin is not rewritten through the context proxy
+unsupported Vex page context does not narrow ordinary human HTTP(S) display
+alternate Host + cross-origin browser effect requests are refused by the loopback Product service
 current service / Conversation / Context / browser-context owners remain authoritative
 common JVM/JS source compiles
 common + JVM tests pass

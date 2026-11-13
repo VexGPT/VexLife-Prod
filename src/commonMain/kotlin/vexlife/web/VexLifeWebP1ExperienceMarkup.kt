@@ -11,6 +11,15 @@ package vexlife.web
  * product's lived composition rather than forcing that composition through generic HTML shapes.
  */
 internal object VexLifeWebP1ExperienceMarkup {
+    /**
+     * The canonical Vextreme family mark, carried at the VexLife Product Brand coordinate. Geometry
+     * is copied (not fetched) from `vgong24/Vextreme@460df846b181e4673de512ba54f2c412ad8de362`
+     * `assets/logo/vextreme-mark.svg` (120x120 viewBox, 5-unit round stroke in currentColor). The
+     * product name stays VexLife; the family header/rail is a later, separately earned relationship.
+     */
+    const val FamilyMarkPath =
+        "M 51.89 109.32 A 50 50 0 1 1 68.11 109.32 L 39.73 35.68 L 60 65.41 L 80.27 35.68 Z"
+
     fun render(): String =
         """
 <!doctype html>
@@ -29,7 +38,7 @@ internal object VexLifeWebP1ExperienceMarkup {
   <header class="chrome" data-vex-ref="${VexLifeWebP1.Header.identity.ref}">
     <a class="brand" data-vex-ref="${VexLifeWebP1.Brand.identity.ref}" href="/" aria-label="VexLife">
       <span class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="10.5"/><path d="M11.2 11.5 16 21.5l4.8-10"/></svg>
+        <svg viewBox="0 0 120 120"><path d="$FamilyMarkPath"/></svg>
       </span>
       <span class="brand-name">VexLife</span>
     </a>
@@ -37,7 +46,7 @@ internal object VexLifeWebP1ExperienceMarkup {
     <form class="address" id="address-form" autocomplete="off">
       <label class="visually-hidden" for="query">Page address</label>
       <input id="query" data-vex-ref="${VexLifeWebP1.BrowserQuery.identity.ref}" type="text" list="page-suggestions" spellcheck="false"
-        inputmode="url" placeholder="Type a Vex-owned web address" title="">
+        inputmode="url" placeholder="Type a web address" title="">
       <datalist id="page-suggestions">
         <option value="vgong24.github.io/Vextreme/pages/terrain-map.html">Vextreme terrain</option>
         <option value="vexgpt.github.io/VexWork/orientation.html">VexWork orientation</option>
@@ -68,8 +77,10 @@ internal object VexLifeWebP1ExperienceMarkup {
       <p class="frame-status" data-vex-ref="${VexLifeWebP1.BrowserFrameStatus.identity.ref}" id="frame-status" role="status" hidden></p>
       <div class="viewport" data-vex-ref="${VexLifeWebP1.BrowserViewport.identity.ref}">
         <iframe id="page-frame" title="Opened page" referrerpolicy="no-referrer"
-          sandbox="allow-scripts allow-same-origin"></iframe>
-        <div class="viewport-empty" id="viewport-empty"><p>Open a Vex-owned public page from the address field. Pages open signed out.</p></div>
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads allow-modals"></iframe>
+        <iframe id="context-frame" class="context-frame" title="Vex page context provider" referrerpolicy="no-referrer"
+          sandbox="allow-scripts allow-same-origin" aria-hidden="true" tabindex="-1"></iframe>
+        <div class="viewport-empty" id="viewport-empty"><p>Open a web page from the address field. Vex page context is separate and may not be available for every page.</p></div>
       </div>
     </section>
 

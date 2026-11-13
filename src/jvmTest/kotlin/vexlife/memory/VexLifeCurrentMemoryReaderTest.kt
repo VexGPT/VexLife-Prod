@@ -9,11 +9,125 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.conversation.CanonicalLivedContextFixture
+import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.filesystem.VexOwnedPath
 import vexlife.home.CanonicalVexLifeHomeFixture
 
 class VexLifeCurrentMemoryReaderTest {
+    @Test
+    fun noCommittedScoreReturnsCurrentEmptyCoordinatesIndependentlyOfMemory() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-score-coordinates-empty-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            val formed =
+                CanonicalVexLifeHomeFixture.form(
+                    home,
+                )
+
+            val current =
+                VexLifeCurrentMemoryReader.readCurrentScoreCoordinates(
+                    home,
+                )
+
+            assertEquals(
+                formed.manifest.homeRef,
+                current.homeRef,
+            )
+            assertEquals(
+                formed.manifest.currentDeviceRef,
+                current.deviceRef,
+            )
+            assertEquals(
+                formed.manifest.currentCompanionLineageRef,
+                current.companionLineageRef,
+            )
+            assertEquals(
+                DirectConversationIdentity.ThreadRef,
+                current.threadRef,
+            )
+            assertNull(
+                current.scoreHeadSha256,
+            )
+            assertNull(
+                current.sourceConversationHeadSha256,
+            )
+            assertNull(
+                current.semanticAuthorityHeadSha256,
+            )
+            assertTrue(
+                current.currentStatementRefs.isEmpty(),
+            )
+            assertTrue(
+                current.openLoopRefs.isEmpty(),
+            )
+            assertTrue(
+                current.sourceRefs.isEmpty(),
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun durableScoreMaterialWithoutCurrentHeadFailsClosedInsteadOfBecomingEmptyCoordinates() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-score-coordinates-orphan-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            val formed =
+                CanonicalVexLifeHomeFixture.form(
+                    home,
+                )
+            val eventsRoot =
+                VexOwnedPath.resolveInside(
+                    home,
+                    "score/" +
+                        formed.manifest.currentCompanionLineageRef +
+                        "/" +
+                        DirectConversationIdentity.ThreadRef +
+                        "/events",
+                )
+            VexOwnedPath.ensureDirectory(
+                home,
+                eventsRoot,
+            )
+            Files.writeString(
+                eventsRoot.resolve(
+                    "orphan.json",
+                ),
+                "{}\n",
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                VexLifeCurrentMemoryReader.readCurrentScoreCoordinates(
+                    home,
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
     @Test
     fun promptFrontierTreatsHistoricalConversationSourceAsHeldNotCorrupt() {
         val historical =
@@ -91,6 +205,10 @@ class VexLifeCurrentMemoryReaderTest {
                 current.estimatedSystemMessageTokens,
             )
             assertEquals(
+                VexLifeMemoryContract.MaximumMemoryTokens,
+                current.memoryTokenCap,
+            )
+            assertEquals(
                 listOf(
                     VexLifeCurrentMemoryReader.LivingJournalMemoryOwnerRef,
                     VexLifeCurrentMemoryReader.LivingJournalDailyRecordOwnerRef,
@@ -98,6 +216,80 @@ class VexLifeCurrentMemoryReaderTest {
                     .sorted(),
                 current.sourceOwnerRefs,
             )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun promptMemoryCapMayYieldToTheCurrentTurnWithoutChangingMemoryOwnership() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-memory-reader-bounded-cap-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home,
+            )
+
+            val zero =
+                VexLifeCurrentMemoryReader.readCurrent(
+                    productHome = home,
+                    memoryTokenCap = 0,
+                )
+            val bounded =
+                VexLifeCurrentMemoryReader.readCurrent(
+                    productHome = home,
+                    memoryTokenCap = 4_096,
+                )
+
+            assertEquals(
+                0,
+                zero.memoryTokenCap,
+            )
+            assertEquals(
+                4_096,
+                bounded.memoryTokenCap,
+            )
+            assertFalse(
+                zero.included,
+            )
+            assertFalse(
+                bounded.included,
+            )
+            assertEquals(
+                listOf(
+                    "NO_COMMITTED_DAILY_MEMORY",
+                ),
+                zero.reasons,
+            )
+            assertEquals(
+                zero.reasons,
+                bounded.reasons,
+            )
+
+            assertFailsWith<IllegalArgumentException> {
+                VexLifeCurrentMemoryReader.readCurrent(
+                    productHome = home,
+                    memoryTokenCap = -1,
+                )
+            }
+            assertFailsWith<IllegalArgumentException> {
+                VexLifeCurrentMemoryReader.readCurrent(
+                    productHome = home,
+                    memoryTokenCap =
+                        VexLifeMemoryContract.MaximumMemoryTokens +
+                            1,
+                )
+            }
         } finally {
             parent
                 .toFile()

@@ -34,7 +34,7 @@ class VexLifeProdLocalSetupTest {
                 architecture = "arm64",
                 chipModel = HereticMacHostProfile.RequiredChipModel,
                 totalMemoryBytes = HereticMacHostProfile.MinimumMemoryBytes,
-            ),
+            )
         )
 
     private fun unsupportedHost(): HereticMacHostProfile.Result =
@@ -44,7 +44,7 @@ class VexLifeProdLocalSetupTest {
                 architecture = "x86_64",
                 chipModel = null,
                 totalMemoryBytes = 4L * 1024L * 1024L * 1024L,
-            ),
+            )
         )
 
     private fun managedPython(
@@ -55,32 +55,14 @@ class VexLifeProdLocalSetupTest {
             state = state,
             pythonVersion = HereticProductIdentity.PythonVersion,
             pythonPath =
-                home.resolve(
-                    "runtime/python/managed/cpython-3.14.7/bin/python3.14",
-                )
-                    .toString(),
-            pythonInstallRoot =
-                home.resolve(
-                    ManagedPython.PythonInstallRelativePath,
-                )
-                    .toString(),
+                home.resolve("runtime/python/managed/cpython-3.14.7/bin/python3.14").toString(),
+            pythonInstallRoot = home.resolve(ManagedPython.PythonInstallRelativePath).toString(),
             uvVersion = ManagedPython.UvVersion,
-            uvPath =
-                home.resolve(
-                    ManagedPython.UvToolRelativePath,
-                )
-                    .resolve(
-                        "uv",
-                    )
-                    .toString(),
+            uvPath = home.resolve(ManagedPython.UvToolRelativePath).resolve("uv").toString(),
             uvArchiveSha256 = ManagedPython.UvMacArm64ArchiveSha256,
             uvReleaseSourceCommit = ManagedPython.UvReleaseSourceCommit,
-            uvAcquisitionPerformed =
-                state ==
-                    "INSTALLED_VERIFIED",
-            pythonInstallationPerformed =
-                state ==
-                    "INSTALLED_VERIFIED",
+            uvAcquisitionPerformed = state == "INSTALLED_VERIFIED",
+            pythonInstallationPerformed = state == "INSTALLED_VERIFIED",
             globalBinMutationPerformed = false,
         )
 
@@ -91,16 +73,8 @@ class VexLifeProdLocalSetupTest {
         HereticArtifactMaterialization.Result(
             state = "HERETIC_ARTIFACTS_MATERIALIZED_EXACT",
             modelPath =
-                home.resolve(
-                    "models/heretic/qwen3.8-27b-mlx4/" +
-                        "8".repeat(
-                            40,
-                        ),
-                )
-                    .toString(),
-            providerRevision = "8".repeat(
-                40,
-            ),
+                home.resolve("models/heretic/qwen3.8-27b-mlx4/" + "8".repeat(40)).toString(),
+            providerRevision = "8".repeat(40),
             contentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
             memberCount = 11,
             totalBytes = 15_153_242_506L,
@@ -125,39 +99,24 @@ class VexLifeProdLocalSetupTest {
         state: String = "CREATED_VERIFIED",
     ): HereticPythonEnvironment.Result {
         val root =
-            home.resolve(
-                "runtime/heretic/" +
-                    HereticPythonEnvironment.EnvironmentDirectoryName,
-            )
+            home.resolve("runtime/heretic/" + HereticPythonEnvironment.EnvironmentDirectoryName)
 
         return HereticPythonEnvironment.Result(
             state = state,
             pythonEnvironmentRoot = root.toString(),
-            pythonPath =
-                root.resolve(
-                    "bin/python",
-                )
-                    .toString(),
+            pythonPath = root.resolve("bin/python").toString(),
             pythonVersion = HereticProductIdentity.PythonVersion,
             mlxLmVersion = HereticProductIdentity.MlxLmVersion,
-            pipReportPath =
-                root.resolve(
-                    HereticPythonEnvironment.InstallReportFilename,
-                )
-                    .toString(),
-            environmentMutationPerformed =
-                state ==
-                    "CREATED_VERIFIED",
+            pipReportPath = root.resolve(HereticPythonEnvironment.InstallReportFilename).toString(),
+            environmentMutationPerformed = state == "CREATED_VERIFIED",
         )
     }
 
     private fun runtimeResult(
-        binding: HereticPersistentRuntime.Binding,
+        binding: HereticPersistentRuntime.Binding
     ): HereticPersistentRuntime.StartResult {
-        val pid =
-            4242L
-        val qualification =
-            HereticRuntimeQualification.qualified()
+        val pid = 4242L
+        val qualification = HereticRuntimeQualification.qualified()
         val receipt =
             HereticPersistentRuntime.Receipt(
                 schemaVersion = HereticPersistentRuntime.ReceiptSchema,
@@ -188,10 +147,7 @@ class VexLifeProdLocalSetupTest {
                         pid = pid,
                         processGroupId = pid,
                         exactOwnedDetachedGroup = true,
-                        args =
-                            HereticPersistentRuntime.serverArgs(
-                                binding,
-                            ),
+                        args = HereticPersistentRuntime.serverArgs(binding),
                         processSubstrate =
                             MacUserLaunchdProcess.Receipt(
                                 schemaVersion = MacUserLaunchdProcess.Schema,
@@ -231,23 +187,19 @@ class VexLifeProdLocalSetupTest {
     ): VexLifeProdLocalSetup.Hooks =
         VexLifeProdLocalSetup.Hooks(
             observeHost = {
-                trace +=
-                    "HOST"
+                trace += "HOST"
                 host
             },
             deviceName = {
-                trace +=
-                    "DEVICE"
+                trace += "DEVICE"
                 "Test Mac"
             },
             now = {
-                trace +=
-                    "NOW"
+                trace += "NOW"
                 "2026-11-04T18:00:00-08:00"
             },
             observeConversationWriter = {
-                trace +=
-                    "WRITER_CURRENTNESS"
+                trace += "WRITER_CURRENTNESS"
                 DirectConversationStore.ThreadWriterCurrentness(
                     state = "IDLE",
                     ownerState = null,
@@ -256,165 +208,81 @@ class VexLifeProdLocalSetupTest {
                     recoveryRequired = false,
                 )
             },
-            recoverConversationWriter = {
-                _,
-                _,
-                _,
-                ->
-                error(
-                    "idle test writer must not recover",
-                )
+            recoverConversationWriter = { _, _, _ ->
+                error("idle test writer must not recover")
             },
-            ensureManagedPython = {
-                home,
-                _,
-                ->
-                trace +=
-                    "MANAGED_PYTHON"
+            ensureManagedPython = { home, _ ->
+                trace += "MANAGED_PYTHON"
                 managedPython(
                     home,
-                    if (
-                        reuse
-                    ) {
+                    if (reuse) {
                         "REUSED_VERIFIED"
                     } else {
                         "INSTALLED_VERIFIED"
                     },
                 )
             },
-            materializeArtifacts = {
-                home,
-                _,
-                ->
-                trace +=
-                    "ARTIFACTS"
-                materialization(
-                    home = home,
-                    reuse = reuse,
-                )
+            materializeArtifacts = { home, _ ->
+                trace += "ARTIFACTS"
+                materialization(home = home, reuse = reuse)
             },
-            ensureHereticEnvironment = {
-                _,
-                home,
-                _,
-                ->
-                trace +=
-                    "HERETIC_ENVIRONMENT"
+            ensureHereticEnvironment = { _, home, _ ->
+                trace += "HERETIC_ENVIRONMENT"
                 environment(
                     home,
-                    if (
-                        reuse
-                    ) {
+                    if (reuse) {
                         "REUSED_VERIFIED"
                     } else {
                         "CREATED_VERIFIED"
                     },
                 )
             },
-            observeCurrentProductRuntime = {
-                _,
-                binding,
-                _,
-                ->
-                trace +=
-                    "PRODUCT_RUNTIME_CURRENTNESS"
+            observeCurrentProductRuntime = { _, binding, _ ->
+                trace += "PRODUCT_RUNTIME_CURRENTNESS"
                 HereticPersistentRuntime.configurationEvidence(
                     binding = binding,
-                    receipt =
-                        runtimeResult(
-                            binding,
-                        )
-                            .receipt,
+                    receipt = runtimeResult(binding).receipt,
                 )
             },
-            startRuntime = {
-                _,
-                binding,
-                _,
-                ->
-                trace +=
-                    "RUNTIME"
-                runtimeResult(
-                    binding,
-                )
+            startRuntime = { _, binding, _ ->
+                trace += "RUNTIME"
+                runtimeResult(binding)
             },
         )
 
     @Test
     fun establishedCanonicalHomeComposesRuntimeWithoutIdentityRewrite() {
-        val parent =
-            Files.createTempDirectory(
-                "vexlife-prod-local-setup-",
-            )
-                .toAbsolutePath()
-        val home =
-            parent.resolve(
-                ".vexlife",
-            )
-        val trace =
-            mutableListOf<String>()
+        val parent = Files.createTempDirectory("vexlife-prod-local-setup-").toAbsolutePath()
+        val home = parent.resolve(".vexlife")
+        val trace = mutableListOf<String>()
 
         try {
-            val fixture =
-                CanonicalVexLifeHomeFixture.form(
-                    home,
-                )
-            val homeBefore =
-                Files.readString(
-                    home.resolve(
-                        "config/home.json",
-                    ),
-                )
+            val fixture = CanonicalVexLifeHomeFixture.form(home)
+            val homeBefore = Files.readString(home.resolve("config/home.json"))
             val deviceBefore =
-                Files.readString(
-                    home.resolve(
-                        "devices/${fixture.installation.deviceRef}.json",
-                    ),
-                )
-            val modelBefore =
-                Files.readString(
-                    home.resolve(
-                        "config/model.json",
-                    ),
-                )
+                Files.readString(home.resolve("devices/${fixture.installation.deviceRef}.json"))
+            val modelBefore = Files.readString(home.resolve("config/model.json"))
 
             val result =
                 VexLifeProdLocalSetup.establishAt(
                     productHome = home,
                     allowAcquisition = true,
-                    hooks = hooks(
-                        trace,
-                    ),
+                    hooks = hooks(trace),
                 )
 
-            assertEquals(
-                "LOCAL_HERETIC_FOUNDATION_READY",
-                result.state,
-            )
+            assertEquals("LOCAL_HERETIC_FOUNDATION_READY", result.state)
             assertEquals(
                 HereticRuntimeState.Qualified,
                 result.qualifiedRuntimeEvidence.runtimeState,
             )
-            assertEquals(
-                "EXISTING_CANONICAL_VEXLIFE_HOME_BOUND",
-                result.homeDisposition,
-            )
-            assertEquals(
-                "HERETIC_SELECTED_PENDING",
-                result.modelSelectionDisposition,
-            )
-            assertEquals(
-                "HERETIC_BOUND_TO_QUALIFIED_RUNTIME",
-                result.modelBindingDisposition,
-            )
+            assertEquals("EXISTING_CANONICAL_VEXLIFE_HOME_BOUND", result.homeDisposition)
+            assertEquals("HERETIC_SELECTED_PENDING", result.modelSelectionDisposition)
+            assertEquals("HERETIC_BOUND_TO_QUALIFIED_RUNTIME", result.modelBindingDisposition)
             assertEquals(
                 HereticModelConfiguration.State.BoundProductModel,
                 result.modelConfigurationState,
             )
-            assertEquals(
-                HereticProductIdentity.Endpoint,
-                result.endpoint,
-            )
+            assertEquals(HereticProductIdentity.Endpoint, result.endpoint)
             assertEquals(
                 listOf(
                     "HOST",
@@ -429,87 +297,37 @@ class VexLifeProdLocalSetupTest {
 
             val current =
                 assertIs<FileHereticModelConfigurationStore.Snapshot.Heretic>(
-                    FileHereticModelConfigurationStore(
-                        home,
-                    )
-                        .read(
-                            fixture.manifest,
-                        ),
+                    FileHereticModelConfigurationStore(home).read(fixture.manifest)
                 )
+            assertTrue(HereticModelConfiguration.isBound(current.value))
             assertTrue(
-                HereticModelConfiguration.isBound(
-                    current.value,
-                ),
+                Files.isRegularFile(home.resolve(VexLifeProdHome.ModelConfigurationRelativePath))
             )
-            assertTrue(
-                Files.isRegularFile(
-                    home.resolve(
-                        VexLifeProdHome.ModelConfigurationRelativePath,
-                    ),
-                ),
-            )
-            assertEquals(
-                homeBefore,
-                Files.readString(
-                    home.resolve(
-                        "config/home.json",
-                    ),
-                ),
-            )
+            assertEquals(homeBefore, Files.readString(home.resolve("config/home.json")))
             assertEquals(
                 deviceBefore,
-                Files.readString(
-                    home.resolve(
-                        "devices/${fixture.installation.deviceRef}.json",
-                    ),
-                ),
+                Files.readString(home.resolve("devices/${fixture.installation.deviceRef}.json")),
             )
-            assertEquals(
-                modelBefore,
-                Files.readString(
-                    home.resolve(
-                        "config/model.json",
-                    ),
-                ),
-            )
+            assertEquals(modelBefore, Files.readString(home.resolve("config/model.json")))
         } finally {
-            parent
-                .toFile()
-                .deleteRecursively()
+            parent.toFile().deleteRecursively()
         }
     }
 
     @Test
     fun abandonedConversationWriterRecoversExactlyBeforeRuntimeEffects() {
         val parent =
-            Files.createTempDirectory(
-                "vexlife-prod-local-setup-writer-recovery-",
-            )
-                .toAbsolutePath()
-        val home =
-            parent.resolve(
-                ".vexlife",
-            )
-        val trace =
-            mutableListOf<String>()
-        var observationCount =
-            0
-        val leaseSha256 =
-            "a".repeat(
-                64,
-            )
-        val instanceRef =
-            "instance.vexlife.writer.abandoned.test"
+            Files.createTempDirectory("vexlife-prod-local-setup-writer-recovery-").toAbsolutePath()
+        val home = parent.resolve(".vexlife")
+        val trace = mutableListOf<String>()
+        var observationCount = 0
+        val leaseSha256 = "a".repeat(64)
+        val instanceRef = "instance.vexlife.writer.abandoned.test"
 
         try {
-            CanonicalVexLifeHomeFixture.form(
-                home,
-            )
+            CanonicalVexLifeHomeFixture.form(home)
 
-            val base =
-                hooks(
-                    trace,
-                )
+            val base = hooks(trace)
             val result =
                 VexLifeProdLocalSetup.establishAt(
                     productHome = home,
@@ -517,14 +335,9 @@ class VexLifeProdLocalSetupTest {
                     hooks =
                         base.copy(
                             observeConversationWriter = {
-                                trace +=
-                                    "WRITER_CURRENTNESS"
-                                observationCount +=
-                                    1
-                                if (
-                                    observationCount ==
-                                    1
-                                ) {
+                                trace += "WRITER_CURRENTNESS"
+                                observationCount += 1
+                                if (observationCount == 1) {
                                     DirectConversationStore.ThreadWriterCurrentness(
                                         state = "RECOVERY_REQUIRED",
                                         ownerState = "ABSENT",
@@ -545,27 +358,16 @@ class VexLifeProdLocalSetupTest {
                             recoverConversationWriter = {
                                 _,
                                 observedInstanceRef,
-                                observedLeaseSha256,
-                                ->
-                                trace +=
-                                    "WRITER_RECOVERY"
-                                assertEquals(
-                                    instanceRef,
-                                    observedInstanceRef,
-                                )
-                                assertEquals(
-                                    leaseSha256,
-                                    observedLeaseSha256,
-                                )
+                                observedLeaseSha256 ->
+                                trace += "WRITER_RECOVERY"
+                                assertEquals(instanceRef, observedInstanceRef)
+                                assertEquals(leaseSha256, observedLeaseSha256)
                                 true
                             },
                         ),
                 )
 
-            assertEquals(
-                "LOCAL_HERETIC_FOUNDATION_READY",
-                result.state,
-            )
+            assertEquals("LOCAL_HERETIC_FOUNDATION_READY", result.state)
             assertEquals(
                 listOf(
                     "HOST",
@@ -580,31 +382,20 @@ class VexLifeProdLocalSetupTest {
                 trace,
             )
         } finally {
-            parent
-                .toFile()
-                .deleteRecursively()
+            parent.toFile().deleteRecursively()
         }
     }
 
     @Test
     fun currentStableVexLifeRuntimeIsBorrowedWithoutProductRuntimeStart() {
         val parent =
-            Files.createTempDirectory(
-                "vexlife-prod-local-setup-borrow-stable-runtime-",
-            )
+            Files.createTempDirectory("vexlife-prod-local-setup-borrow-stable-runtime-")
                 .toAbsolutePath()
-        val home =
-            parent.resolve(
-                ".vexlife",
-            )
-        val trace =
-            mutableListOf<String>()
+        val home = parent.resolve(".vexlife")
+        val trace = mutableListOf<String>()
 
         try {
-            val fixture =
-                CanonicalVexLifeHomeFixture.form(
-                    home,
-                )
+            val fixture = CanonicalVexLifeHomeFixture.form(home)
             val stableEvidence =
                 HereticModelConfiguration.QualifiedRuntimeEvidence(
                     runtimeReceiptRef = "receipt.vexlife.heretic-persistent-runtime.stable.test",
@@ -619,22 +410,15 @@ class VexLifeProdLocalSetupTest {
                     requestModel = HereticProductIdentity.RequestModel,
                     qualification = HereticRuntimeQualification.qualified(),
                 )
-            val base =
-                hooks(
-                    trace,
-                )
+            val base = hooks(trace)
             val result =
                 VexLifeProdLocalSetup.establishAt(
                     productHome = home,
                     allowAcquisition = true,
                     hooks =
                         base.copy(
-                            observeStableRuntime = {
-                                _,
-                                _,
-                                ->
-                                trace +=
-                                    "STABLE_RUNTIME"
+                            observeStableRuntime = { _, _ ->
+                                trace += "STABLE_RUNTIME"
                                 StableVexLifeHereticRuntimeCompatibility.Observation(
                                     evidence = stableEvidence,
                                     receiptRelativePath =
@@ -642,322 +426,189 @@ class VexLifeProdLocalSetupTest {
                                     pid = 4242L,
                                 )
                             },
-                            startRuntime = {
-                                _,
-                                _,
-                                _,
-                                ->
+                            startRuntime = { _, _, _ ->
                                 error(
-                                    "borrowed stable runtime must not start a VexLife-Prod runtime",
+                                    "borrowed stable runtime must not start a VexLife-Prod runtime"
                                 )
                             },
                         ),
                 )
 
-            assertEquals(
-                "BORROWED_STABLE_VEXLIFE_QUALIFIED_RUNTIME",
-                result.runtimeDisposition,
-            )
-            assertEquals(
-                stableEvidence,
-                result.qualifiedRuntimeEvidence,
-            )
+            assertEquals("BORROWED_STABLE_VEXLIFE_QUALIFIED_RUNTIME", result.runtimeDisposition)
+            assertEquals(stableEvidence, result.qualifiedRuntimeEvidence)
             assertTrue(
                 result.modelBindingDisposition in
                     setOf(
                         "HERETIC_BOUND_TO_QUALIFIED_RUNTIME",
                         "HERETIC_REBOUND_TO_QUALIFIED_RUNTIME",
-                    ),
+                    )
             )
             assertEquals(
                 HereticProductIdentity.StableRuntimeReceiptRelativePath,
                 assertIs<FileHereticModelConfigurationStore.Snapshot.Heretic>(
-                    FileHereticModelConfigurationStore(
-                        home,
+                        FileHereticModelConfigurationStore(home).read(fixture.manifest)
                     )
-                        .read(
-                            fixture.manifest,
-                        ),
-                )
                     .value
                     .runtimeReceiptPath,
             )
-            assertTrue(
-                "STABLE_RUNTIME" in
-                    trace,
-            )
-            assertFalse(
-                "RUNTIME" in
-                    trace,
-            )
+            assertTrue("STABLE_RUNTIME" in trace)
+            assertFalse("RUNTIME" in trace)
         } finally {
-            parent
-                .toFile()
-                .deleteRecursively()
+            parent.toFile().deleteRecursively()
         }
     }
 
     @Test
-    fun absentCanonicalHomeStopsBeforeAnyDomainEffectEvenWithAcquisitionAuthority() {
+    fun explicitHomeFormationCreatesIdentityWithoutRuntimeEffects() {
         val parent =
-            Files.createTempDirectory(
-                "vexlife-prod-local-setup-home-absent-",
-            )
-                .toAbsolutePath()
-        val home =
-            parent.resolve(
-                ".vexlife",
-            )
-        val trace =
-            mutableListOf<String>()
+            Files.createTempDirectory("vexlife-prod-local-setup-home-absent-").toAbsolutePath()
+        val home = parent.resolve(".vexlife")
+        val trace = mutableListOf<String>()
 
         try {
-            assertFailsWith<IllegalArgumentException> {
-                VexLifeProdLocalSetup.establishAt(
-                    productHome = home,
-                    allowAcquisition = true,
-                    hooks = hooks(
-                        trace,
-                    ),
-                )
-            }
+            val formed =
+                VexLifeProdLocalSetup.formFreshHomeAt(productHome = home, hooks = hooks(trace))
 
-            assertEquals(
-                listOf(
-                    "HOST",
-                ),
-                trace,
+            assertEquals("FRESH_CANONICAL_VEXLIFE_HOME_FORMED", formed.state)
+            assertEquals(listOf("HOST", "DEVICE", "NOW"), trace)
+            assertTrue(formed.manifest.homeRef.startsWith("vex-home.device.vexlife."))
+            assertTrue(formed.installation.deviceRef.startsWith("device.vexlife."))
+            assertTrue(
+                formed.installation.companionLineageRef.startsWith("companion-lineage.vexlife.")
             )
-            assertFalse(
-                Files.exists(
-                    home,
-                ),
+            assertTrue(
+                Files.isRegularFile(
+                    home.resolve(VexLifeProdHome.CanonicalModelConfigurationRelativePath)
+                )
             )
+            assertFalse(Files.exists(home.resolve("models")))
         } finally {
-            parent
-                .toFile()
-                .deleteRecursively()
+            parent.toFile().deleteRecursively()
         }
+    }
+
+    @Test
+    fun acquisitionAuthorityCannotMintMissingHome() {
+        val parent =
+            Files.createTempDirectory("vexlife-prod-local-setup-home-absent-no-identity-authority-")
+                .toAbsolutePath()
+        val home = parent.resolve(".vexlife")
+
+        for (allowAcquisition in listOf(false, true)) {
+            val trace = mutableListOf<String>()
+
+            try {
+                assertFailsWith<IllegalArgumentException> {
+                    VexLifeProdLocalSetup.establishAt(
+                        productHome = home,
+                        allowAcquisition = allowAcquisition,
+                        hooks = hooks(trace),
+                    )
+                }
+
+                assertEquals(listOf("HOST"), trace)
+                assertFalse(Files.exists(home))
+            } finally {
+                home.toFile().deleteRecursively()
+            }
+        }
+
+        parent.toFile().deleteRecursively()
     }
 
     @Test
     fun unsupportedHostStopsBeforeHomeOrRuntimeEffects() {
         val parent =
-            Files.createTempDirectory(
-                "vexlife-prod-local-setup-host-held-",
-            )
-                .toAbsolutePath()
-        val home =
-            parent.resolve(
-                ".vexlife",
-            )
-        val trace =
-            mutableListOf<String>()
+            Files.createTempDirectory("vexlife-prod-local-setup-host-held-").toAbsolutePath()
+        val home = parent.resolve(".vexlife")
+        val trace = mutableListOf<String>()
 
         try {
-            CanonicalVexLifeHomeFixture.form(
-                home,
-            )
+            CanonicalVexLifeHomeFixture.form(home)
 
             assertFailsWith<IllegalArgumentException> {
                 VexLifeProdLocalSetup.establishAt(
                     productHome = home,
                     allowAcquisition = true,
-                    hooks =
-                        hooks(
-                            trace = trace,
-                            host = unsupportedHost(),
-                        ),
+                    hooks = hooks(trace = trace, host = unsupportedHost()),
                 )
             }
 
-            assertEquals(
-                listOf(
-                    "HOST",
-                ),
-                trace,
-            )
-            assertFalse(
-                Files.exists(
-                    home.resolve(
-                        VexLifeProdHome.ModelConfigurationRelativePath,
-                    ),
-                ),
-            )
+            assertEquals(listOf("HOST"), trace)
+            assertFalse(Files.exists(home.resolve(VexLifeProdHome.ModelConfigurationRelativePath)))
         } finally {
-            parent
-                .toFile()
-                .deleteRecursively()
+            parent.toFile().deleteRecursively()
         }
     }
 
     @Test
     fun serializedSetupHoldsBeforeAnyDomainEffectWhenAnotherSetupOwnsTheLease() {
         val parent =
-            Files.createTempDirectory(
-                "vexlife-prod-local-setup-serialized-",
-            )
-                .toAbsolutePath()
-        val home =
-            parent.resolve(
-                ".vexlife",
-            )
-        val trace =
-            mutableListOf<String>()
+            Files.createTempDirectory("vexlife-prod-local-setup-serialized-").toAbsolutePath()
+        val home = parent.resolve(".vexlife")
+        val trace = mutableListOf<String>()
 
         try {
-            val fixture =
-                CanonicalVexLifeHomeFixture.form(
-                    home,
-                )
-            val homeBefore =
-                Files.readString(
-                    home.resolve(
-                        "config/home.json",
-                    ),
-                )
+            val fixture = CanonicalVexLifeHomeFixture.form(home)
+            val homeBefore = Files.readString(home.resolve("config/home.json"))
 
-            VexLifeProdLocalSetupLease
-                .acquire(
-                    home,
-                )
-                .use {
-                    assertFailsWith<IllegalArgumentException> {
-                        VexLifeProdLocalSetup.establishSerializedAt(
-                            productHome = home,
-                            allowAcquisition = true,
-                            hooks =
-                                hooks(
-                                    trace,
-                                ),
-                        )
-                    }
+            VexLifeProdLocalSetupLease.acquire(home).use {
+                assertFailsWith<IllegalArgumentException> {
+                    VexLifeProdLocalSetup.establishSerializedAt(
+                        productHome = home,
+                        allowAcquisition = true,
+                        hooks = hooks(trace),
+                    )
                 }
+            }
 
-            assertTrue(
-                trace.isEmpty(),
-            )
-            assertEquals(
-                homeBefore,
-                Files.readString(
-                    home.resolve(
-                        "config/home.json",
-                    ),
-                ),
-            )
+            assertTrue(trace.isEmpty())
+            assertEquals(homeBefore, Files.readString(home.resolve("config/home.json")))
             assertEquals(
                 fixture.manifest,
-                requireNotNull(
-                    VexLifeProdHomeFiles.observeExisting(
-                        home,
-                    ),
-                )
-                    .manifest,
+                requireNotNull(VexLifeProdHomeFiles.observeExisting(home)).manifest,
             )
         } finally {
-            parent
-                .toFile()
-                .deleteRecursively()
+            parent.toFile().deleteRecursively()
         }
     }
 
     @Test
     fun rerunPreservesCanonicalIdentityAndReusesProductRuntimeBinding() {
-        val parent =
-            Files.createTempDirectory(
-                "vexlife-prod-local-setup-rerun-",
-            )
-                .toAbsolutePath()
-        val home =
-            parent.resolve(
-                ".vexlife",
-            )
-        val firstTrace =
-            mutableListOf<String>()
+        val parent = Files.createTempDirectory("vexlife-prod-local-setup-rerun-").toAbsolutePath()
+        val home = parent.resolve(".vexlife")
+        val firstTrace = mutableListOf<String>()
 
         try {
-            val fixture =
-                CanonicalVexLifeHomeFixture.form(
-                    home,
-                )
-            val homeBefore =
-                Files.readString(
-                    home.resolve(
-                        "config/home.json",
-                    ),
-                )
-            val modelBefore =
-                Files.readString(
-                    home.resolve(
-                        "config/model.json",
-                    ),
-                )
+            val fixture = CanonicalVexLifeHomeFixture.form(home)
+            val homeBefore = Files.readString(home.resolve("config/home.json"))
+            val modelBefore = Files.readString(home.resolve("config/model.json"))
 
             val first =
                 VexLifeProdLocalSetup.establishAt(
                     productHome = home,
                     allowAcquisition = true,
-                    hooks = hooks(
-                        firstTrace,
-                    ),
+                    hooks = hooks(firstTrace),
                 )
 
-            val secondTrace =
-                mutableListOf<String>()
+            val secondTrace = mutableListOf<String>()
             val second =
                 VexLifeProdLocalSetup.establishAt(
                     productHome = home,
                     allowAcquisition = false,
-                    hooks = hooks(
-                        trace = secondTrace,
-                        reuse = true,
-                    ),
+                    hooks = hooks(trace = secondTrace, reuse = true),
                 )
 
-            assertEquals(
-                "EXISTING_CANONICAL_VEXLIFE_HOME_BOUND",
-                second.homeDisposition,
-            )
-            assertEquals(
-                "HERETIC_ALREADY_BOUND",
-                second.modelSelectionDisposition,
-            )
-            assertEquals(
-                "HERETIC_ALREADY_BOUND",
-                second.modelBindingDisposition,
-            )
-            assertEquals(
-                "REOBSERVED_CURRENT_PRODUCT_QUALIFIED_RUNTIME",
-                second.runtimeDisposition,
-            )
-            assertEquals(
-                first.productHome,
-                second.productHome,
-            )
-            assertEquals(
-                homeBefore,
-                Files.readString(
-                    home.resolve(
-                        "config/home.json",
-                    ),
-                ),
-            )
-            assertEquals(
-                modelBefore,
-                Files.readString(
-                    home.resolve(
-                        "config/model.json",
-                    ),
-                ),
-            )
+            assertEquals("EXISTING_CANONICAL_VEXLIFE_HOME_BOUND", second.homeDisposition)
+            assertEquals("HERETIC_ALREADY_BOUND", second.modelSelectionDisposition)
+            assertEquals("HERETIC_ALREADY_BOUND", second.modelBindingDisposition)
+            assertEquals("REOBSERVED_CURRENT_PRODUCT_QUALIFIED_RUNTIME", second.runtimeDisposition)
+            assertEquals(first.productHome, second.productHome)
+            assertEquals(homeBefore, Files.readString(home.resolve("config/home.json")))
+            assertEquals(modelBefore, Files.readString(home.resolve("config/model.json")))
             assertEquals(
                 fixture.manifest,
-                requireNotNull(
-                    VexLifeProdHomeFiles.observeExisting(
-                        home,
-                    ),
-                )
-                    .manifest,
+                requireNotNull(VexLifeProdHomeFiles.observeExisting(home)).manifest,
             )
             assertEquals(
                 listOf(
@@ -971,9 +622,7 @@ class VexLifeProdLocalSetupTest {
                 secondTrace,
             )
         } finally {
-            parent
-                .toFile()
-                .deleteRecursively()
+            parent.toFile().deleteRecursively()
         }
     }
 }

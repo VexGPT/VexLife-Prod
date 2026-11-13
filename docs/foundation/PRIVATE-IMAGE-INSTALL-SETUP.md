@@ -4,37 +4,57 @@
 
 ## Human question
 
-After a source-bound private service image has been delivered to temporary staging, how can one
-explicitly-authorized first-run setup establish VexLife-Prod Home + Heretic and install that exact
-image into its rightful Home without making shell bootstrap the product installer?
+After a source-bound private service image has been delivered to temporary staging, how can Product
+entry preserve two distinct human choices: first form the canonical Vex Home identity, then separately
+authorize model/runtime acquisition and exact Product installation?
 
 ## Causal sequence
 
 ~~~text
 temporary extracted private image
         ↓
-bin/vexlife-prod-setup
+native Product-entry window
         ↓
-VexLifeProdSetupProcess
-        |
-        +-> derive own image root from packaged vexlife-prod.jar
-        |
-        +-> VexLifeProdPrivateServiceImage.observe(expected source)
-        |
-        +-> VexLifeProdLocalSetup.establishSession(allowAcquisition=true)
-        |     -> Home
-        |     -> model/Python/runtime
-        |
-        +-> VexLifeProdPrivateServiceImageInstaller.install(...)
-              -> established Home proof
-              -> runtime/product-service/images/<sourceSha>
-              -> copy to owned staging
-              -> verify staged payload
-              -> atomic publish
-              -> verify installed payload
-        |
-        v
-VEXLIFE_PROD_SETUP_READY
+human chooses Vex Home coordinate
+  default suggestion = ~/.vexlife
+  alternate absolute location allowed
+        ↓
+observe/classify that exact selected Home
+        ↓
+DisplayState -> human Control
+        ↓
+bin/vexlife-prod-setup
+  --activate-front-door-control <Control>
+  --home <selected absolute Home>
+  --expected-source-sha <sha>
+        ↓
+VexLifeProdMacFrontDoorProcess
+  -> fresh Product-entry observation
+  -> VexLifeProdEntryFamily(State + Control)
+  -> typed Entry Effect stays inside Product
+        ↓
+HOME_FORMATION_REQUIRED + Create Vex Home
+  -> VexLifeProdSetupProcess.realizeHomeFormation(...)
+  -> verify exact source-bound image
+  -> VexLifeProdLocalSetup.formFreshHome()
+  -> canonical Home/device/Companion identity only
+  -> re-observe the selected Home / service truth
+  -> REFRESH_ENTRY
+  -> render whatever State is actually current
+        ↓
+native window refreshes DisplayState + resource plan
+        ↓
+human: Set Up VexLife
+        ↓
+CONVERGE_PRODUCT(allowAcquisition=true)
+  -> VexLifeProdSetupProcess.realizeProductConvergence(...)
+  -> VexLifeProdLocalSetup.establishSession(true)
+  -> model/Python/runtime prerequisites
+  -> VexLifeProdPrivateServiceImageInstaller.install(...)
+  -> VexLifeProdMacServiceLifetime.startOrReuse(...)
+  -> re-observe the selected Home / Product-service truth
+  -> if CURRENT: OPEN_PRODUCT
+  -> otherwise: REFRESH_ENTRY and render the actual State
 ~~~
 
 ## Image contract v3
@@ -60,19 +80,35 @@ the bootstrap.
 An older image cannot silently masquerade as v3 because the strict manifest shape, payload fingerprint
 and schema version change together.
 
-## Setup process input
+## Setup process inputs
 
-Exactly:
+Home-only formation:
 
 ~~~text
+--form-home
+--home <selected absolute Home>
+--expected-source-sha <40-char lowercase Git SHA>
+~~~
+
+Product acquisition/setup after Home exists:
+
+~~~text
+--home <selected absolute Home>
 --expected-source-sha <40-char lowercase Git SHA>
 --allow-acquisition
+~~~
+
+Reuse/update/repair convergence:
+
+~~~text
+--home <selected absolute Home>
+--expected-source-sha <40-char lowercase Git SHA>
+--reuse-existing
 ~~~
 
 No arguments exist for:
 
 ~~~text
-Home path
 install path
 model
 endpoint
@@ -82,22 +118,36 @@ Python path
 artifact source
 ~~~
 
-The image derives its own root; Home derives its own default coordinate; the installer derives the
-final image coordinate.
+The native journey supplies the human-selected Home coordinate explicitly. The image derives its own
+root; the installer derives the final image coordinate beneath that selected Home.
 
-## Human acquisition boundary
+## Human authority boundary
 
-The setup process refuses to run without the explicit acquisition flag.
+Identity formation and model/runtime acquisition are intentionally separate:
 
 ~~~text
-SETUP PROCESS
-= HUMAN-AUTHORIZED ACQUISITION CAPABILITY
+FORM_CANONICAL_HOME
+= HOME / DEVICE / COMPANION IDENTITY EFFECT ONLY
+
+CONVERGE_PRODUCT(allowAcquisition=true)
+= MODEL / RUNTIME / PRODUCT SETUP AUTHORITY
+
+CONVERGE_PRODUCT(allowAcquisition=false, allowRuntimeStart=true)
+= START / UPDATE / REPAIR WITHOUT NEW ACQUISITION
+  (may start the exact local runtime from prerequisites already present)
 
 SERVICE PROCESS
-= REUSE-ONLY / allowAcquisition=false
+= REUSE-ONLY / allowAcquisition=false / allowRuntimeStart=false
 ~~~
 
-Those are intentionally different process roles.
+Runtime start is not acquisition: after a Mac restart the owned receipt survives but neither the
+service nor the local runtime is running. Treating start as acquisition made that ordinary return
+path fail. See `SETUP-JOURNEY.md` for the held/start States that now precede every Control.
+
+A model/runtime acquisition flag cannot create a missing Home. The Product-entry adapter must first
+delegate the Home-only effect to its concrete setup owner, re-observe current truth, return only a
+manifestation instruction, and let the native window refresh the source-owned setup resource plan
+before a separate human Set Up choice.
 
 The setup process itself does not decide whether individual artifacts are missing; LocalSetup's
 rightful owners still classify/reuse/acquire exact prerequisites.
@@ -198,9 +248,11 @@ its own private image. Those remain separate boundaries.
 Tests currently form:
 
 ~~~text
-setup arguments expose only expected source + explicit acquisition
-image verification precedes setup
-setup receives acquisition=true
+Home-only arguments carry form-home + selected Home + expected source
+Home-only effect verifies its source image and stops before model/runtime/Product effects
+native entry re-observes after Home formation
+setup resource consequences are projected before acquisition authority
+acquisition setup receives acquisition=true only after Home exists
 install follows Home establishment
 readiness is last
 
@@ -253,9 +305,17 @@ verify extracted manifest binds same source
         ↓
 compile/open packaged AppKit setup window
         ↓
-window carries explicit human acquisition consent
+window emits only the selected Product-entry Control
         ↓
-bundled setup process
+Mac Product-entry adapter resolves the typed Effect
+        ↓
+concrete Home/setup owner realizes only that Effect
+        ↓
+fresh Product-entry re-observation
+        ↓
+window receives only REFRESH_ENTRY / OPEN_PRODUCT / NO_ACTION
+        ↓
+separate explicit acquisition consent remains a later Control
 ~~~
 
 The bootstrap does not:

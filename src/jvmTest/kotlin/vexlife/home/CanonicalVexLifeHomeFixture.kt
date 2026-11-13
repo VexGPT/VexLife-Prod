@@ -15,37 +15,23 @@ object CanonicalVexLifeHomeFixture {
 
     fun form(
         home: Path,
-        deviceSuffix: String =
-            "00000000-0000-0000-0000-000000000001",
-        lineageSuffix: String =
-            "00000000-0000-0000-0000-000000000002",
+        deviceSuffix: String = "00000000-0000-0000-0000-000000000001",
+        lineageSuffix: String = "00000000-0000-0000-0000-000000000002",
     ): Formed {
-        val root =
-            home.toAbsolutePath()
-                .normalize()
-        val deviceRef =
-            "device.vexlife.$deviceSuffix"
-        val companionLineageRef =
-            "companion-lineage.vexlife.$lineageSuffix"
-        val homeRef =
-            "vex-home.$deviceRef"
-        val createdAt =
-            "2026-11-04T17:30:00-08:00"
+        val root = home.toAbsolutePath().normalize()
+        val deviceRef = "device.vexlife.$deviceSuffix"
+        val companionLineageRef = "companion-lineage.vexlife.$lineageSuffix"
+        val homeRef = "vex-home.$deviceRef"
+        val createdAt = "2026-11-04T17:30:00-08:00"
 
-        for (
-            relative in
+        for (relative in
             listOf(
                 "config",
                 "devices",
                 "runtime",
                 "recovery",
-            )
-        ) {
-            Files.createDirectories(
-                root.resolve(
-                    relative,
-                ),
-            )
+            )) {
+            Files.createDirectories(root.resolve(relative))
         }
 
         val homeJson =
@@ -60,8 +46,8 @@ object CanonicalVexLifeHomeFixture {
               "cultureManifestRef": "culture/manifest.json",
               "modelConfigurationRef": "config/model.json"
             }
-            """.trimIndent() +
-                "\n"
+            """
+                .trimIndent() + "\n"
         val deviceJson =
             """
             {
@@ -79,8 +65,8 @@ object CanonicalVexLifeHomeFixture {
               "createdAt": "$createdAt",
               "identityStatement": "Distinct device companion lineage; shared Score does not collapse identity."
             }
-            """.trimIndent() +
-                "\n"
+            """
+                .trimIndent() + "\n"
         val modelJson =
             """
             {
@@ -91,37 +77,26 @@ object CanonicalVexLifeHomeFixture {
               "automaticDownload": false,
               "automaticActivation": false
             }
-            """.trimIndent() +
-                "\n"
+            """
+                .trimIndent() + "\n"
 
         Files.writeString(
-            root.resolve(
-                "config/home.json",
-            ),
+            root.resolve("config/home.json"),
             homeJson,
             StandardCharsets.UTF_8,
         )
         Files.writeString(
-            root.resolve(
-                "devices/$deviceRef.json",
-            ),
+            root.resolve("devices/$deviceRef.json"),
             deviceJson,
             StandardCharsets.UTF_8,
         )
         Files.writeString(
-            root.resolve(
-                "config/model.json",
-            ),
+            root.resolve("config/model.json"),
             modelJson,
             StandardCharsets.UTF_8,
         )
 
-        val observed =
-            requireNotNull(
-                VexLifeProdHomeFiles.observeExisting(
-                    root,
-                ),
-            )
+        val observed = requireNotNull(VexLifeProdHomeFiles.observeExisting(root))
 
         return Formed(
             home = root,

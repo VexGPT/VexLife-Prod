@@ -22,6 +22,7 @@ object VexLifeProdServiceProcess {
 
     data class Arguments(
         val sourceSha: String,
+        val productHome: Path,
     )
 
     internal data class Hooks(
@@ -42,11 +43,15 @@ object VexLifeProdServiceProcess {
                 .visionRuntimeExecutablePathOrNull
         },
         val establishSession: (
+            productHome: Path,
             allowAcquisition: Boolean,
         ) -> VexLifeProdLocalSetup.Session = {
-            allowAcquisition ->
+            productHome,
+            allowAcquisition,
+            ->
             VexLifeProdLocalSetup.establishSession(
-                allowAcquisition,
+                productHome = productHome,
+                allowAcquisition = allowAcquisition,
             )
         },
         val startService: (
@@ -85,16 +90,14 @@ object VexLifeProdServiceProcess {
         args: Array<String>,
     ): Arguments {
         require(
-            args.size ==
-                2 &&
-                args[0] ==
-                "--source-sha",
+            args.size == 4 &&
+                args[0] == "--source-sha" &&
+                args[2] == "--home",
         ) {
-            "VexLife-Prod service process requires exactly --source-sha <git-sha>"
+            "VexLife-Prod service process requires exactly --source-sha <git-sha> --home <absolute-path>"
         }
 
-        val sourceSha =
-            args[1]
+        val sourceSha = args[1]
 
         require(
             SourceShaPattern.matches(
@@ -104,8 +107,14 @@ object VexLifeProdServiceProcess {
             "VexLife-Prod service process source SHA must be lowercase hex"
         }
 
+        val productHome = Path.of(args[3])
+        require(productHome.isAbsolute) {
+            "VexLife-Prod service process Home path must be absolute"
+        }
+
         return Arguments(
             sourceSha = sourceSha,
+            productHome = productHome.normalize(),
         )
     }
 
@@ -132,6 +141,7 @@ object VexLifeProdServiceProcess {
 
         val session =
             hooks.establishSession(
+                arguments.productHome,
                 false,
             )
 
