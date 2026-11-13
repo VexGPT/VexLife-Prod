@@ -152,6 +152,24 @@ state only and does not mint another product semantic-state owner.
 
 Controls whose current backend effect is not admitted remain non-effecting rather than fabricating
 capability. Home directory mutation, Continuity/Dream sync, Stop, and low-memory alert remain held.
+
+Settings / Resources now consumes the read-only local-service current-state projection rather than
+displaying a placeholder for Mac resource truth. It may show fresh host memory and Home-volume free
+storage alongside startup-bound model/runtime evidence. It does not convert those observations into
+repair, model-selection, low-memory-alert or runtime-lifecycle authority.
+
+~~~text
+SettingsResources
+  <- GET /api/v1/current-state
+       fresh RAM + free storage
+       current Home coordinate
+       active model identity
+       artifact bytes VERIFIED_AT_SETUP
+       runtime STARTUP_QUALIFIED_NOT_REOBSERVED
+
+DISPLAYED CURRENT STATE
+!= EFFECT ADMISSION
+~~~
 CleanChat remains a visible explanatory action that performs no reset effect. ThoughtVisibility is
 presentation-local preference only; it does not claim hidden-reasoning data exists in the current
 Conversation projection.
