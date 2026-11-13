@@ -31,10 +31,11 @@ import vexlife.filesystem.VexOwnedPath
 import vexlife.home.VexLifeProdHomeFiles
 
 /**
- * Read-only owner for current source-attributed Memory admitted to a Companion prompt.
+ * Read-only owner for current source-attributed Memory and the validated Score frontier it consumes.
  *
  * It reads the existing canonical VexLife Home. It does not append Score, commit Daily Dream,
- * create semantic acceptance, mutate Memory, or grant first-person authority.
+ * create semantic acceptance, mutate Memory, or grant first-person authority. Score coordinates
+ * exposed here remain reference-only source truth; they are not prompt Memory or semantic bodies.
  */
 object VexLifeCurrentMemoryReader {
     const val LivingJournalMemoryOwnerRef =
@@ -198,6 +199,19 @@ object VexLifeCurrentMemoryReader {
         val priorDaily: DreamPriorDaily?,
     )
 
+    internal data class CurrentScoreCoordinates(
+        val homeRef: String,
+        val deviceRef: String,
+        val companionLineageRef: String,
+        val threadRef: String,
+        val scoreHeadSha256: String?,
+        val sourceConversationHeadSha256: String?,
+        val semanticAuthorityHeadSha256: String?,
+        val currentStatementRefs: List<String>,
+        val openLoopRefs: List<String>,
+        val sourceRefs: List<String>,
+    )
+
     @Serializable
     private data class PageIdentity(
         val dailyStratumSha256: String,
@@ -356,6 +370,164 @@ object VexLifeCurrentMemoryReader {
             score = score,
             daily = daily,
             memoryTokenCap = memoryTokenCap,
+        )
+    }
+
+
+    internal fun readCurrentScoreCoordinates(
+        productHome: Path,
+        threadRef: String =
+            DirectConversationIdentity.ThreadRef,
+    ): CurrentScoreCoordinates {
+        val home =
+            VexOwnedPath.requireRoot(
+                productHome,
+                "canonical VexLife Home",
+            )
+        val currentHome =
+            requireNotNull(
+                VexLifeProdHomeFiles.observeExisting(
+                    home,
+                ),
+            ) {
+                "Score coordinate reader requires one current canonical VexLife Home"
+            }
+        val identity =
+            Identity(
+                homeRef = currentHome.manifest.homeRef,
+                deviceRef = currentHome.manifest.currentDeviceRef,
+                lineageRef = currentHome.manifest.currentCompanionLineageRef,
+                threadRef = threadRef,
+            )
+        val scoreRoot =
+            inside(
+                home,
+                "score/" +
+                    identity.lineageRef +
+                    "/" +
+                    identity.threadRef,
+            )
+        val scoreHead =
+            scoreRoot.resolve(
+                "head.json",
+            )
+
+        if (
+            !Files.exists(
+                scoreHead,
+                LinkOption.NOFOLLOW_LINKS,
+            )
+        ) {
+            val eventsRoot =
+                scoreRoot.resolve(
+                    "events",
+                )
+            if (
+                Files.exists(
+                    eventsRoot,
+                    LinkOption.NOFOLLOW_LINKS,
+                )
+            ) {
+                requireRealDirectory(
+                    eventsRoot,
+                    "Score events",
+                )
+                val durableMaterialPresent =
+                    Files.list(
+                        eventsRoot,
+                    )
+                        .use {
+                            stream ->
+                            stream.findAny()
+                                .isPresent
+                        }
+                require(
+                    !durableMaterialPresent,
+                ) {
+                    "Score durable events exist without a current head"
+                }
+            }
+
+            return CurrentScoreCoordinates(
+                homeRef = identity.homeRef,
+                deviceRef = identity.deviceRef,
+                companionLineageRef = identity.lineageRef,
+                threadRef = identity.threadRef,
+                scoreHeadSha256 = null,
+                sourceConversationHeadSha256 = null,
+                semanticAuthorityHeadSha256 = null,
+                currentStatementRefs = emptyList(),
+                openLoopRefs = emptyList(),
+                sourceRefs = emptyList(),
+            )
+        }
+
+        val conversationStore =
+            DirectConversationStore(
+                home,
+            )
+        val conversation =
+            conversationStore.current()
+        val score =
+            loadScore(
+                home = home,
+                identity = identity,
+                conversationStore = conversationStore,
+                conversation = conversation,
+                authorityPolicy =
+                    ScoreAuthorityPolicy.ALLOW_HISTORICAL_HELD,
+            )
+        val scoreHeadSha256 =
+            score.head.string(
+                "scoreHeadSha256",
+            )
+        val sourceConversationHeadSha256 =
+            score.head.string(
+                "sourceConversationHeadSha256",
+            )
+        val semanticAuthorityHeadSha256 =
+            score.authority.string(
+                "semanticAuthorityHeadSha256",
+            )
+        val currentStatementRefs =
+            score.statements
+                .filter(
+                    Statement::current,
+                )
+                .map(
+                    Statement::statementRef,
+                )
+                .sorted()
+        val openLoopRefs =
+            score.openLoops
+                .filter {
+                    it.state ==
+                        "OPEN"
+                }
+                .map(
+                    OpenLoop::ref,
+                )
+                .sorted()
+
+        return CurrentScoreCoordinates(
+            homeRef = identity.homeRef,
+            deviceRef = identity.deviceRef,
+            companionLineageRef = identity.lineageRef,
+            threadRef = identity.threadRef,
+            scoreHeadSha256 = scoreHeadSha256,
+            sourceConversationHeadSha256 =
+                sourceConversationHeadSha256,
+            semanticAuthorityHeadSha256 =
+                semanticAuthorityHeadSha256,
+            currentStatementRefs = currentStatementRefs,
+            openLoopRefs = openLoopRefs,
+            sourceRefs =
+                listOf(
+                    "sha256:$scoreHeadSha256",
+                    "sha256:$sourceConversationHeadSha256",
+                    "sha256:$semanticAuthorityHeadSha256",
+                )
+                    .sorted(),
         )
     }
 
