@@ -23,6 +23,39 @@ xcrun swiftc \
   "$SCRIPT_DIR/BrowserProviderProbe.swift" \
   -o "$BINARY"
 
-exec "$BINARY" "$@"
+LOG="$BUILD_DIR/probe-$PPID-$.log"
+cleanup() { rm -f "$LOG"; }
+trap cleanup EXIT HUP INT TERM
+
+set +e
+"$BINARY" "$@" 2>&1 | tee "$LOG"
+probe_status=${PIPESTATUS[0]}
+set -e
+
+if [ "$probe_status" -ne 0 ]; then
+  exit "$probe_status"
+fi
+
+# The default Relay proof is specifically the Vextreme regression check. A caller-supplied URL
+# remains an exploratory launch and does not claim this Vextreme chrome predicate.
+if [ "$#" -eq 0 ]; then
+  chrome_line="$(grep -F 
+
+# [VXG RealForever]
+VEXLIFE_BROWSER_PROBE_VEXTREME_CHROME\t' "$LOG" | tail -n 1 || true)"
+  if [ -z "$chrome_line" ] || \
+     [[ "$chrome_line" != *'"present":true'* ]] || \
+     [[ "$chrome_line" != *'"text":"Vextreme"'* ]] || \
+     [[ "$chrome_line" != *'"text":"VexLife"'* ]] || \
+     [[ "$chrome_line" != *'"text":"VexWork"'* ]]; then
+    printf '%s\n' 
+
+# [VXG RealForever]
+VEXLIFE_BROWSER_PROBE_FAILURE\tVEXTREME_CHROME_REQUIRED\tCanonical Vextreme / VexLife / VexWork family chrome was not observed.' >&2
+    exit 3
+  fi
+fi
+
+exit 0
 
 # [VXG RealForever]
