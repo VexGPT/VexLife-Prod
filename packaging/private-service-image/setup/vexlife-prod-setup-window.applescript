@@ -8,8 +8,7 @@ on isFullHex(value, expectedLength)
     set textValue to value as text
     if (count textValue) is not expectedLength then return false
 
-    set expressionError to reference
-    set expression to current application's NSRegularExpression's regularExpressionWithPattern:("^[0-9a-f]{" & expectedLength & "}$") options:0 |error|:expressionError
+    set {expression, expressionError} to current application's NSRegularExpression's regularExpressionWithPattern:("^[0-9a-f]{" & expectedLength & "}$") options:0 |error|:(reference)
     if expression is missing value then return false
 
     set rangeValue to current application's NSMakeRange(0, expectedLength)
@@ -48,8 +47,7 @@ on runJson(setupLauncher, argumentsList)
     task's setStandardOutput:outputPipe
     task's setStandardError:outputPipe
 
-    set launchError to reference
-    set launched to task's launchAndReturnError:launchError
+    set {launched, launchError} to task's launchAndReturnError:(reference)
     if launched is not true then return {missing value, "The Product-entry process could not be launched."}
 
     repeat while (task's isRunning()) as boolean
@@ -61,8 +59,7 @@ on runJson(setupLauncher, argumentsList)
     set statusValue to task's terminationStatus() as integer
     if statusValue is not 0 then return {missing value, textValue as text}
 
-    set parseError to reference
-    set jsonValue to current application's NSJSONSerialization's JSONObjectWithData:dataValue options:0 |error|:parseError
+    set {jsonValue, parseError} to current application's NSJSONSerialization's JSONObjectWithData:dataValue options:0 |error|:(reference)
     if jsonValue is missing value then return {missing value, textValue as text}
     return {jsonValue, ""}
 end runJson
