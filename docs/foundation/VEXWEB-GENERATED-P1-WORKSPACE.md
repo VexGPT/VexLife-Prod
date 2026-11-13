@@ -152,6 +152,31 @@ state only and does not mint another product semantic-state owner.
 
 Controls whose current backend effect is not admitted remain non-effecting rather than fabricating
 capability. Home directory mutation, Continuity/Dream sync, Stop, and low-memory alert remain held.
+
+Settings / Resources now consumes the read-only local-service current-state projection rather than
+displaying a placeholder for Mac resource truth. The projection is formable independently of
+`VexLifeProdLocalSetup`, so awareness does not first select/bind a model, recover a writer, acquire
+bytes or establish a runtime. It does not convert observations into repair, model-selection,
+low-memory-alert or runtime-lifecycle authority.
+
+~~~text
+SettingsResources
+  <- GET /api/v1/current-state
+       fresh RAM + Home-volume free storage
+       current Home / device / Companion-lineage identity
+       read-only current product model binding
+       selected-model files present by declared size
+       runtime configuration binding not reobserved
+
+COMPLETE_BY_SIZE_NOT_HASHED
+!= HASH-VERIFIED
+
+CONFIGURATION_ONLY_NOT_REOBSERVED
+!= RUNTIME CURRENT
+
+DISPLAYED CURRENT STATE
+!= EFFECT ADMISSION
+~~~
 CleanChat remains a visible explanatory action that performs no reset effect. ThoughtVisibility is
 presentation-local preference only; it does not claim hidden-reasoning data exists in the current
 Conversation projection.

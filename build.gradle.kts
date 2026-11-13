@@ -353,6 +353,29 @@ val jvmJarTask =
         "jvmJar",
     )
 
+tasks.register<JavaExec>(
+    "observeVexLifeProdCurrentState",
+) {
+    group =
+        "verification"
+    description =
+        "Print one no-effect current machine/Home/model awareness projection before setup effects."
+
+    dependsOn(
+        jvmMainCompilation.compileTaskProvider,
+    )
+
+    classpath =
+        files(
+            jvmMainCompilation.output.allOutputs,
+            jvmMainCompilation.runtimeDependencyFiles,
+        )
+
+    mainClass.set(
+        "vexlife.service.VexLifeProdCurrentStateProcessKt",
+    )
+}
+
 val serviceImageJdk21 =
     extensions
         .getByType(

@@ -79,6 +79,19 @@ class VexLifeProdSetupProcessTest {
             parsed.allowAcquisition,
         )
 
+        val reuseExisting =
+            VexLifeProdSetupProcess.parse(
+                arrayOf(
+                    "--expected-source-sha",
+                    sha,
+                    "--reuse-existing",
+                ),
+            )
+        assertEquals(
+            false,
+            reuseExisting.allowAcquisition,
+        )
+
         for (
             args in
             listOf(
@@ -98,6 +111,11 @@ class VexLifeProdSetupProcessTest {
                     "--allow-acquisition",
                     "--home",
                     "/tmp/alternate",
+                ),
+                arrayOf(
+                    "--expected-source-sha",
+                    sha,
+                    "--repair-anything",
                 ),
             )
         ) {
@@ -324,41 +342,63 @@ class VexLifeProdSetupProcessTest {
     }
 
     @Test
-    fun runWithHooksStillRefusesImplicitAcquisitionAuthority() {
-        var effects =
-            0
+    fun reuseExistingModeCarriesNoAcquisitionAuthorityIntoLocalSetup() {
+        val sourceSha =
+            "a".repeat(
+                40,
+            )
+        val sourceImage =
+            Path.of(
+                "/tmp/vexlife-prod-setup-reuse-existing",
+            )
+        val observation =
+            VexLifeProdPrivateServiceImage.Observation(
+                imageRef = "image.vexlife-prod.private-service.reuse-test",
+                sourceSha = sourceSha,
+                payloadSha256 =
+                    "b".repeat(
+                        64,
+                    ),
+                launcherPath = sourceImage.resolve("bin/vexlife-prod-service").toString(),
+                setupLauncherPath = sourceImage.resolve("bin/vexlife-prod-setup").toString(),
+                setupWindowPath = sourceImage.resolve("setup/vexlife-prod-setup-window.applescript").toString(),
+                javaPath = sourceImage.resolve("runtime/bin/java").toString(),
+                runtimeModules = listOf("java.base", "java.net.http", "jdk.httpserver"),
+                effectsPerformed = false,
+            )
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<IllegalStateException> {
             VexLifeProdSetupProcess.runWithHooks(
                 arguments =
                     VexLifeProdSetupProcess.Arguments(
-                        expectedSourceSha =
-                            "a".repeat(
-                                40,
-                            ),
+                        expectedSourceSha = sourceSha,
                         allowAcquisition = false,
                     ),
                 hooks =
                     VexLifeProdSetupProcess.Hooks(
                         locateImageRoot = {
-                            effects +=
-                                1
-                            Path.of(
-                                "/tmp/should-not-run",
+                            sourceImage
+                        },
+                        observeImage = {
+                            _,
+                            _,
+                            ->
+                            observation
+                        },
+                        reportImageVerified = {
+                        },
+                        establishSession = {
+                            allowAcquisition ->
+                            assertFalse(
+                                allowAcquisition,
+                            )
+                            throw IllegalStateException(
+                                "stop after authority projection",
                             )
                         },
                     ),
             )
         }
-
-        assertEquals(
-            0,
-            effects,
-        )
-        assertFalse(
-            effects >
-                0,
-        )
     }
 }
 
