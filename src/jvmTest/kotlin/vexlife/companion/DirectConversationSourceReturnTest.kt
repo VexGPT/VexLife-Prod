@@ -83,6 +83,25 @@ class DirectConversationSourceReturnTest {
                 "Only one source-return request",
             ),
         )
+        assertTrue(
+            protocol.content.contains(
+                DirectConversationSourceReturn.RequestHeader,
+            ),
+        )
+        assertTrue(
+            protocol.content.contains(
+                DirectConversationSourceReturn.RequestHeader +
+                    "\n" +
+                    "{\"schemaVersion\":\"" +
+                    DirectConversationSourceReturn.RequestSchema +
+                    "\",\"queryTerms\":[\"distinctive exact phrase or term\"],\"speakerScope\":\"ANY\"}",
+            ),
+        )
+        assertTrue(
+            protocol.content.contains(
+                "final assistant content",
+            ),
+        )
     }
 
     @Test
