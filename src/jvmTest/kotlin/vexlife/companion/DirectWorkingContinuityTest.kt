@@ -155,9 +155,13 @@ class DirectWorkingContinuityTest {
                         currentIntentReceiptRefs =
                             emptyList(),
                         openLoopRefs =
-                            emptyList(),
+                            listOf(
+                                "open-loop.score.stale",
+                            ),
                         currentStatementRefs =
-                            emptyList(),
+                            listOf(
+                                "statement.score.stale",
+                            ),
                         currentContinuityRecordRefs =
                             emptyList(),
                         currentDailyStratumRefOrNull =
@@ -283,6 +287,12 @@ class DirectWorkingContinuityTest {
                     request.eventRef,
                     prepared.workingSet.cursorEventRef,
                 )
+                assertTrue(
+                    prepared.workingSet.openLoopRefs.isEmpty(),
+                )
+                assertTrue(
+                    prepared.workingSet.currentStatementRefs.isEmpty(),
+                )
             }
         } finally {
             home.parent
@@ -387,6 +397,113 @@ class DirectWorkingContinuityTest {
                 assertEquals(
                     prompt.receipt.receiptRef,
                     prepared.pressureInput.promptReceiptRef,
+                )
+                assertTrue(
+                    prepared.workingSet.currentStatementRefs.isEmpty(),
+                )
+                assertTrue(
+                    prepared.workingSet.openLoopRefs.isEmpty(),
+                )
+            }
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun orphanedScoreMaterialHoldsWorkingContinuityWithoutRejectingPreparation() {
+        val home =
+            productHome()
+
+        try {
+            val store =
+                DirectConversationStore(
+                    home,
+                )
+            val memory =
+                VexLifeMemoryContextFixture.current()
+
+            store.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef =
+                            "turn.vexlife.working.score-held",
+                        requestMessageRef =
+                            "message.vexlife.working.score-held",
+                        content =
+                            "Score continuity remains stewardship.",
+                    )
+                val prompt =
+                    DirectPromptContext.materialize(
+                        prior = null,
+                        currentRequest = request,
+                        memoryContext = memory,
+                    )
+                val eventsRoot =
+                    home.resolve(
+                        "score/" +
+                            request.companionLineageRef +
+                            "/" +
+                            request.threadRef +
+                            "/events",
+                    )
+                Files.createDirectories(
+                    eventsRoot,
+                )
+                Files.writeString(
+                    eventsRoot.resolve(
+                        "orphan.json",
+                    ),
+                    "{}\n",
+                )
+
+                val prepared =
+                    DirectWorkingContinuity.prepare(
+                        productHome = home,
+                        currentRequest = request,
+                        promptContext = prompt.receipt,
+                        memoryContext = memory,
+                    )
+
+                assertNull(
+                    prepared.plan,
+                )
+                assertNull(
+                    prepared.scoreCoordinates,
+                )
+                assertEquals(
+                    "IllegalArgumentException",
+                    prepared.formationFailureClassOrNull,
+                )
+                assertTrue(
+                    prepared.workingSet.currentStatementRefs.isEmpty(),
+                )
+                assertTrue(
+                    prepared.workingSet.openLoopRefs.isEmpty(),
+                )
+
+                val receipt =
+                    DirectWorkingContinuity.commitAfterCompletedTurn(
+                        productHome = home,
+                        turnRef = request.turnRef,
+                        prepared = prepared,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-13T09:20:00Z",
+                            ),
+                    )
+
+                assertEquals(
+                    "HELD",
+                    receipt.disposition,
+                )
+                assertFalse(
+                    receipt.effects.workingCheckpointPersisted,
+                )
+                assertFalse(
+                    receipt.effects.workingHeadMutated,
                 )
             }
         } finally {
