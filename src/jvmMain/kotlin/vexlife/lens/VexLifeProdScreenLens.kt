@@ -83,7 +83,7 @@ object VexLifeProdScreenLens {
                             when (val binding = coordinate?.binding) {
                                 is VexWeb.Binding.Capability ->
                                     "capability ${binding.capabilityRef.value}"
-                                is VexWeb.Binding.LocalInteraction -> "reveal ${binding.target.ref}"
+                                is VexWeb.Binding.LocalInteraction -> "local ${binding.target.ref}"
                                 else -> null
                             },
                         )
@@ -422,10 +422,10 @@ object VexLifeProdScreenLens {
         val targetLabel = target?.let(::humanLabel) ?: targetRef
         return pathway(
             ref = "pathway.vexlife-prod.local.$suffix",
-            label = "Reveal $targetLabel",
+            label = "Presentation over $targetLabel",
             disposition = "TYPED_PRESENTATION",
             summary =
-                "A presentation-local interaction; it reveals another coordinate and decides nothing.",
+                "A presentation-local interaction over another coordinate; it decides nothing.",
             returns = null,
             returnRef = null,
             nodes =

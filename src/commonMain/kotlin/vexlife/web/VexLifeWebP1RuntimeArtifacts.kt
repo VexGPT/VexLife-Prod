@@ -115,6 +115,16 @@ object VexLifeWebP1RuntimeArtifacts {
                 reload: byId('reload'),
                 appSelector: byId('app-selector'),
                 quickActions: byId('quick-actions'),
+                readAloud: byId('read-aloud'),
+                readAloudStatus: byId('read-aloud-status'),
+                readAloudPlay: byId('read-aloud-play'),
+                readAloudStop: byId('read-aloud-stop'),
+                readAloudPrevious: byId('read-aloud-previous'),
+                readAloudNext: byId('read-aloud-next'),
+                readAloudChoose: byId('read-aloud-choose'),
+                readAloudRate: byId('read-aloud-rate'),
+                readAloudRateValue: byId('read-aloud-rate-value'),
+                readAloudVoice: byId('read-aloud-voice'),
                 pageFrame: byId('page-frame'),
                 contextFrame: byId('context-frame'),
                 viewportEmpty: byId('viewport-empty'),
@@ -204,7 +214,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const QUICK_ACTIONS = [
                 { key: 'journeys', label: 'Journeys', icon: '<path d="M4 15.5c0-2 1.6-3 3.4-3.4l3.4-.8 2.2-4.3c.4-.8 1.4-1 2-.3l.6.6c.5.5.5 1.3 0 1.8l-1 1.2 2.8.8c1.4.4 2.4 1.7 2.4 3.2v1.2H4z"/><path d="M8 12l1.4 2M11 11.4l1.3 2"/>' },
-                { key: 'sound', label: 'Sound', icon: '<path d="M4 9.5h3.2L11.5 6v12l-4.3-3.5H4z"/><path d="M15 9.2a4 4 0 0 1 0 5.6M17.6 6.8a7.3 7.3 0 0 1 0 10.4"/>' },
+                { key: 'read-aloud', label: 'Read aloud', bound: true, icon: '<path d="M4 9.5h3.2L11.5 6v12l-4.3-3.5H4z"/><path d="M15 9.2a4 4 0 0 1 0 5.6M17.6 6.8a7.3 7.3 0 0 1 0 10.4"/>' },
                 { key: 'theme', label: 'Light or dark', bound: true, icon: '<circle cx="12" cy="12" r="3.8"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/>' },
                 { key: 'language', label: 'Language', icon: '<path d="M5 20.5V4M5 4.5h12.5l-2 3.5 2 3.5H5"/>' },
                 { key: 'evolution', label: 'Evolution', icon: '<path d="M12.2 12.1c.4-.6-.3-1.4-1-1.2-1.3.4-1.3 2.3-.1 3 1.8 1 4-.5 3.9-2.6-.1-3-3.6-4.3-6-2.8-3.1 2-2.6 6.9.7 8.3 3.9 1.6 8.3-1.2 8.2-5.6"/>' },
@@ -307,6 +317,202 @@ object VexLifeWebP1RuntimeArtifacts {
                 } catch {}
               };
 
+              // Read aloud, ported from the Vextreme Spiral FAB's Read Aloud orb. It reads the canonical
+              // Conversation projection message by message and continues forward. Only voices that
+              // run on this machine are offered, so Conversation text is never sent to a speech service.
+              const READ_ALOUD_SETTINGS = 'vexlife-prod.presentation.read-aloud/v1';
+              const readAloud = {
+                supported: 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window,
+                open: false,
+                mode: 'idle',
+                choosing: false,
+                plan: [],
+                index: 0,
+                generation: 0,
+                settings: { rate: 1, voiceURI: '' }
+              };
+
+              const loadReadAloudSettings = () => {
+                try {
+                  const saved = JSON.parse(localStorage.getItem(READ_ALOUD_SETTINGS) || '{}');
+                  const rate = Number(saved.rate);
+                  if (Number.isFinite(rate)) readAloud.settings.rate = Math.min(1.6, Math.max(0.7, rate));
+                  if (typeof saved.voiceURI === 'string') readAloud.settings.voiceURI = saved.voiceURI;
+                } catch {}
+              };
+
+              const saveReadAloudSettings = () => {
+                try {
+                  localStorage.setItem(READ_ALOUD_SETTINGS, JSON.stringify(readAloud.settings));
+                } catch {}
+              };
+
+              const speechChunks = (text) => {
+                const sentences = String(text).replace(/\s+/gu, ' ').trim().match(/[^.!?]+[.!?]*\s*/gu) || [];
+                const chunks = [];
+                let current = '';
+                for (const sentence of sentences) {
+                  if (current && (current + sentence).length > 300) {
+                    chunks.push(current.trim());
+                    current = '';
+                  }
+                  current += sentence;
+                }
+                if (current.trim()) chunks.push(current.trim());
+                return chunks;
+              };
+
+              const readablePlan = () => (state.conversation?.messages ?? [])
+                .filter((message) => String(message.content ?? '').trim())
+                .map((message) => ({
+                  eventRef: String(message.eventRef ?? ''),
+                  speaker: message.role === 'human' ? 'You' : 'Vex',
+                  chunks: speechChunks(message.content)
+                }));
+
+              const localVoices = () => {
+                if (!readAloud.supported) return [];
+                const language = (document.documentElement.lang || 'en').slice(0, 2).toLowerCase();
+                return window.speechSynthesis.getVoices().filter((voice) =>
+                  voice.localService && String(voice.lang || '').toLowerCase().startsWith(language));
+              };
+
+              const chosenVoice = () => {
+                const voices = localVoices();
+                return voices.find((voice) => voice.voiceURI === readAloud.settings.voiceURI)
+                  ?? voices.find((voice) => voice.default)
+                  ?? voices[0]
+                  ?? null;
+              };
+
+              const renderReadAloudVoices = () => {
+                if (!ui.readAloudVoice) return;
+                const chosen = chosenVoice();
+                const options = localVoices().map((voice) => {
+                  const option = document.createElement('option');
+                  option.value = voice.voiceURI;
+                  option.textContent = voice.name;
+                  return option;
+                });
+                ui.readAloudVoice.replaceChildren(...options);
+                if (chosen) ui.readAloudVoice.value = chosen.voiceURI;
+                ui.readAloudVoice.disabled = !options.length;
+              };
+
+              const markReading = () => {
+                if (!ui.timeline) return;
+                const current = readAloud.mode === 'idle' ? null : readAloud.plan[readAloud.index]?.eventRef;
+                for (const item of ui.timeline.querySelectorAll('.message')) {
+                  item.classList.toggle('reading', Boolean(current) && item.dataset.eventRef === current);
+                }
+                ui.timeline.dataset.choosing = String(readAloud.choosing);
+              };
+
+              const renderReadAloud = () => {
+                if (!ui.readAloud) return;
+                ui.readAloud.hidden = !readAloud.open;
+                ui.readAloud.dataset.mode = readAloud.mode;
+                const action = ui.quickActions?.querySelector('.quick-action[data-action="read-aloud"]');
+                if (action) {
+                  action.setAttribute('aria-expanded', String(readAloud.open));
+                  action.dataset.active = String(readAloud.mode !== 'idle');
+                }
+                const playing = readAloud.mode === 'playing';
+                ui.readAloudPlay.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+                ui.readAloudPlay.title = playing ? 'Pause' : 'Play';
+                ui.readAloudChoose.setAttribute('aria-pressed', String(readAloud.choosing));
+                ui.readAloudRate.value = String(readAloud.settings.rate);
+                ui.readAloudRateValue.textContent = readAloud.settings.rate.toFixed(1) + '×';
+                const usable = readAloud.supported && localVoices().length > 0;
+                ui.readAloudPlay.disabled = !usable;
+                ui.readAloudChoose.disabled = !usable;
+                ui.readAloudStop.disabled = readAloud.mode === 'idle';
+                ui.readAloudPrevious.disabled = readAloud.mode === 'idle' || readAloud.index <= 0;
+                ui.readAloudNext.disabled = readAloud.mode === 'idle' || readAloud.index >= readAloud.plan.length - 1;
+                const current = readAloud.plan[readAloud.index];
+                ui.readAloudStatus.textContent = !readAloud.supported
+                  ? "This browser can't read aloud."
+                  : !usable
+                    ? 'No voice on this Mac is available for reading aloud.'
+                    : readAloud.choosing
+                      ? 'Choose a message to start from. Esc cancels.'
+                      : readAloud.mode === 'idle' || !current
+                        ? "Reads Vex's latest reply, or choose where to start."
+                        : (playing ? 'Reading ' : 'Paused · ') + current.speaker +
+                          ' · message ' + (readAloud.index + 1) + ' of ' + readAloud.plan.length;
+                markReading();
+              };
+
+              const stopReading = () => {
+                readAloud.generation += 1;
+                if (readAloud.supported) window.speechSynthesis.cancel();
+                readAloud.mode = 'idle';
+                renderReadAloud();
+              };
+
+              const speakFrom = (index, chunk) => {
+                const generation = ++readAloud.generation;
+                window.speechSynthesis.cancel();
+                const message = readAloud.plan[index];
+                if (!message) {
+                  stopReading();
+                  return;
+                }
+                readAloud.index = index;
+                if (chunk >= message.chunks.length) {
+                  speakFrom(index + 1, 0);
+                  return;
+                }
+                const utterance = new SpeechSynthesisUtterance(message.chunks[chunk]);
+                utterance.rate = readAloud.settings.rate;
+                const voice = chosenVoice();
+                if (voice) {
+                  utterance.voice = voice;
+                  utterance.lang = voice.lang;
+                }
+                utterance.onend = () => {
+                  if (generation === readAloud.generation && readAloud.mode === 'playing') speakFrom(index, chunk + 1);
+                };
+                utterance.onerror = (event) => {
+                  if (generation !== readAloud.generation || event.error === 'interrupted' || event.error === 'canceled') return;
+                  stopReading();
+                  notify("Read aloud stopped because the voice couldn't continue.");
+                };
+                readAloud.mode = 'playing';
+                renderReadAloud();
+                window.speechSynthesis.speak(utterance);
+              };
+
+              const startReading = (eventRef) => {
+                readAloud.plan = readablePlan();
+                readAloud.choosing = false;
+                if (!readAloud.plan.length) {
+                  renderReadAloud();
+                  notify('There is nothing to read yet.');
+                  return;
+                }
+                let index = eventRef ? readAloud.plan.findIndex((message) => message.eventRef === eventRef) : -1;
+                if (index < 0) {
+                  const vexIndexes = readAloud.plan.map((message, at) => (message.speaker === 'Vex' ? at : -1)).filter((at) => at >= 0);
+                  index = vexIndexes.length ? vexIndexes[vexIndexes.length - 1] : readAloud.plan.length - 1;
+                }
+                speakFrom(index, 0);
+              };
+
+              const toggleReading = () => {
+                if (readAloud.mode === 'playing') {
+                  window.speechSynthesis.pause();
+                  readAloud.mode = 'paused';
+                } else if (readAloud.mode === 'paused') {
+                  window.speechSynthesis.resume();
+                  readAloud.mode = 'playing';
+                } else {
+                  startReading(null);
+                  return;
+                }
+                renderReadAloud();
+              };
+
               const renderQuickActions = () => {
                 if (!ui.quickActions) return;
                 const sourceOnly = [...ui.quickActions.children].filter((item) => item.hidden);
@@ -335,6 +541,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   return item;
                 });
                 ui.quickActions.replaceChildren(...sourceOnly, ...items);
+                renderReadAloud();
               };
 
               // Vision copy, state and the one lawful Control come from the Product (VexLifeVisionFamily);
@@ -658,6 +865,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.timeline.replaceChildren(...nodes);
                 restoreReasoningViewports();
                 applyTimelineViewport();
+                markReading();
               };
 
               const updateLiveTurn = () => {
@@ -1222,6 +1430,13 @@ object VexLifeWebP1RuntimeArtifacts {
                   toggleTheme();
                   return;
                 }
+                if (action.key === 'read-aloud') {
+                  readAloud.open = !readAloud.open;
+                  if (!readAloud.open) readAloud.choosing = false;
+                  renderReadAloudVoices();
+                  renderReadAloud();
+                  return;
+                }
                 if (action.key === 'vision') {
                   void activateVision();
                   return;
@@ -1231,6 +1446,48 @@ object VexLifeWebP1RuntimeArtifacts {
 
               ui.visionControl.addEventListener('click', () => {
                 void activateVision();
+              });
+
+              loadReadAloudSettings();
+              if (readAloud.supported) {
+                window.speechSynthesis.addEventListener('voiceschanged', () => {
+                  renderReadAloudVoices();
+                  renderReadAloud();
+                });
+              }
+              ui.readAloudPlay.addEventListener('click', toggleReading);
+              ui.readAloudStop.addEventListener('click', stopReading);
+              ui.readAloudPrevious.addEventListener('click', () => speakFrom(Math.max(0, readAloud.index - 1), 0));
+              ui.readAloudNext.addEventListener('click', () => speakFrom(readAloud.index + 1, 0));
+              ui.readAloudChoose.addEventListener('click', () => {
+                readAloud.choosing = !readAloud.choosing;
+                renderReadAloud();
+              });
+              ui.readAloudRate.addEventListener('input', () => {
+                readAloud.settings.rate = Math.min(1.6, Math.max(0.7, Number(ui.readAloudRate.value) || 1));
+                saveReadAloudSettings();
+                renderReadAloud();
+              });
+              ui.readAloudVoice.addEventListener('change', () => {
+                readAloud.settings.voiceURI = ui.readAloudVoice.value;
+                saveReadAloudSettings();
+              });
+              ui.timeline.addEventListener('click', (event) => {
+                if (!readAloud.choosing) return;
+                const item = event.target.closest('.message');
+                if (!item?.dataset.eventRef) return;
+                event.preventDefault();
+                startReading(item.dataset.eventRef);
+              });
+              document.addEventListener('keydown', (event) => {
+                if (event.key !== 'Escape') return;
+                if (readAloud.choosing) {
+                  readAloud.choosing = false;
+                  renderReadAloud();
+                } else if (readAloud.open) {
+                  readAloud.open = false;
+                  renderReadAloud();
+                }
               });
 
               ui.viewSwitch.addEventListener('click', () => {

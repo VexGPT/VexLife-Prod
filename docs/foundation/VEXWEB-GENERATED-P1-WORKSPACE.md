@@ -312,6 +312,27 @@ It is evidence of intended shape and interaction composition, not runtime/source
 Current VexLife-Prod service, Conversation, Context, browser-context and runtime owners remain
 authoritative.
 
+## Read aloud
+
+The header's Read aloud orb is the Vextreme Spiral FAB's Read Aloud behavior, ported rather than
+loaded: VexLife-Prod has no runtime dependency on Vextreme.
+
+~~~text
+canonical Conversation projection (state.conversation.messages)
+-> plan: one entry per message, sentence chunks up to ~300 characters
+-> start: Vex's latest reply, or "Start here…" then a message (Esc cancels)
+-> continue forward message by message; play / pause / stop / previous / next; speed; voice
+-> browser speechSynthesis, on-device voices only (voice.localService)
+~~~
+
+It reads the projection rather than the DOM, so a timeline re-render only moves the highlight. Only
+on-device voices are offered, so Conversation text never goes to an online speech service; with none
+available the panel says so and does not play. Vextreme's lazy Kokoro neural provider is deliberately
+not ported because it fetches a model from a CDN. Speed and voice persist per browser
+(`vexlife-prod.presentation.read-aloud/v1`); speech never starts on its own.
+
+The other unbound orbs (Journeys, Language, Evolution) stay as they were: visibly held, not wired.
+
 ## VexBoard Screen Lens export
 
 VexLife-Prod exports its own Screen Lens rather than VexBoard parsing its source:
@@ -332,7 +353,7 @@ Pathway dispositions follow what source has earned:
 ~~~text
 vision.selected-scope   SCAE_FAMILY           VexLifeVisionFamily over a re-observed State
 conversation.send       DIRECT_REGISTRATION   the route calls DirectCompanionTurn; no Conversation Family yet
-local interactions      TYPED_PRESENTATION    reveal another coordinate; decide nothing
+local interactions      TYPED_PRESENTATION    act on another coordinate; decide nothing
 everything else         no pathway            nothing is inferred from a missing binding
 ~~~
 

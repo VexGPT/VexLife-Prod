@@ -207,6 +207,28 @@ svg { display: block; }
 .quick-action svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .quick-action:hover { color: var(--ink); border-color: var(--rule-strong); }
 .quick-action[data-bound="false"] { color: var(--ink-3); }
+.quick-action[aria-expanded="true"], .quick-action[data-active="true"] { color: var(--ink); border-color: var(--ink-2); }
+
+.utilities { position: relative; }
+.read-aloud {
+  position: absolute; top: calc(100% + 8px); right: 12px; z-index: 30; width: 300px;
+  display: grid; gap: 10px; padding: 12px 14px;
+  background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 12px; box-shadow: var(--shadow);
+}
+.read-aloud[hidden] { display: none; }
+.read-aloud-status { margin: 0; color: var(--ink-2); font-size: var(--step--1); }
+.read-aloud-controls { display: flex; align-items: center; gap: 6px; }
+.read-aloud-controls .quiet-button { margin-left: auto; }
+.read-aloud-controls .icon-button svg path, .read-aloud-controls .icon-button svg rect { fill: currentColor; stroke: none; }
+.read-aloud-controls .icon-button svg path[d^="M5.5"], .read-aloud-controls .icon-button svg path[d^="M14.5"],
+.read-aloud-controls .icon-button svg path.glyph-pause { fill: none; stroke: currentColor; stroke-width: 2; }
+.read-aloud-play .glyph-pause, .read-aloud[data-mode="playing"] .read-aloud-play .glyph-play { display: none; }
+.read-aloud[data-mode="playing"] .read-aloud-play .glyph-pause { display: inline; }
+.read-aloud-field { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 8px; font-size: var(--step--1); color: var(--ink-2); }
+.read-aloud-field select { grid-column: 2 / -1; min-width: 0; height: 30px; background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 6px; color: var(--ink); }
+.message.reading .bubble { outline: 2px solid var(--ink-2); outline-offset: 2px; }
+.timeline[data-choosing="true"] .message { cursor: pointer; }
+.timeline[data-choosing="true"] .message:hover .bubble { outline: 1px dashed var(--ink-2); outline-offset: 2px; }
 
 /* ------------------------------------------------------------ frame + seam */
 
