@@ -52,6 +52,7 @@ object VexLifeProdMacFrontDoor {
                         VexLifeProdEntryFamily.StateUpdateAvailable,
                         VexLifeProdEntryFamily.StateRepairRequired,
                         VexLifeProdEntryFamily.StateUpdateRepairRequired,
+                        VexLifeProdEntryFamily.StateHomeFormationRequired,
                         VexLifeProdEntryFamily.StateSetupRequired,
                         VexLifeProdEntryFamily.StateHeldUnknown,
                     ) &&
@@ -78,8 +79,9 @@ object VexLifeProdMacFrontDoor {
                     "Mac front-door owned-service state requires exact source/PID projection"
                 }
 
-                VexLifeProdEntryFamily.StateSetupRequired ->
-                    require(
+                VexLifeProdEntryFamily.StateHomeFormationRequired,
+                VexLifeProdEntryFamily.StateSetupRequired,
+                -> require(
                         currentServiceSourceSha ==
                             null &&
                             currentServicePid ==
@@ -126,6 +128,7 @@ object VexLifeProdMacFrontDoor {
                     setOf(
                         VexLifeProdEntryFamily.ControlOpenCurrent,
                         VexLifeProdEntryFamily.ControlConvergeDesired,
+                        VexLifeProdEntryFamily.ControlFormHome,
                         VexLifeProdEntryFamily.ControlSetUp,
                         VexLifeProdEntryFamily.ControlCancel,
                     ) &&
@@ -145,12 +148,13 @@ object VexLifeProdMacFrontDoor {
                         "no-effect Product-entry resolution must not claim acquisition authority"
                     }
 
-                VexLifeProdEntryFamily.EffectOpenPresentation ->
-                    require(
+                VexLifeProdEntryFamily.EffectOpenPresentation,
+                VexLifeProdEntryFamily.EffectFormCanonicalHome,
+                -> require(
                         allowAcquisition ==
                             null,
                     ) {
-                        "open-presentation effect must not claim acquisition authority"
+                        "non-acquisition Product-entry effect must not claim acquisition authority"
                     }
 
                 VexLifeProdEntryFamily.EffectConvergeProduct ->
@@ -324,7 +328,7 @@ object VexLifeProdMacFrontDoor {
             return Observed(
                 currentState = current,
                 entryState =
-                    VexLifeProdEntryFamily.SetupRequired(
+                    VexLifeProdEntryFamily.HomeFormationRequired(
                         desiredSourceSha,
                     ),
                 currentServiceSourceSha = null,
