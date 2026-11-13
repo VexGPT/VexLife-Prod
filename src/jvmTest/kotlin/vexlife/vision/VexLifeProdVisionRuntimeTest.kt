@@ -480,7 +480,7 @@ class VexLifeProdVisionRuntimeTest {
     }
 
     @Test
-    fun oversizedProductCommandIsRejectedBeforeTransportMutation() {
+    fun oversizedInternalCommandIsRejectedBeforeTransportMutation() {
         val parent =
             Files.createTempDirectory(
                 "vexlife-prod-vision-command-bound-",
@@ -490,15 +490,19 @@ class VexLifeProdVisionRuntimeTest {
             runtimeExecutable(
                 parent,
             )
+        val shutdownRef =
+            "command.vexlife-prod.vision.shutdown-test"
         val transport =
             FakeTransport(
                 listOf(
                     response(
-                        commandRef = "command.vexlife-prod.vision.shutdown-test",
+                        commandRef = shutdownRef,
                         commandType = "SHUTDOWN",
                     ),
                 ),
             )
+        var commandRefCalls =
+            0
 
         try {
             val runtime =
@@ -509,17 +513,23 @@ class VexLifeProdVisionRuntimeTest {
                             transport
                         },
                     commandRefSource = {
-                        "shutdown-test"
+                        commandRefCalls +=
+                            1
+                        if (
+                            commandRefCalls ==
+                                1
+                        ) {
+                            "x".repeat(
+                                VexLifeProdVisionRuntime.MaxCommandBytes,
+                            )
+                        } else {
+                            "shutdown-test"
+                        }
                     },
                 )
 
             assertFailsWith<IllegalStateException> {
-                runtime.engage(
-                    "request." +
-                        "x".repeat(
-                            VexLifeProdVisionRuntime.MaxCommandBytes,
-                        ),
-                )
+                runtime.project()
             }
             assertEquals(
                 0,
@@ -527,6 +537,16 @@ class VexLifeProdVisionRuntimeTest {
             )
 
             runtime.close()
+            assertEquals(
+                1,
+                transport.requests.size,
+            )
+            assertTrue(
+                transport.requests.single()
+                    .contains(
+                        "\"commandRef\":\"$shutdownRef\"",
+                    ),
+            )
         } finally {
             parent
                 .toFile()
