@@ -9,6 +9,44 @@ projection), #122 (clean chat says what it will be), #123 (VexBoard Screen Lens 
 doing that, and the decisions each next stage needs before code. Each section ends with the
 smallest slice that could land once its decision is made.
 
+## 0. Confirmed design (Victor, 2026-11-13)
+
+The left pane becomes three apps: **Source template** (Victor's live Vextreme, VexLife and VexWork,
+read-only), **Archives** (the person's own records in their Vex Home) and **Browser**. The terrain map's
+shape is the template at every scale: arcs of records, each record a frozen transcript split into
+parts plus Vex's own commentary, with the full timeline always preserved beside the arcs (the
+Vextreme Sabotage records are the worked example).
+
+Confirmed decisions:
+
+1. **Acceptance owner:** VexLife-Prod owns memory and record formation. Vextreme-SDK is the lab and
+   provenance it learns from.
+2. **Sorting is on by default and signalled.** The setting reads "Vex sorts my conversations into my
+   archives" and is shown in the Companion header. Outside Private mode the conversation itself is
+   always kept, because continuity needs it. Turning the setting off stops queueing and sorting,
+   not keeping.
+3. **Context queue.** Completed turns enter a queue in the Home. At rest, Vex revisits the queue and
+   places the turns into records and arcs with its own commentary, splitting conversations the way
+   the Sabotage arcs are split, so the person doesn't have to manage memory.
+4. **Private mode replaces "clean chat".** It is never written to disk and lives only in the running
+   app, apart from what the person and Vex both agree to save. Vex still reads its existing Memory
+   and archives there. Saving: the person says "save that", Vex shows the exact words, and nothing is
+   kept until the person agrees. On return, Vex is told: "private conversation from 3:10 to 3:40,
+   6 exchanges; you kept: …", so it knows there is a gap and why.
+5. **No delete buttons.** The person opens the record in Archives, where Vex can see it. Vex proposes
+   the exact change, the person confirms, and it is applied, leaving a note on the timeline.
+6. **Source template is live:** pages load from GitHub Pages, not a bundled snapshot.
+
+Build order:
+
+- **(a) Done (this PR):** the app selector, Source template family row, and the Archives timeline.
+- **(b)** Sorting setting and header signal, plus the context queue in the Home.
+- **(c)** Private mode, with the gap note in prompt context.
+- **(d)** Archives visible to Vex, and change-with-Vex.
+- **(e)** Arc and record format plus sorting at rest.
+- **(f)** Terrain-style map over arcs, for both Victor's template and the person's archives.
+- **(g)** Family header, FAB and a clean-slate VexWork as the person's own.
+
 ## 1. Memory formation (the largest continuity gap)
 
 What is true in Product today (see `VEXLIFE-CONTINUITY-REALIGNMENT.md`, "What a person is told

@@ -312,6 +312,28 @@ It is evidence of intended shape and interaction composition, not runtime/source
 Current VexLife-Prod service, Conversation, Context, browser-context and runtime owners remain
 authoritative.
 
+## Apps: Source template, Archives, Browser
+
+The header's app selector chooses what the left pane shows (`VexLifeWorkspaceApp`); the Companion
+stays on the right for all three. Choosing an app is presentation state only and is remembered per
+browser (`vexlife-prod.presentation.app`).
+
+~~~text
+Source template   Victor's live Vextreme / VexLife / VexWork (VexLifeSourceTemplate), read-only,
+                  served from GitHub Pages so a person follows Victor's actual progress; a family
+                  row above the page marks which member is open
+Archives          the person's own records: v1 is their canonical Conversation as a dated timeline,
+                  newest day first, read from the existing Conversation projection (nothing new is
+                  stored or inferred)
+Browser           the ordinary read-only web view, unchanged
+~~~
+
+Source template and Archives are the same template at two scales: one is Victor's worked example,
+the other is the person's own. Vex doesn't see the Archives pane yet; the composer says so and page
+context is off while it is open. Showing an archive to Vex, sorting the conversation into arcs with
+Vex's commentary, Private mode and changes made together with Vex come next (see
+`docs/work/claude-next-stages/README.md`).
+
 ## Read aloud
 
 The header's Read aloud orb is the Vextreme Spiral FAB's Read Aloud behavior, ported rather than

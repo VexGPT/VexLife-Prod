@@ -1,5 +1,8 @@
 package vexlife.web
 
+import vexlife.workspace.VexLifeSourceTemplate
+import vexlife.workspace.VexLifeWorkspaceApp
+
 /**
  * Canonical VexLife-Prod product presentation template.
  *
@@ -62,8 +65,7 @@ internal object VexLifeWebP1ExperienceMarkup {
     <label class="app-selector">
       <span class="visually-hidden">App</span>
       <select id="app-selector" data-vex-ref="${VexLifeWebP1.AppSelector.identity.ref}">
-        <option value="browser" selected>Browser</option>
-        <option value="" disabled>More apps aren't connected yet</option>
+${VexLifeWorkspaceApp.entries.joinToString("\n") { "        <option value=\"${it.key}\">${it.label}</option>" }}
       </select>
     </label>
 
@@ -87,6 +89,10 @@ internal object VexLifeWebP1ExperienceMarkup {
   <main class="frame" id="frame" data-vex-structural-ref="${VexLifeWebP1.Refs.BodyFrame.value}">
     <section class="region region-browser" data-vex-ref="${VexLifeWebP1.Browser.identity.ref}" aria-label="Browser">
       <p class="frame-status" data-vex-ref="${VexLifeWebP1.BrowserFrameStatus.identity.ref}" id="frame-status" role="status" hidden></p>
+      <nav class="family" data-vex-ref="${VexLifeWebP1.SourceTemplateFamily.identity.ref}" id="source-template-family" aria-label="Source template" hidden>
+${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"button\" class=\"family-member\" data-family-key=\"${it.key}\" data-family-home=\"${it.home}\" data-family-scope=\"${it.scope}\">${it.label}</button>" }}
+        <span class="family-note">Victor's live work, read-only</span>
+      </nav>
       <div class="viewport" data-vex-ref="${VexLifeWebP1.BrowserViewport.identity.ref}">
         <iframe id="page-frame" title="Opened page" referrerpolicy="no-referrer"
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads allow-modals"></iframe>
@@ -94,6 +100,13 @@ internal object VexLifeWebP1ExperienceMarkup {
           sandbox="allow-scripts allow-same-origin" aria-hidden="true" tabindex="-1"></iframe>
         <div class="viewport-empty" id="viewport-empty"><p>Open a web page from the address field. Vex page context is separate and may not be available for every page.</p></div>
       </div>
+      <section class="archives" data-vex-ref="${VexLifeWebP1.Archives.identity.ref}" id="archives" aria-labelledby="archives-heading" hidden>
+        <header class="archives-head">
+          <h2 id="archives-heading">Your archives</h2>
+          <p class="archives-summary" id="archives-summary">Checking your conversation…</p>
+        </header>
+        <ol class="archives-timeline" data-vex-ref="${VexLifeWebP1.ArchivesTimeline.identity.ref}" id="archives-timeline" aria-label="Conversation by day"></ol>
+      </section>
     </section>
 
     <div class="seam" id="seam" data-vex-structural-ref="${VexLifeWebP1.BrowserCompanionHandle.identity.ref}" role="separator" aria-orientation="vertical" tabindex="0"

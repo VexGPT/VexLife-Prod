@@ -221,6 +221,17 @@ object VexLifeWebP1 {
             placement = VexWeb.Placement.FillAvailable,
         )
 
+    val SourceTemplateFamily = blueprintSurface(VexLifeWorkspaceBlueprint.SourceTemplateFamily)
+
+    val ArchivesTimeline = blueprintSurface(VexLifeWorkspaceBlueprint.ArchivesTimeline)
+
+    val Archives =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.Archives,
+            placement = VexWeb.Placement.FillAvailable,
+            children = listOf(ArchivesTimeline),
+        )
+
     val Browser =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.Browser,
@@ -228,7 +239,9 @@ object VexLifeWebP1 {
             children =
                 listOf(
                     BrowserFrameStatus,
+                    SourceTemplateFamily,
                     BrowserViewport,
+                    Archives,
                 ),
         )
 

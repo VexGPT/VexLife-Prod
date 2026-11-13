@@ -2,6 +2,8 @@ package vexlife.web
 
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.service.VexLifeProdServiceContract
+import vexlife.workspace.VexLifeSourceTemplate
+import vexlife.workspace.VexLifeWorkspaceApp
 
 /**
  * Current VexLife-Prod sequencing beneath the canonical A003 presentation contract.
@@ -71,6 +73,8 @@ object VexLifeWebP1RuntimeArtifacts {
             jsList(
                 VexLifeProdBrowserContract.AdmittedHosts,
             )
+        val workspaceApps = jsList(VexLifeWorkspaceApp.entries.map { it.key })
+        val sourceTemplateScopes = jsList(VexLifeSourceTemplate.Members.map { it.scope })
 
         return """
             // Generated VexLife-Prod A003-faithful presentation over current New-Beginnings owners.
@@ -87,6 +91,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 visionPath: ${jsString(VexLifeProdServiceContract.VisionPath)},
                 visionControlPath: ${jsString(VexLifeProdServiceContract.VisionControlPath)},
                 sendPath: ${jsString(VexLifeProdServiceContract.ConversationSendPath)}
+              });
+              const apps = Object.freeze({
+                keys: $workspaceApps,
+                sourceTemplate: ${jsString(VexLifeWorkspaceApp.SourceTemplate.key)},
+                archives: ${jsString(VexLifeWorkspaceApp.Archives.key)},
+                browser: ${jsString(VexLifeWorkspaceApp.Browser.key)},
+                sourceTemplateScopes: $sourceTemplateScopes,
+                storageKey: 'vexlife-prod.presentation.app'
               });
               const browser = Object.freeze({
                 initialPageUrl: ${jsString(VexLifeProdBrowserContract.InitialPageUrl)},
@@ -114,6 +126,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 addressError: byId('address-error'),
                 reload: byId('reload'),
                 appSelector: byId('app-selector'),
+                addressForm: byId('address-form'),
+                family: byId('source-template-family'),
+                viewport: root.querySelector('.viewport'),
+                archives: byId('archives'),
+                archivesSummary: byId('archives-summary'),
+                archivesTimeline: byId('archives-timeline'),
                 quickActions: byId('quick-actions'),
                 readAloud: byId('read-aloud'),
                 readAloudStatus: byId('read-aloud-status'),
@@ -188,6 +206,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 currentState: null,
                 vision: null,
                 visionInFlight: false,
+                app: (() => {
+                  try {
+                    const saved = localStorage.getItem(apps.storageKey);
+                    if (saved && apps.keys.includes(saved)) return saved;
+                  } catch {}
+                  return apps.sourceTemplate;
+                })(),
                 memory: null,
                 browserContext: null,
                 includePage: false,
@@ -644,6 +669,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.pageFrame.src = pageUrl;
                 ui.contextFrame.removeAttribute('src');
                 ui.viewportEmpty.hidden = true;
+                for (const member of ui.family.querySelectorAll('.family-member')) {
+                  if (pageUrl.startsWith(member.dataset.familyScope)) member.setAttribute('aria-current', 'page');
+                  else member.removeAttribute('aria-current');
+                }
                 renderFrameStatus(
                   contextFrameUrl
                     ? 'Opening page directly · Vex page context is available on demand.'
@@ -933,10 +962,107 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.ticketView.dataset.contextReady = 'true';
               };
 
+              // The left pane shows one app at a time. Choosing an app is presentation state only.
+              const inSourceTemplate = (pageUrl) =>
+                Boolean(pageUrl) && apps.sourceTemplateScopes.some((scope) => String(pageUrl).startsWith(scope));
+
+              const renderApp = () => {
+                const app = state.app;
+                ui.appSelector.value = app;
+                ui.family.hidden = app !== apps.sourceTemplate;
+                ui.archives.hidden = app !== apps.archives;
+                ui.viewport.hidden = app === apps.archives;
+                ui.addressForm.dataset.app = app;
+                ui.query.disabled = app === apps.archives;
+                if (app === apps.archives) ui.frameStatus.hidden = true;
+                for (const member of ui.family.querySelectorAll('.family-member')) {
+                  const current = String(state.humanPageUrl ?? '').startsWith(member.dataset.familyScope);
+                  if (current) member.setAttribute('aria-current', 'page');
+                  else member.removeAttribute('aria-current');
+                }
+                root.dataset.vexApp = app;
+                if (app === apps.archives) renderArchives();
+              };
+
+              const archiveDayKey = (date) =>
+                date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+
+              const renderArchives = () => {
+                if (!ui.archivesTimeline) return;
+                const messages = (state.conversation?.messages ?? []).filter((message) => !Number.isNaN(Date.parse(message.formedAt)));
+                if (!messages.length) {
+                  ui.archivesSummary.textContent = 'Everything you and Vex say is kept here, in your Vex Home, by day.';
+                  const empty = document.createElement('li');
+                  empty.className = 'archives-empty';
+                  empty.textContent = 'Nothing here yet.';
+                  ui.archivesTimeline.replaceChildren(empty);
+                  return;
+                }
+                const days = new Map();
+                for (const message of messages) {
+                  const at = new Date(message.formedAt);
+                  const key = archiveDayKey(at);
+                  if (!days.has(key)) days.set(key, { date: at, messages: [] });
+                  days.get(key).messages.push(message);
+                }
+                const first = new Date(messages[0].formedAt);
+                ui.archivesSummary.textContent =
+                  messages.length + ' message' + (messages.length === 1 ? '' : 's') + ' over ' + days.size + ' day' + (days.size === 1 ? '' : 's') +
+                  ' since ' + first.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) +
+                  ' · kept in your Vex Home';
+                const items = [...days.entries()].reverse().map(([key, day]) => {
+                  const item = document.createElement('li');
+                  item.className = 'archives-day';
+                  item.dataset.day = key;
+                  const heading = document.createElement('h3');
+                  heading.textContent = day.date.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                  const count = document.createElement('span');
+                  count.textContent = day.messages.length + ' message' + (day.messages.length === 1 ? '' : 's');
+                  heading.append(count);
+                  const entries = document.createElement('ol');
+                  entries.className = 'archives-entries';
+                  for (const message of day.messages) {
+                    const entry = document.createElement('li');
+                    entry.className = 'archives-entry';
+                    entry.dataset.eventRef = String(message.eventRef ?? '');
+                    const time = document.createElement('time');
+                    time.dateTime = String(message.formedAt);
+                    time.textContent = new Date(message.formedAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+                    const who = document.createElement('span');
+                    who.className = 'who';
+                    who.textContent = message.role === 'human' ? 'You' : 'Vex';
+                    const text = document.createElement('p');
+                    text.textContent = String(message.content ?? '');
+                    entry.append(time, who, text);
+                    entries.append(entry);
+                  }
+                  item.append(heading, entries);
+                  return item;
+                });
+                ui.archivesTimeline.replaceChildren(...items);
+              };
+
+              const chooseApp = (app) => {
+                if (!apps.keys.includes(app)) return;
+                state.app = app;
+                try {
+                  localStorage.setItem(apps.storageKey, app);
+                } catch {}
+                if (app === apps.archives) {
+                  state.includePage = false;
+                } else if (app === apps.sourceTemplate && !inSourceTemplate(state.humanPageUrl)) {
+                  const home = ui.family.querySelector('.family-member')?.dataset.familyHome;
+                  if (home) navigate(home);
+                }
+                renderApp();
+                renderComposer();
+              };
+
               const renderComposer = () => {
                 const contextEligible = Boolean(state.contextTargetPageUrl);
                 const contextReady = Boolean(state.browserContext);
-                const canInclude = contextEligible || contextReady;
+                const archivesOpen = state.app === apps.archives;
+                const canInclude = !archivesOpen && (contextEligible || contextReady);
                 ui.contextShare.disabled = !canInclude || state.contextLoading;
                 ui.contextShare.dataset.state = state.contextLoading
                   ? 'Loading'
@@ -953,6 +1079,8 @@ object VexLifeWebP1RuntimeArtifacts {
                     : 'Include this page';
                 ui.composerHold.textContent = state.contextLoading
                   ? 'Reading the current page separately for Vex…'
+                  : archivesOpen
+                    ? "Vex doesn't see your archives yet."
                   : !canInclude
                     ? 'Vex page context is not available for this site yet.'
                     : contextEligible && !contextReady
@@ -1182,7 +1310,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 const messages = state.conversation?.messages ?? [];
                 const latest = [...messages].reverse().find((message) => message.role === 'vex' && message.model);
                 setCompanionStatus('Ready', 'Ready', latest?.model ?? '');
-                if (renderNow && priorIdentity !== nextIdentity) renderTimeline();
+                if (renderNow && priorIdentity !== nextIdentity) {
+                  renderTimeline();
+                  if (state.app === apps.archives) renderArchives();
+                }
               };
 
               const loadContext = async () => {
@@ -1383,7 +1514,15 @@ object VexLifeWebP1RuntimeArtifacts {
               ui.reload.addEventListener('click', () => {
                 try { navigate(ui.query.value); } catch (error) { notify(error.message); }
               });
-              ui.appSelector.addEventListener('change', () => { ui.appSelector.value = 'browser'; });
+              ui.appSelector.addEventListener('change', () => chooseApp(ui.appSelector.value));
+              ui.family.addEventListener('click', (event) => {
+                const member = event.target.closest('.family-member');
+                if (member?.dataset.familyHome) navigate(member.dataset.familyHome);
+              });
+              ui.archivesTimeline.addEventListener('click', (event) => {
+                const text = event.target.closest('.archives-entry p');
+                if (text) text.dataset.open = String(text.dataset.open !== 'true');
+              });
 
               window.addEventListener('message', (event) => {
                 if (event.source !== ui.contextFrame.contentWindow) return;
@@ -1609,6 +1748,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 .then(() => {
                   render();
                   navigate(browser.initialPageUrl);
+                  renderApp();
                   void loadMemory().catch(() => {});
                 })
                 .catch((error) => {

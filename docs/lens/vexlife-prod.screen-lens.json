@@ -176,6 +176,42 @@
           "slot": "FillAvailable"
         },
         {
+          "ref": "element.vexlife-workspace.browser.source-template-family",
+          "kind": "STACK",
+          "label": "Source template family",
+          "parentRef": "element.vexlife-workspace.browser",
+          "symbol": "VexLifeWorkspaceBlueprint.SourceTemplateFamily",
+          "declared": "Browser.collection(\"source-template-family\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.browser.archives",
+          "kind": "REGION",
+          "label": "Archives",
+          "parentRef": "element.vexlife-workspace.browser",
+          "symbol": "VexLifeWorkspaceBlueprint.Archives",
+          "declared": "Browser.region(\"archives\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "FillAvailable"
+        },
+        {
+          "ref": "element.vexlife-workspace.browser.archives.timeline",
+          "kind": "STACK",
+          "label": "Timeline",
+          "parentRef": "element.vexlife-workspace.browser.archives",
+          "symbol": "VexLifeWorkspaceBlueprint.ArchivesTimeline",
+          "declared": "Archives.collection(\"timeline\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
           "ref": "element.vexlife-workspace.companion",
           "kind": "REGION",
           "label": "Companion",

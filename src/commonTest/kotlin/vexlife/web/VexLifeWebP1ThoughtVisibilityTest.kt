@@ -146,9 +146,8 @@ class VexLifeWebP1ThoughtVisibilityTest {
             "idle Conversation polling must compare projection identity before rebuilding the timeline",
         )
         assertTrue(
-            bundle.javascript.contains(
-                "if (renderNow && priorIdentity !== nextIdentity) renderTimeline();",
-            ),
+            Regex("""if \(renderNow && priorIdentity !== nextIdentity\) \{\s*renderTimeline\(\);""")
+                .containsMatchIn(bundle.javascript),
             "unchanged idle Conversation polls must not pulse the presentation with redundant DOM replacement",
         )
         assertTrue(

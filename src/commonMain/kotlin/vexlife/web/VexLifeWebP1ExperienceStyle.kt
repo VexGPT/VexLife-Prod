@@ -188,7 +188,7 @@ svg { display: block; }
 .icon-button:disabled { opacity: 0.4; }
 
 .app-selector select {
-  width: 136px; height: 36px; padding: 0 30px 0 14px;
+  width: 172px; height: 36px; padding: 0 30px 0 14px;
   background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 8px;
   font-weight: 600;
 }
@@ -262,6 +262,30 @@ svg { display: block; }
   border: 0; opacity: 0; pointer-events: none;
 }
 .viewport-empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink-3); background: var(--ground); }
+.viewport[hidden] { display: none; }
+
+.family { display: flex; align-items: center; gap: 4px; padding: 6px 12px; border-bottom: 1px solid var(--rule); background: var(--surface); }
+.family[hidden] { display: none; }
+.family-member { padding: 5px 12px; border: 1px solid transparent; border-radius: 999px; background: none; color: var(--ink-2); font-weight: 600; }
+.family-member:hover { color: var(--ink); background: var(--sunken); }
+.family-member[aria-current="page"] { color: var(--ink); border-color: var(--rule-strong); background: var(--sunken); }
+.family-note { margin-left: auto; color: var(--ink-3); font-size: var(--step--1); }
+
+.archives { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 22px 28px; background: var(--ground); }
+.archives[hidden] { display: none; }
+.archives-head h2 { margin: 0; font-size: var(--step-1); }
+.archives-summary { margin: 4px 0 16px; color: var(--ink-2); font-size: var(--step--1); }
+.archives-timeline { margin: 0; padding: 0; list-style: none; display: grid; gap: 18px; }
+.archives-day h3 { margin: 0 0 8px; font-size: var(--step-0); }
+.archives-day h3 span { margin-left: 8px; color: var(--ink-3); font-weight: 500; font-size: var(--step--1); }
+.archives-entries { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; border-left: 2px solid var(--rule); }
+.archives-entry { display: grid; grid-template-columns: 56px 40px minmax(0, 1fr); gap: 8px; padding: 2px 0 2px 12px; font-size: var(--step--1); }
+.archives-entry time { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.archives-entry .who { color: var(--ink-2); font-weight: 600; }
+.archives-entry p { margin: 0; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; }
+.archives-entry p[data-open="true"] { display: block; -webkit-line-clamp: unset; }
+.archives-empty { color: var(--ink-3); }
+.address[data-app="archives"] { opacity: 0.5; pointer-events: none; }
 
 .seam {
   position: relative;

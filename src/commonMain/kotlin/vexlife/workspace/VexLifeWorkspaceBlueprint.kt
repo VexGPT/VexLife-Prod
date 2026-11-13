@@ -59,6 +59,13 @@ object VexLifeWorkspaceBlueprint :
             "viewport",
         )
 
+    /** Source template: Victor's live family pages, one control per member. */
+    val SourceTemplateFamily = Browser.collection("source-template-family")
+
+    /** Archives: the person's own records, starting with their dated timeline. */
+    val Archives = Browser.region("archives")
+    val ArchivesTimeline = Archives.collection("timeline")
+
     val Companion =
         region(
             "companion",
