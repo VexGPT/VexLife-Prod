@@ -16,6 +16,26 @@ README.md
 -> proof matching the claim
 ~~~
 
+## Current product authority
+
+~~~text
+VexGPT/VexLife-Prod
+= current VexLife product body
+
+vgong24/VexLife
+= predecessor / lineage / behavioral provenance
+!= default runtime parent
+~~~
+
+Start from VexLife-Prod current source. A predecessor dependency exists only when an exact current
+foundation names the bridge and its bounded meaning. Repository age, historical launch success,
+compatibility with canonical Vex Home, or retained evidence never creates repository-level runtime
+authority.
+
+When current source and a historical/transitional statement disagree, descend to the current
+foundation + VexWork owner and retire the stale present-tense statement. Do not preserve contradictory
+"current" narratives in multiple entry surfaces.
+
 Do not broad-copy historical VexLife or Android architecture into this repository.
 
 Before creating a new abstraction or foundation, ask:
@@ -74,7 +94,7 @@ REUSED_PROCESS_PRIMITIVE != REUSED_LIFECYCLE_MEANING
 
 Before changing or adding a Mac front door:
 
-1. trace the current VexLife startup sequence to its existing lifecycle/process/currentness owners;
+1. trace the current VexLife-Prod startup sequence to its current lifecycle/process/currentness owners; consult predecessor VexLife only when an exact current foundation names a bounded compatibility bridge;
 2. reuse the lowest rightful owner that provides the needed effect—do not call a higher-level human action merely because it eventually reaches the same state;
 3. preserve the ordinary windowed human route unless the human explicitly selects a terminal/recovery route;
 4. keep lifecycle readiness and presentation selection as distinct effects;
@@ -100,8 +120,8 @@ CONSTANT PRODUCT TOPOLOGY
   Home preservation / recovery semantics
 
 RELEASE-VARIABLE IDENTITIES
-  exact VexLife source commit
   exact VexLife-Prod source commit
+  exact predecessor identity only when an exact current compatibility bridge explicitly requires it
 
 DERIVED CURRENTNESS
   Source Manifest records
