@@ -176,7 +176,7 @@ class VexLifeProdPrivateServiceImageTest {
                     )
                 val visionHelper =
                     visionRoot.resolve(
-                        "helper/VexLifeVisionSystemPickerAgent.app/Contents/MacOS",
+                        "helper/VexLifeVisionSelectedScopeAgent.app/Contents/MacOS",
                     )
                 Files.createDirectories(
                     visionBin,
@@ -194,7 +194,7 @@ class VexLifeProdPrivateServiceImageTest {
                     )
                 val helperExecutable =
                     visionHelper.resolve(
-                        "VexLifeVisionSystemPickerAgent",
+                        "VexLifeVisionSelectedScopeAgent",
                     )
                 Files.writeString(
                     visionManifest,
