@@ -106,8 +106,49 @@ on projectionSummary(projection)
     set modelRef to my dictionaryText(currentState, "activeModelRef", "No model selected")
     set storageValue to currentState's objectForKey:"freeStorageBytes"
     set serviceSource to my dictionaryText(projection, "currentServiceSourceSha", "None")
-    return "Home: " & homePath & return & "Model: " & modelRef & return & "Storage available: " & (my formatGiB(storageValue)) & return & "Running Product source: " & serviceSource
+    set summaryText to "Home: " & homePath & return & "Model: " & modelRef & return & "Storage available: " & (my formatGiB(storageValue)) & return & "Running Product source: " & serviceSource
+
+    set setupPlan to projection's objectForKey:"setupPlan"
+    try
+        if setupPlan is not missing value and setupPlan is not (current application's NSNull's null()) then
+            set setupModel to my dictionaryText(setupPlan, "modelRef", "Unknown")
+            set modelBytes to setupPlan's objectForKey:"modelArtifactTotalBytes"
+            set minimumMemory to setupPlan's objectForKey:"modelMinimumMemoryBytes"
+            set currentMemory to setupPlan's objectForKey:"currentTotalMemoryBytes"
+            set currentStorage to setupPlan's objectForKey:"currentFreeStorageBytes"
+            set summaryText to summaryText & return & return & "Setup model: " & setupModel & return & "Model files: " & (my formatGiB(modelBytes)) & return & "Memory: " & (my formatGiB(currentMemory)) & " available hardware / " & (my formatGiB(minimumMemory)) & " minimum" & return & "Free storage before setup: " & (my formatGiB(currentStorage)) & return & "Setup may acquire missing model and local runtime prerequisites."
+        end if
+    end try
+
+    return summaryText
 end projectionSummary
+
+on runHomeFormation(setupLauncher, sourceSha)
+    set outputPipe to current application's NSPipe's pipe()
+    set task to current application's NSTask's alloc()'s init()
+    task's setExecutableURL:(current application's NSURL's fileURLWithPath:setupLauncher)
+    task's setArguments:{"--form-home", "--expected-source-sha", sourceSha}
+    task's setStandardOutput:outputPipe
+    task's setStandardError:outputPipe
+
+    set launchError to reference
+    set launched to task's launchAndReturnError:launchError
+    if launched is not true then return {false, "The exact Vex Home formation process could not be launched."}
+
+    repeat while (task's isRunning()) as boolean
+        current application's NSRunLoop's currentRunLoop()'s runUntilDate:(current application's NSDate's dateWithTimeIntervalSinceNow:0.05)
+    end repeat
+
+    set dataValue to outputPipe's fileHandleForReading()'s readDataToEndOfFile()
+    set outputText to current application's NSString's alloc()'s initWithData:dataValue encoding:(current application's NSUTF8StringEncoding)
+    set statusValue to task's terminationStatus() as integer
+    set expectedReadyPrefix to "VEXLIFE_PROD_HOME_READY" & tab & sourceSha & tab
+    set outputString to outputText as text
+    set readyObserved to outputString contains expectedReadyPrefix
+
+    if statusValue is 0 and readyObserved then return {true, outputString}
+    return {false, outputString}
+end runHomeFormation
 
 on runSetup(setupLauncher, sourceSha, allowAcquisition)
     if allowAcquisition then
@@ -156,6 +197,16 @@ on resolveAndRealize(setupLauncher, sourceSha, controlRef)
         return
     end if
 
+    if effectRef is "FORM_CANONICAL_HOME" then
+        set homeResult to my runHomeFormation(setupLauncher, sourceSha)
+        if item 1 of homeResult is true then
+            my showEntry()
+        else
+            my showFailure("VexLife could not create the Vex Home.", item 2 of homeResult)
+        end if
+        return
+    end if
+
     if effectRef is "CONVERGE_PRODUCT" then
         set allowAcquisition to my dictionaryBoolean(effectProjection, "allowAcquisition", false)
         set setupResult to my runSetup(setupLauncher, sourceSha, allowAcquisition)
@@ -171,7 +222,7 @@ on resolveAndRealize(setupLauncher, sourceSha, controlRef)
     my showFailure("VexLife returned an unsupported Product-entry effect.", effectRef)
 end resolveAndRealize
 
-on run
+on showEntry()
     set sourceSha to my bundleString("VexLifeProdExpectedSourceSha")
     set setupLauncher to my bundleString("VexLifeProdSetupLauncher")
 
@@ -229,6 +280,10 @@ on run
     end if
 
     my resolveAndRealize(setupLauncher, sourceSha, controlRef)
+end showEntry
+
+on run
+    my showEntry()
 end run
 
 -- [VXG RealForever]
