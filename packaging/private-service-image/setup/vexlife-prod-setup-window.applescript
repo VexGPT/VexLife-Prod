@@ -80,17 +80,6 @@ on dictionaryText(dictionaryValue, keyName, fallbackValue)
     return textValue
 end dictionaryText
 
-on dictionaryBoolean(dictionaryValue, keyName, fallbackValue)
-    if dictionaryValue is missing value then return fallbackValue
-    set value to dictionaryValue's objectForKey:keyName
-    if value is missing value then return fallbackValue
-    try
-        return value as boolean
-    on error
-        return fallbackValue
-    end try
-end dictionaryBoolean
-
 on formatGiB(value)
     try
         set gibValue to (value as real) / 1073741824
@@ -123,104 +112,28 @@ on projectionSummary(projection)
     return summaryText
 end projectionSummary
 
-on runHomeFormation(setupLauncher, sourceSha)
-    set outputPipe to current application's NSPipe's pipe()
-    set task to current application's NSTask's alloc()'s init()
-    task's setExecutableURL:(current application's NSURL's fileURLWithPath:setupLauncher)
-    task's setArguments:{"--form-home", "--expected-source-sha", sourceSha}
-    task's setStandardOutput:outputPipe
-    task's setStandardError:outputPipe
-
-    set launchError to reference
-    set launched to task's launchAndReturnError:launchError
-    if launched is not true then return {false, "The exact Vex Home formation process could not be launched."}
-
-    repeat while (task's isRunning()) as boolean
-        current application's NSRunLoop's currentRunLoop()'s runUntilDate:(current application's NSDate's dateWithTimeIntervalSinceNow:0.05)
-    end repeat
-
-    set dataValue to outputPipe's fileHandleForReading()'s readDataToEndOfFile()
-    set outputText to current application's NSString's alloc()'s initWithData:dataValue encoding:(current application's NSUTF8StringEncoding)
-    set statusValue to task's terminationStatus() as integer
-    set expectedReadyPrefix to "VEXLIFE_PROD_HOME_READY" & tab & sourceSha & tab
-    set outputString to outputText as text
-    set readyObserved to outputString contains expectedReadyPrefix
-
-    if statusValue is 0 and readyObserved then return {true, outputString}
-    return {false, outputString}
-end runHomeFormation
-
-on runSetup(setupLauncher, sourceSha, allowAcquisition)
-    if allowAcquisition then
-        set modeFlag to "--allow-acquisition"
-    else
-        set modeFlag to "--reuse-existing"
-    end if
-
-    set outputPipe to current application's NSPipe's pipe()
-    set task to current application's NSTask's alloc()'s init()
-    task's setExecutableURL:(current application's NSURL's fileURLWithPath:setupLauncher)
-    task's setArguments:{"--expected-source-sha", sourceSha, modeFlag}
-    task's setStandardOutput:outputPipe
-    task's setStandardError:outputPipe
-
-    set launchError to reference
-    set launched to task's launchAndReturnError:launchError
-    if launched is not true then return {false, "The exact setup process could not be launched."}
-
-    repeat while (task's isRunning()) as boolean
-        current application's NSRunLoop's currentRunLoop()'s runUntilDate:(current application's NSDate's dateWithTimeIntervalSinceNow:0.1)
-    end repeat
-
-    set dataValue to outputPipe's fileHandleForReading()'s readDataToEndOfFile()
-    set outputText to current application's NSString's alloc()'s initWithData:dataValue encoding:(current application's NSUTF8StringEncoding)
-    set statusValue to task's terminationStatus() as integer
-    set expectedReadyPrefix to "VEXLIFE_PROD_SETUP_READY" & tab & sourceSha & tab
-    set outputString to outputText as text
-    set readyObserved to outputString contains expectedReadyPrefix
-
-    if statusValue is 0 and readyObserved then return {true, outputString}
-    return {false, outputString}
-end runSetup
-
-on resolveAndRealize(setupLauncher, sourceSha, controlRef)
-    set resolved to my runJson(setupLauncher, {"--resolve-front-door-control", controlRef, "--expected-source-sha", sourceSha})
-    set effectProjection to item 1 of resolved
-    if effectProjection is missing value then
-        my showFailure("VexLife could not resolve the selected action.", item 2 of resolved)
+on activateControl(setupLauncher, sourceSha, controlRef)
+    set activated to my runJson(setupLauncher, {"--activate-front-door-control", controlRef, "--expected-source-sha", sourceSha})
+    set activation to item 1 of activated
+    if activation is missing value then
+        my showFailure("VexLife could not complete the selected action.", item 2 of activated)
         return
     end if
 
-    set effectRef to my dictionaryText(effectProjection, "effectRef", "")
-    if effectRef is "OPEN_PRESENTATION" then
+    set manifestationRef to my dictionaryText(activation, "manifestationRef", "")
+    if manifestationRef is "OPEN_PRODUCT" then
         my openProduct()
         return
     end if
 
-    if effectRef is "FORM_CANONICAL_HOME" then
-        set homeResult to my runHomeFormation(setupLauncher, sourceSha)
-        if item 1 of homeResult is true then
-            my showEntry()
-        else
-            my showFailure("VexLife could not create the Vex Home.", item 2 of homeResult)
-        end if
+    if manifestationRef is "REFRESH_ENTRY" then
+        my showEntry()
         return
     end if
 
-    if effectRef is "CONVERGE_PRODUCT" then
-        set allowAcquisition to my dictionaryBoolean(effectProjection, "allowAcquisition", false)
-        set setupResult to my runSetup(setupLauncher, sourceSha, allowAcquisition)
-        if item 1 of setupResult is true then
-            my openProduct()
-        else
-            my showFailure("VexLife did not complete the selected action.", item 2 of setupResult)
-        end if
-        return
-    end if
-
-    if effectRef is "" then return
-    my showFailure("VexLife returned an unsupported Product-entry effect.", effectRef)
-end resolveAndRealize
+    if manifestationRef is "NO_ACTION" then return
+    my showFailure("VexLife returned an unsupported presentation instruction.", manifestationRef)
+end activateControl
 
 on showEntry()
     set sourceSha to my bundleString("VexLifeProdExpectedSourceSha")
@@ -279,7 +192,7 @@ on showEntry()
         end if
     end if
 
-    my resolveAndRealize(setupLauncher, sourceSha, controlRef)
+    my activateControl(setupLauncher, sourceSha, controlRef)
 end showEntry
 
 on run

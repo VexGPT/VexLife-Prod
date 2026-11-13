@@ -239,6 +239,13 @@ object VexLifeProdMacFrontDoor {
         val serviceDetail: String?,
     )
 
+    internal data class ResolvedControl(
+        val observedAt: String,
+        val semanticStateRef: String,
+        val controlRef: String,
+        val effect: VexLifeProdEntryFamily.EntryEffect?,
+    )
+
     fun observe(
         desiredSourceSha: String,
     ): Projection =
@@ -313,11 +320,21 @@ object VexLifeProdMacFrontDoor {
             hooks = Hooks(),
         )
 
-    internal fun resolveControlWithHooks(
+    internal fun resolveTypedControl(
+        desiredSourceSha: String,
+        controlRef: String,
+    ): ResolvedControl =
+        resolveTypedControlWithHooks(
+            desiredSourceSha = desiredSourceSha,
+            controlRef = controlRef,
+            hooks = Hooks(),
+        )
+
+    internal fun resolveTypedControlWithHooks(
         desiredSourceSha: String,
         controlRef: String,
         hooks: Hooks,
-    ): EffectProjection {
+    ): ResolvedControl {
         val observed =
             observeSemantic(
                 desiredSourceSha = desiredSourceSha,
@@ -340,18 +357,36 @@ object VexLifeProdMacFrontDoor {
             ) {
                 "Product-entry Control is not lawful under the freshly reobserved State"
             }
+
+        return ResolvedControl(
+            observedAt = observed.currentState.observedAt,
+            semanticStateRef = observed.entryState.stateRef,
+            controlRef = control.controlRef,
+            effect = act.effect,
+        )
+    }
+
+    internal fun resolveControlWithHooks(
+        desiredSourceSha: String,
+        controlRef: String,
+        hooks: Hooks,
+    ): EffectProjection {
+        val resolved =
+            resolveTypedControlWithHooks(
+                desiredSourceSha = desiredSourceSha,
+                controlRef = controlRef,
+                hooks = hooks,
+            )
         val effect =
-            act.effect
+            resolved.effect
 
         return EffectProjection(
             schemaVersion = EffectSchema,
-            observedAt = observed.currentState.observedAt,
+            observedAt = resolved.observedAt,
             desiredSourceSha = desiredSourceSha,
-            semanticStateRef = observed.entryState.stateRef,
-            controlRef = control.controlRef,
-            effectRef =
-                effect
-                    ?.effectRef,
+            semanticStateRef = resolved.semanticStateRef,
+            controlRef = resolved.controlRef,
+            effectRef = effect?.effectRef,
             allowAcquisition =
                 (
                     effect as?

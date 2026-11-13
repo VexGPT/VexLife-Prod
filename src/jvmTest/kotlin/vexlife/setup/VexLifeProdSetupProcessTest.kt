@@ -1,11 +1,14 @@
 package vexlife.setup
 
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
+import vexlife.entry.VexLifeProdEntryFamily
 import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetup
@@ -546,6 +549,244 @@ class VexLifeProdSetupProcessTest {
             )
         }
     }
+
+    @Test
+    fun frontDoorHomeActivationRealizesBehindProductBoundaryAndRequestsRefresh() {
+        val desired =
+            "a".repeat(
+                40,
+            )
+        var homeCalls =
+            0
+        var setupCalls =
+            0
+
+        val result =
+            VexLifeProdSetupProcess.activateFrontDoorWithHooks(
+                controlRef =
+                    VexLifeProdEntryFamily.ControlFormHome,
+                desiredSourceSha = desired,
+                hooks =
+                    VexLifeProdSetupProcess.FrontDoorActivationHooks(
+                        resolveControl = {
+                            sourceSha,
+                            controlRef,
+                            ->
+                            assertEquals(
+                                desired,
+                                sourceSha,
+                            )
+                            VexLifeProdMacFrontDoor.ResolvedControl(
+                                observedAt = "2026-11-13T00:00:00Z",
+                                semanticStateRef =
+                                    VexLifeProdEntryFamily.StateHomeFormationRequired,
+                                controlRef = controlRef,
+                                effect =
+                                    VexLifeProdEntryFamily.FormCanonicalHome,
+                            )
+                        },
+                        formHome = {
+                            sourceSha ->
+                            assertEquals(
+                                desired,
+                                sourceSha,
+                            )
+                            homeCalls +=
+                                1
+                        },
+                        convergeProduct = {
+                            _,
+                            _,
+                            ->
+                            setupCalls +=
+                                1
+                        },
+                        observeSemanticStateRef = { _ ->
+                            VexLifeProdEntryFamily.StateSetupRequired
+                        },
+                    ),
+            )
+
+        assertEquals(
+            1,
+            homeCalls,
+        )
+        assertEquals(
+            0,
+            setupCalls,
+        )
+        assertEquals(
+            VexLifeProdSetupProcess.ManifestationRefreshEntry,
+            result.manifestationRef,
+        )
+        assertEquals(
+            VexLifeProdEntryFamily.StateSetupRequired,
+            result.semanticStateRef,
+        )
+    }
+
+    @Test
+    fun frontDoorSetupActivationCarriesAcquisitionAuthorityAndOpensOnlyAfterCurrentReobservation() {
+        val desired =
+            "b".repeat(
+                40,
+            )
+        var observedAllowAcquisition: Boolean? =
+            null
+
+        val result =
+            VexLifeProdSetupProcess.activateFrontDoorWithHooks(
+                controlRef =
+                    VexLifeProdEntryFamily.ControlSetUp,
+                desiredSourceSha = desired,
+                hooks =
+                    VexLifeProdSetupProcess.FrontDoorActivationHooks(
+                        resolveControl = {
+                            _,
+                            controlRef,
+                            ->
+                            VexLifeProdMacFrontDoor.ResolvedControl(
+                                observedAt = "2026-11-13T00:00:00Z",
+                                semanticStateRef =
+                                    VexLifeProdEntryFamily.StateSetupRequired,
+                                controlRef = controlRef,
+                                effect =
+                                    VexLifeProdEntryFamily.ConvergeProduct(
+                                        desiredSourceSha = desired,
+                                        allowAcquisition = true,
+                                    ),
+                            )
+                        },
+                        formHome = {
+                            error(
+                                "setup activation must not form Home",
+                            )
+                        },
+                        convergeProduct = {
+                            sourceSha,
+                            allowAcquisition,
+                            ->
+                            assertEquals(
+                                desired,
+                                sourceSha,
+                            )
+                            observedAllowAcquisition =
+                                allowAcquisition
+                        },
+                        observeSemanticStateRef = { _ ->
+                            VexLifeProdEntryFamily.StateCurrent
+                        },
+                    ),
+            )
+
+        assertEquals(
+            true,
+            observedAllowAcquisition,
+        )
+        assertEquals(
+            VexLifeProdSetupProcess.ManifestationOpenProduct,
+            result.manifestationRef,
+        )
+        assertEquals(
+            VexLifeProdEntryFamily.StateCurrent,
+            result.semanticStateRef,
+        )
+    }
+
+    @Test
+    fun frontDoorOpenCurrentReturnsPresentationWithoutSetupRealization() {
+        val desired =
+            "c".repeat(
+                40,
+            )
+
+        val result =
+            VexLifeProdSetupProcess.activateFrontDoorWithHooks(
+                controlRef =
+                    VexLifeProdEntryFamily.ControlOpenCurrent,
+                desiredSourceSha = desired,
+                hooks =
+                    VexLifeProdSetupProcess.FrontDoorActivationHooks(
+                        resolveControl = {
+                            _,
+                            controlRef,
+                            ->
+                            VexLifeProdMacFrontDoor.ResolvedControl(
+                                observedAt = "2026-11-13T00:00:00Z",
+                                semanticStateRef =
+                                    VexLifeProdEntryFamily.StateCurrent,
+                                controlRef = controlRef,
+                                effect =
+                                    VexLifeProdEntryFamily.OpenPresentation,
+                            )
+                        },
+                        formHome = {
+                            error(
+                                "open-current activation must not form Home",
+                            )
+                        },
+                        convergeProduct = {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "open-current activation must not run setup",
+                            )
+                        },
+                        observeSemanticStateRef = {
+                            error(
+                                "open-current activation must not re-observe after a no-effect presentation request",
+                            )
+                        },
+                    ),
+            )
+
+        assertEquals(
+            VexLifeProdSetupProcess.ManifestationOpenProduct,
+            result.manifestationRef,
+        )
+        assertEquals(
+            VexLifeProdEntryFamily.StateCurrent,
+            result.semanticStateRef,
+        )
+    }
+
+    @Test
+    fun nativeWindowConsumesManifestationWithoutSemanticEffectRouting() {
+        val source =
+            Files.readString(
+                Path.of(
+                    System.getProperty(
+                        "user.dir",
+                    ),
+                    "packaging/private-service-image/setup/vexlife-prod-setup-window.applescript",
+                ),
+            )
+
+        assertTrue(
+            source.contains(
+                "--activate-front-door-control",
+            ),
+        )
+        for (
+            forbidden in
+            listOf(
+                "effectRef",
+                "FORM_CANONICAL_HOME",
+                "CONVERGE_PRODUCT",
+                "runHomeFormation",
+                "runSetup",
+            )
+        ) {
+            assertFalse(
+                source.contains(
+                    forbidden,
+                ),
+                "native window must not own semantic Effect routing: $forbidden",
+            )
+        }
+    }
+
 }
 
 // [VXG RealForever]
