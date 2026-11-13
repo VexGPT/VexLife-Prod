@@ -4,6 +4,7 @@ import java.net.InetAddress
 import java.nio.file.Path
 import java.time.OffsetDateTime
 import vexlife.conversation.DirectConversationStore
+import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
@@ -23,8 +24,9 @@ import vexlife.platform.python.ManagedPython
  * Application-level composition for VexLife-Prod runtime machinery beneath the canonical VexLife
  * Home/identity.
  *
- * This owner contributes sequencing only. It does not mint another Home, device, Companion lineage,
- * Conversation, Memory or human product identity. Every artifact fact, environment rule,
+ * This owner contributes sequencing only. Explicit first setup may form the canonical VexLife Home,
+ * device and Companion lineage; it never mints a parallel Product identity. Every artifact fact,
+ * environment rule,
  * process/lifetime effect and runtime-binding transition remains owned by the component that answers
  * that question.
  */
@@ -306,13 +308,39 @@ object VexLifeProdLocalSetup {
         }
 
         val home =
-            requireNotNull(
-                VexLifeProdHomeFiles.observeExisting(
-                    productHome,
-                ),
-            ) {
-                "canonical ~/.vexlife Home is absent; VexLife-Prod must not mint a parallel Home or Companion lineage"
-            }
+            VexLifeProdHomeFiles.observeExisting(
+                productHome,
+            )
+                ?: run {
+                    require(
+                        allowAcquisition,
+                    ) {
+                        "canonical ~/.vexlife Home is absent; only explicit first setup may form Home/device/Companion identity"
+                    }
+
+                    val plan =
+                        VexLifeProdHome.plan(
+                            personRef =
+                                VexLifeProdHome.DefaultPersonRef,
+                            familyRef =
+                                VexLifeProdHome.DefaultFamilyRef,
+                            deviceName =
+                                hooks.deviceName(),
+                            platform =
+                                host.observation.platform,
+                            architecture =
+                                host.observation.architecture,
+                            ids =
+                                VexLifeProdHomeFiles.newInstallationIds(),
+                            createdAt =
+                                hooks.now(),
+                        )
+
+                    VexLifeProdHomeFiles.bootstrap(
+                        productHome = productHome,
+                        plan = plan,
+                    )
+                }
 
         val canonicalHome =
             Path.of(
