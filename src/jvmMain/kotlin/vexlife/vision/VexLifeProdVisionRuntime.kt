@@ -35,6 +35,9 @@ object VexLifeProdVisionRuntime {
     internal const val CloseWaitMs =
         5_000L
 
+    internal const val MaxCommandBytes =
+        4_096
+
     internal const val MaxStdoutLineBytes =
         65_536
 
@@ -486,6 +489,17 @@ object VexLifeProdVisionRuntime {
                         commandType = commandType,
                     ),
                 )
+
+            check(
+                line
+                    .toByteArray(
+                        StandardCharsets.UTF_8,
+                    )
+                    .size <=
+                    MaxCommandBytes,
+            ) {
+                "VexLife-Prod persistent Vision runtime command exceeded the accepted SDK line bound"
+            }
 
             val response =
                 runCatching {
