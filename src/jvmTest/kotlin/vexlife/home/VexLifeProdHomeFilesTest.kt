@@ -122,7 +122,7 @@ class VexLifeProdHomeFilesTest {
     }
 
     @Test
-    fun absentCanonicalHomeHoldsWithoutMintingParallelIdentity() {
+    fun absentCanonicalHomeFormsExactIdentityWithoutParallelNamespace() {
         val parent =
             Files.createTempDirectory(
                 "vexlife-home-absent-",
@@ -150,17 +150,79 @@ class VexLifeProdHomeFilesTest {
             )
 
         try {
-            assertFailsWith<IllegalStateException> {
+            val formed =
                 VexLifeProdHomeFiles.bootstrap(
                     home,
                     plan,
                 )
-            }
 
-            assertFalse(
-                Files.exists(
-                    home,
+            assertEquals(
+                "FRESH_CANONICAL_VEXLIFE_HOME_FORMED",
+                formed.state,
+            )
+            assertTrue(
+                formed.effectsPerformed,
+            )
+            assertEquals(
+                plan.manifest,
+                formed.manifest,
+            )
+            assertEquals(
+                plan.installation,
+                formed.installation,
+            )
+            assertTrue(
+                Files.isRegularFile(
+                    home.resolve(
+                        VexLifeProdHome.CanonicalModelConfigurationRelativePath,
+                    ),
                 ),
+            )
+            assertTrue(
+                Files.isRegularFile(
+                    home.resolve(
+                        VexLifeProdHome.ModelConfigurationRelativePath,
+                    ),
+                ),
+            )
+            assertTrue(
+                Files.isRegularFile(
+                    home.resolve(
+                        VexLifeProdHome.BootstrapReceiptRelativePath,
+                    ),
+                ),
+            )
+            assertTrue(
+                Files.readString(
+                    home.resolve(
+                        VexLifeProdHome.CanonicalModelConfigurationRelativePath,
+                    ),
+                )
+                    .contains(
+                        VexLifeProdHome.CanonicalModelConfigurationSchema,
+                    ),
+            )
+            assertFalse(
+                formed.manifest.homeRef.startsWith(
+                    "vex-home.prod.",
+                ),
+            )
+
+            val rerun =
+                VexLifeProdHomeFiles.bootstrap(
+                    home,
+                    plan,
+                )
+            assertEquals(
+                "EXISTING_CANONICAL_VEXLIFE_HOME_BOUND",
+                rerun.state,
+            )
+            assertFalse(
+                rerun.effectsPerformed,
+            )
+            assertEquals(
+                formed.manifest,
+                rerun.manifest,
             )
         } finally {
             parent
