@@ -25,6 +25,8 @@ import vexlife.conversation.DirectConversationStore
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.memory.VexLifeDailyMemoryDream
+import vexlife.memory.VexLifeMemoryContract
+import vexlife.memory.VexLifeMemoryFamily
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.vision.VexLifeProdVisionRuntime
 import vexlife.vision.VexLifeVisionFamily
@@ -50,6 +52,7 @@ class VexLifeProdLocalService private constructor(
     private val dreamExecutor: DreamExecutor?,
     private val visionRuntime: VisionRuntime?,
     private val currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
+    private val memoryReader: (Path) -> VexLifeMemoryContract.Context,
 ) : AutoCloseable {
     companion object {
         private const val MaxRequestBytes =
@@ -69,6 +72,10 @@ class VexLifeProdLocalService private constructor(
                 allowSpecialFloatingPointValues = false
                 allowStructuredMapKeys = false
             }
+
+        private val ProductMemoryReader: (Path) -> VexLifeMemoryContract.Context = {
+            VexLifeCurrentMemoryReader.readCurrent(it)
+        }
 
         private val ProductDreamExecutor =
             object : DreamExecutor {
@@ -273,6 +280,7 @@ class VexLifeProdLocalService private constructor(
                 null,
             currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)? =
                 null,
+            memoryReader: ((Path) -> VexLifeMemoryContract.Context)? = null,
         ): VexLifeProdLocalService =
             startAt(
                 sourceSha = sourceSha,
@@ -292,6 +300,7 @@ class VexLifeProdLocalService private constructor(
                 dreamExecutor = dreamExecutor,
                 visionRuntime = visionRuntime,
                 currentStateObserver = currentStateObserver,
+                memoryReader = memoryReader ?: ProductMemoryReader,
             )
 
         private fun startAt(
@@ -304,6 +313,7 @@ class VexLifeProdLocalService private constructor(
             dreamExecutor: DreamExecutor?,
             visionRuntime: VisionRuntime?,
             currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
+            memoryReader: (Path) -> VexLifeMemoryContract.Context = ProductMemoryReader,
         ): VexLifeProdLocalService {
             require(
                 SourceShaPattern.matches(
@@ -369,6 +379,7 @@ class VexLifeProdLocalService private constructor(
                         dreamExecutor = dreamExecutor,
                         visionRuntime = visionRuntime,
                         currentStateObserver = currentStateObserver,
+                        memoryReader = memoryReader,
                     )
 
                 server.executor =
@@ -583,6 +594,8 @@ class VexLifeProdLocalService private constructor(
                     handleContext(
                         exchange,
                     )
+
+                VexLifeProdServiceContract.MemoryPath -> handleMemory(exchange)
 
                 VexLifeProdServiceContract.MemoryDreamPath ->
                     handleMemoryDream(
@@ -1052,6 +1065,33 @@ class VexLifeProdLocalService private constructor(
             status = 200,
             value =
                 contextProjection(),
+        )
+    }
+
+    private fun handleMemory(exchange: HttpExchange) {
+        requireMethod(exchange, "GET")
+        respondJson(exchange = exchange, status = 200, value = observeMemory())
+    }
+
+    /**
+     * Fresh no-effect Memory observation through the same reader prompt materialization uses, so
+     * what the person is told is what Vex is actually given. A read failure is Unreadable, never a
+     * guess.
+     */
+    private fun observeMemory(): VexLifeProdServiceContract.MemoryProjection {
+        val context = runCatching { memoryReader(Path.of(startupSetup.productHome)) }.getOrNull()
+        val state =
+            VexLifeMemoryFamily.observe(
+                readable = context != null,
+                current = context?.projectionCurrentness == "CURRENT",
+                heldReasons = context?.reasons.orEmpty(),
+                rememberedCount = context?.pages?.size ?: 0,
+            )
+        return VexLifeProdServiceContract.MemoryProjection(
+            schemaVersion = VexLifeProdServiceContract.MemoryProjectionSchema,
+            state = state.stateRef,
+            display = VexLifeMemoryFamily.displayStateFor(state),
+            effectsPerformed = false,
         )
     }
 

@@ -23,7 +23,7 @@ class VexLifeWorkspaceBlueprintTest {
             refs.toSet().size,
         )
         assertEquals(
-            40,
+            41,
             refs.size,
         )
 
@@ -39,6 +39,7 @@ class VexLifeWorkspaceBlueprintTest {
                 VexLifeWorkspaceBlueprint.ContextWindow.ref to VexLifeWorkspaceBlueprint.SettingsContext.ref,
                 VexLifeWorkspaceBlueprint.MemoryResource.ref to VexLifeWorkspaceBlueprint.SettingsResources.ref,
                 VexLifeWorkspaceBlueprint.CleanChat.ref to VexLifeWorkspaceBlueprint.SettingsReset.ref,
+                VexLifeWorkspaceBlueprint.ContinuityMemory.ref to VexLifeWorkspaceBlueprint.SettingsContinuity.ref,
             )
 
         expectedParents.forEach { (ref, parent) ->

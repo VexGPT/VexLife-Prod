@@ -370,6 +370,8 @@ object VexLifeWebP1 {
                 ),
         )
 
+    val ContinuityMemory = blueprintSurface(VexLifeWorkspaceBlueprint.ContinuityMemory)
+
     val ContinuityMode =
         blueprintSurface(
             VexLifeWorkspaceBlueprint.ContinuityMode,
@@ -385,6 +387,7 @@ object VexLifeWebP1 {
             element = VexLifeWorkspaceBlueprint.SettingsContinuity,
             children =
                 listOf(
+                    ContinuityMemory,
                     ContinuityMode,
                     DreamSync,
                 ),

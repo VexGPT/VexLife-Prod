@@ -407,6 +407,10 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "const activateVision = async () =>",
             ),
         )
+        // Memory is projected by the service's Memory Family; the renderer only shows its DisplayState.
+        assertTrue(bundle.javascript.contains("const loadMemory = async () =>"))
+        assertTrue(bundle.javascript.contains("state.memory?.display"))
+        assertFalse(bundle.html.contains(">Not connected</button>"), "unbuilt controls say what they are, not 'Not connected'")
         assertTrue(
             bundle.javascript.contains(
                 "state.visionInFlight",

@@ -160,6 +160,7 @@ object VexLifeWorkspaceBlueprint :
         Settings.region(
             "continuity",
         )
+    val ContinuityMemory = SettingsContinuity.content("memory")
     val ContinuityMode =
         SettingsContinuity.control(
             "continuity-mode",

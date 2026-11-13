@@ -172,6 +172,50 @@ CONTINUITY COMPATIBILITY CLEARED
 != GENERATED PRESENTATION COMPLETE
 ~~~
 
+## What a person is told about Memory
+
+The prompt Memory gate above is strict: the Living Journal projection is CURRENT only while the
+committed Daily Memory's Conversation frontier equals the current Conversation head (the predecessor
+`living-journal-memory-projection.mjs` holds the same way). Any later turn holds Memory out of the
+prompt until Score catches up and a Daily Dream commits again.
+
+`VexLifeMemoryFamily` turns the reader's own answer, the same one prompt materialization uses, into
+what the person is told, served at `GET /api/v1/memory` and shown in Settings / Continuity:
+
+~~~text
+reader CURRENT                          -> Current(n)   "Vex brings n things it remembers into each reply."
+HELD NO_COMMITTED_DAILY_MEMORY          -> NotFormed    no long-term Memory yet
+HELD DAILY_MEMORY_SOURCE_FRONTIER_STALE -> Behind       kept, not lost, not drawn on now
+reader failed / unknown hold            -> Unreadable   nothing assumed, nothing changed
+~~~
+
+The Family has no Controls. That is deliberate and is the most important open continuity gap:
+
+~~~text
+Memory formation in Product
+  conversation -> Score candidate          VexLifeScoreContinuity can form one
+  candidate -> classification/consent/acceptance/semantic-authority head
+                                           NO OWNER IN PRODUCT (reader validates
+                                           owner.multivex.score-semantic-authority.materializer.001)
+  acceptance -> Score append               VexLifeScoreContinuity, once accepted
+  Score caught up -> Daily Dream           POST /api/v1/memory/dream (manual, deterministic)
+  Daily Dream -> Living Journal pages      VexLifeCurrentMemoryReader
+~~~
+
+The predecessor's source has no writer for that middle step either (`score-context-continuity.mjs`
+reads Score semantic acceptance; only standing-rest consent for the scheduled Dream is written). So in
+VexLife-Prod today:
+
+- a fresh person never forms Memory, and the Family says so (NotFormed);
+- an existing Home's Memory goes Behind after the first Product turn and stays there, because
+  nothing in Product moves Score's Conversation frontier, so the Daily Dream never becomes lawful.
+
+A Rest control would therefore never be lawful, so it is not offered; the manual Dream route stays
+for operations. Memory formation needs one decision before code: which owner materializes semantic
+acceptance from the person's consent. The natural shape is consent-first: after a turn Vex proposes a
+short attributed statement; the person keeps or declines it; only a kept statement becomes Score;
+rest then folds it into Memory. That owner, and a Rest Control on this Family, land together.
+
 ## Remaining acceptance order
 
 1. Prove the exact gate-retirement + pre-runtime writer-convergence source.

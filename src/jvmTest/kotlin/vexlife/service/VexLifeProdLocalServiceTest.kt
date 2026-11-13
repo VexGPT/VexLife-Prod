@@ -27,6 +27,9 @@ import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.memory.VexLifeDailyMemoryDream
+import vexlife.memory.VexLifeMemoryContextFixture
+import vexlife.memory.VexLifeMemoryFamily
+import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -679,6 +682,42 @@ class VexLifeProdLocalServiceTest {
             parent
                 .toFile()
                 .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun memoryRouteTellsThePersonWhatVexIsActuallyGiven() {
+        val root = Files.createTempDirectory("vexlife-prod-service-memory-").toAbsolutePath().resolve("VexLife-Prod")
+
+        fun memory(reader: ((java.nio.file.Path) -> VexLifeMemoryContract.Context)?) =
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha = "a".repeat(40),
+                    setup = setup(root),
+                    turnExecutor = VexLifeProdLocalService.TurnExecutor { _, _ -> error("no turn") },
+                    memoryReader = reader,
+                )
+                .use { service ->
+                    val response = get(service.origin, VexLifeProdServiceContract.MemoryPath)
+                    assertEquals(200, response.statusCode())
+                    json.decodeFromString<VexLifeProdServiceContract.MemoryProjection>(response.body())
+                }
+
+        try {
+            bootstrapHome(root)
+
+            val fresh = memory(null)
+            assertEquals(VexLifeMemoryFamily.StateNotFormed, fresh.state, "a fresh Home has no Daily Memory")
+            assertFalse(fresh.effectsPerformed)
+
+            val current = memory { VexLifeMemoryContextFixture.current() }
+            assertEquals(VexLifeMemoryFamily.StateCurrent, current.state)
+            assertEquals("Vex brings 1 thing it remembers into each reply.", current.display.detail)
+
+            val unreadable = memory { error("corrupt Score") }
+            assertEquals(VexLifeMemoryFamily.StateUnreadable, unreadable.state)
+        } finally {
+            root.parent.toFile().deleteRecursively()
         }
     }
 

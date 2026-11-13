@@ -83,6 +83,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 currentStatePath: ${jsString(VexLifeProdServiceContract.CurrentStatePath)},
                 conversationPath: ${jsString(VexLifeProdServiceContract.ConversationPath)},
                 contextPath: ${jsString(VexLifeProdServiceContract.ContextPath)},
+                memoryPath: ${jsString(VexLifeProdServiceContract.MemoryPath)},
                 visionPath: ${jsString(VexLifeProdServiceContract.VisionPath)},
                 visionControlPath: ${jsString(VexLifeProdServiceContract.VisionControlPath)},
                 sendPath: ${jsString(VexLifeProdServiceContract.ConversationSendPath)}
@@ -154,6 +155,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 memoryRemaining: byId('memory-remaining'),
                 memoryText: byId('memory-text'),
                 memoryNote: byId('memory-note'),
+                vexMemoryLabel: byId('vex-memory-label'),
+                vexMemoryDetail: byId('vex-memory-detail'),
                 resourceNote: byId('resource-note'),
                 homeCurrentState: byId('home-current-state'),
                 thoughtVisibility: byId('thought-visibility'),
@@ -175,6 +178,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 currentState: null,
                 vision: null,
                 visionInFlight: false,
+                memory: null,
                 browserContext: null,
                 includePage: false,
                 humanPageUrl: null,
@@ -335,6 +339,13 @@ object VexLifeWebP1RuntimeArtifacts {
 
               // Vision copy, state and the one lawful Control come from the Product (VexLifeVisionFamily);
               // this renderer only shows them and sends the Control back for fresh resolution.
+              const renderMemory = () => {
+                const display = state.memory?.display;
+                ui.vexMemoryLabel.textContent = String(display?.label ?? 'Memory · Checking');
+                ui.vexMemoryDetail.textContent = String(display?.detail ?? "VexLife hasn't read Vex's Memory yet.");
+                root.dataset.vexMemoryState = String(state.memory?.state ?? '');
+              };
+
               const renderVision = () => {
                 if (!ui.visionControl) return;
                 const display = state.vision?.display;
@@ -865,6 +876,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderTimeline();
                 renderComposer();
                 renderSettings();
+                renderMemory();
               };
 
               const loadSourceCurrentness = async () => {
@@ -881,6 +893,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 root.dataset.vexCurrentStateObservedAt = String(state.currentState?.observedAt ?? '');
                 renderSettings();
                 return state.currentState;
+              };
+
+              const loadMemory = async () => {
+                const response = await fetch(service.memoryPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                state.memory = await readJson(response);
+                renderMemory();
+                return state.memory;
               };
 
               const loadVision = async () => {
@@ -1220,6 +1239,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (state.view === 'settings') {
                   renderSettings();
                   void loadCurrentState().catch(() => {});
+                  void loadMemory().catch(() => {});
                 }
               });
 
@@ -1336,6 +1356,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 .then(() => {
                   render();
                   navigate(browser.initialPageUrl);
+                  void loadMemory().catch(() => {});
                 })
                 .catch((error) => {
                   setCompanionStatus('Unavailable', 'Unavailable', '');
