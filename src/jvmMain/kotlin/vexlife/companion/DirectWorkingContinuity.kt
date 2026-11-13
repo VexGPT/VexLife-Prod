@@ -17,8 +17,9 @@ import vexlife.memory.VexLifeMemoryContract
 /**
  * Direct-turn composition of already-owned working-continuity semantics.
  *
- * Formation is effect-free and occurs while the exact prompt + Memory are still available.
- * Realization occurs only after the Conversation head is durable. A continuity-specific failure is
+ * Formation is effect-free and occurs while the exact prompt + Memory + current Score coordinates are available.
+ * Score statement/open-loop coordinates come from current Score truth, not Memory selection or stale successor
+ * inheritance. Realization occurs only after the Conversation head is durable. A continuity-specific failure is
  * recorded as HELD and must not retroactively turn a completed Companion turn into a provider failure.
  */
 object DirectWorkingContinuity {
