@@ -28,39 +28,50 @@ For substantial work:
 3. read [docs/foundation/INDEX.md](docs/foundation/INDEX.md);
 4. descend only to the exact current foundation/source/tests.
 
-## Mac launch status
+## Current product authority
 
-The lived VexLife-Prod presentation remains a retained exploration threshold, but there is currently
-**no accepted VexLife-Prod Mac front-door command on main**.
-
-Two source-local launch candidates (#15 and #16) were merged before their Mac direct-execution path
-was proved end to end. Victor's lived runs falsified the front-door completion claim: both reached the
-canonical VexLife Companion and then failed before the VexLife-Prod presentation became available.
-
-Those launchers are therefore withdrawn rather than preserved as architectural precedent.
-
-Current accepted ownership remains:
+VexLife-Prod is the **current VexLife product body**. It is not an optional presentation layered on top
+of `vgong24/VexLife`, and the predecessor repository is not a default runtime parent merely because
+it still contains previously accepted implementations, launchers, or lived evidence.
 
 ~~~text
-vgong24/VexLife
-  exact-source Mac bootstrap
-  -> Home lifecycle classification
-  -> open / reconnect / repair / rebuild-preserve
-  -> runtime qualification
-  -> exact browser-process ownership
-  -> launchd lifetime
-  -> source-current browser
-  -> canonical Companion READY
+CURRENT PRODUCT BODY
+= VexGPT/VexLife-Prod
 
-VexLife-Prod
-  retained lived presentation / product exploration
-  -> consumes canonical VexLife Conversation + Companion truth
-  -> does not yet own an accepted Mac presentation lifecycle
+PREDECESSOR / LINEAGE SOURCE
+= vgong24/VexLife
+
+PREDECESSOR SOURCE
+!= CURRENT PRODUCT AUTHORITY
+
+REFERENCE / COMPATIBILITY BRIDGE
+!= REPOSITORY-LEVEL RUNTIME DEPENDENCY
 ~~~
 
-The next launch implementation must consume the existing VexLife lifecycle/process-currentness
-contracts first and add only the missing VexLife-Prod presentation relationship. Do not reconstruct
-setup, process ownership, repair semantics, or source rotation from this repository by example.
+VexLife-Prod has formed its own product substrate, including Product Home/runtime/Conversation/service,
+setup/bootstrap and macOS lifetime owners. Exact acceptance/currentness for each owner remains in the
+foundation index and VexWork; this front door does not promote a held predicate to PASS.
+
+`vgong24/VexLife` remains important lineage and behavioral provenance. A surviving live dependency
+on predecessor state or evidence must be named by an **exact current foundation/bridge owner**. It
+must never be inferred from repository age, an old quick-start, a historical launch success, or a
+transitional README statement.
+
+Historical evidence remains valid evidence. Superseded ownership language is not current authority.
+
+## Mac launch status
+
+There is currently **no accepted ordinary VexLife-Prod Mac product front door on main**.
+
+Earlier source-local launch candidates (#15 and #16) were merged before their direct human route was
+proved end to end. Victor's lived runs falsified those front-door completion claims. That failure
+established only that the attempted Prod presentation route was incomplete; it did **not** transfer
+current product authority back to `vgong24/VexLife`.
+
+The next ordinary Mac entry must therefore descend through the current VexLife-Prod setup/lifetime/
+presentation owners and prove the whole current product end to end. If an exact current compatibility
+bridge to predecessor VexLife state is required, consume only that named bridge. Do not reconstruct a
+repository-level parent/child runtime relationship from historical launchers.
 
 ## Current position
 
