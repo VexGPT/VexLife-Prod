@@ -154,6 +154,7 @@ object VexLifeProdServiceContract {
                     "STARTUP_QUALIFIED_NOT_REOBSERVED" &&
                     modelArtifactState in
                     setOf(
+                        "VERIFIED_AT_SETUP",
                         "VERIFIED_REUSABLE",
                         "INCOMPLETE",
                         "INVALID",
