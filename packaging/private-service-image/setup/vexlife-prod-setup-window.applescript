@@ -94,7 +94,7 @@ end dictionaryBoolean
 on formatGiB(value)
     try
         set gibValue to (value as real) / 1073741824
-        return (gibValue as text) & " GB"
+        return (gibValue as text) & " GiB"
     on error
         return "Unknown"
     end try
