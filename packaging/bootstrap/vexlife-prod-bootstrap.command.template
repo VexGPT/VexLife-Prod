@@ -25,7 +25,7 @@ case "$ARCHIVE_SHA256" in
 esac
 [ "${#ARCHIVE_SHA256}" -eq 64 ] || fail "the bootstrap archive digest is not SHA-256."
 
-for tool in /usr/bin/curl /usr/bin/shasum /usr/bin/awk /usr/bin/tar /usr/bin/osacompile /usr/bin/plutil /usr/bin/open /usr/bin/mktemp; do
+for tool in /usr/bin/curl /usr/bin/shasum /usr/bin/awk /usr/bin/tar /usr/bin/osacompile /usr/bin/plutil /usr/bin/codesign /usr/bin/open /usr/bin/mktemp; do
   [ -x "$tool" ] || fail "required macOS bootstrap tool is unavailable: $tool"
 done
 
@@ -87,6 +87,16 @@ INFO_PLIST="$WINDOW_APP/Contents/Info.plist"
   || fail "the native VexLife setup app could not bind the exact source identity."
 /usr/bin/plutil -insert VexLifeProdSetupLauncher -string "$SETUP_LAUNCHER" "$INFO_PLIST" \
   || fail "the native VexLife setup app could not bind the exact bundled setup process."
+
+# osacompile signs the app it emits. The bundle metadata above is Product-owned and must be bound
+# before the final signature; changing Info.plist after signing invalidates the bundle seal.
+# This temporary local app is ad-hoc signed because it is source-bound carriage, not a published
+# Developer ID application identity.
+/usr/bin/codesign --force --sign - "$WINDOW_APP" \
+  || fail "the native VexLife setup app could not restore its local code signature after metadata binding."
+
+/usr/bin/codesign --verify --strict "$WINDOW_APP" \
+  || fail "the native VexLife setup app did not verify after final metadata binding."
 
 /usr/bin/open -W "$WINDOW_APP" \
   || fail "the native VexLife setup window could not be opened."
