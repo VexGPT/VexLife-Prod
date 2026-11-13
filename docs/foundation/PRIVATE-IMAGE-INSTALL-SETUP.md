@@ -132,12 +132,17 @@ FORM_CANONICAL_HOME
 CONVERGE_PRODUCT(allowAcquisition=true)
 = MODEL / RUNTIME / PRODUCT SETUP AUTHORITY
 
-CONVERGE_PRODUCT(allowAcquisition=false)
-= REUSE / UPDATE / REPAIR WITHOUT NEW ACQUISITION
+CONVERGE_PRODUCT(allowAcquisition=false, allowRuntimeStart=true)
+= START / UPDATE / REPAIR WITHOUT NEW ACQUISITION
+  (may start the exact local runtime from prerequisites already present)
 
 SERVICE PROCESS
-= REUSE-ONLY / allowAcquisition=false
+= REUSE-ONLY / allowAcquisition=false / allowRuntimeStart=false
 ~~~
+
+Runtime start is not acquisition: after a Mac restart the owned receipt survives but neither the
+service nor the local runtime is running. Treating start as acquisition made that ordinary return
+path fail. See `SETUP-JOURNEY.md` for the held/start States that now precede every Control.
 
 A model/runtime acquisition flag cannot create a missing Home. The Product-entry adapter must first
 delegate the Home-only effect to its concrete setup owner, re-observe current truth, return only a
