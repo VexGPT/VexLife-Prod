@@ -172,6 +172,9 @@ class DirectCompanionTurnTest {
             "VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1" +
                 "\n" +
                 """{"schemaVersion":"vexlife-prod.conversation-source-return-request/v1","queryTerms":["lantern-garden"],"speakerScope":"ANY"}"""
+        val wrappedSourceReturnRequest =
+            "I need to reopen exact source before answering.\n" +
+                sourceReturnRequest
         val transport =
             object :
                 DirectCompanionConnection.StreamingTransport {
@@ -256,15 +259,15 @@ class DirectCompanionTurnTest {
                             emit(
                                 field = "content",
                                 delta =
-                                    "VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1".take(
-                                        22,
+                                    wrappedSourceReturnRequest.take(
+                                        24,
                                     ),
                             )
                             emit(
                                 field = "content",
                                 delta =
-                                    sourceReturnRequest.substring(
-                                        22,
+                                    wrappedSourceReturnRequest.substring(
+                                        24,
                                     ),
                                 finish = true,
                             )
@@ -412,6 +415,11 @@ class DirectCompanionTurnTest {
             assertFalse(
                 projectedProgress.contains(
                     "VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1",
+                ),
+            )
+            assertFalse(
+                projectedProgress.contains(
+                    "I need to reopen exact source before answering.",
                 ),
             )
 

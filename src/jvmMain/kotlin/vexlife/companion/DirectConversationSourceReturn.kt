@@ -57,6 +57,9 @@ object DirectConversationSourceReturn {
     const val HeldTokenBudget =
         "HELD_TOKEN_BUDGET"
 
+    internal const val MaximumControlPreambleCharacters =
+        512
+
     private const val MaximumQueryTerms =
         6
 
@@ -177,7 +180,8 @@ object DirectConversationSourceReturn {
                     ProtocolHeader,
                     "If exact older Conversation source that is not already present is necessary to answer the human faithfully, do not guess and do not answer yet.",
                     "Instead emit one source-return control in final assistant content. Do not merely describe it or leave it only in reasoning.",
-                    "Your entire final assistant content must begin with this exact request header on its own line:",
+                    "Never quote or explain the request header in a human answer; emitting that exact header on its own line means you are choosing the internal source-return control.",
+                    "Begin the control with this exact request header on its own line:",
                     RequestHeader,
                     "Then emit exactly one JSON object and no surrounding prose.",
                     "Exact form:",
@@ -192,25 +196,67 @@ object DirectConversationSourceReturn {
                     ),
         )
 
-    fun parseRequestOrNull(
+    internal fun controlHeaderIndexOrNull(
         modelContent: String,
-    ): Request? {
-        if (
-            !modelContent.startsWith(
+    ): Int? {
+        val index =
+            modelContent.indexOf(
                 RequestHeader,
             )
+        if (
+            index <
+                0 ||
+            index >
+                MaximumControlPreambleCharacters
+        ) {
+            return null
+        }
+        if (
+            index >
+                0 &&
+            modelContent[
+                index -
+                    1
+            ] !=
+                '\n'
         ) {
             return null
         }
 
-        val separator =
+        return index
+    }
+
+    fun parseRequestOrNull(
+        modelContent: String,
+    ): Request? {
+        val headerIndex =
+            controlHeaderIndexOrNull(
+                modelContent,
+            )
+                ?: return null
+        require(
             modelContent.indexOf(
+                RequestHeader,
+                headerIndex +
+                    RequestHeader.length,
+            ) <
+                0
+        ) {
+            "Conversation source-return output must contain exactly one request header"
+        }
+
+        val control =
+            modelContent.substring(
+                headerIndex,
+            )
+        val separator =
+            control.indexOf(
                 '\n',
             )
         require(
             separator ==
                 RequestHeader.length &&
-                modelContent.substring(
+                control.substring(
                     0,
                     separator,
                 ) ==
@@ -219,7 +265,7 @@ object DirectConversationSourceReturn {
             "Conversation source-return request header is not exact"
         }
         val json =
-            modelContent.substring(
+            control.substring(
                 separator +
                     1,
             )
@@ -228,7 +274,7 @@ object DirectConversationSourceReturn {
                 json ==
                 json.trim(),
         ) {
-            "Conversation source-return request requires exactly one JSON payload without surrounding prose"
+            "Conversation source-return request requires exactly one JSON payload without trailing prose"
         }
 
         return requireRequest(

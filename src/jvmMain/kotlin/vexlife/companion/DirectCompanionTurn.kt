@@ -197,11 +197,16 @@ object DirectCompanionTurn {
             val header =
                 DirectConversationSourceReturn.RequestHeader
             val controlLike =
-                finalContent.startsWith(
-                    header,
-                ) ||
-                    header.startsWith(
-                        finalContent,
+                DirectConversationSourceReturn.controlHeaderIndexOrNull(
+                    finalContent,
+                ) !=
+                    null ||
+                    (
+                        finalContent.length <=
+                            header.length &&
+                        header.startsWith(
+                            finalContent,
+                        )
                     )
 
             if (
@@ -254,17 +259,18 @@ object DirectCompanionTurn {
                         val header =
                             DirectConversationSourceReturn.RequestHeader
                         when {
-                            observed.startsWith(
-                                header,
-                            ) -> {
+                            DirectConversationSourceReturn.controlHeaderIndexOrNull(
+                                observed,
+                            ) !=
+                                null -> {
                                 mode =
                                     SourceReturnProgressMode.InternalControl
                                 buffered.clear()
                             }
 
-                            header.startsWith(
-                                observed,
-                            ) ->
+                            observed.length <=
+                                DirectConversationSourceReturn.MaximumControlPreambleCharacters +
+                                    header.length ->
                                 Unit
 
                             else -> {

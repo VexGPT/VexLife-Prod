@@ -102,6 +102,11 @@ class DirectConversationSourceReturnTest {
                 "final assistant content",
             ),
         )
+        assertTrue(
+            protocol.content.contains(
+                "Never quote or explain the request header",
+            ),
+        )
     }
 
     @Test
@@ -146,6 +151,54 @@ class DirectConversationSourceReturnTest {
                     " trailing prose",
             )
         }
+    }
+
+
+    @Test
+    fun boundedLeadingWrapperStillSelectsControlWithoutBroadeningPastTheBound() {
+        val exact =
+            requestText(
+                queryTermsJson =
+                    "[\"lantern-garden\"]",
+                speakerScope =
+                    DirectConversationSourceReturn.AnySpeaker,
+            )
+        val acceptedPrefix =
+            "x".repeat(
+                DirectConversationSourceReturn.MaximumControlPreambleCharacters -
+                    1,
+            ) +
+                "\n"
+        val accepted =
+            requireNotNull(
+                DirectConversationSourceReturn.parseRequestOrNull(
+                    acceptedPrefix +
+                        exact,
+                ),
+            )
+
+        assertEquals(
+            listOf(
+                "lantern-garden",
+            ),
+            accepted.queryTerms,
+        )
+        assertEquals(
+            DirectConversationSourceReturn.AnySpeaker,
+            accepted.speakerScope,
+        )
+
+        val outsidePrefix =
+            "x".repeat(
+                DirectConversationSourceReturn.MaximumControlPreambleCharacters,
+            ) +
+                "\n"
+        assertNull(
+            DirectConversationSourceReturn.parseRequestOrNull(
+                outsidePrefix +
+                    exact,
+            ),
+        )
     }
 
     @Test
