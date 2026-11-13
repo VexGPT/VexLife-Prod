@@ -58,6 +58,85 @@ object VexLifeProdHome {
             "recovery",
         )
 
+    /**
+     * No-effect classification of one human-selected Vex Home coordinate.
+     *
+     * The predecessor lifecycle already distinguished an absent/empty selected folder (first setup
+     * may form a Home there) from an existing folder it could not identify (preserve; never
+     * overwrite, repair or delete). This vocabulary keeps that lived distinction as Home-owner
+     * meaning instead of letting an unreadable coordinate surface as an exception.
+     *
+     * HELD_* never admits a Home effect. Only [Absent] and [EmptyDirectory] admit formation, and
+     * only [Canonical] carries Home/device/Companion identity.
+     */
+    enum class LocationDisposition(
+        val wireValue: String,
+        val formationAllowed: Boolean,
+        val identityPresent: Boolean,
+    ) {
+        Absent(
+            "ABSENT_CANONICAL_VEXLIFE_HOME",
+            formationAllowed = true,
+            identityPresent = false,
+        ),
+        EmptyDirectory(
+            "EMPTY_DIRECTORY_VEXLIFE_HOME_FORMABLE",
+            formationAllowed = true,
+            identityPresent = false,
+        ),
+        Canonical(
+            "EXISTING_CANONICAL_VEXLIFE_HOME_BOUND",
+            formationAllowed = false,
+            identityPresent = true,
+        ),
+        HeldNoncanonicalContent(
+            "HELD_NONCANONICAL_CONTENT",
+            formationAllowed = false,
+            identityPresent = false,
+        ),
+        HeldInvalidCanonicalRecords(
+            "HELD_INVALID_CANONICAL_RECORDS",
+            formationAllowed = false,
+            identityPresent = false,
+        ),
+        HeldNotDirectory(
+            "HELD_NOT_A_DIRECTORY",
+            formationAllowed = false,
+            identityPresent = false,
+        ),
+        HeldSymbolicLink(
+            "HELD_SYMBOLIC_LINK",
+            formationAllowed = false,
+            identityPresent = false,
+        ),
+        HeldLocationNotWritable(
+            "HELD_LOCATION_NOT_WRITABLE",
+            formationAllowed = false,
+            identityPresent = false,
+        ),
+        HeldLocationUnreadable(
+            "HELD_LOCATION_UNREADABLE",
+            formationAllowed = false,
+            identityPresent = false,
+        ),
+        ;
+
+        val held: Boolean
+            get() =
+                !formationAllowed &&
+                    !identityPresent
+
+        companion object {
+            fun forWireValue(
+                wireValue: String,
+            ): LocationDisposition? =
+                entries.firstOrNull {
+                    it.wireValue ==
+                        wireValue
+                }
+        }
+    }
+
     data class InstallationIds(
         val deviceRef: String,
         val companionLineageRef: String,

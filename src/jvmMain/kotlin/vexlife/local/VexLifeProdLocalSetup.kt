@@ -87,6 +87,8 @@ object VexLifeProdLocalSetup {
     )
 
     internal data class Hooks(
+        val progress: VexLifeProdSetupProgress =
+            VexLifeProdSetupProgress.Silent,
         val observeHost: () -> HereticMacHostProfile.Result = {
             HereticMacHostProfile.observeCurrent()
         },
@@ -146,7 +148,11 @@ object VexLifeProdLocalSetup {
             HereticArtifactMaterialization.materializeCurrent(
                 productHome = productHome,
                 allowAcquisition = allowAcquisition,
-                acquirer = HereticArtifactDelivery.Acquirer(),
+                acquirer =
+                    artifactAcquirerReporting(
+                        productHome = productHome,
+                        progress = progress,
+                    ),
             )
         },
         val ensureHereticEnvironment: (
@@ -271,12 +277,26 @@ object VexLifeProdLocalSetup {
                 )
         }
 
-        VexLifeProdHomeFiles.observeExisting(
-            productHome,
-        )
-            ?.let {
-                return it
-            }
+        when (
+            val location =
+                VexLifeProdHomeFiles.observeLocation(
+                    productHome,
+                )
+        ) {
+            is VexLifeProdHomeFiles.Location.Existing ->
+                return location.home
+
+            is VexLifeProdHomeFiles.Location.Held ->
+                throw IllegalArgumentException(
+                    "selected Vex Home is preserved and cannot be formed: " +
+                        location.disposition.wireValue +
+                        " — " +
+                        location.detail,
+                )
+
+            is VexLifeProdHomeFiles.Location.Formable ->
+                Unit
+        }
 
         val plan =
             VexLifeProdHome.plan(
@@ -329,12 +349,28 @@ object VexLifeProdLocalSetup {
             allowAcquisition = allowAcquisition,
         )
 
+    /**
+     * [allowAcquisition] authorizes downloading/creating missing model and runtime prerequisites.
+     * [allowRuntimeStart] authorizes starting the exact product-owned local runtime from
+     * prerequisites that are already present. Acquisition implies start; start never implies
+     * acquisition. The long-lived service process keeps both false (reuse-only).
+     */
     internal fun establishSession(
         productHome: Path,
         allowAcquisition: Boolean,
+        allowRuntimeStart: Boolean =
+            allowAcquisition,
+        progress: VexLifeProdSetupProgress =
+            VexLifeProdSetupProgress.Silent,
     ): Session {
         require(productHome.isAbsolute) {
             "selected Vex Home path must be absolute"
+        }
+        require(
+            !allowAcquisition ||
+                allowRuntimeStart,
+        ) {
+            "acquisition authority without runtime-start authority is not one lawful setup relationship"
         }
         val selectedHome = productHome.normalize()
         return VexLifeProdLocalSetupLease
@@ -344,7 +380,11 @@ object VexLifeProdLocalSetup {
                     establishDetailedAt(
                         productHome = selectedHome,
                         allowAcquisition = allowAcquisition,
-                        hooks = Hooks(),
+                        allowRuntimeStart = allowRuntimeStart,
+                        hooks =
+                            Hooks(
+                                progress = progress,
+                            ),
                     ),
                 )
             }
@@ -363,6 +403,7 @@ object VexLifeProdLocalSetup {
                 establishDetailedAt(
                     productHome = productHome,
                     allowAcquisition = allowAcquisition,
+                    allowRuntimeStart = allowAcquisition,
                     hooks = hooks,
                 )
                     .result
@@ -372,10 +413,13 @@ object VexLifeProdLocalSetup {
         productHome: Path,
         allowAcquisition: Boolean,
         hooks: Hooks,
+        allowRuntimeStart: Boolean =
+            allowAcquisition,
     ): Result =
         establishDetailedAt(
             productHome = productHome,
             allowAcquisition = allowAcquisition,
+            allowRuntimeStart = allowRuntimeStart,
             hooks = hooks,
         )
             .result
@@ -383,8 +427,18 @@ object VexLifeProdLocalSetup {
     private fun establishDetailedAt(
         productHome: Path,
         allowAcquisition: Boolean,
+        allowRuntimeStart: Boolean,
         hooks: Hooks,
     ): Established {
+        require(
+            !allowAcquisition ||
+                allowRuntimeStart,
+        ) {
+            "acquisition authority without runtime-start authority is not one lawful setup relationship"
+        }
+        hooks.progress.phase(
+            VexLifeProdSetupProgress.Phase.CheckingHome,
+        )
         val host =
             hooks.observeHost()
 
@@ -429,6 +483,9 @@ object VexLifeProdLocalSetup {
                 home.manifest,
             )
 
+        hooks.progress.phase(
+            VexLifeProdSetupProgress.Phase.PreparingPython,
+        )
         val managedPython =
             hooks.ensureManagedPython(
                 Path.of(
@@ -437,6 +494,9 @@ object VexLifeProdLocalSetup {
                 allowAcquisition,
             )
 
+        hooks.progress.phase(
+            VexLifeProdSetupProgress.Phase.CheckingModelFiles,
+        )
         val materialized =
             hooks.materializeArtifacts(
                 Path.of(
@@ -445,6 +505,9 @@ object VexLifeProdLocalSetup {
                 allowAcquisition,
             )
 
+        hooks.progress.phase(
+            VexLifeProdSetupProgress.Phase.PreparingModelRuntime,
+        )
         val environment =
             hooks.ensureHereticEnvironment(
                 managedPython,
@@ -484,9 +547,13 @@ object VexLifeProdLocalSetup {
                             ?: HereticRuntimeAvailability.State.StablePredecessorUnavailable,
                     control =
                         HereticRuntimeAvailability.Control.EnsureAvailable(
+                            // Runtime availability's AcquisitionAllowed mode authorizes the
+                            // product-owned runtime owner to start/reuse the exact runtime from
+                            // the already-ensured environment above. No download happens at this
+                            // step, so it follows runtime-start authority, not download authority.
                             productOwnedMode =
                                 if (
-                                    allowAcquisition
+                                    allowRuntimeStart
                                 ) {
                                     HereticRuntimeAvailability.ProductOwnedMode.AcquisitionAllowed
                                 } else {
@@ -527,6 +594,9 @@ object VexLifeProdLocalSetup {
                         availabilityAct.effect
                     ) {
                         HereticRuntimeAvailability.Effect.EnsureProductOwnedRuntime -> {
+                            hooks.progress.phase(
+                                VexLifeProdSetupProgress.Phase.StartingLocalModel,
+                            )
                             val runtime =
                                 hooks.startRuntime(
                                     canonicalHome,
@@ -759,6 +829,53 @@ object VexLifeProdLocalSetup {
             result = established.result,
             currentRuntimeEvidence = established.currentRuntimeEvidence,
             recoverRuntimeEvidence = established.recoverRuntimeEvidence,
+        )
+    }
+
+    /**
+     * Binds the existing per-member delivery progress callback to one whole-model byte projection.
+     * Members already complete by size at the start are counted once; a resumed member reports its
+     * cumulative bytes including the resumed prefix. Projection only — the materialization owner
+     * still verifies every member before anything is admitted.
+     */
+    private fun artifactAcquirerReporting(
+        productHome: Path,
+        progress: VexLifeProdSetupProgress,
+    ): HereticArtifactDelivery.Acquirer {
+        if (
+            progress ===
+            VexLifeProdSetupProgress.Silent
+        ) {
+            return HereticArtifactDelivery.Acquirer()
+        }
+        val presentAtStart =
+            runCatching {
+                HereticArtifactMaterialization.observePresence(
+                    productHome,
+                )
+            }.getOrNull()
+        val totalBytes =
+            presentAtStart?.totalBytes
+                ?: HereticArtifactMaterialization.plan().totalBytes
+        val baseBytes =
+            presentAtStart?.presentBySizeBytes
+                ?: 0L
+        val inFlight =
+            mutableMapOf<String, Long>()
+        return HereticArtifactDelivery.Acquirer(
+            onProgress = {
+                member,
+                delivered,
+                ->
+                inFlight[member.artifactRef] =
+                    delivered.bytes
+                progress.artifactBytes(
+                    completedBytes =
+                        baseBytes +
+                            inFlight.values.sum(),
+                    totalBytes = totalBytes,
+                )
+            },
         )
     }
 

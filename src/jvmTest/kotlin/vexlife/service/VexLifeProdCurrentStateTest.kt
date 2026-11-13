@@ -64,9 +64,9 @@ class VexLifeProdCurrentStateTest {
                         resolveProductHome = {
                             home
                         },
-                        observeHome = {
+                        observeLocation = {
                             productHome ->
-                            VexLifeProdHomeFiles.observeExisting(
+                            VexLifeProdHomeFiles.observeLocation(
                                 productHome,
                             )
                         },
@@ -178,8 +178,14 @@ class VexLifeProdCurrentStateTest {
                         resolveProductHome = {
                             home
                         },
-                        observeHome = {
-                            null
+                        observeLocation = {
+                            productHome ->
+                            VexLifeProdHomeFiles.Location.Formable(
+                                productHome = productHome.toString(),
+                                disposition = VexLifeProdHome.LocationDisposition.Absent,
+                                nearestExistingAncestor = productHome.parent.toString(),
+                                missingAncestorCount = 0,
+                            )
                         },
                         observeHost = {
                             HereticMacHostProfile.evaluate(
@@ -280,9 +286,9 @@ class VexLifeProdCurrentStateTest {
                         resolveProductHome = {
                             home
                         },
-                        observeHome = {
+                        observeLocation = {
                             productHome ->
-                            VexLifeProdHomeFiles.observeExisting(
+                            VexLifeProdHomeFiles.observeLocation(
                                 productHome,
                             )
                         },

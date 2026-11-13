@@ -5,6 +5,7 @@ import java.nio.file.LinkOption
 import java.nio.file.Path
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.local.VexLifeProdSetupProgress
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
 import vexlife.service.VexLifeProdMacServiceLifetime
@@ -27,7 +28,18 @@ object VexLifeProdSetupProcess {
         val productHome: Path,
         val expectedSourceSha: String,
         val allowAcquisition: Boolean,
-    )
+        val allowRuntimeStart: Boolean =
+            allowAcquisition,
+    ) {
+        init {
+            require(
+                !allowAcquisition ||
+                    allowRuntimeStart,
+            ) {
+                "acquisition authority without runtime-start authority is not lawful"
+            }
+        }
+    }
 
     data class HomeArguments(
         val productHome: Path,
@@ -35,6 +47,8 @@ object VexLifeProdSetupProcess {
     )
 
     internal data class Hooks(
+        val progress: VexLifeProdSetupProgress =
+            VexLifeProdSetupProgress.Silent,
         val locateImageRoot: () -> Path =
             ::currentImageRoot,
         val observeImage: (
@@ -58,13 +72,17 @@ object VexLifeProdSetupProcess {
         val establishSession: (
             productHome: Path,
             allowAcquisition: Boolean,
+            allowRuntimeStart: Boolean,
         ) -> VexLifeProdLocalSetup.Session = {
             productHome,
             allowAcquisition,
+            allowRuntimeStart,
             ->
             VexLifeProdLocalSetup.establishSession(
                 productHome = productHome,
                 allowAcquisition = allowAcquisition,
+                allowRuntimeStart = allowRuntimeStart,
+                progress = progress,
             )
         },
         val installImage: (
@@ -219,6 +237,9 @@ object VexLifeProdSetupProcess {
         arguments: HomeArguments,
         hooks: Hooks,
     ) {
+        hooks.progress.phase(
+            VexLifeProdSetupProgress.Phase.VerifyingProduct,
+        )
         val imageRoot =
             hooks.locateImageRoot()
                 .toAbsolutePath()
@@ -233,6 +254,9 @@ object VexLifeProdSetupProcess {
             observed,
         )
 
+        hooks.progress.phase(
+            VexLifeProdSetupProgress.Phase.FormingHome,
+        )
         val home =
             hooks.formFreshHome(arguments.productHome)
 
@@ -245,6 +269,8 @@ object VexLifeProdSetupProcess {
     internal fun realizeHomeFormation(
         desiredSourceSha: String,
         productHome: Path,
+        progress: VexLifeProdSetupProgress =
+            VexLifeProdSetupProgress.Silent,
     ) {
         formHomeWithHooks(
             arguments =
@@ -254,6 +280,7 @@ object VexLifeProdSetupProcess {
                 ),
             hooks =
                 Hooks(
+                    progress = progress,
                     reportImageVerified = { _ -> },
                     reportHomeReady = { _, _ -> },
                 ),
@@ -263,7 +290,10 @@ object VexLifeProdSetupProcess {
     internal fun realizeProductConvergence(
         desiredSourceSha: String,
         allowAcquisition: Boolean,
+        allowRuntimeStart: Boolean,
         productHome: Path,
+        progress: VexLifeProdSetupProgress =
+            VexLifeProdSetupProgress.Silent,
     ) {
         runWithHooks(
             arguments =
@@ -271,9 +301,11 @@ object VexLifeProdSetupProcess {
                     productHome = productHome,
                     expectedSourceSha = desiredSourceSha,
                     allowAcquisition = allowAcquisition,
+                    allowRuntimeStart = allowRuntimeStart,
                 ),
             hooks =
                 Hooks(
+                    progress = progress,
                     reportImageVerified = { _ -> },
                     reportReady = { _, _, _, _ -> },
                 ),
@@ -296,6 +328,9 @@ object VexLifeProdSetupProcess {
         arguments: Arguments,
         hooks: Hooks,
     ) {
+        hooks.progress.phase(
+            VexLifeProdSetupProgress.Phase.VerifyingProduct,
+        )
         val imageRoot =
             hooks.locateImageRoot()
                 .toAbsolutePath()
@@ -314,8 +349,12 @@ object VexLifeProdSetupProcess {
             hooks.establishSession(
                 arguments.productHome,
                 arguments.allowAcquisition,
+                arguments.allowRuntimeStart,
             )
 
+        hooks.progress.phase(
+            VexLifeProdSetupProgress.Phase.InstallingProduct,
+        )
         val installed =
             hooks.installImage(
                 imageRoot,
@@ -334,6 +373,9 @@ object VexLifeProdSetupProcess {
             "installed VexLife-Prod private image differs from verified setup image"
         }
 
+        hooks.progress.phase(
+            VexLifeProdSetupProgress.Phase.StartingVexLife,
+        )
         val service =
             hooks.startService(
                 Path.of(

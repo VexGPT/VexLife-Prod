@@ -320,6 +320,119 @@ class VexLifeProdHomeFilesTest {
                 .deleteRecursively()
         }
     }
+
+    private fun freshPlan(): VexLifeProdHome.BootstrapPlan =
+        VexLifeProdHome.plan(
+            personRef = "person.local-user",
+            familyRef = "vex-family.local-user",
+            deviceName = "Test Mac",
+            platform = "darwin",
+            architecture = "arm64",
+            ids =
+                VexLifeProdHome.InstallationIds(
+                    deviceRef = "device.vexlife.00000000-0000-0000-0000-000000000031",
+                    companionLineageRef = "companion-lineage.vexlife.00000000-0000-0000-0000-000000000032",
+                ),
+            createdAt = "2026-11-13T04:00:00-08:00",
+        )
+
+    @Test
+    fun selectedLocationIsClassifiedAsAValueForEveryOrdinaryCase() {
+        val root = Files.createTempDirectory("vexlife-home-location-").toAbsolutePath()
+        try {
+            val absent = root.resolve(".vexlife")
+            val nested = root.resolve("a").resolve("b").resolve("Home")
+            val empty = Files.createDirectory(root.resolve("empty"))
+            val other = Files.createDirectory(root.resolve("other"))
+            Files.writeString(other.resolve("notes.txt"), "keep me")
+            val file = Files.writeString(root.resolve("a-file"), "x")
+            val linkTarget = Files.createDirectory(root.resolve("link-target"))
+            val link = Files.createSymbolicLink(root.resolve("link"), linkTarget)
+            val broken = Files.createDirectories(root.resolve("broken").resolve("config"))
+            Files.writeString(broken.resolve("home.json"), "{ not json")
+            val canonical = root.resolve("canonical")
+            CanonicalVexLifeHomeFixture.form(home = canonical, deviceSuffix = "location", lineageSuffix = "location")
+
+            val absentLocation = VexLifeProdHomeFiles.observeLocation(absent) as VexLifeProdHomeFiles.Location.Formable
+            assertEquals(VexLifeProdHome.LocationDisposition.Absent, absentLocation.disposition)
+            assertEquals(0, absentLocation.missingAncestorCount)
+
+            val nestedLocation = VexLifeProdHomeFiles.observeLocation(nested) as VexLifeProdHomeFiles.Location.Formable
+            assertEquals(2, nestedLocation.missingAncestorCount)
+            assertEquals(root.toString(), nestedLocation.nearestExistingAncestor)
+
+            assertEquals(
+                VexLifeProdHome.LocationDisposition.EmptyDirectory,
+                VexLifeProdHomeFiles.observeLocation(empty).disposition,
+            )
+            assertEquals(
+                VexLifeProdHome.LocationDisposition.HeldNoncanonicalContent,
+                VexLifeProdHomeFiles.observeLocation(other).disposition,
+            )
+            assertEquals(
+                VexLifeProdHome.LocationDisposition.HeldNotDirectory,
+                VexLifeProdHomeFiles.observeLocation(file).disposition,
+            )
+            assertEquals(
+                VexLifeProdHome.LocationDisposition.HeldNotDirectory,
+                VexLifeProdHomeFiles.observeLocation(file.resolve("child")).disposition,
+            )
+            assertEquals(
+                VexLifeProdHome.LocationDisposition.HeldSymbolicLink,
+                VexLifeProdHomeFiles.observeLocation(link).disposition,
+            )
+            assertEquals(
+                VexLifeProdHome.LocationDisposition.HeldInvalidCanonicalRecords,
+                VexLifeProdHomeFiles.observeLocation(root.resolve("broken")).disposition,
+            )
+            assertTrue(
+                VexLifeProdHomeFiles.observeLocation(canonical) is VexLifeProdHomeFiles.Location.Existing,
+            )
+
+            assertFalse(Files.exists(absent), "classification must not create the Home")
+            assertFalse(Files.exists(root.resolve("a")), "classification must not create ancestors")
+            assertEquals("keep me", Files.readString(other.resolve("notes.txt")))
+        } finally {
+            root.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun emptyFolderTheHumanChoseBecomesTheHomeAtTheSameCoordinate() {
+        val root = Files.createTempDirectory("vexlife-home-empty-").toAbsolutePath()
+        val home = Files.createDirectory(root.resolve("Vex Home"))
+        try {
+            val formed = VexLifeProdHomeFiles.bootstrap(home, freshPlan())
+
+            assertEquals("FRESH_CANONICAL_VEXLIFE_HOME_FORMED", formed.state)
+            assertEquals(home.toString(), formed.productHome)
+            assertTrue(VexLifeProdHomeFiles.observeLocation(home) is VexLifeProdHomeFiles.Location.Existing)
+            assertEquals(
+                listOf(home),
+                Files.list(root).use { it.toList() },
+                "no staging sibling may remain after publication",
+            )
+        } finally {
+            root.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun folderWithOtherFilesIsNeverFormedOverAndStagingIsRemoved() {
+        val root = Files.createTempDirectory("vexlife-home-preserve-").toAbsolutePath()
+        val home = Files.createDirectory(root.resolve("Projects"))
+        val keep = Files.writeString(home.resolve("keep.txt"), "mine")
+        try {
+            assertFailsWith<IllegalArgumentException> {
+                VexLifeProdHomeFiles.bootstrap(home, freshPlan())
+            }
+            assertEquals("mine", Files.readString(keep))
+            assertEquals(listOf(keep), Files.list(home).use { it.toList() })
+            assertEquals(listOf(home), Files.list(root).use { it.toList() })
+        } finally {
+            root.toFile().deleteRecursively()
+        }
+    }
 }
 
 // [VXG RealForever]

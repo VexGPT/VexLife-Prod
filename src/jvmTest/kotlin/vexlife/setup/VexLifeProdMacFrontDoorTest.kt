@@ -9,6 +9,8 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.entry.VexLifeProdEntryFamily
+import vexlife.home.VexLifeProdHome
+import vexlife.home.VexLifeProdHomeFiles
 import vexlife.platform.macos.MacUserLaunchdProcess
 import vexlife.service.VexLifeProdMacServiceLifetime
 import vexlife.service.VexLifeProdServiceContract
@@ -34,7 +36,7 @@ class VexLifeProdMacFrontDoorTest {
             schemaVersion = VexLifeProdServiceContract.CurrentStateProjectionSchema,
             observedAt = "2026-11-13T00:00:00Z",
             homePath = "/tmp/.vexlife",
-            homeDisposition = "EXISTING_CANONICAL_HOME",
+            homeDisposition = VexLifeProdHome.LocationDisposition.Canonical.wireValue,
             homeRef = "home.vexlife.front-door-test",
             deviceRef = "device.vexlife.front-door-test",
             companionLineageRef = "companion.vexlife.front-door-test",
@@ -155,8 +157,54 @@ class VexLifeProdMacFrontDoorTest {
             effectsPerformed = false,
         )
 
+    private val testPlan =
+        VexLifeProdHome.plan(
+            personRef = "person.local-user",
+            familyRef = "vex-family.local-user",
+            deviceName = "Front Door Test Mac",
+            platform = "darwin",
+            architecture = "arm64",
+            ids =
+                VexLifeProdHome.InstallationIds(
+                    deviceRef =
+                        "device.vexlife.00000000-0000-0000-0000-000000000001",
+                    companionLineageRef =
+                        "companion-lineage.vexlife.00000000-0000-0000-0000-000000000002",
+                ),
+            createdAt = "2026-11-13T04:00:00-08:00",
+        )
+
+    private val testManifest =
+        testPlan.manifest
+
+    private val testInstallation =
+        testPlan.installation
+
+    private fun existingLocation(): VexLifeProdHomeFiles.Location =
+        VexLifeProdHomeFiles.Location.Existing(
+            VexLifeProdHomeFiles.Result(
+                state = VexLifeProdHome.LocationDisposition.Canonical.wireValue,
+                productHome = selectedHome.toString(),
+                manifest = testManifest,
+                installation = testInstallation,
+                effectsPerformed = false,
+            ),
+        )
+
+    private fun absentLocation(): VexLifeProdHomeFiles.Location =
+        VexLifeProdHomeFiles.Location.Formable(
+            productHome = selectedHome.toString(),
+            disposition = VexLifeProdHome.LocationDisposition.Absent,
+            nearestExistingAncestor = "/tmp",
+            missingAncestorCount = 0,
+        )
+
     private fun hooks(
         existing: VexLifeProdMacServiceLifetime.ExistingObservation,
+        runtimeEnvironmentPresent: Boolean =
+            true,
+        current: VexLifeProdServiceContract.CurrentStateProjection =
+            currentState(),
     ): VexLifeProdMacFrontDoor.Hooks =
         VexLifeProdMacFrontDoor.Hooks(
             observeCurrentState = {
@@ -165,10 +213,21 @@ class VexLifeProdMacFrontDoorTest {
                     selectedHome,
                     productHome,
                 )
-                currentState()
+                current
+            },
+            observeHomeLocation = {
+                existingLocation()
             },
             observeExistingService = {
                 existing
+            },
+            observeRuntimeEnvironmentPresent = {
+                runtimeEnvironmentPresent
+            },
+            userHome = {
+                Path.of(
+                    "/Users/vex",
+                )
             },
         )
 
@@ -185,6 +244,9 @@ class VexLifeProdMacFrontDoorTest {
                         productHome,
                     )
                     absentHomeCurrentState()
+                },
+                observeHomeLocation = {
+                    absentLocation()
                 },
                 observeExistingService = {
                     serviceObserved =
@@ -344,14 +406,14 @@ class VexLifeProdMacFrontDoorTest {
             VexLifeProdMacFrontDoor.observeWithHooks(
                 desiredSourceSha = desired,
                 productHome = selectedHome,
-                hooks = hooks(absentService),
+                hooks = hooks(absentService, runtimeEnvironmentPresent = false),
             )
         val resolved =
             VexLifeProdMacFrontDoor.resolveTypedControlWithHooks(
                 desiredSourceSha = desired,
                 productHome = selectedHome,
                 controlRef = VexLifeProdEntryFamily.ControlSetUp,
-                hooks = hooks(absentService),
+                hooks = hooks(absentService, runtimeEnvironmentPresent = false),
             )
 
         assertEquals(
@@ -472,6 +534,7 @@ class VexLifeProdMacFrontDoorTest {
                             _,
                             _,
                             _,
+                            _,
                             ->
                             setupCalls +=
                                 1
@@ -537,6 +600,7 @@ class VexLifeProdMacFrontDoorTest {
                                     VexLifeProdEntryFamily.ConvergeProduct(
                                         desiredSourceSha = desired,
                                         allowAcquisition = true,
+                                        allowRuntimeStart = true,
                                     ),
                             )
                         },
@@ -551,6 +615,7 @@ class VexLifeProdMacFrontDoorTest {
                         convergeProduct = {
                             sourceSha,
                             allowAcquisition,
+                            _,
                             productHome,
                             ->
                             assertEquals(
@@ -630,6 +695,7 @@ class VexLifeProdMacFrontDoorTest {
                             _,
                             _,
                             _,
+                            _,
                             ->
                             error(
                                 "open-current activation must not run setup",
@@ -668,11 +734,26 @@ class VexLifeProdMacFrontDoorTest {
                 ),
             )
 
-        assertTrue(
-            source.contains(
+        for (
+            required in
+            listOf(
                 "--activate-front-door-control",
-            ),
-        )
+                "--inspect-front-door",
+                "objectForKey:\"card\"",
+                "setStandardOutput:outHandle",
+                "setStandardError:errHandle",
+                "Cancel safely",
+                "property progressPrefix : \"[VexLife] \"",
+                "NSOpenPanel",
+            )
+        ) {
+            assertTrue(
+                source.contains(
+                    required,
+                ),
+                "native window must keep: $required",
+            )
+        }
         for (
             forbidden in
             listOf(
@@ -682,6 +763,20 @@ class VexLifeProdMacFrontDoorTest {
                 "runHomeFormation",
                 "runSetup",
                 "--resolve-front-door-control",
+                // Card copy, State refs and DisplayState fields are Product-owned; the window only
+                // renders the card it is given.
+                "primaryControlRef",
+                "displayState",
+                "HOME_FORMATION_REQUIRED",
+                "SETUP_REQUIRED",
+                "Create Vex Home",
+                "Set Up VexLife",
+                "Start VexLife",
+                "Repair & Restart",
+                "Update & Restart",
+                // One shared stdout/stderr pipe read only after exit can deadlock on a long setup and
+                // lets JVM diagnostics corrupt the JSON channel.
+                "setStandardError:outputPipe",
             )
         ) {
             assertFalse(
@@ -731,6 +826,7 @@ class VexLifeProdMacFrontDoorTest {
                             )
                         },
                         convergeProduct = {
+                            _,
                             _,
                             _,
                             _,

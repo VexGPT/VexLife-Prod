@@ -32,11 +32,11 @@ object VexLifeProdCurrentState {
                 ),
             )
         },
-        val observeHome: (
+        val observeLocation: (
             productHome: Path,
-        ) -> VexLifeProdHomeFiles.Result? = {
+        ) -> VexLifeProdHomeFiles.Location = {
             productHome ->
-            VexLifeProdHomeFiles.observeExisting(
+            VexLifeProdHomeFiles.observeLocation(
                 productHome,
             )
         },
@@ -70,21 +70,25 @@ object VexLifeProdCurrentState {
         ) -> Long? = {
             productHome ->
             try {
-                val observedPath =
-                    if (
-                        Files.exists(
-                            productHome,
-                        )
-                    ) {
-                        productHome
-                    } else {
-                        requireNotNull(
-                            productHome.parent,
-                        )
-                    }
+                // The volume that will hold the Home is the one containing its nearest existing
+                // ancestor; an alternate Home may sit under folders formation has not created yet.
+                var observedPath: Path? =
+                    productHome
+                while (
+                    observedPath !=
+                        null &&
+                    !Files.exists(
+                        observedPath,
+                    )
+                ) {
+                    observedPath =
+                        observedPath.parent
+                }
                 Files
                     .getFileStore(
-                        observedPath,
+                        requireNotNull(
+                            observedPath,
+                        ),
                     )
                     .usableSpace
             } catch (
@@ -128,14 +132,22 @@ object VexLifeProdCurrentState {
                 .normalize()
         val host =
             hooks.observeHost()
-        val home =
-            hooks.observeHome(
+        val location =
+            hooks.observeLocation(
                 productHome,
             )
+        require(
+            Path.of(
+                location.productHome,
+            ) ==
+                productHome,
+        ) {
+            "current-state Home location observation changed the selected coordinate"
+        }
 
         if (
-            home ==
-                null
+            location !is
+                VexLifeProdHomeFiles.Location.Existing
         ) {
             return VexLifeProdServiceContract.CurrentStateProjection(
                 schemaVersion =
@@ -146,7 +158,7 @@ object VexLifeProdCurrentState {
                 homePath =
                     productHome.toString(),
                 homeDisposition =
-                    "ABSENT_CANONICAL_VEXLIFE_HOME",
+                    location.disposition.wireValue,
                 homeRef = null,
                 deviceRef = null,
                 companionLineageRef = null,
@@ -187,6 +199,9 @@ object VexLifeProdCurrentState {
                 effectsPerformed = false,
             )
         }
+
+        val home =
+            location.home
 
         require(
             !home.effectsPerformed &&

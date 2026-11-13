@@ -3,6 +3,7 @@ package vexlife.service
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.home.VexLifeProdHome
 
 /**
  * Shared browser/service contract for the local VexLife implementation.
@@ -144,8 +145,12 @@ object VexLifeProdServiceContract {
         init {
             val homeIdentityValid =
                 if (
-                    homeDisposition ==
-                        "ABSENT_CANONICAL_VEXLIFE_HOME"
+                    VexLifeProdHome.LocationDisposition
+                        .forWireValue(
+                            homeDisposition,
+                        )
+                        ?.identityPresent ==
+                    false
                 ) {
                     homeRef ==
                         null &&

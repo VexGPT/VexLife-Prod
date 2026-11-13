@@ -92,7 +92,7 @@ class VexLifeProdBootstrapTemplateTest {
         )
         assertTrue(
             source.contains(
-                "set {jsonValue, parseError} to current application's NSJSONSerialization's JSONObjectWithData:dataValue options:0 |error|:(reference)",
+                "set {jsonObject, parseError} to current application's NSJSONSerialization's JSONObjectWithData:outData options:0 |error|:(reference)",
             ),
             "NSJSONSerialization NSError out parameter must use the AppleScriptObjC reference return shape",
         )
@@ -170,20 +170,20 @@ class VexLifeProdBootstrapTemplateTest {
             ),
             "JSON null must resolve to the caller fallback before AppleScript text coercion",
         )
+        // Buttons now come only from the Product-formed card (whose Kotlin invariants reject blank
+        // labels / unknown action refs). The window still drops any button whose label or ref
+        // resolved to the empty fallback instead of rendering it.
         assertTrue(
             source.contains(
-                "if primaryControlRef is \"\" or primaryLabel is \"\" then",
+                "if labelText is not \"\" and refText is not \"\" then",
             ),
-            "null Product controls must collapse to the no-control held presentation",
+            "null Product controls must collapse to no button rather than a visible fake control",
         )
         assertTrue(
             !source.contains(
-                "buttons {primaryLabel, secondaryLabel, cancelLabel} default button primaryLabel cancel button cancelLabel\n        set chosenLabel to button returned of chosen\n        if chosenLabel is primaryLabel then\n            set controlRef to primaryControlRef",
-            ) ||
-                source.contains(
-                    "if secondaryControlRef is not \"\" and secondaryLabel is not \"\" then",
-                ),
-            "native presentation must not manufacture a semantic control from missing labels",
+                "primaryControlRef",
+            ),
+            "native presentation must not read DisplayState control fields directly",
         )
     }
 

@@ -19,6 +19,10 @@ object HereticProductIdentity {
     const val ModelRef =
         "model.devex.heretic.qwen3.8-27b.mlx4.329658ee8f27"
 
+    /** Human-facing name for setup copy; [ModelRef] remains the identity. */
+    const val HumanModelLabel =
+        "Heretic 27B (4-bit, MLX)"
+
     const val ModelProfileRef =
         "model-profile.devex.qwen38-27b-heretic-mlx4.certified.20260928A"
 

@@ -26,6 +26,291 @@ object VexLifeProdHomeFiles {
         val effectsPerformed: Boolean,
     )
 
+    /**
+     * No-effect classification of one human-selected Home coordinate.
+     *
+     * Ordinary held conditions are values, not exceptions: the human surface must be able to say
+     * "this folder is being preserved" instead of rendering a stack trace.
+     */
+    sealed interface Location {
+        val productHome: String
+        val disposition: VexLifeProdHome.LocationDisposition
+
+        /**
+         * Formation may target this coordinate. [nearestExistingAncestor] is the directory whose
+         * volume will hold the Home; [missingAncestorCount] counts folders formation must also create
+         * between that ancestor and the Home itself (0 when the parent already exists).
+         */
+        data class Formable(
+            override val productHome: String,
+            override val disposition: VexLifeProdHome.LocationDisposition,
+            val nearestExistingAncestor: String,
+            val missingAncestorCount: Int,
+        ) : Location {
+            init {
+                require(
+                    disposition.formationAllowed &&
+                        missingAncestorCount >=
+                        0,
+                ) {
+                    "formable Home location requires a formation-admitting disposition"
+                }
+            }
+        }
+
+        data class Existing(
+            val home: Result,
+        ) : Location {
+            override val productHome: String =
+                home.productHome
+            override val disposition: VexLifeProdHome.LocationDisposition =
+                VexLifeProdHome.LocationDisposition.Canonical
+        }
+
+        data class Held(
+            override val productHome: String,
+            override val disposition: VexLifeProdHome.LocationDisposition,
+            val detail: String,
+        ) : Location {
+            init {
+                require(
+                    disposition.held &&
+                        detail.isNotBlank(),
+                ) {
+                    "held Home location requires a held disposition and bounded detail"
+                }
+            }
+        }
+    }
+
+    fun observeLocation(
+        productHome: Path,
+    ): Location {
+        require(
+            productHome.isAbsolute,
+        ) {
+            "selected Vex Home path must be absolute"
+        }
+        val home =
+            productHome.normalize()
+        val homeText =
+            home.toString()
+
+        val attributes =
+            try {
+                Files.readAttributes(
+                    home,
+                    BasicFileAttributes::class.java,
+                    LinkOption.NOFOLLOW_LINKS,
+                )
+            } catch (
+                _: java.nio.file.NoSuchFileException,
+            ) {
+                null
+            } catch (
+                error: java.io.IOException,
+            ) {
+                // ENOTDIR: a file sits where a parent folder would have to be.
+                val blocking =
+                    generateSequence(
+                        home.parent,
+                    ) {
+                        it.parent
+                    }.firstOrNull {
+                        Files.exists(
+                            it,
+                            LinkOption.NOFOLLOW_LINKS,
+                        )
+                    }
+                return if (
+                    blocking !=
+                        null &&
+                    !Files.isDirectory(
+                        blocking,
+                    )
+                ) {
+                    Location.Held(
+                        productHome = homeText,
+                        disposition = VexLifeProdHome.LocationDisposition.HeldNotDirectory,
+                        detail =
+                            "something that is not a folder is in the way at $blocking",
+                    )
+                } else {
+                    Location.Held(
+                        productHome = homeText,
+                        disposition = VexLifeProdHome.LocationDisposition.HeldLocationUnreadable,
+                        detail =
+                            "the selected location could not be read: " +
+                                (error.message ?: error.javaClass.simpleName),
+                    )
+                }
+            }
+
+        if (
+            attributes ==
+                null
+        ) {
+            var ancestor =
+                home.parent
+            var missing =
+                0
+            while (
+                ancestor !=
+                    null &&
+                !Files.exists(
+                    ancestor,
+                    LinkOption.NOFOLLOW_LINKS,
+                )
+            ) {
+                missing += 1
+                ancestor =
+                    ancestor.parent
+            }
+            if (
+                ancestor ==
+                    null ||
+                !Files.isDirectory(
+                    ancestor,
+                )
+            ) {
+                return Location.Held(
+                    productHome = homeText,
+                    disposition = VexLifeProdHome.LocationDisposition.HeldNotDirectory,
+                    detail =
+                        "something that is not a folder is in the way at " +
+                            (ancestor ?: home.root),
+                )
+            }
+            if (
+                !Files.isWritable(
+                    ancestor,
+                )
+            ) {
+                return Location.Held(
+                    productHome = homeText,
+                    disposition = VexLifeProdHome.LocationDisposition.HeldLocationNotWritable,
+                    detail =
+                        "this Mac user cannot create folders inside $ancestor",
+                )
+            }
+            return Location.Formable(
+                productHome = homeText,
+                disposition = VexLifeProdHome.LocationDisposition.Absent,
+                nearestExistingAncestor = ancestor.toString(),
+                missingAncestorCount = missing,
+            )
+        }
+
+        if (
+            attributes.isSymbolicLink
+        ) {
+            return Location.Held(
+                productHome = homeText,
+                disposition = VexLifeProdHome.LocationDisposition.HeldSymbolicLink,
+                detail =
+                    "the selected location is a link to somewhere else; choose the real folder instead",
+            )
+        }
+
+        if (
+            !attributes.isDirectory
+        ) {
+            return Location.Held(
+                productHome = homeText,
+                disposition = VexLifeProdHome.LocationDisposition.HeldNotDirectory,
+                detail =
+                    "the selected location is a file, not a folder",
+            )
+        }
+
+        val empty =
+            try {
+                Files.list(
+                    home,
+                )
+                    .use {
+                        entries ->
+                        !entries
+                            .iterator()
+                            .hasNext()
+                    }
+            } catch (
+                error: java.io.IOException,
+            ) {
+                return Location.Held(
+                    productHome = homeText,
+                    disposition = VexLifeProdHome.LocationDisposition.HeldLocationUnreadable,
+                    detail =
+                        "the selected folder could not be read: " +
+                            (error.message ?: error.javaClass.simpleName),
+                )
+            }
+
+        if (
+            empty
+        ) {
+            val parent =
+                home.parent
+            if (
+                parent ==
+                    null ||
+                !Files.isWritable(
+                    parent,
+                )
+            ) {
+                return Location.Held(
+                    productHome = homeText,
+                    disposition = VexLifeProdHome.LocationDisposition.HeldLocationNotWritable,
+                    detail =
+                        "VexLife forms a Home beside the selected folder and then moves it into place, " +
+                            "but this Mac user cannot write inside ${parent ?: home.root}",
+                )
+            }
+            return Location.Formable(
+                productHome = homeText,
+                disposition = VexLifeProdHome.LocationDisposition.EmptyDirectory,
+                nearestExistingAncestor = homeText,
+                missingAncestorCount = 0,
+            )
+        }
+
+        if (
+            !Files.exists(
+                home.resolve(
+                    VexLifeProdHome.HomeManifestRelativePath,
+                ),
+                LinkOption.NOFOLLOW_LINKS,
+            )
+        ) {
+            return Location.Held(
+                productHome = homeText,
+                disposition = VexLifeProdHome.LocationDisposition.HeldNoncanonicalContent,
+                detail =
+                    "the selected folder already contains files that are not a Vex Home",
+            )
+        }
+
+        return try {
+            Location.Existing(
+                requireNotNull(
+                    observeExisting(
+                        home,
+                    ),
+                ),
+            )
+        } catch (
+            error: Exception,
+        ) {
+            Location.Held(
+                productHome = homeText,
+                disposition = VexLifeProdHome.LocationDisposition.HeldInvalidCanonicalRecords,
+                detail =
+                    "the selected folder looks like a Vex Home but its identity records did not validate: " +
+                        (error.message ?: error.javaClass.simpleName),
+            )
+        }
+    }
+
     fun defaultMacRoot(
         userHome: Path,
     ): Path {
@@ -181,20 +466,29 @@ object VexLifeProdHomeFiles {
         val home =
             productHome.normalize()
 
-        if (
-            Files.exists(
-                home,
-                LinkOption.NOFOLLOW_LINKS,
-            )
-        ) {
-            return requireNotNull(
-                observeExisting(
+        when (
+            val location =
+                observeLocation(
                     home,
-                ),
-            ) {
-                "existing VexLife Home path is not one current canonical Home"
-            }
+                )
+        ) {
+            is Location.Existing ->
+                return location.home
+
+            is Location.Held ->
+                throw IllegalArgumentException(
+                    "selected Vex Home is preserved and cannot be formed: " +
+                        location.disposition.wireValue +
+                        " — " +
+                        location.detail,
+                )
+
+            is Location.Formable ->
+                Unit
         }
+        // An EmptyDirectory target is replaced by the atomic rename below. POSIX rename(2) replaces
+        // an empty directory and fails with ENOTEMPTY if anything appeared inside it meanwhile, so
+        // the empty-folder admission cannot overwrite content created after observation.
 
         val currentPlan =
             VexLifeProdHome.validateBootstrapPlan(

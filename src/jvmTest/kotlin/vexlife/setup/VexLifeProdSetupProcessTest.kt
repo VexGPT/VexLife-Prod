@@ -207,6 +207,7 @@ class VexLifeProdSetupProcessTest {
                     establishSession = {
                         _,
                         _,
+                        _,
                         ->
                         error(
                             "Home-only realization must not enter model/runtime setup",
@@ -380,6 +381,7 @@ class VexLifeProdSetupProcessTest {
                     establishSession = {
                         selectedHome,
                         allowAcquisition,
+                        _,
                         ->
                         assertEquals(
                             Path.of(
@@ -540,6 +542,7 @@ class VexLifeProdSetupProcessTest {
                         establishSession = {
                             productHome,
                             allowAcquisition,
+                            _,
                             ->
                             assertEquals(
                                 Path.of(
