@@ -187,6 +187,61 @@ same exact completed attempt
 
 The service does not invent another idempotency layer.
 
+## Current-state awareness read side
+
+The local service now exposes one bounded read-only route:
+
+~~~text
+GET /api/v1/current-state
+~~~
+
+Its purpose is human awareness before later consequential choices. It composes current observations
+without becoming the owner of Home, model selection, runtime lifetime or artifact acquisition.
+
+Current patient-zero projection:
+
+~~~text
+fresh host observation
+  platform / architecture / chip / total system memory
+
+fresh Home-volume observation
+  usable storage bytes
+
+accepted startup setup evidence
+  Home coordinate / disposition
+  active model + profile
+  qualified runtime receipt/state
+  exact current-model artifact-set byte total
+        ↓
+CurrentStateProjection
+        ↓
+Settings / Resources + Home
+~~~
+
+The current model artifact bytes and runtime are deliberately labeled
+`VERIFIED_AT_SETUP` / `STARTUP_QUALIFIED_NOT_REOBSERVED`. Ordinary Settings refresh does not
+SHA-256 the multi-GiB model or requalify/recover the runtime.
+
+Permanent:
+
+~~~text
+CURRENT-STATE AWARENESS
+!= REPAIR
+
+CURRENT-STATE AWARENESS
+!= MODEL CHANGE
+
+CURRENT-STATE AWARENESS
+!= RUNTIME REQUALIFICATION
+
+CURRENT-STATE AWARENESS
+!= ARTIFACT REVERIFICATION
+~~~
+
+A later Repair or model-change preflight may earn deeper exact re-observation because that operation
+actually depends on those predicates. The ordinary read side does not create that cost or authority
+in advance.
+
 ## Prompt-context + Context read-side projection
 
 The Send response projects the already-earned direct prompt receipt:
