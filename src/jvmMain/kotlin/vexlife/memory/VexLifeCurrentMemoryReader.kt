@@ -708,6 +708,18 @@ object VexLifeCurrentMemoryReader {
                     "proposedStatementState",
                 ) in
                 statementStates &&
+                candidate.string(
+                    "proposerClass",
+                ) in
+                setOf(
+                    "LINEAGE",
+                    "HUMAN",
+                    "SYSTEM_CLASSIFIER",
+                ) &&
+                candidate.string(
+                    "privacyClass",
+                ) ==
+                "DEVICE_PRIVATE" &&
                 semanticHashString(
                     candidate.string(
                         "proposedSummary",
@@ -787,7 +799,31 @@ object VexLifeCurrentMemoryReader {
                         ) ==
                         candidate.string(
                             "semanticSubjectFingerprint",
-                        ),
+                        ) &&
+                        value.string(
+                            "issuerRef",
+                        ) ==
+                        "owner.multivex.memory.score-semantic-classifier.001" &&
+                        value.string(
+                            "issuerClass",
+                        ) ==
+                        "SOURCE_MANAGED_MEMORY_CLASSIFIER" &&
+                        value.string(
+                            "ownerProjectRef",
+                        ) ==
+                        "project.multivex.memory" &&
+                        value.string(
+                            "ownerDispositionRef",
+                        ) ==
+                        "github.issue.vextreme-sdk.225.comment.5217085830" &&
+                        value.string(
+                            "privacyClass",
+                        ) ==
+                        "DEVICE_PRIVATE" &&
+                        value.array(
+                            "sourceEvidenceBindings",
+                        )
+                            .isNotEmpty(),
                 ) {
                     "classification evidence differs from current semantic authority binding"
                 }
@@ -847,7 +883,31 @@ object VexLifeCurrentMemoryReader {
                 consent.string(
                     "disposition",
                 ) in
-                consentStates,
+                consentStates &&
+                consent.string(
+                    "issuerRef",
+                ) ==
+                "owner.multivex.safety.score-consent-authority.001" &&
+                consent.string(
+                    "issuerClass",
+                ) ==
+                "SOURCE_MANAGED_SAFETY_CONSENT" &&
+                consent.string(
+                    "ownerProjectRef",
+                ) ==
+                "project.multivex.safety" &&
+                consent.string(
+                    "ownerDispositionRef",
+                ) ==
+                "github.issue.vextreme-sdk.226.comment.5217090896" &&
+                consent.string(
+                    "privacyClass",
+                ) ==
+                "DEVICE_PRIVATE" &&
+                consent.array(
+                    "sourceEvidenceBindings",
+                )
+                    .isNotEmpty(),
         ) {
             "consent disposition differs from current semantic authority binding"
         }
@@ -894,6 +954,18 @@ object VexLifeCurrentMemoryReader {
                     "ownerDispositionRef",
                 ) ==
                 LiveSemanticExecutableAddendum &&
+                acceptance.string(
+                    "issuerRef",
+                ) ==
+                "owner.multivex.score-semantic-authority.materializer.001" &&
+                acceptance.string(
+                    "issuerClass",
+                ) ==
+                "SOURCE_MANAGED_MEMORY_SAFETY_COMPOSITION" &&
+                acceptance.string(
+                    "privacyClass",
+                ) ==
+                "DEVICE_PRIVATE" &&
                 acceptance.string(
                     "candidateRef",
                 ) ==
