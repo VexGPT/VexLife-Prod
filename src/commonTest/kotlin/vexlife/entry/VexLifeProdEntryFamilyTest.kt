@@ -101,6 +101,40 @@ class VexLifeProdEntryFamilyTest {
     }
 
     @Test
+    fun HomeFormationIsDistinctFromProductAcquisition() {
+        val state =
+            VexLifeProdEntryFamily.HomeFormationRequired(
+                sourceSha,
+            )
+        val display =
+            VexLifeProdEntryFamily.Semantics.displayStateFor(
+                state,
+            )
+        val effect =
+            VexLifeProdEntryFamily.Semantics
+                .resolve(
+                    state,
+                    VexLifeProdEntryFamily.FormHome,
+                )
+                ?.effect
+
+        assertEquals(
+            "Create Vex Home",
+            display.primaryLabel,
+        )
+        assertEquals(
+            VexLifeProdEntryFamily.FormCanonicalHome,
+            effect,
+        )
+        assertNull(
+            VexLifeProdEntryFamily.Semantics.resolve(
+                state,
+                VexLifeProdEntryFamily.SetUp,
+            ),
+        )
+    }
+
+    @Test
     fun setupIsTheOnlyEntryStateThatCanAuthorizeAcquisition() {
         val state =
             VexLifeProdEntryFamily.SetupRequired(
@@ -116,6 +150,14 @@ class VexLifeProdEntryFamilyTest {
 
         assertTrue(
             effect.allowAcquisition,
+        )
+        assertNull(
+            VexLifeProdEntryFamily.Semantics.resolve(
+                VexLifeProdEntryFamily.HomeFormationRequired(
+                    sourceSha,
+                ),
+                VexLifeProdEntryFamily.SetUp,
+            ),
         )
         assertNull(
             VexLifeProdEntryFamily.Semantics.resolve(
