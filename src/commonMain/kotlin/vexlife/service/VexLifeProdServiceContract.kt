@@ -546,7 +546,6 @@ object VexLifeProdServiceContract {
                 setOf(
                     null,
                     "SAFETY_NOT_CURRENT",
-                    "HUMAN_CANCELLED",
                 ) &&
                     endReasonOrNull in
                     setOf(
