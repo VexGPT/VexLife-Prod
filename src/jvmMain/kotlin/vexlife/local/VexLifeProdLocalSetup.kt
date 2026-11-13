@@ -406,7 +406,7 @@ object VexLifeProdLocalSetup {
                     productHome,
                 ),
             ) {
-                "canonical ~/.vexlife Home is absent; Product setup requires the separate Home-formation effect first"
+                "selected canonical Vex Home is absent at $productHome; Product setup requires the separate Home-formation effect first"
             }
 
         val canonicalHome =

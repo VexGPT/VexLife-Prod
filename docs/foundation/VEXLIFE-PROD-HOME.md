@@ -29,10 +29,11 @@ Vex Home, device/Companion lineage, Conversation, Memory or model-configuration 
 
 ## Current answer
 
-New Beginnings binds the already-established canonical VexLife Home:
+New Beginnings binds the human-selected canonical VexLife Home. The default suggestion is
+`~/.vexlife`, but the same canonical structure may live at another absolute selected coordinate:
 
 ~~~text
-~/.vexlife
+<selected Vex Home>
   config/home.json
   devices/<currentDeviceRef>.json
   config/model.json
@@ -69,10 +70,10 @@ companion-lineage.vexlife.*
 VexLife-Prod may own source-bound implementation/lifetime records beneath the admitted Home:
 
 ~~~text
-~/.vexlife/runtime/vexlife-prod/
+<selected Vex Home>/runtime/vexlife-prod/
   model-binding.json
 
-~/.vexlife/runtime/product-service/
+<selected Vex Home>/runtime/product-service/
   images/
   launchd/
   logs/
@@ -93,10 +94,11 @@ current heads / source descent
 
 ## Admission and fresh-formation sequence
 
-Existing Home admission remains unchanged:
+Existing Home admission remains unchanged in meaning:
 
 ~~~text
-canonical ~/.vexlife exists
+selected Home exists
+(default suggestion: ~/.vexlife)
         ↓
 config/home.json exact current schema
         ↓
@@ -113,7 +115,8 @@ The current source candidate also ports the missing fresh-user edge from the acc
 bootstrap relationship without resurrecting the superseded isolated Prod Home:
 
 ~~~text
-canonical ~/.vexlife absent
+selected Home absent
+(default suggestion: ~/.vexlife)
         ↓
 read-only current-state projection
   ABSENT_CANONICAL_VEXLIFE_HOME
@@ -136,13 +139,13 @@ exact canonical identity nucleus
         ↓
 re-observe staged Home
         ↓
-atomic publish to ~/.vexlife
+atomic publish to the selected Home
         ↓
-re-observe Product entry
+re-observe Product entry at that same Home
         ↓
-SETUP_REQUIRED
+render the State that is actually current
         ↓
-show model/runtime resource plan
+if SETUP_REQUIRED: show model/runtime resource plan
         ↓
 human separately selects Set Up VexLife
         ↓

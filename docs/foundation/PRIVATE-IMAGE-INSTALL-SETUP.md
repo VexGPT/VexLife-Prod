@@ -25,6 +25,7 @@ DisplayState -> human Control
         ↓
 bin/vexlife-prod-setup
   --activate-front-door-control <Control>
+  --home <selected absolute Home>
   --expected-source-sha <sha>
         ↓
 VexLifeProdMacFrontDoorProcess
@@ -83,12 +84,15 @@ and schema version change together.
 Home-only formation:
 
 ~~~text
---form-home --expected-source-sha <40-char lowercase Git SHA>
+--form-home
+--home <selected absolute Home>
+--expected-source-sha <40-char lowercase Git SHA>
 ~~~
 
 Product acquisition/setup after Home exists:
 
 ~~~text
+--home <selected absolute Home>
 --expected-source-sha <40-char lowercase Git SHA>
 --allow-acquisition
 ~~~
@@ -96,6 +100,7 @@ Product acquisition/setup after Home exists:
 Reuse/update/repair convergence:
 
 ~~~text
+--home <selected absolute Home>
 --expected-source-sha <40-char lowercase Git SHA>
 --reuse-existing
 ~~~
@@ -103,7 +108,6 @@ Reuse/update/repair convergence:
 No arguments exist for:
 
 ~~~text
-Home path
 install path
 model
 endpoint
@@ -113,8 +117,8 @@ Python path
 artifact source
 ~~~
 
-The image derives its own root; Home derives its own default coordinate; the installer derives the
-final image coordinate.
+The native journey supplies the human-selected Home coordinate explicitly. The image derives its own
+root; the installer derives the final image coordinate beneath that selected Home.
 
 ## Human authority boundary
 
@@ -238,7 +242,7 @@ its own private image. Those remain separate boundaries.
 Tests currently form:
 
 ~~~text
-Home-only arguments expose only form-home + expected source
+Home-only arguments carry form-home + selected Home + expected source
 Home-only effect verifies its source image and stops before model/runtime/Product effects
 native entry re-observes after Home formation
 setup resource consequences are projected before acquisition authority
