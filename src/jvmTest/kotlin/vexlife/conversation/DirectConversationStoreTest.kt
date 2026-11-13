@@ -196,6 +196,10 @@ class DirectConversationStoreTest {
                         productHome = productHome,
                         request = olderRequest,
                         response = olderResponse,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-12T00:00:16Z",
+                            ),
                     )
                 commitCompletedTurn(
                     request = olderRequest,
@@ -224,6 +228,10 @@ class DirectConversationStoreTest {
                         productHome = productHome,
                         request = newerRequest,
                         response = newerResponse,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-12T00:00:17Z",
+                            ),
                     )
                 commitCompletedTurn(
                     request = newerRequest,
@@ -361,6 +369,10 @@ class DirectConversationStoreTest {
                         productHome = productHome,
                         request = olderRequest,
                         response = olderResponse,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-12T00:00:18Z",
+                            ),
                     )
                 commitCompletedTurn(
                     request = olderRequest,
@@ -391,6 +403,10 @@ class DirectConversationStoreTest {
                         productHome = productHome,
                         request = newerRequest,
                         response = newerResponse,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-12T00:00:19Z",
+                            ),
                     )
                 commitCompletedTurn(
                     request = newerRequest,
@@ -438,7 +454,7 @@ class DirectConversationStoreTest {
                     !returnedOlder.effectsPerformed,
                 )
 
-                val newerResponse =
+                val newestResponse =
                     requireNotNull(
                         newerResponseOrNull,
                     )
@@ -446,16 +462,16 @@ class DirectConversationStoreTest {
                     exactCommittedConversationEvents(
                         listOf(
                             DirectConversationStore.EventAddress(
-                                sequence = newerResponse.sequence,
-                                eventRef = newerResponse.eventRef,
-                                eventHash = newerResponse.eventHash,
+                                sequence = newestResponse.sequence,
+                                eventRef = newestResponse.eventRef,
+                                eventHash = newestResponse.eventHash,
                             ),
                         ),
                     )
 
                 assertEquals(
                     listOf(
-                        newerResponse,
+                        newestResponse,
                     ),
                     returnedNewest.events,
                 )

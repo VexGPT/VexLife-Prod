@@ -20,8 +20,10 @@ import vexlife.model.heretic.HereticModelConfiguration
  *
  * CONTINUE selects a contiguous recent suffix of completed REQUEST/RESPONSE pairs within the admitted
  * prompt budget. Current attributed Memory may be supplied only through the exact source-owned Memory
- * contract and is reverified before provider materialization. A working-checkpoint successor selects
- * no raw prior Conversation pair. This owner performs no provider call and no durable mutation.
+ * contract and is reverified before provider materialization. A working-checkpoint successor does
+ * not replay the prior human request or full prior Conversation pair; it may carry the exact immediately
+ * prior Vex RESPONSE as a bounded assistant-role bridge. This owner performs no provider call and no
+ * durable mutation.
  */
 object DirectPromptContext {
     const val ReceiptSchemaV2 =
@@ -36,8 +38,11 @@ object DirectPromptContext {
     const val ReceiptSchemaV5 =
         "vexlife-prod.direct-prompt-materialization-receipt/v5"
 
-    const val ReceiptSchema =
+    const val ReceiptSchemaV6 =
         "vexlife-prod.direct-prompt-materialization-receipt/v6"
+
+    const val ReceiptSchema =
+        "vexlife-prod.direct-prompt-materialization-receipt/v7"
 
     const val InputTokenBudget =
         VexLifeMemoryContract.ContextInputTokenBudget
@@ -110,6 +115,21 @@ object DirectPromptContext {
         val estimatedSystemMessageTokens: Int,
     )
 
+    private data class VerifiedFixedContext(
+        val memoryAvailability: VerifiedMemory?,
+        val workingContinuity: VerifiedWorkingContinuity?,
+        val browserContextSha256: String?,
+        val browserContextRef: String?,
+        val capabilityFrame: VerifiedCapabilityFrame?,
+        val successorPriorResponse: DirectConversationStore.Event?,
+        val sourceReturnProtocolEnabled: Boolean,
+        val sourceReturnProtocolSystemMessageSha256: String?,
+        val sourceReturnProtocolEstimatedSystemMessageTokens: Int,
+        val prefixMessages: List<CompanionProviderMessage>,
+        val suffixMessages: List<CompanionProviderMessage>,
+        val fixedInputTokenEstimate: Int,
+    )
+
     @Serializable
     @ConsistentCopyVisibility
     data class CapabilityFrameSnapshot internal constructor(
@@ -135,6 +155,18 @@ object DirectPromptContext {
         val selectedConversationEventSequences: List<Long>,
         val currentRequestEventRef: String,
         val currentRequestEventSha256: String,
+        val successorPriorResponseEventRef: String?,
+        val successorPriorResponseEventSha256: String?,
+        val successorPriorResponseEventSequence: Long?,
+        val sourceReturnProtocolEnabled: Boolean,
+        val sourceReturnProtocolSystemMessageSha256: String?,
+        val sourceReturnProtocolEstimatedSystemMessageTokens: Int,
+        val sourceReturnState: String?,
+        val sourceReturnSourceEventRefs: List<String>,
+        val sourceReturnSystemMessageSha256: String?,
+        val sourceReturnEstimatedSystemMessageTokens: Int,
+        val memoryAvailabilityContextRef: String?,
+        val memoryAvailabilityContextFingerprint: String?,
         val browserContextIncluded: Boolean =
             false,
         val browserContextRef: String? =
@@ -199,6 +231,66 @@ object DirectPromptContext {
             emptyList(),
         val currentRequestEventRef: String,
         val currentRequestEventSha256: String,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val successorPriorResponseEventRef: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val successorPriorResponseEventSha256: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val successorPriorResponseEventSequence: Long? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val sourceReturnProtocolEnabled: Boolean =
+            false,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val sourceReturnProtocolSystemMessageSha256: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val sourceReturnProtocolEstimatedSystemMessageTokens: Int =
+            0,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val sourceReturnState: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val sourceReturnSourceEventRefs: List<String> =
+            emptyList(),
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val sourceReturnSystemMessageSha256: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val sourceReturnEstimatedSystemMessageTokens: Int =
+            0,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val memoryAvailabilityContextRef: String? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val memoryAvailabilityContextFingerprint: String? =
+            null,
         val browserContextIncluded: Boolean =
             false,
         val browserContextRef: String? =
@@ -336,6 +428,107 @@ object DirectPromptContext {
         val receipt: Receipt,
     )
 
+    @ConsistentCopyVisibility
+    data class FixedContext internal constructor(
+        val currentRequestEventRef: String,
+        val currentRequestEventSha256: String,
+        val memoryAvailabilityContextRef: String?,
+        val memoryAvailabilityContextFingerprint: String?,
+        val workingContinuityContextRef: String?,
+        val workingContinuityContextFingerprint: String?,
+        val browserContextRef: String?,
+        val browserContextSha256: String?,
+        val capabilityFrameRef: String?,
+        val capabilityFrameFingerprint: String?,
+        val successorPriorResponseEventRef: String?,
+        val successorPriorResponseEventSha256: String?,
+        val successorPriorResponseEventSequence: Long?,
+        val sourceReturnProtocolEnabled: Boolean,
+        val sourceReturnProtocolSystemMessageSha256: String?,
+        val sourceReturnProtocolEstimatedSystemMessageTokens: Int,
+        val prefixMessages: List<CompanionProviderMessage>,
+        val suffixMessages: List<CompanionProviderMessage>,
+        val fixedInputTokenEstimate: Int,
+        val effectsPerformed: Boolean,
+    )
+
+    fun prepareFixed(
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
+        memoryAvailabilityContext: VexLifeMemoryContract.Context? =
+            null,
+        workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
+            null,
+        browserContext: BrowserContext? =
+            null,
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
+            null,
+        sourceReturnProtocolEnabled: Boolean =
+            false,
+    ): FixedContext {
+        val fixed =
+            verifyFixedContext(
+                prior = prior,
+                currentRequest = currentRequest,
+                memoryAvailabilityContext = memoryAvailabilityContext,
+                workingContinuityContext = workingContinuityContext,
+                browserContext = browserContext,
+                runtimeEvidence = runtimeEvidence,
+                sourceReturnProtocolEnabled =
+                    sourceReturnProtocolEnabled,
+            )
+
+        return FixedContext(
+            currentRequestEventRef = currentRequest.eventRef,
+            currentRequestEventSha256 = currentRequest.eventSha256,
+            memoryAvailabilityContextRef =
+                fixed.memoryAvailability
+                    ?.context
+                    ?.memoryContextRef,
+            memoryAvailabilityContextFingerprint =
+                fixed.memoryAvailability
+                    ?.context
+                    ?.semanticFingerprint,
+            workingContinuityContextRef =
+                fixed.workingContinuity
+                    ?.context
+                    ?.successorContextRef,
+            workingContinuityContextFingerprint =
+                fixed.workingContinuity
+                    ?.context
+                    ?.semanticFingerprint,
+            browserContextRef = fixed.browserContextRef,
+            browserContextSha256 = fixed.browserContextSha256,
+            capabilityFrameRef =
+                fixed.capabilityFrame
+                    ?.frame
+                    ?.selfCapabilityFrameRef,
+            capabilityFrameFingerprint =
+                fixed.capabilityFrame
+                    ?.frame
+                    ?.semanticFingerprint,
+            successorPriorResponseEventRef =
+                fixed.successorPriorResponse
+                    ?.eventRef,
+            successorPriorResponseEventSha256 =
+                fixed.successorPriorResponse
+                    ?.eventHash,
+            successorPriorResponseEventSequence =
+                fixed.successorPriorResponse
+                    ?.sequence,
+            sourceReturnProtocolEnabled =
+                fixed.sourceReturnProtocolEnabled,
+            sourceReturnProtocolSystemMessageSha256 =
+                fixed.sourceReturnProtocolSystemMessageSha256,
+            sourceReturnProtocolEstimatedSystemMessageTokens =
+                fixed.sourceReturnProtocolEstimatedSystemMessageTokens,
+            prefixMessages = fixed.prefixMessages,
+            suffixMessages = fixed.suffixMessages,
+            fixedInputTokenEstimate = fixed.fixedInputTokenEstimate,
+            effectsPerformed = false,
+        )
+    }
+
     fun materialize(
         prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
         currentRequest: DirectConversationStore.Event,
@@ -345,6 +538,8 @@ object DirectPromptContext {
             null,
         memoryContext: VexLifeMemoryContract.Context? =
             null,
+        memoryAvailabilityContext: VexLifeMemoryContract.Context? =
+            memoryContext,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
             null,
         browserContext: BrowserContext? =
@@ -352,73 +547,35 @@ object DirectPromptContext {
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
     ): Materialization {
-        require(
-            currentRequest.eventKind ==
-                "REQUEST",
-        ) {
-            "direct prompt context requires one durable current REQUEST"
-        }
-
-        val workingContinuity =
-            verifyWorkingContinuityContext(
-                value = workingContinuityContext,
+        val fixed =
+            verifyFixedContext(
                 prior = prior,
                 currentRequest = currentRequest,
+                memoryAvailabilityContext = memoryAvailabilityContext,
+                workingContinuityContext = workingContinuityContext,
+                browserContext = browserContext,
+                runtimeEvidence = runtimeEvidence,
             )
-
-        if (
-            prior ==
-                null
-        ) {
-            require(
-                workingContinuity ==
-                    null &&
-                    currentRequest.sequence ==
-                    0L &&
-                    currentRequest.priorEventSha256 ==
-                    null,
-            ) {
-                "first-turn prompt context requires one genesis request without prior Conversation history or working rollover"
-            }
-        } else {
-            requireImmediatePriorBinding(
-                prior = prior,
-                currentRequest = currentRequest,
-            )
-        }
-
         val memory =
             verifyMemoryContext(
                 memoryContext,
             )
+        requireSameMemoryFrontier(
+            availability =
+                fixed.memoryAvailability
+                    ?.context,
+            selected =
+                memory
+                    ?.context,
+        )
+        val workingContinuity =
+            fixed.workingContinuity
         val browserContextSha256 =
-            browserContext
-                ?.let {
-                    sha256(
-                        VexContractJson.canonicalEncode(
-                            it,
-                        ),
-                    )
-                }
+            fixed.browserContextSha256
         val browserContextRef =
-            browserContextSha256
-                ?.let {
-                    "browser-context.vexlife-prod." +
-                        it.take(
-                            32,
-                        )
-                }
+            fixed.browserContextRef
         val capabilityFrame =
-            runtimeEvidence
-                ?.let {
-                    formCapabilityFrame(
-                        currentRequest = currentRequest,
-                        memoryContext = memory?.context,
-                        workingContinuityContext = workingContinuity?.context,
-                        browserContextRef = browserContextRef,
-                        runtimeEvidence = it,
-                    )
-                }
+            fixed.capabilityFrame
         val prefixMessages =
             buildList {
                 memory
@@ -431,51 +588,13 @@ object DirectPromptContext {
                             ),
                         )
                     }
-                workingContinuity
-                    ?.systemContent
-                    ?.let {
-                        add(
-                            CompanionProviderMessage(
-                                role = "system",
-                                content = it,
-                            ),
-                        )
-                    }
-                capabilityFrame
-                    ?.systemContent
-                    ?.let {
-                        add(
-                            CompanionProviderMessage(
-                                role = "system",
-                                content = it,
-                            ),
-                        )
-                    }
-            }
-        val suffixMessages =
-            buildList {
-                if (
-                    browserContext !=
-                        null
-                ) {
-                    add(
-                        CompanionProviderMessage(
-                            role = "user",
-                            content =
-                                browserContextMessage(
-                                    browserContext,
-                                ),
-                        ),
-                    )
-                }
-                add(
-                    CompanionProviderMessage(
-                        role = "user",
-                        content = currentRequest.content,
-                    ),
+                addAll(
+                    fixed.prefixMessages,
                 )
             }
-        val fixedEstimate =
+        val suffixMessages =
+            fixed.suffixMessages
+        val selectionFixedEstimate =
             (
                 prefixMessages +
                     suffixMessages
@@ -487,9 +606,9 @@ object DirectPromptContext {
                 }
 
         require(
-            fixedEstimate <=
+            selectionFixedEstimate <=
                 InputTokenBudget &&
-                fixedEstimate +
+                selectionFixedEstimate +
                 ReservedOutputTokens <=
                 HardTokenLimit,
         ) {
@@ -508,7 +627,7 @@ object DirectPromptContext {
                 recentConversationSource
                     ?.invoke(
                         InputTokenBudget -
-                            fixedEstimate,
+                            selectionFixedEstimate,
                     )
             }
         val selected =
@@ -534,10 +653,7 @@ object DirectPromptContext {
                                 ),
                             exactEventFileReadCount = 2,
                             exactHeadFileReadCount = 1,
-                            wholeHistoryEventEnumerationPerformed =
-                    recentConversation
-                        ?.wholeHistoryEventEnumerationPerformed
-                        ?: false,
+                            wholeHistoryEventEnumerationPerformed = false,
                         )
                 requireRecentConversationHistory(
                     events = source.events,
@@ -550,17 +666,73 @@ object DirectPromptContext {
                         )
                     } <=
                         InputTokenBudget -
-                        fixedEstimate,
+                        selectionFixedEstimate,
                 ) {
                     "direct prompt recent Conversation source exceeds the remaining input token budget"
                 }
                 source.events
             }
 
+        return formMaterialization(
+            prior = prior,
+            currentRequest = currentRequest,
+            browserContext = browserContext,
+            fixed = fixed,
+            memory = memory,
+            selected = selected,
+            recentConversation = recentConversation,
+            sourceReturnProjection = null,
+        )
+    }
+
+    private fun formMaterialization(
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
+        browserContext: BrowserContext?,
+        fixed: VerifiedFixedContext,
+        memory: VerifiedMemory?,
+        selected: List<DirectConversationStore.Event>,
+        recentConversation: DirectConversationStore.RecentCompletedConversation?,
+        sourceReturnProjection: DirectConversationSourceReturn.Projection?,
+    ): Materialization {
+        val workingContinuity =
+            fixed.workingContinuity
+        val capabilityFrame =
+            fixed.capabilityFrame
+        val prefixMessages =
+            buildList {
+                memory
+                    ?.systemContent
+                    ?.let {
+                        add(
+                            CompanionProviderMessage(
+                                role = "system",
+                                content = it,
+                            ),
+                        )
+                    }
+                addAll(
+                    fixed.prefixMessages,
+                )
+                sourceReturnProjection
+                    ?.systemContent
+                    ?.let {
+                        add(
+                            CompanionProviderMessage(
+                                role = "system",
+                                content = it,
+                            ),
+                        )
+                    }
+            }
+        val providerPrefixMessages =
+            coalesceProviderSystemPrefix(
+                prefixMessages,
+            )
         val messages =
             buildList {
                 addAll(
-                    prefixMessages,
+                    providerPrefixMessages,
                 )
                 for (
                     event in
@@ -588,17 +760,15 @@ object DirectPromptContext {
                     )
                 }
                 addAll(
-                    suffixMessages,
+                    fixed.suffixMessages,
                 )
             }
-
         val estimate =
             messages.sumOf {
                 estimatedMessageTokens(
                     it.content,
                 )
             }
-
         require(
             estimate <=
                 InputTokenBudget &&
@@ -627,6 +797,16 @@ object DirectPromptContext {
                 schemaVersion = ReceiptSchema,
                 contextMode =
                     when {
+                        sourceReturnProjection !=
+                            null &&
+                            workingContinuity !=
+                            null ->
+                            "SOURCE_RETURN_WORKING_CHECKPOINT_SUCCESSOR"
+
+                        sourceReturnProjection !=
+                            null ->
+                            "SOURCE_RETURN"
+
                         prior ==
                             null ->
                             "FIRST_TURN"
@@ -660,17 +840,56 @@ object DirectPromptContext {
                     },
                 currentRequestEventRef = currentRequest.eventRef,
                 currentRequestEventSha256 = currentRequest.eventSha256,
+                successorPriorResponseEventRef =
+                    fixed.successorPriorResponse
+                        ?.eventRef,
+                successorPriorResponseEventSha256 =
+                    fixed.successorPriorResponse
+                        ?.eventHash,
+                successorPriorResponseEventSequence =
+                    fixed.successorPriorResponse
+                        ?.sequence,
+                sourceReturnProtocolEnabled =
+                    fixed.sourceReturnProtocolEnabled,
+                sourceReturnProtocolSystemMessageSha256 =
+                    fixed.sourceReturnProtocolSystemMessageSha256,
+                sourceReturnProtocolEstimatedSystemMessageTokens =
+                    fixed.sourceReturnProtocolEstimatedSystemMessageTokens,
+                sourceReturnState =
+                    sourceReturnProjection
+                        ?.state,
+                sourceReturnSourceEventRefs =
+                    sourceReturnProjection
+                        ?.sourceEventRefs
+                        ?: emptyList(),
+                sourceReturnSystemMessageSha256 =
+                    sourceReturnProjection
+                        ?.systemMessageSha256,
+                sourceReturnEstimatedSystemMessageTokens =
+                    sourceReturnProjection
+                        ?.estimatedSystemMessageTokens
+                        ?: 0,
+                memoryAvailabilityContextRef =
+                    fixed.memoryAvailability
+                        ?.context
+                        ?.memoryContextRef,
+                memoryAvailabilityContextFingerprint =
+                    fixed.memoryAvailability
+                        ?.context
+                        ?.semanticFingerprint,
                 browserContextIncluded =
                     browserContext !=
                         null,
-                browserContextRef = browserContextRef,
+                browserContextRef =
+                    fixed.browserContextRef,
                 browserPageUrl =
                     browserContext
                         ?.pageUrl,
                 browserTitle =
                     browserContext
                         ?.title,
-                browserContextSha256 = browserContextSha256,
+                browserContextSha256 =
+                    fixed.browserContextSha256,
                 browserContextCharacters =
                     browserContext
                         ?.text
@@ -730,12 +949,29 @@ object DirectPromptContext {
                     workingContinuity
                         ?.estimatedSystemMessageTokens
                         ?: 0,
-                capabilityFrameIncluded = capabilityFrame != null,
-                capabilityFrameRef = capabilityFrame?.frame?.selfCapabilityFrameRef,
-                capabilityFrameFingerprint = capabilityFrame?.frame?.semanticFingerprint,
-                capabilityFrameSourceRefs = capabilityFrame?.frame?.sourceRefs ?: emptyList(),
-                capabilityFrameSystemMessageSha256 = capabilityFrame?.systemMessageSha256,
-                capabilityFrameEstimatedSystemMessageTokens = capabilityFrame?.estimatedSystemMessageTokens ?: 0,
+                capabilityFrameIncluded =
+                    capabilityFrame !=
+                    null,
+                capabilityFrameRef =
+                    capabilityFrame
+                        ?.frame
+                        ?.selfCapabilityFrameRef,
+                capabilityFrameFingerprint =
+                    capabilityFrame
+                        ?.frame
+                        ?.semanticFingerprint,
+                capabilityFrameSourceRefs =
+                    capabilityFrame
+                        ?.frame
+                        ?.sourceRefs
+                        ?: emptyList(),
+                capabilityFrameSystemMessageSha256 =
+                    capabilityFrame
+                        ?.systemMessageSha256,
+                capabilityFrameEstimatedSystemMessageTokens =
+                    capabilityFrame
+                        ?.estimatedSystemMessageTokens
+                        ?: 0,
                 capabilityFrameSnapshot =
                     capabilityFrame
                         ?.frame
@@ -793,6 +1029,30 @@ object DirectPromptContext {
                 selectedConversationEventSequences = core.selectedConversationEventSequences,
                 currentRequestEventRef = core.currentRequestEventRef,
                 currentRequestEventSha256 = core.currentRequestEventSha256,
+                successorPriorResponseEventRef =
+                    core.successorPriorResponseEventRef,
+                successorPriorResponseEventSha256 =
+                    core.successorPriorResponseEventSha256,
+                successorPriorResponseEventSequence =
+                    core.successorPriorResponseEventSequence,
+                sourceReturnProtocolEnabled =
+                    core.sourceReturnProtocolEnabled,
+                sourceReturnProtocolSystemMessageSha256 =
+                    core.sourceReturnProtocolSystemMessageSha256,
+                sourceReturnProtocolEstimatedSystemMessageTokens =
+                    core.sourceReturnProtocolEstimatedSystemMessageTokens,
+                sourceReturnState =
+                    core.sourceReturnState,
+                sourceReturnSourceEventRefs =
+                    core.sourceReturnSourceEventRefs,
+                sourceReturnSystemMessageSha256 =
+                    core.sourceReturnSystemMessageSha256,
+                sourceReturnEstimatedSystemMessageTokens =
+                    core.sourceReturnEstimatedSystemMessageTokens,
+                memoryAvailabilityContextRef =
+                    core.memoryAvailabilityContextRef,
+                memoryAvailabilityContextFingerprint =
+                    core.memoryAvailabilityContextFingerprint,
                 browserContextIncluded = core.browserContextIncluded,
                 browserContextRef = core.browserContextRef,
                 browserPageUrl = core.browserPageUrl,
@@ -832,8 +1092,10 @@ object DirectPromptContext {
                 capabilityFrameRef = core.capabilityFrameRef,
                 capabilityFrameFingerprint = core.capabilityFrameFingerprint,
                 capabilityFrameSourceRefs = core.capabilityFrameSourceRefs,
-                capabilityFrameSystemMessageSha256 = core.capabilityFrameSystemMessageSha256,
-                capabilityFrameEstimatedSystemMessageTokens = core.capabilityFrameEstimatedSystemMessageTokens,
+                capabilityFrameSystemMessageSha256 =
+                    core.capabilityFrameSystemMessageSha256,
+                capabilityFrameEstimatedSystemMessageTokens =
+                    core.capabilityFrameEstimatedSystemMessageTokens,
                 capabilityFrameSnapshot = core.capabilityFrameSnapshot,
                 effectsPerformed = core.effectsPerformed,
             )
@@ -842,6 +1104,281 @@ object DirectPromptContext {
             messages = messages,
             receipt = receipt,
         )
+    }
+
+    fun materializeContinuity(
+        conversationOwner: DirectConversationStore.Locked,
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
+        memoryAvailabilityContext: VexLifeMemoryContract.Context? =
+            null,
+        memoryContextAtCap: ((
+            memoryTokenCap: Int,
+        ) -> VexLifeMemoryContract.Context)? =
+            null,
+        workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
+            null,
+        browserContext: BrowserContext? =
+            null,
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
+            null,
+        sourceReturnProtocolEnabled: Boolean =
+            false,
+        sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
+            null,
+    ): Materialization {
+        require(
+            !(
+                sourceReturnProtocolEnabled &&
+                    sourceReturnDiscovery !=
+                    null
+                ),
+        ) {
+            "direct continuity prompt cannot advertise another source return while projecting returned source"
+        }
+
+        val fixed =
+            verifyFixedContext(
+                prior = prior,
+                currentRequest = currentRequest,
+                memoryAvailabilityContext =
+                    memoryAvailabilityContext,
+                workingContinuityContext =
+                    workingContinuityContext,
+                browserContext = browserContext,
+                runtimeEvidence = runtimeEvidence,
+                sourceReturnProtocolEnabled =
+                    sourceReturnProtocolEnabled,
+            )
+        val afterFixed =
+            InputTokenBudget -
+                fixed.fixedInputTokenEstimate
+        require(
+            afterFixed >=
+                0,
+        ) {
+            "direct continuity prompt fixed context exceeds the admitted input budget"
+        }
+
+        val sourceReturnProjection =
+            sourceReturnDiscovery
+                ?.let {
+                    discovery ->
+                    DirectConversationSourceReturn.project(
+                        discovery = discovery,
+                        availableTokens = afterFixed,
+                    )
+                }
+        val afterSourceReturn =
+            afterFixed -
+                (
+                    sourceReturnProjection
+                        ?.estimatedSystemMessageTokens
+                        ?: 0
+                    )
+        require(
+            afterSourceReturn >=
+                0,
+        ) {
+            "direct continuity source-return context exceeds remaining prompt attention"
+        }
+
+        val recentConversation =
+            if (
+                prior ==
+                    null ||
+                fixed.workingContinuity !=
+                    null
+            ) {
+                null
+            } else {
+                conversationOwner.recentCompletedConversation(
+                    availableTokens =
+                        afterSourceReturn,
+                    estimatedMessageTokens =
+                        ::estimatedMessageTokens,
+                )
+            }
+        val selected =
+            if (
+                prior ==
+                    null ||
+                fixed.workingContinuity !=
+                    null
+            ) {
+                emptyList()
+            } else {
+                val source =
+                    requireNotNull(
+                        recentConversation,
+                    )
+                if (
+                    source.events.isEmpty()
+                ) {
+                    require(
+                        sourceReturnProjection !=
+                            null,
+                    ) {
+                        "ordinary continuity prompt requires the exact immediate prior completed turn to remain present"
+                    }
+                    emptyList()
+                } else {
+                    requireRecentConversationHistory(
+                        events = source.events,
+                        prior =
+                            requireNotNull(
+                                prior,
+                            ),
+                    )
+                    source.events
+                }
+            }
+        val selectedConversationRefs =
+            selected
+                .map(
+                    DirectConversationStore.Event::eventRef,
+                )
+                .toSet()
+        require(
+            sourceReturnProjection
+                ?.sourceEventRefs
+                .orEmpty()
+                .none {
+                    it in
+                        selectedConversationRefs
+                },
+        ) {
+            "direct continuity returned historical source overlaps exact recent Conversation already selected"
+        }
+        val selectedConversationTokens =
+            selected.sumOf {
+                estimatedMessageTokens(
+                    it.content,
+                )
+            }
+        require(
+            selectedConversationTokens <=
+                afterSourceReturn,
+        ) {
+            "direct continuity exact Conversation selection exceeds remaining prompt attention"
+        }
+
+        val memoryTokenCap =
+            minOf(
+                VexLifeMemoryContract.MaximumMemoryTokens,
+                afterSourceReturn -
+                    selectedConversationTokens,
+            )
+        val memory =
+            fixed.memoryAvailability
+                ?.context
+                ?.let {
+                    availability ->
+                    val selectedMemory =
+                        if (
+                            availability.memoryTokenCap ==
+                                memoryTokenCap
+                        ) {
+                            availability
+                        } else {
+                            requireNotNull(
+                                memoryContextAtCap,
+                            ) {
+                                "direct continuity prompt requires caller-bounded Memory source for the selected cap"
+                            }
+                                .invoke(
+                                    memoryTokenCap,
+                                )
+                        }
+                    val verified =
+                        requireNotNull(
+                            verifyMemoryContext(
+                                selectedMemory,
+                            ),
+                        )
+                    requireSameMemoryFrontier(
+                        availability = availability,
+                        selected = verified.context,
+                    )
+                    require(
+                        verified.context.memoryTokenCap ==
+                            memoryTokenCap,
+                    ) {
+                        "direct continuity selected Memory does not bind the exact remaining prompt cap"
+                    }
+                    verified
+                }
+        require(
+            (
+                fixed.memoryAvailability ==
+                    null
+                ) ==
+                (
+                    memory ==
+                    null
+                ),
+        ) {
+            "direct continuity Memory availability/selection relationship is inconsistent"
+        }
+
+        return formMaterialization(
+            prior = prior,
+            currentRequest = currentRequest,
+            browserContext = browserContext,
+            fixed = fixed,
+            memory = memory,
+            selected = selected,
+            recentConversation = recentConversation,
+            sourceReturnProjection = sourceReturnProjection,
+        )
+    }
+
+    fun reverifyContinuity(
+        materialization: Materialization,
+        conversationOwner: DirectConversationStore.Locked,
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
+        memoryAvailabilityContext: VexLifeMemoryContract.Context? =
+            null,
+        memoryContextAtCap: ((
+            memoryTokenCap: Int,
+        ) -> VexLifeMemoryContract.Context)? =
+            null,
+        workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
+            null,
+        browserContext: BrowserContext? =
+            null,
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
+            null,
+        sourceReturnProtocolEnabled: Boolean =
+            false,
+        sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
+            null,
+    ) {
+        val current =
+            materializeContinuity(
+                conversationOwner = conversationOwner,
+                prior = prior,
+                currentRequest = currentRequest,
+                memoryAvailabilityContext =
+                    memoryAvailabilityContext,
+                memoryContextAtCap =
+                    memoryContextAtCap,
+                workingContinuityContext =
+                    workingContinuityContext,
+                browserContext = browserContext,
+                runtimeEvidence = runtimeEvidence,
+                sourceReturnProtocolEnabled =
+                    sourceReturnProtocolEnabled,
+                sourceReturnDiscovery =
+                    sourceReturnDiscovery,
+            )
+        require(
+            current ==
+                materialization,
+        ) {
+            "direct continuity prompt materialization is no longer current at the provider boundary"
+        }
     }
 
     fun reverify(
@@ -854,6 +1391,8 @@ object DirectPromptContext {
             null,
         memoryContext: VexLifeMemoryContract.Context? =
             null,
+        memoryAvailabilityContext: VexLifeMemoryContract.Context? =
+            memoryContext,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor? =
             null,
         browserContext: BrowserContext? =
@@ -868,6 +1407,8 @@ object DirectPromptContext {
                 recentConversationSource =
                     recentConversationSource,
                 memoryContext = memoryContext,
+                memoryAvailabilityContext =
+                    memoryAvailabilityContext,
                 workingContinuityContext =
                     workingContinuityContext,
                 browserContext = browserContext,
@@ -1020,6 +1561,290 @@ object DirectPromptContext {
         ) {
             "direct prompt context current request does not immediately follow the exact prior completed turn"
         }
+    }
+
+    private fun requireSameMemoryFrontier(
+        availability: VexLifeMemoryContract.Context?,
+        selected: VexLifeMemoryContract.Context?,
+    ) {
+        if (
+            availability ==
+                null &&
+            selected ==
+                null
+        ) {
+            return
+        }
+
+        val available =
+            requireNotNull(
+                availability,
+            ) {
+                "selected Memory requires one explicit current Memory availability context"
+            }
+                .let(
+                    VexLifeMemoryContract::validateContext,
+                )
+        val actual =
+            requireNotNull(
+                selected,
+            ) {
+                "current Memory availability requires one explicit selected/unselected Memory projection"
+            }
+                .let(
+                    VexLifeMemoryContract::validateContext,
+                )
+
+        require(
+            available.schemaVersion ==
+                actual.schemaVersion &&
+                available.truthClass ==
+                actual.truthClass &&
+                available.projectionState ==
+                actual.projectionState &&
+                available.projectionCurrentness ==
+                actual.projectionCurrentness &&
+                available.sourceOwnerRefs ==
+                actual.sourceOwnerRefs &&
+                available.currentDailyStratumRef ==
+                actual.currentDailyStratumRef &&
+                available.currentDailyStratumSha256 ==
+                actual.currentDailyStratumSha256 &&
+                available.sourceConversationHeadSha256 ==
+                actual.sourceConversationHeadSha256 &&
+                available.sourceScoreHeadSha256 ==
+                actual.sourceScoreHeadSha256 &&
+                available.sourceSemanticAuthorityHeadSha256 ==
+                actual.sourceSemanticAuthorityHeadSha256 &&
+                available.heldOrDeferredStatementRefs ==
+                actual.heldOrDeferredStatementRefs &&
+                available.boundedOutStatementRefs ==
+                actual.boundedOutStatementRefs &&
+                available.reasons ==
+                actual.reasons,
+        ) {
+            "selected Memory packet and Memory availability do not bind the same source frontier"
+        }
+    }
+
+    private fun verifyFixedContext(
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
+        memoryAvailabilityContext: VexLifeMemoryContract.Context?,
+        workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        browserContext: BrowserContext?,
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
+        sourceReturnProtocolEnabled: Boolean =
+            false,
+    ): VerifiedFixedContext {
+        require(
+            currentRequest.eventKind ==
+                "REQUEST",
+        ) {
+            "direct prompt fixed context requires one durable current REQUEST"
+        }
+
+        val workingContinuity =
+            verifyWorkingContinuityContext(
+                value = workingContinuityContext,
+                prior = prior,
+                currentRequest = currentRequest,
+            )
+
+        if (
+            prior ==
+                null
+        ) {
+            require(
+                workingContinuity ==
+                    null &&
+                    currentRequest.sequence ==
+                    0L &&
+                    currentRequest.priorEventSha256 ==
+                    null,
+            ) {
+                "first-turn fixed context requires one genesis request without working rollover"
+            }
+        } else {
+            requireImmediatePriorBinding(
+                prior = prior,
+                currentRequest = currentRequest,
+            )
+        }
+
+        val memoryAvailability =
+            verifyMemoryContext(
+                memoryAvailabilityContext,
+            )
+        val successorPriorResponse =
+            if (
+                workingContinuity !=
+                    null
+            ) {
+                requireNotNull(
+                    prior,
+                ) {
+                    "working-checkpoint successor fixed context requires one exact prior completed turn"
+                }
+                    .responseEvent
+                    .also {
+                        response ->
+                        require(
+                            response.eventKind ==
+                                "RESPONSE"
+                        ) {
+                            "working-checkpoint successor prior response is not one exact RESPONSE"
+                        }
+                    }
+            } else {
+                null
+            }
+        val sourceReturnProtocol =
+            if (
+                sourceReturnProtocolEnabled
+            ) {
+                DirectConversationSourceReturn.protocolMessage()
+            } else {
+                null
+            }
+        val browserContextSha256 =
+            browserContext
+                ?.let {
+                    sha256(
+                        VexContractJson.canonicalEncode(
+                            it,
+                        ),
+                    )
+                }
+        val browserContextRef =
+            browserContextSha256
+                ?.let {
+                    "browser-context.vexlife-prod." +
+                        it.take(
+                            32,
+                        )
+                }
+        val capabilityFrame =
+            runtimeEvidence
+                ?.let {
+                    formCapabilityFrame(
+                        currentRequest = currentRequest,
+                        memoryContext =
+                            memoryAvailability
+                                ?.context,
+                        workingContinuityContext =
+                            workingContinuity
+                                ?.context,
+                        browserContextRef = browserContextRef,
+                        runtimeEvidence = it,
+                    )
+                }
+        val prefixMessages =
+            buildList {
+                workingContinuity
+                    ?.systemContent
+                    ?.let {
+                        add(
+                            CompanionProviderMessage(
+                                role = "system",
+                                content = it,
+                            ),
+                        )
+                    }
+                capabilityFrame
+                    ?.systemContent
+                    ?.let {
+                        add(
+                            CompanionProviderMessage(
+                                role = "system",
+                                content = it,
+                            ),
+                        )
+                    }
+                sourceReturnProtocol
+                    ?.let(
+                        ::add,
+                    )
+            }
+        val suffixMessages =
+            buildList {
+                successorPriorResponse
+                    ?.let {
+                        response ->
+                        add(
+                            CompanionProviderMessage(
+                                role = "assistant",
+                                content = response.content,
+                            ),
+                        )
+                    }
+                if (
+                    browserContext !=
+                        null
+                ) {
+                    add(
+                        CompanionProviderMessage(
+                            role = "user",
+                            content =
+                                browserContextMessage(
+                                    browserContext,
+                                ),
+                        ),
+                    )
+                }
+                add(
+                    CompanionProviderMessage(
+                        role = "user",
+                        content = currentRequest.content,
+                    ),
+                )
+            }
+        val fixedEstimate =
+            (
+                prefixMessages +
+                    suffixMessages
+            )
+                .sumOf {
+                    estimatedMessageTokens(
+                        it.content,
+                    )
+                }
+
+        require(
+            fixedEstimate <=
+                InputTokenBudget &&
+                fixedEstimate +
+                ReservedOutputTokens <=
+                HardTokenLimit,
+        ) {
+            "direct prompt fixed current-turn context exceeds the admitted input/output token budget"
+        }
+
+        return VerifiedFixedContext(
+            memoryAvailability = memoryAvailability,
+            workingContinuity = workingContinuity,
+            browserContextSha256 = browserContextSha256,
+            browserContextRef = browserContextRef,
+            capabilityFrame = capabilityFrame,
+            successorPriorResponse = successorPriorResponse,
+            sourceReturnProtocolEnabled = sourceReturnProtocolEnabled,
+            sourceReturnProtocolSystemMessageSha256 =
+                sourceReturnProtocol
+                    ?.content
+                    ?.let(
+                        ::sha256,
+                    ),
+            sourceReturnProtocolEstimatedSystemMessageTokens =
+                sourceReturnProtocol
+                    ?.content
+                    ?.let(
+                        ::estimatedMessageTokens,
+                    )
+                    ?: 0,
+            prefixMessages = prefixMessages,
+            suffixMessages = suffixMessages,
+            fixedInputTokenEstimate = fixedEstimate,
+        )
     }
 
     private fun formCapabilityFrame(
@@ -1317,6 +2142,53 @@ object DirectPromptContext {
         ) {
             "direct prompt recent Conversation history contains an invalid completed pair"
         }
+    }
+
+    private fun coalesceProviderSystemPrefix(
+        messages: List<CompanionProviderMessage>,
+    ): List<CompanionProviderMessage> {
+        if (
+            messages.size <=
+                1
+        ) {
+            return messages
+        }
+        require(
+            messages.all {
+                it.role ==
+                    "system"
+            },
+        ) {
+            "direct prompt provider prefix may contain only system messages"
+        }
+
+        val combined =
+            listOf(
+                CompanionProviderMessage(
+                    role = "system",
+                    content =
+                        messages.joinToString(
+                            separator = "\n\n",
+                            transform =
+                                CompanionProviderMessage::content,
+                        ),
+                ),
+            )
+        require(
+            combined.sumOf {
+                estimatedMessageTokens(
+                    it.content,
+                )
+            } <=
+                messages.sumOf {
+                    estimatedMessageTokens(
+                        it.content,
+                    )
+                },
+        ) {
+            "direct prompt provider system-prefix coalescing exceeded the separately budgeted source blocks"
+        }
+        return combined
     }
 
     fun estimatedMessageTokens(
