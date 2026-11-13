@@ -127,7 +127,8 @@ object VexLifeProdHomeFiles {
                     productHome = homeText,
                     disposition = VexLifeProdHome.LocationDisposition.HeldNotDirectory,
                     detail =
-                        "something that is not a folder is in the way at " + (ancestor ?: home.root),
+                        "something that is not a folder is in the way at " +
+                            (ancestor ?: home.root),
                 )
             }
             if (!Files.isWritable(ancestor)) {

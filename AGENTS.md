@@ -58,6 +58,9 @@ find similar code
 
 A renderer may consume semantic truth; it does not become that truth owner.
 
+Source form (standard Kotlin formatting, types over repeated wire strings, one current-truth doc per
+subsystem): [docs/CULTURE.md](docs/CULTURE.md#source-form).
+
 ## Mac startup integrity
 
 Mac launch work has already produced lived regressions by treating an easier proof route as the product route and by composing a higher-level human front door when only its lower lifecycle readiness was needed.

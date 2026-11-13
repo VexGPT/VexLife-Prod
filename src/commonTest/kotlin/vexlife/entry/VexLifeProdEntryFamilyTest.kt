@@ -5,6 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import vexlife.home.VexLifeProdHome
 
 class VexLifeProdEntryFamilyTest {
     private val sourceSha = "a".repeat(40)
@@ -108,7 +109,7 @@ class VexLifeProdEntryFamilyTest {
             VexLifeProdEntryFamily.HomeFormationRequired(sourceSha),
             VexLifeProdEntryFamily.HomeHeld(
                 sourceSha,
-                "HELD_NONCANONICAL_CONTENT",
+                VexLifeProdHome.LocationDisposition.HeldNoncanonicalContent,
                 "folder has other files",
             ),
             VexLifeProdEntryFamily.HostHeld(
@@ -319,6 +320,30 @@ class VexLifeProdEntryFamilyTest {
                 .detail
         assertTrue(detail.contains("17.0 GiB"))
         assertTrue(detail.contains("9.0 GiB"))
+    }
+
+    @Test
+    fun everyHeldHomeDispositionHasItsOwnExplanation() {
+        val details =
+            VexLifeProdHome.LocationDisposition.entries
+                .filter { it.held }
+                .map {
+                    VexLifeProdEntryFamily.Semantics.displayStateFor(
+                            VexLifeProdEntryFamily.HomeHeld(sourceSha, it, "observed")
+                        )
+                        .detail
+                }
+        assertEquals(details.size, details.toSet().size)
+        assertTrue(
+            runCatching {
+                VexLifeProdEntryFamily.HomeHeld(
+                    sourceSha,
+                    VexLifeProdHome.LocationDisposition.EmptyDirectory,
+                    "not held",
+                )
+            }
+                .isFailure
+        )
     }
 
     @Test

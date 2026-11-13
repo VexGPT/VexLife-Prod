@@ -1,6 +1,7 @@
 package vexlife.entry
 
 import kotlinx.serialization.Serializable
+import vexlife.home.VexLifeProdHome
 import vexlife.semantic.VexFamilyContract
 
 /**
@@ -68,19 +69,16 @@ class VexLifeProdEntryFamily private constructor() :
         override val stateRef: String = StateHomeFormationRequired
     }
 
-    /**
-     * The selected coordinate exists but cannot safely become or be read as a Vex Home.
-     * [dispositionRef] is the Home owner's held disposition wire value.
-     */
+    /** The selected coordinate exists but cannot safely become or be read as a Vex Home. */
     data class HomeHeld(
         override val desiredSourceSha: String,
-        val dispositionRef: String,
+        val disposition: VexLifeProdHome.LocationDisposition,
         val detail: String,
     ) : EntryState {
         override val stateRef: String = StateHomeHeld
 
         init {
-            require(dispositionRef.startsWith("HELD_") && detail.isNotBlank()) {
+            require(disposition.held && detail.isNotBlank()) {
                 "held Home entry state requires one held disposition and bounded detail"
             }
         }
@@ -436,7 +434,7 @@ class VexLifeProdEntryFamily private constructor() :
                 display(
                     title = "This folder is being preserved.",
                     detail =
-                        homeHeldExplanation(state.dispositionRef) +
+                        homeHeldExplanation(state.disposition) +
                             " Nothing in it was changed, moved or deleted.",
                     journey = journey(Complete, JourneyHeld, Upcoming, Upcoming, Upcoming),
                     homeChoice = true,
@@ -556,32 +554,35 @@ class VexLifeProdEntryFamily private constructor() :
             JourneyStep(JourneyStepReady, "Ready", ready),
         )
 
-    private fun homeHeldExplanation(dispositionRef: String): String =
-        when (dispositionRef) {
-            "HELD_NONCANONICAL_CONTENT" ->
+    private fun homeHeldExplanation(disposition: VexLifeProdHome.LocationDisposition): String =
+        when (disposition) {
+            VexLifeProdHome.LocationDisposition.HeldNoncanonicalContent ->
                 "The folder you chose already contains other files, so VexLife will not use it as a Vex Home. " +
                     "Choose an empty folder, or type a new folder name."
 
-            "HELD_INVALID_CANONICAL_RECORDS" ->
+            VexLifeProdHome.LocationDisposition.HeldInvalidCanonicalRecords ->
                 "This folder looks like a Vex Home, but its identity records did not check out. VexLife will not " +
                     "repair or overwrite it automatically. Keep it safe for recovery, or choose another location."
 
-            "HELD_NOT_A_DIRECTORY" ->
+            VexLifeProdHome.LocationDisposition.HeldNotDirectory ->
                 "The location you chose is a file (or a file is in the way), not a folder. Choose a folder location."
 
-            "HELD_SYMBOLIC_LINK" ->
+            VexLifeProdHome.LocationDisposition.HeldSymbolicLink ->
                 "The location you chose is a link to somewhere else. Choose the real folder so your Home has one " +
                     "exact location."
 
-            "HELD_LOCATION_NOT_WRITABLE" ->
+            VexLifeProdHome.LocationDisposition.HeldLocationNotWritable ->
                 "This Mac user cannot create folders there. Choose a location inside your own user folder, such " +
                     "as the suggested ~/.vexlife."
 
-            "HELD_LOCATION_UNREADABLE" ->
+            VexLifeProdHome.LocationDisposition.HeldLocationUnreadable ->
                 "VexLife could not read that location. If macOS asked for permission, you can allow it and choose " +
                     "Check Again, or choose another location."
 
-            else -> "VexLife could not safely identify the selected folder as a Vex Home."
+            VexLifeProdHome.LocationDisposition.Absent,
+            VexLifeProdHome.LocationDisposition.EmptyDirectory,
+            VexLifeProdHome.LocationDisposition.Canonical ->
+                error("HomeHeld admits only held dispositions")
         }
 
     private fun hostHeldExplanation(state: HostHeld): String {

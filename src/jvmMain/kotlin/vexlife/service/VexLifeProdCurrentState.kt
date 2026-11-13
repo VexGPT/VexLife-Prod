@@ -34,7 +34,8 @@ object VexLifeProdCurrentState {
         },
         val observeModel:
             (
-                productHome: Path, manifest: VexLifeProdHome.Manifest,
+                productHome: Path,
+                manifest: VexLifeProdHome.Manifest,
             ) -> FileHereticModelConfigurationStore.Snapshot =
             { productHome, manifest ->
                 FileHereticModelConfigurationStore(productHome).read(manifest)

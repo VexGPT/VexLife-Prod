@@ -117,7 +117,8 @@ object VexLifeProdLocalSetup {
             },
         val materializeArtifacts:
             (
-                productHome: Path, allowAcquisition: Boolean,
+                productHome: Path,
+                allowAcquisition: Boolean,
             ) -> HereticArtifactMaterialization.Result =
             { productHome, allowAcquisition ->
                 HereticArtifactMaterialization.materializeCurrent(
@@ -129,7 +130,9 @@ object VexLifeProdLocalSetup {
             },
         val ensureHereticEnvironment:
             (
-                managedPython: ManagedPython.Result, productHome: Path, allowCreation: Boolean,
+                managedPython: ManagedPython.Result,
+                productHome: Path,
+                allowCreation: Boolean,
             ) -> HereticPythonEnvironment.Result =
             { managedPython, productHome, allowCreation ->
                 HereticPythonEnvironment.ensure(
@@ -140,7 +143,8 @@ object VexLifeProdLocalSetup {
             },
         val observeStableRuntime:
             (
-                productHome: Path, binding: HereticPersistentRuntime.Binding,
+                productHome: Path,
+                binding: HereticPersistentRuntime.Binding,
             ) -> StableVexLifeHereticRuntimeCompatibility.Observation? =
             { productHome, binding ->
                 StableVexLifeHereticRuntimeCompatibility.observe(

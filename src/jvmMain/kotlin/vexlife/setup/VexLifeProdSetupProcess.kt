@@ -41,7 +41,8 @@ object VexLifeProdSetupProcess {
         val locateImageRoot: () -> Path = ::currentImageRoot,
         val observeImage:
             (
-                imageRoot: Path, expectedSourceSha: String,
+                imageRoot: Path,
+                expectedSourceSha: String,
             ) -> VexLifeProdPrivateServiceImage.Observation =
             { imageRoot, expectedSourceSha ->
                 VexLifeProdPrivateServiceImage.observe(
@@ -54,7 +55,9 @@ object VexLifeProdSetupProcess {
         },
         val establishSession:
             (
-                productHome: Path, allowAcquisition: Boolean, allowRuntimeStart: Boolean,
+                productHome: Path,
+                allowAcquisition: Boolean,
+                allowRuntimeStart: Boolean,
             ) -> VexLifeProdLocalSetup.Session =
             { productHome, allowAcquisition, allowRuntimeStart ->
                 VexLifeProdLocalSetup.establishSession(
@@ -66,7 +69,9 @@ object VexLifeProdSetupProcess {
             },
         val installImage:
             (
-                sourceImageRoot: Path, productHome: Path, expectedSourceSha: String,
+                sourceImageRoot: Path,
+                productHome: Path,
+                expectedSourceSha: String,
             ) -> VexLifeProdPrivateServiceImageInstaller.Result =
             { sourceImageRoot, productHome, expectedSourceSha ->
                 VexLifeProdPrivateServiceImageInstaller.install(

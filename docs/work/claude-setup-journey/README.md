@@ -13,6 +13,7 @@ Branch `VXG-111326-claude-setup-journey-a001`, stacked on PR #107
 | 2 | [02-NATIVE-RENDERER.md](02-NATIVE-RENDERER.md): AppKit card renderer, chooser, progress + Cancel safely | written; **not compiled** (no macOS here) |
 | 3 | [03-LIVED-PROOF-PLAN.md](03-LIVED-PROOF-PLAN.md): Mac proof tiers A–D on disposable Homes | not run |
 | — | [SCREENS.md](SCREENS.md): every card, generated from source | current with branch head |
+| 4 | Source form: the slice reformatted as standard Kotlin (ktfmt kotlinlang, formatting-only commit), held Home reason typed as the Home owner's enum, `docs/CULTURE.md` Source form + `tools/kotlin-format/` recipe | done for this slice; rest of repo migrates slice by slice |
 
 Current product meaning lives in [`docs/foundation/SETUP-JOURNEY.md`](../../foundation/SETUP-JOURNEY.md).
 

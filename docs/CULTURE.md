@@ -33,6 +33,24 @@ human Control
 
 Do not force every noun into a type. A type, interface or foundation is earned by stable addressability, compiler-safety pressure, repeated executable invariants, or a real proof burden.
 
+## Source form
+
+Source is read far more often than it is written, by people and by AI workers with bounded context.
+Its shape should match its logic.
+
+- Kotlin follows the Kotlin coding conventions as formatted by `ktfmt --kotlinlang-style`
+  (4-space indent, 100 columns). Do not hand-break every argument, operand or `null` onto its own
+  line: vertical length is not explicitness, and it costs every later reader and every AI context
+  window. Recipe: [`tools/kotlin-format/`](../tools/kotlin-format/README.md).
+- Reformat a file when you meaningfully change it, in a formatting-only commit, and never a file
+  another open PR is editing.
+- When a value carries meaning, prefer a sealed type or enum owned by its semantic owner over a wire
+  string compared in several places. Keep wire strings at the serialization boundary.
+- Tests assert behavior through types and projections. A test that matches source text is a last
+  resort for surfaces the compiler cannot see (the AppleScript renderer), not a pattern.
+- One current-truth foundation per subsystem. State a distinction once, where its owner lives, and
+  link to it; proof history belongs in VexWork or a dated note, not repeated in every entry document.
+
 ## Renderer is not semantic authority
 
 Current construction thesis:

@@ -427,7 +427,7 @@ object VexLifeProdMacFrontDoor {
                 return observed(
                     VexLifeProdEntryFamily.HomeHeld(
                         desiredSourceSha = desiredSourceSha,
-                        dispositionRef = location.disposition.wireValue,
+                        disposition = location.disposition,
                         detail = location.detail,
                     )
                 )
@@ -603,7 +603,9 @@ object VexLifeProdMacFrontDoorProcess {
         val progress: VexLifeProdSetupProgress = VexLifeProdSetupProgress.standardError(),
         val resolveControl:
             (
-                desiredSourceSha: String, controlRef: String, productHome: Path,
+                desiredSourceSha: String,
+                controlRef: String,
+                productHome: Path,
             ) -> VexLifeProdMacFrontDoor.ResolvedControl =
             { desiredSourceSha, controlRef, productHome ->
                 VexLifeProdMacFrontDoor.resolveTypedControl(
