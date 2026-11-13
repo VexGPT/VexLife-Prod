@@ -1,7 +1,6 @@
 use framework "Foundation"
 use scripting additions
 
-property app : current application
 property productOrigin : "http://127.0.0.1:18210/"
 
 on isFullHex(value, expectedLength)
@@ -10,16 +9,16 @@ on isFullHex(value, expectedLength)
     if (count textValue) is not expectedLength then return false
 
     set expressionError to reference
-    set expression to app's NSRegularExpression's regularExpressionWithPattern:("^[0-9a-f]{" & expectedLength & "}$") options:0 |error|:expressionError
+    set expression to current application's NSRegularExpression's regularExpressionWithPattern:("^[0-9a-f]{" & expectedLength & "}$") options:0 |error|:expressionError
     if expression is missing value then return false
 
-    set rangeValue to app's NSMakeRange(0, expectedLength)
+    set rangeValue to current application's NSMakeRange(0, expectedLength)
     set matches to expression's numberOfMatchesInString:textValue options:0 range:rangeValue
     return matches is 1
 end isFullHex
 
 on bundleString(keyName)
-    set value to app's NSBundle's mainBundle()'s objectForInfoDictionaryKey:keyName
+    set value to current application's NSBundle's mainBundle()'s objectForInfoDictionaryKey:keyName
     if value is missing value then return missing value
     return value as text
 end bundleString
@@ -42,9 +41,9 @@ on openProduct()
 end openProduct
 
 on runJson(setupLauncher, argumentsList)
-    set outputPipe to app's NSPipe's pipe()
-    set task to app's NSTask's alloc()'s init()
-    task's setExecutableURL:(app's NSURL's fileURLWithPath:setupLauncher)
+    set outputPipe to current application's NSPipe's pipe()
+    set task to current application's NSTask's alloc()'s init()
+    task's setExecutableURL:(current application's NSURL's fileURLWithPath:setupLauncher)
     task's setArguments:argumentsList
     task's setStandardOutput:outputPipe
     task's setStandardError:outputPipe
@@ -54,16 +53,16 @@ on runJson(setupLauncher, argumentsList)
     if launched is not true then return {missing value, "The Product-entry process could not be launched."}
 
     repeat while (task's isRunning()) as boolean
-        app's NSRunLoop's currentRunLoop()'s runUntilDate:(app's NSDate's dateWithTimeIntervalSinceNow:0.05)
+        current application's NSRunLoop's currentRunLoop()'s runUntilDate:(current application's NSDate's dateWithTimeIntervalSinceNow:0.05)
     end repeat
 
     set dataValue to outputPipe's fileHandleForReading()'s readDataToEndOfFile()
-    set textValue to app's NSString's alloc()'s initWithData:dataValue encoding:(app's NSUTF8StringEncoding)
+    set textValue to current application's NSString's alloc()'s initWithData:dataValue encoding:(current application's NSUTF8StringEncoding)
     set statusValue to task's terminationStatus() as integer
     if statusValue is not 0 then return {missing value, textValue as text}
 
     set parseError to reference
-    set jsonValue to app's NSJSONSerialization's JSONObjectWithData:dataValue options:0 |error|:parseError
+    set jsonValue to current application's NSJSONSerialization's JSONObjectWithData:dataValue options:0 |error|:parseError
     if jsonValue is missing value then return {missing value, textValue as text}
     return {jsonValue, ""}
 end runJson
@@ -117,9 +116,9 @@ on runSetup(setupLauncher, sourceSha, allowAcquisition)
         set modeFlag to "--reuse-existing"
     end if
 
-    set outputPipe to app's NSPipe's pipe()
-    set task to app's NSTask's alloc()'s init()
-    task's setExecutableURL:(app's NSURL's fileURLWithPath:setupLauncher)
+    set outputPipe to current application's NSPipe's pipe()
+    set task to current application's NSTask's alloc()'s init()
+    task's setExecutableURL:(current application's NSURL's fileURLWithPath:setupLauncher)
     task's setArguments:{"--expected-source-sha", sourceSha, modeFlag}
     task's setStandardOutput:outputPipe
     task's setStandardError:outputPipe
@@ -129,11 +128,11 @@ on runSetup(setupLauncher, sourceSha, allowAcquisition)
     if launched is not true then return {false, "The exact setup process could not be launched."}
 
     repeat while (task's isRunning()) as boolean
-        app's NSRunLoop's currentRunLoop()'s runUntilDate:(app's NSDate's dateWithTimeIntervalSinceNow:0.1)
+        current application's NSRunLoop's currentRunLoop()'s runUntilDate:(current application's NSDate's dateWithTimeIntervalSinceNow:0.1)
     end repeat
 
     set dataValue to outputPipe's fileHandleForReading()'s readDataToEndOfFile()
-    set outputText to app's NSString's alloc()'s initWithData:dataValue encoding:(app's NSUTF8StringEncoding)
+    set outputText to current application's NSString's alloc()'s initWithData:dataValue encoding:(current application's NSUTF8StringEncoding)
     set statusValue to task's terminationStatus() as integer
     set expectedReadyPrefix to "VEXLIFE_PROD_SETUP_READY" & tab & sourceSha & tab
     set outputString to outputText as text
@@ -181,7 +180,7 @@ on run
         return
     end if
 
-    if setupLauncher is missing value or not ((app's NSFileManager's defaultManager()'s isExecutableFileAtPath:setupLauncher) as boolean) then
+    if setupLauncher is missing value or not ((current application's NSFileManager's defaultManager()'s isExecutableFileAtPath:setupLauncher) as boolean) then
         my showFailure("VexLife could not start.", "The exact staged VexLife setup program is unavailable.")
         return
     end if
