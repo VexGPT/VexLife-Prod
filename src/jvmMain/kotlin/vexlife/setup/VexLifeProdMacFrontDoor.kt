@@ -306,6 +306,33 @@ object VexLifeProdMacFrontDoor {
             "Mac front door requires no-effect current-state awareness"
         }
 
+        if (
+            current.homeDisposition ==
+                "ABSENT_CANONICAL_VEXLIFE_HOME"
+        ) {
+            require(
+                current.homeRef ==
+                    null &&
+                    current.deviceRef ==
+                    null &&
+                    current.companionLineageRef ==
+                    null,
+            ) {
+                "absent Home current-state projection cannot claim Home/device/Companion identity"
+            }
+
+            return Observed(
+                currentState = current,
+                entryState =
+                    VexLifeProdEntryFamily.SetupRequired(
+                        desiredSourceSha,
+                    ),
+                currentServiceSourceSha = null,
+                currentServicePid = null,
+                serviceDetail = null,
+            )
+        }
+
         return when (
             val existing =
                 hooks.observeExistingService(
