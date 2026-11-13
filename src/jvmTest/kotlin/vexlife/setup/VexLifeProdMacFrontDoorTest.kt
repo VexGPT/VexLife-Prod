@@ -156,7 +156,7 @@ class VexLifeProdMacFrontDoorTest {
         )
 
     @Test
-    fun absentHomeMapsToSetupBeforeServiceLifetimeObservation() {
+    fun absentHomeMapsToHomeFormationBeforeServiceLifetimeObservation() {
         var serviceObserved =
             false
         val hooks =
@@ -180,24 +180,23 @@ class VexLifeProdMacFrontDoorTest {
         val effect =
             VexLifeProdMacFrontDoor.resolveControlWithHooks(
                 desiredSourceSha = desired,
-                controlRef = VexLifeProdEntryFamily.ControlSetUp,
+                controlRef = VexLifeProdEntryFamily.ControlFormHome,
                 hooks = hooks,
             )
 
         assertEquals(
-            VexLifeProdEntryFamily.StateSetupRequired,
+            VexLifeProdEntryFamily.StateHomeFormationRequired,
             projection.semanticStateRef,
         )
         assertEquals(
-            "Set Up VexLife",
+            "Create Vex Home",
             projection.displayState.primaryLabel,
         )
         assertEquals(
-            VexLifeProdEntryFamily.EffectConvergeProduct,
+            VexLifeProdEntryFamily.EffectFormCanonicalHome,
             effect.effectRef,
         )
-        assertEquals(
-            true,
+        assertNull(
             effect.allowAcquisition,
         )
         assertFalse(
