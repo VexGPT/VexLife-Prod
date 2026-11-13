@@ -37,7 +37,7 @@ internal object VexLifeWebP1ExperienceMarkup {
     <form class="address" id="address-form" autocomplete="off">
       <label class="visually-hidden" for="query">Page address</label>
       <input id="query" data-vex-ref="${VexLifeWebP1.BrowserQuery.identity.ref}" type="text" list="page-suggestions" spellcheck="false"
-        inputmode="url" placeholder="Type a Vex-owned web address" title="">
+        inputmode="url" placeholder="Type a web address" title="">
       <datalist id="page-suggestions">
         <option value="vgong24.github.io/Vextreme/pages/terrain-map.html">Vextreme terrain</option>
         <option value="vexgpt.github.io/VexWork/orientation.html">VexWork orientation</option>
@@ -68,8 +68,10 @@ internal object VexLifeWebP1ExperienceMarkup {
       <p class="frame-status" data-vex-ref="${VexLifeWebP1.BrowserFrameStatus.identity.ref}" id="frame-status" role="status" hidden></p>
       <div class="viewport" data-vex-ref="${VexLifeWebP1.BrowserViewport.identity.ref}">
         <iframe id="page-frame" title="Opened page" referrerpolicy="no-referrer"
-          sandbox="allow-scripts allow-same-origin"></iframe>
-        <div class="viewport-empty" id="viewport-empty"><p>Open a Vex-owned public page from the address field. Pages open signed out.</p></div>
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads allow-modals"></iframe>
+        <iframe id="context-frame" class="context-frame" title="Vex page context provider" referrerpolicy="no-referrer"
+          sandbox="allow-scripts allow-same-origin" aria-hidden="true" tabindex="-1"></iframe>
+        <div class="viewport-empty" id="viewport-empty"><p>Open a web page from the address field. Vex page context is separate and may not be available for every page.</p></div>
       </div>
     </section>
 

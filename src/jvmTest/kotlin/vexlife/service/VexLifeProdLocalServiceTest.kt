@@ -1,5 +1,7 @@
 package vexlife.service
 
+import java.net.InetSocketAddress
+import java.net.Socket
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -136,6 +138,42 @@ class VexLifeProdLocalServiceTest {
             ),
         )
 
+    private fun statusLineWithHost(
+        port: Int,
+        host: String,
+        path: String,
+    ): String =
+        Socket().use {
+            socket ->
+            socket.connect(
+                InetSocketAddress(
+                    "127.0.0.1",
+                    port,
+                ),
+            )
+            val request =
+                "GET $path HTTP/1.1\r\n" +
+                    "Host: $host\r\n" +
+                    "Connection: close\r\n" +
+                    "\r\n"
+            socket.getOutputStream()
+                .write(
+                    request.toByteArray(
+                        StandardCharsets.US_ASCII,
+                    ),
+                )
+            socket.getOutputStream()
+                .flush()
+
+            requireNotNull(
+                socket.getInputStream()
+                    .bufferedReader(
+                        StandardCharsets.UTF_8,
+                    )
+                    .readLine(),
+            )
+        }
+
     private fun postEventStream(
         origin: String,
         path: String,
@@ -168,6 +206,182 @@ class VexLifeProdLocalServiceTest {
                 StandardCharsets.UTF_8,
             ),
         )
+
+    @Test
+    fun loopbackBoundaryRejectsAlternateHostAndCrossOriginBrowserEffects() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-service-browser-boundary-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+
+        try {
+            bootstrapHome(
+                root,
+            )
+            val setup =
+                setup(
+                    root,
+                )
+
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha = "a".repeat(
+                        40,
+                    ),
+                    setup = setup,
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "cross-origin boundary test must not run a turn",
+                            )
+                        },
+                )
+                .use {
+                    service ->
+                    val alternateHost =
+                        statusLineWithHost(
+                            port = service.port,
+                            host = "attacker.example:" + service.port,
+                            path = VexLifeProdServiceContract.SourceCurrentnessPath,
+                        )
+                    assertTrue(
+                        alternateHost.startsWith(
+                            "HTTP/1.1 421",
+                        ),
+                    )
+
+                    val crossOrigin =
+                        client.send(
+                            HttpRequest
+                                .newBuilder(
+                                    URI(
+                                        service.origin +
+                                            VexLifeProdServiceContract.ConversationSendPath,
+                                    ),
+                                )
+                                .header(
+                                    "content-type",
+                                    "application/json",
+                                )
+                                .header(
+                                    "Origin",
+                                    "https://example.com",
+                                )
+                                .header(
+                                    "Sec-Fetch-Site",
+                                    "cross-site",
+                                )
+                                .POST(
+                                    HttpRequest.BodyPublishers.ofString(
+                                        "{}",
+                                        StandardCharsets.UTF_8,
+                                    ),
+                                )
+                                .build(),
+                            HttpResponse.BodyHandlers.ofString(
+                                StandardCharsets.UTF_8,
+                            ),
+                        )
+                    assertEquals(
+                        403,
+                        crossOrigin.statusCode(),
+                    )
+                    assertTrue(
+                        crossOrigin.body()
+                            .contains(
+                                "CROSS_ORIGIN_EFFECT_NOT_ADMITTED",
+                            ),
+                    )
+
+                    val crossSiteWithoutOrigin =
+                        client.send(
+                            HttpRequest
+                                .newBuilder(
+                                    URI(
+                                        service.origin +
+                                            VexLifeProdServiceContract.ConversationSendPath,
+                                    ),
+                                )
+                                .header(
+                                    "content-type",
+                                    "application/json",
+                                )
+                                .header(
+                                    "Sec-Fetch-Site",
+                                    "cross-site",
+                                )
+                                .POST(
+                                    HttpRequest.BodyPublishers.ofString(
+                                        "{}",
+                                        StandardCharsets.UTF_8,
+                                    ),
+                                )
+                                .build(),
+                            HttpResponse.BodyHandlers.ofString(
+                                StandardCharsets.UTF_8,
+                            ),
+                        )
+                    assertEquals(
+                        403,
+                        crossSiteWithoutOrigin.statusCode(),
+                    )
+
+                    val sameOrigin =
+                        client.send(
+                            HttpRequest
+                                .newBuilder(
+                                    URI(
+                                        service.origin +
+                                            VexLifeProdServiceContract.ConversationSendPath,
+                                    ),
+                                )
+                                .header(
+                                    "content-type",
+                                    "application/json",
+                                )
+                                .header(
+                                    "Origin",
+                                    service.origin,
+                                )
+                                .header(
+                                    "Sec-Fetch-Site",
+                                    "same-origin",
+                                )
+                                .POST(
+                                    HttpRequest.BodyPublishers.ofString(
+                                        "{}",
+                                        StandardCharsets.UTF_8,
+                                    ),
+                                )
+                                .build(),
+                            HttpResponse.BodyHandlers.ofString(
+                                StandardCharsets.UTF_8,
+                            ),
+                        )
+                    assertEquals(
+                        400,
+                        sameOrigin.statusCode(),
+                    )
+                    assertTrue(
+                        sameOrigin.body()
+                            .contains(
+                                "REQUEST_JSON_INVALID",
+                            ),
+                    )
+                }
+        } finally {
+            parent.toFile()
+                .deleteRecursively()
+        }
+    }
 
     @Test
     fun sourceCurrentnessAndEmptyConversationAreReadOnlyProjections() {

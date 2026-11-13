@@ -423,6 +423,34 @@ class VexLifeProdLocalService private constructor(
     ) {
         try {
             if (
+                !requestHostAdmitted(
+                    exchange,
+                )
+            ) {
+                respondError(
+                    exchange = exchange,
+                    status = 421,
+                    code = "HOST_NOT_ADMITTED",
+                    message = "VexLife local service accepts only its exact loopback Host",
+                )
+                return
+            }
+
+            if (
+                !browserEffectRequestAdmitted(
+                    exchange,
+                )
+            ) {
+                respondError(
+                    exchange = exchange,
+                    status = 403,
+                    code = "CROSS_ORIGIN_EFFECT_NOT_ADMITTED",
+                    message = "cross-origin browser requests may not invoke VexLife local effects",
+                )
+                return
+            }
+
+            if (
                 exchange.requestURI.rawQuery !=
                 null
             ) {
@@ -1516,6 +1544,78 @@ class VexLifeProdLocalService private constructor(
             abandonedAttemptCount = snapshot.abandonedAttempts.size,
             effectsPerformed = false,
         )
+    }
+
+    private fun requestHostAdmitted(
+        exchange: HttpExchange,
+    ): Boolean {
+        val expected =
+            VexLifeProdServiceContract.Host +
+                ":" +
+                server.address.port
+        val actual =
+            exchange.requestHeaders
+                .getFirst(
+                    "Host",
+                )
+                ?.trim()
+                ?.lowercase()
+
+        return actual ==
+            expected
+    }
+
+    /**
+     * Browser-originated effect requests must remain same-origin with the exact Product presentation.
+     * Non-browser local clients may omit browser provenance headers.
+     */
+    private fun browserEffectRequestAdmitted(
+        exchange: HttpExchange,
+    ): Boolean {
+        if (
+            exchange.requestMethod ==
+                "GET" ||
+            exchange.requestMethod ==
+                "HEAD"
+        ) {
+            return true
+        }
+
+        val expectedOrigin =
+            "http://" +
+                VexLifeProdServiceContract.Host +
+                ":" +
+                server.address.port
+        val origin =
+            exchange.requestHeaders
+                .getFirst(
+                    "Origin",
+                )
+                ?.trim()
+
+        if (
+            origin !=
+                null &&
+            origin !=
+                expectedOrigin
+        ) {
+            return false
+        }
+
+        val fetchSite =
+            exchange.requestHeaders
+                .getFirst(
+                    "Sec-Fetch-Site",
+                )
+                ?.trim()
+                ?.lowercase()
+
+        return fetchSite ==
+            null ||
+            fetchSite ==
+                "same-origin" ||
+            fetchSite ==
+                "none"
     }
 
     private fun requireMethod(
