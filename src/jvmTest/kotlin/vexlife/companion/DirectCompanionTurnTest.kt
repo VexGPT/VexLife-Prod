@@ -1036,9 +1036,7 @@ class DirectCompanionTurnTest {
                 ownerCurrent.checkpoint.workingSet.cursorEventRef,
             )
             assertTrue(
-                ownerCurrent.checkpoint.workingSet.currentStatementRefs.contains(
-                    "statement.score.continuity.001",
-                ),
+                ownerCurrent.checkpoint.workingSet.currentStatementRefs.isEmpty(),
             )
 
             val second =

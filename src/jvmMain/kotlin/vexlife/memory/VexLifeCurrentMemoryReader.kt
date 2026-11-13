@@ -31,10 +31,11 @@ import vexlife.filesystem.VexOwnedPath
 import vexlife.home.VexLifeProdHomeFiles
 
 /**
- * Read-only owner for current source-attributed Memory admitted to a Companion prompt.
+ * Read-only owner for current source-attributed Memory and the validated Score frontier it consumes.
  *
  * It reads the existing canonical VexLife Home. It does not append Score, commit Daily Dream,
- * create semantic acceptance, mutate Memory, or grant first-person authority.
+ * create semantic acceptance, mutate Memory, or grant first-person authority. Score coordinates
+ * exposed here remain reference-only source truth; they are not prompt Memory or semantic bodies.
  */
 object VexLifeCurrentMemoryReader {
     const val LivingJournalMemoryOwnerRef =
@@ -141,7 +142,7 @@ object VexLifeCurrentMemoryReader {
 
     private data class ScoreSnapshot(
         val head: JsonObject,
-        val authority: JsonObject,
+        val authority: JsonObject?,
         val statements: List<Statement>,
         val openLoops: List<OpenLoop>,
     )
@@ -196,6 +197,19 @@ object VexLifeCurrentMemoryReader {
         val heldStatementBindings: List<JsonObject>,
         val openLoopBindings: List<JsonObject>,
         val priorDaily: DreamPriorDaily?,
+    )
+
+    internal data class CurrentScoreCoordinates(
+        val homeRef: String,
+        val deviceRef: String,
+        val companionLineageRef: String,
+        val threadRef: String,
+        val scoreHeadSha256: String?,
+        val sourceConversationHeadSha256: String?,
+        val semanticAuthorityHeadSha256: String?,
+        val currentStatementRefs: List<String>,
+        val openLoopRefs: List<String>,
+        val sourceRefs: List<String>,
     )
 
     @Serializable
@@ -360,6 +374,214 @@ object VexLifeCurrentMemoryReader {
     }
 
 
+    internal fun readCurrentScoreCoordinates(
+        productHome: Path,
+        threadRef: String =
+            DirectConversationIdentity.ThreadRef,
+    ): CurrentScoreCoordinates {
+        val home =
+            VexOwnedPath.requireRoot(
+                productHome,
+                "canonical VexLife Home",
+            )
+        val currentHome =
+            requireNotNull(
+                VexLifeProdHomeFiles.observeExisting(
+                    home,
+                ),
+            ) {
+                "Score coordinate reader requires one current canonical VexLife Home"
+            }
+        val identity =
+            Identity(
+                homeRef = currentHome.manifest.homeRef,
+                deviceRef = currentHome.manifest.currentDeviceRef,
+                lineageRef = currentHome.manifest.currentCompanionLineageRef,
+                threadRef = threadRef,
+            )
+        val scoreRoot =
+            inside(
+                home,
+                "score/" +
+                    identity.lineageRef +
+                    "/" +
+                    identity.threadRef,
+            )
+        val scoreHead =
+            scoreRoot.resolve(
+                "head.json",
+            )
+
+        if (
+            !Files.exists(
+                scoreHead,
+                LinkOption.NOFOLLOW_LINKS,
+            )
+        ) {
+            val eventsRoot =
+                scoreRoot.resolve(
+                    "events",
+                )
+            if (
+                Files.exists(
+                    eventsRoot,
+                    LinkOption.NOFOLLOW_LINKS,
+                )
+            ) {
+                requireRealDirectory(
+                    eventsRoot,
+                    "Score events",
+                )
+                val tailFiles =
+                    Files.list(
+                        eventsRoot,
+                    )
+                        .use {
+                            stream ->
+                            stream.toList()
+                        }
+                        .sortedBy {
+                            it.fileName
+                                .toString()
+                        }
+                require(
+                    tailFiles.size <=
+                        1,
+                ) {
+                    "multiple competing Score tails require attention before continuity use"
+                }
+                tailFiles
+                    .singleOrNull()
+                    ?.let {
+                        file ->
+                        requireRegularFile(
+                            file,
+                            "Score event",
+                        )
+                        val event =
+                            readObject(
+                                home,
+                                file,
+                                "Score event",
+                            )
+                        val conversationStore =
+                            DirectConversationStore(
+                                home,
+                            )
+                        val conversation =
+                            conversationStore.current()
+                        validateScoreEvent(
+                            event = event,
+                            identity = identity,
+                            filename =
+                                file.fileName
+                                    .toString(),
+                            conversationStore = conversationStore,
+                            conversation = conversation,
+                        )
+                        require(
+                            event.long(
+                                "sequence",
+                            ) ==
+                                0L &&
+                                event.nullableString(
+                                    "priorScoreEventHash",
+                                ) ==
+                                null,
+                        ) {
+                            "uncommitted Score genesis tail is reordered or readdressed"
+                        }
+                    }
+            }
+
+            return CurrentScoreCoordinates(
+                homeRef = identity.homeRef,
+                deviceRef = identity.deviceRef,
+                companionLineageRef = identity.lineageRef,
+                threadRef = identity.threadRef,
+                scoreHeadSha256 = null,
+                sourceConversationHeadSha256 = null,
+                semanticAuthorityHeadSha256 = null,
+                currentStatementRefs = emptyList(),
+                openLoopRefs = emptyList(),
+                sourceRefs = emptyList(),
+            )
+        }
+
+        val conversationStore =
+            DirectConversationStore(
+                home,
+            )
+        val conversation =
+            conversationStore.current()
+        val score =
+            loadScore(
+                home = home,
+                identity = identity,
+                conversationStore = conversationStore,
+                conversation = conversation,
+                authorityPolicy =
+                    ScoreAuthorityPolicy.ALLOW_HISTORICAL_HELD,
+            )
+        val scoreHeadSha256 =
+            score.head.string(
+                "scoreHeadSha256",
+            )
+        val sourceConversationHeadSha256 =
+            score.head.string(
+                "sourceConversationHeadSha256",
+            )
+        val semanticAuthorityHeadSha256 =
+            score.authority
+                ?.string(
+                    "semanticAuthorityHeadSha256",
+                )
+        val currentStatementRefs =
+            score.statements
+                .filter(
+                    Statement::current,
+                )
+                .map(
+                    Statement::statementRef,
+                )
+                .sorted()
+        val openLoopRefs =
+            score.openLoops
+                .filter {
+                    it.state ==
+                        "OPEN"
+                }
+                .map(
+                    OpenLoop::ref,
+                )
+                .sorted()
+
+        return CurrentScoreCoordinates(
+            homeRef = identity.homeRef,
+            deviceRef = identity.deviceRef,
+            companionLineageRef = identity.lineageRef,
+            threadRef = identity.threadRef,
+            scoreHeadSha256 = scoreHeadSha256,
+            sourceConversationHeadSha256 =
+                sourceConversationHeadSha256,
+            semanticAuthorityHeadSha256 =
+                semanticAuthorityHeadSha256,
+            currentStatementRefs = currentStatementRefs,
+            openLoopRefs = openLoopRefs,
+            sourceRefs =
+                listOfNotNull(
+                    "sha256:$scoreHeadSha256",
+                    "sha256:$sourceConversationHeadSha256",
+                    semanticAuthorityHeadSha256
+                        ?.let {
+                            "sha256:$it"
+                        },
+                )
+                    .sorted(),
+        )
+    }
+
+
     internal fun readDreamSourceFrontier(
         productHome: Path,
         threadRef: String = DirectConversationIdentity.ThreadRef,
@@ -394,12 +616,17 @@ object VexLifeCurrentMemoryReader {
                 conversation = conversation,
                 authorityPolicy = ScoreAuthorityPolicy.ALLOW_HISTORICAL_HELD,
             )
+        val currentAuthority =
+            requireCurrentScoreAuthority(
+                score = score,
+                label = "Daily Memory Dream",
+            )
         val currentStatements = score.statements.filter(Statement::current).sortedBy(Statement::statementRef)
         val active =
             currentStatements.filter {
                 it.acceptedForContinuity &&
                     it.consentState in positiveConsent &&
-                    authorityContains(score.authority, it)
+                    authorityContains(currentAuthority, it)
             }
         val held = currentStatements.filter { it !in active }
         val loops = score.openLoops.filter { it.state == "OPEN" }.sortedBy(OpenLoop::ref)
@@ -415,7 +642,7 @@ object VexLifeCurrentMemoryReader {
             scoreHeadSha256 = score.head.string("scoreHeadSha256"),
             scoreSourceConversationHeadSha256 = score.head.string("sourceConversationHeadSha256"),
             scoreEventHash = score.head.string("eventHash"),
-            semanticAuthorityHeadSha256 = score.authority.string("semanticAuthorityHeadSha256"),
+            semanticAuthorityHeadSha256 = currentAuthority.string("semanticAuthorityHeadSha256"),
             selectedRuntimeRef =
                 requireNotNull(response.endpointProfileRef) {
                     "Daily Memory Dream source response has no runtime profile"
@@ -764,7 +991,7 @@ object VexLifeCurrentMemoryReader {
             }
 
         val authority =
-            loadAuthority(
+            loadAuthorityOrNull(
                 home,
                 identity,
             )
@@ -790,9 +1017,15 @@ object VexLifeCurrentMemoryReader {
                 authorityPolicy ==
                 ScoreAuthorityPolicy.REQUIRE_CURRENT_MEMBERSHIP
             ) {
+                val currentAuthority =
+                    requireNotNull(
+                        authority,
+                    ) {
+                        "current prompt Memory requires one current semantic authority head"
+                    }
                 require(
                     authorityContains(
-                        authority,
+                        currentAuthority,
                         statement,
                     )
                 ) {
@@ -808,6 +1041,43 @@ object VexLifeCurrentMemoryReader {
             openLoops = loops.values.toList(),
         )
     }
+
+    private fun loadAuthorityOrNull(
+        home: Path,
+        identity: Identity,
+    ): JsonObject? {
+        val head =
+            inside(
+                home,
+                "semantic-authority/score/" +
+                    identity.lineageRef +
+                    "/" +
+                    identity.threadRef +
+                    "/head.json",
+            )
+        if (
+            !Files.exists(
+                head,
+                LinkOption.NOFOLLOW_LINKS,
+            )
+        ) {
+            return null
+        }
+        return loadAuthority(
+            home = home,
+            identity = identity,
+        )
+    }
+
+    private fun requireCurrentScoreAuthority(
+        score: ScoreSnapshot,
+        label: String,
+    ): JsonObject =
+        requireNotNull(
+            score.authority,
+        ) {
+            "$label requires one current semantic authority head"
+        }
 
     private fun loadAuthority(
         home: Path,
@@ -2037,6 +2307,11 @@ object VexLifeCurrentMemoryReader {
         score: ScoreSnapshot,
         conversationStore: DirectConversationStore,
     ): DailySnapshot {
+        val currentAuthority =
+            requireCurrentScoreAuthority(
+                score = score,
+                label = "Daily Memory",
+            )
         val root =
             "daily-memory-dream/" +
                 identity.lineageRef +
@@ -2091,7 +2366,7 @@ object VexLifeCurrentMemoryReader {
                 head.string(
                     "sourceSemanticAuthorityHeadSha256",
                 ) ==
-                score.authority.string(
+                currentAuthority.string(
                     "semanticAuthorityHeadSha256",
                 ),
         ) {
@@ -2193,7 +2468,7 @@ object VexLifeCurrentMemoryReader {
                 stratum.string(
                     "sourceSemanticAuthorityHeadSha256",
                 ) ==
-                score.authority.string(
+                currentAuthority.string(
                     "semanticAuthorityHeadSha256",
                 ) &&
                 !stratum.boolean(
@@ -2292,7 +2567,7 @@ object VexLifeCurrentMemoryReader {
             )
 
         val authoritySha =
-            score.authority.string(
+            currentAuthority.string(
                 "semanticAuthorityHeadSha256",
             )
         for (
@@ -2441,7 +2716,7 @@ object VexLifeCurrentMemoryReader {
                         it.consentState in
                         positiveConsent &&
                         authorityContains(
-                            score.authority,
+                            currentAuthority,
                             it,
                         )
                 }
@@ -2456,7 +2731,7 @@ object VexLifeCurrentMemoryReader {
                             it.consentState in
                             positiveConsent &&
                             authorityContains(
-                                score.authority,
+                                currentAuthority,
                                 it,
                             )
                     )
