@@ -65,7 +65,7 @@ class VexLifeScoreContinuityTest {
                             proposedMemoryRelation =
                                 "SHARED_RELATIONSHIP_HISTORY",
                             proposedStatementState =
-                                "UNKNOWN",
+                                "INFERRED",
                             proposerRef =
                                 "owner.vexlife-prod.score-candidate.test",
                             proposerClass =
@@ -206,6 +206,32 @@ class VexLifeScoreContinuityTest {
                 1,
                 dream.heldStatementBindings
                     .size,
+            )
+            assertEquals(
+                "DISPUTED_OR_UNRESOLVED",
+                dream.heldStatementBindings
+                    .single()
+                    .string(
+                        "memoryRelation",
+                    ),
+            )
+            assertEquals(
+                "UNKNOWN",
+                dream.heldStatementBindings
+                    .single()
+                    .string(
+                        "statementState",
+                    ),
+            )
+            assertEquals(
+                semanticHashString(
+                    "External owner preserved this as unresolved rather than accepting the Product proposal.",
+                ),
+                dream.heldStatementBindings
+                    .single()
+                    .string(
+                        "summaryHash",
+                    ),
             )
 
             val loop =
@@ -424,7 +450,7 @@ class VexLifeScoreContinuityTest {
                     proposedMemoryRelation =
                         "SHARED_RELATIONSHIP_HISTORY",
                     proposedStatementState =
-                        "UNKNOWN",
+                        "INFERRED",
                     proposerRef =
                         "owner.vexlife-prod.score-candidate.test",
                     proposerClass =
@@ -583,20 +609,16 @@ class VexLifeScoreContinuityTest {
                         )
                         put(
                             "assertedMemoryRelation",
-                            candidate.string(
-                                "proposedMemoryRelation",
-                            ),
+                            "DISPUTED_OR_UNRESOLVED",
                         )
                         put(
                             "assertedStatementState",
-                            candidate.string(
-                                "proposedStatementState",
-                            ),
+                            "UNKNOWN",
                         )
                         put(
                             "assertedSummarySha256",
-                            candidate.string(
-                                "proposedSummarySha256",
+                            semanticHashString(
+                                "External owner preserved this as unresolved rather than accepting the Product proposal.",
                             ),
                         )
                         put(
@@ -873,27 +895,21 @@ class VexLifeScoreContinuityTest {
                         )
                         put(
                             "acceptedSummary",
-                            candidate.string(
-                                "proposedSummary",
-                            ),
+                            "External owner preserved this as unresolved rather than accepting the Product proposal.",
                         )
                         put(
                             "acceptedSummarySha256",
-                            candidate.string(
-                                "proposedSummarySha256",
+                            semanticHashString(
+                                "External owner preserved this as unresolved rather than accepting the Product proposal.",
                             ),
                         )
                         put(
                             "memoryRelation",
-                            candidate.string(
-                                "proposedMemoryRelation",
-                            ),
+                            "DISPUTED_OR_UNRESOLVED",
                         )
                         put(
                             "statementState",
-                            candidate.string(
-                                "proposedStatementState",
-                            ),
+                            "UNKNOWN",
                         )
                         put(
                             "acceptedForContinuity",
@@ -1252,6 +1268,15 @@ class VexLifeScoreContinuityTest {
                 .deleteRecursively()
         }
     }
+
+    private fun semanticHashString(
+        value: String,
+    ): String =
+        sha256(
+            VexContractJson.canonicalEncode(
+                value,
+            ),
+        )
 
     private fun semanticHash(
         value: JsonObject,
