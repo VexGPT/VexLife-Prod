@@ -287,10 +287,11 @@ CURRENT SCORE
 != PRIOR SUCCESSOR INHERITANCE
 ~~~
 
-No committed Score head plus no durable Score events is one current empty coordinate set. Durable Score
-material without a current head, malformed/currentness-invalid Score, or a Score change before checkpoint
-realization holds working-continuity stewardship rather than promoting stale refs. A completed human
-Conversation turn remains independently valid.
+No committed Score head plus no committed Score state is one current empty coordinate set. One exact,
+well-formed uncommitted genesis event remains non-current tail evidence and does not manufacture a committed
+Score set. Malformed, competing or re-addressed tail evidence, other currentness-invalid Score, or a Score
+change before checkpoint realization holds working-continuity stewardship rather than promoting stale refs.
+A completed human Conversation turn remains independently valid.
 
 The Score coordinate projection is reference-only. It does not expose Score semantic bodies to the provider,
 widen Memory, or create a generic source resolver.
