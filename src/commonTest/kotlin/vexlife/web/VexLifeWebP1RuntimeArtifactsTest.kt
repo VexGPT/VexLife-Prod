@@ -60,23 +60,33 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.html.contains(
+                "id=\"page-frame\" title=\"Opened page\" referrerpolicy=\"no-referrer\"",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "id=\"context-frame\"",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
                 "sandbox=\"allow-scripts allow-same-origin\"",
             ),
         )
 
         assertTrue(
             bundle.html.contains(
-                "placeholder=\"Type a Vex-owned web address\"",
+                "placeholder=\"Type a web address\"",
             ),
         )
         assertTrue(
             bundle.html.contains(
-                "Open a Vex-owned public page from the address field. Pages open signed out.",
+                "Open a web page from the address field. Vex page context is separate and may not be available for every page.",
             ),
         )
         assertFalse(
             bundle.html.contains(
-                "Open any public web page from the address field.",
+                "placeholder=\"Type a Vex-owned web address\"",
             ),
         )
 
@@ -155,6 +165,90 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(
             bundle.javascript.contains(
                 VexLifeProdBrowserContract.InitialPageUrl,
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "const contextFrameUrlFor = (pageUrl) =>",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "ui.pageFrame.src = pageUrl",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "ui.pageFrame.src = pageUrl;\n                ui.contextFrame.removeAttribute('src');",
+            ),
+            "ordinary navigation must not eagerly load the Vex context proxy",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "const contextFrameUrl = contextFrameUrlFor(state.contextTargetPageUrl);",
+            ) &&
+                bundle.javascript.contains(
+                    "state.contextLoading = true;",
+                ) &&
+                bundle.javascript.contains(
+                    "ui.contextFrame.src = contextFrameUrl;",
+                ),
+            "the context provider should load only after explicit Include-page intent",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "A separately rendered snapshot of this entered URL will be given to Vex on the next turn.",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "Separate context-provider rendering",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "event.source !== ui.contextFrame.contentWindow",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "state.contextTargetPageUrl",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "Current address unavailable · enter a web address",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "ui.query.value = ''",
+            ),
+            "an unobservable child navigation must not leave the prior URL displayed as current",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "Only http and https web pages open here.",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "The embedded Browser does not navigate to the local Product service.",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "Vex page context is not available for this site yet.",
+            ),
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "ui.pageFrame.src = frameUrlFor(pageUrl)",
+            ),
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "This page is outside the admitted Vex-owned public boundary.",
             ),
         )
 
@@ -369,14 +463,24 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "ScreenCaptureKit",
             ),
         )
-        assertFalse(
+        assertTrue(
             bundle.html.contains(
-                "allow-forms",
+                "sandbox=\"allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads allow-modals\"",
             ),
+            "the human Browser frame should retain ordinary in-pane web interaction without top-navigation authority",
+        )
+        assertTrue(
+            bundle.html.contains(
+                "id=\"context-frame\"",
+            ) &&
+                bundle.html.contains(
+                    "sandbox=\"allow-scripts allow-same-origin\"",
+                ),
+            "the Vex context provider must remain stricter than the human Browser frame",
         )
         assertFalse(
             bundle.html.contains(
-                "allow-popups",
+                "allow-top-navigation",
             ),
         )
     }
