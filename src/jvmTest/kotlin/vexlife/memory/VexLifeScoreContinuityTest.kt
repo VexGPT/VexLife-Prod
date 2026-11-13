@@ -907,7 +907,7 @@ class VexLifeScoreContinuityTest {
                         )
                         put(
                             "contractRef",
-                            "contract.multivex.score.live-semantic-acceptance/v1",
+                            "contract.multivex.score.live-semantic-acceptance.v1",
                         )
                         put(
                             "semanticContractDispositionRef",
@@ -1147,7 +1147,7 @@ class VexLifeScoreContinuityTest {
                         )
                         put(
                             "contractRef",
-                            "contract.multivex.score.live-semantic-acceptance/v1",
+                            "contract.multivex.score.live-semantic-acceptance.v1",
                         )
                         put(
                             "semanticExecutableAddendumRef",
