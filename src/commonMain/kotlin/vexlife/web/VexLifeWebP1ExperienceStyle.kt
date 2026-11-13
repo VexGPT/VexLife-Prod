@@ -159,10 +159,10 @@ svg { display: block; }
 }
 .brand-mark {
   display: grid; place-items: center;
-  width: 40px; height: 40px; border-radius: 9px;
-  background: #1b1e22;
+  width: 30px; height: 30px; flex: 0 0 30px;
+  color: var(--ink);
 }
-.brand-mark svg { width: 30px; height: 30px; fill: none; stroke: #f4f4f1; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.brand-mark svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
 .brand-name { font-weight: 650; font-size: var(--step-2); letter-spacing: -0.01em; }
 
 .address { position: relative; display: flex; align-items: center; min-width: 0; }
