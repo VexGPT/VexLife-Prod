@@ -66,6 +66,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const service = Object.freeze({
                 sourceCurrentnessPath: ${jsString(VexLifeProdServiceContract.SourceCurrentnessPath)},
+                currentStatePath: ${jsString(VexLifeProdServiceContract.CurrentStatePath)},
                 conversationPath: ${jsString(VexLifeProdServiceContract.ConversationPath)},
                 contextPath: ${jsString(VexLifeProdServiceContract.ContextPath)},
                 visionPath: ${jsString(VexLifeProdServiceContract.VisionPath)},
@@ -135,6 +136,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 memoryRemaining: byId('memory-remaining'),
                 memoryText: byId('memory-text'),
                 memoryNote: byId('memory-note'),
+                resourceNote: byId('resource-note'),
+                homeCurrentState: byId('home-current-state'),
                 thoughtVisibility: byId('thought-visibility'),
                 lowMemoryAlert: byId('low-memory-alert'),
                 alertThreshold: byId('alert-threshold'),
@@ -151,6 +154,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 conversation: null,
                 context: null,
                 currentness: null,
+                currentState: null,
                 vision: null,
                 visionInFlight: false,
                 browserContext: null,
@@ -685,6 +689,20 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (textNode) textNode.textContent = text;
               };
 
+              const formatBytes = (value) => {
+                const bytes = Number(value);
+                if (!Number.isFinite(bytes) || bytes < 0) return 'Unknown';
+                const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+                let scaled = bytes;
+                let unit = 0;
+                while (scaled >= 1024 && unit < units.length - 1) {
+                  scaled /= 1024;
+                  unit += 1;
+                }
+                const digits = unit >= 3 ? 1 : (unit === 0 ? 0 : 1);
+                return scaled.toFixed(digits) + ' ' + units[unit];
+              };
+
               const renderSettings = () => {
                 const prompt = state.context?.promptContext ?? null;
                 if (prompt) {
@@ -714,11 +732,47 @@ object VexLifeWebP1RuntimeArtifacts {
                   ui.memoryNote.textContent = 'Memory inclusion is reported per completed canonical turn.';
                 }
 
-                setMeter(ui.memory, [[ui.memoryUsed, 0]], 'Not measured', 'Mac memory is not exposed by the current service', false);
+                const current = state.currentState;
+                if (current) {
+                  const totalMemory = Number(current.totalMemoryBytes);
+                  const minimumMemory = Number(current.modelMinimumMemoryBytes);
+                  const memoryKnown = Number.isFinite(totalMemory) && totalMemory > 0;
+                  const minimumKnown = Number.isFinite(minimumMemory) && minimumMemory >= 0;
+                  const minimumShare = memoryKnown && minimumKnown
+                    ? Math.max(0, Math.min(1, minimumMemory / totalMemory))
+                    : 0;
+                  setMeter(
+                    ui.memory,
+                    [[ui.memoryUsed, minimumShare], [ui.memoryRemaining, memoryKnown ? 1 - minimumShare : 0]],
+                    memoryKnown
+                      ? formatBytes(totalMemory) + ' system · ' + (minimumKnown ? formatBytes(minimumMemory) + ' current-model minimum' : 'model minimum unknown')
+                      : 'System memory unknown',
+                    'Fresh host memory observation and current model requirement',
+                    memoryKnown
+                  );
+
+                  const freeStorage = formatBytes(current.freeStorageBytes);
+                  const modelTotal = formatBytes(current.modelArtifactTotalBytes);
+                  const modelVerified = formatBytes(current.modelArtifactVerifiedBytes);
+                  ui.resourceNote.textContent =
+                    'Storage available: ' + freeStorage +
+                    '. Current model artifacts: ' + modelVerified + ' of ' + modelTotal +
+                    ' (' + String(current.modelArtifactState ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase() + '). ' +
+                    'Runtime: ' + String(current.runtimeState ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase() +
+                    '; currentness: ' + String(current.runtimeCurrentness ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase() + '.';
+                  ui.homeCurrentState.textContent =
+                    'Current Home: ' + String(current.homePath ?? 'Unknown') +
+                    ' · ' + String(current.homeDisposition ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase() + '.';
+                } else {
+                  setMeter(ui.memory, [[ui.memoryUsed, 0], [ui.memoryRemaining, 0]], 'Not measured', 'Current machine state is unavailable', false);
+                  ui.resourceNote.textContent = 'Current machine and model resource truth is unavailable.';
+                  ui.homeCurrentState.textContent = 'Current Home has not been observed yet.';
+                }
+
                 ui.thoughtVisibility.setAttribute('aria-checked', String(state.thoughtsVisible));
                 ui.lowMemoryAlert.setAttribute('aria-checked', 'false');
                 ui.lowMemoryAlert.disabled = true;
-                ui.alertThreshold.textContent = 'not measured';
+                ui.alertThreshold.textContent = 'not connected';
               };
 
               const renderCompanionHead = () => {
@@ -745,6 +799,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 root.dataset.vexServiceSourceSha = String(state.currentness.sourceSha ?? '');
                 root.dataset.vexServicePid = String(state.currentness.processPid ?? '');
                 setCompanionStatus('Ready', 'Ready', ui.companionStatusModel.textContent);
+              };
+
+              const loadCurrentState = async () => {
+                const response = await fetch(service.currentStatePath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                state.currentState = await readJson(response);
+                root.dataset.vexCurrentStateObservedAt = String(state.currentState?.observedAt ?? '');
+                renderSettings();
+                return state.currentState;
               };
 
               const loadVision = async () => {
@@ -1064,7 +1126,10 @@ object VexLifeWebP1RuntimeArtifacts {
               ui.viewSwitch.addEventListener('click', () => {
                 state.view = state.view === 'settings' ? 'conversation' : 'settings';
                 renderCompanionHead();
-                if (state.view === 'settings') renderSettings();
+                if (state.view === 'settings') {
+                  renderSettings();
+                  void loadCurrentState().catch(() => {});
+                }
               });
 
               ui.contextShare.addEventListener('click', () => {
@@ -1162,7 +1227,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
               });
 
-              void Promise.all([loadSourceCurrentness(), loadConversation(), loadContext(), loadVision()])
+              void Promise.all([loadSourceCurrentness(), loadCurrentState(), loadConversation(), loadContext(), loadVision()])
                 .then(() => {
                   render();
                   navigate(browser.initialPageUrl);
