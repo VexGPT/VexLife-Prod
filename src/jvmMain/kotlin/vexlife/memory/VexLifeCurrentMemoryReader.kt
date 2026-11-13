@@ -432,20 +432,66 @@ object VexLifeCurrentMemoryReader {
                     eventsRoot,
                     "Score events",
                 )
-                val durableMaterialPresent =
+                val tailFiles =
                     Files.list(
                         eventsRoot,
                     )
                         .use {
                             stream ->
-                            stream.findAny()
-                                .isPresent
+                            stream.toList()
+                        }
+                        .sortedBy {
+                            it.fileName
+                                .toString()
                         }
                 require(
-                    !durableMaterialPresent,
+                    tailFiles.size <=
+                        1,
                 ) {
-                    "Score durable events exist without a current head"
+                    "multiple competing Score tails require attention before continuity use"
                 }
+                tailFiles
+                    .singleOrNull()
+                    ?.let {
+                        file ->
+                        requireRegularFile(
+                            file,
+                            "Score event",
+                        )
+                        val event =
+                            readObject(
+                                home,
+                                file,
+                                "Score event",
+                            )
+                        val conversationStore =
+                            DirectConversationStore(
+                                home,
+                            )
+                        val conversation =
+                            conversationStore.current()
+                        validateScoreEvent(
+                            event = event,
+                            identity = identity,
+                            filename =
+                                file.fileName
+                                    .toString(),
+                            conversationStore = conversationStore,
+                            conversation = conversation,
+                        )
+                        require(
+                            event.long(
+                                "sequence",
+                            ) ==
+                                0L &&
+                                event.nullableString(
+                                    "priorScoreEventHash",
+                                ) ==
+                                null,
+                        ) {
+                            "uncommitted Score genesis tail is reordered or readdressed"
+                        }
+                    }
             }
 
             return CurrentScoreCoordinates(
