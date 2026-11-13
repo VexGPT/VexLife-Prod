@@ -28,18 +28,35 @@ For substantial work:
 3. read [docs/foundation/INDEX.md](docs/foundation/INDEX.md);
 4. descend only to the exact current foundation/source/tests.
 
+## Current product role
+
+`VexGPT/VexLife-Prod` is the current VexLife New Beginnings product repository.
+`vgong24/VexLife` is predecessor/lineage source and may still be a bounded compatibility or evidence
+owner where the **current** Prod foundation explicitly names that bridge.
+
+~~~text
+CURRENT PRODUCT REPOSITORY
+!= EVERY SUBSYSTEM BRIDGE RETIRED
+
+PREDECESSOR REPOSITORY
+!= DEFAULT RUNTIME PARENT
+~~~
+
+For exact source/effect ownership, descend to [docs/foundation/INDEX.md](docs/foundation/INDEX.md) and
+VexWork `project.vexlife.new-beginnings`. Do not infer subsystem ownership from this README.
+
 ## Mac launch status
 
-The lived VexLife-Prod presentation remains a retained exploration threshold, but there is currently
-**no accepted VexLife-Prod Mac front-door command on main**.
+There is currently **no accepted ordinary VexLife-Prod Mac product front door on main**.
 
-Two source-local launch candidates (#15 and #16) were merged before their Mac direct-execution path
-was proved end to end. Victor's lived runs falsified the front-door completion claim: both reached the
-canonical VexLife Companion and then failed before the VexLife-Prod presentation became available.
+Earlier source-local launch candidates (#15 and #16) were merged before their direct human route was
+proved end to end. Victor's lived runs falsified those front-door completion claims. That failure
+established only that the attempted Prod presentation route was incomplete; it did **not** transfer
+current product authority back to `vgong24/VexLife`.
 
-Those launchers are therefore withdrawn rather than preserved as architectural precedent.
+### Historical recovery snapshot — November 4, 2026
 
-Current accepted ownership remains:
+After those lived failures, the repository correctly recorded this **then-current recovery position**:
 
 ~~~text
 vgong24/VexLife
@@ -58,65 +75,26 @@ VexLife-Prod
   -> does not yet own an accepted Mac presentation lifecycle
 ~~~
 
-The next launch implementation must consume the existing VexLife lifecycle/process-currentness
-contracts first and add only the missing VexLife-Prod presentation relationship. Do not reconstruct
-setup, process ownership, repair semantics, or source rotation from this repository by example.
+That snapshot remains useful history and evidence for why #15/#16 were shaped as they were. It is **not**
+a current repository-level ownership statement. Later New Beginnings work formed Prod-owned substrate
+and bounded compatibility bridges; the foundation index and VexWork now own the exact current state of
+those relationships.
 
-## Current position
+The next ordinary Mac entry must start from the current VexLife-Prod product intention, then descend
+through the foundation index + VexWork to the **exact current owner of each required effect**. That
+owner may be a Prod owner or an exact bounded predecessor compatibility bridge. Preserve a bridge while
+it is current; retire it only when successor ownership is actually accepted. Do not reconstruct a
+repository-level parent/child runtime relationship from historical launchers.
 
-~~~text
-accepted
-  repository front door
-  semantic Blueprint
-  Compose reference
+## Current source and work truth
 
-accepted VexWeb relational spatial foundation
-  Frame
-  Seam
-  Region
-  Allocation
-  Depth
+- [docs/foundation/INDEX.md](docs/foundation/INDEX.md) owns current product-source status and exact
+  compatibility/bridge states.
+- VexWork Project `project.vexlife.new-beginnings` owns current work/lifecycle position.
+- This README intentionally does **not** duplicate a moving phase or current edge.
 
-accepted VexWeb relational authoring
-  compiler-visible authoring over the same accepted objects
-  exact Kotlin/JVM + Kotlin/JS regression PASS
-  accepted main c2ed37471eab9f163acd2b0cfaf979d7cdeead73
-
-accepted VexWeb deterministic artifact generation
-  source-addressable HTML/CSS/JS + semantic manifest
-  exact Kotlin/JVM + Kotlin/JS regression PASS
-  accepted main cf7de23e2979cc49133e2de4c5eee841d5bcf584
-
-human law
-  expansion must scale the same language fractally
-  adding regions must not require a new spatial noun
-
-accepted proof
-  same vocabulary expresses:
-    2 regions
-    3 regions with a partial Seam
-    4 quadrants
-  geometry validity prevents renderer guesswork
-
-lived exploration threshold retained
-  exploration/web-workspace
-  bounded public nested-browser rendering
-  canonical Conversation projection + human Send through current VexLife Companion
-  canonical prompt-materialization receipt projected into Context Inspector
-  clean-start UI present; canonical CLEAN_START backend semantics remain pending acceptance in VexLife
-  page-context prompt composition remains held
-  != accepted VexWeb generated product
-
-current construction edge
-  generated P1 browser workspace from accepted Blueprint + VexWeb relationships
-  build-owned exact artifact materialization
-
-held
-  nested-browser provider + generated-product convergence
-  page-context admission into the canonical prompt owner
-  canonical CLEAN_START acceptance + presentation wiring
-  full P3 lived browser-context-aware proof
-~~~
+Historical/lived thresholds remain valid evidence. Descend through the current foundation and Workgraph
+before treating an older phase description, launch route, or proof threshold as present authority.
 
 ## Permanent distinctions
 

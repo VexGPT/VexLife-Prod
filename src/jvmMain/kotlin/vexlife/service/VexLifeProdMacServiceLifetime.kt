@@ -97,6 +97,24 @@ object VexLifeProdMacServiceLifetime {
         ) : Observation
     }
 
+    sealed interface ExistingObservation {
+        data object Absent : ExistingObservation
+
+        data class RunningOwned(
+            val receipt: Receipt,
+            val sourceCurrentness: VexLifeProdServiceContract.SourceCurrentness,
+        ) : ExistingObservation
+
+        data class OwnedNotReady(
+            val receipt: Receipt,
+            val launchdObservation: MacUserLaunchdProcess.Observation,
+        ) : ExistingObservation
+
+        data class HeldUnknown(
+            val detail: String,
+        ) : ExistingObservation
+    }
+
     data class Result(
         val disposition: String,
         val sourceSha: String,
@@ -170,6 +188,182 @@ object VexLifeProdMacServiceLifetime {
             ) {
                 null
             }
+    }
+
+    /**
+     * Read-only projection of the already-existing Product service before a desired image is
+     * installed or any lifecycle effect is admitted.
+     *
+     * This is intentionally separate from [observe], which evaluates one desired installed image.
+     * Front-door UX can therefore explain and ask before install/retire/restart effects.
+     */
+    fun observeExisting(
+        productHome: Path,
+        host: MacUserLaunchdProcess.Host =
+            MacUserLaunchdProcess.SystemHost,
+        probe: SourceCurrentnessProbe =
+            SystemSourceCurrentnessProbe,
+    ): ExistingObservation {
+        val home =
+            currentHome(
+                productHome,
+            )
+        val receiptResult =
+            runCatching {
+                readReceipt(
+                    home,
+                    host,
+                )
+            }
+        if (
+            receiptResult.isFailure
+        ) {
+            return ExistingObservation.HeldUnknown(
+                detail =
+                    "product-service lifetime receipt is unreadable or invalid: " +
+                        (
+                            receiptResult.exceptionOrNull()
+                                ?.message
+                                ?: "unknown receipt failure"
+                        ),
+            )
+        }
+
+        val receipt =
+            receiptResult.getOrNull()
+
+        if (
+            receipt ==
+                null
+        ) {
+            val coordinate =
+                MacUserLaunchdProcess.observeCoordinate(
+                    domainTarget =
+                        "gui/" +
+                            host.uid,
+                    label = Label,
+                    host = host,
+                )
+            if (
+                coordinate !=
+                MacUserLaunchdProcess.Observation.Absent
+            ) {
+                return ExistingObservation.HeldUnknown(
+                    detail =
+                        "stable product-service launchd label is present without a product lifetime receipt: " +
+                            coordinate,
+                )
+            }
+
+            val endpoint =
+                probe.observe(
+                    VexLifeProdServiceContract.Origin,
+                )
+            return if (
+                endpoint ==
+                    null
+            ) {
+                ExistingObservation.Absent
+            } else {
+                ExistingObservation.HeldUnknown(
+                    detail =
+                        "product-service endpoint responds without exact product lifetime ownership: " +
+                            endpoint.sourceSha +
+                            " / pid " +
+                            endpoint.processPid,
+                )
+            }
+        }
+
+        val receiptSpec =
+            specFromReceipt(
+                home = home,
+                receipt = receipt,
+                host = host,
+            )
+        val launchd =
+            MacUserLaunchdProcess.observe(
+                receiptSpec,
+                host,
+            )
+
+        if (
+            launchd is
+            MacUserLaunchdProcess.Observation.Unknown
+        ) {
+            return ExistingObservation.HeldUnknown(
+                detail =
+                    "product-service launchd observation is unknown: " +
+                        launchd.detail,
+            )
+        }
+
+        if (
+            launchd is
+                MacUserLaunchdProcess.Observation.Running &&
+            launchd.pid !=
+                receipt.launchd.pid
+        ) {
+            return ExistingObservation.HeldUnknown(
+                detail =
+                    "product-service launchd PID does not match the exact product receipt",
+            )
+        }
+
+        if (
+            launchd is
+                MacUserLaunchdProcess.Observation.Running &&
+            !host.processAlive(
+                receipt.launchd.pid,
+            )
+        ) {
+            return ExistingObservation.HeldUnknown(
+                detail =
+                    "product-service launchd reports the receipt PID but that process is not live",
+            )
+        }
+
+        val endpoint =
+            probe.observe(
+                VexLifeProdServiceContract.Origin,
+            )
+
+        if (
+            launchd is
+                MacUserLaunchdProcess.Observation.Running &&
+            MacUserLaunchdProcess.receiptCurrent(
+                receipt = receipt.launchd,
+                host = host,
+                expectedPid = receipt.launchd.pid,
+            ) &&
+            endpoint !=
+                null &&
+            validSourceCurrentness(
+                currentness = endpoint,
+                expectedSourceSha = receipt.sourceSha,
+                expectedPid = receipt.launchd.pid,
+            )
+        ) {
+            return ExistingObservation.RunningOwned(
+                receipt = receipt,
+                sourceCurrentness = endpoint,
+            )
+        }
+
+        if (
+            endpoint !=
+                null
+        ) {
+            return ExistingObservation.HeldUnknown(
+                detail =
+                    "product-service endpoint does not agree with exact owned launchd/receipt currentness",
+            )
+        }
+
+        return ExistingObservation.OwnedNotReady(
+            receipt = receipt,
+            launchdObservation = launchd,
+        )
     }
 
     fun observe(

@@ -157,12 +157,13 @@ internal object VexLifeWebP1ExperienceMarkup {
         </section>
 
         <section class="setting" data-vex-ref="${VexLifeWebP1.SettingsResources.identity.ref}" aria-labelledby="memory-heading">
-          <h2 id="memory-heading">Mac memory</h2>
-          <div class="meter" data-vex-ref="${VexLifeWebP1.MemoryResource.identity.ref}" id="memory" role="img" aria-label="Memory not measured yet">
+          <h2 id="memory-heading">Current resources</h2>
+          <div class="meter" data-vex-ref="${VexLifeWebP1.MemoryResource.identity.ref}" id="memory" role="img" aria-label="System memory not measured yet">
             <span class="meter-used" id="memory-used"></span>
             <span class="meter-remaining" id="memory-remaining"></span>
             <span class="meter-text" id="memory-text">Measuring</span>
           </div>
+          <p class="setting-note-line" id="resource-note">Current machine and model resource truth has not been observed yet.</p>
           <p class="setting-note-line" id="memory-note"></p>
 
           <div class="toggle-row">
@@ -171,13 +172,14 @@ internal object VexLifeWebP1ExperienceMarkup {
           </div>
           <div class="toggle-row">
             <span class="toggle-label" id="alert-label">Low memory alert</span>
-            <span class="toggle-detail" id="alert-threshold">25% left</span>
+            <span class="toggle-detail" id="alert-threshold">Not connected</span>
             <button class="switch" type="button" role="switch" data-vex-ref="${VexLifeWebP1.LowMemoryAlert.identity.ref}" id="low-memory-alert" aria-checked="true" aria-labelledby="alert-label alert-threshold"><span></span></button>
           </div>
         </section>
 
         <section class="setting" data-vex-ref="${VexLifeWebP1.SettingsHome.identity.ref}" aria-labelledby="home-heading">
           <h2 id="home-heading">VexLife Home</h2>
+          <p class="setting-note-line" id="home-current-state">Current Home has not been observed yet.</p>
           <div class="home-row">
             <button class="outline-button wide" type="button" data-vex-ref="${VexLifeWebP1.HomeDirectories.identity.ref}" id="home-directories" disabled>View accessible directories</button>
             <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.HomeAddDirectory.identity.ref}" id="home-add" disabled>Add</button>
