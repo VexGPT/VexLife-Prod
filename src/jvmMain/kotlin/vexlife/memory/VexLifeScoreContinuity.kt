@@ -55,7 +55,7 @@ object VexLifeScoreContinuity {
         "github.issue.vextreme-sdk.350.comment.5215288414"
 
     private const val LiveSemanticContract =
-        "contract.multivex.score.live-semantic-acceptance/v1"
+        "contract.multivex.score.live-semantic-acceptance.v1"
 
     private const val LiveSemanticDisposition =
         "github.issue.vextreme-sdk.350.comment.5216924433"
