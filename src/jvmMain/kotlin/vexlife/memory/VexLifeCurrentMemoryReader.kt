@@ -1909,22 +1909,45 @@ object VexLifeCurrentMemoryReader {
                     "sourceConversationHeadSha256",
                 ) ==
                 statement.sourceConversationHeadSha256 &&
+                candidate.array(
+                    "sourceBindings",
+                ) ==
+                statement.sourceBindings &&
                 candidate.string(
                     "proposedSummary",
+                )
+                    .isNotBlank() &&
+                semanticHashString(
+                    candidate.string(
+                        "proposedSummary",
+                    ),
                 ) ==
-                statement.summary &&
                 candidate.string(
                     "proposedSummarySha256",
-                ) ==
-                statement.summaryHash &&
+                ) &&
                 candidate.string(
                     "proposedMemoryRelation",
-                ) ==
-                statement.memoryRelation &&
+                ) in
+                memoryRelations &&
                 candidate.string(
                     "proposedStatementState",
+                ) in
+                statementStates &&
+                candidate.string(
+                    "proposerClass",
+                ) in
+                setOf(
+                    "LINEAGE",
+                    "HUMAN",
+                    "SYSTEM_CLASSIFIER",
+                ) &&
+                candidate.string(
+                    "privacyClass",
                 ) ==
-                statement.recordedState,
+                "DEVICE_PRIVATE" &&
+                !candidate.boolean(
+                    "accepted",
+                ),
         ) {
             "semantic candidate differs from current Score statement"
         }
@@ -2078,6 +2101,36 @@ object VexLifeCurrentMemoryReader {
                 ) ==
                 statement.acceptanceRef &&
                 acceptance.string(
+                    "sourceLineageRef",
+                ) ==
+                identity.lineageRef &&
+                acceptance.string(
+                    "sourceThreadRef",
+                ) ==
+                identity.threadRef &&
+                acceptance.string(
+                    "sourceConversationHeadSha256",
+                ) ==
+                statement.sourceConversationHeadSha256 &&
+                acceptance.stringList(
+                    "sourceBindingHashes",
+                ) ==
+                statement.sourceBindings
+                    .map {
+                        it.jsonObject
+                            .string(
+                                "eventHash",
+                            )
+                    } &&
+                acceptance.string(
+                    "semanticSubjectRef",
+                ) ==
+                statement.subjectRef &&
+                acceptance.string(
+                    "semanticSubjectFingerprint",
+                ) ==
+                statement.semanticSubjectFingerprint &&
+                acceptance.string(
                     "candidateRef",
                 ) ==
                 statement.candidateRef &&
@@ -2085,6 +2138,22 @@ object VexLifeCurrentMemoryReader {
                     "candidateSha256",
                 ) ==
                 statement.candidateSha256 &&
+                acceptance.string(
+                    "issuerRef",
+                ) ==
+                "owner.multivex.score-semantic-authority.materializer.001" &&
+                acceptance.string(
+                    "issuerClass",
+                ) ==
+                "SOURCE_MANAGED_MEMORY_SAFETY_COMPOSITION" &&
+                acceptance.string(
+                    "ownerDispositionRef",
+                ) ==
+                LiveSemanticExecutableAddendum &&
+                acceptance.string(
+                    "privacyClass",
+                ) ==
+                "DEVICE_PRIVATE" &&
                 acceptance.string(
                     "acceptedSummary",
                 ) ==
