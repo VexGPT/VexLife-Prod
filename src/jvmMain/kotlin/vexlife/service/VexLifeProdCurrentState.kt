@@ -3,21 +3,67 @@ package vexlife.service
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
-import vexlife.local.VexLifeProdLocalSetup
+import vexlife.home.VexLifeProdHome
+import vexlife.home.VexLifeProdHomeFiles
+import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.HereticArtifactMaterialization
 import vexlife.model.heretic.runtime.HereticMacHostProfile
 
 /**
- * Read-only convergence of current host, Home, model-artifact and startup runtime truth for the
+ * Read-only convergence of current host, Home, model-selection and artifact-presence truth for the
  * human product surface.
  *
- * This projector performs no setup, repair, acquisition, runtime start, model selection or Home
- * mutation. It consumes observations from their current owners and makes unknowns explicit.
+ * This projector deliberately does not depend on [vexlife.local.VexLifeProdLocalSetup]. That setup
+ * may select/bind a model or recover an abandoned Conversation writer. Human awareness must be
+ * formable before those effects are considered.
+ *
+ * The ordinary projection performs no setup, repair, acquisition, runtime start/recovery, model
+ * selection/binding, Home mutation or multi-GiB artifact hashing.
  */
 object VexLifeProdCurrentState {
     internal data class Hooks(
+        val resolveProductHome: () -> Path = {
+            VexLifeProdHomeFiles.defaultMacRoot(
+                Path.of(
+                    System.getProperty(
+                        "user.home",
+                    ),
+                ),
+            )
+        },
+        val observeHome: (
+            productHome: Path,
+        ) -> VexLifeProdHomeFiles.Result? = {
+            productHome ->
+            VexLifeProdHomeFiles.observeExisting(
+                productHome,
+            )
+        },
         val observeHost: () -> HereticMacHostProfile.Result = {
             HereticMacHostProfile.observeCurrent()
+        },
+        val observeModel: (
+            productHome: Path,
+            manifest: VexLifeProdHome.Manifest,
+        ) -> FileHereticModelConfigurationStore.Snapshot = {
+            productHome,
+            manifest,
+            ->
+            FileHereticModelConfigurationStore(
+                productHome,
+            )
+                .read(
+                    manifest,
+                )
+        },
+        val observeArtifacts: (
+            productHome: Path,
+        ) -> HereticArtifactMaterialization.PresenceObservation = {
+            productHome ->
+            HereticArtifactMaterialization.observePresence(
+                productHome,
+            )
         },
         val observeFreeStorageBytes: (
             productHome: Path,
@@ -40,34 +86,113 @@ object VexLifeProdCurrentState {
         },
     )
 
-    fun observe(
-        setup: VexLifeProdLocalSetup.Result,
-    ): VexLifeProdServiceContract.CurrentStateProjection =
+    fun observeCurrentMac(): VexLifeProdServiceContract.CurrentStateProjection =
         observeWithHooks(
-            setup = setup,
-            hooks = Hooks(),
+            Hooks(),
         )
 
     internal fun observeWithHooks(
-        setup: VexLifeProdLocalSetup.Result,
         hooks: Hooks,
     ): VexLifeProdServiceContract.CurrentStateProjection {
         val productHome =
-            Path.of(
-                setup.productHome,
-            )
+            hooks.resolveProductHome()
+                .toAbsolutePath()
+                .normalize()
+        val home =
+            requireNotNull(
+                hooks.observeHome(
+                    productHome,
+                ),
+            ) {
+                "current-state awareness requires one existing canonical VexLife Home"
+            }
         require(
-            productHome.isAbsolute,
+            !home.effectsPerformed &&
+                Path.of(
+                    home.productHome,
+                ) ==
+                productHome,
         ) {
-            "current-state projection requires one absolute VexLife Home"
+            "current-state Home observation is not one no-effect exact-path projection"
         }
 
         val host =
             hooks.observeHost()
-        val artifactPlan =
-            HereticArtifactMaterialization.plan()
-        val runtime =
-            setup.qualifiedRuntimeEvidence
+        val model =
+            hooks.observeModel(
+                productHome,
+                home.manifest,
+            )
+
+        val modelProjection =
+            when (
+                model
+            ) {
+                is FileHereticModelConfigurationStore.Snapshot.Unconfigured ->
+                    ModelProjection(
+                        modelSelectionState = "UNCONFIGURED",
+                        activeModelRef = null,
+                        activeModelProfileRef = null,
+                        modelMinimumMemoryBytes = null,
+                        runtimeState = "NOT_SELECTED",
+                        runtimeCurrentness = "NOT_APPLICABLE",
+                        runtimeReceiptPath = null,
+                        artifactState = "NOT_SELECTED",
+                        artifactTotalBytes = null,
+                        artifactPresentBySizeBytes = null,
+                        artifactMissingBytes = null,
+                        artifactInvalidSizeBytes = null,
+                    )
+
+                is FileHereticModelConfigurationStore.Snapshot.Heretic -> {
+                    val current =
+                        model.value
+                    val artifacts =
+                        hooks.observeArtifacts(
+                            productHome,
+                        )
+                    require(
+                        !artifacts.effectsPerformed,
+                    ) {
+                        "current-state artifact presence observation performed an effect"
+                    }
+
+                    ModelProjection(
+                        modelSelectionState =
+                            current.state.wireValue,
+                        activeModelRef =
+                            current.modelRef,
+                        activeModelProfileRef =
+                            current.modelProfileRef,
+                        modelMinimumMemoryBytes =
+                            HereticMacHostProfile.MinimumMemoryBytes,
+                        runtimeState =
+                            when (
+                                current.state
+                            ) {
+                                HereticModelConfiguration.State.EstablishmentPending ->
+                                    "ESTABLISHMENT_PENDING"
+
+                                HereticModelConfiguration.State.BoundProductModel ->
+                                    "BOUND_PRODUCT_MODEL"
+                            },
+                        runtimeCurrentness =
+                            "CONFIGURATION_ONLY_NOT_REOBSERVED",
+                        runtimeReceiptPath =
+                            current.runtimeReceiptPath,
+                        artifactState =
+                            artifacts.state,
+                        artifactTotalBytes =
+                            artifacts.totalBytes,
+                        artifactPresentBySizeBytes =
+                            artifacts.presentBySizeBytes,
+                        artifactMissingBytes =
+                            artifacts.missingBytes,
+                        artifactInvalidSizeBytes =
+                            artifacts.invalidSizeBytes,
+                    )
+                }
+            }
 
         return VexLifeProdServiceContract.CurrentStateProjection(
             schemaVersion =
@@ -78,7 +203,13 @@ object VexLifeProdCurrentState {
             homePath =
                 productHome.toString(),
             homeDisposition =
-                setup.homeDisposition,
+                home.state,
+            homeRef =
+                home.manifest.homeRef,
+            deviceRef =
+                home.installation.deviceRef,
+            companionLineageRef =
+                home.installation.companionLineageRef,
             platform =
                 host.observation.platform,
             architecture =
@@ -94,37 +225,52 @@ object VexLifeProdCurrentState {
             totalMemoryBytes =
                 host.observation.totalMemoryBytes,
             modelMinimumMemoryBytes =
-                HereticMacHostProfile.MinimumMemoryBytes,
+                modelProjection.modelMinimumMemoryBytes,
             freeStorageBytes =
                 hooks.observeFreeStorageBytes(
                     productHome,
                 ),
+            modelSelectionState =
+                modelProjection.modelSelectionState,
             activeModelRef =
-                runtime.modelRef,
+                modelProjection.activeModelRef,
             activeModelProfileRef =
-                runtime.modelProfileRef,
+                modelProjection.activeModelProfileRef,
             runtimeState =
-                runtime.runtimeState
-                    .name
-                    .uppercase(),
+                modelProjection.runtimeState,
             runtimeCurrentness =
-                "STARTUP_QUALIFIED_NOT_REOBSERVED",
-            runtimeReceiptRef =
-                runtime.runtimeReceiptRef,
+                modelProjection.runtimeCurrentness,
+            runtimeReceiptPath =
+                modelProjection.runtimeReceiptPath,
             modelArtifactState =
-                "VERIFIED_AT_SETUP",
+                modelProjection.artifactState,
             modelArtifactTotalBytes =
-                artifactPlan.totalBytes,
-            modelArtifactVerifiedBytes =
-                artifactPlan.totalBytes,
+                modelProjection.artifactTotalBytes,
+            modelArtifactPresentBySizeBytes =
+                modelProjection.artifactPresentBySizeBytes,
             modelArtifactMissingBytes =
-                0,
-            modelArtifactInvalidBytes =
-                0,
+                modelProjection.artifactMissingBytes,
+            modelArtifactInvalidSizeBytes =
+                modelProjection.artifactInvalidSizeBytes,
             effectsPerformed =
                 false,
         )
     }
+
+    private data class ModelProjection(
+        val modelSelectionState: String,
+        val activeModelRef: String?,
+        val activeModelProfileRef: String?,
+        val modelMinimumMemoryBytes: Long?,
+        val runtimeState: String,
+        val runtimeCurrentness: String,
+        val runtimeReceiptPath: String?,
+        val artifactState: String,
+        val artifactTotalBytes: Long?,
+        val artifactPresentBySizeBytes: Long?,
+        val artifactMissingBytes: Long?,
+        val artifactInvalidSizeBytes: Long?,
+    )
 }
 
 // [VXG RealForever]
