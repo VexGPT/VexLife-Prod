@@ -250,7 +250,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "STARTUP_QUALIFIED_NOT_REOBSERVED",
+                "current.runtimeCurrentness",
             ),
         )
         assertTrue(
