@@ -1,6 +1,7 @@
 package vexlife.service
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import vexlife.browser.VexLifeProdBrowserContract
 
 /**
@@ -25,6 +26,12 @@ object VexLifeProdServiceContract {
 
     const val MemoryDreamRunResponseSchema =
         "vexlife-prod.local-service-memory-dream-run-response/v1"
+
+    const val VisionProjectionSchema =
+        "vexlife-prod.local-service-vision-projection/v1"
+
+    const val VisionRuntimeResultSchema =
+        "vextreme.macos-screen-system-picker-product-runtime-result/v1"
 
     const val SendResponseSchema =
         "vexlife-prod.local-service-send-response/v4"
@@ -73,6 +80,12 @@ object VexLifeProdServiceContract {
 
     const val MemoryDreamPath =
         "/api/v1/memory/dream"
+
+    const val VisionPath =
+        "/api/v1/vision"
+
+    const val VisionLookNowPath =
+        "/api/v1/vision/look-now"
 
     const val ConversationSendPath =
         "/api/v1/conversation/send"
@@ -187,6 +200,183 @@ object VexLifeProdServiceContract {
         val firstPersonAuthorityGranted: Boolean,
         val effectsPerformed: Boolean,
     )
+    @Serializable
+    data class VisionProjection(
+        val schemaVersion: String,
+        val state: String,
+        val routeReachable: Boolean,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    VisionProjectionSchema &&
+                    state in
+                    setOf(
+                        "HELD",
+                        "READY",
+                    ) &&
+                    routeReachable ==
+                    (
+                        state ==
+                            "READY"
+                    ) &&
+                    !effectsPerformed,
+            ) {
+                "Vision projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class VisionLookNowRequest(
+        val requestRef: String,
+    ) {
+        init {
+            requirePortableRef(
+                requestRef,
+                "requestRef",
+            )
+        }
+    }
+
+    @Serializable
+    data class VisionRuntimeResult(
+        val schemaVersion: String,
+        val state: String,
+        val requestRef: String,
+        val sessionRefOrNull: String?,
+        val connectionIdOrNull: String?,
+        val selectionMode: String,
+        val osOwnsSelectionUi: Boolean,
+        val helperLaunched: Boolean,
+        val projectionOrNull: JsonElement?,
+        val activeSharingWitnessOrNull: JsonElement?,
+        val activeVisualObservationOrNull: JsonElement?,
+        val rawBytesIncluded: Boolean,
+        val rawRetentionAllowed: Boolean,
+        val visualModelInputAuthorized: Boolean,
+        val memoryAccepted: Boolean,
+        val trainingEligible: Boolean,
+        val publicationEligible: Boolean,
+        val continuousCaptureAllowed: Boolean,
+        val backgroundCaptureAllowed: Boolean,
+        val persistentHostPermissionEstablished: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    VisionRuntimeResultSchema &&
+                    selectionMode ==
+                    "SINGLE_WINDOW" &&
+                    osOwnsSelectionUi &&
+                    !rawBytesIncluded &&
+                    !rawRetentionAllowed &&
+                    !visualModelInputAuthorized &&
+                    !memoryAccepted &&
+                    !trainingEligible &&
+                    !publicationEligible &&
+                    !continuousCaptureAllowed &&
+                    !backgroundCaptureAllowed &&
+                    !persistentHostPermissionEstablished,
+            ) {
+                "Vision runtime result fixed boundary is invalid"
+            }
+            requirePortableRef(
+                requestRef,
+                "requestRef",
+            )
+
+            when (
+                state
+            ) {
+                "HELD_SAFETY_NOT_CURRENT" ->
+                    require(
+                        sessionRefOrNull ==
+                            null &&
+                            connectionIdOrNull ==
+                            null &&
+                            !helperLaunched &&
+                            projectionOrNull ==
+                            null &&
+                            activeSharingWitnessOrNull ==
+                            null &&
+                            activeVisualObservationOrNull ==
+                            null,
+                    ) {
+                        "held Vision result contains realization/capture truth"
+                    }
+
+                "USER_CANCELLED",
+                "ONE_SHOT_CAPTURE_FAILED",
+                "ONE_SHOT_CAPTURED",
+                -> {
+                    val sessionRef =
+                        requireNotNull(
+                            sessionRefOrNull,
+                        ) {
+                            "Vision runtime result requires sessionRef"
+                        }
+                    val connectionId =
+                        requireNotNull(
+                            connectionIdOrNull,
+                        ) {
+                            "Vision runtime result requires connectionId"
+                        }
+                    requirePortableRef(
+                        sessionRef,
+                        "sessionRef",
+                    )
+                    requirePortableRef(
+                        connectionId,
+                        "connectionId",
+                    )
+                    require(
+                        sessionRef !=
+                            connectionId &&
+                            requestRef !=
+                            sessionRef &&
+                            requestRef !=
+                            connectionId &&
+                            helperLaunched &&
+                            projectionOrNull !=
+                            null,
+                    ) {
+                        "Vision runtime attempt binding is invalid"
+                    }
+
+                    if (
+                        state ==
+                            "ONE_SHOT_CAPTURED"
+                    ) {
+                        require(
+                            activeSharingWitnessOrNull !=
+                                null &&
+                                activeVisualObservationOrNull !=
+                                null,
+                        ) {
+                            "captured Vision result requires canonical witness and observation"
+                        }
+                    } else {
+                        require(
+                            activeSharingWitnessOrNull ==
+                                null &&
+                                activeVisualObservationOrNull ==
+                                null,
+                        ) {
+                            "non-captured Vision result cannot claim witness/observation"
+                        }
+                    }
+                }
+
+                else ->
+                    error(
+                        "Vision runtime result state is unsupported",
+                    )
+            }
+        }
+    }
+
     @Serializable
     data class BrowserContextInput(
         val pageUrl: String,

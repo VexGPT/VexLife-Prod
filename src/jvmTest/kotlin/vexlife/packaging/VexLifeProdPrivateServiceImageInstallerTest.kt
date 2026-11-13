@@ -183,7 +183,7 @@ class VexLifeProdPrivateServiceImageInstallerTest {
             )
         val manifest =
             VexLifeProdPrivateServiceImage.Manifest(
-                schemaVersion = VexLifeProdPrivateServiceImage.Schema,
+                schemaVersion = VexLifeProdPrivateServiceImage.LegacySchema,
                 truthClass = VexLifeProdPrivateServiceImage.TruthClass,
                 sourceSha = sourceSha,
                 platform = VexLifeProdPrivateServiceImage.Platform,
