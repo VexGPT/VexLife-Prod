@@ -80,7 +80,7 @@ object DirectWorkingContinuity {
     data class Prepared internal constructor(
         val pressureInput: VexLifeWorkingContinuity.PromptPressureInput,
         val workingSet: VexLifeWorkingContinuity.WorkingSet,
-        val scoreCoordinates: VexLifeCurrentMemoryReader.CurrentScoreCoordinates?,
+        internal val scoreCoordinates: VexLifeCurrentMemoryReader.CurrentScoreCoordinates?,
         val plan: VexLifeWorkingContinuity.Plan?,
         val formationFailureClassOrNull: String?,
     )
