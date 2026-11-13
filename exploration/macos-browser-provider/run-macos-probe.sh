@@ -18,6 +18,7 @@ fi
 mkdir -p "$BUILD_DIR"
 
 xcrun swiftc \
+  -parse-as-library \
   -framework AppKit \
   -framework WebKit \
   "$SCRIPT_DIR/BrowserProviderProbe.swift" \
