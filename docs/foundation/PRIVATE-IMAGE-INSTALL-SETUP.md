@@ -52,8 +52,9 @@ CONVERGE_PRODUCT(allowAcquisition=true)
   -> model/Python/runtime prerequisites
   -> VexLifeProdPrivateServiceImageInstaller.install(...)
   -> VexLifeProdMacServiceLifetime.startOrReuse(...)
-  -> re-observe CURRENT
-  -> OPEN_PRODUCT
+  -> re-observe the selected Home / Product-service truth
+  -> if CURRENT: OPEN_PRODUCT
+  -> otherwise: REFRESH_ENTRY and render the actual State
 ~~~
 
 ## Image contract v3
