@@ -113,23 +113,39 @@ runtime artifact:
 SDK commit     = 1c2c9d76114ca35f00125f0a5c93e531e3e6a746
 SDK tree       = 6376f68279f0750ee6d3868b8472368199763064
 archive        = vexlife-vision-runtime-darwin-arm64-node-v26.8.1-sdk-1c2c9d76.tar.xz
-archiveSha256  = 8182d4582a11e893b0770cc9ad72c12fab35e54349177232f6100da11d7037d3
-manifestSha256 = 0460f8aa6b2a9d75e50c58ec50197b42a9d1c90b78bef92db0cc76386d645bfb
-runtimeSha256  = 77abb23df39e81bf7fa0d263ac4df9730f024996ab60c627aa7ddda67287e848
-helperSha256   = d5ccf8886311c8b592d36829044660c8baa00b6134e7d3da7e4278b8f0707ecf
+archiveSha256  = f057f551099a90088fcd5ccc600391090810272cc8d3ed3e0af560e236189709
+manifestSha256 = e3c1279a32df87bb93fb2e5952f9c9faa184dfd9c3804470635bf773055d71be
+runtimeSha256  = 4175cb52bf45b495632c570796ef3f31c0cf40ed277b415929f8f8daf1e98461
+helperSha256   = 414226b84629a390d525efd54dcc184b974725f9f74c37c2dfe4492ab1e4a79b
 Node           = v26.8.1
 truthClass     = LOCAL_QUALIFIED_NOT_DISTRIBUTABLE
 release        = LOCAL_ONLY_NO_RELEASE
 ~~~
 
-Fresh qualification is owned by the persistent artifact A002 RETURN. It rebuilt both the Node SEA and
-the `VexLifeVisionSelectedScopeAgent`, re-extracted and verified the exact artifact inventory, and
-qualified only:
+This is the A006 rebuild, bound as the successor to the original A002 artifact. The A002 archive and
+its builder bytes were searched for and are gone (#114 A005, A007), so a contract naming them could never
+be satisfied and Vision could never be carried. A006 was built from the same accepted SDK commit and tree
+with the same Node archive, and qualified only:
 
 ~~~text
 PROJECT
 -> SHUTDOWN
 ~~~
+
+Its bytes differ from A002 because the builder was reconstructed and these builds are not byte-
+reproducible; the source the runtime and helper come from is identical. The successor binding is
+recorded here rather than treated as A002 recovery:
+
+~~~text
+A006_REBUILT_FROM_ACCEPTED_SOURCE
+= current Product artifact contract
+!= A002_BYTES_RECOVERED
+!= LIVED_ENGAGE_PROVEN
+~~~
+
+The image build still fails closed: an archive whose name or SHA-256 differs from this contract is
+rejected, and an image built without one carries no Vision runtime, so the service projects Vision as
+`Held(RouteUnreachable)`.
 
 No ENGAGE, picker presentation, capture, Product mutation, visual-model input, Memory, training or
 publication occurred during artifact qualification.
