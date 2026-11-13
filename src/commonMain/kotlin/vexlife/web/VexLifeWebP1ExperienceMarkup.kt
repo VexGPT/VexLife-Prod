@@ -214,8 +214,8 @@ internal object VexLifeWebP1ExperienceMarkup {
         </section>
 
         <section class="setting setting-reset" data-vex-ref="${VexLifeWebP1.SettingsReset.identity.ref}">
-          <button class="danger-button" type="button" data-vex-ref="${VexLifeWebP1.CleanChat.identity.ref}" id="clean-chat">Start clean chat</button>
-          <p class="setting-note-line">Not connected yet. This presentation does not own canonical Conversation reset/archive semantics, and it does not clear VexLife Memory.</p>
+          <button class="outline-button wide" type="button" data-vex-ref="${VexLifeWebP1.CleanChat.identity.ref}" id="clean-chat" disabled>Start clean chat · Not available yet</button>
+          <p class="setting-note-line">A clean chat will let your next message start fresh: Vex won't be given your earlier messages. Nothing is deleted; they stay in your conversation, and Vex's Memory is untouched.</p>
         </section>
 
         <section class="setting setting-renderer">
