@@ -81,6 +81,9 @@ object VexLifeWebP1 {
                 "conversation.send",
             )
 
+        /** Private mode: a conversation that isn't kept, apart from notes both agree to keep. */
+        val ConversationPrivateCapability = VexWeb.CapabilityRef.of("conversation.private")
+
         /** Persistent selected scope: choose one window (Engage) / release it (Stop). No capture. */
         val VisionSelectedScopeCapability =
             VexWeb.CapabilityRef.of(
@@ -330,11 +333,14 @@ object VexLifeWebP1 {
                 ),
         )
 
+    val PrivateBanner = blueprintSurface(VexLifeWorkspaceBlueprint.PrivateBanner)
+
     val Conversation =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.Conversation,
             children =
                 listOf(
+                    PrivateBanner,
                     ConversationTimeline,
                     ConversationJumpLatest,
                     ResponseProgress,
@@ -425,20 +431,6 @@ object VexLifeWebP1 {
                 ),
         )
 
-    val CleanChat =
-        blueprintSurface(
-            VexLifeWorkspaceBlueprint.CleanChat,
-        )
-
-    val SettingsReset =
-        blueprintSurface(
-            element = VexLifeWorkspaceBlueprint.SettingsReset,
-            children =
-                listOf(
-                    CleanChat,
-                ),
-        )
-
     val Settings =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.Settings,
@@ -449,7 +441,6 @@ object VexLifeWebP1 {
                     ThoughtVisibility,
                     SettingsHome,
                     SettingsContinuity,
-                    SettingsReset,
                 ),
         )
 
@@ -490,6 +481,17 @@ object VexLifeWebP1 {
                 ),
         )
 
+    /** Go private / leave private mode, resolved by VexLifePrivateModeFamily in the service. */
+    val PrivateMode =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.PrivateMode,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(VexWeb.Interaction.Activate),
+            binding = VexWebAuthoring.capability(Refs.ConversationPrivateCapability),
+        )
+
     val CompanionHeader =
         VexWebAuthoring.structural(
             ref = Refs.CompanionHeader,
@@ -499,6 +501,7 @@ object VexLifeWebP1 {
             children =
                 listOf(
                     CompanionStatus,
+                    PrivateMode,
                     Vision,
                     CompanionViewSwitch,
                 ),

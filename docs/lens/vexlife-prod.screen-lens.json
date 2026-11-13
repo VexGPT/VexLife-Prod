@@ -260,12 +260,36 @@
           "slot": "Trailing"
         },
         {
+          "ref": "element.vexlife-workspace.companion.private-mode",
+          "kind": "BUTTON",
+          "label": "Private mode",
+          "parentRef": "element.vexlife-workspace.companion",
+          "symbol": "VexLifeWorkspaceBlueprint.PrivateMode",
+          "declared": "Companion.control(\"private-mode\")",
+          "intent": "capability conversation.private",
+          "pathwayRef": "pathway.vexlife-prod.conversation.private",
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
           "ref": "element.vexlife-workspace.companion.conversation",
           "kind": "REGION",
           "label": "Conversation",
           "parentRef": "element.vexlife-workspace.companion",
           "symbol": "VexLifeWorkspaceBlueprint.Conversation",
           "declared": "Companion.region(\"conversation\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.conversation.private-banner",
+          "kind": "TEXT",
+          "label": "Private banner",
+          "parentRef": "element.vexlife-workspace.companion.conversation",
+          "symbol": "VexLifeWorkspaceBlueprint.PrivateBanner",
+          "declared": "Conversation.content(\"private-banner\")",
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
@@ -542,30 +566,6 @@
           "parentRef": "element.vexlife-workspace.companion.settings.continuity",
           "symbol": "VexLifeWorkspaceBlueprint.DreamSync",
           "declared": "SettingsContinuity.control(\"dream-sync\")",
-          "intent": null,
-          "pathwayRef": null,
-          "style": "Surface",
-          "slot": "InFlow"
-        },
-        {
-          "ref": "element.vexlife-workspace.companion.settings.reset",
-          "kind": "REGION",
-          "label": "Reset",
-          "parentRef": "element.vexlife-workspace.companion.settings",
-          "symbol": "VexLifeWorkspaceBlueprint.SettingsReset",
-          "declared": "Settings.region(\"reset\")",
-          "intent": null,
-          "pathwayRef": null,
-          "style": "Surface",
-          "slot": "InFlow"
-        },
-        {
-          "ref": "element.vexlife-workspace.companion.settings.reset.clean-chat",
-          "kind": "BUTTON",
-          "label": "Clean chat",
-          "parentRef": "element.vexlife-workspace.companion.settings.reset",
-          "symbol": "VexLifeWorkspaceBlueprint.CleanChat",
-          "declared": "SettingsReset.control(\"clean-chat\")",
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
@@ -872,6 +872,147 @@
           "to": "vexlife-prod.local.companion.view-switch.reveal",
           "label": null,
           "kind": "FLOW"
+        }
+      ]
+    },
+    {
+      "pathwayRef": "pathway.vexlife-prod.conversation.private",
+      "label": "Go private or leave private mode",
+      "disposition": "SCAE_FAMILY",
+      "summary": "VexLifePrivateModeFamily decides; a private conversation is never written, only its interval and the notes both agreed to keep.",
+      "returns": "a re-observed Private mode DisplayState",
+      "returnRef": "vexlife-prod.private.projection",
+      "nodes": [
+        {
+          "ref": "vexlife-prod.private.intent",
+          "face": "BEHAVIOR",
+          "role": "INTENT",
+          "label": "conversation.private",
+          "symbol": "VexLifeWebP1.Refs.ConversationPrivateCapability",
+          "summary": null,
+          "source": "common:web/VexLifeWebP1.kt"
+        },
+        {
+          "ref": "vexlife-prod.private.dispatch",
+          "face": "BEHAVIOR",
+          "role": "DISPATCH",
+          "label": "POST /api/v1/private/control",
+          "symbol": "VexLifeProdLocalService",
+          "summary": null,
+          "source": "jvm:service/VexLifeProdLocalService.kt"
+        },
+        {
+          "ref": "vexlife-prod.private.control",
+          "face": "BEHAVIOR",
+          "role": "CONTROL",
+          "label": "BEGIN · END",
+          "symbol": "VexLifePrivateModeFamily.Control",
+          "summary": null,
+          "source": "common:continuity/VexLifePrivateModeFamily.kt"
+        },
+        {
+          "ref": "vexlife-prod.private.state",
+          "face": "BEHAVIOR",
+          "role": "STATE",
+          "label": "KEPT · PRIVATE",
+          "symbol": "VexLifePrivateModeFamily.State",
+          "summary": null,
+          "source": "common:continuity/VexLifePrivateModeFamily.kt"
+        },
+        {
+          "ref": "vexlife-prod.private.act",
+          "face": "BEHAVIOR",
+          "role": "ACT",
+          "label": "VexLifePrivateModeFamily.act",
+          "symbol": "VexLifePrivateModeFamily",
+          "summary": null,
+          "source": "common:continuity/VexLifePrivateModeFamily.kt"
+        },
+        {
+          "ref": "vexlife-prod.private.effect",
+          "face": "BEHAVIOR",
+          "role": "EFFECT",
+          "label": "BeginPrivate · EndPrivate",
+          "symbol": "VexLifePrivateModeFamily.Effect",
+          "summary": null,
+          "source": "common:continuity/VexLifePrivateModeFamily.kt"
+        },
+        {
+          "ref": "vexlife-prod.private.session",
+          "face": "DEPTH",
+          "role": "EXECUTION",
+          "label": "In-memory private conversation",
+          "symbol": "VexLifePrivateConversation",
+          "summary": "Held only in the running service; never written.",
+          "source": "jvm:continuity/VexLifePrivateConversation.kt"
+        },
+        {
+          "ref": "vexlife-prod.private.interval",
+          "face": "DEPTH",
+          "role": "STORE",
+          "label": "Private interval record",
+          "symbol": "VexLifePrivateConversation.IntervalRecord",
+          "summary": "When, how many exchanges, and the kept notes.",
+          "source": "jvm:continuity/VexLifePrivateConversation.kt"
+        },
+        {
+          "ref": "vexlife-prod.private.projection",
+          "face": "BEHAVIOR",
+          "role": "PROJECTION",
+          "label": "Private mode DisplayState",
+          "symbol": "VexLifePrivateModeFamily.DisplayState",
+          "summary": null,
+          "source": "common:continuity/VexLifePrivateModeFamily.kt"
+        }
+      ],
+      "edges": [
+        {
+          "from": "vexlife-prod.private.intent",
+          "to": "vexlife-prod.private.dispatch",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.private.dispatch",
+          "to": "vexlife-prod.private.control",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.private.state",
+          "to": "vexlife-prod.private.act",
+          "label": "current State",
+          "kind": "DATA"
+        },
+        {
+          "from": "vexlife-prod.private.control",
+          "to": "vexlife-prod.private.act",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.private.act",
+          "to": "vexlife-prod.private.effect",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.private.effect",
+          "to": "vexlife-prod.private.session",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.private.session",
+          "to": "vexlife-prod.private.interval",
+          "label": "on leave",
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.private.interval",
+          "to": "vexlife-prod.private.projection",
+          "label": "re-observed",
+          "kind": "RETURN"
         }
       ]
     },

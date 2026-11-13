@@ -10,6 +10,7 @@ import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import vexlife.blueprint.VexUiElementRef
+import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.vision.VexLifeVisionFamily
 import vexlife.web.VexLifeWebP1
@@ -192,6 +193,7 @@ object VexLifeProdScreenLens {
         when (capabilityRef) {
             VexLifeWebP1.Refs.ConversationSendCapability.value -> sendPathway()
             VexLifeWebP1.Refs.VisionSelectedScopeCapability.value -> visionPathway()
+            VexLifeWebP1.Refs.ConversationPrivateCapability.value -> privatePathway()
             else -> null
         }
 
@@ -411,6 +413,41 @@ object VexLifeProdScreenLens {
                     edge("$n.runtime", "$n.picker"),
                     edge("$n.picker", "$n.observation"),
                     edge("$n.observation", "$n.projection", "RETURN", "re-observed"),
+                ),
+        )
+    }
+
+    private fun privatePathway(): JsonObject {
+        val n = "vexlife-prod.private"
+        return pathway(
+            ref = "pathway.vexlife-prod.conversation.private",
+            label = "Go private or leave private mode",
+            disposition = "SCAE_FAMILY",
+            summary = "VexLifePrivateModeFamily decides; a private conversation is never written, only its interval and the notes both agreed to keep.",
+            returns = "a re-observed Private mode DisplayState",
+            returnRef = "$n.projection",
+            nodes =
+                listOf(
+                    node("$n.intent", "BEHAVIOR", "INTENT", "conversation.private", "VexLifeWebP1.Refs.ConversationPrivateCapability", Common + "web/VexLifeWebP1.kt"),
+                    node("$n.dispatch", "BEHAVIOR", "DISPATCH", "POST ${VexLifeProdServiceContract.PrivateControlPath}", "VexLifeProdLocalService", Jvm + "service/VexLifeProdLocalService.kt"),
+                    node("$n.control", "BEHAVIOR", "CONTROL", "${VexLifePrivateModeFamily.ControlBegin} · ${VexLifePrivateModeFamily.ControlEnd}", "VexLifePrivateModeFamily.Control", Common + "continuity/VexLifePrivateModeFamily.kt"),
+                    node("$n.state", "BEHAVIOR", "STATE", "${VexLifePrivateModeFamily.StateKept} · ${VexLifePrivateModeFamily.StatePrivate}", "VexLifePrivateModeFamily.State", Common + "continuity/VexLifePrivateModeFamily.kt"),
+                    node("$n.act", "BEHAVIOR", "ACT", "VexLifePrivateModeFamily.act", "VexLifePrivateModeFamily", Common + "continuity/VexLifePrivateModeFamily.kt"),
+                    node("$n.effect", "BEHAVIOR", "EFFECT", "BeginPrivate · EndPrivate", "VexLifePrivateModeFamily.Effect", Common + "continuity/VexLifePrivateModeFamily.kt"),
+                    node("$n.session", "DEPTH", "EXECUTION", "In-memory private conversation", "VexLifePrivateConversation", Jvm + "continuity/VexLifePrivateConversation.kt", "Held only in the running service; never written."),
+                    node("$n.interval", "DEPTH", "STORE", "Private interval record", "VexLifePrivateConversation.IntervalRecord", Jvm + "continuity/VexLifePrivateConversation.kt", "When, how many exchanges, and the kept notes."),
+                    node("$n.projection", "BEHAVIOR", "PROJECTION", "Private mode DisplayState", "VexLifePrivateModeFamily.DisplayState", Common + "continuity/VexLifePrivateModeFamily.kt"),
+                ),
+            edges =
+                listOf(
+                    edge("$n.intent", "$n.dispatch"),
+                    edge("$n.dispatch", "$n.control"),
+                    edge("$n.state", "$n.act", "DATA", "current State"),
+                    edge("$n.control", "$n.act"),
+                    edge("$n.act", "$n.effect"),
+                    edge("$n.effect", "$n.session"),
+                    edge("$n.session", "$n.interval", label = "on leave"),
+                    edge("$n.interval", "$n.projection", "RETURN", "re-observed"),
                 ),
         )
     }

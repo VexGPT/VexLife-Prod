@@ -131,6 +131,9 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <span class="status-model" id="companion-status-model"></span>
         </p>
         <button class="quiet-button" type="button" data-vex-legacy="CompanionCheck" id="companion-check" hidden>Check again</button>
+        <button class="outline-button private-mode" type="button" data-vex-ref="${VexLifeWebP1.PrivateMode.identity.ref}" id="private-mode" aria-pressed="false" title="Everything you and Vex say here is kept in your Vex Home.">
+          <span class="private-dot" aria-hidden="true"></span><span id="private-mode-label">Kept in your archives</span>
+        </button>
         <button class="outline-button vision-control" type="button" data-vex-ref="${VexLifeWebP1.Vision.identity.ref}" id="vision-control"
           aria-describedby="vision-control-status" aria-disabled="true" disabled title="Vision availability is checking">
           <svg class="vision-mark" viewBox="0 0 20 20" aria-hidden="true"><path d="M2.4 10s2.8-4.3 7.6-4.3 7.6 4.3 7.6 4.3-2.8 4.3-7.6 4.3S2.4 10 2.4 10Z"/><circle cx="10" cy="10" r="2.3"/></svg>
@@ -142,6 +145,18 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
       </div>
 
       <div class="conversation" data-vex-ref="${VexLifeWebP1.Conversation.identity.ref}" data-vex-structural-parent="${VexLifeWebP1.Refs.CompanionContent.value}" id="view-conversation">
+        <section class="private-banner" data-vex-ref="${VexLifeWebP1.PrivateBanner.identity.ref}" id="private-banner" aria-live="polite" hidden>
+          <p class="private-banner-text" id="private-banner-text"></p>
+          <ul class="private-notes" id="private-notes"></ul>
+          <div class="private-proposal" id="private-proposal" hidden>
+            <p class="private-proposal-text" id="private-proposal-text"></p>
+            <div class="private-proposal-actions">
+              <button class="outline-button" type="button" id="private-keep">Keep this note</button>
+              <button class="quiet-button" type="button" id="private-decline">Don't keep</button>
+            </div>
+          </div>
+          <button class="quiet-button" type="button" id="private-propose">Keep something…</button>
+        </section>
         <ol class="timeline" data-vex-ref="${VexLifeWebP1.ConversationTimeline.identity.ref}" id="timeline" aria-label="Conversation with Vex"></ol>
         <button class="outline-button jump-latest" type="button" data-vex-ref="${VexLifeWebP1.ConversationJumpLatest.identity.ref}" id="jump-latest" hidden>New messages</button>
 
@@ -238,10 +253,6 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <p class="setting-note-line">Continuity mode will choose how another device reaches Vex: as a window onto this Mac's Vex, or as a Vex of its own. Dream sync will let Vex propose what to keep from your conversations so you can accept or decline each one before anything is kept or shared. Neither exists in VexLife-Prod yet.</p>
         </section>
 
-        <section class="setting setting-reset" data-vex-ref="${VexLifeWebP1.SettingsReset.identity.ref}">
-          <button class="outline-button wide" type="button" data-vex-ref="${VexLifeWebP1.CleanChat.identity.ref}" id="clean-chat" disabled>Start clean chat · Not available yet</button>
-          <p class="setting-note-line">A clean chat will let your next message start fresh: Vex won't be given your earlier messages. Nothing is deleted; they stay in your conversation, and Vex's Memory is untouched.</p>
-        </section>
 
         <section class="setting setting-renderer">
           <p class="setting-note-line" id="setting-renderer"></p>
@@ -259,14 +270,6 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
     <pre class="inspector-text" id="inspector-text"></pre>
   </dialog>
 
-  <dialog class="sheet confirm" id="confirm-clean" aria-labelledby="confirm-title">
-    <h2 id="confirm-title">Start a clean chat?</h2>
-    <p id="confirm-text"></p>
-    <div class="confirm-actions">
-      <button class="quiet-button" type="button" id="confirm-cancel">Keep this chat</button>
-      <button class="danger-button" type="button" id="confirm-accept">Start clean chat</button>
-    </div>
-  </dialog>
 
   <div class="overlay" id="overlay-root">
     <p class="snackbar" id="snackbar" role="status" aria-live="polite" hidden></p>

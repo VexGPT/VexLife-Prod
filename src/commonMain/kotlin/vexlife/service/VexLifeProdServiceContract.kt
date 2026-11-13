@@ -3,6 +3,7 @@ package vexlife.service
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.home.VexLifeProdHome
 import vexlife.memory.VexLifeMemoryFamily
 import vexlife.vision.VexLifeVisionFamily
@@ -34,6 +35,9 @@ object VexLifeProdServiceContract {
         "vexlife-prod.local-service-memory-dream-run-response/v1"
 
     const val MemoryProjectionSchema = "vexlife-prod.local-service-memory-projection/v1"
+
+    const val PrivateProjectionSchema = "vexlife-prod.local-service-private-projection/v1"
+    const val PrivateControlResultSchema = "vexlife-prod.local-service-private-control-result/v1"
 
     const val VisionProjectionSchema =
         "vexlife-prod.local-service-vision-projection/v2"
@@ -93,6 +97,16 @@ object VexLifeProdServiceContract {
         "/api/v1/context"
 
     const val MemoryPath = "/api/v1/memory"
+
+    const val PrivatePath = "/api/v1/private"
+    const val PrivateControlPath = "/api/v1/private/control"
+    const val PrivateSendPath = "/api/v1/private/send"
+    const val PrivateNoteProposePath = "/api/v1/private/note/propose"
+    const val PrivateNoteKeepPath = "/api/v1/private/note/keep"
+    const val PrivateNoteDeclinePath = "/api/v1/private/note/decline"
+
+    /** Longest private message or kept note the service accepts. */
+    const val PrivateTextLimit = 20_000
 
     const val MemoryDreamPath =
         "/api/v1/memory/dream"
@@ -422,6 +436,87 @@ object VexLifeProdServiceContract {
         val firstPersonAuthorityGranted: Boolean,
         val effectsPerformed: Boolean,
     )
+    /** One private exchange, held only in the running service. */
+    @Serializable
+    data class PrivateExchange(val human: String, val vex: String, val at: String)
+
+    /** What survives a private conversation: when it was, how long, and the agreed notes. */
+    @Serializable
+    data class PrivateInterval(
+        val intervalRef: String,
+        val startedAt: String,
+        val endedAt: String,
+        val exchangeCount: Int,
+        val keptNotes: List<String>,
+    )
+
+    /** See [VexLifePrivateModeFamily]. Exchanges and pending notes exist only while private. */
+    @Serializable
+    data class PrivateProjection(
+        val schemaVersion: String,
+        val state: String,
+        val display: VexLifePrivateModeFamily.DisplayState,
+        val startedAtOrNull: String?,
+        val exchanges: List<PrivateExchange>,
+        val keptNotes: List<String>,
+        val proposedNoteOrNull: String?,
+        val intervals: List<PrivateInterval>,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion == PrivateProjectionSchema &&
+                    state in setOf(VexLifePrivateModeFamily.StateKept, VexLifePrivateModeFamily.StatePrivate) &&
+                    (state == VexLifePrivateModeFamily.StatePrivate ||
+                        (startedAtOrNull == null && exchanges.isEmpty() && keptNotes.isEmpty() && proposedNoteOrNull == null)) &&
+                    !effectsPerformed
+            ) {
+                "Private projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class PrivateControlRequest(val controlRef: String, val requestRef: String) {
+        init {
+            require(VexLifePrivateModeFamily.controlForRef(controlRef) != null) { "unknown Private mode Control" }
+            requirePortableRef(requestRef, "requestRef")
+        }
+    }
+
+    @Serializable
+    data class PrivateControlResult(
+        val schemaVersion: String,
+        val requestRef: String,
+        val controlRef: String,
+        val outcome: String,
+        val private: PrivateProjection,
+    ) {
+        init {
+            require(schemaVersion == PrivateControlResultSchema && outcome in setOf(PrivateRealized, PrivateNotLawfulNow)) {
+                "Private control result is invalid"
+            }
+        }
+    }
+
+    const val PrivateRealized = "REALIZED"
+    const val PrivateNotLawfulNow = "NOT_LAWFUL_NOW"
+
+    @Serializable
+    data class PrivateSendRequest(val content: String) {
+        init {
+            require(content.isNotBlank() && content.length <= PrivateTextLimit) { "private message must be 1..$PrivateTextLimit characters" }
+        }
+    }
+
+    /** Keeping requires the exact words Vex proposed: the agreement is on those words. */
+    @Serializable
+    data class PrivateNoteKeepRequest(val text: String) {
+        init {
+            require(text.isNotBlank() && text.length <= PrivateTextLimit) { "kept note must be 1..$PrivateTextLimit characters" }
+        }
+    }
+
     /** What a person is told about Vex's long-term Memory; see [VexLifeMemoryFamily]. */
     @Serializable
     data class MemoryProjection(

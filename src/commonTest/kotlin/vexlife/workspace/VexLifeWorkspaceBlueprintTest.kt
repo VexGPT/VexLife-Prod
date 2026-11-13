@@ -41,7 +41,8 @@ class VexLifeWorkspaceBlueprintTest {
                 VexLifeWorkspaceBlueprint.ContextReceipt.ref to VexLifeWorkspaceBlueprint.Conversation.ref,
                 VexLifeWorkspaceBlueprint.ContextWindow.ref to VexLifeWorkspaceBlueprint.SettingsContext.ref,
                 VexLifeWorkspaceBlueprint.MemoryResource.ref to VexLifeWorkspaceBlueprint.SettingsResources.ref,
-                VexLifeWorkspaceBlueprint.CleanChat.ref to VexLifeWorkspaceBlueprint.SettingsReset.ref,
+                VexLifeWorkspaceBlueprint.PrivateMode.ref to VexLifeWorkspaceBlueprint.Companion.ref,
+                VexLifeWorkspaceBlueprint.PrivateBanner.ref to VexLifeWorkspaceBlueprint.Conversation.ref,
                 VexLifeWorkspaceBlueprint.ContinuityMemory.ref to VexLifeWorkspaceBlueprint.SettingsContinuity.ref,
             )
 

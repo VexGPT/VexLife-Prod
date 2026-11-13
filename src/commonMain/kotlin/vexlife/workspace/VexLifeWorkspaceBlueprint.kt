@@ -83,10 +83,14 @@ object VexLifeWorkspaceBlueprint :
             "view-switch",
         )
 
+    /** Private mode: a conversation that isn't kept. Replaces the earlier "clean chat". */
+    val PrivateMode = Companion.control("private-mode")
+
     val Conversation =
         Companion.region(
             "conversation",
         )
+    val PrivateBanner = Conversation.content("private-banner")
     val ConversationTimeline =
         Conversation.collection(
             "timeline",
@@ -176,14 +180,6 @@ object VexLifeWorkspaceBlueprint :
     val DreamSync =
         SettingsContinuity.control(
             "dream-sync",
-        )
-    val SettingsReset =
-        Settings.region(
-            "reset",
-        )
-    val CleanChat =
-        SettingsReset.control(
-            "clean-chat",
         )
 }
 
