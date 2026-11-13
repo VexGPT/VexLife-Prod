@@ -2082,7 +2082,7 @@ tasks.register(
     }
 }
 
-val vexLifeWebJvmMain =
+val vexLifeProdJvmMain =
     kotlin.targets
         .getByName("jvm")
         .compilations
@@ -2102,13 +2102,13 @@ tasks.register<JavaExec>(
         "Materialize the deterministic VexLife P1 browser artifacts from accepted VexWeb source."
 
     dependsOn(
-        vexLifeWebJvmMain.compileTaskProvider,
+        vexLifeProdJvmMain.compileTaskProvider,
     )
 
     classpath =
         files(
-            vexLifeWebJvmMain.output.allOutputs,
-            vexLifeWebJvmMain.runtimeDependencyFiles,
+            vexLifeProdJvmMain.output.allOutputs,
+            vexLifeProdJvmMain.runtimeDependencyFiles,
         )
 
     mainClass.set(
@@ -2137,13 +2137,13 @@ tasks.register<JavaExec>(
         "Verify an existing generated VexLife P1 browser artifact set against current VexWeb source."
 
     dependsOn(
-        vexLifeWebJvmMain.compileTaskProvider,
+        vexLifeProdJvmMain.compileTaskProvider,
     )
 
     classpath =
         files(
-            vexLifeWebJvmMain.output.allOutputs,
-            vexLifeWebJvmMain.runtimeDependencyFiles,
+            vexLifeProdJvmMain.output.allOutputs,
+            vexLifeProdJvmMain.runtimeDependencyFiles,
         )
 
     mainClass.set(
@@ -2156,6 +2156,99 @@ tasks.register<JavaExec>(
             .get()
             .asFile
             .absolutePath,
+    )
+}
+
+
+val vexLifeProdPublicEntryOutput =
+    layout.buildDirectory.dir(
+        "generated/public-entry/vexlife",
+    )
+
+val vexLifeProdPublicEntryReleaseContract =
+    layout.projectDirectory.file(
+        "packaging/private-service-image/release-contract.json",
+    )
+
+tasks.register<JavaExec>(
+    "generateVexLifeProdPublicEntry",
+) {
+    group =
+        "vexlife"
+    description =
+        "Materialize the deterministic no-effect public VexLife Product-entry page."
+
+    dependsOn(
+        vexLifeProdJvmMain.compileTaskProvider,
+    )
+
+    classpath =
+        files(
+            vexLifeProdJvmMain.output.allOutputs,
+            vexLifeProdJvmMain.runtimeDependencyFiles,
+        )
+
+    mainClass.set(
+        "vexlife.publicentry.VexLifeProdPublicEntryArtifactMaterializerKt",
+    )
+
+    args(
+        "write",
+        vexLifeProdPublicEntryOutput
+            .get()
+            .asFile
+            .absolutePath,
+        vexLifeProdPublicEntryReleaseContract
+            .asFile
+            .absolutePath,
+    )
+
+    inputs.file(
+        vexLifeProdPublicEntryReleaseContract,
+    )
+    outputs.dir(
+        vexLifeProdPublicEntryOutput,
+    )
+}
+
+tasks.register<JavaExec>(
+    "verifyVexLifeProdPublicEntry",
+) {
+    group =
+        "verification"
+    description =
+        "Verify generated VexLife public-entry bytes against current Product-entry and release source."
+
+    dependsOn(
+        vexLifeProdJvmMain.compileTaskProvider,
+    )
+
+    classpath =
+        files(
+            vexLifeProdJvmMain.output.allOutputs,
+            vexLifeProdJvmMain.runtimeDependencyFiles,
+        )
+
+    mainClass.set(
+        "vexlife.publicentry.VexLifeProdPublicEntryArtifactMaterializerKt",
+    )
+
+    args(
+        "verify",
+        vexLifeProdPublicEntryOutput
+            .get()
+            .asFile
+            .absolutePath,
+        vexLifeProdPublicEntryReleaseContract
+            .asFile
+            .absolutePath,
+    )
+
+    inputs.file(
+        vexLifeProdPublicEntryReleaseContract,
+    )
+    inputs.dir(
+        vexLifeProdPublicEntryOutput,
     )
 }
 
