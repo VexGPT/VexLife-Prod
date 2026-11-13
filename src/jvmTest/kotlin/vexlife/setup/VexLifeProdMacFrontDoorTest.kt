@@ -518,6 +518,8 @@ class VexLifeProdMacFrontDoorTest {
                 "Cancel safely",
                 "property progressPrefix : \"[VexLife] \"",
                 "NSOpenPanel",
+                "showProcessFailure(\"VexLife could not read the result of that step.\", activated, true)",
+                "inspected, false)",
             )) {
             assertTrue(source.contains(required), "native window must keep: $required")
         }
@@ -544,6 +546,8 @@ class VexLifeProdMacFrontDoorTest {
                 // and
                 // lets JVM diagnostics corrupt the JSON channel.
                 "setStandardError:outputPipe",
+                // An unreadable activation result cannot prove that no effect ran.
+                "Nothing was changed by this window.",
             )) {
             assertFalse(
                 source.contains(forbidden),

@@ -60,12 +60,12 @@ on showEntry()
 	set inspected to my runProductEntry({"--inspect-front-door", "--home", selectedHomePath, "--expected-source-sha", sourceSha}, false)
 	set projection to jsonValue of inspected
 	if projection is missing value then
-		return my showProcessFailure("VexLife couldn't check this Mac.", inspected)
+		return my showProcessFailure("VexLife couldn't check this Mac.", inspected, false)
 	end if
 
 	set card to projection's objectForKey:"card"
 	if card is missing value or card is (current application's NSNull's null()) then
-		return my showProcessFailure("VexLife couldn't check this Mac.", inspected)
+		return my showProcessFailure("VexLife couldn't check this Mac.", inspected, false)
 	end if
 
 	set actionRef to my presentCard(card)
@@ -132,7 +132,7 @@ on activateControl(controlRef)
 
 	set activation to jsonValue of activated
 	if activation is missing value then
-		return my showProcessFailure("VexLife could not complete that step.", activated)
+		return my showProcessFailure("VexLife could not read the result of that step.", activated, true)
 	end if
 
 	set failureValue to activation's objectForKey:"failure"
@@ -158,7 +158,7 @@ on activateControl(controlRef)
 	end if
 	if manifestationRef is "REFRESH_ENTRY" then return "RECHECK"
 	if manifestationRef is "NO_ACTION" then return "CLOSE"
-	return my showProcessFailure("VexLife returned an instruction this window does not know.", activated)
+	return my showProcessFailure("VexLife returned an instruction this window does not know.", activated, true)
 end activateControl
 
 -- ------------------------------------------------------------------ Vex Home chooser
@@ -369,11 +369,19 @@ end latestProgressLine
 
 -- ------------------------------------------------------------------ small helpers
 
-on showProcessFailure(titleText, resultRecord)
+-- effectMayHaveRun is false only for the no-effect inspection process. An activation whose result
+-- is unreadable may already have created the Home, downloaded files or started VexLife, so the
+-- window must not claim that nothing changed; it re-observes instead.
+on showProcessFailure(titleText, resultRecord, effectMayHaveRun)
 	set detailText to stderrText of resultRecord
 	if detailText is "" then set detailText to stdoutText of resultRecord
 	if detailText is "" then set detailText to "The setup program stopped without a readable explanation."
-	set choice to my promptChoice(titleText, "Nothing was changed by this window." & linefeed & linefeed & (my boundedText(detailText)), {"Check Again", "Close"})
+	if effectMayHaveRun then
+		set leadText to "VexLife can't tell from this result what finished. Choose Check Again to see what is true on this Mac now; anything that finished was kept."
+	else
+		set leadText to "Checking doesn't change anything on this Mac, and nothing was changed."
+	end if
+	set choice to my promptChoice(titleText, leadText & linefeed & linefeed & (my boundedText(detailText)), {"Check Again", "Close"})
 	if choice is 1 then return "RECHECK"
 	return "CLOSE"
 end showProcessFailure
