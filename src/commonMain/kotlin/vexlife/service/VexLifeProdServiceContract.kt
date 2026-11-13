@@ -15,6 +15,9 @@ object VexLifeProdServiceContract {
     const val SourceCurrentnessSchema =
         "vexlife-prod.local-service-source-currentness/v3"
 
+    const val CurrentStateProjectionSchema =
+        "vexlife-prod.local-service-current-state/v2"
+
     const val ConversationProjectionSchema =
         "vexlife-prod.local-service-conversation-projection/v1"
 
@@ -72,6 +75,9 @@ object VexLifeProdServiceContract {
     const val SourceCurrentnessPath =
         "/api/v1/source-currentness"
 
+    const val CurrentStatePath =
+        "/api/v1/current-state"
+
     const val ConversationPath =
         "/api/v1/conversation"
 
@@ -104,6 +110,174 @@ object VexLifeProdServiceContract {
         val currentConversationHeadSha256: String?,
         val effectsPerformed: Boolean,
     )
+
+    @Serializable
+    data class CurrentStateProjection(
+        val schemaVersion: String,
+        val observedAt: String,
+        val homePath: String,
+        val homeDisposition: String,
+        val homeRef: String,
+        val deviceRef: String,
+        val companionLineageRef: String,
+        val platform: String,
+        val architecture: String,
+        val chipModel: String?,
+        val hostEligibilityState: String,
+        val hostEligibilityReason: String?,
+        val totalMemoryBytes: Long?,
+        val modelMinimumMemoryBytes: Long?,
+        val freeStorageBytes: Long?,
+        val modelSelectionState: String,
+        val activeModelRef: String?,
+        val activeModelProfileRef: String?,
+        val runtimeState: String,
+        val runtimeCurrentness: String,
+        val runtimeReceiptPath: String?,
+        val modelArtifactState: String,
+        val modelArtifactTotalBytes: Long?,
+        val modelArtifactPresentBySizeBytes: Long?,
+        val modelArtifactMissingBytes: Long?,
+        val modelArtifactInvalidSizeBytes: Long?,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    CurrentStateProjectionSchema &&
+                    observedAt.isNotBlank() &&
+                    homePath.isNotBlank() &&
+                    homeDisposition.isNotBlank() &&
+                    homeRef.isNotBlank() &&
+                    deviceRef.isNotBlank() &&
+                    companionLineageRef.isNotBlank() &&
+                    platform.isNotBlank() &&
+                    architecture.isNotBlank() &&
+                    hostEligibilityState in
+                    setOf(
+                        "ELIGIBLE",
+                        "UNSUPPORTED",
+                    ) &&
+                    modelSelectionState in
+                    setOf(
+                        "UNCONFIGURED",
+                        "HERETIC_ESTABLISHMENT_PENDING",
+                        "BOUND_HERETIC_PRODUCT_MODEL",
+                    ) &&
+                    runtimeState in
+                    setOf(
+                        "NOT_SELECTED",
+                        "ESTABLISHMENT_PENDING",
+                        "BOUND_PRODUCT_MODEL",
+                    ) &&
+                    runtimeCurrentness in
+                    setOf(
+                        "NOT_APPLICABLE",
+                        "CONFIGURATION_ONLY_NOT_REOBSERVED",
+                    ) &&
+                    modelArtifactState in
+                    setOf(
+                        "NOT_SELECTED",
+                        "ABSENT",
+                        "PARTIAL_BY_SIZE",
+                        "COMPLETE_BY_SIZE_NOT_HASHED",
+                        "INVALID_SIZE",
+                    ) &&
+                    !effectsPerformed,
+            ) {
+                "current-state projection is invalid"
+            }
+
+            when (
+                modelSelectionState
+            ) {
+                "UNCONFIGURED" ->
+                    require(
+                        activeModelRef ==
+                            null &&
+                            activeModelProfileRef ==
+                            null &&
+                            modelMinimumMemoryBytes ==
+                            null &&
+                            runtimeState ==
+                            "NOT_SELECTED" &&
+                            runtimeCurrentness ==
+                            "NOT_APPLICABLE" &&
+                            runtimeReceiptPath ==
+                            null &&
+                            modelArtifactState ==
+                            "NOT_SELECTED" &&
+                            modelArtifactTotalBytes ==
+                            null &&
+                            modelArtifactPresentBySizeBytes ==
+                            null &&
+                            modelArtifactMissingBytes ==
+                            null &&
+                            modelArtifactInvalidSizeBytes ==
+                            null,
+                    ) {
+                        "unconfigured current-state projection claims selected-model truth"
+                    }
+
+                "HERETIC_ESTABLISHMENT_PENDING",
+                "BOUND_HERETIC_PRODUCT_MODEL",
+                -> {
+                    require(
+                        !activeModelRef.isNullOrBlank() &&
+                            !activeModelProfileRef.isNullOrBlank() &&
+                            modelMinimumMemoryBytes !=
+                            null &&
+                            modelMinimumMemoryBytes >=
+                            0 &&
+                            runtimeCurrentness ==
+                            "CONFIGURATION_ONLY_NOT_REOBSERVED" &&
+                            !runtimeReceiptPath.isNullOrBlank() &&
+                            modelArtifactState !=
+                            "NOT_SELECTED" &&
+                            modelArtifactTotalBytes !=
+                            null &&
+                            modelArtifactPresentBySizeBytes !=
+                            null &&
+                            modelArtifactMissingBytes !=
+                            null &&
+                            modelArtifactInvalidSizeBytes !=
+                            null &&
+                            modelArtifactTotalBytes >=
+                            0 &&
+                            modelArtifactPresentBySizeBytes >=
+                            0 &&
+                            modelArtifactMissingBytes >=
+                            0 &&
+                            modelArtifactInvalidSizeBytes >=
+                            0 &&
+                            modelArtifactPresentBySizeBytes +
+                            modelArtifactMissingBytes +
+                            modelArtifactInvalidSizeBytes ==
+                            modelArtifactTotalBytes,
+                    ) {
+                        "selected-model current-state projection is incomplete"
+                    }
+
+                    require(
+                        (
+                            modelSelectionState ==
+                                "HERETIC_ESTABLISHMENT_PENDING" &&
+                                runtimeState ==
+                                "ESTABLISHMENT_PENDING"
+                        ) ||
+                            (
+                                modelSelectionState ==
+                                    "BOUND_HERETIC_PRODUCT_MODEL" &&
+                                    runtimeState ==
+                                    "BOUND_PRODUCT_MODEL"
+                            ),
+                    ) {
+                        "model selection and runtime-binding projection disagree"
+                    }
+                }
+            }
+        }
+    }
 
     @Serializable
     data class ConversationMessage(
