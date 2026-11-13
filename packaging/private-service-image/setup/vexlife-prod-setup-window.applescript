@@ -3,6 +3,7 @@ use framework "Foundation"
 use scripting additions
 
 property app : current application
+property productOrigin : "http://127.0.0.1:18210/"
 
 on isFullHex(value, expectedLength)
     if value is missing value then return false
@@ -24,67 +25,91 @@ on bundleString(keyName)
     return value as text
 end bundleString
 
-on boundedLog(pathValue)
-    set readError to reference
-    set value to app's NSString's stringWithContentsOfFile:pathValue encoding:(app's NSUTF8StringEncoding) |error|:readError
-    if value is missing value then return "No setup output was recorded."
-
+on boundedText(value)
+    if value is missing value then return ""
+    set source to app's NSString's stringWithString:(value as text)
     set maxCharacters to 3500
-    set countValue to value's |length|()
+    set countValue to source's |length|()
     if countValue > maxCharacters then
-        set value to value's substringFromIndex:(countValue - maxCharacters)
+        set source to source's substringFromIndex:(countValue - maxCharacters)
     end if
-    return value as text
-end boundedLog
+    return source as text
+end boundedText
 
 on showFailure(messageText, detailsText)
     set alert to app's NSAlert's alloc()'s init()
     alert's setAlertStyle:(app's NSAlertStyleCritical)
     alert's setMessageText:messageText
-    alert's setInformativeText:detailsText
+    alert's setInformativeText:(my boundedText(detailsText))
     alert's addButtonWithTitle:"Close"
     alert's runModal()
 end showFailure
 
-on run
-    set sourceSha to my bundleString("VexLifeProdExpectedSourceSha")
-    set setupLauncher to my bundleString("VexLifeProdSetupLauncher")
+on openProduct()
+    app's NSWorkspace's sharedWorkspace()'s openURL:(app's NSURL's URLWithString:productOrigin)
+end openProduct
 
-    if not my isFullHex(sourceSha, 40) then
-        my showFailure("VexLife could not start setup.", "The staged product source identity is invalid.")
-        return
-    end if
+on runInspection(setupLauncher, sourceSha)
+    set outputPipe to app's NSPipe's pipe()
+    set task to app's NSTask's alloc()'s init()
+    task's setExecutableURL:(app's NSURL's fileURLWithPath:setupLauncher)
+    task's setArguments:{"--inspect-front-door", "--expected-source-sha", sourceSha}
+    task's setStandardOutput:outputPipe
+    task's setStandardError:outputPipe
 
-    if setupLauncher is missing value or not ((app's NSFileManager's defaultManager()'s isExecutableFileAtPath:setupLauncher) as boolean) then
-        my showFailure("VexLife could not start setup.", "The exact staged VexLife setup program is unavailable.")
-        return
-    end if
+    set launchError to reference
+    set launched to task's launchAndReturnError:launchError
+    if launched is not true then return {missing value, "The front-door observation process could not be launched."}
 
-    app's NSApplication's sharedApplication()
-    app's NSApp's setActivationPolicy:(app's NSApplicationActivationPolicyRegular)
-    app's NSApp's activateIgnoringOtherApps:true
+    repeat while (task's isRunning()) as boolean
+        app's NSRunLoop's currentRunLoop()'s runUntilDate:(app's NSDate's dateWithTimeIntervalSinceNow:0.05)
+    end repeat
 
-    set consent to app's NSAlert's alloc()'s init()
-    consent's setAlertStyle:(app's NSAlertStyleInformational)
-    consent's setMessageText:"Continue with VexLife"
-    consent's setInformativeText:"VexLife will verify the exact current product, prepare its private local runtime, and download verified model files if they are missing. The first setup can download about 15 GB."
-    consent's addButtonWithTitle:"Continue"
-    consent's addButtonWithTitle:"Cancel"
+    set dataValue to outputPipe's fileHandleForReading()'s readDataToEndOfFile()
+    set textValue to app's NSString's alloc()'s initWithData:dataValue encoding:(app's NSUTF8StringEncoding)
+    if (task's terminationStatus() as integer) is not 0 then return {missing value, textValue as text}
 
-    set consentResult to consent's runModal()
-    if consentResult is not (app's NSAlertFirstButtonReturn) then return
+    set parseError to reference
+    set projection to app's NSJSONSerialization's JSONObjectWithData:dataValue options:0 |error|:parseError
+    if projection is missing value then return {missing value, textValue as text}
+    return {projection, ""}
+end runInspection
 
+on dictionaryText(dictionaryValue, keyName, fallbackValue)
+    if dictionaryValue is missing value then return fallbackValue
+    set value to dictionaryValue's objectForKey:keyName
+    if value is missing value or value is (app's NSNull's null()) then return fallbackValue
+    return value as text
+end dictionaryText
+
+on formatGiB(value)
+    if value is missing value or value is (app's NSNull's null()) then return "Unknown"
+    set gib to (value as real) / 1073741824
+    set tenth to (round (gib * 10)) / 10
+    return (tenth as text) & " GB"
+end formatGiB
+
+on projectionSummary(projection)
+    set currentState to projection's objectForKey:"currentState"
+    set homePath to my dictionaryText(currentState, "homePath", "Unknown")
+    set modelRef to my dictionaryText(currentState, "activeModelRef", "No model selected")
+    set storageValue to currentState's objectForKey:"freeStorageBytes"
+    set serviceSource to my dictionaryText(projection, "currentServiceSourceSha", "None")
+    return "Home: " & homePath & return & "Model: " & modelRef & return & "Storage available: " & (my formatGiB(storageValue)) & return & "Running Product source: " & serviceSource
+end projectionSummary
+
+on performSetup(setupLauncher, sourceSha, modeFlag, headingText)
     set panel to app's NSWindow's alloc()'s initWithContentRect:{{0, 0}, {520, 160}} styleMask:(app's NSWindowStyleMaskTitled) backing:(app's NSBackingStoreBuffered) defer:false
     panel's setTitle:"VexLife"
     panel's center()
 
     set contentView to panel's contentView()
-    set heading to app's NSTextField's labelWithString:"Setting up VexLife…"
+    set heading to app's NSTextField's labelWithString:headingText
     heading's setFont:(app's NSFont's boldSystemFontOfSize:18)
     heading's setFrame:{{64, 96}, {420, 28}}
     contentView's addSubview:heading
 
-    set detail to app's NSTextField's wrappingLabelWithString:"VexLife is verifying the current product, local model, runtime, and service. This can take a while on first setup."
+    set detail to app's NSTextField's wrappingLabelWithString:"VexLife is preserving your Home and continuity while the exact Product lifecycle owner verifies and converges the local service."
     detail's setFrame:{{64, 42}, {420, 50}}
     contentView's addSubview:detail
 
@@ -103,7 +128,7 @@ on run
 
     set task to app's NSTask's alloc()'s init()
     task's setExecutableURL:(app's NSURL's fileURLWithPath:setupLauncher)
-    task's setArguments:{"--expected-source-sha", sourceSha, "--allow-acquisition"}
+    task's setArguments:{"--expected-source-sha", sourceSha, modeFlag}
     task's setStandardOutput:logHandle
     task's setStandardError:logHandle
 
@@ -113,8 +138,8 @@ on run
         logHandle's closeFile()
         spinner's stopAnimation:me
         panel's orderOut:me
-        my showFailure("VexLife setup could not start.", "The bundled setup process could not be launched.")
-        return
+        my showFailure("VexLife could not start the requested lifecycle action.", "The exact setup process could not be launched.")
+        return false
     end if
 
     repeat while (task's isRunning()) as boolean
@@ -131,16 +156,108 @@ on run
     set readyRange to (app's NSString's stringWithString:outputText)'s rangeOfString:expectedReadyPrefix
     set readyObserved to (readyRange's location) is not (app's NSNotFound)
 
-    if statusValue is 0 and readyObserved then
-        set successAlert to app's NSAlert's alloc()'s init()
-        successAlert's setAlertStyle:(app's NSAlertStyleInformational)
-        successAlert's setMessageText:"VexLife setup is complete."
-        successAlert's setInformativeText:"The exact current VexLife local service is installed and running. The final VexLife product interface is a separate held edge in this candidate."
-        successAlert's addButtonWithTitle:"Done"
-        successAlert's runModal()
-    else
-        my showFailure("VexLife setup did not complete.", outputText)
+    if statusValue is 0 and readyObserved then return true
+    my showFailure("VexLife did not complete the requested lifecycle action.", outputText)
+    return false
+end performSetup
+
+on boundedLog(pathValue)
+    set readError to reference
+    set value to app's NSString's stringWithContentsOfFile:pathValue encoding:(app's NSUTF8StringEncoding) |error|:readError
+    if value is missing value then return "No setup output was recorded."
+    return my boundedText(value as text)
+end boundedLog
+
+on run
+    set sourceSha to my bundleString("VexLifeProdExpectedSourceSha")
+    set setupLauncher to my bundleString("VexLifeProdSetupLauncher")
+
+    if not my isFullHex(sourceSha, 40) then
+        my showFailure("VexLife could not start.", "The staged product source identity is invalid.")
+        return
     end if
+
+    if setupLauncher is missing value or not ((app's NSFileManager's defaultManager()'s isExecutableFileAtPath:setupLauncher) as boolean) then
+        my showFailure("VexLife could not start.", "The exact staged VexLife setup program is unavailable.")
+        return
+    end if
+
+    app's NSApplication's sharedApplication()
+    app's NSApp's setActivationPolicy:(app's NSApplicationActivationPolicyRegular)
+    app's NSApp's activateIgnoringOtherApps:true
+
+    set inspection to my runInspection(setupLauncher, sourceSha)
+    set projection to item 1 of inspection
+    if projection is missing value then
+        my showFailure("VexLife could not inspect the current Product state.", item 2 of inspection)
+        return
+    end if
+
+    set actionName to my dictionaryText(projection, "action", "HOLD_UNKNOWN")
+    set summaryText to my projectionSummary(projection)
+
+    if actionName is "HOLD_UNKNOWN" then
+        set detailText to my dictionaryText(projection, "serviceDetail", "Current Product ownership is not exact.")
+        my showFailure("VexLife will not replace the current process.", summaryText & return & return & detailText)
+        return
+    end if
+
+    if actionName is "OPEN_CURRENT" then
+        set alert to app's NSAlert's alloc()'s init()
+        alert's setMessageText:"VexLife is current."
+        alert's setInformativeText:summaryText
+        alert's addButtonWithTitle:"Open VexLife"
+        alert's addButtonWithTitle:"Cancel"
+        if (alert's runModal()) is (app's NSAlertFirstButtonReturn) then my openProduct()
+        return
+    end if
+
+    if actionName is "UPDATE_AVAILABLE" then
+        set alert to app's NSAlert's alloc()'s init()
+        alert's setMessageText:"A newer VexLife Product source is available."
+        alert's setInformativeText:(summaryText & return & return & "Your Home, Conversation, Memory, and model continuity will be preserved. Update & Restart retires only the exact owned prior Product service.")
+        alert's addButtonWithTitle:"Update & Restart"
+        alert's addButtonWithTitle:"Open Current"
+        alert's addButtonWithTitle:"Cancel"
+        set answer to alert's runModal()
+        if answer is (app's NSAlertFirstButtonReturn) then
+            if my performSetup(setupLauncher, sourceSha, "--reuse-existing", "Updating VexLife…") then my openProduct()
+        else if answer is (app's NSAlertSecondButtonReturn) then
+            my openProduct()
+        end if
+        return
+    end if
+
+    if actionName is "REPAIR_REQUIRED" or actionName is "UPDATE_REPAIR_REQUIRED" then
+        set alert to app's NSAlert's alloc()'s init()
+        if actionName is "REPAIR_REQUIRED" then
+            alert's setMessageText:"VexLife needs repair."
+            alert's addButtonWithTitle:"Repair & Restart"
+        else
+            alert's setMessageText:"VexLife can update and repair the owned Product service."
+            alert's addButtonWithTitle:"Update & Restart"
+        end if
+        alert's setInformativeText:(summaryText & return & return & "The exact owned Product service will be retired and restarted. Your Home and Vex continuity remain preserved.")
+        alert's addButtonWithTitle:"Cancel"
+        if (alert's runModal()) is (app's NSAlertFirstButtonReturn) then
+            if my performSetup(setupLauncher, sourceSha, "--reuse-existing", "Repairing VexLife…") then my openProduct()
+        end if
+        return
+    end if
+
+    if actionName is "SETUP_REQUIRED" then
+        set alert to app's NSAlert's alloc()'s init()
+        alert's setMessageText:"Set up VexLife"
+        alert's setInformativeText:(summaryText & return & return & "VexLife will use the canonical Home and may download verified model/runtime prerequisites only because you choose Set Up.")
+        alert's addButtonWithTitle:"Set Up VexLife"
+        alert's addButtonWithTitle:"Cancel"
+        if (alert's runModal()) is (app's NSAlertFirstButtonReturn) then
+            if my performSetup(setupLauncher, sourceSha, "--allow-acquisition", "Setting up VexLife…") then my openProduct()
+        end if
+        return
+    end if
+
+    my showFailure("VexLife front-door state is unsupported.", actionName)
 end run
 
 -- [VXG RealForever]
