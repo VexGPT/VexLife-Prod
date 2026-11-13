@@ -28,48 +28,22 @@ For substantial work:
 3. read [docs/foundation/INDEX.md](docs/foundation/INDEX.md);
 4. descend only to the exact current foundation/source/tests.
 
-## Current product authority
+## Current product role
 
-VexLife-Prod is the **current VexLife product body**. It is not an optional presentation layered on top
-of `vgong24/VexLife`, and the predecessor repository is not a default runtime parent merely because
-it still contains previously accepted implementations, launchers, or lived evidence.
+`VexGPT/VexLife-Prod` is the current VexLife New Beginnings product repository.
+`vgong24/VexLife` is predecessor/lineage source and may still be a bounded compatibility or evidence
+owner where the **current** Prod foundation explicitly names that bridge.
 
 ~~~text
-CURRENT PRODUCT BODY
-= VexGPT/VexLife-Prod
+CURRENT PRODUCT REPOSITORY
+!= EVERY SUBSYSTEM BRIDGE RETIRED
 
-PREDECESSOR / LINEAGE SOURCE
-= vgong24/VexLife
-
-PREDECESSOR SOURCE
-!= CURRENT PRODUCT AUTHORITY
-
-CURRENT PRODUCT BODY
-!= EVERY SUBSYSTEM MIGRATION COMPLETE
-
-STANDALONE PRODUCT DIRECTION
-!= EVERY PREDECESSOR BRIDGE RETIRED
-
-EXACT CURRENT COMPATIBILITY BRIDGE
-= MAY CONSUME PREDECESSOR STATE / EVIDENCE
-
-EXACT BRIDGE
-!= REPOSITORY-LEVEL RUNTIME PARENT
+PREDECESSOR REPOSITORY
+!= DEFAULT RUNTIME PARENT
 ~~~
 
-New Beginnings has formed substantial VexLife-Prod-owned substrate across Product Home, runtime,
-Conversation, service, setup/bootstrap and macOS lifetime. That does **not** mean every one of those
-relationships is already accepted/current or that every predecessor bridge is retired. The foundation
-index deliberately distinguishes ACCEPTED, LIVED COMPATIBLE, CANDIDATE, PREDECESSOR BRIDGE and HELD
-states; VexWork carries the work trajectory.
-
-`vgong24/VexLife` remains important lineage, behavioral provenance and—where an exact current
-foundation says so—a bounded compatibility/evidence source. Canonical `~/.vexlife` Home,
-Conversation/Memory compatibility and predecessor-runtime evidence must remain source-descendable
-while they are current. What must not be inferred is **repository-level** runtime authority from
-repository age, an old quick-start, historical launch success, or a transitional README statement.
-
-Historical evidence remains valid evidence. Superseded ownership language is not current authority.
+For exact source/effect ownership, descend to [docs/foundation/INDEX.md](docs/foundation/INDEX.md) and
+VexWork `project.vexlife.new-beginnings`. Do not infer subsystem ownership from this README.
 
 ## Mac launch status
 
@@ -112,61 +86,15 @@ owner may be a Prod owner or an exact bounded predecessor compatibility bridge. 
 it is current; retire it only when successor ownership is actually accepted. Do not reconstruct a
 repository-level parent/child runtime relationship from historical launchers.
 
-## Current position
+## Current source and work truth
 
-~~~text
-accepted
-  repository front door
-  semantic Blueprint
-  Compose reference
+- [docs/foundation/INDEX.md](docs/foundation/INDEX.md) owns current product-source status and exact
+  compatibility/bridge states.
+- VexWork Project `project.vexlife.new-beginnings` owns current work/lifecycle position.
+- This README intentionally does **not** duplicate a moving phase or current edge.
 
-accepted VexWeb relational spatial foundation
-  Frame
-  Seam
-  Region
-  Allocation
-  Depth
-
-accepted VexWeb relational authoring
-  compiler-visible authoring over the same accepted objects
-  exact Kotlin/JVM + Kotlin/JS regression PASS
-  accepted main c2ed37471eab9f163acd2b0cfaf979d7cdeead73
-
-accepted VexWeb deterministic artifact generation
-  source-addressable HTML/CSS/JS + semantic manifest
-  exact Kotlin/JVM + Kotlin/JS regression PASS
-  accepted main cf7de23e2979cc49133e2de4c5eee841d5bcf584
-
-human law
-  expansion must scale the same language fractally
-  adding regions must not require a new spatial noun
-
-accepted proof
-  same vocabulary expresses:
-    2 regions
-    3 regions with a partial Seam
-    4 quadrants
-  geometry validity prevents renderer guesswork
-
-lived exploration threshold retained
-  exploration/web-workspace
-  bounded public nested-browser rendering
-  canonical Conversation projection + human Send through current VexLife Companion
-  canonical prompt-materialization receipt projected into Context Inspector
-  clean-start UI present; canonical CLEAN_START backend semantics remain pending acceptance in VexLife
-  page-context prompt composition remains held
-  != accepted VexWeb generated product
-
-current construction edge
-  generated P1 browser workspace from accepted Blueprint + VexWeb relationships
-  build-owned exact artifact materialization
-
-held
-  nested-browser provider + generated-product convergence
-  page-context admission into the canonical prompt owner
-  canonical CLEAN_START acceptance + presentation wiring
-  full P3 lived browser-context-aware proof
-~~~
+Historical/lived thresholds remain valid evidence. Descend through the current foundation and Workgraph
+before treating an older phase description, launch route, or proof threshold as present authority.
 
 ## Permanent distinctions
 
