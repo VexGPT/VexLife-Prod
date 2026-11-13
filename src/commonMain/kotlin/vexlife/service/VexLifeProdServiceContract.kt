@@ -15,6 +15,9 @@ object VexLifeProdServiceContract {
     const val SourceCurrentnessSchema =
         "vexlife-prod.local-service-source-currentness/v3"
 
+    const val CurrentStateProjectionSchema =
+        "vexlife-prod.local-service-current-state/v1"
+
     const val ConversationProjectionSchema =
         "vexlife-prod.local-service-conversation-projection/v1"
 
@@ -72,6 +75,9 @@ object VexLifeProdServiceContract {
     const val SourceCurrentnessPath =
         "/api/v1/source-currentness"
 
+    const val CurrentStatePath =
+        "/api/v1/current-state"
+
     const val ConversationPath =
         "/api/v1/conversation"
 
@@ -104,6 +110,73 @@ object VexLifeProdServiceContract {
         val currentConversationHeadSha256: String?,
         val effectsPerformed: Boolean,
     )
+
+    @Serializable
+    data class CurrentStateProjection(
+        val schemaVersion: String,
+        val observedAt: String,
+        val homePath: String,
+        val homeDisposition: String,
+        val platform: String,
+        val architecture: String,
+        val chipModel: String?,
+        val hostEligibilityState: String,
+        val hostEligibilityReason: String?,
+        val totalMemoryBytes: Long?,
+        val modelMinimumMemoryBytes: Long?,
+        val freeStorageBytes: Long?,
+        val activeModelRef: String,
+        val activeModelProfileRef: String,
+        val runtimeState: String,
+        val runtimeCurrentness: String,
+        val runtimeReceiptRef: String,
+        val modelArtifactState: String,
+        val modelArtifactTotalBytes: Long,
+        val modelArtifactVerifiedBytes: Long,
+        val modelArtifactMissingBytes: Long,
+        val modelArtifactInvalidBytes: Long,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    CurrentStateProjectionSchema &&
+                    homePath.isNotBlank() &&
+                    platform.isNotBlank() &&
+                    architecture.isNotBlank() &&
+                    hostEligibilityState in
+                    setOf(
+                        "ELIGIBLE",
+                        "UNSUPPORTED",
+                    ) &&
+                    runtimeState.isNotBlank() &&
+                    runtimeCurrentness ==
+                    "STARTUP_QUALIFIED_NOT_REOBSERVED" &&
+                    modelArtifactState in
+                    setOf(
+                        "VERIFIED_REUSABLE",
+                        "INCOMPLETE",
+                        "INVALID",
+                        "ABSENT",
+                    ) &&
+                    modelArtifactTotalBytes >=
+                    0 &&
+                    modelArtifactVerifiedBytes >=
+                    0 &&
+                    modelArtifactMissingBytes >=
+                    0 &&
+                    modelArtifactInvalidBytes >=
+                    0 &&
+                    modelArtifactVerifiedBytes +
+                    modelArtifactMissingBytes +
+                    modelArtifactInvalidBytes ==
+                    modelArtifactTotalBytes &&
+                    !effectsPerformed,
+            ) {
+                "current-state projection is invalid"
+            }
+        }
+    }
 
     @Serializable
     data class ConversationMessage(
