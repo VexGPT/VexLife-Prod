@@ -177,10 +177,10 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "ui.pageFrame.src = pageUrl",
             ),
         )
+        // The generated script is trimIndent()-ed, so assert adjacency, not source indentation.
         assertTrue(
-            bundle.javascript.contains(
-                "ui.pageFrame.src = pageUrl;\n                ui.contextFrame.removeAttribute('src');",
-            ),
+            Regex("""ui\.pageFrame\.src = pageUrl;\s*ui\.contextFrame\.removeAttribute\('src'\);""")
+                .containsMatchIn(bundle.javascript),
             "ordinary navigation must not eagerly load the Vex context proxy",
         )
         assertTrue(

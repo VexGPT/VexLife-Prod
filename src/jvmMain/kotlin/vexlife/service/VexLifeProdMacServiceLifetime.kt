@@ -926,6 +926,8 @@ object VexLifeProdMacServiceLifetime {
                 listOf(
                     "--source-sha",
                     receipt.sourceSha,
+                    "--home",
+                    home.toString(),
                 ),
             workingDirectory = imagePath.toString(),
             stdoutPath =
@@ -972,6 +974,8 @@ object VexLifeProdMacServiceLifetime {
                 listOf(
                     "--source-sha",
                     image.sourceSha,
+                    "--home",
+                    home.toString(),
                 ),
             workingDirectory =
                 requireNotNull(

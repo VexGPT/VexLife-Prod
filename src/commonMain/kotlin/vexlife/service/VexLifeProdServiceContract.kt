@@ -3,6 +3,7 @@ package vexlife.service
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.home.VexLifeProdHome
 
 /**
  * Shared browser/service contract for the local VexLife implementation.
@@ -117,9 +118,9 @@ object VexLifeProdServiceContract {
         val observedAt: String,
         val homePath: String,
         val homeDisposition: String,
-        val homeRef: String,
-        val deviceRef: String,
-        val companionLineageRef: String,
+        val homeRef: String?,
+        val deviceRef: String?,
+        val companionLineageRef: String?,
         val platform: String,
         val architecture: String,
         val chipModel: String?,
@@ -142,15 +143,34 @@ object VexLifeProdServiceContract {
         val effectsPerformed: Boolean,
     ) {
         init {
+            val homeIdentityValid =
+                if (
+                    VexLifeProdHome.LocationDisposition
+                        .forWireValue(
+                            homeDisposition,
+                        )
+                        ?.identityPresent ==
+                    false
+                ) {
+                    homeRef ==
+                        null &&
+                        deviceRef ==
+                        null &&
+                        companionLineageRef ==
+                        null
+                } else {
+                    !homeRef.isNullOrBlank() &&
+                        !deviceRef.isNullOrBlank() &&
+                        !companionLineageRef.isNullOrBlank()
+                }
+
             require(
                 schemaVersion ==
                     CurrentStateProjectionSchema &&
                     observedAt.isNotBlank() &&
                     homePath.isNotBlank() &&
                     homeDisposition.isNotBlank() &&
-                    homeRef.isNotBlank() &&
-                    deviceRef.isNotBlank() &&
-                    companionLineageRef.isNotBlank() &&
+                    homeIdentityValid &&
                     platform.isNotBlank() &&
                     architecture.isNotBlank() &&
                     hostEligibilityState in

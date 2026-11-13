@@ -11,31 +11,17 @@ import vexlife.filesystem.VexExclusiveFileLease
  * lock coordinate serializes one Prod Home setup.
  */
 internal object VexLifeProdLocalSetupLease {
-    private const val LockSuffix =
-        ".setup.lock"
+    private const val LockSuffix = ".setup.lock"
 
-    fun acquire(
-        productHome: Path,
-    ): VexExclusiveFileLease.Held {
-        val path =
-            lockPath(
-                productHome,
-            )
+    fun acquire(productHome: Path): VexExclusiveFileLease.Held {
+        val path = lockPath(productHome)
 
         // The lock sits beside the not-yet-existing Prod Home in ambient user space.
-        Files.createDirectories(
-            requireNotNull(
-                path.parent,
-            ),
-        )
+        Files.createDirectories(requireNotNull(path.parent))
 
         return try {
-            VexExclusiveFileLease.acquire(
-                path,
-            )
-        } catch (
-            error: IllegalArgumentException,
-        ) {
+            VexExclusiveFileLease.acquire(path)
+        } catch (error: IllegalArgumentException) {
             throw IllegalArgumentException(
                 "another VexLife-Prod local setup is already in progress or the setup lease is invalid",
                 error,
@@ -43,24 +29,12 @@ internal object VexLifeProdLocalSetupLease {
         }
     }
 
-    fun lockPath(
-        productHome: Path,
-    ): Path {
-        require(
-            productHome.isAbsolute,
-        ) {
+    fun lockPath(productHome: Path): Path {
+        require(productHome.isAbsolute) {
             "VexLife-Prod Home must be absolute"
         }
-        val home =
-            productHome.normalize()
-        return requireNotNull(
-            home.parent,
-        )
-            .resolve(
-                "." +
-                    home.fileName +
-                    LockSuffix,
-            )
+        val home = productHome.normalize()
+        return requireNotNull(home.parent).resolve("." + home.fileName + LockSuffix)
     }
 }
 
