@@ -38,7 +38,7 @@ reachability dynamically from the local service rather than hardcoding Ready or 
 
 ## Current semantic owner
 
-`VexLifeVisionFamily` owns only the human-facing Vision semantic relationship:
+`VexLifeVisionFamily` still owns the existing human-facing Vision semantic relationship:
 
 ~~~text
 State
@@ -53,172 +53,167 @@ Effect
   RequestSnapshot
 ~~~
 
-The accepted first Product relationship is one explicit Look Now request. There is no standing
-enable/disable or permission state in this Family. Ready means the ordinary Product route is
-reachable; Look Now enters Looking and requests one RequestSnapshot; Looking does not claim that a
-frame has arrived.
+That Family/presentation contract has **not** yet been evolved into the persistent-scope UI. This source
+slice therefore keeps its current semantic identity while establishing the new persistent selected-scope
+relationship underneath Product.
 
-~~~text
-READY != SCREEN_CAPTURE_AUTHORIZED
-LOOKING != SCREEN_CAPTURED
-LOOK_NOW_REQUESTED != SCREEN_CAPTURED
-SCREEN_CAPTURED != ACTIVE_VISUAL_OBSERVATION
-ACTIVE_VISUAL_OBSERVATION != VISUAL_MODEL_INPUT
-VISUAL_OBSERVATION_REF != IMAGE_BYTES
-OBSERVATION != STORE
-OBSERVATION != MEMORY
-~~~
-
-The generated product manifestation does not decide Vision state from source presence alone. It asks
-the local Product service for the current Vision projection:
+Current service truth is now deliberately transitional:
 
 ~~~text
 GET /api/v1/vision
-  HELD  -> Vision control remains held
-  READY -> Vision control becomes available for one explicit Look Now request
+  HELD / READY
+  = Product route reachability only
+
+GET /api/v1/vision/scope
+  -> PROJECT current persistent selected-scope truth
+
+POST /api/v1/vision/scope/engage
+  -> ENGAGE one OS-selected window scope
+
+POST /api/v1/vision/scope/stop
+  -> STOP current scope
+
+POST /api/v1/vision/look-now
+  -> HELD
+  -> VISION_LOOK_NOT_YET_ADMITTED_FROM_PERSISTENT_SCOPE
 ~~~
 
-The Companion Vision control owns the one `vision.look-now` capability. The global Vision quick
-action remains a local shortcut to that same Companion Vision identity; both activations converge on
-one presentation `lookNow()` path and one Product service request.
+This prevents the old presentation from invoking the new persistent executable with the obsolete
+one-shot protocol.
+
+Permanent:
 
 ~~~text
-PRODUCT_SERVICE_BRIDGE_SOURCE
-!= RUNNING_PRODUCT_VISION_ROUTE_CURRENT
-
-RUNNING_PRODUCT_VISION_ROUTE_CURRENT
--> Product Vision projection may report READY
-
-WEB_VISION_READY
-= consumes Product READY truth
-!= capture authorization
+READY != SCREEN_CAPTURE_AUTHORIZED
+SCOPE_ENGAGED != SCREEN_CAPTURE_ACTIVE
+SCOPE_ENGAGED != LOOKING
+LOOKING != SCREEN_CAPTURED
+CONVERSATION_TURN != AUTOMATIC_SCREENSHOT
+ACTIVE_VISUAL_OBSERVATION != VISUAL_MODEL_INPUT
+OBSERVATION != MEMORY
 ~~~
 
-While one explicit Look Now request is in flight, presentation may show `Looking`. That transient
-presentation state does not claim a frame arrived.
+The later presentation/Family evolution will consume the accepted persistent-scope projection rather
+than inventing a second Vision owner.
+
 
 ## Accepted outside effect owners
 
-The Product artifact contract in this source binds the local-qualified runtime artifact to accepted
-Vextreme-SDK source:
+The Product artifact contract in this source binds the fresh local-qualified **persistent selected-scope**
+runtime artifact:
 
 ~~~text
-commit        = 26a18d97a22b898f14e15bb7b1543c25b808c5af
-tree          = 2fed240516aebe5289e0c947084fe36ab2107c07
-archiveSha256 = fd31be38cefb19c32d45744b58d5254631cf7a1af696850041728c2cd0fe0692
-manifestSha256= 4a0370f0f5c0a56b810bf8fc6e485a2c061d0850cf2c896a790802f996174824
-runtimeSha256 = 300fdbe7d55964b4130f68a827c6a3405a81df1038e05f77884dd37f3af6e5cd
-helperSha256  = 31c03686018c9e79b09a50e0ec880c1f195a7bb5408665365ef1c68632b37c7d
+SDK commit     = 1c2c9d76114ca35f00125f0a5c93e531e3e6a746
+SDK tree       = 6376f68279f0750ee6d3868b8472368199763064
+archive        = vexlife-vision-runtime-darwin-arm64-node-v26.8.1-sdk-1c2c9d76.tar.xz
+archiveSha256  = 8182d4582a11e893b0770cc9ad72c12fab35e54349177232f6100da11d7037d3
+manifestSha256 = 0460f8aa6b2a9d75e50c58ec50197b42a9d1c90b78bef92db0cc76386d645bfb
+runtimeSha256  = 77abb23df39e81bf7fa0d263ac4df9730f024996ab60c627aa7ddda67287e848
+helperSha256   = d5ccf8886311c8b592d36829044660c8baa00b6134e7d3da7e4278b8f0707ecf
+Node           = v26.8.1
+truthClass     = LOCAL_QUALIFIED_NOT_DISTRIBUTABLE
+release        = LOCAL_ONLY_NO_RELEASE
 ~~~
 
-The current helper-rebuild artifact evidence is
-`github.issue.vextreme-sdk.241.comment.6843099171`.
-
-The Node SEA runtime binary remains byte-identical to the prior qualified build. The helper-owning Swift
-source changed in accepted SDK PR #1945, so the native helper was rebuilt and ad-hoc signed for local
-proof while the carried SDK closure was currentized to the accepted SDK source. The artifact manifest
-preserves its prior rights and historical proof objects; fresh rebuilt-helper qualification lives in the
-A003 RETURN evidence above rather than being rewritten into historical proof.
-
-These are artifact provenance coordinates, not a claim that SDK `main` must remain at that commit or
-that the running Product has already rotated to this artifact.
-
-The accepted one-shot SCREEN relationship is:
+Fresh qualification is owned by the persistent artifact A002 RETURN. It rebuilt both the Node SEA and
+the `VexLifeVisionSelectedScopeAgent`, re-extracted and verified the exact artifact inventory, and
+qualified only:
 
 ~~~text
-selected browser/window outside reality
--> Process Factory USER_SELECTED_SESSION Connection realization
-   SCContentSharingPicker
-   SINGLE_WINDOW
-   at most one SCScreenshotManager capture
--> exact Process Factory receipt
--> canonical Security active-sharing witness
--> Perception active VISUAL observation identity
+PROJECT
+-> SHUTDOWN
+~~~
+
+No ENGAGE, picker presentation, capture, Product mutation, visual-model input, Memory, training or
+publication occurred during artifact qualification.
+
+The accepted persistent outside relationship is:
+
+~~~text
+Product service
+-> one long-lived carried vision-runtime child
+-> Process Factory persistent selected-scope Product runtime
+-> Process Factory host custody
+-> VexLifeVisionSelectedScopeAgent
+-> SCContentSharingPicker SINGLE_WINDOW
+-> retained provider scope / retained SCStream object
+-> NO stream start merely while ENGAGED
 ~~~
 
 Rightful ownership remains separate:
 
 ~~~text
-Process Factory
-  owns system-picker route, realization session/connection identity, receipt validity and
-  Safety-at-capture truth
+Process Factory selected-scope session
+  owns selected-scope semantic lifecycle
 
-Security
-  owns exact capture-scoped active-sharing witness identity
+Process Factory host custody
+  owns native child/process lifetime
+
+native selected-scope host
+  owns retained provider/filter/SCStream objects
 
 Vex Safety
-  owns current SCREEN scope/currentness
+  owns current SCREEN authorization/currentness
 
-Perception
-  owns only the content-absent active VISUAL observation cross-binding
+VexLife-Prod
+  owns only one carried runtime child + command correlation + bounded projection validation
 
 VexLifeVisionFamily
-  owns only human-facing Held / Ready / Looking meaning and the explicit Look Now request
+  still owns the current human-facing Product semantic surface
 ~~~
 
-VexLife-Prod does not need to copy a generic Partner/Signal hierarchy merely because the SDK
-implementation earned this concrete relationship. Product should consume the smallest accepted
-outside result once a product-carriage contract exists.
+The historical one-shot USER_SELECTED_SESSION capture path remains accepted lineage/evidence, but it is
+not the protocol spoken by the current persistent artifact.
+
 
 ## Current Product realization state
 
-The previously missing runtime/artifact/carriage chain is accepted, and the Product source now binds
-the refreshed local artifact tuple:
+This source candidate binds the new persistent artifact and replaces the old one-process-per-LookNow
+bridge with one service-lifetime child relationship:
 
 ~~~text
-accepted Process Factory Product runtime
--> accepted darwin-arm64 local-qualified artifact
--> accepted VexLife-Prod private-image carriage
+VexLife-Prod service starts
+-> validate exact carried vision-runtime executable
+-> spawn one persistent child with no semantic CLI arguments
+-> no picker/capture merely from process start
+
+Product scope routes
+-> newline-delimited commandRef-bound JSON
+-> PROJECT / ENGAGE / STOP
+
+service close
+-> SHUTDOWN
+-> join/terminate owned child
 ~~~
 
-Accepted Product carriage and current artifact provenance:
+The Product bridge validates the exact SDK content-absent selected-scope projection before returning it.
+Provider/window/native identifiers, helper paths, child handles and raw image data do not enter the
+Product contract.
 
-~~~text
-github.pull.vexlife-prod.77
-github.issue.vextreme-sdk.241.comment.6843099171
-~~~
-
-The Product-owned source bridge is:
-
-~~~text
-VexLifeVisionFamily.LookNow
--> RequestSnapshot
--> Product local-service bridge
--> carried vision-runtime/bin/vexlife-vision-runtime
--> current SDK/Safety execution custody
--> OS-owned system picker
--> exact capture receipt
--> canonical Security witness
--> canonical Perception active observation
--> bounded Product result
-~~~
-
-The Product bridge consumes the carried runtime rather than reproducing SDK owner algorithms in
-Kotlin. The service process consumes only a Vision runtime executable already verified by the
-source-bound private-image observer.
-
-Source acceptance of this bridge does not by itself claim that the currently running Product has
-already rotated onto a Vision-carrying accepted-main image, nor does it make the web projection Ready.
-Those are lived/currentness and presentation-consumption predicates, not missing bridge source.
+The current Product source deliberately does **not** claim that the running installed service has
+already rotated to this artifact. Source acceptance, private-image assembly, installation/service
+rotation, and lived ENGAGE proof remain separate predicates.
 
 Permanent:
 
 ~~~text
-PRIVATE_IMAGE_CARRIAGE_ACCEPTED
-!= RUNNING_PRODUCT_VISION_ROUTE_CURRENT
+PERSISTENT_ARTIFACT_CONTRACT_CURRENT
+!= RUNNING_PRODUCT_ROTATED_TO_ARTIFACT
 
-PRODUCT_SERVICE_BRIDGE_SOURCE_ACCEPTED
-!= RUNNING_PRODUCT_VISION_ROUTE_CURRENT
-!= WEB_VISION_READY
+PRODUCT_SERVICE_CHILD_SOURCE_ACCEPTED
+!= RUNNING_PRODUCT_VISION_SCOPE_CURRENT
+!= WEB_PERSISTENT_SCOPE_PRESENTATION_CURRENT
 
-PRODUCT_SERVICE_BRIDGE
-!= SECOND VISION RUNTIME
-!= SECOND PICKER OWNER
+PRODUCT_SERVICE_CHILD
+!= SELECTED_SCOPE_SESSION_OWNER
+!= NATIVE_PROVIDER_OWNER
+!= LOOK_EXECUTOR
 != DISTRIBUTION WORK
 ~~~
 
-Do not reopen artifact formation, Developer ID, notarization, App Store, GitHub Release or a developer
-SDK checkout as prerequisites for this local Product bridge.
+No Developer ID, notarization, App Store or public-release work is required for this local-only Product
+bridge.
+
 
 ## Local user-selected Vision is not a distribution gate
 
@@ -333,36 +328,42 @@ This is dynamic Product capability truth, not a source-hardcoded availability pr
 
 ## Reachable and still held effects
 
-The ordinary Product route may now reach these effects only through one explicit human Look Now
-request and the accepted SDK-owned route:
+Once this source candidate is accepted **and** a Product image carrying the exact persistent artifact is
+installed/running, the ordinary Product service may reach only the selected-scope effects admitted here:
 
 ~~~text
-Product Vision READY
-+ explicit LookNow
-+ current SCREEN Safety
+Product Vision route READY
++ explicit POST /api/v1/vision/scope/engage
+-> accepted SDK ENGAGE
 -> macOS system picker
 -> one user-selected window
--> at most one screen capture
--> canonical Security witness
--> canonical active VISUAL observation
+-> persistent selected scope
+-> no capture
+
+GET /api/v1/vision/scope
+-> PROJECT current content-absent scope truth
+
+POST /api/v1/vision/scope/stop
+-> release current selected scope
 ~~~
 
-Reachability does not make those effects automatic, standing, already performed, or model input.
-
-The following remain held from the ordinary Product Vision path:
+Still held:
 
 ~~~text
-continuous/background capture
-automatic picker activation
+LOOK execution
+screen capture from persistent scope
 visual-model input
 raw-frame persistence
+automatic screenshot on Conversation turns
+continuous/background capture
 browser control
 Memory
 training
 publication
 ~~~
 
-The Product presentation consumes bounded reachability and terminal runtime result truth. It does not
-take ownership of the SDK picker, capture, Security, Perception or Safety meanings.
+The legacy `/api/v1/vision/look-now` coordinate is intentionally held in this source candidate. A later
+Vex-access LOOK edge must separately earn one fresh capture from the already-engaged selected scope,
+then ephemeral visual interpretation and Conversation Context composition.
 
-<!-- [VXG RealForever][VEXLIFE-PROD][VISION-COMPANION][SDK-CURRENTIZED] -->
+<!-- [VXG RealForever][VEXLIFE-PROD][VISION-COMPANION][PERSISTENT-SCOPE-SERVICE] -->
