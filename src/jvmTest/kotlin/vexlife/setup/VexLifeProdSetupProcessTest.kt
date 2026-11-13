@@ -6,6 +6,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertSame
+import vexlife.home.VexLifeProdHome
+import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
@@ -125,6 +127,150 @@ class VexLifeProdSetupProcessTest {
                 )
             }
         }
+    }
+
+    @Test
+    fun HomeFormationVerifiesImageAndStopsBeforeAcquisitionOrProductEffects() {
+        val trace =
+            mutableListOf<String>()
+        val sourceSha =
+            "a".repeat(
+                40,
+            )
+        val sourceImage =
+            Path.of(
+                "/tmp/vexlife-prod-home-formation-source-image",
+            )
+        val observation =
+            VexLifeProdPrivateServiceImage.Observation(
+                imageRef = "image.vexlife-prod.private-service.home-test",
+                sourceSha = sourceSha,
+                payloadSha256 =
+                    "b".repeat(
+                        64,
+                    ),
+                launcherPath = sourceImage.resolve("bin/vexlife-prod-service").toString(),
+                setupLauncherPath = sourceImage.resolve("bin/vexlife-prod-setup").toString(),
+                setupWindowPath = sourceImage.resolve("setup/vexlife-prod-setup-window.applescript").toString(),
+                javaPath = sourceImage.resolve("runtime/bin/java").toString(),
+                runtimeModules = listOf("java.base", "java.net.http", "jdk.httpserver"),
+                effectsPerformed = false,
+            )
+        val plan =
+            VexLifeProdHome.plan(
+                personRef = VexLifeProdHome.DefaultPersonRef,
+                familyRef = VexLifeProdHome.DefaultFamilyRef,
+                deviceName = "Test Mac",
+                platform = "darwin",
+                architecture = "arm64",
+                ids =
+                    VexLifeProdHome.InstallationIds(
+                        deviceRef = "device.vexlife.home-process-test",
+                        companionLineageRef = "companion-lineage.vexlife.home-process-test",
+                    ),
+                createdAt = "2026-11-13T00:00:00Z",
+            )
+        val home =
+            VexLifeProdHomeFiles.Result(
+                state = "FRESH_CANONICAL_VEXLIFE_HOME_FORMED",
+                productHome = "/tmp/.vexlife",
+                manifest = plan.manifest,
+                installation = plan.installation,
+                effectsPerformed = true,
+            )
+
+        val parsed =
+            VexLifeProdSetupProcess.parseHome(
+                arrayOf(
+                    "--form-home",
+                    "--expected-source-sha",
+                    sourceSha,
+                ),
+            )
+        assertEquals(
+            sourceSha,
+            parsed.expectedSourceSha,
+        )
+
+        VexLifeProdSetupProcess.formHomeWithHooks(
+            arguments = parsed,
+            hooks =
+                VexLifeProdSetupProcess.Hooks(
+                    locateImageRoot = {
+                        trace += "LOCATE"
+                        sourceImage
+                    },
+                    observeImage = {
+                        imageRoot,
+                        expected,
+                        ->
+                        trace += "VERIFY_IMAGE"
+                        assertEquals(
+                            sourceImage,
+                            imageRoot,
+                        )
+                        assertEquals(
+                            sourceSha,
+                            expected,
+                        )
+                        observation
+                    },
+                    formFreshHome = {
+                        trace += "FORM_HOME"
+                        home
+                    },
+                    establishSession = {
+                        error(
+                            "Home-only realization must not enter model/runtime setup",
+                        )
+                    },
+                    installImage = {
+                        _,
+                        _,
+                        _,
+                        ->
+                        error(
+                            "Home-only realization must not install Product image",
+                        )
+                    },
+                    startService = {
+                        _,
+                        _,
+                        ->
+                        error(
+                            "Home-only realization must not start Product service",
+                        )
+                    },
+                    reportImageVerified = {
+                        trace += "REPORT_IMAGE"
+                    },
+                    reportHomeReady = {
+                        arguments,
+                        formed,
+                        ->
+                        trace += "HOME_READY"
+                        assertEquals(
+                            sourceSha,
+                            arguments.expectedSourceSha,
+                        )
+                        assertSame(
+                            home,
+                            formed,
+                        )
+                    },
+                ),
+        )
+
+        assertEquals(
+            listOf(
+                "LOCATE",
+                "VERIFY_IMAGE",
+                "REPORT_IMAGE",
+                "FORM_HOME",
+                "HOME_READY",
+            ),
+            trace,
+        )
     }
 
     @Test
