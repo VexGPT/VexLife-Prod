@@ -2,6 +2,7 @@ package vexlife.model.heretic.runtime
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.security.MessageDigest
 import vexlife.artifact.ExactArtifactFile
@@ -67,6 +68,20 @@ object HereticArtifactMaterialization {
         val acquisitionPerformed: Boolean,
         val artifactMutationPerformed: Boolean,
     )
+
+    data class PresenceObservation(
+        val state: String,
+        val modelPath: String,
+        val providerRevision: String,
+        val contentSetSha256: String,
+        val memberCount: Int,
+        val totalBytes: Long,
+        val presentBySizeBytes: Long,
+        val missingBytes: Long,
+        val invalidSizeBytes: Long,
+        val effectsPerformed: Boolean,
+    )
+
 
     fun plan(): Plan {
         val descriptors =
@@ -143,6 +158,150 @@ object HereticArtifactMaterialization {
                     it.byteLength
                 },
             members = members,
+        )
+    }
+
+    /**
+     * Lightweight no-effect presence observation for human current-state awareness.
+     *
+     * This intentionally does not hash multi-GiB model members. Exact-byte qualification remains
+     * owned by [materializeCurrent] / runtime qualification when an operation actually depends on
+     * it. This projection answers only which expected files are presently absent, wrong-sized, or
+     * present at the exact declared byte length.
+     */
+    fun observePresence(
+        productHome: Path,
+    ): PresenceObservation {
+        require(
+            productHome.isAbsolute,
+        ) {
+            "VexLife-Prod Home must be one absolute path"
+        }
+
+        val plan =
+            plan()
+        val home =
+            VexOwnedPath.requireRoot(
+                productHome,
+                "VexLife-Prod Home",
+            )
+        val modelPath =
+            VexOwnedPath.resolveInside(
+                home,
+                "$ModelRootRelativePath/${plan.providerRevision}",
+            )
+
+        if (
+            VexOwnedPath.observeDirectory(
+                home,
+                modelPath,
+            ) ==
+            VexOwnedPath.DirectoryState.Missing
+        ) {
+            return PresenceObservation(
+                state = "ABSENT",
+                modelPath = modelPath.toString(),
+                providerRevision = plan.providerRevision,
+                contentSetSha256 = plan.contentSetSha256,
+                memberCount = plan.memberCount,
+                totalBytes = plan.totalBytes,
+                presentBySizeBytes = 0,
+                missingBytes = plan.totalBytes,
+                invalidSizeBytes = 0,
+                effectsPerformed = false,
+            )
+        }
+
+        var presentBySizeBytes =
+            0L
+        var missingBytes =
+            0L
+        var invalidSizeBytes =
+            0L
+
+        for (
+            member in
+            plan.members
+        ) {
+            val path =
+                VexOwnedPath.resolveInside(
+                    modelPath,
+                    member.logicalPath,
+                )
+            require(
+                path.parent ==
+                    modelPath,
+            ) {
+                "Heretic presence member escaped the certified model directory"
+            }
+
+            when {
+                !Files.exists(
+                    path,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) ->
+                    missingBytes +=
+                        member.byteLength
+
+                Files.isSymbolicLink(
+                    path,
+                ) ||
+                    !Files.isRegularFile(
+                        path,
+                        LinkOption.NOFOLLOW_LINKS,
+                    ) ->
+                    invalidSizeBytes +=
+                        member.byteLength
+
+                Files.size(
+                    path,
+                ) !=
+                    member.byteLength ->
+                    invalidSizeBytes +=
+                        member.byteLength
+
+                else ->
+                    presentBySizeBytes +=
+                        member.byteLength
+            }
+        }
+
+        require(
+            presentBySizeBytes +
+                missingBytes +
+                invalidSizeBytes ==
+                plan.totalBytes,
+        ) {
+            "Heretic presence observation did not account for every expected byte"
+        }
+
+        return PresenceObservation(
+            state =
+                when {
+                    invalidSizeBytes >
+                        0 ->
+                        "INVALID_SIZE"
+
+                    presentBySizeBytes ==
+                        0L ->
+                        "ABSENT"
+
+                    missingBytes >
+                        0 ->
+                        "PARTIAL_BY_SIZE"
+
+                    else ->
+                        "COMPLETE_BY_SIZE_NOT_HASHED"
+                },
+            modelPath = modelPath.toString(),
+            providerRevision = plan.providerRevision,
+            contentSetSha256 = plan.contentSetSha256,
+            memberCount = plan.memberCount,
+            totalBytes = plan.totalBytes,
+            presentBySizeBytes = presentBySizeBytes,
+            missingBytes = missingBytes,
+            invalidSizeBytes = invalidSizeBytes,
+            effectsPerformed = false,
         )
     }
 
