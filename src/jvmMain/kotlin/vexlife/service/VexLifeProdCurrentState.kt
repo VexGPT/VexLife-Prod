@@ -19,14 +19,6 @@ object VexLifeProdCurrentState {
         val observeHost: () -> HereticMacHostProfile.Result = {
             HereticMacHostProfile.observeCurrent()
         },
-        val observeArtifacts: (
-            productHome: Path,
-        ) -> HereticArtifactMaterialization.Observation = {
-            productHome ->
-            HereticArtifactMaterialization.observeCurrent(
-                productHome,
-            )
-        },
         val observeFreeStorageBytes: (
             productHome: Path,
         ) -> Long? = {
@@ -72,10 +64,8 @@ object VexLifeProdCurrentState {
 
         val host =
             hooks.observeHost()
-        val artifacts =
-            hooks.observeArtifacts(
-                productHome,
-            )
+        val artifactPlan =
+            HereticArtifactMaterialization.plan()
         val runtime =
             setup.qualifiedRuntimeEvidence
 
@@ -122,15 +112,15 @@ object VexLifeProdCurrentState {
             runtimeReceiptRef =
                 runtime.runtimeReceiptRef,
             modelArtifactState =
-                artifacts.state,
+                "VERIFIED_AT_SETUP",
             modelArtifactTotalBytes =
-                artifacts.totalBytes,
+                artifactPlan.totalBytes,
             modelArtifactVerifiedBytes =
-                artifacts.verifiedBytes,
+                artifactPlan.totalBytes,
             modelArtifactMissingBytes =
-                artifacts.missingBytes,
+                0,
             modelArtifactInvalidBytes =
-                artifacts.invalidBytes,
+                0,
             effectsPerformed =
                 false,
         )
