@@ -27,6 +27,7 @@ import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.memory.VexLifeDailyMemoryDream
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.vision.VexLifeProdVisionRuntime
+import vexlife.vision.VexLifeVisionFamily
 import vexlife.web.VexLifeWebP1RuntimeArtifacts
 import vexlife.web.VexWebArtifacts
 
@@ -47,7 +48,7 @@ class VexLifeProdLocalService private constructor(
     private val turnExecutor: TurnExecutor,
     private val streamingTurnExecutor: StreamingTurnExecutor?,
     private val dreamExecutor: DreamExecutor?,
-    private val visionExecutor: VisionExecutor?,
+    private val visionRuntime: VisionRuntime?,
     private val currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
 ) : AutoCloseable {
     companion object {
@@ -177,8 +178,43 @@ class VexLifeProdLocalService private constructor(
             sourceSha: String,
             session: VexLifeProdLocalSetup.Session,
             visionRuntimeExecutablePathOrNull: String?,
-        ): VexLifeProdLocalService =
-            startAt(
+        ): VexLifeProdLocalService {
+            val visionRuntime =
+                visionRuntimeExecutablePathOrNull
+                    ?.let {
+                        executablePath ->
+                        val runtime =
+                            VexLifeProdVisionRuntime.open(
+                                Path.of(
+                                    executablePath,
+                                ),
+                            )
+                        object :
+                            VisionRuntime {
+                            override fun project(): VexLifeProdServiceContract.VisionSelectedScopeRuntimeResponse =
+                                runtime.project()
+
+                            override fun engage(
+                                requestRef: String,
+                            ): VexLifeProdServiceContract.VisionSelectedScopeRuntimeResponse =
+                                runtime.engage(
+                                    requestRef,
+                                )
+
+                            override fun stop(
+                                requestRef: String,
+                            ): VexLifeProdServiceContract.VisionSelectedScopeRuntimeResponse =
+                                runtime.stop(
+                                    requestRef,
+                                )
+
+                            override fun close() {
+                                runtime.close()
+                            }
+                        }
+                    }
+
+            return startAt(
                 sourceSha = sourceSha,
                 startupSetup = session.result,
                 address =
@@ -221,22 +257,9 @@ class VexLifeProdLocalService private constructor(
                         ),
                     )
                 },
-                visionExecutor =
-                    visionRuntimeExecutablePathOrNull
-                        ?.let {
-                            executablePath ->
-                            VisionExecutor {
-                                requestRef ->
-                                VexLifeProdVisionRuntime.lookNow(
-                                    executable =
-                                        Path.of(
-                                            executablePath,
-                                        ),
-                                    requestRef = requestRef,
-                                )
-                            }
-                        },
+                visionRuntime = visionRuntime,
             )
+        }
 
         internal fun startForTest(
             sourceSha: String,
@@ -246,7 +269,7 @@ class VexLifeProdLocalService private constructor(
                 null,
             dreamExecutor: DreamExecutor? =
                 null,
-            visionExecutor: VisionExecutor? =
+            visionRuntime: VisionRuntime? =
                 null,
             currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)? =
                 null,
@@ -267,7 +290,7 @@ class VexLifeProdLocalService private constructor(
                 turnExecutor = turnExecutor,
                 streamingTurnExecutor = streamingTurnExecutor,
                 dreamExecutor = dreamExecutor,
-                visionExecutor = visionExecutor,
+                visionRuntime = visionRuntime,
                 currentStateObserver = currentStateObserver,
             )
 
@@ -279,7 +302,7 @@ class VexLifeProdLocalService private constructor(
             turnExecutor: TurnExecutor,
             streamingTurnExecutor: StreamingTurnExecutor?,
             dreamExecutor: DreamExecutor?,
-            visionExecutor: VisionExecutor?,
+            visionRuntime: VisionRuntime?,
             currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
         ): VexLifeProdLocalService {
             require(
@@ -344,7 +367,7 @@ class VexLifeProdLocalService private constructor(
                         turnExecutor = turnExecutor,
                         streamingTurnExecutor = streamingTurnExecutor,
                         dreamExecutor = dreamExecutor,
-                        visionExecutor = visionExecutor,
+                        visionRuntime = visionRuntime,
                         currentStateObserver = currentStateObserver,
                     )
 
@@ -370,6 +393,10 @@ class VexLifeProdLocalService private constructor(
                     )
                 frameHost
                     ?.close()
+                runCatching {
+                    visionRuntime
+                        ?.close()
+                }
                 executor.shutdownNow()
                 throw error
             }
@@ -402,10 +429,17 @@ class VexLifeProdLocalService private constructor(
         ): VexLifeDailyMemoryDream.Result
     }
 
-    internal fun interface VisionExecutor {
-        fun lookNow(
+    internal interface VisionRuntime :
+        AutoCloseable {
+        fun project(): VexLifeProdServiceContract.VisionSelectedScopeRuntimeResponse
+
+        fun engage(
             requestRef: String,
-        ): VexLifeProdServiceContract.VisionRuntimeResult
+        ): VexLifeProdServiceContract.VisionSelectedScopeRuntimeResponse
+
+        fun stop(
+            requestRef: String,
+        ): VexLifeProdServiceContract.VisionSelectedScopeRuntimeResponse
     }
 
     val origin: String
@@ -424,11 +458,34 @@ class VexLifeProdLocalService private constructor(
             frameHost.origin
 
     override fun close() {
+        var visionCloseFailure: Throwable? =
+            null
+
+        try {
+            visionRuntime
+                ?.close()
+        } catch (
+            error: Throwable,
+        ) {
+            visionCloseFailure =
+                error
+        }
+
         server.stop(
             0,
         )
         frameHost.close()
         executor.shutdownNow()
+
+        if (
+            visionCloseFailure !=
+            null
+        ) {
+            throw IllegalStateException(
+                "VexLife-Prod Vision runtime did not close with the service",
+                visionCloseFailure,
+            )
+        }
     }
 
     private fun handle(
@@ -534,6 +591,23 @@ class VexLifeProdLocalService private constructor(
 
                 VexLifeProdServiceContract.VisionPath ->
                     handleVision(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.VisionScopePath ->
+                    handleVisionScope(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.VisionControlPath -> handleVisionControl(exchange)
+
+                VexLifeProdServiceContract.VisionScopeEngagePath ->
+                    handleVisionScopeEngage(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.VisionScopeStopPath ->
+                    handleVisionScopeStop(
                         exchange,
                     )
 
@@ -694,7 +768,97 @@ class VexLifeProdLocalService private constructor(
         )
     }
 
-    private fun handleVision(
+    private fun handleVision(exchange: HttpExchange) {
+        requireMethod(exchange, "GET")
+        respondJson(exchange = exchange, status = 200, value = observeVision())
+    }
+
+    /**
+     * Fresh no-effect Vision observation: Product route reachability + the runtime's content-absent
+     * selected-scope PROJECT, reconciled by [VexLifeVisionFamily.observe]. A PROJECT that fails or
+     * cannot be read becomes a held State, never a guessed one.
+     */
+    private fun observedVisionState(): VexLifeVisionFamily.State {
+        val runtime = visionRuntime
+        val projected = runtime?.let { runCatching { it.project() }.getOrNull() }
+        return VexLifeVisionFamily.observe(
+            routeReachable = runtime != null,
+            runtimeReadable = projected?.ok == true,
+            scopeState = projected?.projectionOrNull?.state,
+        )
+    }
+
+    private fun observeVision(): VexLifeProdServiceContract.VisionProjection {
+        val state = observedVisionState()
+        return VexLifeProdServiceContract.VisionProjection(
+            schemaVersion = VexLifeProdServiceContract.VisionProjectionSchema,
+            state = state.stateRef,
+            routeReachable = visionRuntime != null,
+            display = VexLifeVisionFamily.displayStateFor(state),
+            effectsPerformed = false,
+        )
+    }
+
+    /**
+     * Same activation shape as Product entry: re-observe, let the Family decide whether the Control
+     * is lawful now, realize at most one runtime command, observe again.
+     */
+    private fun handleVisionControl(exchange: HttpExchange) {
+        requireMethod(exchange, "POST")
+        requireJson(exchange)
+        val request =
+            JsonCodec.decodeFromString<VexLifeProdServiceContract.VisionControlRequest>(requestText(exchange))
+        val control = requireNotNull(VexLifeVisionFamily.controlForRef(request.controlRef))
+        val runtime = visionRuntime
+        val act = VexLifeVisionFamily.resolve(currentState = observedVisionState(), control = control)
+
+        fun result(outcome: String, errorCode: String? = null) =
+            VexLifeProdServiceContract.VisionControlResult(
+                schemaVersion = VexLifeProdServiceContract.VisionControlResultSchema,
+                requestRef = request.requestRef,
+                controlRef = control.controlRef,
+                outcome = outcome,
+                runtimeErrorCodeOrNull = errorCode,
+                vision = observeVision(),
+            )
+
+        if (act == null || runtime == null) {
+            respondJson(
+                exchange = exchange,
+                status = 409,
+                value = result(VexLifeProdServiceContract.VisionControlNotLawfulNow),
+            )
+            return
+        }
+        val response =
+            when (act.effect) {
+                VexLifeVisionFamily.Effect.EngageScope -> runtime.engage(request.requestRef)
+                VexLifeVisionFamily.Effect.StopScope -> runtime.stop(request.requestRef)
+                null -> null
+            }
+        check(response == null || response.commandRef == request.requestRef) {
+            "Vision runtime result does not match the exact Product request"
+        }
+        if (response != null && !response.ok) {
+            respondJson(
+                exchange = exchange,
+                status = 200,
+                value =
+                    result(
+                        VexLifeProdServiceContract.VisionControlRuntimeRefused,
+                        requireNotNull(response.errorCodeOrNull),
+                    ),
+            )
+            return
+        }
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value = result(VexLifeProdServiceContract.VisionControlRealized),
+        )
+    }
+
+    private fun handleVisionScope(
         exchange: HttpExchange,
     ) {
         requireMethod(
@@ -702,28 +866,135 @@ class VexLifeProdLocalService private constructor(
             "GET",
         )
 
-        val reachable =
-            visionExecutor !=
+        val currentVisionRuntime =
+            visionRuntime
+
+        if (
+            currentVisionRuntime ==
                 null
+        ) {
+            respondError(
+                exchange = exchange,
+                status = 409,
+                code = "VISION_HELD",
+                message = "VexLife Vision persistent selected-scope route is not reachable",
+            )
+            return
+        }
 
         respondJson(
             exchange = exchange,
             status = 200,
             value =
-                VexLifeProdServiceContract.VisionProjection(
-                    schemaVersion =
-                        VexLifeProdServiceContract.VisionProjectionSchema,
-                    state =
-                        if (
-                            reachable
-                        ) {
-                            "READY"
-                        } else {
-                            "HELD"
-                        },
-                    routeReachable = reachable,
-                    effectsPerformed = false,
+                currentVisionRuntime.project(),
+        )
+    }
+
+    private fun handleVisionScopeEngage(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireJson(
+            exchange,
+        )
+
+        val currentVisionRuntime =
+            visionRuntime
+
+        if (
+            currentVisionRuntime ==
+                null
+        ) {
+            respondError(
+                exchange = exchange,
+                status = 409,
+                code = "VISION_HELD",
+                message = "VexLife Vision persistent selected-scope route is not reachable",
+            )
+            return
+        }
+
+        val request =
+            JsonCodec.decodeFromString<VexLifeProdServiceContract.VisionScopeCommandRequest>(
+                requestText(
+                    exchange,
                 ),
+            )
+        val result =
+            currentVisionRuntime.engage(
+                request.requestRef,
+            )
+
+        check(
+            result.commandRef ==
+                request.requestRef &&
+                result.commandType ==
+                "ENGAGE",
+        ) {
+            "Vision ENGAGE result does not match the exact Product request"
+        }
+
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value = result,
+        )
+    }
+
+    private fun handleVisionScopeStop(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireJson(
+            exchange,
+        )
+
+        val currentVisionRuntime =
+            visionRuntime
+
+        if (
+            currentVisionRuntime ==
+                null
+        ) {
+            respondError(
+                exchange = exchange,
+                status = 409,
+                code = "VISION_HELD",
+                message = "VexLife Vision persistent selected-scope route is not reachable",
+            )
+            return
+        }
+
+        val request =
+            JsonCodec.decodeFromString<VexLifeProdServiceContract.VisionScopeCommandRequest>(
+                requestText(
+                    exchange,
+                ),
+            )
+        val result =
+            currentVisionRuntime.stop(
+                request.requestRef,
+            )
+
+        check(
+            result.commandRef ==
+                request.requestRef &&
+                result.commandType ==
+                "STOP",
+        ) {
+            "Vision STOP result does not match the exact Product request"
+        }
+
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value = result,
         )
     }
 
@@ -738,44 +1009,17 @@ class VexLifeProdLocalService private constructor(
             exchange,
         )
 
-        val currentVisionExecutor =
-            visionExecutor
+        JsonCodec.decodeFromString<VexLifeProdServiceContract.VisionLookNowRequest>(
+            requestText(
+                exchange,
+            ),
+        )
 
-        if (
-            currentVisionExecutor ==
-                null
-        ) {
-            respondError(
-                exchange = exchange,
-                status = 409,
-                code = "VISION_HELD",
-                message = "VexLife Vision local Product route is not reachable",
-            )
-            return
-        }
-
-        val request =
-            JsonCodec.decodeFromString<VexLifeProdServiceContract.VisionLookNowRequest>(
-                requestText(
-                    exchange,
-                ),
-            )
-        val result =
-            currentVisionExecutor.lookNow(
-                request.requestRef,
-            )
-
-        check(
-            result.requestRef ==
-                request.requestRef,
-        ) {
-            "Vision runtime result does not match the exact Product request"
-        }
-
-        respondJson(
+        respondError(
             exchange = exchange,
-            status = 200,
-            value = result,
+            status = 409,
+            code = "VISION_LOOK_NOT_YET_ADMITTED_FROM_PERSISTENT_SCOPE",
+            message = "VexLife Vision LOOK remains held until the persistent-scope LOOK executor is accepted",
         )
     }
 

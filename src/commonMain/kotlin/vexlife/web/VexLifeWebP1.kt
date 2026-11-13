@@ -81,9 +81,10 @@ object VexLifeWebP1 {
                 "conversation.send",
             )
 
-        val VisionLookNowCapability =
+        /** Persistent selected scope: choose one window (Engage) / release it (Stop). No capture. */
+        val VisionSelectedScopeCapability =
             VexWeb.CapabilityRef.of(
-                "vision.look-now",
+                "vision.selected-scope",
             )
     }
 
@@ -434,7 +435,7 @@ object VexLifeWebP1 {
                 ),
             binding =
                 VexWebAuthoring.capability(
-                    Refs.VisionLookNowCapability,
+                    Refs.VisionSelectedScopeCapability,
                 ),
         )
 

@@ -224,6 +224,119 @@ class VexLifeProdServiceContractTest {
         }
     }
     @Test
+    fun persistentVisionScopeContractKeepsProviderAndCaptureTruthOut() {
+        assertEquals(
+            "/api/v1/vision/scope",
+            VexLifeProdServiceContract.VisionScopePath,
+        )
+        assertEquals(
+            "/api/v1/vision/scope/engage",
+            VexLifeProdServiceContract.VisionScopeEngagePath,
+        )
+        assertEquals(
+            "/api/v1/vision/scope/stop",
+            VexLifeProdServiceContract.VisionScopeStopPath,
+        )
+
+        val projection =
+            VexLifeProdServiceContract.VisionSelectedScopeProjection(
+                schemaVersion =
+                    VexLifeProdServiceContract.VisionSelectedScopeProjectionSchema,
+                scopeSessionRef = "session.macos-screen-selected-scope.product.test.001",
+                state = "ENGAGED",
+                selectedScopePresent = true,
+                scopeIndicatorRequired = true,
+                lookingIndicatorRequired = false,
+                lookRequestRefOrNull = null,
+                safetyAuthorizationRefOrNull = null,
+                safetyBindingRefOrNull = null,
+                safetyReceiptFingerprintOrNull = null,
+                safetyObservedAtOrNull = null,
+                holdReasonOrNull = null,
+                endReasonOrNull = null,
+                sensorActive = false,
+                screenCaptureActive = false,
+                screenCaptureAuthorized = false,
+                captureExecutionAuthorized = false,
+                requestReplayProtectionEstablished = false,
+                captureExecutionRequiresSingleUseEffectReservation = true,
+                activeObservation = false,
+                rawBytesIncluded = false,
+                rawRetentionAllowed = false,
+                continuousCaptureAllowed = false,
+                backgroundCaptureAllowed = false,
+                visualModelInputAuthorized = false,
+                memoryAccepted = false,
+                trainingEligible = false,
+                publicationEligible = false,
+            )
+
+        assertEquals(
+            "ENGAGED",
+            projection.state,
+        )
+        assertFalse(
+            projection.screenCaptureActive,
+        )
+        assertFalse(
+            projection.visualModelInputAuthorized,
+        )
+
+        assertFailsWith<IllegalArgumentException> {
+            projection.copy(
+                screenCaptureActive = true,
+            )
+        }
+        assertFailsWith<IllegalArgumentException> {
+            projection.copy(
+                state = "LOOKING",
+                lookingIndicatorRequired = true,
+                lookRequestRefOrNull = null,
+            )
+        }
+    }
+
+    @Test
+    fun persistentVisionRuntimeResponseIsExactCommandBoundTruth() {
+        val request =
+            VexLifeProdServiceContract.VisionScopeCommandRequest(
+                requestRef = "request.vexlife-prod.vision.scope.001",
+            )
+        assertEquals(
+            "request.vexlife-prod.vision.scope.001",
+            request.requestRef,
+        )
+
+        val response =
+            VexLifeProdServiceContract.VisionSelectedScopeRuntimeResponse(
+                schemaVersion =
+                    VexLifeProdServiceContract.VisionSelectedScopeRuntimeResponseSchema,
+                commandRef = request.requestRef,
+                commandType = "ENGAGE",
+                ok = true,
+                projectionOrNull = null,
+                shutdownRequested = false,
+                errorCodeOrNull = null,
+            )
+        assertEquals(
+            "ENGAGE",
+            response.commandType,
+        )
+
+        assertFailsWith<IllegalArgumentException> {
+            response.copy(
+                ok = false,
+                errorCodeOrNull = null,
+            )
+        }
+        assertFailsWith<IllegalArgumentException> {
+            response.copy(
+                commandType = "CAPTURE",
+            )
+        }
+    }
+
+    @Test
     fun memoryDreamProjectionExposesScoreConversationCurrentnessWithoutEffect() {
         val projection =
             VexLifeProdServiceContract.MemoryDreamProjection(

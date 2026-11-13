@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.home.VexLifeProdHome
+import vexlife.vision.VexLifeVisionFamily
 
 /**
  * Shared browser/service contract for the local VexLife implementation.
@@ -32,7 +33,10 @@ object VexLifeProdServiceContract {
         "vexlife-prod.local-service-memory-dream-run-response/v1"
 
     const val VisionProjectionSchema =
-        "vexlife-prod.local-service-vision-projection/v1"
+        "vexlife-prod.local-service-vision-projection/v2"
+
+    const val VisionControlResultSchema =
+        "vexlife-prod.local-service-vision-control-result/v1"
 
     const val VisionRuntimeResultSchema =
         "vextreme.macos-screen-system-picker-product-runtime-result/v1"
@@ -93,6 +97,25 @@ object VexLifeProdServiceContract {
 
     const val VisionLookNowPath =
         "/api/v1/vision/look-now"
+
+    const val VisionScopePath =
+        "/api/v1/vision/scope"
+
+    /** Family-resolved Vision Control (Engage / Stop) against freshly observed Vision State. */
+    const val VisionControlPath =
+        "/api/v1/vision/control"
+
+    const val VisionScopeEngagePath =
+        "/api/v1/vision/scope/engage"
+
+    const val VisionScopeStopPath =
+        "/api/v1/vision/scope/stop"
+
+    const val VisionSelectedScopeProjectionSchema =
+        "vextreme.macos-screen-selected-scope-session-projection/v1"
+
+    const val VisionSelectedScopeRuntimeResponseSchema =
+        "vextreme.macos-screen-selected-scope-product-runtime-response/v1"
 
     const val ConversationSendPath =
         "/api/v1/conversation/send"
@@ -399,25 +422,292 @@ object VexLifeProdServiceContract {
         val schemaVersion: String,
         val state: String,
         val routeReachable: Boolean,
+        val display: VexLifeVisionFamily.DisplayState,
         val effectsPerformed: Boolean,
     ) {
         init {
             require(
+                schemaVersion == VisionProjectionSchema &&
+                    state in VisionStateRefs &&
+                    (routeReachable || state == VexLifeVisionFamily.StateHeld) &&
+                    !effectsPerformed
+            ) {
+                "Vision projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class VisionControlRequest(val controlRef: String, val requestRef: String) {
+        init {
+            require(VexLifeVisionFamily.controlForRef(controlRef) != null) { "unknown Vision Control" }
+            requirePortableRef(requestRef, "requestRef")
+        }
+    }
+
+    /**
+     * One Vision activation: fresh observation, Family resolution, at most one runtime command,
+     * fresh observation. [vision] is always the State observed afterwards, never a predicted one.
+     */
+    @Serializable
+    data class VisionControlResult(
+        val schemaVersion: String,
+        val requestRef: String,
+        val controlRef: String,
+        val outcome: String,
+        val runtimeErrorCodeOrNull: String?,
+        val vision: VisionProjection,
+    ) {
+        init {
+            require(
+                schemaVersion == VisionControlResultSchema &&
+                    outcome in setOf(VisionControlRealized, VisionControlNotLawfulNow, VisionControlRuntimeRefused) &&
+                    (outcome == VisionControlRuntimeRefused) == (runtimeErrorCodeOrNull != null)
+            ) {
+                "Vision control result is invalid"
+            }
+            requirePortableRef(requestRef, "requestRef")
+        }
+    }
+
+    const val VisionControlRealized = "REALIZED"
+    const val VisionControlNotLawfulNow = "NOT_LAWFUL_NOW"
+    const val VisionControlRuntimeRefused = "RUNTIME_REFUSED"
+
+    val VisionStateRefs =
+        setOf(
+            VexLifeVisionFamily.StateHeld,
+            VexLifeVisionFamily.StateReady,
+            VexLifeVisionFamily.StateSelecting,
+            VexLifeVisionFamily.StateEngaged,
+            VexLifeVisionFamily.StateLooking,
+        )
+
+    @Serializable
+    data class VisionScopeCommandRequest(
+        val requestRef: String,
+    ) {
+        init {
+            requirePortableRef(
+                requestRef,
+                "requestRef",
+            )
+        }
+    }
+
+    @Serializable
+    data class VisionSelectedScopeProjection(
+        val schemaVersion: String,
+        val scopeSessionRef: String,
+        val state: String,
+        val selectedScopePresent: Boolean,
+        val scopeIndicatorRequired: Boolean,
+        val lookingIndicatorRequired: Boolean,
+        val lookRequestRefOrNull: String?,
+        val safetyAuthorizationRefOrNull: String?,
+        val safetyBindingRefOrNull: String?,
+        val safetyReceiptFingerprintOrNull: String?,
+        val safetyObservedAtOrNull: String?,
+        val holdReasonOrNull: String?,
+        val endReasonOrNull: String?,
+        val sensorActive: Boolean,
+        val screenCaptureActive: Boolean,
+        val screenCaptureAuthorized: Boolean,
+        val captureExecutionAuthorized: Boolean,
+        val requestReplayProtectionEstablished: Boolean,
+        val captureExecutionRequiresSingleUseEffectReservation: Boolean,
+        val activeObservation: Boolean,
+        val rawBytesIncluded: Boolean,
+        val rawRetentionAllowed: Boolean,
+        val continuousCaptureAllowed: Boolean,
+        val backgroundCaptureAllowed: Boolean,
+        val visualModelInputAuthorized: Boolean,
+        val memoryAccepted: Boolean,
+        val trainingEligible: Boolean,
+        val publicationEligible: Boolean,
+    ) {
+        init {
+            require(
                 schemaVersion ==
-                    VisionProjectionSchema &&
+                    VisionSelectedScopeProjectionSchema &&
                     state in
                     setOf(
                         "HELD",
-                        "READY",
+                        "SELECTING",
+                        "ENGAGED",
+                        "LOOKING",
+                        "ENDED",
                     ) &&
-                    routeReachable ==
+                    selectedScopePresent ==
                     (
                         state ==
-                            "READY"
+                            "ENGAGED" ||
+                            state ==
+                            "LOOKING"
                     ) &&
-                    !effectsPerformed,
+                    scopeIndicatorRequired ==
+                    selectedScopePresent &&
+                    lookingIndicatorRequired ==
+                    (
+                        state ==
+                            "LOOKING"
+                    ) &&
+                    !sensorActive &&
+                    !screenCaptureActive &&
+                    !screenCaptureAuthorized &&
+                    !captureExecutionAuthorized &&
+                    !requestReplayProtectionEstablished &&
+                    captureExecutionRequiresSingleUseEffectReservation &&
+                    !activeObservation &&
+                    !rawBytesIncluded &&
+                    !rawRetentionAllowed &&
+                    !continuousCaptureAllowed &&
+                    !backgroundCaptureAllowed &&
+                    !visualModelInputAuthorized &&
+                    !memoryAccepted &&
+                    !trainingEligible &&
+                    !publicationEligible,
             ) {
-                "Vision projection is invalid"
+                "Vision selected-scope projection fixed boundary is invalid"
+            }
+
+            requirePortableRef(
+                scopeSessionRef,
+                "scopeSessionRef",
+            )
+
+            lookRequestRefOrNull?.let {
+                requirePortableRef(
+                    it,
+                    "lookRequestRefOrNull",
+                )
+            }
+            safetyAuthorizationRefOrNull?.let {
+                requirePortableRef(
+                    it,
+                    "safetyAuthorizationRefOrNull",
+                )
+            }
+            safetyBindingRefOrNull?.let {
+                requirePortableRef(
+                    it,
+                    "safetyBindingRefOrNull",
+                )
+            }
+
+            require(
+                safetyReceiptFingerprintOrNull ==
+                    null ||
+                    safetyReceiptFingerprintOrNull.matches(
+                        Regex(
+                            "sha256:[0-9a-f]{64}",
+                        ),
+                    ),
+            ) {
+                "Vision selected-scope Safety fingerprint is invalid"
+            }
+
+            require(
+                holdReasonOrNull in
+                setOf(
+                    null,
+                    "SAFETY_NOT_CURRENT",
+                ) &&
+                    endReasonOrNull in
+                    setOf(
+                        null,
+                        "HUMAN_DISENGAGED",
+                        "SOURCE_LOST",
+                        "HOST_OWNER_LOST",
+                        "EXPLICIT_STOP",
+                    ),
+            ) {
+                "Vision selected-scope terminal/hold reason is invalid"
+            }
+
+            require(
+                (
+                    state ==
+                        "LOOKING" &&
+                        lookRequestRefOrNull !=
+                        null
+                ) ||
+                    (
+                        state !=
+                            "LOOKING" &&
+                            lookRequestRefOrNull ==
+                            null
+                    ),
+            ) {
+                "Vision selected-scope LOOK identity disagrees with state"
+            }
+        }
+    }
+
+    @Serializable
+    data class VisionSelectedScopeRuntimeResponse(
+        val schemaVersion: String,
+        val commandRef: String,
+        val commandType: String,
+        val ok: Boolean,
+        val projectionOrNull: VisionSelectedScopeProjection?,
+        val shutdownRequested: Boolean,
+        val errorCodeOrNull: String?,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    VisionSelectedScopeRuntimeResponseSchema &&
+                    commandType in
+                    setOf(
+                        "ENGAGE",
+                        "PROJECT",
+                        "RECONCILE",
+                        "STOP",
+                        "SHUTDOWN",
+                    ),
+            ) {
+                "Vision selected-scope runtime response identity is invalid"
+            }
+            requirePortableRef(
+                commandRef,
+                "commandRef",
+            )
+
+            if (
+                ok
+            ) {
+                require(
+                    errorCodeOrNull ==
+                        null,
+                ) {
+                    "successful Vision selected-scope runtime response contains an error"
+                }
+            } else {
+                require(
+                    projectionOrNull ==
+                        null &&
+                        errorCodeOrNull !=
+                        null &&
+                        errorCodeOrNull.matches(
+                            Regex(
+                                "[A-Z][A-Z0-9_]*",
+                            ),
+                        ),
+                ) {
+                    "failed Vision selected-scope runtime response is not bounded"
+                }
+            }
+
+            if (
+                commandType ==
+                    "SHUTDOWN"
+            ) {
+                require(
+                    shutdownRequested,
+                ) {
+                    "Vision selected-scope SHUTDOWN must expose terminal shutdown truth"
+                }
             }
         }
     }

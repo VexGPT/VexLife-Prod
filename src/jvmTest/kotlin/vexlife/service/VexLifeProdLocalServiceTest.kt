@@ -13,7 +13,6 @@ import java.time.Instant
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -770,20 +769,283 @@ class VexLifeProdLocalServiceTest {
     }
 
     @Test
-    fun visionRouteIsReadyAndInvokesOneExactRuntimeRequest() {
+    fun visionControlResolvesThroughTheFamilyAgainstFreshObservation() {
+        val root = Files.createTempDirectory("vexlife-prod-service-vision-control-").toAbsolutePath().resolve("VexLife-Prod")
+        var scopeState: String? = null
+        var refuseEngage = false
+        val commands = mutableListOf<String>()
+
+        fun projection(state: String) =
+            VexLifeProdServiceContract.VisionSelectedScopeProjection(
+                schemaVersion = VexLifeProdServiceContract.VisionSelectedScopeProjectionSchema,
+                scopeSessionRef = "session.macos-screen-selected-scope.product-service.control.001",
+                state = state,
+                selectedScopePresent = state == "ENGAGED",
+                scopeIndicatorRequired = state == "ENGAGED",
+                lookingIndicatorRequired = false,
+                lookRequestRefOrNull = null,
+                safetyAuthorizationRefOrNull = null,
+                safetyBindingRefOrNull = null,
+                safetyReceiptFingerprintOrNull = null,
+                safetyObservedAtOrNull = null,
+                holdReasonOrNull = null,
+                endReasonOrNull = if (state == "ENDED") "EXPLICIT_STOP" else null,
+                sensorActive = false,
+                screenCaptureActive = false,
+                screenCaptureAuthorized = false,
+                captureExecutionAuthorized = false,
+                requestReplayProtectionEstablished = false,
+                captureExecutionRequiresSingleUseEffectReservation = true,
+                activeObservation = false,
+                rawBytesIncluded = false,
+                rawRetentionAllowed = false,
+                continuousCaptureAllowed = false,
+                backgroundCaptureAllowed = false,
+                visualModelInputAuthorized = false,
+                memoryAccepted = false,
+                trainingEligible = false,
+                publicationEligible = false,
+            )
+
+        fun response(commandRef: String, commandType: String, error: String? = null) =
+            VexLifeProdServiceContract.VisionSelectedScopeRuntimeResponse(
+                schemaVersion = VexLifeProdServiceContract.VisionSelectedScopeRuntimeResponseSchema,
+                commandRef = commandRef,
+                commandType = commandType,
+                ok = error == null,
+                projectionOrNull = if (error == null) scopeState?.let(::projection) else null,
+                shutdownRequested = false,
+                errorCodeOrNull = error,
+            )
+
+        val runtime =
+            object : VexLifeProdLocalService.VisionRuntime {
+                override fun project() = response("command.vexlife-prod.vision.project", "PROJECT")
+
+                override fun engage(requestRef: String): VexLifeProdServiceContract.VisionSelectedScopeRuntimeResponse {
+                    commands += "ENGAGE"
+                    if (refuseEngage) return response(requestRef, "ENGAGE", "USER_CANCELLED")
+                    scopeState = "ENGAGED"
+                    return response(requestRef, "ENGAGE")
+                }
+
+                override fun stop(requestRef: String): VexLifeProdServiceContract.VisionSelectedScopeRuntimeResponse {
+                    commands += "STOP"
+                    scopeState = "ENDED"
+                    return response(requestRef, "STOP")
+                }
+
+                override fun close() = Unit
+            }
+
+        fun control(service: VexLifeProdLocalService, controlRef: String, n: Int) =
+            postJson(
+                service.origin,
+                VexLifeProdServiceContract.VisionControlPath,
+                json.encodeToString(
+                    VexLifeProdServiceContract.VisionControlRequest(
+                        controlRef = controlRef,
+                        requestRef = "request.vexlife-prod.vision.control.00$n",
+                    ),
+                ),
+            )
+
+        try {
+            bootstrapHome(root)
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha = "a".repeat(40),
+                    setup = setup(root),
+                    turnExecutor = VexLifeProdLocalService.TurnExecutor { _, _ -> error("no turn") },
+                    visionRuntime = runtime,
+                )
+                .use { service ->
+                    val ready = json.decodeFromString<VexLifeProdServiceContract.VisionProjection>(get(service.origin, VexLifeProdServiceContract.VisionPath).body())
+                    assertEquals("READY", ready.state)
+                    assertEquals("ENGAGE", ready.display.primaryControlRef)
+
+                    val engaged = control(service, "ENGAGE", 1)
+                    assertEquals(200, engaged.statusCode())
+                    val engagedResult = json.decodeFromString<VexLifeProdServiceContract.VisionControlResult>(engaged.body())
+                    assertEquals(VexLifeProdServiceContract.VisionControlRealized, engagedResult.outcome)
+                    assertEquals("ENGAGED", engagedResult.vision.state, "result carries the re-observed State")
+                    assertEquals("STOP", engagedResult.vision.display.primaryControlRef)
+
+                    val stale = control(service, "ENGAGE", 2)
+                    assertEquals(409, stale.statusCode())
+                    assertEquals(
+                        VexLifeProdServiceContract.VisionControlNotLawfulNow,
+                        json.decodeFromString<VexLifeProdServiceContract.VisionControlResult>(stale.body()).outcome,
+                    )
+                    assertEquals(listOf("ENGAGE"), commands, "an unlawful Control must not reach the runtime")
+
+                    assertEquals(200, control(service, "STOP", 3).statusCode())
+                    refuseEngage = true
+                    val refused = json.decodeFromString<VexLifeProdServiceContract.VisionControlResult>(control(service, "ENGAGE", 4).body())
+                    assertEquals(VexLifeProdServiceContract.VisionControlRuntimeRefused, refused.outcome)
+                    assertEquals("USER_CANCELLED", refused.runtimeErrorCodeOrNull)
+                    assertEquals("READY", refused.vision.state)
+                    assertEquals(listOf("ENGAGE", "STOP", "ENGAGE"), commands)
+                }
+
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha = "a".repeat(40),
+                    setup = setup(root),
+                    turnExecutor = VexLifeProdLocalService.TurnExecutor { _, _ -> error("no turn") },
+                    visionRuntime = null,
+                )
+                .use { service ->
+                    val held = json.decodeFromString<VexLifeProdServiceContract.VisionProjection>(get(service.origin, VexLifeProdServiceContract.VisionPath).body())
+                    assertEquals("HELD", held.state)
+                    assertFalse(held.routeReachable)
+                    assertNull(held.display.primaryControlRef)
+                    assertEquals(409, control(service, "ENGAGE", 5).statusCode())
+                }
+        } finally {
+            root.parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun visionRouteOwnsPersistentScopeCommandsAndHoldsLookNow() {
         val parent =
             Files.createTempDirectory(
-                "vexlife-prod-service-vision-ready-",
+                "vexlife-prod-service-vision-persistent-",
             )
                 .toAbsolutePath()
         val root =
             parent.resolve(
                 "VexLife-Prod",
             )
-        val requestRef =
-            "request.vexlife-prod.vision.ready.001"
-        var invocationCount =
+        val engageRef =
+            "request.vexlife-prod.vision.engage.001"
+        val stopRef =
+            "request.vexlife-prod.vision.stop.001"
+        var projectCount =
             0
+        var engageCount =
+            0
+        var stopCount =
+            0
+        var closeCount =
+            0
+        var currentProjection: VexLifeProdServiceContract.VisionSelectedScopeProjection? =
+            null
+
+        fun selectedScope(
+            state: String,
+        ): VexLifeProdServiceContract.VisionSelectedScopeProjection =
+            VexLifeProdServiceContract.VisionSelectedScopeProjection(
+                schemaVersion =
+                    VexLifeProdServiceContract.VisionSelectedScopeProjectionSchema,
+                scopeSessionRef =
+                    "session.macos-screen-selected-scope.product-service.test.001",
+                state = state,
+                selectedScopePresent =
+                    state ==
+                        "ENGAGED",
+                scopeIndicatorRequired =
+                    state ==
+                        "ENGAGED",
+                lookingIndicatorRequired =
+                    false,
+                lookRequestRefOrNull = null,
+                safetyAuthorizationRefOrNull = null,
+                safetyBindingRefOrNull = null,
+                safetyReceiptFingerprintOrNull = null,
+                safetyObservedAtOrNull = null,
+                holdReasonOrNull = null,
+                endReasonOrNull =
+                    if (
+                        state ==
+                            "ENDED"
+                    ) {
+                        "EXPLICIT_STOP"
+                    } else {
+                        null
+                    },
+                sensorActive = false,
+                screenCaptureActive = false,
+                screenCaptureAuthorized = false,
+                captureExecutionAuthorized = false,
+                requestReplayProtectionEstablished = false,
+                captureExecutionRequiresSingleUseEffectReservation = true,
+                activeObservation = false,
+                rawBytesIncluded = false,
+                rawRetentionAllowed = false,
+                continuousCaptureAllowed = false,
+                backgroundCaptureAllowed = false,
+                visualModelInputAuthorized = false,
+                memoryAccepted = false,
+                trainingEligible = false,
+                publicationEligible = false,
+            )
+
+        fun response(
+            commandRef: String,
+            commandType: String,
+        ): VexLifeProdServiceContract.VisionSelectedScopeRuntimeResponse =
+            VexLifeProdServiceContract.VisionSelectedScopeRuntimeResponse(
+                schemaVersion =
+                    VexLifeProdServiceContract.VisionSelectedScopeRuntimeResponseSchema,
+                commandRef = commandRef,
+                commandType = commandType,
+                ok = true,
+                projectionOrNull = currentProjection,
+                shutdownRequested = false,
+                errorCodeOrNull = null,
+            )
+
+        val visionRuntime =
+            object :
+                VexLifeProdLocalService.VisionRuntime {
+                override fun project(): VexLifeProdServiceContract.VisionSelectedScopeRuntimeResponse {
+                    projectCount +=
+                        1
+                    return response(
+                        commandRef =
+                            "command.vexlife-prod.vision.project." +
+                                projectCount,
+                        commandType = "PROJECT",
+                    )
+                }
+
+                override fun engage(
+                    requestRef: String,
+                ): VexLifeProdServiceContract.VisionSelectedScopeRuntimeResponse {
+                    engageCount +=
+                        1
+                    currentProjection =
+                        selectedScope(
+                            "ENGAGED",
+                        )
+                    return response(
+                        commandRef = requestRef,
+                        commandType = "ENGAGE",
+                    )
+                }
+
+                override fun stop(
+                    requestRef: String,
+                ): VexLifeProdServiceContract.VisionSelectedScopeRuntimeResponse {
+                    stopCount +=
+                        1
+                    currentProjection =
+                        selectedScope(
+                            "ENDED",
+                        )
+                    return response(
+                        commandRef = requestRef,
+                        commandType = "STOP",
+                    )
+                }
+
+                override fun close() {
+                    closeCount +=
+                        1
+                }
+            }
 
         try {
             bootstrapHome(
@@ -809,44 +1071,7 @@ class VexLifeProdLocalServiceTest {
                                 "turn must not run during Vision request",
                             )
                         },
-                    visionExecutor =
-                        VexLifeProdLocalService.VisionExecutor {
-                            observedRequestRef ->
-                            invocationCount +=
-                                1
-                            assertEquals(
-                                requestRef,
-                                observedRequestRef,
-                            )
-                            VexLifeProdServiceContract.VisionRuntimeResult(
-                                schemaVersion =
-                                    VexLifeProdServiceContract.VisionRuntimeResultSchema,
-                                state = "USER_CANCELLED",
-                                requestRef = observedRequestRef,
-                                sessionRefOrNull =
-                                    "session.macos-screen-system-picker.product-runtime.test",
-                                connectionIdOrNull =
-                                    "connection.macos-screen-system-picker.product-runtime.test",
-                                selectionMode = "SINGLE_WINDOW",
-                                osOwnsSelectionUi = true,
-                                helperLaunched = true,
-                                projectionOrNull =
-                                    JsonObject(
-                                        emptyMap(),
-                                    ),
-                                activeSharingWitnessOrNull = null,
-                                activeVisualObservationOrNull = null,
-                                rawBytesIncluded = false,
-                                rawRetentionAllowed = false,
-                                visualModelInputAuthorized = false,
-                                memoryAccepted = false,
-                                trainingEligible = false,
-                                publicationEligible = false,
-                                continuousCaptureAllowed = false,
-                                backgroundCaptureAllowed = false,
-                                persistentHostPermissionEstablished = false,
-                            )
-                        },
+                    visionRuntime = visionRuntime,
                 )
                 .use {
                     service ->
@@ -859,19 +1084,88 @@ class VexLifeProdLocalServiceTest {
                         200,
                         vision.statusCode(),
                     )
-                    val projection =
+                    val reachability =
                         json.decodeFromString<VexLifeProdServiceContract.VisionProjection>(
                             vision.body(),
                         )
                     assertEquals(
                         "READY",
-                        projection.state,
+                        reachability.state,
                     )
                     assertTrue(
-                        projection.routeReachable,
+                        reachability.routeReachable,
+                    )
+
+                    val before =
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.VisionScopePath,
+                        )
+                    assertEquals(
+                        200,
+                        before.statusCode(),
+                    )
+                    val beforeProjection =
+                        json.decodeFromString<VexLifeProdServiceContract.VisionSelectedScopeRuntimeResponse>(
+                            before.body(),
+                        )
+                    assertEquals(
+                        "PROJECT",
+                        beforeProjection.commandType,
+                    )
+                    assertNull(
+                        beforeProjection.projectionOrNull,
+                    )
+
+                    val engaged =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.VisionScopeEngagePath,
+                            json.encodeToString(
+                                VexLifeProdServiceContract.VisionScopeCommandRequest(
+                                    requestRef = engageRef,
+                                ),
+                            ),
+                        )
+                    assertEquals(
+                        200,
+                        engaged.statusCode(),
+                    )
+                    val engagedResult =
+                        json.decodeFromString<VexLifeProdServiceContract.VisionSelectedScopeRuntimeResponse>(
+                            engaged.body(),
+                        )
+                    assertEquals(
+                        "ENGAGED",
+                        engagedResult.projectionOrNull
+                            ?.state,
+                    )
+                    assertTrue(
+                        requireNotNull(
+                            engagedResult.projectionOrNull,
+                        )
+                            .scopeIndicatorRequired,
                     )
                     assertFalse(
-                        projection.effectsPerformed,
+                        requireNotNull(
+                            engagedResult.projectionOrNull,
+                        )
+                            .screenCaptureActive,
+                    )
+
+                    val projected =
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.VisionScopePath,
+                        )
+                    val projectedResult =
+                        json.decodeFromString<VexLifeProdServiceContract.VisionSelectedScopeRuntimeResponse>(
+                            projected.body(),
+                        )
+                    assertEquals(
+                        "ENGAGED",
+                        projectedResult.projectionOrNull
+                            ?.state,
                     )
 
                     val lookNow =
@@ -880,40 +1174,68 @@ class VexLifeProdLocalServiceTest {
                             VexLifeProdServiceContract.VisionLookNowPath,
                             json.encodeToString(
                                 VexLifeProdServiceContract.VisionLookNowRequest(
-                                    requestRef = requestRef,
+                                    requestRef =
+                                        "request.vexlife-prod.vision.look.held.001",
+                                ),
+                            ),
+                        )
+                    assertEquals(
+                        409,
+                        lookNow.statusCode(),
+                    )
+                    val heldLook =
+                        json.decodeFromString<VexLifeProdServiceContract.ErrorResponse>(
+                            lookNow.body(),
+                        )
+                    assertEquals(
+                        "VISION_LOOK_NOT_YET_ADMITTED_FROM_PERSISTENT_SCOPE",
+                        heldLook.code,
+                    )
+
+                    val stopped =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.VisionScopeStopPath,
+                            json.encodeToString(
+                                VexLifeProdServiceContract.VisionScopeCommandRequest(
+                                    requestRef = stopRef,
                                 ),
                             ),
                         )
                     assertEquals(
                         200,
-                        lookNow.statusCode(),
+                        stopped.statusCode(),
                     )
-                    val result =
-                        json.decodeFromString<VexLifeProdServiceContract.VisionRuntimeResult>(
-                            lookNow.body(),
+                    val stoppedResult =
+                        json.decodeFromString<VexLifeProdServiceContract.VisionSelectedScopeRuntimeResponse>(
+                            stopped.body(),
                         )
                     assertEquals(
-                        "USER_CANCELLED",
-                        result.state,
+                        "ENDED",
+                        stoppedResult.projectionOrNull
+                            ?.state,
                     )
+
+                    // GET /api/v1/vision observes the selected scope through PROJECT (Family
+                    // reconciliation), plus the two explicit GET /scope reads.
                     assertEquals(
-                        requestRef,
-                        result.requestRef,
+                        3,
+                        projectCount,
                     )
                     assertEquals(
                         1,
-                        invocationCount,
+                        engageCount,
                     )
-                    assertTrue(
-                        result.helperLaunched,
-                    )
-                    assertNull(
-                        result.activeSharingWitnessOrNull,
-                    )
-                    assertNull(
-                        result.activeVisualObservationOrNull,
+                    assertEquals(
+                        1,
+                        stopCount,
                     )
                 }
+
+            assertEquals(
+                1,
+                closeCount,
+            )
         } finally {
             parent
                 .toFile()

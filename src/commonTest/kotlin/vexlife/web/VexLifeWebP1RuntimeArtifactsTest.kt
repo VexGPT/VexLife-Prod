@@ -20,7 +20,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.semanticManifest.contains(
-                "\"type\":\"CAPABILITY\",\"capabilityRef\":\"vision.look-now\"",
+                "\"type\":\"CAPABILITY\",\"capabilityRef\":\"vision.selected-scope\"",
             ),
         )
 
@@ -159,7 +159,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                VexLifeProdServiceContract.VisionLookNowPath,
+                VexLifeProdServiceContract.VisionControlPath,
             ),
         )
         assertTrue(
@@ -404,7 +404,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "const lookNow = async () =>",
+                "const activateVision = async () =>",
             ),
         )
         assertTrue(
@@ -419,7 +419,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "Vision · Ready — one snapshot was captured. Visual interpretation remains separate.",
+                "state.vision = result.vision;",
             ),
         )
         assertFalse(

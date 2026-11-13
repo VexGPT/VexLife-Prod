@@ -1,6 +1,7 @@
 package vexlife.web
 
 import kotlin.test.Test
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
@@ -32,17 +33,19 @@ class VexLifeVisionQuickAccessTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "void lookNow();",
+                "void activateVision();",
             ),
         )
+        // Vision copy and its one lawful Control come from VexLifeVisionFamily via the service; the
+        // renderer only shows state.vision.display and never offers Look Now while LOOK is held.
         assertTrue(
             bundle.javascript.contains(
-                "Vision · Ready — Look Now",
+                "const controlRef = state.vision?.display?.primaryControlRef;",
             ),
         )
-        assertTrue(
+        assertFalse(
             bundle.javascript.contains(
-                "Vision · Held — the local Product route is not reachable.",
+                "Look Now",
             ),
         )
     }

@@ -87,7 +87,7 @@ class VexLifeWebP1Test {
                 VexWeb.Binding.Capability,
         )
         assertEquals(
-            VexLifeWebP1.Refs.VisionLookNowCapability,
+            VexLifeWebP1.Refs.VisionSelectedScopeCapability,
             (
                 vision.binding as
                     VexWeb.Binding.Capability
@@ -193,7 +193,7 @@ class VexLifeWebP1Test {
         )
         assertTrue(
             artifacts.semanticManifest.contains(
-                "\"type\":\"CAPABILITY\",\"capabilityRef\":\"vision.look-now\"",
+                "\"type\":\"CAPABILITY\",\"capabilityRef\":\"vision.selected-scope\"",
             ),
         )
     }
