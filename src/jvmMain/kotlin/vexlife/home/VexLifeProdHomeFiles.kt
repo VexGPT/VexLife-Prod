@@ -8,7 +8,6 @@ import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.UUID
 import vexlife.contract.VexDurableContractFile
-import vexlife.contract.VexDurableContractFile
 import vexlife.filesystem.VexOwnedPath
 
 /**
