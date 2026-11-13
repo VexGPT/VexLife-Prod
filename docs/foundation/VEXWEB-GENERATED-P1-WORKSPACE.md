@@ -235,7 +235,11 @@ CONFIGURATION_ONLY_NOT_REOBSERVED
 DISPLAYED CURRENT STATE
 != EFFECT ADMISSION
 ~~~
-CleanChat remains a visible explanatory action that performs no reset effect. ThoughtVisibility is
+CleanChat is disabled as "Not available yet" and says what it will be: the predecessor's `CLEAN_START`
+Send mode (vgong24/VexLife #975 candidate), a prompt-selection boundary, not deletion, archive, a
+new Conversation or Memory erasure. It is not wired because Product selects *recent* completed turns,
+so a one-turn mode would quietly expire on the next Send; it needs a durable boundary in canonical
+Conversation that later selection respects, which is a Conversation contract change of its own. ThoughtVisibility is
 presentation-local preference only; it does not claim hidden-reasoning data exists in the current
 Conversation projection.
 

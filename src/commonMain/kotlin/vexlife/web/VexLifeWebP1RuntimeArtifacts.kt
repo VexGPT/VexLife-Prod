@@ -1305,10 +1305,6 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderTimeline();
               });
 
-              ui.cleanChat.addEventListener('click', () => {
-                notify('Current New-Beginnings Conversation reset/archive semantics are not owned by this presentation yet.');
-              });
-
               ui.collapseBefore.addEventListener('click', () => {
                 state.collapsed = state.collapsed === 'before' ? 'none' : 'before';
                 applySplit();
