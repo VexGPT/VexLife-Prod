@@ -690,6 +690,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const formatBytes = (value) => {
+                if (value === null || value === undefined || value === '') return 'Unknown';
                 const bytes = Number(value);
                 if (!Number.isFinite(bytes) || bytes < 0) return 'Unknown';
                 const units = ['B', 'KB', 'MB', 'GB', 'TB'];
@@ -753,16 +754,23 @@ object VexLifeWebP1RuntimeArtifacts {
 
                   const freeStorage = formatBytes(current.freeStorageBytes);
                   const modelTotal = formatBytes(current.modelArtifactTotalBytes);
-                  const modelVerified = formatBytes(current.modelArtifactVerifiedBytes);
+                  const modelPresent = formatBytes(current.modelArtifactPresentBySizeBytes);
+                  const modelLabel = current.activeModelRef ?? 'No model selected';
+                  const modelStorage =
+                    current.modelArtifactTotalBytes === null || current.modelArtifactTotalBytes === undefined
+                      ? 'No selected-model artifact requirement.'
+                      : 'Model files present by declared size: ' + modelPresent + ' of ' + modelTotal +
+                        ' (' + String(current.modelArtifactState ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase() + '). ' +
+                        'Exact hashes are not rechecked in this awareness view.';
                   ui.resourceNote.textContent =
                     'Storage available: ' + freeStorage +
-                    '. Current model artifacts: ' + modelVerified + ' of ' + modelTotal +
-                    ' (' + String(current.modelArtifactState ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase() + '). ' +
-                    'Runtime: ' + String(current.runtimeState ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase() +
+                    '. Model: ' + modelLabel + '. ' + modelStorage + ' ' +
+                    'Runtime binding: ' + String(current.runtimeState ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase() +
                     '; currentness: ' + String(current.runtimeCurrentness ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase() + '.';
                   ui.homeCurrentState.textContent =
                     'Current Home: ' + String(current.homePath ?? 'Unknown') +
-                    ' · ' + String(current.homeDisposition ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase() + '.';
+                    ' · ' + String(current.homeDisposition ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase() +
+                    ' · ' + String(current.homeRef ?? 'Unknown') + '.';
                 } else {
                   setMeter(ui.memory, [[ui.memoryUsed, 0], [ui.memoryRemaining, 0]], 'Not measured', 'Current machine state is unavailable', false);
                   ui.resourceNote.textContent = 'Current machine and model resource truth is unavailable.';
