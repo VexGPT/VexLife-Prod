@@ -23,9 +23,11 @@ import vexlife.model.heretic.runtime.HereticMacHostProfile
  */
 object VexLifeProdCurrentState {
     internal data class Hooks(
-        val resolveProductHome: () -> Path = {
-            VexLifeProdHomeFiles.defaultMacRoot(Path.of(System.getProperty("user.home")))
-        },
+        /**
+         * Always the human-selected coordinate. There is deliberately no default: an implicit
+         * `~/.vexlife` fallback here is how a chosen Home silently stops being observed.
+         */
+        val resolveProductHome: () -> Path,
         val observeLocation: (productHome: Path) -> VexLifeProdHomeFiles.Location = { productHome ->
             VexLifeProdHomeFiles.observeLocation(productHome)
         },
@@ -62,9 +64,6 @@ object VexLifeProdCurrentState {
             Instant.now()
         },
     )
-
-    fun observeCurrentMac(): VexLifeProdServiceContract.CurrentStateProjection =
-        observeWithHooks(Hooks())
 
     fun observeCurrentMac(productHome: Path): VexLifeProdServiceContract.CurrentStateProjection {
         require(productHome.isAbsolute) {
