@@ -83,6 +83,30 @@ class DirectConversationSourceReturnTest {
                 "Only one source-return request",
             ),
         )
+        assertTrue(
+            protocol.content.contains(
+                DirectConversationSourceReturn.RequestHeader,
+            ),
+        )
+        assertTrue(
+            protocol.content.contains(
+                DirectConversationSourceReturn.RequestHeader +
+                    "\n" +
+                    "{\"schemaVersion\":\"" +
+                    DirectConversationSourceReturn.RequestSchema +
+                    "\",\"queryTerms\":[\"distinctive exact phrase or term\"],\"speakerScope\":\"ANY\"}",
+            ),
+        )
+        assertTrue(
+            protocol.content.contains(
+                "final assistant content",
+            ),
+        )
+        assertTrue(
+            protocol.content.contains(
+                "Never quote or explain the request header",
+            ),
+        )
     }
 
     @Test
@@ -129,6 +153,54 @@ class DirectConversationSourceReturnTest {
         }
     }
 
+
+    @Test
+    fun boundedLeadingWrapperStillSelectsControlWithoutBroadeningPastTheBound() {
+        val exact =
+            requestText(
+                queryTermsJson =
+                    "[\"lantern-garden\"]",
+                speakerScope =
+                    DirectConversationSourceReturn.AnySpeaker,
+            )
+        val acceptedPrefix =
+            "x".repeat(
+                DirectConversationSourceReturn.MaximumControlPreambleCharacters -
+                    1,
+            ) +
+                "\n"
+        val accepted =
+            requireNotNull(
+                DirectConversationSourceReturn.parseRequestOrNull(
+                    acceptedPrefix +
+                        exact,
+                ),
+            )
+
+        assertEquals(
+            listOf(
+                "lantern-garden",
+            ),
+            accepted.queryTerms,
+        )
+        assertEquals(
+            DirectConversationSourceReturn.AnySpeaker,
+            accepted.speakerScope,
+        )
+
+        val outsidePrefix =
+            "x".repeat(
+                DirectConversationSourceReturn.MaximumControlPreambleCharacters,
+            ) +
+                "\n"
+        assertNull(
+            DirectConversationSourceReturn.parseRequestOrNull(
+                outsidePrefix +
+                    exact,
+            ),
+        )
+    }
+
     @Test
     fun discoveryReturnsExactCanonicalCompletedTurnAndHonorsCurrentPresenceExclusion() {
         val home =
@@ -166,6 +238,10 @@ class DirectConversationSourceReturnTest {
                             productHome = home,
                             request = request,
                             response = response,
+                            formedAt =
+                                Instant.parse(
+                                    "2026-11-12T00:00:02Z",
+                                ),
                         )
                     commitCompletedTurn(
                         request = request,
@@ -314,6 +390,10 @@ class DirectConversationSourceReturnTest {
                             productHome = home,
                             request = request,
                             response = response,
+                            formedAt =
+                                Instant.parse(
+                                    "2026-11-12T00:00:03Z",
+                                ),
                         )
                     commitCompletedTurn(
                         request = request,
@@ -404,6 +484,10 @@ class DirectConversationSourceReturnTest {
                         productHome = home,
                         request = oldRequest,
                         response = oldResponse,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-12T00:00:04Z",
+                            ),
                     )
                 commitCompletedTurn(
                     request = oldRequest,
@@ -586,6 +670,10 @@ class DirectConversationSourceReturnTest {
                         productHome = home,
                         request = request,
                         response = response,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-12T00:00:05Z",
+                            ),
                     )
                 commitCompletedTurn(
                     request = request,
@@ -681,6 +769,10 @@ class DirectConversationSourceReturnTest {
                         productHome = home,
                         request = request,
                         response = response,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-12T00:00:06Z",
+                            ),
                     )
                 commitCompletedTurn(
                     request = request,

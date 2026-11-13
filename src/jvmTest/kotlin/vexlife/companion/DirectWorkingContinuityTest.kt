@@ -10,8 +10,11 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
+import vexlife.continuity.VexLifeWorkingContinuity
+import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.memory.VexLifeMemoryContextFixture
+import vexlife.memory.VexLifeMemoryContract
 
 class DirectWorkingContinuityTest {
     private fun productHome(): java.nio.file.Path {
@@ -111,6 +114,184 @@ class DirectWorkingContinuityTest {
     }
 
     @Test
+    fun sourceReturnSuccessorPromptPreservesTheSameWorkingContinuityCustody() {
+        val home =
+            productHome()
+
+        try {
+            val store =
+                DirectConversationStore(
+                    home,
+                )
+            val memory =
+                VexLifeMemoryContextFixture.current()
+
+            store.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef =
+                            "turn.vexlife.working.source-return-successor",
+                        requestMessageRef =
+                            "message.vexlife.working.source-return-successor",
+                        content =
+                            "Source-return successor continuity request",
+                    )
+                val basePrompt =
+                    DirectPromptContext.materialize(
+                        prior = null,
+                        currentRequest = request,
+                        memoryContext = memory,
+                    )
+                val workingSet =
+                    VexLifeWorkingContinuity.WorkingSet(
+                        lineageRef =
+                            request.companionLineageRef,
+                        threadRef =
+                            request.threadRef,
+                        cursorEventRef =
+                            request.eventRef,
+                        activeWorkNodeRefs =
+                            emptyList(),
+                        currentIntentReceiptRefs =
+                            emptyList(),
+                        openLoopRefs =
+                            emptyList(),
+                        currentStatementRefs =
+                            emptyList(),
+                        currentContinuityRecordRefs =
+                            emptyList(),
+                        currentDailyStratumRefOrNull =
+                            null,
+                        sourceRefs =
+                            emptyList(),
+                    )
+                val context =
+                    VexLifeWorkingContinuityOwner.SuccessorContext(
+                        schemaVersion =
+                            VexLifeWorkingContinuityOwner.SuccessorContextSchema,
+                        truthClass =
+                            "NON_SEMANTIC_WORKING_CONTINUITY_SUCCESSOR_CONTEXT",
+                        effectOwnerRef =
+                            VexLifeWorkingContinuityOwner.EffectOwnerRef,
+                        contextMode =
+                            "WORKING_CHECKPOINT_SUCCESSOR",
+                        lineageRef =
+                            request.companionLineageRef,
+                        threadRef =
+                            request.threadRef,
+                        checkpointRef =
+                            "checkpoint.vexlife.test.source-return-successor",
+                        checkpointFingerprint =
+                            "a".repeat(
+                                64,
+                            ),
+                        commitReceiptRef =
+                            "receipt.vexlife.test.source-return-successor",
+                        commitReceiptFingerprint =
+                            "b".repeat(
+                                64,
+                            ),
+                        successorClaimRef =
+                            "claim.vexlife.test.source-return-successor",
+                        successorClaimFingerprint =
+                            "c".repeat(
+                                64,
+                            ),
+                        priorConversationHeadSha256 =
+                            "d".repeat(
+                                64,
+                            ),
+                        priorRequestEventRef =
+                            "event.vexlife.test.prior-request",
+                        currentRequestEventBinding =
+                            VexLifeMemoryContract.CurrentRequestBinding(
+                                eventRef =
+                                    request.eventRef,
+                                eventHash =
+                                    request.eventHash,
+                                sequence =
+                                    request.sequence,
+                            ),
+                        workingSet = workingSet,
+                        sourceRefs =
+                            listOf(
+                                "source.vexlife.test.source-return-successor",
+                            ),
+                        issuedAt =
+                            "2026-11-12T00:00:00Z",
+                        effects =
+                            VexLifeWorkingContinuityOwner.SuccessorContextEffects(
+                                homeMutated = true,
+                                successorContextIssued = true,
+                            ),
+                        successorContextRef =
+                            "successor-context.vexlife.test.source-return-successor",
+                        semanticFingerprint =
+                            "e".repeat(
+                                64,
+                            ),
+                    )
+                val sourceReturnPrompt =
+                    basePrompt.receipt.copy(
+                        contextMode =
+                            "SOURCE_RETURN_WORKING_CHECKPOINT_SUCCESSOR",
+                        workingContinuityIncluded =
+                            true,
+                        workingContinuityContextRef =
+                            context.successorContextRef,
+                        workingContinuityContextFingerprint =
+                            context.semanticFingerprint,
+                        workingContinuityCheckpointRef =
+                            context.checkpointRef,
+                        workingContinuitySuccessorClaimRef =
+                            context.successorClaimRef,
+                        workingContinuitySourceRefs =
+                            context.sourceRefs,
+                        workingContinuitySystemMessageSha256 =
+                            "f".repeat(
+                                64,
+                            ),
+                        workingContinuityEstimatedSystemMessageTokens =
+                            1,
+                        sourceReturnState =
+                            DirectConversationSourceReturn.NoMatch,
+                        sourceReturnSystemMessageSha256 =
+                            "1".repeat(
+                                64,
+                            ),
+                        sourceReturnEstimatedSystemMessageTokens =
+                            1,
+                    )
+
+                val prepared =
+                    DirectWorkingContinuity.prepare(
+                        productHome = home,
+                        currentRequest = request,
+                        promptContext = sourceReturnPrompt,
+                        memoryContext = memory,
+                        priorSuccessorContext =
+                            DirectWorkingContinuity.CurrentSuccessor(
+                                context,
+                            ),
+                    )
+
+                assertEquals(
+                    sourceReturnPrompt.receiptRef,
+                    prepared.pressureInput.promptReceiptRef,
+                )
+                assertEquals(
+                    request.eventRef,
+                    prepared.workingSet.cursorEventRef,
+                )
+            }
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun boundedRecentSelectionMayReachGenesisWithoutInvalidatingWorkingContinuity() {
         val home =
             productHome()
@@ -152,6 +333,10 @@ class DirectWorkingContinuityTest {
                         productHome = home,
                         request = firstRequest,
                         response = firstResponse,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-12T00:00:15Z",
+                            ),
                     )
                 commitCompletedTurn(
                     request = firstRequest,
@@ -201,7 +386,7 @@ class DirectWorkingContinuityTest {
 
                 assertEquals(
                     prompt.receipt.receiptRef,
-                    prepared.promptReceiptRef,
+                    prepared.pressureInput.promptReceiptRef,
                 )
             }
         } finally {
