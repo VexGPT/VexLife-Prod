@@ -20,6 +20,9 @@ object VexLifeProdHome {
     const val BootstrapReceiptSchema =
         "vexlife.bootstrap-receipt/v0"
 
+    const val CanonicalModelConfigurationSchema =
+        "vexlife.model-configuration/v0"
+
     const val InitialModelConfigurationSchema =
         "vexlife-prod.runtime-model-binding/v1"
 
@@ -121,6 +124,16 @@ object VexLifeProdHome {
             ExistingHomePolicy,
     )
 
+    @Serializable
+    data class CanonicalModelConfiguration(
+        val schemaVersion: String,
+        val state: String,
+        val endpoint: String?,
+        val activeArtifactRef: String?,
+        val automaticDownload: Boolean,
+        val automaticActivation: Boolean,
+    )
+
     /**
      * Product-runtime model binding stored beneath runtime/vexlife-prod.
      *
@@ -165,6 +178,7 @@ object VexLifeProdHome {
     data class BootstrapPlan(
         val installation: Installation,
         val manifest: Manifest,
+        val canonicalModelConfiguration: CanonicalModelConfiguration,
         val initialModelConfiguration: InitialModelConfiguration,
         val receipt: BootstrapReceipt,
         val directories: List<String>,
@@ -231,11 +245,13 @@ object VexLifeProdHome {
                 createdAt = createdAt,
                 currentDeviceRef = ids.deviceRef,
                 currentCompanionLineageRef = ids.companionLineageRef,
-                cultureManifestRef = "culture/manifest.json",
+                cultureManifestRef = null,
                 modelConfigurationRef = CanonicalModelConfigurationRelativePath,
                 existingHomePolicy = ExistingHomePolicy,
             )
 
+        val canonicalModel =
+            initialCanonicalModelConfiguration()
         val initialModel =
             initialProductModelConfiguration()
 
@@ -256,6 +272,7 @@ object VexLifeProdHome {
         return BootstrapPlan(
             installation = installation,
             manifest = manifest,
+            canonicalModelConfiguration = canonicalModel,
             initialModelConfiguration = initialModel,
             receipt = receipt,
             directories = BaseDirectories,
@@ -263,6 +280,7 @@ object VexLifeProdHome {
                 listOf(
                     HomeManifestRelativePath,
                     "devices/${ids.deviceRef}.json",
+                    CanonicalModelConfigurationRelativePath,
                     ModelConfigurationRelativePath,
                     BootstrapReceiptRelativePath,
                 ),
@@ -279,6 +297,10 @@ object VexLifeProdHome {
         val manifest =
             validateManifest(
                 plan.manifest,
+            )
+        val canonicalModel =
+            validateCanonicalModelConfiguration(
+                plan.canonicalModelConfiguration,
             )
         val initialModel =
             validateInitialModelConfiguration(
@@ -330,6 +352,7 @@ object VexLifeProdHome {
                 listOf(
                     HomeManifestRelativePath,
                     "devices/${installation.deviceRef}.json",
+                    CanonicalModelConfigurationRelativePath,
                     ModelConfigurationRelativePath,
                     BootstrapReceiptRelativePath,
                 ),
@@ -338,7 +361,9 @@ object VexLifeProdHome {
         }
 
         require(
-            initialModel.state ==
+            canonicalModel.state ==
+                "UNCONFIGURED" &&
+                initialModel.state ==
                 "UNCONFIGURED",
         )
 
@@ -482,6 +507,37 @@ object VexLifeProdHome {
             }
 
         return installation
+    }
+
+    fun initialCanonicalModelConfiguration(): CanonicalModelConfiguration =
+        CanonicalModelConfiguration(
+            schemaVersion = CanonicalModelConfigurationSchema,
+            state = "UNCONFIGURED",
+            endpoint = null,
+            activeArtifactRef = null,
+            automaticDownload = false,
+            automaticActivation = false,
+        )
+
+    fun validateCanonicalModelConfiguration(
+        value: CanonicalModelConfiguration,
+    ): CanonicalModelConfiguration {
+        require(
+            value.schemaVersion ==
+                CanonicalModelConfigurationSchema &&
+                value.state ==
+                "UNCONFIGURED" &&
+                value.endpoint ==
+                null &&
+                value.activeArtifactRef ==
+                null &&
+                !value.automaticDownload &&
+                !value.automaticActivation,
+        ) {
+            "initial canonical VexLife model configuration is not the exact unconfigured state"
+        }
+
+        return value
     }
 
     fun initialProductModelConfiguration(): InitialModelConfiguration =
