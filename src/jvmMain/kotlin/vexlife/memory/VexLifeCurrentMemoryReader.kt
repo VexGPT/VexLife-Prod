@@ -2521,7 +2521,7 @@ object VexLifeCurrentMemoryReader {
             )
 
         val authoritySha =
-            score.authority.string(
+            currentAuthority.string(
                 "semanticAuthorityHeadSha256",
             )
         for (
@@ -2685,7 +2685,7 @@ object VexLifeCurrentMemoryReader {
                             it.consentState in
                             positiveConsent &&
                             authorityContains(
-                                score.authority,
+                                currentAuthority,
                                 it,
                             )
                     )
