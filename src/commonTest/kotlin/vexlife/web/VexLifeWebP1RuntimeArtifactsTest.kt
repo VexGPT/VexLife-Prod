@@ -18,6 +18,11 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "\"type\":\"CAPABILITY\",\"capabilityRef\":\"conversation.send\"",
             ),
         )
+        assertTrue(
+            bundle.semanticManifest.contains(
+                "\"type\":\"CAPABILITY\",\"capabilityRef\":\"vision.look-now\"",
+            ),
+        )
 
         VexLifeWorkspaceBlueprint.elements.forEach { element ->
             assertTrue(
@@ -56,6 +61,22 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(
             bundle.html.contains(
                 "sandbox=\"allow-scripts allow-same-origin\"",
+            ),
+        )
+
+        assertTrue(
+            bundle.html.contains(
+                "placeholder=\"Type a Vex-owned web address\"",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "Open a Vex-owned public page from the address field. Pages open signed out.",
+            ),
+        )
+        assertFalse(
+            bundle.html.contains(
+                "Open any public web page from the address field.",
             ),
         )
 
@@ -114,6 +135,16 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(
             bundle.javascript.contains(
                 VexLifeProdServiceContract.SourceCurrentnessPath,
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                VexLifeProdServiceContract.VisionPath,
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                VexLifeProdServiceContract.VisionLookNowPath,
             ),
         )
         assertTrue(
@@ -224,7 +255,37 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.html.contains(
-                "Look Now is not connected to the macOS picker yet.",
+                "Vision availability is checking",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "Vision route availability is checking.",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "const loadVision = async () =>",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "const lookNow = async () =>",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "state.visionInFlight",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "request.vexlife-prod.vision.presentation.",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "Vision · Ready — one snapshot was captured. Visual interpretation remains separate.",
             ),
         )
         assertFalse(
@@ -248,7 +309,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "/v1/chat/completions",
             ),
         )
-        assertFalse(
+        assertTrue(
             bundle.javascript.contains(
                 "vision-control",
             ),
