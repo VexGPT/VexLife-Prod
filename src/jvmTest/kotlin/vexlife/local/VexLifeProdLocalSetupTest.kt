@@ -698,7 +698,7 @@ class VexLifeProdLocalSetupTest {
     }
 
     @Test
-    fun absentCanonicalHomeStopsBeforeAnyDomainEffectEvenWithAcquisitionAuthority() {
+    fun explicitFirstSetupFormsCanonicalHomeBeforeRuntimeEffects() {
         val parent =
             Files.createTempDirectory(
                 "vexlife-prod-local-setup-home-absent-",
@@ -712,10 +712,90 @@ class VexLifeProdLocalSetupTest {
             mutableListOf<String>()
 
         try {
-            assertFailsWith<IllegalArgumentException> {
+            val result =
                 VexLifeProdLocalSetup.establishAt(
                     productHome = home,
                     allowAcquisition = true,
+                    hooks = hooks(
+                        trace,
+                    ),
+                )
+
+            assertEquals(
+                "FRESH_CANONICAL_VEXLIFE_HOME_FORMED",
+                result.homeDisposition,
+            )
+            assertEquals(
+                "LOCAL_HERETIC_FOUNDATION_READY",
+                result.state,
+            )
+            assertEquals(
+                listOf(
+                    "HOST",
+                    "DEVICE",
+                    "NOW",
+                    "WRITER_CURRENTNESS",
+                    "MANAGED_PYTHON",
+                    "ARTIFACTS",
+                    "HERETIC_ENVIRONMENT",
+                    "RUNTIME",
+                ),
+                trace,
+            )
+            val formed =
+                requireNotNull(
+                    VexLifeProdHomeFiles.observeExisting(
+                        home,
+                    ),
+                )
+            assertTrue(
+                formed.manifest.homeRef.startsWith(
+                    "vex-home.device.vexlife.",
+                ),
+            )
+            assertTrue(
+                formed.installation.deviceRef.startsWith(
+                    "device.vexlife.",
+                ),
+            )
+            assertTrue(
+                formed.installation.companionLineageRef.startsWith(
+                    "companion-lineage.vexlife.",
+                ),
+            )
+            assertTrue(
+                Files.isRegularFile(
+                    home.resolve(
+                        VexLifeProdHome.CanonicalModelConfigurationRelativePath,
+                    ),
+                ),
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun absentCanonicalHomeStillHoldsWithoutExplicitFirstSetupAuthority() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-local-setup-home-absent-no-authority-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+        val trace =
+            mutableListOf<String>()
+
+        try {
+            assertFailsWith<IllegalArgumentException> {
+                VexLifeProdLocalSetup.establishAt(
+                    productHome = home,
+                    allowAcquisition = false,
                     hooks = hooks(
                         trace,
                     ),
