@@ -312,6 +312,34 @@ It is evidence of intended shape and interaction composition, not runtime/source
 Current VexLife-Prod service, Conversation, Context, browser-context and runtime owners remain
 authoritative.
 
+## VexBoard Screen Lens export
+
+VexLife-Prod exports its own Screen Lens rather than VexBoard parsing its source:
+
+~~~text
+VexLifeWorkspaceBlueprint          elements, nesting, property names (symbol / declared)
++ VexLifeWebP1.Surface coordinates  binding per element: capability / local interaction / none
++ owner constants                   service paths, Family Controls and States per capability
+-> vexlife.lens.VexLifeProdScreenLens
+-> docs/lens/vexlife-prod.screen-lens.json   (vexboard.screen-lens/v1; ./gradlew generateVexLifeProdScreenLens)
+~~~
+
+`VexLifeProdScreenLensTest` fails when the committed file is stale. The file carries no commit or
+timestamp; VexWork pins the commit when it takes a build into its catalog (`subject.vexlife-prod`).
+
+Pathway dispositions follow what source has earned:
+
+~~~text
+vision.selected-scope   SCAE_FAMILY           VexLifeVisionFamily over a re-observed State
+conversation.send       DIRECT_REGISTRATION   the route calls DirectCompanionTurn; no Conversation Family yet
+local interactions      TYPED_PRESENTATION    reveal another coordinate; decide nothing
+everything else         no pathway            nothing is inferred from a missing binding
+~~~
+
+Element labels are Blueprint ids made readable; visible copy is dynamic and owned by each Family's
+DisplayState. VexBoard stays a projection: when a pathway changes meaning, the owner constant changes
+and the export follows, or it fails to compile.
+
 ## Current presentation contract
 
 The generated semantic manifest remains a direct projection of the accepted
