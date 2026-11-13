@@ -17,33 +17,6 @@ FRESH REPOSITORY
 != FRESH HOME / FRESH VEX / BLANK MEMORY
 ~~~
 
-Current product-authority rule:
-
-~~~text
-VexLife-Prod
-= current VexLife product body
-
-vgong24/VexLife
-= predecessor / provenance source
-
-PREDECESSOR REPOSITORY AS A WHOLE
-!= LIVE RUNTIME PARENT
-
-CURRENT PRODUCT AUTHORITY
-!= ALL SUBSYSTEM BRIDGES RETIRED
-
-EXACT CURRENT PREDECESSOR BRIDGE
-= MAY CONSUME PREDECESSOR STATE / EVIDENCE
-
-LIVE PREDECESSOR BRIDGE
-= exact current bridge owner + exact bounded meaning
-~~~
-
-A once-valid **repository-level** transitional ownership statement must be retired from present-tense
-entry source when successor ownership becomes current. Preserve its evidence/history and preserve any
-still-current bounded bridge. Do not erase a compatibility owner merely to simplify the story, and do
-not allow the predecessor repository as a whole to remain a competing current authority.
-
 The current behavioral reference for continuity realignment is `vgong24/VexLife` at
 `7d59753687ff12726b0d309ee2dde028b5f89e8a`. Historical JavaScript is provenance for earned
 relationships, not a runtime dependency of the Kotlin product.

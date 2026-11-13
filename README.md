@@ -80,6 +80,32 @@ proved end to end. Victor's lived runs falsified those front-door completion cla
 established only that the attempted Prod presentation route was incomplete; it did **not** transfer
 current product authority back to `vgong24/VexLife`.
 
+### Historical recovery snapshot — November 4, 2026
+
+After those lived failures, the repository correctly recorded this **then-current recovery position**:
+
+~~~text
+vgong24/VexLife
+  exact-source Mac bootstrap
+  -> Home lifecycle classification
+  -> open / reconnect / repair / rebuild-preserve
+  -> runtime qualification
+  -> exact browser-process ownership
+  -> launchd lifetime
+  -> source-current browser
+  -> canonical Companion READY
+
+VexLife-Prod
+  retained lived presentation / product exploration
+  -> consumes canonical VexLife Conversation + Companion truth
+  -> does not yet own an accepted Mac presentation lifecycle
+~~~
+
+That snapshot remains useful history and evidence for why #15/#16 were shaped as they were. It is **not**
+a current repository-level ownership statement. Later New Beginnings work formed Prod-owned substrate
+and bounded compatibility bridges; the foundation index and VexWork now own the exact current state of
+those relationships.
+
 The next ordinary Mac entry must start from the current VexLife-Prod product intention, then descend
 through the foundation index + VexWork to the **exact current owner of each required effect**. That
 owner may be a Prod owner or an exact bounded predecessor compatibility bridge. Preserve a bridge while
