@@ -28,15 +28,15 @@ class VexLifeProdBootstrapTemplateTest {
             )
         val signIndex =
             template.indexOf(
-                "/usr/bin/codesign --force --sign - \"$WINDOW_APP\"",
+                "/usr/bin/codesign --force --sign - \"\$WINDOW_APP\"",
             )
         val verifyIndex =
             template.indexOf(
-                "/usr/bin/codesign --verify --strict \"$WINDOW_APP\"",
+                "/usr/bin/codesign --verify --strict \"\$WINDOW_APP\"",
             )
         val openIndex =
             template.indexOf(
-                "/usr/bin/open -W \"$WINDOW_APP\"",
+                "/usr/bin/open -W \"\$WINDOW_APP\"",
             )
 
         assertTrue(
