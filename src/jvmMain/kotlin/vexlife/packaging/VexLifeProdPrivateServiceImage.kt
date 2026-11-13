@@ -60,7 +60,7 @@ object VexLifeProdPrivateServiceImage {
         "vision-runtime/bin/vexlife-vision-runtime"
 
     const val VisionRuntimeHelperExecutableRelativePath =
-        "vision-runtime/helper/VexLifeVisionSystemPickerAgent.app/Contents/MacOS/VexLifeVisionSystemPickerAgent"
+        "vision-runtime/helper/VexLifeVisionSelectedScopeAgent.app/Contents/MacOS/VexLifeVisionSelectedScopeAgent"
 
     private val GitSha =
         Regex(
