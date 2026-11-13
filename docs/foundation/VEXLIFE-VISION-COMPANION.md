@@ -38,48 +38,58 @@ reachability dynamically from the local service rather than hardcoding Ready or 
 
 ## Current semantic owner
 
-`VexLifeVisionFamily` still owns the existing human-facing Vision semantic relationship:
+`VexLifeVisionFamily` owns the human-facing Vision relationship, and it now speaks the persistent
+selected-scope relationship rather than the retired one-shot Look Now:
 
 ~~~text
 State
-  Held
-  Ready
-  Looking
+  Held(RouteUnreachable | RuntimeUnreadable | ScreenSafetyNotCurrent)
+  Ready        no window chosen; Choose a Window… is lawful
+  Selecting    the macOS picker is open; nothing is lawful until it settles
+  Engaged      one window chosen; Release Window is lawful; nothing is captured
+  Looking      SDK-reported only; Product admits no Control here
 
 Control
-  LookNow
+  Engage
+  Stop
 
 Effect
-  RequestSnapshot
+  EngageScope
+  StopScope
 ~~~
 
-That Family/presentation contract has **not** yet been evolved into the persistent-scope UI. This source
-slice therefore keeps its current semantic identity while establishing the new persistent selected-scope
-relationship underneath Product.
+`observe(routeReachable, runtimeReadable, scopeState)` is the only path from SDK projection to Family
+State. An unknown SDK state is `Held(RuntimeUnreadable)`, never a guess. `ENDED` (and no projection
+yet) is `Ready`, because an ended scope is a fresh opportunity to choose again. A Safety hold still
+admits `Stop`, so a person can always release a window they chose.
 
-Current service truth is now deliberately transitional:
+Service truth:
 
 ~~~text
 GET /api/v1/vision
-  HELD / READY
-  = Product route reachability only
+  -> PROJECT, then Family.observe
+  -> vision-projection/v2 { state, routeReachable, display, effectsPerformed=false }
 
-GET /api/v1/vision/scope
-  -> PROJECT current persistent selected-scope truth
+POST /api/v1/vision/control { controlRef, requestRef }
+  -> re-observe
+  -> Family.act(observed, control)
+       null            -> 409 NOT_LAWFUL_NOW   (runtime never called)
+       EngageScope     -> SDK ENGAGE
+       StopScope       -> SDK STOP
+  -> runtime ok=false  -> 200 RUNTIME_REFUSED  (SDK error code carried)
+  -> otherwise         -> 200 REALIZED
+  -> every result carries a fresh re-observation, never a predicted successor
 
-POST /api/v1/vision/scope/engage
-  -> ENGAGE one OS-selected window scope
-
-POST /api/v1/vision/scope/stop
-  -> STOP current scope
+GET /api/v1/vision/scope, POST /api/v1/vision/scope/{engage,stop}
+  -> the underlying selected-scope coordinates, kept for diagnostics and the SDK contract
 
 POST /api/v1/vision/look-now
-  -> HELD
-  -> VISION_LOOK_NOT_YET_ADMITTED_FROM_PERSISTENT_SCOPE
+  -> HELD -> VISION_LOOK_NOT_YET_ADMITTED_FROM_PERSISTENT_SCOPE
 ~~~
 
-This prevents the old presentation from invoking the new persistent executable with the obsolete
-one-shot protocol.
+The display copy is part of the Family's `DisplayState`, so the renderer never decides what Vision
+means. The Engaged detail tells the person plainly that nothing is captured and Vex can't look at the
+window yet: choosing a window is a relationship, not a camera.
 
 Permanent:
 
@@ -92,9 +102,6 @@ CONVERSATION_TURN != AUTOMATIC_SCREENSHOT
 ACTIVE_VISUAL_OBSERVATION != VISUAL_MODEL_INPUT
 OBSERVATION != MEMORY
 ~~~
-
-The later presentation/Family evolution will consume the accepted persistent-scope projection rather
-than inventing a second Vision owner.
 
 
 ## Accepted outside effect owners
@@ -311,18 +318,12 @@ element.vexlife-workspace.companion.vision
 element.vexlife-workspace.header.utilities.quick-actions.vision
 ~~~
 
-These are two presentations of one Vision relationship, not two Vision owners. The Companion-header
-surface remains the richer state projection. Its initial static markup starts Held/disabled until the
-live Product Vision projection is loaded; the runtime then renders Held or Ready from that service
-truth rather than from a source constant. The header utility row renders an eye-shaped Vision shortcut
-beside the other workspace quick actions so a human has a persistent, low-friction place to reference
-current focus for Vex.
-
-When the Product Vision projection is `Held`, activating the quick-access icon may surface that held
-state but must not fabricate `LookNow`, picker presentation, capture, or observation. When the
-Product projection is `Ready`, both the quick-access coordinate and Companion Vision control converge
-on the existing `VexLifeVisionFamily.Control.LookNow` relationship rather than introducing a second
-capture/control path.
+These are two presentations of one Vision relationship, not two Vision owners. Both render the same
+Product `DisplayState`: the Companion header shows its label and detail, and the utility-row eye shows
+its primary label and indicator (`NONE`, `SCOPE`, `LOOKING`). Static markup starts Held/disabled until the
+live projection loads. When the projection names no primary Control, both coordinates are disabled;
+otherwise both POST that exact `controlRef` to `/api/v1/vision/control` and render the re-observed
+projection the service returns.
 
 This is dynamic Product capability truth, not a source-hardcoded availability promise.
 
@@ -362,8 +363,9 @@ training
 publication
 ~~~
 
-The legacy `/api/v1/vision/look-now` coordinate is intentionally held in this source candidate. A later
-Vex-access LOOK edge must separately earn one fresh capture from the already-engaged selected scope,
-then ephemeral visual interpretation and Conversation Context composition.
+The legacy `/api/v1/vision/look-now` coordinate is intentionally held, and no presentation offers Look
+Now. A later Vex-access LOOK edge must separately earn one fresh capture from the already-engaged
+selected scope, then ephemeral visual interpretation and Conversation Context composition; when it
+does, it arrives as a new Family Control, not as a renderer button.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][VISION-COMPANION][PERSISTENT-SCOPE-SERVICE] -->

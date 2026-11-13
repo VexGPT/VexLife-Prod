@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.home.VexLifeProdHome
+import vexlife.vision.VexLifeVisionFamily
 
 /**
  * Shared browser/service contract for the local VexLife implementation.
@@ -32,7 +33,10 @@ object VexLifeProdServiceContract {
         "vexlife-prod.local-service-memory-dream-run-response/v1"
 
     const val VisionProjectionSchema =
-        "vexlife-prod.local-service-vision-projection/v1"
+        "vexlife-prod.local-service-vision-projection/v2"
+
+    const val VisionControlResultSchema =
+        "vexlife-prod.local-service-vision-control-result/v1"
 
     const val VisionRuntimeResultSchema =
         "vextreme.macos-screen-system-picker-product-runtime-result/v1"
@@ -96,6 +100,10 @@ object VexLifeProdServiceContract {
 
     const val VisionScopePath =
         "/api/v1/vision/scope"
+
+    /** Family-resolved Vision Control (Engage / Stop) against freshly observed Vision State. */
+    const val VisionControlPath =
+        "/api/v1/vision/control"
 
     const val VisionScopeEngagePath =
         "/api/v1/vision/scope/engage"
@@ -414,28 +422,66 @@ object VexLifeProdServiceContract {
         val schemaVersion: String,
         val state: String,
         val routeReachable: Boolean,
+        val display: VexLifeVisionFamily.DisplayState,
         val effectsPerformed: Boolean,
     ) {
         init {
             require(
-                schemaVersion ==
-                    VisionProjectionSchema &&
-                    state in
-                    setOf(
-                        "HELD",
-                        "READY",
-                    ) &&
-                    routeReachable ==
-                    (
-                        state ==
-                            "READY"
-                    ) &&
-                    !effectsPerformed,
+                schemaVersion == VisionProjectionSchema &&
+                    state in VisionStateRefs &&
+                    (routeReachable || state == VexLifeVisionFamily.StateHeld) &&
+                    !effectsPerformed
             ) {
                 "Vision projection is invalid"
             }
         }
     }
+
+    @Serializable
+    data class VisionControlRequest(val controlRef: String, val requestRef: String) {
+        init {
+            require(VexLifeVisionFamily.controlForRef(controlRef) != null) { "unknown Vision Control" }
+            requirePortableRef(requestRef, "requestRef")
+        }
+    }
+
+    /**
+     * One Vision activation: fresh observation, Family resolution, at most one runtime command,
+     * fresh observation. [vision] is always the State observed afterwards, never a predicted one.
+     */
+    @Serializable
+    data class VisionControlResult(
+        val schemaVersion: String,
+        val requestRef: String,
+        val controlRef: String,
+        val outcome: String,
+        val runtimeErrorCodeOrNull: String?,
+        val vision: VisionProjection,
+    ) {
+        init {
+            require(
+                schemaVersion == VisionControlResultSchema &&
+                    outcome in setOf(VisionControlRealized, VisionControlNotLawfulNow, VisionControlRuntimeRefused) &&
+                    (outcome == VisionControlRuntimeRefused) == (runtimeErrorCodeOrNull != null)
+            ) {
+                "Vision control result is invalid"
+            }
+            requirePortableRef(requestRef, "requestRef")
+        }
+    }
+
+    const val VisionControlRealized = "REALIZED"
+    const val VisionControlNotLawfulNow = "NOT_LAWFUL_NOW"
+    const val VisionControlRuntimeRefused = "RUNTIME_REFUSED"
+
+    val VisionStateRefs =
+        setOf(
+            VexLifeVisionFamily.StateHeld,
+            VexLifeVisionFamily.StateReady,
+            VexLifeVisionFamily.StateSelecting,
+            VexLifeVisionFamily.StateEngaged,
+            VexLifeVisionFamily.StateLooking,
+        )
 
     @Serializable
     data class VisionScopeCommandRequest(

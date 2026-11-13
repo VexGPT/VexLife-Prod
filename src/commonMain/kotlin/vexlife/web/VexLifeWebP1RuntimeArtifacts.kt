@@ -84,7 +84,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 conversationPath: ${jsString(VexLifeProdServiceContract.ConversationPath)},
                 contextPath: ${jsString(VexLifeProdServiceContract.ContextPath)},
                 visionPath: ${jsString(VexLifeProdServiceContract.VisionPath)},
-                visionLookNowPath: ${jsString(VexLifeProdServiceContract.VisionLookNowPath)},
+                visionControlPath: ${jsString(VexLifeProdServiceContract.VisionControlPath)},
                 sendPath: ${jsString(VexLifeProdServiceContract.ConversationSendPath)}
               });
               const browser = Object.freeze({
@@ -309,16 +309,22 @@ object VexLifeWebP1RuntimeArtifacts {
                 const items = QUICK_ACTIONS.map((action) => {
                   const item = document.createElement('li');
                   const button = document.createElement('button');
-                  const visionBound = action.key === 'vision' && state.vision?.routeReachable === true;
+                  const visionDisplay = state.vision?.display;
+                  const visionBound = action.key === 'vision' && Boolean(visionDisplay?.primaryControlRef);
                   const bound = visionBound || Boolean(action.bound);
                   button.type = 'button';
                   button.className = 'quick-action';
                   button.dataset.action = action.key;
                   button.dataset.bound = String(bound);
+                  if (action.key === 'vision') button.dataset.indicator = String(visionDisplay?.indicatorRef ?? 'None');
                   button.disabled = action.key === 'vision' && state.visionInFlight;
-                  button.setAttribute('aria-label', bound ? action.label : action.label + ' (Held)');
+                  button.setAttribute('aria-label', action.key === 'vision'
+                    ? String(visionDisplay?.label ?? 'Vision · Held')
+                    : (bound ? action.label : action.label + ' (Held)'));
                   button.title = action.key === 'vision'
-                    ? (state.visionInFlight ? 'Vision · Looking' : (visionBound ? 'Vision · Ready — Look Now' : 'Vision · Held'))
+                    ? (state.visionInFlight
+                        ? 'Vision · Working'
+                        : String(visionDisplay?.label ?? 'Vision · Held') + (visionDisplay?.primaryLabel ? ' — ' + visionDisplay.primaryLabel : ''))
                     : (bound ? action.label : action.label + ': not connected yet');
                   button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + action.icon + '</svg>';
                   item.append(button);
@@ -327,23 +333,22 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.quickActions.replaceChildren(...sourceOnly, ...items);
               };
 
+              // Vision copy, state and the one lawful Control come from the Product (VexLifeVisionFamily);
+              // this renderer only shows them and sends the Control back for fresh resolution.
               const renderVision = () => {
                 if (!ui.visionControl) return;
-                const ready = state.vision?.routeReachable === true;
-                const displayState = state.visionInFlight ? 'Looking' : (ready ? 'Ready' : 'Held');
+                const display = state.vision?.display;
+                const label = String(display?.label ?? 'Vision · Held');
                 const stateNode = ui.visionControl.querySelector('.vision-state');
-                if (stateNode) stateNode.textContent = displayState;
-                ui.visionControl.disabled = !ready || state.visionInFlight;
+                if (stateNode) stateNode.textContent = state.visionInFlight ? 'Working' : label.replace(/^Vision · /, '');
+                ui.visionControl.dataset.indicator = String(display?.indicatorRef ?? 'None');
+                ui.visionControl.disabled = !display?.primaryControlRef || state.visionInFlight;
                 ui.visionControl.setAttribute('aria-disabled', String(ui.visionControl.disabled));
                 ui.visionControl.title = state.visionInFlight
-                  ? 'Vision · Looking'
-                  : (ready ? 'Vision · Ready — Look Now' : 'Vision · Held');
+                  ? 'Vision · Working'
+                  : label + (display?.primaryLabel ? ' — ' + display.primaryLabel : '');
                 if (ui.visionControlStatus) {
-                  ui.visionControlStatus.textContent = state.visionInFlight
-                    ? 'Vision is processing one explicit Look Now request.'
-                    : (ready
-                        ? 'Vision is ready. Look Now opens the macOS system picker for one user-selected window.'
-                        : 'Vision is held because the local Product route is not reachable.');
+                  ui.visionControlStatus.textContent = String(display?.detail ?? 'Vision availability is checking.');
                 }
                 renderQuickActions();
               };
@@ -887,12 +892,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 return state.vision;
               };
 
-              const lookNow = async () => {
+              const activateVision = async () => {
                 if (state.visionInFlight) return;
-                if (state.vision?.routeReachable !== true) {
+                const controlRef = state.vision?.display?.primaryControlRef;
+                if (!controlRef) {
                   state.view = 'conversation';
                   renderCompanionHead();
-                  notify('Vision · Held — the local Product route is not reachable.');
+                  notify(String(state.vision?.display?.label ?? 'Vision · Held') + ' — ' + String(state.vision?.display?.detail ?? ''));
                   return;
                 }
 
@@ -903,29 +909,25 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderVision();
 
                 try {
-                  const response = await fetch(service.visionLookNowPath, {
+                  const response = await fetch(service.visionControlPath, {
                     method: 'POST',
                     headers: { accept: 'application/json', 'content-type': 'application/json' },
-                    body: JSON.stringify({ requestRef })
+                    body: JSON.stringify({ controlRef, requestRef })
                   });
-                  const result = await readJson(response);
-                  if (String(result?.requestRef ?? '') !== requestRef) {
-                    throw new Error('Vision result does not match the exact Look Now request.');
+                  const result = await response.json();
+                  if (String(result?.requestRef ?? '') !== requestRef || !result?.vision) {
+                    throw new Error('Vision result does not match the exact request.');
                   }
-
-                  if (result.state === 'USER_CANCELLED') {
-                    notify('Vision · Ready — window selection cancelled.');
-                  } else if (result.state === 'ONE_SHOT_CAPTURE_FAILED') {
-                    notify('Vision · Ready — the one-shot capture did not complete.');
-                  } else if (result.state === 'ONE_SHOT_CAPTURED') {
-                    notify('Vision · Ready — one snapshot was captured. Visual interpretation remains separate.');
-                  } else if (result.state === 'HELD_SAFETY_NOT_CURRENT') {
-                    notify('Vision · Ready — current Screen safety did not admit this Look Now request.');
+                  state.vision = result.vision;
+                  if (result.outcome === 'NOT_LAWFUL_NOW') {
+                    notify('Vision changed before VexLife acted. ' + result.vision.display.detail);
+                  } else if (result.outcome === 'RUNTIME_REFUSED') {
+                    notify(result.vision.display.label + ' — that request did not complete.');
                   } else {
-                    notify('Vision returned an unsupported Product result.');
+                    notify(result.vision.display.label);
                   }
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : 'Vision Look Now did not complete.');
+                  notify(error instanceof Error ? error.message : 'Vision did not complete that request.');
                 } finally {
                   state.visionInFlight = false;
                   await loadVision().catch(() => {
@@ -1202,14 +1204,14 @@ object VexLifeWebP1RuntimeArtifacts {
                   return;
                 }
                 if (action.key === 'vision') {
-                  void lookNow();
+                  void activateVision();
                   return;
                 }
                 notify(action.label + " isn't connected in this workspace yet.");
               });
 
               ui.visionControl.addEventListener('click', () => {
-                void lookNow();
+                void activateVision();
               });
 
               ui.viewSwitch.addEventListener('click', () => {

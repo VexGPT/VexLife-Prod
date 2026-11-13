@@ -27,6 +27,7 @@ import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.memory.VexLifeDailyMemoryDream
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.vision.VexLifeProdVisionRuntime
+import vexlife.vision.VexLifeVisionFamily
 import vexlife.web.VexLifeWebP1RuntimeArtifacts
 import vexlife.web.VexWebArtifacts
 
@@ -598,6 +599,8 @@ class VexLifeProdLocalService private constructor(
                         exchange,
                     )
 
+                VexLifeProdServiceContract.VisionControlPath -> handleVisionControl(exchange)
+
                 VexLifeProdServiceContract.VisionScopeEngagePath ->
                     handleVisionScopeEngage(
                         exchange,
@@ -765,36 +768,93 @@ class VexLifeProdLocalService private constructor(
         )
     }
 
-    private fun handleVision(
-        exchange: HttpExchange,
-    ) {
-        requireMethod(
-            exchange,
-            "GET",
+    private fun handleVision(exchange: HttpExchange) {
+        requireMethod(exchange, "GET")
+        respondJson(exchange = exchange, status = 200, value = observeVision())
+    }
+
+    /**
+     * Fresh no-effect Vision observation: Product route reachability + the runtime's content-absent
+     * selected-scope PROJECT, reconciled by [VexLifeVisionFamily.observe]. A PROJECT that fails or
+     * cannot be read becomes a held State, never a guessed one.
+     */
+    private fun observedVisionState(): VexLifeVisionFamily.State {
+        val runtime = visionRuntime
+        val projected = runtime?.let { runCatching { it.project() }.getOrNull() }
+        return VexLifeVisionFamily.observe(
+            routeReachable = runtime != null,
+            runtimeReadable = projected?.ok == true,
+            scopeState = projected?.projectionOrNull?.state,
         )
+    }
 
-        val reachable =
-            visionRuntime !=
-                null
+    private fun observeVision(): VexLifeProdServiceContract.VisionProjection {
+        val state = observedVisionState()
+        return VexLifeProdServiceContract.VisionProjection(
+            schemaVersion = VexLifeProdServiceContract.VisionProjectionSchema,
+            state = state.stateRef,
+            routeReachable = visionRuntime != null,
+            display = VexLifeVisionFamily.displayStateFor(state),
+            effectsPerformed = false,
+        )
+    }
 
+    /**
+     * Same activation shape as Product entry: re-observe, let the Family decide whether the Control
+     * is lawful now, realize at most one runtime command, observe again.
+     */
+    private fun handleVisionControl(exchange: HttpExchange) {
+        requireMethod(exchange, "POST")
+        requireJson(exchange)
+        val request =
+            JsonCodec.decodeFromString<VexLifeProdServiceContract.VisionControlRequest>(requestText(exchange))
+        val control = requireNotNull(VexLifeVisionFamily.controlForRef(request.controlRef))
+        val runtime = visionRuntime
+        val act = VexLifeVisionFamily.resolve(currentState = observedVisionState(), control = control)
+
+        fun result(outcome: String, errorCode: String? = null) =
+            VexLifeProdServiceContract.VisionControlResult(
+                schemaVersion = VexLifeProdServiceContract.VisionControlResultSchema,
+                requestRef = request.requestRef,
+                controlRef = control.controlRef,
+                outcome = outcome,
+                runtimeErrorCodeOrNull = errorCode,
+                vision = observeVision(),
+            )
+
+        if (act == null || runtime == null) {
+            respondJson(
+                exchange = exchange,
+                status = 409,
+                value = result(VexLifeProdServiceContract.VisionControlNotLawfulNow),
+            )
+            return
+        }
+        val response =
+            when (act.effect) {
+                VexLifeVisionFamily.Effect.EngageScope -> runtime.engage(request.requestRef)
+                VexLifeVisionFamily.Effect.StopScope -> runtime.stop(request.requestRef)
+                null -> null
+            }
+        check(response == null || response.commandRef == request.requestRef) {
+            "Vision runtime result does not match the exact Product request"
+        }
+        if (response != null && !response.ok) {
+            respondJson(
+                exchange = exchange,
+                status = 200,
+                value =
+                    result(
+                        VexLifeProdServiceContract.VisionControlRuntimeRefused,
+                        requireNotNull(response.errorCodeOrNull),
+                    ),
+            )
+            return
+        }
         respondJson(
             exchange = exchange,
             status = 200,
-            value =
-                VexLifeProdServiceContract.VisionProjection(
-                    schemaVersion =
-                        VexLifeProdServiceContract.VisionProjectionSchema,
-                    state =
-                        if (
-                            reachable
-                        ) {
-                            "READY"
-                        } else {
-                            "HELD"
-                        },
-                    routeReachable = reachable,
-                    effectsPerformed = false,
-                ),
+            value = result(VexLifeProdServiceContract.VisionControlRealized),
         )
     }
 
