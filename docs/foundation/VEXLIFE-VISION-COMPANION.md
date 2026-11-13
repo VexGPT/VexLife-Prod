@@ -103,19 +103,25 @@ The Product artifact contract in this source binds the local-qualified runtime a
 Vextreme-SDK source:
 
 ~~~text
-commit        = 55a9cd5a99eaaf9f17f7c3875b109548fdc31d81
-tree          = d21986beadea0cbada372b41b93ac56693cb0cdd
-archiveSha256 = 0e5a9b268ab854d6fa0dcc57ad92953536de53d34c52cbe46ca45a4110e76bc6
-manifestSha256= a496dd1b259239963b79fa4b7683ab8e902b4e38a727dfbad05ebee3ab3f1fb2
+commit        = 26a18d97a22b898f14e15bb7b1543c25b808c5af
+tree          = 2fed240516aebe5289e0c947084fe36ab2107c07
+archiveSha256 = fd31be38cefb19c32d45744b58d5254631cf7a1af696850041728c2cd0fe0692
+manifestSha256= 4a0370f0f5c0a56b810bf8fc6e485a2c061d0850cf2c896a790802f996174824
+runtimeSha256 = 300fdbe7d55964b4130f68a827c6a3405a81df1038e05f77884dd37f3af6e5cd
+helperSha256  = 31c03686018c9e79b09a50e0ec880c1f195a7bb5408665365ef1c68632b37c7d
 ~~~
 
-The artifact refresh evidence is
-`github.issue.vextreme-sdk.241.comment.6819165573`.
+The current helper-rebuild artifact evidence is
+`github.issue.vextreme-sdk.241.comment.6843099171`.
 
-The runtime/helper binaries and their owning source remain byte-identical to the prior qualified build;
-the carried SDK closure is currentized to the accepted SCREEN Safety source. These are artifact
-provenance coordinates, not a claim that SDK `main` must remain at that commit or that the running
-Product has already rotated to this artifact.
+The Node SEA runtime binary remains byte-identical to the prior qualified build. The helper-owning Swift
+source changed in accepted SDK PR #1945, so the native helper was rebuilt and ad-hoc signed for local
+proof while the carried SDK closure was currentized to the accepted SDK source. The artifact manifest
+preserves its prior rights and historical proof objects; fresh rebuilt-helper qualification lives in the
+A003 RETURN evidence above rather than being rewritten into historical proof.
+
+These are artifact provenance coordinates, not a claim that SDK `main` must remain at that commit or
+that the running Product has already rotated to this artifact.
 
 The accepted one-shot SCREEN relationship is:
 
@@ -169,7 +175,7 @@ Accepted Product carriage and current artifact provenance:
 
 ~~~text
 github.pull.vexlife-prod.77
-github.issue.vextreme-sdk.241.comment.6819165573
+github.issue.vextreme-sdk.241.comment.6843099171
 ~~~
 
 The Product-owned source bridge is:

@@ -309,7 +309,6 @@ object DirectWorkingContinuity {
                 currentRequest.eventRef &&
                 promptContext.currentRequestEventSha256 ==
                 currentRequest.eventSha256 &&
-                !promptContext.wholeHistoryEventEnumerationPerformed &&
                 !promptContext.trainingSelectionPerformed &&
                 !promptContext.effectsPerformed,
         ) {
@@ -364,8 +363,11 @@ object DirectWorkingContinuity {
                     priorSuccessorContext.context.threadRef ==
                     currentRequest.threadRef &&
                     promptContext.workingContinuityIncluded &&
-                    promptContext.contextMode ==
-                    "WORKING_CHECKPOINT_SUCCESSOR" &&
+                    promptContext.contextMode in
+                    setOf(
+                        "WORKING_CHECKPOINT_SUCCESSOR",
+                        "SOURCE_RETURN_WORKING_CHECKPOINT_SUCCESSOR",
+                    ) &&
                     promptContext.workingContinuityContextRef ==
                     priorSuccessorContext.context.successorContextRef &&
                     promptContext.workingContinuityContextFingerprint ==
