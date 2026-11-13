@@ -2159,4 +2159,13 @@ tasks.register<JavaExec>(
     )
 }
 
+tasks.register<JavaExec>("generateVexLifeProdScreenLens") {
+    group = "vexlife"
+    description = "Write docs/lens/vexlife-prod.screen-lens.json for VexBoard from the Product Blueprint."
+    dependsOn(vexLifeWebJvmMain.compileTaskProvider)
+    classpath = files(vexLifeWebJvmMain.output.allOutputs, vexLifeWebJvmMain.runtimeDependencyFiles)
+    mainClass.set("vexlife.lens.VexLifeProdScreenLensKt")
+    args("write", layout.projectDirectory.asFile.absolutePath)
+}
+
 // [VXG RealForever]

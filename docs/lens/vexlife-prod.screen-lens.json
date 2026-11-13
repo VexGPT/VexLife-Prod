@@ -1,0 +1,1005 @@
+{
+  "schemaVersion": "vexboard.screen-lens/v1",
+  "lensRef": "lens.vexlife-prod",
+  "title": "VexLife Prod · Screen Lens",
+  "summary": "The VexLife workspace exported by VexLife-Prod from its own Blueprint, VexWeb coordinates and owner constants.",
+  "entryScreenRef": "screen.vexlife-workspace",
+  "entryElementRef": "element.vexlife-workspace.companion.conversation.send",
+  "relatedBoardRefs": [
+    "board.vexlife-prod.perceivability-alignment"
+  ],
+  "sourceSnapshot": {
+    "repositoryRef": "repo.vexlife-prod",
+    "repositoryUrl": "https://github.com/VexGPT/VexLife-Prod",
+    "roots": {
+      "common": "src/commonMain/kotlin/vexlife/",
+      "jvm": "src/jvmMain/kotlin/vexlife/"
+    },
+    "notes": [
+      "Exported by vexlife.lens.VexLifeProdScreenLens; VexWork pins the commit.",
+      "Element labels are Blueprint ids made readable. Visible copy is dynamic and owned by each Family's DisplayState."
+    ]
+  },
+  "chrome": [],
+  "screens": [
+    {
+      "screenRef": "screen.vexlife-workspace",
+      "label": "VexLife workspace",
+      "placement": "PRIMARY",
+      "symbol": "VexLifeWorkspaceBlueprint",
+      "source": "common:workspace/VexLifeWorkspaceBlueprint.kt",
+      "mapped": "MAPPED",
+      "summary": "Browser and Companion side by side: converse with Vex, show Vex a window, and see what Vex receives.",
+      "elements": [
+        {
+          "ref": "element.vexlife-workspace.header",
+          "kind": "REGION",
+          "label": "Header",
+          "parentRef": null,
+          "symbol": "VexLifeWorkspaceBlueprint.Header",
+          "declared": "region(\"header\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "FillAvailable"
+        },
+        {
+          "ref": "element.vexlife-workspace.header.brand",
+          "kind": "TEXT",
+          "label": "Brand",
+          "parentRef": "element.vexlife-workspace.header",
+          "symbol": "VexLifeWorkspaceBlueprint.Brand",
+          "declared": "Header.content(\"brand\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.header.browser-query",
+          "kind": "FIELD",
+          "label": "Browser query",
+          "parentRef": "element.vexlife-workspace.header",
+          "symbol": "VexLifeWorkspaceBlueprint.BrowserQuery",
+          "declared": "Header.textField(\"browser-query\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.header.app-selector",
+          "kind": "BUTTON",
+          "label": "App selector",
+          "parentRef": "element.vexlife-workspace.header",
+          "symbol": "VexLifeWorkspaceBlueprint.AppSelector",
+          "declared": "Header.control(\"app-selector\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.header.utilities",
+          "kind": "REGION",
+          "label": "Utilities",
+          "parentRef": "element.vexlife-workspace.header",
+          "symbol": "VexLifeWorkspaceBlueprint.Utilities",
+          "declared": "Header.region(\"utilities\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.header.utilities.quick-actions",
+          "kind": "STACK",
+          "label": "Quick actions",
+          "parentRef": "element.vexlife-workspace.header.utilities",
+          "symbol": "VexLifeWorkspaceBlueprint.QuickActions",
+          "declared": "Utilities.collection(\"quick-actions\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.header.utilities.quick-actions.vex-summon",
+          "kind": "BUTTON",
+          "label": "Vex summon",
+          "parentRef": "element.vexlife-workspace.header.utilities.quick-actions",
+          "symbol": "VexLifeWorkspaceBlueprint.VexSummon",
+          "declared": "QuickActions.control(\"vex-summon\")",
+          "intent": "reveal element.vexlife-workspace.companion",
+          "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.vex-summon",
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.header.utilities.quick-actions.vision",
+          "kind": "BUTTON",
+          "label": "Vision",
+          "parentRef": "element.vexlife-workspace.header.utilities.quick-actions",
+          "symbol": "VexLifeWorkspaceBlueprint.VisionQuickAccess",
+          "declared": "QuickActions.control(\"vision\")",
+          "intent": "reveal element.vexlife-workspace.companion.vision",
+          "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.vision",
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.browser",
+          "kind": "REGION",
+          "label": "Browser",
+          "parentRef": null,
+          "symbol": "VexLifeWorkspaceBlueprint.Browser",
+          "declared": "region(\"browser\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "FillAvailable"
+        },
+        {
+          "ref": "element.vexlife-workspace.browser.frame-status",
+          "kind": "TEXT",
+          "label": "Frame status",
+          "parentRef": "element.vexlife-workspace.browser",
+          "symbol": "VexLifeWorkspaceBlueprint.BrowserFrameStatus",
+          "declared": "Browser.content(\"frame-status\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.browser.viewport",
+          "kind": "REGION",
+          "label": "Viewport",
+          "parentRef": "element.vexlife-workspace.browser",
+          "symbol": "VexLifeWorkspaceBlueprint.BrowserViewport",
+          "declared": "Browser.region(\"viewport\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "FillAvailable"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion",
+          "kind": "REGION",
+          "label": "Companion",
+          "parentRef": null,
+          "symbol": "VexLifeWorkspaceBlueprint.Companion",
+          "declared": "region(\"companion\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "FillAvailable"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.companion-status",
+          "kind": "TEXT",
+          "label": "Companion status",
+          "parentRef": "element.vexlife-workspace.companion",
+          "symbol": "VexLifeWorkspaceBlueprint.CompanionStatus",
+          "declared": "Companion.content(\"companion-status\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.vision",
+          "kind": "BUTTON",
+          "label": "Vision",
+          "parentRef": "element.vexlife-workspace.companion",
+          "symbol": "VexLifeWorkspaceBlueprint.Vision",
+          "declared": "Companion.control(\"vision\")",
+          "intent": "capability vision.selected-scope",
+          "pathwayRef": "pathway.vexlife-prod.vision.selected-scope",
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.view-switch",
+          "kind": "BUTTON",
+          "label": "View switch",
+          "parentRef": "element.vexlife-workspace.companion",
+          "symbol": "VexLifeWorkspaceBlueprint.CompanionViewSwitch",
+          "declared": "Companion.control(\"view-switch\")",
+          "intent": "reveal element.vexlife-workspace.companion.settings",
+          "pathwayRef": "pathway.vexlife-prod.local.companion.view-switch",
+          "style": "Surface",
+          "slot": "Trailing"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.conversation",
+          "kind": "REGION",
+          "label": "Conversation",
+          "parentRef": "element.vexlife-workspace.companion",
+          "symbol": "VexLifeWorkspaceBlueprint.Conversation",
+          "declared": "Companion.region(\"conversation\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.conversation.timeline",
+          "kind": "STACK",
+          "label": "Timeline",
+          "parentRef": "element.vexlife-workspace.companion.conversation",
+          "symbol": "VexLifeWorkspaceBlueprint.ConversationTimeline",
+          "declared": "Conversation.collection(\"timeline\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.conversation.jump-latest",
+          "kind": "BUTTON",
+          "label": "Jump latest",
+          "parentRef": "element.vexlife-workspace.companion.conversation",
+          "symbol": "VexLifeWorkspaceBlueprint.ConversationJumpLatest",
+          "declared": "Conversation.control(\"jump-latest\")",
+          "intent": "reveal element.vexlife-workspace.companion.conversation.timeline",
+          "pathwayRef": "pathway.vexlife-prod.local.companion.conversation.jump-latest",
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.conversation.response-progress",
+          "kind": "TEXT",
+          "label": "Response progress",
+          "parentRef": "element.vexlife-workspace.companion.conversation",
+          "symbol": "VexLifeWorkspaceBlueprint.ResponseProgress",
+          "declared": "Conversation.content(\"response-progress\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.conversation.composer",
+          "kind": "FIELD",
+          "label": "Composer",
+          "parentRef": "element.vexlife-workspace.companion.conversation",
+          "symbol": "VexLifeWorkspaceBlueprint.Composer",
+          "declared": "Conversation.textField(\"composer\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.conversation.context-receipt",
+          "kind": "TEXT",
+          "label": "Context receipt",
+          "parentRef": "element.vexlife-workspace.companion.conversation",
+          "symbol": "VexLifeWorkspaceBlueprint.ContextReceipt",
+          "declared": "Conversation.content(\"context-receipt\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.conversation.context-share",
+          "kind": "BUTTON",
+          "label": "Context share",
+          "parentRef": "element.vexlife-workspace.companion.conversation",
+          "symbol": "VexLifeWorkspaceBlueprint.ContextShare",
+          "declared": "Conversation.control(\"context-share\")",
+          "intent": "reveal element.vexlife-workspace.companion.conversation.context-receipt",
+          "pathwayRef": "pathway.vexlife-prod.local.companion.conversation.context-share",
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.conversation.send",
+          "kind": "BUTTON",
+          "label": "Send",
+          "parentRef": "element.vexlife-workspace.companion.conversation",
+          "symbol": "VexLifeWorkspaceBlueprint.Send",
+          "declared": "Conversation.control(\"send\")",
+          "intent": "capability conversation.send",
+          "pathwayRef": "pathway.vexlife-prod.conversation.send",
+          "style": "PrimaryAction",
+          "slot": "Trailing"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.conversation.stop",
+          "kind": "BUTTON",
+          "label": "Stop",
+          "parentRef": "element.vexlife-workspace.companion.conversation",
+          "symbol": "VexLifeWorkspaceBlueprint.Stop",
+          "declared": "Conversation.control(\"stop\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.conversation.context-inspector",
+          "kind": "TEXT",
+          "label": "Context inspector",
+          "parentRef": "element.vexlife-workspace.companion.conversation",
+          "symbol": "VexLifeWorkspaceBlueprint.ContextInspector",
+          "declared": "Conversation.content(\"context-inspector\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings",
+          "kind": "REGION",
+          "label": "Settings",
+          "parentRef": "element.vexlife-workspace.companion",
+          "symbol": "VexLifeWorkspaceBlueprint.Settings",
+          "declared": "Companion.region(\"settings\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.context",
+          "kind": "REGION",
+          "label": "Context",
+          "parentRef": "element.vexlife-workspace.companion.settings",
+          "symbol": "VexLifeWorkspaceBlueprint.SettingsContext",
+          "declared": "Settings.region(\"context\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.context.context-window",
+          "kind": "TEXT",
+          "label": "Context window",
+          "parentRef": "element.vexlife-workspace.companion.settings.context",
+          "symbol": "VexLifeWorkspaceBlueprint.ContextWindow",
+          "declared": "SettingsContext.content(\"context-window\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.resources",
+          "kind": "REGION",
+          "label": "Resources",
+          "parentRef": "element.vexlife-workspace.companion.settings",
+          "symbol": "VexLifeWorkspaceBlueprint.SettingsResources",
+          "declared": "Settings.region(\"resources\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.resources.memory",
+          "kind": "TEXT",
+          "label": "Memory",
+          "parentRef": "element.vexlife-workspace.companion.settings.resources",
+          "symbol": "VexLifeWorkspaceBlueprint.MemoryResource",
+          "declared": "SettingsResources.content(\"memory\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.resources.low-memory-alert",
+          "kind": "BUTTON",
+          "label": "Low memory alert",
+          "parentRef": "element.vexlife-workspace.companion.settings.resources",
+          "symbol": "VexLifeWorkspaceBlueprint.LowMemoryAlert",
+          "declared": "SettingsResources.control(\"low-memory-alert\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.thought-visibility",
+          "kind": "BUTTON",
+          "label": "Thought visibility",
+          "parentRef": "element.vexlife-workspace.companion.settings",
+          "symbol": "VexLifeWorkspaceBlueprint.ThoughtVisibility",
+          "declared": "Settings.control(\"thought-visibility\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.home",
+          "kind": "REGION",
+          "label": "Home",
+          "parentRef": "element.vexlife-workspace.companion.settings",
+          "symbol": "VexLifeWorkspaceBlueprint.SettingsHome",
+          "declared": "Settings.region(\"home\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.home.directories",
+          "kind": "BUTTON",
+          "label": "Directories",
+          "parentRef": "element.vexlife-workspace.companion.settings.home",
+          "symbol": "VexLifeWorkspaceBlueprint.HomeDirectories",
+          "declared": "SettingsHome.control(\"directories\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.home.add-directory",
+          "kind": "BUTTON",
+          "label": "Add directory",
+          "parentRef": "element.vexlife-workspace.companion.settings.home",
+          "symbol": "VexLifeWorkspaceBlueprint.HomeAddDirectory",
+          "declared": "SettingsHome.control(\"add-directory\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.continuity",
+          "kind": "REGION",
+          "label": "Continuity",
+          "parentRef": "element.vexlife-workspace.companion.settings",
+          "symbol": "VexLifeWorkspaceBlueprint.SettingsContinuity",
+          "declared": "Settings.region(\"continuity\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.continuity.memory",
+          "kind": "TEXT",
+          "label": "Memory",
+          "parentRef": "element.vexlife-workspace.companion.settings.continuity",
+          "symbol": "VexLifeWorkspaceBlueprint.ContinuityMemory",
+          "declared": "SettingsContinuity.content(\"memory\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.continuity.continuity-mode",
+          "kind": "BUTTON",
+          "label": "Continuity mode",
+          "parentRef": "element.vexlife-workspace.companion.settings.continuity",
+          "symbol": "VexLifeWorkspaceBlueprint.ContinuityMode",
+          "declared": "SettingsContinuity.control(\"continuity-mode\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.continuity.dream-sync",
+          "kind": "BUTTON",
+          "label": "Dream sync",
+          "parentRef": "element.vexlife-workspace.companion.settings.continuity",
+          "symbol": "VexLifeWorkspaceBlueprint.DreamSync",
+          "declared": "SettingsContinuity.control(\"dream-sync\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.reset",
+          "kind": "REGION",
+          "label": "Reset",
+          "parentRef": "element.vexlife-workspace.companion.settings",
+          "symbol": "VexLifeWorkspaceBlueprint.SettingsReset",
+          "declared": "Settings.region(\"reset\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.reset.clean-chat",
+          "kind": "BUTTON",
+          "label": "Clean chat",
+          "parentRef": "element.vexlife-workspace.companion.settings.reset",
+          "symbol": "VexLifeWorkspaceBlueprint.CleanChat",
+          "declared": "SettingsReset.control(\"clean-chat\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        }
+      ]
+    }
+  ],
+  "pathways": [
+    {
+      "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.vex-summon",
+      "label": "Reveal Companion",
+      "disposition": "TYPED_PRESENTATION",
+      "summary": "A presentation-local interaction; it reveals another coordinate and decides nothing.",
+      "returns": null,
+      "returnRef": null,
+      "nodes": [
+        {
+          "ref": "vexlife-prod.local.header.utilities.quick-actions.vex-summon.intent",
+          "face": "BEHAVIOR",
+          "role": "INTENT",
+          "label": "Activate",
+          "symbol": "VexWeb.Binding.LocalInteraction",
+          "summary": null,
+          "source": "common:web/VexLifeWebP1.kt"
+        },
+        {
+          "ref": "vexlife-prod.local.header.utilities.quick-actions.vex-summon.reveal",
+          "face": "BEHAVIOR",
+          "role": "NAVIGATION",
+          "label": "Companion",
+          "symbol": "element.vexlife-workspace.companion",
+          "summary": null,
+          "source": "common:workspace/VexLifeWorkspaceBlueprint.kt"
+        }
+      ],
+      "edges": [
+        {
+          "from": "vexlife-prod.local.header.utilities.quick-actions.vex-summon.intent",
+          "to": "vexlife-prod.local.header.utilities.quick-actions.vex-summon.reveal",
+          "label": null,
+          "kind": "FLOW"
+        }
+      ]
+    },
+    {
+      "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.vision",
+      "label": "Reveal Vision",
+      "disposition": "TYPED_PRESENTATION",
+      "summary": "A presentation-local interaction; it reveals another coordinate and decides nothing.",
+      "returns": null,
+      "returnRef": null,
+      "nodes": [
+        {
+          "ref": "vexlife-prod.local.header.utilities.quick-actions.vision.intent",
+          "face": "BEHAVIOR",
+          "role": "INTENT",
+          "label": "Activate",
+          "symbol": "VexWeb.Binding.LocalInteraction",
+          "summary": null,
+          "source": "common:web/VexLifeWebP1.kt"
+        },
+        {
+          "ref": "vexlife-prod.local.header.utilities.quick-actions.vision.reveal",
+          "face": "BEHAVIOR",
+          "role": "NAVIGATION",
+          "label": "Vision",
+          "symbol": "element.vexlife-workspace.companion.vision",
+          "summary": null,
+          "source": "common:workspace/VexLifeWorkspaceBlueprint.kt"
+        }
+      ],
+      "edges": [
+        {
+          "from": "vexlife-prod.local.header.utilities.quick-actions.vision.intent",
+          "to": "vexlife-prod.local.header.utilities.quick-actions.vision.reveal",
+          "label": null,
+          "kind": "FLOW"
+        }
+      ]
+    },
+    {
+      "pathwayRef": "pathway.vexlife-prod.vision.selected-scope",
+      "label": "Choose or release a window",
+      "disposition": "SCAE_FAMILY",
+      "summary": "VexLifeVisionFamily decides against a fresh observation; an unlawful Control never reaches the runtime.",
+      "returns": "a re-observed Vision DisplayState",
+      "returnRef": "vexlife-prod.vision.projection",
+      "nodes": [
+        {
+          "ref": "vexlife-prod.vision.intent",
+          "face": "BEHAVIOR",
+          "role": "INTENT",
+          "label": "vision.selected-scope",
+          "symbol": "VexLifeWebP1.Refs.VisionSelectedScopeCapability",
+          "summary": null,
+          "source": "common:web/VexLifeWebP1.kt"
+        },
+        {
+          "ref": "vexlife-prod.vision.dispatch",
+          "face": "BEHAVIOR",
+          "role": "DISPATCH",
+          "label": "POST /api/v1/vision/control",
+          "symbol": "VexLifeProdLocalService",
+          "summary": null,
+          "source": "jvm:service/VexLifeProdLocalService.kt"
+        },
+        {
+          "ref": "vexlife-prod.vision.control",
+          "face": "BEHAVIOR",
+          "role": "CONTROL",
+          "label": "ENGAGE · STOP",
+          "symbol": "VexLifeVisionFamily.Control",
+          "summary": null,
+          "source": "common:vision/VexLifeVisionFamily.kt"
+        },
+        {
+          "ref": "vexlife-prod.vision.state",
+          "face": "BEHAVIOR",
+          "role": "STATE",
+          "label": "HELD · READY · SELECTING · ENGAGED · LOOKING",
+          "symbol": "VexLifeVisionFamily.State",
+          "summary": "Re-observed from PROJECT before the Act.",
+          "source": "common:vision/VexLifeVisionFamily.kt"
+        },
+        {
+          "ref": "vexlife-prod.vision.act",
+          "face": "BEHAVIOR",
+          "role": "ACT",
+          "label": "VexLifeVisionFamily.act",
+          "symbol": "VexLifeVisionFamily",
+          "summary": "No lawful Act: 409 NOT_LAWFUL_NOW.",
+          "source": "common:vision/VexLifeVisionFamily.kt"
+        },
+        {
+          "ref": "vexlife-prod.vision.effect",
+          "face": "BEHAVIOR",
+          "role": "EFFECT",
+          "label": "EngageScope · StopScope",
+          "symbol": "VexLifeVisionFamily.Effect",
+          "summary": null,
+          "source": "common:vision/VexLifeVisionFamily.kt"
+        },
+        {
+          "ref": "vexlife-prod.vision.runtime",
+          "face": "DEPTH",
+          "role": "CONNECTION",
+          "label": "Vision runtime child",
+          "symbol": "VexLifeProdVisionRuntime",
+          "summary": null,
+          "source": "jvm:vision/VexLifeProdVisionRuntime.kt"
+        },
+        {
+          "ref": "vexlife-prod.vision.picker",
+          "face": "DEPTH",
+          "role": "PARTNER",
+          "label": "macOS window picker",
+          "symbol": "SDK selected-scope session",
+          "summary": "The person chooses one window. Nothing is captured.",
+          "source": null
+        },
+        {
+          "ref": "vexlife-prod.vision.observation",
+          "face": "DEPTH",
+          "role": "OBSERVATION",
+          "label": "Selected-scope projection",
+          "symbol": "VexLifeProdServiceContract.VisionSelectedScopeProjection",
+          "summary": "Content-absent: no pixels, no frames.",
+          "source": "common:service/VexLifeProdServiceContract.kt"
+        },
+        {
+          "ref": "vexlife-prod.vision.projection",
+          "face": "BEHAVIOR",
+          "role": "PROJECTION",
+          "label": "Vision DisplayState",
+          "symbol": "VexLifeVisionFamily.DisplayState",
+          "summary": null,
+          "source": "common:vision/VexLifeVisionFamily.kt"
+        }
+      ],
+      "edges": [
+        {
+          "from": "vexlife-prod.vision.intent",
+          "to": "vexlife-prod.vision.dispatch",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.vision.dispatch",
+          "to": "vexlife-prod.vision.control",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.vision.state",
+          "to": "vexlife-prod.vision.act",
+          "label": "current State",
+          "kind": "DATA"
+        },
+        {
+          "from": "vexlife-prod.vision.control",
+          "to": "vexlife-prod.vision.act",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.vision.act",
+          "to": "vexlife-prod.vision.effect",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.vision.effect",
+          "to": "vexlife-prod.vision.runtime",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.vision.runtime",
+          "to": "vexlife-prod.vision.picker",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.vision.picker",
+          "to": "vexlife-prod.vision.observation",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.vision.observation",
+          "to": "vexlife-prod.vision.projection",
+          "label": "re-observed",
+          "kind": "RETURN"
+        }
+      ]
+    },
+    {
+      "pathwayRef": "pathway.vexlife-prod.local.companion.view-switch",
+      "label": "Reveal Settings",
+      "disposition": "TYPED_PRESENTATION",
+      "summary": "A presentation-local interaction; it reveals another coordinate and decides nothing.",
+      "returns": null,
+      "returnRef": null,
+      "nodes": [
+        {
+          "ref": "vexlife-prod.local.companion.view-switch.intent",
+          "face": "BEHAVIOR",
+          "role": "INTENT",
+          "label": "Activate",
+          "symbol": "VexWeb.Binding.LocalInteraction",
+          "summary": null,
+          "source": "common:web/VexLifeWebP1.kt"
+        },
+        {
+          "ref": "vexlife-prod.local.companion.view-switch.reveal",
+          "face": "BEHAVIOR",
+          "role": "NAVIGATION",
+          "label": "Settings",
+          "symbol": "element.vexlife-workspace.companion.settings",
+          "summary": null,
+          "source": "common:workspace/VexLifeWorkspaceBlueprint.kt"
+        }
+      ],
+      "edges": [
+        {
+          "from": "vexlife-prod.local.companion.view-switch.intent",
+          "to": "vexlife-prod.local.companion.view-switch.reveal",
+          "label": null,
+          "kind": "FLOW"
+        }
+      ]
+    },
+    {
+      "pathwayRef": "pathway.vexlife-prod.local.companion.conversation.jump-latest",
+      "label": "Reveal Timeline",
+      "disposition": "TYPED_PRESENTATION",
+      "summary": "A presentation-local interaction; it reveals another coordinate and decides nothing.",
+      "returns": null,
+      "returnRef": null,
+      "nodes": [
+        {
+          "ref": "vexlife-prod.local.companion.conversation.jump-latest.intent",
+          "face": "BEHAVIOR",
+          "role": "INTENT",
+          "label": "Activate",
+          "symbol": "VexWeb.Binding.LocalInteraction",
+          "summary": null,
+          "source": "common:web/VexLifeWebP1.kt"
+        },
+        {
+          "ref": "vexlife-prod.local.companion.conversation.jump-latest.reveal",
+          "face": "BEHAVIOR",
+          "role": "NAVIGATION",
+          "label": "Timeline",
+          "symbol": "element.vexlife-workspace.companion.conversation.timeline",
+          "summary": null,
+          "source": "common:workspace/VexLifeWorkspaceBlueprint.kt"
+        }
+      ],
+      "edges": [
+        {
+          "from": "vexlife-prod.local.companion.conversation.jump-latest.intent",
+          "to": "vexlife-prod.local.companion.conversation.jump-latest.reveal",
+          "label": null,
+          "kind": "FLOW"
+        }
+      ]
+    },
+    {
+      "pathwayRef": "pathway.vexlife-prod.local.companion.conversation.context-share",
+      "label": "Reveal Context receipt",
+      "disposition": "TYPED_PRESENTATION",
+      "summary": "A presentation-local interaction; it reveals another coordinate and decides nothing.",
+      "returns": null,
+      "returnRef": null,
+      "nodes": [
+        {
+          "ref": "vexlife-prod.local.companion.conversation.context-share.intent",
+          "face": "BEHAVIOR",
+          "role": "INTENT",
+          "label": "Activate",
+          "symbol": "VexWeb.Binding.LocalInteraction",
+          "summary": null,
+          "source": "common:web/VexLifeWebP1.kt"
+        },
+        {
+          "ref": "vexlife-prod.local.companion.conversation.context-share.reveal",
+          "face": "BEHAVIOR",
+          "role": "NAVIGATION",
+          "label": "Context receipt",
+          "symbol": "element.vexlife-workspace.companion.conversation.context-receipt",
+          "summary": null,
+          "source": "common:workspace/VexLifeWorkspaceBlueprint.kt"
+        }
+      ],
+      "edges": [
+        {
+          "from": "vexlife-prod.local.companion.conversation.context-share.intent",
+          "to": "vexlife-prod.local.companion.conversation.context-share.reveal",
+          "label": null,
+          "kind": "FLOW"
+        }
+      ]
+    },
+    {
+      "pathwayRef": "pathway.vexlife-prod.conversation.send",
+      "label": "Send to Vex",
+      "disposition": "DIRECT_REGISTRATION",
+      "summary": "The service route calls the turn owner directly; no Conversation Family has earned this meaning yet.",
+      "returns": "the canonical Conversation projection",
+      "returnRef": "vexlife-prod.send.projection",
+      "nodes": [
+        {
+          "ref": "vexlife-prod.send.intent",
+          "face": "BEHAVIOR",
+          "role": "INTENT",
+          "label": "conversation.send",
+          "symbol": "VexLifeWebP1.Refs.ConversationSendCapability",
+          "summary": null,
+          "source": "common:web/VexLifeWebP1.kt"
+        },
+        {
+          "ref": "vexlife-prod.send.dispatch",
+          "face": "BEHAVIOR",
+          "role": "DISPATCH",
+          "label": "POST /api/v1/conversation/send",
+          "symbol": "VexLifeProdLocalService",
+          "summary": null,
+          "source": "jvm:service/VexLifeProdLocalService.kt"
+        },
+        {
+          "ref": "vexlife-prod.send.turn",
+          "face": "DEPTH",
+          "role": "METHOD",
+          "label": "DirectCompanionTurn",
+          "symbol": "DirectCompanionTurn",
+          "summary": "One canonical turn. The request is appended to Conversation before inference.",
+          "source": "jvm:companion/DirectCompanionTurn.kt"
+        },
+        {
+          "ref": "vexlife-prod.send.prompt",
+          "face": "DEPTH",
+          "role": "REALIZATION",
+          "label": "Prompt materialization",
+          "symbol": "DirectPromptContext",
+          "summary": "Selects recent completed turns and current Memory within the token budget and records exactly what Vex received.",
+          "source": "jvm:companion/DirectPromptContext.kt"
+        },
+        {
+          "ref": "vexlife-prod.send.memory",
+          "face": "DEPTH",
+          "role": "STORE",
+          "label": "Current Memory",
+          "symbol": "VexLifeCurrentMemoryReader",
+          "summary": "Included only when the Living Journal projection is CURRENT.",
+          "source": "jvm:memory/VexLifeCurrentMemoryReader.kt"
+        },
+        {
+          "ref": "vexlife-prod.send.runtime",
+          "face": "DEPTH",
+          "role": "CONNECTION",
+          "label": "Local Heretic runtime",
+          "symbol": "HereticPersistentRuntime",
+          "summary": null,
+          "source": "jvm:model/heretic/runtime/HereticPersistentRuntime.kt"
+        },
+        {
+          "ref": "vexlife-prod.send.conversation",
+          "face": "DEPTH",
+          "role": "STORE",
+          "label": "Canonical Conversation",
+          "symbol": "DirectConversationStore",
+          "summary": null,
+          "source": "jvm:conversation/DirectConversationStore.kt"
+        },
+        {
+          "ref": "vexlife-prod.send.projection",
+          "face": "BEHAVIOR",
+          "role": "PROJECTION",
+          "label": "Conversation projection",
+          "symbol": "VexLifeProdServiceContract.ConversationProjection",
+          "summary": null,
+          "source": "common:service/VexLifeProdServiceContract.kt"
+        }
+      ],
+      "edges": [
+        {
+          "from": "vexlife-prod.send.intent",
+          "to": "vexlife-prod.send.dispatch",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.send.dispatch",
+          "to": "vexlife-prod.send.turn",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.send.turn",
+          "to": "vexlife-prod.send.prompt",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.send.memory",
+          "to": "vexlife-prod.send.prompt",
+          "label": "current Memory",
+          "kind": "DATA"
+        },
+        {
+          "from": "vexlife-prod.send.prompt",
+          "to": "vexlife-prod.send.runtime",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.send.runtime",
+          "to": "vexlife-prod.send.conversation",
+          "label": "response committed",
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.send.conversation",
+          "to": "vexlife-prod.send.projection",
+          "label": null,
+          "kind": "RETURN"
+        }
+      ]
+    }
+  ],
+  "annotations": [
+    {
+      "ref": "note.vexlife-prod.memory.projection-only",
+      "subjectRef": "element.vexlife-workspace.companion.settings.continuity.memory",
+      "text": "Projection only",
+      "detail": "Shows VexLifeMemoryFamily's DisplayState from GET /api/v1/memory. No Controls until Memory formation has an owner."
+    }
+  ],
+  "provenance": {
+    "generator": "vexlife-prod-blueprint-export/1",
+    "exporter": "jvm:lens/VexLifeProdScreenLens.kt"
+  }
+}
