@@ -388,6 +388,10 @@ class VexLifeProdHomeFilesTest {
             assertTrue(
                 VexLifeProdHomeFiles.observeLocation(canonical) is VexLifeProdHomeFiles.Location.Existing,
             )
+            val viaLinkedParent =
+                VexLifeProdHomeFiles.observeLocation(link.resolve(".vexlife")) as VexLifeProdHomeFiles.Location.Held
+            assertEquals(VexLifeProdHome.LocationDisposition.HeldSymbolicLink, viaLinkedParent.disposition)
+            assertTrue(viaLinkedParent.detail.contains(linkTarget.toRealPath().resolve(".vexlife").toString()))
 
             assertFalse(Files.exists(absent), "classification must not create the Home")
             assertFalse(Files.exists(root.resolve("a")), "classification must not create ancestors")

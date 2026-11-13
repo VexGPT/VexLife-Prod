@@ -193,6 +193,17 @@ object VexLifeProdHomeFiles {
                         "this Mac user cannot create folders inside $ancestor",
                 )
             }
+            if (
+                missing ==
+                0
+            ) {
+                linkedParent(
+                    home,
+                    homeText,
+                )?.let {
+                    return it
+                }
+            }
             return Location.Formable(
                 productHome = homeText,
                 disposition = VexLifeProdHome.LocationDisposition.Absent,
@@ -249,6 +260,12 @@ object VexLifeProdHomeFiles {
         if (
             empty
         ) {
+            linkedParent(
+                home,
+                homeText,
+            )?.let {
+                return it
+            }
             val parent =
                 home.parent
             if (
@@ -309,6 +326,45 @@ object VexLifeProdHomeFiles {
                         (error.message ?: error.javaClass.simpleName),
             )
         }
+    }
+
+    /**
+     * Formation stages beside the Home and requires that parent to be a real directory. A parent
+     * reached through a link (for example macOS `/tmp` -> `/private/tmp`) is held with the real
+     * location named, instead of failing midway through the Home-only effect.
+     */
+    private fun linkedParent(
+        home: Path,
+        homeText: String,
+    ): Location.Held? {
+        val parent =
+            home.parent
+                ?: return null
+        if (
+            !Files.isSymbolicLink(
+                parent,
+            )
+        ) {
+            return null
+        }
+        val real =
+            runCatching {
+                parent.toRealPath()
+            }.getOrNull()
+        return Location.Held(
+            productHome = homeText,
+            disposition = VexLifeProdHome.LocationDisposition.HeldSymbolicLink,
+            detail =
+                "the folder that would contain it ($parent) is a link" +
+                    (
+                        real?.let {
+                            "; use the real location " +
+                                it.resolve(
+                                    home.fileName,
+                                )
+                        } ?: ""
+                    ),
+        )
     }
 
     fun defaultMacRoot(
