@@ -78,18 +78,30 @@ class VexLifeProdHomeTest {
             plan.manifest.modelConfigurationRef,
         )
         assertEquals(
+            null,
+            plan.manifest.cultureManifestRef,
+        )
+        assertEquals(
             "runtime/vexlife-prod/model-binding.json",
             VexLifeProdHome.ModelConfigurationRelativePath,
+        )
+        assertTrue(
+            plan.writes.contains(
+                VexLifeProdHome.CanonicalModelConfigurationRelativePath,
+            ),
         )
         assertTrue(
             plan.writes.contains(
                 VexLifeProdHome.ModelConfigurationRelativePath,
             ),
         )
-        assertFalse(
-            plan.writes.contains(
-                plan.manifest.modelConfigurationRef,
-            ),
+        assertEquals(
+            VexLifeProdHome.CanonicalModelConfigurationSchema,
+            plan.canonicalModelConfiguration.schemaVersion,
+        )
+        assertEquals(
+            "UNCONFIGURED",
+            plan.canonicalModelConfiguration.state,
         )
     }
 
