@@ -48,6 +48,7 @@ class VexLifeProdLocalService private constructor(
     private val streamingTurnExecutor: StreamingTurnExecutor?,
     private val dreamExecutor: DreamExecutor?,
     private val visionExecutor: VisionExecutor?,
+    private val currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
 ) : AutoCloseable {
     companion object {
         private const val MaxRequestBytes =
@@ -213,6 +214,8 @@ class VexLifeProdLocalService private constructor(
                         )
                     },
                 dreamExecutor = ProductDreamExecutor,
+                currentStateObserver =
+                    VexLifeProdCurrentState::observeCurrentMac,
                 visionExecutor =
                     visionRuntimeExecutablePathOrNull
                         ?.let {
@@ -240,6 +243,8 @@ class VexLifeProdLocalService private constructor(
                 null,
             visionExecutor: VisionExecutor? =
                 null,
+            currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)? =
+                null,
         ): VexLifeProdLocalService =
             startAt(
                 sourceSha = sourceSha,
@@ -258,6 +263,7 @@ class VexLifeProdLocalService private constructor(
                 streamingTurnExecutor = streamingTurnExecutor,
                 dreamExecutor = dreamExecutor,
                 visionExecutor = visionExecutor,
+                currentStateObserver = currentStateObserver,
             )
 
         private fun startAt(
@@ -269,6 +275,7 @@ class VexLifeProdLocalService private constructor(
             streamingTurnExecutor: StreamingTurnExecutor?,
             dreamExecutor: DreamExecutor?,
             visionExecutor: VisionExecutor?,
+            currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
         ): VexLifeProdLocalService {
             require(
                 SourceShaPattern.matches(
@@ -333,6 +340,7 @@ class VexLifeProdLocalService private constructor(
                         streamingTurnExecutor = streamingTurnExecutor,
                         dreamExecutor = dreamExecutor,
                         visionExecutor = visionExecutor,
+                        currentStateObserver = currentStateObserver,
                     )
 
                 server.executor =
@@ -607,9 +615,12 @@ class VexLifeProdLocalService private constructor(
             exchange = exchange,
             status = 200,
             value =
-                VexLifeProdCurrentState.observe(
-                    startupSetup,
-                ),
+                requireNotNull(
+                    currentStateObserver,
+                ) {
+                    "current-state observer is not configured"
+                }
+                    .invoke(),
         )
     }
 
