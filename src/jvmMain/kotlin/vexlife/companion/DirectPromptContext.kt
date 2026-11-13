@@ -20,8 +20,10 @@ import vexlife.model.heretic.HereticModelConfiguration
  *
  * CONTINUE selects a contiguous recent suffix of completed REQUEST/RESPONSE pairs within the admitted
  * prompt budget. Current attributed Memory may be supplied only through the exact source-owned Memory
- * contract and is reverified before provider materialization. A working-checkpoint successor selects
- * no raw prior Conversation pair. This owner performs no provider call and no durable mutation.
+ * contract and is reverified before provider materialization. A working-checkpoint successor does
+ * not replay the prior human request or full prior Conversation pair; it may carry the exact immediately
+ * prior Vex RESPONSE as a bounded assistant-role bridge. This owner performs no provider call and no
+ * durable mutation.
  */
 object DirectPromptContext {
     const val ReceiptSchemaV2 =
@@ -723,10 +725,14 @@ object DirectPromptContext {
                         )
                     }
             }
+        val providerPrefixMessages =
+            coalesceProviderSystemPrefix(
+                prefixMessages,
+            )
         val messages =
             buildList {
                 addAll(
-                    prefixMessages,
+                    providerPrefixMessages,
                 )
                 for (
                     event in
@@ -2136,6 +2142,53 @@ object DirectPromptContext {
         ) {
             "direct prompt recent Conversation history contains an invalid completed pair"
         }
+    }
+
+    private fun coalesceProviderSystemPrefix(
+        messages: List<CompanionProviderMessage>,
+    ): List<CompanionProviderMessage> {
+        if (
+            messages.size <=
+                1
+        ) {
+            return messages
+        }
+        require(
+            messages.all {
+                it.role ==
+                    "system"
+            },
+        ) {
+            "direct prompt provider prefix may contain only system messages"
+        }
+
+        val combined =
+            listOf(
+                CompanionProviderMessage(
+                    role = "system",
+                    content =
+                        messages.joinToString(
+                            separator = "\n\n",
+                            transform =
+                                CompanionProviderMessage::content,
+                        ),
+                ),
+            )
+        require(
+            combined.sumOf {
+                estimatedMessageTokens(
+                    it.content,
+                )
+            } <=
+                messages.sumOf {
+                    estimatedMessageTokens(
+                        it.content,
+                    )
+                },
+        ) {
+            "direct prompt provider system-prefix coalescing exceeded the separately budgeted source blocks"
+        }
+        return combined
     }
 
     fun estimatedMessageTokens(

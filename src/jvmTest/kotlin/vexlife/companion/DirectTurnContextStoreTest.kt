@@ -105,6 +105,10 @@ class DirectTurnContextStoreTest {
                         productHome = productHome,
                         request = oldRequest,
                         response = oldResponse,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-12T00:00:13Z",
+                            ),
                     )
                 commitCompletedTurn(
                     request = oldRequest,
@@ -148,6 +152,10 @@ class DirectTurnContextStoreTest {
                         productHome = productHome,
                         request = newerRequest,
                         response = newerResponse,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-12T00:00:14Z",
+                            ),
                     )
                 commitCompletedTurn(
                     request = newerRequest,
