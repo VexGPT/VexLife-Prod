@@ -517,6 +517,10 @@ class VexLifeProdSetupProcessTest {
             VexLifeProdSetupProcess.runWithHooks(
                 arguments =
                     VexLifeProdSetupProcess.Arguments(
+                        productHome =
+                            Path.of(
+                                "/tmp/vexlife-prod-setup-reuse-existing-home",
+                            ),
                         expectedSourceSha = sourceSha,
                         allowAcquisition = false,
                     ),
@@ -534,7 +538,15 @@ class VexLifeProdSetupProcessTest {
                         reportImageVerified = {
                         },
                         establishSession = {
-                            allowAcquisition ->
+                            productHome,
+                            allowAcquisition,
+                            ->
+                            assertEquals(
+                                Path.of(
+                                    "/tmp/vexlife-prod-setup-reuse-existing-home",
+                                ),
+                                productHome,
+                            )
                             assertFalse(
                                 allowAcquisition,
                             )
