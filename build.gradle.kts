@@ -646,7 +646,7 @@ require(
             ),
         ) &&
         visionRuntimeHelperExecutableRelativePath ==
-        "vision-runtime/helper/VexLifeVisionSystemPickerAgent.app/Contents/MacOS/VexLifeVisionSystemPickerAgent" &&
+        "vision-runtime/helper/VexLifeVisionSelectedScopeAgent.app/Contents/MacOS/VexLifeVisionSelectedScopeAgent" &&
         visionRuntimeHelperExecutableSha256.matches(
             Regex(
                 "[0-9a-f]{64}",
