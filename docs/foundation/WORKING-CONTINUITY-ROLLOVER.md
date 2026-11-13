@@ -295,6 +295,11 @@ Conversation turn remains independently valid.
 The Score coordinate projection is reference-only. It does not expose Score semantic bodies to the provider,
 widen Memory, or create a generic source resolver.
 
+Current Score coordinate truth and current Memory admissibility remain separate. Historical Score statement
+authority is still validated against the exact authority generation recorded by each Score event. A current
+semantic-authority head is required where Memory/Dream needs current semantic membership; its absence does not
+by itself manufacture the conclusion that the current Score coordinate set is absent.
+
 A continuity-specific formation/commit problem does **not** retroactively convert a completed
 Conversation turn into a provider failure. Expected continuity-owner failures become a separate
 post-commit `HELD` receipt under:
