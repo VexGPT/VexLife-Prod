@@ -3,6 +3,7 @@ package vexlife.setup
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
+import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
@@ -27,6 +28,10 @@ object VexLifeProdSetupProcess {
         val allowAcquisition: Boolean,
     )
 
+    data class HomeArguments(
+        val expectedSourceSha: String,
+    )
+
     internal data class Hooks(
         val locateImageRoot: () -> Path =
             ::currentImageRoot,
@@ -41,6 +46,9 @@ object VexLifeProdSetupProcess {
                 imageRoot = imageRoot,
                 expectedSourceSha = expectedSourceSha,
             )
+        },
+        val formFreshHome: () -> VexLifeProdHomeFiles.Result = {
+            VexLifeProdLocalSetup.formFreshHome()
         },
         val establishSession: (
             allowAcquisition: Boolean,
@@ -86,6 +94,27 @@ object VexLifeProdSetupProcess {
                     observation.sourceSha +
                     "\t" +
                     observation.payloadSha256,
+            )
+            System.out.flush()
+        },
+        val reportHomeReady: (
+            HomeArguments,
+            VexLifeProdHomeFiles.Result,
+        ) -> Unit = {
+            arguments,
+            home,
+            ->
+            println(
+                "VEXLIFE_PROD_HOME_READY\t" +
+                    arguments.expectedSourceSha +
+                    "\t" +
+                    home.productHome +
+                    "\t" +
+                    home.manifest.homeRef +
+                    "\t" +
+                    home.installation.deviceRef +
+                    "\t" +
+                    home.installation.companionLineageRef,
             )
             System.out.flush()
         },
@@ -150,6 +179,74 @@ object VexLifeProdSetupProcess {
             allowAcquisition =
                 args[2] ==
                     "--allow-acquisition",
+        )
+    }
+
+    fun parseHome(
+        args: Array<String>,
+    ): HomeArguments {
+        require(
+            args.size ==
+                3 &&
+                args[0] ==
+                "--form-home" &&
+                args[1] ==
+                "--expected-source-sha"
+        ) {
+            "VexLife-Prod fresh Home formation requires exactly --form-home --expected-source-sha <git-sha>"
+        }
+
+        val sourceSha =
+            args[2]
+        require(
+            GitSha.matches(
+                sourceSha,
+            ),
+        ) {
+            "VexLife-Prod fresh Home formation expected source SHA must be one exact lowercase Git commit"
+        }
+
+        return HomeArguments(
+            expectedSourceSha = sourceSha,
+        )
+    }
+
+    fun formHome(
+        args: Array<String>,
+    ) {
+        formHomeWithHooks(
+            arguments =
+                parseHome(
+                    args,
+                ),
+            hooks = Hooks(),
+        )
+    }
+
+    internal fun formHomeWithHooks(
+        arguments: HomeArguments,
+        hooks: Hooks,
+    ) {
+        val imageRoot =
+            hooks.locateImageRoot()
+                .toAbsolutePath()
+                .normalize()
+        val observed =
+            hooks.observeImage(
+                imageRoot,
+                arguments.expectedSourceSha,
+            )
+
+        hooks.reportImageVerified(
+            observed,
+        )
+
+        val home =
+            hooks.formFreshHome()
+
+        hooks.reportHomeReady(
+            arguments,
+            home,
         )
     }
 
@@ -280,6 +377,20 @@ object VexLifeProdSetupProcess {
 fun main(
     args: Array<String>,
 ) {
+    if (
+        args.size ==
+            3 &&
+        args[0] ==
+            "--form-home" &&
+        args[1] ==
+            "--expected-source-sha"
+    ) {
+        VexLifeProdSetupProcess.formHome(
+            args,
+        )
+        return
+    }
+
     if (
         args.size ==
             3 &&
