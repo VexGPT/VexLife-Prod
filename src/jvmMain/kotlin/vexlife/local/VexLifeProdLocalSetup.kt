@@ -219,6 +219,84 @@ object VexLifeProdLocalSetup {
     )
 
     /**
+     * Explicit first-setup identity effect.
+     *
+     * This may form only the canonical VexLife Home/device/Companion identity after host
+     * eligibility. It performs no model/runtime acquisition and does not install/start Product.
+     */
+    fun formFreshHome(): VexLifeProdHomeFiles.Result {
+        val productHome =
+            VexLifeProdHomeFiles.defaultMacRoot(
+                Path.of(
+                    System.getProperty(
+                        "user.home",
+                    ),
+                ),
+            )
+
+        return VexLifeProdLocalSetupLease
+            .acquire(
+                productHome,
+            )
+            .use {
+                formFreshHomeAt(
+                    productHome = productHome,
+                    hooks = Hooks(),
+                )
+            }
+    }
+
+    internal fun formFreshHomeAt(
+        productHome: Path,
+        hooks: Hooks,
+    ): VexLifeProdHomeFiles.Result {
+        val host =
+            hooks.observeHost()
+
+        require(
+            host.state ==
+                HereticMacHostProfile.State.Eligible &&
+                !host.effectsPerformed,
+        ) {
+            "current Mac does not satisfy the certified VexLife-Prod host profile for fresh Home formation: " +
+                (
+                    host.reason
+                        ?: "UNKNOWN"
+                )
+        }
+
+        VexLifeProdHomeFiles.observeExisting(
+            productHome,
+        )
+            ?.let {
+                return it
+            }
+
+        val plan =
+            VexLifeProdHome.plan(
+                personRef =
+                    VexLifeProdHome.DefaultPersonRef,
+                familyRef =
+                    VexLifeProdHome.DefaultFamilyRef,
+                deviceName =
+                    hooks.deviceName(),
+                platform =
+                    host.observation.platform,
+                architecture =
+                    host.observation.architecture,
+                ids =
+                    VexLifeProdHomeFiles.newInstallationIds(),
+                createdAt =
+                    hooks.now(),
+            )
+
+        return VexLifeProdHomeFiles.bootstrap(
+            productHome = productHome,
+            plan = plan,
+        )
+    }
+
+    /**
      * Ordinary product route. The canonical Home coordinate is fixed by the existing VexLife
      * relationship; [allowAcquisition] authorizes only missing model/runtime prerequisites.
      */
@@ -308,39 +386,13 @@ object VexLifeProdLocalSetup {
         }
 
         val home =
-            VexLifeProdHomeFiles.observeExisting(
-                productHome,
-            )
-                ?: run {
-                    require(
-                        allowAcquisition,
-                    ) {
-                        "canonical ~/.vexlife Home is absent; only explicit first setup may form Home/device/Companion identity"
-                    }
-
-                    val plan =
-                        VexLifeProdHome.plan(
-                            personRef =
-                                VexLifeProdHome.DefaultPersonRef,
-                            familyRef =
-                                VexLifeProdHome.DefaultFamilyRef,
-                            deviceName =
-                                hooks.deviceName(),
-                            platform =
-                                host.observation.platform,
-                            architecture =
-                                host.observation.architecture,
-                            ids =
-                                VexLifeProdHomeFiles.newInstallationIds(),
-                            createdAt =
-                                hooks.now(),
-                        )
-
-                    VexLifeProdHomeFiles.bootstrap(
-                        productHome = productHome,
-                        plan = plan,
-                    )
-                }
+            requireNotNull(
+                VexLifeProdHomeFiles.observeExisting(
+                    productHome,
+                ),
+            ) {
+                "canonical ~/.vexlife Home is absent; Product setup requires the separate Home-formation effect first"
+            }
 
         val canonicalHome =
             Path.of(
