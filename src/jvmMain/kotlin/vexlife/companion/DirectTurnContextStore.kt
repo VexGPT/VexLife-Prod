@@ -4,6 +4,8 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.time.Instant
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
@@ -33,10 +35,16 @@ class DirectTurnContextStore(
         const val Schema =
             VexLifeConversationContract.ContextSchema
 
-        const val RuntimeEvidenceSchema =
+        const val RuntimeEvidenceSchemaV1 =
             "vexlife-prod.turn-runtime-evidence/v1"
+
+        const val RuntimeEvidenceSchema =
+            "vexlife-prod.turn-runtime-evidence/v2"
     }
 
+    @OptIn(
+        ExperimentalSerializationApi::class,
+    )
     @Serializable
     private data class RuntimeEvidenceCore(
         val schemaVersion: String,
@@ -49,12 +57,20 @@ class DirectTurnContextStore(
         val promptContext: DirectPromptContext.Receipt,
         val runtimeObservation: DirectCompanionConnection.RuntimeObservation,
         val invocationEvidence: DirectCompanionConnection.InvocationEvidence,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val sourceReturnTrace: DirectConversationSourceReturn.Trace? =
+            null,
         val rawProviderResponsePersisted: Boolean,
         val rawReasoningPersisted: Boolean,
         val rawReportedModelPersisted: Boolean,
         val formedAt: String,
     )
 
+    @OptIn(
+        ExperimentalSerializationApi::class,
+    )
     @Serializable
     private data class RuntimeEvidence(
         val schemaVersion: String,
@@ -67,6 +83,11 @@ class DirectTurnContextStore(
         val promptContext: DirectPromptContext.Receipt,
         val runtimeObservation: DirectCompanionConnection.RuntimeObservation,
         val invocationEvidence: DirectCompanionConnection.InvocationEvidence,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val sourceReturnTrace: DirectConversationSourceReturn.Trace? =
+            null,
         val rawProviderResponsePersisted: Boolean,
         val rawReasoningPersisted: Boolean,
         val rawReportedModelPersisted: Boolean,
@@ -94,6 +115,7 @@ class DirectTurnContextStore(
         val promptContext: DirectPromptContext.Receipt,
         val runtimeObservation: DirectCompanionConnection.RuntimeObservation,
         val invocationEvidence: DirectCompanionConnection.InvocationEvidence,
+        val sourceReturnTrace: DirectConversationSourceReturn.Trace?,
         val rawProviderResponsePersisted: Boolean,
         val rawReasoningPersisted: Boolean,
         val rawReportedModelPersisted: Boolean,
@@ -140,6 +162,8 @@ class DirectTurnContextStore(
         promptContext: DirectPromptContext.Receipt,
         runtimeObservation: DirectCompanionConnection.RuntimeObservation,
         invocationEvidence: DirectCompanionConnection.InvocationEvidence,
+        sourceReturnTrace: DirectConversationSourceReturn.Trace? =
+            null,
         formedAt: Instant = Instant.now(),
     ): Record {
         validateTurnInputs(
@@ -149,6 +173,10 @@ class DirectTurnContextStore(
             runtimeObservation = runtimeObservation,
             invocationEvidence = invocationEvidence,
         )
+        requireSourceReturnTrace(
+            sourceReturnTrace = sourceReturnTrace,
+            finalPrompt = promptContext,
+        )
 
         val evidence =
             formRuntimeEvidence(
@@ -157,6 +185,7 @@ class DirectTurnContextStore(
                 promptContext = promptContext,
                 runtimeObservation = runtimeObservation,
                 invocationEvidence = invocationEvidence,
+                sourceReturnTrace = sourceReturnTrace,
                 formedAt = formedAt,
             )
         writeRuntimeEvidence(
@@ -376,6 +405,7 @@ class DirectTurnContextStore(
             promptContext = evidence.promptContext,
             runtimeObservation = evidence.runtimeObservation,
             invocationEvidence = evidence.invocationEvidence,
+            sourceReturnTrace = evidence.sourceReturnTrace,
             rawProviderResponsePersisted = evidence.rawProviderResponsePersisted,
             rawReasoningPersisted = evidence.rawReasoningPersisted,
             rawReportedModelPersisted = evidence.rawReportedModelPersisted,
@@ -454,12 +484,50 @@ class DirectTurnContextStore(
         }
     }
 
+    private fun requireSourceReturnTrace(
+        sourceReturnTrace: DirectConversationSourceReturn.Trace?,
+        finalPrompt: DirectPromptContext.Receipt,
+    ): Boolean {
+        if (
+            sourceReturnTrace ==
+                null
+        ) {
+            require(
+                finalPrompt.sourceReturnState ==
+                    null
+            ) {
+                "source-return final prompt requires one compact source-return trace"
+            }
+            return true
+        }
+
+        require(
+            finalPrompt.sourceReturnState !=
+                null &&
+                sourceReturnTrace ==
+                DirectConversationSourceReturn.formTrace(
+                    attempt = sourceReturnTrace.attempt,
+                    finalPrompt = finalPrompt,
+                ) &&
+                sourceReturnTrace.attempt.sourceReturnState ==
+                finalPrompt.sourceReturnState &&
+                sourceReturnTrace.attempt.returnedSourceEventRefs ==
+                finalPrompt.sourceReturnSourceEventRefs &&
+                sourceReturnTrace.attempt.sourceReturnSystemMessageSha256 ==
+                finalPrompt.sourceReturnSystemMessageSha256,
+        ) {
+            "source-return trace does not bind the exact final prompt/source projection"
+        }
+        return true
+    }
+
     private fun formRuntimeEvidence(
         request: DirectConversationStore.Event,
         response: DirectConversationStore.Event,
         promptContext: DirectPromptContext.Receipt,
         runtimeObservation: DirectCompanionConnection.RuntimeObservation,
         invocationEvidence: DirectCompanionConnection.InvocationEvidence,
+        sourceReturnTrace: DirectConversationSourceReturn.Trace?,
         formedAt: Instant,
     ): RuntimeEvidence {
         val core =
@@ -474,6 +542,7 @@ class DirectTurnContextStore(
                 promptContext = promptContext,
                 runtimeObservation = runtimeObservation,
                 invocationEvidence = invocationEvidence,
+                sourceReturnTrace = sourceReturnTrace,
                 rawProviderResponsePersisted = false,
                 rawReasoningPersisted = false,
                 rawReportedModelPersisted = false,
@@ -495,6 +564,7 @@ class DirectTurnContextStore(
             promptContext = core.promptContext,
             runtimeObservation = core.runtimeObservation,
             invocationEvidence = core.invocationEvidence,
+            sourceReturnTrace = core.sourceReturnTrace,
             rawProviderResponsePersisted = core.rawProviderResponsePersisted,
             rawReasoningPersisted = core.rawReasoningPersisted,
             rawReportedModelPersisted = core.rawReportedModelPersisted,
@@ -515,8 +585,11 @@ class DirectTurnContextStore(
         value: RuntimeEvidence,
     ) {
         require(
-            value.schemaVersion ==
-                RuntimeEvidenceSchema &&
+            value.schemaVersion in
+                setOf(
+                    RuntimeEvidenceSchemaV1,
+                    RuntimeEvidenceSchema,
+                ) &&
                 value.truthClass ==
                 "PRODUCT_RUNTIME_TURN_EVIDENCE" &&
                 !value.rawProviderResponsePersisted &&
@@ -541,11 +614,33 @@ class DirectTurnContextStore(
                 promptContext = value.promptContext,
                 runtimeObservation = value.runtimeObservation,
                 invocationEvidence = value.invocationEvidence,
+                sourceReturnTrace = value.sourceReturnTrace,
                 rawProviderResponsePersisted = value.rawProviderResponsePersisted,
                 rawReasoningPersisted = value.rawReasoningPersisted,
                 rawReportedModelPersisted = value.rawReportedModelPersisted,
                 formedAt = value.formedAt,
             )
+        require(
+            (
+                value.schemaVersion ==
+                    RuntimeEvidenceSchemaV1 &&
+                    value.sourceReturnTrace ==
+                    null
+                ) ||
+                (
+                    value.schemaVersion ==
+                        RuntimeEvidenceSchema &&
+                    requireSourceReturnTrace(
+                        sourceReturnTrace =
+                            value.sourceReturnTrace,
+                        finalPrompt =
+                            value.promptContext,
+                    )
+                ),
+        ) {
+            "product runtime turn evidence source-return trace is invalid for its schema"
+        }
+
         val hash =
             semanticHash(
                 core,
@@ -685,10 +780,13 @@ class DirectTurnContextStore(
         val preceding =
             (
                 promptContext.selectedConversationEventRefs +
+                    promptContext.sourceReturnSourceEventRefs +
                     promptContext.memorySourceRefs +
                     promptContext.workingContinuitySourceRefs +
                     promptContext.capabilityFrameSourceRefs +
                     listOfNotNull(
+                        promptContext.successorPriorResponseEventRef,
+                        promptContext.memoryAvailabilityContextRef,
                         promptContext.workingContinuityContextRef,
                         promptContext.workingContinuityCheckpointRef,
                         promptContext.workingContinuitySuccessorClaimRef,

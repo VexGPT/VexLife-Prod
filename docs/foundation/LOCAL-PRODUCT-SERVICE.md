@@ -76,6 +76,34 @@ immediately before a new provider invocation.
 A proof-only internal start path may bind port 0 for deterministic tests. That does not redefine the
 ordinary product route.
 
+### Browser-origin request boundary
+
+The human Browser may display ordinary external HTTP(S) content. That does not make arbitrary page
+code a Product-service client.
+
+The service therefore rejects:
+
+~~~text
+Host != exact numeric-loopback service Host
+  -> 421 HOST_NOT_ADMITTED
+
+browser-originated non-read request
++ Origin != exact Product origin
+  -> 403 CROSS_ORIGIN_EFFECT_NOT_ADMITTED
+
+browser-originated non-read request
++ Sec-Fetch-Site not in {same-origin, none}
+  -> 403 CROSS_ORIGIN_EFFECT_NOT_ADMITTED
+~~~
+
+Non-browser local clients may omit browser provenance headers; this boundary prevents web content
+from acquiring ambient Product effect authority rather than inventing a new authentication system.
+
+~~~text
+HUMAN WEB ACCESS != LOCAL SERVICE EFFECT AUTHORITY
+BROWSER DISPLAY != SERVICE CLIENT IDENTITY
+~~~
+
 ## Shared browser/service contract
 
 src/commonMain/kotlin/vexlife/service/VexLifeProdServiceContract.kt owns:
@@ -519,6 +547,7 @@ Current tests are formed for:
 
 ~~~text
 fixed ordinary host / port / routes
+alternate Host + cross-origin browser effect rejection
 narrow Send request
 source currentness projection
 empty Conversation GET with zero storage formation

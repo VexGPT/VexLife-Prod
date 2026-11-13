@@ -31,10 +31,11 @@ import vexlife.filesystem.VexOwnedPath
 import vexlife.home.VexLifeProdHomeFiles
 
 /**
- * Read-only owner for current source-attributed Memory admitted to a Companion prompt.
+ * Read-only owner for current source-attributed Memory and the validated Score frontier it consumes.
  *
  * It reads the existing canonical VexLife Home. It does not append Score, commit Daily Dream,
- * create semantic acceptance, mutate Memory, or grant first-person authority.
+ * create semantic acceptance, mutate Memory, or grant first-person authority. Score coordinates
+ * exposed here remain reference-only source truth; they are not prompt Memory or semantic bodies.
  */
 object VexLifeCurrentMemoryReader {
     const val LivingJournalMemoryOwnerRef =
@@ -141,7 +142,7 @@ object VexLifeCurrentMemoryReader {
 
     private data class ScoreSnapshot(
         val head: JsonObject,
-        val authority: JsonObject,
+        val authority: JsonObject?,
         val statements: List<Statement>,
         val openLoops: List<OpenLoop>,
     )
@@ -198,6 +199,28 @@ object VexLifeCurrentMemoryReader {
         val priorDaily: DreamPriorDaily?,
     )
 
+    internal data class CurrentScoreCoordinates(
+        val homeRef: String,
+        val deviceRef: String,
+        val companionLineageRef: String,
+        val threadRef: String,
+        val scoreHeadSha256: String?,
+        val sourceConversationHeadSha256: String?,
+        val semanticAuthorityHeadSha256: String?,
+        val currentStatementRefs: List<String>,
+        val openLoopRefs: List<String>,
+        val sourceRefs: List<String>,
+    )
+
+    internal data class CurrentScoreAcceptance(
+        val semanticAuthorityHeadSha256: String,
+        val authorityBinding: JsonObject,
+        val candidate: JsonObject,
+        val classificationEvidence: List<JsonObject>,
+        val consent: JsonObject,
+        val acceptance: JsonObject,
+    )
+
     @Serializable
     private data class PageIdentity(
         val dailyStratumSha256: String,
@@ -250,7 +273,16 @@ object VexLifeCurrentMemoryReader {
         productHome: Path,
         threadRef: String =
             DirectConversationIdentity.ThreadRef,
+        memoryTokenCap: Int =
+            VexLifeMemoryContract.MaximumMemoryTokens,
     ): VexLifeMemoryContract.Context {
+        require(
+            memoryTokenCap in
+                0..VexLifeMemoryContract.MaximumMemoryTokens,
+        ) {
+            "Memory prompt token cap is outside the admitted range"
+        }
+
         val home =
             VexOwnedPath.requireRoot(
                 productHome,
@@ -288,9 +320,11 @@ object VexLifeCurrentMemoryReader {
             )
         ) {
             return held(
-                listOf(
-                    "NO_COMMITTED_DAILY_MEMORY",
-                ),
+                reasons =
+                    listOf(
+                        "NO_COMMITTED_DAILY_MEMORY",
+                    ),
+                memoryTokenCap = memoryTokenCap,
             )
         }
 
@@ -333,15 +367,773 @@ object VexLifeCurrentMemoryReader {
             "HELD"
         ) {
             return held(
-                listOf(
-                    "DAILY_MEMORY_SOURCE_FRONTIER_STALE",
-                ),
+                reasons =
+                    listOf(
+                        "DAILY_MEMORY_SOURCE_FRONTIER_STALE",
+                    ),
+                memoryTokenCap = memoryTokenCap,
             )
         }
 
         return formContext(
             score = score,
             daily = daily,
+            memoryTokenCap = memoryTokenCap,
+        )
+    }
+
+
+    internal fun readCurrentScoreCoordinates(
+        productHome: Path,
+        threadRef: String =
+            DirectConversationIdentity.ThreadRef,
+    ): CurrentScoreCoordinates {
+        val home =
+            VexOwnedPath.requireRoot(
+                productHome,
+                "canonical VexLife Home",
+            )
+        val currentHome =
+            requireNotNull(
+                VexLifeProdHomeFiles.observeExisting(
+                    home,
+                ),
+            ) {
+                "Score coordinate reader requires one current canonical VexLife Home"
+            }
+        val identity =
+            Identity(
+                homeRef = currentHome.manifest.homeRef,
+                deviceRef = currentHome.manifest.currentDeviceRef,
+                lineageRef = currentHome.manifest.currentCompanionLineageRef,
+                threadRef = threadRef,
+            )
+        val scoreRoot =
+            inside(
+                home,
+                "score/" +
+                    identity.lineageRef +
+                    "/" +
+                    identity.threadRef,
+            )
+        val scoreHead =
+            scoreRoot.resolve(
+                "head.json",
+            )
+
+        if (
+            !Files.exists(
+                scoreHead,
+                LinkOption.NOFOLLOW_LINKS,
+            )
+        ) {
+            val eventsRoot =
+                scoreRoot.resolve(
+                    "events",
+                )
+            if (
+                Files.exists(
+                    eventsRoot,
+                    LinkOption.NOFOLLOW_LINKS,
+                )
+            ) {
+                requireRealDirectory(
+                    eventsRoot,
+                    "Score events",
+                )
+                val tailFiles =
+                    Files.list(
+                        eventsRoot,
+                    )
+                        .use {
+                            stream ->
+                            stream.toList()
+                        }
+                        .sortedBy {
+                            it.fileName
+                                .toString()
+                        }
+                require(
+                    tailFiles.size <=
+                        1,
+                ) {
+                    "multiple competing Score tails require attention before continuity use"
+                }
+                tailFiles
+                    .singleOrNull()
+                    ?.let {
+                        file ->
+                        requireRegularFile(
+                            file,
+                            "Score event",
+                        )
+                        val event =
+                            readObject(
+                                home,
+                                file,
+                                "Score event",
+                            )
+                        val conversationStore =
+                            DirectConversationStore(
+                                home,
+                            )
+                        val conversation =
+                            conversationStore.current()
+                        validateScoreEvent(
+                            event = event,
+                            identity = identity,
+                            filename =
+                                file.fileName
+                                    .toString(),
+                            conversationStore = conversationStore,
+                            conversation = conversation,
+                        )
+                        require(
+                            event.long(
+                                "sequence",
+                            ) ==
+                                0L &&
+                                event.nullableString(
+                                    "priorScoreEventHash",
+                                ) ==
+                                null,
+                        ) {
+                            "uncommitted Score genesis tail is reordered or readdressed"
+                        }
+                    }
+            }
+
+            return CurrentScoreCoordinates(
+                homeRef = identity.homeRef,
+                deviceRef = identity.deviceRef,
+                companionLineageRef = identity.lineageRef,
+                threadRef = identity.threadRef,
+                scoreHeadSha256 = null,
+                sourceConversationHeadSha256 = null,
+                semanticAuthorityHeadSha256 = null,
+                currentStatementRefs = emptyList(),
+                openLoopRefs = emptyList(),
+                sourceRefs = emptyList(),
+            )
+        }
+
+        val conversationStore =
+            DirectConversationStore(
+                home,
+            )
+        val conversation =
+            conversationStore.current()
+        val score =
+            loadScore(
+                home = home,
+                identity = identity,
+                conversationStore = conversationStore,
+                conversation = conversation,
+                authorityPolicy =
+                    ScoreAuthorityPolicy.ALLOW_HISTORICAL_HELD,
+            )
+        val scoreHeadSha256 =
+            score.head.string(
+                "scoreHeadSha256",
+            )
+        val sourceConversationHeadSha256 =
+            score.head.string(
+                "sourceConversationHeadSha256",
+            )
+        val semanticAuthorityHeadSha256 =
+            score.authority
+                ?.string(
+                    "semanticAuthorityHeadSha256",
+                )
+        val currentStatementRefs =
+            score.statements
+                .filter(
+                    Statement::current,
+                )
+                .map(
+                    Statement::statementRef,
+                )
+                .sorted()
+        val openLoopRefs =
+            score.openLoops
+                .filter {
+                    it.state ==
+                        "OPEN"
+                }
+                .map(
+                    OpenLoop::ref,
+                )
+                .sorted()
+
+        return CurrentScoreCoordinates(
+            homeRef = identity.homeRef,
+            deviceRef = identity.deviceRef,
+            companionLineageRef = identity.lineageRef,
+            threadRef = identity.threadRef,
+            scoreHeadSha256 = scoreHeadSha256,
+            sourceConversationHeadSha256 =
+                sourceConversationHeadSha256,
+            semanticAuthorityHeadSha256 =
+                semanticAuthorityHeadSha256,
+            currentStatementRefs = currentStatementRefs,
+            openLoopRefs = openLoopRefs,
+            sourceRefs =
+                listOfNotNull(
+                    "sha256:$scoreHeadSha256",
+                    "sha256:$sourceConversationHeadSha256",
+                    semanticAuthorityHeadSha256
+                        ?.let {
+                            "sha256:$it"
+                        },
+                )
+                    .sorted(),
+        )
+    }
+
+
+    internal fun readCurrentScoreAcceptance(
+        productHome: Path,
+        acceptanceRef: String,
+        acceptanceSha256: String,
+        threadRef: String =
+            DirectConversationIdentity.ThreadRef,
+    ): CurrentScoreAcceptance {
+        requireSha256(
+            acceptanceSha256,
+            "acceptanceSha256",
+        )
+        val home =
+            VexOwnedPath.requireRoot(
+                productHome,
+                "canonical VexLife Home",
+            )
+        val currentHome =
+            requireNotNull(
+                VexLifeProdHomeFiles.observeExisting(
+                    home,
+                ),
+            ) {
+                "Score acceptance reader requires one current canonical VexLife Home"
+            }
+        val identity =
+            Identity(
+                homeRef = currentHome.manifest.homeRef,
+                deviceRef = currentHome.manifest.currentDeviceRef,
+                lineageRef = currentHome.manifest.currentCompanionLineageRef,
+                threadRef = threadRef,
+            )
+        val authority =
+            loadAuthority(
+                home = home,
+                identity = identity,
+            )
+        val binding =
+            requireNotNull(
+                authority.objectList(
+                    "currentAcceptanceBindings",
+                )
+                    .singleOrNull {
+                        it.string(
+                            "acceptanceRef",
+                        ) ==
+                            acceptanceRef &&
+                            it.string(
+                                "acceptanceSha256",
+                            ) ==
+                            acceptanceSha256
+                    },
+            ) {
+                "requested Score acceptance is absent from current semantic authority"
+            }
+
+        val root =
+            "semantic-authority/score/" +
+                identity.lineageRef +
+                "/" +
+                identity.threadRef
+        val candidate =
+            readAddressed(
+                home = home,
+                path =
+                    inside(
+                        home,
+                        root +
+                            "/candidates/" +
+                            binding.string(
+                                "candidateSha256",
+                            ) +
+                            ".json",
+                    ),
+                schemaVersion = "vextreme.score-semantic-candidate/v1",
+                refField = "candidateRef",
+                hashField = "candidateSha256",
+                prefix = "score-semantic-candidate",
+                label = "semantic candidate",
+            )
+        require(
+            candidate.string(
+                "candidateRef",
+            ) ==
+                binding.string(
+                    "candidateRef",
+                ) &&
+                candidate.string(
+                    "candidateSha256",
+                ) ==
+                binding.string(
+                    "candidateSha256",
+                ) &&
+                candidate.string(
+                    "semanticSubjectFingerprint",
+                ) ==
+                binding.string(
+                    "semanticSubjectFingerprint",
+                ) &&
+                candidate.string(
+                    "sourceLineageRef",
+                ) ==
+                identity.lineageRef &&
+                candidate.string(
+                    "sourceThreadRef",
+                ) ==
+                identity.threadRef &&
+                !candidate.boolean(
+                    "accepted",
+                ) &&
+                candidate.string(
+                    "proposedMemoryRelation",
+                ) in
+                memoryRelations &&
+                candidate.string(
+                    "proposedStatementState",
+                ) in
+                statementStates &&
+                candidate.string(
+                    "proposerClass",
+                ) in
+                setOf(
+                    "LINEAGE",
+                    "HUMAN",
+                    "SYSTEM_CLASSIFIER",
+                ) &&
+                candidate.string(
+                    "privacyClass",
+                ) ==
+                "DEVICE_PRIVATE" &&
+                semanticHashString(
+                    candidate.string(
+                        "proposedSummary",
+                    ),
+                ) ==
+                candidate.string(
+                    "proposedSummarySha256",
+                ),
+        ) {
+            "current semantic authority candidate is invalid"
+        }
+        requireSha256(
+            candidate.string(
+                "sourceConversationHeadSha256",
+            ),
+            "candidate source Conversation head",
+        )
+
+        val evidenceBindings =
+            binding.objectList(
+                "classificationEvidenceBindings",
+            )
+        require(
+            evidenceBindings.isNotEmpty(),
+        ) {
+            "current semantic authority binding has no classification evidence"
+        }
+        val evidence =
+            evidenceBindings.map {
+                evidenceBinding ->
+                val value =
+                    readAddressed(
+                        home = home,
+                        path =
+                            inside(
+                                home,
+                                root +
+                                    "/classification-evidence/" +
+                                    evidenceBinding.string(
+                                        "classificationEvidenceSha256",
+                                    ) +
+                                    ".json",
+                            ),
+                        schemaVersion = "vextreme.score-classification-evidence/v1",
+                        refField = "classificationEvidenceRef",
+                        hashField = "classificationEvidenceSha256",
+                        prefix = "score-classification-evidence",
+                        label = "classification evidence",
+                    )
+                require(
+                    value.string(
+                        "classificationEvidenceRef",
+                    ) ==
+                        evidenceBinding.string(
+                            "classificationEvidenceRef",
+                        ) &&
+                        value.string(
+                            "classificationEvidenceSha256",
+                        ) ==
+                        evidenceBinding.string(
+                            "classificationEvidenceSha256",
+                        ) &&
+                        value.string(
+                            "candidateRef",
+                        ) ==
+                        candidate.string(
+                            "candidateRef",
+                        ) &&
+                        value.string(
+                            "candidateSha256",
+                        ) ==
+                        candidate.string(
+                            "candidateSha256",
+                        ) &&
+                        value.string(
+                            "semanticSubjectFingerprint",
+                        ) ==
+                        candidate.string(
+                            "semanticSubjectFingerprint",
+                        ) &&
+                        value.string(
+                            "issuerRef",
+                        ) ==
+                        "owner.multivex.memory.score-semantic-classifier.001" &&
+                        value.string(
+                            "issuerClass",
+                        ) ==
+                        "SOURCE_MANAGED_MEMORY_CLASSIFIER" &&
+                        value.string(
+                            "ownerProjectRef",
+                        ) ==
+                        "project.multivex.memory" &&
+                        value.string(
+                            "ownerDispositionRef",
+                        ) ==
+                        "github.issue.vextreme-sdk.225.comment.5217085830" &&
+                        value.string(
+                            "privacyClass",
+                        ) ==
+                        "DEVICE_PRIVATE" &&
+                        value.array(
+                            "sourceEvidenceBindings",
+                        )
+                            .isNotEmpty(),
+                ) {
+                    "classification evidence differs from current semantic authority binding"
+                }
+                value
+            }
+
+        val consent =
+            readAddressed(
+                home = home,
+                path =
+                    inside(
+                        home,
+                        root +
+                            "/consents/" +
+                            binding.string(
+                                "consentDispositionSha256",
+                            ) +
+                            ".json",
+                    ),
+                schemaVersion = "vextreme.score-consent-disposition/v1",
+                refField = "consentDispositionRef",
+                hashField = "consentDispositionSha256",
+                prefix = "score-consent-disposition",
+                label = "consent disposition",
+            )
+        require(
+            consent.string(
+                "consentDispositionRef",
+            ) ==
+                binding.string(
+                    "consentDispositionRef",
+                ) &&
+                consent.string(
+                    "consentDispositionSha256",
+                ) ==
+                binding.string(
+                    "consentDispositionSha256",
+                ) &&
+                consent.string(
+                    "candidateRef",
+                ) ==
+                candidate.string(
+                    "candidateRef",
+                ) &&
+                consent.string(
+                    "candidateSha256",
+                ) ==
+                candidate.string(
+                    "candidateSha256",
+                ) &&
+                consent.string(
+                    "semanticSubjectFingerprint",
+                ) ==
+                candidate.string(
+                    "semanticSubjectFingerprint",
+                ) &&
+                consent.string(
+                    "disposition",
+                ) in
+                consentStates &&
+                consent.string(
+                    "issuerRef",
+                ) ==
+                "owner.multivex.safety.score-consent-authority.001" &&
+                consent.string(
+                    "issuerClass",
+                ) ==
+                "SOURCE_MANAGED_SAFETY_CONSENT" &&
+                consent.string(
+                    "ownerProjectRef",
+                ) ==
+                "project.multivex.safety" &&
+                consent.string(
+                    "ownerDispositionRef",
+                ) ==
+                "github.issue.vextreme-sdk.226.comment.5217090896" &&
+                consent.string(
+                    "privacyClass",
+                ) ==
+                "DEVICE_PRIVATE" &&
+                consent.array(
+                    "sourceEvidenceBindings",
+                )
+                    .isNotEmpty(),
+        ) {
+            "consent disposition differs from current semantic authority binding"
+        }
+
+        val acceptance =
+            readAddressed(
+                home = home,
+                path =
+                    inside(
+                        home,
+                        root +
+                            "/acceptances/" +
+                            acceptanceSha256 +
+                            ".json",
+                    ),
+                schemaVersion = "vextreme.score-semantic-acceptance/v1",
+                refField = "acceptanceRef",
+                hashField = "acceptanceSha256",
+                prefix = "score-semantic-acceptance",
+                label = "semantic acceptance",
+            )
+        require(
+            acceptance.string(
+                "acceptanceRef",
+            ) ==
+                acceptanceRef &&
+                acceptance.string(
+                    "acceptanceSha256",
+                ) ==
+                acceptanceSha256 &&
+                acceptance.string(
+                    "contractRef",
+                ) ==
+                LiveSemanticContract &&
+                acceptance.string(
+                    "semanticContractDispositionRef",
+                ) ==
+                LiveSemanticDisposition &&
+                acceptance.string(
+                    "semanticExecutableAddendumRef",
+                ) ==
+                LiveSemanticExecutableAddendum &&
+                acceptance.string(
+                    "ownerDispositionRef",
+                ) ==
+                LiveSemanticExecutableAddendum &&
+                acceptance.string(
+                    "issuerRef",
+                ) ==
+                "owner.multivex.score-semantic-authority.materializer.001" &&
+                acceptance.string(
+                    "issuerClass",
+                ) ==
+                "SOURCE_MANAGED_MEMORY_SAFETY_COMPOSITION" &&
+                acceptance.string(
+                    "privacyClass",
+                ) ==
+                "DEVICE_PRIVATE" &&
+                acceptance.string(
+                    "candidateRef",
+                ) ==
+                candidate.string(
+                    "candidateRef",
+                ) &&
+                acceptance.string(
+                    "candidateSha256",
+                ) ==
+                candidate.string(
+                    "candidateSha256",
+                ) &&
+                acceptance.string(
+                    "sourceLineageRef",
+                ) ==
+                candidate.string(
+                    "sourceLineageRef",
+                ) &&
+                acceptance.string(
+                    "sourceThreadRef",
+                ) ==
+                candidate.string(
+                    "sourceThreadRef",
+                ) &&
+                acceptance.string(
+                    "sourceConversationHeadSha256",
+                ) ==
+                candidate.string(
+                    "sourceConversationHeadSha256",
+                ) &&
+                acceptance.string(
+                    "semanticSubjectRef",
+                ) ==
+                candidate.string(
+                    "semanticSubjectRef",
+                ) &&
+                acceptance.string(
+                    "semanticSubjectFingerprint",
+                ) ==
+                candidate.string(
+                    "semanticSubjectFingerprint",
+                ) &&
+                acceptance.string(
+                    "acceptedSummary",
+                )
+                    .isNotBlank() &&
+                semanticHashString(
+                    acceptance.string(
+                        "acceptedSummary",
+                    ),
+                ) ==
+                acceptance.string(
+                    "acceptedSummarySha256",
+                ) &&
+                acceptance.string(
+                    "memoryRelation",
+                ) in
+                memoryRelations &&
+                acceptance.string(
+                    "statementState",
+                ) in
+                statementStates &&
+                acceptance.string(
+                    "transitionKind",
+                ) in
+                setOf(
+                    "NONE",
+                    "CORRECTS",
+                    "SUPERSEDES",
+                    "RELEASES_OR_TOMBSTONES",
+                ) &&
+                acceptance.string(
+                    "consentDispositionRef",
+                ) ==
+                consent.string(
+                    "consentDispositionRef",
+                ) &&
+                acceptance.string(
+                    "consentDispositionSha256",
+                ) ==
+                consent.string(
+                    "consentDispositionSha256",
+                ) &&
+                acceptance.objectList(
+                    "classificationEvidenceBindings",
+                ) ==
+                evidenceBindings &&
+                acceptance.stringList(
+                    "sourceBindingHashes",
+                ) ==
+                candidate.objectList(
+                    "sourceBindings",
+                )
+                    .map {
+                        it.string(
+                            "eventHash",
+                        )
+                    },
+        ) {
+            "semantic acceptance differs from current semantic authority source"
+        }
+        require(
+            evidence.all {
+                it.string(
+                    "assertedMemoryRelation",
+                ) ==
+                    acceptance.string(
+                        "memoryRelation",
+                    ) &&
+                    it.string(
+                        "assertedStatementState",
+                    ) ==
+                    acceptance.string(
+                        "statementState",
+                    ) &&
+                    it.string(
+                        "assertedSummarySha256",
+                    ) ==
+                    acceptance.string(
+                        "acceptedSummarySha256",
+                    )
+            },
+        ) {
+            "semantic acceptance meaning is not authorized by its classification evidence"
+        }
+
+        val positiveContinuityConsent =
+            consent.string(
+                "disposition",
+            ) in
+                positiveConsent &&
+                consent.stringList(
+                    "permittedUseRefs",
+                )
+                    .contains(
+                        "use.score.device-private-continuity",
+                    ) &&
+                !consent.stringList(
+                    "prohibitedUseRefs",
+                )
+                    .contains(
+                        "use.score.device-private-continuity",
+                    )
+        require(
+            acceptance.boolean(
+                "acceptedForContinuity",
+            ) ==
+                (
+                    acceptance.string(
+                        "statementState",
+                    ) !=
+                        "RELEASED_OR_TOMBSTONED" &&
+                        positiveContinuityConsent
+                ),
+        ) {
+            "acceptedForContinuity differs from current semantic/Safety policy"
+        }
+
+        return CurrentScoreAcceptance(
+            semanticAuthorityHeadSha256 =
+                authority.string(
+                    "semanticAuthorityHeadSha256",
+                ),
+            authorityBinding = binding,
+            candidate = candidate,
+            classificationEvidence = evidence,
+            consent = consent,
+            acceptance = acceptance,
         )
     }
 
@@ -380,12 +1172,17 @@ object VexLifeCurrentMemoryReader {
                 conversation = conversation,
                 authorityPolicy = ScoreAuthorityPolicy.ALLOW_HISTORICAL_HELD,
             )
+        val currentAuthority =
+            requireCurrentScoreAuthority(
+                score = score,
+                label = "Daily Memory Dream",
+            )
         val currentStatements = score.statements.filter(Statement::current).sortedBy(Statement::statementRef)
         val active =
             currentStatements.filter {
                 it.acceptedForContinuity &&
                     it.consentState in positiveConsent &&
-                    authorityContains(score.authority, it)
+                    authorityContains(currentAuthority, it)
             }
         val held = currentStatements.filter { it !in active }
         val loops = score.openLoops.filter { it.state == "OPEN" }.sortedBy(OpenLoop::ref)
@@ -401,7 +1198,7 @@ object VexLifeCurrentMemoryReader {
             scoreHeadSha256 = score.head.string("scoreHeadSha256"),
             scoreSourceConversationHeadSha256 = score.head.string("sourceConversationHeadSha256"),
             scoreEventHash = score.head.string("eventHash"),
-            semanticAuthorityHeadSha256 = score.authority.string("semanticAuthorityHeadSha256"),
+            semanticAuthorityHeadSha256 = currentAuthority.string("semanticAuthorityHeadSha256"),
             selectedRuntimeRef =
                 requireNotNull(response.endpointProfileRef) {
                     "Daily Memory Dream source response has no runtime profile"
@@ -750,7 +1547,7 @@ object VexLifeCurrentMemoryReader {
             }
 
         val authority =
-            loadAuthority(
+            loadAuthorityOrNull(
                 home,
                 identity,
             )
@@ -776,9 +1573,15 @@ object VexLifeCurrentMemoryReader {
                 authorityPolicy ==
                 ScoreAuthorityPolicy.REQUIRE_CURRENT_MEMBERSHIP
             ) {
+                val currentAuthority =
+                    requireNotNull(
+                        authority,
+                    ) {
+                        "current prompt Memory requires one current semantic authority head"
+                    }
                 require(
                     authorityContains(
-                        authority,
+                        currentAuthority,
                         statement,
                     )
                 ) {
@@ -794,6 +1597,43 @@ object VexLifeCurrentMemoryReader {
             openLoops = loops.values.toList(),
         )
     }
+
+    private fun loadAuthorityOrNull(
+        home: Path,
+        identity: Identity,
+    ): JsonObject? {
+        val head =
+            inside(
+                home,
+                "semantic-authority/score/" +
+                    identity.lineageRef +
+                    "/" +
+                    identity.threadRef +
+                    "/head.json",
+            )
+        if (
+            !Files.exists(
+                head,
+                LinkOption.NOFOLLOW_LINKS,
+            )
+        ) {
+            return null
+        }
+        return loadAuthority(
+            home = home,
+            identity = identity,
+        )
+    }
+
+    private fun requireCurrentScoreAuthority(
+        score: ScoreSnapshot,
+        label: String,
+    ): JsonObject =
+        requireNotNull(
+            score.authority,
+        ) {
+            "$label requires one current semantic authority head"
+        }
 
     private fun loadAuthority(
         home: Path,
@@ -1069,22 +1909,45 @@ object VexLifeCurrentMemoryReader {
                     "sourceConversationHeadSha256",
                 ) ==
                 statement.sourceConversationHeadSha256 &&
+                candidate.array(
+                    "sourceBindings",
+                ) ==
+                statement.sourceBindings &&
                 candidate.string(
                     "proposedSummary",
+                )
+                    .isNotBlank() &&
+                semanticHashString(
+                    candidate.string(
+                        "proposedSummary",
+                    ),
                 ) ==
-                statement.summary &&
                 candidate.string(
                     "proposedSummarySha256",
-                ) ==
-                statement.summaryHash &&
+                ) &&
                 candidate.string(
                     "proposedMemoryRelation",
-                ) ==
-                statement.memoryRelation &&
+                ) in
+                memoryRelations &&
                 candidate.string(
                     "proposedStatementState",
+                ) in
+                statementStates &&
+                candidate.string(
+                    "proposerClass",
+                ) in
+                setOf(
+                    "LINEAGE",
+                    "HUMAN",
+                    "SYSTEM_CLASSIFIER",
+                ) &&
+                candidate.string(
+                    "privacyClass",
                 ) ==
-                statement.recordedState,
+                "DEVICE_PRIVATE" &&
+                !candidate.boolean(
+                    "accepted",
+                ),
         ) {
             "semantic candidate differs from current Score statement"
         }
@@ -1238,6 +2101,36 @@ object VexLifeCurrentMemoryReader {
                 ) ==
                 statement.acceptanceRef &&
                 acceptance.string(
+                    "sourceLineageRef",
+                ) ==
+                identity.lineageRef &&
+                acceptance.string(
+                    "sourceThreadRef",
+                ) ==
+                identity.threadRef &&
+                acceptance.string(
+                    "sourceConversationHeadSha256",
+                ) ==
+                statement.sourceConversationHeadSha256 &&
+                acceptance.stringList(
+                    "sourceBindingHashes",
+                ) ==
+                statement.sourceBindings
+                    .map {
+                        it.jsonObject
+                            .string(
+                                "eventHash",
+                            )
+                    } &&
+                acceptance.string(
+                    "semanticSubjectRef",
+                ) ==
+                statement.subjectRef &&
+                acceptance.string(
+                    "semanticSubjectFingerprint",
+                ) ==
+                statement.semanticSubjectFingerprint &&
+                acceptance.string(
                     "candidateRef",
                 ) ==
                 statement.candidateRef &&
@@ -1245,6 +2138,22 @@ object VexLifeCurrentMemoryReader {
                     "candidateSha256",
                 ) ==
                 statement.candidateSha256 &&
+                acceptance.string(
+                    "issuerRef",
+                ) ==
+                "owner.multivex.score-semantic-authority.materializer.001" &&
+                acceptance.string(
+                    "issuerClass",
+                ) ==
+                "SOURCE_MANAGED_MEMORY_SAFETY_COMPOSITION" &&
+                acceptance.string(
+                    "ownerDispositionRef",
+                ) ==
+                LiveSemanticExecutableAddendum &&
+                acceptance.string(
+                    "privacyClass",
+                ) ==
+                "DEVICE_PRIVATE" &&
                 acceptance.string(
                     "acceptedSummary",
                 ) ==
@@ -2023,6 +2932,11 @@ object VexLifeCurrentMemoryReader {
         score: ScoreSnapshot,
         conversationStore: DirectConversationStore,
     ): DailySnapshot {
+        val currentAuthority =
+            requireCurrentScoreAuthority(
+                score = score,
+                label = "Daily Memory",
+            )
         val root =
             "daily-memory-dream/" +
                 identity.lineageRef +
@@ -2077,7 +2991,7 @@ object VexLifeCurrentMemoryReader {
                 head.string(
                     "sourceSemanticAuthorityHeadSha256",
                 ) ==
-                score.authority.string(
+                currentAuthority.string(
                     "semanticAuthorityHeadSha256",
                 ),
         ) {
@@ -2179,7 +3093,7 @@ object VexLifeCurrentMemoryReader {
                 stratum.string(
                     "sourceSemanticAuthorityHeadSha256",
                 ) ==
-                score.authority.string(
+                currentAuthority.string(
                     "semanticAuthorityHeadSha256",
                 ) &&
                 !stratum.boolean(
@@ -2278,7 +3192,7 @@ object VexLifeCurrentMemoryReader {
             )
 
         val authoritySha =
-            score.authority.string(
+            currentAuthority.string(
                 "semanticAuthorityHeadSha256",
             )
         for (
@@ -2427,7 +3341,7 @@ object VexLifeCurrentMemoryReader {
                         it.consentState in
                         positiveConsent &&
                         authorityContains(
-                            score.authority,
+                            currentAuthority,
                             it,
                         )
                 }
@@ -2442,7 +3356,7 @@ object VexLifeCurrentMemoryReader {
                             it.consentState in
                             positiveConsent &&
                             authorityContains(
-                                score.authority,
+                                currentAuthority,
                                 it,
                             )
                     )
@@ -2573,6 +3487,7 @@ object VexLifeCurrentMemoryReader {
     private fun formContext(
         score: ScoreSnapshot,
         daily: DailySnapshot,
+        memoryTokenCap: Int,
     ): VexLifeMemoryContract.Context {
         val byRef =
             score.statements.associateBy(
@@ -2641,6 +3556,7 @@ object VexLifeCurrentMemoryReader {
                     boundedOut = boundedOut,
                     tokenBoundedOut = emptyList(),
                     reasons = emptyList(),
+                    memoryTokenCap = memoryTokenCap,
                 )
             if (
                 DirectPromptContext.estimatedMessageTokens(
@@ -2648,7 +3564,7 @@ object VexLifeCurrentMemoryReader {
                         candidate,
                     ),
                 ) >
-                VexLifeMemoryContract.MaximumMemoryTokens
+                memoryTokenCap
             ) {
                 tokenBoundedOut +=
                     page.pageRef
@@ -2665,6 +3581,7 @@ object VexLifeCurrentMemoryReader {
                 boundedOut = boundedOut,
                 tokenBoundedOut = tokenBoundedOut,
                 reasons = emptyList(),
+                memoryTokenCap = memoryTokenCap,
             )
         val included =
             pages.isNotEmpty()
@@ -2774,6 +3691,7 @@ object VexLifeCurrentMemoryReader {
 
     private fun held(
         reasons: List<String>,
+        memoryTokenCap: Int,
     ): VexLifeMemoryContract.Context {
         val owners =
             listOf(
@@ -2798,7 +3716,7 @@ object VexLifeCurrentMemoryReader {
                 boundedOutStatementRefs = emptyList(),
                 tokenBoundedOutPageRefs = emptyList(),
                 reasons = reasons.distinct().sorted(),
-                memoryTokenCap = VexLifeMemoryContract.MaximumMemoryTokens,
+                memoryTokenCap = memoryTokenCap,
                 systemMessageSha256 = null,
                 estimatedSystemMessageTokens = 0,
             )
@@ -2847,6 +3765,7 @@ object VexLifeCurrentMemoryReader {
         boundedOut: List<String>,
         tokenBoundedOut: List<String>,
         reasons: List<String>,
+        memoryTokenCap: Int,
     ): ProviderPacket =
         ProviderPacket(
             schemaVersion = VexLifeMemoryContract.PacketSchema,
@@ -2875,7 +3794,7 @@ object VexLifeCurrentMemoryReader {
             boundedOutStatementRefs = boundedOut.sorted(),
             tokenBoundedOutPageRefs = tokenBoundedOut.sorted(),
             reasons = reasons.distinct().sorted(),
-            memoryTokenCap = VexLifeMemoryContract.MaximumMemoryTokens,
+            memoryTokenCap = memoryTokenCap,
         )
 
     private fun memorySystemContent(

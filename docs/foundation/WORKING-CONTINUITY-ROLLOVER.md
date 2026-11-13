@@ -251,7 +251,9 @@ required, and stale request evidence cannot lock the new send attempt.
 The direct Companion path now has one bounded producer surface:
 
 ~~~text
-exact live prompt receipt + current attributed Memory
+exact live prompt receipt
++ current attributed Memory
++ current Score coordinate projection
         ↓
 DirectWorkingContinuity.prepare(...)
         ↓
@@ -271,6 +273,33 @@ or HELD
 
 The Plan is formed while the exact Memory bounded-out counts are still available, but no working
 checkpoint effect is realized until after the corresponding Conversation head is durable.
+
+Current Score coordinates are independently re-read from the canonical Home Score source. They do not
+come from whichever Memory pages happened to fit the prompt and they do not remain current merely because
+a prior successor carried them:
+
+~~~text
+WorkingSet.currentStatementRefs = current Score statement refs
+WorkingSet.openLoopRefs         = current Score OPEN-loop refs
+
+CURRENT SCORE
+!= MEMORY SELECTION
+!= PRIOR SUCCESSOR INHERITANCE
+~~~
+
+No committed Score head plus no committed Score state is one current empty coordinate set. One exact,
+well-formed uncommitted genesis event remains non-current tail evidence and does not manufacture a committed
+Score set. Malformed, competing or re-addressed tail evidence, other currentness-invalid Score, or a Score
+change before checkpoint realization holds working-continuity stewardship rather than promoting stale refs.
+A completed human Conversation turn remains independently valid.
+
+The Score coordinate projection is reference-only. It does not expose Score semantic bodies to the provider,
+widen Memory, or create a generic source resolver.
+
+Current Score coordinate truth and current Memory admissibility remain separate. Historical Score statement
+authority is still validated against the exact authority generation recorded by each Score event. A current
+semantic-authority head is required where Memory/Dream needs current semantic membership; its absence does not
+by itself manufacture the conclusion that the current Score coordinate set is absent.
 
 A continuity-specific formation/commit problem does **not** retroactively convert a completed
 Conversation turn into a provider failure. Expected continuity-owner failures become a separate
