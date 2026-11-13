@@ -704,6 +704,8 @@ class VexLifeProdMacServiceLifetimeTest {
                     listOf(
                         "--source-sha",
                         fixture.sourceSha,
+                        "--home",
+                        fixture.home.toString(),
                     ),
                     receipt.launchd.programArguments,
                 )

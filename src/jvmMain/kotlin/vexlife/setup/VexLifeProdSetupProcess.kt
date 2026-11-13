@@ -24,11 +24,13 @@ object VexLifeProdSetupProcess {
         )
 
     data class Arguments(
+        val productHome: Path,
         val expectedSourceSha: String,
         val allowAcquisition: Boolean,
     )
 
     data class HomeArguments(
+        val productHome: Path,
         val expectedSourceSha: String,
     )
 
@@ -47,15 +49,22 @@ object VexLifeProdSetupProcess {
                 expectedSourceSha = expectedSourceSha,
             )
         },
-        val formFreshHome: () -> VexLifeProdHomeFiles.Result = {
-            VexLifeProdLocalSetup.formFreshHome()
+        val formFreshHome: (
+            productHome: Path,
+        ) -> VexLifeProdHomeFiles.Result = {
+            productHome ->
+            VexLifeProdLocalSetup.formFreshHome(productHome)
         },
         val establishSession: (
+            productHome: Path,
             allowAcquisition: Boolean,
         ) -> VexLifeProdLocalSetup.Session = {
-            allowAcquisition ->
+            productHome,
+            allowAcquisition,
+            ->
             VexLifeProdLocalSetup.establishSession(
-                allowAcquisition,
+                productHome = productHome,
+                allowAcquisition = allowAcquisition,
             )
         },
         val installImage: (
@@ -147,66 +156,49 @@ object VexLifeProdSetupProcess {
         },
     )
 
-    fun parse(
-        args: Array<String>,
-    ): Arguments {
-        require(
-            args.size ==
-                3 &&
-                args[0] ==
-                "--expected-source-sha" &&
-                args[2] in
-                setOf(
-                    "--allow-acquisition",
-                    "--reuse-existing",
-                ),
-        ) {
-            "VexLife-Prod setup requires exactly --expected-source-sha <git-sha> (--allow-acquisition|--reuse-existing)"
+    private fun selectedHome(value: String): Path {
+        val path = Path.of(value)
+        require(path.isAbsolute) {
+            "selected Vex Home path must be absolute"
         }
+        return path.normalize()
+    }
 
-        val sourceSha =
-            args[1]
+    fun parse(args: Array<String>): Arguments {
         require(
-            GitSha.matches(
-                sourceSha,
-            ),
+            args.size == 5 &&
+                args[0] == "--home" &&
+                args[2] == "--expected-source-sha" &&
+                args[4] in setOf("--allow-acquisition", "--reuse-existing"),
         ) {
+            "VexLife-Prod setup requires exactly --home <absolute-path> --expected-source-sha <git-sha> (--allow-acquisition|--reuse-existing)"
+        }
+        val sourceSha = args[3]
+        require(GitSha.matches(sourceSha)) {
             "VexLife-Prod setup expected source SHA must be one exact lowercase Git commit"
         }
-
         return Arguments(
+            productHome = selectedHome(args[1]),
             expectedSourceSha = sourceSha,
-            allowAcquisition =
-                args[2] ==
-                    "--allow-acquisition",
+            allowAcquisition = args[4] == "--allow-acquisition",
         )
     }
 
-    fun parseHome(
-        args: Array<String>,
-    ): HomeArguments {
+    fun parseHome(args: Array<String>): HomeArguments {
         require(
-            args.size ==
-                3 &&
-                args[0] ==
-                "--form-home" &&
-                args[1] ==
-                "--expected-source-sha"
+            args.size == 5 &&
+                args[0] == "--form-home" &&
+                args[1] == "--home" &&
+                args[3] == "--expected-source-sha",
         ) {
-            "VexLife-Prod fresh Home formation requires exactly --form-home --expected-source-sha <git-sha>"
+            "VexLife-Prod fresh Home formation requires exactly --form-home --home <absolute-path> --expected-source-sha <git-sha>"
         }
-
-        val sourceSha =
-            args[2]
-        require(
-            GitSha.matches(
-                sourceSha,
-            ),
-        ) {
+        val sourceSha = args[4]
+        require(GitSha.matches(sourceSha)) {
             "VexLife-Prod fresh Home formation expected source SHA must be one exact lowercase Git commit"
         }
-
         return HomeArguments(
+            productHome = selectedHome(args[2]),
             expectedSourceSha = sourceSha,
         )
     }
@@ -242,7 +234,7 @@ object VexLifeProdSetupProcess {
         )
 
         val home =
-            hooks.formFreshHome()
+            hooks.formFreshHome(arguments.productHome)
 
         hooks.reportHomeReady(
             arguments,
@@ -252,10 +244,12 @@ object VexLifeProdSetupProcess {
 
     internal fun realizeHomeFormation(
         desiredSourceSha: String,
+        productHome: Path,
     ) {
         formHomeWithHooks(
             arguments =
                 HomeArguments(
+                    productHome = productHome,
                     expectedSourceSha = desiredSourceSha,
                 ),
             hooks =
@@ -269,10 +263,12 @@ object VexLifeProdSetupProcess {
     internal fun realizeProductConvergence(
         desiredSourceSha: String,
         allowAcquisition: Boolean,
+        productHome: Path,
     ) {
         runWithHooks(
             arguments =
                 Arguments(
+                    productHome = productHome,
                     expectedSourceSha = desiredSourceSha,
                     allowAcquisition = allowAcquisition,
                 ),
@@ -316,6 +312,7 @@ object VexLifeProdSetupProcess {
 
         val session =
             hooks.establishSession(
+                arguments.productHome,
                 arguments.allowAcquisition,
             )
 
@@ -408,55 +405,45 @@ object VexLifeProdSetupProcess {
     }
 }
 
-fun main(
-    args: Array<String>,
-) {
+fun main(args: Array<String>) {
     if (
-        args.size ==
-            3 &&
-        args[0] ==
-            "--form-home" &&
-        args[1] ==
-            "--expected-source-sha"
+        args.size == 5 &&
+        args[0] == "--form-home" &&
+        args[1] == "--home" &&
+        args[3] == "--expected-source-sha"
     ) {
-        VexLifeProdSetupProcess.formHome(
-            args,
-        )
+        VexLifeProdSetupProcess.formHome(args)
         return
     }
 
     if (
-        args.size ==
-            3 &&
-        args[0] ==
-            "--inspect-front-door" &&
-        args[1] ==
-            "--expected-source-sha"
+        args.size == 5 &&
+        args[0] == "--inspect-front-door" &&
+        args[1] == "--home" &&
+        args[3] == "--expected-source-sha"
     ) {
         VexLifeProdMacFrontDoorProcess.inspect(
-            args[2],
+            desiredSourceSha = args[4],
+            productHome = Path.of(args[2]),
         )
         return
     }
 
     if (
-        args.size ==
-            4 &&
-        args[0] ==
-            "--activate-front-door-control" &&
-        args[2] ==
-            "--expected-source-sha"
+        args.size == 6 &&
+        args[0] == "--activate-front-door-control" &&
+        args[2] == "--home" &&
+        args[4] == "--expected-source-sha"
     ) {
         VexLifeProdMacFrontDoorProcess.activate(
             controlRef = args[1],
-            desiredSourceSha = args[3],
+            desiredSourceSha = args[5],
+            productHome = Path.of(args[3]),
         )
         return
     }
 
-    VexLifeProdSetupProcess.run(
-        args,
-    )
+    VexLifeProdSetupProcess.run(args)
 }
 
 // [VXG RealForever]

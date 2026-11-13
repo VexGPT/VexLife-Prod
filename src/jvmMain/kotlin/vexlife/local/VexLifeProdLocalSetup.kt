@@ -224,23 +224,29 @@ object VexLifeProdLocalSetup {
      * This may form only the canonical VexLife Home/device/Companion identity after host
      * eligibility. It performs no model/runtime acquisition and does not install/start Product.
      */
-    fun formFreshHome(): VexLifeProdHomeFiles.Result {
-        val productHome =
+    fun formFreshHome(): VexLifeProdHomeFiles.Result =
+        formFreshHome(
             VexLifeProdHomeFiles.defaultMacRoot(
                 Path.of(
                     System.getProperty(
                         "user.home",
                     ),
                 ),
-            )
+            ),
+        )
 
+    fun formFreshHome(
+        productHome: Path,
+    ): VexLifeProdHomeFiles.Result {
+        require(productHome.isAbsolute) {
+            "selected Vex Home path must be absolute"
+        }
+        val selectedHome = productHome.normalize()
         return VexLifeProdLocalSetupLease
-            .acquire(
-                productHome,
-            )
+            .acquire(selectedHome)
             .use {
                 formFreshHomeAt(
-                    productHome = productHome,
+                    productHome = selectedHome,
                     hooks = Hooks(),
                 )
             }
@@ -297,8 +303,8 @@ object VexLifeProdLocalSetup {
     }
 
     /**
-     * Ordinary product route. The canonical Home coordinate is fixed by the existing VexLife
-     * relationship; [allowAcquisition] authorizes only missing model/runtime prerequisites.
+     * Ordinary product route. The selected Vex Home coordinate is carried explicitly through the
+     * Product relationship; [allowAcquisition] authorizes only missing model/runtime prerequisites.
      */
     fun establish(
         allowAcquisition: Boolean,
@@ -310,24 +316,33 @@ object VexLifeProdLocalSetup {
 
     internal fun establishSession(
         allowAcquisition: Boolean,
-    ): Session {
-        val productHome =
-            VexLifeProdHomeFiles.defaultMacRoot(
-                Path.of(
-                    System.getProperty(
-                        "user.home",
+    ): Session =
+        establishSession(
+            productHome =
+                VexLifeProdHomeFiles.defaultMacRoot(
+                    Path.of(
+                        System.getProperty(
+                            "user.home",
+                        ),
                     ),
                 ),
-            )
+            allowAcquisition = allowAcquisition,
+        )
 
+    internal fun establishSession(
+        productHome: Path,
+        allowAcquisition: Boolean,
+    ): Session {
+        require(productHome.isAbsolute) {
+            "selected Vex Home path must be absolute"
+        }
+        val selectedHome = productHome.normalize()
         return VexLifeProdLocalSetupLease
-            .acquire(
-                productHome,
-            )
+            .acquire(selectedHome)
             .use {
                 formSession(
                     establishDetailedAt(
-                        productHome = productHome,
+                        productHome = selectedHome,
                         allowAcquisition = allowAcquisition,
                         hooks = Hooks(),
                     ),

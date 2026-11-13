@@ -148,8 +148,11 @@ object VexLifeProdMacFrontDoor {
     }
 
     internal data class Hooks(
-        val observeCurrentState: () -> VexLifeProdServiceContract.CurrentStateProjection = {
-            VexLifeProdCurrentState.observeCurrentMac()
+        val observeCurrentState: (
+            Path,
+        ) -> VexLifeProdServiceContract.CurrentStateProjection = {
+            productHome ->
+            VexLifeProdCurrentState.observeCurrentMac(productHome)
         },
         val observeExistingService: (
             Path,
@@ -177,19 +180,23 @@ object VexLifeProdMacFrontDoor {
 
     fun observe(
         desiredSourceSha: String,
+        productHome: Path,
     ): Projection =
         observeWithHooks(
             desiredSourceSha = desiredSourceSha,
+            productHome = productHome,
             hooks = Hooks(),
         )
 
     internal fun observeWithHooks(
         desiredSourceSha: String,
+        productHome: Path,
         hooks: Hooks,
     ): Projection {
         val observed =
             observeSemantic(
                 desiredSourceSha = desiredSourceSha,
+                productHome = productHome,
                 hooks = hooks,
             )
         val display =
@@ -242,21 +249,25 @@ object VexLifeProdMacFrontDoor {
     internal fun resolveTypedControl(
         desiredSourceSha: String,
         controlRef: String,
+        productHome: Path,
     ): ResolvedControl =
         resolveTypedControlWithHooks(
             desiredSourceSha = desiredSourceSha,
             controlRef = controlRef,
+            productHome = productHome,
             hooks = Hooks(),
         )
 
     internal fun resolveTypedControlWithHooks(
         desiredSourceSha: String,
         controlRef: String,
+        productHome: Path,
         hooks: Hooks,
     ): ResolvedControl {
         val observed =
             observeSemantic(
                 desiredSourceSha = desiredSourceSha,
+                productHome = productHome,
                 hooks = hooks,
             )
         val control =
@@ -286,6 +297,7 @@ object VexLifeProdMacFrontDoor {
 
     private fun observeSemantic(
         desiredSourceSha: String,
+        productHome: Path,
         hooks: Hooks,
     ): Observed {
         require(
@@ -296,8 +308,16 @@ object VexLifeProdMacFrontDoor {
             "Mac front door requires one exact desired Product source SHA"
         }
 
-        val current =
-            hooks.observeCurrentState()
+        require(productHome.isAbsolute) {
+            "selected Vex Home path must be absolute"
+        }
+        val selectedHome = productHome.normalize()
+        val current = hooks.observeCurrentState(selectedHome)
+        require(
+            Path.of(current.homePath).normalize() == selectedHome
+        ) {
+            "Product-entry current-state projection changed the selected Vex Home coordinate"
+        }
         require(
             !current.effectsPerformed,
         ) {
@@ -458,53 +478,68 @@ object VexLifeProdMacFrontDoorProcess {
         val resolveControl: (
             desiredSourceSha: String,
             controlRef: String,
+            productHome: Path,
         ) -> VexLifeProdMacFrontDoor.ResolvedControl = {
             desiredSourceSha,
             controlRef,
+            productHome,
             ->
             VexLifeProdMacFrontDoor.resolveTypedControl(
                 desiredSourceSha = desiredSourceSha,
                 controlRef = controlRef,
+                productHome = productHome,
             )
         },
         val formHome: (
             desiredSourceSha: String,
+            productHome: Path,
         ) -> Unit = {
-            desiredSourceSha ->
+            desiredSourceSha,
+            productHome,
+            ->
             VexLifeProdSetupProcess.realizeHomeFormation(
-                desiredSourceSha,
+                desiredSourceSha = desiredSourceSha,
+                productHome = productHome,
             )
         },
         val convergeProduct: (
             desiredSourceSha: String,
             allowAcquisition: Boolean,
+            productHome: Path,
         ) -> Unit = {
             desiredSourceSha,
             allowAcquisition,
+            productHome,
             ->
             VexLifeProdSetupProcess.realizeProductConvergence(
                 desiredSourceSha = desiredSourceSha,
                 allowAcquisition = allowAcquisition,
+                productHome = productHome,
             )
         },
         val observeSemanticStateRef: (
             desiredSourceSha: String,
+            productHome: Path,
         ) -> String = {
-            desiredSourceSha ->
+            desiredSourceSha,
+            productHome,
+            ->
             VexLifeProdMacFrontDoor.observe(
-                desiredSourceSha,
-            )
-                .semanticStateRef
+                desiredSourceSha = desiredSourceSha,
+                productHome = productHome,
+            ).semanticStateRef
         },
     )
 
     fun inspect(
         desiredSourceSha: String,
+        productHome: Path,
     ) {
         println(
             VexContractJson.encode(
                 VexLifeProdMacFrontDoor.observe(
-                    desiredSourceSha,
+                    desiredSourceSha = desiredSourceSha,
+                    productHome = productHome,
                 ),
             ),
         )
@@ -513,12 +548,14 @@ object VexLifeProdMacFrontDoorProcess {
     fun activate(
         controlRef: String,
         desiredSourceSha: String,
+        productHome: Path,
     ) {
         println(
             VexContractJson.encode(
                 activateWithHooks(
                     controlRef = controlRef,
                     desiredSourceSha = desiredSourceSha,
+                    productHome = productHome,
                     hooks = ActivationHooks(),
                 ),
             ),
@@ -528,12 +565,18 @@ object VexLifeProdMacFrontDoorProcess {
     internal fun activateWithHooks(
         controlRef: String,
         desiredSourceSha: String,
+        productHome: Path,
         hooks: ActivationHooks,
     ): ActivationProjection {
+        require(productHome.isAbsolute) {
+            "selected Vex Home path must be absolute"
+        }
+        val selectedHome = productHome.normalize()
         val resolved =
             hooks.resolveControl(
                 desiredSourceSha,
                 controlRef,
+                selectedHome,
             )
         var semanticStateRef =
             resolved.semanticStateRef
@@ -551,17 +594,13 @@ object VexLifeProdMacFrontDoorProcess {
                 VexLifeProdEntryFamily.FormCanonicalHome -> {
                     hooks.formHome(
                         desiredSourceSha,
+                        selectedHome,
                     )
                     semanticStateRef =
                         hooks.observeSemanticStateRef(
                             desiredSourceSha,
+                            selectedHome,
                         )
-                    require(
-                        semanticStateRef ==
-                            VexLifeProdEntryFamily.StateSetupRequired,
-                    ) {
-                        "fresh Home realization must re-observe Product entry as SETUP_REQUIRED"
-                    }
                     ManifestationRefreshEntry
                 }
 
@@ -575,18 +614,20 @@ object VexLifeProdMacFrontDoorProcess {
                     hooks.convergeProduct(
                         effect.desiredSourceSha,
                         effect.allowAcquisition,
+                        selectedHome,
                     )
                     semanticStateRef =
                         hooks.observeSemanticStateRef(
                             desiredSourceSha,
+                            selectedHome,
                         )
-                    require(
-                        semanticStateRef ==
-                            VexLifeProdEntryFamily.StateCurrent,
+                    if (
+                        semanticStateRef == VexLifeProdEntryFamily.StateCurrent
                     ) {
-                        "Product convergence must re-observe exact CURRENT Product entry before presentation opens"
+                        ManifestationOpenProduct
+                    } else {
+                        ManifestationRefreshEntry
                     }
-                    ManifestationOpenProduct
                 }
             }
 

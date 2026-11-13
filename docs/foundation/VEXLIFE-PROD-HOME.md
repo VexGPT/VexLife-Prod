@@ -2,6 +2,26 @@
 
 `[VXG RealForever]`
 
+## Home location is a human custody choice
+
+The default macOS suggestion is `~/.vexlife`, but the location is not a hidden fixed Product
+decision.
+
+```text
+suggest ~/.vexlife
+-> human confirms or chooses another absolute Home
+-> classify that exact coordinate
+-> every subsequent Home/setup/service process carries the same coordinate
+```
+
+The predecessor VexLife setup already exposed this choice. New Beginnings preserves the relationship
+rather than treating `System.getProperty("user.home")/.vexlife` as human authority.
+
+```text
+DEFAULT HOME != FORCED HOME
+SELECTED HOME AT UI != PERMISSION TO FALL BACK DOWNSTREAM
+```
+
 ## Human question
 
 How can VexLife-Prod replace implementation machinery without silently replacing Victor's existing
@@ -238,7 +258,7 @@ Source tests now target:
 - absent Home reaches Product-entry `HOME_FORMATION_REQUIRED` without descending into service-lifetime
   observation;
 - Home formation is one distinct effect and performs no model/runtime acquisition;
-- after Home publication, Product entry re-observes and only then exposes `SETUP_REQUIRED`;
+- after Home publication, Product entry re-observes the exact selected Home and renders the State that is actually current; a first-user host may expose `SETUP_REQUIRED`, while conflicting service truth may expose a held state;
 - `SETUP_REQUIRED` projects model-file size, minimum memory, current memory and free storage before
   acquisition authority is available;
 - model/runtime acquisition, reuse/update/repair authority cannot form a missing Home;

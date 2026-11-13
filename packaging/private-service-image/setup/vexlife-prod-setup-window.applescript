@@ -1,7 +1,10 @@
+use framework "AppKit"
 use framework "Foundation"
 use scripting additions
 
+property NSAlertFirstButtonReturn : 1000
 property productOrigin : "http://127.0.0.1:18210/"
+property selectedHomePath : missing value
 
 on isFullHex(value, expectedLength)
     if value is missing value then return false
@@ -21,6 +24,39 @@ on bundleString(keyName)
     if value is missing value then return missing value
     return value as text
 end bundleString
+
+
+on normalizedHomePath(value)
+    if value is missing value then return missing value
+    set rawValue to value as text
+    if rawValue is "" then return missing value
+    set standardized to (current application's NSString's stringWithString:rawValue)'s stringByStandardizingPath()
+    if standardized is missing value then return missing value
+    set homePath to standardized as text
+    if homePath does not start with "/" then return missing value
+    return homePath
+end normalizedHomePath
+
+on chooseHome(defaultHome)
+    set alert to current application's NSAlert's alloc()'s init()
+    alert's setMessageText:"Choose your Vex Home"
+    alert's setInformativeText:"This folder is VexLife's durable local custody boundary for identity, conversations, Memory, model binding, and recovery. ~/.vexlife is only the default suggestion."
+    alert's addButtonWithTitle:"Continue"
+    alert's addButtonWithTitle:"Cancel"
+    set field to current application's NSTextField's alloc()'s initWithFrame:(current application's NSMakeRect(0, 0, 480, 26))
+    field's setStringValue:defaultHome
+    field's setPlaceholderString:"Vex Home"
+    alert's setAccessoryView:field
+    current application's NSApp's activateIgnoringOtherApps:true
+    set response to alert's runModal()
+    if response is not NSAlertFirstButtonReturn then return missing value
+    set chosen to my normalizedHomePath(field's stringValue())
+    if chosen is missing value then
+        my showFailure("VexLife needs an absolute Home location.", "Choose an absolute folder path for Vex Home.")
+        return my chooseHome(defaultHome)
+    end if
+    return chosen
+end chooseHome
 
 on boundedText(value)
     if value is missing value then return ""
@@ -110,7 +146,7 @@ on projectionSummary(projection)
 end projectionSummary
 
 on activateControl(setupLauncher, sourceSha, controlRef)
-    set activated to my runJson(setupLauncher, {"--activate-front-door-control", controlRef, "--expected-source-sha", sourceSha})
+    set activated to my runJson(setupLauncher, {"--activate-front-door-control", controlRef, "--home", selectedHomePath, "--expected-source-sha", sourceSha})
     set activation to item 1 of activated
     if activation is missing value then
         my showFailure("VexLife could not complete the selected action.", item 2 of activated)
@@ -146,7 +182,7 @@ on showEntry()
         return
     end if
 
-    set inspected to my runJson(setupLauncher, {"--inspect-front-door", "--expected-source-sha", sourceSha})
+    set inspected to my runJson(setupLauncher, {"--inspect-front-door", "--home", selectedHomePath, "--expected-source-sha", sourceSha})
     set projection to item 1 of inspected
     if projection is missing value then
         my showFailure("VexLife could not inspect the current Product state.", item 2 of inspected)
@@ -193,6 +229,9 @@ on showEntry()
 end showEntry
 
 on run
+    set defaultHome to (current application's NSHomeDirectory() as text) & "/.vexlife"
+    set selectedHomePath to my chooseHome(defaultHome)
+    if selectedHomePath is missing value then return
     my showEntry()
 end run
 

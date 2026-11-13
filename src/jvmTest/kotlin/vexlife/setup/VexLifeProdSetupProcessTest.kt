@@ -57,74 +57,50 @@ class VexLifeProdSetupProcessTest {
     }
 
     @Test
-    fun processArgumentsCarryOnlyExpectedSourceAndExplicitAcquisitionAuthorization() {
-        val sha =
-            "a".repeat(
-                40,
-            )
+    fun processArgumentsCarrySelectedHomeExpectedSourceAndExplicitAcquisitionAuthorization() {
+        val sha = "a".repeat(40)
+        val home = Path.of("/tmp/vexlife-selected-home")
 
         val parsed =
             VexLifeProdSetupProcess.parse(
                 arrayOf(
+                    "--home",
+                    home.toString(),
                     "--expected-source-sha",
                     sha,
                     "--allow-acquisition",
                 ),
             )
 
-        assertEquals(
-            sha,
-            parsed.expectedSourceSha,
-        )
-        assertEquals(
-            true,
-            parsed.allowAcquisition,
-        )
+        assertEquals(home, parsed.productHome)
+        assertEquals(sha, parsed.expectedSourceSha)
+        assertEquals(true, parsed.allowAcquisition)
 
         val reuseExisting =
             VexLifeProdSetupProcess.parse(
                 arrayOf(
+                    "--home",
+                    home.toString(),
                     "--expected-source-sha",
                     sha,
                     "--reuse-existing",
                 ),
             )
-        assertEquals(
-            false,
-            reuseExisting.allowAcquisition,
-        )
+        assertEquals(home, reuseExisting.productHome)
+        assertEquals(false, reuseExisting.allowAcquisition)
 
         for (
             args in
             listOf(
                 emptyArray(),
-                arrayOf(
-                    "--expected-source-sha",
-                    sha,
-                ),
-                arrayOf(
-                    "--expected-source-sha",
-                    "main",
-                    "--allow-acquisition",
-                ),
-                arrayOf(
-                    "--expected-source-sha",
-                    sha,
-                    "--allow-acquisition",
-                    "--home",
-                    "/tmp/alternate",
-                ),
-                arrayOf(
-                    "--expected-source-sha",
-                    sha,
-                    "--repair-anything",
-                ),
+                arrayOf("--expected-source-sha", sha, "--allow-acquisition"),
+                arrayOf("--home", "relative-home", "--expected-source-sha", sha, "--allow-acquisition"),
+                arrayOf("--home", home.toString(), "--expected-source-sha", "main", "--allow-acquisition"),
+                arrayOf("--home", home.toString(), "--expected-source-sha", sha, "--repair-anything"),
             )
         ) {
             assertFailsWith<IllegalArgumentException> {
-                VexLifeProdSetupProcess.parse(
-                    args,
-                )
+                VexLifeProdSetupProcess.parse(args)
             }
         }
     }
@@ -183,6 +159,8 @@ class VexLifeProdSetupProcessTest {
             VexLifeProdSetupProcess.parseHome(
                 arrayOf(
                     "--form-home",
+                    "--home",
+                    "/tmp/.vexlife",
                     "--expected-source-sha",
                     sourceSha,
                 ),
@@ -216,10 +194,20 @@ class VexLifeProdSetupProcessTest {
                         observation
                     },
                     formFreshHome = {
+                        selectedHome ->
                         trace += "FORM_HOME"
+                        assertEquals(
+                            Path.of(
+                                home.productHome,
+                            ),
+                            selectedHome,
+                        )
                         home
                     },
                     establishSession = {
+                        _,
+                        _,
+                        ->
                         error(
                             "Home-only realization must not enter model/runtime setup",
                         )
@@ -359,6 +347,10 @@ class VexLifeProdSetupProcessTest {
         VexLifeProdSetupProcess.runWithHooks(
             arguments =
                 VexLifeProdSetupProcess.Arguments(
+                    productHome =
+                        Path.of(
+                            productHome,
+                        ),
                     expectedSourceSha = sourceSha,
                     allowAcquisition = true,
                 ),
@@ -386,7 +378,15 @@ class VexLifeProdSetupProcessTest {
                         observation
                     },
                     establishSession = {
-                        allowAcquisition ->
+                        selectedHome,
+                        allowAcquisition,
+                        ->
+                        assertEquals(
+                            Path.of(
+                                productHome,
+                            ),
+                            selectedHome,
+                        )
                         trace +=
                             "SETUP"
                         assertEquals(

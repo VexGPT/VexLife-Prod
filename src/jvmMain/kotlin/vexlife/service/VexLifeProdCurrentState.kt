@@ -103,6 +103,22 @@ object VexLifeProdCurrentState {
             Hooks(),
         )
 
+    fun observeCurrentMac(
+        productHome: Path,
+    ): VexLifeProdServiceContract.CurrentStateProjection {
+        require(productHome.isAbsolute) {
+            "selected Vex Home path must be absolute"
+        }
+        val selectedHome = productHome.normalize()
+        return observeWithHooks(
+            Hooks(
+                resolveProductHome = {
+                    selectedHome
+                },
+            ),
+        )
+    }
+
     internal fun observeWithHooks(
         hooks: Hooks,
     ): VexLifeProdServiceContract.CurrentStateProjection {

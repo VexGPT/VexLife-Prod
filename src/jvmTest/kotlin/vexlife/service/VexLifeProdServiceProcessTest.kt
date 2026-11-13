@@ -49,7 +49,7 @@ class VexLifeProdServiceProcessTest {
     }
 
     @Test
-    fun processArgumentsCarryOnlyExactSourceIdentity() {
+    fun processArgumentsCarryExactSourceAndSelectedHomeIdentity() {
         val sha =
             "a".repeat(
                 40,
@@ -60,12 +60,20 @@ class VexLifeProdServiceProcessTest {
                 arrayOf(
                     "--source-sha",
                     sha,
+                    "--home",
+                    "/tmp/vexlife-prod-service-process-test",
                 ),
             )
 
         assertEquals(
             sha,
             parsed.sourceSha,
+        )
+        assertEquals(
+            java.nio.file.Path.of(
+                "/tmp/vexlife-prod-service-process-test",
+            ),
+            parsed.productHome,
         )
 
         for (
@@ -82,6 +90,12 @@ class VexLifeProdServiceProcessTest {
                 arrayOf(
                     "--source-sha",
                     "main",
+                ),
+                arrayOf(
+                    "--source-sha",
+                    sha,
+                    "--home",
+                    "relative-home",
                 ),
                 arrayOf(
                     "--source-sha",
@@ -123,6 +137,10 @@ class VexLifeProdServiceProcessTest {
                     "b".repeat(
                         40,
                     ),
+                productHome =
+                    java.nio.file.Path.of(
+                        result.productHome,
+                    ),
             )
 
         VexLifeProdServiceProcess.runWithHooks(
@@ -140,9 +158,17 @@ class VexLifeProdServiceProcessTest {
                         "/tmp/vexlife-prod-service-process-test/vision-runtime/bin/vexlife-vision-runtime"
                     },
                     establishSession = {
-                        allowAcquisition ->
+                        productHome,
+                        allowAcquisition,
+                        ->
                         trace +=
                             "ESTABLISH"
+                        assertEquals(
+                            java.nio.file.Path.of(
+                                result.productHome,
+                            ),
+                            productHome,
+                        )
                         assertFalse(
                             allowAcquisition,
                             "long-lived service process must never grant acquisition authority",

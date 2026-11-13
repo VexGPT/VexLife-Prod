@@ -116,6 +116,41 @@ class VexLifeProdBootstrapTemplateTest {
         }
     }
 
+
+    @Test
+    fun nativeSetupWindowCarriesHumanSelectedHomeIntoProductEntry() {
+        val source =
+            Files.readString(
+                Path.of(
+                    System.getProperty(
+                        "user.dir",
+                    ),
+                    "packaging/private-service-image/setup/vexlife-prod-setup-window.applescript",
+                ),
+            )
+
+        assertTrue(
+            source.contains(
+                "Choose your Vex Home",
+            ),
+        )
+        assertTrue(
+            source.contains(
+                "~/.vexlife is only the default suggestion",
+            ),
+        )
+        assertTrue(
+            source.contains(
+                "\"--inspect-front-door\", \"--home\", selectedHomePath",
+            ),
+        )
+        assertTrue(
+            source.contains(
+                "\"--activate-front-door-control\", controlRef, \"--home\", selectedHomePath",
+            ),
+        )
+    }
+
 }
 
 // [VXG RealForever]

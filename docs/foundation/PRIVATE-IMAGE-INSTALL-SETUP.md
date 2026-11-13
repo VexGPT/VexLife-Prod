@@ -15,6 +15,12 @@ temporary extracted private image
         ↓
 native Product-entry window
         ↓
+human chooses Vex Home coordinate
+  default suggestion = ~/.vexlife
+  alternate absolute location allowed
+        ↓
+observe/classify that exact selected Home
+        ↓
 DisplayState -> human Control
         ↓
 bin/vexlife-prod-setup
@@ -31,8 +37,9 @@ HOME_FORMATION_REQUIRED + Create Vex Home
   -> verify exact source-bound image
   -> VexLifeProdLocalSetup.formFreshHome()
   -> canonical Home/device/Companion identity only
-  -> re-observe SETUP_REQUIRED
+  -> re-observe the selected Home / service truth
   -> REFRESH_ENTRY
+  -> render whatever State is actually current
         ↓
 native window refreshes DisplayState + resource plan
         ↓

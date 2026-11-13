@@ -214,8 +214,13 @@ class VexLifeProdLocalService private constructor(
                         )
                     },
                 dreamExecutor = ProductDreamExecutor,
-                currentStateObserver =
-                    VexLifeProdCurrentState::observeCurrentMac,
+                currentStateObserver = {
+                    VexLifeProdCurrentState.observeCurrentMac(
+                        Path.of(
+                            session.result.productHome,
+                        ),
+                    )
+                },
                 visionExecutor =
                     visionRuntimeExecutablePathOrNull
                         ?.let {
