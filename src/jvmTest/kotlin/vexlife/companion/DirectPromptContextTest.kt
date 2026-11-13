@@ -708,12 +708,20 @@ class DirectPromptContextTest {
                 assertNull(
                     materialized.receipt.sourceReturnState,
                 )
-                assertTrue(
-                    materialized.messages.any {
-                        it.content.startsWith(
-                            DirectConversationSourceReturn.ProtocolHeader,
-                        )
+                assertEquals(
+                    1,
+                    materialized.messages.count {
+                        it.role ==
+                            "system"
                     },
+                )
+                assertTrue(
+                    materialized.messages
+                        .first()
+                        .content
+                        .contains(
+                            DirectConversationSourceReturn.ProtocolHeader,
+                        ),
                 )
                 assertEquals(
                     memory.memoryContextRef,
@@ -1215,9 +1223,11 @@ class DirectPromptContextTest {
                 )
                 assertTrue(
                     materialized.messages.any {
-                        it.content.startsWith(
-                            DirectConversationSourceReturn.ContextHeader,
-                        ) &&
+                        it.role ==
+                            "system" &&
+                            it.content.contains(
+                                DirectConversationSourceReturn.ContextHeader,
+                            ) &&
                             it.content.contains(
                                 "orchard-lantern",
                             )
@@ -1225,7 +1235,7 @@ class DirectPromptContextTest {
                 )
                 assertTrue(
                     materialized.messages.none {
-                        it.content.startsWith(
+                        it.content.contains(
                             DirectConversationSourceReturn.ProtocolHeader,
                         )
                     },
@@ -1414,9 +1424,11 @@ class DirectPromptContextTest {
                 )
                 assertTrue(
                     materialized.messages.any {
-                        it.content.startsWith(
-                            DirectConversationSourceReturn.ContextHeader,
-                        ) &&
+                        it.role ==
+                            "system" &&
+                            it.content.contains(
+                                DirectConversationSourceReturn.ContextHeader,
+                            ) &&
                             it.content.contains(
                                 "rare-copper-bird",
                             )
@@ -2051,7 +2063,6 @@ class DirectPromptContextTest {
                 assertEquals(
                     listOf(
                         "system",
-                        "system",
                         "assistant",
                         "user",
                     ),
@@ -2067,14 +2078,14 @@ class DirectPromptContextTest {
                         ),
                 )
                 assertTrue(
-                    materialized.messages[1]
+                    materialized.messages[0]
                         .content
-                        .startsWith(
+                        .contains(
                             "VEXLIFE_WORKING_CONTINUITY_CONTEXT/v1",
                         ),
                 )
                 assertTrue(
-                    materialized.messages[1]
+                    materialized.messages[0]
                         .content
                         .contains(
                             "work-node.vexlife.prompt.working",
@@ -2398,7 +2409,6 @@ class DirectPromptContextTest {
                 assertEquals(
                     listOf(
                         "system",
-                        "system",
                         "user",
                         "user",
                     ),
@@ -2407,21 +2417,28 @@ class DirectPromptContextTest {
                     },
                 )
                 assertTrue(
-                    materialized.messages[1]
+                    materialized.messages[0]
                         .content
                         .startsWith(
+                            "VEXLIFE_CURRENT_MEMORY_CONTEXT/v1",
+                        ),
+                )
+                assertTrue(
+                    materialized.messages[0]
+                        .content
+                        .contains(
                             "VEXLIFE_SELF_CAPABILITY_FRAME/v1",
                         ),
                 )
                 assertTrue(
-                    materialized.messages[1]
+                    materialized.messages[0]
                         .content
                         .contains(
                             "capability.vexlife.companion.local-inference",
                         ),
                 )
                 assertTrue(
-                    materialized.messages[1]
+                    materialized.messages[0]
                         .content
                         .contains(
                             "\"effectAuthorityGranted\":false",
