@@ -250,7 +250,16 @@ object VexLifeCurrentMemoryReader {
         productHome: Path,
         threadRef: String =
             DirectConversationIdentity.ThreadRef,
+        memoryTokenCap: Int =
+            VexLifeMemoryContract.MaximumMemoryTokens,
     ): VexLifeMemoryContract.Context {
+        require(
+            memoryTokenCap in
+                0..VexLifeMemoryContract.MaximumMemoryTokens,
+        ) {
+            "Memory prompt token cap is outside the admitted range"
+        }
+
         val home =
             VexOwnedPath.requireRoot(
                 productHome,
@@ -288,9 +297,11 @@ object VexLifeCurrentMemoryReader {
             )
         ) {
             return held(
-                listOf(
-                    "NO_COMMITTED_DAILY_MEMORY",
-                ),
+                reasons =
+                    listOf(
+                        "NO_COMMITTED_DAILY_MEMORY",
+                    ),
+                memoryTokenCap = memoryTokenCap,
             )
         }
 
@@ -333,15 +344,18 @@ object VexLifeCurrentMemoryReader {
             "HELD"
         ) {
             return held(
-                listOf(
-                    "DAILY_MEMORY_SOURCE_FRONTIER_STALE",
-                ),
+                reasons =
+                    listOf(
+                        "DAILY_MEMORY_SOURCE_FRONTIER_STALE",
+                    ),
+                memoryTokenCap = memoryTokenCap,
             )
         }
 
         return formContext(
             score = score,
             daily = daily,
+            memoryTokenCap = memoryTokenCap,
         )
     }
 
@@ -2573,6 +2587,7 @@ object VexLifeCurrentMemoryReader {
     private fun formContext(
         score: ScoreSnapshot,
         daily: DailySnapshot,
+        memoryTokenCap: Int,
     ): VexLifeMemoryContract.Context {
         val byRef =
             score.statements.associateBy(
@@ -2641,6 +2656,7 @@ object VexLifeCurrentMemoryReader {
                     boundedOut = boundedOut,
                     tokenBoundedOut = emptyList(),
                     reasons = emptyList(),
+                    memoryTokenCap = memoryTokenCap,
                 )
             if (
                 DirectPromptContext.estimatedMessageTokens(
@@ -2648,7 +2664,7 @@ object VexLifeCurrentMemoryReader {
                         candidate,
                     ),
                 ) >
-                VexLifeMemoryContract.MaximumMemoryTokens
+                memoryTokenCap
             ) {
                 tokenBoundedOut +=
                     page.pageRef
@@ -2665,6 +2681,7 @@ object VexLifeCurrentMemoryReader {
                 boundedOut = boundedOut,
                 tokenBoundedOut = tokenBoundedOut,
                 reasons = emptyList(),
+                memoryTokenCap = memoryTokenCap,
             )
         val included =
             pages.isNotEmpty()
@@ -2774,6 +2791,7 @@ object VexLifeCurrentMemoryReader {
 
     private fun held(
         reasons: List<String>,
+        memoryTokenCap: Int,
     ): VexLifeMemoryContract.Context {
         val owners =
             listOf(
@@ -2798,7 +2816,7 @@ object VexLifeCurrentMemoryReader {
                 boundedOutStatementRefs = emptyList(),
                 tokenBoundedOutPageRefs = emptyList(),
                 reasons = reasons.distinct().sorted(),
-                memoryTokenCap = VexLifeMemoryContract.MaximumMemoryTokens,
+                memoryTokenCap = memoryTokenCap,
                 systemMessageSha256 = null,
                 estimatedSystemMessageTokens = 0,
             )
@@ -2847,6 +2865,7 @@ object VexLifeCurrentMemoryReader {
         boundedOut: List<String>,
         tokenBoundedOut: List<String>,
         reasons: List<String>,
+        memoryTokenCap: Int,
     ): ProviderPacket =
         ProviderPacket(
             schemaVersion = VexLifeMemoryContract.PacketSchema,
@@ -2875,7 +2894,7 @@ object VexLifeCurrentMemoryReader {
             boundedOutStatementRefs = boundedOut.sorted(),
             tokenBoundedOutPageRefs = tokenBoundedOut.sorted(),
             reasons = reasons.distinct().sorted(),
-            memoryTokenCap = VexLifeMemoryContract.MaximumMemoryTokens,
+            memoryTokenCap = memoryTokenCap,
         )
 
     private fun memorySystemContent(
