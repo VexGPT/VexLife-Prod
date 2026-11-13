@@ -73,6 +73,9 @@ class VexLifeProdServiceContractTest {
                 observedAt = "2026-11-12T18:00:00Z",
                 homePath = "/Users/victor/.vexlife",
                 homeDisposition = "EXISTING_CURRENT",
+                homeRef = "vex-home.device.vexlife.test",
+                deviceRef = "device.vexlife.test",
+                companionLineageRef = "companion-lineage.vexlife.test",
                 platform = "darwin",
                 architecture = "arm64",
                 chipModel = "Apple M4 Pro",
@@ -81,22 +84,27 @@ class VexLifeProdServiceContractTest {
                 totalMemoryBytes = 36L * 1024L * 1024L * 1024L,
                 modelMinimumMemoryBytes = 12L * 1024L * 1024L * 1024L,
                 freeStorageBytes = 100L * 1024L * 1024L * 1024L,
+                modelSelectionState = "BOUND_HERETIC_PRODUCT_MODEL",
                 activeModelRef = "model.heretic.test",
                 activeModelProfileRef = "model-profile.heretic.test",
-                runtimeState = "QUALIFIED",
-                runtimeCurrentness = "STARTUP_QUALIFIED_NOT_REOBSERVED",
-                runtimeReceiptRef = "receipt.heretic.test",
-                modelArtifactState = "VERIFIED_AT_SETUP",
+                runtimeState = "BOUND_PRODUCT_MODEL",
+                runtimeCurrentness = "CONFIGURATION_ONLY_NOT_REOBSERVED",
+                runtimeReceiptPath = "runtime/heretic/receipt.json",
+                modelArtifactState = "COMPLETE_BY_SIZE_NOT_HASHED",
                 modelArtifactTotalBytes = 15_000L,
-                modelArtifactVerifiedBytes = 15_000L,
+                modelArtifactPresentBySizeBytes = 15_000L,
                 modelArtifactMissingBytes = 0,
-                modelArtifactInvalidBytes = 0,
+                modelArtifactInvalidSizeBytes = 0,
                 effectsPerformed = false,
             )
 
         assertEquals(
-            "VERIFIED_AT_SETUP",
+            "COMPLETE_BY_SIZE_NOT_HASHED",
             projection.modelArtifactState,
+        )
+        assertEquals(
+            "CONFIGURATION_ONLY_NOT_REOBSERVED",
+            projection.runtimeCurrentness,
         )
         assertEquals(
             100L * 1024L * 1024L * 1024L,
