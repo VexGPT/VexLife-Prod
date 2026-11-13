@@ -3,9 +3,6 @@ package vexlife.setup
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
-import kotlinx.serialization.Serializable
-import vexlife.contract.VexContractJson
-import vexlife.entry.VexLifeProdEntryFamily
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.packaging.VexLifeProdPrivateServiceImage
@@ -34,40 +31,6 @@ object VexLifeProdSetupProcess {
     data class HomeArguments(
         val expectedSourceSha: String,
     )
-
-    const val FrontDoorActivationSchema =
-        "vexlife-prod.macos-front-door-activation/v1"
-    const val ManifestationRefreshEntry =
-        "REFRESH_ENTRY"
-    const val ManifestationOpenProduct =
-        "OPEN_PRODUCT"
-    const val ManifestationNoAction =
-        "NO_ACTION"
-
-    @Serializable
-    data class FrontDoorActivation(
-        val schemaVersion: String,
-        val controlRef: String,
-        val semanticStateRef: String,
-        val manifestationRef: String,
-    ) {
-        init {
-            require(
-                schemaVersion ==
-                    FrontDoorActivationSchema &&
-                    controlRef.isNotBlank() &&
-                    semanticStateRef.isNotBlank() &&
-                    manifestationRef in
-                    setOf(
-                        ManifestationRefreshEntry,
-                        ManifestationOpenProduct,
-                        ManifestationNoAction,
-                    ),
-            ) {
-                "VexLife-Prod front-door activation projection is invalid"
-            }
-        }
-    }
 
     internal data class Hooks(
         val locateImageRoot: () -> Path =
@@ -184,149 +147,6 @@ object VexLifeProdSetupProcess {
         },
     )
 
-    internal data class FrontDoorActivationHooks(
-        val resolveControl: (
-            desiredSourceSha: String,
-            controlRef: String,
-        ) -> VexLifeProdMacFrontDoor.ResolvedControl = {
-            desiredSourceSha,
-            controlRef,
-            ->
-            VexLifeProdMacFrontDoor.resolveTypedControl(
-                desiredSourceSha = desiredSourceSha,
-                controlRef = controlRef,
-            )
-        },
-        val formHome: (
-            desiredSourceSha: String,
-        ) -> Unit = {
-            desiredSourceSha ->
-            formHomeWithHooks(
-                arguments =
-                    HomeArguments(
-                        expectedSourceSha = desiredSourceSha,
-                    ),
-                hooks =
-                    Hooks(
-                        reportImageVerified = { _ -> },
-                        reportHomeReady = { _, _ -> },
-                    ),
-            )
-        },
-        val convergeProduct: (
-            desiredSourceSha: String,
-            allowAcquisition: Boolean,
-        ) -> Unit = {
-            desiredSourceSha,
-            allowAcquisition,
-            ->
-            runWithHooks(
-                arguments =
-                    Arguments(
-                        expectedSourceSha = desiredSourceSha,
-                        allowAcquisition = allowAcquisition,
-                    ),
-                hooks =
-                    Hooks(
-                        reportImageVerified = { _ -> },
-                        reportReady = { _, _, _, _ -> },
-                    ),
-            )
-        },
-        val observeSemanticStateRef: (
-            desiredSourceSha: String,
-        ) -> String = {
-            desiredSourceSha ->
-            VexLifeProdMacFrontDoor.observe(
-                desiredSourceSha,
-            )
-                .semanticStateRef
-        },
-    )
-
-    fun activateFrontDoor(
-        controlRef: String,
-        desiredSourceSha: String,
-    ): FrontDoorActivation =
-        activateFrontDoorWithHooks(
-            controlRef = controlRef,
-            desiredSourceSha = desiredSourceSha,
-            hooks = FrontDoorActivationHooks(),
-        )
-
-    internal fun activateFrontDoorWithHooks(
-        controlRef: String,
-        desiredSourceSha: String,
-        hooks: FrontDoorActivationHooks,
-    ): FrontDoorActivation {
-        val resolved =
-            hooks.resolveControl(
-                desiredSourceSha,
-                controlRef,
-            )
-        var semanticStateRef =
-            resolved.semanticStateRef
-        val manifestationRef =
-            when (
-                val effect =
-                    resolved.effect
-            ) {
-                null ->
-                    ManifestationNoAction
-
-                VexLifeProdEntryFamily.OpenPresentation ->
-                    ManifestationOpenProduct
-
-                VexLifeProdEntryFamily.FormCanonicalHome -> {
-                    hooks.formHome(
-                        desiredSourceSha,
-                    )
-                    semanticStateRef =
-                        hooks.observeSemanticStateRef(
-                            desiredSourceSha,
-                        )
-                    require(
-                        semanticStateRef ==
-                            VexLifeProdEntryFamily.StateSetupRequired,
-                    ) {
-                        "fresh Home realization must re-observe Product entry as SETUP_REQUIRED"
-                    }
-                    ManifestationRefreshEntry
-                }
-
-                is VexLifeProdEntryFamily.ConvergeProduct -> {
-                    require(
-                        effect.desiredSourceSha ==
-                            desiredSourceSha,
-                    ) {
-                        "Product-entry convergence Effect source differs from the activation source"
-                    }
-                    hooks.convergeProduct(
-                        effect.desiredSourceSha,
-                        effect.allowAcquisition,
-                    )
-                    semanticStateRef =
-                        hooks.observeSemanticStateRef(
-                            desiredSourceSha,
-                        )
-                    require(
-                        semanticStateRef ==
-                            VexLifeProdEntryFamily.StateCurrent,
-                    ) {
-                        "Product convergence must re-observe exact CURRENT Product entry before presentation opens"
-                    }
-                    ManifestationOpenProduct
-                }
-            }
-
-        return FrontDoorActivation(
-            schemaVersion = FrontDoorActivationSchema,
-            controlRef = resolved.controlRef,
-            semanticStateRef = semanticStateRef,
-            manifestationRef = manifestationRef,
-        )
-    }
-
     fun parse(
         args: Array<String>,
     ): Arguments {
@@ -427,6 +247,40 @@ object VexLifeProdSetupProcess {
         hooks.reportHomeReady(
             arguments,
             home,
+        )
+    }
+
+    internal fun realizeHomeFormation(
+        desiredSourceSha: String,
+    ) {
+        formHomeWithHooks(
+            arguments =
+                HomeArguments(
+                    expectedSourceSha = desiredSourceSha,
+                ),
+            hooks =
+                Hooks(
+                    reportImageVerified = { _ -> },
+                    reportHomeReady = { _, _ -> },
+                ),
+        )
+    }
+
+    internal fun realizeProductConvergence(
+        desiredSourceSha: String,
+        allowAcquisition: Boolean,
+    ) {
+        runWithHooks(
+            arguments =
+                Arguments(
+                    expectedSourceSha = desiredSourceSha,
+                    allowAcquisition = allowAcquisition,
+                ),
+            hooks =
+                Hooks(
+                    reportImageVerified = { _ -> },
+                    reportReady = { _, _, _, _ -> },
+                ),
         )
     }
 
@@ -593,26 +447,7 @@ fun main(
         args[2] ==
             "--expected-source-sha"
     ) {
-        println(
-            VexContractJson.encode(
-                VexLifeProdSetupProcess.activateFrontDoor(
-                    controlRef = args[1],
-                    desiredSourceSha = args[3],
-                ),
-            ),
-        )
-        return
-    }
-
-    if (
-        args.size ==
-            4 &&
-        args[0] ==
-            "--resolve-front-door-control" &&
-        args[2] ==
-            "--expected-source-sha"
-    ) {
-        VexLifeProdMacFrontDoorProcess.resolve(
+        VexLifeProdMacFrontDoorProcess.activate(
             controlRef = args[1],
             desiredSourceSha = args[3],
         )

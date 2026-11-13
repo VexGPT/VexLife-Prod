@@ -15,39 +15,37 @@ temporary extracted private image
         ↓
 native Product-entry window
         ↓
-HOME_FORMATION_REQUIRED
-        ↓
-human: Create Vex Home
+DisplayState -> human Control
         ↓
 bin/vexlife-prod-setup
-  --form-home --expected-source-sha <sha>
+  --activate-front-door-control <Control>
+  --expected-source-sha <sha>
         ↓
-verify exact source-bound image
+VexLifeProdMacFrontDoorProcess
+  -> fresh Product-entry observation
+  -> VexLifeProdEntryFamily(State + Control)
+  -> typed Entry Effect stays inside Product
         ↓
-VexLifeProdLocalSetup.formFreshHome()
+HOME_FORMATION_REQUIRED + Create Vex Home
+  -> VexLifeProdSetupProcess.realizeHomeFormation(...)
+  -> verify exact source-bound image
+  -> VexLifeProdLocalSetup.formFreshHome()
+  -> canonical Home/device/Companion identity only
+  -> re-observe SETUP_REQUIRED
+  -> REFRESH_ENTRY
         ↓
-canonical Home/device/Companion identity only
-        ↓
-VEXLIFE_PROD_HOME_READY
-        ↓
-native window re-observes Product entry
-        ↓
-SETUP_REQUIRED + resource plan
+native window refreshes DisplayState + resource plan
         ↓
 human: Set Up VexLife
         ↓
-bin/vexlife-prod-setup
-  --expected-source-sha <sha> --allow-acquisition
-        ↓
-VexLifeProdLocalSetup.establishSession(true)
-        ↓
-model/Python/runtime prerequisites
-        ↓
-VexLifeProdPrivateServiceImageInstaller.install(...)
-        ↓
-VexLifeProdMacServiceLifetime.startOrReuse(...)
-        ↓
-VEXLIFE_PROD_SETUP_READY
+CONVERGE_PRODUCT(allowAcquisition=true)
+  -> VexLifeProdSetupProcess.realizeProductConvergence(...)
+  -> VexLifeProdLocalSetup.establishSession(true)
+  -> model/Python/runtime prerequisites
+  -> VexLifeProdPrivateServiceImageInstaller.install(...)
+  -> VexLifeProdMacServiceLifetime.startOrReuse(...)
+  -> re-observe CURRENT
+  -> OPEN_PRODUCT
 ~~~
 
 ## Image contract v3
@@ -129,9 +127,10 @@ SERVICE PROCESS
 = REUSE-ONLY / allowAcquisition=false
 ~~~
 
-A model/runtime acquisition flag cannot create a missing Home. The native window must first complete
-the Home-only effect, re-observe current truth, show the source-owned setup resource plan, and receive
-a separate human Set Up choice.
+A model/runtime acquisition flag cannot create a missing Home. The Product-entry adapter must first
+delegate the Home-only effect to its concrete setup owner, re-observe current truth, return only a
+manifestation instruction, and let the native window refresh the source-owned setup resource plan
+before a separate human Set Up choice.
 
 The setup process itself does not decide whether individual artifacts are missing; LocalSetup's
 rightful owners still classify/reuse/acquire exact prerequisites.
@@ -289,15 +288,17 @@ verify extracted manifest binds same source
         ↓
 compile/open packaged AppKit setup window
         ↓
-window first carries explicit Home-formation consent
+window emits only the selected Product-entry Control
         ↓
-Home-only bundled effect
+Mac Product-entry adapter resolves the typed Effect
         ↓
-fresh re-observation + model/resource consequences
+concrete Home/setup owner realizes only that Effect
         ↓
-separate explicit acquisition consent
+fresh Product-entry re-observation
         ↓
-bundled Product setup process
+window receives only REFRESH_ENTRY / OPEN_PRODUCT / NO_ACTION
+        ↓
+separate explicit acquisition consent remains a later Control
 ~~~
 
 The bootstrap does not:

@@ -21,9 +21,6 @@ object VexLifeProdMacFrontDoor {
     const val Schema =
         "vexlife-prod.macos-front-door/v2"
 
-    const val EffectSchema =
-        "vexlife-prod.macos-front-door-effect/v1"
-
     private val GitSha =
         Regex(
             "[0-9a-f]{40}",
@@ -150,73 +147,6 @@ object VexLifeProdMacFrontDoor {
         }
     }
 
-    @Serializable
-    data class EffectProjection(
-        val schemaVersion: String,
-        val observedAt: String,
-        val desiredSourceSha: String,
-        val semanticStateRef: String,
-        val controlRef: String,
-        val effectRef: String?,
-        val allowAcquisition: Boolean?,
-        val effectsPerformed: Boolean,
-    ) {
-        init {
-            require(
-                schemaVersion ==
-                    EffectSchema &&
-                    GitSha.matches(
-                        desiredSourceSha,
-                    ) &&
-                    controlRef in
-                    setOf(
-                        VexLifeProdEntryFamily.ControlOpenCurrent,
-                        VexLifeProdEntryFamily.ControlConvergeDesired,
-                        VexLifeProdEntryFamily.ControlFormHome,
-                        VexLifeProdEntryFamily.ControlSetUp,
-                        VexLifeProdEntryFamily.ControlCancel,
-                    ) &&
-                    !effectsPerformed,
-            ) {
-                "VexLife-Prod Mac front-door effect projection is invalid"
-            }
-
-            when (
-                effectRef
-            ) {
-                null ->
-                    require(
-                        allowAcquisition ==
-                            null,
-                    ) {
-                        "no-effect Product-entry resolution must not claim acquisition authority"
-                    }
-
-                VexLifeProdEntryFamily.EffectOpenPresentation,
-                VexLifeProdEntryFamily.EffectFormCanonicalHome,
-                -> require(
-                        allowAcquisition ==
-                            null,
-                    ) {
-                        "non-acquisition Product-entry effect must not claim acquisition authority"
-                    }
-
-                VexLifeProdEntryFamily.EffectConvergeProduct ->
-                    require(
-                        allowAcquisition !=
-                            null,
-                    ) {
-                        "converge-product effect requires explicit acquisition authority truth"
-                    }
-
-                else ->
-                    error(
-                        "unsupported Product-entry effect projection",
-                    )
-            }
-        }
-    }
-
     internal data class Hooks(
         val observeCurrentState: () -> VexLifeProdServiceContract.CurrentStateProjection = {
             VexLifeProdCurrentState.observeCurrentMac()
@@ -240,7 +170,6 @@ object VexLifeProdMacFrontDoor {
     )
 
     internal data class ResolvedControl(
-        val observedAt: String,
         val semanticStateRef: String,
         val controlRef: String,
         val effect: VexLifeProdEntryFamily.EntryEffect?,
@@ -310,16 +239,6 @@ object VexLifeProdMacFrontDoor {
         )
     }
 
-    fun resolveControl(
-        desiredSourceSha: String,
-        controlRef: String,
-    ): EffectProjection =
-        resolveControlWithHooks(
-            desiredSourceSha = desiredSourceSha,
-            controlRef = controlRef,
-            hooks = Hooks(),
-        )
-
     internal fun resolveTypedControl(
         desiredSourceSha: String,
         controlRef: String,
@@ -359,41 +278,9 @@ object VexLifeProdMacFrontDoor {
             }
 
         return ResolvedControl(
-            observedAt = observed.currentState.observedAt,
             semanticStateRef = observed.entryState.stateRef,
             controlRef = control.controlRef,
             effect = act.effect,
-        )
-    }
-
-    internal fun resolveControlWithHooks(
-        desiredSourceSha: String,
-        controlRef: String,
-        hooks: Hooks,
-    ): EffectProjection {
-        val resolved =
-            resolveTypedControlWithHooks(
-                desiredSourceSha = desiredSourceSha,
-                controlRef = controlRef,
-                hooks = hooks,
-            )
-        val effect =
-            resolved.effect
-
-        return EffectProjection(
-            schemaVersion = EffectSchema,
-            observedAt = resolved.observedAt,
-            desiredSourceSha = desiredSourceSha,
-            semanticStateRef = resolved.semanticStateRef,
-            controlRef = resolved.controlRef,
-            effectRef = effect?.effectRef,
-            allowAcquisition =
-                (
-                    effect as?
-                        VexLifeProdEntryFamily.ConvergeProduct
-                )
-                    ?.allowAcquisition,
-            effectsPerformed = false,
         )
     }
 
@@ -533,6 +420,84 @@ object VexLifeProdMacFrontDoor {
 }
 
 object VexLifeProdMacFrontDoorProcess {
+    const val ActivationSchema =
+        "vexlife-prod.macos-front-door-activation/v1"
+    const val ManifestationRefreshEntry =
+        "REFRESH_ENTRY"
+    const val ManifestationOpenProduct =
+        "OPEN_PRODUCT"
+    const val ManifestationNoAction =
+        "NO_ACTION"
+
+    @Serializable
+    data class ActivationProjection(
+        val schemaVersion: String,
+        val controlRef: String,
+        val semanticStateRef: String,
+        val manifestationRef: String,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    ActivationSchema &&
+                    controlRef.isNotBlank() &&
+                    semanticStateRef.isNotBlank() &&
+                    manifestationRef in
+                    setOf(
+                        ManifestationRefreshEntry,
+                        ManifestationOpenProduct,
+                        ManifestationNoAction,
+                    ),
+            ) {
+                "VexLife-Prod Mac front-door activation projection is invalid"
+            }
+        }
+    }
+
+    internal data class ActivationHooks(
+        val resolveControl: (
+            desiredSourceSha: String,
+            controlRef: String,
+        ) -> VexLifeProdMacFrontDoor.ResolvedControl = {
+            desiredSourceSha,
+            controlRef,
+            ->
+            VexLifeProdMacFrontDoor.resolveTypedControl(
+                desiredSourceSha = desiredSourceSha,
+                controlRef = controlRef,
+            )
+        },
+        val formHome: (
+            desiredSourceSha: String,
+        ) -> Unit = {
+            desiredSourceSha ->
+            VexLifeProdSetupProcess.realizeHomeFormation(
+                desiredSourceSha,
+            )
+        },
+        val convergeProduct: (
+            desiredSourceSha: String,
+            allowAcquisition: Boolean,
+        ) -> Unit = {
+            desiredSourceSha,
+            allowAcquisition,
+            ->
+            VexLifeProdSetupProcess.realizeProductConvergence(
+                desiredSourceSha = desiredSourceSha,
+                allowAcquisition = allowAcquisition,
+            )
+        },
+        val observeSemanticStateRef: (
+            desiredSourceSha: String,
+        ) -> String = {
+            desiredSourceSha ->
+            VexLifeProdMacFrontDoor.observe(
+                desiredSourceSha,
+            )
+                .semanticStateRef
+        },
+    )
+
     fun inspect(
         desiredSourceSha: String,
     ) {
@@ -545,17 +510,91 @@ object VexLifeProdMacFrontDoorProcess {
         )
     }
 
-    fun resolve(
+    fun activate(
         controlRef: String,
         desiredSourceSha: String,
     ) {
         println(
             VexContractJson.encode(
-                VexLifeProdMacFrontDoor.resolveControl(
-                    desiredSourceSha = desiredSourceSha,
+                activateWithHooks(
                     controlRef = controlRef,
+                    desiredSourceSha = desiredSourceSha,
+                    hooks = ActivationHooks(),
                 ),
             ),
+        )
+    }
+
+    internal fun activateWithHooks(
+        controlRef: String,
+        desiredSourceSha: String,
+        hooks: ActivationHooks,
+    ): ActivationProjection {
+        val resolved =
+            hooks.resolveControl(
+                desiredSourceSha,
+                controlRef,
+            )
+        var semanticStateRef =
+            resolved.semanticStateRef
+        val manifestationRef =
+            when (
+                val effect =
+                    resolved.effect
+            ) {
+                null ->
+                    ManifestationNoAction
+
+                VexLifeProdEntryFamily.OpenPresentation ->
+                    ManifestationOpenProduct
+
+                VexLifeProdEntryFamily.FormCanonicalHome -> {
+                    hooks.formHome(
+                        desiredSourceSha,
+                    )
+                    semanticStateRef =
+                        hooks.observeSemanticStateRef(
+                            desiredSourceSha,
+                        )
+                    require(
+                        semanticStateRef ==
+                            VexLifeProdEntryFamily.StateSetupRequired,
+                    ) {
+                        "fresh Home realization must re-observe Product entry as SETUP_REQUIRED"
+                    }
+                    ManifestationRefreshEntry
+                }
+
+                is VexLifeProdEntryFamily.ConvergeProduct -> {
+                    require(
+                        effect.desiredSourceSha ==
+                            desiredSourceSha,
+                    ) {
+                        "Product-entry convergence Effect source differs from the activation source"
+                    }
+                    hooks.convergeProduct(
+                        effect.desiredSourceSha,
+                        effect.allowAcquisition,
+                    )
+                    semanticStateRef =
+                        hooks.observeSemanticStateRef(
+                            desiredSourceSha,
+                        )
+                    require(
+                        semanticStateRef ==
+                            VexLifeProdEntryFamily.StateCurrent,
+                    ) {
+                        "Product convergence must re-observe exact CURRENT Product entry before presentation opens"
+                    }
+                    ManifestationOpenProduct
+                }
+            }
+
+        return ActivationProjection(
+            schemaVersion = ActivationSchema,
+            controlRef = resolved.controlRef,
+            semanticStateRef = semanticStateRef,
+            manifestationRef = manifestationRef,
         )
     }
 }
