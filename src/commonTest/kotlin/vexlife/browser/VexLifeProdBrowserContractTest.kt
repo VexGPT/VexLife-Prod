@@ -22,7 +22,58 @@ class VexLifeProdBrowserContractTest {
     }
 
     @Test
-    fun arbitraryOrLocalPagesAreNotAdmitted() {
+    fun humanNavigationAcceptsOrdinaryWebWithoutTurningItIntoContextAdmission() {
+        assertEquals(
+            listOf(
+                "http:",
+                "https:",
+            ),
+            VexLifeProdBrowserContract.HumanPageSchemes,
+        )
+        assertEquals(
+            ".localhost",
+            VexLifeProdBrowserContract.RejectedHumanPageHostSuffix,
+        )
+        assertEquals(
+            "https://example.com/products?q=vex",
+            VexLifeProdBrowserContract.admitHumanPageUrl(
+                "https://example.com/products?q=vex",
+            ),
+        )
+        assertEquals(
+            "http://example.com:8080/",
+            VexLifeProdBrowserContract.admitHumanPageUrl(
+                "http://example.com:8080/",
+            ),
+        )
+
+        for (
+            value in
+            listOf(
+                "http://127.0.0.1:18210/",
+                "https://localhost/",
+                "http://anything.localhost:9000/",
+                "http://0.0.0.0:18210/",
+                "file:///tmp/private.txt",
+            )
+        ) {
+            assertFailsWith<IllegalArgumentException> {
+                VexLifeProdBrowserContract.admitHumanPageUrl(
+                    value,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun vexContextAdmissionRemainsNarrowerThanHumanNavigation() {
+        assertEquals(
+            "https://vgong24.github.io/Vextreme/pages/terrain-map.html",
+            VexLifeProdBrowserContract.admitContextPageUrl(
+                "https://vgong24.github.io/Vextreme/pages/terrain-map.html",
+            ),
+        )
+
         for (
             value in
             listOf(
@@ -33,7 +84,7 @@ class VexLifeProdBrowserContractTest {
             )
         ) {
             assertFailsWith<IllegalArgumentException> {
-                VexLifeProdBrowserContract.admitPageUrl(
+                VexLifeProdBrowserContract.admitContextPageUrl(
                     value,
                 )
             }

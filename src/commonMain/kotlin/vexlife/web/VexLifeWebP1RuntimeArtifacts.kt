@@ -46,17 +46,31 @@ object VexLifeWebP1RuntimeArtifacts {
         val authoredBrowserShare =
             allocation.beforeParts.toDouble() /
                 allocation.totalParts.toDouble()
+        fun jsList(
+            values: List<String>,
+        ): String =
+            values.joinToString(
+                separator = ",",
+                prefix = "[",
+                postfix = "]",
+            ) {
+                jsString(
+                    it,
+                )
+            }
+
+        val humanPageSchemes =
+            jsList(
+                VexLifeProdBrowserContract.HumanPageSchemes,
+            )
+        val rejectedHumanPageHosts =
+            jsList(
+                VexLifeProdBrowserContract.RejectedHumanPageHosts,
+            )
         val admittedHosts =
-            VexLifeProdBrowserContract.AdmittedHosts
-                .joinToString(
-                    separator = ",",
-                    prefix = "[",
-                    postfix = "]",
-                ) {
-                    jsString(
-                        it,
-                    )
-                }
+            jsList(
+                VexLifeProdBrowserContract.AdmittedHosts,
+            )
 
         return """
             // Generated VexLife-Prod A003-faithful presentation over current New-Beginnings owners.
@@ -75,6 +89,9 @@ object VexLifeWebP1RuntimeArtifacts {
               });
               const browser = Object.freeze({
                 initialPageUrl: ${jsString(VexLifeProdBrowserContract.InitialPageUrl)},
+                humanPageSchemes: $humanPageSchemes,
+                rejectedHumanPageHosts: $rejectedHumanPageHosts,
+                rejectedHumanPageHostSuffix: ${jsString(VexLifeProdBrowserContract.RejectedHumanPageHostSuffix)},
                 admittedHosts: $admittedHosts,
                 frameHostSuffix: ${jsString(VexLifeProdBrowserContract.FrameHostSuffix)},
                 frameHostPort: ${VexLifeProdBrowserContract.FrameHostPort},
@@ -98,6 +115,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 appSelector: byId('app-selector'),
                 quickActions: byId('quick-actions'),
                 pageFrame: byId('page-frame'),
+                contextFrame: byId('context-frame'),
                 viewportEmpty: byId('viewport-empty'),
                 frameStatus: byId('frame-status'),
                 companionTitle: byId('companion-title'),
@@ -159,6 +177,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 visionInFlight: false,
                 browserContext: null,
                 includePage: false,
+                humanPageUrl: null,
+                humanFrameLoadExpected: false,
+                contextTargetPageUrl: null,
+                contextLoading: false,
                 view: 'conversation',
                 allocation: null,
                 collapsed: 'none',
@@ -333,11 +355,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.companionStatusModel.textContent = model;
               };
 
-              const frameUrlFor = (pageUrl) => {
+              const contextFrameUrlFor = (pageUrl) => {
                 const page = new URL(pageUrl);
-                if (page.protocol !== 'https:' || page.port || !browser.admittedHosts.includes(page.hostname)) {
-                  throw new Error('This browser opens admitted Vex-owned public pages only.');
-                }
+                if (page.protocol !== 'https:' || page.port || !browser.admittedHosts.includes(page.hostname)) return null;
                 return 'http://' + page.hostname + browser.frameHostSuffix + ':' + browser.frameHostPort + page.pathname + page.search + page.hash;
               };
 
@@ -346,8 +366,18 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!text) throw new Error('Type a web address.');
                 if (!/^[a-z][a-z0-9+.-]*:/iu.test(text)) text = 'https://' + text;
                 const page = new URL(text);
-                if (page.protocol !== 'https:' || page.port || !browser.admittedHosts.includes(page.hostname)) {
-                  throw new Error('This page is outside the admitted Vex-owned public boundary.');
+                if (!browser.humanPageSchemes.includes(page.protocol)) {
+                  throw new Error('Only http and https web pages open here.');
+                }
+                if (page.username || page.password) {
+                  throw new Error('Addresses with embedded credentials do not open here.');
+                }
+                const host = page.hostname.toLowerCase();
+                if (
+                  browser.rejectedHumanPageHosts.includes(host) ||
+                  host.endsWith(browser.rejectedHumanPageHostSuffix)
+                ) {
+                  throw new Error('The embedded Browser does not navigate to the local Product service.');
                 }
                 return page.href;
               };
@@ -377,11 +407,26 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const navigate = (value) => {
                 const pageUrl = admitPageAddress(value);
+                const contextFrameUrl = contextFrameUrlFor(pageUrl);
+
                 state.browserContext = null;
+                state.includePage = false;
+                state.humanPageUrl = pageUrl;
+                state.humanFrameLoadExpected = true;
+                state.contextTargetPageUrl = contextFrameUrl ? pageUrl : null;
+                state.contextLoading = false;
+
                 ui.query.value = pageUrl;
-                ui.pageFrame.src = frameUrlFor(pageUrl);
+                ui.query.placeholder = 'Type a web address';
+                ui.pageFrame.src = pageUrl;
+                ui.contextFrame.removeAttribute('src');
                 ui.viewportEmpty.hidden = true;
-                renderFrameStatus('Loading page…', 'Loading');
+                renderFrameStatus(
+                  contextFrameUrl
+                    ? 'Opening page directly · Vex page context is available on demand.'
+                    : 'Opening page directly · Vex page context is not available for this site yet.',
+                  'Loading'
+                );
                 renderComposer();
               };
 
@@ -658,23 +703,39 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!visible) return;
                 ui.ticket.dataset.state = 'Ready';
                 ui.ticketTitle.textContent = context.title || 'Included page';
-                ui.ticketLine.textContent = 'This rendered page text will be given to Vex on the next turn.';
+                ui.ticketLine.textContent = 'A separately rendered snapshot of this entered URL will be given to Vex on the next turn.';
                 ui.ticketUrl.textContent = context.pageUrl;
                 ui.ticketHash.textContent = '';
                 ui.ticketView.dataset.contextReady = 'true';
               };
 
               const renderComposer = () => {
-                const canInclude = Boolean(state.browserContext);
-                ui.contextShare.disabled = !canInclude;
-                ui.contextShare.dataset.state = canInclude ? 'Ready' : 'Unavailable';
-                ui.contextShare.setAttribute('aria-pressed', String(state.includePage && canInclude));
-                ui.contextShareLabel.textContent = state.includePage && canInclude ? 'Page included' : 'Include this page';
-                ui.composerHold.textContent = !canInclude
-                  ? 'Page context becomes available when the opened page reports readable text.'
-                  : state.pending && !state.sendInFlight
-                    ? 'The prior Send outcome is unresolved. Send again to retry that exact attempt.'
-                    : '';
+                const contextEligible = Boolean(state.contextTargetPageUrl);
+                const contextReady = Boolean(state.browserContext);
+                const canInclude = contextEligible || contextReady;
+                ui.contextShare.disabled = !canInclude || state.contextLoading;
+                ui.contextShare.dataset.state = state.contextLoading
+                  ? 'Loading'
+                  : contextReady
+                    ? 'Ready'
+                    : contextEligible
+                      ? 'Available'
+                      : 'Unavailable';
+                ui.contextShare.setAttribute('aria-pressed', String(state.includePage && contextReady));
+                ui.contextShareLabel.textContent = state.contextLoading
+                  ? 'Reading page…'
+                  : state.includePage && contextReady
+                    ? 'Page included'
+                    : 'Include this page';
+                ui.composerHold.textContent = state.contextLoading
+                  ? 'Reading the current page separately for Vex…'
+                  : !canInclude
+                    ? 'Vex page context is not available for this site yet.'
+                    : contextEligible && !contextReady
+                      ? 'Page context is available on demand.'
+                      : state.pending && !state.sendInFlight
+                        ? 'The prior Send outcome is unresolved. Send again to retry that exact attempt.'
+                        : '';
                 ui.send.disabled = state.sendInFlight || (!state.pending && !ui.draft.value.trim());
                 ui.responseProgress.hidden = true;
                 renderTicket();
@@ -1067,7 +1128,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!state.browserContext) return;
                 showInspector(
                   'Captured page',
-                  [['Page', state.browserContext.pageUrl], ['Title', state.browserContext.title || 'None'], ['Read from', 'Rendered page text']],
+                  [['Page', state.browserContext.pageUrl], ['Title', state.browserContext.title || 'None'], ['Read from', 'Separate context-provider rendering']],
                   state.browserContext.text
                 );
               };
@@ -1085,7 +1146,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   ui.query.blur();
                   ui.addressError.hidden = true;
                 } catch (error) {
-                  ui.addressError.textContent = error instanceof Error ? error.message : 'Page is not admitted.';
+                  ui.addressError.textContent = error instanceof Error ? error.message : 'Page could not be opened.';
                   ui.addressError.hidden = false;
                 }
               });
@@ -1096,18 +1157,38 @@ object VexLifeWebP1RuntimeArtifacts {
               ui.appSelector.addEventListener('change', () => { ui.appSelector.value = 'browser'; });
 
               window.addEventListener('message', (event) => {
-                if (event.source !== ui.pageFrame.contentWindow) return;
+                if (event.source !== ui.contextFrame.contentWindow) return;
                 const next = normalizeContext(event.data);
-                if (!next) return;
+                if (!next || !state.contextTargetPageUrl || next.pageUrl !== state.contextTargetPageUrl) return;
                 state.browserContext = next;
-                ui.query.value = next.pageUrl;
-                renderFrameStatus();
+                state.contextLoading = false;
+                state.includePage = true;
+                renderFrameStatus('Vex page context is ready for the next turn.', 'ContextReady');
                 renderComposer();
               });
 
               ui.pageFrame.addEventListener('load', () => {
-                state.browserContext = null;
-                renderFrameStatus('Waiting for readable page context…', 'Loading');
+                if (state.humanFrameLoadExpected) {
+                  state.humanFrameLoadExpected = false;
+                  if (state.contextTargetPageUrl && !state.browserContext) {
+                    renderFrameStatus('Page opened directly · Vex page context is available on demand.', 'Direct');
+                  } else if (!state.contextTargetPageUrl) {
+                    renderFrameStatus('Page opened directly · Vex page context is not available for this site yet.', 'Direct');
+                  }
+                } else {
+                  state.browserContext = null;
+                  state.includePage = false;
+                  state.humanPageUrl = null;
+                  state.contextTargetPageUrl = null;
+                  state.contextLoading = false;
+                  ui.contextFrame.removeAttribute('src');
+                  ui.query.value = '';
+                  ui.query.placeholder = 'Current address unavailable · enter a web address';
+                  renderFrameStatus(
+                    'The page navigated inside the embedded web view. Its exact address is not observable from this web-hosted presentation, so the stale address and Vex page context were cleared.',
+                    'Unlocated'
+                  );
+                }
                 renderComposer();
               });
 
@@ -1141,8 +1222,22 @@ object VexLifeWebP1RuntimeArtifacts {
               });
 
               ui.contextShare.addEventListener('click', () => {
-                if (!state.browserContext) return;
-                state.includePage = !state.includePage;
+                if (state.contextLoading) return;
+
+                if (state.browserContext) {
+                  state.includePage = !state.includePage;
+                  renderComposer();
+                  return;
+                }
+
+                if (!state.contextTargetPageUrl) return;
+                const contextFrameUrl = contextFrameUrlFor(state.contextTargetPageUrl);
+                if (!contextFrameUrl) return;
+
+                state.contextLoading = true;
+                state.includePage = false;
+                ui.contextFrame.src = contextFrameUrl;
+                renderFrameStatus('Reading the current page separately for Vex…', 'Loading');
                 renderComposer();
               });
 

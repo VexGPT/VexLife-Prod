@@ -234,7 +234,11 @@ svg { display: block; }
 }
 .frame-status[data-frame="Loading"] { background: var(--sunken); color: var(--ink-2); border-bottom-color: var(--rule); }
 .viewport { position: relative; flex: 1; min-height: 0; }
-.viewport iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #fff; }
+.viewport #page-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #fff; }
+.context-frame {
+  position: absolute; width: 1px; height: 1px; left: -10000px; top: -10000px;
+  border: 0; opacity: 0; pointer-events: none;
+}
 .viewport-empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink-3); background: var(--ground); }
 
 .seam {

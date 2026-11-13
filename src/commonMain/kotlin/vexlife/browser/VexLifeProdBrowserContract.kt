@@ -1,10 +1,11 @@
 package vexlife.browser
 
 /**
- * Bounded browser contract for the first generated VexLife product circuit.
+ * Browser presentation + Vex-context boundaries for the generated VexLife product circuit.
  *
- * The initial product pressure is Vex-owned GitHub Pages. General public-web proxying is not earned
- * by this source. The frame host and prompt-context owner both consume this exact admission boundary.
+ * Human navigation is ordinary web navigation. The isolated frame host is a separate context-only
+ * provider for the currently admitted Vex-owned pages; it must not redefine what the human browser
+ * is allowed to display.
  */
 object VexLifeProdBrowserContract {
     const val FrameHostPort =
@@ -34,10 +35,40 @@ object VexLifeProdBrowserContract {
     const val CaptureRendered =
         "RENDERED"
 
+    val HumanPageSchemes =
+        listOf(
+            "http:",
+            "https:",
+        )
+
+    val RejectedHumanPageHosts =
+        listOf(
+            "localhost",
+            "127.0.0.1",
+            "0.0.0.0",
+            "[::1]",
+        )
+
+    const val RejectedHumanPageHostSuffix =
+        ".localhost"
+
+    /** Hosts currently admitted for Vex rendered-page context projection. */
     val AdmittedHosts =
         listOf(
             "vgong24.github.io",
             "vexgpt.github.io",
+        )
+
+    private val HumanWebPage =
+        Regex(
+            """https?://(?:\[[0-9A-Fa-f:]+\]|[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?)(?::[0-9]{1,5})?(?:[/?#][^\s\\]*)?""",
+            RegexOption.IGNORE_CASE,
+        )
+
+    private val ProductLocalPage =
+        Regex(
+            """https?://(?:localhost|(?:[A-Za-z0-9.-]+\.)localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(?::[0-9]{1,5})?(?:[/?#][^\s\\]*)?""",
+            RegexOption.IGNORE_CASE,
         )
 
     private val AdmittedPage =
@@ -45,7 +76,33 @@ object VexLifeProdBrowserContract {
             """https://(?:vgong24|vexgpt)\.github\.io(?:[/?#][^\s\\]*)?""",
         )
 
-    fun admitPageUrl(
+    fun admitHumanPageUrl(
+        value: String,
+    ): String {
+        require(
+            value.isNotEmpty() &&
+                value.length <=
+                MaxPageUrlCharacters &&
+                value ==
+                value.trim() &&
+                value.none {
+                    it.code <
+                        0x20
+                } &&
+                HumanWebPage.matches(
+                    value,
+                ) &&
+                !ProductLocalPage.matches(
+                    value,
+                ),
+        ) {
+            "VexLife-Prod human browser page must be one ordinary non-local HTTP(S) URL"
+        }
+
+        return value
+    }
+
+    fun admitContextPageUrl(
         value: String,
     ): String {
         require(
@@ -62,17 +119,25 @@ object VexLifeProdBrowserContract {
                     value,
                 ),
         ) {
-            "VexLife-Prod browser page must be one admitted Vex-owned GitHub Pages HTTPS URL"
+            "VexLife-Prod browser context page must be one admitted Vex-owned GitHub Pages HTTPS URL"
         }
 
         return value
     }
 
+    /** Compatibility name retained for the context/frame-host owner. */
+    fun admitPageUrl(
+        value: String,
+    ): String =
+        admitContextPageUrl(
+            value,
+        )
+
     fun frameUrlFor(
         pageUrl: String,
     ): String {
         val admitted =
-            admitPageUrl(
+            admitContextPageUrl(
                 pageUrl,
             )
         val separator =
