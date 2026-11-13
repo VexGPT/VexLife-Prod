@@ -37,7 +37,7 @@ internal object VexLifeWebP1ExperienceMarkup {
     <form class="address" id="address-form" autocomplete="off">
       <label class="visually-hidden" for="query">Page address</label>
       <input id="query" data-vex-ref="${VexLifeWebP1.BrowserQuery.identity.ref}" type="text" list="page-suggestions" spellcheck="false"
-        inputmode="url" placeholder="Type a web address" title="">
+        inputmode="url" placeholder="Type a Vex-owned web address" title="">
       <datalist id="page-suggestions">
         <option value="vgong24.github.io/Vextreme/pages/terrain-map.html">Vextreme terrain</option>
         <option value="vexgpt.github.io/VexWork/orientation.html">VexWork orientation</option>
@@ -69,7 +69,7 @@ internal object VexLifeWebP1ExperienceMarkup {
       <div class="viewport" data-vex-ref="${VexLifeWebP1.BrowserViewport.identity.ref}">
         <iframe id="page-frame" title="Opened page" referrerpolicy="no-referrer"
           sandbox="allow-scripts allow-same-origin"></iframe>
-        <div class="viewport-empty" id="viewport-empty"><p>Open any public web page from the address field. Pages open signed out.</p></div>
+        <div class="viewport-empty" id="viewport-empty"><p>Open a Vex-owned public page from the address field. Pages open signed out.</p></div>
       </div>
     </section>
 
@@ -96,12 +96,12 @@ internal object VexLifeWebP1ExperienceMarkup {
         </p>
         <button class="quiet-button" type="button" data-vex-legacy="CompanionCheck" id="companion-check" hidden>Check again</button>
         <button class="outline-button vision-control" type="button" data-vex-ref="${VexLifeWebP1.Vision.identity.ref}" id="vision-control"
-          aria-describedby="vision-control-status" aria-disabled="true" disabled title="Vision Look Now is not connected yet">
+          aria-describedby="vision-control-status" aria-disabled="true" disabled title="Vision availability is checking">
           <svg class="vision-mark" viewBox="0 0 20 20" aria-hidden="true"><path d="M2.4 10s2.8-4.3 7.6-4.3 7.6 4.3 7.6 4.3-2.8 4.3-7.6 4.3S2.4 10 2.4 10Z"/><circle cx="10" cy="10" r="2.3"/></svg>
           <span>Vision</span>
           <span class="vision-state">Held</span>
         </button>
-        <span class="visually-hidden" id="vision-control-status">Vision is present in VexLife, but Look Now is not connected to the macOS picker yet.</span>
+        <span class="visually-hidden" id="vision-control-status">Vision route availability is checking.</span>
         <button class="outline-button view-switch" type="button" data-vex-ref="${VexLifeWebP1.CompanionViewSwitch.identity.ref}" id="view-switch" aria-controls="view-settings" aria-expanded="false">Settings</button>
       </div>
 
