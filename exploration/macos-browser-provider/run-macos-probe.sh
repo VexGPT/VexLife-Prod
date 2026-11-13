@@ -6,12 +6,12 @@ BUILD_DIR="${TMPDIR:-/tmp}/vexlife-browser-provider-probe"
 BINARY="$BUILD_DIR/VexLifeBrowserProviderProbe"
 
 if ! command -v xcrun >/dev/null 2>&1; then
-  echo "VEXLIFE_BROWSER_PROBE_FAILURE	TOOLCHAIN	xcrun is unavailable on this Mac." >&2
+  echo "VEXLIFE_BROWSER_PROBE_FAILURE\tTOOLCHAIN\txcrun is unavailable on this Mac." >&2
   exit 2
 fi
 
 if ! xcrun --find swiftc >/dev/null 2>&1; then
-  echo "VEXLIFE_BROWSER_PROBE_FAILURE	TOOLCHAIN	swiftc is unavailable through xcrun." >&2
+  echo "VEXLIFE_BROWSER_PROBE_FAILURE\tTOOLCHAIN\tswiftc is unavailable through xcrun." >&2
   exit 2
 fi
 
@@ -23,7 +23,7 @@ xcrun swiftc \
   "$SCRIPT_DIR/BrowserProviderProbe.swift" \
   -o "$BINARY"
 
-LOG="$BUILD_DIR/probe-$PPID-$.log"
+LOG="$BUILD_DIR/probe-$PPID-$$.log"
 cleanup() { rm -f "$LOG"; }
 trap cleanup EXIT HUP INT TERM
 
@@ -39,19 +39,13 @@ fi
 # The default Relay proof is specifically the Vextreme regression check. A caller-supplied URL
 # remains an exploratory launch and does not claim this Vextreme chrome predicate.
 if [ "$#" -eq 0 ]; then
-  chrome_line="$(grep -F 
-
-# [VXG RealForever]
-VEXLIFE_BROWSER_PROBE_VEXTREME_CHROME\t' "$LOG" | tail -n 1 || true)"
+  chrome_line="$(grep -F $'VEXLIFE_BROWSER_PROBE_VEXTREME_CHROME\t' "$LOG" | tail -n 1 || true)"
   if [ -z "$chrome_line" ] || \
      [[ "$chrome_line" != *'"present":true'* ]] || \
      [[ "$chrome_line" != *'"text":"Vextreme"'* ]] || \
      [[ "$chrome_line" != *'"text":"VexLife"'* ]] || \
      [[ "$chrome_line" != *'"text":"VexWork"'* ]]; then
-    printf '%s\n' 
-
-# [VXG RealForever]
-VEXLIFE_BROWSER_PROBE_FAILURE\tVEXTREME_CHROME_REQUIRED\tCanonical Vextreme / VexLife / VexWork family chrome was not observed.' >&2
+    printf '%s\n' $'VEXLIFE_BROWSER_PROBE_FAILURE\tVEXTREME_CHROME_REQUIRED\tCanonical Vextreme / VexLife / VexWork family chrome was not observed.' >&2
     exit 3
   fi
 fi
