@@ -203,7 +203,13 @@ Conversation and Settings are alternate Companion presentations. Their view swit
 state only and does not mint another product semantic-state owner.
 
 Controls whose current backend effect is not admitted remain non-effecting rather than fabricating
-capability. Home directory mutation, Continuity/Dream sync, Stop, and low-memory alert remain held.
+capability. Home directory mutation, Continuity mode, Dream sync, Stop, and low-memory alert remain held.
+
+Settings / Continuity renders the service's Memory projection (`GET /api/v1/memory`, owned by
+`VexLifeMemoryFamily`; see `VEXLIFE-CONTINUITY-REALIGNMENT.md`) and the per-turn Memory inclusion
+note. Continuity mode and Dream sync stay disabled as "Not available yet", with one line naming what
+each will be in the predecessor's own terms (Home Bridge continuity modes; Dream Sync review), so the
+label is not left to imply a meaning nobody owns yet.
 
 Settings / Resources now consumes the read-only local-service current-state projection rather than
 displaying a placeholder for Mac resource truth. The projection is formable independently of

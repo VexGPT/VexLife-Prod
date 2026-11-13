@@ -493,6 +493,9 @@ svg { display: block; }
 .setting h2 { margin: 0 0 9px; font-size: var(--step-0); font-weight: 650; }
 .setting-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .setting-note-line { margin: 8px 0 0; color: var(--ink-2); font-size: var(--step--1); }
+.memory-state { margin: 0 0 12px; }
+.memory-label { margin: 0; font-weight: 600; }
+.memory-state .setting-note-line { margin-top: 4px; }
 .path { font-family: var(--mono); font-size: 11.5px; overflow-wrap: anywhere; }
 
 .legend { display: flex; gap: 12px; margin: 0 0 9px; padding: 0; list-style: none; font-size: var(--step--1); color: var(--ink-2); }

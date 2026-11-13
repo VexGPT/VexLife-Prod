@@ -175,7 +175,6 @@ internal object VexLifeWebP1ExperienceMarkup {
             <span class="meter-text" id="memory-text">Measuring</span>
           </div>
           <p class="setting-note-line" id="resource-note">Current machine and model resource truth has not been observed yet.</p>
-          <p class="setting-note-line" id="memory-note"></p>
 
           <div class="toggle-row">
             <span class="toggle-label" id="thoughts-label">Viewable thoughts</span>
@@ -195,13 +194,23 @@ internal object VexLifeWebP1ExperienceMarkup {
             <button class="outline-button wide" type="button" data-vex-ref="${VexLifeWebP1.HomeDirectories.identity.ref}" id="home-directories" disabled>View accessible directories</button>
             <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.HomeAddDirectory.identity.ref}" id="home-add" disabled>Add</button>
           </div>
-          <div class="home-row" data-vex-ref="${VexLifeWebP1.SettingsContinuity.identity.ref}">
-            <span class="home-label">Continuity mode</span>
-            <button class="outline-button state" type="button" data-vex-ref="${VexLifeWebP1.ContinuityMode.identity.ref}" id="continuity-mode" disabled>Not connected</button>
-            <span class="home-label">Dream sync</span>
-            <button class="outline-button state" type="button" data-vex-ref="${VexLifeWebP1.DreamSync.identity.ref}" id="dream-sync" disabled>Not connected</button>
-          </div>
           <p class="setting-note-line">This presentation does not open or mutate your Vex Home. Canonical Conversation stays upstream in VexLife; browser-context receipts are kept separately in <span class="path" id="setting-data-dir"></span>.</p>
+        </section>
+
+        <section class="setting" data-vex-ref="${VexLifeWebP1.SettingsContinuity.identity.ref}" aria-labelledby="continuity-heading">
+          <h2 id="continuity-heading">Continuity</h2>
+          <div class="memory-state" data-vex-ref="${VexLifeWebP1.ContinuityMemory.identity.ref}" id="vex-memory">
+            <p class="memory-label" id="vex-memory-label">Memory · Checking</p>
+            <p class="setting-note-line" id="vex-memory-detail">VexLife hasn't read Vex's Memory yet.</p>
+            <p class="setting-note-line" id="memory-note"></p>
+          </div>
+          <div class="home-row">
+            <span class="home-label">Continuity mode</span>
+            <button class="outline-button state" type="button" data-vex-ref="${VexLifeWebP1.ContinuityMode.identity.ref}" id="continuity-mode" disabled>Not available yet</button>
+            <span class="home-label">Dream sync</span>
+            <button class="outline-button state" type="button" data-vex-ref="${VexLifeWebP1.DreamSync.identity.ref}" id="dream-sync" disabled>Not available yet</button>
+          </div>
+          <p class="setting-note-line">Continuity mode will choose how another device reaches Vex: as a window onto this Mac's Vex, or as a Vex of its own. Dream sync will let Vex propose what to keep from your conversations so you can accept or decline each one before anything is kept or shared. Neither exists in VexLife-Prod yet.</p>
         </section>
 
         <section class="setting setting-reset" data-vex-ref="${VexLifeWebP1.SettingsReset.identity.ref}">

@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.home.VexLifeProdHome
+import vexlife.memory.VexLifeMemoryFamily
 import vexlife.vision.VexLifeVisionFamily
 
 /**
@@ -31,6 +32,8 @@ object VexLifeProdServiceContract {
 
     const val MemoryDreamRunResponseSchema =
         "vexlife-prod.local-service-memory-dream-run-response/v1"
+
+    const val MemoryProjectionSchema = "vexlife-prod.local-service-memory-projection/v1"
 
     const val VisionProjectionSchema =
         "vexlife-prod.local-service-vision-projection/v2"
@@ -88,6 +91,8 @@ object VexLifeProdServiceContract {
 
     const val ContextPath =
         "/api/v1/context"
+
+    const val MemoryPath = "/api/v1/memory"
 
     const val MemoryDreamPath =
         "/api/v1/memory/dream"
@@ -417,6 +422,25 @@ object VexLifeProdServiceContract {
         val firstPersonAuthorityGranted: Boolean,
         val effectsPerformed: Boolean,
     )
+    /** What a person is told about Vex's long-term Memory; see [VexLifeMemoryFamily]. */
+    @Serializable
+    data class MemoryProjection(
+        val schemaVersion: String,
+        val state: String,
+        val display: VexLifeMemoryFamily.DisplayState,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion == MemoryProjectionSchema &&
+                    state in VexLifeMemoryFamily.StateRefs &&
+                    !effectsPerformed
+            ) {
+                "Memory projection is invalid"
+            }
+        }
+    }
+
     @Serializable
     data class VisionProjection(
         val schemaVersion: String,
