@@ -44,18 +44,30 @@ PREDECESSOR / LINEAGE SOURCE
 PREDECESSOR SOURCE
 != CURRENT PRODUCT AUTHORITY
 
-REFERENCE / COMPATIBILITY BRIDGE
-!= REPOSITORY-LEVEL RUNTIME DEPENDENCY
+CURRENT PRODUCT BODY
+!= EVERY SUBSYSTEM MIGRATION COMPLETE
+
+STANDALONE PRODUCT DIRECTION
+!= EVERY PREDECESSOR BRIDGE RETIRED
+
+EXACT CURRENT COMPATIBILITY BRIDGE
+= MAY CONSUME PREDECESSOR STATE / EVIDENCE
+
+EXACT BRIDGE
+!= REPOSITORY-LEVEL RUNTIME PARENT
 ~~~
 
-VexLife-Prod has formed its own product substrate, including Product Home/runtime/Conversation/service,
-setup/bootstrap and macOS lifetime owners. Exact acceptance/currentness for each owner remains in the
-foundation index and VexWork; this front door does not promote a held predicate to PASS.
+New Beginnings has formed substantial VexLife-Prod-owned substrate across Product Home, runtime,
+Conversation, service, setup/bootstrap and macOS lifetime. That does **not** mean every one of those
+relationships is already accepted/current or that every predecessor bridge is retired. The foundation
+index deliberately distinguishes ACCEPTED, LIVED COMPATIBLE, CANDIDATE, PREDECESSOR BRIDGE and HELD
+states; VexWork carries the work trajectory.
 
-`vgong24/VexLife` remains important lineage and behavioral provenance. A surviving live dependency
-on predecessor state or evidence must be named by an **exact current foundation/bridge owner**. It
-must never be inferred from repository age, an old quick-start, a historical launch success, or a
-transitional README statement.
+`vgong24/VexLife` remains important lineage, behavioral provenance and—where an exact current
+foundation says so—a bounded compatibility/evidence source. Canonical `~/.vexlife` Home,
+Conversation/Memory compatibility and predecessor-runtime evidence must remain source-descendable
+while they are current. What must not be inferred is **repository-level** runtime authority from
+repository age, an old quick-start, historical launch success, or a transitional README statement.
 
 Historical evidence remains valid evidence. Superseded ownership language is not current authority.
 
@@ -68,9 +80,10 @@ proved end to end. Victor's lived runs falsified those front-door completion cla
 established only that the attempted Prod presentation route was incomplete; it did **not** transfer
 current product authority back to `vgong24/VexLife`.
 
-The next ordinary Mac entry must therefore descend through the current VexLife-Prod setup/lifetime/
-presentation owners and prove the whole current product end to end. If an exact current compatibility
-bridge to predecessor VexLife state is required, consume only that named bridge. Do not reconstruct a
+The next ordinary Mac entry must start from the current VexLife-Prod product intention, then descend
+through the foundation index + VexWork to the **exact current owner of each required effect**. That
+owner may be a Prod owner or an exact bounded predecessor compatibility bridge. Preserve a bridge while
+it is current; retire it only when successor ownership is actually accepted. Do not reconstruct a
 repository-level parent/child runtime relationship from historical launchers.
 
 ## Current position

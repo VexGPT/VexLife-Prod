@@ -26,16 +26,23 @@ VexLife-Prod
 vgong24/VexLife
 = predecessor / provenance source
 
-PREDECESSOR REFERENCE
-!= LIVE RUNTIME DEPENDENCY
+PREDECESSOR REPOSITORY AS A WHOLE
+!= LIVE RUNTIME PARENT
 
-LIVE PREDECESSOR DEPENDENCY
+CURRENT PRODUCT AUTHORITY
+!= ALL SUBSYSTEM BRIDGES RETIRED
+
+EXACT CURRENT PREDECESSOR BRIDGE
+= MAY CONSUME PREDECESSOR STATE / EVIDENCE
+
+LIVE PREDECESSOR BRIDGE
 = exact current bridge owner + exact bounded meaning
 ~~~
 
-A once-valid transitional dependency must be retired from present-tense entry source when successor
-ownership becomes current. Preserve its evidence/history, but do not allow the old statement to
-remain a competing current authority.
+A once-valid **repository-level** transitional ownership statement must be retired from present-tense
+entry source when successor ownership becomes current. Preserve its evidence/history and preserve any
+still-current bounded bridge. Do not erase a compatibility owner merely to simplify the story, and do
+not allow the predecessor repository as a whole to remain a competing current authority.
 
 The current behavioral reference for continuity realignment is `vgong24/VexLife` at
 `7d59753687ff12726b0d309ee2dde028b5f89e8a`. Historical JavaScript is provenance for earned

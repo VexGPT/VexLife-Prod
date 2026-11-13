@@ -25,16 +25,22 @@ VexGPT/VexLife-Prod
 vgong24/VexLife
 = predecessor / lineage / behavioral provenance
 != default runtime parent
+
+CURRENT PRODUCT BODY
+!= EVERY CURRENT EFFECT OWNER LIVES IN PROD
+
+STANDALONE DIRECTION
+!= EVERY PREDECESSOR BRIDGE RETIRED
 ~~~
 
-Start from VexLife-Prod current source. A predecessor dependency exists only when an exact current
-foundation names the bridge and its bounded meaning. Repository age, historical launch success,
-compatibility with canonical Vex Home, or retained evidence never creates repository-level runtime
-authority.
+Start from VexLife-Prod current source. A predecessor relationship may remain current when an exact
+foundation names the bridge and its bounded meaning. Do not skip such a bridge merely because Prod is
+the current product body. Conversely, repository age, historical launch success, compatibility with
+canonical Vex Home, or retained evidence never creates **repository-level** runtime authority.
 
-When current source and a historical/transitional statement disagree, descend to the current
-foundation + VexWork owner and retire the stale present-tense statement. Do not preserve contradictory
-"current" narratives in multiple entry surfaces.
+When entry prose and deeper current source disagree, descend to the exact foundation + VexWork owner.
+Retire only the present-tense ownership statement that is actually superseded; preserve still-current
+compatibility bridges, evidence, historical truth and wake conditions.
 
 Do not broad-copy historical VexLife or Android architecture into this repository.
 
@@ -94,7 +100,7 @@ REUSED_PROCESS_PRIMITIVE != REUSED_LIFECYCLE_MEANING
 
 Before changing or adding a Mac front door:
 
-1. trace the current VexLife-Prod startup sequence to its current lifecycle/process/currentness owners; consult predecessor VexLife only when an exact current foundation names a bounded compatibility bridge;
+1. start from the current VexLife-Prod product-entry intention and descend to the exact current lifecycle/process/currentness owner for each required effect; that owner may be Prod source or an exact bounded predecessor compatibility bridge;
 2. reuse the lowest rightful owner that provides the needed effect—do not call a higher-level human action merely because it eventually reaches the same state;
 3. preserve the ordinary windowed human route unless the human explicitly selects a terminal/recovery route;
 4. keep lifecycle readiness and presentation selection as distinct effects;
