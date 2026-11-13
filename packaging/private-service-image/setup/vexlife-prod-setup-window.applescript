@@ -99,7 +99,10 @@ on projectionSummary(projection)
 end projectionSummary
 
 on performSetup(setupLauncher, sourceSha, modeFlag, headingText)
-    set panel to app's NSWindow's alloc()'s initWithContentRect:{{0, 0}, {520, 160}} styleMask:(app's NSWindowStyleMaskTitled) backing:(app's NSBackingStoreBuffered) defer:false
+    set panelRect to {{0, 0}, {520, 160}}
+    set panelStyle to app's NSWindowStyleMaskTitled
+    set panelBacking to app's NSBackingStoreBuffered
+    set panel to app's NSWindow's alloc()'s initWithContentRect:panelRect styleMask:panelStyle backing:panelBacking defer:false
     panel's setTitle:"VexLife"
     panel's center()
 
