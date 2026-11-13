@@ -115,6 +115,83 @@ class VexLifeScoreContinuityTest {
     }
 
     @Test
+    fun externallyOwnedDeferredAcceptanceResolvesBeforeScoreMutation() {
+        withHome(
+            "vexlife-score-acceptance-read-",
+        ) {
+            home ->
+            completedConversation(
+                home,
+            )
+            val candidate =
+                candidate(
+                    home,
+                )
+            val authority =
+                materializeDeferredAuthority(
+                    home = home,
+                    candidate = candidate.candidate,
+                    formedAt =
+                        "2026-11-13T10:20:30.000Z",
+                )
+
+            val current =
+                VexLifeCurrentMemoryReader
+                    .readCurrentScoreAcceptance(
+                        productHome = home,
+                        acceptanceRef =
+                            authority.acceptanceRef,
+                        acceptanceSha256 =
+                            authority.acceptanceSha256,
+                    )
+
+            assertEquals(
+                authority.semanticAuthorityHeadSha256,
+                current.semanticAuthorityHeadSha256,
+            )
+            assertEquals(
+                candidate.candidateRef,
+                current.candidate[
+                    "candidateRef"
+                ]
+                    ?.jsonPrimitive
+                    ?.content,
+            )
+            assertEquals(
+                "DISPUTED_OR_UNRESOLVED",
+                current.acceptance[
+                    "memoryRelation"
+                ]
+                    ?.jsonPrimitive
+                    ?.content,
+            )
+            assertEquals(
+                "UNKNOWN",
+                current.acceptance[
+                    "statementState"
+                ]
+                    ?.jsonPrimitive
+                    ?.content,
+            )
+            assertFalse(
+                current.acceptance[
+                    "acceptedForContinuity"
+                ]!!
+                    .jsonPrimitive
+                    .content
+                    .toBoolean(),
+            )
+            assertNull(
+                VexLifeCurrentMemoryReader
+                    .readCurrentScoreCoordinates(
+                        home,
+                    )
+                    .scoreHeadSha256,
+            )
+        }
+    }
+
+    @Test
     fun externallyOwnedDeferredAcceptanceCommitsScoreAndMakesDreamSourceCaughtUp() {
         withHome(
             "vexlife-score-accepted-",
