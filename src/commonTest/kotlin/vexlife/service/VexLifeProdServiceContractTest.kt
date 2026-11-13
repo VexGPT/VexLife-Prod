@@ -43,6 +43,10 @@ class VexLifeProdServiceContractTest {
             VexLifeProdServiceContract.SourceCurrentnessPath,
         )
         assertEquals(
+            "/api/v1/current-state",
+            VexLifeProdServiceContract.CurrentStatePath,
+        )
+        assertEquals(
             "/api/v1/conversation",
             VexLifeProdServiceContract.ConversationPath,
         )
@@ -57,6 +61,49 @@ class VexLifeProdServiceContractTest {
         assertEquals(
             "/api/v1/conversation/send",
             VexLifeProdServiceContract.ConversationSendPath,
+        )
+    }
+
+    @Test
+    fun currentStateProjectionRequiresBoundedReadOnlyTruth() {
+        val projection =
+            VexLifeProdServiceContract.CurrentStateProjection(
+                schemaVersion =
+                    VexLifeProdServiceContract.CurrentStateProjectionSchema,
+                observedAt = "2026-11-12T18:00:00Z",
+                homePath = "/Users/victor/.vexlife",
+                homeDisposition = "EXISTING_CURRENT",
+                platform = "darwin",
+                architecture = "arm64",
+                chipModel = "Apple M4 Pro",
+                hostEligibilityState = "ELIGIBLE",
+                hostEligibilityReason = null,
+                totalMemoryBytes = 36L * 1024L * 1024L * 1024L,
+                modelMinimumMemoryBytes = 12L * 1024L * 1024L * 1024L,
+                freeStorageBytes = 100L * 1024L * 1024L * 1024L,
+                activeModelRef = "model.heretic.test",
+                activeModelProfileRef = "model-profile.heretic.test",
+                runtimeState = "QUALIFIED",
+                runtimeCurrentness = "STARTUP_QUALIFIED_NOT_REOBSERVED",
+                runtimeReceiptRef = "receipt.heretic.test",
+                modelArtifactState = "VERIFIED_AT_SETUP",
+                modelArtifactTotalBytes = 15_000L,
+                modelArtifactVerifiedBytes = 15_000L,
+                modelArtifactMissingBytes = 0,
+                modelArtifactInvalidBytes = 0,
+                effectsPerformed = false,
+            )
+
+        assertEquals(
+            "VERIFIED_AT_SETUP",
+            projection.modelArtifactState,
+        )
+        assertEquals(
+            100L * 1024L * 1024L * 1024L,
+            projection.freeStorageBytes,
+        )
+        assertFalse(
+            projection.effectsPerformed,
         )
     }
 
