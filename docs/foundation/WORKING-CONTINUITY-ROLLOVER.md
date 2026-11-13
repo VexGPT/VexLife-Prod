@@ -251,7 +251,9 @@ required, and stale request evidence cannot lock the new send attempt.
 The direct Companion path now has one bounded producer surface:
 
 ~~~text
-exact live prompt receipt + current attributed Memory
+exact live prompt receipt
++ current attributed Memory
++ current Score coordinate projection
         ↓
 DirectWorkingContinuity.prepare(...)
         ↓
@@ -271,6 +273,27 @@ or HELD
 
 The Plan is formed while the exact Memory bounded-out counts are still available, but no working
 checkpoint effect is realized until after the corresponding Conversation head is durable.
+
+Current Score coordinates are independently re-read from the canonical Home Score source. They do not
+come from whichever Memory pages happened to fit the prompt and they do not remain current merely because
+a prior successor carried them:
+
+~~~text
+WorkingSet.currentStatementRefs = current Score statement refs
+WorkingSet.openLoopRefs         = current Score OPEN-loop refs
+
+CURRENT SCORE
+!= MEMORY SELECTION
+!= PRIOR SUCCESSOR INHERITANCE
+~~~
+
+No committed Score head plus no durable Score events is one current empty coordinate set. Durable Score
+material without a current head, malformed/currentness-invalid Score, or a Score change before checkpoint
+realization holds working-continuity stewardship rather than promoting stale refs. A completed human
+Conversation turn remains independently valid.
+
+The Score coordinate projection is reference-only. It does not expose Score semantic bodies to the provider,
+widen Memory, or create a generic source resolver.
 
 A continuity-specific formation/commit problem does **not** retroactively convert a completed
 Conversation turn into a provider failure. Expected continuity-owner failures become a separate
