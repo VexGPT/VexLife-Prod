@@ -26,6 +26,7 @@ import vexlife.local.VexLifeProdLocalSetup
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.memory.VexLifeDailyMemoryDream
 import vexlife.model.heretic.HereticRuntimeState
+import vexlife.vision.VexLifeProdVisionRuntime
 import vexlife.web.VexLifeWebP1RuntimeArtifacts
 import vexlife.web.VexWebArtifacts
 
@@ -46,6 +47,7 @@ class VexLifeProdLocalService private constructor(
     private val turnExecutor: TurnExecutor,
     private val streamingTurnExecutor: StreamingTurnExecutor?,
     private val dreamExecutor: DreamExecutor?,
+    private val visionExecutor: VisionExecutor?,
 ) : AutoCloseable {
     companion object {
         private const val MaxRequestBytes =
@@ -173,6 +175,7 @@ class VexLifeProdLocalService private constructor(
         internal fun start(
             sourceSha: String,
             session: VexLifeProdLocalSetup.Session,
+            visionRuntimeExecutablePathOrNull: String?,
         ): VexLifeProdLocalService =
             startAt(
                 sourceSha = sourceSha,
@@ -210,6 +213,21 @@ class VexLifeProdLocalService private constructor(
                         )
                     },
                 dreamExecutor = ProductDreamExecutor,
+                visionExecutor =
+                    visionRuntimeExecutablePathOrNull
+                        ?.let {
+                            executablePath ->
+                            VisionExecutor {
+                                requestRef ->
+                                VexLifeProdVisionRuntime.lookNow(
+                                    executable =
+                                        Path.of(
+                                            executablePath,
+                                        ),
+                                    requestRef = requestRef,
+                                )
+                            }
+                        },
             )
 
         internal fun startForTest(
@@ -219,6 +237,8 @@ class VexLifeProdLocalService private constructor(
             streamingTurnExecutor: StreamingTurnExecutor? =
                 null,
             dreamExecutor: DreamExecutor? =
+                null,
+            visionExecutor: VisionExecutor? =
                 null,
         ): VexLifeProdLocalService =
             startAt(
@@ -237,6 +257,7 @@ class VexLifeProdLocalService private constructor(
                 turnExecutor = turnExecutor,
                 streamingTurnExecutor = streamingTurnExecutor,
                 dreamExecutor = dreamExecutor,
+                visionExecutor = visionExecutor,
             )
 
         private fun startAt(
@@ -247,6 +268,7 @@ class VexLifeProdLocalService private constructor(
             turnExecutor: TurnExecutor,
             streamingTurnExecutor: StreamingTurnExecutor?,
             dreamExecutor: DreamExecutor?,
+            visionExecutor: VisionExecutor?,
         ): VexLifeProdLocalService {
             require(
                 SourceShaPattern.matches(
@@ -310,6 +332,7 @@ class VexLifeProdLocalService private constructor(
                         turnExecutor = turnExecutor,
                         streamingTurnExecutor = streamingTurnExecutor,
                         dreamExecutor = dreamExecutor,
+                        visionExecutor = visionExecutor,
                     )
 
                 server.executor =
@@ -365,6 +388,13 @@ class VexLifeProdLocalService private constructor(
             request: VexLifeProdServiceContract.MemoryDreamRunRequest,
         ): VexLifeDailyMemoryDream.Result
     }
+
+    internal fun interface VisionExecutor {
+        fun lookNow(
+            requestRef: String,
+        ): VexLifeProdServiceContract.VisionRuntimeResult
+    }
+
     val origin: String
         get() =
             "http://" +
@@ -453,6 +483,16 @@ class VexLifeProdLocalService private constructor(
 
                 VexLifeProdServiceContract.MemoryDreamPath ->
                     handleMemoryDream(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.VisionPath ->
+                    handleVision(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.VisionLookNowPath ->
+                    handleVisionLookNow(
                         exchange,
                     )
 
@@ -584,6 +624,91 @@ class VexLifeProdLocalService private constructor(
         )
         exchange.responseBody.write(
             bytes,
+        )
+    }
+
+    private fun handleVision(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "GET",
+        )
+
+        val reachable =
+            visionExecutor !=
+                null
+
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value =
+                VexLifeProdServiceContract.VisionProjection(
+                    schemaVersion =
+                        VexLifeProdServiceContract.VisionProjectionSchema,
+                    state =
+                        if (
+                            reachable
+                        ) {
+                            "READY"
+                        } else {
+                            "HELD"
+                        },
+                    routeReachable = reachable,
+                    effectsPerformed = false,
+                ),
+        )
+    }
+
+    private fun handleVisionLookNow(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireJson(
+            exchange,
+        )
+
+        val currentVisionExecutor =
+            visionExecutor
+
+        if (
+            currentVisionExecutor ==
+                null
+        ) {
+            respondError(
+                exchange = exchange,
+                status = 409,
+                code = "VISION_HELD",
+                message = "VexLife Vision local Product route is not reachable",
+            )
+            return
+        }
+
+        val request =
+            JsonCodec.decodeFromString<VexLifeProdServiceContract.VisionLookNowRequest>(
+                requestText(
+                    exchange,
+                ),
+            )
+        val result =
+            currentVisionExecutor.lookNow(
+                request.requestRef,
+            )
+
+        check(
+            result.requestRef ==
+                request.requestRef,
+        ) {
+            "Vision runtime result does not match the exact Product request"
+        }
+
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value = result,
         )
     }
 
