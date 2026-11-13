@@ -288,8 +288,23 @@ fun main(
         args[1] ==
             "--expected-source-sha"
     ) {
-        VexLifeProdMacFrontDoorProcess.run(
+        VexLifeProdMacFrontDoorProcess.inspect(
             args[2],
+        )
+        return
+    }
+
+    if (
+        args.size ==
+            4 &&
+        args[0] ==
+            "--resolve-front-door-control" &&
+        args[2] ==
+            "--expected-source-sha"
+    ) {
+        VexLifeProdMacFrontDoorProcess.resolve(
+            controlRef = args[1],
+            desiredSourceSha = args[3],
         )
         return
     }

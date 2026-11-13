@@ -3,7 +3,9 @@ package vexlife.setup
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.entry.VexLifeProdEntryFamily
 import vexlife.platform.macos.MacUserLaunchdProcess
 import vexlife.service.VexLifeProdMacServiceLifetime
 import vexlife.service.VexLifeProdServiceContract
@@ -112,37 +114,41 @@ class VexLifeProdMacFrontDoorTest {
             effectsPerformed = false,
         )
 
-    private fun projection(
+    private fun hooks(
         existing: VexLifeProdMacServiceLifetime.ExistingObservation,
-    ): VexLifeProdMacFrontDoor.Projection =
-        VexLifeProdMacFrontDoor.observeWithHooks(
-            desiredSourceSha = desired,
-            hooks =
-                VexLifeProdMacFrontDoor.Hooks(
-                    observeCurrentState = ::currentState,
-                    observeExistingService = {
-                        existing
-                    },
-                ),
+    ): VexLifeProdMacFrontDoor.Hooks =
+        VexLifeProdMacFrontDoor.Hooks(
+            observeCurrentState = ::currentState,
+            observeExistingService = {
+                existing
+            },
         )
 
     @Test
-    fun exactRunningSourceOpensWithoutLifecycleEffect() {
+    fun exactRunningSourceMapsToCommonCurrentStateAndOpenDisplay() {
         val value =
-            projection(
-                VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned(
-                    receipt = receipt(desired),
-                    sourceCurrentness = currentness(desired),
-                ),
+            VexLifeProdMacFrontDoor.observeWithHooks(
+                desiredSourceSha = desired,
+                hooks =
+                    hooks(
+                        VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned(
+                            receipt = receipt(desired),
+                            sourceCurrentness = currentness(desired),
+                        ),
+                    ),
             )
 
         assertEquals(
-            VexLifeProdMacFrontDoor.OpenCurrent,
-            value.action,
+            VexLifeProdEntryFamily.StateCurrent,
+            value.semanticStateRef,
         )
         assertEquals(
-            desired,
-            value.currentServiceSourceSha,
+            VexLifeProdEntryFamily.ControlOpenCurrent,
+            value.displayState.primaryControlRef,
+        )
+        assertEquals(
+            "Open VexLife",
+            value.displayState.primaryLabel,
         )
         assertFalse(
             value.effectsPerformed,
@@ -150,89 +156,129 @@ class VexLifeProdMacFrontDoorTest {
     }
 
     @Test
-    fun exactOwnedPriorSourceOffersUpdateInsteadOfTreatingPortOccupancyAsFailure() {
-        val value =
-            projection(
-                VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned(
-                    receipt = receipt(prior),
-                    sourceCurrentness = currentness(prior),
-                ),
+    fun exactOwnedPriorSourceMapsToSharedUpdateStateAndNoAcquisitionEffect() {
+        val observed =
+            VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned(
+                receipt = receipt(prior),
+                sourceCurrentness = currentness(prior),
+            )
+        val projection =
+            VexLifeProdMacFrontDoor.observeWithHooks(
+                desiredSourceSha = desired,
+                hooks = hooks(observed),
+            )
+        val effect =
+            VexLifeProdMacFrontDoor.resolveControlWithHooks(
+                desiredSourceSha = desired,
+                controlRef = VexLifeProdEntryFamily.ControlConvergeDesired,
+                hooks = hooks(observed),
             )
 
         assertEquals(
-            VexLifeProdMacFrontDoor.UpdateAvailable,
-            value.action,
+            VexLifeProdEntryFamily.StateUpdateAvailable,
+            projection.semanticStateRef,
         )
         assertEquals(
             prior,
-            value.currentServiceSourceSha,
+            projection.currentServiceSourceSha,
         )
         assertEquals(
-            4242L,
-            value.currentServicePid,
+            "Update & Restart",
+            projection.displayState.primaryLabel,
+        )
+        assertEquals(
+            VexLifeProdEntryFamily.EffectConvergeProduct,
+            effect.effectRef,
+        )
+        assertEquals(
+            false,
+            effect.allowAcquisition,
         )
         assertFalse(
-            value.effectsPerformed,
+            effect.effectsPerformed,
         )
     }
 
     @Test
-    fun ownedUnhealthyServiceOffersRepairOrUpdateRepairBySourceIdentity() {
+    fun ownedUnhealthyServiceMapsToRepairMeaningWithoutDuplicatingPlatformDecisionLogic() {
         val currentRepair =
-            projection(
-                VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(
-                    receipt = receipt(desired),
-                    launchdObservation = MacUserLaunchdProcess.Observation.LoadedStopped,
-                ),
+            VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(
+                receipt = receipt(desired),
+                launchdObservation = MacUserLaunchdProcess.Observation.LoadedStopped,
             )
         val priorRepair =
-            projection(
-                VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(
-                    receipt = receipt(prior),
-                    launchdObservation = MacUserLaunchdProcess.Observation.LoadedStopped,
-                ),
+            VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(
+                receipt = receipt(prior),
+                launchdObservation = MacUserLaunchdProcess.Observation.LoadedStopped,
             )
 
         assertEquals(
-            VexLifeProdMacFrontDoor.RepairRequired,
-            currentRepair.action,
+            VexLifeProdEntryFamily.StateRepairRequired,
+            VexLifeProdMacFrontDoor
+                .observeWithHooks(
+                    desired,
+                    hooks(currentRepair),
+                )
+                .semanticStateRef,
         )
         assertEquals(
-            VexLifeProdMacFrontDoor.UpdateRepairRequired,
-            priorRepair.action,
+            VexLifeProdEntryFamily.StateUpdateRepairRequired,
+            VexLifeProdMacFrontDoor
+                .observeWithHooks(
+                    desired,
+                    hooks(priorRepair),
+                )
+                .semanticStateRef,
         )
     }
 
     @Test
-    fun absentAndUnknownRemainDistinctAndNoEffecting() {
+    fun absentSetupIsOnlyMacEntryResolutionThatCanGrantAcquisition() {
         val absent =
-            projection(
-                VexLifeProdMacServiceLifetime.ExistingObservation.Absent,
-            )
-        val unknown =
-            projection(
-                VexLifeProdMacServiceLifetime.ExistingObservation.HeldUnknown(
-                    "receipt/PID ownership is not exact",
-                ),
+            VexLifeProdMacServiceLifetime.ExistingObservation.Absent
+        val effect =
+            VexLifeProdMacFrontDoor.resolveControlWithHooks(
+                desiredSourceSha = desired,
+                controlRef = VexLifeProdEntryFamily.ControlSetUp,
+                hooks = hooks(absent),
             )
 
         assertEquals(
-            VexLifeProdMacFrontDoor.SetupRequired,
-            absent.action,
+            VexLifeProdEntryFamily.StateSetupRequired,
+            effect.semanticStateRef,
         )
         assertEquals(
-            VexLifeProdMacFrontDoor.HoldUnknown,
-            unknown.action,
+            VexLifeProdEntryFamily.EffectConvergeProduct,
+            effect.effectRef,
+        )
+        assertEquals(
+            true,
+            effect.allowAcquisition,
+        )
+    }
+
+    @Test
+    fun unknownOwnershipProjectsHeldAndRejectsConvergeControl() {
+        val unknown =
+            VexLifeProdMacServiceLifetime.ExistingObservation.HeldUnknown(
+                "receipt/PID ownership is not exact",
+            )
+        val projection =
+            VexLifeProdMacFrontDoor.observeWithHooks(
+                desiredSourceSha = desired,
+                hooks = hooks(unknown),
+            )
+
+        assertEquals(
+            VexLifeProdEntryFamily.StateHeldUnknown,
+            projection.semanticStateRef,
         )
         assertEquals(
             "receipt/PID ownership is not exact",
-            unknown.serviceDetail,
+            projection.serviceDetail,
         )
-        assertFalse(
-            absent.effectsPerformed,
-        )
-        assertFalse(
-            unknown.effectsPerformed,
+        assertNull(
+            projection.displayState.primaryControlRef,
         )
     }
 }

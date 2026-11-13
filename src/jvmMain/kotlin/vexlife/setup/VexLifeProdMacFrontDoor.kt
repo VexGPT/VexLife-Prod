@@ -3,37 +3,23 @@ package vexlife.setup
 import java.nio.file.Path
 import kotlinx.serialization.Serializable
 import vexlife.contract.VexContractJson
+import vexlife.entry.VexLifeProdEntryFamily
 import vexlife.service.VexLifeProdCurrentState
 import vexlife.service.VexLifeProdMacServiceLifetime
 import vexlife.service.VexLifeProdServiceContract
 
 /**
- * Read-only Mac front-door projection.
+ * macOS observer/adapter for the portable Product-entry Family.
  *
- * This owner decides no lifecycle effect. It only combines current machine/Home/model truth with
- * exact existing Product-service ownership so the human can choose before install/retire/restart.
+ * Mac-specific launchd/receipt/PID truth is mapped into common Product-entry State. The Family owns
+ * lawful Controls / Effects / DisplayState; this adapter owns no duplicate human decision tree.
  */
 object VexLifeProdMacFrontDoor {
     const val Schema =
-        "vexlife-prod.macos-front-door/v1"
+        "vexlife-prod.macos-front-door/v2"
 
-    const val OpenCurrent =
-        "OPEN_CURRENT"
-
-    const val UpdateAvailable =
-        "UPDATE_AVAILABLE"
-
-    const val RepairRequired =
-        "REPAIR_REQUIRED"
-
-    const val UpdateRepairRequired =
-        "UPDATE_REPAIR_REQUIRED"
-
-    const val SetupRequired =
-        "SETUP_REQUIRED"
-
-    const val HoldUnknown =
-        "HOLD_UNKNOWN"
+    const val EffectSchema =
+        "vexlife-prod.macos-front-door-effect/v1"
 
     private val GitSha =
         Regex(
@@ -45,10 +31,11 @@ object VexLifeProdMacFrontDoor {
         val schemaVersion: String,
         val observedAt: String,
         val desiredSourceSha: String,
-        val action: String,
+        val semanticStateRef: String,
         val currentServiceSourceSha: String?,
         val currentServicePid: Long?,
         val serviceDetail: String?,
+        val displayState: VexLifeProdEntryFamily.EntryDisplayState,
         val currentState: VexLifeProdServiceContract.CurrentStateProjection,
         val effectsPerformed: Boolean,
     ) {
@@ -59,14 +46,14 @@ object VexLifeProdMacFrontDoor {
                     GitSha.matches(
                         desiredSourceSha,
                     ) &&
-                    action in
+                    semanticStateRef in
                     setOf(
-                        OpenCurrent,
-                        UpdateAvailable,
-                        RepairRequired,
-                        UpdateRepairRequired,
-                        SetupRequired,
-                        HoldUnknown,
+                        VexLifeProdEntryFamily.StateCurrent,
+                        VexLifeProdEntryFamily.StateUpdateAvailable,
+                        VexLifeProdEntryFamily.StateRepairRequired,
+                        VexLifeProdEntryFamily.StateUpdateRepairRequired,
+                        VexLifeProdEntryFamily.StateSetupRequired,
+                        VexLifeProdEntryFamily.StateHeldUnknown,
                     ) &&
                     !effectsPerformed &&
                     !currentState.effectsPerformed,
@@ -75,12 +62,12 @@ object VexLifeProdMacFrontDoor {
             }
 
             when (
-                action
+                semanticStateRef
             ) {
-                OpenCurrent,
-                UpdateAvailable,
-                RepairRequired,
-                UpdateRepairRequired,
+                VexLifeProdEntryFamily.StateCurrent,
+                VexLifeProdEntryFamily.StateUpdateAvailable,
+                VexLifeProdEntryFamily.StateRepairRequired,
+                VexLifeProdEntryFamily.StateUpdateRepairRequired,
                 -> require(
                     !currentServiceSourceSha.isNullOrBlank() &&
                         currentServicePid !=
@@ -88,10 +75,10 @@ object VexLifeProdMacFrontDoor {
                         currentServicePid >
                         0,
                 ) {
-                    "Mac front-door owned-service action requires exact source/PID projection"
+                    "Mac front-door owned-service state requires exact source/PID projection"
                 }
 
-                SetupRequired ->
+                VexLifeProdEntryFamily.StateSetupRequired ->
                     require(
                         currentServiceSourceSha ==
                             null &&
@@ -103,7 +90,7 @@ object VexLifeProdMacFrontDoor {
                         "setup-required projection must not invent existing-service truth"
                     }
 
-                HoldUnknown ->
+                VexLifeProdEntryFamily.StateHeldUnknown ->
                     require(
                         currentServiceSourceSha ==
                             null &&
@@ -113,6 +100,71 @@ object VexLifeProdMacFrontDoor {
                     ) {
                         "held front-door projection requires only bounded diagnostic detail"
                     }
+            }
+        }
+    }
+
+    @Serializable
+    data class EffectProjection(
+        val schemaVersion: String,
+        val observedAt: String,
+        val desiredSourceSha: String,
+        val semanticStateRef: String,
+        val controlRef: String,
+        val effectRef: String?,
+        val allowAcquisition: Boolean?,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    EffectSchema &&
+                    GitSha.matches(
+                        desiredSourceSha,
+                    ) &&
+                    controlRef in
+                    setOf(
+                        VexLifeProdEntryFamily.ControlOpenCurrent,
+                        VexLifeProdEntryFamily.ControlConvergeDesired,
+                        VexLifeProdEntryFamily.ControlSetUp,
+                        VexLifeProdEntryFamily.ControlCancel,
+                    ) &&
+                    !effectsPerformed,
+            ) {
+                "VexLife-Prod Mac front-door effect projection is invalid"
+            }
+
+            when (
+                effectRef
+            ) {
+                null ->
+                    require(
+                        allowAcquisition ==
+                            null,
+                    ) {
+                        "no-effect Product-entry resolution must not claim acquisition authority"
+                    }
+
+                VexLifeProdEntryFamily.EffectOpenPresentation ->
+                    require(
+                        allowAcquisition ==
+                            null,
+                    ) {
+                        "open-presentation effect must not claim acquisition authority"
+                    }
+
+                VexLifeProdEntryFamily.EffectConvergeProduct ->
+                    require(
+                        allowAcquisition !=
+                            null,
+                    ) {
+                        "converge-product effect requires explicit acquisition authority truth"
+                    }
+
+                else ->
+                    error(
+                        "unsupported Product-entry effect projection",
+                    )
             }
         }
     }
@@ -131,6 +183,14 @@ object VexLifeProdMacFrontDoor {
         },
     )
 
+    private data class Observed(
+        val currentState: VexLifeProdServiceContract.CurrentStateProjection,
+        val entryState: VexLifeProdEntryFamily.EntryState,
+        val currentServiceSourceSha: String?,
+        val currentServicePid: Long?,
+        val serviceDetail: String?,
+    )
+
     fun observe(
         desiredSourceSha: String,
     ): Projection =
@@ -143,6 +203,93 @@ object VexLifeProdMacFrontDoor {
         desiredSourceSha: String,
         hooks: Hooks,
     ): Projection {
+        val observed =
+            observeSemantic(
+                desiredSourceSha = desiredSourceSha,
+                hooks = hooks,
+            )
+        val display =
+            VexLifeProdEntryFamily.Semantics.displayStateFor(
+                observed.entryState,
+            )
+
+        return Projection(
+            schemaVersion = Schema,
+            observedAt = observed.currentState.observedAt,
+            desiredSourceSha = desiredSourceSha,
+            semanticStateRef = observed.entryState.stateRef,
+            currentServiceSourceSha = observed.currentServiceSourceSha,
+            currentServicePid = observed.currentServicePid,
+            serviceDetail = observed.serviceDetail,
+            displayState = display,
+            currentState = observed.currentState,
+            effectsPerformed = false,
+        )
+    }
+
+    fun resolveControl(
+        desiredSourceSha: String,
+        controlRef: String,
+    ): EffectProjection =
+        resolveControlWithHooks(
+            desiredSourceSha = desiredSourceSha,
+            controlRef = controlRef,
+            hooks = Hooks(),
+        )
+
+    internal fun resolveControlWithHooks(
+        desiredSourceSha: String,
+        controlRef: String,
+        hooks: Hooks,
+    ): EffectProjection {
+        val observed =
+            observeSemantic(
+                desiredSourceSha = desiredSourceSha,
+                hooks = hooks,
+            )
+        val control =
+            requireNotNull(
+                VexLifeProdEntryFamily.controlForRef(
+                    controlRef,
+                ),
+            ) {
+                "Mac front door received an unknown Product-entry Control"
+            }
+        val act =
+            requireNotNull(
+                VexLifeProdEntryFamily.Semantics.resolve(
+                    currentState = observed.entryState,
+                    control = control,
+                ),
+            ) {
+                "Product-entry Control is not lawful under the freshly reobserved State"
+            }
+        val effect =
+            act.effect
+
+        return EffectProjection(
+            schemaVersion = EffectSchema,
+            observedAt = observed.currentState.observedAt,
+            desiredSourceSha = desiredSourceSha,
+            semanticStateRef = observed.entryState.stateRef,
+            controlRef = control.controlRef,
+            effectRef =
+                effect
+                    ?.effectRef,
+            allowAcquisition =
+                (
+                    effect as?
+                        VexLifeProdEntryFamily.ConvergeProduct
+                )
+                    ?.allowAcquisition,
+            effectsPerformed = false,
+        )
+    }
+
+    private fun observeSemantic(
+        desiredSourceSha: String,
+        hooks: Hooks,
+    ): Observed {
         require(
             GitSha.matches(
                 desiredSourceSha,
@@ -159,103 +306,116 @@ object VexLifeProdMacFrontDoor {
             "Mac front door requires no-effect current-state awareness"
         }
 
-        val existing =
-            hooks.observeExistingService(
-                Path.of(
-                    current.homePath,
-                ),
-            )
-
         return when (
-            existing
+            val existing =
+                hooks.observeExistingService(
+                    Path.of(
+                        current.homePath,
+                    ),
+                )
         ) {
             VexLifeProdMacServiceLifetime.ExistingObservation.Absent ->
-                Projection(
-                    schemaVersion = Schema,
-                    observedAt = current.observedAt,
-                    desiredSourceSha = desiredSourceSha,
-                    action = SetupRequired,
+                Observed(
+                    currentState = current,
+                    entryState =
+                        VexLifeProdEntryFamily.SetupRequired(
+                            desiredSourceSha,
+                        ),
                     currentServiceSourceSha = null,
                     currentServicePid = null,
                     serviceDetail = null,
-                    currentState = current,
-                    effectsPerformed = false,
                 )
 
             is VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned -> {
-                val sameSource =
-                    existing.receipt.sourceSha ==
-                        desiredSourceSha
-                Projection(
-                    schemaVersion = Schema,
-                    observedAt = current.observedAt,
-                    desiredSourceSha = desiredSourceSha,
-                    action =
-                        if (
-                            sameSource
-                        ) {
-                            OpenCurrent
-                        } else {
-                            UpdateAvailable
-                        },
-                    currentServiceSourceSha = existing.receipt.sourceSha,
-                    currentServicePid = existing.receipt.launchd.pid,
-                    serviceDetail = null,
+                val sourceSha =
+                    existing.receipt.sourceSha
+                Observed(
                     currentState = current,
-                    effectsPerformed = false,
+                    entryState =
+                        if (
+                            sourceSha ==
+                            desiredSourceSha
+                        ) {
+                            VexLifeProdEntryFamily.Current(
+                                desiredSourceSha,
+                            )
+                        } else {
+                            VexLifeProdEntryFamily.UpdateAvailable(
+                                desiredSourceSha,
+                            )
+                        },
+                    currentServiceSourceSha = sourceSha,
+                    currentServicePid =
+                        existing.receipt.launchd.pid,
+                    serviceDetail = null,
                 )
             }
 
             is VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady -> {
-                val sameSource =
-                    existing.receipt.sourceSha ==
-                        desiredSourceSha
-                Projection(
-                    schemaVersion = Schema,
-                    observedAt = current.observedAt,
-                    desiredSourceSha = desiredSourceSha,
-                    action =
+                val sourceSha =
+                    existing.receipt.sourceSha
+                Observed(
+                    currentState = current,
+                    entryState =
                         if (
-                            sameSource
+                            sourceSha ==
+                            desiredSourceSha
                         ) {
-                            RepairRequired
+                            VexLifeProdEntryFamily.RepairRequired(
+                                desiredSourceSha,
+                            )
                         } else {
-                            UpdateRepairRequired
+                            VexLifeProdEntryFamily.UpdateRepairRequired(
+                                desiredSourceSha,
+                            )
                         },
-                    currentServiceSourceSha = existing.receipt.sourceSha,
-                    currentServicePid = existing.receipt.launchd.pid,
+                    currentServiceSourceSha = sourceSha,
+                    currentServicePid =
+                        existing.receipt.launchd.pid,
                     serviceDetail =
                         existing.launchdObservation
                             .toString(),
-                    currentState = current,
-                    effectsPerformed = false,
                 )
             }
 
             is VexLifeProdMacServiceLifetime.ExistingObservation.HeldUnknown ->
-                Projection(
-                    schemaVersion = Schema,
-                    observedAt = current.observedAt,
-                    desiredSourceSha = desiredSourceSha,
-                    action = HoldUnknown,
+                Observed(
+                    currentState = current,
+                    entryState =
+                        VexLifeProdEntryFamily.HeldUnknown(
+                            desiredSourceSha = desiredSourceSha,
+                            detail = existing.detail,
+                        ),
                     currentServiceSourceSha = null,
                     currentServicePid = null,
                     serviceDetail = existing.detail,
-                    currentState = current,
-                    effectsPerformed = false,
                 )
         }
     }
 }
 
 object VexLifeProdMacFrontDoorProcess {
-    fun run(
+    fun inspect(
         desiredSourceSha: String,
     ) {
         println(
             VexContractJson.encode(
                 VexLifeProdMacFrontDoor.observe(
                     desiredSourceSha,
+                ),
+            ),
+        )
+    }
+
+    fun resolve(
+        controlRef: String,
+        desiredSourceSha: String,
+    ) {
+        println(
+            VexContractJson.encode(
+                VexLifeProdMacFrontDoor.resolveControl(
+                    desiredSourceSha = desiredSourceSha,
+                    controlRef = controlRef,
                 ),
             ),
         )
