@@ -139,6 +139,11 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
+                VexLifeProdServiceContract.CurrentStatePath,
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
                 VexLifeProdServiceContract.VisionPath,
             ),
         )
@@ -221,6 +226,41 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(
             bundle.javascript.contains(
                 "Light or dark",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "Current resources",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "id=\"resource-note\"",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "id=\"home-current-state\"",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "Storage available: ",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "current.runtimeCurrentness",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "current.modelArtifactPresentBySizeBytes",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "Exact hashes are not rechecked in this awareness view.",
             ),
         )
         assertTrue(
