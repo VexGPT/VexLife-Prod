@@ -254,6 +254,16 @@ class VexLifeWebP1RuntimeArtifactsTest {
             ),
         )
         assertTrue(
+            bundle.javascript.contains(
+                "current.modelArtifactPresentBySizeBytes",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "Exact hashes are not rechecked in this awareness view.",
+            ),
+        )
+        assertTrue(
             bundle.html.contains(
                 "Start clean chat",
             ),
