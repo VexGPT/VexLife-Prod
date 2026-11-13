@@ -160,6 +160,106 @@ class VexLifeProdCurrentStateTest {
     }
 
     @Test
+    fun absentCanonicalHomeProjectsNoEffectSetupAwareness() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-current-state-home-absent-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            val projection =
+                VexLifeProdCurrentState.observeWithHooks(
+                    VexLifeProdCurrentState.Hooks(
+                        resolveProductHome = {
+                            home
+                        },
+                        observeHome = {
+                            null
+                        },
+                        observeHost = {
+                            HereticMacHostProfile.evaluate(
+                                HereticMacHostProfile.Observation(
+                                    platform = "darwin",
+                                    architecture = "arm64",
+                                    chipModel = "Apple M4 Pro",
+                                    totalMemoryBytes = 36L * 1024L * 1024L * 1024L,
+                                ),
+                            )
+                        },
+                        observeModel = {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "absent Home awareness must not read Product model binding",
+                            )
+                        },
+                        observeArtifacts = {
+                            error(
+                                "absent Home awareness must not inspect model artifacts",
+                            )
+                        },
+                        observeFreeStorageBytes = {
+                            200L * 1024L * 1024L * 1024L
+                        },
+                        now = {
+                            Instant.parse(
+                                "2026-11-12T18:00:00Z",
+                            )
+                        },
+                    ),
+                )
+
+            assertEquals(
+                "ABSENT_CANONICAL_VEXLIFE_HOME",
+                projection.homeDisposition,
+            )
+            assertEquals(
+                home.toString(),
+                projection.homePath,
+            )
+            assertNull(
+                projection.homeRef,
+            )
+            assertNull(
+                projection.deviceRef,
+            )
+            assertNull(
+                projection.companionLineageRef,
+            )
+            assertEquals(
+                "UNCONFIGURED",
+                projection.modelSelectionState,
+            )
+            assertEquals(
+                "NOT_SELECTED",
+                projection.modelArtifactState,
+            )
+            assertEquals(
+                200L * 1024L * 1024L * 1024L,
+                projection.freeStorageBytes,
+            )
+            assertFalse(
+                projection.effectsPerformed,
+            )
+            assertFalse(
+                Files.exists(
+                    home,
+                ),
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun unconfiguredCurrentStateDoesNotInventModelOrArtifactTruth() {
         val home =
             Files.createTempDirectory(
