@@ -52,6 +52,37 @@ class VexLifeProdMacFrontDoorTest {
             effectsPerformed = false,
         )
 
+    private fun absentHomeCurrentState(): VexLifeProdServiceContract.CurrentStateProjection =
+        VexLifeProdServiceContract.CurrentStateProjection(
+            schemaVersion = VexLifeProdServiceContract.CurrentStateProjectionSchema,
+            observedAt = "2026-11-13T00:00:00Z",
+            homePath = "/tmp/.vexlife",
+            homeDisposition = "ABSENT_CANONICAL_VEXLIFE_HOME",
+            homeRef = null,
+            deviceRef = null,
+            companionLineageRef = null,
+            platform = "darwin",
+            architecture = "arm64",
+            chipModel = "Apple M4 Pro",
+            hostEligibilityState = "ELIGIBLE",
+            hostEligibilityReason = null,
+            totalMemoryBytes = 48L * 1024L * 1024L * 1024L,
+            modelMinimumMemoryBytes = null,
+            freeStorageBytes = 100L * 1024L * 1024L * 1024L,
+            modelSelectionState = "UNCONFIGURED",
+            activeModelRef = null,
+            activeModelProfileRef = null,
+            runtimeState = "NOT_SELECTED",
+            runtimeCurrentness = "NOT_APPLICABLE",
+            runtimeReceiptPath = null,
+            modelArtifactState = "NOT_SELECTED",
+            modelArtifactTotalBytes = null,
+            modelArtifactPresentBySizeBytes = null,
+            modelArtifactMissingBytes = null,
+            modelArtifactInvalidSizeBytes = null,
+            effectsPerformed = false,
+        )
+
     private fun receipt(
         sourceSha: String,
         pid: Long =
@@ -123,6 +154,56 @@ class VexLifeProdMacFrontDoorTest {
                 existing
             },
         )
+
+    @Test
+    fun absentHomeMapsToSetupBeforeServiceLifetimeObservation() {
+        var serviceObserved =
+            false
+        val hooks =
+            VexLifeProdMacFrontDoor.Hooks(
+                observeCurrentState =
+                    ::absentHomeCurrentState,
+                observeExistingService = {
+                    serviceObserved =
+                        true
+                    error(
+                        "absent Home must not descend into service lifetime observation",
+                    )
+                },
+            )
+
+        val projection =
+            VexLifeProdMacFrontDoor.observeWithHooks(
+                desiredSourceSha = desired,
+                hooks = hooks,
+            )
+        val effect =
+            VexLifeProdMacFrontDoor.resolveControlWithHooks(
+                desiredSourceSha = desired,
+                controlRef = VexLifeProdEntryFamily.ControlSetUp,
+                hooks = hooks,
+            )
+
+        assertEquals(
+            VexLifeProdEntryFamily.StateSetupRequired,
+            projection.semanticStateRef,
+        )
+        assertEquals(
+            "Set Up VexLife",
+            projection.displayState.primaryLabel,
+        )
+        assertEquals(
+            VexLifeProdEntryFamily.EffectConvergeProduct,
+            effect.effectRef,
+        )
+        assertEquals(
+            true,
+            effect.allowAcquisition,
+        )
+        assertFalse(
+            serviceObserved,
+        )
+    }
 
     @Test
     fun exactRunningSourceMapsToCommonCurrentStateAndOpenDisplay() {
