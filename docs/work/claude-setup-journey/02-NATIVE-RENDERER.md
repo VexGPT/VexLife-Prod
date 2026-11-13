@@ -51,8 +51,10 @@ bridge shapes, `NSNull` fallback in `dictionaryText` (plus `"msng"`), path stand
 
 1. `osacompile` acceptance of the new handlers (`|buttons|()`, `|count|()`, `|length|()`,
    `NSOpenPanel` URL `|path|()`, `character id 27`).
-2. NSAlert with 4 buttons and a long informative text stays readable (may want an accessory scroll
-   view if the plan + notices exceed screen height on small displays).
+2. The card body is rendered as a wrapping-label **accessory view** (520 pt) with the rail as the
+   informative text, so NSAlert keeps its wide left-aligned layout instead of the narrow centered
+   column it uses for text-only alerts on macOS 11+. Confirm the layout and that a long body (setup
+   plan + two notices) still fits a 13" display; if not, swap the label for a scroll view.
 3. `task's terminate()` on the `exec`'d JVM leaves leases/partials as expected; re-inspect after cancel
    lands on `SETUP_REQUIRED` with fewer missing bytes.
 4. Unicode (✓ ● ⊘ ○ …) survives: JSON is written as explicit UTF-8 and decoded as UTF-8.

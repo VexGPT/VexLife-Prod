@@ -84,7 +84,16 @@ on presentCard(card)
 
 	set alert to current application's NSAlert's alloc()'s init()
 	alert's setMessageText:titleText
-	alert's setInformativeText:(railText & linefeed & linefeed & bodyText)
+	alert's setInformativeText:railText
+	-- The card body is several short sections; as an accessory view it keeps the wide, left-aligned
+	-- alert layout (the same mechanism the Home chooser's text field already uses) instead of a
+	-- narrow centered column.
+	set bodyField to current application's NSTextField's wrappingLabelWithString:bodyText
+	bodyField's setSelectable:true
+	bodyField's setPreferredMaxLayoutWidth:520
+	set fittedSize to bodyField's fittingSize()
+	bodyField's setFrame:(current application's NSMakeRect(0, 0, 520, (height of fittedSize)))
+	alert's setAccessoryView:bodyField
 
 	set actionRefs to {}
 	set buttonCount to (buttonList's |count|()) as integer
