@@ -151,6 +151,42 @@ class VexLifeProdBootstrapTemplateTest {
         )
     }
 
+
+    @Test
+    fun nativeSetupWindowDoesNotLeakJsonNullAsVisibleOrActionableText() {
+        val source =
+            Files.readString(
+                Path.of(
+                    System.getProperty(
+                        "user.dir",
+                    ),
+                    "packaging/private-service-image/setup/vexlife-prod-setup-window.applescript",
+                ),
+            )
+
+        assertTrue(
+            source.contains(
+                "if value is (current application's NSNull's null()) then return fallbackValue",
+            ),
+            "JSON null must resolve to the caller fallback before AppleScript text coercion",
+        )
+        assertTrue(
+            source.contains(
+                "if primaryControlRef is \"\" or primaryLabel is \"\" then",
+            ),
+            "null Product controls must collapse to the no-control held presentation",
+        )
+        assertTrue(
+            !source.contains(
+                "buttons {primaryLabel, secondaryLabel, cancelLabel} default button primaryLabel cancel button cancelLabel\n        set chosenLabel to button returned of chosen\n        if chosenLabel is primaryLabel then\n            set controlRef to primaryControlRef",
+            ) ||
+                source.contains(
+                    "if secondaryControlRef is not \"\" and secondaryLabel is not \"\" then",
+                ),
+            "native presentation must not manufacture a semantic control from missing labels",
+        )
+    }
+
 }
 
 // [VXG RealForever]

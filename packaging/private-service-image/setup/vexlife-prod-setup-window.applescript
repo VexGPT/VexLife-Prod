@@ -104,6 +104,7 @@ on dictionaryText(dictionaryValue, keyName, fallbackValue)
     if dictionaryValue is missing value then return fallbackValue
     set value to dictionaryValue's objectForKey:keyName
     if value is missing value then return fallbackValue
+    if value is (current application's NSNull's null()) then return fallbackValue
     try
         set textValue to value as text
     on error
