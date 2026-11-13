@@ -313,19 +313,47 @@ class VexLifeProdMacFrontDoorTest {
     }
 
     @Test
-    fun absentSetupIsOnlyMacEntryResolutionThatCanGrantAcquisition() {
-        val absent =
+    fun existingHomeWithoutServiceShowsResourcePlanBeforeAcquisition() {
+        val absentService =
             VexLifeProdMacServiceLifetime.ExistingObservation.Absent
+        val projection =
+            VexLifeProdMacFrontDoor.observeWithHooks(
+                desiredSourceSha = desired,
+                hooks = hooks(absentService),
+            )
         val effect =
             VexLifeProdMacFrontDoor.resolveControlWithHooks(
                 desiredSourceSha = desired,
                 controlRef = VexLifeProdEntryFamily.ControlSetUp,
-                hooks = hooks(absent),
+                hooks = hooks(absentService),
             )
 
         assertEquals(
             VexLifeProdEntryFamily.StateSetupRequired,
-            effect.semanticStateRef,
+            projection.semanticStateRef,
+        )
+        val setupPlan =
+            requireNotNull(
+                projection.setupPlan,
+            )
+        assertTrue(
+            setupPlan.modelArtifactTotalBytes >
+                0,
+        )
+        assertTrue(
+            setupPlan.modelMinimumMemoryBytes >
+                0,
+        )
+        assertEquals(
+            48L * 1024L * 1024L * 1024L,
+            setupPlan.currentTotalMemoryBytes,
+        )
+        assertEquals(
+            3L * 1024L * 1024L * 1024L,
+            setupPlan.currentFreeStorageBytes,
+        )
+        assertFalse(
+            setupPlan.effectsPerformed,
         )
         assertEquals(
             VexLifeProdEntryFamily.EffectConvergeProduct,
