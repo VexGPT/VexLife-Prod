@@ -257,6 +257,47 @@ class VexLifeProdLocalServiceTest {
                         source.effectsPerformed,
                     )
 
+                    val currentStateResponse =
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.CurrentStatePath,
+                        )
+                    assertEquals(
+                        200,
+                        currentStateResponse.statusCode(),
+                    )
+                    val currentState =
+                        json.decodeFromString<VexLifeProdServiceContract.CurrentStateProjection>(
+                            currentStateResponse.body(),
+                        )
+                    assertEquals(
+                        root.toString(),
+                        currentState.homePath,
+                    )
+                    assertEquals(
+                        HereticProductIdentity.ModelRef,
+                        currentState.activeModelRef,
+                    )
+                    assertEquals(
+                        "VERIFIED_AT_SETUP",
+                        currentState.modelArtifactState,
+                    )
+                    assertEquals(
+                        15_153_242_506L,
+                        currentState.modelArtifactTotalBytes,
+                    )
+                    assertEquals(
+                        currentState.modelArtifactTotalBytes,
+                        currentState.modelArtifactVerifiedBytes,
+                    )
+                    assertEquals(
+                        "STARTUP_QUALIFIED_NOT_REOBSERVED",
+                        currentState.runtimeCurrentness,
+                    )
+                    assertFalse(
+                        currentState.effectsPerformed,
+                    )
+
                     val presentation =
                         get(
                             service.origin,
