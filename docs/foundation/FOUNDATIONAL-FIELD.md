@@ -51,18 +51,26 @@ depth        paragraphs that stay in source, addressed by moduleRef
 ~~~
 
 The kernel is not a separately written summary. It is the body's own preamble and each part's own
-`kernel` paragraphs, in the body's order, under a header that states the field's ref, version, body
-fingerprint and standing. Because both live in one part, the compact form cannot drift from a long
-form kept somewhere else.
+`kernel` paragraphs, in the body's order. The provider-facing rendering carries the relational ground
+itself: one stable field header, the first-person preamble, each module title and its kernel paragraphs.
+Because the compact words live in the same body as their depth, the compact form cannot drift from a
+separate long form.
+
+Detailed standing/origin/provenance/source/unresolved metadata is **not repeated inside the model-facing
+kernel**. Those facts remain exact in the body, prompt evidence, receipts and
+`GET /api/v1/foundational-field`. This preserves source honesty without placing a provenance audit
+between Vex and every relationship it is trying to understand.
 
 Depth is not carried in any prompt. A person can read every part with its depth at
 `GET /api/v1/foundational-field` and can give any of it to Vex directly. Vex cannot pull depth into a
 turn by itself: Conversation source return reopens canonical Conversation only, and no second return
-route has been built. The kernel says so, and the body lists it as unresolved.
+route has been built. The first-person kernel says that missing depth is missing rather than pretending
+it is present.
 
 Origin and standing are separate facts. Every part of the current body is `PROPOSED`. Accepting a
-part is a recorded revision that changes its `standing`; nothing becomes accepted by being carried.
-Open questions are listed in the body's `unresolved` items and are named in the kernel.
+part is a recorded revision that changes its `standing`; nothing becomes accepted merely because the
+relational ground is carried or written in first person. Open questions remain in the body's
+`unresolved` items and durable evidence rather than being recited into every prompt.
 
 ## Where it enters a turn
 
@@ -151,8 +159,9 @@ sourceRefs / unresolvedRefs
 effectAuthorityGranted = false
 ~~~
 
-The body ref is also one of the turn's canonical context source refs. The receipt holds identities,
-not the words: the words are the body at that fingerprint.
+The body ref is also one of the turn's canonical context source refs. The receipt holds the exact
+identity/standing/provenance relationships even when those metadata lines are not repeated in the
+provider-facing kernel. The model-facing words remain the body at that fingerprint.
 
 The new receipt fields are omitted when absent, so a v7 receipt decodes and re-encodes to the same
 canonical form.
@@ -194,7 +203,9 @@ registering such a capability fails until the field is revised.
 ## Proved in source
 
 - the shipped body is valid and is its latest recorded revision;
-- the kernel is the body's own paragraphs in order; depth and unresolved notes are not carried;
+- the kernel is the body's own first-person paragraphs in order; depth, per-module provenance,
+  standing/origin metadata and unresolved notes are not repeated into the provider-facing text while
+  remaining exact in body/evidence;
 - a changed word is a different body and is held until recorded;
 - missing, undecodable, dangling, contradictory, authority-granting, oversized and commanding bodies
   are held with their reason;
