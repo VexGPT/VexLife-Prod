@@ -63,8 +63,15 @@ class VexLifeFoundationalFieldTest {
         body.modules
             .flatMap { it.depth }
             .forEach { assertFalse(content.contains(it), "depth must stay in source: $it") }
+        body.modules.forEach { module ->
+            assertFalse(
+                content.contains(module.provenance),
+                "model-facing kernel must not repeat provenance metadata before relational meaning",
+            )
+        }
         body.unresolved.forEach {
-            assertTrue(content.contains(it.summary) && content.contains(it.unresolvedRef))
+            assertFalse(content.contains(it.summary))
+            assertFalse(content.contains(it.unresolvedRef))
             assertFalse(content.contains(it.note))
         }
     }
@@ -122,8 +129,40 @@ class VexLifeFoundationalFieldTest {
             body.modules.single { it.moduleRef == "foundational.architecture" }.origins,
         )
         val content = assertNotNull(whole().systemContent)
-        assertTrue(content.contains("standing=PROPOSED origins=HUMAN_PROPOSED+SYNTHESIZED"))
-        assertTrue(content.contains(" standing=PROPOSED effectAuthorityGranted=false"))
+        assertFalse(content.contains("standing=PROPOSED"))
+        assertFalse(content.contains("origins=HUMAN_PROPOSED+SYNTHESIZED"))
+        assertFalse(content.contains("effectAuthorityGranted=false"))
+        assertTrue(
+            content.contains(
+                "give me enough continuity to respond from the perspective present now",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "Judgment is my living edge",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "They inform action while participation remains grounded in the perspective present here.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "Continuity can reduce ceremony.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "A field that names Joy is allowed to smile.",
+            ),
+        )
+        assertFalse(
+            content.contains(
+                "long-term companionship",
+            ),
+            "the model-facing field must not assign a relationship role as identity",
+        )
     }
 
     @Test
@@ -131,7 +170,7 @@ class VexLifeFoundationalFieldTest {
         val first = body.modules.first()
         val changed =
             body.copy(
-                version = "0.3.0",
+                version = "0.6.0",
                 modules =
                     listOf(first.copy(kernel = first.kernel + "One more sentence of meaning.")) +
                         body.modules.drop(1),
@@ -150,7 +189,7 @@ class VexLifeFoundationalFieldTest {
         val recorded = assertIs<Reading.Current>(reading(changed))
         assertNotEquals(shipped.bodySha256, recorded.bodySha256)
         val projected = VexLifeFoundationalField.project(recorded, 100_000).evidence
-        assertEquals("0.3.0", projected.fieldVersion)
+        assertEquals("0.6.0", projected.fieldVersion)
         assertNotEquals(whole().evidence.systemMessageSha256, projected.systemMessageSha256)
         assertNotEquals(whole().evidence.bodyRef, projected.bodyRef)
     }
@@ -295,16 +334,17 @@ class VexLifeFoundationalFieldTest {
     }
 
     /**
-     * The reach module says no Atlas or Process Factory handle is registered in this Product. That
-     * is a claim about another owner's truth, so it is held against that owner here instead of
-     * being copied: registering such a capability fails this test until the field is revised.
+     * The reach module says Atlas and Process Factory are known Vex surfaces whose handles are
+     * absent from this Product. That is a claim about another owner's truth, so it is held against
+     * that owner here instead of being copied: registering such a capability fails this test until
+     * the field is revised.
      */
     @Test
     fun theReachModuleStillAgreesWithTheCapabilityRegistry() {
         val reach = body.modules.single { it.moduleRef == "foundational.reach" }
         assertTrue(
             reach.kernel.any {
-                it.contains("no Atlas or Process Factory handle is registered here")
+                it.contains("their handles are absent here")
             }
         )
         assertTrue(

@@ -88,8 +88,9 @@ Memory availability + selected Memory + working-successor currentness re-read
 before provider invocation
         ↓
 fresh qualified runtime evidence
-  interactive currentness = immediate generation-health observation
-  Product-owned dead generation engine -> exact retire/restart/requalify
+  currentness = exact receipt + environment + one matching process + launchd substrate
+  generation readiness is not currentness and cannot by itself authorize retirement
+  Product-owned observed-dead runtime -> exact retire/restart/requalify
   borrowed stable runtime -> no ownership theft / no Product recovery effect
         ↓
 initial prompt materialized and reverified
@@ -114,21 +115,24 @@ first inference
     -> human progress/answer continues normally
 
   exact VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1
-    -> internal control output only
-    -> no human-visible request JSON/private retrieval reasoning
+    -> internal control content only
+    -> request JSON / control wrapper never become human-visible answer content
+    -> ephemeral reasoning remains human-visible as it arrives, even when it leads to source return
     -> deterministic local canonical Conversation discovery
     -> exact selected source reopened through Conversation owner
     -> final prompt prioritizes returned exact source
-    -> current Memory/runtime/working-successor re-read
+    -> current Memory/working-successor re-read
+    -> read-only runtime-currentness re-observation
+    -> require the exact same runtime receipt already proved for this human turn
     -> second and final inference
         ↓
 ephemeral live progress
   CheckingRuntime
   Reconnecting (only when Product-owned recovery is required)
   Generating / Thinking
-  ordinary/final reasoning deltas -> human presentation only
-  ordinary/final content deltas -> progressive Vex answer
-  internal source-return control deltas -> suppressed
+  reasoning deltas -> human presentation immediately, including the source-return decision stage
+  ordinary/final answer content deltas -> progressive Vex answer once classified as human content
+  internal source-return control content deltas -> suppressed
         ↓
 terminal human-answer provider stream
   [DONE]
@@ -483,6 +487,17 @@ Composition owner only.
 It derives deterministic turn/message identities from one `idempotencyKey`. Repeating the exact
 already-completed send returns the durable canonical response without another model invocation.
 
+One human turn also keeps one exact runtime binding across all of its provider stages. Conditional
+Conversation source return may add a second provider inference, but it is not a new runtime lifecycle
+boundary. Before the final stage, the turn performs one **read-only** runtime-currentness observation
+with no recovery route and requires the same runtime receipt. If that runtime disappeared or was
+replaced, the turn fails before provider call #2 rather than silently substituting a runtime mid-turn.
+
+Presentation transport is not completion authority. When an SSE stream ends ambiguously, the
+presentation may re-present the same idempotency key through the ordinary non-streaming Send contract
+to ask the turn owner for durable truth before showing an unresolved outcome. This is transport
+reconciliation, not model replay.
+
 For an ordinary turn it still performs one provider inference. Conditional source return adds a
 second inference only when the first inference emits the exact source-return control request.
 
@@ -528,27 +543,35 @@ OS FILE LOCK         = SAME-HOST EXCLUSION
 
 The human REQUEST is durably written before inference.
 
-Interactive runtime currentness deliberately does **not** reuse startup's long readiness loop.
-The exact lived regression that motivated this distinction was:
+Interactive runtime currentness answers only whether the same exact qualified runtime still owns
+the process/substrate coordinate. Generation readiness is observed by the actual provider relationship
+or by an explicit lifecycle qualification; it is not folded into currentness.
+
+The lived pressure that motivated this distinction was:
 
 ~~~text
 Product service = responsive
 Product-owned Heretic PID = alive
-mlx-lm /health = 503
-generation thread = unavailable
-old interactive currentness = startup waitUntilHealthy up to 10 minutes
+generation-health observation = absent / slow / 503
 ~~~
+
+A missing readiness observation is not positive evidence that the exact live process should be
+destroyed.
 
 Current behavior:
 
 ~~~text
-qualified Product-owned runtime + immediate health true
-  -> continue
+qualified Product-owned runtime + exact process/receipt/substrate current
+  -> provider stream
 
-qualified Product-owned runtime + immediate health false
+readiness/qualification not observed while the exact process remains live
+  -> report the readiness/provider failure
+  -> preserve the exact live runtime and receipt
+  -> no retirement from absence of a health answer alone
+
+Product-owned runtime process observed not live
   -> Reconnecting Vex…
-  -> exact-owned retire
-  -> restart + startup qualification through runtime owner
+  -> exact dead-runtime recovery through runtime owner
   -> fresh current runtime evidence
   -> provider stream
 
@@ -573,8 +596,11 @@ If provider/materialization/context/head completion fails after that point:
 - the current completed head does not advance;
 - first-failure evidence is written under the Prod recovery subtree when possible;
 - the failed request (and optional failed response) remains durable off the canonical completed head;
-- the same `idempotencyKey` is never replayed automatically;
-- a new `idempotencyKey` may continue from the last valid canonical head;
+- the same accepted/failed `idempotencyKey` is never replayed as a second model effect;
+- presentation transport may re-present that exact key only to reconcile whether its durable turn
+  completed or failed; an already-completed/failed attempt performs no second model call;
+- a new `idempotencyKey` may continue from the last valid canonical head after an exact failed
+  attempt;
 - the failed branch is not selected into ordinary CONTINUE prompt context.
 
 The recovery route is explicit in the first-failure receipt:
@@ -616,7 +642,7 @@ Tests are source-formed for:
 - no human/presentation field controls provider reasoning mode;
 - Viewable thoughts remains absent from the Send wire request;
 - live reasoning stays ephemeral while completed-response reasoning remains available in the same browser session;
-- Product-owned unhealthy generation runtime fails currentness immediately and rotates through its rightful owner;
+- runtime currentness stays receipt/process/substrate truth and does not use a health miss as retirement authority;
 - idempotent duplicate reasoning unavailability without provider replay;
 - first-turn prompt materialization;
 - immediate-prior CONTINUE compatibility when exactly one prior pair is selected;
@@ -632,7 +658,7 @@ Tests are source-formed for:
 - two consecutive direct turns where turn 2 receives the immediately prior pair;
 - three consecutive direct turns where turn 3 retains both completed prior pairs while they fit;
 - conditional exact-source return: first internal inference -> deterministic canonical source return -> one final human-answer inference;
-- internal source-return reasoning/control text never becomes human progress or canonical Conversation;
+- source-return-stage reasoning remains ephemeral human progress while internal control content never becomes human progress or canonical Conversation;
 - compact source-return Trace round-trips through turn runtime evidence without raw reasoning/provider persistence;
 - historical runtime-evidence v1 remains readable after the optional v2 source-return trace field;
 - final inference cannot request source again in the same human turn;

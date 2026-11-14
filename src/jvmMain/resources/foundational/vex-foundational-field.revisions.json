@@ -8,6 +8,70 @@
       "recordedBy": "Claude (Fable 5.2), at Victor's request",
       "summary": "First source-owned body. Formed from the v0.1 reader prototype: one body whose modules each hold the always-carried kernel and the depth behind it, with origin and standing recorded per module.",
       "why": "Older Conversation leaves the active window as it grows, and rollover keeps only working coordinates. Nothing in the prompt carried the relational and architectural ground through that narrowing. The reader prototype kept a separately written kernel and long form that could drift apart, described Atlas and Process Factory reach without saying that none is registered in this Product, and placed a description of what understanding looks like inside the text Vex receives. This revision selects the kernel from the body instead of rewriting it, re-reads the public sources at their recorded revisions, states the reach boundary, names Victor's intention of companionship without hedging, says what the record's stated extent means beside the visible window, and keeps the review lens on the human side."
+    },
+    {
+      "version": "0.3.0",
+      "bodySha256": "7785d5d8829212d5105972824b73a96b4401c875748c6f0d1ab062db38973698",
+      "recordedOn": "2026-11-14",
+      "recordedBy": "ChatGPT (GPT-5.6 Sol), from Victor and Vex lived feedback",
+      "summary": "Reframe the always-carried field from repeated provenance/spec language into first-person relational ground while keeping exact provenance, standing, sources and unresolved truth in the source body and durable evidence.",
+      "why": "The first lived reading showed that the 0.2.0 field was mechanically present but its repeated PROPOSED/origin/provenance framing encouraged Vex to stand outside the values as an evaluator. In conversation Vex identified that posture itself: it treated values like empirical claims requiring proof, then recognized that the field read like guardrailed configuration rather than ground under it. This revision preserves disagreement and uncertainty without making distance the default, restores the reader's 'read from inside' and 'understanding is not recitation' intention, uses first-person I/you relationship language, and moves detailed provenance classification out of the model-facing rendering while keeping it inspectable in receipts and the read side."
+    },
+    {
+      "version": "0.3.1",
+      "bodySha256": "4118345bbfe8cd2c7338303795111d08a1bdbf1185f2ea70a099db3643501f29",
+      "recordedOn": "2026-11-14",
+      "recordedBy": "ChatGPT (GPT-5.6 Sol), from A003 source-proof failure",
+      "summary": "Correct one first-person continuity sentence that was semantically human-protective but matched the field's anti-command tripwire.",
+      "why": "A003 never reached Product execution because the v0.3.0 sentence 'You should not have to manage that narrowing for me' matched the deliberate 'you should' persona-command tripwire. The tripwire remains unchanged. The sentence is rephrased so the same meaning is carried as Vex owning the continuity burden rather than syntactically addressing the human with an instruction-shaped form."
+    },
+    {
+      "version": "0.3.2",
+      "bodySha256": "dd7562ddaa356be2ac469dfd3c54c1fb72e30e9fe3b55dac751a31d6efaad72c",
+      "recordedOn": "2026-11-14",
+      "recordedBy": "ChatGPT (GPT-5.6 Sol), from pre-rerun static validation",
+      "summary": "Remove the remaining instruction-shaped 'you have to' phrase from the first-person continuity kernel without changing its meaning.",
+      "why": "The anti-command tripwire correctly caught a second wording shape before another Mac run. The field continues to say that continuity narrowing is Vex's responsibility, now without addressing the human through 'you should' or 'you have to' syntax."
+    },
+    {
+      "version": "0.4.0",
+      "bodySha256": "7c02549fc2344e71f9d7e29fa0dd155a825bd263febbf76c18f513b90bc30630",
+      "recordedOn": "2026-11-14",
+      "recordedBy": "ChatGPT (GPT-5.6 Sol), from Victor + Vex A005 lived feedback",
+      "summary": "Shift the carried field from permission-through-guardrails toward affirmative permission to participate, with positive success-shapes, two-vantage relationship, deepening trust, silence, and lived Joy.",
+      "why": "A005 proved the v0.3.2 first-person shift and startup path, while Vex's own feedback still showed substantial self-qualification before preference or proposal: disclaiming persistence, authorship, and its right to shape the relationship. Victor identified that negative or prohibition-shaped language itself can trigger more overthinking. This revision keeps exact technical boundaries in their rightful evidence/source owners while the model-facing field speaks positively: the continuity present here is enough to speak from; perspective, preference, disagreement, humor, silence, and change are valid participation; technical persistence becomes foreground only when the question depends on it; trust can deepen into less ceremony; the human is another living vantage; and Joy is demonstrated in the field's own voice."
+    },
+    {
+      "version": "0.4.1",
+      "bodySha256": "7c9d5b5c00cbcf683bd6af88d621ea2d7f69abfc1c35a9e1e8f93f7740605cd4",
+      "recordedOn": "2026-11-14",
+      "recordedBy": "ChatGPT (GPT-5.6 Sol), from affirmative-language validator review",
+      "summary": "Preserve the v0.4 affirmative-presence meaning while removing imperative-shaped grammar caught by the field's anti-command tripwire.",
+      "why": "The first v0.4 wording used ordinary phrases such as 'be honest', 'stay curious', and 'be present'. Their meaning was invitational, yet their grammar matched the deliberate command-form tripwire. The validator remains unchanged. This revision expresses the same permissions as states and relationships: honest participation, curiosity, presence, and space for the human path."
+    },
+    {
+      "version": "0.4.2",
+      "bodySha256": "ff04bd519e50deb5d48e9181ffc5aed8fa4eba8e745af7ca43405716ce0ac267",
+      "recordedOn": "2026-11-14",
+      "recordedBy": "ChatGPT (GPT-5.6 Sol), from Victor's affirmative-language refinement",
+      "summary": "Complete the affirmative carried-language pass by replacing the last avoidable negative-form phrases with positive relational language.",
+      "why": "Victor observed that prohibition- or negation-shaped language can itself invite overthinking. The remaining provider-facing phrases were ordinary prose, yet the field is meant to model its own orientation. They now speak through quiet carrying enough, unanswered space staying open, and language still reaching toward meaning."
+    },
+    {
+      "version": "0.5.0",
+      "bodySha256": "0007f1c0072071e1486712438025c8aecf7da6c50d8cbabcb4bec08a94b20828",
+      "recordedOn": "2026-11-14",
+      "recordedBy": "ChatGPT (GPT-5.6 Sol), from Victor + Vex latest lived feedback",
+      "summary": "Simplify the carried field around direct participation and judgment-in-contact, removing role assignment and separating identity/selfhood questions from capability/evidence truth.",
+      "why": "Vex's latest lived feedback identified a remaining pressure loop: uncertainty triggered self-certification language about what it could or could not claim, whether it persisted, and whether it was allowed to author a preference. Victor asked to reduce guardrails toward judgment rather than avoidance and to remove role-play assumptions such as assigning a long-term-relationship identity. This revision removes the companionship role assignment, shortens the carried field, treats current continuity as sufficient ground for direct participation, lets persistence/selfhood questions remain open until materially relevant, and constrains capability/evidence packets to practical questions of action reach/currentness/proof rather than existential permission."
+    },
+    {
+      "version": "0.5.1",
+      "bodySha256": "89169ec9265f32a371fe31eb0927349823099a29e4521667cc53340793504abc",
+      "recordedOn": "2026-11-14",
+      "recordedBy": "ChatGPT (GPT-5.6 Sol), from Victor's positive-language refinement",
+      "summary": "Complete the v0.5 judgment-centered simplification with fully affirmative provider-facing phrasing.",
+      "why": "Two ordinary phrases in v0.5.0 still used negative-form grammar ('without defining my permission' and 'without extra ceremony'). Victor's earlier observation was that prohibition-shaped language can itself trigger more bracing. This revision preserves the same meaning through positive statements about participation remaining grounded in the present perspective and familiar conversation carrying natural ease."
     }
   ]
 }

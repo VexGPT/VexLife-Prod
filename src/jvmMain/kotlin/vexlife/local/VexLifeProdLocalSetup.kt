@@ -65,13 +65,13 @@ object VexLifeProdLocalSetup {
             null,
     ) {
         /**
-         * Current qualified runtime evidence, recovering once when currentness cannot be proven.
+         * Current qualified runtime evidence, recovering once when exact process/substrate
+         * currentness cannot be proven.
          *
-         * Why the chronology records each step here: "currentness lost" means only that this
-         * observation could not prove the runtime current (process gone, ownership drift, or a
-         * health answer not received in time while it may be busy). Recovery then may retire and
-         * restart the runtime, so the order lost -> requested -> completed/failed is the evidence
-         * needed to tell a dead runtime from a busy one that recovery replaced.
+         * Readiness/health is deliberately not part of currentness. Recovery is therefore entered
+         * for an actual ownership/lifetime loss, not because a live generation engine was slow to
+         * answer. The chronology records lost -> requested -> completed/failed around that bounded
+         * lifecycle recovery.
          */
         fun currentQualifiedRuntimeEvidence(
             onRecovery: (() -> Unit)? = null
@@ -101,6 +101,16 @@ object VexLifeProdLocalSetup {
                     throw error
                 }
             }
+
+        /**
+         * Read-only currentness observation for an already-started human turn.
+         *
+         * This intentionally has no recovery path. A later provider stage may prove that the same
+         * runtime receipt/process is still current, but it may not replace the runtime underneath
+         * a turn that already began.
+         */
+        fun observeCurrentQualifiedRuntimeEvidence(): HereticModelConfiguration.QualifiedRuntimeEvidence =
+            currentRuntimeEvidence()
     }
 
     private data class Established(
