@@ -103,7 +103,7 @@ object VexLifeProdSetupModel {
                     val fits = HereticModelCatalog.fits(entry, totalMemoryBytes)
                     val fit =
                         when {
-                            entry == recommended && totalMemoryBytes != null ->
+                            entry == recommended && fits ->
                                 VexLifeText("setup.status.model-recommended")
                             fits -> VexLifeText("setup.status.model-fits")
                             else ->
@@ -127,7 +127,7 @@ object VexLifeProdSetupModel {
                             ),
                         totalBytes = entry.totalBytes,
                         fits = fits,
-                        recommended = entry == recommended,
+                        recommended = entry == recommended && fits,
                         standing = entry.standing.name,
                     )
                 },
