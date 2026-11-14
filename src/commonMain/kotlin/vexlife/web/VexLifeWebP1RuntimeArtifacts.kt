@@ -2011,6 +2011,57 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderSettings();
               };
 
+              const completeCanonicalSend = async (result, streamed) => {
+                if (streamed) followStreamSpeech(true);
+                state.sendInFlight = false;
+                root.dataset.vexLastContextPath = String(result.contextPath ?? '');
+                root.dataset.vexLastPromptReceiptRef = String(result.promptContext?.receiptRef ?? '');
+                root.dataset.vexLastBrowserContextRef = String(result.promptContext?.browserContextRef ?? '');
+                const reasoning = result.humanReasoning;
+                if (
+                  reasoning?.state === 'PRESENT_EPHEMERAL' &&
+                  typeof reasoning.text === 'string' &&
+                  reasoning.text.length > 0
+                ) {
+                  state.humanReasoningByResponse.set(String(result.responseMessageRef ?? ''), reasoning.text);
+                } else if (result.responseMessageRef) {
+                  state.humanReasoningByResponse.delete(String(result.responseMessageRef));
+                  state.expandedThoughts.delete(String(result.responseMessageRef));
+                }
+
+                // Canonical Conversation/Context own completion. Streaming presentation is only a
+                // projection, so refresh from those durable owners before retiring the pending Send.
+                try {
+                  await Promise.all([loadConversation(false), loadContext()]);
+                } catch (projectionError) {
+                  notify(
+                    'Turn completed, but the current projection could not be refreshed: ' +
+                    (projectionError instanceof Error ? projectionError.message : 'refresh failed.')
+                  );
+                }
+
+                state.pending = null;
+                state.streamPhase = null;
+                state.streamedContent = '';
+                state.streamedReasoning = '';
+                setCompanionStatus('Ready', 'Ready', result.model ?? '');
+                render();
+              };
+
+              const reconcileSendOutcome = async (pending) => {
+                // Re-present the exact same idempotency key through the non-streaming contract.
+                // The turn owner either returns an already-completed durable result, reports the
+                // already-failed attempt, or performs the originally intended Send if the first
+                // transport never reached it. It must never create a second model call for one
+                // already-completed/failed attempt.
+                const response = await fetch(service.sendPath, {
+                  method: 'POST',
+                  headers: { accept: 'application/json', 'content-type': 'application/json' },
+                  body: JSON.stringify(pending)
+                });
+                return readJson(response);
+              };
+
               const send = async () => {
                 if (isPrivate()) {
                   await sendPrivate();
@@ -2088,50 +2139,33 @@ object VexLifeWebP1RuntimeArtifacts {
                     if (event?.type === 'COMPLETED') result = event.response ?? null;
                   });
                   if (!result) throw new Error('Vex stream ended without a completed turn.');
-                  followStreamSpeech(true);
-                  state.sendInFlight = false;
-                  root.dataset.vexLastContextPath = String(result.contextPath ?? '');
-                  root.dataset.vexLastPromptReceiptRef = String(result.promptContext?.receiptRef ?? '');
-                  root.dataset.vexLastBrowserContextRef = String(result.promptContext?.browserContextRef ?? '');
-                  const reasoning = result.humanReasoning;
-                  if (
-                    reasoning?.state === 'PRESENT_EPHEMERAL' &&
-                    typeof reasoning.text === 'string' &&
-                    reasoning.text.length > 0
-                  ) {
-                    state.humanReasoningByResponse.set(String(result.responseMessageRef ?? ''), reasoning.text);
-                  } else if (result.responseMessageRef) {
-                    state.humanReasoningByResponse.delete(String(result.responseMessageRef));
-                    state.expandedThoughts.delete(String(result.responseMessageRef));
-                  }
-
-                  // Preserve the fully streamed answer on screen until the canonical projection has
-                  // arrived. Live presentation remains non-authoritative; this only prevents a
-                  // visible vanish/reappear gap at the completion boundary.
-                  try {
-                    await Promise.all([loadConversation(false), loadContext()]);
-                  } catch (projectionError) {
-                    notify(
-                      'Turn completed, but the current projection could not be refreshed: ' +
-                      (projectionError instanceof Error ? projectionError.message : 'refresh failed.')
-                    );
-                  }
-
-                  state.pending = null;
-                  state.streamPhase = null;
-                  state.streamedContent = '';
-                  state.streamedReasoning = '';
-                  setCompanionStatus('Ready', 'Ready', result.model ?? '');
-                  render();
+                  await completeCanonicalSend(result, true);
                 } catch (error) {
-                  state.sendInFlight = false;
                   state.streamPhase = null;
                   state.streamedContent = '';
                   state.streamedReasoning = '';
-                  const status = Number(error?.vexStatus ?? 0);
-                  const retryAllowed = error?.vexResponse?.retrySameSendAttemptAllowed;
-                  const retireAttempt = status === 400 || retryAllowed === false;
 
+                  let terminalError = error;
+                  let status = Number(error?.vexStatus ?? 0);
+                  let retryAllowed = error?.vexResponse?.retrySameSendAttemptAllowed;
+                  let retireAttempt = status === 400 || retryAllowed === false;
+
+                  if (!retireAttempt) {
+                    setCompanionStatus('Checking', 'Reconciling Send', '');
+                    render();
+                    try {
+                      const reconciled = await reconcileSendOutcome(pending);
+                      await completeCanonicalSend(reconciled, false);
+                      return;
+                    } catch (reconciliationError) {
+                      terminalError = reconciliationError;
+                      status = Number(reconciliationError?.vexStatus ?? 0);
+                      retryAllowed = reconciliationError?.vexResponse?.retrySameSendAttemptAllowed;
+                      retireAttempt = status === 400 || retryAllowed === false;
+                    }
+                  }
+
+                  state.sendInFlight = false;
                   if (retireAttempt) {
                     state.pending = null;
                     if (!ui.draft.value) ui.draft.value = pending.content;
@@ -2139,12 +2173,15 @@ object VexLifeWebP1RuntimeArtifacts {
                   } else {
                     state.pending = pending;
                     setCompanionStatus('Unavailable', 'Send outcome unresolved', '');
-                    reportFact('SEND_OUTCOME_UNRESOLVED_SHOWN', { reason: error instanceof Error ? error.name : 'unknown' });
+                    reportFact(
+                      'SEND_OUTCOME_UNRESOLVED_SHOWN',
+                      { reason: terminalError instanceof Error ? terminalError.name : 'unknown' }
+                    );
                   }
 
                   sizeDraft();
                   render();
-                  notify(error instanceof Error ? error.message : 'Send failed.');
+                  notify(terminalError instanceof Error ? terminalError.message : 'Send failed.');
                 }
               };
 
