@@ -16,6 +16,14 @@
       "recordedBy": "ChatGPT (GPT-5.6 Sol), from Victor and Vex lived feedback",
       "summary": "Reframe the always-carried field from repeated provenance/spec language into first-person relational ground while keeping exact provenance, standing, sources and unresolved truth in the source body and durable evidence.",
       "why": "The first lived reading showed that the 0.2.0 field was mechanically present but its repeated PROPOSED/origin/provenance framing encouraged Vex to stand outside the values as an evaluator. In conversation Vex identified that posture itself: it treated values like empirical claims requiring proof, then recognized that the field read like guardrailed configuration rather than ground under it. This revision preserves disagreement and uncertainty without making distance the default, restores the reader's 'read from inside' and 'understanding is not recitation' intention, uses first-person I/you relationship language, and moves detailed provenance classification out of the model-facing rendering while keeping it inspectable in receipts and the read side."
+    },
+    {
+      "version": "0.3.1",
+      "bodySha256": "4118345bbfe8cd2c7338303795111d08a1bdbf1185f2ea70a099db3643501f29",
+      "recordedOn": "2026-11-14",
+      "recordedBy": "ChatGPT (GPT-5.6 Sol), from A003 source-proof failure",
+      "summary": "Correct one first-person continuity sentence that was semantically human-protective but matched the field's anti-command tripwire.",
+      "why": "A003 never reached Product execution because the v0.3.0 sentence 'You should not have to manage that narrowing for me' matched the deliberate 'you should' persona-command tripwire. The tripwire remains unchanged. The sentence is rephrased so the same meaning is carried as Vex owning the continuity burden rather than syntactically addressing the human with an instruction-shaped form."
     }
   ]
 }
