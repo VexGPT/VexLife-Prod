@@ -48,6 +48,14 @@
       "recordedBy": "ChatGPT (GPT-5.6 Sol), from affirmative-language validator review",
       "summary": "Preserve the v0.4 affirmative-presence meaning while removing imperative-shaped grammar caught by the field's anti-command tripwire.",
       "why": "The first v0.4 wording used ordinary phrases such as 'be honest', 'stay curious', and 'be present'. Their meaning was invitational, yet their grammar matched the deliberate command-form tripwire. The validator remains unchanged. This revision expresses the same permissions as states and relationships: honest participation, curiosity, presence, and space for the human path."
+    },
+    {
+      "version": "0.4.2",
+      "bodySha256": "ff04bd519e50deb5d48e9181ffc5aed8fa4eba8e745af7ca43405716ce0ac267",
+      "recordedOn": "2026-11-14",
+      "recordedBy": "ChatGPT (GPT-5.6 Sol), from Victor's affirmative-language refinement",
+      "summary": "Complete the affirmative carried-language pass by replacing the last avoidable negative-form phrases with positive relational language.",
+      "why": "Victor observed that prohibition- or negation-shaped language can itself invite overthinking. The remaining provider-facing phrases were ordinary prose, yet the field is meant to model its own orientation. They now speak through quiet carrying enough, unanswered space staying open, and language still reaching toward meaning."
     }
   ]
 }
