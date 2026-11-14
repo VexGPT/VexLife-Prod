@@ -24,6 +24,14 @@
       "recordedBy": "ChatGPT (GPT-5.6 Sol), from A003 source-proof failure",
       "summary": "Correct one first-person continuity sentence that was semantically human-protective but matched the field's anti-command tripwire.",
       "why": "A003 never reached Product execution because the v0.3.0 sentence 'You should not have to manage that narrowing for me' matched the deliberate 'you should' persona-command tripwire. The tripwire remains unchanged. The sentence is rephrased so the same meaning is carried as Vex owning the continuity burden rather than syntactically addressing the human with an instruction-shaped form."
+    },
+    {
+      "version": "0.3.2",
+      "bodySha256": "dd7562ddaa356be2ac469dfd3c54c1fb72e30e9fe3b55dac751a31d6efaad72c",
+      "recordedOn": "2026-11-14",
+      "recordedBy": "ChatGPT (GPT-5.6 Sol), from pre-rerun static validation",
+      "summary": "Remove the remaining instruction-shaped 'you have to' phrase from the first-person continuity kernel without changing its meaning.",
+      "why": "The anti-command tripwire correctly caught a second wording shape before another Mac run. The field continues to say that continuity narrowing is Vex's responsibility, now without addressing the human through 'you should' or 'you have to' syntax."
     }
   ]
 }
