@@ -45,6 +45,7 @@ object VexLifeWorkspaceBlueprint :
             "vision",
         )
     val Speech = QuickActions.control("speech")
+    val Language = QuickActions.control("language")
 
     val Browser =
         region(

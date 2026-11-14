@@ -28,6 +28,8 @@ import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.continuity.VexLifePrivateConversation
 import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.memory.VexLifeDailyMemoryDream
+import vexlife.person.VexLifePersonSettings
+import vexlife.person.VexLifePersonSettingsStore
 import vexlife.memory.VexLifeMemoryContract
 import vexlife.memory.VexLifeMemoryFamily
 import vexlife.model.heretic.HereticRuntimeState
@@ -59,6 +61,7 @@ class VexLifeProdLocalService private constructor(
     privateCompletionOverride: VexLifePrivateConversation.Completion? = null,
 ) : AutoCloseable {
     private val privateConversation = VexLifePrivateConversation(Path.of(startupSetup.productHome))
+    private val personSettings = VexLifePersonSettingsStore(Path.of(startupSetup.productHome))
 
     private val privateCompletion =
         privateCompletionOverride
@@ -86,6 +89,7 @@ class VexLifeProdLocalService private constructor(
             }
 
         private const val PrivateIntervalProjectionLimit = 50
+        private const val PrivateGapRecentDays = 14L
 
         private val ProductMemoryReader: (Path) -> VexLifeMemoryContract.Context = {
             VexLifeCurrentMemoryReader.readCurrent(it)
@@ -615,6 +619,8 @@ class VexLifeProdLocalService private constructor(
 
                 VexLifeProdServiceContract.MemoryPath -> handleMemory(exchange)
 
+                VexLifeProdServiceContract.SettingsPath -> handleSettings(exchange)
+
                 VexLifeProdServiceContract.PrivatePath -> handlePrivate(exchange)
 
                 VexLifeProdServiceContract.PrivateControlPath -> handlePrivateControl(exchange)
@@ -1098,6 +1104,46 @@ class VexLifeProdLocalService private constructor(
         )
     }
 
+    private fun settingsProjection(): VexLifeProdServiceContract.SettingsProjection =
+        VexLifeProdServiceContract.SettingsProjection(
+            schemaVersion = VexLifeProdServiceContract.SettingsSchema,
+            replyLanguage = personSettings.read().replyLanguage,
+            languages = VexLifePersonSettings.Languages.map { VexLifeProdServiceContract.SettingsLanguage(it.first, it.second) },
+        )
+
+    private fun handleSettings(exchange: HttpExchange) {
+        when (exchange.requestMethod) {
+            "GET" -> respondJson(exchange = exchange, status = 200, value = settingsProjection())
+            "POST" -> {
+                requireJson(exchange)
+                val update = JsonCodec.decodeFromString<VexLifeProdServiceContract.SettingsUpdate>(requestText(exchange))
+                personSettings.write(VexLifePersonSettings.Value(VexLifePersonSettings.Schema, update.replyLanguage))
+                respondJson(exchange = exchange, status = 200, value = settingsProjection())
+            }
+            else -> respondError(exchange, 405, "METHOD_NOT_ALLOWED", "settings accepts GET or POST")
+        }
+    }
+
+    /**
+     * What every ordinary prompt tells Vex about the person: the reply language from their Home
+     * settings, and the recent private conversations Vex does not remember.
+     */
+    private fun personContext(): DirectPromptContext.PersonContext {
+        val language = runCatching { personSettings.read().replyLanguage }.getOrDefault(VexLifePersonSettings.DefaultLanguage)
+        val recentCutoff = java.time.Instant.now().minus(java.time.Duration.ofDays(PrivateGapRecentDays))
+        val gaps =
+            runCatching { privateConversation.intervals() }
+                .getOrDefault(emptyList())
+                .filter { java.time.Instant.parse(it.endedAt).isAfter(recentCutoff) }
+                .takeLast(DirectPromptContext.MaximumPrivateGaps)
+                .map { DirectPromptContext.PrivateGap(it.startedAt, it.endedAt, it.exchangeCount, it.keptNotes) }
+        return DirectPromptContext.PersonContext(
+            replyLanguage = language,
+            replyLanguageName = VexLifePersonSettings.languageName(language),
+            privateConversations = gaps,
+        )
+    }
+
     private fun observePrivate(): VexLifeProdServiceContract.PrivateProjection {
         val state = privateConversation.state()
         val snapshot = privateConversation.snapshot()
@@ -1181,7 +1227,11 @@ class VexLifeProdLocalService private constructor(
         if (!requirePrivateOpen(exchange)) return
         val memory = runCatching { memoryReader(Path.of(startupSetup.productHome)) }.getOrNull()
         val memoryMessage = memory?.let { runCatching { DirectPromptContext.memorySystemMessage(it) }.getOrNull() }
-        privateEffect(exchange) { privateConversation.send(request.content, memoryMessage, privateCompletion) }
+        val language = runCatching { personSettings.read().replyLanguage }.getOrDefault(VexLifePersonSettings.DefaultLanguage)
+        val languageNote = "Reply in " + VexLifePersonSettings.languageName(language) + " ($language) unless the person clearly wants another language."
+        privateEffect(exchange) {
+            privateConversation.send(request.content, listOfNotNull(languageNote, memoryMessage).joinToString("\n\n"), privateCompletion)
+        }
     }
 
     private fun handlePrivateNotePropose(exchange: HttpExchange) {
@@ -1427,6 +1477,7 @@ class VexLifeProdLocalService private constructor(
         DirectCompanionTurn.Intent(
             idempotencyKey = request.idempotencyKey,
             content = request.content,
+            personContext = personContext(),
             browserContext =
                 request.browserContext
                     ?.let {
@@ -1928,6 +1979,9 @@ class VexLifeProdLocalService private constructor(
                 receipt.capabilityFrameIncluded,
             capabilityFrame =
                 capabilityFrame,
+            replyLanguage = receipt.personContext?.replyLanguage,
+            replyLanguageName = receipt.personContext?.replyLanguageName,
+            privateConversationsNotRemembered = receipt.personContext?.privateConversations?.size ?: 0,
             effectsPerformed =
                 receipt.effectsPerformed,
         )

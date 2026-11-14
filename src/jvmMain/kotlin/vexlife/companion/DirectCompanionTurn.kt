@@ -57,6 +57,8 @@ object DirectCompanionTurn {
         val content: String,
         val browserContext: DirectPromptContext.BrowserContext? =
             null,
+        /** Reply language and private gaps, composed by the service; see [DirectPromptContext.PersonContext]. */
+        val personContext: DirectPromptContext.PersonContext? = null,
     ) {
         init {
             requireRef(
@@ -521,6 +523,7 @@ object DirectCompanionTurn {
                             workingContinuityContext =
                                 workingSuccessorContext,
                             browserContext = intent.browserContext,
+                            personContext = intent.personContext,
                             hooks = hooks,
                         )
                     val prompt =
@@ -678,6 +681,7 @@ object DirectCompanionTurn {
         currentRequest: DirectConversationStore.Event,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
         browserContext: DirectPromptContext.BrowserContext?,
+        personContext: DirectPromptContext.PersonContext?,
         hooks: Hooks,
     ): FinalProviderTurn {
         val initialMemoryAvailability =
@@ -722,6 +726,7 @@ object DirectCompanionTurn {
                 workingContinuityContext =
                     workingContinuityContext,
                 browserContext = browserContext,
+                personContext = personContext,
                 runtimeEvidence = initialRuntimeEvidence,
                 sourceReturnProtocolEnabled = true,
             )
@@ -761,6 +766,7 @@ object DirectCompanionTurn {
             workingContinuityContext =
                 workingContinuityContext,
             browserContext = browserContext,
+            personContext = personContext,
             runtimeEvidence = initialRuntimeEvidence,
             sourceReturnProtocolEnabled = true,
         )
@@ -841,6 +847,7 @@ object DirectCompanionTurn {
                 workingContinuityContext =
                     workingContinuityContext,
                 browserContext = browserContext,
+                personContext = personContext,
                 runtimeEvidence = finalRuntimeEvidence,
                 sourceReturnProtocolEnabled = false,
                 sourceReturnDiscovery = discovery,
@@ -881,6 +888,7 @@ object DirectCompanionTurn {
             workingContinuityContext =
                 workingContinuityContext,
             browserContext = browserContext,
+            personContext = personContext,
             runtimeEvidence = finalRuntimeEvidence,
             sourceReturnProtocolEnabled = false,
             sourceReturnDiscovery = discovery,
@@ -953,6 +961,7 @@ object DirectCompanionTurn {
         ) -> VexLifeMemoryContract.Context,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
         browserContext: DirectPromptContext.BrowserContext?,
+        personContext: DirectPromptContext.PersonContext?,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
@@ -979,6 +988,7 @@ object DirectCompanionTurn {
                 },
                 workingContinuityContext = workingContinuityContext,
                 browserContext = browserContext,
+                personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
@@ -1015,6 +1025,7 @@ object DirectCompanionTurn {
         ) -> VexLifeMemoryContract.Context,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
         browserContext: DirectPromptContext.BrowserContext?,
+        personContext: DirectPromptContext.PersonContext?,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
@@ -1036,6 +1047,7 @@ object DirectCompanionTurn {
             },
             workingContinuityContext = workingContinuityContext,
             browserContext = browserContext,
+            personContext = personContext,
             runtimeEvidence = runtimeEvidence,
             sourceReturnProtocolEnabled =
                 sourceReturnProtocolEnabled,

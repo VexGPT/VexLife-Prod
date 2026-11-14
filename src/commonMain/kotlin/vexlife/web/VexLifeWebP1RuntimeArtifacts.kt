@@ -88,6 +88,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 conversationPath: ${jsString(VexLifeProdServiceContract.ConversationPath)},
                 contextPath: ${jsString(VexLifeProdServiceContract.ContextPath)},
                 memoryPath: ${jsString(VexLifeProdServiceContract.MemoryPath)},
+                settingsPath: ${jsString(VexLifeProdServiceContract.SettingsPath)},
                 privatePath: ${jsString(VexLifeProdServiceContract.PrivatePath)},
                 privateControlPath: ${jsString(VexLifeProdServiceContract.PrivateControlPath)},
                 privateSendPath: ${jsString(VexLifeProdServiceContract.PrivateSendPath)},
@@ -139,6 +140,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 archivesSummary: byId('archives-summary'),
                 archivesTimeline: byId('archives-timeline'),
                 quickActions: byId('quick-actions'),
+                languagePanel: byId('language-panel'),
+                languageList: byId('language-list'),
                 speech: byId('speech'),
                 speechSwitch: byId('speech-switch'),
                 speechStatus: byId('speech-status'),
@@ -225,6 +228,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 visionInFlight: false,
                 privateMode: null,
                 privateInFlight: false,
+                settings: null,
+                languageOpen: false,
                 privatePending: null,
                 app: (() => {
                   try {
@@ -261,7 +266,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 { key: 'journeys', label: 'Journeys', icon: '<path d="M4 15.5c0-2 1.6-3 3.4-3.4l3.4-.8 2.2-4.3c.4-.8 1.4-1 2-.3l.6.6c.5.5.5 1.3 0 1.8l-1 1.2 2.8.8c1.4.4 2.4 1.7 2.4 3.2v1.2H4z"/><path d="M8 12l1.4 2M11 11.4l1.3 2"/>' },
                 { key: 'speech', label: 'Speech', bound: true, icon: '<path d="M4 9.5h3.2L11.5 6v12l-4.3-3.5H4z"/><path d="M15 9.2a4 4 0 0 1 0 5.6M17.6 6.8a7.3 7.3 0 0 1 0 10.4"/>' },
                 { key: 'theme', label: 'Light or dark', bound: true, icon: '<circle cx="12" cy="12" r="3.8"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/>' },
-                { key: 'language', label: 'Language', icon: '<path d="M5 20.5V4M5 4.5h12.5l-2 3.5 2 3.5H5"/>' },
+                { key: 'language', label: 'Language', bound: true, icon: '<path d="M5 20.5V4M5 4.5h12.5l-2 3.5 2 3.5H5"/>' },
                 { key: 'evolution', label: 'Evolution', icon: '<path d="M12.2 12.1c.4-.6-.3-1.4-1-1.2-1.3.4-1.3 2.3-.1 3 1.8 1 4-.5 3.9-2.6-.1-3-3.6-4.3-6-2.8-3.1 2-2.6 6.9.7 8.3 3.9 1.6 8.3-1.2 8.2-5.6"/>' },
                 { key: 'vision', label: 'Vision', icon: '<path d="M3 12s3.6-5.2 9-5.2 9 5.2 9 5.2-3.6 5.2-9 5.2S3 12 3 12Z"/><circle cx="12" cy="12" r="2.8"/>' }
               ];
@@ -847,6 +852,61 @@ object VexLifeWebP1RuntimeArtifacts {
                 markReading();
               };
 
+              // Reply language is a Home setting the service tells Vex about on every message.
+              const renderLanguage = () => {
+                if (!ui.languagePanel) return;
+                ui.languagePanel.hidden = !state.languageOpen;
+                const current = state.settings?.replyLanguage ?? 'en';
+                document.documentElement.lang = current;
+                const action = ui.quickActions?.querySelector('.quick-action[data-action="language"]');
+                if (action) {
+                  action.setAttribute('aria-expanded', String(state.languageOpen));
+                  const name = (state.settings?.languages ?? []).find((language) => language.code === current)?.name;
+                  action.title = 'Vex replies in ' + (name ?? current);
+                  action.setAttribute('aria-label', action.title);
+                }
+                const items = (state.settings?.languages ?? []).map((language) => {
+                  const item = document.createElement('li');
+                  const button = document.createElement('button');
+                  button.type = 'button';
+                  button.dataset.language = language.code;
+                  button.setAttribute('role', 'option');
+                  button.setAttribute('aria-selected', String(language.code === current));
+                  button.textContent = language.name;
+                  item.append(button);
+                  return item;
+                });
+                ui.languageList.replaceChildren(...items);
+              };
+
+              const loadSettings = async () => {
+                const response = await fetch(service.settingsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                state.settings = await readJson(response);
+                renderLanguage();
+                renderSpeechVoices();
+                renderSpeech();
+                return state.settings;
+              };
+
+              const chooseLanguage = async (code) => {
+                try {
+                  const response = await fetch(service.settingsPath, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', accept: 'application/json' },
+                    body: JSON.stringify({ replyLanguage: code })
+                  });
+                  state.settings = await readJson(response);
+                  state.languageOpen = false;
+                  renderLanguage();
+                  renderSpeechVoices();
+                  renderSpeech();
+                  const name = state.settings.languages.find((language) => language.code === code)?.name ?? code;
+                  notify('Vex will reply in ' + name + '.');
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : 'The language could not be changed.');
+                }
+              };
+
               const renderQuickActions = () => {
                 if (!ui.quickActions) return;
                 const sourceOnly = [...ui.quickActions.children].filter((item) => item.hidden);
@@ -876,6 +936,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 });
                 ui.quickActions.replaceChildren(...sourceOnly, ...items);
                 renderSpeech();
+                renderLanguage();
               };
 
               // Vision copy, state and the one lawful Control come from the Product (VexLifeVisionFamily);
@@ -1605,9 +1666,12 @@ object VexLifeWebP1RuntimeArtifacts {
                   );
                   const priorCount = Array.isArray(prompt.selectedConversationEventRefs) ? prompt.selectedConversationEventRefs.length : 0;
                   const memoryCount = Array.isArray(prompt.memorySourceRefs) ? prompt.memorySourceRefs.length : 0;
+                  const gaps = Number(prompt.privateConversationsNotRemembered) || 0;
                   ui.contextNote.textContent =
                     'Canonical turn receipt: ' + priorCount + ' prior Conversation event' + (priorCount === 1 ? '' : 's') +
-                    ' selected. Whole-history enumeration: ' + (prompt.wholeHistoryEventEnumerationPerformed ? 'yes' : 'no') + '.';
+                    ' selected. Whole-history enumeration: ' + (prompt.wholeHistoryEventEnumerationPerformed ? 'yes' : 'no') + '.' +
+                    (prompt.replyLanguageName ? ' Vex was told to reply in ' + prompt.replyLanguageName + '.' : '') +
+                    (gaps ? ' It was told about ' + gaps + ' private conversation' + (gaps === 1 ? '' : 's') + ' it does not remember.' : '');
                   ui.memoryNote.textContent = prompt.memoryIncluded
                     ? 'VexLife Memory contributed through ' + memoryCount + ' source' + (memoryCount === 1 ? '' : 's') + ' to the current prompt.'
                     : 'No VexLife Memory packet was included in the current prompt.';
@@ -1995,6 +2059,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 try { navigate(ui.query.value); } catch (error) { notify(error.message); }
               });
               ui.appSelector.addEventListener('change', () => chooseApp(ui.appSelector.value));
+              ui.languageList.addEventListener('click', (event) => {
+                const button = event.target.closest('button[data-language]');
+                if (button) void chooseLanguage(button.dataset.language);
+              });
               ui.privateMode.addEventListener('click', () => void togglePrivate());
               ui.privatePropose.addEventListener('click', () => {
                 void privatePost(service.privateNoteProposePath, {}).catch((error) =>
@@ -2063,7 +2131,16 @@ object VexLifeWebP1RuntimeArtifacts {
                   toggleTheme();
                   return;
                 }
+                if (action.key === 'language') {
+                  state.languageOpen = !state.languageOpen;
+                  if (state.languageOpen) speech.open = false;
+                  renderLanguage();
+                  renderSpeech();
+                  return;
+                }
                 if (action.key === 'speech') {
+                  state.languageOpen = false;
+                  renderLanguage();
                   speech.open = !speech.open;
                   if (!speech.open) speech.choosing = false;
                   renderSpeechVoices();
@@ -2142,6 +2219,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 } else if (speech.open) {
                   speech.open = false;
                   renderSpeech();
+                } else if (state.languageOpen) {
+                  state.languageOpen = false;
+                  renderLanguage();
                 }
               });
 
@@ -2266,6 +2346,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   navigate(browser.initialPageUrl);
                   renderApp();
                   void loadPrivate().catch(() => {});
+                  void loadSettings().catch(() => {});
                   void loadMemory().catch(() => {});
                 })
                 .catch((error) => {

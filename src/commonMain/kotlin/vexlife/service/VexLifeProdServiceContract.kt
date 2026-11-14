@@ -98,6 +98,9 @@ object VexLifeProdServiceContract {
 
     const val MemoryPath = "/api/v1/memory"
 
+    const val SettingsPath = "/api/v1/settings"
+    const val SettingsSchema = "vexlife-prod.local-service-settings/v1"
+
     const val PrivatePath = "/api/v1/private"
     const val PrivateControlPath = "/api/v1/private/control"
     const val PrivateSendPath = "/api/v1/private/send"
@@ -436,6 +439,24 @@ object VexLifeProdServiceContract {
         val firstPersonAuthorityGranted: Boolean,
         val effectsPerformed: Boolean,
     )
+    @Serializable
+    data class SettingsLanguage(val code: String, val name: String)
+
+    /** The person's Home settings Vex is told about, and the choices for each. */
+    @Serializable
+    data class SettingsProjection(
+        val schemaVersion: String,
+        val replyLanguage: String,
+        val languages: List<SettingsLanguage>,
+    )
+
+    @Serializable
+    data class SettingsUpdate(val replyLanguage: String) {
+        init {
+            vexlife.person.VexLifePersonSettings.languageName(replyLanguage)
+        }
+    }
+
     /** One private exchange, held only in the running service. */
     @Serializable
     data class PrivateExchange(val human: String, val vex: String, val at: String)
@@ -1084,6 +1105,10 @@ object VexLifeProdServiceContract {
             false,
         val capabilityFrame: CapabilityFrameProjection? =
             null,
+        /** The reply language Vex was told, and how many private conversations it was told it doesn't remember. */
+        val replyLanguage: String? = null,
+        val replyLanguageName: String? = null,
+        val privateConversationsNotRemembered: Int = 0,
         val effectsPerformed: Boolean,
     )
 

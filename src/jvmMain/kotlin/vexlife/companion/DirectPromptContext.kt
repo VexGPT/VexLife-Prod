@@ -125,6 +125,9 @@ object DirectPromptContext {
         val sourceReturnProtocolEnabled: Boolean,
         val sourceReturnProtocolSystemMessageSha256: String?,
         val sourceReturnProtocolEstimatedSystemMessageTokens: Int,
+        val personContext: PersonContext?,
+        val personContextSystemMessageSha256: String?,
+        val personContextEstimatedSystemMessageTokens: Int,
         val prefixMessages: List<CompanionProviderMessage>,
         val suffixMessages: List<CompanionProviderMessage>,
         val fixedInputTokenEstimate: Int,
@@ -181,6 +184,10 @@ object DirectPromptContext {
             null,
         val browserContextCapture: String? =
             null,
+        val personContextIncluded: Boolean = false,
+        val personContextSystemMessageSha256: String? = null,
+        val personContextEstimatedSystemMessageTokens: Int = 0,
+        val personContext: PersonContext? = null,
         val providerMessageSetSha256: String,
         val providerMaterializedInputTokenEstimate: Int,
         val inputTokenBudget: Int,
@@ -305,6 +312,10 @@ object DirectPromptContext {
             null,
         val browserContextCapture: String? =
             null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val personContextIncluded: Boolean = false,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val personContextSystemMessageSha256: String? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val personContextEstimatedSystemMessageTokens: Int = 0,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val personContext: PersonContext? = null,
         val providerMessageSetSha256: String,
         val providerMaterializedInputTokenEstimate: Int,
         val inputTokenBudget: Int,
@@ -395,6 +406,37 @@ object DirectPromptContext {
             null,
     )
 
+    /**
+     * What Vex is told about the person's current settings and its own continuity: the language to
+     * reply in, and the private conversations it does not remember (only when, how long, and the
+     * notes both agreed to keep). Composed by the service from Home owners; carried as one bounded
+     * system block and recorded on the receipt so it is visible in what Vex receives.
+     */
+    @Serializable
+    data class PersonContext(
+        val replyLanguage: String,
+        val replyLanguageName: String,
+        val privateConversations: List<PrivateGap>,
+    ) {
+        init {
+            require(replyLanguage.matches(Regex("[a-z]{2}(-[A-Z]{2})?")) && replyLanguageName.isNotBlank()) {
+                "person context reply language is invalid"
+            }
+            require(privateConversations.size <= MaximumPrivateGaps) { "too many private gaps in one prompt" }
+        }
+    }
+
+    @Serializable
+    data class PrivateGap(
+        val startedAt: String,
+        val endedAt: String,
+        val exchangeCount: Int,
+        val keptNotes: List<String>,
+    )
+
+    const val MaximumPrivateGaps = 5
+
+
     @Serializable
     @ConsistentCopyVisibility
     data class BrowserContext internal constructor(
@@ -461,6 +503,8 @@ object DirectPromptContext {
             null,
         browserContext: BrowserContext? =
             null,
+        personContext: PersonContext? =
+            null,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
         sourceReturnProtocolEnabled: Boolean =
@@ -473,6 +517,7 @@ object DirectPromptContext {
                 memoryAvailabilityContext = memoryAvailabilityContext,
                 workingContinuityContext = workingContinuityContext,
                 browserContext = browserContext,
+                personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
@@ -544,6 +589,8 @@ object DirectPromptContext {
             null,
         browserContext: BrowserContext? =
             null,
+        personContext: PersonContext? =
+            null,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
     ): Materialization {
@@ -554,6 +601,7 @@ object DirectPromptContext {
                 memoryAvailabilityContext = memoryAvailabilityContext,
                 workingContinuityContext = workingContinuityContext,
                 browserContext = browserContext,
+                personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
             )
         val memory =
@@ -897,6 +945,10 @@ object DirectPromptContext {
                 browserContextCapture =
                     browserContext
                         ?.capture,
+                personContextIncluded = fixed.personContext != null,
+                personContextSystemMessageSha256 = fixed.personContextSystemMessageSha256,
+                personContextEstimatedSystemMessageTokens = fixed.personContextEstimatedSystemMessageTokens,
+                personContext = fixed.personContext,
                 providerMessageSetSha256 = providerMessageSetSha256,
                 providerMaterializedInputTokenEstimate = estimate,
                 inputTokenBudget = InputTokenBudget,
@@ -1060,6 +1112,10 @@ object DirectPromptContext {
                 browserContextSha256 = core.browserContextSha256,
                 browserContextCharacters = core.browserContextCharacters,
                 browserContextCapture = core.browserContextCapture,
+                personContextIncluded = core.personContextIncluded,
+                personContextSystemMessageSha256 = core.personContextSystemMessageSha256,
+                personContextEstimatedSystemMessageTokens = core.personContextEstimatedSystemMessageTokens,
+                personContext = core.personContext,
                 providerMessageSetSha256 = core.providerMessageSetSha256,
                 providerMaterializedInputTokenEstimate = core.providerMaterializedInputTokenEstimate,
                 inputTokenBudget = core.inputTokenBudget,
@@ -1120,6 +1176,8 @@ object DirectPromptContext {
             null,
         browserContext: BrowserContext? =
             null,
+        personContext: PersonContext? =
+            null,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
         sourceReturnProtocolEnabled: Boolean =
@@ -1146,6 +1204,7 @@ object DirectPromptContext {
                 workingContinuityContext =
                     workingContinuityContext,
                 browserContext = browserContext,
+                personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
@@ -1348,6 +1407,8 @@ object DirectPromptContext {
             null,
         browserContext: BrowserContext? =
             null,
+        personContext: PersonContext? =
+            null,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
         sourceReturnProtocolEnabled: Boolean =
@@ -1367,6 +1428,7 @@ object DirectPromptContext {
                 workingContinuityContext =
                     workingContinuityContext,
                 browserContext = browserContext,
+                personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
@@ -1397,6 +1459,8 @@ object DirectPromptContext {
             null,
         browserContext: BrowserContext? =
             null,
+        personContext: PersonContext? =
+            null,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
     ) {
@@ -1412,6 +1476,7 @@ object DirectPromptContext {
                 workingContinuityContext =
                     workingContinuityContext,
                 browserContext = browserContext,
+                personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
             )
 
@@ -1633,6 +1698,7 @@ object DirectPromptContext {
         memoryAvailabilityContext: VexLifeMemoryContract.Context?,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
         browserContext: BrowserContext?,
+        personContext: PersonContext?,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
         sourceReturnProtocolEnabled: Boolean =
             false,
@@ -1739,6 +1805,7 @@ object DirectPromptContext {
                         runtimeEvidence = it,
                     )
                 }
+        val personContextContent = personContext?.let(::personContextSystemContent)
         val prefixMessages =
             buildList {
                 workingContinuity
@@ -1761,6 +1828,7 @@ object DirectPromptContext {
                             ),
                         )
                     }
+                personContextContent?.let { add(CompanionProviderMessage(role = "system", content = it)) }
                 sourceReturnProtocol
                     ?.let(
                         ::add,
@@ -1841,11 +1909,22 @@ object DirectPromptContext {
                         ::estimatedMessageTokens,
                     )
                     ?: 0,
+            personContext = personContext,
+            personContextSystemMessageSha256 = personContextContent?.let(::sha256),
+            personContextEstimatedSystemMessageTokens = personContextContent?.let(::estimatedMessageTokens) ?: 0,
             prefixMessages = prefixMessages,
             suffixMessages = suffixMessages,
             fixedInputTokenEstimate = fixedEstimate,
         )
     }
+
+    private fun personContextSystemContent(context: PersonContext): String =
+        listOf(
+            "VEXLIFE_PERSON_CONTEXT/v1",
+            "Reply in the language named here unless the person writes to you in another and clearly wants that.",
+            "Private conversations listed here happened and you do not have their content. Do not guess at it; only the kept notes are known.",
+            VexContractJson.compactEncode(context),
+        ).joinToString("\n")
 
     private fun formCapabilityFrame(
         currentRequest: DirectConversationStore.Event,

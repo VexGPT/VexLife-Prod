@@ -92,8 +92,8 @@ class VexLifePrivateConversation(
      * nothing is written anywhere. The model call runs outside the lock so the current state stays
      * readable while Vex replies.
      */
-    fun send(content: String, memorySystemMessage: String?, completion: Completion): Exchange {
-        val (open, messages) = beginCall { prompt(it, PrivateSystem, memorySystemMessage, content) }
+    fun send(content: String, contextSystemMessage: String?, completion: Completion): Exchange {
+        val (open, messages) = beginCall { prompt(it, PrivateSystem, contextSystemMessage, content) }
         try {
             val reply =
                 completion.complete(messages).trim().ifEmpty {

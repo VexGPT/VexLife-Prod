@@ -140,6 +140,18 @@
           "slot": "InFlow"
         },
         {
+          "ref": "element.vexlife-workspace.header.utilities.quick-actions.language",
+          "kind": "BUTTON",
+          "label": "Language",
+          "parentRef": "element.vexlife-workspace.header.utilities.quick-actions",
+          "symbol": "VexLifeWorkspaceBlueprint.Language",
+          "declared": "QuickActions.control(\"language\")",
+          "intent": "capability person.reply-language",
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
           "ref": "element.vexlife-workspace.browser",
           "kind": "REGION",
           "label": "Browser",
