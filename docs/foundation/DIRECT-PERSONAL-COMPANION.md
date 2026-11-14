@@ -115,8 +115,9 @@ first inference
     -> human progress/answer continues normally
 
   exact VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1
-    -> internal control output only
-    -> no human-visible request JSON/private retrieval reasoning
+    -> internal control content only
+    -> request JSON / control wrapper never become human-visible answer content
+    -> ephemeral reasoning remains human-visible as it arrives, even when it leads to source return
     -> deterministic local canonical Conversation discovery
     -> exact selected source reopened through Conversation owner
     -> final prompt prioritizes returned exact source
@@ -129,9 +130,9 @@ ephemeral live progress
   CheckingRuntime
   Reconnecting (only when Product-owned recovery is required)
   Generating / Thinking
-  ordinary/final reasoning deltas -> human presentation only
-  ordinary/final content deltas -> progressive Vex answer
-  internal source-return control deltas -> suppressed
+  reasoning deltas -> human presentation immediately, including the source-return decision stage
+  ordinary/final answer content deltas -> progressive Vex answer once classified as human content
+  internal source-return control content deltas -> suppressed
         ↓
 terminal human-answer provider stream
   [DONE]
@@ -657,7 +658,7 @@ Tests are source-formed for:
 - two consecutive direct turns where turn 2 receives the immediately prior pair;
 - three consecutive direct turns where turn 3 retains both completed prior pairs while they fit;
 - conditional exact-source return: first internal inference -> deterministic canonical source return -> one final human-answer inference;
-- internal source-return reasoning/control text never becomes human progress or canonical Conversation;
+- source-return-stage reasoning remains ephemeral human progress while internal control content never becomes human progress or canonical Conversation;
 - compact source-return Trace round-trips through turn runtime evidence without raw reasoning/provider persistence;
 - historical runtime-evidence v1 remains readable after the optional v2 source-return trace field;
 - final inference cannot request source again in the same human turn;
