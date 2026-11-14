@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.security.MessageDigest
 import vexlife.logging.VexLogger
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeEffectBoundary
@@ -127,6 +128,8 @@ object HereticPersistentRuntime {
         val pythonPath: String,
         val pythonEnvironmentRoot: String,
         val implementationIdentity: ImplementationIdentity,
+        /** The catalog model this runtime serves; its identity is what receipts must carry. */
+        val model: HereticModelCatalog.Entry = HereticModelCatalog.Default,
     )
 
     data class ProcessIdentity(
@@ -309,15 +312,18 @@ object HereticPersistentRuntime {
         ) {
             "Heretic runtime authorityRef must be one stable ref"
         }
+        val model =
+            HereticModelCatalog.Entries.firstOrNull {
+                it.identity.artifactContentSetSha256 == materialization.contentSetSha256
+            }
         require(
             materialization.state ==
                 "HERETIC_ARTIFACTS_MATERIALIZED_EXACT" &&
-                materialization.contentSetSha256 ==
-                HereticProductIdentity.ArtifactContentSetSha256 &&
+                model != null &&
                 materialization.memberCount ==
-                11,
+                model.members.size,
         ) {
-            "Heretic runtime binding requires exact certified model materialization"
+            "Heretic runtime binding requires one exact catalog model materialization"
         }
         require(
             (
@@ -334,7 +340,7 @@ object HereticPersistentRuntime {
             "Heretic runtime binding requires exact verified Python/mlx-lm environment"
         }
 
-        val model =
+        val modelDirectory =
             absolute(
                 materialization.modelPath,
                 "modelPath",
@@ -361,10 +367,11 @@ object HereticPersistentRuntime {
         return Binding(
             schemaVersion = BindingSchema,
             authorityRef = authorityRef,
-            modelPath = model.toString(),
+            modelPath = modelDirectory.toString(),
             pythonPath = python.toString(),
             pythonEnvironmentRoot = environmentRoot.toString(),
             implementationIdentity = currentImplementationIdentity(),
+            model = model,
         )
     }
 
@@ -557,8 +564,60 @@ object HereticPersistentRuntime {
             store.read()
         var staleImplementationRotated =
             false
+        var switchedModel =
+            false
+
+        // Model switch: the Home chose another catalog model than the one this exactly owned runtime
+        // serves. The prior receipt is still this Product's own (same authority, environment and
+        // implementation lineage), so it is retired through the same exact-ownership path before the
+        // chosen model starts. A receipt that is not provably ours still fails below.
+        val priorModel =
+            prior?.let { HereticModelCatalog.entry(it.modelRef) }
+        if (
+            prior !=
+                null &&
+                priorModel !=
+                null &&
+                priorModel.modelRef !=
+                binding.model.modelRef &&
+                receiptBinds(
+                    binding.copy(model = priorModel, modelPath = prior.modelPath),
+                    prior,
+                    requireImplementationSha = false,
+                )
+        ) {
+            if (
+                platform.processAlive(
+                    prior.runtime.pid,
+                )
+            ) {
+                requireExactOwnedProcess(
+                    prior,
+                    prior.runtime.args,
+                    platform,
+                )
+            }
+            val retired =
+                platform.retire(
+                    prior,
+                )
+            require(
+                retired.exactOwnershipVerified &&
+                    retired.verifiedNotLive,
+            ) {
+                "the runtime serving ${priorModel.handle} could not be retired before switching to ${binding.model.handle}"
+            }
+            store.delete()
+            switchedModel =
+                true
+            VexLogger.record(
+                VexLogger.Fact.RuntimeModelSwitched,
+                mapOf("from" to priorModel.handle, "to" to binding.model.handle),
+            )
+        }
 
         if (
+            !switchedModel &&
             prior !=
                 null &&
                 !receiptBinds(
@@ -598,7 +657,8 @@ object HereticPersistentRuntime {
             staleImplementationRotated =
                 true
         } else if (
-            prior !=
+            !switchedModel &&
+                prior !=
                 null &&
                 !receiptBinds(
                     binding,
@@ -613,7 +673,8 @@ object HereticPersistentRuntime {
 
         val currentPrior =
             if (
-                staleImplementationRotated
+                staleImplementationRotated ||
+                    switchedModel
             ) {
                 null
             } else {
@@ -914,6 +975,10 @@ object HereticPersistentRuntime {
         return StartResult(
             disposition =
                 if (
+                    switchedModel
+                ) {
+                    "SWITCHED_MODEL_AND_STARTED_NEW_EXACT_MLX_RUNTIME"
+                } else if (
                     staleImplementationRotated
                 ) {
                     "ROTATED_STALE_IMPLEMENTATION_AND_STARTED_NEW_EXACT_MLX_RUNTIME"
@@ -1033,34 +1098,36 @@ object HereticPersistentRuntime {
                 binding,
             )
 
+        val identity =
+            binding.model.identity
         return receipt.schemaVersion ==
             ReceiptSchema &&
             receipt.authorityRef ==
             binding.authorityRef &&
             receipt.modelRef ==
-            HereticProductIdentity.ModelRef &&
+            identity.modelRef &&
             receipt.modelProfileRef ==
-            HereticProductIdentity.ModelProfileRef &&
+            identity.modelProfileRef &&
             receipt.artifactRef ==
-            HereticProductIdentity.ArtifactSetRef &&
+            identity.artifactSetRef &&
             receipt.artifactCustodyEvidenceRef ==
-            HereticProductIdentity.ArtifactCustodyEvidenceRef &&
+            identity.artifactCustodyEvidenceRef &&
             receipt.artifactContentSetSha256 ==
-            HereticProductIdentity.ArtifactContentSetSha256 &&
+            identity.artifactContentSetSha256 &&
             receipt.runtimeAdapterRef ==
-            HereticProductIdentity.RuntimeAdapterRef &&
+            identity.runtimeAdapterRef &&
             receipt.runtimeClass ==
-            HereticProductIdentity.RuntimeClass &&
+            identity.runtimeClass &&
             receipt.transportClass ==
-            HereticProductIdentity.TransportClass &&
+            identity.transportClass &&
             receipt.hostExecutionProfileRef ==
-            HereticProductIdentity.HostExecutionProfileRef &&
+            identity.hostExecutionProfileRef &&
             receipt.pythonVersion ==
-            HereticProductIdentity.PythonVersion &&
+            identity.pythonVersion &&
             receipt.mlxLmVersion ==
-            HereticProductIdentity.MlxLmVersion &&
+            identity.mlxLmVersion &&
             receipt.trainerSourceCommit ==
-            HereticProductIdentity.TrainerSourceCommit &&
+            identity.trainerSourceCommit &&
             receipt.modelPath ==
             binding.modelPath &&
             receipt.pythonPath ==
@@ -1068,9 +1135,9 @@ object HereticPersistentRuntime {
             receipt.pythonEnvironmentRoot ==
             binding.pythonEnvironmentRoot &&
             receipt.endpoint ==
-            HereticProductIdentity.Endpoint &&
+            identity.endpoint &&
             receipt.requestModel ==
-            HereticProductIdentity.RequestModel &&
+            identity.requestModel &&
             receipt.implementationIdentity.repository ==
             binding.implementationIdentity.repository &&
             receipt.implementationIdentity.classResource ==
@@ -1197,23 +1264,23 @@ object HereticPersistentRuntime {
             state = state,
             formedAt = formedAt,
             authorityRef = binding.authorityRef,
-            modelRef = HereticProductIdentity.ModelRef,
-            modelProfileRef = HereticProductIdentity.ModelProfileRef,
-            artifactRef = HereticProductIdentity.ArtifactSetRef,
-            artifactCustodyEvidenceRef = HereticProductIdentity.ArtifactCustodyEvidenceRef,
-            artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
-            runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
-            runtimeClass = HereticProductIdentity.RuntimeClass,
-            transportClass = HereticProductIdentity.TransportClass,
-            hostExecutionProfileRef = HereticProductIdentity.HostExecutionProfileRef,
-            pythonVersion = HereticProductIdentity.PythonVersion,
-            mlxLmVersion = HereticProductIdentity.MlxLmVersion,
-            trainerSourceCommit = HereticProductIdentity.TrainerSourceCommit,
+            modelRef = binding.model.identity.modelRef,
+            modelProfileRef = binding.model.identity.modelProfileRef,
+            artifactRef = binding.model.identity.artifactSetRef,
+            artifactCustodyEvidenceRef = binding.model.identity.artifactCustodyEvidenceRef,
+            artifactContentSetSha256 = binding.model.identity.artifactContentSetSha256,
+            runtimeAdapterRef = binding.model.identity.runtimeAdapterRef,
+            runtimeClass = binding.model.identity.runtimeClass,
+            transportClass = binding.model.identity.transportClass,
+            hostExecutionProfileRef = binding.model.identity.hostExecutionProfileRef,
+            pythonVersion = binding.model.identity.pythonVersion,
+            mlxLmVersion = binding.model.identity.mlxLmVersion,
+            trainerSourceCommit = binding.model.identity.trainerSourceCommit,
             modelPath = binding.modelPath,
             pythonPath = binding.pythonPath,
             pythonEnvironmentRoot = binding.pythonEnvironmentRoot,
-            endpoint = HereticProductIdentity.Endpoint,
-            requestModel = HereticProductIdentity.RequestModel,
+            endpoint = binding.model.identity.endpoint,
+            requestModel = binding.model.identity.requestModel,
             implementationIdentity = binding.implementationIdentity,
             runtime =
                 RuntimeProcess(

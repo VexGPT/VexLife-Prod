@@ -72,8 +72,8 @@ object VexLifeProdMacFrontDoor {
     ) {
         init {
             require(
-                modelRef == HereticProductIdentity.ModelRef &&
-                    modelProfileRef == HereticProductIdentity.ModelProfileRef &&
+                vexlife.model.heretic.HereticModelCatalog.entry(modelRef)?.identity?.modelProfileRef ==
+                    modelProfileRef &&
                     modelLabel.isNotBlank() &&
                     modelArtifactTotalBytes > 0 &&
                     modelArtifactMissingBytes in 0..modelArtifactTotalBytes &&
@@ -196,6 +196,8 @@ object VexLifeProdMacFrontDoor {
         val currentServicePid: Long?,
         val serviceDetail: String?,
         val storage: HereticSetupStorage.Requirement?,
+        val model: vexlife.model.heretic.HereticModelCatalog.Entry =
+            vexlife.model.heretic.HereticModelCatalog.Default,
     )
 
     internal data class ResolvedControl(
@@ -209,26 +211,35 @@ object VexLifeProdMacFrontDoor {
         desiredSourceSha: String,
         productHome: Path,
         language: String = VexLifePersonSettings.DefaultLanguage,
+        model: String? = null,
     ): Projection =
         observeWithHooks(
             desiredSourceSha = desiredSourceSha,
             productHome = productHome,
             hooks = Hooks(),
             language = language,
+            model = model,
         )
 
+    /**
+     * [model] is the model handle chosen in the setup window, when one was; before a Home exists it
+     * is the only place that choice lives. Once the Home exists its saved choice is the authority.
+     */
     internal fun observeWithHooks(
         desiredSourceSha: String,
         productHome: Path,
         hooks: Hooks,
         language: String = VexLifePersonSettings.DefaultLanguage,
+        model: String? = null,
     ): Projection {
         val observed =
             observeSemantic(
                 desiredSourceSha = desiredSourceSha,
                 productHome = productHome,
                 hooks = hooks,
+                model = model,
             )
+        val chosenModel = observed.model
         val display = VexLifeProdEntryFamily.Semantics.displayStateFor(observed.entryState)
         val setupPlan =
             if (observed.entryState.stateRef in PlanStates) {
@@ -237,12 +248,12 @@ object VexLifeProdMacFrontDoor {
                         "setup plan requires one storage requirement"
                     }
                 SetupPlan(
-                    modelRef = HereticProductIdentity.ModelRef,
-                    modelProfileRef = HereticProductIdentity.ModelProfileRef,
-                    modelLabel = HereticProductIdentity.HumanModelLabel,
-                    modelArtifactTotalBytes = HereticArtifactMaterialization.plan().totalBytes,
+                    modelRef = chosenModel.modelRef,
+                    modelProfileRef = chosenModel.identity.modelProfileRef,
+                    modelLabel = chosenModel.humanLabel,
+                    modelArtifactTotalBytes = chosenModel.totalBytes,
                     modelArtifactMissingBytes = storage.missingModelBytes,
-                    modelMinimumMemoryBytes = HereticMacHostProfile.MinimumMemoryBytes,
+                    modelMinimumMemoryBytes = chosenModel.recommendedMemoryBytes,
                     currentTotalMemoryBytes = observed.currentState.totalMemoryBytes,
                     currentFreeStorageBytes = observed.currentState.freeStorageBytes,
                     requiredFreeStorageBytes = storage.requiredFreeBytes,
@@ -265,8 +276,7 @@ object VexLifeProdMacFrontDoor {
                     formationPreview =
                         if (observed.entryState is VexLifeProdEntryFamily.HomeFormationRequired) {
                             HereticSetupStorage.requirement(
-                                missingModelBytes =
-                                    HereticArtifactMaterialization.plan().totalBytes,
+                                missingModelBytes = chosenModel.totalBytes,
                                 observedFreeBytes = observed.currentState.freeStorageBytes,
                             )
                         } else {
@@ -275,6 +285,7 @@ object VexLifeProdMacFrontDoor {
                     currentServiceSourceSha = observed.currentServiceSourceSha,
                     requiredChipModel = HereticMacHostProfile.RequiredChipModel,
                     requiredMemoryBytes = HereticMacHostProfile.MinimumMemoryBytes,
+                    modelLabel = chosenModel.humanLabel,
                     protectedLocation =
                         VexLifeProdMacSetupCard.protectedLocationName(
                             userHome = hooks.userHome(),
@@ -350,6 +361,7 @@ object VexLifeProdMacFrontDoor {
         desiredSourceSha: String,
         productHome: Path,
         hooks: Hooks,
+        model: String? = null,
     ): Observed {
         require(GitSha.matches(desiredSourceSha)) {
             "Mac front door requires one exact desired Product source SHA"
@@ -371,6 +383,11 @@ object VexLifeProdMacFrontDoor {
         require(Path.of(location.productHome).normalize() == selectedHome) {
             "Product-entry Home location changed the selected Vex Home coordinate"
         }
+        // The model this setup is about: the window's choice, else the Home's, else what fits this Mac.
+        val chosenModel =
+            model?.let(vexlife.model.heretic.HereticModelCatalog::byHandle)
+                ?: current.activeModelRef?.let(vexlife.model.heretic.HereticModelCatalog::entry)
+                ?: vexlife.model.heretic.HereticModelCatalog.recommendedFor(current.totalMemoryBytes)
 
         fun observed(
             state: VexLifeProdEntryFamily.EntryState,
@@ -387,6 +404,7 @@ object VexLifeProdMacFrontDoor {
                 currentServicePid = pid,
                 serviceDetail = detail,
                 storage = storage,
+                model = chosenModel,
             )
 
         if (current.homeDisposition != location.disposition.wireValue) {
@@ -502,7 +520,7 @@ object VexLifeProdMacFrontDoor {
         if (!runtimeEnvironmentPresent) {
             val missingModelBytes =
                 current.modelArtifactMissingBytes
-                    ?: HereticArtifactMaterialization.plan().totalBytes
+                    ?: chosenModel.totalBytes
             val storage =
                 HereticSetupStorage.requirement(
                     missingModelBytes = missingModelBytes,
@@ -621,6 +639,11 @@ object VexLifeProdMacFrontDoorProcess {
         val persistLanguage: (productHome: Path, language: String) -> Boolean =
             { productHome, language ->
                 VexLifeProdSetupLanguage.persist(productHome, language)
+            },
+        /** Saves a model chosen in the window into the Home once it is a canonical Vex Home. */
+        val persistModel: (productHome: Path, model: vexlife.model.heretic.HereticModelCatalog.Entry) -> Boolean =
+            { productHome, model ->
+                VexLifeProdSetupModel.persist(productHome, model)
             },
         val resolveControl:
             (
@@ -787,6 +810,7 @@ object VexLifeProdMacFrontDoorProcess {
         productHome: Path,
         language: String?,
         systemLanguage: String?,
+        model: String? = null,
     ) {
         bindLogger(desiredSourceSha, productHome)
         val selected = runCatching {
@@ -799,6 +823,7 @@ object VexLifeProdMacFrontDoorProcess {
                         desiredSourceSha = desiredSourceSha,
                         productHome = productHome,
                         language = selected,
+                        model = model,
                     )
                 VexLogger.record(
                     VexLogger.Fact.EntryStateObserved,
@@ -832,6 +857,7 @@ object VexLifeProdMacFrontDoorProcess {
         desiredSourceSha: String,
         productHome: Path,
         language: String?,
+        model: String? = null,
     ) {
         bindLogger(desiredSourceSha, productHome)
         val selected = runCatching {
@@ -849,9 +875,35 @@ object VexLifeProdMacFrontDoorProcess {
                         ),
                     language = selected,
                     persistLanguage = language != null,
+                    model = model,
                 )
             )
         )
+        utf8StandardOutput.flush()
+    }
+
+    /** No-effect: the offered models, how each fits this Mac, and which one setup will use. */
+    fun observeModel(productHome: Path, model: String?, language: String?) {
+        val selected = runCatching { VexLifeProdSetupLanguage.resolve(productHome, language, null) }
+            .getOrDefault(VexLifePersonSettings.DefaultLanguage)
+        val memory = runCatching { HereticMacHostProfile.observeCurrent().observation.totalMemoryBytes }.getOrNull()
+        utf8StandardOutput.println(
+            VexContractJson.encode(VexLifeProdSetupModel.observe(productHome, model, selected, memory))
+        )
+        utf8StandardOutput.flush()
+    }
+
+    /** The person chose a model in the setup window: saved into the Home when it exists. */
+    fun chooseModel(productHome: Path, model: String, language: String?) {
+        bindLogger(null, productHome)
+        val selected = runCatching { VexLifeProdSetupLanguage.resolve(productHome, language, null) }
+            .getOrDefault(VexLifePersonSettings.DefaultLanguage)
+        val memory = runCatching { HereticMacHostProfile.observeCurrent().observation.totalMemoryBytes }.getOrNull()
+        val projection = VexLifeProdSetupModel.choose(productHome, model, selected, memory)
+        if (projection.effectsPerformed) {
+            VexLogger.record(VexLogger.Fact.PersonModelChosen, mapOf("model" to model))
+        }
+        utf8StandardOutput.println(VexContractJson.encode(projection))
         utf8StandardOutput.flush()
     }
 
@@ -900,12 +952,25 @@ object VexLifeProdMacFrontDoorProcess {
         hooks: ActivationHooks,
         language: String = VexLifePersonSettings.DefaultLanguage,
         persistLanguage: Boolean = false,
+        model: String? = null,
     ): ActivationProjection {
         require(productHome.isAbsolute) {
             "selected Vex Home path must be absolute"
         }
         val selectedHome = productHome.normalize()
+        // A model chosen in the window is the Home's choice as soon as a Home exists to hold it:
+        // before the Control (so Set Up acquires and starts exactly that model) and again after it
+        // (so a Home formed by this very activation holds it too).
+        val chosenModel = model?.let { requireNotNull(vexlife.model.heretic.HereticModelCatalog.byHandle(it)) { "model $it is not offered" } }
+        fun persistChosenModel() {
+            if (chosenModel != null) {
+                runCatching { hooks.persistModel(selectedHome, chosenModel) }
+                    .onSuccess { saved -> if (saved) VexLogger.record(VexLogger.Fact.PersonModelChosen, mapOf("model" to chosenModel.handle)) }
+            }
+        }
+        persistChosenModel()
         val projection = activateOnce(controlRef, desiredSourceSha, selectedHome, hooks, language)
+        persistChosenModel()
         // Whatever the Control did, a language the person chose is theirs once a Home exists to
         // hold it. Saving it never changes the activation's outcome.
         if (persistLanguage) {

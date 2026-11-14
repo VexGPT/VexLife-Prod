@@ -161,6 +161,58 @@ That path records **where qualification evidence comes from**. It does not trans
 ownership. A later exact qualified observation may rebind this product projection from one admitted
 owner coordinate to the other without changing the model/Vex identity.
 
+## Model catalog (2026-11-14)
+
+The Product now offers more than one local Heretic model. `HereticModelCatalog`
+(`src/commonMain/kotlin/vexlife/model/heretic/HereticModelCatalog.kt`) is the one source-owned index:
+
+| handle | model | weights | wants | standing |
+|---|---|---|---|---|
+| `heretic-27b` | Qwen3.8 27B Heretic, MLX 4-bit — `donedynamics/Qwen3.8-27B-heretic-MLX-4bit@808b82a2` | 15.15 GB, 11 members | 32 GiB | CERTIFIED (the identity above, unchanged) |
+| `heretic-9b` | Qwen3.8 9B Heretic, MLX 5-bit — `Foresee/Qwen3.8-9B-heretic-uncensored-5bit-MLX@8a3eec7d` | 6.74 GB, 10 members, content set `5901a94b…` | 16 GiB | CANDIDATE |
+| `heretic-4b` | Qwen3.8→Qwen3.5 4B Distill, Heretic + abliterated, MLX 4-bit — `yachen4ever/Qwen3.8-4B-Distill-Heretic-Abliterated-MLX-4bit@f47bef77` | 3.05 GB, 11 members, content set `d2f8f402…` | 8 GiB | CANDIDATE |
+
+Every member of every model is pinned by byte length and SHA-256 at one provider revision (LFS
+members by their published SHA-256 oid, small files by hashing the bytes at that revision), and
+each model's content-set SHA-256 is reproduced by `HereticArtifactMaterialization.plan(entry)` with
+the same formula that reproduces the certified `329658ee…`. All three share the Qwen3.5
+`ForConditionalGeneration` architecture class and the certified runtime relationship (adapter,
+MLX_LM_DIRECT_RUNTIME, mlx-lm 0.32.0, Python 3.14.7, loopback endpoint, `default_model`). The 9B and
+4B chat templates are the standard Qwen3.5 template (same `<think>` handling, no reasoning-effort
+preamble); the 27B's adds reasoning-effort instructions.
+
+CANDIDATE means: exact bytes pinned, qualified at every start by the same runtime qualification as
+the certified model (health, model enumeration, one real chat completion), lived comparison still
+owed. It is never an automatic fallback; a person chooses it.
+
+What the catalog does not own: bytes on disk (`HereticArtifactMaterialization`, now per model under
+`models/heretic/<model folder>/<revision>`), the Home's choice (`FileHereticModelConfigurationStore`
+— same v1 schema; a bound 27B Home reads exactly as before), runtime liveness and receipts
+(`HereticPersistentRuntime`, whose `Binding` now names the catalog model its files are and whose
+receipts carry that model's identity).
+
+Relationships that changed:
+
+~~~text
+Home never chose        -> largest offered model that fits this Mac's memory (27B on Victor's Mac)
+Home chose model X      -> X is materialized, bound and run; nothing else binds the Home
+runtime serves Y != X   -> at Setup Start the runtime owner retires its own exact Y runtime
+                           (same exact-ownership path as a stale implementation), starts X:
+                           SWITCHED_MODEL_AND_STARTED_NEW_EXACT_MLX_RUNTIME
+borrowed stable runtime -> only ever for the certified 27B
+service process         -> still reuse-only: it never starts or switches a runtime
+~~~
+
+Host eligibility (`HereticMacHostProfile`) was a stale guard for this: it required exactly an
+Apple M4 Pro and 12 GiB, the certification envelope of the 27B on Victor's Mac, which kept every
+other Mac out. It now admits Apple silicon (any M-series chip) with at least the smallest model's
+8 GiB; whether a given model fits is answered per model. The profile ref is unchanged so existing
+runtime receipts stay exact.
+
+Removing a model (`HereticArtifactMaterialization.remove`) deletes only that model's own pinned
+member files (and their `.partial` downloads), then its empty folders. The model stays offered and
+can be downloaded again.
+
 ## Certified artifact catalog
 
 The 11-member bundle is source-placed as typed data with:

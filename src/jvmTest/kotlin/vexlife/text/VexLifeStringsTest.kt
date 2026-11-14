@@ -58,7 +58,15 @@ class VexLifeStringsTest {
         val capabilityRefs =
             vexlife.capability.VexLifeCapabilityAtlas.definitions().flatMap { definition ->
                 definition.actions.map { "capability:${definition.handle}:${it.action}" }
-            } + "capability:trace:USES"
+            } + "capability:trace:USES" +
+                listOf(
+                    vexlife.model.VexLifeModelsFamily.ControlUse,
+                    vexlife.model.VexLifeModelsFamily.ControlDownload,
+                    vexlife.model.VexLifeModelsFamily.ControlRedownload,
+                    vexlife.model.VexLifeModelsFamily.ControlRemove,
+                ).map { "model:control:$it" } +
+                vexlife.model.VexLifeModelsFamily.Files.entries.map { "model:files:${it.name}" } +
+                vexlife.model.heretic.HereticModelCatalog.Standing.entries.map { "model:standing:${it.name}" }
         val known =
             capabilityRefs.toSet() +
             setOf(

@@ -8,6 +8,7 @@ import java.security.MessageDigest
 import vexlife.artifact.ExactArtifactFile
 import vexlife.filesystem.VexOwnedPath
 import vexlife.model.heretic.HereticArtifactCatalog
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticProductIdentity
 
 /**
@@ -20,8 +21,9 @@ object HereticArtifactMaterialization {
     const val Schema =
         "vexlife.heretic-runtime-establishment/v1"
 
-    const val ModelRootRelativePath =
-        "models/heretic/qwen3.8-27b-mlx4"
+    /** The certified model's folder; every catalog model names its own (HereticModelCatalog). */
+    val ModelRootRelativePath: String =
+        HereticModelCatalog.Default.modelRootRelativePath
 
     private val ProviderRevisionPattern =
         Regex(
@@ -83,9 +85,11 @@ object HereticArtifactMaterialization {
     )
 
 
-    fun plan(): Plan {
+    fun plan(
+        model: HereticModelCatalog.Entry = HereticModelCatalog.Default,
+    ): Plan {
         val descriptors =
-            HereticArtifactCatalog.Members
+            model.members
 
         require(
             descriptors.isNotEmpty(),
@@ -139,18 +143,18 @@ object HereticArtifactMaterialization {
 
         require(
             actualContentSet ==
-                HereticProductIdentity.ArtifactContentSetSha256,
+                model.identity.artifactContentSetSha256,
         ) {
-            "Heretic artifact catalog does not reproduce the certified content-set SHA-256"
+            "Heretic artifact catalog does not reproduce the pinned content-set SHA-256 of ${model.handle}"
         }
 
         return Plan(
             schemaVersion = Schema,
-            modelBundleRef = HereticProductIdentity.ModelBundleRef,
-            modelProfileRef = HereticProductIdentity.ModelProfileRef,
-            artifactSetRef = HereticProductIdentity.ArtifactSetRef,
-            contentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
-            runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
+            modelBundleRef = model.identity.modelBundleRef,
+            modelProfileRef = model.identity.modelProfileRef,
+            artifactSetRef = model.identity.artifactSetRef,
+            contentSetSha256 = model.identity.artifactContentSetSha256,
+            runtimeAdapterRef = model.identity.runtimeAdapterRef,
             providerRevision = providerRevisions.single(),
             memberCount = members.size,
             totalBytes =
@@ -171,6 +175,7 @@ object HereticArtifactMaterialization {
      */
     fun observePresence(
         productHome: Path,
+        model: HereticModelCatalog.Entry = HereticModelCatalog.Default,
     ): PresenceObservation {
         require(
             productHome.isAbsolute,
@@ -179,7 +184,7 @@ object HereticArtifactMaterialization {
         }
 
         val plan =
-            plan()
+            plan(model)
         val home =
             VexOwnedPath.requireRoot(
                 productHome,
@@ -188,7 +193,7 @@ object HereticArtifactMaterialization {
         val modelPath =
             VexOwnedPath.resolveInside(
                 home,
-                "$ModelRootRelativePath/${plan.providerRevision}",
+                "${model.modelRootRelativePath}/${plan.providerRevision}",
             )
 
         if (
@@ -309,6 +314,7 @@ object HereticArtifactMaterialization {
         productHome: Path,
         allowAcquisition: Boolean,
         acquirer: Acquirer,
+        model: HereticModelCatalog.Entry = HereticModelCatalog.Default,
     ): Result {
         require(
             productHome.isAbsolute,
@@ -317,7 +323,7 @@ object HereticArtifactMaterialization {
         }
 
         val plan =
-            plan()
+            plan(model)
         val home =
             VexOwnedPath.requireRoot(
                 productHome,
@@ -326,7 +332,7 @@ object HereticArtifactMaterialization {
         val modelPath =
             VexOwnedPath.resolveInside(
                 home,
-                "$ModelRootRelativePath/${plan.providerRevision}",
+                "${model.modelRootRelativePath}/${plan.providerRevision}",
             )
 
         val modelDirectoryState =
@@ -352,7 +358,7 @@ object HereticArtifactMaterialization {
         }
 
         val descriptors =
-            HereticArtifactCatalog.Members
+            model.members
                 .associateBy {
                     it.artifactRef
                 }
@@ -470,6 +476,57 @@ object HereticArtifactMaterialization {
                 acquired >
                     0,
         )
+    }
+
+    data class Removal(
+        val state: String,
+        val modelPath: String,
+        val removedFiles: Int,
+        val freedBytes: Long,
+    )
+
+    /**
+     * Frees a catalog model's files from the Home so the space can be used again; the model stays
+     * offered and can be downloaded again. Removes only that model's own pinned member files and
+     * then its empty folders — nothing else under the Home, and never through a link.
+     *
+     * Whether removing is lawful now (not the model the running runtime serves) is the caller's
+     * Control; this owner performs the exact removal it is asked for.
+     */
+    fun remove(
+        productHome: Path,
+        model: HereticModelCatalog.Entry,
+    ): Removal {
+        require(productHome.isAbsolute) { "VexLife-Prod Home must be one absolute path" }
+        val home = VexOwnedPath.requireRoot(productHome, "VexLife-Prod Home")
+        val root = VexOwnedPath.resolveInside(home, model.modelRootRelativePath)
+        val modelPath = VexOwnedPath.resolveInside(home, "${model.modelRootRelativePath}/${model.providerRevision}")
+        if (VexOwnedPath.observeDirectory(home, modelPath) == VexOwnedPath.DirectoryState.Missing) {
+            return Removal("ALREADY_ABSENT", modelPath.toString(), 0, 0)
+        }
+        var removed = 0
+        var freed = 0L
+        for (member in model.members) {
+            val path = VexOwnedPath.resolveInside(modelPath, member.filename)
+            require(path.parent == modelPath) { "Heretic removal member escaped the model directory" }
+            if (Files.exists(path, LinkOption.NOFOLLOW_LINKS) && !Files.isSymbolicLink(path) && Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)) {
+                freed += Files.size(path)
+                Files.delete(path)
+                removed++
+            }
+            // A paused download leaves a sibling ".partial" file (DirectHttpsArtifactDelivery); it is
+            // this model's own bytes too.
+            val partial = modelPath.resolve(member.filename + ".partial")
+            if (Files.isRegularFile(partial, LinkOption.NOFOLLOW_LINKS) && !Files.isSymbolicLink(partial)) {
+                freed += Files.size(partial)
+                Files.delete(partial)
+            }
+        }
+        for (directory in listOf(modelPath, root)) {
+            val empty = Files.list(directory).use { it.findFirst().isEmpty }
+            if (empty) Files.delete(directory) else break
+        }
+        return Removal("REMOVED", modelPath.toString(), removed, freed)
     }
 
     fun computeContentSetSha256(

@@ -9,7 +9,7 @@ use scripting additions
 -- Effect. Every card comes from `--inspect-front-door`; every Control goes back through
 -- `--activate-front-door-control`, which re-observes current truth before acting and observes
 -- again afterwards. The only things decided here are renderer-local navigation (choose a
--- language, choose another Home location, check again, close) and how long-running work is shown
+-- language, choose a model, choose another Home location, check again, close) and how long-running work is shown
 -- (progress + Cancel safely), ported from the predecessor's lived AppKit progress panel.
 --
 -- Language is the first step. The window's own words come from the Product's keyed string source
@@ -33,6 +33,9 @@ property selectedLanguage : missing value
 property systemLanguage : missing value
 property windowText : missing value
 property offeredLanguages : missing value
+-- The model chosen in this window (a catalog handle); empty until the person chooses. The Product
+-- saves it into the Home once one exists, so later inspections read it from there.
+property selectedModel : ""
 
 on run
 	set sourceSha to my bundleString("VexLifeProdExpectedSourceSha")
@@ -60,6 +63,15 @@ on run
 	set selectedHomePath to my chooseHome(defaultHome)
 	if selectedHomePath is missing value then return
 
+	-- Model is the step after the Home: a Home that already chose keeps its choice unasked.
+	set modelState to my runProductEntry({"--setup-model", "--home", selectedHomePath, "--language", selectedLanguage}, false)
+	set modelProjection to jsonValue of modelState
+	if modelProjection is not missing value then
+		if ((modelProjection's objectForKey:"chosen") as boolean) is false then
+			if my chooseModel(selectedHomePath) is false then return
+		end if
+	end if
+
 	repeat
 		set nextAction to my showEntry()
 		if nextAction is "CHOOSE_HOME" then
@@ -67,6 +79,8 @@ on run
 			if chosen is not missing value then set selectedHomePath to chosen
 		else if nextAction is "CHOOSE_LANGUAGE" then
 			my chooseLanguage(selectedHomePath)
+		else if nextAction is "CHOOSE_MODEL" then
+			my chooseModel(selectedHomePath)
 		else if nextAction is "RECHECK" then
 			-- observe again
 		else
@@ -78,7 +92,7 @@ end run
 -- ------------------------------------------------------------------ one journey step
 
 on showEntry()
-	set inspected to my runProductEntry({"--inspect-front-door", "--home", selectedHomePath, "--expected-source-sha", sourceSha, "--language", selectedLanguage}, false)
+	set inspected to my runProductEntry(my withModel({"--inspect-front-door", "--home", selectedHomePath, "--expected-source-sha", sourceSha, "--language", selectedLanguage}), false)
 	set projection to jsonValue of inspected
 	if projection is missing value then
 		return my showProcessFailure(my chromeText("setup.heading.could-not-check-mac"), inspected, false)
@@ -144,7 +158,7 @@ on presentCard(card)
 end presentCard
 
 on activateControl(controlRef)
-	set activated to my runProductEntry({"--activate-front-door-control", controlRef, "--home", selectedHomePath, "--expected-source-sha", sourceSha, "--language", selectedLanguage}, true)
+	set activated to my runProductEntry(my withModel({"--activate-front-door-control", controlRef, "--home", selectedHomePath, "--expected-source-sha", sourceSha, "--language", selectedLanguage}), true)
 
 	if cancelledByHuman of activated then
 		my showMessage(my chromeText("setup.heading.setup-paused"), my chromeText("setup.description.setup-paused"), my chromeText("setup.button.continue"))
@@ -231,6 +245,50 @@ on chooseLanguage(homePath)
 	end if
 	return true
 end chooseLanguage
+
+-- ------------------------------------------------------------------ model (after the Home)
+
+-- Adds the window's model choice to a setup command when the person made one here.
+on withModel(argumentsList)
+	if selectedModel is "" then return argumentsList
+	return argumentsList & {"--model", selectedModel}
+end withModel
+
+-- Shows the offered models, each with its size and how it fits this Mac (lines come from the
+-- Product in the window's language). Returns false when the person cancels.
+on chooseModel(homePath)
+	set modelRun to my runProductEntry(my withModel({"--setup-model", "--home", homePath, "--language", selectedLanguage}), false)
+	set projection to jsonValue of modelRun
+	if projection is missing value then return true
+	set modelsValue to projection's objectForKey:"models"
+	set currentHandle to my dictionaryText(projection, "selected", "")
+	if modelsValue is missing value then return true
+
+	set alert to current application's NSAlert's alloc()'s init()
+	alert's setMessageText:(my chromeText("setup.heading.choose-model"))
+	alert's setInformativeText:(my chromeText("setup.description.choose-model"))
+	alert's addButtonWithTitle:(my chromeText("setup.button.continue"))
+	alert's addButtonWithTitle:(my chromeText("setup.button.cancel"))
+	set popup to current application's NSPopUpButton's alloc()'s initWithFrame:(current application's NSMakeRect(0, 0, 420, 28)) pullsDown:false
+	set modelCount to (modelsValue's |count|()) as integer
+	set selectedIndex to 0
+	repeat with modelIndex from 0 to (modelCount - 1)
+		set modelValue to (modelsValue's objectAtIndex:modelIndex)
+		(popup's addItemWithTitle:(my dictionaryText(modelValue, "line", my dictionaryText(modelValue, "label", ""))))
+		if (my dictionaryText(modelValue, "handle", "")) is currentHandle then set selectedIndex to modelIndex
+	end repeat
+	popup's selectItemAtIndex:selectedIndex
+	alert's setAccessoryView:popup
+	current application's NSApp's activateIgnoringOtherApps:true
+	set response to (alert's runModal()) as integer
+	if response is not NSAlertFirstButtonReturn then return false
+
+	set chosenValue to (modelsValue's objectAtIndex:((popup's indexOfSelectedItem()) as integer))
+	set selectedModel to my dictionaryText(chosenValue, "handle", currentHandle)
+	-- Saved into the Home now if it already exists; otherwise carried until the Home is created.
+	my runProductEntry({"--choose-model", selectedModel, "--home", homePath, "--language", selectedLanguage}, false)
+	return true
+end chooseModel
 
 on preferredSystemLanguage()
 	try

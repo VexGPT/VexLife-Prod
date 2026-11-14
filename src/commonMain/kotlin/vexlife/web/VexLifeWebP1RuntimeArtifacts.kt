@@ -99,6 +99,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 visionControlPath: ${jsString(VexLifeProdServiceContract.VisionControlPath)},
                 diagnosticsPath: ${jsString(VexLifeProdServiceContract.DiagnosticsPath)},
                 diagnosticsControlPath: ${jsString(VexLifeProdServiceContract.DiagnosticsControlPath)},
+                modelsPath: ${jsString(VexLifeProdServiceContract.ModelsPath)},
+                modelsControlPath: ${jsString(VexLifeProdServiceContract.ModelsControlPath)},
                 chronologyPath: ${jsString(VexLifeProdServiceContract.ChronologyPath)},
                 workspaceStringsPath: ${jsString(VexLifeProdServiceContract.WorkspaceStringsPath)},
                 sendPath: ${jsString(VexLifeProdServiceContract.ConversationSendPath)}
@@ -199,6 +201,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 memoryText: byId('memory-text'),
                 memoryNote: byId('memory-note'),
                 vexMemoryLabel: byId('vex-memory-label'),
+                modelsList: byId('models-list'),
+                modelsNote: byId('models-note'),
                 diagnosticsStatus: byId('diagnostics-status'),
                 diagnosticsCapture: byId('diagnostics-capture'),
                 diagnosticsRecords: byId('diagnostics-records'),
@@ -250,6 +254,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 memory: null,
                 diagnostics: null,
                 diagnosticsInFlight: false,
+                // Settings → Models projection (VexLifeModels); refreshed while a download runs.
+                models: null,
+                modelsInFlight: false,
                 workspaceStrings: null,
                 browserContext: null,
                 includePage: false,
@@ -1980,6 +1987,92 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
               };
 
+              const gibText = (bytes) => (Number(bytes) / 1073741824).toFixed(1);
+
+              // Settings → Models. Rows, states and lawful Controls come from VexLifeModelsFamily via
+              // the service; this renderer only lays them out and returns the chosen Control ref.
+              const renderModels = () => {
+                if (!ui.modelsList) return;
+                ui.modelsList.textContent = '';
+                const projection = state.models;
+                if (!projection) return;
+                for (const model of projection.models || []) {
+                  const row = document.createElement('div');
+                  row.className = 'model-row';
+                  row.dataset.chosen = String(Boolean(model.chosen));
+                  const name = document.createElement('p');
+                  name.className = 'model-name';
+                  name.textContent = model.label;
+                  const facts = document.createElement('p');
+                  facts.className = 'model-facts';
+                  const status = model.downloadedBytes != null
+                    ? t('workspace.status.model-downloading')
+                        .replace('{done}', gibText(model.downloadedBytes))
+                        .replace('{total}', gibText(model.totalBytes))
+                    : resolveText(model.display.status);
+                  facts.textContent = status + ' · ' + t('workspace.label.model-facts')
+                    .replace('{size}', gibText(model.totalBytes))
+                    .replace('{memory}', gibText(model.recommendedMemoryBytes))
+                    .replace('{fit}', t(model.fitsThisMac ? 'workspace.label.model-fits' : 'workspace.label.model-tight'));
+                  const notes = document.createElement('p');
+                  notes.className = 'model-notes';
+                  notes.textContent = [
+                    ...(model.display.notes || []).map(resolveText),
+                    model.standing === 'CANDIDATE' ? t('workspace.label.model-candidate') : ''
+                  ].filter(Boolean).join(' · ');
+                  const controls = document.createElement('div');
+                  controls.className = 'model-controls';
+                  for (const control of model.display.controls || []) {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'outline-button';
+                    button.textContent = resolveText(control.label);
+                    button.disabled = state.modelsInFlight;
+                    button.addEventListener('click', () => { void modelControl(control.controlRef, model.handle); });
+                    controls.append(button);
+                  }
+                  row.append(name, controls, facts, notes);
+                  ui.modelsList.append(row);
+                }
+                const lines = [];
+                if (projection.lastOutcome) lines.push(resolveText(projection.lastOutcome.message));
+                if (projection.switchPending) lines.push(t('workspace.status.models-switch-pending'));
+                if (projection.freeStorageBytes != null) {
+                  lines.push(t('workspace.label.model-free-space').replace('{free}', gibText(projection.freeStorageBytes)));
+                }
+                if (ui.modelsNote) ui.modelsNote.textContent = lines.join(' ');
+              };
+
+              const loadModels = async () => {
+                const response = await fetch(service.modelsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                state.models = await readJson(response);
+                renderModels();
+                // A running download is followed until it settles; nothing polls when idle.
+                if (state.models?.downloading) window.setTimeout(() => { void loadModels().catch(() => {}); }, 2000);
+                return state.models;
+              };
+
+              const modelControl = async (controlRef, handle) => {
+                if (state.modelsInFlight) return;
+                if (controlRef === 'REMOVE_MODEL' && !window.confirm(t('workspace.button.model-remove') + '?')) return;
+                state.modelsInFlight = true;
+                renderModels();
+                try {
+                  const response = await fetch(service.modelsControlPath, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', accept: 'application/json' },
+                    body: JSON.stringify({ controlRef, handle })
+                  });
+                  state.models = await readJson(response);
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : 'Models are not available.');
+                } finally {
+                  state.modelsInFlight = false;
+                  renderModels();
+                  if (state.models?.downloading) window.setTimeout(() => { void loadModels().catch(() => {}); }, 2000);
+                }
+              };
+
               const loadMemory = async () => {
                 const response = await fetch(service.memoryPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.memory = await readJson(response);
@@ -2652,6 +2745,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   void loadSettings().catch(() => {});
                   void loadMemory().catch(() => {});
                   void loadDiagnostics().catch(() => renderDiagnostics());
+                  void loadModels().catch(() => {});
                   // Observed: the presentation rendered with current service data.
                   reportFact('PRESENTATION_ARRIVED', { presentation: 'workspace' });
                 })

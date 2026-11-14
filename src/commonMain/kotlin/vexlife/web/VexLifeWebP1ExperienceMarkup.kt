@@ -264,6 +264,13 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
         </section>
 
 
+        <section class="setting" data-vex-ref="${VexLifeWebP1.SettingsModels.identity.ref}" aria-labelledby="models-heading">
+          <h2 id="models-heading" data-vex-text="workspace.heading.models"></h2>
+          <p class="setting-note-line" data-vex-text="workspace.description.models"></p>
+          <div class="models-list" data-vex-ref="${VexLifeWebP1.ModelsList.identity.ref}" id="models-list"></div>
+          <p class="setting-note-line" id="models-note"></p>
+        </section>
+
         <section class="setting" data-vex-ref="${VexLifeWebP1.SettingsDiagnostics.identity.ref}" aria-labelledby="diagnostics-heading">
           <h2 id="diagnostics-heading" data-vex-text="workspace.heading.diagnostics"></h2>
           <div class="memory-state" data-vex-ref="${VexLifeWebP1.DiagnosticsTrace.identity.ref}" id="diagnostics-trace">

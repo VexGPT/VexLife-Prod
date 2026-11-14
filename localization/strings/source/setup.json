@@ -6042,5 +6042,302 @@
     "surfaces": [
       "setup.window"
     ]
+  },
+  "setup.button.change-model": {
+    "strings": {
+      "en": {
+        "text": "Model…"
+      },
+      "ja": {
+        "text": "モデル…"
+      },
+      "zh": {
+        "text": "模型…"
+      },
+      "ko": {
+        "text": "모델…"
+      },
+      "fr": {
+        "text": "Modèle…"
+      },
+      "de": {
+        "text": "Modell …"
+      },
+      "es": {
+        "text": "Modelo…"
+      },
+      "pt": {
+        "text": "Modelo…"
+      },
+      "ar": {
+        "text": "النموذج…"
+      },
+      "hi": {
+        "text": "मॉडल…"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "setup:action:CHOOSE_MODEL"
+  },
+  "setup.heading.choose-model": {
+    "strings": {
+      "en": {
+        "text": "Choose Vex's model"
+      },
+      "ja": {
+        "text": "Vex のモデルを選ぶ"
+      },
+      "zh": {
+        "text": "选择 Vex 的模型"
+      },
+      "ko": {
+        "text": "Vex 모델 선택"
+      },
+      "fr": {
+        "text": "Choisir le modèle de Vex"
+      },
+      "de": {
+        "text": "Modell für Vex wählen"
+      },
+      "es": {
+        "text": "Elige el modelo de Vex"
+      },
+      "pt": {
+        "text": "Escolha o modelo do Vex"
+      },
+      "ar": {
+        "text": "اختر نموذج Vex"
+      },
+      "hi": {
+        "text": "Vex का मॉडल चुनें"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.description.choose-model": {
+    "strings": {
+      "en": {
+        "text": "Smaller models answer sooner and need less memory; the 27B thinks most deeply. You can change this later, and remove models you don't use to free space."
+      },
+      "ja": {
+        "text": "小さいモデルほど早く答え、必要なメモリも少なくなります。27B は最も深く考えます。後から変更でき、使わないモデルは削除して空き容量を増やせます。"
+      },
+      "zh": {
+        "text": "较小的模型回答更快、所需内存更少；27B 思考最深入。以后可以更改，也可以删除不用的模型以释放空间。"
+      },
+      "ko": {
+        "text": "작은 모델일수록 더 빨리 답하고 메모리도 적게 씁니다. 27B는 가장 깊이 생각합니다. 나중에 바꿀 수 있고, 쓰지 않는 모델은 삭제해 공간을 확보할 수 있습니다."
+      },
+      "fr": {
+        "text": "Les modèles plus petits répondent plus vite et demandent moins de mémoire ; le 27B réfléchit le plus en profondeur. Vous pourrez changer plus tard et supprimer les modèles inutilisés pour libérer de l'espace."
+      },
+      "de": {
+        "text": "Kleinere Modelle antworten schneller und brauchen weniger Arbeitsspeicher; das 27B denkt am gründlichsten. Du kannst das später ändern und nicht genutzte Modelle entfernen, um Platz freizugeben."
+      },
+      "es": {
+        "text": "Los modelos más pequeños responden antes y necesitan menos memoria; el 27B piensa con más profundidad. Puedes cambiarlo después y eliminar los modelos que no uses para liberar espacio."
+      },
+      "pt": {
+        "text": "Modelos menores respondem mais rápido e precisam de menos memória; o 27B pensa com mais profundidade. Você pode mudar depois e remover os modelos que não usa para liberar espaço."
+      },
+      "ar": {
+        "text": "النماذج الأصغر تجيب أسرع وتحتاج ذاكرة أقل؛ ونموذج 27B يفكّر بأعمق صورة. يمكنك التغيير لاحقًا، وإزالة النماذج التي لا تستخدمها لتوفير المساحة."
+      },
+      "hi": {
+        "text": "छोटे मॉडल जल्दी जवाब देते हैं और कम मेमोरी लेते हैं; 27B सबसे गहराई से सोचता है। आप इसे बाद में बदल सकते हैं, और जगह खाली करने के लिए न उपयोग होने वाले मॉडल हटा सकते हैं।"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.label.model-choice": {
+    "strings": {
+      "en": {
+        "text": "{model} · {size} GiB · {fit}"
+      },
+      "ja": {
+        "text": "{model} · {size} GiB · {fit}"
+      },
+      "zh": {
+        "text": "{model} · {size} GiB · {fit}"
+      },
+      "ko": {
+        "text": "{model} · {size} GiB · {fit}"
+      },
+      "fr": {
+        "text": "{model} · {size} Gio · {fit}"
+      },
+      "de": {
+        "text": "{model} · {size} GiB · {fit}"
+      },
+      "es": {
+        "text": "{model} · {size} GiB · {fit}"
+      },
+      "pt": {
+        "text": "{model} · {size} GiB · {fit}"
+      },
+      "ar": {
+        "text": "{model} · {size} GiB · {fit}"
+      },
+      "hi": {
+        "text": "{model} · {size} GiB · {fit}"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.status.model-recommended": {
+    "strings": {
+      "en": {
+        "text": "recommended for this Mac"
+      },
+      "ja": {
+        "text": "この Mac におすすめ"
+      },
+      "zh": {
+        "text": "推荐用于这台 Mac"
+      },
+      "ko": {
+        "text": "이 Mac에 권장"
+      },
+      "fr": {
+        "text": "recommandé pour ce Mac"
+      },
+      "de": {
+        "text": "für diesen Mac empfohlen"
+      },
+      "es": {
+        "text": "recomendado para este Mac"
+      },
+      "pt": {
+        "text": "recomendado para este Mac"
+      },
+      "ar": {
+        "text": "موصى به لهذا الـ Mac"
+      },
+      "hi": {
+        "text": "इस Mac के लिए सुझाया गया"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.status.model-fits": {
+    "strings": {
+      "en": {
+        "text": "fits this Mac"
+      },
+      "ja": {
+        "text": "この Mac で動作"
+      },
+      "zh": {
+        "text": "适合这台 Mac"
+      },
+      "ko": {
+        "text": "이 Mac에 맞음"
+      },
+      "fr": {
+        "text": "adapté à ce Mac"
+      },
+      "de": {
+        "text": "passt zu diesem Mac"
+      },
+      "es": {
+        "text": "apto para este Mac"
+      },
+      "pt": {
+        "text": "adequado a este Mac"
+      },
+      "ar": {
+        "text": "يناسب هذا الـ Mac"
+      },
+      "hi": {
+        "text": "इस Mac के लिए उपयुक्त"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.status.model-needs-memory": {
+    "strings": {
+      "en": {
+        "text": "wants {memory} GiB of memory"
+      },
+      "ja": {
+        "text": "{memory} GiB のメモリが必要"
+      },
+      "zh": {
+        "text": "需要 {memory} GiB 内存"
+      },
+      "ko": {
+        "text": "{memory} GiB 메모리 필요"
+      },
+      "fr": {
+        "text": "demande {memory} Gio de mémoire"
+      },
+      "de": {
+        "text": "braucht {memory} GiB Arbeitsspeicher"
+      },
+      "es": {
+        "text": "necesita {memory} GiB de memoria"
+      },
+      "pt": {
+        "text": "precisa de {memory} GiB de memória"
+      },
+      "ar": {
+        "text": "يحتاج إلى {memory} GiB من الذاكرة"
+      },
+      "hi": {
+        "text": "{memory} GiB मेमोरी चाहिए"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.found-chosen-model": {
+    "strings": {
+      "en": {
+        "text": "Model: {model}"
+      },
+      "ja": {
+        "text": "モデル: {model}"
+      },
+      "zh": {
+        "text": "模型：{model}"
+      },
+      "ko": {
+        "text": "모델: {model}"
+      },
+      "fr": {
+        "text": "Modèle : {model}"
+      },
+      "de": {
+        "text": "Modell: {model}"
+      },
+      "es": {
+        "text": "Modelo: {model}"
+      },
+      "pt": {
+        "text": "Modelo: {model}"
+      },
+      "ar": {
+        "text": "النموذج: {model}"
+      },
+      "hi": {
+        "text": "मॉडल: {model}"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
   }
 }
