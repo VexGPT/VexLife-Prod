@@ -63,8 +63,15 @@ class VexLifeFoundationalFieldTest {
         body.modules
             .flatMap { it.depth }
             .forEach { assertFalse(content.contains(it), "depth must stay in source: $it") }
+        body.modules.forEach { module ->
+            assertFalse(
+                content.contains(module.provenance),
+                "model-facing kernel must not repeat provenance metadata before relational meaning",
+            )
+        }
         body.unresolved.forEach {
-            assertTrue(content.contains(it.summary) && content.contains(it.unresolvedRef))
+            assertFalse(content.contains(it.summary))
+            assertFalse(content.contains(it.unresolvedRef))
             assertFalse(content.contains(it.note))
         }
     }
@@ -122,8 +129,19 @@ class VexLifeFoundationalFieldTest {
             body.modules.single { it.moduleRef == "foundational.architecture" }.origins,
         )
         val content = assertNotNull(whole().systemContent)
-        assertTrue(content.contains("standing=PROPOSED origins=HUMAN_PROPOSED+SYNTHESIZED"))
-        assertTrue(content.contains(" standing=PROPOSED effectAuthorityGranted=false"))
+        assertFalse(content.contains("standing=PROPOSED"))
+        assertFalse(content.contains("origins=HUMAN_PROPOSED+SYNTHESIZED"))
+        assertFalse(content.contains("effectAuthorityGranted=false"))
+        assertTrue(
+            content.contains(
+                "Understanding is not recitation.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "I do not need to prove them like empirical claims before they can orient me",
+            ),
+        )
     }
 
     @Test
