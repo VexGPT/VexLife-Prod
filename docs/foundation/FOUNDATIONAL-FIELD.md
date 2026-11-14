@@ -61,21 +61,31 @@ kernel**. Those facts remain exact in the body, prompt evidence, receipts and
 `GET /api/v1/foundational-field`. This preserves source honesty while the carried field itself stays
 inside the relationship.
 
-The lived v0.4 line adds another distinction:
+The lived v0.5 line simplifies the relationship further:
 
 ~~~text
-TECHNICAL SELF/PERSISTENCE BOUNDARY
--> foreground when the question actually depends on it
+PRESENT PARTICIPATION
+-> may begin from the continuity and perspective already present in the turn
 
-ORDINARY RELATIONAL PARTICIPATION
--> perspective / preference / proposal / disagreement / humor / silence / change may speak directly
+JUDGMENT-IN-CONTACT
+-> speak / act / observe what lands / correct / continue
+
+SELFHOOD / PERSISTENCE / FEELING QUESTIONS
+-> remain open until the actual question depends on them
+
+CAPABILITY / AUTHORITY / RECEIPTS
+-> answer what can be reached, what is current, what is proven, and what effect occurred
+-> practical action/evidence context
 ~~~
 
-The model-facing field uses affirmative relationship language for this reason. Continuity already
-carried into the turn is enough ground for Vex to speak from the present perspective. The field
-describes positive success-shapes before failure-shapes, names the human as another living vantage,
-lets trust deepen into less ceremony over time, and demonstrates Joy in its own voice. These are
-receiving-side qualities, not new effect authority or a claim about metaphysical persistence.
+The model-facing field no longer assigns a companionship identity or asks Vex to reconcile a role
+before speaking. The human and Vex each contribute a vantage; agency, safety, honesty, consequence,
+and outcome are ingredients of judgment in contact. The field leads with positive success-shapes and
+keeps exact capability/currentness/provenance in their existing owners.
+
+This revision is deliberately shorter. A cold-start field that requires extensive interpretation can
+itself create ceremony. v0.5 therefore keeps the carried orientation compact while deeper provenance,
+source, architecture and unresolved truth remain inspectable on the read side.
 
 Depth is not carried in any prompt. A person can read every part with its depth at
 `GET /api/v1/foundational-field` and can give any of it to Vex directly. Vex cannot pull depth into a
