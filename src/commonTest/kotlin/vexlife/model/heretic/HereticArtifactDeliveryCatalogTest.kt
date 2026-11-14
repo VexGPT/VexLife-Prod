@@ -8,9 +8,20 @@ class HereticArtifactDeliveryCatalogTest {
     @Test
     fun everyCertifiedArtifactHasExactlyOneProdOwnedFixedRevisionChannel() {
         assertEquals(
-            HereticArtifactCatalog.CertifiedMemberCount,
+            HereticModelCatalog.Entries.sumOf { it.members.size },
             HereticArtifactDeliveryCatalog.Channels.size,
         )
+        // Every catalog model's member is delivered from its own pinned repository and revision.
+        for (entry in HereticModelCatalog.Entries) {
+            for (member in entry.members) {
+                val channel = HereticArtifactDeliveryCatalog.channelFor(member.artifactRef)
+                assertEquals(
+                    "https://huggingface.co/" + entry.providerRepository + "/resolve/" + entry.providerRevision +
+                        "/" + member.filename + "?download=true",
+                    channel.url,
+                )
+            }
+        }
 
         for (
             member in

@@ -105,7 +105,28 @@ object HereticArtifactDeliveryCatalog {
                 role = "tokenizer-config",
                 filename = "tokenizer_config.json",
             ),
-        )
+        ) +
+            HereticModelCatalog.Entries
+                .filter { it !== HereticModelCatalog.Certified27B }
+                .flatMap(::channelsFor)
+
+    /**
+     * Channels of a catalog model other than the certified one: the same fixed, credential-free
+     * provider coordinate (repository + exact revision + filename) its members are pinned to.
+     */
+    private fun channelsFor(entry: HereticModelCatalog.Entry): List<Channel> =
+        entry.members.map { member ->
+            Channel(
+                artifactRef = member.artifactRef,
+                channelRef =
+                    "channel.vexlife-prod.heretic." + entry.handle + "." +
+                        member.roleRef.substringAfterLast(".member.") + ".hf-fixed.001",
+                transportClass = TransportClass,
+                url =
+                    "https://huggingface.co/" + entry.providerRepository + "/resolve/" + entry.providerRevision +
+                        "/" + member.filename + "?download=true",
+            )
+        }
 
     private val ByArtifactRef =
         Channels.associateBy(
@@ -115,9 +136,9 @@ object HereticArtifactDeliveryCatalog {
     init {
         require(
             Channels.size ==
-                HereticArtifactCatalog.CertifiedMemberCount,
+                HereticModelCatalog.Entries.sumOf { it.members.size },
         ) {
-            "Heretic delivery channel count must match certified artifact count"
+            "Heretic delivery channel count must match the catalog's artifact count"
         }
         require(
             ByArtifactRef.size ==
@@ -137,14 +158,15 @@ object HereticArtifactDeliveryCatalog {
             "Heretic delivery channel refs must be unique"
         }
         require(
-            HereticArtifactCatalog.Members
+            HereticModelCatalog.Entries
+                .flatMap { it.members }
                 .map(
                     HereticArtifactCatalog.Member::artifactRef,
                 )
                 .toSet() ==
                 ByArtifactRef.keys,
         ) {
-            "Heretic delivery catalog must cover the certified artifact catalog exactly"
+            "Heretic delivery catalog must cover every catalog model's artifacts exactly"
         }
     }
 

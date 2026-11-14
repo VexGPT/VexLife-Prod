@@ -446,6 +446,14 @@ object VexLifeWebP1 {
                 ),
         )
 
+    val ModelsList = blueprintSurface(VexLifeWorkspaceBlueprint.ModelsList)
+
+    val SettingsModels =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.SettingsModels,
+            children = listOf(ModelsList),
+        )
+
     val DiagnosticsTrace = blueprintSurface(VexLifeWorkspaceBlueprint.DiagnosticsTrace)
     val DiagnosticsEnhancedCapture = blueprintSurface(VexLifeWorkspaceBlueprint.DiagnosticsEnhancedCapture)
     val DiagnosticsClearHistory = blueprintSurface(VexLifeWorkspaceBlueprint.DiagnosticsClearHistory)
@@ -473,6 +481,7 @@ object VexLifeWebP1 {
                     ThoughtVisibility,
                     SettingsHome,
                     SettingsContinuity,
+                    SettingsModels,
                     SettingsDiagnostics,
                 ),
         )

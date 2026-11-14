@@ -285,6 +285,7 @@ class VexLifeProdSetupJourneyTest {
                 listOf(
                     VexLifeProdMacSetupCard.ActionChooseHome,
                     VexLifeProdMacSetupCard.ActionRecheck,
+                    VexLifeProdMacSetupCard.ActionChooseModel,
                     VexLifeProdMacSetupCard.ActionChooseLanguage,
                     VexLifeProdMacSetupCard.ActionClose,
                 ),
@@ -408,13 +409,13 @@ class VexLifeProdSetupJourneyTest {
         val parent = Files.createTempDirectory("vexlife-journey-host-").toAbsolutePath()
         val home = parent.resolve(".vexlife")
         try {
-            val hooks = realLocationHooks(host = host(chip = "Apple M2", memoryGiB = 16L))
+            val hooks = realLocationHooks(host = host(chip = "Intel(R) Core(TM) i7", memoryGiB = 16L))
             val projection = observe(home, hooks)
 
             assertEquals(VexLifeProdEntryFamily.StateHostHeld, projection.semanticStateRef)
             assertNull(projection.displayState.primaryControlRef)
             assertTrue(projection.card.rail.startsWith("⊘ This Mac"))
-            assertTrue(projection.card.body.contains("needs Apple M4 Pro"))
+            assertTrue(projection.card.body.contains("needs Apple silicon (M1 or later)"))
             assertFalse(resolve(home, VexLifeProdEntryFamily.ControlFormHome, hooks).lawful)
             assertFalse(Files.exists(home))
         } finally {
@@ -429,7 +430,7 @@ class VexLifeProdSetupJourneyTest {
                 existingHome,
                 existingHooks(
                     current =
-                        existingState(hostResult = host(chip = "Apple M3 Max", memoryGiB = 64L))
+                        existingState(hostResult = host(chip = "Intel(R) Core(TM) i9", memoryGiB = 64L))
                 ),
             )
         assertEquals(VexLifeProdEntryFamily.StateHostHeld, projection.semanticStateRef)
@@ -444,7 +445,7 @@ class VexLifeProdSetupJourneyTest {
             observe(
                 existingHome,
                 existingHooks(
-                    current = existingState(hostResult = host(chip = "Apple M2")),
+                    current = existingState(hostResult = host(chip = "Intel(R) Core(TM) i7")),
                     service =
                         VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned(
                             receipt = receipt(desired),

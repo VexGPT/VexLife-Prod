@@ -107,6 +107,10 @@ object VexLifeProdServiceContract {
 
     const val SettingsPath = "/api/v1/settings"
     const val DiagnosticsPath = "/api/v1/diagnostics"
+
+    /** Settings → Models: offered models as this Home holds them, and their Controls. */
+    const val ModelsPath = "/api/v1/models"
+    const val ModelsControlPath = "/api/v1/models/control"
     const val DiagnosticsControlPath = "/api/v1/diagnostics/control"
     const val DiagnosticsExportPath = "/api/v1/diagnostics/export"
     const val ChronologyPath = "/api/v1/chronology"

@@ -491,6 +491,13 @@ svg { display: block; }
 .reaches li { margin: 2px 0; overflow-wrap: anywhere; }
 .reaches li::before { content: "↳ "; color: var(--ink-3); }
 .reached-line { overflow-wrap: anywhere; }
+.models-list { display: grid; gap: 10px; margin: 8px 0; }
+.model-row { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--rule-strong); border-radius: 8px; }
+.model-row[data-chosen="true"] { border-color: var(--ink-2); }
+.model-row .model-name { font-weight: 600; }
+.model-row .model-facts, .model-row .model-notes { color: var(--ink-2); font-size: var(--step--1); grid-column: 1; }
+.model-row .model-controls { grid-column: 2; grid-row: 1 / span 3; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.model-row .model-controls .outline-button { height: 30px; padding: 0 10px; }
 
 .receipt-line {
   grid-area: receipt; margin: 6px 2px 0; color: var(--ink-3); font-size: var(--step--1);

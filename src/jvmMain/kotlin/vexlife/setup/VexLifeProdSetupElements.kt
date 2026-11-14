@@ -28,6 +28,7 @@ object VexLifeProdSetupElements {
         listOf(
             VexLifeProdMacSetupCard.ActionChooseHome,
             VexLifeProdMacSetupCard.ActionChooseLanguage,
+            VexLifeProdMacSetupCard.ActionChooseModel,
             VexLifeProdMacSetupCard.ActionRecheck,
             VexLifeProdMacSetupCard.ActionClose,
         )

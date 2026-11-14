@@ -147,6 +147,45 @@ class FileHereticModelConfigurationStore(
         }
     }
 
+    /**
+     * The person's model choice for this Home. Choosing is the only effect: the value becomes
+     * HERETIC_ESTABLISHMENT_PENDING for the chosen catalog model. Acquiring its files and starting
+     * its runtime stay with Setup's own lawful Controls; a runtime already serving another model is
+     * switched by the runtime owner at the next establishment, never here.
+     *
+     * Choosing the model a Home already has changes nothing (bound stays bound).
+     */
+    fun selectModel(
+        manifest: VexLifeProdHome.Manifest,
+        model: vexlife.model.heretic.HereticModelCatalog.Entry,
+    ): Transition {
+        val currentManifest = VexLifeProdHome.validateManifest(manifest)
+        val current = read(currentManifest)
+        if (current is Snapshot.Heretic && current.value.modelRef == model.modelRef) {
+            return Transition(
+                state =
+                    if (HereticModelConfiguration.isBound(current.value)) "HERETIC_ALREADY_BOUND"
+                    else "HERETIC_ALREADY_SELECTED_PENDING",
+                value = current.value,
+                writePerformed = false,
+            )
+        }
+        val pending = HereticModelConfiguration.pending(bindingScope(currentManifest), model)
+        write(currentManifest, pending)
+        return Transition(
+            state = if (current is Snapshot.Heretic) "HERETIC_MODEL_SWITCHED_PENDING" else "HERETIC_SELECTED_PENDING",
+            value = pending,
+            writePerformed = true,
+        )
+    }
+
+    /** The catalog model this Home has chosen, or the catalog default when it has not chosen yet. */
+    fun selectedModel(manifest: VexLifeProdHome.Manifest): vexlife.model.heretic.HereticModelCatalog.Entry =
+        when (val current = read(manifest)) {
+            is Snapshot.Heretic -> HereticModelConfiguration.selected(current.value)
+            is Snapshot.Unconfigured -> vexlife.model.heretic.HereticModelCatalog.Default
+        }
+
     fun bindQualified(
         manifest: VexLifeProdHome.Manifest,
         qualifiedRuntime: HereticModelConfiguration.QualifiedRuntimeEvidence,
@@ -167,6 +206,10 @@ class FileHereticModelConfigurationStore(
                 Snapshot.Heretic,
         ) {
             "Heretic runtime must be explicitly selected before qualified evidence can bind it"
+        }
+        // A runtime serving one model never binds a Home that chose another.
+        require(current.value.modelRef == qualifiedRuntime.modelRef) {
+            "qualified runtime serves ${qualifiedRuntime.modelRef}, but this Home chose ${current.value.modelRef}"
         }
 
         val bound =

@@ -584,6 +584,30 @@
           "slot": "InFlow"
         },
         {
+          "ref": "element.vexlife-workspace.companion.settings.models",
+          "kind": "REGION",
+          "label": "Models",
+          "parentRef": "element.vexlife-workspace.companion.settings",
+          "symbol": "VexLifeWorkspaceBlueprint.SettingsModels",
+          "declared": "Settings.region(\"models\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.models.list",
+          "kind": "TEXT",
+          "label": "List",
+          "parentRef": "element.vexlife-workspace.companion.settings.models",
+          "symbol": "VexLifeWorkspaceBlueprint.ModelsList",
+          "declared": "SettingsModels.content(\"list\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
           "ref": "element.vexlife-workspace.companion.settings.diagnostics",
           "kind": "REGION",
           "label": "Diagnostics",

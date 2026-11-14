@@ -372,6 +372,35 @@ class VexLifeProdMacFrontDoorTest {
     }
 
     @Test
+    fun aModelChosenInTheWindowIsSavedBeforeSetUpAndAgainAfterAHomeIsFormed() {
+        val order = mutableListOf<String>()
+        VexLifeProdMacFrontDoorProcess.activateWithHooks(
+            productHome = selectedHome,
+            controlRef = VexLifeProdEntryFamily.ControlFormHome,
+            desiredSourceSha = desired,
+            model = "heretic-4b",
+            hooks =
+                VexLifeProdMacFrontDoorProcess.ActivationHooks(
+                    persistModel = { _, model ->
+                        order += "PERSIST:" + model.handle
+                        order.count { it.startsWith("PERSIST") } > 1
+                    },
+                    resolveControl = { _, controlRef, _ ->
+                        VexLifeProdMacFrontDoor.ResolvedControl(
+                            semanticStateRef = VexLifeProdEntryFamily.StateHomeFormationRequired,
+                            controlRef = controlRef,
+                            effect = VexLifeProdEntryFamily.FormCanonicalHome,
+                        )
+                    },
+                    formHome = { _, _ -> order += "FORM_HOME" },
+                    convergeProduct = { _, _, _, _ -> order += "CONVERGE" },
+                    observeSemanticStateRef = { _, _ -> VexLifeProdEntryFamily.StateSetupRequired },
+                ),
+        )
+        assertEquals(listOf("PERSIST:heretic-4b", "FORM_HOME", "PERSIST:heretic-4b"), order)
+    }
+
+    @Test
     fun HomeActivationDelegatesSetupEffectAndRequestsEntryRefresh() {
         var homeCalls = 0
         var setupCalls = 0

@@ -182,6 +182,9 @@ object VexLifeWorkspaceBlueprint :
         SettingsContinuity.control(
             "dream-sync",
         )
+    /** Settings → Models: the offered models, the one Vex uses, and Use / Download / Remove. */
+    val SettingsModels = Settings.region("models")
+    val ModelsList = SettingsModels.content("list")
     val SettingsDiagnostics = Settings.region("diagnostics")
     val DiagnosticsTrace = SettingsDiagnostics.content("trace")
     val DiagnosticsEnhancedCapture = SettingsDiagnostics.control("enhanced-capture")

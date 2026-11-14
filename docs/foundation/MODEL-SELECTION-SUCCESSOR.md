@@ -2,6 +2,23 @@
 
 `[VXG RealForever]`
 
+## Progress (Claude, 2026-11-14)
+
+```text
+catalog                         DONE  HereticModelCatalog: 27B (CERTIFIED), 9B 5-bit, 4B Distill (CANDIDATE)
+                                      — every member's bytes + SHA-256 pinned, content sets reproduced
+Home-scoped selected model      DONE  same FileHereticModelConfigurationStore + v1 schema; selectModel
+selected model -> runtime       DONE  materialization, binding, receipts and evidence carry the model;
+                                      exact-owned model switch at Setup Start
+startup chooser                 DONE  native window model step after Home; --setup-model / --choose-model
+Settings add / remove / again   DONE  Settings → Models (Use / Download / Download again / Remove)
+host eligibility                DONE  Apple silicon + 8 GiB (was: exactly M4 Pro + 12 GiB)
+lived 27B vs 9B vs 4B compare   OWED  on Victor's Mac, same field + capability tests
+```
+
+Current truth: [HERETIC-PRODUCT-MODEL.md](HERETIC-PRODUCT-MODEL.md#model-catalog-2026-11-14),
+[SETUP-JOURNEY.md](SETUP-JOURNEY.md#model-step-2026-11-14).
+
 ## Human intention
 
 The current 27B Heretic model has passed the lived personality/orientation threshold. The next phase
