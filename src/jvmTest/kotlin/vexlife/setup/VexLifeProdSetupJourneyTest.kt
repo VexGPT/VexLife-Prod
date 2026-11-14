@@ -890,6 +890,26 @@ class VexLifeProdSetupJourneyTest {
         assertTrue(lines.size < 60, "download progress must be bounded, was ${lines.size}")
         assertTrue(lines.last().contains("10.0 of 10.0 GiB (100%)"))
     }
+
+    @Test
+    fun nativeSetupWindowUsesAppleScriptObjCSafeNSNullSelector() {
+        val source =
+            Files.readString(
+                Path.of(
+                    "packaging/private-service-image/setup/vexlife-prod-setup-window.applescript"
+                )
+            )
+
+        assertFalse(
+            source.contains("NSNull's null()"),
+            "AppleScriptObjC treats null as a reserved selector; unescaped NSNull null() fails at runtime",
+        )
+        assertTrue(
+            source.contains("NSNull's |null|()"),
+            "native Setup Journey must use the escaped AppleScriptObjC NSNull selector",
+        )
+    }
+
 }
 
 // [VXG RealForever]
