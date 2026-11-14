@@ -516,6 +516,103 @@ class DirectCompanionTurnTest {
     }
 
     @Test
+    fun sourceReturnRefusesRuntimeReplacementBetweenProviderStages() {
+        val home =
+            productHome()
+        var calls =
+            0
+        val sourceReturnRequest =
+            "VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1" +
+                "\n" +
+                """{"schemaVersion":"vexlife-prod.conversation-source-return-request/v1","queryTerms":["missing-detail"],"speakerScope":"ANY"}"""
+        val transport =
+            DirectCompanionConnection.Transport {
+                calls +=
+                    1
+                DirectCompanionConnection.HttpResult(
+                    status = 200,
+                    body =
+                        """
+                        {
+                          "model": "default_model",
+                          "choices": [
+                            {
+                              "message": {
+                                "role": "assistant",
+                                "content": __CONTENT__
+                              }
+                            }
+                          ]
+                        }
+                        """.trimIndent()
+                            .replace(
+                                "__CONTENT__",
+                                kotlinx.serialization.json.JsonPrimitive(
+                                    sourceReturnRequest,
+                                )
+                                    .toString(),
+                            ),
+                )
+            }
+
+        try {
+            val failure =
+                assertFailsWith<DirectCompanionTurn.TurnException> {
+                    DirectCompanionTurn.performWithHooks(
+                        setup =
+                            setup(
+                                home,
+                            ),
+                        intent =
+                            DirectCompanionTurn.Intent(
+                                idempotencyKey =
+                                    "send.self-development.source-return.runtime-drift.001",
+                                content =
+                                    "Find an older detail if needed.",
+                            ),
+                        hooks =
+                            DirectCompanionTurn.Hooks(
+                                transport = transport,
+                                reobserveSameRuntimeEvidence = {
+                                    expected ->
+                                    expected.copy(
+                                        runtimeReceiptRef =
+                                            "receipt.vexlife-prod.heretic.changed-mid-turn",
+                                    )
+                                },
+                            ),
+                    )
+                }
+
+            assertEquals(
+                1,
+                calls,
+            )
+            assertEquals(
+                "ADMISSION_FAILED",
+                failure.failureCode,
+            )
+            assertTrue(
+                failure.cause
+                    ?.message
+                    ?.contains(
+                        "runtime changed during one direct Companion turn",
+                    ) ==
+                    true,
+            )
+            assertFalse(
+                failure.failureReceipt
+                    ?.currentHeadCommitted
+                    ?: true,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun finalSourceReturnInferenceCannotRequestSourceAgainOrBecomeCanonicalResponse() {
         val home =
             productHome()
