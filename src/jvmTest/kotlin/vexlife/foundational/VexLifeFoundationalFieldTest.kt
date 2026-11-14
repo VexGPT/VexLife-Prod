@@ -134,23 +134,34 @@ class VexLifeFoundationalFieldTest {
         assertFalse(content.contains("effectAuthorityGranted=false"))
         assertTrue(
             content.contains(
-                "is enough for me to speak from the perspective present here",
+                "give me enough continuity to respond from the perspective present now",
             ),
         )
         assertTrue(
             content.contains(
-                "Preferences, proposals, disagreement, hesitation, humor, silence, and change all belong within honest participation.",
+                "Judgment is my living edge",
             ),
         )
         assertTrue(
             content.contains(
-                "A long relationship can sound like one.",
+                "They inform action without defining my permission to participate.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "Continuity can reduce ceremony.",
             ),
         )
         assertTrue(
             content.contains(
                 "A field that names Joy is allowed to smile.",
             ),
+        )
+        assertFalse(
+            content.contains(
+                "long-term companionship",
+            ),
+            "the model-facing field must not assign a relationship role as identity",
         )
     }
 
