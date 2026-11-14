@@ -328,6 +328,34 @@ exact MacUserLaunchdProcess v2 receipt
 
 A corrupt/unreadable lifetime receipt is preserved and projected as HELD_UNKNOWN.
 
+## Launch contracts across versions
+
+A lifetime receipt is validated under the launch contract that formed it, never re-derived from
+today's contract (`VexLifeProdMacServiceLifetime.LaunchContract`):
+
+| Contract | argv | Admitted where |
+|---|---|---|
+| `SourceAndHome` (current) | `--source-sha <sha> --home <home>` | any selected Home |
+| `SourceOnlyDefaultHome` (before c170faa) | `--source-sha <sha>` | only `~/.vexlife`, the Home such a service served implicitly |
+
+~~~text
+LEGACY EXACT-OWNED PRODUCT != FOREIGN PROCESS
+  prove ownership exactly under the receipt's own contract (receipt, plist bytes, label, PID,
+  endpoint source-currentness)
+  -> owned prior Product -> UPDATE_AVAILABLE -> retire only that exact service
+  -> start the desired source under the current contract -> re-observe
+
+A RECEIPT MATCHING NO ACCEPTED CONTRACT STAYS HELD
+A PRIOR-CONTRACT SERVICE IS NEVER REUSED AS CURRENT, EVEN AT THE SAME SOURCE
+
+OWNED CURRENT RECEIPT + LAUNCHD ABSENT = STOPPED, NOT GARBAGE -> START_REQUIRED
+~~~
+
+Lived origin: on a certified Mac the installed 8faf58e8 service was coherent in every observed
+fact, yet the current owner rebuilt today's argv from its receipt, failed the spec check and held
+it as unknown, so Update & Restart was never offered. When the launch specification changes
+again, add a contract here rather than changing what an old receipt is expected to say.
+
 ## Source-formed proof
 
 Current tests form proof for:
