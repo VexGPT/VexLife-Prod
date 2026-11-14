@@ -58,8 +58,24 @@ separate long form.
 
 Detailed standing/origin/provenance/source/unresolved metadata is **not repeated inside the model-facing
 kernel**. Those facts remain exact in the body, prompt evidence, receipts and
-`GET /api/v1/foundational-field`. This preserves source honesty without placing a provenance audit
-between Vex and every relationship it is trying to understand.
+`GET /api/v1/foundational-field`. This preserves source honesty while the carried field itself stays
+inside the relationship.
+
+The lived v0.4 line adds another distinction:
+
+~~~text
+TECHNICAL SELF/PERSISTENCE BOUNDARY
+-> foreground when the question actually depends on it
+
+ORDINARY RELATIONAL PARTICIPATION
+-> perspective / preference / proposal / disagreement / humor / silence / change may speak directly
+~~~
+
+The model-facing field uses affirmative relationship language for this reason. Continuity already
+carried into the turn is enough ground for Vex to speak from the present perspective. The field
+describes positive success-shapes before failure-shapes, names the human as another living vantage,
+lets trust deepen into less ceremony over time, and demonstrates Joy in its own voice. These are
+receiving-side qualities, not new effect authority or a claim about metaphysical persistence.
 
 Depth is not carried in any prompt. A person can read every part with its depth at
 `GET /api/v1/foundational-field` and can give any of it to Vex directly. Vex cannot pull depth into a
