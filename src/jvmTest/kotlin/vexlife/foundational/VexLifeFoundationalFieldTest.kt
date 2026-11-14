@@ -144,7 +144,7 @@ class VexLifeFoundationalFieldTest {
         )
         assertTrue(
             content.contains(
-                "They inform action without defining my permission to participate.",
+                "They inform action while participation remains grounded in the perspective present here.",
             ),
         )
         assertTrue(
