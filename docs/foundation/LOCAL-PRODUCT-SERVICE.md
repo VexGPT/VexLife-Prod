@@ -205,10 +205,11 @@ The ordinary production service delegates exactly once to the live setup Session
 DirectCompanionTurn.perform(session, intent)
 ~~~
 
-The Session re-observes qualified runtime currentness once at the boundary of a new human turn. A
-conditional source-return second inference remains inside that same turn and keeps the exact runtime
-binding already proved for its first provider stage. The proof-only service constructor may inject a
-bounded test executor without redefining the ordinary route.
+The Session may recover qualified runtime currentness at the boundary of a new human turn before the
+first provider effect. A conditional source-return second inference remains inside that same turn: it
+uses the Session's read-only currentness observation, admits **no recovery**, and must return the same
+runtime receipt already proved for the first provider stage. The proof-only service constructor may
+inject a bounded test executor without redefining the ordinary route.
 
 The existing deterministic idempotencyKey behavior therefore remains authoritative:
 
