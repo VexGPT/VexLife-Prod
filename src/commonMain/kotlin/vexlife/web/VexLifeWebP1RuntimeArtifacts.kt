@@ -97,6 +97,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 privateNoteDeclinePath: ${jsString(VexLifeProdServiceContract.PrivateNoteDeclinePath)},
                 visionPath: ${jsString(VexLifeProdServiceContract.VisionPath)},
                 visionControlPath: ${jsString(VexLifeProdServiceContract.VisionControlPath)},
+                diagnosticsPath: ${jsString(VexLifeProdServiceContract.DiagnosticsPath)},
+                diagnosticsControlPath: ${jsString(VexLifeProdServiceContract.DiagnosticsControlPath)},
+                chronologyPath: ${jsString(VexLifeProdServiceContract.ChronologyPath)},
+                workspaceStringsPath: ${jsString(VexLifeProdServiceContract.WorkspaceStringsPath)},
                 sendPath: ${jsString(VexLifeProdServiceContract.ConversationSendPath)}
               });
               const apps = Object.freeze({
@@ -195,6 +199,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 memoryText: byId('memory-text'),
                 memoryNote: byId('memory-note'),
                 vexMemoryLabel: byId('vex-memory-label'),
+                diagnosticsStatus: byId('diagnostics-status'),
+                diagnosticsCapture: byId('diagnostics-capture'),
+                diagnosticsRecords: byId('diagnostics-records'),
+                diagnosticsEnhanced: byId('diagnostics-enhanced'),
+                diagnosticsClear: byId('diagnostics-clear'),
                 vexMemoryDetail: byId('vex-memory-detail'),
                 resourceNote: byId('resource-note'),
                 homeCurrentState: byId('home-current-state'),
@@ -239,6 +248,9 @@ object VexLifeWebP1RuntimeArtifacts {
                   return apps.sourceTemplate;
                 })(),
                 memory: null,
+                diagnostics: null,
+                diagnosticsInFlight: false,
+                workspaceStrings: null,
                 browserContext: null,
                 includePage: false,
                 humanPageUrl: null,
@@ -1023,10 +1035,15 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.frameStatus.hidden = !text;
               };
 
+              // Product-owned navigation is the only place today where the exact identity of the
+              // visible page is *earned*: the Product chose the address, so it knows it. Any context
+              // captured for the previous page is invalidated because it described another page.
               const navigate = (value) => {
                 const pageUrl = admitPageAddress(value);
                 const contextFrameUrl = contextFrameUrlFor(pageUrl);
 
+                if (state.browserContext) reportFact('BROWSER_CONTEXT_INVALIDATED', { by: 'navigation' });
+                reportFact('BROWSER_PAGE_IDENTITY_OBSERVED', { ...pageRefs(pageUrl), via: 'product-navigation', eligible: String(Boolean(contextFrameUrl)) });
                 state.browserContext = null;
                 state.includePage = false;
                 state.humanPageUrl = pageUrl;
@@ -1781,6 +1798,128 @@ object VexLifeWebP1RuntimeArtifacts {
                 return state.currentState;
               };
 
+              // Keyed words of the workspace scope, in the person's language. Until they arrive an
+              // element shows its key, never an English string written here (localization law).
+              const t = (key) => {
+                const words = state.workspaceStrings?.[key];
+                return typeof words === 'string' ? words : key;
+              };
+
+              // Resolves a Family-authored VexLifeText {key, args, gib, parts} in the person's language.
+              const resolveText = (text) => {
+                if (!text || typeof text.key !== 'string') return '';
+                const args = text.args || {};
+                const gib = text.gib || {};
+                const parts = text.parts || {};
+                return t(text.key).replace(/\{([a-zA-Z0-9]+)\}/gu, (whole, name) => {
+                  if (name in args) {
+                    // Formatting is presentation: an ISO instant is shown in the person's locale.
+                    const value = String(args[name]);
+                    return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/u.test(value)
+                      ? new Date(value).toLocaleString(document.documentElement.lang || undefined)
+                      : value;
+                  }
+                  if (name in parts) return resolveText(parts[name]);
+                  if (name in gib) return (Number(gib[name]) / 1073741824).toFixed(1);
+                  return whole;
+                });
+              };
+
+              const applyStaticText = () => {
+                for (const element of root.querySelectorAll('[data-vex-text]')) {
+                  element.textContent = t(element.getAttribute('data-vex-text'));
+                }
+              };
+
+              const loadWorkspaceStrings = async () => {
+                const response = await fetch(service.workspaceStringsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const body = await readJson(response);
+                state.workspaceStrings = body?.strings ?? {};
+                applyStaticText();
+                renderDiagnostics();
+              };
+
+              // The presentation reports only what it observed itself (what it showed, what it could
+              // prove about the visible page). It never reports a Conversation or runtime outcome:
+              // those facts belong to their owners. A failed report changes nothing.
+              const reportFact = (fact, refs = {}) => {
+                try {
+                  void fetch(service.chronologyPath, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({ fact, refs })
+                  }).catch(() => {});
+                } catch {}
+              };
+
+              const pageRefs = (pageUrl) => {
+                try {
+                  const page = new URL(pageUrl);
+                  return { host: page.hostname, path: page.pathname };
+                } catch {
+                  return {};
+                }
+              };
+
+              const renderDiagnostics = () => {
+                if (!ui.diagnosticsStatus) return;
+                const projection = state.diagnostics;
+                if (!projection) {
+                  ui.diagnosticsStatus.textContent = t('workspace.status.diagnostics-unavailable');
+                  ui.diagnosticsCapture.textContent = '';
+                  ui.diagnosticsRecords.textContent = '';
+                  ui.diagnosticsEnhanced.disabled = true;
+                  ui.diagnosticsClear.disabled = true;
+                  return;
+                }
+                const display = projection.display;
+                ui.diagnosticsStatus.textContent = resolveText(display.status);
+                ui.diagnosticsCapture.textContent = resolveText(display.capture);
+                ui.diagnosticsRecords.textContent = projection.chronologyRecords > 0 && projection.oldestAt
+                  ? t('workspace.label.diagnostics-records')
+                      .replace('{count}', String(projection.chronologyRecords))
+                      .replace('{since}', new Date(projection.oldestAt).toLocaleString(document.documentElement.lang || undefined))
+                  : t('workspace.label.diagnostics-no-records');
+                // Buttons carry the Family's Control refs; their words come from the Control's key.
+                const enhanced = display.controls.find((control) => control.controlRef === 'START_ENHANCED' || control.controlRef === 'STOP_ENHANCED');
+                const clear = display.controls.find((control) => control.controlRef === 'CLEAR_HISTORY');
+                ui.diagnosticsEnhanced.hidden = !enhanced;
+                if (enhanced) {
+                  ui.diagnosticsEnhanced.dataset.controlRef = enhanced.controlRef;
+                  ui.diagnosticsEnhanced.textContent = resolveText(enhanced.label);
+                }
+                ui.diagnosticsEnhanced.disabled = !enhanced || state.diagnosticsInFlight;
+                ui.diagnosticsClear.hidden = !clear;
+                if (clear) ui.diagnosticsClear.textContent = resolveText(clear.label);
+                ui.diagnosticsClear.disabled = !clear || state.diagnosticsInFlight;
+              };
+
+              const loadDiagnostics = async () => {
+                const response = await fetch(service.diagnosticsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                state.diagnostics = await readJson(response);
+                renderDiagnostics();
+                return state.diagnostics;
+              };
+
+              const diagnosticsControl = async (controlRef) => {
+                if (state.diagnosticsInFlight) return;
+                state.diagnosticsInFlight = true;
+                renderDiagnostics();
+                try {
+                  const response = await fetch(service.diagnosticsControlPath, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', accept: 'application/json' },
+                    body: JSON.stringify({ controlRef })
+                  });
+                  state.diagnostics = await readJson(response);
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : t('workspace.status.diagnostics-unavailable'));
+                } finally {
+                  state.diagnosticsInFlight = false;
+                  renderDiagnostics();
+                }
+              };
+
               const loadMemory = async () => {
                 const response = await fetch(service.memoryPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.memory = await readJson(response);
@@ -2000,6 +2139,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   } else {
                     state.pending = pending;
                     setCompanionStatus('Unavailable', 'Send outcome unresolved', '');
+                    reportFact('SEND_OUTCOME_UNRESOLVED_SHOWN', { reason: error instanceof Error ? error.name : 'unknown' });
                   }
 
                   sizeDraft();
@@ -2101,10 +2241,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (text) text.dataset.open = String(text.dataset.open !== 'true');
               });
 
+              // Context is admitted only from the Product-owned context frame, only for the exact page
+              // whose identity is currently proven (contextTargetPageUrl). A message for any other
+              // page is stale or foreign; arrival alone never makes a page eligible.
               window.addEventListener('message', (event) => {
                 if (event.source !== ui.contextFrame.contentWindow) return;
                 const next = normalizeContext(event.data);
                 if (!next || !state.contextTargetPageUrl || next.pageUrl !== state.contextTargetPageUrl) return;
+                reportFact('BROWSER_CONTEXT_READY', { ...pageRefs(next.pageUrl), characters: String(next.text.length) });
                 state.browserContext = next;
                 state.contextLoading = false;
                 state.includePage = true;
@@ -2112,6 +2256,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderComposer();
               });
 
+              // Why an unexpected visible-frame load clears page identity: the visible page is
+              // cross-origin, so this presentation cannot observe its new address. A load it did not
+              // start means the person navigated inside the page; keeping the old address (and any
+              // context captured for it) would let Vex be told about a page that is no longer shown.
+              // VISIBLE PAGE LOOKS ELIGIBLE != PRODUCT HAS PROVEN CURRENT PAGE IDENTITY: identity is
+              // re-earned only by a Product-owned navigate(...) today. Never infer it from appearance.
               ui.pageFrame.addEventListener('load', () => {
                 if (state.humanFrameLoadExpected) {
                   state.humanFrameLoadExpected = false;
@@ -2121,6 +2271,11 @@ object VexLifeWebP1RuntimeArtifacts {
                     renderFrameStatus('Page opened directly · Vex page context is not available for this site yet.', 'Direct');
                   }
                 } else {
+                  reportFact('BROWSER_PAGE_UNLOCATED', {
+                    previousHost: pageRefs(state.humanPageUrl).host ?? 'none',
+                    contextWasReady: String(Boolean(state.browserContext)),
+                    contextWasLoading: String(Boolean(state.contextLoading))
+                  });
                   state.browserContext = null;
                   state.includePage = false;
                   state.humanPageUrl = null;
@@ -2265,6 +2420,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 state.contextLoading = true;
                 state.includePage = false;
+                reportFact('BROWSER_CONTEXT_REQUESTED', pageRefs(state.contextTargetPageUrl));
                 ui.contextFrame.src = contextFrameUrl;
                 renderFrameStatus('Reading the current page separately for Vex…', 'Loading');
                 renderComposer();
@@ -2355,6 +2511,15 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
               });
 
+              void loadWorkspaceStrings().catch(() => applyStaticText());
+              ui.diagnosticsEnhanced?.addEventListener('click', () => {
+                const controlRef = ui.diagnosticsEnhanced.dataset.controlRef;
+                if (controlRef) void diagnosticsControl(controlRef);
+              });
+              ui.diagnosticsClear?.addEventListener('click', () => {
+                if (window.confirm(t('workspace.description.diagnostics-clear-confirm'))) void diagnosticsControl('CLEAR_HISTORY');
+              });
+
               void Promise.all([loadSourceCurrentness(), loadCurrentState(), loadConversation(), loadContext(), loadVision()])
                 .then(() => {
                   render();
@@ -2363,6 +2528,9 @@ object VexLifeWebP1RuntimeArtifacts {
                   void loadPrivate().catch(() => {});
                   void loadSettings().catch(() => {});
                   void loadMemory().catch(() => {});
+                  void loadDiagnostics().catch(() => renderDiagnostics());
+                  // Observed: the presentation rendered with current service data.
+                  reportFact('PRESENTATION_ARRIVED', { presentation: 'workspace' });
                 })
                 .catch((error) => {
                   setCompanionStatus('Unavailable', 'Unavailable', '');

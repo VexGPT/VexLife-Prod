@@ -613,6 +613,41 @@ class VexLifeProdMacFrontDoorTest {
     }
 
     @Test
+    fun anActivationLeavesItsCauseAndEffectInTheChronologyInOrder() {
+        val facts =
+            vexlife.logging.VexLogger.capturing { records ->
+                VexLifeProdMacFrontDoorProcess.activateWithHooks(
+                    controlRef = VexLifeProdEntryFamily.ControlFormHome,
+                    desiredSourceSha = desired,
+                    productHome = selectedHome,
+                    hooks =
+                        VexLifeProdMacFrontDoorProcess.ActivationHooks(
+                            resolveControl = { _, controlRef, _ ->
+                                VexLifeProdMacFrontDoor.ResolvedControl(
+                                    semanticStateRef = VexLifeProdEntryFamily.StateHomeFormationRequired,
+                                    controlRef = controlRef,
+                                    effect = VexLifeProdEntryFamily.FormCanonicalHome,
+                                )
+                            },
+                            formHome = { _, _ -> },
+                            observeSemanticStateRef = { _, _ -> VexLifeProdEntryFamily.StateSetupRequired },
+                        ),
+                )
+                records.map { it.fact to (it.refs["stateRef"] ?: it.refs["effectRef"]) }
+            }
+        assertEquals(
+            listOf(
+                "SETUP_CONTROL_ACCEPTED" to VexLifeProdEntryFamily.StateHomeFormationRequired,
+                "SETUP_EFFECT_STARTED" to VexLifeProdEntryFamily.EffectFormCanonicalHome,
+                "SETUP_EFFECT_COMPLETED" to VexLifeProdEntryFamily.EffectFormCanonicalHome,
+                // The successor is what was observed afterwards, not what the Effect hoped for.
+                "ENTRY_STATE_OBSERVED" to VexLifeProdEntryFamily.StateSetupRequired,
+            ),
+            facts,
+        )
+    }
+
+    @Test
     fun aLanguageChosenInTheWindowIsSavedOnceTheHomeExistsWhateverTheControlDid() {
         val saved = mutableListOf<Pair<Path, String>>()
         val hooks =

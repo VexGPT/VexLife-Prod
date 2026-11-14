@@ -182,6 +182,11 @@ object VexLifeWorkspaceBlueprint :
         SettingsContinuity.control(
             "dream-sync",
         )
+    val SettingsDiagnostics = Settings.region("diagnostics")
+    val DiagnosticsTrace = SettingsDiagnostics.content("trace")
+    val DiagnosticsEnhancedCapture = SettingsDiagnostics.control("enhanced-capture")
+    val DiagnosticsClearHistory = SettingsDiagnostics.control("clear-history")
+    val DiagnosticsExport = SettingsDiagnostics.control("export")
 }
 
 // [VXG RealForever]

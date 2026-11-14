@@ -582,6 +582,66 @@
           "pathwayRef": null,
           "style": "Surface",
           "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.diagnostics",
+          "kind": "REGION",
+          "label": "Diagnostics",
+          "parentRef": "element.vexlife-workspace.companion.settings",
+          "symbol": "VexLifeWorkspaceBlueprint.SettingsDiagnostics",
+          "declared": "Settings.region(\"diagnostics\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.diagnostics.trace",
+          "kind": "TEXT",
+          "label": "Trace",
+          "parentRef": "element.vexlife-workspace.companion.settings.diagnostics",
+          "symbol": "VexLifeWorkspaceBlueprint.DiagnosticsTrace",
+          "declared": "SettingsDiagnostics.content(\"trace\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.diagnostics.enhanced-capture",
+          "kind": "BUTTON",
+          "label": "Enhanced capture",
+          "parentRef": "element.vexlife-workspace.companion.settings.diagnostics",
+          "symbol": "VexLifeWorkspaceBlueprint.DiagnosticsEnhancedCapture",
+          "declared": "SettingsDiagnostics.control(\"enhanced-capture\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.diagnostics.clear-history",
+          "kind": "BUTTON",
+          "label": "Clear history",
+          "parentRef": "element.vexlife-workspace.companion.settings.diagnostics",
+          "symbol": "VexLifeWorkspaceBlueprint.DiagnosticsClearHistory",
+          "declared": "SettingsDiagnostics.control(\"clear-history\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.diagnostics.export",
+          "kind": "BUTTON",
+          "label": "Export",
+          "parentRef": "element.vexlife-workspace.companion.settings.diagnostics",
+          "symbol": "VexLifeWorkspaceBlueprint.DiagnosticsExport",
+          "declared": "SettingsDiagnostics.control(\"export\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
         }
       ]
     }

@@ -1,0 +1,172 @@
+{
+  "_meta": {
+    "scope": "workspace",
+    "category": "product",
+    "description": "The VexLife workspace in the browser. English is canonical source; other languages are filled by the translation cycle (see docs/foundation/LOCALIZATION.md).",
+    "keyConvention": "workspace.{element-type}.{semantic-name}",
+    "surfaces": {
+      "workspace.settings": "the Settings panel of the workspace"
+    },
+    "dataKeyOwners": {
+      "diagnostics": "VexLifeDiagnosticsFamily (state, control refs) and the debug export route"
+    }
+  },
+  "workspace.heading.diagnostics": {
+    "strings": {
+      "en": {
+        "text": "Debug & diagnostics"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.diagnostics": {
+    "strings": {
+      "en": {
+        "text": "VexLife keeps a short history of what happened (setup steps, service and model starts, sends and how they ended) so a problem can be traced to its cause. It holds no conversation text."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.diagnostics-recording": {
+    "strings": {
+      "en": {
+        "text": "Trace: recording the normal history"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "diagnostics:state:RECORDING"
+  },
+  "workspace.status.diagnostics-enhanced-off": {
+    "strings": {
+      "en": {
+        "text": "Enhanced capture: off"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "diagnostics:state:RECORDING"
+  },
+  "workspace.status.diagnostics-enhanced-on": {
+    "strings": {
+      "en": {
+        "text": "Enhanced capture: on until {until}"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "diagnostics:state:RECORDING_ENHANCED"
+  },
+  "workspace.status.diagnostics-unavailable": {
+    "strings": {
+      "en": {
+        "text": "The debug history isn't available right now."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.diagnostics-records": {
+    "strings": {
+      "en": {
+        "text": "{count} records kept since {since}"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.diagnostics-no-records": {
+    "strings": {
+      "en": {
+        "text": "No records yet"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.button.diagnostics-start-enhanced": {
+    "strings": {
+      "en": {
+        "text": "Start enhanced capture"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "diagnostics:control:START_ENHANCED"
+  },
+  "workspace.button.diagnostics-stop-enhanced": {
+    "strings": {
+      "en": {
+        "text": "Stop enhanced capture"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "diagnostics:control:STOP_ENHANCED"
+  },
+  "workspace.button.diagnostics-clear-history": {
+    "strings": {
+      "en": {
+        "text": "Clear debug history"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "diagnostics:control:CLEAR_HISTORY"
+  },
+  "workspace.button.diagnostics-export": {
+    "strings": {
+      "en": {
+        "text": "Export debug ZIP"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "diagnostics:export:DEBUG_ZIP"
+  },
+  "workspace.description.diagnostics-enhanced-note": {
+    "strings": {
+      "en": {
+        "text": "Enhanced capture also records process and memory snapshots every 30 seconds for two hours, then stops by itself."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.diagnostics-export-note": {
+    "strings": {
+      "en": {
+        "text": "The ZIP holds states, timings, process IDs, receipt summaries and short log tails. It never includes your conversations, prompts or page contents."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.diagnostics-clear-confirm": {
+    "strings": {
+      "en": {
+        "text": "Clear the debug history? Only this history is removed. Your conversations, memory and Vex Home stay as they are."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "diagnostics:control:CLEAR_HISTORY"
+  }
+}

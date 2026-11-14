@@ -106,6 +106,12 @@ object VexLifeProdServiceContract {
     const val FoundationalFieldSchema = "vexlife-prod.local-service-foundational-field/v1"
 
     const val SettingsPath = "/api/v1/settings"
+    const val DiagnosticsPath = "/api/v1/diagnostics"
+    const val DiagnosticsControlPath = "/api/v1/diagnostics/control"
+    const val DiagnosticsExportPath = "/api/v1/diagnostics/export"
+    const val ChronologyPath = "/api/v1/chronology"
+    /** The workspace scope's words in the person's language. Routes take no query parameters. */
+    const val WorkspaceStringsPath = "/api/v1/strings/workspace"
     const val SettingsSchema = "vexlife-prod.local-service-settings/v1"
 
     const val PrivatePath = "/api/v1/private"

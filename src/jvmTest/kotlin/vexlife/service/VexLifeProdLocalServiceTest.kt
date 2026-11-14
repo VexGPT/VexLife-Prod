@@ -715,6 +715,43 @@ class VexLifeProdLocalServiceTest {
     }
 
     @Test
+    fun diagnosticsStringsAndPresentationFactsAreServedWithinTheirOwnership() {
+        val root = Files.createTempDirectory("vexlife-prod-service-diagnostics-").toAbsolutePath().resolve("VexLife-Prod")
+        try {
+            bootstrapHome(root)
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha = "a".repeat(40),
+                    setup = setup(root),
+                    turnExecutor = VexLifeProdLocalService.TurnExecutor { _, _ -> error("no turn") },
+                )
+                .use { service ->
+                    val diagnostics = get(service.origin, VexLifeProdServiceContract.DiagnosticsPath)
+                    assertEquals(200, diagnostics.statusCode(), diagnostics.body())
+                    assertTrue(diagnostics.body().contains("\"state\":\"RECORDING\""))
+
+                    val strings = get(service.origin, VexLifeProdServiceContract.WorkspaceStringsPath)
+                    assertEquals(200, strings.statusCode(), strings.body())
+                    assertTrue(strings.body().contains("workspace.heading.diagnostics"))
+
+                    assertEquals(
+                        204,
+                        postJson(service.origin, VexLifeProdServiceContract.ChronologyPath, """{"fact":"BROWSER_PAGE_UNLOCATED","refs":{"previousHost":"vgong24.github.io"}}""").statusCode(),
+                    )
+                    // The presentation cannot report a fact it does not own.
+                    assertEquals(
+                        422,
+                        postJson(service.origin, VexLifeProdServiceContract.ChronologyPath, """{"fact":"TURN_COMPLETED"}""").statusCode(),
+                    )
+                    val export = get(service.origin, VexLifeProdServiceContract.DiagnosticsExportPath)
+                    assertEquals(200, export.statusCode())
+                }
+        } finally {
+            root.parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
     fun privateModeKeepsNothingButTheIntervalAndTheAgreedNote() {
         val root = Files.createTempDirectory("vexlife-prod-service-private-").toAbsolutePath().resolve("VexLife-Prod")
         val calls = mutableListOf<List<vexlife.companion.CompanionProviderMessage>>()

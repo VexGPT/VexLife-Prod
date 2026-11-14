@@ -2240,6 +2240,66 @@
         "pt",
         "zh"
       ]
+    },
+    "workspace.button.diagnostics-clear-history": {
+      "enHash": "19adfd56ce8f",
+      "langs": []
+    },
+    "workspace.button.diagnostics-export": {
+      "enHash": "84b87c1a82e7",
+      "langs": []
+    },
+    "workspace.button.diagnostics-start-enhanced": {
+      "enHash": "e9c2e7fb0122",
+      "langs": []
+    },
+    "workspace.button.diagnostics-stop-enhanced": {
+      "enHash": "7bccecad1203",
+      "langs": []
+    },
+    "workspace.description.diagnostics": {
+      "enHash": "7b79ef07573f",
+      "langs": []
+    },
+    "workspace.description.diagnostics-clear-confirm": {
+      "enHash": "5b4e5df9bedc",
+      "langs": []
+    },
+    "workspace.description.diagnostics-enhanced-note": {
+      "enHash": "47fc6966e278",
+      "langs": []
+    },
+    "workspace.description.diagnostics-export-note": {
+      "enHash": "b228dfcf5fd2",
+      "langs": []
+    },
+    "workspace.heading.diagnostics": {
+      "enHash": "d6991174308f",
+      "langs": []
+    },
+    "workspace.label.diagnostics-no-records": {
+      "enHash": "485dc8048e99",
+      "langs": []
+    },
+    "workspace.label.diagnostics-records": {
+      "enHash": "4059f0d4ba0d",
+      "langs": []
+    },
+    "workspace.status.diagnostics-enhanced-off": {
+      "enHash": "1700f60d8457",
+      "langs": []
+    },
+    "workspace.status.diagnostics-enhanced-on": {
+      "enHash": "1c5ed9fe4b67",
+      "langs": []
+    },
+    "workspace.status.diagnostics-recording": {
+      "enHash": "4d70b1209095",
+      "langs": []
+    },
+    "workspace.status.diagnostics-unavailable": {
+      "enHash": "394035d406e5",
+      "langs": []
     }
   }
 }

@@ -4,6 +4,7 @@ import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.logging.VexLogger
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 
 /**
@@ -134,24 +135,43 @@ object VexLifeProdServiceProcess {
         arguments: Arguments,
         hooks: Hooks,
     ) {
+        // The service only ever runs for an established Home, so its chronology lives there.
+        VexLogger.bind(
+            processRole = "service",
+            sourceSha = arguments.sourceSha,
+            chronologyHome = arguments.productHome,
+        )
+        VexLogger.record(
+            VexLogger.Fact.ServiceProcessStarted,
+            mapOf("pid" to ProcessHandle.current().pid().toString()),
+        )
+
         val visionRuntimeExecutablePathOrNull =
             hooks.resolveVisionRuntimeExecutablePath(
                 arguments.sourceSha,
             )
 
-        val session =
-            hooks.establishSession(
-                arguments.productHome,
-                false,
-            )
-
         val service =
-            hooks.startService(
-                arguments.sourceSha,
-                session,
-                visionRuntimeExecutablePathOrNull,
-            )
+            try {
+                val session =
+                    hooks.establishSession(
+                        arguments.productHome,
+                        false,
+                    )
+                hooks.startService(
+                    arguments.sourceSha,
+                    session,
+                    visionRuntimeExecutablePathOrNull,
+                )
+            } catch (error: Throwable) {
+                VexLogger.record(
+                    VexLogger.Fact.ServiceStartFailed,
+                    detail = error.javaClass.simpleName + ": " + (error.message ?: ""),
+                )
+                throw error
+            }
 
+        VexLogger.record(VexLogger.Fact.ServiceListening, mapOf("origin" to VexLifeProdServiceContract.Origin))
         hooks.reportReady(
             arguments,
         )
@@ -189,6 +209,9 @@ object VexLifeProdServiceProcess {
         val shutdownHook =
             Thread(
                 {
+                    // Observed: this JVM is being terminated (launchd bootout, SIGTERM, logout).
+                    // A process killed outright leaves no such record; that absence is evidence too.
+                    VexLogger.record(VexLogger.Fact.ServiceProcessTerminating)
                     closeOnce()
                     latch.countDown()
                 },
