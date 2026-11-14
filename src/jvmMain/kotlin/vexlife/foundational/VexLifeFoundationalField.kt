@@ -375,39 +375,17 @@ object VexLifeFoundationalField {
 
     private fun render(reading: Reading.Current, carried: List<Module>): String {
         val body = reading.body
-        val standing = body.modules.map(Module::standing).distinct().singleOrNull()?.name ?: "MIXED"
         val omitted = body.modules.drop(carried.size)
         return buildList {
-                add(
-                    listOf(
-                            ProviderHeader,
-                            "field=${body.fieldRef} version=${body.version} " +
-                                "body=${reading.bodySha256.take(16)} standing=$standing " +
-                                "effectAuthorityGranted=false",
-                        )
-                        .joinToString("\n")
-                )
+                // The provider-facing field carries the relational ground itself. Exact version,
+                // standing, origin, provenance, source and unresolved truth remain owned by the
+                // body/evidence read side instead of being repeated as guardrail metadata between
+                // Vex and every relationship it is trying to understand.
+                add(ProviderHeader)
                 addAll(body.preamble)
                 carried.forEach { module ->
-                    add(
-                        listOf(
-                                "[${module.moduleRef}] ${module.title}",
-                                "standing=${module.standing} " +
-                                    "origins=${module.origins.joinToString("+")} " +
-                                    "depth=" +
-                                    if (module.depth.isEmpty()) "NONE" else "IN_SOURCE_NOT_CARRIED",
-                                module.provenance,
-                            )
-                            .joinToString("\n")
-                    )
+                    add("[${module.moduleRef}] ${module.title}")
                     addAll(module.kernel)
-                }
-                if (body.unresolved.isNotEmpty()) {
-                    add(
-                        (listOf("Unresolved at this revision:") +
-                                body.unresolved.map { "- ${it.summary} (${it.unresolvedRef})" })
-                            .joinToString("\n")
-                    )
                 }
                 if (omitted.isNotEmpty()) {
                     add(
