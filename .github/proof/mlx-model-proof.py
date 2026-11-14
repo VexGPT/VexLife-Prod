@@ -26,10 +26,14 @@ for m in pins["members"]:
         sys.exit(2)
 say("all members exact at", pins["repo"] + "@" + pins["revision"], "in %.0fs" % (time.time() - t0))
 
+# Same as the product's runtime start: an owned, existing Hugging Face cache folder.
+cache = os.path.join(root, "huggingface-cache")
+os.makedirs(cache, exist_ok=True)
+server_env = dict(os.environ, HF_HUB_CACHE=cache)
 server = subprocess.Popen(
     [sys.executable, "-m", "mlx_lm.server", "--model", model_dir, "--host", "127.0.0.1", "--port", "8765",
      "--chat-template-args", '{"enable_thinking":false}'],
-    stdout=open(os.path.join(root, key + ".server.log"), "w"), stderr=subprocess.STDOUT)
+    stdout=open(os.path.join(root, key + ".server.log"), "w"), stderr=subprocess.STDOUT, env=server_env)
 t1 = time.time()
 models = None
 while time.time() - t1 < 600:
