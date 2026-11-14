@@ -540,23 +540,24 @@ OS FILE LOCK         = SAME-HOST EXCLUSION
 
 The human REQUEST is durably written before inference.
 
-Interactive runtime currentness deliberately does **not** reuse startup's long readiness loop.
-The exact lived regression that motivated this distinction was:
+Interactive runtime currentness answers only whether the same exact qualified runtime still owns
+the process/substrate coordinate. Generation readiness is observed by the actual provider relationship
+or by an explicit lifecycle qualification; it is not folded into currentness.
+
+The lived pressure that motivated this distinction was:
 
 ~~~text
 Product service = responsive
 Product-owned Heretic PID = alive
-mlx-lm /health = 503
-generation thread = unavailable
-old interactive currentness = startup waitUntilHealthy up to 10 minutes
+generation-health observation = absent / slow / 503
 ~~~
+
+A missing readiness observation is not positive evidence that the exact live process should be
+destroyed.
 
 Current behavior:
 
 ~~~text
-qualified Product-owned runtime + immediate health true
-  -> continue
-
 qualified Product-owned runtime + exact process/receipt/substrate current
   -> provider stream
 
