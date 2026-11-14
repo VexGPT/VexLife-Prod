@@ -62,6 +62,31 @@ class VexLifeProdSetupModelTest {
     }
 
     @Test
+    fun aMacBelowEveryModelIsNeverToldAModelIsRecommendedForIt() {
+        val parent = Files.createTempDirectory("vexlife-setup-model-small-").toAbsolutePath()
+        try {
+            // A 7 GiB Mac (the hosted macOS runner) is below the smallest model's 8 GiB.
+            val observed =
+                VexLifeProdSetupModel.observe(
+                    parent.resolve("new-home"),
+                    explicit = null,
+                    language = "en",
+                    totalMemoryBytes = 7 * gib,
+                )
+            assertEquals("heretic-4b", observed.selected, "the smallest is still preselected")
+            assertTrue(observed.models.none { it.recommended || it.fits })
+            assertTrue(
+                observed.models
+                    .first { it.handle == "heretic-4b" }
+                    .line
+                    .contains("wants 8.0 GiB of memory")
+            )
+        } finally {
+            parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
     fun onceAHomeExistsTheChoiceIsTheHomesOwn() {
         val parent = Files.createTempDirectory("vexlife-setup-model-home-").toAbsolutePath()
         val home = parent.resolve(".vexlife")
