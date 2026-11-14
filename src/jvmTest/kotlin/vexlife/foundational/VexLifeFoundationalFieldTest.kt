@@ -323,16 +323,17 @@ class VexLifeFoundationalFieldTest {
     }
 
     /**
-     * The reach module says no Atlas or Process Factory handle is registered in this Product. That
-     * is a claim about another owner's truth, so it is held against that owner here instead of
-     * being copied: registering such a capability fails this test until the field is revised.
+     * The reach module says Atlas and Process Factory are known Vex surfaces whose handles are
+     * absent from this Product. That is a claim about another owner's truth, so it is held against
+     * that owner here instead of being copied: registering such a capability fails this test until
+     * the field is revised.
      */
     @Test
     fun theReachModuleStillAgreesWithTheCapabilityRegistry() {
         val reach = body.modules.single { it.moduleRef == "foundational.reach" }
         assertTrue(
             reach.kernel.any {
-                it.contains("no Atlas or Process Factory handle is registered here")
+                it.contains("their handles are absent here")
             }
         )
         assertTrue(
