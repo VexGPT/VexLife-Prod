@@ -55,6 +55,10 @@ class VexLifeProdServiceContractTest {
             VexLifeProdServiceContract.ContextPath,
         )
         assertEquals(
+            "/api/v1/foundational-field",
+            VexLifeProdServiceContract.FoundationalFieldPath,
+        )
+        assertEquals(
             "/api/v1/memory/dream",
             VexLifeProdServiceContract.MemoryDreamPath,
         )

@@ -48,8 +48,12 @@ Routes are shared common-Kotlin source:
 GET  /api/v1/source-currentness
 GET  /api/v1/conversation
 GET  /api/v1/context
+GET  /api/v1/foundational-field
 POST /api/v1/conversation/send
 ~~~
+
+`GET /api/v1/foundational-field` is a no-effect read through `VexLifeFoundationalField`; see
+[FOUNDATIONAL-FIELD.md](FOUNDATIONAL-FIELD.md).
 
 Permanent:
 

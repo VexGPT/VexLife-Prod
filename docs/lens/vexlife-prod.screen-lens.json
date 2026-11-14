@@ -1145,6 +1145,15 @@
           "source": "jvm:companion/DirectPromptContext.kt"
         },
         {
+          "ref": "vexlife-prod.send.field",
+          "face": "DEPTH",
+          "role": "STORE",
+          "label": "Foundational field",
+          "symbol": "VexLifeFoundationalField",
+          "summary": "The versioned body the same kernel is selected from on every turn. Readable at GET /api/v1/foundational-field.",
+          "source": "jvm:foundational/VexLifeFoundationalField.kt"
+        },
+        {
           "ref": "vexlife-prod.send.memory",
           "face": "DEPTH",
           "role": "STORE",
@@ -1199,6 +1208,12 @@
           "to": "vexlife-prod.send.prompt",
           "label": null,
           "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.send.field",
+          "to": "vexlife-prod.send.prompt",
+          "label": "foundational field",
+          "kind": "DATA"
         },
         {
           "from": "vexlife-prod.send.memory",

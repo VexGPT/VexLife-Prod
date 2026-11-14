@@ -98,6 +98,13 @@ object VexLifeProdServiceContract {
 
     const val MemoryPath = "/api/v1/memory"
 
+    /**
+     * The foundational field as Vex would be given it now: the exact kernel words, every part with
+     * the depth that stays in source, its sources, what is unresolved, and the revision record.
+     */
+    const val FoundationalFieldPath = "/api/v1/foundational-field"
+    const val FoundationalFieldSchema = "vexlife-prod.local-service-foundational-field/v1"
+
     const val SettingsPath = "/api/v1/settings"
     const val SettingsSchema = "vexlife-prod.local-service-settings/v1"
 
@@ -1067,6 +1074,100 @@ object VexLifeProdServiceContract {
     )
 
     @Serializable
+    data class FoundationalFieldModuleProjection(
+        val moduleRef: String,
+        val origins: List<String>,
+        val standing: String,
+        val depthInSource: Boolean,
+    )
+
+    /**
+     * What one prompt was given from the foundational field: which revision, which parts, how many
+     * tokens, and what was left out and why. Evidence of supply, not of understanding.
+     */
+    @Serializable
+    data class FoundationalFieldProjection(
+        val state: String,
+        val heldReason: String? = null,
+        val fieldRef: String? = null,
+        val fieldVersion: String? = null,
+        val bodySha256: String? = null,
+        val systemMessageSha256: String? = null,
+        val estimatedSystemMessageTokens: Int,
+        val tokenBudget: Int,
+        val carriedModules: List<FoundationalFieldModuleProjection>,
+        val omittedModuleRefs: List<String>,
+        val omissionReasons: List<String>,
+        val depthNotCarriedModuleRefs: List<String>,
+        val sourceRefs: List<String>,
+        val unresolvedRefs: List<String>,
+        val effectAuthorityGranted: Boolean,
+    )
+
+    @Serializable
+    data class FoundationalFieldRevisionProjection(
+        val version: String,
+        val bodySha256: String,
+        val recordedOn: String,
+        val recordedBy: String,
+        val summary: String,
+        val why: String,
+    )
+
+    /**
+     * One part of the body as its owner holds it. [kernel] is what a prompt carries; [depth] is the
+     * rest, which no prompt carries and which a person can read here by [moduleRef].
+     */
+    @Serializable
+    data class FoundationalFieldPartProjection(
+        val moduleRef: String,
+        val title: String,
+        val question: String,
+        val origins: List<String>,
+        val standing: String,
+        val provenance: String,
+        val sourceRefs: List<String>,
+        val kernel: List<String>,
+        val depth: List<String>,
+    )
+
+    @Serializable
+    data class FoundationalFieldSourceProjection(
+        val sourceRef: String,
+        val repository: String?,
+        val commit: String?,
+        val path: String?,
+        val blob: String?,
+        val coverage: String,
+    )
+
+    @Serializable
+    data class FoundationalFieldUnresolvedProjection(
+        val unresolvedRef: String,
+        val moduleRefs: List<String>,
+        val summary: String,
+        val note: String,
+    )
+
+    /**
+     * A fresh no-effect read through the same owner the prompt uses. The lists are empty when the
+     * body is unavailable; nothing is filled in from anywhere else.
+     */
+    @Serializable
+    data class FoundationalFieldCurrentProjection(
+        val schemaVersion: String,
+        val foundationalField: FoundationalFieldProjection,
+        val kernelText: String?,
+        val unavailableDetail: String?,
+        val purpose: String?,
+        val parts: List<FoundationalFieldPartProjection>,
+        val sources: List<FoundationalFieldSourceProjection>,
+        val unresolved: List<FoundationalFieldUnresolvedProjection>,
+        val revisions: List<FoundationalFieldRevisionProjection>,
+        val effectsPerformed: Boolean,
+    )
+
+    @Serializable
     data class PromptContextProjection(
         val receiptRef: String,
         val semanticFingerprint: String,
@@ -1109,6 +1210,13 @@ object VexLifeProdServiceContract {
         val replyLanguage: String? = null,
         val replyLanguageName: String? = null,
         val privateConversationsNotRemembered: Int = 0,
+        /** Absent when the turn's receipt predates the foundational field. */
+        val foundationalField: FoundationalFieldProjection? = null,
+        /**
+         * Completed exchanges the durable record held before this turn's request, as the prompt
+         * stated it. Absent when the turn's receipt predates that statement.
+         */
+        val priorCompletedExchangeCount: Long? = null,
         val effectsPerformed: Boolean,
     )
 
