@@ -1,0 +1,78 @@
+# PROOF ROUTE ONLY (AGENTS.md: PROOF_ROUTE != ORDINARY_PRODUCT_ROUTE).
+# Lives only on its own proof branch; never part of a product PR. Exercises the exact localized
+# Setup Journey window source and the exact assembled private image on a real macOS host with
+# disposable Homes.
+name: claude-macos-localization-proof
+on:
+  push:
+    branches: [VXG-111426-claude-localization-macos-proof-a001]
+permissions:
+  contents: read
+jobs:
+  macos:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Host
+        run: |
+          echo "PROOF host :: macOS $(sw_vers -productVersion) / $(sysctl -n machdep.cpu.brand_string) / $(( $(sysctl -n hw.memsize) / 1073741824 )) GiB / $(uname -m) / preferred=$(defaults read -g AppleLanguages 2>/dev/null | tr -d ' \n')"
+      - name: osacompile exact window source
+        run: |
+          /usr/bin/osacompile -o "$RUNNER_TEMP/Check.app" packaging/private-service-image/setup/vexlife-prod-setup-window.applescript
+          echo "PROOF osacompile :: PASS localized window source compiled"
+      - name: Setup + text tests on macOS
+        run: ./gradlew --no-daemon jvmTest --tests 'vexlife.setup.*' --tests 'vexlife.text.*' --tests 'vexlife.entry.*' --tests 'vexlife.packaging.*' checkVexLifeStrings
+      - name: Assemble exact private image
+        run: ./gradlew --no-daemon assembleVexLifeProdServiceImage
+      - name: Window runtime harness (headless AppleScriptObjC)
+        run: |
+          IMAGE="$(ls -d "$PWD"/build/vexlife-prod-service-image/images/*/ | head -1)"
+          SHA="$(git rev-parse HEAD)"
+          /usr/bin/osacompile -o "$RUNNER_TEMP/window.scpt" "$IMAGE/setup/vexlife-prod-setup-window.applescript"
+          /usr/bin/osacompile -o "$RUNNER_TEMP/harness.scpt" .github/proof/window-runtime-harness.applescript
+          mkdir -p "$RUNNER_TEMP/harness-homes"
+          echo "PROOF nsnull :: $(/usr/bin/osascript .github/proof/nsnull-selector.applescript 2>&1)"
+          /usr/bin/osascript "$RUNNER_TEMP/harness.scpt" "$RUNNER_TEMP/window.scpt" "$IMAGE/bin/vexlife-prod-setup" "$RUNNER_TEMP/harness-homes/absent" "$SHA" 2>&1 | sed 's/^/PROOF harness :: /'
+      - name: Localized setup projections on disposable Homes
+        run: |
+          IMAGE="$(ls -d "$PWD"/build/vexlife-prod-service-image/images/*/ | head -1)"
+          SHA="$(git rev-parse HEAD)"
+          L="$IMAGE/bin/vexlife-prod-setup"
+          P="$RUNNER_TEMP/proof-homes"
+          mkdir -p "$P/withfiles"
+          echo keep > "$P/withfiles/notes.txt"
+          lang() {
+            python3 -c '
+          import json,sys
+          d=json.loads(sys.stdin.read())
+          w=d["window"]
+          print("language=%s chosen=%s saved=%s effects=%s offered=%s | %s | %s" % (d["language"], d["languageChosen"], d["savedInHome"], d["effectsPerformed"], ",".join(x["code"] for x in d["languages"]), w["setup.heading.choose-language"], w["setup.button.continue"]))
+          '
+          }
+          card() {
+            python3 -c '
+          import json,sys
+          d=json.loads(sys.stdin.read())
+          c=d.get("card") or {}
+          f=d.get("failure") or {}
+          print("state=%s lang=%s failure=%s | %s | %s | buttons=%s" % (d.get("semanticStateRef"), c.get("language"), f.get("failureRef"), c.get("title") or f.get("title"), c.get("rail"), [(b["label"], b["key"]) for b in c.get("buttons",[])]))
+          '
+          }
+          for sys in ja-JP ar-SA pt-BR xx-YY; do
+            echo "PROOF setup-language system=$sys :: $("$L" --setup-language --home "$P/absent" --system-language "$sys" | lang)"
+          done
+          echo "PROOF choose-language before Home :: $("$L" --choose-language ko --home "$P/absent" | lang) home_created=$(test -e "$P/absent" && echo yes || echo no)"
+          for l in ja zh ko fr de es pt ar hi en; do
+            echo "PROOF inspect absent $l :: $("$L" --inspect-front-door --home "$P/absent" --expected-source-sha "$SHA" --language "$l" 2>/dev/null | card)"
+          done
+          echo "PROOF inspect with-files de :: $("$L" --inspect-front-door --home "$P/withfiles" --expected-source-sha "$SHA" --language de 2>/dev/null | card)"
+          out="$("$L" --activate-front-door-control FORM_HOME --home "$P/absent" --expected-source-sha "$SHA" --language ja 2>"$RUNNER_TEMP/act.err")"; code=$?
+          echo "PROOF activate FORM_HOME ja :: exit=$code $(printf '%s' "$out" | python3 -c 'import json,sys; d=json.loads(sys.stdin.read()); print(d.get("semanticStateRef"), d.get("manifestationRef"), (d.get("failure") or {}).get("title"))') home_created=$(test -e "$P/absent" && echo yes || echo no) person_json=$(cat "$P/absent/runtime/vexlife-prod/settings/person.json" 2>/dev/null | tr -d ' \n' || echo none)"
+          echo "PROOF progress lines ja :: $(grep '^\[VexLife\]' "$RUNNER_TEMP/act.err" | head -3 | tr '\n' ' ')"
+          echo "PROOF returning Home language :: $("$L" --setup-language --home "$P/absent" --system-language de-DE | lang)"
+          echo "PROOF notes intact :: $(cat "$P/withfiles/notes.txt")"
