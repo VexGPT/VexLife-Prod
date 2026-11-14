@@ -687,6 +687,33 @@ class VexLifeProdLocalServiceTest {
     }
 
     @Test
+    fun replyLanguageIsAHomeSettingWithOnlySupportedLanguages() {
+        val root = Files.createTempDirectory("vexlife-prod-service-settings-").toAbsolutePath().resolve("VexLife-Prod")
+        try {
+            bootstrapHome(root)
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha = "a".repeat(40),
+                    setup = setup(root),
+                    turnExecutor = VexLifeProdLocalService.TurnExecutor { _, _ -> error("no turn") },
+                )
+                .use { service ->
+                    fun settings() =
+                        json.decodeFromString<VexLifeProdServiceContract.SettingsProjection>(get(service.origin, VexLifeProdServiceContract.SettingsPath).body())
+                    assertEquals("en", settings().replyLanguage)
+                    assertEquals(10, settings().languages.size)
+                    assertEquals(200, postJson(service.origin, VexLifeProdServiceContract.SettingsPath, """{"replyLanguage":"ja"}""").statusCode())
+                    assertEquals("ja", settings().replyLanguage)
+                    assertEquals(400, postJson(service.origin, VexLifeProdServiceContract.SettingsPath, """{"replyLanguage":"xx"}""").statusCode())
+                    assertEquals("ja", settings().replyLanguage)
+                }
+            assertTrue(Files.exists(root.resolve("runtime/vexlife-prod/settings/person.json")))
+        } finally {
+            root.parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
     fun privateModeKeepsNothingButTheIntervalAndTheAgreedNote() {
         val root = Files.createTempDirectory("vexlife-prod-service-private-").toAbsolutePath().resolve("VexLife-Prod")
         val calls = mutableListOf<List<vexlife.companion.CompanionProviderMessage>>()

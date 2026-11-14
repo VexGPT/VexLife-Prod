@@ -81,6 +81,9 @@ object VexLifeWebP1 {
                 "conversation.send",
             )
 
+        /** The person's reply language, a Home setting every prompt carries. */
+        val ReplyLanguageCapability = VexWeb.CapabilityRef.of("person.reply-language")
+
         /** Private mode: a conversation that isn't kept, apart from notes both agree to keep. */
         val ConversationPrivateCapability = VexWeb.CapabilityRef.of("conversation.private")
 
@@ -179,6 +182,17 @@ object VexLifeWebP1 {
                 ),
         )
 
+    /** The language Vex replies in (and Speech reads in), kept as a Home setting. */
+    val Language =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.Language,
+            placement = VexWeb.Placement.InFlow,
+            depth = VexWeb.Depth.Chrome,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(VexWeb.Interaction.Activate),
+            binding = VexWebAuthoring.capability(Refs.ReplyLanguageCapability),
+        )
+
     val QuickActions =
         blueprintSurface(
             element = VexLifeWorkspaceBlueprint.QuickActions,
@@ -187,6 +201,7 @@ object VexLifeWebP1 {
                     VexSummon,
                     VisionQuickAccess,
                     Speech,
+                    Language,
                 ),
         )
 

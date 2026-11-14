@@ -216,6 +216,18 @@ svg { display: block; }
   background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 12px; box-shadow: var(--shadow);
 }
 .speech[hidden] { display: none; }
+.language-panel {
+  position: absolute; top: calc(100% + 8px); right: 12px; z-index: 30; width: 260px;
+  display: grid; gap: 8px; padding: 12px 14px;
+  background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 12px; box-shadow: var(--shadow);
+}
+.language-panel[hidden] { display: none; }
+.language-title { margin: 0; font-weight: 650; }
+.language-list { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.language-list button { width: 100%; padding: 6px 10px; text-align: left; border: 1px solid transparent; border-radius: 8px; background: none; color: var(--ink); }
+.language-list button:hover { background: var(--sunken); }
+.language-list button[aria-selected="true"] { border-color: var(--rule-strong); background: var(--sunken); font-weight: 650; }
+.language-note { margin: 0; color: var(--ink-2); font-size: var(--step--1); }
 .speech-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .speech-title { font-weight: 650; }
 .speech-status { margin: 0; color: var(--ink-2); font-size: var(--step--1); }

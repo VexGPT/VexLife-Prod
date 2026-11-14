@@ -23,7 +23,7 @@ class VexLifeWorkspaceBlueprintTest {
             refs.toSet().size,
         )
         assertEquals(
-            45,
+            46,
             refs.size,
         )
 

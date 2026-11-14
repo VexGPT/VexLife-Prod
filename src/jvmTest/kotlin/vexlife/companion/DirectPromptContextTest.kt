@@ -55,6 +55,49 @@ class DirectPromptContextTest {
         )
 
     @Test
+    fun personContextTellsVexTheReplyLanguageAndThePrivateGaps() {
+        val parent = Files.createTempDirectory("vexlife-prod-direct-prompt-person-").toAbsolutePath()
+        val productHome = parent.resolve(".vexlife")
+        try {
+            home(productHome)
+            DirectConversationStore(productHome).withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef = "turn.self-development.person",
+                        requestMessageRef = "message.self-development.human.person",
+                        content = "Where were we?",
+                    )
+                val person =
+                    DirectPromptContext.PersonContext(
+                        replyLanguage = "ja",
+                        replyLanguageName = "日本語",
+                        privateConversations =
+                            listOf(
+                                DirectPromptContext.PrivateGap(
+                                    startedAt = "2026-11-13T19:10:00Z",
+                                    endedAt = "2026-11-13T19:40:00Z",
+                                    exchangeCount = 6,
+                                    keptNotes = listOf("Victor is nervous about Friday."),
+                                ),
+                            ),
+                    )
+                val told = DirectPromptContext.materialize(prior = null, currentRequest = request, personContext = person)
+                val system = told.messages.first { it.role == "system" }.content
+                assertTrue(system.startsWith("VEXLIFE_PERSON_CONTEXT/v1"))
+                assertTrue("日本語" in system && "Victor is nervous about Friday." in system)
+                assertTrue(told.receipt.personContextIncluded)
+                assertEquals(person, told.receipt.personContext)
+
+                val untold = DirectPromptContext.materialize(prior = null, currentRequest = request).receipt
+                val encoded = VexContractJson.Strict.encodeToJsonElement(untold).jsonObject
+                assertTrue(encoded.keys.none { it.startsWith("personContext") }, "receipts without person context keep their historical shape")
+            }
+        } finally {
+            parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
     fun historicalV2ReceiptRoundTripsWithoutNewWorkingFieldsInCanonicalHashShape() {
         val parent =
             Files.createTempDirectory(

@@ -70,7 +70,12 @@ ${VexLifeWorkspaceApp.entries.joinToString("\n") { "        <option value=\"${it
     </label>
 
     <div class="utilities" data-vex-ref="${VexLifeWebP1.Utilities.identity.ref}">
-      <ul class="quick-actions" data-vex-ref="${VexLifeWebP1.QuickActions.identity.ref}" id="quick-actions" aria-label="Quick actions"><li hidden data-vex-ref="${VexLifeWebP1.VexSummon.identity.ref}"><button type="button" id="vex-summon" hidden></button></li><li hidden data-vex-ref="${VexLifeWebP1.VisionQuickAccess.identity.ref}"><button type="button" id="vision-quick-access-source" hidden></button></li><li hidden data-vex-ref="${VexLifeWebP1.Speech.identity.ref}"><button type="button" id="speech-source" hidden></button></li></ul>
+      <ul class="quick-actions" data-vex-ref="${VexLifeWebP1.QuickActions.identity.ref}" id="quick-actions" aria-label="Quick actions"><li hidden data-vex-ref="${VexLifeWebP1.VexSummon.identity.ref}"><button type="button" id="vex-summon" hidden></button></li><li hidden data-vex-ref="${VexLifeWebP1.VisionQuickAccess.identity.ref}"><button type="button" id="vision-quick-access-source" hidden></button></li><li hidden data-vex-ref="${VexLifeWebP1.Speech.identity.ref}"><button type="button" id="speech-source" hidden></button></li><li hidden data-vex-ref="${VexLifeWebP1.Language.identity.ref}"><button type="button" id="language-source" hidden></button></li></ul>
+      <section class="language-panel" id="language-panel" aria-label="Reply language" hidden>
+        <p class="language-title">Vex replies in</p>
+        <ul class="language-list" id="language-list" role="listbox" aria-label="Reply language"></ul>
+        <p class="language-note">Kept in your Vex Home. Vex is told this on every message, and Speech reads in it.</p>
+      </section>
       <section class="speech" id="speech" aria-label="Speech" hidden>
         <div class="speech-head">
           <span class="speech-title">Speak Vex aloud</span>

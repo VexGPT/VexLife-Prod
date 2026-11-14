@@ -349,6 +349,27 @@ context is off while it is open. Showing an archive to Vex, sorting the conversa
 Vex's commentary, Private mode and changes made together with Vex come next (see
 `docs/work/claude-next-stages/README.md`).
 
+## Reply language and what Vex is told about the person
+
+The header's Language orb chooses the language Vex replies in. The choice is a Home setting
+(`runtime/vexlife-prod/settings/person.json`, `VexLifePersonSettings`) rather than a browser
+preference, because Vex is given it on every message: one selected-language authority, as
+VexArchitecture's localization law requires.
+
+~~~text
+GET/POST /api/v1/settings          replyLanguage (one of Vextreme's ten), with each language's own name
+every ordinary turn                DirectPromptContext carries one VEXLIFE_PERSON_CONTEXT/v1 system block:
+                                     reply language + private conversations from the last 14 days
+                                     (at most 5: when, how many exchanges, kept notes)
+receipt                            personContextIncluded / snapshot (EncodeDefault NEVER, so receipts
+                                     without it keep their historical shape); shown in Settings
+private turns                      told the reply language too
+<html lang>                        follows the setting, so Speech chooses voices in that language
+~~~
+
+The workspace's own text is still English. Localizing it under VexArchitecture's string-catalog law is
+the next slice, starting with onboarding, where the language is chosen first.
+
 ## Speech
 
 The header's Speech orb carries the Vextreme Spiral FAB's Read Aloud behavior, ported rather than
