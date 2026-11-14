@@ -121,7 +121,8 @@ first inference
     -> exact selected source reopened through Conversation owner
     -> final prompt prioritizes returned exact source
     -> current Memory/working-successor re-read
-    -> keep the exact runtime binding already proved for this human turn
+    -> read-only runtime-currentness re-observation
+    -> require the exact same runtime receipt already proved for this human turn
     -> second and final inference
         ↓
 ephemeral live progress
@@ -487,8 +488,9 @@ already-completed send returns the durable canonical response without another mo
 
 One human turn also keeps one exact runtime binding across all of its provider stages. Conditional
 Conversation source return may add a second provider inference, but it is not a new runtime lifecycle
-boundary. If the bound process disappears before the final stage, the provider call fails against
-that bound identity rather than silently substituting a replacement runtime mid-turn.
+boundary. Before the final stage, the turn performs one **read-only** runtime-currentness observation
+with no recovery route and requires the same runtime receipt. If that runtime disappeared or was
+replaced, the turn fails before provider call #2 rather than silently substituting a runtime mid-turn.
 
 Presentation transport is not completion authority. When an SSE stream ends ambiguously, the
 presentation may re-present the same idempotency key through the ordinary non-streaming Send contract
