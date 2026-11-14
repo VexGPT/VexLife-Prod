@@ -129,14 +129,15 @@ class VexLifeProdBootstrapTemplateTest {
                 ),
             )
 
+        // The Home chooser's words are keyed string source, resolved in the person's language.
         assertTrue(
             source.contains(
-                "Choose your Vex Home",
+                "chromeText(\"setup.heading.choose-home\")",
             ),
         )
         assertTrue(
             source.contains(
-                "~/.vexlife is only the default suggestion",
+                "chromeText(\"setup.description.choose-home\")",
             ),
         )
         assertTrue(

@@ -3,11 +3,13 @@ package vexlife.setup
 import java.nio.file.Path
 import kotlinx.serialization.Serializable
 import vexlife.entry.VexLifeProdEntryFamily
-import vexlife.entry.VexLifeProdEntryFamily.Companion.gib
 import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.model.heretic.runtime.HereticSetupStorage
+import vexlife.person.VexLifePersonSettings
 import vexlife.service.VexLifeProdServiceContract
+import vexlife.text.VexLifeStrings
+import vexlife.text.VexLifeText
 
 /**
  * Concrete native presentation meaning for one Setup Journey card.
@@ -16,31 +18,47 @@ import vexlife.service.VexLifeProdServiceContract
  *
  * The card composes the Family's DisplayState with the observed facts the person needs to decide
  * (where the Home is, whether this Mac and drive meet the requirements, what setup will download).
- * Every button carries either a Family-authored Control ref or one of three renderer-local
- * navigation refs. The native renderer only shows these strings and returns the chosen ref; it does
- * not author copy, decide which buttons exist, or map anything to an Effect.
+ * Every button carries either a Family-authored Control ref or one of the renderer-local navigation
+ * refs (choose another Home, choose a language, check again, close). Text is resolved here, in the
+ * person's selected language, from the keyed string source; the native renderer only shows these
+ * strings and returns the chosen ref. It does not author copy, decide which buttons exist, or map
+ * anything to an Effect.
  */
 object VexLifeProdMacSetupCard {
     const val ActionControlPrefix = "CONTROL:"
     const val ActionChooseHome = "CHOOSE_HOME"
+    const val ActionChooseLanguage = "CHOOSE_LANGUAGE"
     const val ActionRecheck = "RECHECK"
     const val ActionClose = "CLOSE"
 
+    private val RendererLocalActions =
+        setOf(ActionChooseHome, ActionChooseLanguage, ActionRecheck, ActionClose)
+
+    /**
+     * [key] is the button's element identity in the string source; it maps to [actionRef] through
+     * the key's `dataKey`, whatever language [label] is in.
+     */
     @Serializable
-    data class Button(val label: String, val actionRef: String) {
+    data class Button(val label: String, val actionRef: String, val key: String) {
         init {
             require(
                 label.isNotBlank() &&
-                    (actionRef.startsWith(ActionControlPrefix) ||
-                        actionRef in setOf(ActionChooseHome, ActionRecheck, ActionClose))
+                    VexLifeText.KeyPattern.matches(key) &&
+                    (actionRef.startsWith(ActionControlPrefix) || actionRef in RendererLocalActions)
             ) {
                 "Setup Journey button is invalid"
             }
         }
     }
 
+    /**
+     * Words already resolved in [language]; the native renderer shows them as they are. [titleKey]
+     * and each [Button.key] keep the elements identifiable in every language.
+     */
     @Serializable
     data class Card(
+        val language: String,
+        val titleKey: String,
         val title: String,
         val rail: String,
         val body: String,
@@ -48,10 +66,11 @@ object VexLifeProdMacSetupCard {
     ) {
         init {
             require(
-                title.isNotBlank() &&
+                VexLifePersonSettings.Languages.any { it.first == language } &&
+                    title.isNotBlank() &&
                     rail.isNotBlank() &&
                     body.isNotBlank() &&
-                    buttons.size in 1..5 &&
+                    buttons.size in 1..6 &&
                     buttons.last().actionRef == ActionClose &&
                     buttons.count {
                         it.actionRef == ActionClose
@@ -78,44 +97,56 @@ object VexLifeProdMacSetupCard {
         val currentServiceSourceSha: String?,
         val requiredChipModel: String,
         val requiredMemoryBytes: Long,
-        val protectedLocation: String?,
+        val protectedLocation: VexLifeText?,
     )
 
-    fun form(facts: Facts): Card {
+    fun form(facts: Facts, language: String): Card {
+        fun say(text: VexLifeText) = VexLifeStrings.resolve(text, language)
+
+        fun button(label: VexLifeText, actionRef: String) =
+            Button(label = say(label), actionRef = actionRef, key = label.key)
+
         val display = facts.displayState
         val buttons = buildList {
             display.primaryControlRef?.let {
-                add(Button(requireNotNull(display.primaryLabel), ActionControlPrefix + it))
+                add(button(requireNotNull(display.primaryLabel), ActionControlPrefix + it))
             }
             display.secondaryControlRef?.let {
-                add(Button(requireNotNull(display.secondaryLabel), ActionControlPrefix + it))
+                add(button(requireNotNull(display.secondaryLabel), ActionControlPrefix + it))
             }
             display.homeChoiceLabel?.let {
-                add(Button(it, ActionChooseHome))
+                add(button(it, ActionChooseHome))
             }
             display.recheckLabel?.let {
-                add(Button(it, ActionRecheck))
+                add(button(it, ActionRecheck))
             }
-            add(Button(display.cancelLabel, ActionClose))
+            add(button(text("setup.button.change-language"), ActionChooseLanguage))
+            add(button(display.cancelLabel, ActionClose))
         }
 
         return Card(
-            title = display.title,
-            rail = rail(display.journey),
+            language = language,
+            titleKey = display.title.key,
+            title = say(display.title),
+            rail = rail(display.journey, language),
             body =
                 listOfNotNull(
-                        display.detail,
-                        foundSection(facts),
-                        facts.setupPlan?.let(::planSection),
-                        facts.formationPreview?.let(::upNextSection),
-                        noticeSection(facts),
+                        say(display.detail),
+                        section("setup.heading.found", foundLines(facts).map(::Line), language),
+                        facts.setupPlan?.let {
+                            section("setup.heading.plan", planLines(it), language)
+                        },
+                        facts.formationPreview?.let {
+                            section("setup.heading.up-next", upNextLines(it).map(::Line), language)
+                        },
+                        noticeSection(facts, language),
                     )
                     .joinToString("\n\n"),
             buttons = buttons,
         )
     }
 
-    fun rail(journey: List<VexLifeProdEntryFamily.JourneyStep>): String =
+    fun rail(journey: List<VexLifeProdEntryFamily.JourneyStep>, language: String): String =
         journey.joinToString("   ") { step ->
             val mark =
                 when (step.statusRef) {
@@ -124,133 +155,227 @@ object VexLifeProdMacSetupCard {
                     VexLifeProdEntryFamily.JourneyHeld -> "⊘"
                     else -> "○"
                 }
-            "$mark ${step.label}"
+            mark + " " + VexLifeStrings.resolve(step.label, language)
         }
 
-    private fun foundSection(facts: Facts): String {
+    /** A heading and its indented lines; [Line.bullet] marks a step setup will take. */
+    private data class Line(val text: VexLifeText, val bullet: Boolean = false)
+
+    private fun section(headingKey: String, lines: List<Line>, language: String): String =
+        VexLifeStrings.text(headingKey, language) +
+            "\n" +
+            lines.joinToString("\n") {
+                "  " + (if (it.bullet) "• " else "") + VexLifeStrings.resolve(it.text, language)
+            }
+
+    private fun text(key: String) = VexLifeText(key)
+
+    private fun foundLines(facts: Facts): List<VexLifeText> {
         val current = facts.currentState
-        val lines = mutableListOf<String>()
+        val lines = mutableListOf<VexLifeText>()
 
-        lines += "Vex Home: " + current.homePath + " — " + homeStatus(facts.location)
+        lines +=
+            VexLifeText(
+                key = "setup.label.found-home",
+                args = mapOf("path" to current.homePath),
+                parts = mapOf("status" to homeStatus(facts.location)),
+            )
 
-        val memory = current.totalMemoryBytes?.let { gib(it) + " GiB memory" } ?: "memory unknown"
         val meets = current.hostEligibilityState == "ELIGIBLE"
         lines +=
-            "This Mac: " +
-                (current.chipModel ?: "unknown chip") +
-                ", " +
-                memory +
-                " — " +
-                if (meets) {
-                    "meets the requirements"
-                } else {
-                    "needs ${facts.requiredChipModel} and ${gib(facts.requiredMemoryBytes)} GiB memory"
-                }
+            VexLifeText(
+                key = "setup.label.found-mac",
+                args = current.chipModel?.let { mapOf("chip" to it) } ?: emptyMap(),
+                parts =
+                    buildMap {
+                        if (current.chipModel == null) put("chip", text("setup.label.unknown-chip"))
+                        put("memory", VexLifeProdEntryFamily.memoryText(current.totalMemoryBytes))
+                        put(
+                            "verdict",
+                            if (meets) {
+                                text("setup.status.mac-meets")
+                            } else {
+                                VexLifeText(
+                                    key = "setup.status.mac-needs",
+                                    args = mapOf("chip" to facts.requiredChipModel),
+                                    gib = mapOf("memory" to facts.requiredMemoryBytes),
+                                )
+                            },
+                        )
+                    },
+            )
 
         lines +=
-            "Free space on that drive: " +
-                (current.freeStorageBytes?.let { gib(it) + " GiB" } ?: "unknown")
+            VexLifeText(
+                key = "setup.label.found-free-space",
+                parts =
+                    mapOf(
+                        "amount" to
+                            (current.freeStorageBytes?.let {
+                                VexLifeText(
+                                    key = "setup.label.gib-amount",
+                                    gib = mapOf("amount" to it),
+                                )
+                            } ?: text("setup.status.unknown"))
+                    ),
+            )
 
         if (facts.location is VexLifeProdHomeFiles.Location.Existing) {
-            lines += "Local model: " + modelStatus(current)
+            lines +=
+                VexLifeText(
+                    key = "setup.label.found-model",
+                    parts = mapOf("status" to modelStatus(current)),
+                )
             serviceStatus(facts)?.let {
-                lines += "VexLife service: $it"
+                lines +=
+                    VexLifeText(key = "setup.label.found-service", parts = mapOf("status" to it))
             }
         }
 
-        return "What VexLife found\n" + lines.joinToString("\n") { "  $it" }
+        return lines
     }
 
-    private fun homeStatus(location: VexLifeProdHomeFiles.Location): String =
+    private fun homeStatus(location: VexLifeProdHomeFiles.Location): VexLifeText =
         when (location) {
-            is VexLifeProdHomeFiles.Location.Existing -> "your existing Vex Home"
+            is VexLifeProdHomeFiles.Location.Existing -> text("setup.status.home-existing")
 
-            is VexLifeProdHomeFiles.Location.Held -> "preserved (" + location.detail + ")"
+            // The observer's detail is technical evidence (English), quoted as it is.
+            is VexLifeProdHomeFiles.Location.Held ->
+                VexLifeText(
+                    key = "setup.status.home-preserved",
+                    args = mapOf("detail" to location.detail),
+                )
 
             is VexLifeProdHomeFiles.Location.Formable ->
                 when {
                     location.disposition == VexLifeProdHome.LocationDisposition.EmptyDirectory ->
-                        "an empty folder VexLife can set up as your Home"
+                        text("setup.status.home-empty-folder")
 
-                    location.missingAncestorCount > 0 ->
-                        "new; VexLife will also create " +
-                            location.missingAncestorCount +
-                            (if (location.missingAncestorCount == 1) " folder" else " folders") +
-                            " leading to it"
+                    location.missingAncestorCount == 1 ->
+                        VexLifeText(
+                            key = "setup.status.home-new-one-folder",
+                            args = mapOf("count" to "1"),
+                        )
 
-                    else -> "new; nothing is there yet"
+                    location.missingAncestorCount > 1 ->
+                        VexLifeText(
+                            key = "setup.status.home-new-folders",
+                            args = mapOf("count" to location.missingAncestorCount.toString()),
+                        )
+
+                    else -> text("setup.status.home-new")
                 }
         }
 
-    private fun modelStatus(current: VexLifeProdServiceContract.CurrentStateProjection): String =
+    private fun modelStatus(
+        current: VexLifeProdServiceContract.CurrentStateProjection
+    ): VexLifeText =
         when (current.modelArtifactState) {
-            "NOT_SELECTED" -> "not set up yet"
+            "NOT_SELECTED" -> text("setup.status.model-not-set-up")
 
-            "ABSENT" -> "not downloaded yet"
+            "ABSENT" -> text("setup.status.model-not-downloaded")
 
             "PARTIAL_BY_SIZE" ->
-                gib(current.modelArtifactPresentBySizeBytes ?: 0L) +
-                    " of " +
-                    gib(current.modelArtifactTotalBytes ?: 0L) +
-                    " GiB downloaded"
+                VexLifeText(
+                    key = "setup.status.model-partial",
+                    gib =
+                        mapOf(
+                            "present" to (current.modelArtifactPresentBySizeBytes ?: 0L),
+                            "total" to (current.modelArtifactTotalBytes ?: 0L),
+                        ),
+                )
 
             "COMPLETE_BY_SIZE_NOT_HASHED" ->
-                "on this Mac (" + gib(current.modelArtifactTotalBytes ?: 0L) + " GiB)"
+                VexLifeText(
+                    key = "setup.status.model-present",
+                    gib = mapOf("total" to (current.modelArtifactTotalBytes ?: 0L)),
+                )
 
             "INVALID_SIZE" ->
-                gib(current.modelArtifactInvalidSizeBytes ?: 0L) +
-                    " GiB of files do not match their expected size"
+                VexLifeText(
+                    key = "setup.status.model-size-mismatch",
+                    gib = mapOf("affected" to (current.modelArtifactInvalidSizeBytes ?: 0L)),
+                )
 
-            else -> "unknown"
+            else -> text("setup.status.unknown")
         }
 
-    private fun serviceStatus(facts: Facts): String? =
+    private fun serviceStatus(facts: Facts): VexLifeText? =
         when (facts.semanticStateRef) {
-            VexLifeProdEntryFamily.StateCurrent -> "running this version"
+            VexLifeProdEntryFamily.StateCurrent -> text("setup.status.service-current")
 
             VexLifeProdEntryFamily.StateUpdateAvailable ->
-                "running an earlier version (" + facts.currentServiceSourceSha?.take(7) + ")"
+                VexLifeText(
+                    key = "setup.status.service-earlier",
+                    args = mapOf("version" to (facts.currentServiceSourceSha?.take(7) ?: "?")),
+                )
 
             VexLifeProdEntryFamily.StateRepairRequired,
-            VexLifeProdEntryFamily.StateUpdateRepairRequired -> "registered but not responding"
+            VexLifeProdEntryFamily.StateUpdateRepairRequired ->
+                text("setup.status.service-not-responding")
 
-            VexLifeProdEntryFamily.StateStartRequired -> "not running"
+            VexLifeProdEntryFamily.StateStartRequired -> text("setup.status.service-not-running")
 
-            VexLifeProdEntryFamily.StateHeldUnknown -> "in use by something VexLife cannot verify"
+            VexLifeProdEntryFamily.StateHeldUnknown -> text("setup.status.service-unverified")
 
             else -> null
         }
 
-    private fun planSection(plan: VexLifeProdMacFrontDoor.SetupPlan): String {
-        val lines = mutableListOf<String>()
-        lines +=
-            if (plan.modelArtifactMissingBytes > 0) {
-                "• Download about ${gib(plan.modelArtifactMissingBytes)} GiB of verified model files " +
-                    "(${plan.modelLabel})"
-            } else {
-                "• Re-use the model files already in your Home (${plan.modelLabel})"
-            }
-        lines += "• Prepare a private Python + MLX runtime inside your Vex Home"
-        lines += "• Start the local model and VexLife on this Mac only (127.0.0.1)"
-        lines +=
-            "Needs about ${gib(plan.requiredFreeStorageBytes)} GiB free" +
-                (plan.currentFreeStorageBytes?.let { " · ${gib(it)} GiB available" }
-                    ?: " · free space unknown") +
-                ". Needs an internet connection; downloads resume if interrupted."
-        return "What setup will do\n" + lines.joinToString("\n") { "  $it" }
-    }
+    private fun planLines(plan: VexLifeProdMacFrontDoor.SetupPlan): List<Line> =
+        listOf(
+            Line(
+                if (plan.modelArtifactMissingBytes > 0) {
+                    VexLifeText(
+                        key = "setup.label.plan-download",
+                        args = mapOf("model" to plan.modelLabel),
+                        gib = mapOf("missing" to plan.modelArtifactMissingBytes),
+                    )
+                } else {
+                    VexLifeText(
+                        key = "setup.label.plan-reuse",
+                        args = mapOf("model" to plan.modelLabel),
+                    )
+                },
+                bullet = true,
+            ),
+            Line(text("setup.label.plan-runtime"), bullet = true),
+            Line(text("setup.label.plan-start"), bullet = true),
+            Line(
+                VexLifeText(
+                    key = "setup.label.plan-needs",
+                    gib = mapOf("required" to plan.requiredFreeStorageBytes),
+                    parts =
+                        mapOf(
+                            "available" to
+                                (plan.currentFreeStorageBytes?.let {
+                                    VexLifeText(
+                                        key = "setup.label.plan-available",
+                                        gib = mapOf("amount" to it),
+                                    )
+                                } ?: text("setup.label.plan-free-unknown"))
+                        ),
+                )
+            ),
+        )
 
     /**
      * Walk-through honesty: before the Home-only step, say what the *next* step will need, so a
      * person is not surprised by a 14 GiB download after committing a folder.
      */
-    private fun upNextSection(preview: HereticSetupStorage.Requirement): String =
-        "Up next (you'll confirm it separately)\n" +
-            "  Local model: about ${gib(preview.missingModelBytes)} GiB download, about " +
-            "${gib(preview.requiredFreeBytes)} GiB free space on this drive, and an internet connection."
+    private fun upNextLines(preview: HereticSetupStorage.Requirement): List<VexLifeText> =
+        listOf(
+            VexLifeText(
+                key = "setup.label.up-next-model",
+                gib =
+                    mapOf(
+                        "download" to preview.missingModelBytes,
+                        "free" to preview.requiredFreeBytes,
+                    ),
+            )
+        )
 
-    private fun noticeSection(facts: Facts): String? {
-        val notices = mutableListOf<String>()
+    private fun noticeSection(facts: Facts, language: String): String? {
+        val notices = mutableListOf<VexLifeText>()
 
         if (
             facts.protectedLocation != null &&
@@ -261,25 +386,31 @@ object VexLifeProdMacSetupCard {
                     )
         ) {
             notices +=
-                "Heads-up: this location is inside ${facts.protectedLocation}, which macOS protects. " +
-                    "macOS may ask you to allow access, and VexLife's background service can be blocked " +
-                    "from reading it later. A location such as ~/.vexlife avoids this."
+                VexLifeText(
+                    key = "setup.description.notice-protected-location",
+                    parts = mapOf("place" to facts.protectedLocation),
+                )
         }
 
         facts.formationPreview
             ?.takeIf { it.shortfallObserved }
             ?.let {
                 notices +=
-                    "Heads-up: the local model step will need about ${gib(it.requiredFreeBytes)} GiB free on " +
-                        "this drive, and it has ${gib(it.observedFreeBytes ?: 0L)} GiB. You can still create the " +
-                        "Home now and free up space before the next step."
+                    VexLifeText(
+                        key = "setup.description.notice-storage-shortfall",
+                        gib =
+                            mapOf(
+                                "required" to it.requiredFreeBytes,
+                                "free" to (it.observedFreeBytes ?: 0L),
+                            ),
+                    )
             }
 
         return notices
             .takeIf {
                 it.isNotEmpty()
             }
-            ?.joinToString("\n\n")
+            ?.joinToString("\n\n") { VexLifeStrings.resolve(it, language) }
     }
 
     /**
@@ -289,18 +420,22 @@ object VexLifeProdMacSetupCard {
      * Vex Home is read later by a launchd background service, so a protected coordinate is a real
      * capability risk that must be explained before Home formation, not discovered afterwards.
      */
-    fun protectedLocationName(userHome: Path, selectedHome: Path): String? {
+    fun protectedLocationName(userHome: Path, selectedHome: Path): VexLifeText? {
         val home = userHome.normalize()
         val selected = selectedHome.normalize()
-        return when {
-            selected.startsWith(home.resolve("Desktop")) -> "your Desktop folder"
-            selected.startsWith(home.resolve("Documents")) -> "your Documents folder"
-            selected.startsWith(home.resolve("Downloads")) -> "your Downloads folder"
-            selected.startsWith(home.resolve("Library/Mobile Documents")) -> "iCloud Drive"
-            selected.startsWith(home.resolve("Library/CloudStorage")) -> "a cloud-storage folder"
-            selected.startsWith(Path.of("/Volumes")) -> "an external or network drive"
-            else -> null
-        }
+        val key =
+            when {
+                selected.startsWith(home.resolve("Desktop")) -> "setup.label.place-desktop"
+                selected.startsWith(home.resolve("Documents")) -> "setup.label.place-documents"
+                selected.startsWith(home.resolve("Downloads")) -> "setup.label.place-downloads"
+                selected.startsWith(home.resolve("Library/Mobile Documents")) ->
+                    "setup.label.place-icloud"
+                selected.startsWith(home.resolve("Library/CloudStorage")) ->
+                    "setup.label.place-cloud-storage"
+                selected.startsWith(Path.of("/Volumes")) -> "setup.label.place-external-drive"
+                else -> null
+            }
+        return key?.let(::VexLifeText)
     }
 }
 

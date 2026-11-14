@@ -1,0 +1,2245 @@
+{
+  "schemaVersion": "vexlife-prod.strings-manifest/v1",
+  "keys": {
+    "setup.button.cancel": {
+      "enHash": "b1dc4db4bc02",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.button.cancel-safely": {
+      "enHash": "60ed95324677",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.button.change-language": {
+      "enHash": "bc20de9c76a4",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.button.check-again": {
+      "enHash": "d33bc082b9ee",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.button.choose-another-location": {
+      "enHash": "77dc27586c77",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.button.choose-folder": {
+      "enHash": "859609a70293",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.button.close": {
+      "enHash": "f861c80db0d3",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.button.continue": {
+      "enHash": "eaa891f77600",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.button.create-home": {
+      "enHash": "fb2dc813141f",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.button.done": {
+      "enHash": "2b4a262c691d",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.button.ok": {
+      "enHash": "69b62862e424",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.button.open-current": {
+      "enHash": "538a9e11e0e6",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.button.open-vexlife": {
+      "enHash": "4123443ab399",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.button.repair-restart": {
+      "enHash": "da2086d8d986",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.button.set-up": {
+      "enHash": "5c54a392cd4f",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.button.start-vexlife": {
+      "enHash": "726d67700159",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.button.update-restart": {
+      "enHash": "fb4f203dc319",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.button.use-this-folder": {
+      "enHash": "9eabbb5d2ae4",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.cancel-safely-hint": {
+      "enHash": "0dfb0e75b35b",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.check-changes-nothing": {
+      "enHash": "7c7f3e54eb44",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.choose-home": {
+      "enHash": "5a7d2837f00a",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.choose-language": {
+      "enHash": "0cf5671e3f22",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.current": {
+      "enHash": "d93a020bd227",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.failure-already-running": {
+      "enHash": "0b05c1b763e4",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.failure-home-preserved": {
+      "enHash": "cf19f48aeac1",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.failure-network": {
+      "enHash": "f7307089f625",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.failure-prerequisite-missing": {
+      "enHash": "c7edad2aafb1",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.failure-state-changed": {
+      "enHash": "ea65f7fe3f06",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.failure-stopped": {
+      "enHash": "bcf60808aec3",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.failure-storage-exhausted": {
+      "enHash": "605018d25ba8",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.full-location-needed": {
+      "enHash": "74de26496423",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.held-unknown": {
+      "enHash": "f8b74be7473d",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.home-formation-required": {
+      "enHash": "8c05f8c2c781",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.home-held": {
+      "enHash": "4785267ced4b",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.home-held-invalid-records": {
+      "enHash": "7814276884a0",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.home-held-link": {
+      "enHash": "843b03000328",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.home-held-not-folder": {
+      "enHash": "d84ad06ad360",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.home-held-not-writable": {
+      "enHash": "26841b8303c0",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.home-held-other-files": {
+      "enHash": "ba072a3644ed",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.home-held-unreadable": {
+      "enHash": "6f0be77e73f2",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.host-held": {
+      "enHash": "e6ca2e4adf73",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.host-home-untouched": {
+      "enHash": "a6c602798390",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.host-nothing-created": {
+      "enHash": "9ceeb99c6c74",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.host-observed": {
+      "enHash": "7fbcd630fff0",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.host-reason-architecture": {
+      "enHash": "96eba7decad1",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.host-reason-chip": {
+      "enHash": "2bf2622f9a46",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.host-reason-memory-low": {
+      "enHash": "0e7fa9b8cc8e",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.host-reason-memory-unknown": {
+      "enHash": "49c5eac93264",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.host-reason-platform": {
+      "enHash": "bac5f7f74465",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.host-requirement": {
+      "enHash": "2668f2cec5f0",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.inspection-failure": {
+      "enHash": "4129c6bbb9e3",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.launch-failed": {
+      "enHash": "c124d2a090fd",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.model-files-held": {
+      "enHash": "f33a71297deb",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.no-readable-explanation": {
+      "enHash": "11de79dde075",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.notice-protected-location": {
+      "enHash": "af60965ebcf6",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.notice-storage-shortfall": {
+      "enHash": "d0a5d12af002",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.pick-folder": {
+      "enHash": "b06571a6e6ef",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.ready": {
+      "enHash": "8c64cf6db3cc",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.repair-required": {
+      "enHash": "59768788213f",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.result-unclear": {
+      "enHash": "015228ec4a85",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.setup-paused": {
+      "enHash": "362217a6fc58",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.setup-required": {
+      "enHash": "c01213a5adda",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.start-required": {
+      "enHash": "1301d1088a63",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.start-required-newer-version": {
+      "enHash": "6f5ea112763f",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.storage-held": {
+      "enHash": "a1b997d94206",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.update-available": {
+      "enHash": "f5757e10119b",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.update-repair-required": {
+      "enHash": "44f9202c1590",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.choose-home": {
+      "enHash": "997d9875449f",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.choose-language": {
+      "enHash": "9d5e61d958a5",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.could-not-check-mac": {
+      "enHash": "338d4a43ddb8",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.could-not-read-result": {
+      "enHash": "ecad05aef887",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.current": {
+      "enHash": "d347a349814c",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.failure-already-running": {
+      "enHash": "7e06569a97f7",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.failure-file-access": {
+      "enHash": "8b53e9d29e97",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.failure-home-preserved": {
+      "enHash": "f4194dbf645d",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.failure-network": {
+      "enHash": "4018eba6f5a2",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.failure-prerequisite-missing": {
+      "enHash": "c33aa4274f76",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.failure-state-changed": {
+      "enHash": "f53ada3efe69",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.failure-stopped": {
+      "enHash": "912f31a2670c",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.failure-storage-exhausted": {
+      "enHash": "8ddb2d3d2042",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.found": {
+      "enHash": "28c009808ee7",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.full-location-needed": {
+      "enHash": "f26734c22069",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.held-unknown": {
+      "enHash": "ed7569f62c5f",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.home-formation-required": {
+      "enHash": "dfbba55091a2",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.home-held": {
+      "enHash": "30fcb3e6e319",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.host-held": {
+      "enHash": "a2866c6795f0",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.inspection-failure": {
+      "enHash": "4e4a6cca6d58",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.model-files-held": {
+      "enHash": "67ed0ecec500",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.plan": {
+      "enHash": "afaceba58909",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.ready": {
+      "enHash": "dcbc88017170",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.repair-required": {
+      "enHash": "0cb8f2efa2b3",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.setup-paused": {
+      "enHash": "df38d8d006b4",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.setup-required": {
+      "enHash": "4524926eb983",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.start-required": {
+      "enHash": "4f5b6604a2f7",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.storage-held": {
+      "enHash": "252edd6cab52",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.technical-detail": {
+      "enHash": "8964bf1611fd",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.unknown-instruction": {
+      "enHash": "c00d011e1e16",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.up-next": {
+      "enHash": "f157986db997",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.update-available": {
+      "enHash": "aae7352ba6fa",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.update-repair-required": {
+      "enHash": "93757499014b",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.found-free-space": {
+      "enHash": "44bb38c09ea0",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.found-home": {
+      "enHash": "598ad7600cc8",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.found-mac": {
+      "enHash": "a787635a323e",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.found-model": {
+      "enHash": "57a679f8ba43",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.found-service": {
+      "enHash": "426496ed4038",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.gib-amount": {
+      "enHash": "b99496b44b34",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.memory-amount": {
+      "enHash": "b2db80bcf414",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.place-cloud-storage": {
+      "enHash": "f1122a5788b3",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.place-desktop": {
+      "enHash": "6fd9cf1ee049",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.place-documents": {
+      "enHash": "132ad2515a05",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.place-downloads": {
+      "enHash": "b7b21ddcb36f",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.place-external-drive": {
+      "enHash": "f0ce376bcf03",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.place-icloud": {
+      "enHash": "b2737232919e",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.plan-available": {
+      "enHash": "79321e5640da",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.plan-download": {
+      "enHash": "dbf39b6d85fa",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.plan-free-unknown": {
+      "enHash": "f063a9465658",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.plan-needs": {
+      "enHash": "252cf6f65fc8",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.plan-reuse": {
+      "enHash": "a60a175005df",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.plan-runtime": {
+      "enHash": "f5e3d5e7515e",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.plan-start": {
+      "enHash": "1747133c7aba",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.step-home": {
+      "enHash": "4767af4ca503",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.step-mac": {
+      "enHash": "a75a25999d0c",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.step-model": {
+      "enHash": "d3c67c7fd977",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.step-ready": {
+      "enHash": "df614e5c830e",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.step-start": {
+      "enHash": "726d67700159",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.unknown-chip": {
+      "enHash": "5ce19b7d9524",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.unknown-memory": {
+      "enHash": "763925d14cf2",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.up-next-model": {
+      "enHash": "0f586a37ae5f",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.window-title": {
+      "enHash": "1b4d7f63091d",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.home-empty-folder": {
+      "enHash": "9bcff4f7fdc5",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.home-existing": {
+      "enHash": "883c8737d80a",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.home-new": {
+      "enHash": "31bff6ed424e",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.home-new-folders": {
+      "enHash": "1ff747ff6398",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.home-new-one-folder": {
+      "enHash": "e351e65acb8b",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.home-preserved": {
+      "enHash": "cc51d5c3a166",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.mac-meets": {
+      "enHash": "36d6934e1210",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.mac-needs": {
+      "enHash": "410bea8f098a",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.model-not-downloaded": {
+      "enHash": "abec8e489162",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.model-not-set-up": {
+      "enHash": "45fdcb7ea18e",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.model-partial": {
+      "enHash": "d191ff983095",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.model-present": {
+      "enHash": "e8ed18047920",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.model-size-mismatch": {
+      "enHash": "b929a65eed0f",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.progress-checking-home": {
+      "enHash": "75055853d790",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.progress-checking-model-files": {
+      "enHash": "28610b597894",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.progress-confirming-vexlife": {
+      "enHash": "f143701e540c",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.progress-downloading": {
+      "enHash": "ed76ee5d0da0",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.progress-forming-home": {
+      "enHash": "84a830d72bf8",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.progress-installing-product": {
+      "enHash": "442b22d3680c",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.progress-preparing-model-runtime": {
+      "enHash": "cdac0a42bb65",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.progress-preparing-python": {
+      "enHash": "9e30f020d7aa",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.progress-starting-local-model": {
+      "enHash": "195d312c218d",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.progress-starting-vexlife": {
+      "enHash": "6ea8f82c429f",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.progress-verifying-product": {
+      "enHash": "859bbdf5d8bf",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.service-current": {
+      "enHash": "8be5b50d23fd",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.service-earlier": {
+      "enHash": "7493ab9b2b3d",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.service-not-responding": {
+      "enHash": "468583fb0fa1",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.service-not-running": {
+      "enHash": "3a04601bc7c0",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.service-unverified": {
+      "enHash": "bc20b0e56859",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.unknown": {
+      "enHash": "40688c0e22bc",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.working": {
+      "enHash": "966d13edffe0",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    }
+  }
+}

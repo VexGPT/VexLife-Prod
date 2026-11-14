@@ -13,11 +13,14 @@ import vexlife.model.heretic.runtime.HereticArtifactMaterialization
 import vexlife.model.heretic.runtime.HereticMacHostProfile
 import vexlife.model.heretic.runtime.HereticPythonEnvironment
 import vexlife.model.heretic.runtime.HereticSetupStorage
+import vexlife.person.VexLifePersonSettings
 import vexlife.platform.macos.MacUserLaunchdProcess
 import vexlife.platform.python.ManagedPython
 import vexlife.service.VexLifeProdCurrentState
 import vexlife.service.VexLifeProdMacServiceLifetime
 import vexlife.service.VexLifeProdServiceContract
+import vexlife.text.VexLifeStrings
+import vexlife.text.VexLifeText
 
 /**
  * macOS observer/adapter for the portable Product-entry Family.
@@ -36,7 +39,7 @@ import vexlife.service.VexLifeProdServiceContract
  * UPDATE_REPAIR_REQUIRED
  */
 object VexLifeProdMacFrontDoor {
-    const val Schema = "vexlife-prod.macos-front-door/v3"
+    const val Schema = "vexlife-prod.macos-front-door/v4"
 
     private val GitSha = Regex("[0-9a-f]{40}")
 
@@ -88,6 +91,7 @@ object VexLifeProdMacFrontDoor {
     data class Projection(
         val schemaVersion: String,
         val observedAt: String,
+        val language: String,
         val desiredSourceSha: String,
         val semanticStateRef: String,
         val currentServiceSourceSha: String?,
@@ -102,6 +106,7 @@ object VexLifeProdMacFrontDoor {
         init {
             require(
                 schemaVersion == Schema &&
+                    card.language == language &&
                     GitSha.matches(desiredSourceSha) &&
                     semanticStateRef in VexLifeProdEntryFamily.StateRefs &&
                     !effectsPerformed &&
@@ -199,17 +204,23 @@ object VexLifeProdMacFrontDoor {
         val lawful: Boolean = true,
     )
 
-    fun observe(desiredSourceSha: String, productHome: Path): Projection =
+    fun observe(
+        desiredSourceSha: String,
+        productHome: Path,
+        language: String = VexLifePersonSettings.DefaultLanguage,
+    ): Projection =
         observeWithHooks(
             desiredSourceSha = desiredSourceSha,
             productHome = productHome,
             hooks = Hooks(),
+            language = language,
         )
 
     internal fun observeWithHooks(
         desiredSourceSha: String,
         productHome: Path,
         hooks: Hooks,
+        language: String = VexLifePersonSettings.DefaultLanguage,
     ): Projection {
         val observed =
             observeSemantic(
@@ -268,12 +279,14 @@ object VexLifeProdMacFrontDoor {
                             userHome = hooks.userHome(),
                             selectedHome = productHome.normalize(),
                         ),
-                )
+                ),
+                language,
             )
 
         return Projection(
             schemaVersion = Schema,
             observedAt = observed.currentState.observedAt,
+            language = language,
             desiredSourceSha = desiredSourceSha,
             semanticStateRef = observed.entryState.stateRef,
             currentServiceSourceSha = observed.currentServiceSourceSha,
@@ -550,7 +563,7 @@ object VexLifeProdMacFrontDoor {
 }
 
 object VexLifeProdMacFrontDoorProcess {
-    const val ActivationSchema = "vexlife-prod.macos-front-door-activation/v2"
+    const val ActivationSchema = "vexlife-prod.macos-front-door-activation/v3"
     const val ManifestationRefreshEntry = "REFRESH_ENTRY"
     const val ManifestationOpenProduct = "OPEN_PRODUCT"
     const val ManifestationNoAction = "NO_ACTION"
@@ -588,19 +601,26 @@ object VexLifeProdMacFrontDoorProcess {
     /** Completion copy shown once after an Effect reached a freshly observed CURRENT State. */
     @Serializable data class Notice(val title: String, val detail: String)
 
-    internal val ReadyNotice =
+    internal fun readyNotice(language: String) =
         Notice(
-            title = "VexLife is ready.",
+            title = VexLifeStrings.text("setup.heading.ready", language),
             detail =
-                "VexLife is running on this Mac and opened in your browser at " +
-                    VexLifeProdServiceContract.Origin +
-                    ". You can close this window. To start VexLife again later (for example after " +
-                    "restarting your Mac), run the same setup command: it checks first and offers only " +
-                    "what is needed.",
+                VexLifeStrings.resolve(
+                    VexLifeText.text(
+                        "setup.description.ready",
+                        "origin" to VexLifeProdServiceContract.Origin,
+                    ),
+                    language,
+                ),
         )
 
     internal data class ActivationHooks(
         val progress: VexLifeProdSetupProgress = VexLifeProdSetupProgress.standardError(),
+        /** Saves an explicitly chosen language into the Home once it is a canonical Vex Home. */
+        val persistLanguage: (productHome: Path, language: String) -> Boolean =
+            { productHome, language ->
+                VexLifeProdSetupLanguage.persist(productHome, language)
+            },
         val resolveControl:
             (
                 desiredSourceSha: String,
@@ -675,67 +695,144 @@ object VexLifeProdMacFrontDoorProcess {
         }
     }
 
-    internal fun inspectionFailure(productHome: Path, error: Throwable): InspectionFailure {
-        val failure = VexLifeProdSetupFailure.classify(error)
+    internal fun inspectionFailure(
+        productHome: Path,
+        error: Throwable,
+        language: String = VexLifePersonSettings.DefaultLanguage,
+    ): InspectionFailure {
+        val failure = VexLifeProdSetupFailure.classify(error, language)
+        fun button(key: String, actionRef: String) =
+            VexLifeProdMacSetupCard.Button(VexLifeStrings.text(key, language), actionRef, key)
+        val unobserved =
+            VexLifeProdEntryFamily.JourneyStepRefs.zip(
+                listOf(
+                    "setup.label.step-mac",
+                    "setup.label.step-home",
+                    "setup.label.step-model",
+                    "setup.label.step-start",
+                    "setup.label.step-ready",
+                )
+            ) { stepRef, key ->
+                VexLifeProdEntryFamily.JourneyStep(
+                    stepRef,
+                    VexLifeText(key),
+                    VexLifeProdEntryFamily.Upcoming,
+                )
+            }
         return InspectionFailure(
             schemaVersion = InspectionFailureSchema,
             failure = failure,
             card =
                 VexLifeProdMacSetupCard.Card(
-                    title = "VexLife couldn't check this Home.",
-                    rail = "○ This Mac   ○ Vex Home   ○ Local model   ○ Start VexLife   ○ Ready",
+                    language = language,
+                    titleKey = "setup.heading.inspection-failure",
+                    title = VexLifeStrings.text("setup.heading.inspection-failure", language),
+                    rail = VexLifeProdMacSetupCard.rail(unobserved, language),
                     body =
-                        "VexLife tried to look at " +
-                            productHome +
-                            " and this Mac before offering anything, and the check itself did not finish. " +
-                            "Nothing was changed.\n\nTechnical detail\n  " +
+                        VexLifeStrings.resolve(
+                            VexLifeText.text(
+                                "setup.description.inspection-failure",
+                                "path" to productHome.toString(),
+                            ),
+                            language,
+                        ) +
+                            "\n\n" +
+                            VexLifeStrings.text("setup.heading.technical-detail", language) +
+                            "\n  " +
                             (failure.technicalDetail ?: failure.detail),
                     buttons =
                         listOf(
-                            VexLifeProdMacSetupCard.Button(
-                                "Check Again",
+                            button(
+                                "setup.button.check-again",
                                 VexLifeProdMacSetupCard.ActionRecheck,
                             ),
-                            VexLifeProdMacSetupCard.Button(
-                                "Choose Another Location…",
+                            button(
+                                "setup.button.choose-another-location",
                                 VexLifeProdMacSetupCard.ActionChooseHome,
                             ),
-                            VexLifeProdMacSetupCard.Button(
-                                "Close",
-                                VexLifeProdMacSetupCard.ActionClose,
+                            button(
+                                "setup.button.change-language",
+                                VexLifeProdMacSetupCard.ActionChooseLanguage,
                             ),
+                            button("setup.button.close", VexLifeProdMacSetupCard.ActionClose),
                         ),
                 ),
             effectsPerformed = false,
         )
     }
 
-    fun inspect(desiredSourceSha: String, productHome: Path) {
+    fun inspect(
+        desiredSourceSha: String,
+        productHome: Path,
+        language: String?,
+        systemLanguage: String?,
+    ) {
+        val selected = runCatching {
+            VexLifeProdSetupLanguage.resolve(productHome, language, systemLanguage)
+        }.getOrDefault(VexLifePersonSettings.DefaultLanguage)
         val encoded =
             try {
                 VexContractJson.encode(
                     VexLifeProdMacFrontDoor.observe(
                         desiredSourceSha = desiredSourceSha,
                         productHome = productHome,
+                        language = selected,
                     )
                 )
             } catch (error: Exception) {
-                VexContractJson.encode(inspectionFailure(productHome = productHome, error = error))
+                VexContractJson.encode(
+                    inspectionFailure(productHome = productHome, error = error, language = selected)
+                )
             }
         utf8StandardOutput.println(encoded)
         utf8StandardOutput.flush()
     }
 
-    fun activate(controlRef: String, desiredSourceSha: String, productHome: Path) {
+    /**
+     * [language] is the language chosen in the setup window, when one was; it is used for every
+     * word of the activation and saved into the Home once the Home exists.
+     */
+    fun activate(
+        controlRef: String,
+        desiredSourceSha: String,
+        productHome: Path,
+        language: String?,
+    ) {
+        val selected = runCatching {
+            VexLifeProdSetupLanguage.resolve(productHome, language, null)
+        }.getOrDefault(VexLifePersonSettings.DefaultLanguage)
         utf8StandardOutput.println(
             VexContractJson.encode(
                 activateWithHooks(
                     controlRef = controlRef,
                     desiredSourceSha = desiredSourceSha,
                     productHome = productHome,
-                    hooks = ActivationHooks(),
+                    hooks =
+                        ActivationHooks(
+                            progress = VexLifeProdSetupProgress.standardError(selected)
+                        ),
+                    language = selected,
+                    persistLanguage = language != null,
                 )
             )
+        )
+        utf8StandardOutput.flush()
+    }
+
+    /** No-effect: the language setup shows in, the offered languages and the window's words. */
+    fun observeLanguage(productHome: Path, language: String?, systemLanguage: String?) {
+        utf8StandardOutput.println(
+            VexContractJson.encode(
+                VexLifeProdSetupLanguage.observe(productHome, language, systemLanguage)
+            )
+        )
+        utf8StandardOutput.flush()
+    }
+
+    /** The person chose a language in the setup window. */
+    fun chooseLanguage(productHome: Path, language: String) {
+        utf8StandardOutput.println(
+            VexContractJson.encode(VexLifeProdSetupLanguage.choose(productHome, language))
         )
         utf8StandardOutput.flush()
     }
@@ -764,11 +861,29 @@ object VexLifeProdMacFrontDoorProcess {
         desiredSourceSha: String,
         productHome: Path,
         hooks: ActivationHooks,
+        language: String = VexLifePersonSettings.DefaultLanguage,
+        persistLanguage: Boolean = false,
     ): ActivationProjection {
         require(productHome.isAbsolute) {
             "selected Vex Home path must be absolute"
         }
         val selectedHome = productHome.normalize()
+        val projection = activateOnce(controlRef, desiredSourceSha, selectedHome, hooks, language)
+        // Whatever the Control did, a language the person chose is theirs once a Home exists to
+        // hold it. Saving it never changes the activation's outcome.
+        if (persistLanguage) {
+            runCatching { hooks.persistLanguage(selectedHome, language) }
+        }
+        return projection
+    }
+
+    private fun activateOnce(
+        controlRef: String,
+        desiredSourceSha: String,
+        selectedHome: Path,
+        hooks: ActivationHooks,
+        language: String,
+    ): ActivationProjection {
 
         fun reobserve(): String = runCatching {
             hooks.observeSemanticStateRef(desiredSourceSha, selectedHome)
@@ -788,7 +903,7 @@ object VexLifeProdMacFrontDoorProcess {
             try {
                 hooks.resolveControl(desiredSourceSha, controlRef, selectedHome)
             } catch (error: Exception) {
-                return failed(controlRef, VexLifeProdSetupFailure.classify(error))
+                return failed(controlRef, VexLifeProdSetupFailure.classify(error, language))
             }
 
         if (!resolved.lawful) {
@@ -797,7 +912,7 @@ object VexLifeProdMacFrontDoorProcess {
                 controlRef = resolved.controlRef,
                 semanticStateRef = resolved.semanticStateRef,
                 manifestationRef = ManifestationRefreshEntry,
-                failure = VexLifeProdSetupFailure.stateChanged(),
+                failure = VexLifeProdSetupFailure.stateChanged(language),
             )
         }
 
@@ -823,7 +938,10 @@ object VexLifeProdMacFrontDoorProcess {
                 try {
                     hooks.formHome(desiredSourceSha, selectedHome)
                 } catch (error: Exception) {
-                    return failed(resolved.controlRef, VexLifeProdSetupFailure.classify(error))
+                    return failed(
+                        resolved.controlRef,
+                        VexLifeProdSetupFailure.classify(error, language),
+                    )
                 }
                 ActivationProjection(
                     schemaVersion = ActivationSchema,
@@ -845,7 +963,10 @@ object VexLifeProdMacFrontDoorProcess {
                         selectedHome,
                     )
                 } catch (error: Exception) {
-                    return failed(resolved.controlRef, VexLifeProdSetupFailure.classify(error))
+                    return failed(
+                        resolved.controlRef,
+                        VexLifeProdSetupFailure.classify(error, language),
+                    )
                 }
                 hooks.progress.phase(VexLifeProdSetupProgress.Phase.ConfirmingVexLife)
                 val reobserved = reobserve()
@@ -856,7 +977,7 @@ object VexLifeProdMacFrontDoorProcess {
                         semanticStateRef = reobserved,
                         manifestationRef = ManifestationOpenProduct,
                         productOrigin = VexLifeProdServiceContract.Origin,
-                        notice = ReadyNotice,
+                        notice = readyNotice(language),
                     )
                 } else {
                     ActivationProjection(

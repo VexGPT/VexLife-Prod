@@ -3,6 +3,7 @@ package vexlife.entry
 import kotlinx.serialization.Serializable
 import vexlife.home.VexLifeProdHome
 import vexlife.semantic.VexFamilyContract
+import vexlife.text.VexLifeText
 
 /**
  * Portable Product-entry semantics.
@@ -18,6 +19,9 @@ import vexlife.semantic.VexFamilyContract
  * Effect. They exist so the human surface can explain *why* nothing is offered instead of offering
  * a Control whose realization would fail mid-effect (predecessor HOST_ELIGIBILITY_HELD /
  * HELD_NONCANONICAL_HOME parity).
+ *
+ * [EntryDisplayState] names text by key ([VexLifeText]); the presentation resolves it in the
+ * person's selected language.
  *
  * [EntryDisplayState.journey] is the Setup Journey rail: a projection of this State, never a second
  * step ledger. A rail position is re-derived from fresh observation every time.
@@ -209,17 +213,19 @@ class VexLifeProdEntryFamily private constructor() :
     }
 
     @Serializable
-    data class JourneyStep(val stepRef: String, val label: String, val statusRef: String) {
+    data class JourneyStep(val stepRef: String, val label: VexLifeText, val statusRef: String) {
         init {
-            require(
-                stepRef in JourneyStepRefs && label.isNotBlank() && statusRef in JourneyStatusRefs
-            ) {
+            require(stepRef in JourneyStepRefs && statusRef in JourneyStatusRefs) {
                 "Setup Journey step is invalid"
             }
         }
     }
 
     /**
+     * Every human-readable field is a [VexLifeText] key, resolved by the concrete presentation in
+     * the person's selected language (VexArchitecture localization law); this Family names meaning,
+     * never words.
+     *
      * [homeChoiceLabel] offers renderer-local navigation back to the Home chooser. Choosing a
      * different coordinate is not a semantic Effect; it changes what will be observed next.
      * [recheckLabel] offers renderer-local re-observation for held States whose cause the person
@@ -227,16 +233,16 @@ class VexLifeProdEntryFamily private constructor() :
      */
     @Serializable
     data class EntryDisplayState(
-        val title: String,
-        val detail: String,
+        val title: VexLifeText,
+        val detail: VexLifeText,
         val primaryControlRef: String?,
-        val primaryLabel: String?,
+        val primaryLabel: VexLifeText?,
         val secondaryControlRef: String?,
-        val secondaryLabel: String?,
-        val cancelLabel: String,
+        val secondaryLabel: VexLifeText?,
+        val cancelLabel: VexLifeText,
         val journey: List<JourneyStep>,
-        val homeChoiceLabel: String?,
-        val recheckLabel: String?,
+        val homeChoiceLabel: VexLifeText?,
+        val recheckLabel: VexLifeText?,
     ) :
         VexFamilyContract.DisplayState<
             VexLifeProdEntryFamily,
@@ -244,19 +250,14 @@ class VexLifeProdEntryFamily private constructor() :
         > {
         init {
             require(
-                title.isNotBlank() &&
-                    detail.isNotBlank() &&
-                    cancelLabel.isNotBlank() &&
-                    ((primaryControlRef == null) == (primaryLabel == null)) &&
+                ((primaryControlRef == null) == (primaryLabel == null)) &&
                     ((secondaryControlRef == null) == (secondaryLabel == null)) &&
                     journey.map {
                         it.stepRef
                     } == JourneyStepRefs &&
                     journey.count {
                         it.statusRef == JourneyCurrent || it.statusRef == JourneyHeld
-                    } <= 1 &&
-                    homeChoiceLabel?.isNotBlank() != false &&
-                    recheckLabel?.isNotBlank() != false
+                    } <= 1
             ) {
                 "Product-entry DisplayState is invalid"
             }
@@ -361,97 +362,80 @@ class VexLifeProdEntryFamily private constructor() :
         when (state) {
             is Current ->
                 display(
-                    title = "VexLife is running.",
-                    detail =
-                        "Everything is current. Opening VexLife does not restart or replace anything.",
-                    primary = ControlOpenCurrent to "Open VexLife",
+                    title = text("setup.heading.current"),
+                    detail = text("setup.description.current"),
+                    primary = ControlOpenCurrent to text("setup.button.open-vexlife"),
                     journey = journey(Complete, Complete, Complete, Complete, JourneyCurrent),
                 )
 
             is UpdateAvailable ->
                 display(
-                    title = "A newer version of VexLife is ready.",
-                    detail =
-                        "Your Home, conversations and memory stay as they are. Update & Restart stops only " +
-                            "the exact VexLife service this Home owns and starts the newer one. Nothing will be downloaded.",
-                    primary = ControlConvergeDesired to "Update & Restart",
-                    secondary = ControlOpenCurrent to "Open Current",
+                    title = text("setup.heading.update-available"),
+                    detail = text("setup.description.update-available"),
+                    primary = ControlConvergeDesired to text("setup.button.update-restart"),
+                    secondary = ControlOpenCurrent to text("setup.button.open-current"),
                     journey = journey(Complete, Complete, Complete, JourneyCurrent, Upcoming),
                 )
 
             is RepairRequired ->
                 display(
-                    title = "VexLife isn't responding.",
-                    detail =
-                        "VexLife's background service is registered but not answering. Repair & Restart " +
-                            "re-checks the local model files, then starts the local model and VexLife again. " +
-                            "Your Home, conversations and memory stay as they are. Nothing will be downloaded.",
-                    primary = ControlConvergeDesired to "Repair & Restart",
+                    title = text("setup.heading.repair-required"),
+                    detail = text("setup.description.repair-required"),
+                    primary = ControlConvergeDesired to text("setup.button.repair-restart"),
                     journey = journey(Complete, Complete, Complete, JourneyCurrent, Upcoming),
                 )
 
             is UpdateRepairRequired ->
                 display(
-                    title = "VexLife can update and restart.",
-                    detail =
-                        "An earlier VexLife service from this Home isn't answering. Update & Restart re-checks " +
-                            "the local model files and starts this newer version. Nothing will be downloaded.",
-                    primary = ControlConvergeDesired to "Update & Restart",
+                    title = text("setup.heading.update-repair-required"),
+                    detail = text("setup.description.update-repair-required"),
+                    primary = ControlConvergeDesired to text("setup.button.update-restart"),
                     journey = journey(Complete, Complete, Complete, JourneyCurrent, Upcoming),
                 )
 
             is StartRequired ->
                 display(
-                    title = "Start VexLife.",
+                    title = text("setup.heading.start-required"),
                     detail =
-                        "Your Vex Home and local model are already on this Mac. Starting checks those files, " +
-                            "then starts the local model and VexLife. Nothing will be downloaded." +
-                            if (
-                                state.priorServiceSourceSha != null &&
-                                    state.priorServiceSourceSha != state.desiredSourceSha
-                            ) {
-                                " This also moves VexLife to the newer version you just opened."
-                            } else {
-                                ""
-                            },
-                    primary = ControlStart to "Start VexLife",
+                        if (
+                            state.priorServiceSourceSha != null &&
+                                state.priorServiceSourceSha != state.desiredSourceSha
+                        ) {
+                            text("setup.description.start-required-newer-version")
+                        } else {
+                            text("setup.description.start-required")
+                        },
+                    primary = ControlStart to text("setup.button.start-vexlife"),
                     journey = journey(Complete, Complete, Complete, JourneyCurrent, Upcoming),
                 )
 
             is HomeFormationRequired ->
                 display(
-                    title = "Create your Vex Home.",
-                    detail =
-                        "VexLife keeps your identity, conversations and memory together in one folder on " +
-                            "this Mac: your Vex Home. Creating it does not download or start anything; you'll " +
-                            "review the local model as a separate step.",
-                    primary = ControlFormHome to "Create Vex Home",
+                    title = text("setup.heading.home-formation-required"),
+                    detail = text("setup.description.home-formation-required"),
+                    primary = ControlFormHome to text("setup.button.create-home"),
                     journey = journey(Complete, JourneyCurrent, Upcoming, Upcoming, Upcoming),
                     homeChoice = true,
                 )
 
             is HomeHeld ->
                 display(
-                    title = "This folder is being preserved.",
+                    title = text("setup.heading.home-held"),
                     detail =
-                        homeHeldExplanation(state.disposition) +
-                            " Nothing in it was changed, moved or deleted.",
+                        VexLifeText(
+                            key = "setup.description.home-held",
+                            parts = mapOf("reason" to homeHeldExplanation(state.disposition)),
+                        ),
                     journey = journey(Complete, JourneyHeld, Upcoming, Upcoming, Upcoming),
                     homeChoice = true,
                     recheck = true,
-                    cancelLabel = "Close",
+                    cancelLabel = text("setup.button.close"),
                 )
 
             is HostHeld ->
                 display(
-                    title = "This Mac can't run VexLife's local model yet.",
-                    detail =
-                        hostHeldExplanation(state) +
-                            if (state.homePresent) {
-                                " Your existing Vex Home was left untouched."
-                            } else {
-                                " Nothing was created or downloaded."
-                            },
+                    title = text("setup.heading.host-held"),
+                    detail = hostHeldExplanation(state),
                     journey =
                         journey(
                             JourneyHeld,
@@ -460,71 +444,70 @@ class VexLifeProdEntryFamily private constructor() :
                             Upcoming,
                             Upcoming,
                         ),
-                    cancelLabel = "Close",
+                    cancelLabel = text("setup.button.close"),
                 )
 
             is SetupRequired ->
                 display(
-                    title = "Set up the local model.",
-                    detail =
-                        "Your Vex Home is ready. Next, VexLife downloads its verified local model and runtime " +
-                            "into your Home and starts VexLife. Review the size and requirements before you continue. " +
-                            "If the download is interrupted, finished parts are kept and it resumes next time.",
-                    primary = ControlSetUp to "Set Up VexLife",
+                    title = text("setup.heading.setup-required"),
+                    detail = text("setup.description.setup-required"),
+                    primary = ControlSetUp to text("setup.button.set-up"),
                     journey = journey(Complete, Complete, JourneyCurrent, Upcoming, Upcoming),
                 )
 
             is StorageHeld ->
                 display(
-                    title = "Not enough free space for the local model.",
+                    title = text("setup.heading.storage-held"),
                     detail =
-                        "VexLife needs about ${gib(state.requiredFreeBytes)} GiB free on the drive that holds " +
-                            "your Vex Home before it can download the local model. That drive has " +
-                            "${gib(state.freeBytes)} GiB free. Free up space and choose Check Again, or choose a " +
-                            "location on another drive. Nothing was downloaded.",
+                        VexLifeText(
+                            key = "setup.description.storage-held",
+                            gib =
+                                mapOf(
+                                    "required" to state.requiredFreeBytes,
+                                    "free" to state.freeBytes,
+                                ),
+                        ),
                     journey = journey(Complete, Complete, JourneyHeld, Upcoming, Upcoming),
                     homeChoice = true,
                     recheck = true,
-                    cancelLabel = "Close",
+                    cancelLabel = text("setup.button.close"),
                 )
 
             is ModelFilesHeld ->
                 display(
-                    title = "A local model file needs attention.",
+                    title = text("setup.heading.model-files-held"),
                     detail =
-                        "Some model files in your Vex Home are not the size VexLife expects " +
-                            "(${gib(state.invalidBytes)} GiB affected). VexLife keeps them and will not delete or " +
-                            "replace them on its own. If you moved or edited files inside your Vex Home, put them " +
-                            "back and choose Check Again. Guided model-file repair is not part of this setup yet.",
+                        VexLifeText(
+                            key = "setup.description.model-files-held",
+                            gib = mapOf("affected" to state.invalidBytes),
+                        ),
                     journey = journey(Complete, Complete, JourneyHeld, Upcoming, Upcoming),
                     recheck = true,
-                    cancelLabel = "Close",
+                    cancelLabel = text("setup.button.close"),
                 )
 
             is HeldUnknown ->
                 display(
-                    title = "VexLife will not replace the current process.",
-                    detail =
-                        "Something is already using VexLife's background service on this Mac, and VexLife " +
-                            "cannot prove it belongs to the Home you chose. To keep your data safe it will not stop " +
-                            "or replace it. If you already have a Vex Home somewhere else, choose that location. " +
-                            "Otherwise quit the other VexLife and choose Check Again.",
+                    title = text("setup.heading.held-unknown"),
+                    detail = text("setup.description.held-unknown"),
                     journey = journey(Complete, Complete, Upcoming, JourneyHeld, Upcoming),
                     homeChoice = true,
                     recheck = true,
-                    cancelLabel = "Close",
+                    cancelLabel = text("setup.button.close"),
                 )
         }
 
+    private fun text(key: String): VexLifeText = VexLifeText(key)
+
     private fun display(
-        title: String,
-        detail: String,
+        title: VexLifeText,
+        detail: VexLifeText,
         journey: List<JourneyStep>,
-        primary: Pair<String, String>? = null,
-        secondary: Pair<String, String>? = null,
+        primary: Pair<String, VexLifeText>? = null,
+        secondary: Pair<String, VexLifeText>? = null,
         homeChoice: Boolean = false,
         recheck: Boolean = false,
-        cancelLabel: String = "Cancel",
+        cancelLabel: VexLifeText = text("setup.button.cancel"),
     ): EntryDisplayState =
         EntryDisplayState(
             title = title,
@@ -535,8 +518,9 @@ class VexLifeProdEntryFamily private constructor() :
             secondaryLabel = secondary?.second,
             cancelLabel = cancelLabel,
             journey = journey,
-            homeChoiceLabel = if (homeChoice) "Choose Another Location…" else null,
-            recheckLabel = if (recheck) "Check Again" else null,
+            homeChoiceLabel =
+                if (homeChoice) text("setup.button.choose-another-location") else null,
+            recheckLabel = if (recheck) text("setup.button.check-again") else null,
         )
 
     private fun journey(
@@ -547,37 +531,32 @@ class VexLifeProdEntryFamily private constructor() :
         ready: String,
     ): List<JourneyStep> =
         listOf(
-            JourneyStep(JourneyStepMac, "This Mac", mac),
-            JourneyStep(JourneyStepHome, "Vex Home", home),
-            JourneyStep(JourneyStepModel, "Local model", model),
-            JourneyStep(JourneyStepStart, "Start VexLife", start),
-            JourneyStep(JourneyStepReady, "Ready", ready),
+            JourneyStep(JourneyStepMac, text("setup.label.step-mac"), mac),
+            JourneyStep(JourneyStepHome, text("setup.label.step-home"), home),
+            JourneyStep(JourneyStepModel, text("setup.label.step-model"), model),
+            JourneyStep(JourneyStepStart, text("setup.label.step-start"), start),
+            JourneyStep(JourneyStepReady, text("setup.label.step-ready"), ready),
         )
 
-    private fun homeHeldExplanation(disposition: VexLifeProdHome.LocationDisposition): String =
+    private fun homeHeldExplanation(disposition: VexLifeProdHome.LocationDisposition): VexLifeText =
         when (disposition) {
             VexLifeProdHome.LocationDisposition.HeldNoncanonicalContent ->
-                "The folder you chose already contains other files, so VexLife will not use it as a Vex Home. " +
-                    "Choose an empty folder, or type a new folder name."
+                text("setup.description.home-held-other-files")
 
             VexLifeProdHome.LocationDisposition.HeldInvalidCanonicalRecords ->
-                "This folder looks like a Vex Home, but its identity records did not check out. VexLife will not " +
-                    "repair or overwrite it automatically. Keep it safe for recovery, or choose another location."
+                text("setup.description.home-held-invalid-records")
 
             VexLifeProdHome.LocationDisposition.HeldNotDirectory ->
-                "The location you chose is a file (or a file is in the way), not a folder. Choose a folder location."
+                text("setup.description.home-held-not-folder")
 
             VexLifeProdHome.LocationDisposition.HeldSymbolicLink ->
-                "The location you chose is a link to somewhere else. Choose the real folder so your Home has one " +
-                    "exact location."
+                text("setup.description.home-held-link")
 
             VexLifeProdHome.LocationDisposition.HeldLocationNotWritable ->
-                "This Mac user cannot create folders there. Choose a location inside your own user folder, such " +
-                    "as the suggested ~/.vexlife."
+                text("setup.description.home-held-not-writable")
 
             VexLifeProdHome.LocationDisposition.HeldLocationUnreadable ->
-                "VexLife could not read that location. If macOS asked for permission, you can allow it and choose " +
-                    "Check Again, or choose another location."
+                text("setup.description.home-held-unreadable")
 
             VexLifeProdHome.LocationDisposition.Absent,
             VexLifeProdHome.LocationDisposition.EmptyDirectory,
@@ -585,31 +564,51 @@ class VexLifeProdEntryFamily private constructor() :
                 error("HomeHeld admits only held dispositions")
         }
 
-    private fun hostHeldExplanation(state: HostHeld): String {
-        val requirement =
-            "VexLife's local model currently runs on Macs with an ${state.requiredChipModel} chip and at least " +
-                "${gib(state.requiredMemoryBytes)} GiB of memory."
-        val observed =
-            "This Mac: " +
-                (state.chipModel ?: "unknown chip") +
-                ", " +
-                (state.totalMemoryBytes?.let { gib(it) + " GiB memory" } ?: "unknown memory") +
-                "."
-        val reason =
-            when (state.reasonRef) {
-                "PLATFORM_UNSUPPORTED" -> "VexLife setup currently runs on macOS only."
-
-                "ARCHITECTURE_UNSUPPORTED" -> "This Mac does not use Apple silicon."
-
-                "SYSTEM_MEMORY_UNKNOWN" -> "VexLife could not read how much memory this Mac has."
-
-                "INSUFFICIENT_SYSTEM_MEMORY" ->
-                    "This Mac has less memory than the local model needs."
-
-                else -> "This Mac's chip is not yet certified for the local model."
-            }
-        return "$reason $requirement $observed"
-    }
+    private fun hostHeldExplanation(state: HostHeld): VexLifeText =
+        VexLifeText(
+            key = "setup.description.host-held",
+            parts =
+                mapOf(
+                    "reason" to
+                        text(
+                            when (state.reasonRef) {
+                                "PLATFORM_UNSUPPORTED" -> "setup.description.host-reason-platform"
+                                "ARCHITECTURE_UNSUPPORTED" ->
+                                    "setup.description.host-reason-architecture"
+                                "SYSTEM_MEMORY_UNKNOWN" ->
+                                    "setup.description.host-reason-memory-unknown"
+                                "INSUFFICIENT_SYSTEM_MEMORY" ->
+                                    "setup.description.host-reason-memory-low"
+                                else -> "setup.description.host-reason-chip"
+                            }
+                        ),
+                    "requirement" to
+                        VexLifeText(
+                            key = "setup.description.host-requirement",
+                            args = mapOf("chip" to state.requiredChipModel),
+                            gib = mapOf("memory" to state.requiredMemoryBytes),
+                        ),
+                    "observed" to
+                        VexLifeText(
+                            key = "setup.description.host-observed",
+                            args = state.chipModel?.let { mapOf("chip" to it) } ?: emptyMap(),
+                            parts =
+                                buildMap {
+                                    if (state.chipModel == null)
+                                        put("chip", text("setup.label.unknown-chip"))
+                                    put("memory", memoryText(state.totalMemoryBytes))
+                                },
+                        ),
+                    "outcome" to
+                        text(
+                            if (state.homePresent) {
+                                "setup.description.host-home-untouched"
+                            } else {
+                                "setup.description.host-nothing-created"
+                            }
+                        ),
+                ),
+        )
 
     companion object {
         const val StateCurrent = "CURRENT"
@@ -693,12 +692,11 @@ class VexLifeProdEntryFamily private constructor() :
                 else -> null
             }
 
-        /** Binary GiB with one decimal, for human copy. */
-        fun gib(bytes: Long): String {
-            val gibibyte = 1024L * 1024L * 1024L
-            val tenths = (bytes.coerceAtLeast(0L) * 10L + gibibyte / 2L) / gibibyte
-            return "${tenths / 10L}.${tenths % 10L}"
-        }
+        /** "{memory} GiB memory", or "unknown memory" when it could not be read. */
+        fun memoryText(totalMemoryBytes: Long?): VexLifeText =
+            totalMemoryBytes?.let {
+                VexLifeText(key = "setup.label.memory-amount", gib = mapOf("memory" to it))
+            } ?: VexLifeText("setup.label.unknown-memory")
     }
 }
 

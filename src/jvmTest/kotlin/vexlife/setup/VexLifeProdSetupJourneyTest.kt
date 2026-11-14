@@ -22,6 +22,8 @@ import vexlife.platform.macos.MacUserLaunchdProcess
 import vexlife.service.VexLifeProdCurrentState
 import vexlife.service.VexLifeProdMacServiceLifetime
 import vexlife.service.VexLifeProdServiceContract
+import vexlife.text.VexLifeStrings
+import vexlife.text.VexLifeText
 
 /**
  * Setup Journey edge cases: does the person already have VexLife, may they choose the Home
@@ -215,6 +217,8 @@ class VexLifeProdSetupJourneyTest {
             hooks = hooks,
         )
 
+    private fun en(text: VexLifeText): String = VexLifeStrings.resolve(text, "en")
+
     private fun assertCardMirrorsFamily(projection: VexLifeProdMacFrontDoor.Projection) {
         val display = projection.displayState
         val cardControls =
@@ -227,8 +231,16 @@ class VexLifeProdSetupJourneyTest {
             cardControls,
             "native card must carry exactly the Family's displayed Controls",
         )
-        assertEquals(display.title, projection.card.title)
-        assertTrue(projection.card.body.startsWith(display.detail))
+        assertEquals(en(display.title), projection.card.title)
+        assertEquals(display.title.key, projection.card.titleKey)
+        assertTrue(projection.card.body.startsWith(en(display.detail)))
+        for (button in projection.card.buttons) {
+            assertEquals(
+                VexLifeProdSetupElements.dataKeyForAction(button.actionRef),
+                VexLifeStrings.catalog.dataKey(button.key),
+                "a button's element key maps to the action it returns: ${button.key}",
+            )
+        }
         assertEquals(VexLifeProdMacSetupCard.ActionClose, projection.card.buttons.last().actionRef)
     }
 
@@ -273,6 +285,7 @@ class VexLifeProdSetupJourneyTest {
                 listOf(
                     VexLifeProdMacSetupCard.ActionChooseHome,
                     VexLifeProdMacSetupCard.ActionRecheck,
+                    VexLifeProdMacSetupCard.ActionChooseLanguage,
                     VexLifeProdMacSetupCard.ActionClose,
                 ),
                 projection.card.buttons.map { it.actionRef },
@@ -293,7 +306,7 @@ class VexLifeProdSetupJourneyTest {
         try {
             val projection = observe(file, realLocationHooks())
             assertEquals(VexLifeProdEntryFamily.StateHomeHeld, projection.semanticStateRef)
-            assertTrue(projection.displayState.detail.contains("is a file"))
+            assertTrue(en(projection.displayState.detail).contains("is a file"))
         } finally {
             parent.toFile().deleteRecursively()
         }
@@ -352,11 +365,12 @@ class VexLifeProdSetupJourneyTest {
             )
             assertTrue(projection.card.body.contains("your Documents folder, which macOS protects"))
             assertEquals(
-                "an external or network drive",
+                "setup.label.place-external-drive",
                 VexLifeProdMacSetupCard.protectedLocationName(
-                    Path.of("/Users/vex"),
-                    Path.of("/Volumes/T7/Vex"),
-                ),
+                        Path.of("/Users/vex"),
+                        Path.of("/Volumes/T7/Vex"),
+                    )
+                    ?.key,
             )
             assertNull(
                 VexLifeProdMacSetupCard.protectedLocationName(
@@ -419,7 +433,9 @@ class VexLifeProdSetupJourneyTest {
                 ),
             )
         assertEquals(VexLifeProdEntryFamily.StateHostHeld, projection.semanticStateRef)
-        assertTrue(projection.displayState.detail.contains("existing Vex Home was left untouched"))
+        assertTrue(
+            en(projection.displayState.detail).contains("existing Vex Home was left untouched")
+        )
     }
 
     @Test
@@ -554,7 +570,7 @@ class VexLifeProdSetupJourneyTest {
         val resolved = resolve(existingHome, VexLifeProdEntryFamily.ControlStart, hooks)
 
         assertEquals(VexLifeProdEntryFamily.StateStartRequired, projection.semanticStateRef)
-        assertEquals("Start VexLife", projection.displayState.primaryLabel)
+        assertEquals("Start VexLife", en(projection.displayState.primaryLabel!!))
         assertNull(projection.currentServicePid)
         val effect = resolved.effect as VexLifeProdEntryFamily.ConvergeProduct
         assertFalse(effect.allowAcquisition)
@@ -577,7 +593,7 @@ class VexLifeProdSetupJourneyTest {
                 ),
             )
         assertEquals(VexLifeProdEntryFamily.StateStartRequired, projection.semanticStateRef)
-        assertTrue(projection.displayState.detail.contains("newer version"))
+        assertTrue(en(projection.displayState.detail).contains("newer version"))
     }
 
     @Test
@@ -641,7 +657,7 @@ class VexLifeProdSetupJourneyTest {
         assertTrue(
             projection.card.buttons.any { it.actionRef == VexLifeProdMacSetupCard.ActionChooseHome }
         )
-        assertTrue(projection.displayState.detail.contains("Vex Home somewhere else"))
+        assertTrue(en(projection.displayState.detail).contains("Vex Home somewhere else"))
     }
 
     @Test
@@ -824,13 +840,14 @@ class VexLifeProdSetupJourneyTest {
             VexLifeProdSetupFailure.classify(
                     IllegalArgumentException(
                         "another VexLife-Prod local setup is already in progress or the setup lease is invalid"
-                    )
+                    ),
+                    "en",
                 )
                 .failureRef,
         )
         assertEquals(
             VexLifeProdSetupFailure.StorageExhausted,
-            VexLifeProdSetupFailure.classify(java.io.IOException("No space left on device"))
+            VexLifeProdSetupFailure.classify(java.io.IOException("No space left on device"), "en")
                 .failureRef,
         )
         assertEquals(
@@ -838,16 +855,18 @@ class VexLifeProdSetupJourneyTest {
             VexLifeProdSetupFailure.classify(
                     IllegalArgumentException(
                         "Heretic artifact model.safetensors is missing and acquisition was not authorized"
-                    )
+                    ),
+                    "en",
                 )
                 .failureRef,
         )
         assertEquals(
             VexLifeProdSetupFailure.StoppedSafely,
-            VexLifeProdSetupFailure.classify(IllegalStateException("x".repeat(5_000))).failureRef,
+            VexLifeProdSetupFailure.classify(IllegalStateException("x".repeat(5_000)), "en")
+                .failureRef,
         )
         assertTrue(
-            VexLifeProdSetupFailure.classify(IllegalStateException("x".repeat(5_000)))
+            VexLifeProdSetupFailure.classify(IllegalStateException("x".repeat(5_000)), "en")
                 .technicalDetail!!
                 .length <= 1_500
         )

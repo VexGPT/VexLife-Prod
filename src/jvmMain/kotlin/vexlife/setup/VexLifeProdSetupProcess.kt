@@ -314,6 +314,24 @@ object VexLifeProdSetupProcess {
     }
 }
 
+/**
+ * Exact flag pairs after a command word; every required flag once, optional flags at most once,
+ * nothing else. A malformed shape is refused rather than guessed.
+ */
+internal fun setupFlags(
+    args: List<String>,
+    required: Set<String>,
+    optional: Set<String> = emptySet(),
+): Map<String, String>? {
+    if (args.size % 2 != 0) return null
+    val pairs = args.chunked(2).map { it[0] to it[1] }
+    val names = pairs.map { it.first }
+    if (names.toSet().size != names.size) return null
+    if (!names.containsAll(required) || !(required + optional).containsAll(names)) return null
+    if (pairs.any { it.second.startsWith("--") }) return null
+    return pairs.toMap()
+}
+
 fun main(args: Array<String>) {
     if (
         args.size == 5 &&
@@ -325,29 +343,78 @@ fun main(args: Array<String>) {
         return
     }
 
-    if (
-        args.size == 5 &&
-            args[0] == "--inspect-front-door" &&
-            args[1] == "--home" &&
-            args[3] == "--expected-source-sha"
-    ) {
+    val command = args.firstOrNull()
+    val rest = args.drop(1)
+
+    if (command == "--inspect-front-door") {
+        val flags =
+            requireNotNull(
+                setupFlags(
+                    rest,
+                    required = setOf("--home", "--expected-source-sha"),
+                    optional = setOf("--language", "--system-language"),
+                )
+            ) {
+                "--inspect-front-door requires --home <path> --expected-source-sha <sha> " +
+                    "[--language <code>] [--system-language <code>]"
+            }
         VexLifeProdMacFrontDoorProcess.inspect(
-            desiredSourceSha = args[4],
-            productHome = Path.of(args[2]),
+            desiredSourceSha = flags.getValue("--expected-source-sha"),
+            productHome = Path.of(flags.getValue("--home")),
+            language = flags["--language"],
+            systemLanguage = flags["--system-language"],
         )
         return
     }
 
-    if (
-        args.size == 6 &&
-            args[0] == "--activate-front-door-control" &&
-            args[2] == "--home" &&
-            args[4] == "--expected-source-sha"
-    ) {
+    if (command == "--activate-front-door-control" && rest.isNotEmpty()) {
+        val flags =
+            requireNotNull(
+                setupFlags(
+                    rest.drop(1),
+                    required = setOf("--home", "--expected-source-sha"),
+                    optional = setOf("--language"),
+                )
+            ) {
+                "--activate-front-door-control <ref> requires --home <path> --expected-source-sha <sha> " +
+                    "[--language <code>]"
+            }
         VexLifeProdMacFrontDoorProcess.activate(
-            controlRef = args[1],
-            desiredSourceSha = args[5],
-            productHome = Path.of(args[3]),
+            controlRef = rest[0],
+            desiredSourceSha = flags.getValue("--expected-source-sha"),
+            productHome = Path.of(flags.getValue("--home")),
+            language = flags["--language"],
+        )
+        return
+    }
+
+    if (command == "--setup-language") {
+        val flags =
+            requireNotNull(
+                setupFlags(
+                    rest,
+                    required = setOf("--home"),
+                    optional = setOf("--language", "--system-language"),
+                )
+            ) {
+                "--setup-language requires --home <path> [--language <code>] [--system-language <code>]"
+            }
+        VexLifeProdMacFrontDoorProcess.observeLanguage(
+            productHome = Path.of(flags.getValue("--home")),
+            language = flags["--language"],
+            systemLanguage = flags["--system-language"],
+        )
+        return
+    }
+
+    if (command == "--choose-language" && rest.isNotEmpty()) {
+        val flags =
+            requireNotNull(setupFlags(rest.drop(1), required = setOf("--home"))) {
+                "--choose-language <code> requires --home <path>"
+            }
+        VexLifeProdMacFrontDoorProcess.chooseLanguage(
+            productHome = Path.of(flags.getValue("--home")),
+            language = rest[0],
         )
         return
     }

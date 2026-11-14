@@ -80,6 +80,23 @@ ALIGNMENT != SAMENESS
 ONE PRODUCT BODY != ONE GIANT OWNER
 ~~~
 
+## Words are keyed; the key is the element
+
+No display string is hardcoded (VexArchitecture localization law, ported from Vextreme). A Family's
+DisplayState names text by key, and that key is the element's identity at every layer: the same in
+every language, carried next to the resolved words by the concrete presentation, and mapped by its
+`dataKey` to the semantic ref it presents.
+
+~~~text
+Family ref            entry:control:CONVERGE_DESIRED      (meaning)
+DisplayState          setup.button.update-restart          (identity, language-free)
+presentation          key + words in the selected language
+renderer              shows words, returns the ref; never matches words
+~~~
+
+Find an element by its key or `dataKey`, never by its words. Detail:
+[foundation/LOCALIZATION.md](foundation/LOCALIZATION.md).
+
 ## One semantic owner; bounded projections
 
 A state domain has one rightful semantic owner. Consumers receive the smallest truthful projection they need.

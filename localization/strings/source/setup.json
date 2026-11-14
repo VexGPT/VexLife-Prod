@@ -1,0 +1,6046 @@
+{
+  "_meta": {
+    "scope": "setup",
+    "category": "product",
+    "description": "The VexLife Setup Journey: the native setup window, its cards, progress, failures and the ready notice. English is canonical source.",
+    "keyConvention": "setup.{element-type}.{semantic-name}",
+    "surfaces": {
+      "setup.card": "one Setup Journey card (Entry Family DisplayState + what VexLife found)",
+      "setup.window": "the native setup window's own chrome (language and Home choosers, progress panel, process failures)",
+      "setup.progress": "progress lines written while an Effect runs",
+      "setup.failure": "explanations of an Effect that did not complete",
+      "setup.notice": "the one-time notice after setup reaches a current VexLife"
+    },
+    "dataKeyOwners": {
+      "entry": "VexLifeProdEntryFamily (state, control, step refs)",
+      "setup": "VexLifeProdMacSetupCard actions, VexLifeProdSetupFailure refs, VexLifeProdSetupProgress phases",
+      "home": "VexLifeProdHome.LocationDisposition wire values",
+      "host": "HereticMacHostProfile eligibility reasons",
+      "model": "current-state modelArtifactState values"
+    }
+  },
+  "setup.heading.current": {
+    "strings": {
+      "en": {
+        "text": "VexLife is running."
+      },
+      "ja": {
+        "text": "VexLife は動作中です。"
+      },
+      "zh": {
+        "text": "VexLife 正在运行。"
+      },
+      "ko": {
+        "text": "VexLife가 실행 중입니다."
+      },
+      "fr": {
+        "text": "VexLife est en cours d’exécution."
+      },
+      "de": {
+        "text": "VexLife läuft."
+      },
+      "es": {
+        "text": "VexLife está en funcionamiento."
+      },
+      "pt": {
+        "text": "O VexLife está em execução."
+      },
+      "ar": {
+        "text": "VexLife يعمل الآن."
+      },
+      "hi": {
+        "text": "VexLife चल रहा है।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:CURRENT"
+  },
+  "setup.heading.update-available": {
+    "strings": {
+      "en": {
+        "text": "A newer version of VexLife is ready."
+      },
+      "ja": {
+        "text": "VexLife の新しいバージョンを使えます。"
+      },
+      "zh": {
+        "text": "VexLife 有新版本可用。"
+      },
+      "ko": {
+        "text": "VexLife 새 버전을 사용할 수 있습니다."
+      },
+      "fr": {
+        "text": "Une nouvelle version de VexLife est prête."
+      },
+      "de": {
+        "text": "Eine neuere Version von VexLife ist bereit."
+      },
+      "es": {
+        "text": "Hay una versión más reciente de VexLife lista."
+      },
+      "pt": {
+        "text": "Uma versão mais recente do VexLife está pronta."
+      },
+      "ar": {
+        "text": "إصدار أحدث من VexLife جاهز."
+      },
+      "hi": {
+        "text": "VexLife का नया संस्करण तैयार है।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:UPDATE_AVAILABLE"
+  },
+  "setup.heading.repair-required": {
+    "strings": {
+      "en": {
+        "text": "VexLife isn't responding."
+      },
+      "ja": {
+        "text": "VexLife が応答していません。"
+      },
+      "zh": {
+        "text": "VexLife 没有响应。"
+      },
+      "ko": {
+        "text": "VexLife가 응답하지 않습니다."
+      },
+      "fr": {
+        "text": "VexLife ne répond pas."
+      },
+      "de": {
+        "text": "VexLife reagiert nicht."
+      },
+      "es": {
+        "text": "VexLife no responde."
+      },
+      "pt": {
+        "text": "O VexLife não está respondendo."
+      },
+      "ar": {
+        "text": "VexLife لا يستجيب."
+      },
+      "hi": {
+        "text": "VexLife जवाब नहीं दे रहा है।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:REPAIR_REQUIRED"
+  },
+  "setup.heading.update-repair-required": {
+    "strings": {
+      "en": {
+        "text": "VexLife can update and restart."
+      },
+      "ja": {
+        "text": "VexLife をアップデートして再起動できます。"
+      },
+      "zh": {
+        "text": "VexLife 可以更新并重新启动。"
+      },
+      "ko": {
+        "text": "VexLife를 업데이트하고 다시 시작할 수 있습니다."
+      },
+      "fr": {
+        "text": "VexLife peut se mettre à jour et redémarrer."
+      },
+      "de": {
+        "text": "VexLife kann aktualisieren und neu starten."
+      },
+      "es": {
+        "text": "VexLife puede actualizarse y reiniciarse."
+      },
+      "pt": {
+        "text": "O VexLife pode ser atualizado e reiniciado."
+      },
+      "ar": {
+        "text": "يمكن تحديث VexLife وإعادة تشغيله."
+      },
+      "hi": {
+        "text": "VexLife को अपडेट करके फिर से शुरू किया जा सकता है।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:UPDATE_REPAIR_REQUIRED"
+  },
+  "setup.heading.start-required": {
+    "strings": {
+      "en": {
+        "text": "Start VexLife."
+      },
+      "ja": {
+        "text": "VexLife を起動します。"
+      },
+      "zh": {
+        "text": "启动 VexLife。"
+      },
+      "ko": {
+        "text": "VexLife를 시작합니다."
+      },
+      "fr": {
+        "text": "Démarrer VexLife."
+      },
+      "de": {
+        "text": "VexLife starten."
+      },
+      "es": {
+        "text": "Iniciar VexLife."
+      },
+      "pt": {
+        "text": "Iniciar o VexLife."
+      },
+      "ar": {
+        "text": "ابدأ تشغيل VexLife."
+      },
+      "hi": {
+        "text": "VexLife शुरू करें।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:START_REQUIRED"
+  },
+  "setup.heading.home-formation-required": {
+    "strings": {
+      "en": {
+        "text": "Create your Vex Home."
+      },
+      "ja": {
+        "text": "Vex Home を作成します。"
+      },
+      "zh": {
+        "text": "创建你的 Vex Home。"
+      },
+      "ko": {
+        "text": "Vex Home을 만듭니다."
+      },
+      "fr": {
+        "text": "Créez votre Vex Home."
+      },
+      "de": {
+        "text": "Erstelle dein Vex Home."
+      },
+      "es": {
+        "text": "Crea tu Vex Home."
+      },
+      "pt": {
+        "text": "Crie seu Vex Home."
+      },
+      "ar": {
+        "text": "أنشئ Vex Home الخاص بك."
+      },
+      "hi": {
+        "text": "अपना Vex Home बनाएँ।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:HOME_FORMATION_REQUIRED"
+  },
+  "setup.heading.home-held": {
+    "strings": {
+      "en": {
+        "text": "This folder is being preserved."
+      },
+      "ja": {
+        "text": "このフォルダはそのまま保護されています。"
+      },
+      "zh": {
+        "text": "此文件夹已被原样保留。"
+      },
+      "ko": {
+        "text": "이 폴더는 그대로 보존됩니다."
+      },
+      "fr": {
+        "text": "Ce dossier est préservé tel quel."
+      },
+      "de": {
+        "text": "Dieser Ordner bleibt unverändert erhalten."
+      },
+      "es": {
+        "text": "Esta carpeta se conserva tal como está."
+      },
+      "pt": {
+        "text": "Esta pasta está sendo preservada."
+      },
+      "ar": {
+        "text": "يُحتفظ بهذا المجلد كما هو."
+      },
+      "hi": {
+        "text": "यह फ़ोल्डर जैसा है वैसा ही सुरक्षित रखा गया है।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:HOME_HELD"
+  },
+  "setup.heading.host-held": {
+    "strings": {
+      "en": {
+        "text": "This Mac can't run VexLife's local model yet."
+      },
+      "ja": {
+        "text": "この Mac ではまだ VexLife のローカルモデルを実行できません。"
+      },
+      "zh": {
+        "text": "这台 Mac 目前还不能运行 VexLife 的本地模型。"
+      },
+      "ko": {
+        "text": "이 Mac에서는 아직 VexLife의 로컬 모델을 실행할 수 없습니다."
+      },
+      "fr": {
+        "text": "Ce Mac ne peut pas encore exécuter le modèle local de VexLife."
+      },
+      "de": {
+        "text": "Dieser Mac kann das lokale Modell von VexLife noch nicht ausführen."
+      },
+      "es": {
+        "text": "Este Mac todavía no puede ejecutar el modelo local de VexLife."
+      },
+      "pt": {
+        "text": "Este Mac ainda não pode executar o modelo local do VexLife."
+      },
+      "ar": {
+        "text": "لا يستطيع جهاز Mac هذا تشغيل النموذج المحلي لـ VexLife بعد."
+      },
+      "hi": {
+        "text": "यह Mac अभी VexLife का लोकल मॉडल नहीं चला सकता।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:HOST_HELD"
+  },
+  "setup.heading.setup-required": {
+    "strings": {
+      "en": {
+        "text": "Set up the local model."
+      },
+      "ja": {
+        "text": "ローカルモデルをセットアップします。"
+      },
+      "zh": {
+        "text": "设置本地模型。"
+      },
+      "ko": {
+        "text": "로컬 모델을 설정합니다."
+      },
+      "fr": {
+        "text": "Configurer le modèle local."
+      },
+      "de": {
+        "text": "Lokales Modell einrichten."
+      },
+      "es": {
+        "text": "Configurar el modelo local."
+      },
+      "pt": {
+        "text": "Configurar o modelo local."
+      },
+      "ar": {
+        "text": "إعداد النموذج المحلي."
+      },
+      "hi": {
+        "text": "लोकल मॉडल सेट अप करें।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:SETUP_REQUIRED"
+  },
+  "setup.heading.storage-held": {
+    "strings": {
+      "en": {
+        "text": "Not enough free space for the local model."
+      },
+      "ja": {
+        "text": "ローカルモデルに必要な空き容量が足りません。"
+      },
+      "zh": {
+        "text": "可用空间不足，无法放下本地模型。"
+      },
+      "ko": {
+        "text": "로컬 모델을 위한 여유 공간이 부족합니다."
+      },
+      "fr": {
+        "text": "Pas assez d’espace libre pour le modèle local."
+      },
+      "de": {
+        "text": "Nicht genug freier Speicher für das lokale Modell."
+      },
+      "es": {
+        "text": "No hay suficiente espacio libre para el modelo local."
+      },
+      "pt": {
+        "text": "Não há espaço livre suficiente para o modelo local."
+      },
+      "ar": {
+        "text": "لا توجد مساحة فارغة كافية للنموذج المحلي."
+      },
+      "hi": {
+        "text": "लोकल मॉडल के लिए पर्याप्त खाली जगह नहीं है।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:STORAGE_HELD"
+  },
+  "setup.heading.model-files-held": {
+    "strings": {
+      "en": {
+        "text": "A local model file needs attention."
+      },
+      "ja": {
+        "text": "ローカルモデルのファイルに確認が必要です。"
+      },
+      "zh": {
+        "text": "有本地模型文件需要处理。"
+      },
+      "ko": {
+        "text": "로컬 모델 파일을 확인해야 합니다."
+      },
+      "fr": {
+        "text": "Un fichier du modèle local demande votre attention."
+      },
+      "de": {
+        "text": "Eine Datei des lokalen Modells braucht Aufmerksamkeit."
+      },
+      "es": {
+        "text": "Un archivo del modelo local necesita atención."
+      },
+      "pt": {
+        "text": "Um arquivo do modelo local precisa de atenção."
+      },
+      "ar": {
+        "text": "أحد ملفات النموذج المحلي يحتاج إلى انتباه."
+      },
+      "hi": {
+        "text": "लोकल मॉडल की एक फ़ाइल पर ध्यान देने की ज़रूरत है।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:MODEL_FILES_HELD"
+  },
+  "setup.heading.held-unknown": {
+    "strings": {
+      "en": {
+        "text": "VexLife will not replace the current process."
+      },
+      "ja": {
+        "text": "VexLife は現在のプロセスを置き換えません。"
+      },
+      "zh": {
+        "text": "VexLife 不会替换当前进程。"
+      },
+      "ko": {
+        "text": "VexLife는 현재 프로세스를 교체하지 않습니다."
+      },
+      "fr": {
+        "text": "VexLife ne remplacera pas le processus en cours."
+      },
+      "de": {
+        "text": "VexLife ersetzt den laufenden Prozess nicht."
+      },
+      "es": {
+        "text": "VexLife no reemplazará el proceso actual."
+      },
+      "pt": {
+        "text": "O VexLife não vai substituir o processo atual."
+      },
+      "ar": {
+        "text": "لن يستبدل VexLife العملية الحالية."
+      },
+      "hi": {
+        "text": "VexLife मौजूदा प्रोसेस को नहीं बदलेगा।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:HOLD_UNKNOWN"
+  },
+  "setup.description.current": {
+    "strings": {
+      "en": {
+        "text": "Everything is current. Opening VexLife does not restart or replace anything."
+      },
+      "ja": {
+        "text": "すべて最新です。VexLife を開いても、何も再起動・置き換えされません。"
+      },
+      "zh": {
+        "text": "一切都是最新的。打开 VexLife 不会重启或替换任何内容。"
+      },
+      "ko": {
+        "text": "모두 최신 상태입니다. VexLife를 열어도 아무것도 다시 시작하거나 교체하지 않습니다."
+      },
+      "fr": {
+        "text": "Tout est à jour. Ouvrir VexLife ne redémarre ni ne remplace rien."
+      },
+      "de": {
+        "text": "Alles ist aktuell. Beim Öffnen von VexLife wird nichts neu gestartet oder ersetzt."
+      },
+      "es": {
+        "text": "Todo está al día. Abrir VexLife no reinicia ni reemplaza nada."
+      },
+      "pt": {
+        "text": "Tudo está atualizado. Abrir o VexLife não reinicia nem substitui nada."
+      },
+      "ar": {
+        "text": "كل شيء محدّث. فتح VexLife لا يعيد تشغيل أي شيء ولا يستبدله."
+      },
+      "hi": {
+        "text": "सब कुछ अप-टू-डेट है। VexLife खोलने से कुछ भी फिर से शुरू या बदला नहीं जाता।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:CURRENT"
+  },
+  "setup.description.update-available": {
+    "strings": {
+      "en": {
+        "text": "Your Home, conversations and memory stay as they are. Update & Restart stops only the exact VexLife service this Home owns and starts the newer one. Nothing will be downloaded."
+      },
+      "ja": {
+        "text": "Home、会話、メモリはそのまま残ります。「アップデートして再起動」は、この Home が所有する VexLife サービスだけを停止し、新しいバージョンを起動します。何もダウンロードされません。"
+      },
+      "zh": {
+        "text": "你的 Home、对话和记忆都保持原样。“更新并重新启动”只会停止此 Home 所拥有的那个 VexLife 服务，然后启动新版本。不会下载任何内容。"
+      },
+      "ko": {
+        "text": "Home, 대화, 기억은 그대로 유지됩니다. '업데이트 후 재시작'은 이 Home이 소유한 VexLife 서비스만 중지하고 새 버전을 시작합니다. 아무것도 다운로드하지 않습니다."
+      },
+      "fr": {
+        "text": "Votre Home, vos conversations et votre mémoire restent tels quels. « Mettre à jour et redémarrer » arrête uniquement le service VexLife appartenant à ce Home et démarre la nouvelle version. Rien ne sera téléchargé."
+      },
+      "de": {
+        "text": "Dein Home, deine Gespräche und deine Erinnerungen bleiben, wie sie sind. „Aktualisieren und neu starten“ stoppt nur den VexLife-Dienst, der zu diesem Home gehört, und startet die neuere Version. Es wird nichts heruntergeladen."
+      },
+      "es": {
+        "text": "Tu Home, tus conversaciones y tu memoria se quedan como están. «Actualizar y reiniciar» detiene solo el servicio de VexLife que pertenece a este Home e inicia la versión más reciente. No se descargará nada."
+      },
+      "pt": {
+        "text": "Seu Home, suas conversas e sua memória continuam como estão. “Atualizar e reiniciar” para apenas o serviço do VexLife que pertence a este Home e inicia a versão mais recente. Nada será baixado."
+      },
+      "ar": {
+        "text": "يبقى Home ومحادثاتك وذاكرتك كما هي. يوقف «تحديث وإعادة تشغيل» خدمة VexLife التي يملكها هذا الـ Home فقط، ثم يشغّل الإصدار الأحدث. لن يُنزَّل أي شيء."
+      },
+      "hi": {
+        "text": "आपका Home, आपकी बातचीत और मेमोरी जैसी हैं वैसी ही रहेंगी। “अपडेट करें और फिर से शुरू करें” केवल उसी VexLife सेवा को रोकता है जो इस Home की है, और नया संस्करण शुरू करता है। कुछ भी डाउनलोड नहीं होगा।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:UPDATE_AVAILABLE"
+  },
+  "setup.description.repair-required": {
+    "strings": {
+      "en": {
+        "text": "VexLife's background service is registered but not answering. Repair & Restart re-checks the local model files, then starts the local model and VexLife again. Your Home, conversations and memory stay as they are. Nothing will be downloaded."
+      },
+      "ja": {
+        "text": "VexLife のバックグラウンドサービスは登録されていますが、応答していません。「修復して再起動」はローカルモデルのファイルを確認し直してから、ローカルモデルと VexLife をもう一度起動します。Home、会話、メモリはそのまま残ります。何もダウンロードされません。"
+      },
+      "zh": {
+        "text": "VexLife 的后台服务已注册，但没有响应。“修复并重新启动”会重新检查本地模型文件，然后再次启动本地模型和 VexLife。你的 Home、对话和记忆都保持原样。不会下载任何内容。"
+      },
+      "ko": {
+        "text": "VexLife의 백그라운드 서비스가 등록되어 있지만 응답하지 않습니다. '복구 후 재시작'은 로컬 모델 파일을 다시 확인한 뒤 로컬 모델과 VexLife를 다시 시작합니다. Home, 대화, 기억은 그대로 유지됩니다. 아무것도 다운로드하지 않습니다."
+      },
+      "fr": {
+        "text": "Le service d’arrière-plan de VexLife est enregistré mais ne répond pas. « Réparer et redémarrer » revérifie les fichiers du modèle local, puis redémarre le modèle local et VexLife. Votre Home, vos conversations et votre mémoire restent tels quels. Rien ne sera téléchargé."
+      },
+      "de": {
+        "text": "Der Hintergrunddienst von VexLife ist registriert, antwortet aber nicht. „Reparieren und neu starten“ prüft die Dateien des lokalen Modells erneut und startet dann das lokale Modell und VexLife wieder. Dein Home, deine Gespräche und deine Erinnerungen bleiben, wie sie sind. Es wird nichts heruntergeladen."
+      },
+      "es": {
+        "text": "El servicio en segundo plano de VexLife está registrado, pero no responde. «Reparar y reiniciar» vuelve a comprobar los archivos del modelo local y luego inicia de nuevo el modelo local y VexLife. Tu Home, tus conversaciones y tu memoria se quedan como están. No se descargará nada."
+      },
+      "pt": {
+        "text": "O serviço em segundo plano do VexLife está registrado, mas não responde. “Reparar e reiniciar” verifica de novo os arquivos do modelo local e depois inicia novamente o modelo local e o VexLife. Seu Home, suas conversas e sua memória continuam como estão. Nada será baixado."
+      },
+      "ar": {
+        "text": "خدمة VexLife في الخلفية مسجّلة لكنها لا تستجيب. يعيد «إصلاح وإعادة تشغيل» فحص ملفات النموذج المحلي، ثم يشغّل النموذج المحلي وVexLife من جديد. يبقى Home ومحادثاتك وذاكرتك كما هي. لن يُنزَّل أي شيء."
+      },
+      "hi": {
+        "text": "VexLife की बैकग्राउंड सेवा रजिस्टर्ड है, लेकिन जवाब नहीं दे रही है। “ठीक करें और फिर से शुरू करें” लोकल मॉडल की फ़ाइलें दोबारा जाँचता है, फिर लोकल मॉडल और VexLife को फिर से शुरू करता है। आपका Home, आपकी बातचीत और मेमोरी जैसी हैं वैसी ही रहेंगी। कुछ भी डाउनलोड नहीं होगा।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:REPAIR_REQUIRED"
+  },
+  "setup.description.update-repair-required": {
+    "strings": {
+      "en": {
+        "text": "An earlier VexLife service from this Home isn't answering. Update & Restart re-checks the local model files and starts this newer version. Nothing will be downloaded."
+      },
+      "ja": {
+        "text": "この Home の以前の VexLife サービスが応答していません。「アップデートして再起動」はローカルモデルのファイルを確認し直し、この新しいバージョンを起動します。何もダウンロードされません。"
+      },
+      "zh": {
+        "text": "此 Home 中较早的 VexLife 服务没有响应。“更新并重新启动”会重新检查本地模型文件，并启动这个新版本。不会下载任何内容。"
+      },
+      "ko": {
+        "text": "이 Home의 이전 VexLife 서비스가 응답하지 않습니다. '업데이트 후 재시작'은 로컬 모델 파일을 다시 확인하고 이 새 버전을 시작합니다. 아무것도 다운로드하지 않습니다."
+      },
+      "fr": {
+        "text": "Un ancien service VexLife de ce Home ne répond pas. « Mettre à jour et redémarrer » revérifie les fichiers du modèle local et démarre cette nouvelle version. Rien ne sera téléchargé."
+      },
+      "de": {
+        "text": "Ein älterer VexLife-Dienst aus diesem Home antwortet nicht. „Aktualisieren und neu starten“ prüft die Dateien des lokalen Modells erneut und startet diese neuere Version. Es wird nichts heruntergeladen."
+      },
+      "es": {
+        "text": "Un servicio anterior de VexLife de este Home no responde. «Actualizar y reiniciar» vuelve a comprobar los archivos del modelo local e inicia esta versión más reciente. No se descargará nada."
+      },
+      "pt": {
+        "text": "Um serviço anterior do VexLife deste Home não está respondendo. “Atualizar e reiniciar” verifica de novo os arquivos do modelo local e inicia esta versão mais recente. Nada será baixado."
+      },
+      "ar": {
+        "text": "خدمة VexLife أقدم من هذا الـ Home لا تستجيب. يعيد «تحديث وإعادة تشغيل» فحص ملفات النموذج المحلي ويشغّل هذا الإصدار الأحدث. لن يُنزَّل أي شيء."
+      },
+      "hi": {
+        "text": "इस Home की एक पुरानी VexLife सेवा जवाब नहीं दे रही है। “अपडेट करें और फिर से शुरू करें” लोकल मॉडल की फ़ाइलें दोबारा जाँचता है और यह नया संस्करण शुरू करता है। कुछ भी डाउनलोड नहीं होगा।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:UPDATE_REPAIR_REQUIRED"
+  },
+  "setup.description.start-required": {
+    "strings": {
+      "en": {
+        "text": "Your Vex Home and local model are already on this Mac. Starting checks those files, then starts the local model and VexLife. Nothing will be downloaded."
+      },
+      "ja": {
+        "text": "Vex Home とローカルモデルはすでにこの Mac にあります。起動するとそれらのファイルを確認してから、ローカルモデルと VexLife を起動します。何もダウンロードされません。"
+      },
+      "zh": {
+        "text": "你的 Vex Home 和本地模型已经在这台 Mac 上。启动时会先检查这些文件，然后启动本地模型和 VexLife。不会下载任何内容。"
+      },
+      "ko": {
+        "text": "Vex Home과 로컬 모델이 이미 이 Mac에 있습니다. 시작하면 해당 파일을 확인한 뒤 로컬 모델과 VexLife를 시작합니다. 아무것도 다운로드하지 않습니다."
+      },
+      "fr": {
+        "text": "Votre Vex Home et le modèle local sont déjà sur ce Mac. Le démarrage vérifie ces fichiers, puis lance le modèle local et VexLife. Rien ne sera téléchargé."
+      },
+      "de": {
+        "text": "Dein Vex Home und das lokale Modell sind bereits auf diesem Mac. Beim Start werden diese Dateien geprüft, dann werden das lokale Modell und VexLife gestartet. Es wird nichts heruntergeladen."
+      },
+      "es": {
+        "text": "Tu Vex Home y el modelo local ya están en este Mac. Al iniciar se comprueban esos archivos y luego se inician el modelo local y VexLife. No se descargará nada."
+      },
+      "pt": {
+        "text": "Seu Vex Home e o modelo local já estão neste Mac. Ao iniciar, esses arquivos são verificados e depois o modelo local e o VexLife são iniciados. Nada será baixado."
+      },
+      "ar": {
+        "text": "Vex Home والنموذج المحلي موجودان بالفعل على جهاز Mac هذا. عند البدء تُفحص هذه الملفات، ثم يُشغَّل النموذج المحلي وVexLife. لن يُنزَّل أي شيء."
+      },
+      "hi": {
+        "text": "आपका Vex Home और लोकल मॉडल पहले से इस Mac पर हैं। शुरू करने पर उन फ़ाइलों की जाँच होती है, फिर लोकल मॉडल और VexLife शुरू होते हैं। कुछ भी डाउनलोड नहीं होगा।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:START_REQUIRED"
+  },
+  "setup.description.start-required-newer-version": {
+    "strings": {
+      "en": {
+        "text": "Your Vex Home and local model are already on this Mac. Starting checks those files, then starts the local model and VexLife. Nothing will be downloaded. This also moves VexLife to the newer version you just opened."
+      },
+      "ja": {
+        "text": "Vex Home とローカルモデルはすでにこの Mac にあります。起動するとそれらのファイルを確認してから、ローカルモデルと VexLife を起動します。何もダウンロードされません。あわせて、いま開いた新しいバージョンの VexLife に切り替わります。"
+      },
+      "zh": {
+        "text": "你的 Vex Home 和本地模型已经在这台 Mac 上。启动时会先检查这些文件，然后启动本地模型和 VexLife。不会下载任何内容。同时，VexLife 也会切换到你刚刚打开的新版本。"
+      },
+      "ko": {
+        "text": "Vex Home과 로컬 모델이 이미 이 Mac에 있습니다. 시작하면 해당 파일을 확인한 뒤 로컬 모델과 VexLife를 시작합니다. 아무것도 다운로드하지 않습니다. 또한 방금 연 새 버전의 VexLife로 전환됩니다."
+      },
+      "fr": {
+        "text": "Votre Vex Home et le modèle local sont déjà sur ce Mac. Le démarrage vérifie ces fichiers, puis lance le modèle local et VexLife. Rien ne sera téléchargé. VexLife passe aussi à la nouvelle version que vous venez d’ouvrir."
+      },
+      "de": {
+        "text": "Dein Vex Home und das lokale Modell sind bereits auf diesem Mac. Beim Start werden diese Dateien geprüft, dann werden das lokale Modell und VexLife gestartet. Es wird nichts heruntergeladen. Dabei wechselt VexLife auch zu der neueren Version, die du gerade geöffnet hast."
+      },
+      "es": {
+        "text": "Tu Vex Home y el modelo local ya están en este Mac. Al iniciar se comprueban esos archivos y luego se inician el modelo local y VexLife. No se descargará nada. Además, VexLife pasa a la versión más reciente que acabas de abrir."
+      },
+      "pt": {
+        "text": "Seu Vex Home e o modelo local já estão neste Mac. Ao iniciar, esses arquivos são verificados e depois o modelo local e o VexLife são iniciados. Nada será baixado. Isso também muda o VexLife para a versão mais recente que você acabou de abrir."
+      },
+      "ar": {
+        "text": "Vex Home والنموذج المحلي موجودان بالفعل على جهاز Mac هذا. عند البدء تُفحص هذه الملفات، ثم يُشغَّل النموذج المحلي وVexLife. لن يُنزَّل أي شيء. وينتقل VexLife أيضًا إلى الإصدار الأحدث الذي فتحته للتو."
+      },
+      "hi": {
+        "text": "आपका Vex Home और लोकल मॉडल पहले से इस Mac पर हैं। शुरू करने पर उन फ़ाइलों की जाँच होती है, फिर लोकल मॉडल और VexLife शुरू होते हैं। कुछ भी डाउनलोड नहीं होगा। साथ ही, VexLife उस नए संस्करण पर चला जाता है जिसे आपने अभी खोला है।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:START_REQUIRED"
+  },
+  "setup.description.home-formation-required": {
+    "strings": {
+      "en": {
+        "text": "VexLife keeps your identity, conversations and memory together in one folder on this Mac: your Vex Home. Creating it does not download or start anything; you'll review the local model as a separate step."
+      },
+      "ja": {
+        "text": "VexLife は、あなたの ID、会話、メモリをこの Mac 上の 1 つのフォルダ「Vex Home」にまとめて保管します。作成しても何もダウンロード・起動されません。ローカルモデルは別のステップで確認します。"
+      },
+      "zh": {
+        "text": "VexLife 会把你的身份、对话和记忆一起保存在这台 Mac 上的一个文件夹里：你的 Vex Home。创建它不会下载或启动任何内容；本地模型会在单独的步骤中由你确认。"
+      },
+      "ko": {
+        "text": "VexLife는 사용자의 신원, 대화, 기억을 이 Mac의 폴더 하나, 즉 Vex Home에 함께 보관합니다. Home을 만들어도 아무것도 다운로드하거나 시작하지 않으며, 로컬 모델은 별도의 단계에서 확인합니다."
+      },
+      "fr": {
+        "text": "VexLife conserve votre identité, vos conversations et votre mémoire ensemble dans un seul dossier de ce Mac : votre Vex Home. Sa création ne télécharge et ne lance rien ; vous examinerez le modèle local lors d’une étape distincte."
+      },
+      "de": {
+        "text": "VexLife bewahrt deine Identität, deine Gespräche und deine Erinnerungen gemeinsam in einem Ordner auf diesem Mac auf: deinem Vex Home. Das Erstellen lädt nichts herunter und startet nichts; das lokale Modell prüfst du in einem eigenen Schritt."
+      },
+      "es": {
+        "text": "VexLife guarda tu identidad, tus conversaciones y tu memoria juntas en una carpeta de este Mac: tu Vex Home. Crearla no descarga ni inicia nada; revisarás el modelo local en un paso aparte."
+      },
+      "pt": {
+        "text": "O VexLife guarda sua identidade, suas conversas e sua memória juntas em uma pasta neste Mac: seu Vex Home. Criá-lo não baixa nem inicia nada; você vai revisar o modelo local em uma etapa separada."
+      },
+      "ar": {
+        "text": "يحتفظ VexLife بهويتك ومحادثاتك وذاكرتك معًا في مجلد واحد على جهاز Mac هذا: Vex Home الخاص بك. إنشاؤه لا ينزّل شيئًا ولا يشغّل شيئًا؛ ستراجع النموذج المحلي في خطوة منفصلة."
+      },
+      "hi": {
+        "text": "VexLife आपकी पहचान, बातचीत और मेमोरी को इस Mac के एक ही फ़ोल्डर में साथ रखता है: आपका Vex Home। इसे बनाने से कुछ भी डाउनलोड या शुरू नहीं होता; लोकल मॉडल की समीक्षा आप एक अलग चरण में करेंगे।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:HOME_FORMATION_REQUIRED"
+  },
+  "setup.description.home-held": {
+    "strings": {
+      "en": {
+        "text": "{reason} Nothing in it was changed, moved or deleted."
+      },
+      "ja": {
+        "text": "{reason}フォルダの中身は何も変更・移動・削除されていません。"
+      },
+      "zh": {
+        "text": "{reason}其中的内容没有被更改、移动或删除。"
+      },
+      "ko": {
+        "text": "{reason} 폴더 안의 어떤 것도 변경, 이동 또는 삭제되지 않았습니다."
+      },
+      "fr": {
+        "text": "{reason} Rien n’y a été modifié, déplacé ni supprimé."
+      },
+      "de": {
+        "text": "{reason} Darin wurde nichts geändert, verschoben oder gelöscht."
+      },
+      "es": {
+        "text": "{reason} No se cambió, movió ni eliminó nada de su contenido."
+      },
+      "pt": {
+        "text": "{reason} Nada nela foi alterado, movido ou apagado."
+      },
+      "ar": {
+        "text": "{reason} لم يُغيَّر أو يُنقل أو يُحذف أي شيء بداخله."
+      },
+      "hi": {
+        "text": "{reason} इसमें कुछ भी बदला, हटाया या मिटाया नहीं गया।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:HOME_HELD"
+  },
+  "setup.description.home-held-other-files": {
+    "strings": {
+      "en": {
+        "text": "The folder you chose already contains other files, so VexLife will not use it as a Vex Home. Choose an empty folder, or type a new folder name."
+      },
+      "ja": {
+        "text": "選んだフォルダにはすでに他のファイルがあるため、VexLife はこれを Vex Home として使いません。空のフォルダを選ぶか、新しいフォルダ名を入力してください。"
+      },
+      "zh": {
+        "text": "你选择的文件夹里已经有其他文件，所以 VexLife 不会把它用作 Vex Home。请选择一个空文件夹，或输入一个新的文件夹名称。"
+      },
+      "ko": {
+        "text": "선택한 폴더에 이미 다른 파일이 있어 VexLife는 이 폴더를 Vex Home으로 사용하지 않습니다. 빈 폴더를 선택하거나 새 폴더 이름을 입력하세요."
+      },
+      "fr": {
+        "text": "Le dossier choisi contient déjà d’autres fichiers ; VexLife ne l’utilisera donc pas comme Vex Home. Choisissez un dossier vide ou saisissez le nom d’un nouveau dossier."
+      },
+      "de": {
+        "text": "Der gewählte Ordner enthält bereits andere Dateien, daher verwendet VexLife ihn nicht als Vex Home. Wähle einen leeren Ordner oder gib einen neuen Ordnernamen ein."
+      },
+      "es": {
+        "text": "La carpeta que elegiste ya contiene otros archivos, así que VexLife no la usará como Vex Home. Elige una carpeta vacía o escribe el nombre de una carpeta nueva."
+      },
+      "pt": {
+        "text": "A pasta escolhida já contém outros arquivos, então o VexLife não vai usá-la como Vex Home. Escolha uma pasta vazia ou digite o nome de uma nova pasta."
+      },
+      "ar": {
+        "text": "المجلد الذي اخترته يحتوي بالفعل على ملفات أخرى، لذلك لن يستخدمه VexLife كـ Vex Home. اختر مجلدًا فارغًا، أو اكتب اسم مجلد جديد."
+      },
+      "hi": {
+        "text": "आपके चुने गए फ़ोल्डर में पहले से दूसरी फ़ाइलें हैं, इसलिए VexLife इसे Vex Home के रूप में इस्तेमाल नहीं करेगा। कोई खाली फ़ोल्डर चुनें, या नए फ़ोल्डर का नाम लिखें।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "home:disposition:HELD_NONCANONICAL_CONTENT"
+  },
+  "setup.description.home-held-invalid-records": {
+    "strings": {
+      "en": {
+        "text": "This folder looks like a Vex Home, but its identity records did not check out. VexLife will not repair or overwrite it automatically. Keep it safe for recovery, or choose another location."
+      },
+      "ja": {
+        "text": "このフォルダは Vex Home のように見えますが、ID の記録を確認できませんでした。VexLife が自動で修復したり上書きしたりすることはありません。復旧のためにそのまま保管するか、別の場所を選んでください。"
+      },
+      "zh": {
+        "text": "这个文件夹看起来像 Vex Home，但它的身份记录没有通过检查。VexLife 不会自动修复或覆盖它。请妥善保留以便恢复，或选择其他位置。"
+      },
+      "ko": {
+        "text": "이 폴더는 Vex Home처럼 보이지만 신원 기록을 확인할 수 없었습니다. VexLife는 이를 자동으로 복구하거나 덮어쓰지 않습니다. 복구를 위해 안전하게 보관하거나 다른 위치를 선택하세요."
+      },
+      "fr": {
+        "text": "Ce dossier ressemble à un Vex Home, mais ses enregistrements d’identité n’ont pas pu être vérifiés. VexLife ne le réparera ni ne l’écrasera automatiquement. Conservez-le en lieu sûr pour une récupération, ou choisissez un autre emplacement."
+      },
+      "de": {
+        "text": "Dieser Ordner sieht aus wie ein Vex Home, aber seine Identitätsdaten ließen sich nicht bestätigen. VexLife repariert oder überschreibt ihn nicht automatisch. Bewahre ihn für eine Wiederherstellung auf oder wähle einen anderen Ort."
+      },
+      "es": {
+        "text": "Esta carpeta parece un Vex Home, pero sus registros de identidad no superaron la comprobación. VexLife no la reparará ni la sobrescribirá automáticamente. Guárdala para una posible recuperación o elige otra ubicación."
+      },
+      "pt": {
+        "text": "Esta pasta parece um Vex Home, mas os registros de identidade dela não passaram na verificação. O VexLife não vai repará-la nem sobrescrevê-la automaticamente. Guarde-a para recuperação ou escolha outro local."
+      },
+      "ar": {
+        "text": "يبدو هذا المجلد مثل Vex Home، لكن سجلات الهوية فيه لم تجتز الفحص. لن يصلحه VexLife أو يكتب فوقه تلقائيًا. احتفظ به بأمان للاستعادة، أو اختر موقعًا آخر."
+      },
+      "hi": {
+        "text": "यह फ़ोल्डर Vex Home जैसा दिखता है, लेकिन इसके पहचान रिकॉर्ड की जाँच सफल नहीं हुई। VexLife इसे अपने आप ठीक या ओवरराइट नहीं करेगा। रिकवरी के लिए इसे सुरक्षित रखें, या कोई दूसरी जगह चुनें।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "home:disposition:HELD_INVALID_CANONICAL_RECORDS"
+  },
+  "setup.description.home-held-not-folder": {
+    "strings": {
+      "en": {
+        "text": "The location you chose is a file (or a file is in the way), not a folder. Choose a folder location."
+      },
+      "ja": {
+        "text": "選んだ場所はフォルダではなくファイルです（または途中にファイルがあります）。フォルダの場所を選んでください。"
+      },
+      "zh": {
+        "text": "你选择的位置是一个文件（或路径上有文件挡住），而不是文件夹。请选择一个文件夹位置。"
+      },
+      "ko": {
+        "text": "선택한 위치는 폴더가 아니라 파일입니다(또는 경로 중간에 파일이 있습니다). 폴더 위치를 선택하세요."
+      },
+      "fr": {
+        "text": "L’emplacement choisi est un fichier (ou un fichier gêne le chemin), pas un dossier. Choisissez l’emplacement d’un dossier."
+      },
+      "de": {
+        "text": "Der gewählte Ort ist eine Datei (oder eine Datei steht im Weg), kein Ordner. Wähle einen Ordner als Ort."
+      },
+      "es": {
+        "text": "La ubicación que elegiste es un archivo (o hay un archivo en el camino), no una carpeta. Elige la ubicación de una carpeta."
+      },
+      "pt": {
+        "text": "O local escolhido é um arquivo (ou há um arquivo no caminho), não uma pasta. Escolha o local de uma pasta."
+      },
+      "ar": {
+        "text": "الموقع الذي اخترته ملف (أو يعترض المسارَ ملف)، وليس مجلدًا. اختر موقع مجلد."
+      },
+      "hi": {
+        "text": "आपकी चुनी गई जगह एक फ़ाइल है (या रास्ते में कोई फ़ाइल है), फ़ोल्डर नहीं। किसी फ़ोल्डर की जगह चुनें।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "home:disposition:HELD_NOT_A_DIRECTORY"
+  },
+  "setup.description.home-held-link": {
+    "strings": {
+      "en": {
+        "text": "The location you chose is a link to somewhere else. Choose the real folder so your Home has one exact location."
+      },
+      "ja": {
+        "text": "選んだ場所は別の場所へのリンクです。Home の場所が 1 つに定まるよう、実際のフォルダを選んでください。"
+      },
+      "zh": {
+        "text": "你选择的位置是指向别处的链接。请选择真实的文件夹，让你的 Home 只有一个确切的位置。"
+      },
+      "ko": {
+        "text": "선택한 위치는 다른 곳을 가리키는 링크입니다. Home이 정확히 한 곳에 있도록 실제 폴더를 선택하세요."
+      },
+      "fr": {
+        "text": "L’emplacement choisi est un lien vers un autre endroit. Choisissez le vrai dossier afin que votre Home ait un emplacement unique et exact."
+      },
+      "de": {
+        "text": "Der gewählte Ort ist ein Verweis auf einen anderen Ort. Wähle den tatsächlichen Ordner, damit dein Home genau einen Ort hat."
+      },
+      "es": {
+        "text": "La ubicación que elegiste es un enlace a otro lugar. Elige la carpeta real para que tu Home tenga una ubicación exacta."
+      },
+      "pt": {
+        "text": "O local escolhido é um link para outro lugar. Escolha a pasta real para que seu Home tenha um único local exato."
+      },
+      "ar": {
+        "text": "الموقع الذي اخترته رابط إلى مكان آخر. اختر المجلد الحقيقي ليكون لـ Home موقع واحد محدد."
+      },
+      "hi": {
+        "text": "आपकी चुनी गई जगह किसी दूसरी जगह का लिंक है। असली फ़ोल्डर चुनें ताकि आपके Home की एक ही सटीक जगह हो।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "home:disposition:HELD_SYMBOLIC_LINK"
+  },
+  "setup.description.home-held-not-writable": {
+    "strings": {
+      "en": {
+        "text": "This Mac user cannot create folders there. Choose a location inside your own user folder, such as the suggested ~/.vexlife."
+      },
+      "ja": {
+        "text": "この Mac ユーザーはその場所にフォルダを作成できません。おすすめの ~/.vexlife など、自分のユーザーフォルダ内の場所を選んでください。"
+      },
+      "zh": {
+        "text": "这个 Mac 用户无法在那里创建文件夹。请选择你自己用户文件夹内的位置，例如建议的 ~/.vexlife。"
+      },
+      "ko": {
+        "text": "이 Mac 사용자는 그곳에 폴더를 만들 수 없습니다. 권장 위치인 ~/.vexlife처럼 본인의 사용자 폴더 안에 있는 위치를 선택하세요."
+      },
+      "fr": {
+        "text": "Cet utilisateur du Mac ne peut pas créer de dossiers à cet endroit. Choisissez un emplacement dans votre propre dossier utilisateur, comme ~/.vexlife, l’emplacement suggéré."
+      },
+      "de": {
+        "text": "Dieser Mac-Benutzer kann dort keine Ordner erstellen. Wähle einen Ort in deinem eigenen Benutzerordner, zum Beispiel den vorgeschlagenen ~/.vexlife."
+      },
+      "es": {
+        "text": "Este usuario del Mac no puede crear carpetas ahí. Elige una ubicación dentro de tu propia carpeta de usuario, como la sugerida ~/.vexlife."
+      },
+      "pt": {
+        "text": "Este usuário do Mac não pode criar pastas ali. Escolha um local dentro da sua própria pasta de usuário, como o sugerido ~/.vexlife."
+      },
+      "ar": {
+        "text": "لا يستطيع مستخدم Mac هذا إنشاء مجلدات هناك. اختر موقعًا داخل مجلد المستخدم الخاص بك، مثل الموقع المقترح ~/.vexlife."
+      },
+      "hi": {
+        "text": "यह Mac यूज़र वहाँ फ़ोल्डर नहीं बना सकता। अपने यूज़र फ़ोल्डर के अंदर की कोई जगह चुनें, जैसे सुझाई गई ~/.vexlife।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "home:disposition:HELD_LOCATION_NOT_WRITABLE"
+  },
+  "setup.description.home-held-unreadable": {
+    "strings": {
+      "en": {
+        "text": "VexLife could not read that location. If macOS asked for permission, you can allow it and choose Check Again, or choose another location."
+      },
+      "ja": {
+        "text": "VexLife はその場所を読み取れませんでした。macOS が許可を求めた場合は許可してから「もう一度確認」を選ぶか、別の場所を選んでください。"
+      },
+      "zh": {
+        "text": "VexLife 无法读取该位置。如果 macOS 请求权限，你可以允许后选择“再次检查”，或选择其他位置。"
+      },
+      "ko": {
+        "text": "VexLife가 그 위치를 읽을 수 없었습니다. macOS가 권한을 요청했다면 허용한 뒤 '다시 확인'을 선택하거나 다른 위치를 선택하세요."
+      },
+      "fr": {
+        "text": "VexLife n’a pas pu lire cet emplacement. Si macOS a demandé une autorisation, vous pouvez l’accorder puis choisir « Vérifier à nouveau », ou choisir un autre emplacement."
+      },
+      "de": {
+        "text": "VexLife konnte diesen Ort nicht lesen. Wenn macOS um Erlaubnis gefragt hat, kannst du sie erteilen und „Erneut prüfen“ wählen, oder einen anderen Ort wählen."
+      },
+      "es": {
+        "text": "VexLife no pudo leer esa ubicación. Si macOS pidió permiso, puedes concederlo y elegir «Comprobar de nuevo», o elegir otra ubicación."
+      },
+      "pt": {
+        "text": "O VexLife não conseguiu ler esse local. Se o macOS pediu permissão, você pode permitir e escolher “Verificar de novo”, ou escolher outro local."
+      },
+      "ar": {
+        "text": "تعذّر على VexLife قراءة ذلك الموقع. إذا طلب macOS إذنًا، يمكنك السماح به ثم اختيار «التحقق مرة أخرى»، أو اختيار موقع آخر."
+      },
+      "hi": {
+        "text": "VexLife उस जगह को पढ़ नहीं सका। अगर macOS ने अनुमति माँगी है, तो अनुमति देकर “फिर से जाँचें” चुनें, या कोई दूसरी जगह चुनें।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "home:disposition:HELD_LOCATION_UNREADABLE"
+  },
+  "setup.description.host-held": {
+    "strings": {
+      "en": {
+        "text": "{reason} {requirement} {observed} {outcome}"
+      },
+      "ja": {
+        "text": "{reason}{requirement}{observed}{outcome}"
+      },
+      "zh": {
+        "text": "{reason}{requirement}{observed}{outcome}"
+      },
+      "ko": {
+        "text": "{reason} {requirement} {observed} {outcome}"
+      },
+      "fr": {
+        "text": "{reason} {requirement} {observed} {outcome}"
+      },
+      "de": {
+        "text": "{reason} {requirement} {observed} {outcome}"
+      },
+      "es": {
+        "text": "{reason} {requirement} {observed} {outcome}"
+      },
+      "pt": {
+        "text": "{reason} {requirement} {observed} {outcome}"
+      },
+      "ar": {
+        "text": "{reason} {requirement} {observed} {outcome}"
+      },
+      "hi": {
+        "text": "{reason} {requirement} {observed} {outcome}"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:HOST_HELD"
+  },
+  "setup.description.host-reason-platform": {
+    "strings": {
+      "en": {
+        "text": "VexLife setup currently runs on macOS only."
+      },
+      "ja": {
+        "text": "VexLife のセットアップは現在 macOS でのみ動作します。"
+      },
+      "zh": {
+        "text": "VexLife 设置目前只支持 macOS。"
+      },
+      "ko": {
+        "text": "VexLife 설정은 현재 macOS에서만 실행됩니다."
+      },
+      "fr": {
+        "text": "La configuration de VexLife fonctionne actuellement sur macOS uniquement."
+      },
+      "de": {
+        "text": "Die Einrichtung von VexLife läuft derzeit nur unter macOS."
+      },
+      "es": {
+        "text": "Por ahora, la configuración de VexLife solo funciona en macOS."
+      },
+      "pt": {
+        "text": "A configuração do VexLife funciona atualmente apenas no macOS."
+      },
+      "ar": {
+        "text": "يعمل إعداد VexLife حاليًا على macOS فقط."
+      },
+      "hi": {
+        "text": "VexLife सेटअप अभी केवल macOS पर चलता है।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "host:reason:PLATFORM_UNSUPPORTED"
+  },
+  "setup.description.host-reason-architecture": {
+    "strings": {
+      "en": {
+        "text": "This Mac does not use Apple silicon."
+      },
+      "ja": {
+        "text": "この Mac は Apple シリコンを搭載していません。"
+      },
+      "zh": {
+        "text": "这台 Mac 没有使用 Apple 芯片。"
+      },
+      "ko": {
+        "text": "이 Mac은 Apple 실리콘을 사용하지 않습니다."
+      },
+      "fr": {
+        "text": "Ce Mac n’utilise pas de puce Apple."
+      },
+      "de": {
+        "text": "Dieser Mac verwendet keinen Apple Chip."
+      },
+      "es": {
+        "text": "Este Mac no usa un chip de Apple."
+      },
+      "pt": {
+        "text": "Este Mac não usa um chip da Apple."
+      },
+      "ar": {
+        "text": "جهاز Mac هذا لا يستخدم شريحة Apple."
+      },
+      "hi": {
+        "text": "यह Mac Apple silicon का इस्तेमाल नहीं करता।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "host:reason:ARCHITECTURE_UNSUPPORTED"
+  },
+  "setup.description.host-reason-memory-unknown": {
+    "strings": {
+      "en": {
+        "text": "VexLife could not read how much memory this Mac has."
+      },
+      "ja": {
+        "text": "VexLife はこの Mac のメモリ容量を読み取れませんでした。"
+      },
+      "zh": {
+        "text": "VexLife 无法读取这台 Mac 的内存大小。"
+      },
+      "ko": {
+        "text": "VexLife가 이 Mac의 메모리 용량을 읽을 수 없었습니다."
+      },
+      "fr": {
+        "text": "VexLife n’a pas pu lire la quantité de mémoire de ce Mac."
+      },
+      "de": {
+        "text": "VexLife konnte nicht feststellen, wie viel Arbeitsspeicher dieser Mac hat."
+      },
+      "es": {
+        "text": "VexLife no pudo leer cuánta memoria tiene este Mac."
+      },
+      "pt": {
+        "text": "O VexLife não conseguiu ler quanta memória este Mac tem."
+      },
+      "ar": {
+        "text": "تعذّر على VexLife معرفة مقدار ذاكرة جهاز Mac هذا."
+      },
+      "hi": {
+        "text": "VexLife यह नहीं पढ़ सका कि इस Mac में कितनी मेमोरी है।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "host:reason:SYSTEM_MEMORY_UNKNOWN"
+  },
+  "setup.description.host-reason-memory-low": {
+    "strings": {
+      "en": {
+        "text": "This Mac has less memory than the local model needs."
+      },
+      "ja": {
+        "text": "この Mac のメモリは、ローカルモデルに必要な量より少なくなっています。"
+      },
+      "zh": {
+        "text": "这台 Mac 的内存少于本地模型的需求。"
+      },
+      "ko": {
+        "text": "이 Mac의 메모리가 로컬 모델에 필요한 양보다 적습니다."
+      },
+      "fr": {
+        "text": "Ce Mac dispose de moins de mémoire que ce dont le modèle local a besoin."
+      },
+      "de": {
+        "text": "Dieser Mac hat weniger Arbeitsspeicher, als das lokale Modell braucht."
+      },
+      "es": {
+        "text": "Este Mac tiene menos memoria de la que necesita el modelo local."
+      },
+      "pt": {
+        "text": "Este Mac tem menos memória do que o modelo local precisa."
+      },
+      "ar": {
+        "text": "ذاكرة جهاز Mac هذا أقل مما يحتاجه النموذج المحلي."
+      },
+      "hi": {
+        "text": "इस Mac में लोकल मॉडल की ज़रूरत से कम मेमोरी है।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "host:reason:INSUFFICIENT_SYSTEM_MEMORY"
+  },
+  "setup.description.host-reason-chip": {
+    "strings": {
+      "en": {
+        "text": "This Mac's chip is not yet certified for the local model."
+      },
+      "ja": {
+        "text": "この Mac のチップは、まだローカルモデル用に認定されていません。"
+      },
+      "zh": {
+        "text": "这台 Mac 的芯片尚未获准运行本地模型。"
+      },
+      "ko": {
+        "text": "이 Mac의 칩은 아직 로컬 모델용으로 인증되지 않았습니다."
+      },
+      "fr": {
+        "text": "La puce de ce Mac n’est pas encore certifiée pour le modèle local."
+      },
+      "de": {
+        "text": "Der Chip dieses Mac ist für das lokale Modell noch nicht zertifiziert."
+      },
+      "es": {
+        "text": "El chip de este Mac aún no está certificado para el modelo local."
+      },
+      "pt": {
+        "text": "O chip deste Mac ainda não está certificado para o modelo local."
+      },
+      "ar": {
+        "text": "شريحة جهاز Mac هذا غير معتمدة بعد للنموذج المحلي."
+      },
+      "hi": {
+        "text": "इस Mac की चिप अभी लोकल मॉडल के लिए प्रमाणित नहीं है।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "host:reason:CHIP_MODEL_UNSUPPORTED"
+  },
+  "setup.description.host-requirement": {
+    "strings": {
+      "en": {
+        "text": "VexLife's local model currently runs on Macs with an {chip} chip and at least {memory} GiB of memory."
+      },
+      "ja": {
+        "text": "VexLife のローカルモデルは現在、{chip} チップと {memory} GiB 以上のメモリを搭載した Mac で動作します。"
+      },
+      "zh": {
+        "text": "VexLife 的本地模型目前需要配备 {chip} 芯片且至少有 {memory} GiB 内存的 Mac。"
+      },
+      "ko": {
+        "text": "VexLife의 로컬 모델은 현재 {chip} 칩과 {memory} GiB 이상의 메모리를 갖춘 Mac에서 실행됩니다."
+      },
+      "fr": {
+        "text": "Le modèle local de VexLife fonctionne actuellement sur les Mac équipés d’une puce {chip} et d’au moins {memory} Gio de mémoire."
+      },
+      "de": {
+        "text": "Das lokale Modell von VexLife läuft derzeit auf Macs mit einem {chip} Chip und mindestens {memory} GiB Arbeitsspeicher."
+      },
+      "es": {
+        "text": "Por ahora, el modelo local de VexLife funciona en Mac con un chip {chip} y al menos {memory} GiB de memoria."
+      },
+      "pt": {
+        "text": "Atualmente, o modelo local do VexLife funciona em Macs com chip {chip} e pelo menos {memory} GiB de memória."
+      },
+      "ar": {
+        "text": "يعمل النموذج المحلي لـ VexLife حاليًا على أجهزة Mac المزودة بشريحة {chip} وذاكرة لا تقل عن {memory} GiB."
+      },
+      "hi": {
+        "text": "VexLife का लोकल मॉडल अभी उन Mac पर चलता है जिनमें {chip} चिप और कम से कम {memory} GiB मेमोरी हो।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.description.host-observed": {
+    "strings": {
+      "en": {
+        "text": "This Mac: {chip}, {memory}."
+      },
+      "ja": {
+        "text": "この Mac：{chip}、{memory}。"
+      },
+      "zh": {
+        "text": "这台 Mac：{chip}，{memory}。"
+      },
+      "ko": {
+        "text": "이 Mac: {chip}, {memory}."
+      },
+      "fr": {
+        "text": "Ce Mac : {chip}, {memory}."
+      },
+      "de": {
+        "text": "Dieser Mac: {chip}, {memory}."
+      },
+      "es": {
+        "text": "Este Mac: {chip}, {memory}."
+      },
+      "pt": {
+        "text": "Este Mac: {chip}, {memory}."
+      },
+      "ar": {
+        "text": "جهاز Mac هذا: {chip}، {memory}."
+      },
+      "hi": {
+        "text": "यह Mac: {chip}, {memory}।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.description.host-home-untouched": {
+    "strings": {
+      "en": {
+        "text": "Your existing Vex Home was left untouched."
+      },
+      "ja": {
+        "text": "既存の Vex Home には手を加えていません。"
+      },
+      "zh": {
+        "text": "你现有的 Vex Home 没有被改动。"
+      },
+      "ko": {
+        "text": "기존 Vex Home은 건드리지 않았습니다."
+      },
+      "fr": {
+        "text": "Votre Vex Home existant n’a pas été modifié."
+      },
+      "de": {
+        "text": "Dein vorhandenes Vex Home wurde nicht angetastet."
+      },
+      "es": {
+        "text": "Tu Vex Home existente no se tocó."
+      },
+      "pt": {
+        "text": "Seu Vex Home existente não foi tocado."
+      },
+      "ar": {
+        "text": "لم يُمَسّ Vex Home الموجود لديك."
+      },
+      "hi": {
+        "text": "आपके मौजूदा Vex Home को छुआ नहीं गया।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.description.host-nothing-created": {
+    "strings": {
+      "en": {
+        "text": "Nothing was created or downloaded."
+      },
+      "ja": {
+        "text": "何も作成・ダウンロードしていません。"
+      },
+      "zh": {
+        "text": "没有创建或下载任何内容。"
+      },
+      "ko": {
+        "text": "아무것도 만들거나 다운로드하지 않았습니다."
+      },
+      "fr": {
+        "text": "Rien n’a été créé ni téléchargé."
+      },
+      "de": {
+        "text": "Es wurde nichts erstellt oder heruntergeladen."
+      },
+      "es": {
+        "text": "No se creó ni se descargó nada."
+      },
+      "pt": {
+        "text": "Nada foi criado nem baixado."
+      },
+      "ar": {
+        "text": "لم يُنشأ أو يُنزَّل أي شيء."
+      },
+      "hi": {
+        "text": "कुछ भी बनाया या डाउनलोड नहीं किया गया।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.description.setup-required": {
+    "strings": {
+      "en": {
+        "text": "Your Vex Home is ready. Next, VexLife downloads its verified local model and runtime into your Home and starts VexLife. Review the size and requirements before you continue. If the download is interrupted, finished parts are kept and it resumes next time."
+      },
+      "ja": {
+        "text": "Vex Home の準備ができました。次に VexLife は、検証済みのローカルモデルとランタイムを Home にダウンロードして VexLife を起動します。続ける前にサイズと要件を確認してください。ダウンロードが中断しても、完了した部分は残り、次回そこから再開します。"
+      },
+      "zh": {
+        "text": "你的 Vex Home 已就绪。接下来，VexLife 会把经过验证的本地模型和运行环境下载到你的 Home 中，然后启动 VexLife。继续之前，请先查看大小和要求。如果下载中断，已完成的部分会保留，下次会从中断处继续。"
+      },
+      "ko": {
+        "text": "Vex Home이 준비되었습니다. 다음으로 VexLife가 검증된 로컬 모델과 런타임을 Home에 다운로드하고 VexLife를 시작합니다. 계속하기 전에 크기와 요구 사항을 확인하세요. 다운로드가 중단되더라도 완료된 부분은 보존되며 다음에 이어서 진행됩니다."
+      },
+      "fr": {
+        "text": "Votre Vex Home est prêt. VexLife va maintenant télécharger son modèle local et son environnement d’exécution vérifiés dans votre Home, puis démarrer VexLife. Vérifiez la taille et la configuration requise avant de continuer. Si le téléchargement est interrompu, les parties terminées sont conservées et il reprend la fois suivante."
+      },
+      "de": {
+        "text": "Dein Vex Home ist bereit. Als Nächstes lädt VexLife sein geprüftes lokales Modell und die Laufzeitumgebung in dein Home und startet VexLife. Prüfe Größe und Anforderungen, bevor du fortfährst. Wird der Download unterbrochen, bleiben fertige Teile erhalten und er wird beim nächsten Mal fortgesetzt."
+      },
+      "es": {
+        "text": "Tu Vex Home está listo. A continuación, VexLife descarga en tu Home su modelo local y su entorno de ejecución verificados e inicia VexLife. Revisa el tamaño y los requisitos antes de continuar. Si la descarga se interrumpe, las partes terminadas se conservan y continúa la próxima vez."
+      },
+      "pt": {
+        "text": "Seu Vex Home está pronto. Em seguida, o VexLife baixa para o seu Home o modelo local e o ambiente de execução verificados e inicia o VexLife. Revise o tamanho e os requisitos antes de continuar. Se o download for interrompido, as partes concluídas são mantidas e ele continua na próxima vez."
+      },
+      "ar": {
+        "text": "Vex Home الخاص بك جاهز. بعد ذلك ينزّل VexLife نموذجه المحلي وبيئة التشغيل الموثّقة إلى Home ويشغّل VexLife. راجع الحجم والمتطلبات قبل المتابعة. إذا انقطع التنزيل، تُحفظ الأجزاء المكتملة ويُستأنف في المرة القادمة."
+      },
+      "hi": {
+        "text": "आपका Vex Home तैयार है। आगे, VexLife अपना सत्यापित लोकल मॉडल और रनटाइम आपके Home में डाउनलोड करता है और VexLife शुरू करता है। आगे बढ़ने से पहले आकार और ज़रूरतें देख लें। अगर डाउनलोड रुक जाए, तो पूरे हो चुके हिस्से रखे जाते हैं और अगली बार वहीं से जारी होता है।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:SETUP_REQUIRED"
+  },
+  "setup.description.storage-held": {
+    "strings": {
+      "en": {
+        "text": "VexLife needs about {required} GiB free on the drive that holds your Vex Home before it can download the local model. That drive has {free} GiB free. Free up space and choose Check Again, or choose a location on another drive. Nothing was downloaded."
+      },
+      "ja": {
+        "text": "ローカルモデルをダウンロードするには、Vex Home があるドライブに約 {required} GiB の空き容量が必要です。そのドライブの空きは {free} GiB です。空き容量を増やしてから「もう一度確認」を選ぶか、別のドライブの場所を選んでください。何もダウンロードしていません。"
+      },
+      "zh": {
+        "text": "VexLife 需要存放 Vex Home 的磁盘上有大约 {required} GiB 可用空间，才能下载本地模型。该磁盘目前有 {free} GiB 可用。请释放空间后选择“再次检查”，或选择另一块磁盘上的位置。没有下载任何内容。"
+      },
+      "ko": {
+        "text": "로컬 모델을 다운로드하려면 Vex Home이 있는 드라이브에 약 {required} GiB의 여유 공간이 필요합니다. 해당 드라이브의 여유 공간은 {free} GiB입니다. 공간을 확보한 뒤 '다시 확인'을 선택하거나 다른 드라이브의 위치를 선택하세요. 아무것도 다운로드하지 않았습니다."
+      },
+      "fr": {
+        "text": "VexLife a besoin d’environ {required} Gio libres sur le disque qui contient votre Vex Home pour télécharger le modèle local. Ce disque dispose de {free} Gio libres. Libérez de l’espace et choisissez « Vérifier à nouveau », ou choisissez un emplacement sur un autre disque. Rien n’a été téléchargé."
+      },
+      "de": {
+        "text": "VexLife braucht etwa {required} GiB freien Speicher auf dem Laufwerk mit deinem Vex Home, bevor es das lokale Modell herunterladen kann. Dieses Laufwerk hat {free} GiB frei. Schaffe Platz und wähle „Erneut prüfen“ oder wähle einen Ort auf einem anderen Laufwerk. Es wurde nichts heruntergeladen."
+      },
+      "es": {
+        "text": "VexLife necesita unos {required} GiB libres en el disco donde está tu Vex Home para poder descargar el modelo local. Ese disco tiene {free} GiB libres. Libera espacio y elige «Comprobar de nuevo», o elige una ubicación en otro disco. No se descargó nada."
+      },
+      "pt": {
+        "text": "O VexLife precisa de cerca de {required} GiB livres no disco onde está seu Vex Home para baixar o modelo local. Esse disco tem {free} GiB livres. Libere espaço e escolha “Verificar de novo”, ou escolha um local em outro disco. Nada foi baixado."
+      },
+      "ar": {
+        "text": "يحتاج VexLife إلى نحو {required} GiB من المساحة الفارغة على القرص الذي يحتوي على Vex Home قبل أن يتمكن من تنزيل النموذج المحلي. يحتوي ذلك القرص على {free} GiB فارغة. أفرغ بعض المساحة واختر «التحقق مرة أخرى»، أو اختر موقعًا على قرص آخر. لم يُنزَّل أي شيء."
+      },
+      "hi": {
+        "text": "लोकल मॉडल डाउनलोड करने से पहले VexLife को उस ड्राइव पर लगभग {required} GiB खाली जगह चाहिए जिस पर आपका Vex Home है। उस ड्राइव पर {free} GiB खाली है। जगह खाली करके “फिर से जाँचें” चुनें, या किसी दूसरी ड्राइव पर जगह चुनें। कुछ भी डाउनलोड नहीं किया गया।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:STORAGE_HELD"
+  },
+  "setup.description.model-files-held": {
+    "strings": {
+      "en": {
+        "text": "Some model files in your Vex Home are not the size VexLife expects ({affected} GiB affected). VexLife keeps them and will not delete or replace them on its own. If you moved or edited files inside your Vex Home, put them back and choose Check Again. Guided model-file repair is not part of this setup yet."
+      },
+      "ja": {
+        "text": "Vex Home 内の一部のモデルファイルが、VexLife の想定するサイズと一致しません（{affected} GiB が該当）。VexLife はそれらを残したままにし、自動で削除・置き換えすることはありません。Vex Home 内のファイルを移動・編集した場合は元に戻し、「もう一度確認」を選んでください。モデルファイルの修復ガイドは、このセットアップにはまだ含まれていません。"
+      },
+      "zh": {
+        "text": "你的 Vex Home 中有些模型文件的大小与 VexLife 预期的不符（涉及 {affected} GiB）。VexLife 会保留它们，不会自行删除或替换。如果你移动或编辑过 Vex Home 中的文件，请把它们放回原处，然后选择“再次检查”。此设置暂不包含模型文件的引导式修复。"
+      },
+      "ko": {
+        "text": "Vex Home의 일부 모델 파일이 VexLife가 예상한 크기와 다릅니다({affected} GiB 해당). VexLife는 이 파일을 그대로 두며 임의로 삭제하거나 교체하지 않습니다. Vex Home 안의 파일을 옮기거나 수정했다면 원래대로 되돌린 뒤 '다시 확인'을 선택하세요. 모델 파일 복구 안내는 아직 이 설정에 포함되어 있지 않습니다."
+      },
+      "fr": {
+        "text": "Certains fichiers du modèle dans votre Vex Home n’ont pas la taille attendue par VexLife ({affected} Gio concernés). VexLife les conserve et ne les supprimera ni ne les remplacera de lui-même. Si vous avez déplacé ou modifié des fichiers dans votre Vex Home, remettez-les en place et choisissez « Vérifier à nouveau ». La réparation guidée des fichiers du modèle ne fait pas encore partie de cette configuration."
+      },
+      "de": {
+        "text": "Einige Modelldateien in deinem Vex Home haben nicht die Größe, die VexLife erwartet ({affected} GiB betroffen). VexLife behält sie und wird sie nicht von sich aus löschen oder ersetzen. Wenn du Dateien in deinem Vex Home verschoben oder bearbeitet hast, stelle sie wieder her und wähle „Erneut prüfen“. Eine geführte Reparatur der Modelldateien ist noch nicht Teil dieser Einrichtung."
+      },
+      "es": {
+        "text": "Algunos archivos del modelo en tu Vex Home no tienen el tamaño que VexLife espera ({affected} GiB afectados). VexLife los conserva y no los eliminará ni reemplazará por su cuenta. Si moviste o editaste archivos dentro de tu Vex Home, vuelve a ponerlos en su sitio y elige «Comprobar de nuevo». La reparación guiada de archivos del modelo todavía no forma parte de esta configuración."
+      },
+      "pt": {
+        "text": "Alguns arquivos do modelo no seu Vex Home não têm o tamanho que o VexLife espera ({affected} GiB afetados). O VexLife os mantém e não vai apagá-los nem substituí-los por conta própria. Se você moveu ou editou arquivos dentro do seu Vex Home, coloque-os de volta e escolha “Verificar de novo”. O reparo guiado de arquivos do modelo ainda não faz parte desta configuração."
+      },
+      "ar": {
+        "text": "بعض ملفات النموذج في Vex Home ليست بالحجم الذي يتوقعه VexLife (المتأثر {affected} GiB). يحتفظ VexLife بها ولن يحذفها أو يستبدلها من تلقاء نفسه. إذا نقلت ملفات داخل Vex Home أو عدّلتها، فأعدها إلى مكانها واختر «التحقق مرة أخرى». الإصلاح الموجَّه لملفات النموذج ليس جزءًا من هذا الإعداد بعد."
+      },
+      "hi": {
+        "text": "आपके Vex Home में मॉडल की कुछ फ़ाइलें उस आकार की नहीं हैं जिसकी VexLife को उम्मीद है ({affected} GiB प्रभावित)। VexLife उन्हें रखता है और अपने आप न मिटाएगा, न बदलेगा। अगर आपने Vex Home के अंदर फ़ाइलें हटाई या बदली हैं, तो उन्हें वापस रखें और “फिर से जाँचें” चुनें। मॉडल फ़ाइलों की निर्देशित मरम्मत अभी इस सेटअप का हिस्सा नहीं है।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:MODEL_FILES_HELD"
+  },
+  "setup.description.held-unknown": {
+    "strings": {
+      "en": {
+        "text": "Something is already using VexLife's background service on this Mac, and VexLife cannot prove it belongs to the Home you chose. To keep your data safe it will not stop or replace it. If you already have a Vex Home somewhere else, choose that location. Otherwise quit the other VexLife and choose Check Again."
+      },
+      "ja": {
+        "text": "この Mac ではすでに何かが VexLife のバックグラウンドサービスを使用しており、それが選んだ Home のものだと VexLife は確認できません。データを守るため、停止も置き換えもしません。別の場所にすでに Vex Home がある場合は、その場所を選んでください。そうでなければ、もう一方の VexLife を終了してから「もう一度確認」を選んでください。"
+      },
+      "zh": {
+        "text": "这台 Mac 上已经有程序在使用 VexLife 的后台服务，而 VexLife 无法证明它属于你选择的 Home。为保护你的数据，VexLife 不会停止或替换它。如果你在其他位置已有 Vex Home，请选择那个位置；否则请退出另一个 VexLife，然后选择“再次检查”。"
+      },
+      "ko": {
+        "text": "이 Mac에서 이미 무언가가 VexLife의 백그라운드 서비스를 사용 중이며, VexLife는 그것이 선택한 Home의 것임을 확인할 수 없습니다. 데이터를 보호하기 위해 중지하거나 교체하지 않습니다. 다른 곳에 이미 Vex Home이 있다면 그 위치를 선택하세요. 그렇지 않다면 다른 VexLife를 종료한 뒤 '다시 확인'을 선택하세요."
+      },
+      "fr": {
+        "text": "Quelque chose utilise déjà le service d’arrière-plan de VexLife sur ce Mac, et VexLife ne peut pas prouver qu’il appartient au Home choisi. Pour protéger vos données, il ne l’arrêtera ni ne le remplacera. Si vous avez déjà un Vex Home ailleurs, choisissez cet emplacement. Sinon, quittez l’autre VexLife et choisissez « Vérifier à nouveau »."
+      },
+      "de": {
+        "text": "Etwas nutzt auf diesem Mac bereits den Hintergrunddienst von VexLife, und VexLife kann nicht nachweisen, dass es zu dem gewählten Home gehört. Um deine Daten zu schützen, wird es weder gestoppt noch ersetzt. Wenn du bereits woanders ein Vex Home hast, wähle diesen Ort. Andernfalls beende das andere VexLife und wähle „Erneut prüfen“."
+      },
+      "es": {
+        "text": "Algo ya está usando el servicio en segundo plano de VexLife en este Mac, y VexLife no puede demostrar que pertenezca al Home que elegiste. Para proteger tus datos, no lo detendrá ni lo reemplazará. Si ya tienes un Vex Home en otro lugar, elige esa ubicación. Si no, cierra el otro VexLife y elige «Comprobar de nuevo»."
+      },
+      "pt": {
+        "text": "Algo já está usando o serviço em segundo plano do VexLife neste Mac, e o VexLife não consegue provar que ele pertence ao Home escolhido. Para proteger seus dados, ele não vai pará-lo nem substituí-lo. Se você já tem um Vex Home em outro lugar, escolha esse local. Caso contrário, encerre o outro VexLife e escolha “Verificar de novo”."
+      },
+      "ar": {
+        "text": "هناك شيء يستخدم بالفعل خدمة VexLife في الخلفية على جهاز Mac هذا، ولا يستطيع VexLife إثبات أنه يخص الـ Home الذي اخترته. وحفاظًا على بياناتك لن يوقفه أو يستبدله. إذا كان لديك Vex Home في مكان آخر، فاختر ذلك الموقع. وإلا فأغلق نسخة VexLife الأخرى واختر «التحقق مرة أخرى»."
+      },
+      "hi": {
+        "text": "इस Mac पर कोई चीज़ पहले से VexLife की बैकग्राउंड सेवा का इस्तेमाल कर रही है, और VexLife यह साबित नहीं कर सकता कि वह आपके चुने गए Home की है। आपके डेटा को सुरक्षित रखने के लिए वह उसे न रोकेगा, न बदलेगा। अगर आपका Vex Home पहले से कहीं और है, तो वह जगह चुनें। नहीं तो दूसरा VexLife बंद करें और “फिर से जाँचें” चुनें।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:HOLD_UNKNOWN"
+  },
+  "setup.button.open-vexlife": {
+    "strings": {
+      "en": {
+        "text": "Open VexLife"
+      },
+      "ja": {
+        "text": "VexLife を開く"
+      },
+      "zh": {
+        "text": "打开 VexLife"
+      },
+      "ko": {
+        "text": "VexLife 열기"
+      },
+      "fr": {
+        "text": "Ouvrir VexLife"
+      },
+      "de": {
+        "text": "VexLife öffnen"
+      },
+      "es": {
+        "text": "Abrir VexLife"
+      },
+      "pt": {
+        "text": "Abrir o VexLife"
+      },
+      "ar": {
+        "text": "فتح VexLife"
+      },
+      "hi": {
+        "text": "VexLife खोलें"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:control:OPEN_CURRENT"
+  },
+  "setup.button.update-restart": {
+    "strings": {
+      "en": {
+        "text": "Update & Restart"
+      },
+      "ja": {
+        "text": "アップデートして再起動"
+      },
+      "zh": {
+        "text": "更新并重新启动"
+      },
+      "ko": {
+        "text": "업데이트 후 재시작"
+      },
+      "fr": {
+        "text": "Mettre à jour et redémarrer"
+      },
+      "de": {
+        "text": "Aktualisieren und neu starten"
+      },
+      "es": {
+        "text": "Actualizar y reiniciar"
+      },
+      "pt": {
+        "text": "Atualizar e reiniciar"
+      },
+      "ar": {
+        "text": "تحديث وإعادة تشغيل"
+      },
+      "hi": {
+        "text": "अपडेट करें और फिर से शुरू करें"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:control:CONVERGE_DESIRED"
+  },
+  "setup.button.open-current": {
+    "strings": {
+      "en": {
+        "text": "Open Current"
+      },
+      "ja": {
+        "text": "現在のバージョンを開く"
+      },
+      "zh": {
+        "text": "打开当前版本"
+      },
+      "ko": {
+        "text": "현재 버전 열기"
+      },
+      "fr": {
+        "text": "Ouvrir la version actuelle"
+      },
+      "de": {
+        "text": "Aktuelle Version öffnen"
+      },
+      "es": {
+        "text": "Abrir la versión actual"
+      },
+      "pt": {
+        "text": "Abrir a versão atual"
+      },
+      "ar": {
+        "text": "فتح الإصدار الحالي"
+      },
+      "hi": {
+        "text": "मौजूदा संस्करण खोलें"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:control:OPEN_CURRENT"
+  },
+  "setup.button.repair-restart": {
+    "strings": {
+      "en": {
+        "text": "Repair & Restart"
+      },
+      "ja": {
+        "text": "修復して再起動"
+      },
+      "zh": {
+        "text": "修复并重新启动"
+      },
+      "ko": {
+        "text": "복구 후 재시작"
+      },
+      "fr": {
+        "text": "Réparer et redémarrer"
+      },
+      "de": {
+        "text": "Reparieren und neu starten"
+      },
+      "es": {
+        "text": "Reparar y reiniciar"
+      },
+      "pt": {
+        "text": "Reparar e reiniciar"
+      },
+      "ar": {
+        "text": "إصلاح وإعادة تشغيل"
+      },
+      "hi": {
+        "text": "ठीक करें और फिर से शुरू करें"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:control:CONVERGE_DESIRED"
+  },
+  "setup.button.start-vexlife": {
+    "strings": {
+      "en": {
+        "text": "Start VexLife"
+      },
+      "ja": {
+        "text": "VexLife を起動"
+      },
+      "zh": {
+        "text": "启动 VexLife"
+      },
+      "ko": {
+        "text": "VexLife 시작"
+      },
+      "fr": {
+        "text": "Démarrer VexLife"
+      },
+      "de": {
+        "text": "VexLife starten"
+      },
+      "es": {
+        "text": "Iniciar VexLife"
+      },
+      "pt": {
+        "text": "Iniciar o VexLife"
+      },
+      "ar": {
+        "text": "تشغيل VexLife"
+      },
+      "hi": {
+        "text": "VexLife शुरू करें"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:control:START"
+  },
+  "setup.button.create-home": {
+    "strings": {
+      "en": {
+        "text": "Create Vex Home"
+      },
+      "ja": {
+        "text": "Vex Home を作成"
+      },
+      "zh": {
+        "text": "创建 Vex Home"
+      },
+      "ko": {
+        "text": "Vex Home 만들기"
+      },
+      "fr": {
+        "text": "Créer le Vex Home"
+      },
+      "de": {
+        "text": "Vex Home erstellen"
+      },
+      "es": {
+        "text": "Crear Vex Home"
+      },
+      "pt": {
+        "text": "Criar Vex Home"
+      },
+      "ar": {
+        "text": "إنشاء Vex Home"
+      },
+      "hi": {
+        "text": "Vex Home बनाएँ"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:control:FORM_HOME"
+  },
+  "setup.button.set-up": {
+    "strings": {
+      "en": {
+        "text": "Set Up VexLife"
+      },
+      "ja": {
+        "text": "VexLife をセットアップ"
+      },
+      "zh": {
+        "text": "设置 VexLife"
+      },
+      "ko": {
+        "text": "VexLife 설정"
+      },
+      "fr": {
+        "text": "Configurer VexLife"
+      },
+      "de": {
+        "text": "VexLife einrichten"
+      },
+      "es": {
+        "text": "Configurar VexLife"
+      },
+      "pt": {
+        "text": "Configurar o VexLife"
+      },
+      "ar": {
+        "text": "إعداد VexLife"
+      },
+      "hi": {
+        "text": "VexLife सेट अप करें"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:control:SET_UP"
+  },
+  "setup.button.cancel": {
+    "strings": {
+      "en": {
+        "text": "Cancel"
+      },
+      "ja": {
+        "text": "キャンセル"
+      },
+      "zh": {
+        "text": "取消"
+      },
+      "ko": {
+        "text": "취소"
+      },
+      "fr": {
+        "text": "Annuler"
+      },
+      "de": {
+        "text": "Abbrechen"
+      },
+      "es": {
+        "text": "Cancelar"
+      },
+      "pt": {
+        "text": "Cancelar"
+      },
+      "ar": {
+        "text": "إلغاء"
+      },
+      "hi": {
+        "text": "रद्द करें"
+      }
+    },
+    "surfaces": [
+      "setup.card",
+      "setup.window"
+    ],
+    "dataKey": "setup:action:CLOSE"
+  },
+  "setup.button.close": {
+    "strings": {
+      "en": {
+        "text": "Close"
+      },
+      "ja": {
+        "text": "閉じる"
+      },
+      "zh": {
+        "text": "关闭"
+      },
+      "ko": {
+        "text": "닫기"
+      },
+      "fr": {
+        "text": "Fermer"
+      },
+      "de": {
+        "text": "Schließen"
+      },
+      "es": {
+        "text": "Cerrar"
+      },
+      "pt": {
+        "text": "Fechar"
+      },
+      "ar": {
+        "text": "إغلاق"
+      },
+      "hi": {
+        "text": "बंद करें"
+      }
+    },
+    "surfaces": [
+      "setup.card",
+      "setup.window"
+    ],
+    "dataKey": "setup:action:CLOSE"
+  },
+  "setup.button.choose-another-location": {
+    "strings": {
+      "en": {
+        "text": "Choose Another Location…"
+      },
+      "ja": {
+        "text": "別の場所を選ぶ…"
+      },
+      "zh": {
+        "text": "选择其他位置…"
+      },
+      "ko": {
+        "text": "다른 위치 선택…"
+      },
+      "fr": {
+        "text": "Choisir un autre emplacement…"
+      },
+      "de": {
+        "text": "Anderen Ort wählen …"
+      },
+      "es": {
+        "text": "Elegir otra ubicación…"
+      },
+      "pt": {
+        "text": "Escolher outro local…"
+      },
+      "ar": {
+        "text": "اختيار موقع آخر…"
+      },
+      "hi": {
+        "text": "दूसरी जगह चुनें…"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "setup:action:CHOOSE_HOME"
+  },
+  "setup.button.check-again": {
+    "strings": {
+      "en": {
+        "text": "Check Again"
+      },
+      "ja": {
+        "text": "もう一度確認"
+      },
+      "zh": {
+        "text": "再次检查"
+      },
+      "ko": {
+        "text": "다시 확인"
+      },
+      "fr": {
+        "text": "Vérifier à nouveau"
+      },
+      "de": {
+        "text": "Erneut prüfen"
+      },
+      "es": {
+        "text": "Comprobar de nuevo"
+      },
+      "pt": {
+        "text": "Verificar de novo"
+      },
+      "ar": {
+        "text": "التحقق مرة أخرى"
+      },
+      "hi": {
+        "text": "फिर से जाँचें"
+      }
+    },
+    "surfaces": [
+      "setup.card",
+      "setup.window"
+    ],
+    "dataKey": "setup:action:RECHECK"
+  },
+  "setup.button.change-language": {
+    "strings": {
+      "en": {
+        "text": "Language…"
+      },
+      "ja": {
+        "text": "言語…"
+      },
+      "zh": {
+        "text": "语言…"
+      },
+      "ko": {
+        "text": "언어…"
+      },
+      "fr": {
+        "text": "Langue…"
+      },
+      "de": {
+        "text": "Sprache …"
+      },
+      "es": {
+        "text": "Idioma…"
+      },
+      "pt": {
+        "text": "Idioma…"
+      },
+      "ar": {
+        "text": "اللغة…"
+      },
+      "hi": {
+        "text": "भाषा…"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "setup:action:CHOOSE_LANGUAGE"
+  },
+  "setup.label.step-mac": {
+    "strings": {
+      "en": {
+        "text": "This Mac"
+      },
+      "ja": {
+        "text": "この Mac"
+      },
+      "zh": {
+        "text": "这台 Mac"
+      },
+      "ko": {
+        "text": "이 Mac"
+      },
+      "fr": {
+        "text": "Ce Mac"
+      },
+      "de": {
+        "text": "Dieser Mac"
+      },
+      "es": {
+        "text": "Este Mac"
+      },
+      "pt": {
+        "text": "Este Mac"
+      },
+      "ar": {
+        "text": "جهاز Mac هذا"
+      },
+      "hi": {
+        "text": "यह Mac"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:step:MAC"
+  },
+  "setup.label.step-home": {
+    "strings": {
+      "en": {
+        "text": "Vex Home"
+      },
+      "ja": {
+        "text": "Vex Home"
+      },
+      "zh": {
+        "text": "Vex Home"
+      },
+      "ko": {
+        "text": "Vex Home"
+      },
+      "fr": {
+        "text": "Vex Home"
+      },
+      "de": {
+        "text": "Vex Home"
+      },
+      "es": {
+        "text": "Vex Home"
+      },
+      "pt": {
+        "text": "Vex Home"
+      },
+      "ar": {
+        "text": "Vex Home"
+      },
+      "hi": {
+        "text": "Vex Home"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:step:HOME"
+  },
+  "setup.label.step-model": {
+    "strings": {
+      "en": {
+        "text": "Local model"
+      },
+      "ja": {
+        "text": "ローカルモデル"
+      },
+      "zh": {
+        "text": "本地模型"
+      },
+      "ko": {
+        "text": "로컬 모델"
+      },
+      "fr": {
+        "text": "Modèle local"
+      },
+      "de": {
+        "text": "Lokales Modell"
+      },
+      "es": {
+        "text": "Modelo local"
+      },
+      "pt": {
+        "text": "Modelo local"
+      },
+      "ar": {
+        "text": "النموذج المحلي"
+      },
+      "hi": {
+        "text": "लोकल मॉडल"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:step:MODEL"
+  },
+  "setup.label.step-start": {
+    "strings": {
+      "en": {
+        "text": "Start VexLife"
+      },
+      "ja": {
+        "text": "VexLife を起動"
+      },
+      "zh": {
+        "text": "启动 VexLife"
+      },
+      "ko": {
+        "text": "VexLife 시작"
+      },
+      "fr": {
+        "text": "Démarrer VexLife"
+      },
+      "de": {
+        "text": "VexLife starten"
+      },
+      "es": {
+        "text": "Iniciar VexLife"
+      },
+      "pt": {
+        "text": "Iniciar o VexLife"
+      },
+      "ar": {
+        "text": "تشغيل VexLife"
+      },
+      "hi": {
+        "text": "VexLife शुरू"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:step:START"
+  },
+  "setup.label.step-ready": {
+    "strings": {
+      "en": {
+        "text": "Ready"
+      },
+      "ja": {
+        "text": "準備完了"
+      },
+      "zh": {
+        "text": "就绪"
+      },
+      "ko": {
+        "text": "준비 완료"
+      },
+      "fr": {
+        "text": "Prêt"
+      },
+      "de": {
+        "text": "Bereit"
+      },
+      "es": {
+        "text": "Listo"
+      },
+      "pt": {
+        "text": "Pronto"
+      },
+      "ar": {
+        "text": "جاهز"
+      },
+      "hi": {
+        "text": "तैयार"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:step:READY"
+  },
+  "setup.heading.found": {
+    "strings": {
+      "en": {
+        "text": "What VexLife found"
+      },
+      "ja": {
+        "text": "VexLife が確認したこと"
+      },
+      "zh": {
+        "text": "VexLife 发现的情况"
+      },
+      "ko": {
+        "text": "VexLife가 확인한 내용"
+      },
+      "fr": {
+        "text": "Ce que VexLife a trouvé"
+      },
+      "de": {
+        "text": "Was VexLife gefunden hat"
+      },
+      "es": {
+        "text": "Lo que VexLife encontró"
+      },
+      "pt": {
+        "text": "O que o VexLife encontrou"
+      },
+      "ar": {
+        "text": "ما وجده VexLife"
+      },
+      "hi": {
+        "text": "VexLife को क्या मिला"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.found-home": {
+    "strings": {
+      "en": {
+        "text": "Vex Home: {path} — {status}"
+      },
+      "ja": {
+        "text": "Vex Home：{path} — {status}"
+      },
+      "zh": {
+        "text": "Vex Home：{path} — {status}"
+      },
+      "ko": {
+        "text": "Vex Home: {path} — {status}"
+      },
+      "fr": {
+        "text": "Vex Home : {path} — {status}"
+      },
+      "de": {
+        "text": "Vex Home: {path} — {status}"
+      },
+      "es": {
+        "text": "Vex Home: {path} — {status}"
+      },
+      "pt": {
+        "text": "Vex Home: {path} — {status}"
+      },
+      "ar": {
+        "text": "Vex Home: {path} — {status}"
+      },
+      "hi": {
+        "text": "Vex Home: {path} — {status}"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.status.home-existing": {
+    "strings": {
+      "en": {
+        "text": "your existing Vex Home"
+      },
+      "ja": {
+        "text": "既存の Vex Home"
+      },
+      "zh": {
+        "text": "你现有的 Vex Home"
+      },
+      "ko": {
+        "text": "기존 Vex Home"
+      },
+      "fr": {
+        "text": "votre Vex Home existant"
+      },
+      "de": {
+        "text": "dein vorhandenes Vex Home"
+      },
+      "es": {
+        "text": "tu Vex Home existente"
+      },
+      "pt": {
+        "text": "seu Vex Home existente"
+      },
+      "ar": {
+        "text": "Vex Home الموجود لديك"
+      },
+      "hi": {
+        "text": "आपका मौजूदा Vex Home"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "home:disposition:EXISTING_CANONICAL_VEXLIFE_HOME_BOUND"
+  },
+  "setup.status.home-preserved": {
+    "strings": {
+      "en": {
+        "text": "preserved ({detail})"
+      },
+      "ja": {
+        "text": "保護中（{detail}）"
+      },
+      "zh": {
+        "text": "已保留（{detail}）"
+      },
+      "ko": {
+        "text": "보존됨 ({detail})"
+      },
+      "fr": {
+        "text": "préservé ({detail})"
+      },
+      "de": {
+        "text": "erhalten ({detail})"
+      },
+      "es": {
+        "text": "conservado ({detail})"
+      },
+      "pt": {
+        "text": "preservado ({detail})"
+      },
+      "ar": {
+        "text": "محفوظ ({detail})"
+      },
+      "hi": {
+        "text": "सुरक्षित रखा गया ({detail})"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.status.home-empty-folder": {
+    "strings": {
+      "en": {
+        "text": "an empty folder VexLife can set up as your Home"
+      },
+      "ja": {
+        "text": "Home としてセットアップできる空のフォルダ"
+      },
+      "zh": {
+        "text": "一个可以设为你的 Home 的空文件夹"
+      },
+      "ko": {
+        "text": "Home으로 설정할 수 있는 빈 폴더"
+      },
+      "fr": {
+        "text": "un dossier vide que VexLife peut configurer comme Home"
+      },
+      "de": {
+        "text": "ein leerer Ordner, den VexLife als dein Home einrichten kann"
+      },
+      "es": {
+        "text": "una carpeta vacía que VexLife puede configurar como tu Home"
+      },
+      "pt": {
+        "text": "uma pasta vazia que o VexLife pode configurar como seu Home"
+      },
+      "ar": {
+        "text": "مجلد فارغ يمكن لـ VexLife إعداده ليكون Home الخاص بك"
+      },
+      "hi": {
+        "text": "एक खाली फ़ोल्डर जिसे VexLife आपके Home के रूप में सेट कर सकता है"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "home:disposition:EMPTY_DIRECTORY_VEXLIFE_HOME_FORMABLE"
+  },
+  "setup.status.home-new-one-folder": {
+    "strings": {
+      "en": {
+        "text": "new; VexLife will also create {count} folder leading to it"
+      },
+      "ja": {
+        "text": "新規。途中のフォルダも {count} 個作成します"
+      },
+      "zh": {
+        "text": "新位置；VexLife 还会创建通往它的 {count} 个文件夹"
+      },
+      "ko": {
+        "text": "새 위치. 경로상의 폴더 {count}개도 함께 만듭니다"
+      },
+      "fr": {
+        "text": "nouveau ; VexLife créera aussi {count} dossier pour y mener"
+      },
+      "de": {
+        "text": "neu; VexLife erstellt auch {count} Ordner auf dem Weg dorthin"
+      },
+      "es": {
+        "text": "nuevo; VexLife también creará {count} carpeta para llegar a él"
+      },
+      "pt": {
+        "text": "novo; o VexLife também vai criar {count} pasta até ele"
+      },
+      "ar": {
+        "text": "جديد؛ سينشئ VexLife أيضًا مجلدات في الطريق إليه (العدد: {count})"
+      },
+      "hi": {
+        "text": "नया; VexLife वहाँ तक पहुँचने के लिए {count} फ़ोल्डर भी बनाएगा"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.status.home-new-folders": {
+    "strings": {
+      "en": {
+        "text": "new; VexLife will also create {count} folders leading to it"
+      },
+      "ja": {
+        "text": "新規。途中のフォルダも {count} 個作成します"
+      },
+      "zh": {
+        "text": "新位置；VexLife 还会创建通往它的 {count} 个文件夹"
+      },
+      "ko": {
+        "text": "새 위치. 경로상의 폴더 {count}개도 함께 만듭니다"
+      },
+      "fr": {
+        "text": "nouveau ; VexLife créera aussi {count} dossiers pour y mener"
+      },
+      "de": {
+        "text": "neu; VexLife erstellt auch {count} Ordner auf dem Weg dorthin"
+      },
+      "es": {
+        "text": "nuevo; VexLife también creará {count} carpetas para llegar a él"
+      },
+      "pt": {
+        "text": "novo; o VexLife também vai criar {count} pastas até ele"
+      },
+      "ar": {
+        "text": "جديد؛ سينشئ VexLife أيضًا مجلدات في الطريق إليه (العدد: {count})"
+      },
+      "hi": {
+        "text": "नया; VexLife वहाँ तक पहुँचने के लिए {count} फ़ोल्डर भी बनाएगा"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.status.home-new": {
+    "strings": {
+      "en": {
+        "text": "new; nothing is there yet"
+      },
+      "ja": {
+        "text": "新規。まだ何もありません"
+      },
+      "zh": {
+        "text": "新位置；那里还没有任何内容"
+      },
+      "ko": {
+        "text": "새 위치. 아직 아무것도 없습니다"
+      },
+      "fr": {
+        "text": "nouveau ; rien n’y est encore"
+      },
+      "de": {
+        "text": "neu; dort ist noch nichts"
+      },
+      "es": {
+        "text": "nuevo; todavía no hay nada"
+      },
+      "pt": {
+        "text": "novo; ainda não há nada ali"
+      },
+      "ar": {
+        "text": "جديد؛ لا يوجد شيء هناك بعد"
+      },
+      "hi": {
+        "text": "नया; वहाँ अभी कुछ नहीं है"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "home:disposition:ABSENT_CANONICAL_VEXLIFE_HOME"
+  },
+  "setup.label.found-mac": {
+    "strings": {
+      "en": {
+        "text": "This Mac: {chip}, {memory} — {verdict}"
+      },
+      "ja": {
+        "text": "この Mac：{chip}、{memory} — {verdict}"
+      },
+      "zh": {
+        "text": "这台 Mac：{chip}，{memory} — {verdict}"
+      },
+      "ko": {
+        "text": "이 Mac: {chip}, {memory} — {verdict}"
+      },
+      "fr": {
+        "text": "Ce Mac : {chip}, {memory} — {verdict}"
+      },
+      "de": {
+        "text": "Dieser Mac: {chip}, {memory} — {verdict}"
+      },
+      "es": {
+        "text": "Este Mac: {chip}, {memory} — {verdict}"
+      },
+      "pt": {
+        "text": "Este Mac: {chip}, {memory} — {verdict}"
+      },
+      "ar": {
+        "text": "جهاز Mac هذا: {chip}، {memory} — {verdict}"
+      },
+      "hi": {
+        "text": "यह Mac: {chip}, {memory} — {verdict}"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.unknown-chip": {
+    "strings": {
+      "en": {
+        "text": "unknown chip"
+      },
+      "ja": {
+        "text": "不明なチップ"
+      },
+      "zh": {
+        "text": "未知芯片"
+      },
+      "ko": {
+        "text": "알 수 없는 칩"
+      },
+      "fr": {
+        "text": "puce inconnue"
+      },
+      "de": {
+        "text": "unbekannter Chip"
+      },
+      "es": {
+        "text": "chip desconocido"
+      },
+      "pt": {
+        "text": "chip desconhecido"
+      },
+      "ar": {
+        "text": "شريحة غير معروفة"
+      },
+      "hi": {
+        "text": "अज्ञात चिप"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.memory-amount": {
+    "strings": {
+      "en": {
+        "text": "{memory} GiB memory"
+      },
+      "ja": {
+        "text": "メモリ {memory} GiB"
+      },
+      "zh": {
+        "text": "{memory} GiB 内存"
+      },
+      "ko": {
+        "text": "메모리 {memory} GiB"
+      },
+      "fr": {
+        "text": "{memory} Gio de mémoire"
+      },
+      "de": {
+        "text": "{memory} GiB Arbeitsspeicher"
+      },
+      "es": {
+        "text": "{memory} GiB de memoria"
+      },
+      "pt": {
+        "text": "{memory} GiB de memória"
+      },
+      "ar": {
+        "text": "ذاكرة {memory} GiB"
+      },
+      "hi": {
+        "text": "{memory} GiB मेमोरी"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.unknown-memory": {
+    "strings": {
+      "en": {
+        "text": "unknown memory"
+      },
+      "ja": {
+        "text": "メモリ不明"
+      },
+      "zh": {
+        "text": "内存未知"
+      },
+      "ko": {
+        "text": "메모리 알 수 없음"
+      },
+      "fr": {
+        "text": "mémoire inconnue"
+      },
+      "de": {
+        "text": "Arbeitsspeicher unbekannt"
+      },
+      "es": {
+        "text": "memoria desconocida"
+      },
+      "pt": {
+        "text": "memória desconhecida"
+      },
+      "ar": {
+        "text": "ذاكرة غير معروفة"
+      },
+      "hi": {
+        "text": "अज्ञात मेमोरी"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.status.mac-meets": {
+    "strings": {
+      "en": {
+        "text": "meets the requirements"
+      },
+      "ja": {
+        "text": "要件を満たしています"
+      },
+      "zh": {
+        "text": "符合要求"
+      },
+      "ko": {
+        "text": "요구 사항 충족"
+      },
+      "fr": {
+        "text": "répond à la configuration requise"
+      },
+      "de": {
+        "text": "erfüllt die Anforderungen"
+      },
+      "es": {
+        "text": "cumple los requisitos"
+      },
+      "pt": {
+        "text": "atende aos requisitos"
+      },
+      "ar": {
+        "text": "يستوفي المتطلبات"
+      },
+      "hi": {
+        "text": "ज़रूरतें पूरी करता है"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.status.mac-needs": {
+    "strings": {
+      "en": {
+        "text": "needs {chip} and {memory} GiB memory"
+      },
+      "ja": {
+        "text": "{chip} と {memory} GiB のメモリが必要です"
+      },
+      "zh": {
+        "text": "需要 {chip} 和 {memory} GiB 内存"
+      },
+      "ko": {
+        "text": "{chip} 칩과 {memory} GiB 메모리 필요"
+      },
+      "fr": {
+        "text": "nécessite {chip} et {memory} Gio de mémoire"
+      },
+      "de": {
+        "text": "braucht {chip} und {memory} GiB Arbeitsspeicher"
+      },
+      "es": {
+        "text": "necesita {chip} y {memory} GiB de memoria"
+      },
+      "pt": {
+        "text": "precisa de {chip} e {memory} GiB de memória"
+      },
+      "ar": {
+        "text": "يحتاج إلى {chip} وذاكرة {memory} GiB"
+      },
+      "hi": {
+        "text": "{chip} और {memory} GiB मेमोरी चाहिए"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.found-free-space": {
+    "strings": {
+      "en": {
+        "text": "Free space on that drive: {amount}"
+      },
+      "ja": {
+        "text": "そのドライブの空き容量：{amount}"
+      },
+      "zh": {
+        "text": "该磁盘的可用空间：{amount}"
+      },
+      "ko": {
+        "text": "해당 드라이브의 여유 공간: {amount}"
+      },
+      "fr": {
+        "text": "Espace libre sur ce disque : {amount}"
+      },
+      "de": {
+        "text": "Freier Speicher auf diesem Laufwerk: {amount}"
+      },
+      "es": {
+        "text": "Espacio libre en ese disco: {amount}"
+      },
+      "pt": {
+        "text": "Espaço livre nesse disco: {amount}"
+      },
+      "ar": {
+        "text": "المساحة الفارغة على ذلك القرص: {amount}"
+      },
+      "hi": {
+        "text": "उस ड्राइव पर खाली जगह: {amount}"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.gib-amount": {
+    "strings": {
+      "en": {
+        "text": "{amount} GiB"
+      },
+      "ja": {
+        "text": "{amount} GiB"
+      },
+      "zh": {
+        "text": "{amount} GiB"
+      },
+      "ko": {
+        "text": "{amount} GiB"
+      },
+      "fr": {
+        "text": "{amount} Gio"
+      },
+      "de": {
+        "text": "{amount} GiB"
+      },
+      "es": {
+        "text": "{amount} GiB"
+      },
+      "pt": {
+        "text": "{amount} GiB"
+      },
+      "ar": {
+        "text": "{amount} GiB"
+      },
+      "hi": {
+        "text": "{amount} GiB"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.status.unknown": {
+    "strings": {
+      "en": {
+        "text": "unknown"
+      },
+      "ja": {
+        "text": "不明"
+      },
+      "zh": {
+        "text": "未知"
+      },
+      "ko": {
+        "text": "알 수 없음"
+      },
+      "fr": {
+        "text": "inconnu"
+      },
+      "de": {
+        "text": "unbekannt"
+      },
+      "es": {
+        "text": "desconocido"
+      },
+      "pt": {
+        "text": "desconhecido"
+      },
+      "ar": {
+        "text": "غير معروف"
+      },
+      "hi": {
+        "text": "अज्ञात"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.found-model": {
+    "strings": {
+      "en": {
+        "text": "Local model: {status}"
+      },
+      "ja": {
+        "text": "ローカルモデル：{status}"
+      },
+      "zh": {
+        "text": "本地模型：{status}"
+      },
+      "ko": {
+        "text": "로컬 모델: {status}"
+      },
+      "fr": {
+        "text": "Modèle local : {status}"
+      },
+      "de": {
+        "text": "Lokales Modell: {status}"
+      },
+      "es": {
+        "text": "Modelo local: {status}"
+      },
+      "pt": {
+        "text": "Modelo local: {status}"
+      },
+      "ar": {
+        "text": "النموذج المحلي: {status}"
+      },
+      "hi": {
+        "text": "लोकल मॉडल: {status}"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.status.model-not-set-up": {
+    "strings": {
+      "en": {
+        "text": "not set up yet"
+      },
+      "ja": {
+        "text": "まだセットアップされていません"
+      },
+      "zh": {
+        "text": "尚未设置"
+      },
+      "ko": {
+        "text": "아직 설정되지 않음"
+      },
+      "fr": {
+        "text": "pas encore configuré"
+      },
+      "de": {
+        "text": "noch nicht eingerichtet"
+      },
+      "es": {
+        "text": "todavía no configurado"
+      },
+      "pt": {
+        "text": "ainda não configurado"
+      },
+      "ar": {
+        "text": "لم يُعَدّ بعد"
+      },
+      "hi": {
+        "text": "अभी सेट अप नहीं हुआ"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "model:artifact-state:NOT_SELECTED"
+  },
+  "setup.status.model-not-downloaded": {
+    "strings": {
+      "en": {
+        "text": "not downloaded yet"
+      },
+      "ja": {
+        "text": "まだダウンロードされていません"
+      },
+      "zh": {
+        "text": "尚未下载"
+      },
+      "ko": {
+        "text": "아직 다운로드되지 않음"
+      },
+      "fr": {
+        "text": "pas encore téléchargé"
+      },
+      "de": {
+        "text": "noch nicht heruntergeladen"
+      },
+      "es": {
+        "text": "todavía no descargado"
+      },
+      "pt": {
+        "text": "ainda não baixado"
+      },
+      "ar": {
+        "text": "لم يُنزَّل بعد"
+      },
+      "hi": {
+        "text": "अभी डाउनलोड नहीं हुआ"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "model:artifact-state:ABSENT"
+  },
+  "setup.status.model-partial": {
+    "strings": {
+      "en": {
+        "text": "{present} of {total} GiB downloaded"
+      },
+      "ja": {
+        "text": "{total} GiB 中 {present} GiB ダウンロード済み"
+      },
+      "zh": {
+        "text": "已下载 {present} / {total} GiB"
+      },
+      "ko": {
+        "text": "{total} GiB 중 {present} GiB 다운로드됨"
+      },
+      "fr": {
+        "text": "{present} sur {total} Gio téléchargés"
+      },
+      "de": {
+        "text": "{present} von {total} GiB heruntergeladen"
+      },
+      "es": {
+        "text": "{present} de {total} GiB descargados"
+      },
+      "pt": {
+        "text": "{present} de {total} GiB baixados"
+      },
+      "ar": {
+        "text": "نُزِّل {present} من {total} GiB"
+      },
+      "hi": {
+        "text": "{total} GiB में से {present} GiB डाउनलोड हुआ"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "model:artifact-state:PARTIAL_BY_SIZE"
+  },
+  "setup.status.model-present": {
+    "strings": {
+      "en": {
+        "text": "on this Mac ({total} GiB)"
+      },
+      "ja": {
+        "text": "この Mac にあります（{total} GiB）"
+      },
+      "zh": {
+        "text": "已在这台 Mac 上（{total} GiB）"
+      },
+      "ko": {
+        "text": "이 Mac에 있음 ({total} GiB)"
+      },
+      "fr": {
+        "text": "sur ce Mac ({total} Gio)"
+      },
+      "de": {
+        "text": "auf diesem Mac ({total} GiB)"
+      },
+      "es": {
+        "text": "en este Mac ({total} GiB)"
+      },
+      "pt": {
+        "text": "neste Mac ({total} GiB)"
+      },
+      "ar": {
+        "text": "على جهاز Mac هذا ({total} GiB)"
+      },
+      "hi": {
+        "text": "इस Mac पर ({total} GiB)"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "model:artifact-state:COMPLETE_BY_SIZE_NOT_HASHED"
+  },
+  "setup.status.model-size-mismatch": {
+    "strings": {
+      "en": {
+        "text": "{affected} GiB of files do not match their expected size"
+      },
+      "ja": {
+        "text": "{affected} GiB 分のファイルが想定サイズと一致しません"
+      },
+      "zh": {
+        "text": "有 {affected} GiB 的文件与预期大小不符"
+      },
+      "ko": {
+        "text": "{affected} GiB 분량의 파일이 예상 크기와 다름"
+      },
+      "fr": {
+        "text": "{affected} Gio de fichiers n’ont pas la taille attendue"
+      },
+      "de": {
+        "text": "{affected} GiB an Dateien haben nicht die erwartete Größe"
+      },
+      "es": {
+        "text": "{affected} GiB de archivos no tienen el tamaño esperado"
+      },
+      "pt": {
+        "text": "{affected} GiB de arquivos não têm o tamanho esperado"
+      },
+      "ar": {
+        "text": "{affected} GiB من الملفات لا تطابق الحجم المتوقع"
+      },
+      "hi": {
+        "text": "{affected} GiB फ़ाइलें अपेक्षित आकार से मेल नहीं खातीं"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "model:artifact-state:INVALID_SIZE"
+  },
+  "setup.label.found-service": {
+    "strings": {
+      "en": {
+        "text": "VexLife service: {status}"
+      },
+      "ja": {
+        "text": "VexLife サービス：{status}"
+      },
+      "zh": {
+        "text": "VexLife 服务：{status}"
+      },
+      "ko": {
+        "text": "VexLife 서비스: {status}"
+      },
+      "fr": {
+        "text": "Service VexLife : {status}"
+      },
+      "de": {
+        "text": "VexLife-Dienst: {status}"
+      },
+      "es": {
+        "text": "Servicio de VexLife: {status}"
+      },
+      "pt": {
+        "text": "Serviço do VexLife: {status}"
+      },
+      "ar": {
+        "text": "خدمة VexLife: {status}"
+      },
+      "hi": {
+        "text": "VexLife सेवा: {status}"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.status.service-current": {
+    "strings": {
+      "en": {
+        "text": "running this version"
+      },
+      "ja": {
+        "text": "このバージョンが動作中"
+      },
+      "zh": {
+        "text": "正在运行此版本"
+      },
+      "ko": {
+        "text": "이 버전 실행 중"
+      },
+      "fr": {
+        "text": "exécute cette version"
+      },
+      "de": {
+        "text": "läuft in dieser Version"
+      },
+      "es": {
+        "text": "ejecuta esta versión"
+      },
+      "pt": {
+        "text": "executando esta versão"
+      },
+      "ar": {
+        "text": "تشغّل هذا الإصدار"
+      },
+      "hi": {
+        "text": "यह संस्करण चल रहा है"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:CURRENT"
+  },
+  "setup.status.service-earlier": {
+    "strings": {
+      "en": {
+        "text": "running an earlier version ({version})"
+      },
+      "ja": {
+        "text": "以前のバージョンが動作中（{version}）"
+      },
+      "zh": {
+        "text": "正在运行较早的版本（{version}）"
+      },
+      "ko": {
+        "text": "이전 버전 실행 중 ({version})"
+      },
+      "fr": {
+        "text": "exécute une version antérieure ({version})"
+      },
+      "de": {
+        "text": "läuft in einer älteren Version ({version})"
+      },
+      "es": {
+        "text": "ejecuta una versión anterior ({version})"
+      },
+      "pt": {
+        "text": "executando uma versão anterior ({version})"
+      },
+      "ar": {
+        "text": "تشغّل إصدارًا أقدم ({version})"
+      },
+      "hi": {
+        "text": "पुराना संस्करण चल रहा है ({version})"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:UPDATE_AVAILABLE"
+  },
+  "setup.status.service-not-responding": {
+    "strings": {
+      "en": {
+        "text": "registered but not responding"
+      },
+      "ja": {
+        "text": "登録済みですが応答がありません"
+      },
+      "zh": {
+        "text": "已注册但没有响应"
+      },
+      "ko": {
+        "text": "등록되었지만 응답 없음"
+      },
+      "fr": {
+        "text": "enregistré mais ne répond pas"
+      },
+      "de": {
+        "text": "registriert, aber reagiert nicht"
+      },
+      "es": {
+        "text": "registrado, pero no responde"
+      },
+      "pt": {
+        "text": "registrado, mas sem resposta"
+      },
+      "ar": {
+        "text": "مسجّلة لكنها لا تستجيب"
+      },
+      "hi": {
+        "text": "रजिस्टर्ड है, पर जवाब नहीं दे रही"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:REPAIR_REQUIRED"
+  },
+  "setup.status.service-not-running": {
+    "strings": {
+      "en": {
+        "text": "not running"
+      },
+      "ja": {
+        "text": "停止中"
+      },
+      "zh": {
+        "text": "未运行"
+      },
+      "ko": {
+        "text": "실행 중이 아님"
+      },
+      "fr": {
+        "text": "arrêté"
+      },
+      "de": {
+        "text": "läuft nicht"
+      },
+      "es": {
+        "text": "detenido"
+      },
+      "pt": {
+        "text": "parado"
+      },
+      "ar": {
+        "text": "متوقفة"
+      },
+      "hi": {
+        "text": "नहीं चल रही"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:START_REQUIRED"
+  },
+  "setup.status.service-unverified": {
+    "strings": {
+      "en": {
+        "text": "in use by something VexLife cannot verify"
+      },
+      "ja": {
+        "text": "VexLife が確認できない何かが使用中"
+      },
+      "zh": {
+        "text": "正被 VexLife 无法验证的程序使用"
+      },
+      "ko": {
+        "text": "VexLife가 확인할 수 없는 무언가가 사용 중"
+      },
+      "fr": {
+        "text": "utilisé par quelque chose que VexLife ne peut pas vérifier"
+      },
+      "de": {
+        "text": "wird von etwas genutzt, das VexLife nicht prüfen kann"
+      },
+      "es": {
+        "text": "en uso por algo que VexLife no puede verificar"
+      },
+      "pt": {
+        "text": "em uso por algo que o VexLife não consegue verificar"
+      },
+      "ar": {
+        "text": "يستخدمها شيء لا يستطيع VexLife التحقق منه"
+      },
+      "hi": {
+        "text": "किसी ऐसी चीज़ द्वारा इस्तेमाल में है जिसे VexLife सत्यापित नहीं कर सकता"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ],
+    "dataKey": "entry:state:HOLD_UNKNOWN"
+  },
+  "setup.heading.plan": {
+    "strings": {
+      "en": {
+        "text": "What setup will do"
+      },
+      "ja": {
+        "text": "セットアップで行うこと"
+      },
+      "zh": {
+        "text": "设置将会执行的操作"
+      },
+      "ko": {
+        "text": "설정에서 할 일"
+      },
+      "fr": {
+        "text": "Ce que la configuration va faire"
+      },
+      "de": {
+        "text": "Was die Einrichtung tun wird"
+      },
+      "es": {
+        "text": "Lo que hará la configuración"
+      },
+      "pt": {
+        "text": "O que a configuração vai fazer"
+      },
+      "ar": {
+        "text": "ما الذي سيفعله الإعداد"
+      },
+      "hi": {
+        "text": "सेटअप क्या करेगा"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.plan-download": {
+    "strings": {
+      "en": {
+        "text": "Download about {missing} GiB of verified model files ({model})"
+      },
+      "ja": {
+        "text": "検証済みのモデルファイル約 {missing} GiB をダウンロード（{model}）"
+      },
+      "zh": {
+        "text": "下载约 {missing} GiB 经过验证的模型文件（{model}）"
+      },
+      "ko": {
+        "text": "검증된 모델 파일 약 {missing} GiB 다운로드 ({model})"
+      },
+      "fr": {
+        "text": "Télécharger environ {missing} Gio de fichiers de modèle vérifiés ({model})"
+      },
+      "de": {
+        "text": "Etwa {missing} GiB geprüfte Modelldateien herunterladen ({model})"
+      },
+      "es": {
+        "text": "Descargar unos {missing} GiB de archivos del modelo verificados ({model})"
+      },
+      "pt": {
+        "text": "Baixar cerca de {missing} GiB de arquivos do modelo verificados ({model})"
+      },
+      "ar": {
+        "text": "تنزيل نحو {missing} GiB من ملفات النموذج الموثّقة ({model})"
+      },
+      "hi": {
+        "text": "लगभग {missing} GiB सत्यापित मॉडल फ़ाइलें डाउनलोड करना ({model})"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.plan-reuse": {
+    "strings": {
+      "en": {
+        "text": "Re-use the model files already in your Home ({model})"
+      },
+      "ja": {
+        "text": "Home にあるモデルファイルを再利用（{model}）"
+      },
+      "zh": {
+        "text": "重用你的 Home 中已有的模型文件（{model}）"
+      },
+      "ko": {
+        "text": "Home에 이미 있는 모델 파일 재사용 ({model})"
+      },
+      "fr": {
+        "text": "Réutiliser les fichiers de modèle déjà présents dans votre Home ({model})"
+      },
+      "de": {
+        "text": "Die Modelldateien wiederverwenden, die schon in deinem Home sind ({model})"
+      },
+      "es": {
+        "text": "Reutilizar los archivos del modelo que ya están en tu Home ({model})"
+      },
+      "pt": {
+        "text": "Reutilizar os arquivos do modelo que já estão no seu Home ({model})"
+      },
+      "ar": {
+        "text": "إعادة استخدام ملفات النموذج الموجودة بالفعل في Home ({model})"
+      },
+      "hi": {
+        "text": "आपके Home में पहले से मौजूद मॉडल फ़ाइलों का फिर से इस्तेमाल ({model})"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.plan-runtime": {
+    "strings": {
+      "en": {
+        "text": "Prepare a private Python + MLX runtime inside your Vex Home"
+      },
+      "ja": {
+        "text": "Vex Home 内に専用の Python + MLX ランタイムを準備"
+      },
+      "zh": {
+        "text": "在你的 Vex Home 中准备专用的 Python + MLX 运行环境"
+      },
+      "ko": {
+        "text": "Vex Home 안에 전용 Python + MLX 런타임 준비"
+      },
+      "fr": {
+        "text": "Préparer un environnement Python + MLX privé dans votre Vex Home"
+      },
+      "de": {
+        "text": "Eine private Python- und MLX-Laufzeit in deinem Vex Home vorbereiten"
+      },
+      "es": {
+        "text": "Preparar un entorno privado de Python + MLX dentro de tu Vex Home"
+      },
+      "pt": {
+        "text": "Preparar um ambiente privado de Python + MLX dentro do seu Vex Home"
+      },
+      "ar": {
+        "text": "تجهيز بيئة Python + MLX خاصة داخل Vex Home"
+      },
+      "hi": {
+        "text": "आपके Vex Home के अंदर एक निजी Python + MLX रनटाइम तैयार करना"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.plan-start": {
+    "strings": {
+      "en": {
+        "text": "Start the local model and VexLife on this Mac only (127.0.0.1)"
+      },
+      "ja": {
+        "text": "ローカルモデルと VexLife をこの Mac 上だけで起動（127.0.0.1）"
+      },
+      "zh": {
+        "text": "仅在这台 Mac 上启动本地模型和 VexLife（127.0.0.1）"
+      },
+      "ko": {
+        "text": "로컬 모델과 VexLife를 이 Mac에서만 시작 (127.0.0.1)"
+      },
+      "fr": {
+        "text": "Démarrer le modèle local et VexLife sur ce Mac uniquement (127.0.0.1)"
+      },
+      "de": {
+        "text": "Das lokale Modell und VexLife nur auf diesem Mac starten (127.0.0.1)"
+      },
+      "es": {
+        "text": "Iniciar el modelo local y VexLife solo en este Mac (127.0.0.1)"
+      },
+      "pt": {
+        "text": "Iniciar o modelo local e o VexLife apenas neste Mac (127.0.0.1)"
+      },
+      "ar": {
+        "text": "تشغيل النموذج المحلي وVexLife على جهاز Mac هذا فقط (127.0.0.1)"
+      },
+      "hi": {
+        "text": "लोकल मॉडल और VexLife को केवल इसी Mac पर शुरू करना (127.0.0.1)"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.plan-needs": {
+    "strings": {
+      "en": {
+        "text": "Needs about {required} GiB free · {available}. Needs an internet connection; downloads resume if interrupted."
+      },
+      "ja": {
+        "text": "約 {required} GiB の空き容量が必要 · {available}。インターネット接続が必要です。中断してもダウンロードは再開します。"
+      },
+      "zh": {
+        "text": "需要约 {required} GiB 可用空间 · {available}。需要联网；下载中断后可以继续。"
+      },
+      "ko": {
+        "text": "약 {required} GiB 여유 공간 필요 · {available}. 인터넷 연결이 필요하며, 다운로드가 중단되면 이어서 진행됩니다."
+      },
+      "fr": {
+        "text": "Nécessite environ {required} Gio libres · {available}. Nécessite une connexion Internet ; les téléchargements reprennent s’ils sont interrompus."
+      },
+      "de": {
+        "text": "Braucht etwa {required} GiB frei · {available}. Braucht eine Internetverbindung; Downloads werden nach einer Unterbrechung fortgesetzt."
+      },
+      "es": {
+        "text": "Necesita unos {required} GiB libres · {available}. Necesita conexión a Internet; las descargas continúan si se interrumpen."
+      },
+      "pt": {
+        "text": "Precisa de cerca de {required} GiB livres · {available}. Precisa de conexão com a internet; os downloads continuam se forem interrompidos."
+      },
+      "ar": {
+        "text": "يحتاج إلى نحو {required} GiB فارغة · {available}. يحتاج إلى اتصال بالإنترنت؛ تُستأنف التنزيلات إذا انقطعت."
+      },
+      "hi": {
+        "text": "लगभग {required} GiB खाली जगह चाहिए · {available}। इंटरनेट कनेक्शन चाहिए; रुकने पर डाउनलोड फिर से जारी होते हैं।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.plan-available": {
+    "strings": {
+      "en": {
+        "text": "{amount} GiB available"
+      },
+      "ja": {
+        "text": "{amount} GiB 使用可能"
+      },
+      "zh": {
+        "text": "可用 {amount} GiB"
+      },
+      "ko": {
+        "text": "{amount} GiB 사용 가능"
+      },
+      "fr": {
+        "text": "{amount} Gio disponibles"
+      },
+      "de": {
+        "text": "{amount} GiB verfügbar"
+      },
+      "es": {
+        "text": "{amount} GiB disponibles"
+      },
+      "pt": {
+        "text": "{amount} GiB disponíveis"
+      },
+      "ar": {
+        "text": "{amount} GiB متاحة"
+      },
+      "hi": {
+        "text": "{amount} GiB उपलब्ध"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.plan-free-unknown": {
+    "strings": {
+      "en": {
+        "text": "free space unknown"
+      },
+      "ja": {
+        "text": "空き容量不明"
+      },
+      "zh": {
+        "text": "可用空间未知"
+      },
+      "ko": {
+        "text": "여유 공간 알 수 없음"
+      },
+      "fr": {
+        "text": "espace libre inconnu"
+      },
+      "de": {
+        "text": "freier Speicher unbekannt"
+      },
+      "es": {
+        "text": "espacio libre desconocido"
+      },
+      "pt": {
+        "text": "espaço livre desconhecido"
+      },
+      "ar": {
+        "text": "المساحة الفارغة غير معروفة"
+      },
+      "hi": {
+        "text": "खाली जगह अज्ञात"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.heading.up-next": {
+    "strings": {
+      "en": {
+        "text": "Up next (you'll confirm it separately)"
+      },
+      "ja": {
+        "text": "次のステップ（別途確認します）"
+      },
+      "zh": {
+        "text": "下一步（你会单独确认）"
+      },
+      "ko": {
+        "text": "다음 단계 (별도로 확인합니다)"
+      },
+      "fr": {
+        "text": "Ensuite (vous confirmerez séparément)"
+      },
+      "de": {
+        "text": "Als Nächstes (du bestätigst es separat)"
+      },
+      "es": {
+        "text": "A continuación (lo confirmarás por separado)"
+      },
+      "pt": {
+        "text": "A seguir (você vai confirmar separadamente)"
+      },
+      "ar": {
+        "text": "الخطوة التالية (ستؤكدها بشكل منفصل)"
+      },
+      "hi": {
+        "text": "अगला चरण (आप इसे अलग से पुष्टि करेंगे)"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.up-next-model": {
+    "strings": {
+      "en": {
+        "text": "Local model: about {download} GiB download, about {free} GiB free space on this drive, and an internet connection."
+      },
+      "ja": {
+        "text": "ローカルモデル：約 {download} GiB のダウンロード、このドライブに約 {free} GiB の空き容量、インターネット接続が必要です。"
+      },
+      "zh": {
+        "text": "本地模型：下载约 {download} GiB，此磁盘需约 {free} GiB 可用空间，并需要联网。"
+      },
+      "ko": {
+        "text": "로컬 모델: 약 {download} GiB 다운로드, 이 드라이브에 약 {free} GiB 여유 공간, 인터넷 연결이 필요합니다."
+      },
+      "fr": {
+        "text": "Modèle local : environ {download} Gio à télécharger, environ {free} Gio d’espace libre sur ce disque et une connexion Internet."
+      },
+      "de": {
+        "text": "Lokales Modell: etwa {download} GiB Download, etwa {free} GiB freier Speicher auf diesem Laufwerk und eine Internetverbindung."
+      },
+      "es": {
+        "text": "Modelo local: descarga de unos {download} GiB, unos {free} GiB de espacio libre en este disco y conexión a Internet."
+      },
+      "pt": {
+        "text": "Modelo local: download de cerca de {download} GiB, cerca de {free} GiB de espaço livre neste disco e conexão com a internet."
+      },
+      "ar": {
+        "text": "النموذج المحلي: تنزيل نحو {download} GiB، ونحو {free} GiB من المساحة الفارغة على هذا القرص، واتصال بالإنترنت."
+      },
+      "hi": {
+        "text": "लोकल मॉडल: लगभग {download} GiB डाउनलोड, इस ड्राइव पर लगभग {free} GiB खाली जगह, और इंटरनेट कनेक्शन।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.description.notice-protected-location": {
+    "strings": {
+      "en": {
+        "text": "Heads-up: this location is inside {place}, which macOS protects. macOS may ask you to allow access, and VexLife's background service can be blocked from reading it later. A location such as ~/.vexlife avoids this."
+      },
+      "ja": {
+        "text": "ご注意：この場所は macOS が保護している{place}の中にあります。macOS がアクセスの許可を求めることがあり、後で VexLife のバックグラウンドサービスが読み取れなくなる場合があります。~/.vexlife などの場所ならこの問題は起きません。"
+      },
+      "zh": {
+        "text": "提醒：此位置位于受 macOS 保护的{place}中。macOS 可能会请求你允许访问，之后 VexLife 的后台服务也可能被阻止读取它。选择 ~/.vexlife 这样的位置可以避免这个问题。"
+      },
+      "ko": {
+        "text": "참고: 이 위치는 macOS가 보호하는 {place} 안에 있습니다. macOS가 접근 허용을 요청할 수 있으며, 나중에 VexLife의 백그라운드 서비스가 이 위치를 읽지 못할 수 있습니다. ~/.vexlife 같은 위치를 사용하면 이 문제를 피할 수 있습니다."
+      },
+      "fr": {
+        "text": "À noter : cet emplacement se trouve dans {place}, que macOS protège. macOS peut vous demander d’autoriser l’accès, et le service d’arrière-plan de VexLife peut ensuite être empêché de le lire. Un emplacement comme ~/.vexlife évite ce problème."
+      },
+      "de": {
+        "text": "Hinweis: Dieser Ort liegt in {place}, einem von macOS geschützten Bereich. macOS fragt eventuell nach einer Erlaubnis, und der Hintergrunddienst von VexLife kann später daran gehindert werden, ihn zu lesen. Ein Ort wie ~/.vexlife vermeidet das."
+      },
+      "es": {
+        "text": "Aviso: esta ubicación está dentro de {place}, que macOS protege. macOS puede pedirte que permitas el acceso, y más adelante el servicio en segundo plano de VexLife podría no poder leerla. Una ubicación como ~/.vexlife evita esto."
+      },
+      "pt": {
+        "text": "Atenção: este local fica dentro de {place}, que o macOS protege. O macOS pode pedir que você permita o acesso, e o serviço em segundo plano do VexLife pode ser impedido de lê-lo depois. Um local como ~/.vexlife evita isso."
+      },
+      "ar": {
+        "text": "تنبيه: يقع هذا الموقع داخل {place}، وهو مكان يحميه macOS. قد يطلب منك macOS السماح بالوصول، وقد تُمنع خدمة VexLife في الخلفية من قراءته لاحقًا. موقع مثل ~/.vexlife يتجنب ذلك."
+      },
+      "hi": {
+        "text": "ध्यान दें: यह जगह {place} के अंदर है, जिसे macOS सुरक्षित रखता है। macOS आपसे पहुँच की अनुमति माँग सकता है, और बाद में VexLife की बैकग्राउंड सेवा को इसे पढ़ने से रोका जा सकता है। ~/.vexlife जैसी जगह से यह समस्या नहीं होती।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.description.notice-storage-shortfall": {
+    "strings": {
+      "en": {
+        "text": "Heads-up: the local model step will need about {required} GiB free on this drive, and it has {free} GiB. You can still create the Home now and free up space before the next step."
+      },
+      "ja": {
+        "text": "ご注意：ローカルモデルのステップでは、このドライブに約 {required} GiB の空き容量が必要ですが、現在は {free} GiB です。Home はいま作成し、次のステップまでに空き容量を増やすこともできます。"
+      },
+      "zh": {
+        "text": "提醒：本地模型这一步需要此磁盘有约 {required} GiB 可用空间，而目前只有 {free} GiB。你仍然可以现在创建 Home，并在下一步之前释放空间。"
+      },
+      "ko": {
+        "text": "참고: 로컬 모델 단계에는 이 드라이브에 약 {required} GiB의 여유 공간이 필요하지만 현재 {free} GiB입니다. 지금 Home을 만들고 다음 단계 전에 공간을 확보해도 됩니다."
+      },
+      "fr": {
+        "text": "À noter : l’étape du modèle local nécessitera environ {required} Gio libres sur ce disque, qui en a {free} Gio. Vous pouvez tout de même créer le Home maintenant et libérer de l’espace avant l’étape suivante."
+      },
+      "de": {
+        "text": "Hinweis: Der Schritt für das lokale Modell braucht etwa {required} GiB frei auf diesem Laufwerk, und es hat {free} GiB. Du kannst das Home trotzdem jetzt erstellen und vor dem nächsten Schritt Platz schaffen."
+      },
+      "es": {
+        "text": "Aviso: el paso del modelo local necesitará unos {required} GiB libres en este disco, y tiene {free} GiB. Aun así, puedes crear el Home ahora y liberar espacio antes del siguiente paso."
+      },
+      "pt": {
+        "text": "Atenção: a etapa do modelo local vai precisar de cerca de {required} GiB livres neste disco, e ele tem {free} GiB. Você ainda pode criar o Home agora e liberar espaço antes da próxima etapa."
+      },
+      "ar": {
+        "text": "تنبيه: ستحتاج خطوة النموذج المحلي إلى نحو {required} GiB فارغة على هذا القرص، وفيه {free} GiB. لا يزال بإمكانك إنشاء Home الآن وإفراغ مساحة قبل الخطوة التالية."
+      },
+      "hi": {
+        "text": "ध्यान दें: लोकल मॉडल वाले चरण के लिए इस ड्राइव पर लगभग {required} GiB खाली जगह चाहिए, और इस पर {free} GiB है। आप फिर भी अभी Home बना सकते हैं और अगले चरण से पहले जगह खाली कर सकते हैं।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.place-desktop": {
+    "strings": {
+      "en": {
+        "text": "your Desktop folder"
+      },
+      "ja": {
+        "text": "デスクトップフォルダ"
+      },
+      "zh": {
+        "text": "“桌面”文件夹"
+      },
+      "ko": {
+        "text": "데스크탑 폴더"
+      },
+      "fr": {
+        "text": "votre dossier Bureau"
+      },
+      "de": {
+        "text": "deinem Schreibtisch-Ordner"
+      },
+      "es": {
+        "text": "tu carpeta Escritorio"
+      },
+      "pt": {
+        "text": "sua pasta Mesa"
+      },
+      "ar": {
+        "text": "مجلد سطح المكتب"
+      },
+      "hi": {
+        "text": "आपका Desktop फ़ोल्डर"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.place-documents": {
+    "strings": {
+      "en": {
+        "text": "your Documents folder"
+      },
+      "ja": {
+        "text": "書類フォルダ"
+      },
+      "zh": {
+        "text": "“文稿”文件夹"
+      },
+      "ko": {
+        "text": "문서 폴더"
+      },
+      "fr": {
+        "text": "votre dossier Documents"
+      },
+      "de": {
+        "text": "deinem Dokumente-Ordner"
+      },
+      "es": {
+        "text": "tu carpeta Documentos"
+      },
+      "pt": {
+        "text": "sua pasta Documentos"
+      },
+      "ar": {
+        "text": "مجلد المستندات"
+      },
+      "hi": {
+        "text": "आपका Documents फ़ोल्डर"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.place-downloads": {
+    "strings": {
+      "en": {
+        "text": "your Downloads folder"
+      },
+      "ja": {
+        "text": "ダウンロードフォルダ"
+      },
+      "zh": {
+        "text": "“下载”文件夹"
+      },
+      "ko": {
+        "text": "다운로드 폴더"
+      },
+      "fr": {
+        "text": "votre dossier Téléchargements"
+      },
+      "de": {
+        "text": "deinem Downloads-Ordner"
+      },
+      "es": {
+        "text": "tu carpeta Descargas"
+      },
+      "pt": {
+        "text": "sua pasta Downloads"
+      },
+      "ar": {
+        "text": "مجلد التنزيلات"
+      },
+      "hi": {
+        "text": "आपका Downloads फ़ोल्डर"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.place-icloud": {
+    "strings": {
+      "en": {
+        "text": "iCloud Drive"
+      },
+      "ja": {
+        "text": "iCloud Drive"
+      },
+      "zh": {
+        "text": "iCloud 云盘"
+      },
+      "ko": {
+        "text": "iCloud Drive"
+      },
+      "fr": {
+        "text": "iCloud Drive"
+      },
+      "de": {
+        "text": "iCloud Drive"
+      },
+      "es": {
+        "text": "iCloud Drive"
+      },
+      "pt": {
+        "text": "iCloud Drive"
+      },
+      "ar": {
+        "text": "iCloud Drive"
+      },
+      "hi": {
+        "text": "iCloud Drive"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.place-cloud-storage": {
+    "strings": {
+      "en": {
+        "text": "a cloud-storage folder"
+      },
+      "ja": {
+        "text": "クラウドストレージのフォルダ"
+      },
+      "zh": {
+        "text": "云存储文件夹"
+      },
+      "ko": {
+        "text": "클라우드 저장소 폴더"
+      },
+      "fr": {
+        "text": "un dossier de stockage en nuage"
+      },
+      "de": {
+        "text": "einem Cloud-Speicher-Ordner"
+      },
+      "es": {
+        "text": "una carpeta de almacenamiento en la nube"
+      },
+      "pt": {
+        "text": "uma pasta de armazenamento em nuvem"
+      },
+      "ar": {
+        "text": "مجلد تخزين سحابي"
+      },
+      "hi": {
+        "text": "एक क्लाउड-स्टोरेज फ़ोल्डर"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.place-external-drive": {
+    "strings": {
+      "en": {
+        "text": "an external or network drive"
+      },
+      "ja": {
+        "text": "外部ドライブまたはネットワークドライブ"
+      },
+      "zh": {
+        "text": "外置磁盘或网络磁盘"
+      },
+      "ko": {
+        "text": "외장 드라이브 또는 네트워크 드라이브"
+      },
+      "fr": {
+        "text": "un disque externe ou réseau"
+      },
+      "de": {
+        "text": "einem externen oder Netzwerklaufwerk"
+      },
+      "es": {
+        "text": "un disco externo o de red"
+      },
+      "pt": {
+        "text": "um disco externo ou de rede"
+      },
+      "ar": {
+        "text": "قرص خارجي أو قرص شبكة"
+      },
+      "hi": {
+        "text": "एक बाहरी या नेटवर्क ड्राइव"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.heading.inspection-failure": {
+    "strings": {
+      "en": {
+        "text": "VexLife couldn't check this Home."
+      },
+      "ja": {
+        "text": "VexLife はこの Home を確認できませんでした。"
+      },
+      "zh": {
+        "text": "VexLife 无法检查这个 Home。"
+      },
+      "ko": {
+        "text": "VexLife가 이 Home을 확인할 수 없었습니다."
+      },
+      "fr": {
+        "text": "VexLife n’a pas pu vérifier ce Home."
+      },
+      "de": {
+        "text": "VexLife konnte dieses Home nicht prüfen."
+      },
+      "es": {
+        "text": "VexLife no pudo comprobar este Home."
+      },
+      "pt": {
+        "text": "O VexLife não conseguiu verificar este Home."
+      },
+      "ar": {
+        "text": "تعذّر على VexLife فحص هذا الـ Home."
+      },
+      "hi": {
+        "text": "VexLife इस Home की जाँच नहीं कर सका।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.description.inspection-failure": {
+    "strings": {
+      "en": {
+        "text": "VexLife tried to look at {path} and this Mac before offering anything, and the check itself did not finish. Nothing was changed."
+      },
+      "ja": {
+        "text": "VexLife は何かを提案する前に {path} とこの Mac を確認しようとしましたが、確認そのものが完了しませんでした。何も変更していません。"
+      },
+      "zh": {
+        "text": "VexLife 在提供任何选项之前尝试检查 {path} 和这台 Mac，但检查本身没有完成。没有做任何更改。"
+      },
+      "ko": {
+        "text": "VexLife가 무언가를 제안하기 전에 {path}와 이 Mac을 확인하려 했지만 확인 자체가 끝나지 않았습니다. 아무것도 변경하지 않았습니다."
+      },
+      "fr": {
+        "text": "VexLife a essayé d’examiner {path} et ce Mac avant de proposer quoi que ce soit, mais la vérification elle-même n’a pas abouti. Rien n’a été modifié."
+      },
+      "de": {
+        "text": "VexLife wollte {path} und diesen Mac prüfen, bevor es etwas anbietet, aber die Prüfung selbst wurde nicht abgeschlossen. Es wurde nichts geändert."
+      },
+      "es": {
+        "text": "VexLife intentó examinar {path} y este Mac antes de ofrecer nada, y la comprobación misma no terminó. No se cambió nada."
+      },
+      "pt": {
+        "text": "O VexLife tentou examinar {path} e este Mac antes de oferecer qualquer coisa, e a própria verificação não terminou. Nada foi alterado."
+      },
+      "ar": {
+        "text": "حاول VexLife فحص {path} وجهاز Mac هذا قبل أن يعرض أي شيء، لكن الفحص نفسه لم يكتمل. لم يُغيَّر أي شيء."
+      },
+      "hi": {
+        "text": "कुछ भी पेश करने से पहले VexLife ने {path} और इस Mac को देखने की कोशिश की, लेकिन जाँच खुद पूरी नहीं हुई। कुछ भी बदला नहीं गया।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.heading.technical-detail": {
+    "strings": {
+      "en": {
+        "text": "Technical detail"
+      },
+      "ja": {
+        "text": "技術的な詳細"
+      },
+      "zh": {
+        "text": "技术细节"
+      },
+      "ko": {
+        "text": "기술 세부 정보"
+      },
+      "fr": {
+        "text": "Détail technique"
+      },
+      "de": {
+        "text": "Technische Details"
+      },
+      "es": {
+        "text": "Detalle técnico"
+      },
+      "pt": {
+        "text": "Detalhe técnico"
+      },
+      "ar": {
+        "text": "التفاصيل التقنية"
+      },
+      "hi": {
+        "text": "तकनीकी विवरण"
+      }
+    },
+    "surfaces": [
+      "setup.card",
+      "setup.window"
+    ]
+  },
+  "setup.heading.failure-state-changed": {
+    "strings": {
+      "en": {
+        "text": "Something changed before VexLife acted."
+      },
+      "ja": {
+        "text": "VexLife が実行する前に状況が変わりました。"
+      },
+      "zh": {
+        "text": "在 VexLife 执行之前，情况发生了变化。"
+      },
+      "ko": {
+        "text": "VexLife가 실행하기 전에 상황이 바뀌었습니다."
+      },
+      "fr": {
+        "text": "Quelque chose a changé avant que VexLife n’agisse."
+      },
+      "de": {
+        "text": "Etwas hat sich geändert, bevor VexLife gehandelt hat."
+      },
+      "es": {
+        "text": "Algo cambió antes de que VexLife actuara."
+      },
+      "pt": {
+        "text": "Algo mudou antes de o VexLife agir."
+      },
+      "ar": {
+        "text": "تغيّر شيء ما قبل أن يتصرف VexLife."
+      },
+      "hi": {
+        "text": "VexLife के कुछ करने से पहले कुछ बदल गया।"
+      }
+    },
+    "surfaces": [
+      "setup.failure"
+    ],
+    "dataKey": "setup:failure:STATE_CHANGED_BEFORE_EFFECT"
+  },
+  "setup.description.failure-state-changed": {
+    "strings": {
+      "en": {
+        "text": "VexLife looked again right before acting, and that choice no longer fits what is on this Mac now. Nothing was changed. Here is what is true now."
+      },
+      "ja": {
+        "text": "VexLife は実行の直前にもう一度確認しましたが、その選択はいまのこの Mac の状態に合わなくなっていました。何も変更していません。現在の状態を表示します。"
+      },
+      "zh": {
+        "text": "VexLife 在执行前又检查了一次，发现这个选择已不再符合这台 Mac 现在的状态。没有做任何更改。以下是当前的真实情况。"
+      },
+      "ko": {
+        "text": "VexLife가 실행 직전에 다시 확인했더니, 그 선택은 지금 이 Mac의 상태와 더 이상 맞지 않았습니다. 아무것도 변경하지 않았습니다. 현재 상태는 다음과 같습니다."
+      },
+      "fr": {
+        "text": "VexLife a vérifié à nouveau juste avant d’agir, et ce choix ne correspond plus à ce qui se trouve sur ce Mac. Rien n’a été modifié. Voici ce qui est vrai maintenant."
+      },
+      "de": {
+        "text": "VexLife hat direkt vor dem Handeln noch einmal nachgesehen, und diese Auswahl passt nicht mehr zu dem, was jetzt auf diesem Mac ist. Es wurde nichts geändert. Hier ist der aktuelle Stand."
+      },
+      "es": {
+        "text": "VexLife volvió a mirar justo antes de actuar, y esa opción ya no encaja con lo que hay ahora en este Mac. No se cambió nada. Esto es lo que es cierto ahora."
+      },
+      "pt": {
+        "text": "O VexLife verificou de novo logo antes de agir, e essa escolha não corresponde mais ao que está neste Mac agora. Nada foi alterado. Veja o que é verdade agora."
+      },
+      "ar": {
+        "text": "تحقق VexLife مرة أخرى قبل التصرف مباشرة، ولم يعد ذلك الاختيار يناسب ما هو موجود على جهاز Mac هذا الآن. لم يُغيَّر أي شيء. هذا هو الوضع الحالي."
+      },
+      "hi": {
+        "text": "VexLife ने कुछ करने से ठीक पहले फिर से देखा, और वह विकल्प अब इस Mac की मौजूदा स्थिति से मेल नहीं खाता। कुछ भी बदला नहीं गया। अभी की सही स्थिति यह है।"
+      }
+    },
+    "surfaces": [
+      "setup.failure"
+    ],
+    "dataKey": "setup:failure:STATE_CHANGED_BEFORE_EFFECT"
+  },
+  "setup.heading.failure-already-running": {
+    "strings": {
+      "en": {
+        "text": "Another VexLife setup is already running for this Home."
+      },
+      "ja": {
+        "text": "この Home では別の VexLife セットアップがすでに実行中です。"
+      },
+      "zh": {
+        "text": "此 Home 已有另一个 VexLife 设置正在运行。"
+      },
+      "ko": {
+        "text": "이 Home에서 다른 VexLife 설정이 이미 실행 중입니다."
+      },
+      "fr": {
+        "text": "Une autre configuration de VexLife est déjà en cours pour ce Home."
+      },
+      "de": {
+        "text": "Für dieses Home läuft bereits eine andere VexLife-Einrichtung."
+      },
+      "es": {
+        "text": "Ya hay otra configuración de VexLife en curso para este Home."
+      },
+      "pt": {
+        "text": "Outra configuração do VexLife já está em andamento para este Home."
+      },
+      "ar": {
+        "text": "هناك إعداد آخر لـ VexLife قيد التشغيل لهذا الـ Home."
+      },
+      "hi": {
+        "text": "इस Home के लिए VexLife का दूसरा सेटअप पहले से चल रहा है।"
+      }
+    },
+    "surfaces": [
+      "setup.failure"
+    ],
+    "dataKey": "setup:failure:SETUP_ALREADY_RUNNING"
+  },
+  "setup.description.failure-already-running": {
+    "strings": {
+      "en": {
+        "text": "Only one setup can change a Vex Home at a time. Let the other one finish or cancel it, then choose Check Again."
+      },
+      "ja": {
+        "text": "Vex Home を変更できるセットアップは一度に 1 つだけです。もう一方が終わるのを待つかキャンセルしてから、「もう一度確認」を選んでください。"
+      },
+      "zh": {
+        "text": "同一时间只能有一个设置更改 Vex Home。请等待另一个完成或取消它，然后选择“再次检查”。"
+      },
+      "ko": {
+        "text": "Vex Home은 한 번에 하나의 설정만 변경할 수 있습니다. 다른 설정이 끝나기를 기다리거나 취소한 뒤 '다시 확인'을 선택하세요."
+      },
+      "fr": {
+        "text": "Une seule configuration à la fois peut modifier un Vex Home. Laissez l’autre se terminer ou annulez-la, puis choisissez « Vérifier à nouveau »."
+      },
+      "de": {
+        "text": "Nur eine Einrichtung gleichzeitig kann ein Vex Home ändern. Lass die andere fertig werden oder brich sie ab und wähle dann „Erneut prüfen“."
+      },
+      "es": {
+        "text": "Solo una configuración a la vez puede cambiar un Vex Home. Deja que la otra termine o cancélala, y luego elige «Comprobar de nuevo»."
+      },
+      "pt": {
+        "text": "Só uma configuração por vez pode alterar um Vex Home. Deixe a outra terminar ou cancele-a e depois escolha “Verificar de novo”."
+      },
+      "ar": {
+        "text": "لا يمكن إلا لإعداد واحد في كل مرة أن يغيّر Vex Home. انتظر حتى ينتهي الآخر أو ألغِه، ثم اختر «التحقق مرة أخرى»."
+      },
+      "hi": {
+        "text": "एक समय में केवल एक सेटअप ही Vex Home को बदल सकता है। दूसरे को पूरा होने दें या उसे रद्द करें, फिर “फिर से जाँचें” चुनें।"
+      }
+    },
+    "surfaces": [
+      "setup.failure"
+    ],
+    "dataKey": "setup:failure:SETUP_ALREADY_RUNNING"
+  },
+  "setup.heading.failure-storage-exhausted": {
+    "strings": {
+      "en": {
+        "text": "The drive ran out of space."
+      },
+      "ja": {
+        "text": "ドライブの空き容量がなくなりました。"
+      },
+      "zh": {
+        "text": "磁盘空间已用完。"
+      },
+      "ko": {
+        "text": "드라이브 공간이 부족합니다."
+      },
+      "fr": {
+        "text": "Le disque est plein."
+      },
+      "de": {
+        "text": "Auf dem Laufwerk ist kein Platz mehr."
+      },
+      "es": {
+        "text": "El disco se quedó sin espacio."
+      },
+      "pt": {
+        "text": "O disco ficou sem espaço."
+      },
+      "ar": {
+        "text": "نفدت المساحة على القرص."
+      },
+      "hi": {
+        "text": "ड्राइव में जगह खत्म हो गई।"
+      }
+    },
+    "surfaces": [
+      "setup.failure"
+    ],
+    "dataKey": "setup:failure:STORAGE_EXHAUSTED"
+  },
+  "setup.description.failure-storage-exhausted": {
+    "strings": {
+      "en": {
+        "text": "VexLife stopped before finishing. Files that finished downloading were kept, and an unfinished download resumes where it stopped. Free up space, then try again."
+      },
+      "ja": {
+        "text": "VexLife は完了前に停止しました。ダウンロードが完了したファイルは残り、途中のダウンロードは止まったところから再開します。空き容量を増やしてから、もう一度お試しください。"
+      },
+      "zh": {
+        "text": "VexLife 在完成前停止了。已下载完成的文件会保留，未完成的下载会从中断处继续。请释放空间后再试一次。"
+      },
+      "ko": {
+        "text": "VexLife가 완료 전에 중지했습니다. 다운로드가 끝난 파일은 보존되며, 완료되지 않은 다운로드는 멈춘 지점부터 이어집니다. 공간을 확보한 뒤 다시 시도하세요."
+      },
+      "fr": {
+        "text": "VexLife s’est arrêté avant la fin. Les fichiers entièrement téléchargés ont été conservés, et un téléchargement inachevé reprend là où il s’est arrêté. Libérez de l’espace, puis réessayez."
+      },
+      "de": {
+        "text": "VexLife hat vor dem Abschluss angehalten. Vollständig heruntergeladene Dateien bleiben erhalten, und ein unvollständiger Download wird dort fortgesetzt, wo er aufgehört hat. Schaffe Platz und versuche es dann erneut."
+      },
+      "es": {
+        "text": "VexLife se detuvo antes de terminar. Los archivos que terminaron de descargarse se conservaron, y una descarga sin terminar continúa donde se detuvo. Libera espacio y vuelve a intentarlo."
+      },
+      "pt": {
+        "text": "O VexLife parou antes de terminar. Os arquivos que terminaram de baixar foram mantidos, e um download incompleto continua de onde parou. Libere espaço e tente de novo."
+      },
+      "ar": {
+        "text": "توقف VexLife قبل الانتهاء. حُفظت الملفات التي اكتمل تنزيلها، ويُستأنف التنزيل غير المكتمل من حيث توقف. أفرغ بعض المساحة، ثم حاول مرة أخرى."
+      },
+      "hi": {
+        "text": "VexLife पूरा होने से पहले रुक गया। जो फ़ाइलें पूरी डाउनलोड हो चुकी थीं वे रखी गई हैं, और अधूरा डाउनलोड वहीं से जारी होगा जहाँ रुका था। जगह खाली करें, फिर दोबारा कोशिश करें।"
+      }
+    },
+    "surfaces": [
+      "setup.failure"
+    ],
+    "dataKey": "setup:failure:STORAGE_EXHAUSTED"
+  },
+  "setup.heading.failure-network": {
+    "strings": {
+      "en": {
+        "text": "VexLife couldn't download what it needed."
+      },
+      "ja": {
+        "text": "VexLife は必要なものをダウンロードできませんでした。"
+      },
+      "zh": {
+        "text": "VexLife 无法下载所需的内容。"
+      },
+      "ko": {
+        "text": "VexLife가 필요한 항목을 다운로드할 수 없었습니다."
+      },
+      "fr": {
+        "text": "VexLife n’a pas pu télécharger ce dont il avait besoin."
+      },
+      "de": {
+        "text": "VexLife konnte nicht herunterladen, was es braucht."
+      },
+      "es": {
+        "text": "VexLife no pudo descargar lo que necesitaba."
+      },
+      "pt": {
+        "text": "O VexLife não conseguiu baixar o que precisava."
+      },
+      "ar": {
+        "text": "تعذّر على VexLife تنزيل ما يحتاجه."
+      },
+      "hi": {
+        "text": "VexLife ज़रूरी चीज़ें डाउनलोड नहीं कर सका।"
+      }
+    },
+    "surfaces": [
+      "setup.failure"
+    ],
+    "dataKey": "setup:failure:NETWORK_UNAVAILABLE"
+  },
+  "setup.description.failure-network": {
+    "strings": {
+      "en": {
+        "text": "Check your internet connection and try again. Files that finished downloading were kept, and an unfinished download resumes where it stopped."
+      },
+      "ja": {
+        "text": "インターネット接続を確認して、もう一度お試しください。ダウンロードが完了したファイルは残り、途中のダウンロードは止まったところから再開します。"
+      },
+      "zh": {
+        "text": "请检查网络连接后再试一次。已下载完成的文件会保留，未完成的下载会从中断处继续。"
+      },
+      "ko": {
+        "text": "인터넷 연결을 확인한 뒤 다시 시도하세요. 다운로드가 끝난 파일은 보존되며, 완료되지 않은 다운로드는 멈춘 지점부터 이어집니다."
+      },
+      "fr": {
+        "text": "Vérifiez votre connexion Internet et réessayez. Les fichiers entièrement téléchargés ont été conservés, et un téléchargement inachevé reprend là où il s’est arrêté."
+      },
+      "de": {
+        "text": "Prüfe deine Internetverbindung und versuche es erneut. Vollständig heruntergeladene Dateien bleiben erhalten, und ein unvollständiger Download wird dort fortgesetzt, wo er aufgehört hat."
+      },
+      "es": {
+        "text": "Comprueba tu conexión a Internet y vuelve a intentarlo. Los archivos que terminaron de descargarse se conservaron, y una descarga sin terminar continúa donde se detuvo."
+      },
+      "pt": {
+        "text": "Verifique sua conexão com a internet e tente de novo. Os arquivos que terminaram de baixar foram mantidos, e um download incompleto continua de onde parou."
+      },
+      "ar": {
+        "text": "تحقق من اتصالك بالإنترنت وحاول مرة أخرى. حُفظت الملفات التي اكتمل تنزيلها، ويُستأنف التنزيل غير المكتمل من حيث توقف."
+      },
+      "hi": {
+        "text": "अपना इंटरनेट कनेक्शन जाँचें और दोबारा कोशिश करें। जो फ़ाइलें पूरी डाउनलोड हो चुकी थीं वे रखी गई हैं, और अधूरा डाउनलोड वहीं से जारी होगा जहाँ रुका था।"
+      }
+    },
+    "surfaces": [
+      "setup.failure"
+    ],
+    "dataKey": "setup:failure:NETWORK_UNAVAILABLE"
+  },
+  "setup.heading.failure-prerequisite-missing": {
+    "strings": {
+      "en": {
+        "text": "Something VexLife needs is missing from your Home."
+      },
+      "ja": {
+        "text": "VexLife に必要なものが Home にありません。"
+      },
+      "zh": {
+        "text": "你的 Home 中缺少 VexLife 需要的内容。"
+      },
+      "ko": {
+        "text": "VexLife에 필요한 항목이 Home에 없습니다."
+      },
+      "fr": {
+        "text": "Il manque à votre Home un élément dont VexLife a besoin."
+      },
+      "de": {
+        "text": "In deinem Home fehlt etwas, das VexLife braucht."
+      },
+      "es": {
+        "text": "Falta en tu Home algo que VexLife necesita."
+      },
+      "pt": {
+        "text": "Falta no seu Home algo de que o VexLife precisa."
+      },
+      "ar": {
+        "text": "شيء يحتاجه VexLife مفقود من Home الخاص بك."
+      },
+      "hi": {
+        "text": "आपके Home में VexLife के लिए ज़रूरी कुछ गायब है।"
+      }
+    },
+    "surfaces": [
+      "setup.failure"
+    ],
+    "dataKey": "setup:failure:PREREQUISITE_MISSING"
+  },
+  "setup.description.failure-prerequisite-missing": {
+    "strings": {
+      "en": {
+        "text": "VexLife started without downloading anything, as you chose, and found a missing piece. Nothing was deleted. Choose Check Again to see what needs to be set up."
+      },
+      "ja": {
+        "text": "VexLife は選択どおり何もダウンロードせずに起動し、足りないものを見つけました。何も削除していません。「もう一度確認」を選んで、セットアップが必要なものを確認してください。"
+      },
+      "zh": {
+        "text": "按照你的选择，VexLife 在不下载任何内容的情况下启动，并发现缺少某个部分。没有删除任何内容。请选择“再次检查”，查看需要设置什么。"
+      },
+      "ko": {
+        "text": "선택한 대로 VexLife는 아무것도 다운로드하지 않고 시작했으며, 빠진 항목을 발견했습니다. 아무것도 삭제하지 않았습니다. '다시 확인'을 선택해 설정이 필요한 항목을 확인하세요."
+      },
+      "fr": {
+        "text": "Comme vous l’avez choisi, VexLife a démarré sans rien télécharger et a trouvé un élément manquant. Rien n’a été supprimé. Choisissez « Vérifier à nouveau » pour voir ce qui doit être configuré."
+      },
+      "de": {
+        "text": "VexLife wurde wie gewählt ohne Download gestartet und hat ein fehlendes Teil gefunden. Es wurde nichts gelöscht. Wähle „Erneut prüfen“, um zu sehen, was eingerichtet werden muss."
+      },
+      "es": {
+        "text": "VexLife se inició sin descargar nada, como elegiste, y encontró que falta una pieza. No se eliminó nada. Elige «Comprobar de nuevo» para ver qué hay que configurar."
+      },
+      "pt": {
+        "text": "O VexLife iniciou sem baixar nada, como você escolheu, e encontrou uma parte faltando. Nada foi apagado. Escolha “Verificar de novo” para ver o que precisa ser configurado."
+      },
+      "ar": {
+        "text": "بدأ VexLife دون تنزيل أي شيء كما اخترت، ووجد جزءًا مفقودًا. لم يُحذف أي شيء. اختر «التحقق مرة أخرى» لترى ما يحتاج إلى إعداد."
+      },
+      "hi": {
+        "text": "आपकी पसंद के अनुसार VexLife बिना कुछ डाउनलोड किए शुरू हुआ और उसे एक हिस्सा गायब मिला। कुछ भी मिटाया नहीं गया। क्या सेट अप करना है यह देखने के लिए “फिर से जाँचें” चुनें।"
+      }
+    },
+    "surfaces": [
+      "setup.failure"
+    ],
+    "dataKey": "setup:failure:PREREQUISITE_MISSING"
+  },
+  "setup.heading.failure-home-preserved": {
+    "strings": {
+      "en": {
+        "text": "VexLife left that folder as it was."
+      },
+      "ja": {
+        "text": "VexLife はそのフォルダをそのままにしました。"
+      },
+      "zh": {
+        "text": "VexLife 保留了那个文件夹的原样。"
+      },
+      "ko": {
+        "text": "VexLife가 그 폴더를 그대로 두었습니다."
+      },
+      "fr": {
+        "text": "VexLife a laissé ce dossier tel quel."
+      },
+      "de": {
+        "text": "VexLife hat diesen Ordner unverändert gelassen."
+      },
+      "es": {
+        "text": "VexLife dejó esa carpeta como estaba."
+      },
+      "pt": {
+        "text": "O VexLife deixou essa pasta como estava."
+      },
+      "ar": {
+        "text": "ترك VexLife ذلك المجلد كما كان."
+      },
+      "hi": {
+        "text": "VexLife ने उस फ़ोल्डर को जैसा था वैसा ही छोड़ दिया।"
+      }
+    },
+    "surfaces": [
+      "setup.failure"
+    ],
+    "dataKey": "setup:failure:HOME_PRESERVED"
+  },
+  "setup.description.failure-home-preserved": {
+    "strings": {
+      "en": {
+        "text": "The selected location could not safely become a Vex Home, so nothing was created there. Choose Check Again to see why, or choose another location."
+      },
+      "ja": {
+        "text": "選んだ場所は安全に Vex Home にできなかったため、そこには何も作成していません。「もう一度確認」で理由を確認するか、別の場所を選んでください。"
+      },
+      "zh": {
+        "text": "所选位置无法安全地成为 Vex Home，所以没有在那里创建任何内容。请选择“再次检查”查看原因，或选择其他位置。"
+      },
+      "ko": {
+        "text": "선택한 위치를 안전하게 Vex Home으로 만들 수 없어 그곳에는 아무것도 만들지 않았습니다. '다시 확인'을 선택해 이유를 보거나 다른 위치를 선택하세요."
+      },
+      "fr": {
+        "text": "L’emplacement sélectionné ne pouvait pas devenir un Vex Home en toute sécurité ; rien n’y a donc été créé. Choisissez « Vérifier à nouveau » pour en voir la raison, ou choisissez un autre emplacement."
+      },
+      "de": {
+        "text": "Der gewählte Ort konnte nicht sicher zu einem Vex Home werden, daher wurde dort nichts erstellt. Wähle „Erneut prüfen“, um den Grund zu sehen, oder wähle einen anderen Ort."
+      },
+      "es": {
+        "text": "La ubicación seleccionada no podía convertirse de forma segura en un Vex Home, así que no se creó nada allí. Elige «Comprobar de nuevo» para ver por qué, o elige otra ubicación."
+      },
+      "pt": {
+        "text": "O local selecionado não podia se tornar um Vex Home com segurança, então nada foi criado ali. Escolha “Verificar de novo” para ver o motivo, ou escolha outro local."
+      },
+      "ar": {
+        "text": "لم يكن من الآمن أن يصبح الموقع المحدد Vex Home، لذلك لم يُنشأ أي شيء هناك. اختر «التحقق مرة أخرى» لمعرفة السبب، أو اختر موقعًا آخر."
+      },
+      "hi": {
+        "text": "चुनी गई जगह सुरक्षित रूप से Vex Home नहीं बन सकती थी, इसलिए वहाँ कुछ नहीं बनाया गया। कारण देखने के लिए “फिर से जाँचें” चुनें, या कोई दूसरी जगह चुनें।"
+      }
+    },
+    "surfaces": [
+      "setup.failure"
+    ],
+    "dataKey": "setup:failure:HOME_PRESERVED"
+  },
+  "setup.heading.failure-stopped": {
+    "strings": {
+      "en": {
+        "text": "VexLife stopped before finishing."
+      },
+      "ja": {
+        "text": "VexLife は完了前に停止しました。"
+      },
+      "zh": {
+        "text": "VexLife 在完成前停止了。"
+      },
+      "ko": {
+        "text": "VexLife가 완료 전에 중지했습니다."
+      },
+      "fr": {
+        "text": "VexLife s’est arrêté avant la fin."
+      },
+      "de": {
+        "text": "VexLife hat vor dem Abschluss angehalten."
+      },
+      "es": {
+        "text": "VexLife se detuvo antes de terminar."
+      },
+      "pt": {
+        "text": "O VexLife parou antes de terminar."
+      },
+      "ar": {
+        "text": "توقف VexLife قبل الانتهاء."
+      },
+      "hi": {
+        "text": "VexLife पूरा होने से पहले रुक गया।"
+      }
+    },
+    "surfaces": [
+      "setup.failure",
+      "setup.window"
+    ],
+    "dataKey": "setup:failure:STOPPED_SAFELY"
+  },
+  "setup.description.failure-stopped": {
+    "strings": {
+      "en": {
+        "text": "Nothing in your Vex Home was deleted. You can try again. If it keeps happening, the technical detail below explains where it stopped."
+      },
+      "ja": {
+        "text": "Vex Home 内のものは何も削除していません。もう一度お試しいただけます。繰り返し起きる場合は、下の技術的な詳細に停止した箇所が書かれています。"
+      },
+      "zh": {
+        "text": "你的 Vex Home 中没有任何内容被删除。你可以再试一次。如果问题反复出现，下方的技术细节说明了停止的位置。"
+      },
+      "ko": {
+        "text": "Vex Home의 어떤 것도 삭제되지 않았습니다. 다시 시도할 수 있습니다. 같은 문제가 반복되면 아래 기술 세부 정보에서 멈춘 위치를 확인할 수 있습니다."
+      },
+      "fr": {
+        "text": "Rien n’a été supprimé de votre Vex Home. Vous pouvez réessayer. Si cela se reproduit, le détail technique ci-dessous indique où l’arrêt a eu lieu."
+      },
+      "de": {
+        "text": "In deinem Vex Home wurde nichts gelöscht. Du kannst es erneut versuchen. Wenn es wieder passiert, zeigen die technischen Details unten, wo es angehalten hat."
+      },
+      "es": {
+        "text": "No se eliminó nada de tu Vex Home. Puedes volver a intentarlo. Si sigue ocurriendo, el detalle técnico de abajo explica dónde se detuvo."
+      },
+      "pt": {
+        "text": "Nada no seu Vex Home foi apagado. Você pode tentar de novo. Se continuar acontecendo, o detalhe técnico abaixo explica onde ele parou."
+      },
+      "ar": {
+        "text": "لم يُحذف أي شيء من Vex Home. يمكنك المحاولة مرة أخرى. إذا تكرر ذلك، فالتفاصيل التقنية أدناه توضح أين توقف."
+      },
+      "hi": {
+        "text": "आपके Vex Home में से कुछ भी मिटाया नहीं गया। आप दोबारा कोशिश कर सकते हैं। अगर ऐसा बार-बार हो, तो नीचे दिया तकनीकी विवरण बताता है कि यह कहाँ रुका।"
+      }
+    },
+    "surfaces": [
+      "setup.failure"
+    ],
+    "dataKey": "setup:failure:STOPPED_SAFELY"
+  },
+  "setup.heading.failure-file-access": {
+    "strings": {
+      "en": {
+        "text": "VexLife couldn't read or write a file it needed."
+      },
+      "ja": {
+        "text": "VexLife は必要なファイルを読み書きできませんでした。"
+      },
+      "zh": {
+        "text": "VexLife 无法读取或写入所需的文件。"
+      },
+      "ko": {
+        "text": "VexLife가 필요한 파일을 읽거나 쓸 수 없었습니다."
+      },
+      "fr": {
+        "text": "VexLife n’a pas pu lire ou écrire un fichier nécessaire."
+      },
+      "de": {
+        "text": "VexLife konnte eine benötigte Datei nicht lesen oder schreiben."
+      },
+      "es": {
+        "text": "VexLife no pudo leer o escribir un archivo que necesitaba."
+      },
+      "pt": {
+        "text": "O VexLife não conseguiu ler ou gravar um arquivo de que precisava."
+      },
+      "ar": {
+        "text": "تعذّر على VexLife قراءة ملف يحتاجه أو الكتابة فيه."
+      },
+      "hi": {
+        "text": "VexLife किसी ज़रूरी फ़ाइल को पढ़ या लिख नहीं सका।"
+      }
+    },
+    "surfaces": [
+      "setup.failure"
+    ],
+    "dataKey": "setup:failure:STOPPED_SAFELY"
+  },
+  "setup.heading.ready": {
+    "strings": {
+      "en": {
+        "text": "VexLife is ready."
+      },
+      "ja": {
+        "text": "VexLife の準備ができました。"
+      },
+      "zh": {
+        "text": "VexLife 已就绪。"
+      },
+      "ko": {
+        "text": "VexLife가 준비되었습니다."
+      },
+      "fr": {
+        "text": "VexLife est prêt."
+      },
+      "de": {
+        "text": "VexLife ist bereit."
+      },
+      "es": {
+        "text": "VexLife está listo."
+      },
+      "pt": {
+        "text": "O VexLife está pronto."
+      },
+      "ar": {
+        "text": "VexLife جاهز."
+      },
+      "hi": {
+        "text": "VexLife तैयार है।"
+      }
+    },
+    "surfaces": [
+      "setup.notice",
+      "setup.window"
+    ],
+    "dataKey": "entry:state:CURRENT"
+  },
+  "setup.description.ready": {
+    "strings": {
+      "en": {
+        "text": "VexLife is running on this Mac and opened in your browser at {origin}. You can close this window. To start VexLife again later (for example after restarting your Mac), run the same setup command: it checks first and offers only what is needed."
+      },
+      "ja": {
+        "text": "VexLife はこの Mac で動作しており、ブラウザで {origin} を開きました。このウインドウは閉じてかまいません。後で（Mac の再起動後など）VexLife をもう一度起動するには、同じセットアップコマンドを実行してください。まず確認し、必要なことだけを提案します。"
+      },
+      "zh": {
+        "text": "VexLife 正在这台 Mac 上运行，并已在浏览器中打开 {origin}。你可以关闭此窗口。以后要再次启动 VexLife（例如重启 Mac 之后），运行同一个设置命令即可：它会先检查，只提供需要的操作。"
+      },
+      "ko": {
+        "text": "VexLife가 이 Mac에서 실행 중이며 브라우저에서 {origin}을(를) 열었습니다. 이 창은 닫아도 됩니다. 나중에(예: Mac을 재시동한 후) VexLife를 다시 시작하려면 같은 설정 명령을 실행하세요. 먼저 확인한 뒤 필요한 작업만 제안합니다."
+      },
+      "fr": {
+        "text": "VexLife fonctionne sur ce Mac et s’est ouvert dans votre navigateur à l’adresse {origin}. Vous pouvez fermer cette fenêtre. Pour relancer VexLife plus tard (par exemple après avoir redémarré votre Mac), exécutez la même commande de configuration : elle vérifie d’abord et ne propose que ce qui est nécessaire."
+      },
+      "de": {
+        "text": "VexLife läuft auf diesem Mac und wurde in deinem Browser unter {origin} geöffnet. Du kannst dieses Fenster schließen. Um VexLife später wieder zu starten (zum Beispiel nach einem Neustart deines Mac), führe denselben Einrichtungsbefehl aus: Er prüft zuerst und bietet nur an, was nötig ist."
+      },
+      "es": {
+        "text": "VexLife se está ejecutando en este Mac y se abrió en tu navegador en {origin}. Puedes cerrar esta ventana. Para volver a iniciar VexLife más tarde (por ejemplo, después de reiniciar tu Mac), ejecuta el mismo comando de configuración: primero comprueba y solo ofrece lo necesario."
+      },
+      "pt": {
+        "text": "O VexLife está em execução neste Mac e foi aberto no seu navegador em {origin}. Você pode fechar esta janela. Para iniciar o VexLife de novo mais tarde (por exemplo, depois de reiniciar o Mac), execute o mesmo comando de configuração: ele verifica primeiro e oferece apenas o que é necessário."
+      },
+      "ar": {
+        "text": "يعمل VexLife على جهاز Mac هذا وقد فُتح في متصفحك على {origin}. يمكنك إغلاق هذه النافذة. لتشغيل VexLife مرة أخرى لاحقًا (مثلًا بعد إعادة تشغيل جهاز Mac)، شغّل أمر الإعداد نفسه: فهو يتحقق أولًا ولا يعرض إلا ما يلزم."
+      },
+      "hi": {
+        "text": "VexLife इस Mac पर चल रहा है और आपके ब्राउज़र में {origin} पर खुल गया है। आप यह विंडो बंद कर सकते हैं। बाद में VexLife को फिर से शुरू करने के लिए (जैसे Mac रीस्टार्ट करने के बाद), वही सेटअप कमांड चलाएँ: यह पहले जाँच करता है और केवल वही पेश करता है जो ज़रूरी है।"
+      }
+    },
+    "surfaces": [
+      "setup.notice"
+    ],
+    "dataKey": "entry:state:CURRENT"
+  },
+  "setup.status.progress-verifying-product": {
+    "strings": {
+      "en": {
+        "text": "Checking this copy of VexLife…"
+      },
+      "ja": {
+        "text": "この VexLife のコピーを確認しています…"
+      },
+      "zh": {
+        "text": "正在检查这份 VexLife…"
+      },
+      "ko": {
+        "text": "이 VexLife 사본을 확인하는 중…"
+      },
+      "fr": {
+        "text": "Vérification de cette copie de VexLife…"
+      },
+      "de": {
+        "text": "Diese Kopie von VexLife wird geprüft …"
+      },
+      "es": {
+        "text": "Comprobando esta copia de VexLife…"
+      },
+      "pt": {
+        "text": "Verificando esta cópia do VexLife…"
+      },
+      "ar": {
+        "text": "جارٍ فحص نسخة VexLife هذه…"
+      },
+      "hi": {
+        "text": "VexLife की इस कॉपी की जाँच हो रही है…"
+      }
+    },
+    "surfaces": [
+      "setup.progress"
+    ],
+    "dataKey": "setup:phase:VerifyingProduct"
+  },
+  "setup.status.progress-forming-home": {
+    "strings": {
+      "en": {
+        "text": "Creating your Vex Home…"
+      },
+      "ja": {
+        "text": "Vex Home を作成しています…"
+      },
+      "zh": {
+        "text": "正在创建你的 Vex Home…"
+      },
+      "ko": {
+        "text": "Vex Home을 만드는 중…"
+      },
+      "fr": {
+        "text": "Création de votre Vex Home…"
+      },
+      "de": {
+        "text": "Dein Vex Home wird erstellt …"
+      },
+      "es": {
+        "text": "Creando tu Vex Home…"
+      },
+      "pt": {
+        "text": "Criando seu Vex Home…"
+      },
+      "ar": {
+        "text": "جارٍ إنشاء Vex Home الخاص بك…"
+      },
+      "hi": {
+        "text": "आपका Vex Home बनाया जा रहा है…"
+      }
+    },
+    "surfaces": [
+      "setup.progress"
+    ],
+    "dataKey": "setup:phase:FormingHome"
+  },
+  "setup.status.progress-checking-home": {
+    "strings": {
+      "en": {
+        "text": "Checking your Vex Home…"
+      },
+      "ja": {
+        "text": "Vex Home を確認しています…"
+      },
+      "zh": {
+        "text": "正在检查你的 Vex Home…"
+      },
+      "ko": {
+        "text": "Vex Home을 확인하는 중…"
+      },
+      "fr": {
+        "text": "Vérification de votre Vex Home…"
+      },
+      "de": {
+        "text": "Dein Vex Home wird geprüft …"
+      },
+      "es": {
+        "text": "Comprobando tu Vex Home…"
+      },
+      "pt": {
+        "text": "Verificando seu Vex Home…"
+      },
+      "ar": {
+        "text": "جارٍ فحص Vex Home الخاص بك…"
+      },
+      "hi": {
+        "text": "आपके Vex Home की जाँच हो रही है…"
+      }
+    },
+    "surfaces": [
+      "setup.progress"
+    ],
+    "dataKey": "setup:phase:CheckingHome"
+  },
+  "setup.status.progress-preparing-python": {
+    "strings": {
+      "en": {
+        "text": "Preparing VexLife's private Python…"
+      },
+      "ja": {
+        "text": "VexLife 専用の Python を準備しています…"
+      },
+      "zh": {
+        "text": "正在准备 VexLife 专用的 Python…"
+      },
+      "ko": {
+        "text": "VexLife 전용 Python을 준비하는 중…"
+      },
+      "fr": {
+        "text": "Préparation du Python privé de VexLife…"
+      },
+      "de": {
+        "text": "Das private Python von VexLife wird vorbereitet …"
+      },
+      "es": {
+        "text": "Preparando el Python privado de VexLife…"
+      },
+      "pt": {
+        "text": "Preparando o Python privado do VexLife…"
+      },
+      "ar": {
+        "text": "جارٍ تجهيز Python الخاص بـ VexLife…"
+      },
+      "hi": {
+        "text": "VexLife का निजी Python तैयार किया जा रहा है…"
+      }
+    },
+    "surfaces": [
+      "setup.progress"
+    ],
+    "dataKey": "setup:phase:PreparingPython"
+  },
+  "setup.status.progress-checking-model-files": {
+    "strings": {
+      "en": {
+        "text": "Checking the local model files…"
+      },
+      "ja": {
+        "text": "ローカルモデルのファイルを確認しています…"
+      },
+      "zh": {
+        "text": "正在检查本地模型文件…"
+      },
+      "ko": {
+        "text": "로컬 모델 파일을 확인하는 중…"
+      },
+      "fr": {
+        "text": "Vérification des fichiers du modèle local…"
+      },
+      "de": {
+        "text": "Die Dateien des lokalen Modells werden geprüft …"
+      },
+      "es": {
+        "text": "Comprobando los archivos del modelo local…"
+      },
+      "pt": {
+        "text": "Verificando os arquivos do modelo local…"
+      },
+      "ar": {
+        "text": "جارٍ فحص ملفات النموذج المحلي…"
+      },
+      "hi": {
+        "text": "लोकल मॉडल की फ़ाइलों की जाँच हो रही है…"
+      }
+    },
+    "surfaces": [
+      "setup.progress"
+    ],
+    "dataKey": "setup:phase:CheckingModelFiles"
+  },
+  "setup.status.progress-preparing-model-runtime": {
+    "strings": {
+      "en": {
+        "text": "Preparing the local model runtime…"
+      },
+      "ja": {
+        "text": "ローカルモデルのランタイムを準備しています…"
+      },
+      "zh": {
+        "text": "正在准备本地模型运行环境…"
+      },
+      "ko": {
+        "text": "로컬 모델 런타임을 준비하는 중…"
+      },
+      "fr": {
+        "text": "Préparation de l’environnement du modèle local…"
+      },
+      "de": {
+        "text": "Die Laufzeit des lokalen Modells wird vorbereitet …"
+      },
+      "es": {
+        "text": "Preparando el entorno del modelo local…"
+      },
+      "pt": {
+        "text": "Preparando o ambiente do modelo local…"
+      },
+      "ar": {
+        "text": "جارٍ تجهيز بيئة تشغيل النموذج المحلي…"
+      },
+      "hi": {
+        "text": "लोकल मॉडल का रनटाइम तैयार किया जा रहा है…"
+      }
+    },
+    "surfaces": [
+      "setup.progress"
+    ],
+    "dataKey": "setup:phase:PreparingModelRuntime"
+  },
+  "setup.status.progress-starting-local-model": {
+    "strings": {
+      "en": {
+        "text": "Starting the local model. This can take a few minutes…"
+      },
+      "ja": {
+        "text": "ローカルモデルを起動しています。数分かかることがあります…"
+      },
+      "zh": {
+        "text": "正在启动本地模型，这可能需要几分钟…"
+      },
+      "ko": {
+        "text": "로컬 모델을 시작하는 중입니다. 몇 분 걸릴 수 있습니다…"
+      },
+      "fr": {
+        "text": "Démarrage du modèle local. Cela peut prendre quelques minutes…"
+      },
+      "de": {
+        "text": "Das lokale Modell wird gestartet. Das kann einige Minuten dauern …"
+      },
+      "es": {
+        "text": "Iniciando el modelo local. Esto puede tardar unos minutos…"
+      },
+      "pt": {
+        "text": "Iniciando o modelo local. Isso pode levar alguns minutos…"
+      },
+      "ar": {
+        "text": "جارٍ تشغيل النموذج المحلي. قد يستغرق ذلك بضع دقائق…"
+      },
+      "hi": {
+        "text": "लोकल मॉडल शुरू हो रहा है। इसमें कुछ मिनट लग सकते हैं…"
+      }
+    },
+    "surfaces": [
+      "setup.progress"
+    ],
+    "dataKey": "setup:phase:StartingLocalModel"
+  },
+  "setup.status.progress-installing-product": {
+    "strings": {
+      "en": {
+        "text": "Installing this version of VexLife into your Home…"
+      },
+      "ja": {
+        "text": "このバージョンの VexLife を Home にインストールしています…"
+      },
+      "zh": {
+        "text": "正在把此版本的 VexLife 安装到你的 Home…"
+      },
+      "ko": {
+        "text": "이 버전의 VexLife를 Home에 설치하는 중…"
+      },
+      "fr": {
+        "text": "Installation de cette version de VexLife dans votre Home…"
+      },
+      "de": {
+        "text": "Diese Version von VexLife wird in dein Home installiert …"
+      },
+      "es": {
+        "text": "Instalando esta versión de VexLife en tu Home…"
+      },
+      "pt": {
+        "text": "Instalando esta versão do VexLife no seu Home…"
+      },
+      "ar": {
+        "text": "جارٍ تثبيت هذا الإصدار من VexLife في Home الخاص بك…"
+      },
+      "hi": {
+        "text": "VexLife का यह संस्करण आपके Home में इंस्टॉल हो रहा है…"
+      }
+    },
+    "surfaces": [
+      "setup.progress"
+    ],
+    "dataKey": "setup:phase:InstallingProduct"
+  },
+  "setup.status.progress-starting-vexlife": {
+    "strings": {
+      "en": {
+        "text": "Starting VexLife…"
+      },
+      "ja": {
+        "text": "VexLife を起動しています…"
+      },
+      "zh": {
+        "text": "正在启动 VexLife…"
+      },
+      "ko": {
+        "text": "VexLife를 시작하는 중…"
+      },
+      "fr": {
+        "text": "Démarrage de VexLife…"
+      },
+      "de": {
+        "text": "VexLife wird gestartet …"
+      },
+      "es": {
+        "text": "Iniciando VexLife…"
+      },
+      "pt": {
+        "text": "Iniciando o VexLife…"
+      },
+      "ar": {
+        "text": "جارٍ تشغيل VexLife…"
+      },
+      "hi": {
+        "text": "VexLife शुरू हो रहा है…"
+      }
+    },
+    "surfaces": [
+      "setup.progress"
+    ],
+    "dataKey": "setup:phase:StartingVexLife"
+  },
+  "setup.status.progress-confirming-vexlife": {
+    "strings": {
+      "en": {
+        "text": "Confirming VexLife is running…"
+      },
+      "ja": {
+        "text": "VexLife が動作していることを確認しています…"
+      },
+      "zh": {
+        "text": "正在确认 VexLife 已运行…"
+      },
+      "ko": {
+        "text": "VexLife가 실행 중인지 확인하는 중…"
+      },
+      "fr": {
+        "text": "Vérification que VexLife fonctionne…"
+      },
+      "de": {
+        "text": "Es wird bestätigt, dass VexLife läuft …"
+      },
+      "es": {
+        "text": "Confirmando que VexLife está en funcionamiento…"
+      },
+      "pt": {
+        "text": "Confirmando que o VexLife está em execução…"
+      },
+      "ar": {
+        "text": "جارٍ التأكد من أن VexLife يعمل…"
+      },
+      "hi": {
+        "text": "पुष्टि की जा रही है कि VexLife चल रहा है…"
+      }
+    },
+    "surfaces": [
+      "setup.progress"
+    ],
+    "dataKey": "setup:phase:ConfirmingVexLife"
+  },
+  "setup.status.progress-downloading": {
+    "strings": {
+      "en": {
+        "text": "Downloading the local model — {done} of {total} GiB ({percent}%). Keep this window open; an interrupted download resumes next time."
+      },
+      "ja": {
+        "text": "ローカルモデルをダウンロードしています — {total} GiB 中 {done} GiB（{percent}%）。このウインドウは開いたままにしてください。中断しても次回再開します。"
+      },
+      "zh": {
+        "text": "正在下载本地模型 — {done} / {total} GiB（{percent}%）。请保持此窗口打开；下载中断后下次会继续。"
+      },
+      "ko": {
+        "text": "로컬 모델 다운로드 중 — {total} GiB 중 {done} GiB ({percent}%). 이 창을 열어 두세요. 다운로드가 중단되면 다음에 이어서 진행됩니다."
+      },
+      "fr": {
+        "text": "Téléchargement du modèle local — {done} sur {total} Gio ({percent} %). Gardez cette fenêtre ouverte ; un téléchargement interrompu reprendra la prochaine fois."
+      },
+      "de": {
+        "text": "Das lokale Modell wird heruntergeladen — {done} von {total} GiB ({percent} %). Lass dieses Fenster offen; ein unterbrochener Download wird beim nächsten Mal fortgesetzt."
+      },
+      "es": {
+        "text": "Descargando el modelo local — {done} de {total} GiB ({percent} %). Mantén esta ventana abierta; una descarga interrumpida continuará la próxima vez."
+      },
+      "pt": {
+        "text": "Baixando o modelo local — {done} de {total} GiB ({percent}%). Mantenha esta janela aberta; um download interrompido continua na próxima vez."
+      },
+      "ar": {
+        "text": "جارٍ تنزيل النموذج المحلي — {done} من {total} GiB ({percent}%). أبقِ هذه النافذة مفتوحة؛ يُستأنف التنزيل المنقطع في المرة القادمة."
+      },
+      "hi": {
+        "text": "लोकल मॉडल डाउनलोड हो रहा है — {total} GiB में से {done} GiB ({percent}%)। यह विंडो खुली रखें; रुका हुआ डाउनलोड अगली बार जारी होगा।"
+      }
+    },
+    "surfaces": [
+      "setup.progress"
+    ],
+    "dataKey": "setup:progress:ARTIFACT_BYTES"
+  },
+  "setup.label.window-title": {
+    "strings": {
+      "en": {
+        "text": "VexLife setup"
+      },
+      "ja": {
+        "text": "VexLife セットアップ"
+      },
+      "zh": {
+        "text": "VexLife 设置"
+      },
+      "ko": {
+        "text": "VexLife 설정"
+      },
+      "fr": {
+        "text": "Configuration de VexLife"
+      },
+      "de": {
+        "text": "VexLife-Einrichtung"
+      },
+      "es": {
+        "text": "Configuración de VexLife"
+      },
+      "pt": {
+        "text": "Configuração do VexLife"
+      },
+      "ar": {
+        "text": "إعداد VexLife"
+      },
+      "hi": {
+        "text": "VexLife सेटअप"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.heading.choose-language": {
+    "strings": {
+      "en": {
+        "text": "Choose your language"
+      },
+      "ja": {
+        "text": "言語を選んでください"
+      },
+      "zh": {
+        "text": "选择你的语言"
+      },
+      "ko": {
+        "text": "언어를 선택하세요"
+      },
+      "fr": {
+        "text": "Choisissez votre langue"
+      },
+      "de": {
+        "text": "Wähle deine Sprache"
+      },
+      "es": {
+        "text": "Elige tu idioma"
+      },
+      "pt": {
+        "text": "Escolha seu idioma"
+      },
+      "ar": {
+        "text": "اختر لغتك"
+      },
+      "hi": {
+        "text": "अपनी भाषा चुनें"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ],
+    "dataKey": "setup:action:CHOOSE_LANGUAGE"
+  },
+  "setup.description.choose-language": {
+    "strings": {
+      "en": {
+        "text": "VexLife shows setup in this language, and Vex replies to you in it. You can change it later in VexLife's settings."
+      },
+      "ja": {
+        "text": "VexLife はこの言語でセットアップを表示し、Vex もこの言語で返事をします。後で VexLife の設定から変更できます。"
+      },
+      "zh": {
+        "text": "VexLife 会用这种语言显示设置，Vex 也会用它回复你。之后可以在 VexLife 的设置中更改。"
+      },
+      "ko": {
+        "text": "VexLife는 이 언어로 설정을 표시하고, Vex도 이 언어로 답합니다. 나중에 VexLife 설정에서 바꿀 수 있습니다."
+      },
+      "fr": {
+        "text": "VexLife affiche la configuration dans cette langue, et Vex vous répond dans cette langue. Vous pourrez la changer plus tard dans les réglages de VexLife."
+      },
+      "de": {
+        "text": "VexLife zeigt die Einrichtung in dieser Sprache, und Vex antwortet dir darin. Du kannst sie später in den Einstellungen von VexLife ändern."
+      },
+      "es": {
+        "text": "VexLife muestra la configuración en este idioma, y Vex te responde en él. Puedes cambiarlo más tarde en los ajustes de VexLife."
+      },
+      "pt": {
+        "text": "O VexLife mostra a configuração neste idioma, e o Vex responde a você nele. Você pode mudá-lo depois nos ajustes do VexLife."
+      },
+      "ar": {
+        "text": "يعرض VexLife الإعداد بهذه اللغة، ويردّ عليك Vex بها. يمكنك تغييرها لاحقًا من إعدادات VexLife."
+      },
+      "hi": {
+        "text": "VexLife सेटअप इसी भाषा में दिखाता है, और Vex आपको इसी में जवाब देता है। आप इसे बाद में VexLife की सेटिंग्स में बदल सकते हैं।"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ],
+    "dataKey": "setup:action:CHOOSE_LANGUAGE"
+  },
+  "setup.button.continue": {
+    "strings": {
+      "en": {
+        "text": "Continue"
+      },
+      "ja": {
+        "text": "続ける"
+      },
+      "zh": {
+        "text": "继续"
+      },
+      "ko": {
+        "text": "계속"
+      },
+      "fr": {
+        "text": "Continuer"
+      },
+      "de": {
+        "text": "Weiter"
+      },
+      "es": {
+        "text": "Continuar"
+      },
+      "pt": {
+        "text": "Continuar"
+      },
+      "ar": {
+        "text": "متابعة"
+      },
+      "hi": {
+        "text": "जारी रखें"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.heading.choose-home": {
+    "strings": {
+      "en": {
+        "text": "Choose your Vex Home"
+      },
+      "ja": {
+        "text": "Vex Home を選んでください"
+      },
+      "zh": {
+        "text": "选择你的 Vex Home"
+      },
+      "ko": {
+        "text": "Vex Home을 선택하세요"
+      },
+      "fr": {
+        "text": "Choisissez votre Vex Home"
+      },
+      "de": {
+        "text": "Wähle dein Vex Home"
+      },
+      "es": {
+        "text": "Elige tu Vex Home"
+      },
+      "pt": {
+        "text": "Escolha seu Vex Home"
+      },
+      "ar": {
+        "text": "اختر Vex Home الخاص بك"
+      },
+      "hi": {
+        "text": "अपना Vex Home चुनें"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ],
+    "dataKey": "setup:action:CHOOSE_HOME"
+  },
+  "setup.description.choose-home": {
+    "strings": {
+      "en": {
+        "text": "Your Vex Home is the one folder on this Mac where VexLife keeps your identity, conversations, memory and local model.\n\n~/.vexlife is only the default suggestion. You can type another location or choose a folder; VexLife looks at it first and changes nothing until you agree."
+      },
+      "ja": {
+        "text": "Vex Home は、VexLife があなたの ID、会話、メモリ、ローカルモデルを保管する、この Mac 上のただ 1 つのフォルダです。\n\n~/.vexlife はおすすめの場所にすぎません。別の場所を入力するか、フォルダを選ぶこともできます。VexLife はまずその場所を確認し、あなたが同意するまで何も変更しません。"
+      },
+      "zh": {
+        "text": "Vex Home 是这台 Mac 上唯一的一个文件夹，VexLife 在其中保存你的身份、对话、记忆和本地模型。\n\n~/.vexlife 只是默认建议。你可以输入其他位置或选择一个文件夹；VexLife 会先查看它，在你同意之前不会做任何更改。"
+      },
+      "ko": {
+        "text": "Vex Home은 VexLife가 사용자의 신원, 대화, 기억, 로컬 모델을 보관하는 이 Mac의 단 하나의 폴더입니다.\n\n~/.vexlife는 기본 제안일 뿐입니다. 다른 위치를 입력하거나 폴더를 선택할 수 있으며, VexLife는 먼저 그 위치를 확인하고 사용자가 동의할 때까지 아무것도 변경하지 않습니다."
+      },
+      "fr": {
+        "text": "Votre Vex Home est l’unique dossier de ce Mac où VexLife conserve votre identité, vos conversations, votre mémoire et le modèle local.\n\n~/.vexlife n’est qu’une suggestion par défaut. Vous pouvez saisir un autre emplacement ou choisir un dossier ; VexLife l’examine d’abord et ne modifie rien sans votre accord."
+      },
+      "de": {
+        "text": "Dein Vex Home ist der eine Ordner auf diesem Mac, in dem VexLife deine Identität, deine Gespräche, deine Erinnerungen und das lokale Modell aufbewahrt.\n\n~/.vexlife ist nur der Standardvorschlag. Du kannst einen anderen Ort eingeben oder einen Ordner wählen; VexLife sieht ihn sich zuerst an und ändert nichts, bevor du zustimmst."
+      },
+      "es": {
+        "text": "Tu Vex Home es la única carpeta de este Mac donde VexLife guarda tu identidad, tus conversaciones, tu memoria y el modelo local.\n\n~/.vexlife es solo la sugerencia predeterminada. Puedes escribir otra ubicación o elegir una carpeta; VexLife la examina primero y no cambia nada hasta que estés de acuerdo."
+      },
+      "pt": {
+        "text": "Seu Vex Home é a única pasta neste Mac onde o VexLife guarda sua identidade, suas conversas, sua memória e o modelo local.\n\n~/.vexlife é apenas a sugestão padrão. Você pode digitar outro local ou escolher uma pasta; o VexLife examina o local primeiro e não altera nada até você concordar."
+      },
+      "ar": {
+        "text": "Vex Home هو المجلد الوحيد على جهاز Mac هذا الذي يحتفظ فيه VexLife بهويتك ومحادثاتك وذاكرتك والنموذج المحلي.\n\n~/.vexlife مجرد اقتراح افتراضي. يمكنك كتابة موقع آخر أو اختيار مجلد؛ يفحصه VexLife أولًا ولا يغيّر شيئًا حتى توافق."
+      },
+      "hi": {
+        "text": "आपका Vex Home इस Mac का वह एक फ़ोल्डर है जहाँ VexLife आपकी पहचान, बातचीत, मेमोरी और लोकल मॉडल रखता है।\n\n~/.vexlife सिर्फ़ डिफ़ॉल्ट सुझाव है। आप कोई दूसरी जगह लिख सकते हैं या कोई फ़ोल्डर चुन सकते हैं; VexLife पहले उसे देखता है और आपकी सहमति तक कुछ नहीं बदलता।"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ],
+    "dataKey": "setup:action:CHOOSE_HOME"
+  },
+  "setup.button.choose-folder": {
+    "strings": {
+      "en": {
+        "text": "Choose Folder…"
+      },
+      "ja": {
+        "text": "フォルダを選ぶ…"
+      },
+      "zh": {
+        "text": "选择文件夹…"
+      },
+      "ko": {
+        "text": "폴더 선택…"
+      },
+      "fr": {
+        "text": "Choisir un dossier…"
+      },
+      "de": {
+        "text": "Ordner wählen …"
+      },
+      "es": {
+        "text": "Elegir carpeta…"
+      },
+      "pt": {
+        "text": "Escolher pasta…"
+      },
+      "ar": {
+        "text": "اختيار مجلد…"
+      },
+      "hi": {
+        "text": "फ़ोल्डर चुनें…"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.heading.full-location-needed": {
+    "strings": {
+      "en": {
+        "text": "Choose a full folder location."
+      },
+      "ja": {
+        "text": "フォルダの完全な場所を指定してください。"
+      },
+      "zh": {
+        "text": "请选择完整的文件夹位置。"
+      },
+      "ko": {
+        "text": "전체 폴더 위치를 지정하세요."
+      },
+      "fr": {
+        "text": "Choisissez un emplacement de dossier complet."
+      },
+      "de": {
+        "text": "Wähle einen vollständigen Ordnerpfad."
+      },
+      "es": {
+        "text": "Elige la ubicación completa de una carpeta."
+      },
+      "pt": {
+        "text": "Escolha o local completo de uma pasta."
+      },
+      "ar": {
+        "text": "اختر موقع مجلد كاملًا."
+      },
+      "hi": {
+        "text": "फ़ोल्डर की पूरी जगह चुनें।"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.description.full-location-needed": {
+    "strings": {
+      "en": {
+        "text": "Type a location that starts with / or ~/, for example ~/.vexlife, or use Choose Folder…."
+      },
+      "ja": {
+        "text": "/ または ~/ で始まる場所（例：~/.vexlife）を入力するか、「フォルダを選ぶ…」を使ってください。"
+      },
+      "zh": {
+        "text": "请输入以 / 或 ~/ 开头的位置，例如 ~/.vexlife，或使用“选择文件夹…”。"
+      },
+      "ko": {
+        "text": "/ 또는 ~/로 시작하는 위치(예: ~/.vexlife)를 입력하거나 '폴더 선택…'을 사용하세요."
+      },
+      "fr": {
+        "text": "Saisissez un emplacement qui commence par / ou ~/, par exemple ~/.vexlife, ou utilisez « Choisir un dossier… »."
+      },
+      "de": {
+        "text": "Gib einen Ort ein, der mit / oder ~/ beginnt, zum Beispiel ~/.vexlife, oder verwende „Ordner wählen …“."
+      },
+      "es": {
+        "text": "Escribe una ubicación que empiece por / o ~/, por ejemplo ~/.vexlife, o usa «Elegir carpeta…»."
+      },
+      "pt": {
+        "text": "Digite um local que comece com / ou ~/, por exemplo ~/.vexlife, ou use “Escolher pasta…”."
+      },
+      "ar": {
+        "text": "اكتب موقعًا يبدأ بـ / أو ~/، مثل ~/.vexlife، أو استخدم «اختيار مجلد…»."
+      },
+      "hi": {
+        "text": "/ या ~/ से शुरू होने वाली जगह लिखें, जैसे ~/.vexlife, या “फ़ोल्डर चुनें…” का इस्तेमाल करें।"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.button.ok": {
+    "strings": {
+      "en": {
+        "text": "OK"
+      },
+      "ja": {
+        "text": "OK"
+      },
+      "zh": {
+        "text": "好"
+      },
+      "ko": {
+        "text": "확인"
+      },
+      "fr": {
+        "text": "OK"
+      },
+      "de": {
+        "text": "OK"
+      },
+      "es": {
+        "text": "Aceptar"
+      },
+      "pt": {
+        "text": "OK"
+      },
+      "ar": {
+        "text": "حسنًا"
+      },
+      "hi": {
+        "text": "ठीक है"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.button.use-this-folder": {
+    "strings": {
+      "en": {
+        "text": "Use This Folder"
+      },
+      "ja": {
+        "text": "このフォルダを使う"
+      },
+      "zh": {
+        "text": "使用此文件夹"
+      },
+      "ko": {
+        "text": "이 폴더 사용"
+      },
+      "fr": {
+        "text": "Utiliser ce dossier"
+      },
+      "de": {
+        "text": "Diesen Ordner verwenden"
+      },
+      "es": {
+        "text": "Usar esta carpeta"
+      },
+      "pt": {
+        "text": "Usar esta pasta"
+      },
+      "ar": {
+        "text": "استخدام هذا المجلد"
+      },
+      "hi": {
+        "text": "यह फ़ोल्डर इस्तेमाल करें"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.description.pick-folder": {
+    "strings": {
+      "en": {
+        "text": "Choose an empty folder (use New Folder to make one) or an existing Vex Home."
+      },
+      "ja": {
+        "text": "空のフォルダ（「新規フォルダ」で作成できます）か、既存の Vex Home を選んでください。"
+      },
+      "zh": {
+        "text": "请选择一个空文件夹（可用“新建文件夹”创建）或现有的 Vex Home。"
+      },
+      "ko": {
+        "text": "빈 폴더('새로운 폴더'로 만들 수 있음) 또는 기존 Vex Home을 선택하세요."
+      },
+      "fr": {
+        "text": "Choisissez un dossier vide (utilisez « Nouveau dossier » pour en créer un) ou un Vex Home existant."
+      },
+      "de": {
+        "text": "Wähle einen leeren Ordner (mit „Neuer Ordner“ kannst du einen anlegen) oder ein vorhandenes Vex Home."
+      },
+      "es": {
+        "text": "Elige una carpeta vacía (usa «Nueva carpeta» para crear una) o un Vex Home existente."
+      },
+      "pt": {
+        "text": "Escolha uma pasta vazia (use “Nova Pasta” para criar uma) ou um Vex Home existente."
+      },
+      "ar": {
+        "text": "اختر مجلدًا فارغًا (استخدم «مجلد جديد» لإنشاء واحد) أو Vex Home موجودًا."
+      },
+      "hi": {
+        "text": "कोई खाली फ़ोल्डर (बनाने के लिए “New Folder” इस्तेमाल करें) या मौजूदा Vex Home चुनें।"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.heading.setup-paused": {
+    "strings": {
+      "en": {
+        "text": "Setup paused."
+      },
+      "ja": {
+        "text": "セットアップを一時停止しました。"
+      },
+      "zh": {
+        "text": "设置已暂停。"
+      },
+      "ko": {
+        "text": "설정이 일시 중지되었습니다."
+      },
+      "fr": {
+        "text": "Configuration en pause."
+      },
+      "de": {
+        "text": "Einrichtung angehalten."
+      },
+      "es": {
+        "text": "Configuración en pausa."
+      },
+      "pt": {
+        "text": "Configuração pausada."
+      },
+      "ar": {
+        "text": "توقف الإعداد مؤقتًا."
+      },
+      "hi": {
+        "text": "सेटअप रोका गया।"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.description.setup-paused": {
+    "strings": {
+      "en": {
+        "text": "VexLife stopped only the task you started. Anything already finished was kept, and an unfinished download resumes the next time you continue."
+      },
+      "ja": {
+        "text": "VexLife は開始した作業だけを停止しました。完了したものは残り、途中のダウンロードは次に続けたときに再開します。"
+      },
+      "zh": {
+        "text": "VexLife 只停止了你启动的任务。已完成的内容都会保留，未完成的下载会在你下次继续时接着进行。"
+      },
+      "ko": {
+        "text": "VexLife는 사용자가 시작한 작업만 중지했습니다. 이미 완료된 항목은 보존되며, 완료되지 않은 다운로드는 다음에 계속할 때 이어서 진행됩니다."
+      },
+      "fr": {
+        "text": "VexLife n’a arrêté que la tâche que vous aviez lancée. Tout ce qui était terminé a été conservé, et un téléchargement inachevé reprendra la prochaine fois que vous continuerez."
+      },
+      "de": {
+        "text": "VexLife hat nur die Aufgabe angehalten, die du gestartet hast. Alles bereits Fertige bleibt erhalten, und ein unvollständiger Download wird fortgesetzt, wenn du das nächste Mal weitermachst."
+      },
+      "es": {
+        "text": "VexLife solo detuvo la tarea que iniciaste. Todo lo que ya había terminado se conservó, y una descarga sin terminar continuará la próxima vez que sigas."
+      },
+      "pt": {
+        "text": "O VexLife parou apenas a tarefa que você iniciou. Tudo o que já tinha terminado foi mantido, e um download incompleto continua na próxima vez que você prosseguir."
+      },
+      "ar": {
+        "text": "أوقف VexLife المهمة التي بدأتها فقط. حُفظ كل ما اكتمل، ويُستأنف التنزيل غير المكتمل في المرة القادمة التي تتابع فيها."
+      },
+      "hi": {
+        "text": "VexLife ने केवल वही काम रोका जो आपने शुरू किया था। जो पूरा हो चुका था वह रखा गया है, और अधूरा डाउनलोड अगली बार जारी रखने पर फिर से शुरू होगा।"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.heading.could-not-read-result": {
+    "strings": {
+      "en": {
+        "text": "VexLife could not read the result of that step."
+      },
+      "ja": {
+        "text": "VexLife はその手順の結果を読み取れませんでした。"
+      },
+      "zh": {
+        "text": "VexLife 无法读取这一步的结果。"
+      },
+      "ko": {
+        "text": "VexLife가 해당 단계의 결과를 읽을 수 없었습니다."
+      },
+      "fr": {
+        "text": "VexLife n’a pas pu lire le résultat de cette étape."
+      },
+      "de": {
+        "text": "VexLife konnte das Ergebnis dieses Schritts nicht lesen."
+      },
+      "es": {
+        "text": "VexLife no pudo leer el resultado de ese paso."
+      },
+      "pt": {
+        "text": "O VexLife não conseguiu ler o resultado dessa etapa."
+      },
+      "ar": {
+        "text": "تعذّر على VexLife قراءة نتيجة تلك الخطوة."
+      },
+      "hi": {
+        "text": "VexLife उस चरण का नतीजा पढ़ नहीं सका।"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.heading.could-not-check-mac": {
+    "strings": {
+      "en": {
+        "text": "VexLife couldn't check this Mac."
+      },
+      "ja": {
+        "text": "VexLife はこの Mac を確認できませんでした。"
+      },
+      "zh": {
+        "text": "VexLife 无法检查这台 Mac。"
+      },
+      "ko": {
+        "text": "VexLife가 이 Mac을 확인할 수 없었습니다."
+      },
+      "fr": {
+        "text": "VexLife n’a pas pu vérifier ce Mac."
+      },
+      "de": {
+        "text": "VexLife konnte diesen Mac nicht prüfen."
+      },
+      "es": {
+        "text": "VexLife no pudo comprobar este Mac."
+      },
+      "pt": {
+        "text": "O VexLife não conseguiu verificar este Mac."
+      },
+      "ar": {
+        "text": "تعذّر على VexLife فحص جهاز Mac هذا."
+      },
+      "hi": {
+        "text": "VexLife इस Mac की जाँच नहीं कर सका।"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.heading.unknown-instruction": {
+    "strings": {
+      "en": {
+        "text": "VexLife returned an instruction this window does not know."
+      },
+      "ja": {
+        "text": "VexLife が、このウインドウの知らない指示を返しました。"
+      },
+      "zh": {
+        "text": "VexLife 返回了此窗口无法识别的指令。"
+      },
+      "ko": {
+        "text": "VexLife가 이 창에서 알 수 없는 지시를 반환했습니다."
+      },
+      "fr": {
+        "text": "VexLife a renvoyé une instruction que cette fenêtre ne connaît pas."
+      },
+      "de": {
+        "text": "VexLife hat eine Anweisung zurückgegeben, die dieses Fenster nicht kennt."
+      },
+      "es": {
+        "text": "VexLife devolvió una instrucción que esta ventana no conoce."
+      },
+      "pt": {
+        "text": "O VexLife retornou uma instrução que esta janela não conhece."
+      },
+      "ar": {
+        "text": "أعاد VexLife تعليمة لا تعرفها هذه النافذة."
+      },
+      "hi": {
+        "text": "VexLife ने एक ऐसा निर्देश लौटाया जिसे यह विंडो नहीं जानती।"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.button.done": {
+    "strings": {
+      "en": {
+        "text": "Done"
+      },
+      "ja": {
+        "text": "完了"
+      },
+      "zh": {
+        "text": "完成"
+      },
+      "ko": {
+        "text": "완료"
+      },
+      "fr": {
+        "text": "Terminé"
+      },
+      "de": {
+        "text": "Fertig"
+      },
+      "es": {
+        "text": "Listo"
+      },
+      "pt": {
+        "text": "Concluído"
+      },
+      "ar": {
+        "text": "تم"
+      },
+      "hi": {
+        "text": "हो गया"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.description.result-unclear": {
+    "strings": {
+      "en": {
+        "text": "VexLife can't tell from this result what finished. Choose Check Again to see what is true on this Mac now; anything that finished was kept."
+      },
+      "ja": {
+        "text": "この結果からは、何が完了したのか VexLife には判断できません。「もう一度確認」を選ぶと、いまのこの Mac の状態を確認できます。完了したものは残っています。"
+      },
+      "zh": {
+        "text": "VexLife 无法从这个结果判断哪些已经完成。请选择“再次检查”查看这台 Mac 现在的真实情况；已完成的内容都已保留。"
+      },
+      "ko": {
+        "text": "VexLife는 이 결과만으로 무엇이 완료되었는지 알 수 없습니다. '다시 확인'을 선택해 지금 이 Mac의 상태를 확인하세요. 완료된 항목은 보존되어 있습니다."
+      },
+      "fr": {
+        "text": "VexLife ne peut pas déterminer à partir de ce résultat ce qui s’est terminé. Choisissez « Vérifier à nouveau » pour voir l’état actuel de ce Mac ; tout ce qui s’est terminé a été conservé."
+      },
+      "de": {
+        "text": "VexLife kann an diesem Ergebnis nicht erkennen, was abgeschlossen wurde. Wähle „Erneut prüfen“, um zu sehen, was jetzt auf diesem Mac gilt; alles Abgeschlossene bleibt erhalten."
+      },
+      "es": {
+        "text": "VexLife no puede saber por este resultado qué terminó. Elige «Comprobar de nuevo» para ver lo que es cierto ahora en este Mac; todo lo que terminó se conservó."
+      },
+      "pt": {
+        "text": "O VexLife não consegue saber, por este resultado, o que terminou. Escolha “Verificar de novo” para ver o que é verdade neste Mac agora; tudo o que terminou foi mantido."
+      },
+      "ar": {
+        "text": "لا يستطيع VexLife أن يعرف من هذه النتيجة ما الذي اكتمل. اختر «التحقق مرة أخرى» لترى ما هو صحيح على جهاز Mac هذا الآن؛ وقد حُفظ كل ما اكتمل."
+      },
+      "hi": {
+        "text": "इस नतीजे से VexLife यह नहीं बता सकता कि क्या पूरा हुआ। इस Mac पर अभी क्या सही है यह देखने के लिए “फिर से जाँचें” चुनें; जो पूरा हुआ वह रखा गया है।"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.description.check-changes-nothing": {
+    "strings": {
+      "en": {
+        "text": "Checking doesn't change anything on this Mac, and nothing was changed."
+      },
+      "ja": {
+        "text": "確認ではこの Mac に何も変更を加えず、実際に何も変更されていません。"
+      },
+      "zh": {
+        "text": "检查不会更改这台 Mac 上的任何内容，也确实没有做任何更改。"
+      },
+      "ko": {
+        "text": "확인 작업은 이 Mac에서 아무것도 바꾸지 않으며, 실제로 아무것도 변경되지 않았습니다."
+      },
+      "fr": {
+        "text": "La vérification ne modifie rien sur ce Mac, et rien n’a été modifié."
+      },
+      "de": {
+        "text": "Das Prüfen ändert nichts auf diesem Mac, und es wurde nichts geändert."
+      },
+      "es": {
+        "text": "Comprobar no cambia nada en este Mac, y no se cambió nada."
+      },
+      "pt": {
+        "text": "Verificar não altera nada neste Mac, e nada foi alterado."
+      },
+      "ar": {
+        "text": "الفحص لا يغيّر أي شيء على جهاز Mac هذا، ولم يُغيَّر أي شيء."
+      },
+      "hi": {
+        "text": "जाँच करने से इस Mac पर कुछ नहीं बदलता, और कुछ भी बदला नहीं गया।"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.description.no-readable-explanation": {
+    "strings": {
+      "en": {
+        "text": "The setup program stopped without a readable explanation."
+      },
+      "ja": {
+        "text": "セットアッププログラムは、読み取れる説明なしで停止しました。"
+      },
+      "zh": {
+        "text": "设置程序停止了，但没有给出可读的说明。"
+      },
+      "ko": {
+        "text": "설정 프로그램이 읽을 수 있는 설명 없이 중지되었습니다."
+      },
+      "fr": {
+        "text": "Le programme de configuration s’est arrêté sans explication lisible."
+      },
+      "de": {
+        "text": "Das Einrichtungsprogramm wurde ohne lesbare Erklärung beendet."
+      },
+      "es": {
+        "text": "El programa de configuración se detuvo sin una explicación legible."
+      },
+      "pt": {
+        "text": "O programa de configuração parou sem uma explicação legível."
+      },
+      "ar": {
+        "text": "توقف برنامج الإعداد دون شرح قابل للقراءة."
+      },
+      "hi": {
+        "text": "सेटअप प्रोग्राम बिना किसी पढ़ने लायक स्पष्टीकरण के रुक गया।"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.description.launch-failed": {
+    "strings": {
+      "en": {
+        "text": "The VexLife setup program could not be launched."
+      },
+      "ja": {
+        "text": "VexLife のセットアッププログラムを起動できませんでした。"
+      },
+      "zh": {
+        "text": "无法启动 VexLife 设置程序。"
+      },
+      "ko": {
+        "text": "VexLife 설정 프로그램을 실행할 수 없었습니다."
+      },
+      "fr": {
+        "text": "Le programme de configuration de VexLife n’a pas pu être lancé."
+      },
+      "de": {
+        "text": "Das Einrichtungsprogramm von VexLife konnte nicht gestartet werden."
+      },
+      "es": {
+        "text": "No se pudo abrir el programa de configuración de VexLife."
+      },
+      "pt": {
+        "text": "Não foi possível abrir o programa de configuração do VexLife."
+      },
+      "ar": {
+        "text": "تعذّر تشغيل برنامج إعداد VexLife."
+      },
+      "hi": {
+        "text": "VexLife सेटअप प्रोग्राम शुरू नहीं हो सका।"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.status.working": {
+    "strings": {
+      "en": {
+        "text": "Working on it. Keep this window open."
+      },
+      "ja": {
+        "text": "処理中です。このウインドウは開いたままにしてください。"
+      },
+      "zh": {
+        "text": "正在处理，请保持此窗口打开。"
+      },
+      "ko": {
+        "text": "작업 중입니다. 이 창을 열어 두세요."
+      },
+      "fr": {
+        "text": "Traitement en cours. Gardez cette fenêtre ouverte."
+      },
+      "de": {
+        "text": "Wird bearbeitet. Lass dieses Fenster offen."
+      },
+      "es": {
+        "text": "Trabajando en ello. Mantén esta ventana abierta."
+      },
+      "pt": {
+        "text": "Trabalhando nisso. Mantenha esta janela aberta."
+      },
+      "ar": {
+        "text": "جارٍ العمل. أبقِ هذه النافذة مفتوحة."
+      },
+      "hi": {
+        "text": "काम चल रहा है। यह विंडो खुली रखें।"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.description.cancel-safely-hint": {
+    "strings": {
+      "en": {
+        "text": "Cancel safely stops only this task. Finished work is kept and downloads resume next time."
+      },
+      "ja": {
+        "text": "「安全にキャンセル」はこの作業だけを停止します。完了した作業は残り、ダウンロードは次回再開します。"
+      },
+      "zh": {
+        "text": "“安全取消”只会停止此任务。已完成的工作会保留，下载会在下次继续。"
+      },
+      "ko": {
+        "text": "'안전하게 취소'는 이 작업만 중지합니다. 완료된 작업은 보존되며 다운로드는 다음에 이어서 진행됩니다."
+      },
+      "fr": {
+        "text": "« Annuler sans risque » arrête uniquement cette tâche. Le travail terminé est conservé et les téléchargements reprendront la prochaine fois."
+      },
+      "de": {
+        "text": "„Sicher abbrechen“ stoppt nur diese Aufgabe. Fertige Arbeit bleibt erhalten, und Downloads werden beim nächsten Mal fortgesetzt."
+      },
+      "es": {
+        "text": "«Cancelar con seguridad» detiene solo esta tarea. El trabajo terminado se conserva y las descargas continúan la próxima vez."
+      },
+      "pt": {
+        "text": "“Cancelar com segurança” para apenas esta tarefa. O trabalho concluído é mantido e os downloads continuam na próxima vez."
+      },
+      "ar": {
+        "text": "«إلغاء آمن» يوقف هذه المهمة فقط. يُحفظ العمل المكتمل وتُستأنف التنزيلات في المرة القادمة."
+      },
+      "hi": {
+        "text": "“सुरक्षित रूप से रद्द करें” केवल इस काम को रोकता है। पूरा हुआ काम रखा जाता है और डाउनलोड अगली बार जारी होते हैं।"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.button.cancel-safely": {
+    "strings": {
+      "en": {
+        "text": "Cancel safely"
+      },
+      "ja": {
+        "text": "安全にキャンセル"
+      },
+      "zh": {
+        "text": "安全取消"
+      },
+      "ko": {
+        "text": "안전하게 취소"
+      },
+      "fr": {
+        "text": "Annuler sans risque"
+      },
+      "de": {
+        "text": "Sicher abbrechen"
+      },
+      "es": {
+        "text": "Cancelar con seguridad"
+      },
+      "pt": {
+        "text": "Cancelar com segurança"
+      },
+      "ar": {
+        "text": "إلغاء آمن"
+      },
+      "hi": {
+        "text": "सुरक्षित रूप से रद्द करें"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  }
+}
