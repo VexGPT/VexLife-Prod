@@ -865,6 +865,163 @@ class VexLifeProdMacServiceLifetimeTest {
             }
     }
 
+    /**
+     * Rewrites the running exact-owned service's receipt and plist to the pre-selected-Home launch
+     * contract (`--source-sha` only), the shape an installed 8faf58e8-era Product carries.
+     */
+    private fun becomePriorContractService(home: Path) {
+        val receipt = assertNotNull(lifetimeReceipt(home))
+        val legacy =
+            receipt.copy(
+                launchd =
+                    receipt.launchd.copy(programArguments = listOf("--source-sha", receipt.sourceSha))
+            )
+        VexDurableContractFile.write(
+            ownedRoot = home,
+            path = VexOwnedPath.resolveInside(home, VexLifeProdMacServiceLifetime.ReceiptRelativePath),
+            value = legacy,
+        )
+        val spec =
+            MacUserLaunchdProcess.form(
+                label = legacy.launchd.label,
+                plistPath = legacy.launchd.plistPath,
+                programPath = legacy.launchd.programPath,
+                programArguments = legacy.launchd.programArguments,
+                workingDirectory = legacy.launchd.workingDirectory,
+                stdoutPath = legacy.launchd.stdoutPath,
+                stderrPath = legacy.launchd.stderrPath,
+                environment = legacy.launchd.environment,
+                uid = legacy.launchd.domainTarget.substringAfter("gui/").toLong(),
+            )
+        Files.writeString(
+            Path.of(legacy.launchd.plistPath),
+            MacUserLaunchdProcess.renderPlist(spec),
+            StandardCharsets.UTF_8,
+        )
+    }
+
+    @Test
+    fun priorContractServiceAtTheDefaultHomeIsOwnedAndUpdatableNotHeldUnknown() {
+        fixture()
+            .use { fixture ->
+                val probe = Probe(fixture.sourceSha, fixture.host)
+                VexLifeProdMacServiceLifetime.startOrReuse(
+                    productHome = fixture.home,
+                    desiredSourceSha = fixture.sourceSha,
+                    host = fixture.host,
+                    probe = probe,
+                    legacyDefaultHome = fixture.home,
+                )
+                becomePriorContractService(fixture.home)
+
+                val existing =
+                    VexLifeProdMacServiceLifetime.observeExisting(
+                        productHome = fixture.home,
+                        host = fixture.host,
+                        probe = probe,
+                        legacyDefaultHome = fixture.home,
+                    )
+                assertIs<VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned>(existing)
+
+                // Even at the same source, a prior-contract service is re-formed, never reused.
+                assertIs<VexLifeProdMacServiceLifetime.Observation.OwnedPriorSource>(
+                    VexLifeProdMacServiceLifetime.observe(
+                        productHome = fixture.home,
+                        desiredSourceSha = fixture.sourceSha,
+                        host = fixture.host,
+                        probe = probe,
+                        legacyDefaultHome = fixture.home,
+                    )
+                )
+
+                val nextSource = "b".repeat(40)
+                installImage(
+                    parent = fixture.parent,
+                    home = fixture.home,
+                    sourceSha = nextSource,
+                    label = "next",
+                )
+                probe.sourceSha = nextSource
+                fixture.host.nextBootstrapPid = 5252L
+                val updated =
+                    VexLifeProdMacServiceLifetime.startOrReuse(
+                        productHome = fixture.home,
+                        desiredSourceSha = nextSource,
+                        host = fixture.host,
+                        probe = probe,
+                        legacyDefaultHome = fixture.home,
+                    )
+                assertTrue(updated.priorProcessRetired)
+                assertEquals(1, fixture.host.bootoutCount(), "only the exact prior service is retired")
+                val receipt = assertNotNull(lifetimeReceipt(fixture.home))
+                assertEquals(nextSource, receipt.sourceSha)
+                assertEquals(
+                    listOf("--source-sha", nextSource, "--home", fixture.home.toString()),
+                    receipt.launchd.programArguments,
+                    "the successor is formed under the current contract",
+                )
+            }
+    }
+
+    @Test
+    fun priorContractReceiptAnywhereButTheDefaultHomeStaysHeld() {
+        fixture()
+            .use { fixture ->
+                val probe = Probe(fixture.sourceSha, fixture.host)
+                VexLifeProdMacServiceLifetime.startOrReuse(
+                    productHome = fixture.home,
+                    desiredSourceSha = fixture.sourceSha,
+                    host = fixture.host,
+                    probe = probe,
+                    legacyDefaultHome = fixture.home,
+                )
+                becomePriorContractService(fixture.home)
+
+                // A --source-sha-only service always served ~/.vexlife; at another coordinate the
+                // receipt is incoherent and must not be treated as owned.
+                val elsewhere = fixture.parent.resolve("not-this-home")
+                assertIs<VexLifeProdMacServiceLifetime.ExistingObservation.HeldUnknown>(
+                    VexLifeProdMacServiceLifetime.observeExisting(
+                        productHome = fixture.home,
+                        host = fixture.host,
+                        probe = probe,
+                        legacyDefaultHome = elsewhere,
+                    )
+                )
+                assertEquals(0, fixture.host.bootoutCount())
+            }
+    }
+
+    @Test
+    fun ownedCurrentReceiptWithStoppedServiceIsNotGarbage() {
+        fixture()
+            .use { fixture ->
+                val probe = Probe(fixture.sourceSha, fixture.host)
+                VexLifeProdMacServiceLifetime.startOrReuse(
+                    productHome = fixture.home,
+                    desiredSourceSha = fixture.sourceSha,
+                    host = fixture.host,
+                    probe = probe,
+                )
+                // The Mac restarted: launchd no longer carries the job, the receipt survives.
+                fixture.host.servicePresent = false
+                fixture.host.running = false
+                fixture.host.alive = false
+                probe.available = false
+
+                val existing =
+                    VexLifeProdMacServiceLifetime.observeExisting(
+                        productHome = fixture.home,
+                        host = fixture.host,
+                        probe = probe,
+                    )
+                val notReady =
+                    assertIs<VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady>(existing)
+                assertEquals(MacUserLaunchdProcess.Observation.Absent, notReady.launchdObservation)
+                assertNotNull(lifetimeReceipt(fixture.home), "the receipt is preserved, not deleted")
+            }
+    }
+
     @Test
     fun launchdPidMismatchIsHeldUnknownAndNeverBootedOut() {
         fixture()

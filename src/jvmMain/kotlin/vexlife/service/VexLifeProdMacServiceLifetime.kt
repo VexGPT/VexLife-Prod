@@ -68,6 +68,69 @@ object VexLifeProdMacServiceLifetime {
         val launchd: MacUserLaunchdProcess.Receipt,
     )
 
+    /**
+     * The owned service launch contracts this owner has accepted, newest first.
+     *
+     * A lifetime receipt is validated under the contract it was formed under, never re-derived from
+     * today's contract. When the launch specification gains a field, a legitimate prior exact-owned
+     * Product must stay recognizable as *owned*: re-deriving today's spec from an old receipt made a
+     * coherent prior service (receipt, label, PID, endpoint and source-currentness all agreeing) fail
+     * the spec check, so Product entry held it as unknown and could never offer Update & Restart for
+     * it. Lived on a certified Mac: installed 8faf58e8 under current b1351c32.
+     *
+     * Ownership is still proven exactly; only the expected argv comes from the receipt's own era.
+     */
+    internal enum class LaunchContract {
+        /** Current: the service is told which Home it serves. */
+        SourceAndHome,
+
+        /**
+         * Before c170faa ("Carry selected Home through Product entry") the service took only
+         * `--source-sha` and always served the default Home. A receipt of this era is coherent only
+         * at that coordinate, so it is admitted nowhere else.
+         */
+        SourceOnlyDefaultHome,
+    }
+
+    internal fun launchArguments(
+        contract: LaunchContract,
+        sourceSha: String,
+        home: Path,
+    ): List<String> =
+        when (contract) {
+            LaunchContract.SourceAndHome -> listOf("--source-sha", sourceSha, "--home", home.toString())
+            LaunchContract.SourceOnlyDefaultHome -> listOf("--source-sha", sourceSha)
+        }
+
+    /** The Home a pre-selected-Home service served implicitly: `~/.vexlife`. */
+    fun legacyDefaultHome(): Path =
+        Path.of(System.getProperty("user.home"), ".vexlife").toAbsolutePath().normalize()
+
+    /**
+     * Which accepted contract formed [receipt]. A receipt that matches none is not owned by any
+     * contract this source accepts and stays held (fail closed); it is never coerced into today's.
+     */
+    internal fun receiptContract(
+        receipt: Receipt,
+        home: Path,
+        legacyDefaultHome: Path,
+    ): LaunchContract {
+        val arguments = receipt.launchd.programArguments
+        return when {
+            arguments == launchArguments(LaunchContract.SourceAndHome, receipt.sourceSha, home) ->
+                LaunchContract.SourceAndHome
+
+            arguments == launchArguments(LaunchContract.SourceOnlyDefaultHome, receipt.sourceSha, home) &&
+                home.toAbsolutePath().normalize() == legacyDefaultHome.toAbsolutePath().normalize() ->
+                LaunchContract.SourceOnlyDefaultHome
+
+            else ->
+                throw IllegalArgumentException(
+                    "product-service launchd receipt matches no accepted launch contract for this Home"
+                )
+        }
+    }
+
     sealed interface Observation {
         data class Absent(
             val desiredImage: VexLifeProdPrivateServiceImage.Observation,
@@ -203,6 +266,7 @@ object VexLifeProdMacServiceLifetime {
             MacUserLaunchdProcess.SystemHost,
         probe: SourceCurrentnessProbe =
             SystemSourceCurrentnessProbe,
+        legacyDefaultHome: Path = legacyDefaultHome(),
     ): ExistingObservation {
         val home =
             currentHome(
@@ -213,6 +277,7 @@ object VexLifeProdMacServiceLifetime {
                 readReceipt(
                     home,
                     host,
+                    legacyDefaultHome,
                 )
             }
         if (
@@ -280,6 +345,7 @@ object VexLifeProdMacServiceLifetime {
                 home = home,
                 receipt = receipt,
                 host = host,
+                legacyDefaultHome = legacyDefaultHome,
             )
         val launchd =
             MacUserLaunchdProcess.observe(
@@ -373,6 +439,7 @@ object VexLifeProdMacServiceLifetime {
             MacUserLaunchdProcess.SystemHost,
         probe: SourceCurrentnessProbe =
             SystemSourceCurrentnessProbe,
+        legacyDefaultHome: Path = legacyDefaultHome(),
     ): Observation {
         require(
             GitSha.matches(
@@ -408,6 +475,7 @@ object VexLifeProdMacServiceLifetime {
                 readReceipt(
                     home,
                     host,
+                    legacyDefaultHome,
                 )
             }
         if (
@@ -458,6 +526,7 @@ object VexLifeProdMacServiceLifetime {
                 home = home,
                 receipt = receipt,
                 host = host,
+                legacyDefaultHome = legacyDefaultHome,
             )
         val launchd =
             MacUserLaunchdProcess.observe(
@@ -504,9 +573,12 @@ object VexLifeProdMacServiceLifetime {
             )
         }
 
+        // A prior-contract service is owned but must be re-formed under today's contract even if its
+        // source were the desired one; it is never reused as current.
         if (
             receipt.sourceSha !=
-                desiredSourceSha
+                desiredSourceSha ||
+                receiptContract(receipt, home, legacyDefaultHome) != LaunchContract.SourceAndHome
         ) {
             return Observation.OwnedPriorSource(
                 desiredImage = desiredImage,
@@ -575,6 +647,7 @@ object VexLifeProdMacServiceLifetime {
             MacUserLaunchdProcess.SystemHost,
         probe: SourceCurrentnessProbe =
             SystemSourceCurrentnessProbe,
+        legacyDefaultHome: Path = legacyDefaultHome(),
     ): Result {
         val home =
             currentHome(
@@ -588,6 +661,7 @@ object VexLifeProdMacServiceLifetime {
                     desiredSourceSha = desiredSourceSha,
                     host = host,
                     probe = probe,
+                    legacyDefaultHome = legacyDefaultHome,
                 )
         ) {
             is Observation.RunningCurrent ->
@@ -622,6 +696,7 @@ object VexLifeProdMacServiceLifetime {
                     home = home,
                     receipt = observed.receipt,
                     host = host,
+                    legacyDefaultHome = legacyDefaultHome,
                 )
                 startDesired(
                     home = home,
@@ -637,6 +712,7 @@ object VexLifeProdMacServiceLifetime {
                     home = home,
                     receipt = observed.receipt,
                     host = host,
+                    legacyDefaultHome = legacyDefaultHome,
                 )
                 startDesired(
                     home = home,
@@ -794,11 +870,15 @@ object VexLifeProdMacServiceLifetime {
         home: Path,
         receipt: Receipt,
         host: MacUserLaunchdProcess.Host,
+        legacyDefaultHome: Path,
     ) {
+        // Re-prove ownership under the receipt's own contract immediately before the only
+        // destructive step; the earlier observation may be stale by now.
         validateReceipt(
             home = home,
             receipt = receipt,
             host = host,
+            legacyDefaultHome = legacyDefaultHome,
         )
         val retired =
             MacUserLaunchdProcess.retire(
@@ -826,6 +906,7 @@ object VexLifeProdMacServiceLifetime {
     private fun readReceipt(
         home: Path,
         host: MacUserLaunchdProcess.Host,
+        legacyDefaultHome: Path,
     ): Receipt? {
         val receipt =
             VexDurableContractFile.read<Receipt>(
@@ -842,6 +923,7 @@ object VexLifeProdMacServiceLifetime {
             home = home,
             receipt = receipt,
             host = host,
+            legacyDefaultHome = legacyDefaultHome,
         )
     }
 
@@ -849,6 +931,7 @@ object VexLifeProdMacServiceLifetime {
         home: Path,
         receipt: Receipt,
         host: MacUserLaunchdProcess.Host,
+        legacyDefaultHome: Path = legacyDefaultHome(),
     ): Receipt {
         require(
             receipt.schemaVersion ==
@@ -888,6 +971,7 @@ object VexLifeProdMacServiceLifetime {
                 home = home,
                 receipt = receipt,
                 host = host,
+                legacyDefaultHome = legacyDefaultHome,
             )
         requireReceiptMatchesSpec(
             receipt.launchd,
@@ -897,10 +981,12 @@ object VexLifeProdMacServiceLifetime {
         return receipt
     }
 
+    /** The exact spec the receipt's own launch contract formed; see [LaunchContract]. */
     private fun specFromReceipt(
         home: Path,
         receipt: Receipt,
         host: MacUserLaunchdProcess.Host,
+        legacyDefaultHome: Path,
     ): MacUserLaunchdProcess.Spec {
         val imagePath =
             Path.of(
@@ -923,11 +1009,10 @@ object VexLifeProdMacServiceLifetime {
                     )
                     .toString(),
             programArguments =
-                listOf(
-                    "--source-sha",
+                launchArguments(
+                    receiptContract(receipt, home, legacyDefaultHome),
                     receipt.sourceSha,
-                    "--home",
-                    home.toString(),
+                    home,
                 ),
             workingDirectory = imagePath.toString(),
             stdoutPath =
@@ -970,13 +1055,9 @@ object VexLifeProdMacServiceLifetime {
                 )
                     .toString(),
             programPath = image.launcherPath,
+            // A newly formed service always uses the current contract.
             programArguments =
-                listOf(
-                    "--source-sha",
-                    image.sourceSha,
-                    "--home",
-                    home.toString(),
-                ),
+                launchArguments(LaunchContract.SourceAndHome, image.sourceSha, home),
             workingDirectory =
                 requireNotNull(
                     Path.of(
