@@ -424,17 +424,7 @@ object DirectCompanionTurn {
                         )
                     },
                     reobserveSameRuntimeEvidence = {
-                        expected ->
                         session.observeCurrentQualifiedRuntimeEvidence()
-                            .also {
-                                current ->
-                                require(
-                                    current.runtimeReceiptRef ==
-                                        expected.runtimeReceiptRef,
-                                ) {
-                                    "runtime changed during one direct Companion turn"
-                                }
-                            }
                     },
                     progressObserver = progressObserver,
                 ),
@@ -873,6 +863,15 @@ object DirectCompanionTurn {
             hooks.reobserveSameRuntimeEvidence(
                 initialRuntimeEvidence,
             )
+                .also {
+                    current ->
+                    require(
+                        current.runtimeReceiptRef ==
+                            initialRuntimeEvidence.runtimeReceiptRef,
+                    ) {
+                        "runtime changed during one direct Companion turn"
+                    }
+                }
         val finalPrior =
             conversationOwner.immediatePriorCompletedTurn()
         DirectWorkingContinuity.requireSuccessorContextCurrent(
