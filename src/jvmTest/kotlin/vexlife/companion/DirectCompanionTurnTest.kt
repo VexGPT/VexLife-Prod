@@ -258,7 +258,16 @@ class DirectCompanionTurnTest {
                             emit(
                                 field = "reasoning_content",
                                 delta =
-                                    "PRIVATE_INTERNAL_SOURCE_RETURN_REASONING",
+                                    "initial source-return reasoning visible live",
+                            )
+                            assertTrue(
+                                progress.any {
+                                    it.phase ==
+                                        DirectCompanionTurn.ProgressPhase.Reasoning &&
+                                        it.delta ==
+                                        "initial source-return reasoning visible live"
+                                },
+                                "reasoning must reach the human before answer/control content decides the source-return route",
                             )
                             emit(
                                 field = "content",
@@ -431,9 +440,9 @@ class DirectCompanionTurnTest {
                     "The exact lantern-garden detail is now grounded in returned source.",
                 ),
             )
-            assertFalse(
+            assertTrue(
                 projectedProgress.contains(
-                    "PRIVATE_INTERNAL_SOURCE_RETURN_REASONING",
+                    "initial source-return reasoning visible live",
                 ),
             )
             assertFalse(
