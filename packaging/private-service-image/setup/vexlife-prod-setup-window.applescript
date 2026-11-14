@@ -64,7 +64,7 @@ on showEntry()
 	end if
 
 	set card to projection's objectForKey:"card"
-	if card is missing value or card is (current application's NSNull's null()) then
+	if card is missing value or card is (current application's NSNull's |null|()) then
 		return my showProcessFailure("VexLife couldn't check this Mac.", inspected, false)
 	end if
 
@@ -136,7 +136,7 @@ on activateControl(controlRef)
 	end if
 
 	set failureValue to activation's objectForKey:"failure"
-	if failureValue is not missing value and failureValue is not (current application's NSNull's null()) then
+	if failureValue is not missing value and failureValue is not (current application's NSNull's |null|()) then
 		set failureTitle to my dictionaryText(failureValue, "title", "VexLife stopped before finishing.")
 		set failureDetail to my dictionaryText(failureValue, "detail", "")
 		set technicalText to my dictionaryText(failureValue, "technicalDetail", "")
@@ -151,7 +151,7 @@ on activateControl(controlRef)
 		set originText to my dictionaryText(activation, "productOrigin", fallbackProductOrigin)
 		open location originText
 		set noticeValue to activation's objectForKey:"notice"
-		if noticeValue is not missing value and noticeValue is not (current application's NSNull's null()) then
+		if noticeValue is not missing value and noticeValue is not (current application's NSNull's |null|()) then
 			my showMessage(my dictionaryText(noticeValue, "title", "VexLife is ready."), my dictionaryText(noticeValue, "detail", ""), "Done")
 		end if
 		return "DONE"
@@ -403,10 +403,10 @@ end showMessage
 
 on dictionaryText(dictionaryValue, keyName, fallbackValue)
 	if dictionaryValue is missing value then return fallbackValue
-	if dictionaryValue is (current application's NSNull's null()) then return fallbackValue
+	if dictionaryValue is (current application's NSNull's |null|()) then return fallbackValue
 	set value to dictionaryValue's objectForKey:keyName
 	if value is missing value then return fallbackValue
-	if value is (current application's NSNull's null()) then return fallbackValue
+	if value is (current application's NSNull's |null|()) then return fallbackValue
 	try
 		set textValue to value as text
 	on error
