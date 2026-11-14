@@ -1,0 +1,79 @@
+# PROOF ROUTE ONLY (AGENTS.md: PROOF_ROUTE != ORDINARY_PRODUCT_ROUTE).
+# Lives only on its own proof branch; never part of a product PR. Qualifies the pinned candidate
+# models with the Product-pinned mlx-lm on real Apple silicon, and exercises the Setup model step
+# on disposable Homes.
+name: claude-macos-models-proof
+on:
+  push:
+    branches: [VXG-111426-claude-models-macos-proof-a001]
+permissions:
+  contents: read
+jobs:
+  setup:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Host
+        run: echo "PROOF host :: macOS $(sw_vers -productVersion) / $(sysctl -n machdep.cpu.brand_string) / $(( $(sysctl -n hw.memsize) / 1073741824 )) GiB / $(uname -m)"
+      - name: osacompile exact window source
+        run: |
+          /usr/bin/osacompile -o "$RUNNER_TEMP/Check.app" packaging/private-service-image/setup/vexlife-prod-setup-window.applescript
+          echo "PROOF osacompile :: PASS window source with the model step compiled"
+      - name: Model + setup tests on macOS
+        run: ./gradlew --no-daemon jvmTest --tests 'vexlife.model.*' --tests 'vexlife.setup.*' --tests 'vexlife.capability.*' checkVexLifeStrings
+      - name: Assemble exact private image
+        run: ./gradlew --no-daemon assembleVexLifeProdServiceImage
+      - name: Setup model step on disposable Homes
+        run: |
+          IMAGE="$(ls -d "$PWD"/build/vexlife-prod-service-image/images/*/ | head -1)"
+          SHA="$(git rev-parse HEAD)"
+          L="$IMAGE/bin/vexlife-prod-setup"
+          P="$RUNNER_TEMP/proof-homes"
+          mkdir -p "$P"
+          models() { python3 -c 'import json,sys; d=json.loads(sys.stdin.read()); print("selected=%s chosen=%s saved=%s effects=%s | %s" % (d["selected"], d["chosen"], d["savedInHome"], d["effectsPerformed"], " || ".join(m["line"] for m in d["models"])))'; }
+          card() { python3 -c 'import json,sys; d=json.loads(sys.stdin.read()); c=d.get("card") or {}; print("state=%s | plan=%s | buttons=%s" % (d.get("semanticStateRef"), (d.get("setupPlan") or {}).get("modelLabel"), [b["actionRef"] for b in c.get("buttons",[])])); print([l for l in c.get("body","").splitlines() if "Model" in l or "model" in l][:4])'; }
+          echo "PROOF setup-model absent en :: $("$L" --setup-model --home "$P/absent" --language en | models)"
+          echo "PROOF setup-model absent ja :: $("$L" --setup-model --home "$P/absent" --language ja | models)"
+          echo "PROOF choose-model before Home :: $("$L" --choose-model heretic-4b --home "$P/absent" --language en | models) home_created=$(test -e "$P/absent" && echo yes || echo no)"
+          echo "PROOF inspect absent --model heretic-4b :: $("$L" --inspect-front-door --home "$P/absent" --expected-source-sha "$SHA" --language en --model heretic-4b 2>/dev/null | card)"
+          out="$("$L" --activate-front-door-control FORM_HOME --home "$P/absent" --expected-source-sha "$SHA" --language en --model heretic-4b 2>"$RUNNER_TEMP/act.err")"; code=$?
+          echo "PROOF activate FORM_HOME --model heretic-4b :: exit=$code $(printf '%s' "$out" | python3 -c 'import json,sys; d=json.loads(sys.stdin.read()); print(d.get("semanticStateRef"), d.get("manifestationRef"), (d.get("failure") or {}).get("title"))')"
+          echo "PROOF Home's model binding :: $(cat "$P/absent/runtime/vexlife-prod/model-binding.json" 2>/dev/null | python3 -c 'import json,sys; d=json.loads(sys.stdin.read()); print(d["state"], d["modelRef"])' 2>/dev/null || ls -R "$P/absent/runtime" | head -20)"
+          echo "PROOF setup-model after Home :: $("$L" --setup-model --home "$P/absent" --language en | models)"
+          echo "PROOF inspect after Home :: $("$L" --inspect-front-door --home "$P/absent" --expected-source-sha "$SHA" --language en 2>/dev/null | card)"
+  mlx-4b:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Host
+        run: echo "PROOF host :: macOS $(sw_vers -productVersion) / $(sysctl -n machdep.cpu.brand_string) / $(( $(sysctl -n hw.memsize) / 1073741824 )) GiB / $(uname -m)"
+      - name: Product-pinned mlx-lm
+        run: |
+          python -m pip install --quiet mlx-lm==0.32.0
+          echo "PROOF mlx-lm :: $(python -c 'import mlx_lm, mlx.core as mx; print(mlx_lm.__version__, mx.__version__, mx.default_device())')"
+      - name: Qualify heretic-4b
+        run: python .github/proof/mlx-model-proof.py 4b "$RUNNER_TEMP/models"
+  mlx-9b:
+    runs-on: macos-latest
+    timeout-minutes: 75
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Host
+        run: echo "PROOF host :: macOS $(sw_vers -productVersion) / $(sysctl -n machdep.cpu.brand_string) / $(( $(sysctl -n hw.memsize) / 1073741824 )) GiB / $(uname -m)"
+      - name: Product-pinned mlx-lm
+        run: python -m pip install --quiet mlx-lm==0.32.0
+      - name: Qualify heretic-9b (may exceed this runner's memory; reported as it is)
+        run: python .github/proof/mlx-model-proof.py 9b "$RUNNER_TEMP/models"

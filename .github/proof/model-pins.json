@@ -1,0 +1,142 @@
+{
+ "9b": {
+  "repo": "Foresee/Qwen3.8-9B-heretic-uncensored-5bit-MLX",
+  "revision": "8a3eec7d4b298cc5100a191bbb870d2fb7446bb5",
+  "contentSetSha256": "5901a94ba7c70a1bbf4d4d46a15e76d1f29e148921bf2d5a95098a918859318d",
+  "members": [
+   {
+    "filename": ".gitattributes",
+    "sha256": "34448b82c17d60fec9b65b1f093c115ddbaadc04beb1b0140b6bfed2e012a930",
+    "bytes": 1570,
+    "lfs": false
+   },
+   {
+    "filename": "README.md",
+    "sha256": "f1178c30c406f52d168321e3e9ac1dd3fcce9024faad0d3c5ee1e6b9a4e2c2a6",
+    "bytes": 1556,
+    "lfs": false
+   },
+   {
+    "filename": "chat_template.jinja",
+    "sha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715",
+    "bytes": 7756,
+    "lfs": false
+   },
+   {
+    "filename": "config.json",
+    "sha256": "46e9588177621c3e6d07c29cc3524e16e22ac698f326c75299a0952f4394c0b8",
+    "bytes": 3090,
+    "lfs": false
+   },
+   {
+    "filename": "generation_config.json",
+    "sha256": "2b74f0e736d274777db8ad400235c4a6e767821d27e7597eacec4b2d6b9a707e",
+    "bytes": 174,
+    "lfs": false
+   },
+   {
+    "filename": "model-00001-of-00002.safetensors",
+    "sha256": "72c76a4646e5fc56e0749c5712225e060a1cf1ec7f3fffef1efec2137e4a1bd8",
+    "bytes": 5355676988,
+    "lfs": true
+   },
+   {
+    "filename": "model-00002-of-00002.safetensors",
+    "sha256": "297e3724b2a4baa405a8cd6caf92d5549988126a1d1d5f73b8526eaf0bb5132b",
+    "bytes": 1361123465,
+    "lfs": true
+   },
+   {
+    "filename": "model.safetensors.index.json",
+    "sha256": "c37c9db5b81ec021af8dbd0b4380fc4f94aa01f9b7911cab8e9a909fd71b004b",
+    "bytes": 95099,
+    "lfs": false
+   },
+   {
+    "filename": "tokenizer.json",
+    "sha256": "06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523",
+    "bytes": 19989325,
+    "lfs": true
+   },
+   {
+    "filename": "tokenizer_config.json",
+    "sha256": "8f781f0d7369fb2532a77284368c2a5f9eccd6413a381dfa3795787e20ca4ca4",
+    "bytes": 1202,
+    "lfs": false
+   }
+  ]
+ },
+ "4b": {
+  "repo": "yachen4ever/Qwen3.8-4B-Distill-Heretic-Abliterated-MLX-4bit",
+  "revision": "f47bef776bcd49b552219c14c4da949c8b49e336",
+  "contentSetSha256": "d2f8f4028f2030f994c6182a8c52cc429cab0d5b635dfa2801218ba736b89aea",
+  "members": [
+   {
+    "filename": ".gitattributes",
+    "sha256": "34448b82c17d60fec9b65b1f093c115ddbaadc04beb1b0140b6bfed2e012a930",
+    "bytes": 1570,
+    "lfs": false
+   },
+   {
+    "filename": "README.md",
+    "sha256": "8ff09e890a2a7980aa1f7fd3a4e090f822e61f46610877c654bfc362a464595d",
+    "bytes": 6018,
+    "lfs": false
+   },
+   {
+    "filename": "chat_template.jinja",
+    "sha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715",
+    "bytes": 7756,
+    "lfs": false
+   },
+   {
+    "filename": "config.json",
+    "sha256": "05c0558e1eee06e97d2e73f7b01d8cb0d94322cdd4e310a90a16234f9d63cf53",
+    "bytes": 3857,
+    "lfs": false
+   },
+   {
+    "filename": "generation_config.json",
+    "sha256": "2cee8242d29b39b8684970e78098eb7664859f62c42c764500719ed01842a0ed",
+    "bytes": 174,
+    "lfs": false
+   },
+   {
+    "filename": "model.safetensors",
+    "sha256": "ce5a70fa86c09f709a662c656e5a171bacc2aac2c5e4717d96336ff10cf7c000",
+    "bytes": 3034299183,
+    "lfs": true
+   },
+   {
+    "filename": "model.safetensors.index.json",
+    "sha256": "840634e215ba74eb1ff53c03660b82443d249845884910e87b1a99a258225951",
+    "bytes": 101944,
+    "lfs": false
+   },
+   {
+    "filename": "preprocessor_config.json",
+    "sha256": "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516",
+    "bytes": 390,
+    "lfs": false
+   },
+   {
+    "filename": "processor_config.json",
+    "sha256": "27959590c1d52d08c2b4cefe09b522a489475deb2cd9ca5e3b97f27cf23e2308",
+    "bytes": 989,
+    "lfs": false
+   },
+   {
+    "filename": "tokenizer.json",
+    "sha256": "6f32ce20dc35f57a7f9ad1eac03525bd7d30f9df8cea6507e958279cc3657706",
+    "bytes": 19989492,
+    "lfs": true
+   },
+   {
+    "filename": "tokenizer_config.json",
+    "sha256": "dcb88c4a1dff8096b6fd919e458d987351b499f86db65d1b997ed515a90cc35c",
+    "bytes": 1269,
+    "lfs": false
+   }
+  ]
+ }
+}
