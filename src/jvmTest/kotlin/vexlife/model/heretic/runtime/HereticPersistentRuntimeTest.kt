@@ -425,7 +425,7 @@ class HereticPersistentRuntimeTest {
     }
 
     @Test
-    fun currentQualifiedObservationRejectsDeadGenerationEngineWithoutStartupWait() {
+    fun currentQualifiedObservationKeepsReadinessSeparateFromCurrentness() {
         val trace =
             mutableListOf<String>()
         val current =
@@ -460,15 +460,18 @@ class HereticPersistentRuntimeTest {
                         false
                 }
 
-        assertFailsWith<IllegalArgumentException> {
+        val evidence =
             HereticPersistentRuntime.observeCurrentQualified(
                 binding = current,
                 store = store,
                 platform = platform,
             )
-        }
 
-        assertTrue(
+        assertEquals(
+            existing.receiptRef,
+            evidence.runtimeReceiptRef,
+        )
+        assertFalse(
             "HEALTHY" in
                 trace,
         )
@@ -480,10 +483,17 @@ class HereticPersistentRuntimeTest {
             "QUALIFY" in
                 trace,
         )
+        assertFalse(
+            trace.any {
+                it.startsWith(
+                    "RETIRE_",
+                )
+            },
+        )
     }
 
     @Test
-    fun liveButUnhealthyQualifiedRuntimeRotatesBeforeReplacement() {
+    fun liveQualifiedRuntimeQualificationFailureDoesNotAuthorizeRetirement() {
         val trace =
             mutableListOf<String>()
         val current =
@@ -506,37 +516,44 @@ class HereticPersistentRuntimeTest {
                         prior.runtime.pid
                     it.healthyNow =
                         false
+                    it.qualificationFailure =
+                        true
                     it.spawnedPid =
                         prior.runtime.pid +
                             1
                 }
 
-        val result =
+        assertFailsWith<IllegalStateException> {
             HereticPersistentRuntime.startOrReuse(
                 current,
                 store,
                 platform,
             )
+        }
 
         assertEquals(
-            "STARTED_NEW_EXACT_MLX_RUNTIME",
-            result.disposition,
-        )
-        assertTrue(
-            trace.any {
-                it.startsWith(
-                    "RETIRE_",
-                )
-            },
-        )
-        assertTrue(
-            "SPAWN" in
-                trace,
+            0,
+            platform.retireCalls,
         )
         assertEquals(
-            prior.runtime.pid +
-                1,
-            result.pid,
+            prior,
+            store.value,
+        )
+        assertTrue(
+            prior.runtime.pid in
+                platform.alivePids,
+        )
+        assertFalse(
+            "HEALTHY" in
+                trace,
+        )
+        assertTrue(
+            "QUALIFY" in
+                trace,
+        )
+        assertFalse(
+            "SPAWN" in
+                trace,
         )
     }
 
