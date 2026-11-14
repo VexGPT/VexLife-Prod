@@ -36,6 +36,7 @@ rightful owner accepts / observes a fact
 | Heretic runtime | `RUNTIME_CURRENTNESS_LOST`, `RUNTIME_RECOVERY_REQUESTED/COMPLETED/FAILED`, `RUNTIME_RETIRED_UNHEALTHY`, `RUNTIME_START_REQUESTED`, `RUNTIME_QUALIFIED`, `RUNTIME_PROCESS_LIVE/NO_LONGER_LIVE` (PID observer, transitions only, never probes health) |
 | Conversation | `SEND_ACCEPTED`, `PROVIDER_INVOCATION_REQUESTED`, `TURN_COMPLETED`, `TURN_FAILED` (with whether a failure receipt was written) |
 | Web presentation (`POST /api/v1/chronology`, Browser/Presentation facts only) | `PRESENTATION_ARRIVED`, `SEND_OUTCOME_UNRESOLVED_SHOWN`, `BROWSER_PAGE_IDENTITY_OBSERVED`, `BROWSER_PAGE_UNLOCATED`, `BROWSER_CONTEXT_REQUESTED/READY/INVALIDATED` |
+| Capability bridge | `CAPABILITY_REQUEST_OBSERVED` (callRef, request number, handle, action), `CAPABILITY_RESULT_RETURNED` (state, tokens, truncated) — never the returned content |
 | Diagnostics | `DEBUG_HISTORY_CLEARED`, `DEBUG_EXPORT_FORMED`, `ENHANCED_CAPTURE_STARTED/STOPPED`, `PROCESS_SNAPSHOT_OBSERVED` |
 
 ## Storage

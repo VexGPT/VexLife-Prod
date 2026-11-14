@@ -19,6 +19,16 @@ class VexLifeCapabilityAtlasTest {
             "capability.vexlife.context.working-continuity",
         )
 
+    private val reachCapabilityRefs =
+        listOf(
+            "capability.vexlife.atlas.describe",
+            "capability.vexlife.conversation.source-return",
+            "capability.vexlife.home.read",
+            "capability.vexlife.memory.recall",
+            "capability.vexlife.repository.read",
+            "capability.vexlife.web.read",
+        )
+
     private fun currentContext() =
         VexLifeCapabilityAtlas.CurrentContext(
             homeRef =
@@ -172,11 +182,21 @@ class VexLifeCapabilityAtlasTest {
             registry.effectAuthorityGranted,
         )
         assertEquals(
-            allCapabilityRefs,
+            (allCapabilityRefs + reachCapabilityRefs).sorted(),
             registry.definitions
                 .map {
                     it.capabilityRef
                 },
+        )
+        // Every registered capability names an owner that exists in this source tree.
+        assertTrue(registry.definitions.all { java.nio.file.Files.exists(java.nio.file.Path.of(it.sourcePath)) })
+        // Context capabilities carry no envelope actions; reach capabilities other than the
+        // Conversation source return (which keeps its own request form) all do.
+        assertTrue(registry.definitions.filter { it.capabilityRef in allCapabilityRefs }.all { it.actions.isEmpty() })
+        assertTrue(
+            registry.definitions
+                .filter { it.capabilityRef in reachCapabilityRefs && !it.capabilityRef.endsWith("source-return") }
+                .all { it.actions.isNotEmpty() && it.effectClass != "WRITE" },
         )
         assertTrue(
             registry.definitions.all {

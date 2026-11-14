@@ -5,10 +5,12 @@
     "description": "The VexLife workspace in the browser. English is canonical source; other languages are filled by the translation cycle (see docs/foundation/LOCALIZATION.md).",
     "keyConvention": "workspace.{element-type}.{semantic-name}",
     "surfaces": {
-      "workspace.settings": "the Settings panel of the workspace"
+      "workspace.settings": "the Settings panel of the workspace",
+      "workspace.conversation": "the conversation column and its composer"
     },
     "dataKeyOwners": {
-      "diagnostics": "VexLifeDiagnosticsFamily (state, control refs) and the debug export route"
+      "diagnostics": "VexLifeDiagnosticsFamily (state, control refs) and the debug export route",
+      "capability": "VexLifeCapabilityBridge uses (handle:action), shown to the person as reach"
     }
   },
   "workspace.heading.diagnostics": {
@@ -168,5 +170,92 @@
       "workspace.settings"
     ],
     "dataKey": "diagnostics:control:CLEAR_HISTORY"
+  },
+  "workspace.status.reach-web-fetch": {
+    "strings": {
+      "en": {
+        "text": "reading {target}"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "capability:web:fetch"
+  },
+  "workspace.status.reach-web-search": {
+    "strings": {
+      "en": {
+        "text": "searching the web for {target}"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "capability:web:search"
+  },
+  "workspace.status.reach-github": {
+    "strings": {
+      "en": {
+        "text": "reading GitHub {target}"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "capability:github:read"
+  },
+  "workspace.status.reach-home": {
+    "strings": {
+      "en": {
+        "text": "looking in my Home at {target}"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "capability:home:read"
+  },
+  "workspace.status.reach-memory": {
+    "strings": {
+      "en": {
+        "text": "searching Memory for {target}"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "capability:memory:search"
+  },
+  "workspace.status.reach-atlas": {
+    "strings": {
+      "en": {
+        "text": "checking what I can reach"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "capability:atlas:describe"
+  },
+  "workspace.label.reached": {
+    "strings": {
+      "en": {
+        "text": "reached"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "capability:trace:USES"
+  },
+  "workspace.label.reach-state": {
+    "strings": {
+      "en": {
+        "text": "({state})"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
   }
 }
