@@ -23,7 +23,7 @@ class VexLifeWorkspaceBlueprintTest {
             refs.toSet().size,
         )
         assertEquals(
-            46,
+            51,
             refs.size,
         )
 
@@ -44,6 +44,9 @@ class VexLifeWorkspaceBlueprintTest {
                 VexLifeWorkspaceBlueprint.PrivateMode.ref to VexLifeWorkspaceBlueprint.Companion.ref,
                 VexLifeWorkspaceBlueprint.PrivateBanner.ref to VexLifeWorkspaceBlueprint.Conversation.ref,
                 VexLifeWorkspaceBlueprint.ContinuityMemory.ref to VexLifeWorkspaceBlueprint.SettingsContinuity.ref,
+                VexLifeWorkspaceBlueprint.SettingsDiagnostics.ref to VexLifeWorkspaceBlueprint.Settings.ref,
+                VexLifeWorkspaceBlueprint.DiagnosticsTrace.ref to VexLifeWorkspaceBlueprint.SettingsDiagnostics.ref,
+                VexLifeWorkspaceBlueprint.DiagnosticsExport.ref to VexLifeWorkspaceBlueprint.SettingsDiagnostics.ref,
             )
 
         expectedParents.forEach { (ref, parent) ->

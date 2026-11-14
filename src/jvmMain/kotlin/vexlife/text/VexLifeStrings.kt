@@ -10,7 +10,7 @@ object VexLifeStrings {
     const val SourceResourceRoot = "/strings/source/"
 
     /** Every source scope, in load order. A test keeps this equal to the files on disk. */
-    val Scopes = listOf("setup")
+    val Scopes = listOf("setup", "workspace")
 
     val catalog: VexLifeStringCatalog by lazy {
         Scopes.fold(VexLifeStringCatalog.Empty) { catalog, scope ->

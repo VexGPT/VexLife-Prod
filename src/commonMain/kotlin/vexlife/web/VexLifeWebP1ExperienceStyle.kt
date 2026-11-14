@@ -632,6 +632,9 @@ svg { display: block; }
   border: 1px solid var(--rule); border-radius: 7px; color: var(--ink-2); font-weight: 600; font-size: var(--step--1);
 }
 .outline-button.wide { height: 34px; text-align: left; }
+a.outline-button { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; color: inherit; height: 34px; }
+[data-vex-ref="${VexLifeWebP1.SettingsDiagnostics.identity.ref}"] .home-row { grid-template-columns: 1fr auto auto; }
+[data-vex-ref="${VexLifeWebP1.SettingsDiagnostics.identity.ref}"] .home-row .outline-button { height: 34px; padding: 0 12px; }
 .outline-button.state { height: 34px; }
 
 .setting-reset { padding-top: 18px; }

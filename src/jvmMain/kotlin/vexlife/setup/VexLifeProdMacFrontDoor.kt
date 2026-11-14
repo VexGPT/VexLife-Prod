@@ -8,6 +8,7 @@ import vexlife.contract.VexContractJson
 import vexlife.entry.VexLifeProdEntryFamily
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdSetupProgress
+import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.runtime.HereticArtifactMaterialization
 import vexlife.model.heretic.runtime.HereticMacHostProfile
@@ -761,25 +762,59 @@ object VexLifeProdMacFrontDoorProcess {
         )
     }
 
+    /**
+     * Names this setup process in the chronology. Facts reach the Home's chronology file only when
+     * the selected Home is already a canonical Vex Home; the Logger never creates one, and the
+     * chronology is the only thing a no-effect inspection may write.
+     */
+    private fun bindLogger(desiredSourceSha: String?, productHome: Path) {
+        val home = runCatching { productHome.toAbsolutePath().normalize() }.getOrNull() ?: return
+        val existing =
+            runCatching {
+                    VexLifeProdHomeFiles.observeLocation(home) is
+                        VexLifeProdHomeFiles.Location.Existing
+                }
+                .getOrDefault(false)
+        VexLogger.bind(
+            processRole = "setup",
+            sourceSha = desiredSourceSha,
+            chronologyHome = home.takeIf { existing },
+        )
+    }
+
     fun inspect(
         desiredSourceSha: String,
         productHome: Path,
         language: String?,
         systemLanguage: String?,
     ) {
+        bindLogger(desiredSourceSha, productHome)
         val selected = runCatching {
             VexLifeProdSetupLanguage.resolve(productHome, language, systemLanguage)
         }.getOrDefault(VexLifePersonSettings.DefaultLanguage)
         val encoded =
             try {
-                VexContractJson.encode(
+                val projection =
                     VexLifeProdMacFrontDoor.observe(
                         desiredSourceSha = desiredSourceSha,
                         productHome = productHome,
                         language = selected,
                     )
+                VexLogger.record(
+                    VexLogger.Fact.EntryStateObserved,
+                    mapOf(
+                        "stateRef" to projection.semanticStateRef,
+                        "language" to selected,
+                        "via" to "inspect",
+                    ),
                 )
+                VexContractJson.encode(projection)
             } catch (error: Exception) {
+                VexLogger.record(
+                    VexLogger.Fact.EntryStateObserved,
+                    mapOf("stateRef" to "INSPECTION_FAILED", "via" to "inspect"),
+                    detail = error.javaClass.simpleName + ": " + (error.message ?: ""),
+                )
                 VexContractJson.encode(
                     inspectionFailure(productHome = productHome, error = error, language = selected)
                 )
@@ -798,6 +833,7 @@ object VexLifeProdMacFrontDoorProcess {
         productHome: Path,
         language: String?,
     ) {
+        bindLogger(desiredSourceSha, productHome)
         val selected = runCatching {
             VexLifeProdSetupLanguage.resolve(productHome, language, null)
         }.getOrDefault(VexLifePersonSettings.DefaultLanguage)
@@ -831,6 +867,7 @@ object VexLifeProdMacFrontDoorProcess {
 
     /** The person chose a language in the setup window. */
     fun chooseLanguage(productHome: Path, language: String) {
+        bindLogger(null, productHome)
         utf8StandardOutput.println(
             VexContractJson.encode(VexLifeProdSetupLanguage.choose(productHome, language))
         )
@@ -873,6 +910,11 @@ object VexLifeProdMacFrontDoorProcess {
         // hold it. Saving it never changes the activation's outcome.
         if (persistLanguage) {
             runCatching { hooks.persistLanguage(selectedHome, language) }
+                .onSuccess { saved ->
+                    if (saved) {
+                        VexLogger.record(VexLogger.Fact.PersonLanguageSaved, mapOf("language" to language))
+                    }
+                }
         }
         return projection
     }
@@ -884,29 +926,55 @@ object VexLifeProdMacFrontDoorProcess {
         hooks: ActivationHooks,
         language: String,
     ): ActivationProjection {
+        // Fresh observation after an Effect: this, not the Effect's hoped-for successor, is the State
+        // the chronology records and the window renders next (EFFECT COMPLETED != PREDICTED STATE).
+        fun reobserve(): String =
+            runCatching { hooks.observeSemanticStateRef(desiredSourceSha, selectedHome) }
+                .getOrDefault(StateUnobserved)
+                .also {
+                    VexLogger.record(
+                        VexLogger.Fact.EntryStateObserved,
+                        mapOf("stateRef" to it, "via" to "activation", "controlRef" to controlRef),
+                    )
+                }
 
-        fun reobserve(): String = runCatching {
-            hooks.observeSemanticStateRef(desiredSourceSha, selectedHome)
-        }
-            .getOrDefault(StateUnobserved)
-
-        fun failed(resolvedControlRef: String, failure: VexLifeProdSetupFailure.Failure) =
-            ActivationProjection(
+        fun failed(
+            resolvedControlRef: String,
+            effectRef: String?,
+            failure: VexLifeProdSetupFailure.Failure,
+        ): ActivationProjection {
+            VexLogger.record(
+                VexLogger.Fact.SetupEffectFailed,
+                listOfNotNull(
+                        "controlRef" to resolvedControlRef,
+                        "failureRef" to failure.failureRef,
+                        effectRef?.let { "effectRef" to it },
+                    )
+                    .toMap(),
+                detail = failure.technicalDetail,
+            )
+            return ActivationProjection(
                 schemaVersion = ActivationSchema,
                 controlRef = resolvedControlRef,
                 semanticStateRef = reobserve(),
                 manifestationRef = ManifestationRefreshEntry,
                 failure = failure,
             )
+        }
 
         val resolved =
             try {
                 hooks.resolveControl(desiredSourceSha, controlRef, selectedHome)
             } catch (error: Exception) {
-                return failed(controlRef, VexLifeProdSetupFailure.classify(error, language))
+                return failed(controlRef, null, VexLifeProdSetupFailure.classify(error, language))
             }
 
         if (!resolved.lawful) {
+            // Offered earlier, not lawful against the State observed just now: nothing is attempted.
+            VexLogger.record(
+                VexLogger.Fact.SetupControlNotLawfulNow,
+                mapOf("controlRef" to resolved.controlRef, "stateRef" to resolved.semanticStateRef),
+            )
             return ActivationProjection(
                 schemaVersion = ActivationSchema,
                 controlRef = resolved.controlRef,
@@ -915,6 +983,25 @@ object VexLifeProdMacFrontDoorProcess {
                 failure = VexLifeProdSetupFailure.stateChanged(language),
             )
         }
+
+        val effectRef =
+            when (val effect = resolved.effect) {
+                null -> "NONE"
+                VexLifeProdEntryFamily.OpenPresentation -> effect.effectRef
+                VexLifeProdEntryFamily.FormCanonicalHome -> effect.effectRef
+                is VexLifeProdEntryFamily.ConvergeProduct ->
+                    effect.effectRef +
+                        (if (effect.allowAcquisition) ":ACQUIRE" else "") +
+                        (if (effect.allowRuntimeStart) ":START" else "")
+            }
+        VexLogger.record(
+            VexLogger.Fact.SetupControlAccepted,
+            mapOf(
+                "controlRef" to resolved.controlRef,
+                "stateRef" to resolved.semanticStateRef,
+                "effectRef" to effectRef,
+            ),
+        )
 
         return when (val effect = resolved.effect) {
             null ->
@@ -925,6 +1012,7 @@ object VexLifeProdMacFrontDoorProcess {
                     manifestationRef = ManifestationNoAction,
                 )
 
+            // The window opens the presentation; whether it arrived is the presentation's fact.
             VexLifeProdEntryFamily.OpenPresentation ->
                 ActivationProjection(
                     schemaVersion = ActivationSchema,
@@ -935,14 +1023,19 @@ object VexLifeProdMacFrontDoorProcess {
                 )
 
             VexLifeProdEntryFamily.FormCanonicalHome -> {
+                VexLogger.record(VexLogger.Fact.SetupEffectStarted, mapOf("effectRef" to effectRef))
                 try {
                     hooks.formHome(desiredSourceSha, selectedHome)
                 } catch (error: Exception) {
                     return failed(
                         resolved.controlRef,
+                        effectRef,
                         VexLifeProdSetupFailure.classify(error, language),
                     )
                 }
+                // The Home exists now, so this process's facts can be kept inside it from here on.
+                VexLogger.bindHome(selectedHome)
+                VexLogger.record(VexLogger.Fact.SetupEffectCompleted, mapOf("effectRef" to effectRef))
                 ActivationProjection(
                     schemaVersion = ActivationSchema,
                     controlRef = resolved.controlRef,
@@ -955,6 +1048,7 @@ object VexLifeProdMacFrontDoorProcess {
                 require(effect.desiredSourceSha == desiredSourceSha) {
                     "Product-entry convergence Effect source differs from the activation source"
                 }
+                VexLogger.record(VexLogger.Fact.SetupEffectStarted, mapOf("effectRef" to effectRef))
                 try {
                     hooks.convergeProduct(
                         effect.desiredSourceSha,
@@ -965,9 +1059,11 @@ object VexLifeProdMacFrontDoorProcess {
                 } catch (error: Exception) {
                     return failed(
                         resolved.controlRef,
+                        effectRef,
                         VexLifeProdSetupFailure.classify(error, language),
                     )
                 }
+                VexLogger.record(VexLogger.Fact.SetupEffectCompleted, mapOf("effectRef" to effectRef))
                 hooks.progress.phase(VexLifeProdSetupProgress.Phase.ConfirmingVexLife)
                 val reobserved = reobserve()
                 if (reobserved == VexLifeProdEntryFamily.StateCurrent) {

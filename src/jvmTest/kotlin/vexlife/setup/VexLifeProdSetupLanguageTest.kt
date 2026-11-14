@@ -149,7 +149,7 @@ class VexLifeProdSetupLanguageTest {
 
     @Test
     fun everyDataKeyNamesARefItsOwnerHas() {
-        for (key in catalog.keys) {
+        for (key in catalog.keys.filter { it.startsWith("setup.") }) {
             val dataKey = catalog.dataKey(key) ?: continue
             assertTrue(dataKey in VexLifeProdSetupElements.DataKeys, "$key names unknown $dataKey")
         }

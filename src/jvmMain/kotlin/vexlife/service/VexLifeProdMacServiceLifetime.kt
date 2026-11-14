@@ -15,6 +15,7 @@ import vexlife.filesystem.VexOwnedPath
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
+import vexlife.logging.VexLogger
 import vexlife.platform.macos.MacUserLaunchdProcess
 
 /**
@@ -666,7 +667,7 @@ object VexLifeProdMacServiceLifetime {
         ) {
             is Observation.RunningCurrent ->
                 Result(
-                    disposition = "REUSED_CURRENT_SERVICE",
+                        disposition = "REUSED_CURRENT_SERVICE",
                     sourceSha = desiredSourceSha,
                     imagePayloadSha256 = observed.desiredImage.payloadSha256,
                     pid = observed.receipt.launchd.pid,
@@ -675,6 +676,12 @@ object VexLifeProdMacServiceLifetime {
                     priorProcessRetired = false,
                     receiptWritePerformed = false,
                 )
+                    .also {
+                        VexLogger.record(
+                            VexLogger.Fact.ServiceReusedCurrent,
+                            mapOf("serviceSourceSha" to it.sourceSha, "pid" to it.pid.toString()),
+                        )
+                    }
 
             is Observation.HeldUnknown ->
                 error(
@@ -827,6 +834,15 @@ object VexLifeProdMacServiceLifetime {
                 value = receipt,
             )
 
+            // Recorded only after readiness was observed and the receipt committed.
+            VexLogger.record(
+                VexLogger.Fact.ServiceStartedCurrent,
+                mapOf(
+                    "serviceSourceSha" to image.sourceSha,
+                    "pid" to launchd.pid.toString(),
+                    "priorProcessRetired" to priorProcessRetired.toString(),
+                ),
+            )
             return Result(
                 disposition = "STARTED_CURRENT_SERVICE",
                 sourceSha = image.sourceSha,
@@ -892,6 +908,14 @@ object VexLifeProdMacServiceLifetime {
         ) {
             "VexLife-Prod prior service was not verified retired"
         }
+        VexLogger.record(
+            VexLogger.Fact.ServiceRetiredVerified,
+            mapOf(
+                "serviceSourceSha" to receipt.sourceSha,
+                "pid" to receipt.launchd.pid.toString(),
+                "launchContract" to receiptContract(receipt, home, legacyDefaultHome).name,
+            ),
+        )
 
         VexDurableContractFile.delete(
             ownedRoot = home,

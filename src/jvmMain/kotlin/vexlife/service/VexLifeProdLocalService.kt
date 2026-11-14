@@ -15,6 +15,9 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import vexlife.diagnostics.VexLifeDiagnostics
+import vexlife.logging.VexLogger
+import vexlife.text.VexLifeStrings
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.browser.VexLifeProdFrameHost
 import vexlife.companion.DirectCompanionConnection
@@ -62,6 +65,10 @@ class VexLifeProdLocalService private constructor(
 ) : AutoCloseable {
     private val privateConversation = VexLifePrivateConversation(Path.of(startupSetup.productHome))
     private val personSettings = VexLifePersonSettingsStore(Path.of(startupSetup.productHome))
+    private val diagnostics =
+        VexLifeDiagnostics(home = Path.of(startupSetup.productHome), sourceSha = sourceSha).also {
+            it.startObserving()
+        }
 
     private val privateCompletion =
         privateCompletionOverride
@@ -491,6 +498,7 @@ class VexLifeProdLocalService private constructor(
             frameHost.origin
 
     override fun close() {
+        runCatching { diagnostics.close() }
         var visionCloseFailure: Throwable? =
             null
 
@@ -620,6 +628,19 @@ class VexLifeProdLocalService private constructor(
                 VexLifeProdServiceContract.MemoryPath -> handleMemory(exchange)
 
                 VexLifeProdServiceContract.SettingsPath -> handleSettings(exchange)
+
+                VexLifeProdServiceContract.DiagnosticsPath -> {
+                    requireMethod(exchange, "GET")
+                    respondJson(exchange = exchange, status = 200, value = diagnostics.projection())
+                }
+
+                VexLifeProdServiceContract.DiagnosticsControlPath -> handleDiagnosticsControl(exchange)
+
+                VexLifeProdServiceContract.DiagnosticsExportPath -> handleDiagnosticsExport(exchange)
+
+                VexLifeProdServiceContract.ChronologyPath -> handlePresentationFact(exchange)
+
+                VexLifeProdServiceContract.WorkspaceStringsPath -> handleStrings(exchange, scope = "workspace")
 
                 VexLifeProdServiceContract.PrivatePath -> handlePrivate(exchange)
 
@@ -1110,6 +1131,79 @@ class VexLifeProdLocalService private constructor(
             replyLanguage = personSettings.read().replyLanguage,
             languages = VexLifePersonSettings.Languages.map { VexLifeProdServiceContract.SettingsLanguage(it.first, it.second) },
         )
+
+    @kotlinx.serialization.Serializable
+    private data class DiagnosticsControlRequest(val controlRef: String)
+
+    private fun handleDiagnosticsControl(exchange: HttpExchange) {
+        requireMethod(exchange, "POST")
+        requireJson(exchange)
+        val request = JsonCodec.decodeFromString<DiagnosticsControlRequest>(requestText(exchange))
+        respondJson(exchange = exchange, status = 200, value = diagnostics.control(request.controlRef))
+    }
+
+    private fun handleDiagnosticsExport(exchange: HttpExchange) {
+        requireMethod(exchange, "GET")
+        val bytes = diagnostics.export()
+        val stamp = java.time.Instant.now().toString().replace(":", "").substringBefore('.')
+        exchange.responseHeaders.set("content-type", "application/zip")
+        exchange.responseHeaders.set("content-disposition", "attachment; filename=\"vexlife-debug-$stamp.zip\"")
+        exchange.responseHeaders.set("cache-control", "no-store")
+        exchange.sendResponseHeaders(200, bytes.size.toLong())
+        exchange.responseBody.write(bytes)
+    }
+
+    @kotlinx.serialization.Serializable
+    private data class PresentationFact(val fact: String, val refs: Map<String, String> = emptyMap())
+
+    /**
+     * Facts the web presentation itself observed: what it actually showed and what it could prove
+     * about the visible page. Only Browser and Presentation facts are admitted from it; the
+     * presentation cannot report a Conversation, runtime or setup fact it does not own.
+     */
+    private fun handlePresentationFact(exchange: HttpExchange) {
+        requireMethod(exchange, "POST")
+        requireJson(exchange)
+        val reported = JsonCodec.decodeFromString<PresentationFact>(requestText(exchange))
+        val fact = VexLogger.Fact.fromWire(reported.fact)
+        if (
+            fact == null ||
+                fact.owner !in setOf(VexLogger.Owner.Browser, VexLogger.Owner.Presentation) ||
+                reported.refs.size > 12
+        ) {
+            respondError(exchange, 422, "FACT_NOT_ADMITTED", "the presentation may report only Browser or Presentation facts")
+            return
+        }
+        VexLogger.record(fact, reported.refs + ("reportedBy" to "web-presentation"))
+        exchange.sendResponseHeaders(204, -1)
+    }
+
+    @kotlinx.serialization.Serializable
+    private data class StringsProjection(
+        val schemaVersion: String,
+        val scope: String,
+        val language: String,
+        val strings: Map<String, String>,
+    )
+
+    /** The keyed words of one scope in the person's selected language (English where untranslated). */
+    private fun handleStrings(exchange: HttpExchange, scope: String) {
+        requireMethod(exchange, "GET")
+        require(scope in VexLifeStrings.Scopes) { "unknown string scope" }
+        val language = runCatching { personSettings.read().replyLanguage }.getOrDefault(VexLifePersonSettings.DefaultLanguage)
+        val catalog = VexLifeStrings.catalog
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value =
+                StringsProjection(
+                    schemaVersion = "vexlife-prod.strings/v1",
+                    scope = scope,
+                    language = language,
+                    strings = catalog.keys.filter { it.startsWith("$scope.") }.sorted().associateWith { catalog.text(it, language) },
+                ),
+        )
+    }
 
     private fun handleSettings(exchange: HttpExchange) {
         when (exchange.requestMethod) {

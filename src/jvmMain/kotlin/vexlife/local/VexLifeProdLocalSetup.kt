@@ -3,6 +3,7 @@ package vexlife.local
 import java.net.InetAddress
 import java.nio.file.Path
 import java.time.OffsetDateTime
+import vexlife.logging.VexLogger
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
@@ -63,15 +64,42 @@ object VexLifeProdLocalSetup {
             (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)? =
             null,
     ) {
+        /**
+         * Current qualified runtime evidence, recovering once when currentness cannot be proven.
+         *
+         * Why the chronology records each step here: "currentness lost" means only that this
+         * observation could not prove the runtime current (process gone, ownership drift, or a
+         * health answer not received in time while it may be busy). Recovery then may retire and
+         * restart the runtime, so the order lost -> requested -> completed/failed is the evidence
+         * needed to tell a dead runtime from a busy one that recovery replaced.
+         */
         fun currentQualifiedRuntimeEvidence(
             onRecovery: (() -> Unit)? = null
         ): HereticModelConfiguration.QualifiedRuntimeEvidence =
             try {
                 currentRuntimeEvidence()
             } catch (original: RuntimeException) {
+                VexLogger.record(
+                    VexLogger.Fact.RuntimeCurrentnessLost,
+                    detail = original.javaClass.simpleName + ": " + (original.message ?: ""),
+                )
                 val recover = recoverRuntimeEvidence ?: throw original
+                VexLogger.record(VexLogger.Fact.RuntimeRecoveryRequested)
                 onRecovery?.invoke()
-                recover()
+                try {
+                    recover().also {
+                        VexLogger.record(
+                            VexLogger.Fact.RuntimeRecoveryCompleted,
+                            mapOf("runtimeReceiptRef" to it.runtimeReceiptRef),
+                        )
+                    }
+                } catch (error: Throwable) {
+                    VexLogger.record(
+                        VexLogger.Fact.RuntimeRecoveryFailed,
+                        detail = error.javaClass.simpleName + ": " + (error.message ?: ""),
+                    )
+                    throw error
+                }
             }
     }
 

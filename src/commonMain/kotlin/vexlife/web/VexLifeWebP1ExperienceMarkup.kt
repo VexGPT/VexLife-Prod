@@ -264,6 +264,23 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
         </section>
 
 
+        <section class="setting" data-vex-ref="${VexLifeWebP1.SettingsDiagnostics.identity.ref}" aria-labelledby="diagnostics-heading">
+          <h2 id="diagnostics-heading" data-vex-text="workspace.heading.diagnostics"></h2>
+          <div class="memory-state" data-vex-ref="${VexLifeWebP1.DiagnosticsTrace.identity.ref}" id="diagnostics-trace">
+            <p class="memory-label" id="diagnostics-status"></p>
+            <p class="setting-note-line" id="diagnostics-capture"></p>
+            <p class="setting-note-line" id="diagnostics-records"></p>
+          </div>
+          <p class="setting-note-line" data-vex-text="workspace.description.diagnostics"></p>
+          <div class="home-row">
+            <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.DiagnosticsEnhancedCapture.identity.ref}" id="diagnostics-enhanced" disabled></button>
+            <button class="outline-button" type="button" data-vex-ref="${VexLifeWebP1.DiagnosticsClearHistory.identity.ref}" id="diagnostics-clear" disabled></button>
+            <a class="outline-button" data-vex-ref="${VexLifeWebP1.DiagnosticsExport.identity.ref}" id="diagnostics-export" href="/api/v1/diagnostics/export" download data-vex-text="workspace.button.diagnostics-export"></a>
+          </div>
+          <p class="setting-note-line" data-vex-text="workspace.description.diagnostics-enhanced-note"></p>
+          <p class="setting-note-line" data-vex-text="workspace.description.diagnostics-export-note"></p>
+        </section>
+
         <section class="setting setting-renderer">
           <p class="setting-note-line" id="setting-renderer"></p>
         </section>

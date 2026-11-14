@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.security.MessageDigest
+import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeEffectBoundary
@@ -677,6 +678,15 @@ object HereticPersistentRuntime {
                             binding,
                         )
                 ) {
+                    // A live, exactly owned, qualified runtime that did not answer one immediate
+                    // health observation is retired here. Recorded because "did not answer" is not
+                    // proven "dead": a runtime busy generating can miss the bounded health window,
+                    // and this branch would then replace it mid-work.
+                    VexLogger.record(
+                        VexLogger.Fact.RuntimeRetiredUnhealthy,
+                        mapOf("pid" to pid.toString()),
+                        detail = "qualified runtime alive but health was not observed; retiring before restart",
+                    )
                     val retired =
                         platform.retire(
                             currentPrior,
@@ -788,6 +798,7 @@ object HereticPersistentRuntime {
             "Heretic endpoint is occupied without exact ownership"
         }
 
+        VexLogger.record(VexLogger.Fact.RuntimeStartRequested)
         val spawned =
             platform.spawn(
                 binding,
@@ -926,6 +937,8 @@ object HereticPersistentRuntime {
         store.write(
             qualified,
         )
+        // Recorded after qualification passed and the receipt was committed, not at spawn.
+        VexLogger.record(VexLogger.Fact.RuntimeQualified, mapOf("pid" to spawned.pid.toString()))
 
         return StartResult(
             disposition =

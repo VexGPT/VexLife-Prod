@@ -6,6 +6,7 @@ import java.security.MessageDigest
 import java.time.Instant
 import java.util.UUID
 import kotlinx.serialization.Serializable
+import vexlife.logging.VexLogger
 import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
 import vexlife.conversation.DirectConversationIdentity
@@ -495,6 +496,16 @@ object DirectCompanionTurn {
                             content = intent.content,
                             formedAt = hooks.now(),
                         )
+                    // The request is durable now; from here every outcome must terminate as a
+                    // completed head or a failure receipt (or be terminalized after a loss).
+                    VexLogger.record(
+                        VexLogger.Fact.SendAccepted,
+                        mapOf(
+                            "turnRef" to identity.turnRef,
+                            "requestMessageRef" to identity.requestMessageRef,
+                            "browserContext" to if (intent.browserContext != null) "included" else "none",
+                        ),
+                    )
                     emitProgress(
                         hooks.progressObserver,
                         Progress(
@@ -566,6 +577,14 @@ object DirectCompanionTurn {
                             formedAt = hooks.now(),
                         )
 
+                    VexLogger.record(
+                        VexLogger.Fact.TurnCompleted,
+                        mapOf(
+                            "turnRef" to identity.turnRef,
+                            "model" to (response.model ?: "unknown"),
+                            "sourceReturn" to if (sourceReturnTrace != null) "used" else "none",
+                        ),
+                    )
                     CompletedTurn(
                         result =
                             Result(
@@ -624,6 +643,17 @@ object DirectCompanionTurn {
                             null
                         }
 
+                    VexLogger.record(
+                        VexLogger.Fact.TurnFailed,
+                        listOfNotNull(
+                                "turnRef" to identity.turnRef,
+                                "failureCode" to failureCode(error),
+                                failure?.let { "failureRef" to it.failureRef },
+                                "failureReceipt" to if (failure != null) "written" else "not-written",
+                            )
+                            .toMap(),
+                        detail = error.javaClass.simpleName + ": " + (error.message ?: ""),
+                    )
                     val route =
                         failure
                             ?.exactNextSafeRoute
@@ -1065,6 +1095,17 @@ object DirectCompanionTurn {
             SourceReturnProgressGate(
                 hooks.progressObserver,
             )
+        // Recorded before the call so a provider that never answers still leaves its request in
+        // the chronology. The stage says whether a source-return request is still admitted.
+        VexLogger.record(
+            VexLogger.Fact.ProviderInvocationRequested,
+            mapOf(
+                "runtimeReceiptRef" to runtimeEvidence.runtimeReceiptRef,
+                "stage" to if (sourceReturnRequestAllowed) "initial" else "final",
+                "messageCount" to messages.size.toString(),
+                "approxChars" to messages.sumOf { it.content.length }.toString(),
+            ),
+        )
         val inference =
             DirectCompanionConnection.invoke(
                 runtime = runtimeEvidence,
