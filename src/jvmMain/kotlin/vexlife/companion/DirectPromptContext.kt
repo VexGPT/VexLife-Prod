@@ -12,6 +12,7 @@ import vexlife.contract.VexContractJson
 import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
+import vexlife.foundational.VexLifeFoundationalField
 import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticModelConfiguration
 
@@ -24,6 +25,14 @@ import vexlife.model.heretic.HereticModelConfiguration
  * not replay the prior human request or full prior Conversation pair; it may carry the exact immediately
  * prior Vex RESPONSE as a bounded assistant-role bridge. This owner performs no provider call and no
  * durable mutation.
+ *
+ * The foundational field is placed first in every mode when a caller supplies its Reading. Its words,
+ * selection and evidence belong to [VexLifeFoundationalField]; this owner only gives it room, after
+ * the current request, the other fixed context and the exact immediate prior turn, and records the
+ * evidence on the receipt.
+ *
+ * The Conversation extent is this owner's own statement: how many completed exchanges the durable
+ * record holds before the current request, so that what is shown is never mistaken for all there is.
  */
 object DirectPromptContext {
     const val ReceiptSchemaV2 =
@@ -41,8 +50,13 @@ object DirectPromptContext {
     const val ReceiptSchemaV6 =
         "vexlife-prod.direct-prompt-materialization-receipt/v6"
 
-    const val ReceiptSchema =
+    const val ReceiptSchemaV7 =
         "vexlife-prod.direct-prompt-materialization-receipt/v7"
+
+    const val ReceiptSchema =
+        "vexlife-prod.direct-prompt-materialization-receipt/v8"
+
+    const val ConversationExtentHeader = "VEXLIFE_CONVERSATION_EXTENT/v1"
 
     const val InputTokenBudget =
         VexLifeMemoryContract.ContextInputTokenBudget
@@ -128,9 +142,16 @@ object DirectPromptContext {
         val personContext: PersonContext?,
         val personContextSystemMessageSha256: String?,
         val personContextEstimatedSystemMessageTokens: Int,
+        val foundationalField: VexLifeFoundationalField.Projection?,
+        val conversationExtent: ConversationExtent?,
         val prefixMessages: List<CompanionProviderMessage>,
         val suffixMessages: List<CompanionProviderMessage>,
         val fixedInputTokenEstimate: Int,
+    )
+
+    private data class ConversationExtent(
+        val priorCompletedExchangeCount: Long,
+        val systemContent: String,
     )
 
     @Serializable
@@ -214,6 +235,10 @@ object DirectPromptContext {
         val capabilityFrameSystemMessageSha256: String?,
         val capabilityFrameEstimatedSystemMessageTokens: Int,
         val capabilityFrameSnapshot: CapabilityFrameSnapshot?,
+        val foundationalField: VexLifeFoundationalField.Evidence?,
+        val priorCompletedExchangeCount: Long?,
+        val conversationExtentSystemMessageSha256: String?,
+        val conversationExtentEstimatedSystemMessageTokens: Int,
         val trainingSelectionPerformed: Boolean,
         val effectsPerformed: Boolean,
     )
@@ -404,6 +429,18 @@ object DirectPromptContext {
         )
         val capabilityFrameSnapshot: CapabilityFrameSnapshot? =
             null,
+        /** Exactly which foundational field revision and parts this prompt carried, or why none. */
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val foundationalField: VexLifeFoundationalField.Evidence? = null,
+        /**
+         * How many completed exchanges the durable record held before this request, when the prompt
+         * said so. Compare with [selectedConversationEventRefs] to see how much of it was shown.
+         */
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val priorCompletedExchangeCount: Long? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val conversationExtentSystemMessageSha256: String? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val conversationExtentEstimatedSystemMessageTokens: Int = 0,
     )
 
     /**
@@ -488,6 +525,8 @@ object DirectPromptContext {
         val sourceReturnProtocolEnabled: Boolean,
         val sourceReturnProtocolSystemMessageSha256: String?,
         val sourceReturnProtocolEstimatedSystemMessageTokens: Int,
+        val foundationalField: VexLifeFoundationalField.Evidence?,
+        val priorCompletedExchangeCount: Long?,
         val prefixMessages: List<CompanionProviderMessage>,
         val suffixMessages: List<CompanionProviderMessage>,
         val fixedInputTokenEstimate: Int,
@@ -509,6 +548,8 @@ object DirectPromptContext {
             null,
         sourceReturnProtocolEnabled: Boolean =
             false,
+        foundationalField: VexLifeFoundationalField.Reading? = null,
+        conversationExtentIncluded: Boolean = false,
     ): FixedContext {
         val fixed =
             verifyFixedContext(
@@ -521,6 +562,8 @@ object DirectPromptContext {
                 runtimeEvidence = runtimeEvidence,
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
+                foundationalField = foundationalField,
+                conversationExtentIncluded = conversationExtentIncluded,
             )
 
         return FixedContext(
@@ -567,7 +610,9 @@ object DirectPromptContext {
                 fixed.sourceReturnProtocolSystemMessageSha256,
             sourceReturnProtocolEstimatedSystemMessageTokens =
                 fixed.sourceReturnProtocolEstimatedSystemMessageTokens,
-            prefixMessages = fixed.prefixMessages,
+            foundationalField = fixed.foundationalField?.evidence,
+            priorCompletedExchangeCount = fixed.conversationExtent?.priorCompletedExchangeCount,
+            prefixMessages = foundationalFieldMessages(fixed) + fixed.prefixMessages,
             suffixMessages = fixed.suffixMessages,
             fixedInputTokenEstimate = fixed.fixedInputTokenEstimate,
             effectsPerformed = false,
@@ -593,6 +638,8 @@ object DirectPromptContext {
             null,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
+        foundationalField: VexLifeFoundationalField.Reading? = null,
+        conversationExtentIncluded: Boolean = false,
     ): Materialization {
         val fixed =
             verifyFixedContext(
@@ -603,6 +650,8 @@ object DirectPromptContext {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
+                foundationalField = foundationalField,
+                conversationExtentIncluded = conversationExtentIncluded,
             )
         val memory =
             verifyMemoryContext(
@@ -626,6 +675,7 @@ object DirectPromptContext {
             fixed.capabilityFrame
         val prefixMessages =
             buildList {
+                addAll(foundationalFieldMessages(fixed))
                 memory
                     ?.systemContent
                     ?.let {
@@ -749,6 +799,7 @@ object DirectPromptContext {
             fixed.capabilityFrame
         val prefixMessages =
             buildList {
+                addAll(foundationalFieldMessages(fixed))
                 memory
                     ?.systemContent
                     ?.let {
@@ -1056,6 +1107,12 @@ object DirectPromptContext {
                                     frame.effectAuthorityGranted,
                             )
                         },
+                foundationalField = fixed.foundationalField?.evidence,
+                priorCompletedExchangeCount = fixed.conversationExtent?.priorCompletedExchangeCount,
+                conversationExtentSystemMessageSha256 =
+                    fixed.conversationExtent?.systemContent?.let(::sha256),
+                conversationExtentEstimatedSystemMessageTokens =
+                    fixed.conversationExtent?.systemContent?.let(::estimatedMessageTokens) ?: 0,
                 trainingSelectionPerformed = false,
                 effectsPerformed = false,
             )
@@ -1153,6 +1210,11 @@ object DirectPromptContext {
                 capabilityFrameEstimatedSystemMessageTokens =
                     core.capabilityFrameEstimatedSystemMessageTokens,
                 capabilityFrameSnapshot = core.capabilityFrameSnapshot,
+                foundationalField = core.foundationalField,
+                priorCompletedExchangeCount = core.priorCompletedExchangeCount,
+                conversationExtentSystemMessageSha256 = core.conversationExtentSystemMessageSha256,
+                conversationExtentEstimatedSystemMessageTokens =
+                    core.conversationExtentEstimatedSystemMessageTokens,
                 effectsPerformed = core.effectsPerformed,
             )
 
@@ -1184,6 +1246,8 @@ object DirectPromptContext {
             false,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
+        foundationalField: VexLifeFoundationalField.Reading? = null,
+        conversationExtentIncluded: Boolean = false,
     ): Materialization {
         require(
             !(
@@ -1208,6 +1272,8 @@ object DirectPromptContext {
                 runtimeEvidence = runtimeEvidence,
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
+                foundationalField = foundationalField,
+                conversationExtentIncluded = conversationExtentIncluded,
             )
         val afterFixed =
             InputTokenBudget -
@@ -1415,6 +1481,8 @@ object DirectPromptContext {
             false,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
+        foundationalField: VexLifeFoundationalField.Reading? = null,
+        conversationExtentIncluded: Boolean = false,
     ) {
         val current =
             materializeContinuity(
@@ -1434,6 +1502,8 @@ object DirectPromptContext {
                     sourceReturnProtocolEnabled,
                 sourceReturnDiscovery =
                     sourceReturnDiscovery,
+                foundationalField = foundationalField,
+                conversationExtentIncluded = conversationExtentIncluded,
             )
         require(
             current ==
@@ -1463,6 +1533,8 @@ object DirectPromptContext {
             null,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
+        foundationalField: VexLifeFoundationalField.Reading? = null,
+        conversationExtentIncluded: Boolean = false,
     ) {
         val current =
             materialize(
@@ -1478,6 +1550,8 @@ object DirectPromptContext {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
+                foundationalField = foundationalField,
+                conversationExtentIncluded = conversationExtentIncluded,
             )
 
         require(
@@ -1702,6 +1776,8 @@ object DirectPromptContext {
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
         sourceReturnProtocolEnabled: Boolean =
             false,
+        foundationalField: VexLifeFoundationalField.Reading? = null,
+        conversationExtentIncluded: Boolean = false,
     ): VerifiedFixedContext {
         require(
             currentRequest.eventKind ==
@@ -1806,6 +1882,15 @@ object DirectPromptContext {
                     )
                 }
         val personContextContent = personContext?.let(::personContextSystemContent)
+        val conversationExtent =
+            if (conversationExtentIncluded) {
+                conversationExtent(
+                    currentRequest = currentRequest,
+                    workingRolloverCurrent = workingContinuity != null,
+                )
+            } else {
+                null
+            }
         val prefixMessages =
             buildList {
                 workingContinuity
@@ -1829,6 +1914,9 @@ object DirectPromptContext {
                         )
                     }
                 personContextContent?.let { add(CompanionProviderMessage(role = "system", content = it)) }
+                conversationExtent?.let {
+                    add(CompanionProviderMessage(role = "system", content = it.systemContent))
+                }
                 sourceReturnProtocol
                     ?.let(
                         ::add,
@@ -1867,7 +1955,7 @@ object DirectPromptContext {
                     ),
                 )
             }
-        val fixedEstimate =
+        val otherFixedEstimate =
             (
                 prefixMessages +
                     suffixMessages
@@ -1877,6 +1965,32 @@ object DirectPromptContext {
                         it.content,
                     )
                 }
+        // The field takes what is left after the current turn's own context and the exact immediate
+        // prior turn an ordinary continuation must keep, so carrying it can never fail a Send that
+        // would otherwise fit. Its room is measured as if the source-return protocol were present,
+        // so both inferences of one turn are given the same projection.
+        val foundational =
+            foundationalField?.let { reading ->
+                VexLifeFoundationalField.project(
+                    reading = reading,
+                    availableTokens =
+                        InputTokenBudget -
+                            otherFixedEstimate -
+                            (if (sourceReturnProtocol == null) SourceReturnProtocolTokens else 0) -
+                            (if (prior != null && workingContinuity == null) {
+                                estimatedMessageTokens(prior.requestEvent.content) +
+                                    estimatedMessageTokens(prior.responseEvent.content)
+                            } else {
+                                0
+                            }),
+                    estimateTokens = ::estimatedMessageTokens,
+                )
+            }
+        require(foundational?.evidence?.effectAuthorityGranted != true) {
+            "direct prompt foundational field cannot grant effect authority"
+        }
+        val fixedEstimate =
+            otherFixedEstimate + (foundational?.evidence?.estimatedSystemMessageTokens ?: 0)
 
         require(
             fixedEstimate <=
@@ -1912,9 +2026,59 @@ object DirectPromptContext {
             personContext = personContext,
             personContextSystemMessageSha256 = personContextContent?.let(::sha256),
             personContextEstimatedSystemMessageTokens = personContextContent?.let(::estimatedMessageTokens) ?: 0,
+            foundationalField = foundational,
+            conversationExtent = conversationExtent,
             prefixMessages = prefixMessages,
             suffixMessages = suffixMessages,
             fixedInputTokenEstimate = fixedEstimate,
+        )
+    }
+
+    private val SourceReturnProtocolTokens: Int by lazy {
+        estimatedMessageTokens(DirectConversationSourceReturn.protocolMessage().content)
+    }
+
+    /** The field's own system block, first in the provider prefix; empty when none is carried. */
+    private fun foundationalFieldMessages(fixed: VerifiedFixedContext): List<CompanionProviderMessage> =
+        listOfNotNull(
+            fixed.foundationalField?.systemContent?.let { CompanionProviderMessage(role = "system", content = it) },
+        )
+
+    /**
+     * What the durable record holds before [currentRequest], counted from the request's own
+     * canonical sequence: completed exchanges are contiguous REQUEST/RESPONSE pairs from genesis, so
+     * no history is enumerated to know it. It states a fact about the record and about this prompt;
+     * it does not say what to do with it.
+     */
+    private fun conversationExtent(
+        currentRequest: DirectConversationStore.Event,
+        workingRolloverCurrent: Boolean,
+    ): ConversationExtent {
+        require(currentRequest.sequence >= 0 && currentRequest.sequence % 2 == 0L) {
+            "direct prompt Conversation extent requires a REQUEST at an even canonical sequence"
+        }
+        val count = currentRequest.sequence / 2
+        val exchanges = if (count == 1L) "1 completed exchange" else "$count completed exchanges"
+        val statement =
+            when {
+                count == 0L ->
+                    "The durable record of this Conversation holds no completed exchange before " +
+                        "this request."
+                workingRolloverCurrent ->
+                    "Before this request the durable record of this Conversation holds $exchanges. " +
+                        "After a working rollover this prompt shows none of them except your last " +
+                        "reply; working coordinates are carried in their place. All of them are " +
+                        "still in the record."
+                else ->
+                    "Before this request the durable record of this Conversation holds $exchanges. " +
+                        "This prompt shows the newest of them that fit, exactly as written. Any " +
+                        "that are not shown here are still in the record."
+            }
+        return ConversationExtent(
+            priorCompletedExchangeCount = count,
+            systemContent =
+                listOf(ConversationExtentHeader, "priorCompletedExchanges=$count", statement)
+                    .joinToString("\n"),
         )
     }
 

@@ -62,11 +62,13 @@ VexLifeCurrentMemoryReader
 current qualified runtime evidence
         ↓
 DirectPromptContext
-  current Memory availability truth when source-current
+  foundational field kernel, first, in every mode (owner: VexLifeFoundationalField)
+  + current Memory availability truth when source-current
   + caller-bounded selected Memory from remaining prompt capacity
   + owner-current working-checkpoint successor when present
   + exact prior Vex RESPONSE bridge when successor mode is current
   + source-formed bounded self-capability frame
+  + Conversation extent: how many completed exchanges the record holds before this request
   + Conversation-owned backward read of the newest contiguous completed REQUEST/RESPONSE suffix
     that fits ordinary prompt attention
   + conditional Conversation source-return protocol on the first inference
@@ -249,6 +251,26 @@ again in the same human turn.
 The self-capability frame is formed from live owner facts inside the prompt materialization path. It
 is context about what is currently available, not a second authority owner and not an executable
 tool registry.
+
+The foundational field is owned by `VexLifeFoundationalField`
+([FOUNDATIONAL-FIELD.md](FOUNDATIONAL-FIELD.md)). This owner gives it room after the current request,
+the other fixed context and the exact immediate prior exchange, places it first in the system prefix,
+and records its evidence in prompt receipt v8. It does not write or shorten its words.
+
+The Conversation extent is this owner's own statement. A narrow window otherwise looks the same to
+Vex as a short history, so the live turn's prompt says how many completed exchanges the durable record
+holds before the current request, and that any not shown are still in the record. The count is the
+request's canonical sequence divided by two; no history is enumerated. After a working rollover the
+statement says that only the last reply is shown. Receipt v8 records the count
+(`priorCompletedExchangeCount`), and Settings / Context shows selected events against events on record.
+
+~~~text
+OUTSIDE THE WINDOW
+!= LOST
+
+A SHORT WINDOW
+!= A SHORT HISTORY
+~~~
 
 ### `DirectCompanionConnection`
 
@@ -614,7 +636,8 @@ Tests are source-formed for:
 - compact source-return Trace round-trips through turn runtime evidence without raw reasoning/provider persistence;
 - historical runtime-evidence v1 remains readable after the optional v2 source-return trace field;
 - final inference cannot request source again in the same human turn;
-- working-checkpoint successor retains the exact prior Vex response bridge while the prior human request stays out.
+- working-checkpoint successor retains the exact prior Vex response bridge while the prior human request stays out;
+- the foundational field and the Conversation extent are present and receipted on first turn, continuation, rollover successor and both source-return inferences (`DirectCompanionTurnFoundationalFieldTest`).
 
 ## VexBoard projectability horizon
 
