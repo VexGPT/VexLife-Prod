@@ -314,6 +314,12 @@ object DirectCompanionTurn {
             setup ->
             setup.qualifiedRuntimeEvidence
         },
+        val reobserveSameRuntimeEvidence: (
+            expected: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        ) -> HereticModelConfiguration.QualifiedRuntimeEvidence = {
+            expected ->
+            expected
+        },
         val currentMemoryContext: (
             productHome: Path,
         ) -> VexLifeMemoryContract.Context = {
@@ -416,6 +422,19 @@ object DirectCompanionTurn {
                                 )
                             },
                         )
+                    },
+                    reobserveSameRuntimeEvidence = {
+                        expected ->
+                        session.observeCurrentQualifiedRuntimeEvidence()
+                            .also {
+                                current ->
+                                require(
+                                    current.runtimeReceiptRef ==
+                                        expected.runtimeReceiptRef,
+                                ) {
+                                    "runtime changed during one direct Companion turn"
+                                }
+                            }
                     },
                     progressObserver = progressObserver,
                 ),
@@ -847,11 +866,13 @@ object DirectCompanionTurn {
                 productHome,
             )
         // Source return is a second provider stage of this same human turn, not a fresh
-        // runtime-lifecycle boundary. Keep the exact runtime binding already proved before the
-        // first provider call. If that process actually disappears, the final call fails against
-        // the bound runtime instead of silently replacing Vex mid-turn.
+        // runtime-lifecycle boundary. Re-observe currentness without recovery and require the same
+        // receipt/process identity already proved before the first provider call. A runtime that
+        // disappeared or was replaced ends this turn instead of being silently substituted.
         val finalRuntimeEvidence =
-            initialRuntimeEvidence
+            hooks.reobserveSameRuntimeEvidence(
+                initialRuntimeEvidence,
+            )
         val finalPrior =
             conversationOwner.immediatePriorCompletedTurn()
         DirectWorkingContinuity.requireSuccessorContextCurrent(
