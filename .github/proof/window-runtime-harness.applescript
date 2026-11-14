@@ -9,7 +9,7 @@ on run argv
 	set launcherPath to item 2 of argv
 	set homePath to item 3 of argv
 	set sourceSha to item 4 of argv
-	set w to load script (POSIX file windowScript)
+	set w to load script (windowScript as POSIX file)
 	set setupLauncher of w to launcherPath
 	set lines to {}
 
