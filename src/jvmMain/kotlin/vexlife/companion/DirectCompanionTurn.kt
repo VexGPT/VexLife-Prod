@@ -177,7 +177,11 @@ object DirectCompanionTurn {
     private class SourceReturnProgressGate(
         private val observer: ProgressObserver?,
     ) {
-        private val buffered =
+        // Only assistant content is gated while it may still become the machine-only source-return
+        // control. Reasoning is the human's explicitly-open ephemeral thought stream and must remain
+        // live as it arrives; buffering it until answer content begins recreates the exact lived
+        // regression where several minutes of thinking appear as one late block.
+        private val bufferedContent =
             mutableListOf<DirectCompanionConnection.Progress>()
         private val contentPrefix =
             StringBuilder()
@@ -222,11 +226,11 @@ object DirectCompanionTurn {
                 ) {
                     mode =
                         SourceReturnProgressMode.InternalControl
-                    buffered.clear()
+                    bufferedContent.clear()
                 } else {
                     mode =
                         SourceReturnProgressMode.HumanAnswer
-                    flush()
+                    flushContent()
                 }
             }
 
@@ -248,50 +252,56 @@ object DirectCompanionTurn {
                 SourceReturnProgressMode.InternalControl ->
                     Unit
 
-                SourceReturnProgressMode.Pending -> {
-                    buffered +=
-                        progress
-                    if (
-                        progress.kind ==
-                            DirectCompanionConnection.ProgressKind.Content
+                SourceReturnProgressMode.Pending ->
+                    when (
+                        progress.kind
                     ) {
-                        contentPrefix.append(
-                            progress.delta,
-                        )
-                        val observed =
-                            contentPrefix.toString()
-                        val header =
-                            DirectConversationSourceReturn.RequestHeader
-                        when {
-                            DirectConversationSourceReturn.controlHeaderIndexOrNull(
-                                observed,
-                            ) !=
-                                null -> {
-                                mode =
-                                    SourceReturnProgressMode.InternalControl
-                                buffered.clear()
-                            }
+                        DirectCompanionConnection.ProgressKind.Reasoning ->
+                            projectProviderProgress(
+                                observer,
+                                progress,
+                            )
 
-                            observed.length <=
-                                DirectConversationSourceReturn.MaximumControlPreambleCharacters +
-                                    header.length ->
-                                Unit
+                        DirectCompanionConnection.ProgressKind.Content -> {
+                            bufferedContent +=
+                                progress
+                            contentPrefix.append(
+                                progress.delta,
+                            )
+                            val observed =
+                                contentPrefix.toString()
+                            val header =
+                                DirectConversationSourceReturn.RequestHeader
+                            when {
+                                DirectConversationSourceReturn.controlHeaderIndexOrNull(
+                                    observed,
+                                ) !=
+                                    null -> {
+                                    mode =
+                                        SourceReturnProgressMode.InternalControl
+                                    bufferedContent.clear()
+                                }
 
-                            else -> {
-                                mode =
-                                    SourceReturnProgressMode.HumanAnswer
-                                flush()
+                                observed.length <=
+                                    DirectConversationSourceReturn.MaximumControlPreambleCharacters +
+                                        header.length ->
+                                    Unit
+
+                                else -> {
+                                    mode =
+                                        SourceReturnProgressMode.HumanAnswer
+                                    flushContent()
+                                }
                             }
                         }
                     }
-                }
             }
         }
 
-        private fun flush() {
+        private fun flushContent() {
             val pending =
-                buffered.toList()
-            buffered.clear()
+                bufferedContent.toList()
+            bufferedContent.clear()
             pending.forEach {
                 progress ->
                 projectProviderProgress(
