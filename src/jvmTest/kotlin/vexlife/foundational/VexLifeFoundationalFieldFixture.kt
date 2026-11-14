@@ -14,7 +14,7 @@ object VexLifeFoundationalFieldFixture {
             VexLifeFoundationalField.project(shipped, VexLifeFoundationalField.KernelTokenBudget)
 
     /** A later recorded revision whose first module says one more sentence. */
-    fun revised(version: String = "0.5.0"): Reading.Current {
+    fun revised(version: String = "0.6.0"): Reading.Current {
         val body = shipped.body
         val first = body.modules.first()
         val changed =
