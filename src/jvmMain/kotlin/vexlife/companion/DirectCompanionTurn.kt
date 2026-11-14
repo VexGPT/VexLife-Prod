@@ -846,10 +846,12 @@ object DirectCompanionTurn {
             hooks.currentMemoryContext(
                 productHome,
             )
+        // Source return is a second provider stage of this same human turn, not a fresh
+        // runtime-lifecycle boundary. Keep the exact runtime binding already proved before the
+        // first provider call. If that process actually disappears, the final call fails against
+        // the bound runtime instead of silently replacing Vex mid-turn.
         val finalRuntimeEvidence =
-            hooks.currentRuntimeEvidence(
-                setup,
-            )
+            initialRuntimeEvidence
         val finalPrior =
             conversationOwner.immediatePriorCompletedTurn()
         DirectWorkingContinuity.requireSuccessorContextCurrent(
