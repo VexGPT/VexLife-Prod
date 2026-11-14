@@ -274,7 +274,7 @@ class HereticPersistentRuntimeTest {
         )
 
     @Test
-    fun currentQualifiedObservationProvesSameProcessWithoutLifecycleMutationOrQualificationChat() {
+    fun currentQualifiedObservationProvesSameProcessWithoutReadinessOrLifecycleMutation() {
         val trace =
             mutableListOf<String>()
         val current =
@@ -347,7 +347,7 @@ class HereticPersistentRuntimeTest {
                 existing.runtime.pid in
                 trace,
         )
-        assertTrue(
+        assertFalse(
             "HEALTHY" in
                 trace,
         )
