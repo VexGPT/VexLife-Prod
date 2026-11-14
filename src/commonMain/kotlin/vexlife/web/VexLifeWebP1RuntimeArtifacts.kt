@@ -1684,11 +1684,26 @@ object VexLifeWebP1RuntimeArtifacts {
                   const priorCount = Array.isArray(prompt.selectedConversationEventRefs) ? prompt.selectedConversationEventRefs.length : 0;
                   const memoryCount = Array.isArray(prompt.memorySourceRefs) ? prompt.memorySourceRefs.length : 0;
                   const gaps = Number(prompt.privateConversationsNotRemembered) || 0;
+                  const field = prompt.foundationalField ?? null;
+                  const fieldParts = field && Array.isArray(field.carriedModules) ? field.carriedModules.length : 0;
+                  const fieldLeftOut = field && Array.isArray(field.omittedModuleRefs) ? field.omittedModuleRefs.length : 0;
+                  const fieldNote = !field
+                    ? ''
+                    : field.state === 'HELD'
+                      ? ' The foundational field was not carried (' + String(field.heldReason ?? 'UNKNOWN').replaceAll('_', ' ').toLowerCase() + ').'
+                      : ' Foundational field ' + String(field.fieldVersion ?? '') + ' was carried: ' + fieldParts + ' part' + (fieldParts === 1 ? '' : 's') +
+                        (fieldLeftOut ? ', ' + fieldLeftOut + ' left out for room' : '') +
+                        ', about ' + (Number(field.estimatedSystemMessageTokens) || 0).toLocaleString() + ' tokens.';
+                  const recordExchanges = prompt.priorCompletedExchangeCount ?? null;
+                  const recordNote = recordExchanges === null
+                    ? ''
+                    : ' of ' + (Number(recordExchanges) * 2).toLocaleString() + ' on record';
                   ui.contextNote.textContent =
                     'Canonical turn receipt: ' + priorCount + ' prior Conversation event' + (priorCount === 1 ? '' : 's') +
-                    ' selected. Whole-history enumeration: ' + (prompt.wholeHistoryEventEnumerationPerformed ? 'yes' : 'no') + '.' +
+                    ' selected' + recordNote + '. Whole-history enumeration: ' + (prompt.wholeHistoryEventEnumerationPerformed ? 'yes' : 'no') + '.' +
                     (prompt.replyLanguageName ? ' Vex was told to reply in ' + prompt.replyLanguageName + '.' : '') +
-                    (gaps ? ' It was told about ' + gaps + ' private conversation' + (gaps === 1 ? '' : 's') + ' it does not remember.' : '');
+                    (gaps ? ' It was told about ' + gaps + ' private conversation' + (gaps === 1 ? '' : 's') + ' it does not remember.' : '') +
+                    fieldNote;
                   ui.memoryNote.textContent = prompt.memoryIncluded
                     ? 'VexLife Memory contributed through ' + memoryCount + ' source' + (memoryCount === 1 ? '' : 's') + ' to the current prompt.'
                     : 'No VexLife Memory packet was included in the current prompt.';

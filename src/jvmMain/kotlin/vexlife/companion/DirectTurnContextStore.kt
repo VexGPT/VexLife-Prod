@@ -791,6 +791,7 @@ class DirectTurnContextStore(
                         promptContext.workingContinuityCheckpointRef,
                         promptContext.workingContinuitySuccessorClaimRef,
                         promptContext.capabilityFrameRef,
+                        promptContext.foundationalField?.bodyRef,
                     ) +
                     listOf(
                         promptContext.receiptRef,

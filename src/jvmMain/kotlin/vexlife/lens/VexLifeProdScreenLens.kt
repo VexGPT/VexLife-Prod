@@ -245,6 +245,15 @@ object VexLifeProdScreenLens {
                         "Selects recent completed turns and current Memory within the token budget and records exactly what Vex received.",
                     ),
                     node(
+                        "$n.field",
+                        "DEPTH",
+                        "STORE",
+                        "Foundational field",
+                        "VexLifeFoundationalField",
+                        Jvm + "foundational/VexLifeFoundationalField.kt",
+                        "The versioned body the same kernel is selected from on every turn. Readable at GET ${VexLifeProdServiceContract.FoundationalFieldPath}.",
+                    ),
+                    node(
                         "$n.memory",
                         "DEPTH",
                         "STORE",
@@ -283,6 +292,7 @@ object VexLifeProdScreenLens {
                     edge("$n.intent", "$n.dispatch"),
                     edge("$n.dispatch", "$n.turn"),
                     edge("$n.turn", "$n.prompt"),
+                    edge("$n.field", "$n.prompt", "DATA", "foundational field"),
                     edge("$n.memory", "$n.prompt", "DATA", "current Memory"),
                     edge("$n.prompt", "$n.runtime"),
                     edge("$n.runtime", "$n.conversation", label = "response committed"),

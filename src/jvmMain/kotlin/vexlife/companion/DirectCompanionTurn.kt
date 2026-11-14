@@ -12,6 +12,7 @@ import vexlife.contract.VexDurableContractFile
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.filesystem.VexOwnedPath
+import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.memory.VexLifeMemoryContract
@@ -335,6 +336,10 @@ object DirectCompanionTurn {
         },
         val progressObserver: ProgressObserver? =
             null,
+        /** The foundational field as its owner reads it now; re-read at each provider boundary. */
+        val currentFoundationalField: () -> VexLifeFoundationalField.Reading = {
+            VexLifeFoundationalField.readCurrent()
+        },
         val commitWorkingContinuity: (
             productHome: Path,
             turnRef: String,
@@ -759,6 +764,7 @@ object DirectCompanionTurn {
                 personContext = personContext,
                 runtimeEvidence = initialRuntimeEvidence,
                 sourceReturnProtocolEnabled = true,
+                foundationalField = hooks.currentFoundationalField(),
             )
         val initialWorkingContinuity =
             DirectWorkingContinuity.prepare(
@@ -799,6 +805,7 @@ object DirectCompanionTurn {
             personContext = personContext,
             runtimeEvidence = initialRuntimeEvidence,
             sourceReturnProtocolEnabled = true,
+            foundationalField = hooks.currentFoundationalField(),
         )
         val initialStage =
             invokeProviderStage(
@@ -881,7 +888,16 @@ object DirectCompanionTurn {
                 runtimeEvidence = finalRuntimeEvidence,
                 sourceReturnProtocolEnabled = false,
                 sourceReturnDiscovery = discovery,
+                foundationalField = hooks.currentFoundationalField(),
             )
+        // Source return adds exact older Conversation; it must not change the ground Vex was given
+        // when it asked for it.
+        require(
+            finalPrompt.materialization.receipt.foundationalField ==
+                initialPrompt.materialization.receipt.foundationalField,
+        ) {
+            "foundational field changed between the two inferences of one human turn"
+        }
         val finalWorkingContinuity =
             DirectWorkingContinuity.prepare(
                 productHome = productHome,
@@ -922,6 +938,7 @@ object DirectCompanionTurn {
             runtimeEvidence = finalRuntimeEvidence,
             sourceReturnProtocolEnabled = false,
             sourceReturnDiscovery = discovery,
+            foundationalField = hooks.currentFoundationalField(),
         )
 
         val sourceReturnTokens =
@@ -996,6 +1013,7 @@ object DirectCompanionTurn {
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
+        foundationalField: VexLifeFoundationalField.Reading,
     ): ContinuityPromptSelection {
         var selectedMemoryAtCap: VexLifeMemoryContract.Context? =
             null
@@ -1023,6 +1041,8 @@ object DirectCompanionTurn {
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
                 sourceReturnDiscovery = sourceReturnDiscovery,
+                foundationalField = foundationalField,
+                conversationExtentIncluded = true,
             )
         val selectedMemory =
             selectedMemoryAtCap
@@ -1060,6 +1080,7 @@ object DirectCompanionTurn {
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
+        foundationalField: VexLifeFoundationalField.Reading,
     ) {
         DirectPromptContext.reverifyContinuity(
             materialization =
@@ -1082,6 +1103,8 @@ object DirectCompanionTurn {
             sourceReturnProtocolEnabled =
                 sourceReturnProtocolEnabled,
             sourceReturnDiscovery = sourceReturnDiscovery,
+            foundationalField = foundationalField,
+            conversationExtentIncluded = true,
         )
     }
 

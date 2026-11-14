@@ -28,6 +28,7 @@ import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.memory.VexLifeDailyMemoryDream
+import vexlife.foundational.VexLifeFoundationalFieldFixture
 import vexlife.memory.VexLifeMemoryContextFixture
 import vexlife.memory.VexLifeMemoryFamily
 import vexlife.memory.VexLifeMemoryContract
@@ -805,6 +806,10 @@ class VexLifeProdLocalServiceTest {
                     val system = calls.last().first().content
                     assertTrue(system.startsWith("VEXLIFE_PRIVATE_CONVERSATION/v1"))
                     assertTrue("VEXLIFE_CURRENT_MEMORY_CONTEXT/v1" in system, "Vex still knows what it knew")
+                    assertTrue(
+                        assertNotNull(VexLifeFoundationalFieldFixture.wholeKernel.systemContent) in system,
+                        "a private conversation stands on the same foundational field",
+                    )
 
                     val proposed =
                         json.decodeFromString<VexLifeProdServiceContract.PrivateProjection>(
@@ -831,6 +836,75 @@ class VexLifeProdLocalServiceTest {
             assertTrue(written.any { it.toString().contains("private-intervals") })
         } finally {
             root.parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun foundationalFieldRouteShowsExactlyWhatVexIsGivenAndTheDepthBehindIt() {
+        val parent = Files.createTempDirectory("vexlife-prod-service-foundational-").toAbsolutePath()
+        val root = parent.resolve("VexLife-Prod")
+        try {
+            bootstrapHome(root)
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha = "f".repeat(40),
+                    setup = setup(root),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor { _, _ ->
+                            error("reading the foundational field must not start a turn")
+                        },
+                )
+                .use { service ->
+                    val response = get(service.origin, VexLifeProdServiceContract.FoundationalFieldPath)
+                    assertEquals(200, response.statusCode())
+                    val projection =
+                        json.decodeFromString<VexLifeProdServiceContract.FoundationalFieldCurrentProjection>(
+                            response.body(),
+                        )
+                    val shipped = VexLifeFoundationalFieldFixture.shipped
+                    val whole = VexLifeFoundationalFieldFixture.wholeKernel
+
+                    assertEquals(VexLifeProdServiceContract.FoundationalFieldSchema, projection.schemaVersion)
+                    assertEquals(whole.systemContent, projection.kernelText)
+                    assertEquals("CARRIED", projection.foundationalField.state)
+                    assertEquals(shipped.body.version, projection.foundationalField.fieldVersion)
+                    assertEquals(shipped.bodySha256, projection.foundationalField.bodySha256)
+                    assertEquals(whole.evidence.systemMessageSha256, projection.foundationalField.systemMessageSha256)
+                    assertNull(projection.unavailableDetail)
+                    assertFalse(projection.foundationalField.effectAuthorityGranted)
+                    assertFalse(projection.effectsPerformed)
+
+                    // Every part is readable by ref with the depth no prompt carries.
+                    assertEquals(shipped.body.modules.map { it.moduleRef }, projection.parts.map { it.moduleRef })
+                    assertEquals(shipped.body.modules.map { it.kernel }, projection.parts.map { it.kernel })
+                    assertEquals(shipped.body.modules.map { it.depth }, projection.parts.map { it.depth })
+                    assertTrue(projection.parts.all { it.depth.isNotEmpty() && it.provenance.isNotBlank() })
+                    assertEquals(
+                        shipped.body.modules.map { it.standing.name },
+                        projection.parts.map { it.standing },
+                    )
+                    assertEquals(shipped.body.sources.map { it.sourceRef }, projection.sources.map { it.sourceRef })
+                    assertEquals(
+                        shipped.body.unresolved.map { it.unresolvedRef },
+                        projection.unresolved.map { it.unresolvedRef },
+                    )
+                    assertEquals(shipped.revisions.map { it.bodySha256 }, projection.revisions.map { it.bodySha256 })
+                    assertEquals(shipped.bodySha256, projection.revisions.last().bodySha256)
+
+                    assertEquals(
+                        400,
+                        postJson(service.origin, VexLifeProdServiceContract.FoundationalFieldPath, "{}").statusCode(),
+                        "the field is read here, never written",
+                    )
+                    // No turn happened, so no completed turn claims to have received it.
+                    val context =
+                        json.decodeFromString<VexLifeProdServiceContract.ContextProjection>(
+                            get(service.origin, VexLifeProdServiceContract.ContextPath).body(),
+                        )
+                    assertNull(context.promptContext)
+                }
+        } finally {
+            parent.toFile().deleteRecursively()
         }
     }
 
@@ -1918,6 +1992,18 @@ class VexLifeProdLocalServiceTest {
                     assertFalse(
                         firstCapabilityFrame.effectAuthorityGranted,
                     )
+                    val firstField = assertNotNull(firstResult.promptContext.foundationalField)
+                    assertEquals("CARRIED", firstField.state)
+                    assertEquals(
+                        VexLifeFoundationalFieldFixture.shipped.bodySha256,
+                        firstField.bodySha256,
+                    )
+                    assertEquals(
+                        VexLifeFoundationalFieldFixture.shipped.body.modules.map { it.moduleRef },
+                        firstField.carriedModules.map { it.moduleRef },
+                    )
+                    assertTrue(firstField.omittedModuleRefs.isEmpty())
+                    assertFalse(firstField.effectAuthorityGranted)
                     assertEquals(
                         1,
                         providerCalls,
@@ -1999,6 +2085,8 @@ class VexLifeProdLocalServiceTest {
                         firstResult.promptContext.capabilityFrame,
                         currentPrompt.capabilityFrame,
                     )
+                    // The read side reports the completed turn's durable field evidence.
+                    assertEquals(firstField, currentPrompt.foundationalField)
                     assertFalse(
                         currentContext.effectsPerformed,
                     )
@@ -2045,6 +2133,7 @@ class VexLifeProdLocalServiceTest {
                         firstResult.currentConversationHeadSha256,
                         duplicateResult.currentConversationHeadSha256,
                     )
+                    assertEquals(firstField, duplicateResult.promptContext.foundationalField)
                     assertEquals(
                         1,
                         providerCalls,

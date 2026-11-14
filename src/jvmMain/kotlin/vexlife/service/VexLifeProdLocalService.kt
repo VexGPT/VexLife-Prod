@@ -26,6 +26,7 @@ import vexlife.companion.DirectPromptContext
 import vexlife.companion.DirectTurnContextStore
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
+import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.continuity.VexLifePrivateConversation
@@ -626,6 +627,8 @@ class VexLifeProdLocalService private constructor(
                     )
 
                 VexLifeProdServiceContract.MemoryPath -> handleMemory(exchange)
+
+                VexLifeProdServiceContract.FoundationalFieldPath -> handleFoundationalField(exchange)
 
                 VexLifeProdServiceContract.SettingsPath -> handleSettings(exchange)
 
@@ -1323,8 +1326,19 @@ class VexLifeProdLocalService private constructor(
         val memoryMessage = memory?.let { runCatching { DirectPromptContext.memorySystemMessage(it) }.getOrNull() }
         val language = runCatching { personSettings.read().replyLanguage }.getOrDefault(VexLifePersonSettings.DefaultLanguage)
         val languageNote = "Reply in " + VexLifePersonSettings.languageName(language) + " ($language) unless the person clearly wants another language."
+        // A private conversation is not kept, but Vex is still standing on the same ground in it.
+        val foundationalMessage =
+            VexLifeFoundationalField.project(
+                    VexLifeFoundationalField.readCurrent(),
+                    VexLifeFoundationalField.KernelTokenBudget,
+                )
+                .systemContent
         privateEffect(exchange) {
-            privateConversation.send(request.content, listOfNotNull(languageNote, memoryMessage).joinToString("\n\n"), privateCompletion)
+            privateConversation.send(
+                request.content,
+                listOfNotNull(foundationalMessage, languageNote, memoryMessage).joinToString("\n\n"),
+                privateCompletion,
+            )
         }
     }
 
@@ -1347,6 +1361,104 @@ class VexLifeProdLocalService private constructor(
         if (!requirePrivateOpen(exchange)) return
         privateEffect(exchange) { privateConversation.declineNote() }
     }
+
+    private fun handleFoundationalField(exchange: HttpExchange) {
+        requireMethod(exchange, "GET")
+        respondJson(exchange = exchange, status = 200, value = observeFoundationalField())
+    }
+
+    /**
+     * The field read through its owner exactly as a turn reads it, projected with its whole budget.
+     * This reports what Vex would be given now; what a completed turn was given is on that turn's
+     * receipt and is never re-formed from here.
+     */
+    private fun observeFoundationalField(): VexLifeProdServiceContract.FoundationalFieldCurrentProjection {
+        val reading = VexLifeFoundationalField.readCurrent()
+        val projection = VexLifeFoundationalField.project(reading, VexLifeFoundationalField.KernelTokenBudget)
+        val current = reading as? VexLifeFoundationalField.Reading.Current
+        return VexLifeProdServiceContract.FoundationalFieldCurrentProjection(
+            schemaVersion = VexLifeProdServiceContract.FoundationalFieldSchema,
+            foundationalField = foundationalFieldProjection(projection.evidence),
+            kernelText = projection.systemContent,
+            unavailableDetail = (reading as? VexLifeFoundationalField.Reading.Unavailable)?.detail,
+            purpose = current?.body?.purpose,
+            parts =
+                current?.body?.modules.orEmpty().map {
+                    VexLifeProdServiceContract.FoundationalFieldPartProjection(
+                        moduleRef = it.moduleRef,
+                        title = it.title,
+                        question = it.question,
+                        origins = it.origins.map { origin -> origin.name },
+                        standing = it.standing.name,
+                        provenance = it.provenance,
+                        sourceRefs = it.sourceRefs,
+                        kernel = it.kernel,
+                        depth = it.depth,
+                    )
+                },
+            sources =
+                current?.body?.sources.orEmpty().map {
+                    VexLifeProdServiceContract.FoundationalFieldSourceProjection(
+                        sourceRef = it.sourceRef,
+                        repository = it.repository,
+                        commit = it.commit,
+                        path = it.path,
+                        blob = it.blob,
+                        coverage = it.coverage,
+                    )
+                },
+            unresolved =
+                current?.body?.unresolved.orEmpty().map {
+                    VexLifeProdServiceContract.FoundationalFieldUnresolvedProjection(
+                        unresolvedRef = it.unresolvedRef,
+                        moduleRefs = it.moduleRefs,
+                        summary = it.summary,
+                        note = it.note,
+                    )
+                },
+            revisions =
+                current?.revisions.orEmpty().map {
+                    VexLifeProdServiceContract.FoundationalFieldRevisionProjection(
+                        version = it.version,
+                        bodySha256 = it.bodySha256,
+                        recordedOn = it.recordedOn,
+                        recordedBy = it.recordedBy,
+                        summary = it.summary,
+                        why = it.why,
+                    )
+                },
+            effectsPerformed = false,
+        )
+    }
+
+    private fun foundationalFieldProjection(
+        evidence: VexLifeFoundationalField.Evidence,
+    ): VexLifeProdServiceContract.FoundationalFieldProjection =
+        VexLifeProdServiceContract.FoundationalFieldProjection(
+            state = evidence.state.name,
+            heldReason = evidence.heldReason?.name,
+            fieldRef = evidence.fieldRef,
+            fieldVersion = evidence.fieldVersion,
+            bodySha256 = evidence.bodySha256,
+            systemMessageSha256 = evidence.systemMessageSha256,
+            estimatedSystemMessageTokens = evidence.estimatedSystemMessageTokens,
+            tokenBudget = evidence.tokenBudget,
+            carriedModules =
+                evidence.carriedModules.map {
+                    VexLifeProdServiceContract.FoundationalFieldModuleProjection(
+                        moduleRef = it.moduleRef,
+                        origins = it.origins.map { origin -> origin.name },
+                        standing = it.standing.name,
+                        depthInSource = it.depthInSource,
+                    )
+                },
+            omittedModuleRefs = evidence.omittedModuleRefs,
+            omissionReasons = evidence.omissionReasons,
+            depthNotCarriedModuleRefs = evidence.depthNotCarriedModuleRefs,
+            sourceRefs = evidence.sourceRefs,
+            unresolvedRefs = evidence.unresolvedRefs,
+            effectAuthorityGranted = evidence.effectAuthorityGranted,
+        )
 
     private fun handleMemory(exchange: HttpExchange) {
         requireMethod(exchange, "GET")
@@ -2076,6 +2188,8 @@ class VexLifeProdLocalService private constructor(
             replyLanguage = receipt.personContext?.replyLanguage,
             replyLanguageName = receipt.personContext?.replyLanguageName,
             privateConversationsNotRemembered = receipt.personContext?.privateConversations?.size ?: 0,
+            foundationalField = receipt.foundationalField?.let(::foundationalFieldProjection),
+            priorCompletedExchangeCount = receipt.priorCompletedExchangeCount,
             effectsPerformed =
                 receipt.effectsPerformed,
         )
