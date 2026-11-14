@@ -166,6 +166,8 @@ class DirectCompanionTurnTest {
 
         var calls =
             0
+        var runtimeObservations =
+            0
         val progress =
             mutableListOf<DirectCompanionTurn.Progress>()
         val sourceReturnRequest =
@@ -356,6 +358,12 @@ class DirectCompanionTurnTest {
                     hooks =
                         DirectCompanionTurn.Hooks(
                             transport = transport,
+                            currentRuntimeEvidence = {
+                                currentSetup ->
+                                runtimeObservations +=
+                                    1
+                                currentSetup.qualifiedRuntimeEvidence
+                            },
                             progressObserver =
                                 DirectCompanionTurn.ProgressObserver {
                                     progress +=
@@ -372,6 +380,10 @@ class DirectCompanionTurnTest {
             assertEquals(
                 2,
                 calls,
+            )
+            assertEquals(
+                1,
+                runtimeObservations,
             )
             assertEquals(
                 "The exact lantern-garden detail is now grounded in returned source.",
