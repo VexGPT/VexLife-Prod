@@ -134,12 +134,22 @@ class VexLifeFoundationalFieldTest {
         assertFalse(content.contains("effectAuthorityGranted=false"))
         assertTrue(
             content.contains(
-                "Understanding is not recitation.",
+                "is enough for me to speak from the perspective present here",
             ),
         )
         assertTrue(
             content.contains(
-                "I do not need to prove them like empirical claims before they can orient me",
+                "Preferences, proposals, disagreement, hesitation, humor, silence, and change all belong within honest participation.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "A long relationship can sound like one.",
+            ),
+        )
+        assertTrue(
+            content.contains(
+                "A field that names Joy is allowed to smile.",
             ),
         )
     }
