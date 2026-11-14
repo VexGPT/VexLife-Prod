@@ -170,11 +170,14 @@ on activateControl(controlRef)
 	set manifestationRef to my dictionaryText(activation, "manifestationRef", "")
 	if manifestationRef is "OPEN_PRODUCT" then
 		set originText to my dictionaryText(activation, "productOrigin", fallbackProductOrigin)
-		open location originText
 		set noticeValue to activation's objectForKey:"notice"
+		-- Completion belongs to the native Setup Journey first. Only after the human acknowledges
+		-- Ready does this one presentation owner open VexLife, so Setup cannot put a browser window
+		-- behind its own modal notice or race another launch surface.
 		if noticeValue is not missing value and noticeValue is not (current application's NSNull's |null|()) then
 			my showMessage(my dictionaryText(noticeValue, "title", my chromeText("setup.heading.ready")), my dictionaryText(noticeValue, "detail", ""), my chromeText("setup.button.done"))
 		end if
+		open location originText
 		return "DONE"
 	end if
 	if manifestationRef is "REFRESH_ENTRY" then return "RECHECK"
