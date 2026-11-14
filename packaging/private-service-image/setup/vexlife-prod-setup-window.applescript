@@ -8,9 +8,14 @@ use scripting additions
 -- It does not author State, decide which buttons exist, write card copy, or map a choice to an
 -- Effect. Every card comes from `--inspect-front-door`; every Control goes back through
 -- `--activate-front-door-control`, which re-observes current truth before acting and observes
--- again afterwards. The only things decided here are renderer-local navigation (choose another
--- Home location, check again, close) and how long-running work is shown (progress + Cancel
--- safely), ported from the predecessor's lived AppKit progress panel.
+-- again afterwards. The only things decided here are renderer-local navigation (choose a
+-- language, choose another Home location, check again, close) and how long-running work is shown
+-- (progress + Cancel safely), ported from the predecessor's lived AppKit progress panel.
+--
+-- Language is the first step. The window's own words come from the Product's keyed string source
+-- (`--setup-language`, the `setup.window` surface) in the person's selected language, and every
+-- inspection and activation is told that language. The only English written here is the two
+-- messages shown when the setup program itself cannot run, because then no catalog is reachable.
 
 property NSAlertFirstButtonReturn : 1000
 property NSModalResponseOK : 1
@@ -24,6 +29,10 @@ property controlPrefix : "CONTROL:"
 property selectedHomePath : missing value
 property sourceSha : missing value
 property setupLauncher : missing value
+property selectedLanguage : missing value
+property systemLanguage : missing value
+property windowText : missing value
+property offeredLanguages : missing value
 
 on run
 	set sourceSha to my bundleString("VexLifeProdExpectedSourceSha")
@@ -38,6 +47,16 @@ on run
 	end if
 
 	set defaultHome to (current application's NSHomeDirectory() as text) & "/.vexlife"
+	set systemLanguage to my preferredSystemLanguage()
+	set languageState to my loadLanguage({"--setup-language", "--home", defaultHome, "--system-language", systemLanguage})
+	if languageState is missing value then
+		my showMessage("VexLife could not start.", "The VexLife setup program did not answer. Nothing was changed.", "Close")
+		return
+	end if
+	if ((languageState's objectForKey:"languageChosen") as boolean) is false then
+		if my chooseLanguage(defaultHome) is false then return
+	end if
+
 	set selectedHomePath to my chooseHome(defaultHome)
 	if selectedHomePath is missing value then return
 
@@ -46,6 +65,8 @@ on run
 		if nextAction is "CHOOSE_HOME" then
 			set chosen to my chooseHome(selectedHomePath)
 			if chosen is not missing value then set selectedHomePath to chosen
+		else if nextAction is "CHOOSE_LANGUAGE" then
+			my chooseLanguage(selectedHomePath)
 		else if nextAction is "RECHECK" then
 			-- observe again
 		else
@@ -57,15 +78,15 @@ end run
 -- ------------------------------------------------------------------ one journey step
 
 on showEntry()
-	set inspected to my runProductEntry({"--inspect-front-door", "--home", selectedHomePath, "--expected-source-sha", sourceSha}, false)
+	set inspected to my runProductEntry({"--inspect-front-door", "--home", selectedHomePath, "--expected-source-sha", sourceSha, "--language", selectedLanguage}, false)
 	set projection to jsonValue of inspected
 	if projection is missing value then
-		return my showProcessFailure("VexLife couldn't check this Mac.", inspected, false)
+		return my showProcessFailure(my chromeText("setup.heading.could-not-check-mac"), inspected, false)
 	end if
 
 	set card to projection's objectForKey:"card"
-	if card is missing value or card is (current application's NSNull's null()) then
-		return my showProcessFailure("VexLife couldn't check this Mac.", inspected, false)
+	if card is missing value or card is (current application's NSNull's |null|()) then
+		return my showProcessFailure(my chromeText("setup.heading.could-not-check-mac"), inspected, false)
 	end if
 
 	set actionRef to my presentCard(card)
@@ -123,25 +144,25 @@ on presentCard(card)
 end presentCard
 
 on activateControl(controlRef)
-	set activated to my runProductEntry({"--activate-front-door-control", controlRef, "--home", selectedHomePath, "--expected-source-sha", sourceSha}, true)
+	set activated to my runProductEntry({"--activate-front-door-control", controlRef, "--home", selectedHomePath, "--expected-source-sha", sourceSha, "--language", selectedLanguage}, true)
 
 	if cancelledByHuman of activated then
-		my showMessage("Setup paused.", "VexLife stopped only the task you started. Anything already finished was kept, and an unfinished download resumes the next time you continue.", "Continue")
+		my showMessage(my chromeText("setup.heading.setup-paused"), my chromeText("setup.description.setup-paused"), my chromeText("setup.button.continue"))
 		return "RECHECK"
 	end if
 
 	set activation to jsonValue of activated
 	if activation is missing value then
-		return my showProcessFailure("VexLife could not read the result of that step.", activated, true)
+		return my showProcessFailure(my chromeText("setup.heading.could-not-read-result"), activated, true)
 	end if
 
 	set failureValue to activation's objectForKey:"failure"
-	if failureValue is not missing value and failureValue is not (current application's NSNull's null()) then
-		set failureTitle to my dictionaryText(failureValue, "title", "VexLife stopped before finishing.")
+	if failureValue is not missing value and failureValue is not (current application's NSNull's |null|()) then
+		set failureTitle to my dictionaryText(failureValue, "title", my chromeText("setup.heading.failure-stopped"))
 		set failureDetail to my dictionaryText(failureValue, "detail", "")
 		set technicalText to my dictionaryText(failureValue, "technicalDetail", "")
-		if technicalText is not "" then set failureDetail to failureDetail & linefeed & linefeed & "Technical detail" & linefeed & technicalText
-		set choice to my promptChoice(failureTitle, failureDetail, {"Continue", "Close"})
+		if technicalText is not "" then set failureDetail to failureDetail & linefeed & linefeed & (my chromeText("setup.heading.technical-detail")) & linefeed & technicalText
+		set choice to my promptChoice(failureTitle, failureDetail, {my chromeText("setup.button.continue"), my chromeText("setup.button.close")})
 		if choice is 1 then return "RECHECK"
 		return "CLOSE"
 	end if
@@ -151,15 +172,75 @@ on activateControl(controlRef)
 		set originText to my dictionaryText(activation, "productOrigin", fallbackProductOrigin)
 		open location originText
 		set noticeValue to activation's objectForKey:"notice"
-		if noticeValue is not missing value and noticeValue is not (current application's NSNull's null()) then
-			my showMessage(my dictionaryText(noticeValue, "title", "VexLife is ready."), my dictionaryText(noticeValue, "detail", ""), "Done")
+		if noticeValue is not missing value and noticeValue is not (current application's NSNull's |null|()) then
+			my showMessage(my dictionaryText(noticeValue, "title", my chromeText("setup.heading.ready")), my dictionaryText(noticeValue, "detail", ""), my chromeText("setup.button.done"))
 		end if
 		return "DONE"
 	end if
 	if manifestationRef is "REFRESH_ENTRY" then return "RECHECK"
 	if manifestationRef is "NO_ACTION" then return "CLOSE"
-	return my showProcessFailure("VexLife returned an instruction this window does not know.", activated, true)
+	return my showProcessFailure(my chromeText("setup.heading.unknown-instruction"), activated, true)
 end activateControl
+
+-- ------------------------------------------------------------------ language (first step)
+
+-- Runs one no-effect or choose-language command and takes its projection as the window's language.
+on loadLanguage(argumentsList)
+	set languageRun to my runProductEntry(argumentsList, false)
+	set projection to jsonValue of languageRun
+	if projection is missing value then return missing value
+	set languageValue to my dictionaryText(projection, "language", "")
+	set textValue to projection's objectForKey:"window"
+	set languagesValue to projection's objectForKey:"languages"
+	if languageValue is "" or textValue is missing value or languagesValue is missing value then return missing value
+	set selectedLanguage to languageValue
+	set windowText to textValue
+	set offeredLanguages to languagesValue
+	return projection
+end loadLanguage
+
+-- Shows the offered languages, each in its own name. Returns false when the person cancels.
+on chooseLanguage(homePath)
+	set alert to current application's NSAlert's alloc()'s init()
+	alert's setMessageText:(my chromeText("setup.heading.choose-language"))
+	alert's setInformativeText:(my chromeText("setup.description.choose-language"))
+	alert's addButtonWithTitle:(my chromeText("setup.button.continue"))
+	alert's addButtonWithTitle:(my chromeText("setup.button.cancel"))
+	set popup to current application's NSPopUpButton's alloc()'s initWithFrame:(current application's NSMakeRect(0, 0, 280, 28)) pullsDown:false
+	set languageCount to (offeredLanguages's |count|()) as integer
+	set selectedIndex to 0
+	repeat with languageIndex from 0 to (languageCount - 1)
+		set languageValue to (offeredLanguages's objectAtIndex:languageIndex)
+		(popup's addItemWithTitle:(my dictionaryText(languageValue, "name", "")))
+		if (my dictionaryText(languageValue, "code", "")) is selectedLanguage then set selectedIndex to languageIndex
+	end repeat
+	popup's selectItemAtIndex:selectedIndex
+	alert's setAccessoryView:popup
+	current application's NSApp's activateIgnoringOtherApps:true
+	set response to (alert's runModal()) as integer
+	if response is not NSAlertFirstButtonReturn then return false
+
+	set chosenValue to (offeredLanguages's objectAtIndex:((popup's indexOfSelectedItem()) as integer))
+	set chosenCode to my dictionaryText(chosenValue, "code", selectedLanguage)
+	-- Saved into the Home now if it already exists; otherwise carried until the Home is created.
+	if (my loadLanguage({"--choose-language", chosenCode, "--home", homePath})) is missing value then
+		set selectedLanguage to chosenCode
+	end if
+	return true
+end chooseLanguage
+
+on preferredSystemLanguage()
+	try
+		set preferred to (current application's NSLocale's preferredLanguages())'s firstObject()
+		if preferred is not missing value then return preferred as text
+	end try
+	return "en"
+end preferredSystemLanguage
+
+-- The window's own words, in the selected language, by element key.
+on chromeText(keyName)
+	return my dictionaryText(windowText, keyName, keyName)
+end chromeText
 
 -- ------------------------------------------------------------------ Vex Home chooser
 
@@ -167,11 +248,11 @@ on chooseHome(suggestedHome)
 	set candidate to suggestedHome
 	repeat
 		set alert to current application's NSAlert's alloc()'s init()
-		alert's setMessageText:"Choose your Vex Home"
-		alert's setInformativeText:("Your Vex Home is the one folder on this Mac where VexLife keeps your identity, conversations, memory and local model." & linefeed & linefeed & "~/.vexlife is only the default suggestion. You can type another location or choose a folder; VexLife looks at it first and changes nothing until you agree.")
-		alert's addButtonWithTitle:"Continue"
-		alert's addButtonWithTitle:"Choose Folder…"
-		alert's addButtonWithTitle:"Cancel"
+		alert's setMessageText:(my chromeText("setup.heading.choose-home"))
+		alert's setInformativeText:(my chromeText("setup.description.choose-home"))
+		alert's addButtonWithTitle:(my chromeText("setup.button.continue"))
+		alert's addButtonWithTitle:(my chromeText("setup.button.choose-folder"))
+		alert's addButtonWithTitle:(my chromeText("setup.button.cancel"))
 		set field to current application's NSTextField's alloc()'s initWithFrame:(current application's NSMakeRect(0, 0, 480, 26))
 		field's setStringValue:candidate
 		field's setPlaceholderString:"~/.vexlife"
@@ -182,7 +263,7 @@ on chooseHome(suggestedHome)
 		if response is NSAlertFirstButtonReturn then
 			set chosen to my normalizedHomePath(field's stringValue())
 			if chosen is not missing value then return chosen
-			my showMessage("Choose a full folder location.", "Type a location that starts with / or ~/, for example ~/.vexlife, or use Choose Folder….", "OK")
+			my showMessage(my chromeText("setup.heading.full-location-needed"), my chromeText("setup.description.full-location-needed"), my chromeText("setup.button.ok"))
 			set candidate to (field's stringValue()) as text
 		else if response is (NSAlertFirstButtonReturn + 1) then
 			set picked to my pickFolder(candidate)
@@ -199,8 +280,8 @@ on pickFolder(startPath)
 	panel's setCanChooseFiles:false
 	panel's setCanCreateDirectories:true
 	panel's setAllowsMultipleSelection:false
-	panel's setPrompt:"Use This Folder"
-	panel's setMessage:"Choose an empty folder (use New Folder to make one) or an existing Vex Home."
+	panel's setPrompt:(my chromeText("setup.button.use-this-folder"))
+	panel's setMessage:(my chromeText("setup.description.pick-folder"))
 	set startDirectory to my existingAncestor(startPath)
 	if startDirectory is not missing value then
 		panel's setDirectoryURL:(current application's NSURL's fileURLWithPath:startDirectory)
@@ -286,7 +367,7 @@ on runProductEntry(argumentsList, showProgress)
 		end repeat
 		set taskStatus to (task's terminationStatus()) as integer
 	else
-		set launchErrorText to "The VexLife setup program could not be launched."
+		set launchErrorText to my chromeText("setup.description.launch-failed")
 		if launchError is not missing value then set launchErrorText to launchErrorText & " " & ((launchError's localizedDescription()) as text)
 	end if
 
@@ -324,20 +405,20 @@ end runProductEntry
 on beginProgress()
 	set panelStyle to NSWindowStyleMaskTitled + NSWindowStyleMaskClosable
 	set panel to current application's NSPanel's alloc()'s initWithContentRect:(current application's NSMakeRect(0, 0, 520, 168)) styleMask:panelStyle backing:NSBackingStoreBuffered defer:false
-	panel's setTitle:"VexLife setup"
+	panel's setTitle:(my chromeText("setup.label.window-title"))
 	panel's setReleasedWhenClosed:false
-	set label to current application's NSTextField's labelWithString:"Working on it. Keep this window open."
+	set label to current application's NSTextField's labelWithString:(my chromeText("setup.status.working"))
 	label's setFrame:(current application's NSMakeRect(24, 84, 472, 56))
 	label's setLineBreakMode:0
 	label's setUsesSingleLineMode:false
 	label's setSelectable:true
-	set hint to current application's NSTextField's labelWithString:"Cancel safely stops only this task. Finished work is kept and downloads resume next time."
+	set hint to current application's NSTextField's labelWithString:(my chromeText("setup.description.cancel-safely-hint"))
 	hint's setFrame:(current application's NSMakeRect(24, 56, 472, 18))
 	hint's setSelectable:true
 	set indicator to current application's NSProgressIndicator's alloc()'s initWithFrame:(current application's NSMakeRect(24, 25, 345, 18))
 	indicator's setIndeterminate:true
 	indicator's startAnimation:(missing value)
-	set cancelButton to current application's NSButton's buttonWithTitle:"Cancel safely" target:panel action:"performClose:"
+	set cancelButton to current application's NSButton's buttonWithTitle:(my chromeText("setup.button.cancel-safely")) target:panel action:"performClose:"
 	cancelButton's setFrame:(current application's NSMakeRect(385, 14, 111, 32))
 	panel's contentView()'s addSubview:label
 	panel's contentView()'s addSubview:hint
@@ -375,13 +456,13 @@ end latestProgressLine
 on showProcessFailure(titleText, resultRecord, effectMayHaveRun)
 	set detailText to stderrText of resultRecord
 	if detailText is "" then set detailText to stdoutText of resultRecord
-	if detailText is "" then set detailText to "The setup program stopped without a readable explanation."
+	if detailText is "" then set detailText to my chromeText("setup.description.no-readable-explanation")
 	if effectMayHaveRun then
-		set leadText to "VexLife can't tell from this result what finished. Choose Check Again to see what is true on this Mac now; anything that finished was kept."
+		set leadText to my chromeText("setup.description.result-unclear")
 	else
-		set leadText to "Checking doesn't change anything on this Mac, and nothing was changed."
+		set leadText to my chromeText("setup.description.check-changes-nothing")
 	end if
-	set choice to my promptChoice(titleText, leadText & linefeed & linefeed & (my boundedText(detailText)), {"Check Again", "Close"})
+	set choice to my promptChoice(titleText, leadText & linefeed & linefeed & (my boundedText(detailText)), {my chromeText("setup.button.check-again"), my chromeText("setup.button.close")})
 	if choice is 1 then return "RECHECK"
 	return "CLOSE"
 end showProcessFailure
@@ -403,10 +484,10 @@ end showMessage
 
 on dictionaryText(dictionaryValue, keyName, fallbackValue)
 	if dictionaryValue is missing value then return fallbackValue
-	if dictionaryValue is (current application's NSNull's null()) then return fallbackValue
+	if dictionaryValue is (current application's NSNull's |null|()) then return fallbackValue
 	set value to dictionaryValue's objectForKey:keyName
 	if value is missing value then return fallbackValue
-	if value is (current application's NSNull's null()) then return fallbackValue
+	if value is (current application's NSNull's |null|()) then return fallbackValue
 	try
 		set textValue to value as text
 	on error

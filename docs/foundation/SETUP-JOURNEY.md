@@ -39,27 +39,42 @@ Topology is unchanged (AGENTS.md startup dependency law): same bootstrap, same A
 ## Causal loop
 
 ~~~text
+window: --setup-language --home ~/.vexlife --system-language <Mac's preferred>   (no effect)
+   language = saved in Home -> Mac's preferred -> en; window words in that language
+   │ not yet chosen
+   ▼
+window: choose language (each in its own name) -> --choose-language <code> --home <p>
+   saved only into an existing canonical Home; otherwise carried by the window
+   │
+   ▼
 window: choose Home coordinate (suggest ~/.vexlife | type | Choose Folder…)
    │
    ▼
---inspect-front-door --home <selected>            (no effect)
+--inspect-front-door --home <selected> --language <code>   (no effect)
    VexLifeProdHomeFiles.observeLocation           absent | empty | canonical | HELD_*
    VexLifeProdCurrentState                        host, model selection, artifact presence, free space
    VexLifeProdMacServiceLifetime.observeExisting  running owned | stopped | not ready | unknown
    Mac adapter -> Entry State -> Family DisplayState -> VexLifeProdMacSetupCard
    │
    ▼
-window renders card; returns CONTROL:<ref> | CHOOSE_HOME | RECHECK | CLOSE
+window renders card; returns CONTROL:<ref> | CHOOSE_HOME | CHOOSE_LANGUAGE | RECHECK | CLOSE
    │ CONTROL
    ▼
---activate-front-door-control <ref> --home <selected>
+--activate-front-door-control <ref> --home <selected> --language <code>
    fresh re-observation -> Family.resolve      not lawful now -> STATE_CHANGED, nothing realized
    typed Effect -> rightful owner realizes it  (progress lines on stderr; Cancel safely = SIGTERM)
    fresh observation                           CURRENT -> OPEN_PRODUCT (+ ready notice)
                                                otherwise -> REFRESH_ENTRY (+ failure, if any)
+   the chosen language is saved into the Home once it exists (after FORM_HOME)
    │
    └──► window inspects again (never predicts the successor State)
 ~~~
+
+Every word on a card, failure, progress line, ready notice and in the window's own chrome comes from
+the keyed `setup` string scope in the selected language; the Family's DisplayState names text by key
+and the card carries each element's key next to its words
+([LOCALIZATION.md](LOCALIZATION.md)). The window writes English only for the two messages it shows
+when the setup program cannot run at all.
 
 ## Entry States
 
@@ -153,7 +168,9 @@ Browser / Vision permissions stay out of first run (VexWork #302 step 6).
 
 ## Proof boundary
 
-Source: Family + adapter + card + activation + Home-location + progress tests (JVM), common/JS compile.
+Source: Family + adapter + card + activation + Home-location + progress tests (JVM), common/JS compile;
+every State resolves in all ten languages with distinct button words; element keys map to the
+Controls and actions they carry.
 Not proven here: AppleScript compilation, AppKit rendering, real NSTask/launchd/model effects on a Mac.
 See `docs/work/claude-setup-journey/03-LIVED-PROOF-PLAN.md`.
 

@@ -129,14 +129,15 @@ class VexLifeProdBootstrapTemplateTest {
                 ),
             )
 
+        // The Home chooser's words are keyed string source, resolved in the person's language.
         assertTrue(
             source.contains(
-                "Choose your Vex Home",
+                "chromeText(\"setup.heading.choose-home\")",
             ),
         )
         assertTrue(
             source.contains(
-                "~/.vexlife is only the default suggestion",
+                "chromeText(\"setup.description.choose-home\")",
             ),
         )
         assertTrue(
@@ -166,7 +167,7 @@ class VexLifeProdBootstrapTemplateTest {
 
         assertTrue(
             source.contains(
-                "if value is (current application's NSNull's null()) then return fallbackValue",
+                "if value is (current application's NSNull's |null|()) then return fallbackValue",
             ),
             "JSON null must resolve to the caller fallback before AppleScript text coercion",
         )

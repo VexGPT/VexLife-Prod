@@ -14,8 +14,12 @@ import vexlife.home.VexLifeProdHomeFiles
 import vexlife.platform.macos.MacUserLaunchdProcess
 import vexlife.service.VexLifeProdMacServiceLifetime
 import vexlife.service.VexLifeProdServiceContract
+import vexlife.text.VexLifeStrings
+import vexlife.text.VexLifeText
 
 class VexLifeProdMacFrontDoorTest {
+    private fun en(text: VexLifeText?): String = VexLifeStrings.resolve(requireNotNull(text), "en")
+
     private val selectedHome = Path.of("/tmp/.vexlife")
 
     private val desired = "a".repeat(40)
@@ -231,7 +235,7 @@ class VexLifeProdMacFrontDoorTest {
             )
 
         assertEquals(VexLifeProdEntryFamily.StateHomeFormationRequired, projection.semanticStateRef)
-        assertEquals("Create Vex Home", projection.displayState.primaryLabel)
+        assertEquals("Create Vex Home", en(projection.displayState.primaryLabel))
         assertEquals(VexLifeProdEntryFamily.FormCanonicalHome, resolved.effect)
         assertFalse(serviceObserved)
     }
@@ -256,7 +260,7 @@ class VexLifeProdMacFrontDoorTest {
             VexLifeProdEntryFamily.ControlOpenCurrent,
             value.displayState.primaryControlRef,
         )
-        assertEquals("Open VexLife", value.displayState.primaryLabel)
+        assertEquals("Open VexLife", en(value.displayState.primaryLabel))
         assertFalse(value.effectsPerformed)
     }
 
@@ -283,7 +287,7 @@ class VexLifeProdMacFrontDoorTest {
 
         assertEquals(VexLifeProdEntryFamily.StateUpdateAvailable, projection.semanticStateRef)
         assertEquals(prior, projection.currentServiceSourceSha)
-        assertEquals("Update & Restart", projection.displayState.primaryLabel)
+        assertEquals("Update & Restart", en(projection.displayState.primaryLabel))
         val converge = requireNotNull(resolved.effect as? VexLifeProdEntryFamily.ConvergeProduct)
         assertFalse(converge.allowAcquisition)
     }
@@ -515,11 +519,17 @@ class VexLifeProdMacFrontDoorTest {
                 "objectForKey:\"card\"",
                 "setStandardOutput:outHandle",
                 "setStandardError:errHandle",
-                "Cancel safely",
+                "chromeText(\"setup.button.cancel-safely\")",
                 "property progressPrefix : \"[VexLife] \"",
                 "NSOpenPanel",
-                "showProcessFailure(\"VexLife could not read the result of that step.\", activated, true)",
+                "showProcessFailure(my chromeText(\"setup.heading.could-not-read-result\"), activated, true)",
                 "inspected, false)",
+                // Language is the first step, and every inspection and activation is told it.
+                "\"--setup-language\"",
+                "\"--choose-language\"",
+                "\"--language\", selectedLanguage",
+                "NSPopUpButton",
+                "nextAction is \"CHOOSE_LANGUAGE\"",
             )) {
             assertTrue(source.contains(required), "native window must keep: $required")
         }
@@ -542,6 +552,14 @@ class VexLifeProdMacFrontDoorTest {
                 "Start VexLife",
                 "Repair & Restart",
                 "Update & Restart",
+                // The window's own words come from the keyed string source, not from here.
+                "Choose your Vex Home",
+                "Choose Folder…",
+                "Use This Folder",
+                "Setup paused.",
+                "Working on it.",
+                "Technical detail",
+                "Check Again",
                 // One shared stdout/stderr pipe read only after exit can deadlock on a long setup
                 // and
                 // lets JVM diagnostics corrupt the JSON channel.
@@ -592,6 +610,50 @@ class VexLifeProdMacFrontDoorTest {
             VexLifeProdMacFrontDoorProcess.ManifestationRefreshEntry,
             result.manifestationRef,
         )
+    }
+
+    @Test
+    fun aLanguageChosenInTheWindowIsSavedOnceTheHomeExistsWhateverTheControlDid() {
+        val saved = mutableListOf<Pair<Path, String>>()
+        val hooks =
+            VexLifeProdMacFrontDoorProcess.ActivationHooks(
+                resolveControl = { _, controlRef, _ ->
+                    VexLifeProdMacFrontDoor.ResolvedControl(
+                        semanticStateRef = VexLifeProdEntryFamily.StateHomeFormationRequired,
+                        controlRef = controlRef,
+                        effect = VexLifeProdEntryFamily.FormCanonicalHome,
+                    )
+                },
+                formHome = { _, _ -> error("the folder is held") },
+                observeSemanticStateRef = { _, _ -> VexLifeProdEntryFamily.StateHomeHeld },
+                persistLanguage = { home, language ->
+                    saved += home to language
+                    true
+                },
+            )
+
+        val chosen =
+            VexLifeProdMacFrontDoorProcess.activateWithHooks(
+                controlRef = VexLifeProdEntryFamily.ControlFormHome,
+                desiredSourceSha = desired,
+                productHome = selectedHome,
+                hooks = hooks,
+                language = "ja",
+                persistLanguage = true,
+            )
+        assertEquals(listOf(selectedHome to "ja"), saved)
+        assertEquals(
+            VexLifeStrings.text("setup.heading.failure-stopped", "ja"),
+            chosen.failure?.title,
+        )
+
+        VexLifeProdMacFrontDoorProcess.activateWithHooks(
+            controlRef = VexLifeProdEntryFamily.ControlFormHome,
+            desiredSourceSha = desired,
+            productHome = selectedHome,
+            hooks = hooks,
+        )
+        assertEquals(1, saved.size, "no language was chosen, so nothing is saved")
     }
 }
 

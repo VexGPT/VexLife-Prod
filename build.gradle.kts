@@ -31,6 +31,12 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
+
+        // Keyed string source (VexArchitecture localization law) ships inside the JVM build:
+        // localization/strings/source/<scope>.json -> classpath /strings/source/<scope>.json.
+        jvmMain {
+            resources.srcDir("localization")
+        }
     }
 }
 
@@ -2166,6 +2172,24 @@ tasks.register<JavaExec>("generateVexLifeProdScreenLens") {
     classpath = files(vexLifeWebJvmMain.output.allOutputs, vexLifeWebJvmMain.runtimeDependencyFiles)
     mainClass.set("vexlife.lens.VexLifeProdScreenLensKt")
     args("write", layout.projectDirectory.asFile.absolutePath)
+}
+
+tasks.register<JavaExec>("checkVexLifeStrings") {
+    group = "verification"
+    description = "Check the keyed string source: English present, placeholders match, manifest current."
+    dependsOn(vexLifeWebJvmMain.compileTaskProvider)
+    classpath = files(vexLifeWebJvmMain.output.allOutputs, vexLifeWebJvmMain.runtimeDependencyFiles)
+    mainClass.set("vexlife.text.VexLifeStringsSourceKt")
+    args("check", layout.projectDirectory.asFile.absolutePath)
+}
+
+tasks.register<JavaExec>("compileVexLifeStrings") {
+    group = "vexlife"
+    description = "Mark translations of changed English stale and rewrite localization/strings/manifest.json."
+    dependsOn(vexLifeWebJvmMain.compileTaskProvider)
+    classpath = files(vexLifeWebJvmMain.output.allOutputs, vexLifeWebJvmMain.runtimeDependencyFiles)
+    mainClass.set("vexlife.text.VexLifeStringsSourceKt")
+    args("compile", layout.projectDirectory.asFile.absolutePath)
 }
 
 // [VXG RealForever]

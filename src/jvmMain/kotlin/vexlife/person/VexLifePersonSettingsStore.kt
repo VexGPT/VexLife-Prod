@@ -6,9 +6,11 @@ import vexlife.filesystem.VexOwnedPath
 
 /** The person's settings file in their Vex Home; absent means the defaults. */
 class VexLifePersonSettingsStore(private val productHome: Path) {
-    fun read(): VexLifePersonSettings.Value =
+    fun read(): VexLifePersonSettings.Value = readOrNull() ?: VexLifePersonSettings.Default
+
+    /** The saved settings, or null when the person has not chosen any yet. */
+    fun readOrNull(): VexLifePersonSettings.Value? =
         VexDurableContractFile.read<VexLifePersonSettings.Value>(ownedRoot = home(), path = file())
-            ?: VexLifePersonSettings.Default
 
     fun write(value: VexLifePersonSettings.Value) {
         VexDurableContractFile.write(ownedRoot = home(), path = file(), value = value)

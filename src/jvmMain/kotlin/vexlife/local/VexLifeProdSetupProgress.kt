@@ -1,12 +1,16 @@
 package vexlife.local
 
+import vexlife.person.VexLifePersonSettings
+import vexlife.text.VexLifeStrings
+import vexlife.text.VexLifeText
+
 /**
  * Chronology of setup facts as their rightful owners learn them, projected for a waiting human.
  *
  * This owns no State and decides nothing. A progress line never proves that a step succeeded: the
- * native window still re-observes current truth after the process ends. Lines are written with the
- * predecessor's `[VexLife] ` prefix so the already-lived AppKit progress panel parser applies
- * unchanged.
+ * native window still re-observes current truth after the process ends. Lines are in the person's
+ * selected language (keyed string source). They are written with the predecessor's `[VexLife] `
+ * prefix so the already-lived AppKit progress panel parser applies unchanged.
  *
  * Long-lived consumers (the Product service process) use [Silent].
  */
@@ -15,17 +19,18 @@ interface VexLifeProdSetupProgress {
 
     fun artifactBytes(completedBytes: Long, totalBytes: Long)
 
-    enum class Phase(val line: String) {
-        VerifyingProduct("Checking this copy of VexLife…"),
-        FormingHome("Creating your Vex Home…"),
-        CheckingHome("Checking your Vex Home…"),
-        PreparingPython("Preparing VexLife's private Python…"),
-        CheckingModelFiles("Checking the local model files…"),
-        PreparingModelRuntime("Preparing the local model runtime…"),
-        StartingLocalModel("Starting the local model. This can take a few minutes…"),
-        InstallingProduct("Installing this version of VexLife into your Home…"),
-        StartingVexLife("Starting VexLife…"),
-        ConfirmingVexLife("Confirming VexLife is running…"),
+    /** Each phase names its line by string key (`setup.status.progress-*`), never by words. */
+    enum class Phase(val key: String) {
+        VerifyingProduct("setup.status.progress-verifying-product"),
+        FormingHome("setup.status.progress-forming-home"),
+        CheckingHome("setup.status.progress-checking-home"),
+        PreparingPython("setup.status.progress-preparing-python"),
+        CheckingModelFiles("setup.status.progress-checking-model-files"),
+        PreparingModelRuntime("setup.status.progress-preparing-model-runtime"),
+        StartingLocalModel("setup.status.progress-starting-local-model"),
+        InstallingProduct("setup.status.progress-installing-product"),
+        StartingVexLife("setup.status.progress-starting-vexlife"),
+        ConfirmingVexLife("setup.status.progress-confirming-vexlife"),
     }
 
     object Silent : VexLifeProdSetupProgress {
@@ -40,6 +45,7 @@ interface VexLifeProdSetupProgress {
      */
     class Lines(
         private val sink: (String) -> Unit,
+        private val language: String = VexLifePersonSettings.DefaultLanguage,
         private val clockMs: () -> Long = System::currentTimeMillis,
         private val minimumIntervalMs: Long = 1_000L,
     ) : VexLifeProdSetupProgress {
@@ -47,7 +53,7 @@ interface VexLifeProdSetupProgress {
         private var lastPercent = -1
 
         override fun phase(phase: Phase) {
-            sink(LinePrefix + phase.line)
+            sink(LinePrefix + VexLifeStrings.text(phase.key, language))
         }
 
         override fun artifactBytes(completedBytes: Long, totalBytes: Long) {
@@ -70,13 +76,14 @@ interface VexLifeProdSetupProgress {
             lastPercent = percent
             sink(
                 LinePrefix +
-                    "Downloading the local model — " +
-                    gib(bounded) +
-                    " of " +
-                    gib(totalBytes) +
-                    " GiB (" +
-                    percent +
-                    "%). Keep this window open; an interrupted download resumes next time."
+                    VexLifeStrings.resolve(
+                        VexLifeText(
+                            key = "setup.status.progress-downloading",
+                            args = mapOf("percent" to percent.toString()),
+                            gib = mapOf("done" to bounded, "total" to totalBytes),
+                        ),
+                        language,
+                    )
             )
         }
     }
@@ -84,7 +91,9 @@ interface VexLifeProdSetupProgress {
     companion object {
         const val LinePrefix = "[VexLife] "
 
-        fun standardError(): VexLifeProdSetupProgress {
+        fun standardError(
+            language: String = VexLifePersonSettings.DefaultLanguage
+        ): VexLifeProdSetupProgress {
             val utf8 =
                 java.io.PrintStream(
                     java.io.FileOutputStream(java.io.FileDescriptor.err),
@@ -95,16 +104,10 @@ interface VexLifeProdSetupProgress {
                 sink = { line ->
                     utf8.println(line)
                     utf8.flush()
-                }
+                },
+                language = language,
             )
         }
-
-        internal fun gib(bytes: Long): String {
-            val tenths = (bytes * 10L + GiB / 2L) / GiB
-            return "${tenths / 10L}.${tenths % 10L}"
-        }
-
-        private const val GiB = 1024L * 1024L * 1024L
     }
 }
 

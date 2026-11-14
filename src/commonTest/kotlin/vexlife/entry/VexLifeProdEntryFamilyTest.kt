@@ -19,7 +19,7 @@ class VexLifeProdEntryFamilyTest {
         val effect = act?.effect as VexLifeProdEntryFamily.ConvergeProduct
 
         assertEquals(VexLifeProdEntryFamily.ControlConvergeDesired, display.primaryControlRef)
-        assertEquals("Update & Restart", display.primaryLabel)
+        assertEquals("setup.button.update-restart", display.primaryLabel?.key)
         assertEquals(VexLifeProdEntryFamily.ControlOpenCurrent, display.secondaryControlRef)
         assertEquals(sourceSha, effect.desiredSourceSha)
         assertFalse(effect.allowAcquisition)
@@ -31,12 +31,12 @@ class VexLifeProdEntryFamilyTest {
         val updateRepair = VexLifeProdEntryFamily.UpdateRepairRequired(sourceSha)
 
         assertEquals(
-            "Repair & Restart",
-            VexLifeProdEntryFamily.Semantics.displayStateFor(repair).primaryLabel,
+            "setup.button.repair-restart",
+            VexLifeProdEntryFamily.Semantics.displayStateFor(repair).primaryLabel?.key,
         )
         assertEquals(
-            "Update & Restart",
-            VexLifeProdEntryFamily.Semantics.displayStateFor(updateRepair).primaryLabel,
+            "setup.button.update-restart",
+            VexLifeProdEntryFamily.Semantics.displayStateFor(updateRepair).primaryLabel?.key,
         )
 
         for (state in listOf(repair, updateRepair)) {
@@ -57,7 +57,7 @@ class VexLifeProdEntryFamilyTest {
         val effect =
             VexLifeProdEntryFamily.Semantics.resolve(state, VexLifeProdEntryFamily.FormHome)?.effect
 
-        assertEquals("Create Vex Home", display.primaryLabel)
+        assertEquals("setup.button.create-home", display.primaryLabel?.key)
         assertEquals(VexLifeProdEntryFamily.FormCanonicalHome, effect)
         assertNull(VexLifeProdEntryFamily.Semantics.resolve(state, VexLifeProdEntryFamily.SetUp))
     }
@@ -96,7 +96,10 @@ class VexLifeProdEntryFamilyTest {
             VexLifeProdEntryFamily.Semantics.resolve(state, VexLifeProdEntryFamily.ConvergeDesired)
         )
         assertNull(VexLifeProdEntryFamily.Semantics.displayStateFor(state).primaryControlRef)
-        assertEquals("Close", VexLifeProdEntryFamily.Semantics.displayStateFor(state).cancelLabel)
+        assertEquals(
+            "setup.button.close",
+            VexLifeProdEntryFamily.Semantics.displayStateFor(state).cancelLabel.key,
+        )
     }
 
     private fun allStates(): List<VexLifeProdEntryFamily.EntryState> =
@@ -199,7 +202,7 @@ class VexLifeProdEntryFamilyTest {
             val display = VexLifeProdEntryFamily.Semantics.displayStateFor(state)
             assertNull(display.primaryControlRef, state.stateRef)
             assertNull(display.secondaryControlRef, state.stateRef)
-            assertEquals("Close", display.cancelLabel, state.stateRef)
+            assertEquals("setup.button.close", display.cancelLabel.key, state.stateRef)
             for (control in allControls.filter { it != VexLifeProdEntryFamily.Cancel }) {
                 assertNull(
                     VexLifeProdEntryFamily.Semantics.resolve(state, control),
@@ -221,9 +224,8 @@ class VexLifeProdEntryFamilyTest {
             VexLifeProdEntryFamily.Semantics.resolve(state, VexLifeProdEntryFamily.Start)?.effect
                 as VexLifeProdEntryFamily.ConvergeProduct
 
-        assertEquals("Start VexLife", display.primaryLabel)
-        assertTrue(display.detail.contains("Nothing will be downloaded"))
-        assertTrue(display.detail.contains("newer version"))
+        assertEquals("setup.button.start-vexlife", display.primaryLabel?.key)
+        assertEquals("setup.description.start-required-newer-version", display.detail.key)
         assertFalse(effect.allowAcquisition)
         assertTrue(effect.allowRuntimeStart)
         assertNull(VexLifeProdEntryFamily.Semantics.resolve(state, VexLifeProdEntryFamily.SetUp))
@@ -300,11 +302,14 @@ class VexLifeProdEntryFamilyTest {
     fun hostHoldNamesTheObservedMacAndTheCertifiedRequirement() {
         val state = allStates().filterIsInstance<VexLifeProdEntryFamily.HostHeld>().single()
         val detail = VexLifeProdEntryFamily.Semantics.displayStateFor(state).detail
-        assertTrue(detail.contains("Apple M2"))
-        assertTrue(detail.contains("16.0 GiB"))
-        assertTrue(detail.contains("Apple M4 Pro"))
-        assertTrue(detail.contains("12.0 GiB"))
-        assertTrue(detail.contains("Nothing was created or downloaded"))
+        val observed = detail.parts.getValue("observed")
+        val requirement = detail.parts.getValue("requirement")
+        assertEquals("setup.description.host-reason-chip", detail.parts.getValue("reason").key)
+        assertEquals("Apple M2", observed.args["chip"])
+        assertEquals(16L shl 30, observed.parts.getValue("memory").gib["memory"])
+        assertEquals("Apple M4 Pro", requirement.args["chip"])
+        assertEquals(12L shl 30, requirement.gib["memory"])
+        assertEquals("setup.description.host-nothing-created", detail.parts.getValue("outcome").key)
     }
 
     @Test
@@ -318,8 +323,7 @@ class VexLifeProdEntryFamilyTest {
                     )
                 )
                 .detail
-        assertTrue(detail.contains("17.0 GiB"))
-        assertTrue(detail.contains("9.0 GiB"))
+        assertEquals(mapOf("required" to (17L shl 30), "free" to (9L shl 30)), detail.gib)
     }
 
     @Test
@@ -332,6 +336,9 @@ class VexLifeProdEntryFamilyTest {
                             VexLifeProdEntryFamily.HomeHeld(sourceSha, it, "observed")
                         )
                         .detail
+                        .parts
+                        .getValue("reason")
+                        .key
                 }
         assertEquals(details.size, details.toSet().size)
         assertTrue(
@@ -347,11 +354,24 @@ class VexLifeProdEntryFamilyTest {
     }
 
     @Test
-    fun gibFormatsBinaryUnitsWithOneDecimal() {
-        assertEquals("0.0", VexLifeProdEntryFamily.gib(0))
-        assertEquals("1.0", VexLifeProdEntryFamily.gib(1L shl 30))
-        assertEquals("14.1", VexLifeProdEntryFamily.gib(15_153_242_506L))
-        assertEquals("0.5", VexLifeProdEntryFamily.gib(1L shl 29))
+    fun displayStateNamesTextByKeyAndNeverByWords() {
+        fun keys(text: vexlife.text.VexLifeText): List<String> =
+            listOf(text.key) + text.parts.values.flatMap(::keys)
+        for (state in allStates()) {
+            val display = VexLifeProdEntryFamily.Semantics.displayStateFor(state)
+            val all =
+                listOfNotNull(
+                        display.title,
+                        display.detail,
+                        display.primaryLabel,
+                        display.secondaryLabel,
+                        display.cancelLabel,
+                        display.homeChoiceLabel,
+                        display.recheckLabel,
+                    )
+                    .flatMap(::keys) + display.journey.map { it.label.key }
+            assertTrue(all.all { it.startsWith("setup.") }, state.stateRef)
+        }
     }
 }
 
