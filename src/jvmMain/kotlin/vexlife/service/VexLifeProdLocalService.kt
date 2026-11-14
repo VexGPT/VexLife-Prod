@@ -1722,6 +1722,15 @@ class VexLifeProdLocalService private constructor(
                 humanReasoningProjection(
                     result,
                 ),
+            capabilityUses =
+                result.capabilityUses.map {
+                    VexLifeProdServiceContract.CapabilityUse(
+                        handle = it.handle,
+                        action = it.action,
+                        target = it.target,
+                        state = it.state.name,
+                    )
+                },
         )
 
     private fun acceptsEventStream(
@@ -1826,6 +1835,23 @@ class VexLifeProdLocalService private constructor(
                                         type = "CONTENT_DELTA",
                                         delta = progress.delta,
                                         accumulatedCharacters = progress.accumulatedCharacters,
+                                    )
+
+                                DirectCompanionTurn.ProgressPhase.Reaching,
+                                DirectCompanionTurn.ProgressPhase.Reached,
+                                ->
+                                    VexLifeProdServiceContract.SendStreamEvent(
+                                        type = "REACH",
+                                        reach =
+                                            progress.reach?.let {
+                                                VexLifeProdServiceContract.CapabilityUse(
+                                                    handle = it.handle,
+                                                    action = it.action,
+                                                    target = it.target,
+                                                    state =
+                                                        if (progress.phase == DirectCompanionTurn.ProgressPhase.Reached) it.state.name else null,
+                                                )
+                                            },
                                     )
                             }
                         emit(

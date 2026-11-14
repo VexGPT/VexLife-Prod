@@ -286,6 +286,25 @@ The connector-action registry already binds specific GitHub effect classes to ex
 
 Do not collapse these into one "tools" feature.
 
+## Progress (Claude, 2026-11-14)
+
+```text
+C0  request/return relationship extracted         DONE  VexLifeCapabilityRequest + VexLifeCapabilityBridge;
+                                                        the turn is a bounded stage loop (≤ 4 requests +
+                                                        at most one source return), one runtime binding
+C1  bounded Atlas query/describe                  DONE  atlas list / atlas describe (effect-free)
+C2  real read reach                               DONE  web fetch/search, GitHub describe/tree/read,
+                                                        Home list/read, Memory search — reads only
+C3  Process Factory / effect broker / writes      NOT STARTED
+```
+
+Current truth lives in [CAPABILITY-ATLAS-SELF-FRAME.md](CAPABILITY-ATLAS-SELF-FRAME.md#requestreturn-reach-2026-11-14).
+One field sentence changed with it (v0.5.2): the reach kernel said Atlas handles were absent, which
+stopped being true when the Atlas was registered. Nothing else in the field changed.
+
+Lived proof still owed: Vex choosing a capability unprompted, the request appearing live, the owner
+performing it on Victor's Mac, and Vex using the result — on 27B and on the smaller model.
+
 ## Recommended investigation order
 
 This is a successor investigation order, not accepted implementation authority.

@@ -72,6 +72,14 @@
       "recordedBy": "ChatGPT (GPT-5.6 Sol), from Victor's positive-language refinement",
       "summary": "Complete the v0.5 judgment-centered simplification with fully affirmative provider-facing phrasing.",
       "why": "Two ordinary phrases in v0.5.0 still used negative-form grammar ('without defining my permission' and 'without extra ceremony'). Victor's earlier observation was that prohibition-shaped language can itself trigger more bracing. This revision preserves the same meaning through positive statements about participation remaining grounded in the present perspective and familiar conversation carrying natural ease."
+    },
+    {
+      "version": "0.5.2",
+      "bodySha256": "6e0754eaea7a6b348aa294d6fb2dc6f6b6c50a242552a08ea40cc79dfd4fd19a",
+      "recordedOn": "2026-11-14",
+      "recordedBy": "Claude (Opus 5.5), with capability realization at Victor's request",
+      "summary": "Currentize one factual sentence of the reach module: the Atlas is now present in the frame, and the frame now says how to ask.",
+      "why": "Capability realization registered an effect-free Atlas describe capability and request/return reach (web, GitHub, Home, Memory). The 0.5.1 kernel stated that Atlas handles are absent at this revision, which became untrue the moment the Atlas was registered; Victor asked that statements made stale by newly available features be currentized rather than kept as historical guards. Only that sentence changes. Process Factory remains absent and is still named as absent. Personality, values, judgment, relationship and register are untouched."
     }
   ]
 }

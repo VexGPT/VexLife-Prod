@@ -57,9 +57,34 @@ object VexLifeCapabilityAtlas {
         UNKNOWN,
     }
 
+    /** One argument of a requestable action, as the model writes it in `arguments`. */
+    @Serializable
+    data class Argument(
+        val name: String,
+        val type: String,
+        val required: Boolean,
+        val meaning: String,
+    )
+
+    /**
+     * One action Vex may request through the capability request envelope. The Atlas describes it;
+     * the host bridge performs it through the capability's rightful owner. Describing an action is
+     * not performing it.
+     */
+    @Serializable
+    data class Action(
+        val action: String,
+        val purpose: String,
+        val arguments: List<Argument>,
+        val exampleArguments: String,
+        val returns: String,
+    )
+
     @Serializable
     data class Definition(
         val capabilityRef: String,
+        /** The short name Vex uses in a request; unique, stable, and listed in the frame. */
+        val handle: String,
         val purpose: String,
         val defaultStage: Stage,
         val roleRefs: List<String>,
@@ -71,6 +96,8 @@ object VexLifeCapabilityAtlas {
         val modelParticipationClass: String,
         val sourcePath: String,
         val priority: Int,
+        /** Empty for context the prompt already carries; non-empty for request/return reach. */
+        val actions: List<Action> = emptyList(),
     )
 
     @Serializable
@@ -141,6 +168,7 @@ object VexLifeCapabilityAtlas {
     @Serializable
     data class Entry(
         val capabilityRef: String,
+        val handle: String,
         val purpose: String,
         val state: FrameState,
         val reasonCodes: List<String>,
@@ -154,6 +182,8 @@ object VexLifeCapabilityAtlas {
         val modelParticipationClass: String,
         val sourceRefs: List<String>,
         val effectAuthorityGranted: Boolean,
+        /** Actions requestable through the envelope; full argument detail comes from `atlas`. */
+        val actions: List<String> = emptyList(),
     )
 
     @Serializable
@@ -220,6 +250,7 @@ object VexLifeCapabilityAtlas {
             Definition(
                 capabilityRef =
                     "capability.vexlife.context.memory-current",
+                handle = "memory.current",
                 purpose =
                     "Use the exact current source-attributed Memory context already admitted by VexLifeCurrentMemoryReader without creating semantic acceptance or Memory mutation.",
                 defaultStage =
@@ -250,6 +281,7 @@ object VexLifeCapabilityAtlas {
             Definition(
                 capabilityRef =
                     "capability.vexlife.context.working-continuity",
+                handle = "working-continuity",
                 purpose =
                     "Use exact owner-current reference-only working coordinates carried across context rollover without treating them as semantic Memory or replayed Conversation text.",
                 defaultStage =
@@ -280,6 +312,7 @@ object VexLifeCapabilityAtlas {
             Definition(
                 capabilityRef =
                     "capability.vexlife.context.browser-current",
+                handle = "browser.current",
                 purpose =
                     "Use already-captured current admitted Vex-owned browser page text as untrusted reference material without claiming navigation or general-web authority.",
                 defaultStage =
@@ -310,6 +343,7 @@ object VexLifeCapabilityAtlas {
             Definition(
                 capabilityRef =
                     "capability.vexlife.companion.local-inference",
+                handle = "local-inference",
                 purpose =
                     "Participate in one direct local Companion inference through an already-qualified loopback Heretic runtime while provider invocation remains DirectCompanionConnection-owned.",
                 defaultStage =
@@ -337,15 +371,24 @@ object VexLifeCapabilityAtlas {
                 priority =
                     5,
             ),
-        )
-            .sortedBy {
-                it.capabilityRef
-            }
+        ) +
+            VexLifeReachDefinitions.Definitions
+                .sortedBy {
+                    it.capabilityRef
+                }
+
+    private val ReachableDefinitions =
+        Definitions.sortedBy {
+            it.capabilityRef
+        }
 
     fun registry(): Registry {
-        Definitions.forEach(
+        ReachableDefinitions.forEach(
             ::validateDefinition,
         )
+        require(ReachableDefinitions.map { it.handle }.distinct().size == ReachableDefinitions.size) {
+            "capability handles must be unique"
+        }
         val core =
             RegistryCore(
                 schemaVersion =
@@ -353,7 +396,7 @@ object VexLifeCapabilityAtlas {
                 truthClass =
                     "PRODUCT_OWNED_CAPABILITY_REGISTRY",
                 definitions =
-                    Definitions,
+                    ReachableDefinitions,
                 effectAuthorityGranted =
                     false,
             )
@@ -388,7 +431,7 @@ object VexLifeCapabilityAtlas {
             "capabilityRef",
         )
         return requireNotNull(
-            Definitions.firstOrNull {
+            ReachableDefinitions.firstOrNull {
                 it.capabilityRef ==
                     capabilityRef
             },
@@ -396,6 +439,13 @@ object VexLifeCapabilityAtlas {
             "capability is not registered in VexLife-Prod"
         }
     }
+
+    /** The registered definition named by a handle or a full capabilityRef, or null. */
+    fun resolve(nameOrRef: String): Definition? =
+        ReachableDefinitions.firstOrNull { it.handle == nameOrRef || it.capabilityRef == nameOrRef }
+
+    /** Every registered definition, in canonical order. */
+    fun definitions(): List<Definition> = ReachableDefinitions
 
     fun formFrame(
         input: FrameInput,
@@ -435,7 +485,7 @@ object VexLifeCapabilityAtlas {
             "self-capability frame requires at least one relevant registered capability"
         }
         val definitionsByRef =
-            Definitions.associateBy {
+            ReachableDefinitions.associateBy {
                 it.capabilityRef
             }
         relevant.forEach {
@@ -844,6 +894,7 @@ object VexLifeCapabilityAtlas {
         return Entry(
             capabilityRef =
                 definition.capabilityRef,
+            handle = definition.handle,
             purpose =
                 definition.purpose,
             state =
@@ -870,6 +921,7 @@ object VexLifeCapabilityAtlas {
                 sourceRefs,
             effectAuthorityGranted =
                 false,
+            actions = definition.actions.map { it.action },
         )
     }
 
@@ -998,6 +1050,23 @@ object VexLifeCapabilityAtlas {
                 0,
         ) {
             "definition capability metadata is incomplete"
+        }
+        require(value.handle.matches(Regex("[a-z][a-z0-9.-]*"))) {
+            "definition handle must be one short lowercase name"
+        }
+        require(value.actions.map { it.action }.distinct().size == value.actions.size) {
+            "definition actions must be unique"
+        }
+        value.actions.forEach { action ->
+            require(
+                action.action.matches(Regex("[a-z][a-z0-9-]*")) &&
+                    action.purpose.isNotBlank() &&
+                    action.returns.isNotBlank() &&
+                    action.arguments.map { it.name }.distinct().size == action.arguments.size,
+            ) {
+                "definition action ${action.action} is incomplete"
+            }
+            VexContractJson.Strict.parseToJsonElement(action.exampleArguments)
         }
     }
 

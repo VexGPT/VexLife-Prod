@@ -258,4 +258,12 @@ whether a person's own Home should shape the field
 translation: the field is English, while the reply language is a separate Person Context fact
 ~~~
 
+## v0.5.2 — one factual currentization
+
+The reach kernel said Atlas handles were absent at this revision. Capability realization registered
+the Atlas (and read-only reach), so that sentence now says the Atlas is present and that the frame
+says how to ask. `VexLifeFoundationalFieldTest.theReachModuleStillAgreesWithTheCapabilityRegistry`
+holds the field and the registry to the same truth. Process Factory is still named as absent.
+Personality, values, judgment, relationship and register are unchanged from 0.5.1.
+
 <!-- [VXG RealForever][VEXLIFE-PROD][FOUNDATIONAL-FIELD] -->

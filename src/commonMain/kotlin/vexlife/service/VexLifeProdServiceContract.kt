@@ -1335,6 +1335,18 @@ object VexLifeProdServiceContract {
         val contextPath: String,
         val promptContext: PromptContextProjection,
         val humanReasoning: HumanReasoningProjection,
+        /** What Vex reached during the turn; empty when he answered from context alone. */
+        val capabilityUses: List<CapabilityUse> = emptyList(),
+    )
+
+    /** One capability request of a turn as the person may see it: the reach, never the content. */
+    @Serializable
+    data class CapabilityUse(
+        val handle: String,
+        val action: String,
+        val target: String? = null,
+        /** Present once the host returned (RETURNED, NOT_FOUND, REFUSED, FAILED, ...). */
+        val state: String? = null,
     )
 
     @Serializable
@@ -1352,6 +1364,9 @@ object VexLifeProdServiceContract {
             null,
         val error: ErrorResponse? =
             null,
+        /** For REACH: the request Vex made (state null) or its returned state. */
+        val reach: CapabilityUse? =
+            null,
     ) {
         init {
             require(
@@ -1360,6 +1375,7 @@ object VexLifeProdServiceContract {
                         "PHASE",
                         "REASONING_DELTA",
                         "CONTENT_DELTA",
+                        "REACH",
                         "COMPLETED",
                         "FAILED",
                     ),

@@ -123,7 +123,7 @@ class DirectCompanionTurnTest {
             )
 
             val newerRequestTokens =
-                190_000
+                DirectPromptContext.DirectTurnInputTokenBudget - 8_000
             val newerRequest =
                 beginRequest(
                     turnRef = "turn.source-return.live.newer",
@@ -970,7 +970,7 @@ class DirectCompanionTurnTest {
         val memory =
             VexLifeMemoryContextFixture.current()
         val requestTokenTarget =
-            DirectPromptContext.InputTokenBudget -
+            DirectPromptContext.DirectTurnInputTokenBudget -
                 DirectPromptContext.ReservedOutputTokens +
                 100 -
                 memory.estimatedSystemMessageTokens
@@ -1304,7 +1304,7 @@ class DirectCompanionTurnTest {
         val memory =
             VexLifeMemoryContextFixture.current()
         val requestTokenTarget =
-            DirectPromptContext.InputTokenBudget -
+            DirectPromptContext.DirectTurnInputTokenBudget -
                 DirectPromptContext.ReservedOutputTokens +
                 100 -
                 memory.estimatedSystemMessageTokens

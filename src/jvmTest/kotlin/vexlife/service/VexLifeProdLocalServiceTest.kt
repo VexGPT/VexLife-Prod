@@ -2571,6 +2571,72 @@ class VexLifeProdLocalServiceTest {
         }
     }
 
+    @Test
+    fun streamingSendShowsEachReachAndTheCompletedResponseNamesIt() {
+        val parent = Files.createTempDirectory("vexlife-prod-service-reach-").toAbsolutePath()
+        val root = parent.resolve("VexLife-Prod")
+        var providerCalls = 0
+        try {
+            bootstrapHome(root)
+            val currentSetup = setup(root)
+            val control =
+                vexlife.capability.VexLifeCapabilityRequest.RequestHeader + "\n" +
+                    """{"capability":"home","action":"read","arguments":{"path":"config/home.json"}}"""
+            val transport =
+                object : DirectCompanionConnection.StreamingTransport {
+                    override fun post(call: DirectCompanionConnection.HttpCall): DirectCompanionConnection.HttpResult =
+                        error("stream test must use the provider stream")
+
+                    override fun postStreaming(
+                        call: DirectCompanionConnection.HttpCall,
+                        onLine: (String) -> Unit,
+                    ): DirectCompanionConnection.StreamingHttpResult {
+                        providerCalls += 1
+                        val content = if (providerCalls == 1) control else "Your Home config names its Home ref."
+                        val delta = kotlinx.serialization.json.JsonPrimitive(content).toString()
+                        onLine("""data: {"model":"default_model","choices":[{"finish_reason":"stop","delta":{"role":"assistant","content":$delta}}]}""")
+                        onLine("")
+                        onLine("data: [DONE]")
+                        return DirectCompanionConnection.StreamingHttpResult(status = 200, responseBodySha256 = "e".repeat(64))
+                    }
+                }
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha = "f".repeat(40),
+                    setup = currentSetup,
+                    turnExecutor = VexLifeProdLocalService.TurnExecutor { _, _ -> error("stream only") },
+                    streamingTurnExecutor =
+                        VexLifeProdLocalService.StreamingTurnExecutor { setup, intent, observer ->
+                            DirectCompanionTurn.performWithHooks(
+                                setup = setup,
+                                intent = intent,
+                                hooks = DirectCompanionTurn.Hooks(transport = transport, progressObserver = observer),
+                            )
+                        },
+                )
+                .use { service ->
+                    val stream =
+                        postEventStream(
+                            service.origin,
+                            VexLifeProdServiceContract.ConversationSendPath,
+                            json.encodeToString(
+                                VexLifeProdServiceContract.SendRequest(idempotencyKey = "send.vexlife.browser.reach.001", content = "What is in my Home config?"),
+                            ),
+                        )
+                            .body()
+                    val reaching = stream.indexOf(""""type":"REACH","phase":null,"delta":null""")
+                    val requested = stream.indexOf(""""reach":{"handle":"home","action":"read","target":"home:config/home.json","state":null}""")
+                    val returned = stream.indexOf(""""reach":{"handle":"home","action":"read","target":"home:config/home.json","state":"RETURNED"}""")
+                    val completed = stream.indexOf(""""type":"COMPLETED"""")
+                    assertTrue(reaching >= 0 && requested > 0 && returned > requested && completed > returned, stream.take(2000))
+                    assertTrue(stream.contains(""""capabilityUses":[{"handle":"home","action":"read","target":"home:config/home.json","state":"RETURNED"}]"""))
+                    assertFalse(stream.contains("VEXLIFE_CAPABILITY_REQUEST/v1\\n"), "the control never streams as answer content")
+                    assertEquals(2, providerCalls)
+                }
+        } finally {
+            parent.toFile().deleteRecursively()
+        }
+    }
 }
 
 // [VXG RealForever]

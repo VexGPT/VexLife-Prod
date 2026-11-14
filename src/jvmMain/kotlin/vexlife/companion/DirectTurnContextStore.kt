@@ -10,6 +10,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
 import vexlife.conversation.DirectConversationIdentity
@@ -40,6 +41,10 @@ class DirectTurnContextStore(
 
         const val RuntimeEvidenceSchema =
             "vexlife-prod.turn-runtime-evidence/v2"
+
+        /** v2 plus the capability exchange trace; written only when a turn made requests. */
+        const val RuntimeEvidenceSchemaV3 =
+            "vexlife-prod.turn-runtime-evidence/v3"
     }
 
     @OptIn(
@@ -61,6 +66,11 @@ class DirectTurnContextStore(
             EncodeDefault.Mode.NEVER,
         )
         val sourceReturnTrace: DirectConversationSourceReturn.Trace? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val capabilityTrace: VexLifeCapabilityBridge.Trace? =
             null,
         val rawProviderResponsePersisted: Boolean,
         val rawReasoningPersisted: Boolean,
@@ -87,6 +97,11 @@ class DirectTurnContextStore(
             EncodeDefault.Mode.NEVER,
         )
         val sourceReturnTrace: DirectConversationSourceReturn.Trace? =
+            null,
+        @EncodeDefault(
+            EncodeDefault.Mode.NEVER,
+        )
+        val capabilityTrace: VexLifeCapabilityBridge.Trace? =
             null,
         val rawProviderResponsePersisted: Boolean,
         val rawReasoningPersisted: Boolean,
@@ -116,6 +131,7 @@ class DirectTurnContextStore(
         val runtimeObservation: DirectCompanionConnection.RuntimeObservation,
         val invocationEvidence: DirectCompanionConnection.InvocationEvidence,
         val sourceReturnTrace: DirectConversationSourceReturn.Trace?,
+        val capabilityTrace: VexLifeCapabilityBridge.Trace? = null,
         val rawProviderResponsePersisted: Boolean,
         val rawReasoningPersisted: Boolean,
         val rawReportedModelPersisted: Boolean,
@@ -164,6 +180,7 @@ class DirectTurnContextStore(
         invocationEvidence: DirectCompanionConnection.InvocationEvidence,
         sourceReturnTrace: DirectConversationSourceReturn.Trace? =
             null,
+        capabilityTrace: VexLifeCapabilityBridge.Trace? = null,
         formedAt: Instant = Instant.now(),
     ): Record {
         validateTurnInputs(
@@ -186,6 +203,7 @@ class DirectTurnContextStore(
                 runtimeObservation = runtimeObservation,
                 invocationEvidence = invocationEvidence,
                 sourceReturnTrace = sourceReturnTrace,
+                capabilityTrace = capabilityTrace,
                 formedAt = formedAt,
             )
         writeRuntimeEvidence(
@@ -406,6 +424,7 @@ class DirectTurnContextStore(
             runtimeObservation = evidence.runtimeObservation,
             invocationEvidence = evidence.invocationEvidence,
             sourceReturnTrace = evidence.sourceReturnTrace,
+            capabilityTrace = evidence.capabilityTrace,
             rawProviderResponsePersisted = evidence.rawProviderResponsePersisted,
             rawReasoningPersisted = evidence.rawReasoningPersisted,
             rawReportedModelPersisted = evidence.rawReportedModelPersisted,
@@ -528,11 +547,12 @@ class DirectTurnContextStore(
         runtimeObservation: DirectCompanionConnection.RuntimeObservation,
         invocationEvidence: DirectCompanionConnection.InvocationEvidence,
         sourceReturnTrace: DirectConversationSourceReturn.Trace?,
+        capabilityTrace: VexLifeCapabilityBridge.Trace?,
         formedAt: Instant,
     ): RuntimeEvidence {
         val core =
             RuntimeEvidenceCore(
-                schemaVersion = RuntimeEvidenceSchema,
+                schemaVersion = if (capabilityTrace != null) RuntimeEvidenceSchemaV3 else RuntimeEvidenceSchema,
                 truthClass = "PRODUCT_RUNTIME_TURN_EVIDENCE",
                 turnRef = request.turnRef,
                 requestEventRef = request.eventRef,
@@ -543,6 +563,7 @@ class DirectTurnContextStore(
                 runtimeObservation = runtimeObservation,
                 invocationEvidence = invocationEvidence,
                 sourceReturnTrace = sourceReturnTrace,
+                capabilityTrace = capabilityTrace,
                 rawProviderResponsePersisted = false,
                 rawReasoningPersisted = false,
                 rawReportedModelPersisted = false,
@@ -565,6 +586,7 @@ class DirectTurnContextStore(
             runtimeObservation = core.runtimeObservation,
             invocationEvidence = core.invocationEvidence,
             sourceReturnTrace = core.sourceReturnTrace,
+            capabilityTrace = core.capabilityTrace,
             rawProviderResponsePersisted = core.rawProviderResponsePersisted,
             rawReasoningPersisted = core.rawReasoningPersisted,
             rawReportedModelPersisted = core.rawReportedModelPersisted,
@@ -589,6 +611,7 @@ class DirectTurnContextStore(
                 setOf(
                     RuntimeEvidenceSchemaV1,
                     RuntimeEvidenceSchema,
+                    RuntimeEvidenceSchemaV3,
                 ) &&
                 value.truthClass ==
                 "PRODUCT_RUNTIME_TURN_EVIDENCE" &&
@@ -615,6 +638,7 @@ class DirectTurnContextStore(
                 runtimeObservation = value.runtimeObservation,
                 invocationEvidence = value.invocationEvidence,
                 sourceReturnTrace = value.sourceReturnTrace,
+                capabilityTrace = value.capabilityTrace,
                 rawProviderResponsePersisted = value.rawProviderResponsePersisted,
                 rawReasoningPersisted = value.rawReasoningPersisted,
                 rawReportedModelPersisted = value.rawReportedModelPersisted,
@@ -630,6 +654,21 @@ class DirectTurnContextStore(
                 (
                     value.schemaVersion ==
                         RuntimeEvidenceSchema &&
+                    value.capabilityTrace == null &&
+                    requireSourceReturnTrace(
+                        sourceReturnTrace =
+                            value.sourceReturnTrace,
+                        finalPrompt =
+                            value.promptContext,
+                    )
+                ) ||
+                (
+                    // v3 exists only because the turn made capability requests: the trace is present,
+                    // and the prompt that carried them kept room for them.
+                    value.schemaVersion ==
+                        RuntimeEvidenceSchemaV3 &&
+                    value.capabilityTrace != null &&
+                    value.promptContext.capabilityExchangeAllowanceTokens > 0 &&
                     requireSourceReturnTrace(
                         sourceReturnTrace =
                             value.sourceReturnTrace,
