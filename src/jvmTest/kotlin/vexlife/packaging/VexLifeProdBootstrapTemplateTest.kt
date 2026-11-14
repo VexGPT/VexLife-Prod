@@ -167,7 +167,7 @@ class VexLifeProdBootstrapTemplateTest {
 
         assertTrue(
             source.contains(
-                "if value is (current application's NSNull's null()) then return fallbackValue",
+                "if value is (current application's NSNull's |null|()) then return fallbackValue",
             ),
             "JSON null must resolve to the caller fallback before AppleScript text coercion",
         )
