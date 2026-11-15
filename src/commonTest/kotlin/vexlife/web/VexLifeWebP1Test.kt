@@ -13,6 +13,8 @@ class VexLifeWebP1Test {
         assertTrue(artifacts.javascript.contains("liveThoughtRounds: []"))
         assertTrue(artifacts.javascript.contains("thoughtRoundsByResponse: new Map()"))
         assertTrue(artifacts.javascript.contains("recordThoughtReach(use)"))
+        assertTrue(artifacts.javascript.contains("renderLiveThoughtRounds(thought)"))
+        assertTrue(artifacts.javascript.contains("provider delta != scroll authority"))
         assertTrue(artifacts.javascript.contains("Reviewing result"))
         assertTrue(artifacts.javascript.contains("view thoughts"))
         assertTrue(artifacts.css.contains(".thought-rounds"))
