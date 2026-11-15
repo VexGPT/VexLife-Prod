@@ -1134,7 +1134,8 @@ object VexLifeWebP1RuntimeArtifacts {
               const restoreReasoningViewports = () => {
                 ui.timeline.querySelectorAll('.reasoning[data-scroll-key]').forEach((element) => {
                   const key = String(element.dataset.scrollKey ?? '');
-                  applyReasoningViewport(element, key, key.startsWith('live.process.'));
+                  const liveTail = element.dataset.liveTail === 'true';
+                  applyReasoningViewport(element, key, liveTail);
                 });
               };
 
@@ -1262,6 +1263,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   if (!state.thoughtsVisible || !String(entry.text ?? '').trim()) return null;
                   const box = document.createElement('div');
                   box.className = 'reasoning process-thought' + (live && entry.active ? ' live-reasoning' : '');
+                  box.dataset.liveTail = String(Boolean(live && entry.active));
                   bindReasoningViewport(box, viewportKey, live && entry.active);
                   // Keep the exact provider text as the source projection. Markdown is a separate
                   // presentation concern; freezing a process container must never rewrite the
