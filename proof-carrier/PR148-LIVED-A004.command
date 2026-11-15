@@ -12,11 +12,11 @@ CONTRACT_REF='source.vexrelay.current-contract/v1'
 RUNTIME_VERSION='v0.2.0-RC1'
 
 CARRIER_REPO='VexGPT/VexLife-Prod'
-CARRIER_CONTENT_COMMIT='a43a021ae8215bfb08e018187a5a24c88cb830d6'
-PAYLOAD_PATH='proof-carrier/PR148-LIVED-A004.payload.mjs'
+CARRIER_CONTENT_COMMIT='8ed026e46f4d95e794c583e0050f77635bc79e8c'
+PAYLOAD_PATH='proof-carrier/PR148-LIVED-A004.payload.cjs'
 PAYLOAD_BLOB='76258e2adf2a655fa8bbb646312b2276909c8133'
 FORM_PATH='proof-carrier/PR148-LIVED-A004.form.cjs'
-FORM_BLOB='dce9fab46676ef41d6dfe1d2f1d723aa0ec22788'
+FORM_BLOB='3941b38abc903f0bc0afa0c32680fd4270938e3f'
 
 resolve_exec() {
   local candidate
@@ -56,7 +56,7 @@ cleanup() {
 trap cleanup EXIT HUP INT TERM
 
 SDK_ROOT="$BOOT_ROOT/Vextreme-SDK"
-PAYLOAD="$BOOT_ROOT/PR148-LIVED-A004.payload.mjs"
+PAYLOAD="$BOOT_ROOT/PR148-LIVED-A004.payload.cjs"
 FORM="$BOOT_ROOT/PR148-LIVED-A004.form.cjs"
 
 printf '%s\n' 'PR148 LIVED A004: acquiring exact current VexLocalBridge source...'
