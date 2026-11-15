@@ -274,6 +274,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 streamedReasoning: '',
                 thoughtsVisible: true,
                 humanReasoningByResponse: new Map(),
+                // Ephemeral browser-session projection of owner-supplied provider stages. Stage
+                // identity comes from DirectCompanionTurn; presentation never infers stage changes.
+                liveProcessStages: [],
+                processStagesByResponse: new Map(),
                 // What Vex reached during the live turn (bridge uses: handle/action/target/state), and
                 // per completed response for this browser session. Reach, never the content.
                 liveReaches: [],
@@ -1123,8 +1127,16 @@ object VexLifeWebP1RuntimeArtifacts {
               const restoreReasoningViewports = () => {
                 ui.timeline.querySelectorAll('.reasoning[data-scroll-key]').forEach((element) => {
                   const key = String(element.dataset.scrollKey ?? '');
-                  applyReasoningViewport(element, key, key === 'live');
+                  applyReasoningViewport(element, key, key.startsWith('live.stage.'));
                 });
+              };
+
+              const resetLiveReasoningViewports = () => {
+                for (const key of state.reasoningViewports.keys()) {
+                  if (key === 'live' || key.startsWith('live.stage.')) {
+                    state.reasoningViewports.delete(key);
+                  }
+                }
               };
 
               const applyTimelineViewport = (restoreReadingPosition = true) => {
@@ -1196,11 +1208,94 @@ object VexLifeWebP1RuntimeArtifacts {
                 return line;
               };
 
+              const ensureLiveProcessStage = (stageIndex, modelRef) => {
+                const index = Number(stageIndex);
+                if (!Number.isInteger(index) || index <= 0) return null;
+                let stage = state.liveProcessStages.find((candidate) => candidate.index === index);
+                if (!stage) {
+                  stage = {
+                    index,
+                    modelRef: String(modelRef ?? ''),
+                    reasoning: '',
+                    reaches: [],
+                    responding: false
+                  };
+                  state.liveProcessStages.push(stage);
+                  state.liveProcessStages.sort((left, right) => left.index - right.index);
+                } else if (!stage.modelRef && modelRef) {
+                  stage.modelRef = String(modelRef);
+                }
+                return stage;
+              };
+
+              const settleReach = (uses, use) => {
+                if (!Array.isArray(uses) || !use) return;
+                if (use.state) {
+                  for (let index = uses.length - 1; index >= 0; index -= 1) {
+                    const open = uses[index];
+                    if (!open.state && open.handle === use.handle && open.action === use.action) {
+                      uses[index] = { ...use };
+                      return;
+                    }
+                  }
+                }
+                uses.push({ ...use });
+              };
+
+              const snapshotLiveProcessStages = () =>
+                state.liveProcessStages.map((stage) => ({
+                  index: stage.index,
+                  modelRef: stage.modelRef,
+                  reasoning: stage.reasoning,
+                  reaches: stage.reaches.map((use) => ({ ...use })),
+                  responding: Boolean(stage.responding)
+                }));
+
+              const processStageNode = (stage, viewportKey, live) => {
+                const section = document.createElement('div');
+                section.className = 'process-stage';
+                section.dataset.providerStageIndex = String(stage.index);
+
+                const heading = document.createElement('p');
+                heading.className = 'receipt-line process-stage-heading';
+                heading.textContent =
+                  'Stage ' +
+                  String(stage.index) +
+                  (stage.modelRef ? ' · ' + stage.modelRef : '');
+                section.append(heading);
+
+                if (stage.reasoning) {
+                  const box = document.createElement('div');
+                  box.className = 'reasoning' + (live ? ' live-reasoning' : '');
+                  bindReasoningViewport(box, viewportKey, live);
+                  box.textContent = stage.reasoning;
+                  section.append(box);
+                }
+
+                if (stage.reaches.length) {
+                  section.append(reachList(stage.reaches));
+                }
+                return section;
+              };
+
+              const appendProcessStages = (holder, stages, keyPrefix, live) => {
+                for (const stage of stages) {
+                  holder.append(
+                    processStageNode(
+                      stage,
+                      keyPrefix + '.stage.' + String(stage.index),
+                      live
+                    )
+                  );
+                }
+              };
+
               const completedThoughtNode = (message) => {
                 if (!state.thoughtsVisible || message.role !== 'vex') return null;
                 const key = String(message.messageRef ?? '');
+                const stages = state.processStagesByResponse.get(key) ?? [];
                 const reasoning = state.humanReasoningByResponse.get(key);
-                if (!reasoning) return null;
+                if (!stages.length && !reasoning) return null;
 
                 const holder = document.createElement('div');
                 holder.className = 'thought';
@@ -1216,11 +1311,17 @@ object VexLifeWebP1RuntimeArtifacts {
                 holder.append(toggle);
 
                 if (expanded) {
-                  const box = document.createElement('div');
-                  box.className = 'reasoning';
-                  bindReasoningViewport(box, 'response.' + key, false);
-                  box.textContent = reasoning;
-                  holder.append(box);
+                  if (stages.length) {
+                    appendProcessStages(holder, stages, 'response.' + key, false);
+                  } else {
+                    // Non-streaming/idempotent recovery has only the final response-local
+                    // projection. Keep that truthful fallback without pretending it was a stage log.
+                    const box = document.createElement('div');
+                    box.className = 'reasoning';
+                    bindReasoningViewport(box, 'response.' + key, false);
+                    box.textContent = reasoning;
+                    holder.append(box);
+                  }
                 }
                 return holder;
               };
@@ -1284,14 +1385,12 @@ object VexLifeWebP1RuntimeArtifacts {
                         ? 'responding…'
                         : 'preparing…';
                 thought.append(who, mark, label);
-                if (state.liveReaches.length) thought.append(reachList(state.liveReaches));
 
-                if (state.thoughtsVisible && state.streamedReasoning) {
-                  const reasoning = document.createElement('div');
-                  reasoning.className = 'reasoning live-reasoning';
-                  bindReasoningViewport(reasoning, 'live', true);
-                  reasoning.textContent = state.streamedReasoning;
-                  thought.append(reasoning);
+                if (state.thoughtsVisible && state.liveProcessStages.length) {
+                  const stages = document.createElement('div');
+                  stages.className = 'live-process-stages';
+                  appendProcessStages(stages, state.liveProcessStages, 'live', true);
+                  thought.append(stages);
                 }
 
                 const bubble = document.createElement('div');
@@ -1393,26 +1492,18 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
 
                 const thought = item.querySelector('.thinking-now');
-                // Reach lines sit between the label and the live reasoning, in the order Vex asked.
-                item.querySelector('.live-reaches')?.remove();
-                if (state.liveReaches.length && thought) {
-                  const list = reachList(state.liveReaches);
-                  const label = thought.querySelector('.thinking-label');
-                  if (label) label.after(list);
-                  else thought.append(list);
-                }
-                let reasoning = item.querySelector('.live-reasoning');
-                if (state.thoughtsVisible && state.streamedReasoning) {
-                  if (!reasoning) {
-                    reasoning = document.createElement('div');
-                    reasoning.className = 'reasoning live-reasoning';
-                    bindReasoningViewport(reasoning, 'live', true);
-                    thought?.append(reasoning);
+                let stages = item.querySelector('.live-process-stages');
+                if (state.thoughtsVisible && state.liveProcessStages.length && thought) {
+                  if (!stages) {
+                    stages = document.createElement('div');
+                    stages.className = 'live-process-stages';
+                    thought.append(stages);
                   }
-                  reasoning.textContent = state.streamedReasoning;
-                  applyReasoningViewport(reasoning, 'live', true, false);
-                } else if (reasoning) {
-                  reasoning.remove();
+                  stages.replaceChildren();
+                  appendProcessStages(stages, state.liveProcessStages, 'live', true);
+                  restoreReasoningViewports();
+                } else if (stages) {
+                  stages.remove();
                 }
 
                 const bubble = item.querySelector('.bubble');
@@ -2170,16 +2261,28 @@ object VexLifeWebP1RuntimeArtifacts {
                 root.dataset.vexLastContextPath = String(result.contextPath ?? '');
                 root.dataset.vexLastPromptReceiptRef = String(result.promptContext?.receiptRef ?? '');
                 root.dataset.vexLastBrowserContextRef = String(result.promptContext?.browserContextRef ?? '');
+                const responseKey = String(result.responseMessageRef ?? '');
                 const reasoning = result.humanReasoning;
                 if (
                   reasoning?.state === 'PRESENT_EPHEMERAL' &&
                   typeof reasoning.text === 'string' &&
                   reasoning.text.length > 0
                 ) {
-                  state.humanReasoningByResponse.set(String(result.responseMessageRef ?? ''), reasoning.text);
+                  state.humanReasoningByResponse.set(responseKey, reasoning.text);
                 } else if (result.responseMessageRef) {
-                  state.humanReasoningByResponse.delete(String(result.responseMessageRef));
-                  state.expandedThoughts.delete(String(result.responseMessageRef));
+                  state.humanReasoningByResponse.delete(responseKey);
+                }
+                if (responseKey && state.liveProcessStages.length) {
+                  state.processStagesByResponse.set(responseKey, snapshotLiveProcessStages());
+                } else if (responseKey) {
+                  state.processStagesByResponse.delete(responseKey);
+                }
+                if (
+                  responseKey &&
+                  !state.humanReasoningByResponse.has(responseKey) &&
+                  !state.processStagesByResponse.has(responseKey)
+                ) {
+                  state.expandedThoughts.delete(responseKey);
                 }
                 if (Array.isArray(result.capabilityUses) && result.capabilityUses.length > 0) {
                   state.reachesByResponse.set(String(result.responseMessageRef ?? ''), result.capabilityUses);
@@ -2201,6 +2304,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.streamPhase = null;
                 state.streamedContent = '';
                 state.streamedReasoning = '';
+                state.liveProcessStages = [];
                 setCompanionStatus('Ready', 'Ready', result.model ?? '');
                 render();
               };
@@ -2238,12 +2342,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.pending = pending;
                 state.sendInFlight = true;
                 state.liveReaches = [];
+                state.liveProcessStages = [];
                 state.streamPhase = 'CheckingRuntime';
                 state.streamedContent = '';
                 state.streamedReasoning = '';
                 speech.stream = { reply: 0, thought: 0 };
                 if (speech.settings.enabled) audioContext();
-                state.reasoningViewports.set('live', { followTail: true, scrollTop: 0 });
+                resetLiveReasoningViewports();
                 if (!retrying) {
                   ui.draft.value = '';
                   sizeDraft();
@@ -2261,6 +2366,9 @@ object VexLifeWebP1RuntimeArtifacts {
                   await readEventStream(response, (event) => {
                     if (event?.type === 'PHASE') {
                       state.streamPhase = String(event.phase ?? '');
+                      if (event.providerStageIndex) {
+                        ensureLiveProcessStage(event.providerStageIndex, event.providerModelRef);
+                      }
                       if (state.streamPhase === 'CheckingRuntime') {
                         setCompanionStatus('Checking', 'Checking Vex', '');
                       } else if (state.streamPhase === 'Reconnecting') {
@@ -2274,27 +2382,18 @@ object VexLifeWebP1RuntimeArtifacts {
                     if (event?.type === 'REASONING_DELTA' && typeof event.delta === 'string') {
                       state.streamPhase = 'Reasoning';
                       state.streamedReasoning += event.delta;
+                      const stage = ensureLiveProcessStage(event.providerStageIndex, event.providerModelRef);
+                      if (stage) stage.reasoning += event.delta;
                       setCompanionStatus('Checking', 'Thinking', '');
                       updateLiveTurn();
                       followStreamSpeech(false);
                       return;
                     }
                     if (event?.type === 'REACH' && event.reach) {
-                      // A request Vex made (state absent) or what came back (state present). The
-                      // returned event settles the newest open request of the same handle/action.
                       const use = event.reach;
-                      let settled = false;
-                      if (use.state) {
-                        for (let index = state.liveReaches.length - 1; index >= 0; index -= 1) {
-                          const open = state.liveReaches[index];
-                          if (!open.state && open.handle === use.handle && open.action === use.action) {
-                            state.liveReaches[index] = use;
-                            settled = true;
-                            break;
-                          }
-                        }
-                      }
-                      if (!settled) state.liveReaches.push(use);
+                      const stage = ensureLiveProcessStage(event.providerStageIndex, event.providerModelRef);
+                      if (stage) settleReach(stage.reaches, use);
+                      settleReach(state.liveReaches, use);
                       setCompanionStatus('Checking', reachText(use), '');
                       updateLiveTurn();
                       return;
@@ -2302,6 +2401,8 @@ object VexLifeWebP1RuntimeArtifacts {
                     if (event?.type === 'CONTENT_DELTA' && typeof event.delta === 'string') {
                       state.streamPhase = 'Responding';
                       state.streamedContent += event.delta;
+                      const stage = ensureLiveProcessStage(event.providerStageIndex, event.providerModelRef);
+                      if (stage) stage.responding = true;
                       setCompanionStatus('Checking', 'Responding', '');
                       updateLiveTurn();
                       followStreamSpeech(false);
@@ -2345,6 +2446,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   }
 
                   state.sendInFlight = false;
+                  state.liveProcessStages = [];
                   if (retireAttempt) {
                     state.pending = null;
                     if (!ui.draft.value) ui.draft.value = pending.content;
