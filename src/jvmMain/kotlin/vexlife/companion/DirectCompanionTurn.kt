@@ -53,6 +53,10 @@ object DirectCompanionTurn {
         val delta: String? = null,
         val accumulatedCharacters: Int = 0,
         val reach: VexLifeCapabilityBridge.Use? = null,
+        /** 1-based provider stage identity assigned by this turn owner; null outside provider work. */
+        val providerStageIndex: Int? = null,
+        /** Exact Product model identity serving [providerStageIndex]. */
+        val providerModelRef: String? = null,
     )
 
     fun interface ProgressObserver {
@@ -198,6 +202,8 @@ object DirectCompanionTurn {
 
     private class SourceReturnProgressGate(
         private val observer: ProgressObserver?,
+        private val providerStageIndex: Int,
+        private val providerModelRef: String,
     ) {
         // Only assistant content is gated while it may still become the machine-only source-return
         // control. Reasoning is the human's explicitly-open ephemeral thought stream and must remain
@@ -265,8 +271,10 @@ object DirectCompanionTurn {
             ) {
                 SourceReturnProgressMode.HumanAnswer ->
                     projectProviderProgress(
-                        observer,
-                        progress,
+                        observer = observer,
+                        progress = progress,
+                        providerStageIndex = providerStageIndex,
+                        providerModelRef = providerModelRef,
                     )
 
                 SourceReturnProgressMode.InternalControl ->
@@ -278,8 +286,10 @@ object DirectCompanionTurn {
                     ) {
                         DirectCompanionConnection.ProgressKind.Reasoning ->
                             projectProviderProgress(
-                                observer,
-                                progress,
+                                observer = observer,
+                                progress = progress,
+                                providerStageIndex = providerStageIndex,
+                                providerModelRef = providerModelRef,
                             )
 
                         DirectCompanionConnection.ProgressKind.Content -> {
@@ -323,8 +333,10 @@ object DirectCompanionTurn {
             pending.forEach {
                 progress ->
                 projectProviderProgress(
-                    observer,
-                    progress,
+                    observer = observer,
+                    progress = progress,
+                    providerStageIndex = providerStageIndex,
+                    providerModelRef = providerModelRef,
                 )
             }
         }
@@ -566,12 +578,6 @@ object DirectCompanionTurn {
                             currentRequest = request,
                             issuedAt = hooks.now(),
                         )
-                    emitProgress(
-                        hooks.progressObserver,
-                        Progress(
-                            phase = ProgressPhase.Generating,
-                        ),
-                    )
                     val providerTurn =
                         performProviderTurn(
                             conversationOwner = this,
@@ -866,6 +872,7 @@ object DirectCompanionTurn {
         var stageRuntimeEvidence = initialRuntimeEvidence
         var sourceReturnTrace: DirectConversationSourceReturn.Trace? = null
         val exchanges = mutableListOf<VexLifeCapabilityBridge.Exchange>()
+        var providerStageIndex = 0
 
         fun exchangeMessages(): List<CompanionProviderMessage> =
             exchanges.flatMap { listOf(it.assistantMessage, it.resultMessage) }
@@ -880,8 +887,10 @@ object DirectCompanionTurn {
             }
 
         while (true) {
+            providerStageIndex += 1
             val stage =
                 invokeProviderStage(
+                    providerStageIndex = providerStageIndex,
                     runtimeEvidence = stageRuntimeEvidence,
                     messages = base.materialization.messages + exchangeMessages(),
                     hooks = hooks,
@@ -892,7 +901,15 @@ object DirectCompanionTurn {
             val capabilityRequest = stage.capabilityRequest
             if (capabilityRequest != null) {
                 val pendingUse = VexLifeCapabilityBridge.describeUse(capabilityRequest)
-                emitProgress(hooks.progressObserver, Progress(phase = ProgressPhase.Reaching, reach = pendingUse))
+                emitProgress(
+                    hooks.progressObserver,
+                    Progress(
+                        phase = ProgressPhase.Reaching,
+                        reach = pendingUse,
+                        providerStageIndex = providerStageIndex,
+                        providerModelRef = stageRuntimeEvidence.modelRef,
+                    ),
+                )
                 val usedTokens = exchangeMessages().sumOf { DirectPromptContext.estimatedMessageTokens(it.content) }
                 val exchange =
                     VexLifeCapabilityBridge.perform(
@@ -913,7 +930,15 @@ object DirectCompanionTurn {
                         estimateTokens = DirectPromptContext::estimatedMessageTokens,
                     )
                 exchanges += exchange
-                emitProgress(hooks.progressObserver, Progress(phase = ProgressPhase.Reached, reach = exchange.use))
+                emitProgress(
+                    hooks.progressObserver,
+                    Progress(
+                        phase = ProgressPhase.Reached,
+                        reach = exchange.use,
+                        providerStageIndex = providerStageIndex,
+                        providerModelRef = stageRuntimeEvidence.modelRef,
+                    ),
+                )
 
                 stageRuntimeEvidence = sameRuntime()
                 // The base prompt is reused, so it must still be current at this provider boundary.
@@ -1234,15 +1259,29 @@ object DirectCompanionTurn {
     }
 
     private fun invokeProviderStage(
+        providerStageIndex: Int,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
         messages: List<CompanionProviderMessage>,
         hooks: Hooks,
         sourceReturnRequestAllowed: Boolean,
         capabilityRequestsAllowed: Boolean,
     ): ProviderStage {
+        require(providerStageIndex > 0) {
+            "provider stage index must be positive"
+        }
+        emitProgress(
+            hooks.progressObserver,
+            Progress(
+                phase = ProgressPhase.Generating,
+                providerStageIndex = providerStageIndex,
+                providerModelRef = runtimeEvidence.modelRef,
+            ),
+        )
         val progressGate =
             SourceReturnProgressGate(
-                hooks.progressObserver,
+                observer = hooks.progressObserver,
+                providerStageIndex = providerStageIndex,
+                providerModelRef = runtimeEvidence.modelRef,
             )
         // Recorded before the call so a provider that never answers still leaves its request in
         // the chronology. The stage says whether a source-return request is still admitted.
@@ -1307,6 +1346,8 @@ object DirectCompanionTurn {
     private fun projectProviderProgress(
         observer: ProgressObserver?,
         progress: DirectCompanionConnection.Progress,
+        providerStageIndex: Int,
+        providerModelRef: String,
     ) {
         emitProgress(
             observer,
@@ -1324,6 +1365,8 @@ object DirectCompanionTurn {
                 delta = progress.delta,
                 accumulatedCharacters =
                     progress.accumulatedCharacters,
+                providerStageIndex = providerStageIndex,
+                providerModelRef = providerModelRef,
             ),
         )
     }
