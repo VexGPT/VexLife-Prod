@@ -754,14 +754,46 @@ class DirectCompanionTurnTest {
                         "VEXLIFE_SELF_CAPABILITY_FRAME/v1",
                     ),
                 )
+                assertTrue(call.body.contains("not something I narrate"))
+                assertTrue(
+                    call.body.contains(
+                        "Nothing has been retrieved until a real VEXLIFE_CAPABILITY_RESULT/v1"
+                    )
+                )
+                assertTrue(
+                    call.body.contains(
+                        "currentInferenceModelRef=" + HereticProductIdentity.ModelRef
+                    )
+                )
+                assertTrue(
+                    call.body.contains(
+                        "UI turn numbers are not carried in these provider messages"
+                    )
+                )
                 val content =
                     when (
                         calls
                     ) {
-                        1 ->
+                        1 -> {
+                            assertTrue(
+                                call.body.contains(
+                                    "inferenceContinuityRelation=NO_PRIOR_COMPLETED_VEX_REPLY"
+                                )
+                            )
                             "First response"
+                        }
 
                         2 -> {
+                            assertTrue(
+                                call.body.contains(
+                                    "priorVexReplyModelRef=" + HereticProductIdentity.ModelRef
+                                )
+                            )
+                            assertTrue(
+                                call.body.contains(
+                                    "inferenceContinuityRelation=SAME_RUNTIME_BINDING_AS_PRIOR_VEX_REPLY"
+                                )
+                            )
                             assertTrue(
                                 call.body.contains(
                                     "First request",
