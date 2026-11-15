@@ -753,6 +753,10 @@ class DirectConversationSourceReturnTest {
                         turnRef = "turn.source-return.project",
                         requestMessageRef = "message.source-return.human.project",
                         content = "Distinctive orchard memory source phrase.",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-12T00:00:04Z",
+                            ),
                     )
                 val response =
                     appendResponse(
@@ -763,6 +767,10 @@ class DirectConversationSourceReturnTest {
                         endpointOrigin = "http://127.0.0.1:8765",
                         runtimeObservationRef = "observation.source-return.project",
                         invocationEvidenceRef = "evidence.source-return.project",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-12T00:00:05Z",
+                            ),
                     )
                 val context =
                     CanonicalLivedContextFixture.write(
@@ -795,11 +803,16 @@ class DirectConversationSourceReturnTest {
                                     DirectConversationSourceReturn.AnySpeaker,
                             ),
                     )
+                val historicalRuntimeModel =
+                    "model.vexlife-prod.heretic.source-return-test"
                 val returned =
                     DirectConversationSourceReturn.project(
                         discovery = discovery,
                         availableTokens =
                             DirectPromptContext.InputTokenBudget,
+                        runtimeModelRefForTurn = {
+                            historicalRuntimeModel
+                        },
                     )
 
                 assertEquals(
@@ -818,6 +831,26 @@ class DirectConversationSourceReturnTest {
                 assertTrue(
                     returned.systemContent.contains(
                         response.content,
+                    ),
+                )
+                assertTrue(
+                    returned.systemContent.contains(
+                        "\"formedAt\":\"2026-11-12T00:00:04Z\"",
+                    ),
+                )
+                assertTrue(
+                    returned.systemContent.contains(
+                        "\"formedAt\":\"2026-11-12T00:00:05Z\"",
+                    ),
+                )
+                assertTrue(
+                    returned.systemContent.contains(
+                        "\"conversationModelOrNull\":\"default_model\"",
+                    ),
+                )
+                assertTrue(
+                    returned.systemContent.contains(
+                        "\"runtimeModelRefOrNull\":\"$historicalRuntimeModel\"",
                     ),
                 )
                 assertEquals(
@@ -840,6 +873,9 @@ class DirectConversationSourceReturnTest {
                         availableTokens =
                             returned.estimatedSystemMessageTokens -
                                 1,
+                        runtimeModelRefForTurn = {
+                            historicalRuntimeModel
+                        },
                     )
                 assertEquals(
                     DirectConversationSourceReturn.HeldTokenBudget,
