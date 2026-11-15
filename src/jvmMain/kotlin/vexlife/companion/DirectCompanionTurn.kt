@@ -53,6 +53,10 @@ object DirectCompanionTurn {
         val delta: String? = null,
         val accumulatedCharacters: Int = 0,
         val reach: VexLifeCapabilityBridge.Use? = null,
+        /** 1-based provider stage identity assigned by this turn owner; null outside provider work. */
+        val providerStageIndex: Int? = null,
+        /** Exact Product model identity serving this provider stage. */
+        val providerModelRef: String? = null,
     )
 
     fun interface ProgressObserver {
@@ -198,6 +202,9 @@ object DirectCompanionTurn {
 
     private class SourceReturnProgressGate(
         private val observer: ProgressObserver?,
+        private val providerStageIndex: Int,
+        private val providerModelRef: String,
+        private val onFirstProviderProgress: ((DirectCompanionConnection.Progress) -> Unit)? = null,
     ) {
         // Only assistant content is gated while it may still become the machine-only source-return
         // control. Reasoning is the human's explicitly-open ephemeral thought stream and must remain
@@ -209,17 +216,35 @@ object DirectCompanionTurn {
             StringBuilder()
         private var mode =
             SourceReturnProgressMode.Pending
+        private var firstProviderProgressObserved =
+            false
 
         fun connectionObserver(): DirectCompanionConnection.ProgressObserver? =
-            observer
-                ?.let {
-                    DirectCompanionConnection.ProgressObserver {
-                        progress ->
-                        observe(
-                            progress,
-                        )
+            if (
+                observer ==
+                    null &&
+                    onFirstProviderProgress ==
+                    null
+            ) {
+                null
+            } else {
+                DirectCompanionConnection.ProgressObserver {
+                    progress ->
+                    if (
+                        !firstProviderProgressObserved
+                    ) {
+                        firstProviderProgressObserved =
+                            true
+                        onFirstProviderProgress
+                            ?.invoke(
+                                progress,
+                            )
                     }
+                    observe(
+                        progress,
+                    )
                 }
+            }
 
         fun finish(
             finalContent: String,
@@ -265,8 +290,10 @@ object DirectCompanionTurn {
             ) {
                 SourceReturnProgressMode.HumanAnswer ->
                     projectProviderProgress(
-                        observer,
-                        progress,
+                        observer = observer,
+                        progress = progress,
+                        providerStageIndex = providerStageIndex,
+                        providerModelRef = providerModelRef,
                     )
 
                 SourceReturnProgressMode.InternalControl ->
@@ -278,9 +305,11 @@ object DirectCompanionTurn {
                     ) {
                         DirectCompanionConnection.ProgressKind.Reasoning ->
                             projectProviderProgress(
-                                observer,
-                                progress,
-                            )
+                        observer = observer,
+                        progress = progress,
+                        providerStageIndex = providerStageIndex,
+                        providerModelRef = providerModelRef,
+                    )
 
                         DirectCompanionConnection.ProgressKind.Content -> {
                             bufferedContent +=
@@ -323,9 +352,11 @@ object DirectCompanionTurn {
             pending.forEach {
                 progress ->
                 projectProviderProgress(
-                    observer,
-                    progress,
-                )
+                        observer = observer,
+                        progress = progress,
+                        providerStageIndex = providerStageIndex,
+                        providerModelRef = providerModelRef,
+                    )
             }
         }
     }
@@ -566,12 +597,6 @@ object DirectCompanionTurn {
                             currentRequest = request,
                             issuedAt = hooks.now(),
                         )
-                    emitProgress(
-                        hooks.progressObserver,
-                        Progress(
-                            phase = ProgressPhase.Generating,
-                        ),
-                    )
                     val providerTurn =
                         performProviderTurn(
                             conversationOwner = this,
@@ -866,6 +891,8 @@ object DirectCompanionTurn {
         var stageRuntimeEvidence = initialRuntimeEvidence
         var sourceReturnTrace: DirectConversationSourceReturn.Trace? = null
         val exchanges = mutableListOf<VexLifeCapabilityBridge.Exchange>()
+        var providerStageIndex =
+            0
 
         fun exchangeMessages(): List<CompanionProviderMessage> =
             exchanges.flatMap { listOf(it.assistantMessage, it.resultMessage) }
@@ -880,8 +907,11 @@ object DirectCompanionTurn {
             }
 
         while (true) {
+            providerStageIndex +=
+                1
             val stage =
                 invokeProviderStage(
+                    providerStageIndex = providerStageIndex,
                     runtimeEvidence = stageRuntimeEvidence,
                     messages = base.materialization.messages + exchangeMessages(),
                     hooks = hooks,
@@ -892,7 +922,15 @@ object DirectCompanionTurn {
             val capabilityRequest = stage.capabilityRequest
             if (capabilityRequest != null) {
                 val pendingUse = VexLifeCapabilityBridge.describeUse(capabilityRequest)
-                emitProgress(hooks.progressObserver, Progress(phase = ProgressPhase.Reaching, reach = pendingUse))
+                emitProgress(
+                    hooks.progressObserver,
+                    Progress(
+                        phase = ProgressPhase.Reaching,
+                        reach = pendingUse,
+                        providerStageIndex = providerStageIndex,
+                        providerModelRef = stageRuntimeEvidence.modelRef,
+                    ),
+                )
                 val usedTokens = exchangeMessages().sumOf { DirectPromptContext.estimatedMessageTokens(it.content) }
                 val exchange =
                     VexLifeCapabilityBridge.perform(
@@ -913,7 +951,15 @@ object DirectCompanionTurn {
                         estimateTokens = DirectPromptContext::estimatedMessageTokens,
                     )
                 exchanges += exchange
-                emitProgress(hooks.progressObserver, Progress(phase = ProgressPhase.Reached, reach = exchange.use))
+                emitProgress(
+                    hooks.progressObserver,
+                    Progress(
+                        phase = ProgressPhase.Reached,
+                        reach = exchange.use,
+                        providerStageIndex = providerStageIndex,
+                        providerModelRef = stageRuntimeEvidence.modelRef,
+                    ),
+                )
 
                 stageRuntimeEvidence = sameRuntime()
                 // The base prompt is reused, so it must still be current at this provider boundary.
@@ -1234,23 +1280,55 @@ object DirectCompanionTurn {
     }
 
     private fun invokeProviderStage(
+        providerStageIndex: Int,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
         messages: List<CompanionProviderMessage>,
         hooks: Hooks,
         sourceReturnRequestAllowed: Boolean,
         capabilityRequestsAllowed: Boolean,
     ): ProviderStage {
+        require(
+            providerStageIndex >
+                0,
+        ) {
+            "provider stage index must be positive"
+        }
+        emitProgress(
+            hooks.progressObserver,
+            Progress(
+                phase = ProgressPhase.Generating,
+                providerStageIndex = providerStageIndex,
+                providerModelRef = runtimeEvidence.modelRef,
+            ),
+        )
         val progressGate =
             SourceReturnProgressGate(
-                hooks.progressObserver,
+                observer = hooks.progressObserver,
+                providerStageIndex = providerStageIndex,
+                providerModelRef = runtimeEvidence.modelRef,
+                onFirstProviderProgress = {
+                    progress ->
+                    VexLogger.record(
+                        VexLogger.Fact.ProviderStreamFirstProgressObserved,
+                        mapOf(
+                            "runtimeReceiptRef" to runtimeEvidence.runtimeReceiptRef,
+                            "stageIndex" to providerStageIndex.toString(),
+                            "modelRef" to runtimeEvidence.modelRef,
+                            "progressKind" to progress.kind.name,
+                            "characters" to progress.accumulatedCharacters.toString(),
+                        ),
+                    )
+                },
             )
         // Recorded before the call so a provider that never answers still leaves its request in
-        // the chronology. The stage says whether a source-return request is still admitted.
+        // the chronology. Stage identity comes from this turn owner, not from presentation timing.
         VexLogger.record(
             VexLogger.Fact.ProviderInvocationRequested,
             mapOf(
                 "runtimeReceiptRef" to runtimeEvidence.runtimeReceiptRef,
-                "stage" to if (sourceReturnRequestAllowed) "initial" else "final",
+                "stageIndex" to providerStageIndex.toString(),
+                "modelRef" to runtimeEvidence.modelRef,
+                "sourceReturn" to if (sourceReturnRequestAllowed) "admitted" else "exhausted",
                 "capabilityRequests" to if (capabilityRequestsAllowed) "admitted" else "exhausted",
                 "messageCount" to messages.size.toString(),
                 "approxChars" to messages.sumOf { it.content.length }.toString(),
@@ -1297,6 +1375,30 @@ object DirectCompanionTurn {
             throw RepeatedSourceReturnRequestException()
         }
 
+        val outcome =
+            when {
+                capabilityRequest !=
+                    null ->
+                    "CAPABILITY_REQUEST"
+
+                sourceReturnRequest !=
+                    null ->
+                    "CONVERSATION_SOURCE_RETURN"
+
+                else ->
+                    "HUMAN_RESPONSE"
+            }
+        VexLogger.record(
+            VexLogger.Fact.ProviderInvocationCompleted,
+            mapOf(
+                "runtimeReceiptRef" to runtimeEvidence.runtimeReceiptRef,
+                "stageIndex" to providerStageIndex.toString(),
+                "modelRef" to runtimeEvidence.modelRef,
+                "outcome" to outcome,
+                "observationRef" to inference.runtimeObservation.observationRef,
+            ),
+        )
+
         return ProviderStage(
             inference = inference,
             sourceReturnRequest = sourceReturnRequest,
@@ -1307,6 +1409,8 @@ object DirectCompanionTurn {
     private fun projectProviderProgress(
         observer: ProgressObserver?,
         progress: DirectCompanionConnection.Progress,
+        providerStageIndex: Int,
+        providerModelRef: String,
     ) {
         emitProgress(
             observer,
@@ -1324,6 +1428,8 @@ object DirectCompanionTurn {
                 delta = progress.delta,
                 accumulatedCharacters =
                     progress.accumulatedCharacters,
+                providerStageIndex = providerStageIndex,
+                providerModelRef = providerModelRef,
             ),
         )
     }
