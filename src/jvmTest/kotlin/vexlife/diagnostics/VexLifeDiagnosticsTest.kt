@@ -59,8 +59,12 @@ class VexLifeDiagnosticsTest {
 
             diagnostics.control(VexLifeDiagnosticsFamily.ControlStartEnhanced)
             assertIs<VexLifeDiagnosticsFamily.RecordingEnhanced>(diagnostics.state())
+            diagnostics.beginProviderStreamTrace("send.expiring")
+            diagnostics.observeProviderStreamTrace("send.expiring", reasoningDelta = "temporary thought")
+            assertEquals(1, diagnostics.providerStreamTraces().size)
             now = now.plusSeconds(3 * 3600)
             assertEquals(VexLifeDiagnosticsFamily.Recording, diagnostics.state(), "it ends by itself")
+            assertTrue(diagnostics.providerStreamTraces().isEmpty(), "expired enhanced capture erases stream traces")
 
             val failure = home.resolve("recovery/direct-companion/turn.json")
             Files.createDirectories(failure.parent)
@@ -104,6 +108,58 @@ class VexLifeDiagnosticsTest {
             assertTrue(contents.contains("TURN_FAILED"))
             assertTrue(contents.contains("\"humanContentIncluded\":false"))
             assertFalse(contents.contains(conversationSecret), "Conversation never enters the export")
+        }
+    }
+
+    @Test
+    fun enhancedCaptureKeepsOnlyThirtyRecentProviderStreamsAndExportsThemExplicitly() {
+        withHome { home ->
+            val diagnostics = VexLifeDiagnostics(home, sha)
+
+            diagnostics.beginProviderStreamTrace("send.not-enabled")
+            assertTrue(diagnostics.providerStreamTraces().isEmpty(), "normal diagnostics must not retain model stream text")
+
+            diagnostics.control(VexLifeDiagnosticsFamily.ControlStartEnhanced)
+            repeat(35) { index ->
+                val key = "send.$index"
+                diagnostics.beginProviderStreamTrace(key)
+                diagnostics.observeProviderStreamTrace(
+                    idempotencyKey = key,
+                    reasoningDelta = "reasoning-$index",
+                    contentDelta = "content-$index",
+                )
+                diagnostics.finishProviderStreamTrace(
+                    idempotencyKey = key,
+                    turnRef = "turn.$index",
+                    outcome = "TURN_COMPLETED",
+                    failureCode = null,
+                )
+            }
+
+            val traces = diagnostics.providerStreamTraces()
+            assertEquals(30, traces.size)
+            assertEquals("send.5", traces.first().idempotencyKey)
+            assertEquals("send.34", traces.last().idempotencyKey)
+            assertEquals("reasoning-34", traces.last().reasoning)
+            assertEquals("content-34", traces.last().content)
+
+            val names = mutableListOf<String>()
+            val contents = StringBuilder()
+            ZipInputStream(ByteArrayInputStream(diagnostics.export())).use { zip ->
+                while (true) {
+                    val entry = zip.nextEntry ?: break
+                    names += entry.name
+                    contents.append(String(zip.readAllBytes()))
+                }
+            }
+            assertTrue(names.contains("enhanced/provider-stream-traces.json"))
+            assertTrue(contents.contains(""modelStreamContentIncluded":true"))
+            assertTrue(contents.contains("reasoning-34"))
+            assertTrue(contents.contains("content-34"))
+            assertFalse(contents.contains("reasoning-0"), "oldest traces must be evicted from the bounded ring")
+
+            diagnostics.control(VexLifeDiagnosticsFamily.ControlStopEnhanced)
+            assertTrue(diagnostics.providerStreamTraces().isEmpty(), "stopping enhanced capture erases raw stream traces")
         }
     }
 
