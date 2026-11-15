@@ -290,11 +290,11 @@ object DirectCompanionTurn {
             ) {
                 SourceReturnProgressMode.HumanAnswer ->
                     projectProviderProgress(
-                        observer = observer,
-                        progress = progress,
-                        providerStageIndex = providerStageIndex,
-                        providerModelRef = providerModelRef,
-                    )
+                    observer = observer,
+                    progress = progress,
+                    providerStageIndex = providerStageIndex,
+                    providerModelRef = providerModelRef,
+                )
 
                 SourceReturnProgressMode.InternalControl ->
                     Unit
@@ -305,11 +305,11 @@ object DirectCompanionTurn {
                     ) {
                         DirectCompanionConnection.ProgressKind.Reasoning ->
                             projectProviderProgress(
-                        observer = observer,
-                        progress = progress,
-                        providerStageIndex = providerStageIndex,
-                        providerModelRef = providerModelRef,
-                    )
+                                observer = observer,
+                                progress = progress,
+                                providerStageIndex = providerStageIndex,
+                                providerModelRef = providerModelRef,
+                            )
 
                         DirectCompanionConnection.ProgressKind.Content -> {
                             bufferedContent +=
@@ -911,6 +911,7 @@ object DirectCompanionTurn {
                 1
             val stage =
                 invokeProviderStage(
+                    turnRef = currentRequest.turnRef,
                     providerStageIndex = providerStageIndex,
                     runtimeEvidence = stageRuntimeEvidence,
                     messages = base.materialization.messages + exchangeMessages(),
@@ -1302,6 +1303,7 @@ object DirectCompanionTurn {
     }
 
     private fun invokeProviderStage(
+        turnRef: String,
         providerStageIndex: Int,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
         messages: List<CompanionProviderMessage>,
@@ -1333,6 +1335,7 @@ object DirectCompanionTurn {
                     VexLogger.record(
                         VexLogger.Fact.ProviderStreamFirstProgressObserved,
                         mapOf(
+                            "turnRef" to turnRef,
                             "runtimeReceiptRef" to runtimeEvidence.runtimeReceiptRef,
                             "stageIndex" to providerStageIndex.toString(),
                             "modelRef" to runtimeEvidence.modelRef,
@@ -1347,6 +1350,7 @@ object DirectCompanionTurn {
         VexLogger.record(
             VexLogger.Fact.ProviderInvocationRequested,
             mapOf(
+                "turnRef" to turnRef,
                 "runtimeReceiptRef" to runtimeEvidence.runtimeReceiptRef,
                 "stageIndex" to providerStageIndex.toString(),
                 "modelRef" to runtimeEvidence.modelRef,
@@ -1386,19 +1390,18 @@ object DirectCompanionTurn {
         ) {
             "provider output resembles an incomplete Conversation source-return control request"
         }
-        if (capabilityRequest != null && !capabilityRequestsAllowed) {
-            throw CapabilityRequestLimitException()
-        }
-        if (
-            !sourceReturnRequestAllowed &&
-            sourceReturnRequest !=
-                null
-        ) {
-            throw RepeatedSourceReturnRequestException()
-        }
-
         val outcome =
             when {
+                capabilityRequest !=
+                    null &&
+                    !capabilityRequestsAllowed ->
+                    "CAPABILITY_REQUEST_LIMIT_EXCEEDED"
+
+                !sourceReturnRequestAllowed &&
+                    sourceReturnRequest !=
+                        null ->
+                    "REPEATED_CONVERSATION_SOURCE_RETURN"
+
                 capabilityRequest !=
                     null ->
                     "CAPABILITY_REQUEST"
@@ -1413,6 +1416,7 @@ object DirectCompanionTurn {
         VexLogger.record(
             VexLogger.Fact.ProviderInvocationCompleted,
             mapOf(
+                "turnRef" to turnRef,
                 "runtimeReceiptRef" to runtimeEvidence.runtimeReceiptRef,
                 "stageIndex" to providerStageIndex.toString(),
                 "modelRef" to runtimeEvidence.modelRef,
@@ -1420,6 +1424,17 @@ object DirectCompanionTurn {
                 "observationRef" to inference.runtimeObservation.observationRef,
             ),
         )
+
+        if (capabilityRequest != null && !capabilityRequestsAllowed) {
+            throw CapabilityRequestLimitException()
+        }
+        if (
+            !sourceReturnRequestAllowed &&
+            sourceReturnRequest !=
+                null
+        ) {
+            throw RepeatedSourceReturnRequestException()
+        }
 
         return ProviderStage(
             inference = inference,
