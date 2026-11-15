@@ -2286,6 +2286,16 @@ object DirectPromptContext {
                     }
                 }
                 add("- conversation: exact older turns of this Conversation, through its own source-return form (once per turn).")
+                add(
+                    "When I need one of these reads, reaching is the next stage of this same turn, " +
+                        "not something I narrate. I stop composing the human-facing answer and make " +
+                        "the request my whole reply for this provider stage.",
+                )
+                add(
+                    "Nothing has been retrieved until a real ${VexLifeCapabilityRequest.ResultHeader} " +
+                        "message comes back. Writing a request inside prose or a code example is only " +
+                        "text; I do not invent or report a result that did not return.",
+                )
                 add("To ask, my whole reply is the header line and one JSON object, nothing else:")
                 add(VexLifeCapabilityRequest.RequestHeader)
                 add("""{"capability":"web","action":"fetch","arguments":{"url":"https://example.com/"}}""")
