@@ -71,6 +71,18 @@ class VexLifeProdLocalService private constructor(
             it.startObserving()
         }
 
+    /** Settings → Models; the model this service's runtime serves is the one it started with. */
+    private val models =
+        vexlife.model.VexLifeModels(
+            productHome = Path.of(startupSetup.productHome),
+            servingModelRef = { startupSetup.qualifiedRuntimeEvidence.modelRef },
+            totalMemoryBytes = {
+                runCatching {
+                    vexlife.model.heretic.runtime.HereticMacHostProfile.observeCurrent().observation.totalMemoryBytes
+                }.getOrNull()
+            },
+        )
+
     private val privateCompletion =
         privateCompletionOverride
             ?: VexLifePrivateConversation.Completion { messages ->
@@ -500,6 +512,7 @@ class VexLifeProdLocalService private constructor(
 
     override fun close() {
         runCatching { diagnostics.close() }
+        runCatching { models.close() }
         var visionCloseFailure: Throwable? =
             null
 
@@ -638,6 +651,18 @@ class VexLifeProdLocalService private constructor(
                 }
 
                 VexLifeProdServiceContract.DiagnosticsControlPath -> handleDiagnosticsControl(exchange)
+
+                VexLifeProdServiceContract.ModelsPath -> {
+                    requireMethod(exchange, "GET")
+                    respondJson(exchange = exchange, status = 200, value = models.projection())
+                }
+
+                VexLifeProdServiceContract.ModelsControlPath -> {
+                    requireMethod(exchange, "POST")
+                    requireJson(exchange)
+                    val request = JsonCodec.decodeFromString<ModelControlRequest>(requestText(exchange))
+                    respondJson(exchange = exchange, status = 200, value = models.control(request.controlRef, request.handle))
+                }
 
                 VexLifeProdServiceContract.DiagnosticsExportPath -> handleDiagnosticsExport(exchange)
 
@@ -1137,6 +1162,9 @@ class VexLifeProdLocalService private constructor(
 
     @kotlinx.serialization.Serializable
     private data class DiagnosticsControlRequest(val controlRef: String)
+
+    @kotlinx.serialization.Serializable
+    private data class ModelControlRequest(val controlRef: String, val handle: String)
 
     private fun handleDiagnosticsControl(exchange: HttpExchange) {
         requireMethod(exchange, "POST")

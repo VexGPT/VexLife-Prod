@@ -10,7 +10,8 @@
     },
     "dataKeyOwners": {
       "diagnostics": "VexLifeDiagnosticsFamily (state, control refs) and the debug export route",
-      "capability": "VexLifeCapabilityBridge uses (handle:action), shown to the person as reach"
+      "capability": "VexLifeCapabilityBridge uses (handle:action), shown to the person as reach",
+      "model": "VexLifeModelsFamily (files, control refs) and HereticModelCatalog standing"
     }
   },
   "workspace.heading.diagnostics": {
@@ -256,6 +257,265 @@
     },
     "surfaces": [
       "workspace.conversation"
+    ]
+  },
+  "workspace.heading.models": {
+    "strings": {
+      "en": {
+        "text": "Models"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.models": {
+    "strings": {
+      "en": {
+        "text": "Choose which local Heretic model Vex thinks with. Smaller models answer sooner and need less memory. Download a model to add it, and remove models you don't use to free space — they stay here to download again."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-facts": {
+    "strings": {
+      "en": {
+        "text": "{size} GiB · wants {memory} GiB memory · {fit}"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-fits": {
+    "strings": {
+      "en": {
+        "text": "fits this Mac"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-tight": {
+    "strings": {
+      "en": {
+        "text": "more than this Mac has"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-candidate": {
+    "strings": {
+      "en": {
+        "text": "new — not yet lived-tested"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "model:standing:CANDIDATE"
+  },
+  "workspace.status.model-on-this-mac": {
+    "strings": {
+      "en": {
+        "text": "on this Mac"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "model:files:PRESENT"
+  },
+  "workspace.status.model-not-downloaded": {
+    "strings": {
+      "en": {
+        "text": "not downloaded"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "model:files:ABSENT"
+  },
+  "workspace.status.model-partly-downloaded": {
+    "strings": {
+      "en": {
+        "text": "partly downloaded"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "model:files:PARTIAL"
+  },
+  "workspace.status.model-damaged": {
+    "strings": {
+      "en": {
+        "text": "files damaged"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "model:files:DAMAGED"
+  },
+  "workspace.status.model-downloading": {
+    "strings": {
+      "en": {
+        "text": "downloading {done} of {total} GiB"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-serving": {
+    "strings": {
+      "en": {
+        "text": "Vex is using this model now"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-chosen-next-start": {
+    "strings": {
+      "en": {
+        "text": "Vex switches to this model the next time VexLife starts"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-chosen": {
+    "strings": {
+      "en": {
+        "text": "chosen"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.button.model-use": {
+    "strings": {
+      "en": {
+        "text": "Use"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "model:control:USE_MODEL"
+  },
+  "workspace.button.model-download": {
+    "strings": {
+      "en": {
+        "text": "Download"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "model:control:DOWNLOAD_MODEL"
+  },
+  "workspace.button.model-redownload": {
+    "strings": {
+      "en": {
+        "text": "Download again"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "model:control:REDOWNLOAD_MODEL"
+  },
+  "workspace.button.model-remove": {
+    "strings": {
+      "en": {
+        "text": "Remove"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "model:control:REMOVE_MODEL"
+  },
+  "workspace.status.model-control-not-lawful": {
+    "strings": {
+      "en": {
+        "text": "That isn't possible for this model right now."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-chosen-restart": {
+    "strings": {
+      "en": {
+        "text": "Chosen. Restart VexLife (open VexLife Setup and press Start) to switch to it."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-removed": {
+    "strings": {
+      "en": {
+        "text": "Removed — {freed} GiB freed."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-downloaded": {
+    "strings": {
+      "en": {
+        "text": "Downloaded and verified."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-download-failed": {
+    "strings": {
+      "en": {
+        "text": "The download didn't finish: {reason}"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.models-switch-pending": {
+    "strings": {
+      "en": {
+        "text": "Vex switches to the chosen model the next time VexLife starts."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-free-space": {
+    "strings": {
+      "en": {
+        "text": "{free} GiB free on this disk"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
     ]
   }
 }

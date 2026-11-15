@@ -43,6 +43,20 @@
         "zh"
       ]
     },
+    "setup.button.change-model": {
+      "enHash": "abc1462eb6ff",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
     "setup.button.check-again": {
       "enHash": "d33bc082b9ee",
       "langs": [
@@ -297,6 +311,20 @@
     },
     "setup.description.choose-language": {
       "enHash": "0cf5671e3f22",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.choose-model": {
+      "enHash": "1c4925bef950",
       "langs": [
         "ar",
         "de",
@@ -967,6 +995,20 @@
         "zh"
       ]
     },
+    "setup.heading.choose-model": {
+      "enHash": "3ea2993ce7b7",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
     "setup.heading.could-not-check-mac": {
       "enHash": "338d4a43ddb8",
       "langs": [
@@ -1401,6 +1443,20 @@
         "zh"
       ]
     },
+    "setup.label.found-chosen-model": {
+      "enHash": "4c14777c6932",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
     "setup.label.found-free-space": {
       "enHash": "44bb38c09ea0",
       "langs": [
@@ -1487,6 +1543,20 @@
     },
     "setup.label.memory-amount": {
       "enHash": "b2db80bcf414",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.model-choice": {
+      "enHash": "b31a32c37540",
       "langs": [
         "ar",
         "de",
@@ -1919,6 +1989,34 @@
         "zh"
       ]
     },
+    "setup.status.model-fits": {
+      "enHash": "b7cf00fdd907",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.model-needs-memory": {
+      "enHash": "82be12dba07b",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
     "setup.status.model-not-downloaded": {
       "enHash": "abec8e489162",
       "langs": [
@@ -1963,6 +2061,20 @@
     },
     "setup.status.model-present": {
       "enHash": "e8ed18047920",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.model-recommended": {
+      "enHash": "8874a2845a73",
       "langs": [
         "ar",
         "de",
@@ -2257,6 +2369,22 @@
       "enHash": "7bccecad1203",
       "langs": []
     },
+    "workspace.button.model-download": {
+      "enHash": "c996a8b49be3",
+      "langs": []
+    },
+    "workspace.button.model-redownload": {
+      "enHash": "88f028115fd5",
+      "langs": []
+    },
+    "workspace.button.model-remove": {
+      "enHash": "48d919b10693",
+      "langs": []
+    },
+    "workspace.button.model-use": {
+      "enHash": "99cbaa8ea1dd",
+      "langs": []
+    },
     "workspace.description.diagnostics": {
       "enHash": "7b79ef07573f",
       "langs": []
@@ -2273,8 +2401,16 @@
       "enHash": "b228dfcf5fd2",
       "langs": []
     },
+    "workspace.description.models": {
+      "enHash": "3f9eef16b166",
+      "langs": []
+    },
     "workspace.heading.diagnostics": {
       "enHash": "d6991174308f",
+      "langs": []
+    },
+    "workspace.heading.models": {
+      "enHash": "c595dae8d3cd",
       "langs": []
     },
     "workspace.label.diagnostics-no-records": {
@@ -2283,6 +2419,38 @@
     },
     "workspace.label.diagnostics-records": {
       "enHash": "4059f0d4ba0d",
+      "langs": []
+    },
+    "workspace.label.model-candidate": {
+      "enHash": "7eacf88f9467",
+      "langs": []
+    },
+    "workspace.label.model-chosen": {
+      "enHash": "9ab2badc2956",
+      "langs": []
+    },
+    "workspace.label.model-chosen-next-start": {
+      "enHash": "7792d0eb69cc",
+      "langs": []
+    },
+    "workspace.label.model-facts": {
+      "enHash": "5e8423a7151c",
+      "langs": []
+    },
+    "workspace.label.model-fits": {
+      "enHash": "b7cf00fdd907",
+      "langs": []
+    },
+    "workspace.label.model-free-space": {
+      "enHash": "23215e90e89b",
+      "langs": []
+    },
+    "workspace.label.model-serving": {
+      "enHash": "f278a138aa4e",
+      "langs": []
+    },
+    "workspace.label.model-tight": {
+      "enHash": "8368cc93803d",
       "langs": []
     },
     "workspace.label.reach-state": {
@@ -2307,6 +2475,50 @@
     },
     "workspace.status.diagnostics-unavailable": {
       "enHash": "394035d406e5",
+      "langs": []
+    },
+    "workspace.status.model-chosen-restart": {
+      "enHash": "2f5c0fbd8b77",
+      "langs": []
+    },
+    "workspace.status.model-control-not-lawful": {
+      "enHash": "633a30d3a33e",
+      "langs": []
+    },
+    "workspace.status.model-damaged": {
+      "enHash": "596aa74d71cf",
+      "langs": []
+    },
+    "workspace.status.model-download-failed": {
+      "enHash": "f96db2b232d8",
+      "langs": []
+    },
+    "workspace.status.model-downloaded": {
+      "enHash": "f8d0450b01b6",
+      "langs": []
+    },
+    "workspace.status.model-downloading": {
+      "enHash": "2482ade68a63",
+      "langs": []
+    },
+    "workspace.status.model-not-downloaded": {
+      "enHash": "0174c76dec2c",
+      "langs": []
+    },
+    "workspace.status.model-on-this-mac": {
+      "enHash": "417f48cc1333",
+      "langs": []
+    },
+    "workspace.status.model-partly-downloaded": {
+      "enHash": "efcbb51277d3",
+      "langs": []
+    },
+    "workspace.status.model-removed": {
+      "enHash": "2ee3915aac45",
+      "langs": []
+    },
+    "workspace.status.models-switch-pending": {
+      "enHash": "d2afd49aeb2a",
       "langs": []
     },
     "workspace.status.reach-atlas": {

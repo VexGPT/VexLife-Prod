@@ -11,6 +11,7 @@ import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.entry.VexLifeProdEntryFamily
 import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.platform.macos.MacUserLaunchdProcess
 import vexlife.service.VexLifeProdMacServiceLifetime
 import vexlife.service.VexLifeProdServiceContract
@@ -293,6 +294,56 @@ class VexLifeProdMacFrontDoorTest {
     }
 
     @Test
+    fun runningPriorProductCannotMaskPendingSelectedModelAcquisition() {
+        val model = HereticModelCatalog.Candidate9B
+        val pendingModel =
+            currentState().copy(
+                freeStorageBytes = 100L * 1024L * 1024L * 1024L,
+                modelSelectionState = "HERETIC_ESTABLISHMENT_PENDING",
+                activeModelRef = model.modelRef,
+                activeModelProfileRef = model.identity.modelProfileRef,
+                modelMinimumMemoryBytes = model.recommendedMemoryBytes,
+                runtimeState = "ESTABLISHMENT_PENDING",
+                modelArtifactState = "ABSENT",
+                modelArtifactTotalBytes = model.totalBytes,
+                modelArtifactPresentBySizeBytes = 0L,
+                modelArtifactMissingBytes = model.totalBytes,
+                modelArtifactInvalidSizeBytes = 0L,
+            )
+        val runningPrior =
+            VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned(
+                receipt = receipt(prior),
+                sourceCurrentness = currentness(prior),
+            )
+        val modelHooks =
+            hooks(
+                existing = runningPrior,
+                runtimeEnvironmentPresent = false,
+                current = pendingModel,
+            )
+
+        val projection =
+            VexLifeProdMacFrontDoor.observeWithHooks(
+                desiredSourceSha = desired,
+                productHome = selectedHome,
+                hooks = modelHooks,
+            )
+        val resolved =
+            VexLifeProdMacFrontDoor.resolveTypedControlWithHooks(
+                desiredSourceSha = desired,
+                productHome = selectedHome,
+                controlRef = VexLifeProdEntryFamily.ControlSetUp,
+                hooks = modelHooks,
+            )
+
+        assertEquals(VexLifeProdEntryFamily.StateSetupRequired, projection.semanticStateRef)
+        assertEquals(model.modelRef, projection.setupPlan?.modelRef)
+        val converge = requireNotNull(resolved.effect as? VexLifeProdEntryFamily.ConvergeProduct)
+        assertTrue(converge.allowAcquisition)
+        assertTrue(converge.allowRuntimeStart)
+    }
+
+    @Test
     fun ownedUnhealthyServiceMapsToRepairMeaningWithoutDuplicatingPlatformDecisionLogic() {
         val currentRepair =
             VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(
@@ -369,6 +420,35 @@ class VexLifeProdMacFrontDoorTest {
         assertEquals(VexLifeProdEntryFamily.StateHeldUnknown, projection.semanticStateRef)
         assertEquals("receipt/PID ownership is not exact", projection.serviceDetail)
         assertNull(projection.displayState.primaryControlRef)
+    }
+
+    @Test
+    fun aModelChosenInTheWindowIsSavedBeforeSetUpAndAgainAfterAHomeIsFormed() {
+        val order = mutableListOf<String>()
+        VexLifeProdMacFrontDoorProcess.activateWithHooks(
+            productHome = selectedHome,
+            controlRef = VexLifeProdEntryFamily.ControlFormHome,
+            desiredSourceSha = desired,
+            model = "heretic-4b",
+            hooks =
+                VexLifeProdMacFrontDoorProcess.ActivationHooks(
+                    persistModel = { _, model ->
+                        order += "PERSIST:" + model.handle
+                        order.count { it.startsWith("PERSIST") } > 1
+                    },
+                    resolveControl = { _, controlRef, _ ->
+                        VexLifeProdMacFrontDoor.ResolvedControl(
+                            semanticStateRef = VexLifeProdEntryFamily.StateHomeFormationRequired,
+                            controlRef = controlRef,
+                            effect = VexLifeProdEntryFamily.FormCanonicalHome,
+                        )
+                    },
+                    formHome = { _, _ -> order += "FORM_HOME" },
+                    convergeProduct = { _, _, _, _ -> order += "CONVERGE" },
+                    observeSemanticStateRef = { _, _ -> VexLifeProdEntryFamily.StateSetupRequired },
+                ),
+        )
+        assertEquals(listOf("PERSIST:heretic-4b", "FORM_HOME", "PERSIST:heretic-4b"), order)
     }
 
     @Test

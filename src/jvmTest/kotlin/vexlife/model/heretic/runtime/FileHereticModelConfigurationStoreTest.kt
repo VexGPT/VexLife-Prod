@@ -216,6 +216,56 @@ class FileHereticModelConfigurationStoreTest {
                 .deleteRecursively()
         }
     }
+
+    @Test
+    fun aPersonChoosesAnotherModelAndOnlyThatModelsRuntimeCanBindIt() {
+        val parent = Files.createTempDirectory("vexlife-prod-model-choice-").toAbsolutePath()
+        val home = parent.resolve(".vexlife")
+        try {
+            val fixture = CanonicalVexLifeHomeFixture.form(home)
+            val store = FileHereticModelConfigurationStore(home)
+            store.selectHeretic(fixture.manifest)
+            store.bindQualified(manifest = fixture.manifest, qualifiedRuntime = qualifiedRuntime())
+            assertEquals(vexlife.model.heretic.HereticModelCatalog.Certified27B, store.selectedModel(fixture.manifest))
+
+            val nine = vexlife.model.heretic.HereticModelCatalog.Candidate9B
+            val switched = store.selectModel(fixture.manifest, nine)
+            assertEquals("HERETIC_MODEL_SWITCHED_PENDING", switched.state)
+            assertEquals(HereticModelConfiguration.State.EstablishmentPending, switched.value.state)
+            assertEquals(nine, store.selectedModel(fixture.manifest))
+            assertEquals("HERETIC_ALREADY_SELECTED_PENDING", store.selectModel(fixture.manifest, nine).state)
+
+            // The 27B runtime that was serving this Home cannot bind it now that it chose 9B.
+            assertFailsWith<IllegalArgumentException> {
+                store.bindQualified(manifest = fixture.manifest, qualifiedRuntime = qualifiedRuntime())
+            }
+            val nineRuntime =
+                HereticModelConfiguration.QualifiedRuntimeEvidence(
+                    runtimeReceiptRef = "receipt.vexlife-prod.heretic.nine",
+                    runtimeState = HereticRuntimeState.Qualified,
+                    modelRef = nine.identity.modelRef,
+                    modelProfileRef = nine.identity.modelProfileRef,
+                    artifactRef = nine.identity.artifactSetRef,
+                    artifactContentSetSha256 = nine.identity.artifactContentSetSha256,
+                    runtimeAdapterRef = nine.identity.runtimeAdapterRef,
+                    runtimeClass = nine.identity.runtimeClass,
+                    endpoint = nine.identity.endpoint,
+                    requestModel = nine.identity.requestModel,
+                    qualification = HereticRuntimeQualification.qualified(),
+                )
+            val bound =
+                store.bindQualified(
+                    manifest = fixture.manifest,
+                    qualifiedRuntime = nineRuntime,
+                    runtimeReceiptPath = HereticProductIdentity.ProductRuntimeReceiptRelativePath,
+                )
+            assertEquals(HereticModelConfiguration.State.BoundProductModel, bound.value.state)
+            assertEquals(nine.modelRef, bound.value.modelRef)
+            assertEquals("HERETIC_ALREADY_BOUND", store.selectModel(fixture.manifest, nine).state)
+        } finally {
+            parent.toFile().deleteRecursively()
+        }
+    }
 }
 
 // [VXG RealForever]

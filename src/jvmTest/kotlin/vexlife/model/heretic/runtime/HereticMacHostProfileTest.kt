@@ -65,7 +65,11 @@ class HereticMacHostProfileTest {
                 ) to
                     "ARCHITECTURE_UNSUPPORTED",
                 eligible.copy(
-                    chipModel = "Apple M4 Max",
+                    chipModel = "Intel(R) Core(TM) i9",
+                ) to
+                    "CHIP_MODEL_UNSUPPORTED",
+                eligible.copy(
+                    chipModel = null,
                 ) to
                     "CHIP_MODEL_UNSUPPORTED",
                 eligible.copy(
