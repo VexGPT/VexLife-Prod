@@ -1581,6 +1581,12 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 const bubble = document.createElement('div');
                 bubble.className = 'bubble';
+                if (typeof attempt.partialContent === 'string' && attempt.partialContent.trim()) {
+                  const partial = document.createElement('p');
+                  partial.className = 'failed-attempt-partial';
+                  partial.textContent = attempt.partialContent;
+                  bubble.append(partial);
+                }
                 const detail = document.createElement('p');
                 detail.textContent =
                   String(attempt.failureCode ?? 'TURN_FAILED') +
@@ -2663,6 +2669,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   // terminal truth. Presentation transport is not authority to erase process state.
                   freezeLiveProcess();
                   const interruptedProcess = snapshotLiveProcess();
+                  const interruptedContent = state.streamedContent;
 
                   let terminalError = error;
                   let status = Number(error?.vexStatus ?? 0);
@@ -2693,8 +2700,12 @@ object VexLifeWebP1RuntimeArtifacts {
                       browserContext: pending.browserContext ?? null,
                       failureCode: String(failure.code ?? terminalError?.name ?? 'TURN_FAILED'),
                       exactNextSafeRoute: failure.exactNextSafeRoute ?? null,
-                      processEntries: interruptedProcess
+                      processEntries: interruptedProcess,
+                      partialContent: interruptedContent
                     });
+                    if (state.failedAttempts.length > 30) {
+                      state.failedAttempts.splice(0, state.failedAttempts.length - 30);
+                    }
                     state.pending = null;
                     clearLiveProcessState();
                     setCompanionStatus('Unavailable', 'Send failed', '');
