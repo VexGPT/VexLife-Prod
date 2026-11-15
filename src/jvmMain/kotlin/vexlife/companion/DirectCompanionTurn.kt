@@ -776,6 +776,13 @@ object DirectCompanionTurn {
             )
         val initialPrior =
             conversationOwner.immediatePriorCompletedTurn()
+        val priorRuntimeObservation =
+            initialPrior
+                ?.let { priorTurn ->
+                    DirectTurnContextStore(productHome)
+                        .read(priorTurn.head.turnRef)
+                        ?.runtimeObservation
+                }
         DirectWorkingContinuity.requireSuccessorContextCurrent(
             productHome = productHome,
             prior = initialPrior,
@@ -810,6 +817,7 @@ object DirectCompanionTurn {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = initialRuntimeEvidence,
+                priorRuntimeObservation = priorRuntimeObservation,
                 sourceReturnProtocolEnabled = true,
                 foundationalField = hooks.currentFoundationalField(),
             )
@@ -851,6 +859,7 @@ object DirectCompanionTurn {
             browserContext = browserContext,
             personContext = personContext,
             runtimeEvidence = initialRuntimeEvidence,
+            priorRuntimeObservation = priorRuntimeObservation,
             sourceReturnProtocolEnabled = true,
             foundationalField = hooks.currentFoundationalField(),
         )
@@ -934,6 +943,7 @@ object DirectCompanionTurn {
                     browserContext = browserContext,
                     personContext = personContext,
                     runtimeEvidence = stageRuntimeEvidence,
+                    priorRuntimeObservation = priorRuntimeObservation,
                     sourceReturnProtocolEnabled = baseSourceReturnProtocolEnabled,
                     sourceReturnDiscovery = baseDiscovery,
                     foundationalField = hooks.currentFoundationalField(),
@@ -1015,6 +1025,7 @@ object DirectCompanionTurn {
                     browserContext = browserContext,
                     personContext = personContext,
                     runtimeEvidence = finalRuntimeEvidence,
+                    priorRuntimeObservation = priorRuntimeObservation,
                     sourceReturnProtocolEnabled = false,
                     sourceReturnDiscovery = discovery,
                     foundationalField = hooks.currentFoundationalField(),
@@ -1065,6 +1076,7 @@ object DirectCompanionTurn {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = finalRuntimeEvidence,
+                priorRuntimeObservation = priorRuntimeObservation,
                 sourceReturnProtocolEnabled = false,
                 sourceReturnDiscovery = discovery,
                 foundationalField = hooks.currentFoundationalField(),
@@ -1130,6 +1142,7 @@ object DirectCompanionTurn {
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        priorRuntimeObservation: DirectCompanionConnection.RuntimeObservation?,
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
@@ -1160,6 +1173,7 @@ object DirectCompanionTurn {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
+                priorRuntimeObservation = priorRuntimeObservation,
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
                 sourceReturnDiscovery = sourceReturnDiscovery,
@@ -1200,6 +1214,7 @@ object DirectCompanionTurn {
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        priorRuntimeObservation: DirectCompanionConnection.RuntimeObservation?,
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
@@ -1224,6 +1239,7 @@ object DirectCompanionTurn {
             browserContext = browserContext,
             personContext = personContext,
             runtimeEvidence = runtimeEvidence,
+            priorRuntimeObservation = priorRuntimeObservation,
             sourceReturnProtocolEnabled =
                 sourceReturnProtocolEnabled,
             sourceReturnDiscovery = sourceReturnDiscovery,
