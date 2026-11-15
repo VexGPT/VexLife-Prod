@@ -142,7 +142,10 @@ normalized final RuntimeObservation
 + optional compact source-return Trace
   raw provider body not persisted
   raw model path not persisted
-  raw reasoning not persisted
+  raw reasoning not persisted by Conversation / Context / Memory
+  explicit Diagnostics Enhanced Capture may temporarily retain a bounded recent reasoning/response
+  stream trace for debugging; that trace is diagnostics-owned, local-only, expires/clears, and is
+  never model input, Conversation, Memory, training or publication
   internal control response not persisted as Conversation
         ↓
 one RESPONSE event durable
@@ -335,6 +338,8 @@ reasoning deltas
 -> ephemeral browser-session custody
 -> visible while Viewable thoughts is enabled
 -> never canonical Conversation / Memory / training / publication
+-> optional explicit Diagnostics Enhanced Capture may also hold a bounded temporary debugging copy
+   (last 30 provider attempts; local diagnostics only; never model input)
 
 content deltas
 -> progressive in-flight Vex answer
@@ -377,7 +382,12 @@ EPHEMERAL HUMAN REASONING
 != MODEL INPUT
 != TRAINING
 != PUBLICATION
-!= DURABLE STORE
+
+DIAGNOSTICS ENHANCED CAPTURE
+= EXPLICIT TEMPORARY DEBUG CUSTODY
+!= PRODUCT MEMORY
+!= MODEL INPUT
+!= CANONICAL CONVERSATION
 ~~~
 
 The Product Send now restores the historical live Companion relationship without weakening the
