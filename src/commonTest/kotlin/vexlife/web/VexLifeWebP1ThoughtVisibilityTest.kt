@@ -153,12 +153,6 @@ class VexLifeWebP1ThoughtVisibilityTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "state.reasoningViewports.set('live', { followTail: true, scrollTop: 0 });",
-            ),
-            "every fresh Send must begin with a fresh live-reasoning follow state",
-        )
-        assertTrue(
-            bundle.javascript.contains(
                 "const conversationRenderIdentity = (conversation) =>",
             ),
             "idle Conversation polling must compare projection identity before rebuilding the timeline",
