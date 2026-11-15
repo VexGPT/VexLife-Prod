@@ -51,7 +51,8 @@ class HereticPersistentRuntimeTest {
         var spawnedAlive = true
         var qualificationFailure = false
         var healthFailure = false
-        var healthyNow = true
+        var generationReadiness =
+            HereticPersistentRuntime.GenerationReadiness.Available
         var cancel = false
         var clock = 0L
         var retireCalls = 0
@@ -138,12 +139,13 @@ class HereticPersistentRuntimeTest {
             )
         }
 
-        override fun healthy(
+        override fun generationReadiness(
             binding: HereticPersistentRuntime.Binding,
-        ): Boolean {
+        ): HereticPersistentRuntime.GenerationReadiness {
             trace +=
-                "HEALTHY"
-            return healthyNow
+                "GENERATION_READINESS_" +
+                    generationReadiness.name
+            return generationReadiness
         }
 
         override fun waitUntilHealthy(
@@ -348,8 +350,11 @@ class HereticPersistentRuntimeTest {
                 trace,
         )
         assertFalse(
-            "HEALTHY" in
-                trace,
+            trace.any {
+                it.startsWith(
+                    "GENERATION_READINESS_",
+                )
+            },
         )
         assertFalse(
             "WAIT_HEALTHY" in
@@ -456,8 +461,8 @@ class HereticPersistentRuntimeTest {
                                 exactOwnedDetachedGroup = true,
                             ),
                         )
-                    it.healthyNow =
-                        false
+                    it.generationReadiness =
+                        HereticPersistentRuntime.GenerationReadiness.Unknown
                 }
 
         val evidence =
@@ -472,8 +477,11 @@ class HereticPersistentRuntimeTest {
             evidence.runtimeReceiptRef,
         )
         assertFalse(
-            "HEALTHY" in
-                trace,
+            trace.any {
+                it.startsWith(
+                    "GENERATION_READINESS_",
+                )
+            },
         )
         assertFalse(
             "WAIT_HEALTHY" in
@@ -514,8 +522,8 @@ class HereticPersistentRuntimeTest {
                 .also {
                     it.alivePids +=
                         prior.runtime.pid
-                    it.healthyNow =
-                        false
+                    it.generationReadiness =
+                        HereticPersistentRuntime.GenerationReadiness.Available
                     it.qualificationFailure =
                         true
                     it.spawnedPid =
@@ -544,8 +552,11 @@ class HereticPersistentRuntimeTest {
                 platform.alivePids,
         )
         assertFalse(
-            "HEALTHY" in
-                trace,
+            trace.any {
+                it.startsWith(
+                    "GENERATION_READINESS_",
+                )
+            },
         )
         assertTrue(
             "QUALIFY" in
@@ -555,6 +566,61 @@ class HereticPersistentRuntimeTest {
             "SPAWN" in
                 trace,
         )
+    }
+
+    @Test
+    fun explicitGenerationUnavailableRotatesExactOwnedRuntimeBeforeReplacement() {
+        val trace = mutableListOf<String>()
+        val current = binding()
+        val prior = receipt(current)
+        val store = Store(prior, trace)
+        val platform =
+            Platform(trace).also {
+                it.alivePids += prior.runtime.pid
+                it.generationReadiness =
+                    HereticPersistentRuntime.GenerationReadiness.Unavailable
+                it.spawnedPid = prior.runtime.pid + 1
+            }
+
+        val result = HereticPersistentRuntime.startOrReuse(current, store, platform)
+
+        assertEquals(
+            "RECOVERED_UNAVAILABLE_GENERATION_AND_STARTED_NEW_EXACT_MLX_RUNTIME",
+            result.disposition,
+        )
+        assertEquals(1, platform.retireCalls)
+        assertTrue(trace.indexOf("RETIRE_Qualified") < trace.indexOf("SPAWN"))
+        assertTrue(trace.contains("STORE_DELETE"))
+        assertTrue(trace.contains("GENERATION_READINESS_Unavailable"))
+        assertEquals(prior.runtime.pid + 1, result.pid)
+        assertEquals(HereticRuntimeState.Qualified, store.value?.state)
+    }
+
+    @Test
+    fun unknownGenerationReadinessPreservesExactOwnedRuntimeWithoutReplacement() {
+        val trace = mutableListOf<String>()
+        val current = binding()
+        val prior = receipt(current)
+        val store = Store(prior, trace)
+        val platform =
+            Platform(trace).also {
+                it.alivePids += prior.runtime.pid
+                it.generationReadiness =
+                    HereticPersistentRuntime.GenerationReadiness.Unknown
+                it.spawnedPid = prior.runtime.pid + 1
+            }
+
+        val error =
+            assertFailsWith<IllegalStateException> {
+                HereticPersistentRuntime.startOrReuse(current, store, platform)
+            }
+
+        assertTrue(error.message?.contains("generation readiness is unknown") == true)
+        assertEquals(0, platform.retireCalls)
+        assertEquals(prior, store.value)
+        assertTrue(prior.runtime.pid in platform.alivePids)
+        assertFalse(trace.contains("SPAWN"))
+        assertTrue(trace.contains("GENERATION_READINESS_Unknown"))
     }
 
     @Test
