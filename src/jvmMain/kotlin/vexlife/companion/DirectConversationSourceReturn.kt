@@ -180,6 +180,8 @@ object DirectConversationSourceReturn {
                     ProtocolHeader,
                     "If exact older Conversation source that is not already present is necessary to answer the human faithfully, do not guess and do not answer yet.",
                     "Instead emit one source-return control in final assistant content. Do not merely describe it or leave it only in reasoning.",
+                    "Emitting that control ends this provider stage. Do not continue the human-facing answer and do not imagine what the returned source will say.",
+                    "Older source has actually returned only after a later system message begins with $ContextHeader. Until that message exists, nothing was retrieved.",
                     "Never quote or explain the request header in a human answer; emitting that exact header on its own line means you are choosing the internal source-return control.",
                     "Begin the control with this exact request header on its own line:",
                     RequestHeader,
