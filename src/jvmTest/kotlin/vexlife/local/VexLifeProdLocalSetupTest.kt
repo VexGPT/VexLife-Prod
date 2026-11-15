@@ -181,6 +181,165 @@ class VexLifeProdLocalSetupTest {
         )
     }
 
+    private fun sessionResult(
+        evidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
+    ): VexLifeProdLocalSetup.Result =
+        VexLifeProdLocalSetup.Result(
+            state = "LOCAL_HERETIC_FOUNDATION_READY",
+            productHome = "/tmp/vexlife-prod-session-test",
+            homeDisposition = "EXISTING_CANONICAL_VEXLIFE_HOME_BOUND",
+            modelSelectionDisposition = "HERETIC_ALREADY_BOUND",
+            managedPythonDisposition = "REUSED_VERIFIED",
+            artifactDisposition = "HERETIC_ARTIFACTS_MATERIALIZED_EXACT",
+            environmentDisposition = "REUSED_VERIFIED",
+            runtimeDisposition = "REUSED_EXACT_OWNED_MLX_RUNTIME",
+            modelBindingDisposition = "HERETIC_ALREADY_BOUND",
+            modelConfigurationState = HereticModelConfiguration.State.BoundProductModel,
+            qualifiedRuntimeEvidence = evidence,
+            endpoint = evidence.endpoint,
+            requestModel = evidence.requestModel,
+        )
+
+    @Test
+    fun newTurnExplicitGenerationUnavailableRecoversExactlyOnce() {
+        val current =
+            HereticModelConfiguration.QualifiedRuntimeEvidence(
+                runtimeReceiptRef = "receipt.vexlife-prod.heretic.current",
+                runtimeState = HereticRuntimeState.Qualified,
+                modelRef = HereticProductIdentity.ModelRef,
+                modelProfileRef = HereticProductIdentity.ModelProfileRef,
+                artifactRef = HereticProductIdentity.ArtifactSetRef,
+                artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
+                runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
+                runtimeClass = HereticProductIdentity.RuntimeClass,
+                endpoint = HereticProductIdentity.Endpoint,
+                requestModel = HereticProductIdentity.RequestModel,
+                qualification = HereticRuntimeQualification.qualified(),
+            )
+        val recovered =
+            current.copy(
+                runtimeReceiptRef = "receipt.vexlife-prod.heretic.recovered",
+            )
+        var recoveryCalls = 0
+
+        val session =
+            VexLifeProdLocalSetup.Session(
+                result = sessionResult(current),
+                currentRuntimeEvidence = { current },
+                generationReadiness = {
+                    HereticPersistentRuntime.GenerationReadiness.Unavailable
+                },
+                recoverRuntimeEvidence = {
+                    recoveryCalls += 1
+                    recovered
+                },
+            )
+
+        assertEquals(
+            recovered,
+            session.currentQualifiedRuntimeEvidence(),
+        )
+        assertEquals(
+            1,
+            recoveryCalls,
+        )
+    }
+
+    @Test
+    fun newTurnUnknownGenerationReadinessHoldsWithoutRecovery() {
+        val current =
+            HereticModelConfiguration.QualifiedRuntimeEvidence(
+                runtimeReceiptRef = "receipt.vexlife-prod.heretic.current",
+                runtimeState = HereticRuntimeState.Qualified,
+                modelRef = HereticProductIdentity.ModelRef,
+                modelProfileRef = HereticProductIdentity.ModelProfileRef,
+                artifactRef = HereticProductIdentity.ArtifactSetRef,
+                artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
+                runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
+                runtimeClass = HereticProductIdentity.RuntimeClass,
+                endpoint = HereticProductIdentity.Endpoint,
+                requestModel = HereticProductIdentity.RequestModel,
+                qualification = HereticRuntimeQualification.qualified(),
+            )
+        var recoveryCalls = 0
+
+        val session =
+            VexLifeProdLocalSetup.Session(
+                result = sessionResult(current),
+                currentRuntimeEvidence = { current },
+                generationReadiness = {
+                    HereticPersistentRuntime.GenerationReadiness.Unknown
+                },
+                recoverRuntimeEvidence = {
+                    recoveryCalls += 1
+                    current
+                },
+            )
+
+        val error =
+            assertFailsWith<IllegalStateException> {
+                session.currentQualifiedRuntimeEvidence()
+            }
+
+        assertTrue(
+            error.message?.contains(
+                "generation readiness is unknown",
+            ) ==
+                true,
+        )
+        assertEquals(
+            0,
+            recoveryCalls,
+        )
+    }
+
+    @Test
+    fun sameTurnRuntimeReobservationNeverChecksReadinessOrRecovers() {
+        val current =
+            HereticModelConfiguration.QualifiedRuntimeEvidence(
+                runtimeReceiptRef = "receipt.vexlife-prod.heretic.same-turn",
+                runtimeState = HereticRuntimeState.Qualified,
+                modelRef = HereticProductIdentity.ModelRef,
+                modelProfileRef = HereticProductIdentity.ModelProfileRef,
+                artifactRef = HereticProductIdentity.ArtifactSetRef,
+                artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
+                runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
+                runtimeClass = HereticProductIdentity.RuntimeClass,
+                endpoint = HereticProductIdentity.Endpoint,
+                requestModel = HereticProductIdentity.RequestModel,
+                qualification = HereticRuntimeQualification.qualified(),
+            )
+        var readinessCalls = 0
+        var recoveryCalls = 0
+
+        val session =
+            VexLifeProdLocalSetup.Session(
+                result = sessionResult(current),
+                currentRuntimeEvidence = { current },
+                generationReadiness = {
+                    readinessCalls += 1
+                    HereticPersistentRuntime.GenerationReadiness.Unavailable
+                },
+                recoverRuntimeEvidence = {
+                    recoveryCalls += 1
+                    current
+                },
+            )
+
+        assertEquals(
+            current,
+            session.observeCurrentQualifiedRuntimeEvidence(),
+        )
+        assertEquals(
+            0,
+            readinessCalls,
+        )
+        assertEquals(
+            0,
+            recoveryCalls,
+        )
+    }
+
     private fun hooks(
         trace: MutableList<String>,
         host: HereticMacHostProfile.Result = eligibleHost(),
