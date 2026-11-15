@@ -398,24 +398,30 @@ object VexLifeWebP1RuntimeArtifacts {
                   request.onerror = () => reject(request.error ?? new Error('process-history storage could not open'));
                 });
 
-              const processHistoryTransaction = async (mode, work) => {
+              const writeProcessHistoryRecord = async (record) => {
+                const db = await openProcessHistoryDb();
+                try {
+                  await new Promise((resolve, reject) => {
+                    const transaction = db.transaction(PROCESS_HISTORY_STORE, 'readwrite');
+                    transaction.objectStore(PROCESS_HISTORY_STORE).put(record);
+                    transaction.oncomplete = () => resolve();
+                    transaction.onerror = () => reject(transaction.error ?? new Error('process-history write failed'));
+                    transaction.onabort = () => reject(transaction.error ?? new Error('process-history write aborted'));
+                  });
+                } finally {
+                  db.close();
+                }
+              };
+
+              const readAllProcessHistoryRecords = async () => {
                 const db = await openProcessHistoryDb();
                 try {
                   return await new Promise((resolve, reject) => {
-                    const transaction = db.transaction(PROCESS_HISTORY_STORE, mode);
-                    const store = transaction.objectStore(PROCESS_HISTORY_STORE);
-                    let value;
-                    try {
-                      value = work(store, resolve, reject);
-                    } catch (error) {
-                      reject(error);
-                      return;
-                    }
-                    transaction.oncomplete = () => {
-                      if (value !== undefined) resolve(value);
-                    };
-                    transaction.onerror = () => reject(transaction.error ?? new Error('process-history transaction failed'));
-                    transaction.onabort = () => reject(transaction.error ?? new Error('process-history transaction aborted'));
+                    const transaction = db.transaction(PROCESS_HISTORY_STORE, 'readonly');
+                    const request = transaction.objectStore(PROCESS_HISTORY_STORE).getAll();
+                    request.onsuccess = () => resolve(request.result ?? []);
+                    request.onerror = () => reject(request.error ?? new Error('process-history records could not load'));
+                    transaction.onerror = () => reject(transaction.error ?? new Error('process-history read failed'));
                   });
                 } finally {
                   db.close();
@@ -438,48 +444,46 @@ object VexLifeWebP1RuntimeArtifacts {
                   });
                 if (!archivedEntries.length) return;
 
-                await processHistoryTransaction('readwrite', (store) => {
-                  store.put({
-                    messageRef,
-                    savedAt: new Date().toISOString(),
-                    entries: archivedEntries
-                  });
+                await writeProcessHistoryRecord({
+                  messageRef,
+                  savedAt: new Date().toISOString(),
+                  entries: archivedEntries
                 });
               };
 
               const hydrateProcessHistory = async (messages) => {
-                const wanted = new Set(
-                  (messages ?? [])
-                    .filter((message) => message.role === 'vex' && message.messageRef)
-                    .map((message) => String(message.messageRef))
-                );
+                const wanted =
+                  new Set(
+                    (messages ?? [])
+                      .filter(
+                        (message) =>
+                          message.role === 'vex' &&
+                          message.messageRef &&
+                          !state.processEntriesByResponse.has(String(message.messageRef))
+                      )
+                      .map((message) => String(message.messageRef))
+                  );
                 if (!wanted.size) return;
 
-                await processHistoryTransaction('readonly', (store, resolve, reject) => {
-                  const request = store.getAll();
-                  request.onsuccess = () => {
-                    for (const record of request.result ?? []) {
-                      const key = String(record?.messageRef ?? '');
-                      if (!wanted.has(key) || state.processEntriesByResponse.has(key)) continue;
-                      const entries =
-                        Array.isArray(record?.entries)
-                          ? record.entries.flatMap((entry) => {
-                              if (entry?.kind === 'thought') {
-                                const text = String(entry.text ?? '');
-                                return text ? [{ kind: 'thought', text, active: false }] : [];
-                              }
-                              if (entry?.kind === 'reach') {
-                                return [{ kind: 'reach', use: cloneReach(entry.use) }];
-                              }
-                              return [];
-                            })
-                          : [];
-                      if (entries.length) state.processEntriesByResponse.set(key, entries);
-                    }
-                    resolve();
-                  };
-                  request.onerror = () => reject(request.error ?? new Error('process-history records could not load'));
-                });
+                const records = await readAllProcessHistoryRecords();
+                for (const record of records) {
+                  const key = String(record?.messageRef ?? '');
+                  if (!wanted.has(key)) continue;
+                  const entries =
+                    Array.isArray(record?.entries)
+                      ? record.entries.flatMap((entry) => {
+                          if (entry?.kind === 'thought') {
+                            const text = String(entry.text ?? '');
+                            return text ? [{ kind: 'thought', text, active: false }] : [];
+                          }
+                          if (entry?.kind === 'reach') {
+                            return [{ kind: 'reach', use: cloneReach(entry.use) }];
+                          }
+                          return [];
+                        })
+                      : [];
+                  if (entries.length) state.processEntriesByResponse.set(key, entries);
+                }
               };
 
               const currentTheme = () =>
