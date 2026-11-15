@@ -569,6 +569,8 @@ object DirectPromptContext {
             null,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
+        priorRuntimeObservation: DirectCompanionConnection.RuntimeObservation? =
+            null,
         sourceReturnProtocolEnabled: Boolean =
             false,
         foundationalField: VexLifeFoundationalField.Reading? = null,
