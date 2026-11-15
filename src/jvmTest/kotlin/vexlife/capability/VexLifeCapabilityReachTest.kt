@@ -1,7 +1,9 @@
 package vexlife.capability
 
+import java.io.IOException
 import java.net.InetAddress
 import java.net.URI
+import java.net.UnknownHostException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
@@ -135,6 +137,103 @@ class VexLifeCapabilityReachTest {
             assertFalse(VexLifeWebReach.isPublic(InetAddress.getByName(literal)), literal)
         }
         assertTrue(VexLifeWebReach.isPublic(InetAddress.getByName("2606:4700::1111")))
+    }
+
+    @Test
+    fun dnsFailureIsAReadFailureNotAPolicyRefusalAndIsRetriedOnce() {
+        var resolves = 0
+        val resolver =
+            VexLifeWebReach.Resolver {
+                resolves += 1
+                throw UnknownHostException("offline")
+            }
+        val transport =
+            Recorded(
+                mapOf(
+                    "https://example.com/" to response(200, "text/plain", "unused")
+                )
+            )
+
+        val failed =
+            assertIs<VexLifeWebReach.Outcome.Failed>(
+                VexLifeWebReach.fetch("https://example.com/", transport, resolver)
+            )
+
+        assertEquals(VexLifeWebReach.MaximumNetworkAttempts, resolves)
+        assertTrue(failed.reason.contains("DNS lookup failed for example.com"))
+        assertTrue(failed.reason.contains("network may be offline"))
+        assertTrue(transport.requested.isEmpty())
+    }
+
+    @Test
+    fun oneTransientDnsFailureCanRecoverOnTheBoundedRetry() {
+        var resolves = 0
+        val resolver =
+            VexLifeWebReach.Resolver {
+                resolves += 1
+                if (resolves == 1) throw UnknownHostException("temporary outage")
+                listOf(publicAddress)
+            }
+        val transport =
+            Recorded(
+                mapOf(
+                    "https://example.com/" to response(200, "text/plain", "back online")
+                )
+            )
+
+        val fetched =
+            assertIs<VexLifeWebReach.Outcome.Fetched>(
+                VexLifeWebReach.fetch("https://example.com/", transport, resolver)
+            )
+
+        assertEquals(VexLifeWebReach.MaximumNetworkAttempts, resolves)
+        assertEquals("back online", fetched.page.text)
+        assertEquals(listOf(URI("https://example.com/")), transport.requested)
+    }
+
+    @Test
+    fun oneTransientTransportFailureCanRecoverOnTheBoundedRetry() {
+        var attempts = 0
+        val transport =
+            VexLifeWebReach.Transport { request, _ ->
+                attempts += 1
+                if (attempts == 1) throw IOException("network dropped")
+                assertEquals(URI("https://example.com/"), request.uri)
+                response(200, "text/plain", "second attempt")
+            }
+
+        val fetched =
+            assertIs<VexLifeWebReach.Outcome.Fetched>(
+                VexLifeWebReach.fetch("https://example.com/", transport, publicResolver)
+            )
+
+        assertEquals(VexLifeWebReach.MaximumNetworkAttempts, attempts)
+        assertEquals("second attempt", fetched.page.text)
+    }
+
+    @Test
+    fun policyRefusalDoesNotRetryOrTouchTheTransport() {
+        var resolves = 0
+        val resolver =
+            VexLifeWebReach.Resolver {
+                resolves += 1
+                listOf(publicAddress)
+            }
+        var requests = 0
+        val transport =
+            VexLifeWebReach.Transport { _, _ ->
+                requests += 1
+                response(200, "text/plain", "must not run")
+            }
+
+        val refused =
+            assertIs<VexLifeWebReach.Outcome.Refused>(
+                VexLifeWebReach.fetch("http://localhost/", transport, resolver)
+            )
+
+        assertEquals("local network hosts are not read", refused.reason)
+        assertEquals(0, resolves)
+        assertEquals(0, requests)
     }
 
     @Test
