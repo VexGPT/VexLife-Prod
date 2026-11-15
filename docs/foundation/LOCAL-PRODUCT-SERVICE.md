@@ -205,9 +205,11 @@ The ordinary production service delegates exactly once to the live setup Session
 DirectCompanionTurn.perform(session, intent)
 ~~~
 
-The Session re-observes qualified runtime currentness immediately before a new inference. The
-proof-only service constructor may inject a bounded test executor without redefining the ordinary
-route.
+The Session may recover qualified runtime currentness at the boundary of a new human turn before the
+first provider effect. A conditional source-return second inference remains inside that same turn: it
+uses the Session's read-only currentness observation, admits **no recovery**, and must return the same
+runtime receipt already proved for the first provider stage. The proof-only service constructor may
+inject a bounded test executor without redefining the ordinary route.
 
 The existing deterministic idempotencyKey behavior therefore remains authoritative:
 
@@ -215,9 +217,51 @@ The existing deterministic idempotencyKey behavior therefore remains authoritati
 same exact completed attempt
 -> durable result returned
 -> no second provider call
+
+same exact failed attempt
+-> exact failure returned
+-> no provider replay
+
+ambiguous presentation stream
+-> same idempotency key may be re-presented through ordinary Send
+-> durable completed/failed truth wins before presentation calls the outcome unresolved
 ~~~
 
 The service does not invent another idempotency layer.
+
+### Streaming presentation is an observer, not provider custody
+
+The provider stream is consumed by the direct-turn/Connection path. Browser SSE delivery is a
+downstream projection of those progress facts.
+
+~~~text
+provider InputStream
+-> DirectCompanionConnection / DirectCompanionTurn
+-> bounded presentation queue
+-> separate SSE socket writer
+-> browser
+~~~
+
+The provider-reading thread never performs browser `write/flush`. If the browser is slow, stalls,
+disconnects, or fills the bounded presentation queue, live projection may lose deltas or the
+presentation leg may end; it may not stall provider ingestion, capability execution, Conversation
+completion, or turn durability.
+
+The terminal projection is preferred over queued old deltas. If that terminal projection is not
+observed by the browser, the existing same-idempotency Send reconciliation asks the canonical turn
+owner for durable completed/failed truth without replaying the model.
+
+~~~text
+PRESENTATION TRANSPORT PRESSURE
+!= PROVIDER BACKPRESSURE
+
+LOST LIVE DELTA
+!= LOST CANONICAL TURN
+
+BROWSER DISCONNECT
+!= TURN FAILURE
+~~~
+
 
 ## Current-state awareness read side
 
@@ -413,8 +457,12 @@ new Send
 -> DirectCompanionTurn
 -> LocalSetup.Session current-runtime capability
 -> HereticPersistentRuntime.observeCurrentQualified()
--> exact receipt + environment + one matching process + launchd substrate + health
--> provider invocation
+-> exact receipt + environment + one matching process + launchd substrate
+-> provider invocation observes generation readiness through the actual provider relationship
+
+HEALTH NOT OBSERVED
+!= RUNTIME NOT CURRENT
+!= RETIREMENT AUTHORITY
 
 exact completed duplicate
 -> durable result

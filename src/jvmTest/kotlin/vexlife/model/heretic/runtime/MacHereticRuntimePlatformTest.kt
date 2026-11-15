@@ -259,7 +259,7 @@ class MacHereticRuntimePlatformTest {
                     runner,
                 healthProbe =
                     MacHereticRuntimePlatform.HealthProbe {
-                        true
+                        HereticPersistentRuntime.GenerationReadiness.Available
                     },
             )
 
@@ -309,7 +309,7 @@ class MacHereticRuntimePlatformTest {
                     Runner(),
                 healthProbe =
                     MacHereticRuntimePlatform.HealthProbe {
-                        true
+                        HereticPersistentRuntime.GenerationReadiness.Available
                     },
             )
 
@@ -473,7 +473,7 @@ class MacHereticRuntimePlatformTest {
                 commandRunner = Runner(),
                 healthProbe =
                     MacHereticRuntimePlatform.HealthProbe {
-                        true
+                        HereticPersistentRuntime.GenerationReadiness.Available
                     },
             )
 
@@ -531,7 +531,7 @@ class MacHereticRuntimePlatformTest {
                     runner,
                 healthProbe =
                     MacHereticRuntimePlatform.HealthProbe {
-                        true
+                        HereticPersistentRuntime.GenerationReadiness.Available
                     },
             )
 
@@ -630,7 +630,7 @@ class MacHereticRuntimePlatformTest {
                         origin ->
                         healthCalls +=
                             origin
-                        true
+                        HereticPersistentRuntime.GenerationReadiness.Available
                     },
             )
 

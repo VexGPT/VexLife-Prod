@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.security.MessageDigest
 import vexlife.logging.VexLogger
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeEffectBoundary
@@ -127,6 +128,8 @@ object HereticPersistentRuntime {
         val pythonPath: String,
         val pythonEnvironmentRoot: String,
         val implementationIdentity: ImplementationIdentity,
+        /** The catalog model this runtime serves; its identity is what receipts must carry. */
+        val model: HereticModelCatalog.Entry = HereticModelCatalog.Default,
     )
 
     data class ProcessIdentity(
@@ -194,6 +197,19 @@ object HereticPersistentRuntime {
         val verifiedNotLive: Boolean,
     )
 
+    /**
+     * Immediate generation-engine observation, separate from process/substrate currentness.
+     *
+     * Available means mlx-lm explicitly reports that generation can accept work. Unavailable is a
+     * positive engine-level failure (for current mlx-lm, exact /health 503 + status=unavailable).
+     * Unknown means transport/timeout/malformed observation and never authorizes retirement.
+     */
+    enum class GenerationReadiness {
+        Available,
+        Unavailable,
+        Unknown,
+    }
+
     interface Platform {
         val platform: String
         val architecture: String
@@ -243,16 +259,15 @@ object HereticPersistentRuntime {
         ): Retirement
 
         /**
-         * One immediate health observation for an already-qualified runtime.
+         * One immediate generation-readiness observation.
          *
-         * Interactive currentness must never reuse startup's long readiness wait. A false result
-         * means the generation engine is not currently available and the rightful runtime owner may
-         * recover/rotate it.
+         * This is deliberately separate from exact process/substrate currentness. Unknown is not
+         * permission to mutate lifecycle; only Unavailable is positive generation-loss truth.
          */
-        fun healthy(
+        fun generationReadiness(
             binding: Binding,
-        ): Boolean =
-            true
+        ): GenerationReadiness =
+            GenerationReadiness.Available
 
         fun waitUntilHealthy(
             binding: Binding,
@@ -309,15 +324,18 @@ object HereticPersistentRuntime {
         ) {
             "Heretic runtime authorityRef must be one stable ref"
         }
+        val model =
+            HereticModelCatalog.Entries.firstOrNull {
+                it.identity.artifactContentSetSha256 == materialization.contentSetSha256
+            }
         require(
             materialization.state ==
                 "HERETIC_ARTIFACTS_MATERIALIZED_EXACT" &&
-                materialization.contentSetSha256 ==
-                HereticProductIdentity.ArtifactContentSetSha256 &&
+                model != null &&
                 materialization.memberCount ==
-                11,
+                model.members.size,
         ) {
-            "Heretic runtime binding requires exact certified model materialization"
+            "Heretic runtime binding requires one exact catalog model materialization"
         }
         require(
             (
@@ -334,7 +352,7 @@ object HereticPersistentRuntime {
             "Heretic runtime binding requires exact verified Python/mlx-lm environment"
         }
 
-        val model =
+        val modelDirectory =
             absolute(
                 materialization.modelPath,
                 "modelPath",
@@ -361,10 +379,11 @@ object HereticPersistentRuntime {
         return Binding(
             schemaVersion = BindingSchema,
             authorityRef = authorityRef,
-            modelPath = model.toString(),
+            modelPath = modelDirectory.toString(),
             pythonPath = python.toString(),
             pythonEnvironmentRoot = environmentRoot.toString(),
             implementationIdentity = currentImplementationIdentity(),
+            model = model,
         )
     }
 
@@ -492,14 +511,9 @@ object HereticPersistentRuntime {
             platform = platform,
         )
 
-        require(
-            platform.healthy(
-                binding,
-            ),
-        ) {
-            "qualified Heretic runtime generation engine is not healthy"
-        }
-
+        // Currentness is exact receipt/process/substrate truth. A live qualified runtime may
+        // temporarily be busy or slow to answer its generation-health endpoint; that absence of a
+        // readiness observation is not lifecycle authority to replace the process.
         return configurationEvidence(
             binding = binding,
             receipt = receipt,
@@ -562,8 +576,62 @@ object HereticPersistentRuntime {
             store.read()
         var staleImplementationRotated =
             false
+        var switchedModel =
+            false
+        var generationUnavailableRotated =
+            false
+
+        // Model switch: the Home chose another catalog model than the one this exactly owned runtime
+        // serves. The prior receipt is still this Product's own (same authority, environment and
+        // implementation lineage), so it is retired through the same exact-ownership path before the
+        // chosen model starts. A receipt that is not provably ours still fails below.
+        val priorModel =
+            prior?.let { HereticModelCatalog.entry(it.modelRef) }
+        if (
+            prior !=
+                null &&
+                priorModel !=
+                null &&
+                priorModel.modelRef !=
+                binding.model.modelRef &&
+                receiptBinds(
+                    binding.copy(model = priorModel, modelPath = prior.modelPath),
+                    prior,
+                    requireImplementationSha = false,
+                )
+        ) {
+            if (
+                platform.processAlive(
+                    prior.runtime.pid,
+                )
+            ) {
+                requireExactOwnedProcess(
+                    prior,
+                    prior.runtime.args,
+                    platform,
+                )
+            }
+            val retired =
+                platform.retire(
+                    prior,
+                )
+            require(
+                retired.exactOwnershipVerified &&
+                    retired.verifiedNotLive,
+            ) {
+                "the runtime serving ${priorModel.handle} could not be retired before switching to ${binding.model.handle}"
+            }
+            store.delete()
+            switchedModel =
+                true
+            VexLogger.record(
+                VexLogger.Fact.RuntimeModelSwitched,
+                mapOf("from" to priorModel.handle, "to" to binding.model.handle),
+            )
+        }
 
         if (
+            !switchedModel &&
             prior !=
                 null &&
                 !receiptBinds(
@@ -603,7 +671,8 @@ object HereticPersistentRuntime {
             staleImplementationRotated =
                 true
         } else if (
-            prior !=
+            !switchedModel &&
+                prior !=
                 null &&
                 !receiptBinds(
                     binding,
@@ -618,7 +687,8 @@ object HereticPersistentRuntime {
 
         val currentPrior =
             if (
-                staleImplementationRotated
+                staleImplementationRotated ||
+                    switchedModel
             ) {
                 null
             } else {
@@ -673,32 +743,55 @@ object HereticPersistentRuntime {
 
                 if (
                     currentPrior.state ==
-                        HereticRuntimeState.Qualified &&
-                        !platform.healthy(
+                        HereticRuntimeState.Qualified
+                ) {
+                    when (
+                        platform.generationReadiness(
                             binding,
                         )
-                ) {
-                    // A live, exactly owned, qualified runtime that did not answer one immediate
-                    // health observation is retired here. Recorded because "did not answer" is not
-                    // proven "dead": a runtime busy generating can miss the bounded health window,
-                    // and this branch would then replace it mid-work.
-                    VexLogger.record(
-                        VexLogger.Fact.RuntimeRetiredUnhealthy,
-                        mapOf("pid" to pid.toString()),
-                        detail = "qualified runtime alive but health was not observed; retiring before restart",
-                    )
-                    val retired =
-                        platform.retire(
-                            currentPrior,
-                        )
-                    require(
-                        retired.exactOwnershipVerified &&
-                            retired.verifiedNotLive,
                     ) {
-                        "unhealthy qualified Heretic runtime could not be retired before recovery"
+                        GenerationReadiness.Available ->
+                            Unit
+
+                        GenerationReadiness.Unavailable -> {
+                            // Safe lifecycle boundary: exact ownership is already proven and mlx-lm
+                            // positively says its generation worker is unavailable. Recover the
+                            // working predecessor behavior without treating timeout/ambiguity as
+                            // destruction authority.
+                            VexLogger.record(
+                                VexLogger.Fact.RuntimeGenerationUnavailable,
+                                mapOf("pid" to pid.toString()),
+                            )
+                            val retired =
+                                platform.retire(
+                                    currentPrior,
+                                )
+                            require(
+                                retired.exactOwnershipVerified &&
+                                    retired.verifiedNotLive,
+                            ) {
+                                "generation-unavailable exact Heretic runtime could not be retired before recovery"
+                            }
+                            store.delete()
+                            generationUnavailableRotated =
+                                true
+                        }
+
+                        GenerationReadiness.Unknown -> {
+                            VexLogger.record(
+                                VexLogger.Fact.RuntimeGenerationUnknown,
+                                mapOf("pid" to pid.toString()),
+                            )
+                            error(
+                                "qualified Heretic runtime generation readiness is unknown; preserving exact-owned runtime",
+                            )
+                        }
                     }
-                    store.delete()
-                } else {
+                }
+
+                if (
+                    !generationUnavailableRotated
+                ) {
                     if (
                         platform.cancellationRequested()
                     ) {
@@ -943,9 +1036,17 @@ object HereticPersistentRuntime {
         return StartResult(
             disposition =
                 if (
+                    switchedModel
+                ) {
+                    "SWITCHED_MODEL_AND_STARTED_NEW_EXACT_MLX_RUNTIME"
+                } else if (
                     staleImplementationRotated
                 ) {
                     "ROTATED_STALE_IMPLEMENTATION_AND_STARTED_NEW_EXACT_MLX_RUNTIME"
+                } else if (
+                    generationUnavailableRotated
+                ) {
+                    "RECOVERED_UNAVAILABLE_GENERATION_AND_STARTED_NEW_EXACT_MLX_RUNTIME"
                 } else {
                     "STARTED_NEW_EXACT_MLX_RUNTIME"
                 },
@@ -1062,34 +1163,36 @@ object HereticPersistentRuntime {
                 binding,
             )
 
+        val identity =
+            binding.model.identity
         return receipt.schemaVersion ==
             ReceiptSchema &&
             receipt.authorityRef ==
             binding.authorityRef &&
             receipt.modelRef ==
-            HereticProductIdentity.ModelRef &&
+            identity.modelRef &&
             receipt.modelProfileRef ==
-            HereticProductIdentity.ModelProfileRef &&
+            identity.modelProfileRef &&
             receipt.artifactRef ==
-            HereticProductIdentity.ArtifactSetRef &&
+            identity.artifactSetRef &&
             receipt.artifactCustodyEvidenceRef ==
-            HereticProductIdentity.ArtifactCustodyEvidenceRef &&
+            identity.artifactCustodyEvidenceRef &&
             receipt.artifactContentSetSha256 ==
-            HereticProductIdentity.ArtifactContentSetSha256 &&
+            identity.artifactContentSetSha256 &&
             receipt.runtimeAdapterRef ==
-            HereticProductIdentity.RuntimeAdapterRef &&
+            identity.runtimeAdapterRef &&
             receipt.runtimeClass ==
-            HereticProductIdentity.RuntimeClass &&
+            identity.runtimeClass &&
             receipt.transportClass ==
-            HereticProductIdentity.TransportClass &&
+            identity.transportClass &&
             receipt.hostExecutionProfileRef ==
-            HereticProductIdentity.HostExecutionProfileRef &&
+            identity.hostExecutionProfileRef &&
             receipt.pythonVersion ==
-            HereticProductIdentity.PythonVersion &&
+            identity.pythonVersion &&
             receipt.mlxLmVersion ==
-            HereticProductIdentity.MlxLmVersion &&
+            identity.mlxLmVersion &&
             receipt.trainerSourceCommit ==
-            HereticProductIdentity.TrainerSourceCommit &&
+            identity.trainerSourceCommit &&
             receipt.modelPath ==
             binding.modelPath &&
             receipt.pythonPath ==
@@ -1097,9 +1200,9 @@ object HereticPersistentRuntime {
             receipt.pythonEnvironmentRoot ==
             binding.pythonEnvironmentRoot &&
             receipt.endpoint ==
-            HereticProductIdentity.Endpoint &&
+            identity.endpoint &&
             receipt.requestModel ==
-            HereticProductIdentity.RequestModel &&
+            identity.requestModel &&
             receipt.implementationIdentity.repository ==
             binding.implementationIdentity.repository &&
             receipt.implementationIdentity.classResource ==
@@ -1226,23 +1329,23 @@ object HereticPersistentRuntime {
             state = state,
             formedAt = formedAt,
             authorityRef = binding.authorityRef,
-            modelRef = HereticProductIdentity.ModelRef,
-            modelProfileRef = HereticProductIdentity.ModelProfileRef,
-            artifactRef = HereticProductIdentity.ArtifactSetRef,
-            artifactCustodyEvidenceRef = HereticProductIdentity.ArtifactCustodyEvidenceRef,
-            artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
-            runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
-            runtimeClass = HereticProductIdentity.RuntimeClass,
-            transportClass = HereticProductIdentity.TransportClass,
-            hostExecutionProfileRef = HereticProductIdentity.HostExecutionProfileRef,
-            pythonVersion = HereticProductIdentity.PythonVersion,
-            mlxLmVersion = HereticProductIdentity.MlxLmVersion,
-            trainerSourceCommit = HereticProductIdentity.TrainerSourceCommit,
+            modelRef = binding.model.identity.modelRef,
+            modelProfileRef = binding.model.identity.modelProfileRef,
+            artifactRef = binding.model.identity.artifactSetRef,
+            artifactCustodyEvidenceRef = binding.model.identity.artifactCustodyEvidenceRef,
+            artifactContentSetSha256 = binding.model.identity.artifactContentSetSha256,
+            runtimeAdapterRef = binding.model.identity.runtimeAdapterRef,
+            runtimeClass = binding.model.identity.runtimeClass,
+            transportClass = binding.model.identity.transportClass,
+            hostExecutionProfileRef = binding.model.identity.hostExecutionProfileRef,
+            pythonVersion = binding.model.identity.pythonVersion,
+            mlxLmVersion = binding.model.identity.mlxLmVersion,
+            trainerSourceCommit = binding.model.identity.trainerSourceCommit,
             modelPath = binding.modelPath,
             pythonPath = binding.pythonPath,
             pythonEnvironmentRoot = binding.pythonEnvironmentRoot,
-            endpoint = HereticProductIdentity.Endpoint,
-            requestModel = HereticProductIdentity.RequestModel,
+            endpoint = binding.model.identity.endpoint,
+            requestModel = binding.model.identity.requestModel,
             implementationIdentity = binding.implementationIdentity,
             runtime =
                 RuntimeProcess(

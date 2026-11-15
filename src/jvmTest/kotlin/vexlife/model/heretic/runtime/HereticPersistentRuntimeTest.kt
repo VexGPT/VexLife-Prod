@@ -51,7 +51,8 @@ class HereticPersistentRuntimeTest {
         var spawnedAlive = true
         var qualificationFailure = false
         var healthFailure = false
-        var healthyNow = true
+        var generationReadiness =
+            HereticPersistentRuntime.GenerationReadiness.Available
         var cancel = false
         var clock = 0L
         var retireCalls = 0
@@ -138,12 +139,13 @@ class HereticPersistentRuntimeTest {
             )
         }
 
-        override fun healthy(
+        override fun generationReadiness(
             binding: HereticPersistentRuntime.Binding,
-        ): Boolean {
+        ): HereticPersistentRuntime.GenerationReadiness {
             trace +=
-                "HEALTHY"
-            return healthyNow
+                "GENERATION_READINESS_" +
+                    generationReadiness.name
+            return generationReadiness
         }
 
         override fun waitUntilHealthy(
@@ -274,7 +276,7 @@ class HereticPersistentRuntimeTest {
         )
 
     @Test
-    fun currentQualifiedObservationProvesSameProcessWithoutLifecycleMutationOrQualificationChat() {
+    fun currentQualifiedObservationProvesSameProcessWithoutReadinessOrLifecycleMutation() {
         val trace =
             mutableListOf<String>()
         val current =
@@ -347,9 +349,12 @@ class HereticPersistentRuntimeTest {
                 existing.runtime.pid in
                 trace,
         )
-        assertTrue(
-            "HEALTHY" in
-                trace,
+        assertFalse(
+            trace.any {
+                it.startsWith(
+                    "GENERATION_READINESS_",
+                )
+            },
         )
         assertFalse(
             "WAIT_HEALTHY" in
@@ -425,7 +430,7 @@ class HereticPersistentRuntimeTest {
     }
 
     @Test
-    fun currentQualifiedObservationRejectsDeadGenerationEngineWithoutStartupWait() {
+    fun currentQualifiedObservationKeepsReadinessSeparateFromCurrentness() {
         val trace =
             mutableListOf<String>()
         val current =
@@ -456,21 +461,27 @@ class HereticPersistentRuntimeTest {
                                 exactOwnedDetachedGroup = true,
                             ),
                         )
-                    it.healthyNow =
-                        false
+                    it.generationReadiness =
+                        HereticPersistentRuntime.GenerationReadiness.Unknown
                 }
 
-        assertFailsWith<IllegalArgumentException> {
+        val evidence =
             HereticPersistentRuntime.observeCurrentQualified(
                 binding = current,
                 store = store,
                 platform = platform,
             )
-        }
 
-        assertTrue(
-            "HEALTHY" in
-                trace,
+        assertEquals(
+            existing.receiptRef,
+            evidence.runtimeReceiptRef,
+        )
+        assertFalse(
+            trace.any {
+                it.startsWith(
+                    "GENERATION_READINESS_",
+                )
+            },
         )
         assertFalse(
             "WAIT_HEALTHY" in
@@ -480,10 +491,17 @@ class HereticPersistentRuntimeTest {
             "QUALIFY" in
                 trace,
         )
+        assertFalse(
+            trace.any {
+                it.startsWith(
+                    "RETIRE_",
+                )
+            },
+        )
     }
 
     @Test
-    fun liveButUnhealthyQualifiedRuntimeRotatesBeforeReplacement() {
+    fun liveQualifiedRuntimeQualificationFailureDoesNotAuthorizeRetirement() {
         val trace =
             mutableListOf<String>()
         val current =
@@ -504,40 +522,105 @@ class HereticPersistentRuntimeTest {
                 .also {
                     it.alivePids +=
                         prior.runtime.pid
-                    it.healthyNow =
-                        false
+                    it.generationReadiness =
+                        HereticPersistentRuntime.GenerationReadiness.Available
+                    it.qualificationFailure =
+                        true
                     it.spawnedPid =
                         prior.runtime.pid +
                             1
                 }
 
-        val result =
+        assertFailsWith<IllegalStateException> {
             HereticPersistentRuntime.startOrReuse(
                 current,
                 store,
                 platform,
             )
+        }
 
         assertEquals(
-            "STARTED_NEW_EXACT_MLX_RUNTIME",
-            result.disposition,
+            0,
+            platform.retireCalls,
+        )
+        assertEquals(
+            prior,
+            store.value,
+        )
+        assertTrue(
+            prior.runtime.pid in
+                platform.alivePids,
         )
         assertTrue(
             trace.any {
                 it.startsWith(
-                    "RETIRE_",
+                    "GENERATION_READINESS_",
                 )
             },
         )
         assertTrue(
+            "QUALIFY" in
+                trace,
+        )
+        assertFalse(
             "SPAWN" in
                 trace,
         )
+    }
+
+    @Test
+    fun explicitGenerationUnavailableRotatesExactOwnedRuntimeBeforeReplacement() {
+        val trace = mutableListOf<String>()
+        val current = binding()
+        val prior = receipt(current)
+        val store = Store(prior, trace)
+        val platform =
+            Platform(trace).also {
+                it.alivePids += prior.runtime.pid
+                it.generationReadiness =
+                    HereticPersistentRuntime.GenerationReadiness.Unavailable
+                it.spawnedPid = prior.runtime.pid + 1
+            }
+
+        val result = HereticPersistentRuntime.startOrReuse(current, store, platform)
+
         assertEquals(
-            prior.runtime.pid +
-                1,
-            result.pid,
+            "RECOVERED_UNAVAILABLE_GENERATION_AND_STARTED_NEW_EXACT_MLX_RUNTIME",
+            result.disposition,
         )
+        assertEquals(1, platform.retireCalls)
+        assertTrue(trace.indexOf("RETIRE_Qualified") < trace.indexOf("SPAWN"))
+        assertTrue(trace.contains("STORE_DELETE"))
+        assertTrue(trace.contains("GENERATION_READINESS_Unavailable"))
+        assertEquals(prior.runtime.pid + 1, result.pid)
+        assertEquals(HereticRuntimeState.Qualified, store.value?.state)
+    }
+
+    @Test
+    fun unknownGenerationReadinessPreservesExactOwnedRuntimeWithoutReplacement() {
+        val trace = mutableListOf<String>()
+        val current = binding()
+        val prior = receipt(current)
+        val store = Store(prior, trace)
+        val platform =
+            Platform(trace).also {
+                it.alivePids += prior.runtime.pid
+                it.generationReadiness =
+                    HereticPersistentRuntime.GenerationReadiness.Unknown
+                it.spawnedPid = prior.runtime.pid + 1
+            }
+
+        val error =
+            assertFailsWith<IllegalStateException> {
+                HereticPersistentRuntime.startOrReuse(current, store, platform)
+            }
+
+        assertTrue(error.message?.contains("generation readiness is unknown") == true)
+        assertEquals(0, platform.retireCalls)
+        assertEquals(prior, store.value)
+        assertTrue(prior.runtime.pid in platform.alivePids)
+        assertFalse(trace.contains("SPAWN"))
+        assertTrue(trace.contains("GENERATION_READINESS_Unknown"))
     }
 
     @Test
@@ -619,6 +702,80 @@ class HereticPersistentRuntimeTest {
         assertEquals("ROTATED_STALE_IMPLEMENTATION_AND_STARTED_NEW_EXACT_MLX_RUNTIME", result.disposition)
         assertTrue(trace.indexOf("RETIRE_Qualified") < trace.indexOf("SPAWN"))
         assertTrue(trace.contains("STORE_DELETE"))
+    }
+
+    private fun bindingFor(model: vexlife.model.heretic.HereticModelCatalog.Entry): HereticPersistentRuntime.Binding =
+        HereticPersistentRuntime.bind(
+            authorityRef = "authority.vexlife-prod.heretic-runtime.test",
+            materialization =
+                HereticArtifactMaterialization.Result(
+                    state = "HERETIC_ARTIFACTS_MATERIALIZED_EXACT",
+                    modelPath = "/tmp/vexlife-prod-test/" + model.handle,
+                    providerRevision = model.providerRevision,
+                    contentSetSha256 = model.identity.artifactContentSetSha256,
+                    memberCount = model.members.size,
+                    totalBytes = model.totalBytes,
+                    reusedMemberCount = model.members.size,
+                    acquiredMemberCount = 0,
+                    acquisitionPerformed = false,
+                    artifactMutationPerformed = false,
+                ),
+            environment = binding().let {
+                HereticPythonEnvironment.Result(
+                    state = "REUSED_VERIFIED",
+                    pythonEnvironmentRoot = it.pythonEnvironmentRoot,
+                    pythonPath = it.pythonPath,
+                    pythonVersion = HereticProductIdentity.PythonVersion,
+                    mlxLmVersion = HereticProductIdentity.MlxLmVersion,
+                    pipReportPath = "/tmp/vexlife-prod-test/runtime/python/vexlife-mlx-lm-install-report.json",
+                    environmentMutationPerformed = false,
+                )
+            },
+        )
+
+    @Test
+    fun aBindingNamesTheCatalogModelItsFilesAre() {
+        val nine = bindingFor(vexlife.model.heretic.HereticModelCatalog.Candidate9B)
+        assertEquals(vexlife.model.heretic.HereticModelCatalog.Candidate9B.modelRef, nine.model.modelRef)
+        assertEquals(vexlife.model.heretic.HereticModelCatalog.Certified27B.modelRef, binding().model.modelRef)
+        assertTrue(HereticPersistentRuntime.serverArgs(nine).contains("/tmp/vexlife-prod-test/heretic-9b"))
+    }
+
+    @Test
+    fun aModelSwitchRetiresTheExactOwnedRuntimeBeforeStartingTheChosenModel() {
+        val trace = mutableListOf<String>()
+        val prior = receipt(binding())
+        val store = Store(prior, trace)
+        val platform = Platform(trace).also { it.alivePids += prior.runtime.pid }
+        val nine = bindingFor(vexlife.model.heretic.HereticModelCatalog.Candidate9B)
+
+        val result = HereticPersistentRuntime.startOrReuse(nine, store, platform)
+
+        assertEquals("SWITCHED_MODEL_AND_STARTED_NEW_EXACT_MLX_RUNTIME", result.disposition)
+        assertTrue(trace.indexOf("RETIRE_Qualified") < trace.indexOf("SPAWN"))
+        assertEquals(vexlife.model.heretic.HereticModelCatalog.Candidate9B.modelRef, result.receipt.modelRef)
+        assertEquals(
+            vexlife.model.heretic.HereticModelCatalog.Candidate9B.identity.artifactContentSetSha256,
+            result.receipt.artifactContentSetSha256,
+        )
+        assertEquals(
+            vexlife.model.heretic.HereticModelCatalog.Candidate9B.modelRef,
+            HereticPersistentRuntime.configurationEvidence(nine, result.receipt).modelRef,
+        )
+    }
+
+    @Test
+    fun aReceiptForAnotherModelThatIsNotProvablyOursIsNeverRetired() {
+        val trace = mutableListOf<String>()
+        val foreign = receipt(binding()).copy(authorityRef = "authority.someone-else.heretic")
+        val store = Store(foreign, trace)
+        val platform = Platform(trace).also { it.alivePids += foreign.runtime.pid }
+
+        assertFailsWith<IllegalStateException> {
+            HereticPersistentRuntime.startOrReuse(bindingFor(vexlife.model.heretic.HereticModelCatalog.Candidate4B), store, platform)
+        }
+        assertEquals(0, platform.retireCalls)
+        assertFalse(trace.contains("SPAWN"))
     }
 
     @Test

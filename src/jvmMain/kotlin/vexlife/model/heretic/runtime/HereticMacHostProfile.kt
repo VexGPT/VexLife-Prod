@@ -3,10 +3,16 @@ package vexlife.model.heretic.runtime
 import vexlife.model.heretic.HereticProductIdentity
 
 /**
- * Fresh Prod-owned host execution profile for the certified Heretic runtime.
+ * Fresh Prod-owned host execution profile for the local Heretic runtime.
  *
- * The eligibility meaning is faithfully ported from current VexLife's ordinary Heretic setup:
- * darwin/arm64, exact Apple M4 Pro, and at least 12 GiB physical memory.
+ * Eligibility: darwin/arm64 on Apple silicon (any M-series chip, which MLX runs on) with at least
+ * the memory the smallest offered catalog model wants.
+ *
+ * History: until 2026-11-14 this profile required one exact chip (Apple M4 Pro) and 12 GiB, the
+ * ported certification envelope of the 27B on Victor's Mac. With a model catalog whose smallest
+ * model needs 8 GiB, that pin became a stale guard that kept ordinary Macs out entirely. Whether a
+ * particular model fits this Mac is now answered per model ([HereticModelCatalog.Entry.recommendedMemoryBytes]),
+ * not by refusing the Mac. The profile ref is unchanged so existing runtime receipts stay exact.
  *
  * Bootstrap Python is intentionally not part of host hardware eligibility; it is owned by
  * [HereticPythonEnvironment].
@@ -21,14 +27,16 @@ object HereticMacHostProfile {
     const val RequiredArchitecture =
         "arm64"
 
+    /** Shown to the person as what this Mac needs; evaluated as an "Apple M…" chip name. */
     const val RequiredChipModel =
-        "Apple M4 Pro"
+        "Apple silicon (M1 or later)"
 
-    const val MinimumMemoryBytes =
-        12L *
-            1024L *
-            1024L *
-            1024L
+    private const val AppleSiliconChipPrefix =
+        "Apple M"
+
+    /** What the smallest offered model wants; a larger model's own need is judged per model. */
+    val MinimumMemoryBytes: Long =
+        vexlife.model.heretic.HereticModelCatalog.Entries.minOf { it.recommendedMemoryBytes }
 
     data class Observation(
         val platform: String,
@@ -63,8 +71,8 @@ object HereticMacHostProfile {
                     RequiredArchitecture ->
                     "ARCHITECTURE_UNSUPPORTED"
 
-                observation.chipModel !=
-                    RequiredChipModel ->
+                observation.chipModel?.startsWith(AppleSiliconChipPrefix) !=
+                    true ->
                     "CHIP_MODEL_UNSUPPORTED"
 
                 observation.totalMemoryBytes ==

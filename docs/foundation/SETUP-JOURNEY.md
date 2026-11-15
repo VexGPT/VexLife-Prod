@@ -65,6 +65,10 @@ window renders card; returns CONTROL:<ref> | CHOOSE_HOME | CHOOSE_LANGUAGE | REC
    typed Effect -> rightful owner realizes it  (progress lines on stderr; Cancel safely = SIGTERM)
    fresh observation                           CURRENT -> OPEN_PRODUCT (+ ready notice)
                                                otherwise -> REFRESH_ENTRY (+ failure, if any)
+   an explicit model choice is Home truth before Set Up / Start may converge:
+     existing Home -> choice must save before Control resolution; failure stops the activation
+     Home absent   -> window may carry the choice through FORM_HOME, then save is required before
+                      the choice is considered honored and current State is re-observed
    the chosen language is saved into the Home once it exists (after FORM_HOME)
    │
    └──► window inspects again (never predicts the successor State)
@@ -131,6 +135,26 @@ OFFERED CONTROL    != LAWFUL NOW   (re-observed inside activation)
 | What is preserved | completed Home, verified model files, `.partial` downloads (resume), existing folders |
 | What Cancel means | before an Effect: nothing happens. During an Effect: *Cancel safely* terminates only the task this window started; finished work stays |
 | Accidental authorization? | none: Home formation grants no acquisition; Start/Repair/Update never acquire; held States admit nothing |
+
+## Model step (2026-11-14)
+
+~~~text
+language -> Home -> model -> card (Set Up / Start / ...)
+~~~
+
+`VexLifeProdSetupModel` mirrors the language step. Before a Home exists the window holds the model
+handle and passes `--model <handle>` to every inspection and activation; once the Home exists the
+choice is saved into the Home's model configuration (`--choose-model`, and again around any
+activation so a Home formed by Set Up holds it before the Product converges). A Home that already
+chose is not asked again; the card offers **Model…** (`CHOOSE_MODEL`, renderer-local) whenever this
+Mac can run VexLife, and its "Found" section names the model the setup is about. The plan's
+download size and memory need are that model's own.
+
+Settings → Models (web workspace, `VexLifeModelsFamily` + `VexLifeModels`, `GET /api/v1/models`,
+`POST /api/v1/models/control`) lists every offered model with its size, memory need and fit, and
+offers Use / Download / Download again / Remove by the Family's lawfulness. Downloads run in the
+background under the Home's setup lease, one at a time. Use saves the choice; the switch happens
+at the next Setup Start, because the service process holds no runtime-start authority.
 
 ## Requirements shown before effects
 

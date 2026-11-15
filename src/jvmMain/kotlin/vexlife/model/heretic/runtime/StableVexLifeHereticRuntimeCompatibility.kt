@@ -138,6 +138,11 @@ object StableVexLifeHereticRuntimeCompatibility {
         launchdHost: MacUserLaunchdProcess.Host =
             MacUserLaunchdProcess.SystemHost,
     ): Observation? {
+        // The stable predecessor only ever serves the certified 27B. A Home that chose another
+        // catalog model is never served by borrowing it.
+        if (binding.model.modelRef != HereticProductIdentity.ModelRef) {
+            return null
+        }
         val home =
             VexOwnedPath.requireRoot(
                 productHome,

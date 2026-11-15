@@ -393,7 +393,7 @@ class DirectCompanionTurnFoundationalFieldTest {
             completedTurn(home, "early", earlyHuman, earlyVex)
         }
         val nearlyFull =
-            DirectPromptContext.InputTokenBudget -
+            DirectPromptContext.DirectTurnInputTokenBudget -
                 DirectPromptContext.ReservedOutputTokens -
                 VexLifeMemoryContextFixture.current().estimatedSystemMessageTokens
         val producer =

@@ -11,6 +11,9 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -70,6 +73,18 @@ class VexLifeProdLocalService private constructor(
         VexLifeDiagnostics(home = Path.of(startupSetup.productHome), sourceSha = sourceSha).also {
             it.startObserving()
         }
+
+    /** Settings → Models; the model this service's runtime serves is the one it started with. */
+    private val models =
+        vexlife.model.VexLifeModels(
+            productHome = Path.of(startupSetup.productHome),
+            servingModelRef = { startupSetup.qualifiedRuntimeEvidence.modelRef },
+            totalMemoryBytes = {
+                runCatching {
+                    vexlife.model.heretic.runtime.HereticMacHostProfile.observeCurrent().observation.totalMemoryBytes
+                }.getOrNull()
+            },
+        )
 
     private val privateCompletion =
         privateCompletionOverride
@@ -500,6 +515,7 @@ class VexLifeProdLocalService private constructor(
 
     override fun close() {
         runCatching { diagnostics.close() }
+        runCatching { models.close() }
         var visionCloseFailure: Throwable? =
             null
 
@@ -638,6 +654,18 @@ class VexLifeProdLocalService private constructor(
                 }
 
                 VexLifeProdServiceContract.DiagnosticsControlPath -> handleDiagnosticsControl(exchange)
+
+                VexLifeProdServiceContract.ModelsPath -> {
+                    requireMethod(exchange, "GET")
+                    respondJson(exchange = exchange, status = 200, value = models.projection())
+                }
+
+                VexLifeProdServiceContract.ModelsControlPath -> {
+                    requireMethod(exchange, "POST")
+                    requireJson(exchange)
+                    val request = JsonCodec.decodeFromString<ModelControlRequest>(requestText(exchange))
+                    respondJson(exchange = exchange, status = 200, value = models.control(request.controlRef, request.handle))
+                }
 
                 VexLifeProdServiceContract.DiagnosticsExportPath -> handleDiagnosticsExport(exchange)
 
@@ -1137,6 +1165,9 @@ class VexLifeProdLocalService private constructor(
 
     @kotlinx.serialization.Serializable
     private data class DiagnosticsControlRequest(val controlRef: String)
+
+    @kotlinx.serialization.Serializable
+    private data class ModelControlRequest(val controlRef: String, val handle: String)
 
     private fun handleDiagnosticsControl(exchange: HttpExchange) {
         requireMethod(exchange, "POST")
@@ -1722,6 +1753,15 @@ class VexLifeProdLocalService private constructor(
                 humanReasoningProjection(
                     result,
                 ),
+            capabilityUses =
+                result.capabilityUses.map {
+                    VexLifeProdServiceContract.CapabilityUse(
+                        handle = it.handle,
+                        action = it.action,
+                        target = it.target,
+                        state = it.state.name,
+                    )
+                },
         )
 
     private fun acceptsEventStream(
@@ -1772,7 +1812,26 @@ class VexLifeProdLocalService private constructor(
             0,
         )
 
-        fun emit(
+        // The browser is an observer of canonical turn progress, not part of provider execution
+        // custody. DirectCompanionConnection consumes the provider stream synchronously, so writing
+        // to the browser from its progress callback would let a slow/stalled browser socket
+        // backpressure model-stream ingestion. Keep one bounded presentation queue and one separate
+        // socket writer instead. Live deltas may be lost under presentation pressure; canonical
+        // execution, durable Conversation truth, and the terminal result may not be stalled by it.
+        val projectionQueue =
+            LinkedBlockingQueue<VexLifeProdServiceContract.SendStreamEvent>(
+                16_384,
+            )
+        val projectionOpen =
+            AtomicBoolean(
+                true,
+            )
+        val producerDone =
+            AtomicBoolean(
+                false,
+            )
+
+        fun write(
             event: VexLifeProdServiceContract.SendStreamEvent,
         ) {
             val payload =
@@ -1793,6 +1852,91 @@ class VexLifeProdLocalService private constructor(
             )
             exchange.responseBody.flush()
         }
+
+        fun offerProgress(
+            event: VexLifeProdServiceContract.SendStreamEvent,
+        ) {
+            if (
+                projectionOpen.get()
+            ) {
+                // Progress is ephemeral presentation. Queue saturation must never become provider
+                // backpressure; the final canonical response remains recoverable through the Send
+                // idempotency contract.
+                projectionQueue.offer(
+                    event,
+                )
+            }
+        }
+
+        fun offerTerminal(
+            event: VexLifeProdServiceContract.SendStreamEvent,
+        ) {
+            if (
+                !projectionOpen.get()
+            ) {
+                return
+            }
+
+            // If an abandoned/slow browser filled the bounded queue, prefer the terminal projection
+            // over old live deltas. This affects only what that browser observed, never turn truth.
+            while (
+                !projectionQueue.offer(
+                    event,
+                )
+            ) {
+                projectionQueue.poll()
+            }
+        }
+
+        val writer =
+            this.executor.submit {
+                try {
+                    while (
+                        true
+                    ) {
+                        val event =
+                            projectionQueue.poll(
+                                50,
+                                TimeUnit.MILLISECONDS,
+                            )
+                        if (
+                            event !=
+                                null
+                        ) {
+                            write(
+                                event,
+                            )
+                            continue
+                        }
+                        if (
+                            producerDone.get()
+                        ) {
+                            break
+                        }
+                    }
+
+                    if (
+                        projectionOpen.get()
+                    ) {
+                        exchange.responseBody.write(
+                            "data: [DONE]\n\n"
+                                .toByteArray(
+                                    StandardCharsets.UTF_8,
+                                ),
+                        )
+                        exchange.responseBody.flush()
+                    }
+                } catch (
+                    _: Throwable,
+                ) {
+                    // Presentation transport failure is observational. It must not fail, retry, or
+                    // replay the human turn.
+                    projectionOpen.set(
+                        false,
+                    )
+                    projectionQueue.clear()
+                }
+            }
 
         try {
             val result =
@@ -1827,25 +1971,50 @@ class VexLifeProdLocalService private constructor(
                                         delta = progress.delta,
                                         accumulatedCharacters = progress.accumulatedCharacters,
                                     )
+
+                                DirectCompanionTurn.ProgressPhase.Reaching,
+                                DirectCompanionTurn.ProgressPhase.Reached,
+                                ->
+                                    VexLifeProdServiceContract.SendStreamEvent(
+                                        type = "REACH",
+                                        reach =
+                                            progress.reach?.let {
+                                                VexLifeProdServiceContract.CapabilityUse(
+                                                    handle = it.handle,
+                                                    action = it.action,
+                                                    target = it.target,
+                                                    state =
+                                                        if (
+                                                            progress.phase ==
+                                                                DirectCompanionTurn.ProgressPhase.Reached
+                                                        ) {
+                                                            it.state.name
+                                                        } else {
+                                                            null
+                                                        },
+                                                )
+                                            },
+                                    )
                             }
-                        emit(
+                        offerProgress(
                             event,
                         )
                     },
                 )
 
-            emit(
+            offerTerminal(
                 VexLifeProdServiceContract.SendStreamEvent(
                     type = "COMPLETED",
-                    response = sendResponse(
-                        result,
-                    ),
+                    response =
+                        sendResponse(
+                            result,
+                        ),
                 ),
             )
         } catch (
             error: DirectCompanionTurn.TurnException,
         ) {
-            emit(
+            offerTerminal(
                 VexLifeProdServiceContract.SendStreamEvent(
                     type = "FAILED",
                     error =
@@ -1861,7 +2030,7 @@ class VexLifeProdLocalService private constructor(
         } catch (
             _: Throwable,
         ) {
-            emit(
+            offerTerminal(
                 VexLifeProdServiceContract.SendStreamEvent(
                     type = "FAILED",
                     error =
@@ -1875,13 +2044,27 @@ class VexLifeProdLocalService private constructor(
                 ),
             )
         } finally {
-            exchange.responseBody.write(
-                "data: [DONE]\n\n"
-                    .toByteArray(
-                        StandardCharsets.UTF_8,
-                    ),
+            producerDone.set(
+                true,
             )
-            exchange.responseBody.flush()
+            runCatching {
+                    writer.get(
+                        5,
+                        TimeUnit.SECONDS,
+                    )
+                }
+                .onFailure {
+                    // Canonical execution is already terminal. Abandon only this presentation leg.
+                    projectionOpen.set(
+                        false,
+                    )
+                    writer.cancel(
+                        true,
+                    )
+                    runCatching {
+                        exchange.responseBody.close()
+                    }
+                }
         }
     }
 

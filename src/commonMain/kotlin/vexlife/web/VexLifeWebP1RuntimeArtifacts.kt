@@ -99,6 +99,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 visionControlPath: ${jsString(VexLifeProdServiceContract.VisionControlPath)},
                 diagnosticsPath: ${jsString(VexLifeProdServiceContract.DiagnosticsPath)},
                 diagnosticsControlPath: ${jsString(VexLifeProdServiceContract.DiagnosticsControlPath)},
+                modelsPath: ${jsString(VexLifeProdServiceContract.ModelsPath)},
+                modelsControlPath: ${jsString(VexLifeProdServiceContract.ModelsControlPath)},
                 chronologyPath: ${jsString(VexLifeProdServiceContract.ChronologyPath)},
                 workspaceStringsPath: ${jsString(VexLifeProdServiceContract.WorkspaceStringsPath)},
                 sendPath: ${jsString(VexLifeProdServiceContract.ConversationSendPath)}
@@ -199,6 +201,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 memoryText: byId('memory-text'),
                 memoryNote: byId('memory-note'),
                 vexMemoryLabel: byId('vex-memory-label'),
+                modelsList: byId('models-list'),
+                modelsNote: byId('models-note'),
                 diagnosticsStatus: byId('diagnostics-status'),
                 diagnosticsCapture: byId('diagnostics-capture'),
                 diagnosticsRecords: byId('diagnostics-records'),
@@ -250,6 +254,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 memory: null,
                 diagnostics: null,
                 diagnosticsInFlight: false,
+                // Settings → Models projection (VexLifeModels); refreshed while a download runs.
+                models: null,
+                modelsInFlight: false,
                 workspaceStrings: null,
                 browserContext: null,
                 includePage: false,
@@ -267,6 +274,22 @@ object VexLifeWebP1RuntimeArtifacts {
                 streamedReasoning: '',
                 thoughtsVisible: true,
                 humanReasoningByResponse: new Map(),
+                // Human-readable browser-session projection of facts already emitted by the Send
+                // stream. This is deliberately not a turn/stage owner: it may open/freeze visual
+                // containers, but it never feeds DirectCompanionTurn, capability execution, or the
+                // raw streamedReasoning/streamedContent buffers consumed by Speech/Kokoro.
+                liveProcessEntries: [],
+                processEntriesByResponse: new Map(),
+                // Session-only presentation of terminal failed Sends. Conversation/recovery remains
+                // the semantic owner; this only preserves what the human already saw in this browser
+                // so terminal failure does not erase the process before the next lawful Control.
+                failedAttempts: [],
+                liveProcessExpanded: true,
+                liveProcessManuallyToggled: false,
+                // What Vex reached during the live turn (bridge uses: handle/action/target/state), and
+                // per completed response for this browser session. Reach, never the content.
+                liveReaches: [],
+                reachesByResponse: new Map(),
                 expandedThoughts: new Set(),
                 timelineFollowTail: true,
                 timelineScrollTop: 0,
@@ -381,9 +404,12 @@ object VexLifeWebP1RuntimeArtifacts {
 
               // Speech: the Vextreme Spiral FAB's Read Aloud, ported and extended. When Speech is on, Vex
               // is read aloud as it streams, and its thoughts too if the person chooses. It reads the
-              // Conversation projections, never the DOM. Kokoro voices run on this machine after a
-              // one-time model download; system voices are limited to those that run on this machine.
-              // Either way the words are never sent to a speech service.
+              // Conversation/raw stream projections, never the DOM. The visual process projection is
+              // a sibling observer of that same stream: freezing/reordering visual containers must
+              // never become Speech input, drop speech deltas, or feed execution back upstream.
+              // Kokoro voices run on this machine after a one-time model download; system voices are
+              // limited to those that run on this machine. Either way the words are never sent to a
+              // speech service.
               const SPEECH_SETTINGS = 'vexlife-prod.presentation.speech/v1';
               const KOKORO_MODULE_URL = 'https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/+esm';
               const KOKORO_MODEL_ID = 'onnx-community/Kokoro-82M-v1.0-ONNX';
@@ -1112,8 +1138,17 @@ object VexLifeWebP1RuntimeArtifacts {
               const restoreReasoningViewports = () => {
                 ui.timeline.querySelectorAll('.reasoning[data-scroll-key]').forEach((element) => {
                   const key = String(element.dataset.scrollKey ?? '');
-                  applyReasoningViewport(element, key, key === 'live');
+                  const liveTail = element.dataset.liveTail === 'true';
+                  applyReasoningViewport(element, key, liveTail);
                 });
+              };
+
+              const resetLiveProcessViewports = () => {
+                for (const key of state.reasoningViewports.keys()) {
+                  if (key === 'live' || key.startsWith('live.process.')) {
+                    state.reasoningViewports.delete(key);
+                  }
+                }
               };
 
               const applyTimelineViewport = (restoreReadingPosition = true) => {
@@ -1140,11 +1175,270 @@ object VexLifeWebP1RuntimeArtifacts {
                 return mark;
               };
 
-              const completedThoughtNode = (message) => {
-                if (!state.thoughtsVisible || message.role !== 'vex') return null;
+              // Reach in the person's words: the bridge names handle/action/target, the words are keyed.
+              const reachText = (use) => {
+                const target = String(use?.target ?? '')
+                  .replace(/^home:/u, '')
+                  .replace(/^search: /u, '')
+                  .replace(/^memory: /u, '');
+                const key =
+                  use?.handle === 'web' && use?.action === 'search'
+                    ? 'workspace.status.reach-web-search'
+                    : use?.handle === 'web'
+                      ? 'workspace.status.reach-web-fetch'
+                      : use?.handle === 'github'
+                        ? 'workspace.status.reach-github'
+                        : use?.handle === 'home'
+                          ? 'workspace.status.reach-home'
+                          : use?.handle === 'memory'
+                            ? 'workspace.status.reach-memory'
+                            : 'workspace.status.reach-atlas';
+                const words = t(key).replace('{target}', target);
+                if (!use?.state || use.state === 'RETURNED') return words;
+                const settled = String(use.state).toLowerCase().replace(/_/gu, ' ');
+                return words + ' ' + t('workspace.label.reach-state').replace('{state}', settled);
+              };
+
+              const reachList = (uses) => {
+                const list = document.createElement('ul');
+                list.className = 'reaches live-reaches';
+                for (const use of uses) {
+                  const line = document.createElement('li');
+                  line.textContent = reachText(use);
+                  list.append(line);
+                }
+                return list;
+              };
+
+              const cloneReach = (use) => ({
+                handle: String(use?.handle ?? ''),
+                action: String(use?.action ?? ''),
+                target: use?.target == null ? null : String(use.target),
+                state: use?.state == null ? null : String(use.state)
+              });
+
+              const freezeActiveProcessThought = () => {
+                const entry = state.liveProcessEntries[state.liveProcessEntries.length - 1];
+                if (entry?.kind === 'thought' && entry.active) entry.active = false;
+              };
+
+              const appendProcessReasoning = (delta) => {
+                let entry = state.liveProcessEntries[state.liveProcessEntries.length - 1];
+                if (entry?.kind !== 'thought' || !entry.active) {
+                  entry = { kind: 'thought', text: '', active: true };
+                  state.liveProcessEntries.push(entry);
+                }
+                entry.text += String(delta ?? '');
+              };
+
+              const projectProcessReach = (use) => {
+                freezeActiveProcessThought();
+                const next = cloneReach(use);
+                if (next.state) {
+                  for (let index = state.liveProcessEntries.length - 1; index >= 0; index -= 1) {
+                    const entry = state.liveProcessEntries[index];
+                    if (
+                      entry?.kind === 'reach' &&
+                      !entry.use.state &&
+                      entry.use.handle === next.handle &&
+                      entry.use.action === next.action &&
+                      entry.use.target === next.target
+                    ) {
+                      entry.use = next;
+                      return;
+                    }
+                  }
+                }
+                state.liveProcessEntries.push({ kind: 'reach', use: next });
+              };
+
+              const freezeLiveProcess = () => {
+                freezeActiveProcessThought();
+              };
+
+              const snapshotLiveProcess = () =>
+                state.liveProcessEntries.map((entry) =>
+                  entry.kind === 'thought'
+                    ? { kind: 'thought', text: entry.text, active: false }
+                    : { kind: 'reach', use: cloneReach(entry.use) });
+
+              const clearLiveProcessState = () => {
+                state.streamPhase = null;
+                state.streamedContent = '';
+                state.streamedReasoning = '';
+                state.liveReaches = [];
+                state.liveProcessEntries = [];
+                state.liveProcessExpanded = true;
+                state.liveProcessManuallyToggled = false;
+                resetLiveProcessViewports();
+              };
+
+              const failureRouteLabel = (route) =>
+                route === 'RESUME_LAST_VALID_HEAD_THEN_FORM_NEW_SEND_ATTEMPT'
+                  ? 'Try again from the last completed turn with a new Send.'
+                  : route === 'FORM_NEW_SEND_ATTEMPT_AND_RETRY'
+                    ? 'Try again as a new Send.'
+                    : route
+                      ? 'Next: ' + String(route).replaceAll('_', ' ').toLowerCase() + '.'
+                      : 'This Send stopped before Vex completed a reply.';
+
+              const processEntryNode = (entry, viewportKey, live) => {
+                if (entry.kind === 'thought') {
+                  if (!state.thoughtsVisible || !String(entry.text ?? '').trim()) return null;
+                  const box = document.createElement('div');
+                  box.className = 'reasoning process-thought' + (live && entry.active ? ' live-reasoning' : '');
+                  box.dataset.liveTail = String(Boolean(live && entry.active));
+                  bindReasoningViewport(box, viewportKey, live && entry.active);
+                  // Keep the exact provider text as the source projection. Markdown is a separate
+                  // presentation concern; freezing a process container must never rewrite the
+                  // stream that Speech/Kokoro or canonical completion observes.
+                  box.textContent = entry.text;
+                  return box;
+                }
+
+                const use = entry.use;
+                const line = document.createElement('div');
+                line.className = 'process-action';
+                line.dataset.state = use?.state ? String(use.state) : 'ACTIVE';
+                const mark = document.createElement('span');
+                mark.className = 'process-action-mark';
+                mark.setAttribute('aria-hidden', 'true');
+                mark.textContent = !use?.state ? '↳' : use.state === 'RETURNED' ? '✓' : '!';
+                const text = document.createElement('span');
+                text.className = 'process-action-text';
+                text.textContent = reachText(use);
+                line.append(mark, text);
+                return line;
+              };
+
+              const processHistoryNode = (entries, keyPrefix, live) => {
+                const history = document.createElement('div');
+                history.className = 'process-history';
+                entries.forEach((entry, index) => {
+                  const node = processEntryNode(entry, keyPrefix + '.' + String(index), live);
+                  if (node) history.append(node);
+                });
+                return history.childElementCount ? history : null;
+              };
+
+              const syncLiveProcessEntry = (node, entry, viewportKey) => {
+                if (entry.kind === 'thought') {
+                  const active = Boolean(entry.active);
+                  node.classList.toggle('live-reasoning', active);
+                  node.dataset.liveTail = String(active);
+                  if (node.textContent !== entry.text) node.textContent = entry.text;
+                  // Regression boundary: T004 established that human scrolling owns follow state.
+                  // While a thought is active, update this exact DOM node in place. Never replace it
+                  // on a stream delta: destroying the node invalidates an in-progress scrollbar or
+                  // pointer interaction even if scrollTop is reconstructed afterward.
+                  if (active) {
+                    applyReasoningViewport(node, viewportKey, true, false);
+                  }
+                  return;
+                }
+
+                const use = entry.use;
+                node.dataset.state = use?.state ? String(use.state) : 'ACTIVE';
+                const mark = node.querySelector('.process-action-mark');
+                if (mark) mark.textContent = !use?.state ? '↳' : use.state === 'RETURNED' ? '✓' : '!';
+                const text = node.querySelector('.process-action-text');
+                if (text) text.textContent = reachText(use);
+              };
+
+              const syncLiveProcessHistory = (history) => {
+                const visible = new Set();
+                state.liveProcessEntries.forEach((entry, index) => {
+                  if (entry.kind === 'thought' && (!state.thoughtsVisible || !String(entry.text ?? '').trim())) {
+                    return;
+                  }
+                  const key = String(index);
+                  const viewportKey = 'live.process.' + key;
+                  let node = history.querySelector('[data-process-entry="' + key + '"]');
+                  if (!node) {
+                    node = processEntryNode(entry, viewportKey, true);
+                    if (!node) return;
+                    node.dataset.processEntry = key;
+                    history.append(node);
+                  }
+                  syncLiveProcessEntry(node, entry, viewportKey);
+                  visible.add(key);
+                });
+
+                // Removal is only for a human visibility-control change. Normal streaming is
+                // append/update-only, so older process containers retain stable DOM identity.
+                history.querySelectorAll('[data-process-entry]').forEach((node) => {
+                  if (!visible.has(String(node.dataset.processEntry ?? ''))) node.remove();
+                });
+              };
+
+              const createLiveProcessPanel = () => {
+                const panel = document.createElement('div');
+                panel.className = 'live-process-panel';
+
+                const toggle = document.createElement('button');
+                toggle.type = 'button';
+                toggle.className = 'thought-toggle live-process-toggle';
+                toggle.dataset.liveProcess = 'true';
+                toggle.hidden = true;
+                toggle.append(thoughtMark(), document.createElement('span'));
+
+                const history = document.createElement('div');
+                history.className = 'process-history live-process-history';
+
+                panel.append(toggle, history);
+                return panel;
+              };
+
+              const syncLiveProcessPanel = (thought) => {
+                let panel = thought.querySelector('.live-process-panel');
+                if (!panel) {
+                  panel = createLiveProcessPanel();
+                  thought.append(panel);
+                }
+
+                const hasEntries = state.liveProcessEntries.length > 0;
+                panel.hidden = !hasEntries;
+                if (!hasEntries) return;
+
+                const collapseWithAnswer = Boolean(state.streamedContent);
+                const expanded = collapseWithAnswer ? state.liveProcessExpanded : true;
+                const toggle = panel.querySelector('.live-process-toggle');
+                if (toggle) {
+                  toggle.hidden = !collapseWithAnswer;
+                  toggle.setAttribute('aria-expanded', String(expanded));
+                  const label = toggle.querySelector('span');
+                  if (label) label.textContent = expanded ? 'hide process' : 'view process';
+                }
+
+                const history = panel.querySelector('.live-process-history');
+                if (!history) return;
+
+                // Collapse is visual only. Keep the process DOM mounted so opening it again does
+                // not recreate scrollable children or cut sibling observers such as Speech/Kokoro.
+                history.hidden = !expanded;
+                if (expanded) syncLiveProcessHistory(history);
+              };
+
+              const reachedLine = (message) => {
+                if (message.role !== 'vex') return null;
                 const key = String(message.messageRef ?? '');
-                const reasoning = state.humanReasoningByResponse.get(key);
-                if (!reasoning) return null;
+                if (state.processEntriesByResponse.has(key)) return null;
+                const uses = state.reachesByResponse.get(key);
+                if (!uses || !uses.length) return null;
+                const line = document.createElement('p');
+                line.className = 'receipt-line reached-line';
+                line.textContent = t('workspace.label.reached') + ': ' + uses.map(reachText).join(' · ');
+                return line;
+              };
+
+              const completedThoughtNode = (message) => {
+                if (message.role !== 'vex') return null;
+                const key = String(message.messageRef ?? '');
+                const entries = state.processEntriesByResponse.get(key) ?? [];
+                const reasoning = state.thoughtsVisible ? state.humanReasoningByResponse.get(key) : null;
+                const hasVisibleProcess =
+                  entries.some((entry) => entry.kind === 'reach' || (state.thoughtsVisible && String(entry.text ?? '').trim()));
+                if (!hasVisibleProcess && !reasoning) return null;
 
                 const holder = document.createElement('div');
                 holder.className = 'thought';
@@ -1155,16 +1449,25 @@ object VexLifeWebP1RuntimeArtifacts {
                 toggle.dataset.thoughtKey = key;
                 toggle.setAttribute('aria-expanded', String(expanded));
                 const label = document.createElement('span');
-                label.textContent = expanded ? 'hide thoughts' : 'view thoughts';
+                label.textContent = expanded ? 'hide process' : 'view process';
                 toggle.append(thoughtMark(), label);
                 holder.append(toggle);
 
                 if (expanded) {
-                  const box = document.createElement('div');
-                  box.className = 'reasoning';
-                  bindReasoningViewport(box, 'response.' + key, false);
-                  box.textContent = reasoning;
-                  holder.append(box);
+                  const process = entries.length
+                    ? processHistoryNode(entries, 'response.' + key + '.process', false)
+                    : null;
+                  if (process) {
+                    holder.append(process);
+                  } else if (reasoning) {
+                    // Non-streaming/idempotent recovery may have only response-local reasoning.
+                    // Keep that truthful fallback without inventing missing process boundaries.
+                    const box = document.createElement('div');
+                    box.className = 'reasoning';
+                    bindReasoningViewport(box, 'response.' + key, false);
+                    box.textContent = reasoning;
+                    holder.append(box);
+                  }
                 }
                 return holder;
               };
@@ -1192,6 +1495,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 const thought = completedThoughtNode(message);
                 if (thought) item.append(index, thought, bubble, speaker);
                 else item.append(index, bubble, speaker);
+                const reached = reachedLine(message);
+                if (reached) item.append(reached);
                 return item;
               };
 
@@ -1221,19 +1526,15 @@ object VexLifeWebP1RuntimeArtifacts {
                     : state.streamPhase === 'Reconnecting'
                       ? 'reconnecting Vex…'
                       : state.streamPhase === 'Generating' || state.streamPhase === 'Reasoning'
-                      ? 'thinking…'
-                      : state.streamPhase === 'Responding'
-                        ? 'responding…'
-                        : 'preparing…';
+                        ? 'thinking…'
+                        : state.streamPhase === 'Responding'
+                          ? 'responding…'
+                          : 'preparing…';
                 thought.append(who, mark, label);
-
-                if (state.thoughtsVisible && state.streamedReasoning) {
-                  const reasoning = document.createElement('div');
-                  reasoning.className = 'reasoning live-reasoning';
-                  bindReasoningViewport(reasoning, 'live', true);
-                  reasoning.textContent = state.streamedReasoning;
-                  thought.append(reasoning);
-                }
+                // Live process DOM is mounted once for this waiting message. Streaming updates
+                // mutate/append inside it; they do not replace the panel or existing containers.
+                thought.append(createLiveProcessPanel());
+                syncLiveProcessPanel(thought);
 
                 const bubble = document.createElement('div');
                 bubble.className = 'bubble';
@@ -1242,6 +1543,59 @@ object VexLifeWebP1RuntimeArtifacts {
                   paragraph.textContent = state.streamedContent;
                   bubble.append(paragraph);
                 }
+                const speaker = document.createElement('p');
+                speaker.className = 'speaker';
+                speaker.textContent = 'Vex';
+
+                item.append(index, thought, bubble, speaker);
+                return item;
+              };
+
+              const failedAttemptNode = (attempt, sequence) => {
+                const item = document.createElement('li');
+                item.className = 'message message-vex failed-attempt';
+                item.dataset.failedAttemptKey = String(attempt.idempotencyKey ?? '');
+
+                const index = document.createElement('p');
+                index.className = 'message-index';
+                index.textContent = '[' + String(sequence).padStart(2, '0') + ']';
+
+                const thought = document.createElement('div');
+                thought.className = 'thought';
+                const who = document.createElement('span');
+                who.className = 'speaker-inline';
+                who.textContent = 'Vex';
+                const mark = thoughtMark();
+                const label = document.createElement('span');
+                label.className = 'thinking-label';
+                label.textContent = 'stopped before finishing';
+                thought.append(who, mark, label);
+
+                const history =
+                  processHistoryNode(
+                    attempt.processEntries ?? [],
+                    'failed.' + String(attempt.idempotencyKey ?? ''),
+                    false
+                  );
+                if (history) thought.append(history);
+
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                const detail = document.createElement('p');
+                detail.textContent =
+                  String(attempt.failureCode ?? 'TURN_FAILED') +
+                  ' · ' +
+                  failureRouteLabel(attempt.exactNextSafeRoute);
+                bubble.append(detail);
+
+                const retry = document.createElement('button');
+                retry.type = 'button';
+                retry.className = 'thought-toggle failed-attempt-retry';
+                retry.dataset.failedAttemptKey = String(attempt.idempotencyKey ?? '');
+                retry.textContent = 'Try Again';
+                retry.disabled = state.sendInFlight;
+                bubble.append(retry);
+
                 const speaker = document.createElement('p');
                 speaker.className = 'speaker';
                 speaker.textContent = 'Vex';
@@ -1281,9 +1635,21 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
                 const messages = state.conversation?.messages ?? [];
                 const nodes = messages.map(messageNode);
+                let sequence = nextSequence();
+
+                for (const attempt of state.failedAttempts) {
+                  nodes.push(messageNode({
+                    role: 'human',
+                    content: attempt.content,
+                    sequence,
+                    eventRef: 'presentation.failed.' + attempt.idempotencyKey
+                  }));
+                  sequence += 1;
+                  nodes.push(failedAttemptNode(attempt, sequence));
+                  sequence += 1;
+                }
 
                 if (state.pending) {
-                  const sequence = nextSequence();
                   nodes.push(messageNode({
                     role: 'human',
                     content: state.pending.content,
@@ -1334,19 +1700,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
 
                 const thought = item.querySelector('.thinking-now');
-                let reasoning = item.querySelector('.live-reasoning');
-                if (state.thoughtsVisible && state.streamedReasoning) {
-                  if (!reasoning) {
-                    reasoning = document.createElement('div');
-                    reasoning.className = 'reasoning live-reasoning';
-                    bindReasoningViewport(reasoning, 'live', true);
-                    thought?.append(reasoning);
-                  }
-                  reasoning.textContent = state.streamedReasoning;
-                  applyReasoningViewport(reasoning, 'live', true, false);
-                } else if (reasoning) {
-                  reasoning.remove();
-                }
+                // Preserve live DOM identity while Vex streams. This is a continuation of the
+                // T004 scroll-ownership fix: state restoration cannot compensate for destroying
+                // the element a human is actively scrolling/dragging.
+                if (thought) syncLiveProcessPanel(thought);
 
                 const bubble = item.querySelector('.bubble');
                 let paragraph = bubble?.querySelector('p');
@@ -1633,8 +1990,10 @@ object VexLifeWebP1RuntimeArtifacts {
                     : contextEligible && !contextReady
                       ? 'Page context is available on demand.'
                       : state.pending && !state.sendInFlight
-                        ? 'The prior Send outcome is unresolved. Send again to retry that exact attempt.'
-                        : '';
+                        ? 'The prior Send outcome is unresolved. Send again to reconcile that exact attempt.'
+                        : state.failedAttempts.length
+                          ? 'A prior Send stopped. Its process is preserved here; use Try Again to form a new Send.'
+                          : '';
                 ui.send.disabled = privateNow
                   ? state.privateInFlight || !ui.draft.value.trim()
                   : state.sendInFlight || (!state.pending && !ui.draft.value.trim());
@@ -1920,6 +2279,92 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
               };
 
+              const gibText = (bytes) => (Number(bytes) / 1073741824).toFixed(1);
+
+              // Settings → Models. Rows, states and lawful Controls come from VexLifeModelsFamily via
+              // the service; this renderer only lays them out and returns the chosen Control ref.
+              const renderModels = () => {
+                if (!ui.modelsList) return;
+                ui.modelsList.textContent = '';
+                const projection = state.models;
+                if (!projection) return;
+                for (const model of projection.models || []) {
+                  const row = document.createElement('div');
+                  row.className = 'model-row';
+                  row.dataset.chosen = String(Boolean(model.chosen));
+                  const name = document.createElement('p');
+                  name.className = 'model-name';
+                  name.textContent = model.label;
+                  const facts = document.createElement('p');
+                  facts.className = 'model-facts';
+                  const status = model.downloadedBytes != null
+                    ? t('workspace.status.model-downloading')
+                        .replace('{done}', gibText(model.downloadedBytes))
+                        .replace('{total}', gibText(model.totalBytes))
+                    : resolveText(model.display.status);
+                  facts.textContent = status + ' · ' + t('workspace.label.model-facts')
+                    .replace('{size}', gibText(model.totalBytes))
+                    .replace('{memory}', gibText(model.recommendedMemoryBytes))
+                    .replace('{fit}', t(model.fitsThisMac ? 'workspace.label.model-fits' : 'workspace.label.model-tight'));
+                  const notes = document.createElement('p');
+                  notes.className = 'model-notes';
+                  notes.textContent = [
+                    ...(model.display.notes || []).map(resolveText),
+                    model.standing === 'CANDIDATE' ? t('workspace.label.model-candidate') : ''
+                  ].filter(Boolean).join(' · ');
+                  const controls = document.createElement('div');
+                  controls.className = 'model-controls';
+                  for (const control of model.display.controls || []) {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'outline-button';
+                    button.textContent = resolveText(control.label);
+                    button.disabled = state.modelsInFlight;
+                    button.addEventListener('click', () => { void modelControl(control.controlRef, model.handle); });
+                    controls.append(button);
+                  }
+                  row.append(name, controls, facts, notes);
+                  ui.modelsList.append(row);
+                }
+                const lines = [];
+                if (projection.lastOutcome) lines.push(resolveText(projection.lastOutcome.message));
+                if (projection.switchPending) lines.push(t('workspace.status.models-switch-pending'));
+                if (projection.freeStorageBytes != null) {
+                  lines.push(t('workspace.label.model-free-space').replace('{free}', gibText(projection.freeStorageBytes)));
+                }
+                if (ui.modelsNote) ui.modelsNote.textContent = lines.join(' ');
+              };
+
+              const loadModels = async () => {
+                const response = await fetch(service.modelsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                state.models = await readJson(response);
+                renderModels();
+                // A running download is followed until it settles; nothing polls when idle.
+                if (state.models?.downloading) window.setTimeout(() => { void loadModels().catch(() => {}); }, 2000);
+                return state.models;
+              };
+
+              const modelControl = async (controlRef, handle) => {
+                if (state.modelsInFlight) return;
+                if (controlRef === 'REMOVE_MODEL' && !window.confirm(t('workspace.button.model-remove') + '?')) return;
+                state.modelsInFlight = true;
+                renderModels();
+                try {
+                  const response = await fetch(service.modelsControlPath, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', accept: 'application/json' },
+                    body: JSON.stringify({ controlRef, handle })
+                  });
+                  state.models = await readJson(response);
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : 'Models are not available.');
+                } finally {
+                  state.modelsInFlight = false;
+                  renderModels();
+                  if (state.models?.downloading) window.setTimeout(() => { void loadModels().catch(() => {}); }, 2000);
+                }
+              };
+
               const loadMemory = async () => {
                 const response = await fetch(service.memoryPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.memory = await readJson(response);
@@ -2011,35 +2456,133 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderSettings();
               };
 
-              const send = async () => {
+              const completeCanonicalSend = async (result, streamed, preservedProcess = null) => {
+                if (streamed) followStreamSpeech(true);
+                state.sendInFlight = false;
+                root.dataset.vexLastContextPath = String(result.contextPath ?? '');
+                root.dataset.vexLastPromptReceiptRef = String(result.promptContext?.receiptRef ?? '');
+                root.dataset.vexLastBrowserContextRef = String(result.promptContext?.browserContextRef ?? '');
+                const responseKey = String(result.responseMessageRef ?? '');
+                const completedProcess =
+                  Array.isArray(preservedProcess)
+                    ? preservedProcess
+                    : state.liveProcessEntries.length
+                      ? (freezeLiveProcess(), snapshotLiveProcess())
+                      : [];
+                if (responseKey && completedProcess.length) {
+                  state.processEntriesByResponse.set(responseKey, completedProcess);
+                  if (state.liveProcessManuallyToggled && state.liveProcessExpanded) {
+                    state.expandedThoughts.add(responseKey);
+                  }
+                } else if (responseKey) {
+                  state.processEntriesByResponse.delete(responseKey);
+                }
+                const reasoning = result.humanReasoning;
+                if (
+                  reasoning?.state === 'PRESENT_EPHEMERAL' &&
+                  typeof reasoning.text === 'string' &&
+                  reasoning.text.length > 0
+                ) {
+                  state.humanReasoningByResponse.set(responseKey, reasoning.text);
+                } else if (result.responseMessageRef) {
+                  state.humanReasoningByResponse.delete(responseKey);
+                  if (!state.processEntriesByResponse.has(responseKey)) state.expandedThoughts.delete(responseKey);
+                }
+                if (Array.isArray(result.capabilityUses) && result.capabilityUses.length > 0) {
+                  state.reachesByResponse.set(String(result.responseMessageRef ?? ''), result.capabilityUses);
+                }
+                state.liveReaches = [];
+
+                // Canonical Conversation/Context own completion. Streaming presentation is only a
+                // projection, so refresh from those durable owners before retiring the pending Send.
+                try {
+                  await Promise.all([loadConversation(false), loadContext()]);
+                } catch (projectionError) {
+                  notify(
+                    'Turn completed, but the current projection could not be refreshed: ' +
+                    (projectionError instanceof Error ? projectionError.message : 'refresh failed.')
+                  );
+                }
+
+                state.pending = null;
+                clearLiveProcessState();
+                setCompanionStatus('Ready', 'Ready', result.model ?? '');
+                render();
+              };
+
+              const reconcileSendOutcome = async (pending) => {
+                // Re-present the exact same idempotency key through the non-streaming contract.
+                // The turn owner either returns an already-completed durable result, reports the
+                // already-failed attempt, or performs the originally intended Send if the first
+                // transport never reached it. It must never create a second model call for one
+                // already-completed/failed attempt.
+                const response = await fetch(service.sendPath, {
+                  method: 'POST',
+                  headers: { accept: 'application/json', 'content-type': 'application/json' },
+                  body: JSON.stringify(pending)
+                });
+                return readJson(response);
+              };
+
+              const send = async (newAttemptSeed = null) => {
                 if (isPrivate()) {
                   await sendPrivate();
                   return;
                 }
                 if (state.sendInFlight) return;
 
-                const retrying = state.pending !== null;
-                const content = retrying ? state.pending.content : ui.draft.value.trim();
+                const retryingExactAttempt = state.pending !== null && newAttemptSeed === null;
+                const content =
+                  newAttemptSeed
+                    ? String(newAttemptSeed.content ?? '').trim()
+                    : retryingExactAttempt
+                      ? state.pending.content
+                      : ui.draft.value.trim();
                 if (!content) return;
 
-                const pending = state.pending ?? Object.freeze({
-                  idempotencyKey: 'send.' + crypto.randomUUID().toLowerCase(),
-                  content,
-                  browserContext: state.includePage ? state.browserContext : null
-                });
+                const pending =
+                  newAttemptSeed
+                    ? Object.freeze({
+                        idempotencyKey: 'send.' + crypto.randomUUID().toLowerCase(),
+                        content,
+                        browserContext: newAttemptSeed.browserContext ?? null
+                      })
+                    : state.pending ?? Object.freeze({
+                        idempotencyKey: 'send.' + crypto.randomUUID().toLowerCase(),
+                        content,
+                        browserContext: state.includePage ? state.browserContext : null
+                      });
                 state.pending = pending;
                 state.sendInFlight = true;
+                if (!retryingExactAttempt) {
+                  // A genuinely new Send owns a new live process slot. Reconciliation of the same
+                  // pending idempotency key must preserve the process already observed for it.
+                  state.liveReaches = [];
+                  state.liveProcessEntries = [];
+                  state.liveProcessExpanded = true;
+                  state.liveProcessManuallyToggled = false;
+                  resetLiveProcessViewports();
+                }
                 state.streamPhase = 'CheckingRuntime';
                 state.streamedContent = '';
                 state.streamedReasoning = '';
+                // Speech and the visual process projection intentionally share only these raw
+                // stream accumulators/events; neither presentation consumer owns the other.
                 speech.stream = { reply: 0, thought: 0 };
                 if (speech.settings.enabled) audioContext();
-                state.reasoningViewports.set('live', { followTail: true, scrollTop: 0 });
-                if (!retrying) {
+                if (!retryingExactAttempt && newAttemptSeed === null) {
                   ui.draft.value = '';
                   sizeDraft();
                 }
-                setCompanionStatus('Checking', retrying ? 'Retrying exact Send' : 'Checking Vex', '');
+                setCompanionStatus(
+                  'Checking',
+                  retryingExactAttempt
+                    ? 'Retrying exact Send'
+                    : newAttemptSeed
+                      ? 'Trying again'
+                      : 'Checking Vex',
+                  ''
+                );
                 render();
 
                 try {
@@ -2065,16 +2608,42 @@ object VexLifeWebP1RuntimeArtifacts {
                     if (event?.type === 'REASONING_DELTA' && typeof event.delta === 'string') {
                       state.streamPhase = 'Reasoning';
                       state.streamedReasoning += event.delta;
+                      appendProcessReasoning(event.delta);
                       setCompanionStatus('Checking', 'Thinking', '');
                       updateLiveTurn();
+                      // Kokoro consumes the raw aggregate above, never the visual containers.
                       followStreamSpeech(false);
+                      return;
+                    }
+                    if (event?.type === 'REACH' && event.reach) {
+                      // A request Vex made (state absent) or what came back (state present). The
+                      // returned event settles the newest open request of the same handle/action.
+                      const use = event.reach;
+                      let settled = false;
+                      if (use.state) {
+                        for (let index = state.liveReaches.length - 1; index >= 0; index -= 1) {
+                          const open = state.liveReaches[index];
+                          if (!open.state && open.handle === use.handle && open.action === use.action) {
+                            state.liveReaches[index] = use;
+                            settled = true;
+                            break;
+                          }
+                        }
+                      }
+                      if (!settled) state.liveReaches.push(use);
+                      projectProcessReach(use);
+                      setCompanionStatus('Checking', reachText(use), '');
+                      updateLiveTurn();
                       return;
                     }
                     if (event?.type === 'CONTENT_DELTA' && typeof event.delta === 'string') {
                       state.streamPhase = 'Responding';
                       state.streamedContent += event.delta;
+                      freezeActiveProcessThought();
+                      if (!state.liveProcessManuallyToggled) state.liveProcessExpanded = false;
                       setCompanionStatus('Checking', 'Responding', '');
                       updateLiveTurn();
+                      // Final-answer speech remains on the same raw stream as T004.
                       followStreamSpeech(false);
                       return;
                     }
@@ -2088,63 +2657,62 @@ object VexLifeWebP1RuntimeArtifacts {
                     if (event?.type === 'COMPLETED') result = event.response ?? null;
                   });
                   if (!result) throw new Error('Vex stream ended without a completed turn.');
-                  followStreamSpeech(true);
-                  state.sendInFlight = false;
-                  root.dataset.vexLastContextPath = String(result.contextPath ?? '');
-                  root.dataset.vexLastPromptReceiptRef = String(result.promptContext?.receiptRef ?? '');
-                  root.dataset.vexLastBrowserContextRef = String(result.promptContext?.browserContextRef ?? '');
-                  const reasoning = result.humanReasoning;
-                  if (
-                    reasoning?.state === 'PRESENT_EPHEMERAL' &&
-                    typeof reasoning.text === 'string' &&
-                    reasoning.text.length > 0
-                  ) {
-                    state.humanReasoningByResponse.set(String(result.responseMessageRef ?? ''), reasoning.text);
-                  } else if (result.responseMessageRef) {
-                    state.humanReasoningByResponse.delete(String(result.responseMessageRef));
-                    state.expandedThoughts.delete(String(result.responseMessageRef));
-                  }
-
-                  // Preserve the fully streamed answer on screen until the canonical projection has
-                  // arrived. Live presentation remains non-authoritative; this only prevents a
-                  // visible vanish/reappear gap at the completion boundary.
-                  try {
-                    await Promise.all([loadConversation(false), loadContext()]);
-                  } catch (projectionError) {
-                    notify(
-                      'Turn completed, but the current projection could not be refreshed: ' +
-                      (projectionError instanceof Error ? projectionError.message : 'refresh failed.')
-                    );
-                  }
-
-                  state.pending = null;
-                  state.streamPhase = null;
-                  state.streamedContent = '';
-                  state.streamedReasoning = '';
-                  setCompanionStatus('Ready', 'Ready', result.model ?? '');
-                  render();
+                  await completeCanonicalSend(result, true);
                 } catch (error) {
-                  state.sendInFlight = false;
-                  state.streamPhase = null;
-                  state.streamedContent = '';
-                  state.streamedReasoning = '';
-                  const status = Number(error?.vexStatus ?? 0);
-                  const retryAllowed = error?.vexResponse?.retrySameSendAttemptAllowed;
-                  const retireAttempt = status === 400 || retryAllowed === false;
+                  // Preserve what the human already saw until the canonical turn owner returns
+                  // terminal truth. Presentation transport is not authority to erase process state.
+                  freezeLiveProcess();
+                  const interruptedProcess = snapshotLiveProcess();
 
+                  let terminalError = error;
+                  let status = Number(error?.vexStatus ?? 0);
+                  let retryAllowed = error?.vexResponse?.retrySameSendAttemptAllowed;
+                  let retireAttempt = status === 400 || retryAllowed === false;
+
+                  if (!retireAttempt) {
+                    setCompanionStatus('Checking', 'Reconciling Send', '');
+                    render();
+                    try {
+                      const reconciled = await reconcileSendOutcome(pending);
+                      await completeCanonicalSend(reconciled, false, interruptedProcess);
+                      return;
+                    } catch (reconciliationError) {
+                      terminalError = reconciliationError;
+                      status = Number(reconciliationError?.vexStatus ?? 0);
+                      retryAllowed = reconciliationError?.vexResponse?.retrySameSendAttemptAllowed;
+                      retireAttempt = status === 400 || retryAllowed === false;
+                    }
+                  }
+
+                  state.sendInFlight = false;
                   if (retireAttempt) {
+                    const failure = terminalError?.vexResponse ?? {};
+                    state.failedAttempts.push({
+                      idempotencyKey: pending.idempotencyKey,
+                      content: pending.content,
+                      browserContext: pending.browserContext ?? null,
+                      failureCode: String(failure.code ?? terminalError?.name ?? 'TURN_FAILED'),
+                      exactNextSafeRoute: failure.exactNextSafeRoute ?? null,
+                      processEntries: interruptedProcess
+                    });
                     state.pending = null;
-                    if (!ui.draft.value) ui.draft.value = pending.content;
+                    clearLiveProcessState();
                     setCompanionStatus('Unavailable', 'Send failed', '');
                   } else {
+                    // Outcome is still unresolved: keep the same idempotency key and the process the
+                    // human watched. A later exact retry/reconciliation must not look like a new Send.
                     state.pending = pending;
+                    state.streamPhase = 'Reconnecting';
                     setCompanionStatus('Unavailable', 'Send outcome unresolved', '');
-                    reportFact('SEND_OUTCOME_UNRESOLVED_SHOWN', { reason: error instanceof Error ? error.name : 'unknown' });
+                    reportFact(
+                      'SEND_OUTCOME_UNRESOLVED_SHOWN',
+                      { reason: terminalError instanceof Error ? terminalError.name : 'unknown' }
+                    );
                   }
 
                   sizeDraft();
                   render();
-                  notify(error instanceof Error ? error.message : 'Send failed.');
+                  notify(terminalError instanceof Error ? terminalError.message : 'Send failed.');
                 }
               };
 
@@ -2445,10 +3013,33 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.jumpLatest.hidden = state.timelineFollowTail;
               });
               ui.timeline.addEventListener('click', (event) => {
+                const retryFailed = event.target.closest('.failed-attempt-retry');
+                if (retryFailed) {
+                  if (state.sendInFlight) return;
+                  const key = String(retryFailed.dataset.failedAttemptKey ?? '');
+                  const failed = state.failedAttempts.find((attempt) => attempt.idempotencyKey === key);
+                  if (!failed) return;
+                  void send({
+                    content: failed.content,
+                    browserContext: failed.browserContext
+                  });
+                  return;
+                }
+
+                const liveToggle = event.target.closest('.live-process-toggle');
+                if (liveToggle) {
+                  state.liveProcessExpanded = !state.liveProcessExpanded;
+                  state.liveProcessManuallyToggled = true;
+                  updateLiveTurn();
+                  return;
+                }
                 const toggle = event.target.closest('.thought-toggle');
                 if (!toggle) return;
                 const key = String(toggle.dataset.thoughtKey ?? '');
-                if (!key || !state.humanReasoningByResponse.has(key)) return;
+                if (
+                  !key ||
+                  (!state.humanReasoningByResponse.has(key) && !state.processEntriesByResponse.has(key))
+                ) return;
                 if (state.expandedThoughts.has(key)) state.expandedThoughts.delete(key);
                 else state.expandedThoughts.add(key);
                 renderTimeline();
@@ -2529,6 +3120,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   void loadSettings().catch(() => {});
                   void loadMemory().catch(() => {});
                   void loadDiagnostics().catch(() => renderDiagnostics());
+                  void loadModels().catch(() => {});
                   // Observed: the presentation rendered with current service data.
                   reportFact('PRESENTATION_ARRIVED', { presentation: 'workspace' });
                 })

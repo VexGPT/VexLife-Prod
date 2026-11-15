@@ -11,6 +11,7 @@ import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.entry.VexLifeProdEntryFamily
 import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.platform.macos.MacUserLaunchdProcess
 import vexlife.service.VexLifeProdMacServiceLifetime
 import vexlife.service.VexLifeProdServiceContract
@@ -293,6 +294,56 @@ class VexLifeProdMacFrontDoorTest {
     }
 
     @Test
+    fun runningPriorProductCannotMaskPendingSelectedModelAcquisition() {
+        val model = HereticModelCatalog.Candidate9B
+        val pendingModel =
+            currentState().copy(
+                freeStorageBytes = 100L * 1024L * 1024L * 1024L,
+                modelSelectionState = "HERETIC_ESTABLISHMENT_PENDING",
+                activeModelRef = model.modelRef,
+                activeModelProfileRef = model.identity.modelProfileRef,
+                modelMinimumMemoryBytes = model.recommendedMemoryBytes,
+                runtimeState = "ESTABLISHMENT_PENDING",
+                modelArtifactState = "ABSENT",
+                modelArtifactTotalBytes = model.totalBytes,
+                modelArtifactPresentBySizeBytes = 0L,
+                modelArtifactMissingBytes = model.totalBytes,
+                modelArtifactInvalidSizeBytes = 0L,
+            )
+        val runningPrior =
+            VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned(
+                receipt = receipt(prior),
+                sourceCurrentness = currentness(prior),
+            )
+        val modelHooks =
+            hooks(
+                existing = runningPrior,
+                runtimeEnvironmentPresent = false,
+                current = pendingModel,
+            )
+
+        val projection =
+            VexLifeProdMacFrontDoor.observeWithHooks(
+                desiredSourceSha = desired,
+                productHome = selectedHome,
+                hooks = modelHooks,
+            )
+        val resolved =
+            VexLifeProdMacFrontDoor.resolveTypedControlWithHooks(
+                desiredSourceSha = desired,
+                productHome = selectedHome,
+                controlRef = VexLifeProdEntryFamily.ControlSetUp,
+                hooks = modelHooks,
+            )
+
+        assertEquals(VexLifeProdEntryFamily.StateSetupRequired, projection.semanticStateRef)
+        assertEquals(model.modelRef, projection.setupPlan?.modelRef)
+        val converge = requireNotNull(resolved.effect as? VexLifeProdEntryFamily.ConvergeProduct)
+        assertTrue(converge.allowAcquisition)
+        assertTrue(converge.allowRuntimeStart)
+    }
+
+    @Test
     fun ownedUnhealthyServiceMapsToRepairMeaningWithoutDuplicatingPlatformDecisionLogic() {
         val currentRepair =
             VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(
@@ -369,6 +420,114 @@ class VexLifeProdMacFrontDoorTest {
         assertEquals(VexLifeProdEntryFamily.StateHeldUnknown, projection.semanticStateRef)
         assertEquals("receipt/PID ownership is not exact", projection.serviceDetail)
         assertNull(projection.displayState.primaryControlRef)
+    }
+
+    @Test
+    fun aModelChosenInTheWindowIsSavedBeforeSetUpAndAgainAfterAHomeIsFormed() {
+        val order = mutableListOf<String>()
+        VexLifeProdMacFrontDoorProcess.activateWithHooks(
+            productHome = selectedHome,
+            controlRef = VexLifeProdEntryFamily.ControlFormHome,
+            desiredSourceSha = desired,
+            model = "heretic-4b",
+            hooks =
+                VexLifeProdMacFrontDoorProcess.ActivationHooks(
+                    persistModel = { _, model ->
+                        order += "PERSIST:" + model.handle
+                        order.count { it.startsWith("PERSIST") } > 1
+                    },
+                    resolveControl = { _, controlRef, _ ->
+                        VexLifeProdMacFrontDoor.ResolvedControl(
+                            semanticStateRef = VexLifeProdEntryFamily.StateHomeFormationRequired,
+                            controlRef = controlRef,
+                            effect = VexLifeProdEntryFamily.FormCanonicalHome,
+                        )
+                    },
+                    formHome = { _, _ -> order += "FORM_HOME" },
+                    convergeProduct = { _, _, _, _ -> order += "CONVERGE" },
+                    observeSemanticStateRef = { _, _ -> VexLifeProdEntryFamily.StateSetupRequired },
+                ),
+        )
+        assertEquals(listOf("PERSIST:heretic-4b", "FORM_HOME", "PERSIST:heretic-4b"), order)
+    }
+
+    @Test
+    fun explicitModelChoiceMustPersistBeforeExistingHomeConvergence() {
+        var resolved = 0
+        var converged = 0
+
+        val result =
+            VexLifeProdMacFrontDoorProcess.activateWithHooks(
+                productHome = selectedHome,
+                controlRef = VexLifeProdEntryFamily.ControlSetUp,
+                desiredSourceSha = desired,
+                model = "heretic-4b",
+                hooks =
+                    VexLifeProdMacFrontDoorProcess.ActivationHooks(
+                        persistModel = { _, _ -> false },
+                        resolveControl = { _, _, _ ->
+                            resolved += 1
+                            error("model persistence failure must stop before Control resolution")
+                        },
+                        convergeProduct = { _, _, _, _ -> converged += 1 },
+                        observeSemanticStateRef = { _, _ ->
+                            VexLifeProdEntryFamily.StateSetupRequired
+                        },
+                    ),
+            )
+
+        assertTrue(result.failure != null)
+        assertEquals(0, resolved)
+        assertEquals(0, converged)
+        assertEquals(
+            VexLifeProdMacFrontDoorProcess.ManifestationRefreshEntry,
+            result.manifestationRef,
+        )
+    }
+
+    @Test
+    fun modelChoiceMustPersistAfterHomeFormationBeforeItCanBeConsideredHonored() {
+        var persistCalls = 0
+        var formed = 0
+
+        val result =
+            VexLifeProdMacFrontDoorProcess.activateWithHooks(
+                productHome = selectedHome,
+                controlRef = VexLifeProdEntryFamily.ControlFormHome,
+                desiredSourceSha = desired,
+                model = "heretic-4b",
+                hooks =
+                    VexLifeProdMacFrontDoorProcess.ActivationHooks(
+                        persistModel = { _, _ ->
+                            persistCalls += 1
+                            if (persistCalls == 1) false
+                            else error("model selection write failed after Home formation")
+                        },
+                        resolveControl = { _, controlRef, _ ->
+                            VexLifeProdMacFrontDoor.ResolvedControl(
+                                semanticStateRef =
+                                    VexLifeProdEntryFamily.StateHomeFormationRequired,
+                                controlRef = controlRef,
+                                effect = VexLifeProdEntryFamily.FormCanonicalHome,
+                            )
+                        },
+                        formHome = { _, _ -> formed += 1 },
+                        convergeProduct = { _, _, _, _ ->
+                            error("Home formation must not also converge Product")
+                        },
+                        observeSemanticStateRef = { _, _ ->
+                            VexLifeProdEntryFamily.StateSetupRequired
+                        },
+                    ),
+            )
+
+        assertEquals(2, persistCalls)
+        assertEquals(1, formed)
+        assertTrue(result.failure != null)
+        assertEquals(
+            VexLifeProdMacFrontDoorProcess.ManifestationRefreshEntry,
+            result.manifestationRef,
+        )
     }
 
     @Test
@@ -533,6 +692,18 @@ class VexLifeProdMacFrontDoorTest {
             )) {
             assertTrue(source.contains(required), "native window must keep: $required")
         }
+        val readyNoticeAt = source.indexOf("set noticeValue to activation's objectForKey:\"notice\"")
+        val readyDialogAt = source.indexOf("my showMessage(my dictionaryText(noticeValue", readyNoticeAt)
+        val productOpenAt = source.indexOf("open location originText", readyNoticeAt)
+        assertTrue(readyNoticeAt >= 0, "native window must inspect the Product-owned Ready notice")
+        assertTrue(readyDialogAt > readyNoticeAt, "Ready notice must be shown before Product presentation")
+        assertTrue(productOpenAt > readyDialogAt, "VexLife must open only after the human acknowledges Ready")
+        assertEquals(
+            1,
+            Regex("""open location originText""").findAll(source).count(),
+            "native Setup Journey must have one Product presentation open effect",
+        )
+
         for (forbidden in
             listOf(
                 "effectRef",

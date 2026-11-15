@@ -2,6 +2,7 @@ package vexlife.web
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
@@ -24,7 +25,7 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            51,
+            53,
             blueprint.size,
         )
         assertTrue(
@@ -326,6 +327,102 @@ class VexLifeWebP1Test {
             ),
         )
     }
+
+    @Test
+    fun processProjectionUsesExistingSendFactsInsteadOfProviderStages() {
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts
+                .generate()
+                .javascript
+
+        assertTrue(
+            javascript.contains(
+                "liveProcessEntries: []",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "processEntriesByResponse: new Map()",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "appendProcessReasoning(event.delta);",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "projectProcessReach(use);",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "const completedProcess =",
+            ) &&
+                javascript.contains(
+                    "state.processEntriesByResponse.set(responseKey, completedProcess)",
+                ),
+            "completed presentation must attach the process snapshot selected before transient live state is cleared",
+        )
+        assertTrue(
+            javascript.contains(
+                "label.textContent = expanded ? 'hide process' : 'view process';",
+            ),
+        )
+        assertFalse(
+            javascript.contains(
+                "providerStageIndex",
+            ),
+            "the browser must project meaningful consequences rather than expose provider invocation numbering",
+        )
+        assertFalse(
+            javascript.contains(
+                "providerModelRef",
+            ),
+            "model identity remains diagnostics/runtime truth rather than primary process UX",
+        )
+    }
+
+    @Test
+    fun ambiguousStreamEndingReconcilesExactSendBeforeShowingUnresolved() {
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts
+                .generate()
+                .javascript
+
+        val reconciliation =
+            javascript.indexOf(
+                "await reconcileSendOutcome(pending)",
+            )
+        val unresolved =
+            javascript.indexOf(
+                "setCompanionStatus('Unavailable', 'Send outcome unresolved', '')",
+            )
+
+        assertTrue(
+            javascript.contains(
+                "headers: { accept: 'application/json', 'content-type': 'application/json' }",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "const interruptedProcess = snapshotLiveProcess()",
+            ) &&
+                javascript.contains(
+                    "await completeCanonicalSend(reconciled, false, interruptedProcess)",
+                ),
+            "ambiguous stream reconciliation must carry forward the process the human already observed",
+        )
+        assertTrue(
+            reconciliation >=
+                0,
+        )
+        assertTrue(
+            unresolved >
+                reconciliation,
+        )
+    }
+
 }
 
 // [VXG RealForever]

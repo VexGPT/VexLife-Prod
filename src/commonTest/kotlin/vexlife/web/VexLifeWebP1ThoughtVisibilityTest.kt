@@ -23,7 +23,7 @@ class VexLifeWebP1ThoughtVisibilityTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "if (!state.thoughtsVisible || message.role !== 'vex') return null;",
+                "if (message.role !== 'vex') return null;",
             ),
         )
         assertTrue(
@@ -45,6 +45,48 @@ class VexLifeWebP1ThoughtVisibilityTest {
             bundle.javascript.contains(
                 "state.streamedContent += event.delta",
             ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "appendProcessReasoning(event.delta);",
+            ),
+            "visual thought containers must observe reasoning deltas without replacing the raw stream",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "projectProcessReach(use);",
+            ),
+            "capability request/result facts must become meaningful process entries",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "freezeActiveProcessThought();",
+            ),
+            "a real relationship boundary must freeze the prior thought container before the next one can open",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "speech.stream.thought = speakFresh(state.streamedReasoning",
+            ),
+            "Speech/Kokoro must keep consuming the raw reasoning stream rather than visual containers",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "speech.stream.reply = speakFresh(state.streamedContent",
+            ),
+            "Speech/Kokoro must keep consuming the raw final-answer stream",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "speakFresh(state.liveProcessEntries",
+            ),
+            "visual process history must never become Speech input",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "providerStageIndex",
+            ),
+            "presentation must not invent or expose provider-stage ownership",
         )
         assertTrue(
             bundle.javascript.contains(
@@ -89,6 +131,12 @@ class VexLifeWebP1ThoughtVisibilityTest {
         )
         assertTrue(
             bundle.javascript.contains(
+                "if (state.liveProcessManuallyToggled && state.liveProcessExpanded)",
+            ),
+            "completion must preserve an explicit human choice to keep the live process open",
+        )
+        assertTrue(
+            bundle.javascript.contains(
                 "timelineFollowTail: true",
             ),
             "Conversation following must be explicit presentation state rather than inferred from proximity",
@@ -112,6 +160,54 @@ class VexLifeWebP1ThoughtVisibilityTest {
         )
         assertTrue(
             bundle.javascript.contains(
+                "const syncLiveProcessPanel = (thought) =>",
+            ),
+            "live process rendering must synchronize one mounted panel instead of reconstructing it per delta",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "const syncLiveProcessHistory = (history) =>",
+            ),
+            "streaming process entries must append/update stable child nodes",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "node.dataset.processEntry = key;",
+            ),
+            "each live process entry needs stable DOM identity for the duration of the Send",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "if (node.textContent !== entry.text) node.textContent = entry.text;",
+            ),
+            "active reasoning must mutate the existing scrollable node in place",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "history.hidden = !expanded;",
+            ),
+            "collapsing process history must hide rather than destroy mounted streaming nodes",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "if (thought) syncLiveProcessPanel(thought);",
+            ),
+            "stream updates must converge into the existing live process DOM",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "thought?.querySelector('.live-process-panel')?.remove();",
+            ),
+            "never destroy the live process panel while a human may be scrolling it",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "const process = liveProcessPanel();",
+            ),
+            "the old rebuild-per-delta process projection must not return",
+        )
+        assertTrue(
+            bundle.javascript.contains(
                 "updateLiveTurn();",
             ),
         )
@@ -123,9 +219,21 @@ class VexLifeWebP1ThoughtVisibilityTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "applyReasoningViewport(reasoning, 'live', true, false);",
+                "const liveTail = element.dataset.liveTail === 'true';",
             ),
-            "streaming reasoning must not write scrollTop while the human is reading within the nested pane",
+            "only the currently active thought container may follow its live tail",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "if (key === 'live' || key.startsWith('live.process.'))",
+            ),
+            "a fresh Send must retire only prior live-process viewport state",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "resetLiveProcessViewports();",
+            ),
+            "fresh Send must begin with fresh visual process viewport state",
         )
         assertTrue(
             bundle.javascript.contains(
@@ -133,11 +241,11 @@ class VexLifeWebP1ThoughtVisibilityTest {
             ),
             "streaming content must not write Conversation scrollTop while the human is reading history",
         )
-        assertTrue(
+        assertFalse(
             bundle.javascript.contains(
                 "state.reasoningViewports.set('live', { followTail: true, scrollTop: 0 });",
             ),
-            "every fresh Send must begin with a fresh live-reasoning follow state",
+            "the obsolete single live-thought viewport must not stand in for process containers",
         )
         assertTrue(
             bundle.javascript.contains(

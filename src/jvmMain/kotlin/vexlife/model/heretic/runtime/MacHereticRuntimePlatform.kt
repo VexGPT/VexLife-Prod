@@ -117,9 +117,9 @@ class MacHereticRuntimePlatform(
     }
 
     fun interface HealthProbe {
-        fun healthy(
+        fun observe(
             origin: String,
-        ): Boolean
+        ): HereticPersistentRuntime.GenerationReadiness
     }
 
     object SystemProcessInspector :
@@ -344,14 +344,18 @@ class MacHereticRuntimePlatform(
 
     object SystemHealthProbe :
         HealthProbe {
-        private val statusPattern =
+        private val okPattern =
             Regex(
                 "\"status\"\\s*:\\s*\"ok\"",
             )
+        private val unavailablePattern =
+            Regex(
+                "\"status\"\\s*:\\s*\"unavailable\"",
+            )
 
-        override fun healthy(
+        override fun observe(
             origin: String,
-        ): Boolean =
+        ): HereticPersistentRuntime.GenerationReadiness =
             try {
                 val connection =
                     (
@@ -373,25 +377,48 @@ class MacHereticRuntimePlatform(
                         }
 
                 try {
-                    if (
-                        connection.responseCode !=
-                            200
-                    ) {
-                        return false
-                    }
+                    val status =
+                        connection.responseCode
+                    val body =
+                        (
+                            if (
+                                status in
+                                    200..299
+                            ) {
+                                connection.inputStream
+                            } else {
+                                connection.errorStream
+                            }
+                        )
+                            ?.bufferedReader()
+                            ?.readText()
+                            .orEmpty()
 
-                    statusPattern.containsMatchIn(
-                        connection.inputStream
-                            .bufferedReader()
-                            .readText(),
-                    )
+                    when {
+                        status ==
+                            200 &&
+                            okPattern.containsMatchIn(
+                                body,
+                            ) ->
+                            HereticPersistentRuntime.GenerationReadiness.Available
+
+                        status ==
+                            503 &&
+                            unavailablePattern.containsMatchIn(
+                                body,
+                            ) ->
+                            HereticPersistentRuntime.GenerationReadiness.Unavailable
+
+                        else ->
+                            HereticPersistentRuntime.GenerationReadiness.Unknown
+                    }
                 } finally {
                     connection.disconnect()
                 }
             } catch (
                 _: Exception,
             ) {
-                false
+                HereticPersistentRuntime.GenerationReadiness.Unknown
             }
     }
 
@@ -432,13 +459,13 @@ class MacHereticRuntimePlatform(
             pid,
         )
 
-    override fun healthy(
+    override fun generationReadiness(
         binding: HereticPersistentRuntime.Binding,
-    ): Boolean {
-        // The caller has already established exact environment currentness for this binding.
-        // Interactive health is intentionally one immediate generation-engine observation.
-        return healthProbe.healthy(
-            HereticProductIdentity.Endpoint,
+    ): HereticPersistentRuntime.GenerationReadiness {
+        // Readiness is outside process/substrate currentness. The exact bound model endpoint owns
+        // the observation; only explicit Unavailable may later authorize lifecycle recovery.
+        return healthProbe.observe(
+            binding.model.identity.endpoint,
         )
     }
 
@@ -622,17 +649,24 @@ class MacHereticRuntimePlatform(
                 "mlx_lm.server exited before startup readiness"
             }
 
-            if (
-                healthProbe.healthy(
-                    HereticProductIdentity.Endpoint,
+            when (
+                healthProbe.observe(
+                    binding.model.identity.endpoint,
                 )
             ) {
-                return
-            }
+                HereticPersistentRuntime.GenerationReadiness.Available ->
+                    return
 
-            sleep(
-                500,
-            )
+                HereticPersistentRuntime.GenerationReadiness.Unavailable ->
+                    error(
+                        "mlx_lm.server generation engine reported unavailable during startup",
+                    )
+
+                HereticPersistentRuntime.GenerationReadiness.Unknown ->
+                    sleep(
+                        500,
+                    )
+            }
         }
 
         error(

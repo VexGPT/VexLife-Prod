@@ -107,6 +107,10 @@ object VexLifeProdServiceContract {
 
     const val SettingsPath = "/api/v1/settings"
     const val DiagnosticsPath = "/api/v1/diagnostics"
+
+    /** Settings → Models: offered models as this Home holds them, and their Controls. */
+    const val ModelsPath = "/api/v1/models"
+    const val ModelsControlPath = "/api/v1/models/control"
     const val DiagnosticsControlPath = "/api/v1/diagnostics/control"
     const val DiagnosticsExportPath = "/api/v1/diagnostics/export"
     const val ChronologyPath = "/api/v1/chronology"
@@ -1335,6 +1339,18 @@ object VexLifeProdServiceContract {
         val contextPath: String,
         val promptContext: PromptContextProjection,
         val humanReasoning: HumanReasoningProjection,
+        /** What Vex reached during the turn; empty when he answered from context alone. */
+        val capabilityUses: List<CapabilityUse> = emptyList(),
+    )
+
+    /** One capability request of a turn as the person may see it: the reach, never the content. */
+    @Serializable
+    data class CapabilityUse(
+        val handle: String,
+        val action: String,
+        val target: String? = null,
+        /** Present once the host returned (RETURNED, NOT_FOUND, REFUSED, FAILED, ...). */
+        val state: String? = null,
     )
 
     @Serializable
@@ -1352,6 +1368,9 @@ object VexLifeProdServiceContract {
             null,
         val error: ErrorResponse? =
             null,
+        /** For REACH: the request Vex made (state null) or its returned state. */
+        val reach: CapabilityUse? =
+            null,
     ) {
         init {
             require(
@@ -1360,6 +1379,7 @@ object VexLifeProdServiceContract {
                         "PHASE",
                         "REASONING_DELTA",
                         "CONTENT_DELTA",
+                        "REACH",
                         "COMPLETED",
                         "FAILED",
                     ),

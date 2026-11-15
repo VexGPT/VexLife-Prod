@@ -46,6 +46,7 @@ object VexLogger {
         Browser("browser"),
         Presentation("presentation"),
         Diagnostics("diagnostics"),
+        Capability("capability"),
     }
 
     /**
@@ -62,6 +63,7 @@ object VexLogger {
         SetupEffectFailed(Owner.Setup),
         SetupEffectCancelledByHuman(Owner.Setup),
         PersonLanguageSaved(Owner.Person),
+        PersonModelChosen(Owner.Person),
 
         // Product service process and its lifetime owner
         ServiceProcessStarted(Owner.Service),
@@ -74,12 +76,22 @@ object VexLogger {
 
         // Heretic runtime (Python/MLX)
         RuntimeCurrentnessLost(Owner.HereticRuntime),
+        RuntimeGenerationUnavailable(Owner.HereticRuntime),
+        RuntimeGenerationUnknown(Owner.HereticRuntime),
         RuntimeRecoveryRequested(Owner.HereticRuntime),
         RuntimeRecoveryCompleted(Owner.HereticRuntime),
         RuntimeRecoveryFailed(Owner.HereticRuntime),
         RuntimeRetiredUnhealthy(Owner.HereticRuntime),
         RuntimeStartRequested(Owner.HereticRuntime),
         RuntimeQualified(Owner.HereticRuntime),
+        RuntimeModelSwitched(Owner.HereticRuntime),
+
+        // Settings → Models: the person's model Controls and the file effects they caused.
+        ModelControlAccepted(Owner.Setup),
+        ModelDownloadStarted(Owner.Setup),
+        ModelDownloadCompleted(Owner.Setup),
+        ModelDownloadFailed(Owner.Setup),
+        ModelFilesRemoved(Owner.Setup),
         RuntimeProcessNoLongerLive(Owner.HereticRuntime),
         RuntimeProcessLive(Owner.HereticRuntime),
 
@@ -89,6 +101,10 @@ object VexLogger {
         TurnCompleted(Owner.Conversation),
         TurnFailed(Owner.Conversation),
         SendAttemptTerminalizedAfterLoss(Owner.Conversation),
+
+        // Capability bridge: a request Vex made, and what its owner returned.
+        CapabilityRequestObserved(Owner.Capability),
+        CapabilityResultReturned(Owner.Capability),
 
         // Browser and presentation, reported by the web presentation that observed them
         BrowserPageIdentityObserved(Owner.Browser),
