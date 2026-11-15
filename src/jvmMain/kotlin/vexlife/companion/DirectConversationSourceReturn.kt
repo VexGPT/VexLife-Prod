@@ -99,6 +99,11 @@ object DirectConversationSourceReturn {
         val eventKind: String,
         val speakerRef: String,
         val recipientRefs: List<String>,
+        val formedAt: String,
+        /** Canonical Conversation model label when the event is a RESPONSE. */
+        val conversationModelOrNull: String?,
+        /** Exact Product runtime modelRef when a VexLife-Prod evidence sidecar exists. */
+        val runtimeModelRefOrNull: String?,
         val content: String,
     )
 
@@ -497,6 +502,9 @@ object DirectConversationSourceReturn {
     fun project(
         discovery: Discovery,
         availableTokens: Int,
+        runtimeModelRefForTurn: (turnRef: String) -> String? = {
+            null
+        },
     ): Projection {
         require(
             availableTokens in
@@ -521,6 +529,7 @@ object DirectConversationSourceReturn {
                     discovery = discovery,
                     state = NoMatch,
                     matches = emptyList(),
+                    runtimeModelRefForTurn = runtimeModelRefForTurn,
                 )
             val estimate =
                 DirectPromptContext.estimatedMessageTokens(
@@ -563,6 +572,7 @@ object DirectConversationSourceReturn {
                     discovery = discovery,
                     state = Returned,
                     matches = candidate,
+                    runtimeModelRefForTurn = runtimeModelRefForTurn,
                 )
             val estimate =
                 DirectPromptContext.estimatedMessageTokens(
@@ -586,6 +596,7 @@ object DirectConversationSourceReturn {
                     discovery = discovery,
                     state = HeldTokenBudget,
                     matches = emptyList(),
+                    runtimeModelRefForTurn = runtimeModelRefForTurn,
                 )
             val estimate =
                 DirectPromptContext.estimatedMessageTokens(
@@ -619,6 +630,7 @@ object DirectConversationSourceReturn {
                 discovery = discovery,
                 state = Returned,
                 matches = selected,
+                runtimeModelRefForTurn = runtimeModelRefForTurn,
             )
         val estimate =
             DirectPromptContext.estimatedMessageTokens(
@@ -797,6 +809,7 @@ object DirectConversationSourceReturn {
         discovery: Discovery,
         state: String,
         matches: List<Match>,
+        runtimeModelRefForTurn: (turnRef: String) -> String?,
     ): String {
         val packet =
             ProviderPacket(
@@ -814,11 +827,13 @@ object DirectConversationSourceReturn {
                                 match.matchedTerms,
                             request =
                                 providerEvent(
-                                    match.requestEvent,
+                                    event = match.requestEvent,
+                                    runtimeModelRefForTurn = runtimeModelRefForTurn,
                                 ),
                             response =
                                 providerEvent(
-                                    match.responseEvent,
+                                    event = match.responseEvent,
+                                    runtimeModelRefForTurn = runtimeModelRefForTurn,
                                 ),
                         )
                     },
@@ -833,6 +848,7 @@ object DirectConversationSourceReturn {
             ContextHeader,
             "This is exact canonical local Conversation source returned because Vex explicitly requested older source. It is not Memory, semantic acceptance, or a profile of the human.",
             "Answer the current human from the returned exact source and other current context. If the return is NO_MATCH, HELD_TOKEN_BUDGET, ambiguous, or insufficient, preserve that uncertainty instead of inventing recall.",
+            "Each returned event carries its canonical sequence and formedAt. RESPONSE events also carry the canonical Conversation model label and, when Product runtime evidence exists, the exact runtimeModelRef. Do not guess a missing model attribution.",
             "Do not emit another source-return request in this human turn.",
             VexContractJson.compactEncode(
                 packet,
@@ -845,6 +861,7 @@ object DirectConversationSourceReturn {
 
     private fun providerEvent(
         event: DirectConversationStore.Event,
+        runtimeModelRefForTurn: (turnRef: String) -> String?,
     ): ProviderEvent =
         ProviderEvent(
             eventRef = event.eventRef,
@@ -853,6 +870,27 @@ object DirectConversationSourceReturn {
             eventKind = event.eventKind,
             speakerRef = event.speakerRef,
             recipientRefs = event.recipientRefs,
+            formedAt = event.formedAt,
+            conversationModelOrNull =
+                if (
+                    event.eventKind ==
+                        "RESPONSE"
+                ) {
+                    event.model
+                } else {
+                    null
+                },
+            runtimeModelRefOrNull =
+                if (
+                    event.eventKind ==
+                        "RESPONSE"
+                ) {
+                    runtimeModelRefForTurn(
+                        event.turnRef,
+                    )
+                } else {
+                    null
+                },
             content = event.content,
         )
 
