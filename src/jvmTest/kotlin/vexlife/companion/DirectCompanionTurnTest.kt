@@ -760,16 +760,7 @@ class DirectCompanionTurnTest {
                         "Nothing has been retrieved until a real VEXLIFE_CAPABILITY_RESULT/v1"
                     )
                 )
-                assertTrue(
-                    call.body.contains(
-                        "currentInferenceModelRef=" + HereticProductIdentity.ModelRef
-                    )
-                )
-                assertTrue(
-                    call.body.contains(
-                        "UI turn numbers are not carried in these provider messages"
-                    )
-                )
+                assertTrue(call.body.contains("Me now [Vex 27B]."))
                 val content =
                     when (
                         calls
@@ -777,7 +768,7 @@ class DirectCompanionTurnTest {
                         1 -> {
                             assertTrue(
                                 call.body.contains(
-                                    "inferenceContinuityRelation=NO_PRIOR_COMPLETED_VEX_REPLY"
+                                    "Human [2026-11-05T05:01:00Z][0]:\\nFirst request"
                                 )
                             )
                             "First response"
@@ -786,12 +777,17 @@ class DirectCompanionTurnTest {
                         2 -> {
                             assertTrue(
                                 call.body.contains(
-                                    "priorVexReplyModelRef=" + HereticProductIdentity.ModelRef
+                                    "Human [2026-11-05T05:01:00Z][0]:\\nFirst request"
                                 )
                             )
                             assertTrue(
                                 call.body.contains(
-                                    "inferenceContinuityRelation=SAME_RUNTIME_BINDING_AS_PRIOR_VEX_REPLY"
+                                    "Me [Vex 27B][1]:\\nFirst response"
+                                )
+                            )
+                            assertTrue(
+                                call.body.contains(
+                                    "Human [2026-11-05T05:02:00Z][2]:\\nSecond request"
                                 )
                             )
                             assertTrue(
