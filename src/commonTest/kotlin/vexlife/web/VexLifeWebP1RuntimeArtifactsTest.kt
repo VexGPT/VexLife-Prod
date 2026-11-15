@@ -538,6 +538,26 @@ class VexLifeWebP1RuntimeArtifactsTest {
             ),
         )
     }
+
+    @Test
+    fun vexRepliesRenderAsMarkdownWithDomNodesWhileThePersonsWordsStayExact() {
+        val javascript = VexLifeWebP1RuntimeArtifacts.generate().javascript
+        val renderer =
+            javascript.substring(
+                javascript.indexOf("const mdElement = "),
+                javascript.indexOf("const messageNode = "),
+            )
+        assertTrue(!renderer.contains("innerHTML"), "Markdown is built from DOM nodes, never markup")
+        assertTrue(renderer.contains("/^(https?:\\/\\/|mailto:)/i"), "only web and mail links are linked")
+        assertTrue(javascript.contains("bubble.append(markdownBody(message.content));"))
+        assertTrue(
+            javascript.contains("paragraph.textContent = String(message.content ?? '');"),
+            "the person's message is shown exactly as written",
+        )
+        // Streaming keeps the live bubble and its body mounted; only the body's children change.
+        assertTrue(javascript.contains("if (body) scheduleLiveMarkdown(body);"))
+        assertTrue(javascript.contains("container.replaceChildren(...mdBlocks(text, 0));"))
+    }
 }
 
 // [VXG RealForever]

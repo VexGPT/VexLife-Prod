@@ -1472,6 +1472,302 @@ object VexLifeWebP1RuntimeArtifacts {
                 return holder;
               };
 
+              // Vex writes Markdown (bold, lists, tables, code). It is rendered with DOM nodes only —
+              // never innerHTML — so text from a model or a page can never become markup. The
+              // container element is kept; only its children are replaced, and no nested scroller is
+              // created (tables and code wrap inside the bubble), so timeline scroll ownership and
+              // live DOM identity are unchanged.
+              const mdElement = (tag, className, children) => {
+                const node = document.createElement(tag);
+                if (className) node.className = className;
+                for (const child of children || []) node.append(child);
+                return node;
+              };
+
+              const mdSafeHref = (url) => /^(https?:\/\/|mailto:)/i.test(url) ? url : null;
+
+              const mdWordChar = (character) => Boolean(character) && /[\p{L}\p{N}]/u.test(character);
+
+              const mdInlineRules = [
+                { kind: 'code', re: /``([^\n]+?)``/ },
+                { kind: 'code', re: /`([^`\n]+)`/ },
+                { kind: 'link', re: /\[([^\]\n]+)\]\(([^()\s]+(?:\([^()\s]*\))?[^()\s]*)\)/ },
+                { kind: 'url', re: /https?:\/\/[^\s<>()\[\]{}"']+/ },
+                { kind: 'strong', re: /\*\*(?=\S)([^\n]*?\S)\*\*/ },
+                { kind: 'strong', re: /__(?=\S)([^\n]*?\S)__/, word: true },
+                { kind: 'del', re: /~~(?=\S)([^\n]*?\S)~~/ },
+                { kind: 'em', re: /\*(?=[^\s*])([^*\n]*?[^\s*])\*/ },
+                { kind: 'em', re: /_(?=[^\s_])([^_\n]*?[^\s_])_/, word: true }
+              ];
+
+              const mdInline = (text, depth) => {
+                const nodes = [];
+                let rest = String(text);
+                let guard = 0;
+                while (rest && guard < 10000) {
+                  guard += 1;
+                  let best = null;
+                  for (const rule of mdInlineRules) {
+                    const match = rule.re.exec(rest);
+                    if (!match) continue;
+                    if (rule.word) {
+                      // snake_case and __init__ stay text: an underscore delimiter needs a boundary.
+                      const before = rest.charAt(match.index - 1);
+                      const after = rest.charAt(match.index + match[0].length);
+                      if (mdWordChar(before) || mdWordChar(after)) continue;
+                    }
+                    if (!best || match.index < best.match.index) best = { rule, match };
+                  }
+                  if (!best || (depth || 0) > 8) {
+                    nodes.push(document.createTextNode(rest));
+                    break;
+                  }
+                  const { rule, match } = best;
+                  if (match.index > 0) nodes.push(document.createTextNode(rest.slice(0, match.index)));
+                  if (rule.kind === 'code') {
+                    const code = document.createElement('code');
+                    code.textContent = match[1];
+                    nodes.push(code);
+                  } else if (rule.kind === 'link') {
+                    const href = mdSafeHref(match[2]);
+                    if (href) {
+                      const link = mdElement('a', null, mdInline(match[1], (depth || 0) + 1));
+                      link.href = href;
+                      link.target = '_blank';
+                      link.rel = 'noopener noreferrer';
+                      nodes.push(link);
+                    } else {
+                      nodes.push(document.createTextNode(match[0]));
+                    }
+                  } else if (rule.kind === 'url') {
+                    let url = match[0];
+                    while (/[.,;:!?)]/.test(url.charAt(url.length - 1))) url = url.slice(0, -1);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    link.textContent = url;
+                    nodes.push(link);
+                    rest = rest.slice(match.index + url.length);
+                    continue;
+                  } else {
+                    nodes.push(mdElement(rule.kind, null, mdInline(match[1], (depth || 0) + 1)));
+                  }
+                  rest = rest.slice(match.index + match[0].length);
+                }
+                return nodes;
+              };
+
+              const mdSplitRow = (line) => {
+                let text = line.trim();
+                if (text.startsWith('|')) text = text.slice(1);
+                if (text.endsWith('|') && !text.endsWith('\\|')) text = text.slice(0, -1);
+                const cells = [];
+                let current = '';
+                for (let index = 0; index < text.length; index += 1) {
+                  const character = text.charAt(index);
+                  if (character === '\\' && text.charAt(index + 1) === '|') {
+                    current += '|';
+                    index += 1;
+                  } else if (character === '|') {
+                    cells.push(current.trim());
+                    current = '';
+                  } else {
+                    current += character;
+                  }
+                }
+                cells.push(current.trim());
+                return cells;
+              };
+
+              const mdFullMatch = (re, line) => {
+                const match = line.match(re);
+                return match && match[0].length === line.length ? match : null;
+              };
+
+              const mdTableSeparator = (line) =>
+                Boolean(line) && line.includes('-') && Boolean(mdFullMatch(/\s*\|?(?:\s*:?-+:?\s*\|)*\s*:?-+:?\s*\|?\s*/, line));
+
+              const mdFence = /^\s{0,3}(`{3,}|~{3,})\s*([\w+#.-]*)/;
+              const mdHeading = /^\s{0,3}(#{1,6})\s+(.*)/;
+              const mdRule = /\s{0,3}([-*_])(?:\s*\1){2,}\s*/;
+              const mdItem = /^(\s*)([-*+]|\d{1,9}[.)])\s+(.*)/;
+              const mdQuote = /^\s{0,3}>\s?(.*)/;
+
+              const mdStartsBlock = (line, next) =>
+                mdFence.test(line) || mdHeading.test(line) || Boolean(mdFullMatch(mdRule, line)) ||
+                mdQuote.test(line) || mdItem.test(line) ||
+                (line.includes('|') && mdTableSeparator(next));
+
+              const mdBlocks = (source, depth) => {
+                const lines = String(source).replace(/\r\n?/g, '\n').split('\n');
+                const out = [];
+                let index = 0;
+                const blank = (line) => !line || !line.trim();
+                if (depth > 6) return [mdElement('p', null, [document.createTextNode(String(source))])];
+                while (index < lines.length) {
+                  const line = lines[index];
+                  if (blank(line)) {
+                    index += 1;
+                    continue;
+                  }
+                  let match = line.match(mdFence);
+                  if (match) {
+                    const marker = match[1];
+                    const body = [];
+                    index += 1;
+                    while (index < lines.length && !lines[index].trim().startsWith(marker)) {
+                      body.push(lines[index]);
+                      index += 1;
+                    }
+                    index += 1;
+                    const code = document.createElement('code');
+                    if (match[2]) code.dataset.language = match[2];
+                    code.textContent = body.join('\n');
+                    out.push(mdElement('pre', null, [code]));
+                    continue;
+                  }
+                  match = line.match(mdHeading);
+                  if (match) {
+                    const level = match[1].length;
+                    const heading = mdElement('p', 'prose-heading md-h' + level, mdInline(match[2].replace(/\s+#+\s*(?![\s\S])/, ''), 0));
+                    heading.setAttribute('role', 'heading');
+                    heading.setAttribute('aria-level', String(Math.min(6, level + 2)));
+                    out.push(heading);
+                    index += 1;
+                    continue;
+                  }
+                  if (mdFullMatch(mdRule, line)) {
+                    out.push(document.createElement('hr'));
+                    index += 1;
+                    continue;
+                  }
+                  if (line.includes('|') && mdTableSeparator(lines[index + 1])) {
+                    const header = mdSplitRow(line);
+                    const aligns = mdSplitRow(lines[index + 1]).map((cell) =>
+                      cell.startsWith(':') && cell.endsWith(':') ? 'center' : cell.endsWith(':') ? 'right' : cell.startsWith(':') ? 'left' : ''
+                    );
+                    index += 2;
+                    const rows = [];
+                    while (index < lines.length && !blank(lines[index]) && lines[index].includes('|')) {
+                      rows.push(mdSplitRow(lines[index]));
+                      index += 1;
+                    }
+                    const cell = (tag, text, column) => {
+                      const node = mdElement(tag, null, mdInline(text, 0));
+                      if (aligns[column]) node.style.textAlign = aligns[column];
+                      return node;
+                    };
+                    const head = mdElement('thead', null, [mdElement('tr', null, header.map((text, column) => cell('th', text, column)))]);
+                    const body = mdElement('tbody', null, rows.map((row) =>
+                      mdElement('tr', null, header.map((_, column) => cell('td', row[column] ?? '', column)))
+                    ));
+                    out.push(mdElement('table', 'md-table', [head, body]));
+                    continue;
+                  }
+                  match = line.match(mdQuote);
+                  if (match) {
+                    const quoted = [];
+                    while (index < lines.length && (match = lines[index].match(mdQuote))) {
+                      quoted.push(match[1]);
+                      index += 1;
+                    }
+                    out.push(mdElement('blockquote', null, mdBlocks(quoted.join('\n'), depth + 1)));
+                    continue;
+                  }
+                  match = line.match(mdItem);
+                  if (match) {
+                    const indent = match[1].length;
+                    const ordered = /\d/.test(match[2]);
+                    const list = document.createElement(ordered ? 'ol' : 'ul');
+                    if (ordered) {
+                      const start = parseInt(match[2], 10);
+                      if (start !== 1) list.start = start;
+                    }
+                    const items = [];
+                    while (index < lines.length) {
+                      const current = lines[index];
+                      const item = current.match(mdItem);
+                      if (item && item[1].length === indent && /\d/.test(item[2]) === ordered) {
+                        items.push([item[3]]);
+                        index += 1;
+                      } else if (!blank(current) && items.length && current.match(/^\s*/)[0].length > indent) {
+                        items[items.length - 1].push(current.slice(Math.min(current.match(/^\s*/)[0].length, indent + 2)));
+                        index += 1;
+                      } else if (blank(current) && items.length && index + 1 < lines.length) {
+                        const following = lines[index + 1];
+                        const nextItem = following.match(mdItem);
+                        const continues =
+                          (nextItem && nextItem[1].length === indent && /\d/.test(nextItem[2]) === ordered) ||
+                          (!blank(following) && following.match(/^\s*/)[0].length > indent);
+                        if (!continues) break;
+                        items[items.length - 1].push('');
+                        index += 1;
+                      } else {
+                        break;
+                      }
+                    }
+                    for (const itemLines of items) {
+                      const content = mdBlocks(itemLines.join('\n'), depth + 1);
+                      const li = document.createElement('li');
+                      // A one-paragraph item is written inline, as people expect from a short list.
+                      if (content.length && content[0].tagName === 'P' && !content[0].classList.contains('prose-heading')) {
+                        li.append(...content[0].childNodes);
+                        li.append(...content.slice(1));
+                      } else {
+                        li.append(...content);
+                      }
+                      list.append(li);
+                    }
+                    out.push(list);
+                    continue;
+                  }
+                  const paragraph = [];
+                  while (index < lines.length && !blank(lines[index]) &&
+                    (!paragraph.length || !mdStartsBlock(lines[index], lines[index + 1]))) {
+                    paragraph.push(lines[index]);
+                    index += 1;
+                  }
+                  const node = document.createElement('p');
+                  paragraph.forEach((text, position) => {
+                    if (position > 0) node.append(document.createElement('br'));
+                    node.append(...mdInline(text.trim(), 0));
+                  });
+                  out.push(node);
+                }
+                return out;
+              };
+
+              const mdRendered = new WeakMap();
+
+              const renderMarkdownInto = (container, source) => {
+                const text = String(source ?? '');
+                if (mdRendered.get(container) === text) return;
+                mdRendered.set(container, text);
+                container.replaceChildren(...mdBlocks(text, 0));
+              };
+
+              const markdownBody = (source) => {
+                const body = document.createElement('div');
+                body.className = 'md';
+                renderMarkdownInto(body, source);
+                return body;
+              };
+
+              // Live answers re-render at most once per frame; the bubble and its body stay mounted.
+              let liveMarkdownFrame = 0;
+              let liveMarkdownTarget = null;
+              const scheduleLiveMarkdown = (body) => {
+                liveMarkdownTarget = body;
+                if (liveMarkdownFrame) return;
+                liveMarkdownFrame = requestAnimationFrame(() => {
+                  liveMarkdownFrame = 0;
+                  if (!liveMarkdownTarget || !liveMarkdownTarget.isConnected) return;
+                  renderMarkdownInto(liveMarkdownTarget, state.streamedContent);
+                  applyTimelineViewport(false);
+                });
+              };
+
               const messageNode = (message) => {
                 const item = document.createElement('li');
                 const human = message.role === 'human';
@@ -1484,9 +1780,14 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 const bubble = document.createElement('div');
                 bubble.className = 'bubble';
-                const paragraph = document.createElement('p');
-                paragraph.textContent = String(message.content ?? '');
-                bubble.append(paragraph);
+                if (human) {
+                  // What the person wrote is shown exactly as written.
+                  const paragraph = document.createElement('p');
+                  paragraph.textContent = String(message.content ?? '');
+                  bubble.append(paragraph);
+                } else {
+                  bubble.append(markdownBody(message.content));
+                }
 
                 const speaker = document.createElement('p');
                 speaker.className = 'speaker';
@@ -1538,11 +1839,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 const bubble = document.createElement('div');
                 bubble.className = 'bubble';
-                if (state.streamedContent) {
-                  const paragraph = document.createElement('p');
-                  paragraph.textContent = state.streamedContent;
-                  bubble.append(paragraph);
-                }
+                if (state.streamedContent) bubble.append(markdownBody(state.streamedContent));
                 const speaker = document.createElement('p');
                 speaker.className = 'speaker';
                 speaker.textContent = 'Vex';
@@ -1706,15 +2003,16 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (thought) syncLiveProcessPanel(thought);
 
                 const bubble = item.querySelector('.bubble');
-                let paragraph = bubble?.querySelector('p');
+                let body = bubble?.querySelector('.md');
                 if (state.streamedContent) {
-                  if (!paragraph && bubble) {
-                    paragraph = document.createElement('p');
-                    bubble.append(paragraph);
+                  if (!body && bubble) {
+                    body = document.createElement('div');
+                    body.className = 'md';
+                    bubble.append(body);
                   }
-                  if (paragraph) paragraph.textContent = state.streamedContent;
-                } else if (paragraph) {
-                  paragraph.remove();
+                  if (body) scheduleLiveMarkdown(body);
+                } else if (body) {
+                  body.remove();
                 }
 
                 applyTimelineViewport(false);

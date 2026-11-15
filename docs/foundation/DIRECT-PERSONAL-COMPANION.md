@@ -342,6 +342,20 @@ content deltas
 -> streamed answer stays visible until canonical Conversation refresh replaces it
 ~~~
 
+Vex's answer is shown as Markdown (2026-11-15): bold, italics, strikethrough, inline and fenced
+code, headings, lists, block quotes, rules, pipe tables, and http(s)/mailto links. The person's
+own words are shown exactly as written. Presentation only — the canonical RESPONSE keeps the exact
+text Vex wrote.
+
+~~~text
+markdown renderer -> DOM nodes only (createElement / textContent; never innerHTML)
+links             -> http(s) / mailto only; others stay text; target=_blank rel=noopener noreferrer
+live answer       -> the bubble and its .md body stay mounted; only the body's children are
+                     replaced, at most once per animation frame
+tables / code     -> wrap inside the bubble; no nested scroller, so timeline scroll ownership is
+                     unchanged
+~~~
+
 The human's `Viewable thoughts` preference is a separate local presentation decision:
 
 ~~~text

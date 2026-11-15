@@ -462,9 +462,23 @@ svg { display: block; }
 .bubble ul, .bubble ol { margin: 0.2em 0 0.6em; padding-left: 1.3em; }
 .bubble li { margin: 0.15em 0; }
 .bubble code { font-family: var(--mono); font-size: 0.86em; padding: 1px 4px; border-radius: 4px; background: var(--sunken); }
-.bubble pre { margin: 0.4em 0 0.7em; padding: 10px 12px; border-radius: 8px; background: var(--sunken); overflow-x: auto; }
+/* Vex's Markdown. Tables and code wrap inside the bubble: no nested scroller, so the timeline
+   keeps sole scroll ownership while an answer streams. */
+.bubble pre { margin: 0.4em 0 0.7em; padding: 10px 12px; border-radius: 8px; background: var(--sunken); white-space: pre-wrap; overflow-wrap: anywhere; }
 .bubble pre code { padding: 0; background: none; }
 .prose-heading { font-weight: 650; }
+.md > :first-child { margin-top: 0; }
+.md > :last-child { margin-bottom: 0; }
+.md .prose-heading { margin: 0.7em 0 0.35em; line-height: 1.3; }
+.md .md-h1 { font-size: 1.25em; }
+.md .md-h2 { font-size: 1.15em; }
+.md .md-h3 { font-size: 1.05em; }
+.md a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.md blockquote { margin: 0.4em 0 0.7em; padding: 0 0 0 10px; border-left: 3px solid var(--vex-rule); color: var(--ink-2); }
+.md hr { border: 0; border-top: 1px solid var(--vex-rule); margin: 0.8em 0; }
+.md table { width: 100%; border-collapse: collapse; margin: 0.4em 0 0.7em; font-size: 0.92em; line-height: 1.4; }
+.md th, .md td { border: 1px solid var(--vex-rule); padding: 4px 8px; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+.md th { font-weight: 650; background: var(--sunken); }
 
 .thought { grid-area: thought; justify-self: start; margin: 0 0 7px; }
 .thought-toggle {
