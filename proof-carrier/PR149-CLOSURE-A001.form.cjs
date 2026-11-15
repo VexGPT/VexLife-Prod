@@ -35,7 +35,7 @@ const candidate = {
 
 const authorityEnvelope = {
   authoritySchemaRef: 'vextreme.effect-transaction/v1',
-  semanticAdmissionRef: 'github.pull.vexlife-prod.148',
+  semanticAdmissionRef: 'github.pull.vexlife-prod.149',
   transactionRef: 'transaction.vexlife-prod.pr149.conversation-closure.a001',
   transactionVersion: 1,
   allowedEffectRefs: [
@@ -94,12 +94,12 @@ try {
     packageRef: 'package.vexlife-prod.pr149.conversation-closure.a001',
     requestRef: 'request.vexlife-prod.pr149.conversation-closure.a001',
     correlationRef: 'correlation.vexlife-prod.pr149.conversation-closure.a001',
-    taskStorageKey: 'vexlife-prod-pr148-lived-circuit',
+    taskStorageKey: 'vexlife-prod-pr149-conversation-closure',
     attemptStorageKey: 'attempt-a001',
     requestingRoleRef: 'Operations[VexLife-Prod]',
     requestingInstanceRef: 'instance.operations.vexlife-prod.pr149.conversation-closure.a001',
-    parentOperationsRef: 'github.pull.vexlife-prod.148',
-    returnRouteRef: 'github.pull.vexlife-prod.148',
+    parentOperationsRef: 'github.pull.vexlife-prod.149',
+    returnRouteRef: 'github.pull.vexlife-prod.149',
     hostProfileRef: 'macos-victor',
     repositoryExecutionProfileRefOrNull: 'profile.repository.vextreme-sdk.macos-v1',
     repositoryRefOrNull: null,
@@ -107,7 +107,7 @@ try {
     headRefOrNull: null,
     treeRefOrNull: null,
     branchRefOrNull: null,
-    claimRefOrNull: 'github.pull.vexlife-prod.148',
+    claimRefOrNull: 'github.pull.vexlife-prod.149',
     exactPathRefs: [],
     authorityBinding: {
       authoritySchemaRef: authorityEnvelope.authoritySchemaRef,
@@ -120,7 +120,7 @@ try {
       heldEffectRefs: [...authorityEnvelope.heldEffectRefs],
     },
     payload: {
-      payloadClass: 'VEXLIFE_PROD_FAILURE_RETRY_LIVED',
+      payloadClass: 'VEXLIFE_PROD_CONVERSATION_CLOSURE_LIVED',
       payloadRuntime: 'node',
       payloadPath: payloadRelativePath,
       payloadSha256: hashFile(payloadPath),
