@@ -61,47 +61,94 @@ object VexLifeProdLocalSetup {
         val result: Result,
         private val currentRuntimeEvidence:
             () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
+        private val generationReadiness:
+            (() -> HereticPersistentRuntime.GenerationReadiness)? =
+            null,
         private val recoverRuntimeEvidence:
             (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)? =
             null,
     ) {
         /**
-         * Current qualified runtime evidence, recovering once when exact process/substrate
-         * currentness cannot be proven.
+         * New-turn runtime admission.
          *
-         * Readiness/health is deliberately not part of currentness. Recovery is therefore entered
-         * for an actual ownership/lifetime loss, not because a live generation engine was slow to
-         * answer. The chronology records lost -> requested -> completed/failed around that bounded
-         * lifecycle recovery.
+         * Exact process/substrate currentness and generation readiness are separate truths. A lost
+         * exact process may recover once. An exact mlx-lm Unavailable result may also recover once
+         * at this safe boundary. Unknown readiness preserves the live exact-owned process and holds.
          */
         fun currentQualifiedRuntimeEvidence(
             onRecovery: (() -> Unit)? = null
-        ): HereticModelConfiguration.QualifiedRuntimeEvidence =
-            try {
-                currentRuntimeEvidence()
-            } catch (original: RuntimeException) {
-                VexLogger.record(
-                    VexLogger.Fact.RuntimeCurrentnessLost,
-                    detail = original.javaClass.simpleName + ": " + (original.message ?: ""),
-                )
-                val recover = recoverRuntimeEvidence ?: throw original
-                VexLogger.record(VexLogger.Fact.RuntimeRecoveryRequested)
-                onRecovery?.invoke()
+        ): HereticModelConfiguration.QualifiedRuntimeEvidence {
+            val current =
                 try {
-                    recover().also {
-                        VexLogger.record(
-                            VexLogger.Fact.RuntimeRecoveryCompleted,
-                            mapOf("runtimeReceiptRef" to it.runtimeReceiptRef),
-                        )
-                    }
-                } catch (error: Throwable) {
+                    currentRuntimeEvidence()
+                } catch (original: RuntimeException) {
                     VexLogger.record(
-                        VexLogger.Fact.RuntimeRecoveryFailed,
-                        detail = error.javaClass.simpleName + ": " + (error.message ?: ""),
+                        VexLogger.Fact.RuntimeCurrentnessLost,
+                        detail = original.javaClass.simpleName + ": " + (original.message ?: ""),
                     )
-                    throw error
+                    return recoverOnce(
+                        original = original,
+                        onRecovery = onRecovery,
+                    )
+                }
+
+            return when (
+                generationReadiness?.invoke()
+                    ?: HereticPersistentRuntime.GenerationReadiness.Available
+            ) {
+                HereticPersistentRuntime.GenerationReadiness.Available ->
+                    current
+
+                HereticPersistentRuntime.GenerationReadiness.Unavailable -> {
+                    VexLogger.record(
+                        VexLogger.Fact.RuntimeGenerationUnavailable,
+                        mapOf("runtimeReceiptRef" to current.runtimeReceiptRef),
+                    )
+                    recoverOnce(
+                        original =
+                            IllegalStateException(
+                                "qualified Heretic runtime generation engine is explicitly unavailable",
+                            ),
+                        onRecovery = onRecovery,
+                    )
+                }
+
+                HereticPersistentRuntime.GenerationReadiness.Unknown -> {
+                    VexLogger.record(
+                        VexLogger.Fact.RuntimeGenerationUnknown,
+                        mapOf("runtimeReceiptRef" to current.runtimeReceiptRef),
+                    )
+                    error(
+                        "qualified Heretic runtime generation readiness is unknown; preserving exact-owned runtime",
+                    )
                 }
             }
+        }
+
+        private fun recoverOnce(
+            original: RuntimeException,
+            onRecovery: (() -> Unit)?,
+        ): HereticModelConfiguration.QualifiedRuntimeEvidence {
+            val recover =
+                recoverRuntimeEvidence
+                    ?: throw original
+            VexLogger.record(VexLogger.Fact.RuntimeRecoveryRequested)
+            onRecovery?.invoke()
+            return try {
+                recover().also {
+                    VexLogger.record(
+                        VexLogger.Fact.RuntimeRecoveryCompleted,
+                        mapOf("runtimeReceiptRef" to it.runtimeReceiptRef),
+                    )
+                }
+            } catch (error: Throwable) {
+                VexLogger.record(
+                    VexLogger.Fact.RuntimeRecoveryFailed,
+                    detail = error.javaClass.simpleName + ": " + (error.message ?: ""),
+                )
+                throw error
+            }
+        }
 
         /**
          * Read-only currentness observation for an already-started human turn.
@@ -117,6 +164,7 @@ object VexLifeProdLocalSetup {
     private data class Established(
         val result: Result,
         val currentRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
+        val generationReadiness: () -> HereticPersistentRuntime.GenerationReadiness,
         val recoverRuntimeEvidence: (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)?,
     )
 
@@ -206,6 +254,17 @@ object VexLifeProdLocalSetup {
                     store = store,
                     platform = MacHereticRuntimePlatform(productHome = productHome),
                 )
+            },
+        val observeGenerationReadiness:
+            (
+                productHome: Path,
+                binding: HereticPersistentRuntime.Binding,
+            ) -> HereticPersistentRuntime.GenerationReadiness =
+            { productHome, binding ->
+                MacHereticRuntimePlatform(productHome = productHome)
+                    .generationReadiness(
+                        binding,
+                    )
             },
         val startRuntime:
             (
@@ -526,6 +585,14 @@ object VexLifeProdLocalSetup {
                 }
             }
 
+        val generationReadiness: () -> HereticPersistentRuntime.GenerationReadiness =
+            {
+                hooks.observeGenerationReadiness(
+                    canonicalHome,
+                    binding,
+                )
+            }
+
         val recoverRuntimeEvidence: (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)? =
             when (availability.source) {
                 HereticRuntimeAvailability.Source.VexLifeProdOwned -> {
@@ -571,6 +638,7 @@ object VexLifeProdLocalSetup {
                     requestModel = qualifiedRuntimeEvidence.requestModel,
                 ),
             currentRuntimeEvidence = currentRuntimeEvidence,
+            generationReadiness = generationReadiness,
             recoverRuntimeEvidence = recoverRuntimeEvidence,
         )
     }
@@ -633,6 +701,7 @@ object VexLifeProdLocalSetup {
         return Session(
             result = established.result,
             currentRuntimeEvidence = established.currentRuntimeEvidence,
+            generationReadiness = established.generationReadiness,
             recoverRuntimeEvidence = established.recoverRuntimeEvidence,
         )
     }
