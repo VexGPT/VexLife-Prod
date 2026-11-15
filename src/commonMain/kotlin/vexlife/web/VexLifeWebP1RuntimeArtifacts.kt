@@ -274,10 +274,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 streamedReasoning: '',
                 thoughtsVisible: true,
                 humanReasoningByResponse: new Map(),
-                // Human-readable browser-session projection of facts already emitted by the Send
+                // Human-readable presentation projection of facts already emitted by the Send
                 // stream. This is deliberately not a turn/stage owner: it may open/freeze visual
                 // containers, but it never feeds DirectCompanionTurn, capability execution, or the
                 // raw streamedReasoning/streamedContent buffers consumed by Speech/Kokoro.
+                //
+                // Completed snapshots are additionally archived in browser-owned IndexedDB, keyed by
+                // the canonical responseMessageRef. That lets "view process" survive Product/browser
+                // restarts without promoting raw reasoning into Conversation, Memory, or execution.
                 liveProcessEntries: [],
                 processEntriesByResponse: new Map(),
                 liveProcessExpanded: true,
@@ -371,6 +375,115 @@ object VexLifeWebP1RuntimeArtifacts {
                 try {
                   localStorage.setItem(THOUGHT_VISIBILITY_KEY, String(state.thoughtsVisible));
                 } catch {}
+              };
+
+              const PROCESS_HISTORY_DB = 'vexlife-prod.presentation.process-history';
+              const PROCESS_HISTORY_STORE = 'responses';
+              const PROCESS_HISTORY_VERSION = 1;
+
+              const openProcessHistoryDb = () =>
+                new Promise((resolve, reject) => {
+                  if (!window.indexedDB) {
+                    reject(new Error('browser process-history storage is unavailable'));
+                    return;
+                  }
+                  const request = indexedDB.open(PROCESS_HISTORY_DB, PROCESS_HISTORY_VERSION);
+                  request.onupgradeneeded = () => {
+                    const db = request.result;
+                    if (!db.objectStoreNames.contains(PROCESS_HISTORY_STORE)) {
+                      db.createObjectStore(PROCESS_HISTORY_STORE, { keyPath: 'messageRef' });
+                    }
+                  };
+                  request.onsuccess = () => resolve(request.result);
+                  request.onerror = () => reject(request.error ?? new Error('process-history storage could not open'));
+                });
+
+              const writeProcessHistoryRecord = async (record) => {
+                const db = await openProcessHistoryDb();
+                try {
+                  await new Promise((resolve, reject) => {
+                    const transaction = db.transaction(PROCESS_HISTORY_STORE, 'readwrite');
+                    transaction.objectStore(PROCESS_HISTORY_STORE).put(record);
+                    transaction.oncomplete = () => resolve();
+                    transaction.onerror = () => reject(transaction.error ?? new Error('process-history write failed'));
+                    transaction.onabort = () => reject(transaction.error ?? new Error('process-history write aborted'));
+                  });
+                } finally {
+                  db.close();
+                }
+              };
+
+              const readAllProcessHistoryRecords = async () => {
+                const db = await openProcessHistoryDb();
+                try {
+                  return await new Promise((resolve, reject) => {
+                    const transaction = db.transaction(PROCESS_HISTORY_STORE, 'readonly');
+                    const request = transaction.objectStore(PROCESS_HISTORY_STORE).getAll();
+                    request.onsuccess = () => resolve(request.result ?? []);
+                    request.onerror = () => reject(request.error ?? new Error('process-history records could not load'));
+                    transaction.onerror = () => reject(transaction.error ?? new Error('process-history read failed'));
+                  });
+                } finally {
+                  db.close();
+                }
+              };
+
+              const archiveProcessSnapshot = async (messageRef, entries) => {
+                if (!messageRef || !entries.length) return;
+                // Presentation archive only. It is never canonical Conversation/Memory truth and is
+                // never read by execution. If viewable thoughts are disabled, do not retain raw
+                // thought text merely because the stream carried it for another observer.
+                const archivedEntries =
+                  entries.flatMap((entry) => {
+                    if (entry.kind === 'thought') {
+                      return state.thoughtsVisible && String(entry.text ?? '').trim()
+                        ? [{ kind: 'thought', text: String(entry.text), active: false }]
+                        : [];
+                    }
+                    return [{ kind: 'reach', use: cloneReach(entry.use) }];
+                  });
+                if (!archivedEntries.length) return;
+
+                await writeProcessHistoryRecord({
+                  messageRef,
+                  savedAt: new Date().toISOString(),
+                  entries: archivedEntries
+                });
+              };
+
+              const hydrateProcessHistory = async (messages) => {
+                const wanted =
+                  new Set(
+                    (messages ?? [])
+                      .filter(
+                        (message) =>
+                          message.role === 'vex' &&
+                          message.messageRef &&
+                          !state.processEntriesByResponse.has(String(message.messageRef))
+                      )
+                      .map((message) => String(message.messageRef))
+                  );
+                if (!wanted.size) return;
+
+                const records = await readAllProcessHistoryRecords();
+                for (const record of records) {
+                  const key = String(record?.messageRef ?? '');
+                  if (!wanted.has(key)) continue;
+                  const entries =
+                    Array.isArray(record?.entries)
+                      ? record.entries.flatMap((entry) => {
+                          if (entry?.kind === 'thought') {
+                            const text = String(entry.text ?? '');
+                            return text ? [{ kind: 'thought', text, active: false }] : [];
+                          }
+                          if (entry?.kind === 'reach') {
+                            return [{ kind: 'reach', use: cloneReach(entry.use) }];
+                          }
+                          return [];
+                        })
+                      : [];
+                  if (entries.length) state.processEntriesByResponse.set(key, entries);
+                }
               };
 
               const currentTheme = () =>
@@ -2351,6 +2464,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 const nextIdentity = conversationRenderIdentity(nextConversation);
                 state.conversation = nextConversation;
                 const messages = state.conversation?.messages ?? [];
+                // Rehydrate completed process snapshots before rendering canonical Conversation.
+                // This is presentation continuity only; missing/corrupt browser storage never changes
+                // Conversation truth or blocks the Product from becoming usable.
+                try {
+                  await hydrateProcessHistory(messages);
+                } catch (processHistoryError) {
+                  console.warn('Vex process history could not be restored.', processHistoryError);
+                }
                 const latest = [...messages].reverse().find((message) => message.role === 'vex' && message.model);
                 setCompanionStatus('Ready', 'Ready', latest?.model ?? '');
                 if (renderNow && priorIdentity !== nextIdentity) {
@@ -2374,9 +2495,18 @@ object VexLifeWebP1RuntimeArtifacts {
                 const responseKey = String(result.responseMessageRef ?? '');
                 if (streamed && responseKey && state.liveProcessEntries.length) {
                   freezeLiveProcess();
-                  state.processEntriesByResponse.set(responseKey, snapshotLiveProcess());
+                  const processSnapshot = snapshotLiveProcess();
+                  state.processEntriesByResponse.set(responseKey, processSnapshot);
                   if (state.liveProcessManuallyToggled && state.liveProcessExpanded) {
                     state.expandedThoughts.add(responseKey);
+                  }
+                  try {
+                    await archiveProcessSnapshot(responseKey, processSnapshot);
+                  } catch (processHistoryError) {
+                    // Canonical Send is already complete. A presentation-archive failure may be
+                    // reported to the human, but it must never retroactively fail the turn.
+                    console.warn('Vex process history could not be archived.', processHistoryError);
+                    notify('Turn completed, but its process history could not be saved for later viewing.');
                   }
                 } else if (responseKey) {
                   state.processEntriesByResponse.delete(responseKey);
