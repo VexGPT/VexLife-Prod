@@ -1,28 +1,23 @@
+# PROOF ROUTE ONLY: the release workflow's build steps on a runner; publishes nothing.
 # Builds VexLife for the Mac from main, and cuts stable versions when asked.
 # Process and meaning: docs/release/RELEASES.md. This is the ordinary product release route; it
 # publishes only what the Product's own Gradle tasks form (assemble + archive of the exact
 # private service image and its source-bound bootstrap), at one exact commit.
-name: release
+name: claude-release-proof
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Cut this stable version from the current main commit (e.g. 0.6.0). Leave empty to build main only.'
-        required: false
-        default: ''
+    branches: [VXG-111526-claude-release-proof-a001]
 permissions:
-  contents: write
+  contents: read
 concurrency:
-  group: release-main
+  group: claude-release-proof
   cancel-in-progress: false
 jobs:
   mac:
     runs-on: macos-latest
     timeout-minutes: 75
     env:
-      VERSION: ${{ inputs.version }}
+      VERSION: '0.0.0-proof'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -35,12 +30,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          [ "$GITHUB_REF" = "refs/heads/main" ] || { echo "Releases are built from main only (got $GITHUB_REF)."; exit 1; }
+          echo "PROOF ref :: $GITHUB_REF (proof branch; the product workflow admits main only)"
           if [ -n "$VERSION" ]; then
-            [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Version must look like 0.6.0 (got '$VERSION')."; exit 1; }
-            if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-              echo "v$VERSION already exists; versions are never rebuilt or moved."; exit 1
-            fi
+            echo "PROOF version check skipped for proof label $VERSION"
           fi
           echo "Host: macOS $(sw_vers -productVersion) / $(uname -m)"
 
@@ -69,15 +61,10 @@ jobs:
               echo "sha256 $(basename "$file") $(shasum -a 256 "$file" | awk '{print $1}')"
             done
           } > "$RUNNER_TEMP/main-notes.md"
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release upload "$TAG" "$DIR"/* --clobber --repo "$GITHUB_REPOSITORY"
-          else
-            gh release create "$TAG" "$DIR"/* --repo "$GITHUB_REPOSITORY" --target "$SHA" --prerelease \
-              --title "Main build ${SHA:0:7}" --notes-file "$RUNNER_TEMP/main-notes.md"
-          fi
+          echo "PROOF would publish $TAG with:"; ls -la "$DIR"; echo "PROOF notes ::"; cat "$RUNNER_TEMP/main-notes.md"
 
       - name: Cut the stable version
-        if: ${{ inputs.version != '' }}
+        if: ${{ true }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -95,5 +82,26 @@ jobs:
               echo "sha256 $(basename "$file") $(shasum -a 256 "$file" | awk '{print $1}')"
             done
           } > "$RUNNER_TEMP/stable-notes.md"
-          gh release create "v$VERSION" "$DIR"/*.command "$DIR"/*.sha256 --repo "$GITHUB_REPOSITORY" \
-            --target "$SHA" --title "VexLife $VERSION" --notes-file "$RUNNER_TEMP/stable-notes.md" --latest
+          echo "PROOF would cut v$VERSION with:"; ls "$DIR"/*.command "$DIR"/*.sha256; cat "$RUNNER_TEMP/stable-notes.md"
+
+  site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Assemble the site exactly as pages.yml does (no deploy)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          SHA="$(git rev-parse HEAD)"
+          mkdir -p _site
+          cp -R site/. _site/
+          ./gradlew --no-daemon -q generateVexLifeSiteData -PvexlifeSiteDataDir="$PWD/_site/data" -PvexlifeSourceSha="$SHA"
+          python3 .github/release/releases-snapshot.py --repository "$GITHUB_REPOSITORY" --main-sha "$SHA" --out _site/data/releases.json
+          echo "PROOF site files ::"; find _site -type f | sort
+          echo "PROOF releases.json ::"; head -c 600 _site/data/releases.json; echo
+          echo "PROOF models.json ::"; python3 -c "import json; d=json.load(open('_site/data/models.json')); print([m['handle'] for m in d['models']], d['mac'])"
