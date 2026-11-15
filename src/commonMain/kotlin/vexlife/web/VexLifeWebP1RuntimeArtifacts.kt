@@ -1127,8 +1127,16 @@ object VexLifeWebP1RuntimeArtifacts {
               const restoreReasoningViewports = () => {
                 ui.timeline.querySelectorAll('.reasoning[data-scroll-key]').forEach((element) => {
                   const key = String(element.dataset.scrollKey ?? '');
-                  applyReasoningViewport(element, key, key === 'live');
+                  applyReasoningViewport(element, key, key.startsWith('live.stage.'));
                 });
+              };
+
+              const resetLiveReasoningViewports = () => {
+                for (const key of state.reasoningViewports.keys()) {
+                  if (key === 'live' || key.startsWith('live.stage.')) {
+                    state.reasoningViewports.delete(key);
+                  }
+                }
               };
 
               const applyTimelineViewport = (restoreReadingPosition = true) => {
@@ -2340,7 +2348,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.streamedReasoning = '';
                 speech.stream = { reply: 0, thought: 0 };
                 if (speech.settings.enabled) audioContext();
-                state.reasoningViewports.set('live', { followTail: true, scrollTop: 0 });
+                resetLiveReasoningViewports();
                 if (!retrying) {
                   ui.draft.value = '';
                   sizeDraft();
