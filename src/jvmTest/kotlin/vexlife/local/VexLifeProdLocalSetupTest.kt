@@ -32,8 +32,9 @@ class VexLifeProdLocalSetupTest {
             HereticMacHostProfile.Observation(
                 platform = "darwin",
                 architecture = "arm64",
-                chipModel = HereticMacHostProfile.RequiredChipModel,
-                totalMemoryBytes = HereticMacHostProfile.MinimumMemoryBytes,
+                chipModel = "Apple M4 Pro",
+                // Enough memory that the certified 27B is the recommended model for a fresh Home.
+                totalMemoryBytes = 64L * 1024L * 1024L * 1024L,
             )
         )
 
@@ -222,7 +223,7 @@ class VexLifeProdLocalSetupTest {
                     },
                 )
             },
-            materializeArtifacts = { home, _ ->
+            materializeArtifacts = { home, _, _ ->
                 trace += "ARTIFACTS"
                 materialization(home = home, reuse = reuse)
             },

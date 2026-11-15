@@ -1067,17 +1067,17 @@ object DirectCompanionConnection {
                 "direct Companion Connection requires one qualified Heretic runtime",
             )
         }
+        val identity = vexlife.model.heretic.HereticModelCatalog.entry(runtime.modelRef)?.identity
         require(
-            runtime.modelRef ==
-                HereticProductIdentity.ModelRef &&
+            identity != null &&
                 runtime.modelProfileRef ==
-                HereticProductIdentity.ModelProfileRef &&
+                identity.modelProfileRef &&
                 runtime.endpoint ==
-                HereticProductIdentity.Endpoint &&
+                identity.endpoint &&
                 runtime.requestModel ==
-                HereticProductIdentity.RequestModel,
+                identity.requestModel,
         ) {
-            "qualified runtime evidence no longer matches certified Heretic product identity"
+            "qualified runtime evidence no longer matches one offered Heretic model identity"
         }
     }
 

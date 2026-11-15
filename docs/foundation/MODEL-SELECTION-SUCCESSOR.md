@@ -2,6 +2,43 @@
 
 `[VXG RealForever]`
 
+## Progress (Claude, 2026-11-14)
+
+```text
+catalog                         DONE  HereticModelCatalog: 27B (CERTIFIED), 9B 5-bit, 4B Distill (CANDIDATE)
+                                      — every member's bytes + SHA-256 pinned, content sets reproduced
+Home-scoped selected model      DONE  same FileHereticModelConfigurationStore + v1 schema; selectModel
+selected model -> runtime       DONE  materialization, binding, receipts and evidence carry the model;
+                                      exact-owned model switch at Setup Start
+startup chooser                 DONE  native window model step after Home; --setup-model / --choose-model
+Settings add / remove / again   DONE  Settings → Models (Use / Download / Download again / Remove)
+host eligibility                DONE  Apple silicon + 8 GiB (was: exactly M4 Pro + 12 GiB)
+hosted macOS proof              DONE  run 43612345116 (proof-only branch; see below)
+lived 27B vs 9B vs 4B compare   OWED  on Victor's Mac, same field + capability tests
+```
+
+Hosted macOS proof (GitHub `macos-latest`, Apple M1 Virtual, 7 GiB, mlx-lm 0.32.0 as pinned):
+
+```text
+setup window source with the model step   osacompile PASS
+--setup-model / --choose-model            offered models in en + ja; a choice before a Home
+                                          writes nothing; 7 GiB is below every model, so no
+                                          model is called recommended and the Mac is HOST_HELD
+4B Distill                                11/11 members SHA-256 exact; server up 41 s;
+                                          plain turn 25 s (first token 22 s, cold virtual GPU);
+                                          template accepts assistant request + user-role host
+                                          result; judgment turn chose the request form for
+                                          "please read <url>". Answer grounded in the returned
+                                          text but added one unreturned claim — CANDIDATE stays.
+9B 5-bit                                  10/10 members SHA-256 exact; server up 42 s; first
+                                          turn did not finish in ~35 min on 7 GiB (6.3 GiB of
+                                          weights): consistent with its 16 GiB recommendation,
+                                          not a qualification. Owed on a 16 GiB+ Mac.
+```
+
+Current truth: [HERETIC-PRODUCT-MODEL.md](HERETIC-PRODUCT-MODEL.md#model-catalog-2026-11-14),
+[SETUP-JOURNEY.md](SETUP-JOURNEY.md#model-step-2026-11-14).
+
 ## Human intention
 
 The current 27B Heretic model has passed the lived personality/orientation threshold. The next phase

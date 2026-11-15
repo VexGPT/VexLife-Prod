@@ -70,7 +70,7 @@ class VexLifeProdCurrentStateTest {
                         observeModel = { _, _ ->
                             FileHereticModelConfigurationStore.Snapshot.Heretic(bound)
                         },
-                        observeArtifacts = {
+                        observeArtifacts = { _, _ ->
                             HereticArtifactMaterialization.PresenceObservation(
                                 state = "COMPLETE_BY_SIZE_NOT_HASHED",
                                 modelPath = home.resolve("models/heretic/test").toString(),
@@ -145,7 +145,7 @@ class VexLifeProdCurrentStateTest {
                         observeModel = { _, _ ->
                             error("absent Home awareness must not read Product model binding")
                         },
-                        observeArtifacts = {
+                        observeArtifacts = { _, _ ->
                             error("absent Home awareness must not inspect model artifacts")
                         },
                         observeFreeStorageBytes = {
@@ -208,7 +208,7 @@ class VexLifeProdCurrentStateTest {
                                 VexLifeProdHome.initialProductModelConfiguration()
                             )
                         },
-                        observeArtifacts = {
+                        observeArtifacts = { _, _ ->
                             error(
                                 "unconfigured awareness must not inspect selected-model artifacts"
                             )

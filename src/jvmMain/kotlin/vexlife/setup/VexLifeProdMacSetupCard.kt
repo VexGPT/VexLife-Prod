@@ -28,11 +28,12 @@ object VexLifeProdMacSetupCard {
     const val ActionControlPrefix = "CONTROL:"
     const val ActionChooseHome = "CHOOSE_HOME"
     const val ActionChooseLanguage = "CHOOSE_LANGUAGE"
+    const val ActionChooseModel = "CHOOSE_MODEL"
     const val ActionRecheck = "RECHECK"
     const val ActionClose = "CLOSE"
 
     private val RendererLocalActions =
-        setOf(ActionChooseHome, ActionChooseLanguage, ActionRecheck, ActionClose)
+        setOf(ActionChooseHome, ActionChooseLanguage, ActionChooseModel, ActionRecheck, ActionClose)
 
     /**
      * [key] is the button's element identity in the string source; it maps to [actionRef] through
@@ -70,7 +71,7 @@ object VexLifeProdMacSetupCard {
                     title.isNotBlank() &&
                     rail.isNotBlank() &&
                     body.isNotBlank() &&
-                    buttons.size in 1..6 &&
+                    buttons.size in 1..7 &&
                     buttons.last().actionRef == ActionClose &&
                     buttons.count {
                         it.actionRef == ActionClose
@@ -98,6 +99,8 @@ object VexLifeProdMacSetupCard {
         val requiredChipModel: String,
         val requiredMemoryBytes: Long,
         val protectedLocation: VexLifeText?,
+        /** The model this setup is about (the window's, the Home's, or the one that fits this Mac). */
+        val modelLabel: String? = null,
     )
 
     fun form(facts: Facts, language: String): Card {
@@ -119,6 +122,10 @@ object VexLifeProdMacSetupCard {
             }
             display.recheckLabel?.let {
                 add(button(it, ActionRecheck))
+            }
+            // The model can be chosen whenever this Mac can run VexLife at all.
+            if (facts.currentState.hostEligibilityState == "ELIGIBLE") {
+                add(button(text("setup.button.change-model"), ActionChooseModel))
             }
             add(button(text("setup.button.change-language"), ActionChooseLanguage))
             add(button(display.cancelLabel, ActionClose))
@@ -219,6 +226,10 @@ object VexLifeProdMacSetupCard {
                             } ?: text("setup.status.unknown"))
                     ),
             )
+
+        facts.modelLabel?.let {
+            lines += VexLifeText(key = "setup.label.found-chosen-model", args = mapOf("model" to it))
+        }
 
         if (facts.location is VexLifeProdHomeFiles.Location.Existing) {
             lines +=

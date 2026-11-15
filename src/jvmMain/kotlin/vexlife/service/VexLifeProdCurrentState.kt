@@ -5,6 +5,7 @@ import java.nio.file.Path
 import java.time.Instant
 import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.HereticArtifactMaterialization
@@ -43,9 +44,9 @@ object VexLifeProdCurrentState {
                 FileHereticModelConfigurationStore(productHome).read(manifest)
             },
         val observeArtifacts:
-            (productHome: Path) -> HereticArtifactMaterialization.PresenceObservation =
-            { productHome ->
-                HereticArtifactMaterialization.observePresence(productHome)
+            (productHome: Path, model: HereticModelCatalog.Entry) -> HereticArtifactMaterialization.PresenceObservation =
+            { productHome, model ->
+                HereticArtifactMaterialization.observePresence(productHome, model)
             },
         val observeFreeStorageBytes: (productHome: Path) -> Long? = { productHome ->
             try {
@@ -147,7 +148,9 @@ object VexLifeProdCurrentState {
 
                 is FileHereticModelConfigurationStore.Snapshot.Heretic -> {
                     val current = model.value
-                    val artifacts = hooks.observeArtifacts(productHome)
+                    // Presence and memory need are the chosen model's own, not the default's.
+                    val chosen = HereticModelConfiguration.selected(current)
+                    val artifacts = hooks.observeArtifacts(productHome, chosen)
                     require(!artifacts.effectsPerformed) {
                         "current-state artifact presence observation performed an effect"
                     }
@@ -156,7 +159,7 @@ object VexLifeProdCurrentState {
                         modelSelectionState = current.state.wireValue,
                         activeModelRef = current.modelRef,
                         activeModelProfileRef = current.modelProfileRef,
-                        modelMinimumMemoryBytes = HereticMacHostProfile.MinimumMemoryBytes,
+                        modelMinimumMemoryBytes = chosen.recommendedMemoryBytes,
                         runtimeState =
                             when (current.state) {
                                 HereticModelConfiguration.State.EstablishmentPending ->

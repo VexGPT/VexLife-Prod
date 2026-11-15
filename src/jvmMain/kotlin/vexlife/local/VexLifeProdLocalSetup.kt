@@ -7,6 +7,7 @@ import vexlife.logging.VexLogger
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeAvailability
@@ -157,13 +158,15 @@ object VexLifeProdLocalSetup {
             (
                 productHome: Path,
                 allowAcquisition: Boolean,
+                model: HereticModelCatalog.Entry,
             ) -> HereticArtifactMaterialization.Result =
-            { productHome, allowAcquisition ->
+            { productHome, allowAcquisition, model ->
                 HereticArtifactMaterialization.materializeCurrent(
                     productHome = productHome,
                     allowAcquisition = allowAcquisition,
                     acquirer =
-                        artifactAcquirerReporting(productHome = productHome, progress = progress),
+                        artifactAcquirerReporting(productHome = productHome, progress = progress, model = model),
+                    model = model,
                 )
             },
         val ensureHereticEnvironment:
@@ -375,13 +378,27 @@ object VexLifeProdLocalSetup {
 
         val modelConfiguration = FileHereticModelConfigurationStore(canonicalHome)
 
-        val selected = modelConfiguration.selectHeretic(home.manifest)
+        // A Home that has not chosen a model yet starts with the largest offered model that fits
+        // this Mac; a Home that chose keeps its choice (a bound 27B Home stays exactly as it was).
+        val selected =
+            when (modelConfiguration.read(home.manifest)) {
+                is FileHereticModelConfigurationStore.Snapshot.Unconfigured ->
+                    modelConfiguration.selectModel(
+                        home.manifest,
+                        HereticModelCatalog.recommendedFor(host.observation.totalMemoryBytes),
+                    )
+                is FileHereticModelConfigurationStore.Snapshot.Heretic ->
+                    modelConfiguration.selectHeretic(home.manifest)
+            }
+        // The Home's own choice decides which catalog model is materialized and run. A Home that
+        // never chose is given the certified default, exactly as before the catalog existed.
+        val model = HereticModelConfiguration.selected(selected.value)
 
         hooks.progress.phase(VexLifeProdSetupProgress.Phase.PreparingPython)
         val managedPython = hooks.ensureManagedPython(Path.of(home.productHome), allowAcquisition)
 
         hooks.progress.phase(VexLifeProdSetupProgress.Phase.CheckingModelFiles)
-        val materialized = hooks.materializeArtifacts(Path.of(home.productHome), allowAcquisition)
+        val materialized = hooks.materializeArtifacts(Path.of(home.productHome), allowAcquisition, model)
 
         hooks.progress.phase(VexLifeProdSetupProgress.Phase.PreparingModelRuntime)
         val environment =
@@ -629,16 +646,17 @@ object VexLifeProdLocalSetup {
     private fun artifactAcquirerReporting(
         productHome: Path,
         progress: VexLifeProdSetupProgress,
+        model: HereticModelCatalog.Entry,
     ): HereticArtifactDelivery.Acquirer {
         if (progress === VexLifeProdSetupProgress.Silent) {
             return HereticArtifactDelivery.Acquirer()
         }
         val presentAtStart = runCatching {
-            HereticArtifactMaterialization.observePresence(productHome)
+            HereticArtifactMaterialization.observePresence(productHome, model)
         }
             .getOrNull()
         val totalBytes =
-            presentAtStart?.totalBytes ?: HereticArtifactMaterialization.plan().totalBytes
+            presentAtStart?.totalBytes ?: HereticArtifactMaterialization.plan(model).totalBytes
         val baseBytes = presentAtStart?.presentBySizeBytes ?: 0L
         val inFlight = mutableMapOf<String, Long>()
         return HereticArtifactDelivery.Acquirer(

@@ -63,6 +63,7 @@ object VexLogger {
         SetupEffectFailed(Owner.Setup),
         SetupEffectCancelledByHuman(Owner.Setup),
         PersonLanguageSaved(Owner.Person),
+        PersonModelChosen(Owner.Person),
 
         // Product service process and its lifetime owner
         ServiceProcessStarted(Owner.Service),
@@ -81,6 +82,14 @@ object VexLogger {
         RuntimeRetiredUnhealthy(Owner.HereticRuntime),
         RuntimeStartRequested(Owner.HereticRuntime),
         RuntimeQualified(Owner.HereticRuntime),
+        RuntimeModelSwitched(Owner.HereticRuntime),
+
+        // Settings → Models: the person's model Controls and the file effects they caused.
+        ModelControlAccepted(Owner.Setup),
+        ModelDownloadStarted(Owner.Setup),
+        ModelDownloadCompleted(Owner.Setup),
+        ModelDownloadFailed(Owner.Setup),
+        ModelFilesRemoved(Owner.Setup),
         RuntimeProcessNoLongerLive(Owner.HereticRuntime),
         RuntimeProcessLive(Owner.HereticRuntime),
 

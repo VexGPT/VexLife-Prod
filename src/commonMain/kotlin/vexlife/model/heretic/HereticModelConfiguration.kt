@@ -3,11 +3,15 @@ package vexlife.model.heretic
 import kotlinx.serialization.Serializable
 
 /**
- * Home + Companion-lineage scoped selection/binding relationship for the certified Heretic model.
+ * Home + Companion-lineage scoped selection/binding relationship for one catalog Heretic model.
  *
  * [BindingScope] carries refs supplied by those rightful owners; this package does not define Home
- * or Companion lineage semantics. Selecting Heretic is not authority to download, activate,
+ * or Companion lineage semantics. Selecting a model is not authority to download, activate,
  * replace another model, or start a process. Those effects belong to later runtime/platform owners.
+ *
+ * The value names exactly one [HereticModelCatalog] entry. Its schema is unchanged from the
+ * single-model era, so a Home bound to the certified 27B reads exactly as it always did; a Home that
+ * selected another catalog model carries that model's identity in the same fields.
  */
 object HereticModelConfiguration {
     const val Schema =
@@ -73,25 +77,25 @@ object HereticModelConfiguration {
             ) {
                 "Heretic model binding requires a qualified runtime"
             }
+            val identity = HereticModelCatalog.entry(modelRef)?.identity
             require(
-                modelRef ==
-                    HereticProductIdentity.ModelRef &&
+                identity != null &&
                     modelProfileRef ==
-                    HereticProductIdentity.ModelProfileRef &&
+                    identity.modelProfileRef &&
                     artifactRef ==
-                    HereticProductIdentity.ArtifactSetRef &&
+                    identity.artifactSetRef &&
                     artifactContentSetSha256 ==
-                    HereticProductIdentity.ArtifactContentSetSha256 &&
+                    identity.artifactContentSetSha256 &&
                     runtimeAdapterRef ==
-                    HereticProductIdentity.RuntimeAdapterRef &&
+                    identity.runtimeAdapterRef &&
                     runtimeClass ==
-                    HereticProductIdentity.RuntimeClass &&
+                    identity.runtimeClass &&
                     endpoint ==
-                    HereticProductIdentity.Endpoint &&
+                    identity.endpoint &&
                     requestModel ==
-                    HereticProductIdentity.RequestModel,
+                    identity.requestModel,
             ) {
-                "qualified runtime evidence does not match the certified Heretic product identity"
+                "qualified runtime evidence does not match one offered Heretic model identity"
             }
         }
     }
@@ -118,11 +122,16 @@ object HereticModelConfiguration {
 
     fun pending(
         homeIdentity: BindingScope,
+        model: HereticModelCatalog.Entry = HereticModelCatalog.Default,
     ): Value =
         form(
             homeIdentity = homeIdentity,
             state = State.EstablishmentPending,
+            model = model,
         )
+
+    /** The catalog model this value names. */
+    fun selected(value: Value): HereticModelCatalog.Entry = HereticModelCatalog.requireEntry(value.modelRef)
 
     fun bound(
         homeIdentity: BindingScope,
@@ -148,6 +157,7 @@ object HereticModelConfiguration {
             homeIdentity = homeIdentity,
             state = State.BoundProductModel,
             runtimeReceiptPath = runtimeReceiptPath,
+            model = HereticModelCatalog.requireEntry(qualifiedRuntime.modelRef),
         )
     }
 
@@ -173,23 +183,23 @@ object HereticModelConfiguration {
         ) {
             "Heretic model configuration Companion lineage drift"
         }
+        val identity = HereticModelCatalog.entry(value.modelRef)?.identity
         require(
-            value.modelRef ==
-                HereticProductIdentity.ModelRef &&
+            identity != null &&
                 value.modelProfileRef ==
-                HereticProductIdentity.ModelProfileRef &&
+                identity.modelProfileRef &&
                 value.artifactRef ==
-                HereticProductIdentity.ArtifactSetRef &&
+                identity.artifactSetRef &&
                 value.artifactContentSetSha256 ==
-                HereticProductIdentity.ArtifactContentSetSha256 &&
+                identity.artifactContentSetSha256 &&
                 value.runtimeAdapterRef ==
-                HereticProductIdentity.RuntimeAdapterRef &&
+                identity.runtimeAdapterRef &&
                 value.runtimeClass ==
-                HereticProductIdentity.RuntimeClass &&
+                identity.runtimeClass &&
                 value.endpoint ==
-                HereticProductIdentity.Endpoint &&
+                identity.endpoint &&
                 value.requestModel ==
-                HereticProductIdentity.RequestModel &&
+                identity.requestModel &&
                 value.runtimeReceiptPath in
                 admittedRuntimeReceiptPaths,
         ) {
@@ -223,6 +233,7 @@ object HereticModelConfiguration {
         state: State,
         runtimeReceiptPath: String =
             HereticProductIdentity.StableRuntimeReceiptRelativePath,
+        model: HereticModelCatalog.Entry = HereticModelCatalog.Default,
     ): Value =
         validate(
             value =
@@ -231,14 +242,14 @@ object HereticModelConfiguration {
                     state = state,
                     homeRef = homeIdentity.homeRef,
                     companionLineageRef = homeIdentity.companionLineageRef,
-                    modelRef = HereticProductIdentity.ModelRef,
-                    modelProfileRef = HereticProductIdentity.ModelProfileRef,
-                    artifactRef = HereticProductIdentity.ArtifactSetRef,
-                    artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
-                    runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
-                    runtimeClass = HereticProductIdentity.RuntimeClass,
-                    endpoint = HereticProductIdentity.Endpoint,
-                    requestModel = HereticProductIdentity.RequestModel,
+                    modelRef = model.identity.modelRef,
+                    modelProfileRef = model.identity.modelProfileRef,
+                    artifactRef = model.identity.artifactSetRef,
+                    artifactContentSetSha256 = model.identity.artifactContentSetSha256,
+                    runtimeAdapterRef = model.identity.runtimeAdapterRef,
+                    runtimeClass = model.identity.runtimeClass,
+                    endpoint = model.identity.endpoint,
+                    requestModel = model.identity.requestModel,
                     runtimeReceiptPath = runtimeReceiptPath,
                     automaticFallback = false,
                     automaticDownload = false,
