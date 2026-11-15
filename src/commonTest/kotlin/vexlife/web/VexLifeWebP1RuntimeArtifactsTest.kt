@@ -279,13 +279,19 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "const retrying = state.pending !== null",
+                "const send = async (newAttemptSeed = null) =>",
             ),
         )
         assertTrue(
             bundle.javascript.contains(
-                "const pending = state.pending ?? Object.freeze",
+                "const retryingExactAttempt = state.pending !== null && newAttemptSeed === null",
             ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "idempotencyKey: 'send.' + crypto.randomUUID().toLowerCase()",
+            ),
+            "Try Again must form a new Send identity instead of replaying a failed key",
         )
         assertTrue(
             bundle.javascript.contains(
@@ -296,6 +302,42 @@ class VexLifeWebP1RuntimeArtifactsTest {
             bundle.javascript.contains(
                 "let retireAttempt = status === 400 || retryAllowed === false",
             ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "const interruptedProcess = snapshotLiveProcess()",
+            ) &&
+                bundle.javascript.contains(
+                    "await completeCanonicalSend(reconciled, false, interruptedProcess)",
+                ),
+            "reconciliation must preserve the process the human already watched",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "state.failedAttempts.push",
+            ) &&
+                bundle.javascript.contains(
+                    "processEntries: interruptedProcess",
+                ) &&
+                bundle.javascript.contains(
+                    "exactNextSafeRoute",
+                ),
+            "terminal failure must retain process history and the canonical continuation route",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "className = 'thought-toggle failed-attempt-retry'",
+            ) &&
+                bundle.javascript.contains(
+                    "void send({",
+                ),
+            "failed-attempt presentation must expose an explicit fresh-Send Try Again",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "if (!ui.draft.value) ui.draft.value = pending.content",
+            ),
+            "terminal failure must not silently turn an already-attempted Send back into a draft",
         )
         assertTrue(
             bundle.javascript.contains(
