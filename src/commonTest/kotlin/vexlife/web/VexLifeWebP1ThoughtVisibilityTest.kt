@@ -123,21 +123,33 @@ class VexLifeWebP1ThoughtVisibilityTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "applyReasoningViewport(reasoning, 'live', true, false);",
+                "applyReasoningViewport(element, key, key.startsWith('live.stage.'));",
             ),
-            "streaming reasoning must not write scrollTop while the human is reading within the nested pane",
+            "each live provider-stage pane must preserve its own human-owned follow/read position",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "if (key === 'live' || key.startsWith('live.stage.'))",
+            ),
+            "a fresh Send must retire only prior live-stage viewport state",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "resetLiveReasoningViewports();",
+            ),
+            "a fresh Send must begin with fresh provider-stage viewport state",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "state.reasoningViewports.set('live', { followTail: true, scrollTop: 0 });",
+            ),
+            "the obsolete single live-pane key must not stand in for the provider-stage stack",
         )
         assertTrue(
             bundle.javascript.contains(
                 "applyTimelineViewport(false);",
             ),
             "streaming content must not write Conversation scrollTop while the human is reading history",
-        )
-        assertTrue(
-            bundle.javascript.contains(
-                "state.reasoningViewports.set('live', { followTail: true, scrollTop: 0 });",
-            ),
-            "every fresh Send must begin with a fresh live-reasoning follow state",
         )
         assertTrue(
             bundle.javascript.contains(
