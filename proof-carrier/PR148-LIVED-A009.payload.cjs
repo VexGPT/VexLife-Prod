@@ -266,10 +266,34 @@ async function main() {
 
     const javaHome = run('/usr/libexec/java_home', ['-v', '21'], { timeoutMs: 10000 }).stdout.trim();
     const gradleEnv = { ...process.env, JAVA_HOME: javaHome, PATH: javaHome + '/bin:' + process.env.PATH };
-    run('./gradlew', ['--no-daemon', '-Dorg.gradle.java.home=' + javaHome, 'assembleVexLifeProdServiceImage'], {
-      cwd: repo,
-      timeoutMs: 360000,
-      env: gradleEnv,
+    run(
+      './gradlew',
+      [
+        '--no-daemon',
+        '-Dorg.gradle.java.home=' + javaHome,
+        'jvmTest',
+        'compileKotlinJs',
+        'compileTestKotlinJs',
+        'checkVexLifeStrings',
+        'assembleVexLifeProdServiceImage',
+      ],
+      {
+        cwd: repo,
+        timeoutMs: 600000,
+        env: gradleEnv,
+      },
+    );
+
+    resultBase.completedStepReceipts.push({
+      step: 'exact-source-preflight',
+      state: 'PASS',
+      tasks: [
+        'jvmTest',
+        'compileKotlinJs',
+        'compileTestKotlinJs',
+        'checkVexLifeStrings',
+        'assembleVexLifeProdServiceImage',
+      ],
     });
 
     const imageRoot = path.join(repo, 'build/vexlife-prod-service-image/images', binding.head);
