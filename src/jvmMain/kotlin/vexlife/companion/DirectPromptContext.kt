@@ -59,6 +59,7 @@ object DirectPromptContext {
         "vexlife-prod.direct-prompt-materialization-receipt/v8"
 
     const val ConversationExtentHeader = "VEXLIFE_CONVERSATION_EXTENT/v1"
+    const val ConversationCoordinatesHeader = "VEXLIFE_CONVERSATION_COORDINATES/v1"
 
     const val InputTokenBudget =
         VexLifeMemoryContract.ContextInputTokenBudget
@@ -118,6 +119,36 @@ object DirectPromptContext {
         val workingSet: vexlife.continuity.VexLifeWorkingContinuity.WorkingSet,
         val sourceRefs: List<String>,
     )
+
+    @Serializable
+    private data class ProviderConversationCoordinate(
+        val eventRef: String,
+        val sequence: Long,
+        val eventKind: String,
+        val speakerRef: String,
+        val formedAt: String,
+        val conversationModelOrNull: String?,
+        val runtimeModelRefOrNull: String?,
+    )
+
+    @Serializable
+    private data class ProviderConversationCoordinatesPacket(
+        val schemaVersion: String,
+        val truthClass: String,
+        val events: List<ProviderConversationCoordinate>,
+    )
+
+    private data class ConversationSelection(
+        val events: List<DirectConversationStore.Event>,
+        val coordinatesSystemContent: String?,
+        val coordinatesSystemTokens: Int,
+        val eventTokens: Int,
+    ) {
+        val totalTokens: Int
+            get() =
+                eventTokens +
+                    coordinatesSystemTokens
+    }
 
     private data class VerifiedWorkingContinuity(
         val context: VexLifeWorkingContinuityOwner.SuccessorContext,
@@ -814,6 +845,7 @@ object DirectPromptContext {
         selected: List<DirectConversationStore.Event>,
         recentConversation: DirectConversationStore.RecentCompletedConversation?,
         sourceReturnProjection: DirectConversationSourceReturn.Projection?,
+        conversationCoordinatesSystemContent: String? = null,
     ): Materialization {
         val workingContinuity =
             fixed.workingContinuity
@@ -837,6 +869,15 @@ object DirectPromptContext {
                 )
                 sourceReturnProjection
                     ?.systemContent
+                    ?.let {
+                        add(
+                            CompanionProviderMessage(
+                                role = "system",
+                                content = it,
+                            ),
+                        )
+                    }
+                conversationCoordinatesSystemContent
                     ?.let {
                         add(
                             CompanionProviderMessage(
@@ -1273,6 +1314,9 @@ object DirectPromptContext {
         foundationalField: VexLifeFoundationalField.Reading? = null,
         conversationExtentIncluded: Boolean = false,
         capabilityRequestsAdmitted: Boolean = false,
+        conversationRuntimeModelRefForTurn: (turnRef: String) -> String? = {
+            null
+        },
     ): Materialization {
         require(
             !(
@@ -1318,6 +1362,7 @@ object DirectPromptContext {
                     DirectConversationSourceReturn.project(
                         discovery = discovery,
                         availableTokens = afterFixed,
+                        runtimeModelRefForTurn = conversationRuntimeModelRefForTurn,
                     )
                 }
         val afterSourceReturn =
@@ -1350,7 +1395,7 @@ object DirectPromptContext {
                         ::estimatedMessageTokens,
                 )
             }
-        val selected =
+        val rawSelected =
             if (
                 prior ==
                     null ||
@@ -1384,6 +1429,14 @@ object DirectPromptContext {
                     source.events
                 }
             }
+        val conversationSelection =
+            projectConversationSelection(
+                events = rawSelected,
+                availableTokens = afterSourceReturn,
+                runtimeModelRefForTurn = conversationRuntimeModelRefForTurn,
+            )
+        val selected =
+            conversationSelection.events
         val selectedConversationRefs =
             selected
                 .map(
@@ -1402,16 +1455,12 @@ object DirectPromptContext {
             "direct continuity returned historical source overlaps exact recent Conversation already selected"
         }
         val selectedConversationTokens =
-            selected.sumOf {
-                estimatedMessageTokens(
-                    it.content,
-                )
-            }
+            conversationSelection.totalTokens
         require(
             selectedConversationTokens <=
                 afterSourceReturn,
         ) {
-            "direct continuity exact Conversation selection exceeds remaining prompt attention"
+            "direct continuity exact Conversation selection and provenance exceed remaining prompt attention"
         }
 
         val memoryTokenCap =
@@ -1481,6 +1530,8 @@ object DirectPromptContext {
             selected = selected,
             recentConversation = recentConversation,
             sourceReturnProjection = sourceReturnProjection,
+            conversationCoordinatesSystemContent =
+                conversationSelection.coordinatesSystemContent,
         )
     }
 
@@ -1510,6 +1561,9 @@ object DirectPromptContext {
         foundationalField: VexLifeFoundationalField.Reading? = null,
         conversationExtentIncluded: Boolean = false,
         capabilityRequestsAdmitted: Boolean = false,
+        conversationRuntimeModelRefForTurn: (turnRef: String) -> String? = {
+            null
+        },
     ) {
         val current =
             materializeContinuity(
@@ -1532,6 +1586,8 @@ object DirectPromptContext {
                 foundationalField = foundationalField,
                 conversationExtentIncluded = conversationExtentIncluded,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                conversationRuntimeModelRefForTurn =
+                    conversationRuntimeModelRefForTurn,
             )
         require(
             current ==
@@ -2080,6 +2136,151 @@ object DirectPromptContext {
         listOfNotNull(
             fixed.foundationalField?.systemContent?.let { CompanionProviderMessage(role = "system", content = it) },
         )
+
+    private fun projectConversationSelection(
+        events: List<DirectConversationStore.Event>,
+        availableTokens: Int,
+        runtimeModelRefForTurn: (turnRef: String) -> String?,
+    ): ConversationSelection {
+        require(
+            availableTokens >=
+                0,
+        ) {
+            "Conversation selection allowance must be non-negative"
+        }
+        require(
+            events.size %
+                2 ==
+                0,
+        ) {
+            "Conversation selection must contain complete request/response pairs"
+        }
+
+        var selected =
+            events
+        while (
+            selected.isNotEmpty()
+        ) {
+            val eventTokens =
+                selected.sumOf {
+                    estimatedMessageTokens(
+                        it.content,
+                    )
+                }
+            val coordinates =
+                conversationCoordinatesSystemContent(
+                    events = selected,
+                    runtimeModelRefForTurn = runtimeModelRefForTurn,
+                )
+            val coordinateTokens =
+                estimatedMessageTokens(
+                    coordinates,
+                )
+            if (
+                eventTokens +
+                    coordinateTokens <=
+                    availableTokens
+            ) {
+                return ConversationSelection(
+                    events = selected,
+                    coordinatesSystemContent = coordinates,
+                    coordinatesSystemTokens = coordinateTokens,
+                    eventTokens = eventTokens,
+                )
+            }
+
+            if (
+                selected.size <=
+                    2
+            ) {
+                require(
+                    eventTokens <=
+                        availableTokens,
+                ) {
+                    "exact immediate prior Conversation turn no longer fits prompt attention"
+                }
+                return ConversationSelection(
+                    events = selected,
+                    coordinatesSystemContent = null,
+                    coordinatesSystemTokens = 0,
+                    eventTokens = eventTokens,
+                )
+            }
+
+            selected =
+                selected.drop(
+                    2,
+                )
+        }
+
+        return ConversationSelection(
+            events = emptyList(),
+            coordinatesSystemContent = null,
+            coordinatesSystemTokens = 0,
+            eventTokens = 0,
+        )
+    }
+
+    private fun conversationCoordinatesSystemContent(
+        events: List<DirectConversationStore.Event>,
+        runtimeModelRefForTurn: (turnRef: String) -> String?,
+    ): String {
+        val runtimeModels =
+            mutableMapOf<String, String?>()
+        val packet =
+            ProviderConversationCoordinatesPacket(
+                schemaVersion = ConversationCoordinatesHeader,
+                truthClass = "EXACT_SELECTED_CONVERSATION_COORDINATES",
+                events =
+                    events.map {
+                        event ->
+                        val runtimeModel =
+                            if (
+                                event.eventKind ==
+                                    "RESPONSE"
+                            ) {
+                                runtimeModels.getOrPut(
+                                    event.turnRef,
+                                ) {
+                                    runtimeModelRefForTurn(
+                                        event.turnRef,
+                                    )
+                                }
+                            } else {
+                                null
+                            }
+                        ProviderConversationCoordinate(
+                            eventRef = event.eventRef,
+                            sequence = event.sequence,
+                            eventKind = event.eventKind,
+                            speakerRef = event.speakerRef,
+                            formedAt = event.formedAt,
+                            conversationModelOrNull =
+                                if (
+                                    event.eventKind ==
+                                        "RESPONSE"
+                                ) {
+                                    event.model
+                                } else {
+                                    null
+                                },
+                            runtimeModelRefOrNull = runtimeModel,
+                        )
+                    },
+            )
+
+        return listOf(
+                ConversationCoordinatesHeader,
+                "These coordinates describe the exact durable Conversation messages that immediately follow this block, in the same order. sequence is the canonical event position and formedAt is the durable event time.",
+                "For a RESPONSE, conversationModelOrNull is the canonical Conversation model label. runtimeModelRefOrNull is the exact VexLife-Prod runtime model when a product runtime-evidence sidecar exists. A missing value is unknown here; do not guess it.",
+                VexContractJson.compactEncode(
+                    packet,
+                ),
+            )
+            .joinToString(
+                "\n",
+            )
+    }
 
     /**
      * What the durable record holds before [currentRequest], counted from the request's own
