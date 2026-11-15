@@ -60,11 +60,15 @@ const authorityEnvelope = {
   ],
 };
 
+const authorityRelativePath = 'authority/effect.json';
+const payloadRelativePath = 'payload/run.cjs';
+const candidateRelativePath = 'inputs/candidate.json';
+
 const contentRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'vexlife-prod-pr148-lived-a005-form-'));
 try {
-  const authorityPath = path.join(contentRoot, 'authority/effect.json');
-  const payloadPath = path.join(contentRoot, 'payload/run.cjs');
-  const candidatePath = path.join(contentRoot, 'inputs/candidate.json');
+  const authorityPath = path.join(contentRoot, authorityRelativePath);
+  const payloadPath = path.join(contentRoot, payloadRelativePath);
+  const candidatePath = path.join(contentRoot, candidateRelativePath);
 
   fs.mkdirSync(path.dirname(authorityPath), { recursive: true });
   fs.mkdirSync(path.dirname(payloadPath), { recursive: true });
@@ -73,6 +77,14 @@ try {
   writeJson(authorityPath, authorityEnvelope);
   fs.copyFileSync(payloadSource, payloadPath);
   writeJson(candidatePath, candidate);
+
+  if (!fs.existsSync(payloadPath) || !fs.statSync(payloadPath).isFile()) {
+    throw new Error('PR148_LIVED_A005_PAYLOAD_STAGING_MISSING');
+  }
+  if (!fs.existsSync(candidatePath) || !fs.statSync(candidatePath).isFile()) {
+    throw new Error('PR148_LIVED_A005_CANDIDATE_STAGING_MISSING');
+  }
+
 
   const taskTemplate = bindAuthoritySummaryFromEnvelope({
     schemaVersion: 'vextreme.vexlocalbridge-task-manifest/v1',
@@ -99,7 +111,7 @@ try {
     exactPathRefs: [],
     authorityBinding: {
       authoritySchemaRef: authorityEnvelope.authoritySchemaRef,
-      authorityEnvelopePath: 'authority/effect.json',
+      authorityEnvelopePath: authorityRelativePath,
       authorityEnvelopeSha256: hashFile(authorityPath),
       semanticAdmissionRef: authorityEnvelope.semanticAdmissionRef,
       transactionRef: authorityEnvelope.transactionRef,
@@ -110,11 +122,11 @@ try {
     payload: {
       payloadClass: 'VEXLIFE_PROD_HOST_SEMANTIC_LIVED_CIRCUIT',
       payloadRuntime: 'node',
-      payloadPath: 'payload/run.cjs',
+      payloadPath: payloadRelativePath,
       payloadSha256: hashFile(payloadPath),
-      typedArgv: ['inputs/candidate.json'],
+      typedArgv: [candidateRelativePath],
       immutableInputs: [{
-        path: 'inputs/candidate.json',
+        path: candidateRelativePath,
         sha256: hashFile(candidatePath),
       }],
     },
