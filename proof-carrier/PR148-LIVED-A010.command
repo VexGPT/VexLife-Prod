@@ -12,11 +12,11 @@ CONTRACT_REF='source.vexrelay.current-contract/v1'
 RUNTIME_VERSION='v0.2.0-RC1'
 
 CARRIER_REPO='VexGPT/VexLife-Prod'
-CARRIER_CONTENT_COMMIT='c45a7000dc32ca2eafced3f858b7727150cc48f8'
+CARRIER_CONTENT_COMMIT='dc385a21c8b490954dc0fc7a336b9a36a2fd30a3'
 PAYLOAD_PATH='proof-carrier/PR148-LIVED-A010.payload.cjs'
 PAYLOAD_BLOB='aa8a61ba20de3527feac729cce46927bb9d35555'
 FORM_PATH='proof-carrier/PR148-LIVED-A010.form.cjs'
-FORM_BLOB='9885116522566996ecf2a713979dc9f39b49e58b'
+FORM_BLOB='dcbf7bff56a1f8593823c8f8a982bda405a9ee04'
 
 resolve_exec() {
   local candidate
