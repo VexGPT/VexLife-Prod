@@ -99,6 +99,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 visionControlPath: ${jsString(VexLifeProdServiceContract.VisionControlPath)},
                 diagnosticsPath: ${jsString(VexLifeProdServiceContract.DiagnosticsPath)},
                 diagnosticsControlPath: ${jsString(VexLifeProdServiceContract.DiagnosticsControlPath)},
+                reachPacingPath: ${jsString(VexLifeProdServiceContract.ReachPacingPath)},
+                reachPacingControlPath: ${jsString(VexLifeProdServiceContract.ReachPacingControlPath)},
                 modelsPath: ${jsString(VexLifeProdServiceContract.ModelsPath)},
                 modelsControlPath: ${jsString(VexLifeProdServiceContract.ModelsControlPath)},
                 chronologyPath: ${jsString(VexLifeProdServiceContract.ChronologyPath)},
@@ -208,6 +210,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 diagnosticsRecords: byId('diagnostics-records'),
                 diagnosticsEnhanced: byId('diagnostics-enhanced'),
                 diagnosticsClear: byId('diagnostics-clear'),
+                reachPacingStatus: byId('reach-pacing-status'),
+                reachPacingBudgets: byId('reach-pacing-budgets'),
+                reachPacingCounters: byId('reach-pacing-counters'),
                 vexMemoryDetail: byId('vex-memory-detail'),
                 resourceNote: byId('resource-note'),
                 homeCurrentState: byId('home-current-state'),
@@ -254,6 +259,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 memory: null,
                 diagnostics: null,
                 diagnosticsInFlight: false,
+                reachPacing: null,
+                reachPacingInFlight: false,
                 // Settings → Models projection (VexLifeModels); refreshed while a download runs.
                 models: null,
                 modelsInFlight: false,
@@ -2279,6 +2286,62 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
               };
 
+              // Settings → Debug → Reach pacing (experiment). Choices and their words come from
+              // VexLifeReachPacingFamily via the service; the next turn uses the saved choice.
+              const renderReachPacing = () => {
+                if (!ui.reachPacingStatus) return;
+                const projection = state.reachPacing;
+                ui.reachPacingBudgets.textContent = '';
+                ui.reachPacingCounters.textContent = '';
+                if (!projection) {
+                  ui.reachPacingStatus.textContent = '';
+                  return;
+                }
+                const display = projection.display;
+                ui.reachPacingStatus.textContent = resolveText(display.status);
+                const group = (row, controls) => {
+                  for (const control of controls || []) {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'outline-button';
+                    button.dataset.controlRef = control.controlRef;
+                    button.setAttribute('aria-pressed', String(Boolean(control.selected)));
+                    button.textContent = resolveText(control.label);
+                    button.disabled = state.reachPacingInFlight || Boolean(control.selected);
+                    button.addEventListener('click', () => void reachPacingControl(control.controlRef));
+                    row.append(button);
+                  }
+                };
+                group(ui.reachPacingBudgets, display.budgets);
+                group(ui.reachPacingCounters, display.counters);
+              };
+
+              const loadReachPacing = async () => {
+                const response = await fetch(service.reachPacingPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                state.reachPacing = await readJson(response);
+                renderReachPacing();
+                return state.reachPacing;
+              };
+
+              const reachPacingControl = async (controlRef) => {
+                if (state.reachPacingInFlight) return;
+                state.reachPacingInFlight = true;
+                renderReachPacing();
+                try {
+                  const response = await fetch(service.reachPacingControlPath, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', accept: 'application/json' },
+                    body: JSON.stringify({ controlRef })
+                  });
+                  state.reachPacing = await readJson(response);
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : 'Reach pacing could not be saved.');
+                } finally {
+                  state.reachPacingInFlight = false;
+                  renderReachPacing();
+                }
+              };
+
               const gibText = (bytes) => (Number(bytes) / 1073741824).toFixed(1);
 
               // Settings → Models. Rows, states and lawful Controls come from VexLifeModelsFamily via
@@ -3120,6 +3183,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   void loadSettings().catch(() => {});
                   void loadMemory().catch(() => {});
                   void loadDiagnostics().catch(() => renderDiagnostics());
+                  void loadReachPacing().catch(() => renderReachPacing());
                   void loadModels().catch(() => {});
                   // Observed: the presentation rendered with current service data.
                   reportFact('PRESENTATION_ARRIVED', { presentation: 'workspace' });

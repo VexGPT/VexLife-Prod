@@ -190,6 +190,9 @@ object VexLifeWorkspaceBlueprint :
     val DiagnosticsEnhancedCapture = SettingsDiagnostics.control("enhanced-capture")
     val DiagnosticsClearHistory = SettingsDiagnostics.control("clear-history")
     val DiagnosticsExport = SettingsDiagnostics.control("export")
+    /** Reach pacing experiment: the turn's reach budget and how Vex is told about it. */
+    val ReachPacingState = SettingsDiagnostics.content("reach-pacing")
+    val ReachPacingControl = SettingsDiagnostics.control("reach-pacing-control")
 }
 
 // [VXG RealForever]

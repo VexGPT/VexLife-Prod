@@ -66,7 +66,10 @@ class VexLifeStringsTest {
                     vexlife.model.VexLifeModelsFamily.ControlRemove,
                 ).map { "model:control:$it" } +
                 vexlife.model.VexLifeModelsFamily.Files.entries.map { "model:files:${it.name}" } +
-                vexlife.model.heretic.HereticModelCatalog.Standing.entries.map { "model:standing:${it.name}" }
+                vexlife.model.heretic.HereticModelCatalog.Standing.entries.map { "model:standing:${it.name}" } +
+                vexlife.capability.VexLifeReachPacingFamily.Counter.entries.flatMap {
+                    listOf("reach-pacing:counter:${it.name}", "reach-pacing:control:COUNTER_${it.name}")
+                } + "reach-pacing:control:BUDGET"
         val known =
             capabilityRefs.toSet() +
             setOf(

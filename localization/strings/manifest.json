@@ -2385,6 +2385,18 @@
       "enHash": "99cbaa8ea1dd",
       "langs": []
     },
+    "workspace.button.reach-pacing-budget": {
+      "enHash": "ffa33fafcdb1",
+      "langs": []
+    },
+    "workspace.button.reach-pacing-counter-bounded": {
+      "enHash": "2f8712d01e69",
+      "langs": []
+    },
+    "workspace.button.reach-pacing-counter-exact": {
+      "enHash": "71309701f88c",
+      "langs": []
+    },
     "workspace.description.diagnostics": {
       "enHash": "7b79ef07573f",
       "langs": []
@@ -2405,12 +2417,20 @@
       "enHash": "3f9eef16b166",
       "langs": []
     },
+    "workspace.description.reach-pacing": {
+      "enHash": "8c20df812fb8",
+      "langs": []
+    },
     "workspace.heading.diagnostics": {
       "enHash": "d6991174308f",
       "langs": []
     },
     "workspace.heading.models": {
       "enHash": "c595dae8d3cd",
+      "langs": []
+    },
+    "workspace.heading.reach-pacing": {
+      "enHash": "aee748199f4a",
       "langs": []
     },
     "workspace.label.diagnostics-no-records": {
@@ -2535,6 +2555,14 @@
     },
     "workspace.status.reach-memory": {
       "enHash": "238b3df1556e",
+      "langs": []
+    },
+    "workspace.status.reach-pacing-bounded": {
+      "enHash": "4e9e10b6004a",
+      "langs": []
+    },
+    "workspace.status.reach-pacing-exact": {
+      "enHash": "aa109d01342d",
       "langs": []
     },
     "workspace.status.reach-web-fetch": {

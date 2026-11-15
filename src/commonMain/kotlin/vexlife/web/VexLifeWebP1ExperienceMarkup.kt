@@ -286,6 +286,15 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           </div>
           <p class="setting-note-line" data-vex-text="workspace.description.diagnostics-enhanced-note"></p>
           <p class="setting-note-line" data-vex-text="workspace.description.diagnostics-export-note"></p>
+          <div class="memory-state" data-vex-ref="${VexLifeWebP1.ReachPacingState.identity.ref}" id="reach-pacing-state">
+            <p class="memory-label" data-vex-text="workspace.heading.reach-pacing"></p>
+            <p class="setting-note-line" id="reach-pacing-status"></p>
+          </div>
+          <p class="setting-note-line" data-vex-text="workspace.description.reach-pacing"></p>
+          <div data-vex-ref="${VexLifeWebP1.ReachPacingControl.identity.ref}" id="reach-pacing-controls">
+            <div class="home-row" id="reach-pacing-budgets"></div>
+            <div class="home-row" id="reach-pacing-counters"></div>
+          </div>
         </section>
 
         <section class="setting setting-renderer">

@@ -676,6 +676,51 @@ class VexLifeCapabilityReachTest {
     }
 
     @Test
+    fun reachPacingDecidesTheBudgetAndWhetherVexSeesAnExactCount() = withHome { home ->
+        val bounded = VexLifeReachPacingFamily.State(10, VexLifeReachPacingFamily.Counter.BOUNDED)
+        val fifth =
+            VexLifeCapabilityBridge.perform(
+                request("""{"capability":"atlas","action":"list"}"""),
+                admission(home, number = 5).copy(pacing = bounded),
+                estimateTokens = tokens,
+            )
+        assertEquals(VexLifeCapabilityBridge.State.RETURNED, fifth.entry.state, "5 is inside a budget of 10")
+        val text = fifth.resultMessage.content
+        assertTrue(text.contains("\"request\":\"5\""), "bounded wording shows no count out of a total")
+        assertFalse(text.contains("5 of"))
+        assertTrue(text.contains("bounded but ample"))
+        assertFalse(text.contains("left this turn"))
+
+        val last =
+            VexLifeCapabilityBridge.perform(
+                request("""{"capability":"atlas","action":"list"}"""),
+                admission(home, number = 10).copy(pacing = bounded),
+                estimateTokens = tokens,
+            )
+        assertTrue(last.resultMessage.content.contains("No requests are left this turn"), "running out is always said")
+        val over =
+            VexLifeCapabilityBridge.perform(
+                request("""{"capability":"atlas","action":"list"}"""),
+                admission(home, number = 11).copy(pacing = bounded),
+                estimateTokens = tokens,
+            )
+        assertEquals(VexLifeCapabilityBridge.State.LIMIT_REACHED, over.entry.state)
+
+        val exact =
+            VexLifeCapabilityBridge.perform(
+                request("""{"capability":"atlas","action":"list"}"""),
+                admission(home, number = 2),
+                estimateTokens = tokens,
+            )
+        assertTrue(exact.resultMessage.content.contains("\"request\":\"2 of 4\""), "the default is unchanged")
+        assertTrue(exact.resultMessage.content.contains("(2 left this turn)"))
+
+        val trace = VexLifeCapabilityBridge.trace(List(11) { fifth.entry.copy(requestNumber = it + 1) }, bounded)
+        assertEquals(10, trace.maximumRequestsPerTurn)
+        assertEquals(36_000, trace.exchangeAllowanceTokens)
+    }
+
+    @Test
     fun theTurnsRequestLimitIsAnsweredNotSilentlyDropped() = withHome { home ->
         val over =
             VexLifeCapabilityBridge.perform(
