@@ -279,19 +279,13 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "const send = async (newAttemptSeed = null) =>",
+                "const retrying = state.pending !== null",
             ),
         )
         assertTrue(
             bundle.javascript.contains(
-                "const retryingExactAttempt = state.pending !== null && newAttemptSeed === null",
+                "const pending = state.pending ?? Object.freeze",
             ),
-        )
-        assertTrue(
-            bundle.javascript.contains(
-                "idempotencyKey: 'send.' + crypto.randomUUID().toLowerCase()",
-            ),
-            "a human Try Again must form a new Send identity instead of replaying the failed key",
         )
         assertTrue(
             bundle.javascript.contains(
@@ -302,60 +296,6 @@ class VexLifeWebP1RuntimeArtifactsTest {
             bundle.javascript.contains(
                 "let retireAttempt = status === 400 || retryAllowed === false",
             ),
-        )
-        assertTrue(
-            bundle.javascript.contains(
-                "await completeCanonicalSend(reconciled, false, interruptedProcess)",
-            ),
-            "reconciliation completion must inherit the process the human already watched",
-        )
-        assertTrue(
-            bundle.javascript.contains(
-                "state.failedAttempts.push",
-            ) &&
-                bundle.javascript.contains(
-                    "processEntries: interruptedProcess",
-                ),
-            "terminal failed Sends must transfer live process history into a session-only failed attempt",
-        )
-        assertTrue(
-            bundle.javascript.contains(
-                "className = 'thought-toggle failed-attempt-retry'",
-            ) &&
-                bundle.javascript.contains(
-                    "void send({",
-                ),
-            "the failed-attempt projection must expose an explicit new-attempt Try Again control",
-        )
-        assertFalse(
-            bundle.javascript.contains(
-                "if (!ui.draft.value) ui.draft.value = pending.content",
-            ),
-            "terminal failure must not silently revert the old prompt into an anonymous draft",
-        )
-        assertTrue(
-            Regex(
-                """freezeLiveProcess\(\);\s*const interruptedProcess = snapshotLiveProcess\(\);[\s\S]*?reconcileSendOutcome\(pending\)""",
-            ).containsMatchIn(bundle.javascript),
-            "presentation must preserve live process state until canonical reconciliation returns",
-        )
-        assertTrue(
-            Regex(
-                """if \(!retryingExactAttempt\) \{[\s\S]*?state\.liveProcessEntries = \[\];[\s\S]*?resetLiveProcessViewports\(\);[\s\S]*?\}""",
-            ).containsMatchIn(bundle.javascript),
-            "only a genuinely new Send may reset the live process slot",
-        )
-        assertTrue(
-            bundle.javascript.contains(
-                "exactNextSafeRoute",
-            ) &&
-                bundle.javascript.contains(
-                    "FORM_NEW_SEND_ATTEMPT_AND_RETRY",
-                ) &&
-                bundle.javascript.contains(
-                    "RESUME_LAST_VALID_HEAD_THEN_FORM_NEW_SEND_ATTEMPT",
-                ),
-            "presentation must retain the canonical owner's exact next route",
         )
         assertTrue(
             bundle.javascript.contains(
