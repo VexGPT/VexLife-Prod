@@ -2,6 +2,7 @@ package vexlife.web
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
@@ -324,6 +325,36 @@ class VexLifeWebP1Test {
             artifacts.semanticManifest.contains(
                 "\"ref\":\"${VexLifeWebP1.Refs.CompanionRegion.value}\",\"nodeKind\":\"REGION\",\"blueprintKind\":null,\"sourceParentRef\":null,\"containerRef\":\"${VexLifeWebP1.Refs.BodyFrame.value}\",\"placement\":\"FillAvailable\",\"depth\":\"Content\"",
             ),
+        )
+    }
+
+    @Test
+    fun thoughtsUseTurnOwnedProviderStagesAndPreserveThemAcrossCompletion() {
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts
+                .generate()
+                .javascript
+
+        assertTrue(
+            javascript.contains(
+                "ensureLiveProcessStage(event.providerStageIndex, event.providerModelRef)",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "state.processStagesByResponse.set(responseKey, snapshotLiveProcessStages())",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "section.dataset.providerStageIndex = String(stage.index)",
+            ),
+        )
+        assertFalse(
+            javascript.contains(
+                "currentReasoningRound",
+            ),
+            "presentation must not infer its own execution-stage owner",
         )
     }
 
