@@ -43,7 +43,7 @@ function defaultEffects() {
 function failureRecord(error, stage) {
   const summary = String(error?.message || error || 'unknown lived failure').slice(0, 1200);
   return {
-    failureFamily: 'VEXLIFE_PROD_REPAIRED_STARTUP_LIVED',
+    failureFamily: 'VEXLIFE_PROD_CONVERSATION_CLOSURE_LIVED',
     failureFingerprint: sha256(Buffer.from(stage + '\n' + summary)),
     stage,
     summary,
@@ -520,7 +520,7 @@ async function main() {
       );
     } else {
       resultBase.harnessFindings.push(
-        'REPAIRED_CARRIER_STOPPED:' + stage,
+        'CONVERSATION_CLOSURE_CARRIER_STOPPED:' + stage,
       );
     }
     if (observedHomePath) {
@@ -540,7 +540,7 @@ async function main() {
     };
     writeResult({
       disposition: 'SAFE_FAILURE',
-      stopReasonOrNull: 'REPAIRED_STARTUP_LIVED_STOPPED',
+      stopReasonOrNull: 'CONVERSATION_CLOSURE_LIVED_STOPPED',
       firstSubstantiveFailureOrNull: failureRecord(error, stage),
       ...resultBase,
     });
@@ -553,10 +553,10 @@ main().catch((error) => {
   try {
     writeResult({
       disposition: 'SAFE_FAILURE',
-      stopReasonOrNull: 'UNCAUGHT_REPAIRED_STARTUP_FAILURE',
+      stopReasonOrNull: 'UNCAUGHT_CONVERSATION_CLOSURE_FAILURE',
       firstSubstantiveFailureOrNull: failureRecord(error, 'UNCAUGHT'),
       candidateFindings: [],
-      harnessFindings: ['UNCAUGHT_REPAIRED_STARTUP_FAILURE'],
+      harnessFindings: ['UNCAUGHT_CONVERSATION_CLOSURE_FAILURE'],
       environmentFindings: [],
       unknownFindings: [],
       effects: defaultEffects(),
