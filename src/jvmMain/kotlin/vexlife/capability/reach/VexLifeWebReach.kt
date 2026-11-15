@@ -1,6 +1,7 @@
 package vexlife.capability.reach
 
 import java.io.ByteArrayOutputStream
+import java.io.IOException
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetAddress
@@ -30,6 +31,7 @@ import java.time.Duration
 object VexLifeWebReach {
     const val MaximumResponseBytes = 2 * 1024 * 1024
     const val MaximumRedirects = 5
+    const val MaximumNetworkAttempts = 2
     const val SearchProviderRef = "search-provider.duckduckgo-html"
     private const val UserAgent = "VexLife-Prod/1 (+https://github.com/VexGPT/VexLife-Prod)"
 
@@ -133,6 +135,23 @@ object VexLifeWebReach {
         data class Failed(val reason: String, val status: Int? = null) : Outcome
     }
 
+    private sealed interface Admission {
+        data object Allowed : Admission
+
+        data class Refused(val reason: String) : Admission
+
+        /** Admission policy is satisfied, but current DNS observation could not prove a public host. */
+        data class NetworkUnavailable(val reason: String) : Admission
+    }
+
+    private sealed interface ReadAttempt {
+        data class Success(val response: Response) : ReadAttempt
+
+        data class Refused(val reason: String) : ReadAttempt
+
+        data class Failed(val reason: String) : ReadAttempt
+    }
+
     fun fetch(
         url: String,
         transport: Transport = SystemTransport,
@@ -146,19 +165,24 @@ object VexLifeWebReach {
                 ?: return Outcome.Refused("not a valid URL")
         val redirects = mutableListOf<String>()
         repeat(MaximumRedirects + 1) {
-            admit(current, resolver)?.let {
-                return Outcome.Refused(it)
-            }
             val response =
-                try {
-                    transport.get(
-                        Request(current, mapOf("Accept" to accept) + extraHeaders),
-                        MaximumResponseBytes,
-                    )
-                } catch (error: Exception) {
-                    return Outcome.Failed(
-                        "could not read the page: " + (error.message ?: error.javaClass.simpleName)
-                    )
+                when (
+                    val read =
+                        readPublic(
+                            uri = current,
+                            headers = mapOf("Accept" to accept) + extraHeaders,
+                            transport = transport,
+                            resolver = resolver,
+                        )
+                ) {
+                    is ReadAttempt.Success ->
+                        read.response
+
+                    is ReadAttempt.Refused ->
+                        return Outcome.Refused(read.reason)
+
+                    is ReadAttempt.Failed ->
+                        return Outcome.Failed(read.reason)
                 }
             if (response.status in 300..399) {
                 val location =
@@ -238,17 +262,24 @@ object VexLifeWebReach {
                 "https://html.duckduckgo.com/html/?q=" +
                     URLEncoder.encode(trimmed, StandardCharsets.UTF_8)
             )
-        admit(uri, resolver)?.let {
-            return Outcome.Refused(it)
-        }
         val response =
-            try {
-                transport.get(Request(uri, mapOf("Accept" to "text/html")), MaximumResponseBytes)
-            } catch (error: Exception) {
-                return Outcome.Failed(
-                    "could not reach the search provider: " +
-                        (error.message ?: error.javaClass.simpleName)
-                )
+            when (
+                val read =
+                    readPublic(
+                        uri = uri,
+                        headers = mapOf("Accept" to "text/html"),
+                        transport = transport,
+                        resolver = resolver,
+                    )
+            ) {
+                is ReadAttempt.Success ->
+                    read.response
+
+                is ReadAttempt.Refused ->
+                    return Outcome.Refused(read.reason)
+
+                is ReadAttempt.Failed ->
+                    return Outcome.Failed("could not reach the search provider: " + read.reason)
             }
         if (response.status != 200)
             return Outcome.Failed(
@@ -310,32 +341,126 @@ object VexLifeWebReach {
         return absolute.takeIf { it.startsWith("http://") || it.startsWith("https://") }
     }
 
-    /** Null when [uri] may be read; otherwise why not. */
-    fun admit(uri: URI, resolver: Resolver = SystemResolver): String? {
+    /**
+     * Compatibility view of target admission for callers that only need allowed/refused.
+     *
+     * Production reads use [inspectAdmission] directly so a transient DNS/network observation is
+     * not collapsed into policy refusal. A host can be perfectly admissible while this Mac is
+     * temporarily offline.
+     */
+    fun admit(uri: URI, resolver: Resolver = SystemResolver): String? =
+        when (val admission = inspectAdmission(uri, resolver)) {
+            Admission.Allowed ->
+                null
+
+            is Admission.Refused ->
+                admission.reason
+
+            is Admission.NetworkUnavailable ->
+                admission.reason
+        }
+
+    private fun inspectAdmission(
+        uri: URI,
+        resolver: Resolver,
+    ): Admission {
         val scheme = uri.scheme?.lowercase()
-        if (scheme != "http" && scheme != "https") return "only http and https URLs can be read"
-        if (uri.rawUserInfo != null) return "URLs carrying credentials are not read"
-        val host = uri.host?.trimEnd('.')?.lowercase() ?: return "the URL has no host"
+        if (scheme != "http" && scheme != "https")
+            return Admission.Refused("only http and https URLs can be read")
+        if (uri.rawUserInfo != null)
+            return Admission.Refused("URLs carrying credentials are not read")
+        val host =
+            uri.host?.trimEnd('.')?.lowercase()
+                ?: return Admission.Refused("the URL has no host")
         if (uri.port != -1 && uri.port != 80 && uri.port != 443)
-            return "only the standard web ports are read"
+            return Admission.Refused("only the standard web ports are read")
         if (
             host == "localhost" ||
                 host.endsWith(".localhost") ||
                 host.endsWith(".local") ||
                 host.endsWith(".internal")
         ) {
-            return "local network hosts are not read"
+            return Admission.Refused("local network hosts are not read")
         }
+
         val addresses =
             try {
                 resolver.resolve(host)
-            } catch (_: Exception) {
-                return "the host name does not resolve"
+            } catch (error: Exception) {
+                return Admission.NetworkUnavailable(
+                    "DNS lookup failed for $host; the network may be offline, DNS may be temporarily unavailable, or the host may not exist"
+                )
             }
-        if (addresses.isEmpty()) return "the host name does not resolve"
-        if (addresses.any { !isPublic(it) })
-            return "the host resolves to a private or local address"
-        return null
+        if (addresses.isEmpty()) {
+            return Admission.NetworkUnavailable(
+                "DNS lookup returned no addresses for $host; the network may be offline, DNS may be temporarily unavailable, or the host may not exist"
+            )
+        }
+        if (addresses.any { !isPublic(it) }) {
+            return Admission.Refused("the host resolves to a private or local address")
+        }
+        return Admission.Allowed
+    }
+
+    /**
+     * One read-only request may be tried twice when the only failure is current DNS/network
+     * observation. Re-resolving before the retry preserves the public-address admission boundary.
+     *
+     * This is intentionally not a general HTTP retry policy: status responses, redirects, policy
+     * refusals and content decisions are returned once as observed.
+     */
+    private fun readPublic(
+        uri: URI,
+        headers: Map<String, String>,
+        transport: Transport,
+        resolver: Resolver,
+    ): ReadAttempt {
+        var lastFailure =
+            "network read failed"
+
+        for (attempt in 1..MaximumNetworkAttempts) {
+            when (val admission = inspectAdmission(uri, resolver)) {
+                Admission.Allowed ->
+                    Unit
+
+                is Admission.Refused ->
+                    return ReadAttempt.Refused(admission.reason)
+
+                is Admission.NetworkUnavailable -> {
+                    lastFailure = admission.reason
+                    if (attempt < MaximumNetworkAttempts) {
+                        continue
+                    }
+                    return ReadAttempt.Failed(
+                        "$lastFailure after $MaximumNetworkAttempts attempts"
+                    )
+                }
+            }
+
+            try {
+                return ReadAttempt.Success(
+                    transport.get(
+                        Request(uri, headers),
+                        MaximumResponseBytes,
+                    )
+                )
+            } catch (error: InterruptedException) {
+                Thread.currentThread().interrupt()
+                return ReadAttempt.Failed("network read was interrupted")
+            } catch (error: IOException) {
+                lastFailure =
+                    "network read failed for ${uri.host}: " +
+                        (error.message ?: error.javaClass.simpleName)
+                if (attempt < MaximumNetworkAttempts) {
+                    continue
+                }
+                return ReadAttempt.Failed(
+                    "$lastFailure after $MaximumNetworkAttempts attempts"
+                )
+            }
+        }
+
+        return ReadAttempt.Failed(lastFailure)
     }
 
     internal fun isPublic(address: InetAddress): Boolean {
