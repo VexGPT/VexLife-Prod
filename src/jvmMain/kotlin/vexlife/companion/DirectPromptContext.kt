@@ -17,6 +17,7 @@ import vexlife.conversation.DirectConversationStore
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.HereticModelCatalog
 
 /**
  * Bounded direct Companion prompt materialization.
@@ -582,6 +583,7 @@ object DirectPromptContext {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
+                priorRuntimeObservation = priorRuntimeObservation,
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
                 foundationalField = foundationalField,
@@ -1266,6 +1268,8 @@ object DirectPromptContext {
             null,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
+        priorRuntimeObservation: DirectCompanionConnection.RuntimeObservation? =
+            null,
         sourceReturnProtocolEnabled: Boolean =
             false,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
@@ -1503,6 +1507,8 @@ object DirectPromptContext {
             null,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
+        priorRuntimeObservation: DirectCompanionConnection.RuntimeObservation? =
+            null,
         sourceReturnProtocolEnabled: Boolean =
             false,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
@@ -1525,6 +1531,7 @@ object DirectPromptContext {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
+                priorRuntimeObservation = priorRuntimeObservation,
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
                 sourceReturnDiscovery =
@@ -1802,6 +1809,7 @@ object DirectPromptContext {
         browserContext: BrowserContext?,
         personContext: PersonContext?,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
+        priorRuntimeObservation: DirectCompanionConnection.RuntimeObservation? = null,
         sourceReturnProtocolEnabled: Boolean =
             false,
         foundationalField: VexLifeFoundationalField.Reading? = null,
@@ -1922,6 +1930,8 @@ object DirectPromptContext {
                 conversationExtent(
                     currentRequest = currentRequest,
                     workingRolloverCurrent = workingContinuity != null,
+                    runtimeEvidence = runtimeEvidence,
+                    priorRuntimeObservation = priorRuntimeObservation,
                 )
             } else {
                 null
@@ -2090,6 +2100,8 @@ object DirectPromptContext {
     private fun conversationExtent(
         currentRequest: DirectConversationStore.Event,
         workingRolloverCurrent: Boolean,
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
+        priorRuntimeObservation: DirectCompanionConnection.RuntimeObservation?,
     ): ConversationExtent {
         require(currentRequest.sequence >= 0 && currentRequest.sequence % 2 == 0L) {
             "direct prompt Conversation extent requires a REQUEST at an even canonical sequence"
@@ -2111,10 +2123,64 @@ object DirectPromptContext {
                         "This prompt shows the newest of them that fit, exactly as written. Any " +
                         "that are not shown here are still in the record."
             }
+
+        val perspective =
+            runtimeEvidence
+                ?.let { current ->
+                    val currentLabel =
+                        HereticModelCatalog.entry(current.modelRef)
+                            ?.humanLabel
+                            ?: current.modelRef
+                    val prior = priorRuntimeObservation
+                    val relation =
+                        when {
+                            count == 0L -> "NO_PRIOR_COMPLETED_VEX_REPLY"
+                            prior == null -> "PRIOR_RUNTIME_PROVENANCE_UNAVAILABLE"
+                            prior.modelRef != current.modelRef ->
+                                "MODEL_CHANGED_SINCE_PRIOR_VEX_REPLY"
+                            prior.runtimeReceiptRef != current.runtimeReceiptRef ->
+                                "RUNTIME_CHANGED_SAME_MODEL_SINCE_PRIOR_VEX_REPLY"
+                            else -> "SAME_RUNTIME_BINDING_AS_PRIOR_VEX_REPLY"
+                        }
+                    buildList {
+                        add("currentInferenceModel=$currentLabel")
+                        add("currentInferenceModelRef=${current.modelRef}")
+                        add("currentRuntimeReceiptRef=${current.runtimeReceiptRef}")
+                        if (prior != null) {
+                            val priorLabel =
+                                HereticModelCatalog.entry(prior.modelRef)
+                                    ?.humanLabel
+                                    ?: prior.modelRef
+                            add("priorVexReplyModel=$priorLabel")
+                            add("priorVexReplyModelRef=${prior.modelRef}")
+                            add("priorVexReplyRuntimeReceiptRef=${prior.runtimeReceiptRef}")
+                        }
+                        add("inferenceContinuityRelation=$relation")
+                        add(
+                            "The provider preserves person/Vex roles as user/assistant. Prior " +
+                                "assistant messages are shared Conversation history; their presence " +
+                                "does not mean this current inference produced them.",
+                        )
+                        add(
+                            "UI turn numbers are not carried in these provider messages. When an " +
+                                "exact older turn must be located, use the Conversation's source " +
+                                "addressing rather than guessing from visible numbering.",
+                        )
+                    }
+                }
+                .orEmpty()
+
         return ConversationExtent(
             priorCompletedExchangeCount = count,
             systemContent =
-                listOf(ConversationExtentHeader, "priorCompletedExchanges=$count", statement)
+                (
+                    listOf(
+                        ConversationExtentHeader,
+                        "priorCompletedExchanges=$count",
+                        statement,
+                    ) +
+                        perspective
+                    )
                     .joinToString("\n"),
         )
     }
@@ -2286,6 +2352,16 @@ object DirectPromptContext {
                     }
                 }
                 add("- conversation: exact older turns of this Conversation, through its own source-return form (once per turn).")
+                add(
+                    "When I need one of these reads, reaching is the next stage of this same turn, " +
+                        "not something I narrate. I stop composing the human-facing answer and make " +
+                        "the request my whole reply for this provider stage.",
+                )
+                add(
+                    "Nothing has been retrieved until a real ${VexLifeCapabilityRequest.ResultHeader} " +
+                        "message comes back. Writing a request inside prose or a code example is only " +
+                        "text; I do not invent or report a result that did not return.",
+                )
                 add("To ask, my whole reply is the header line and one JSON object, nothing else:")
                 add(VexLifeCapabilityRequest.RequestHeader)
                 add("""{"capability":"web","action":"fetch","arguments":{"url":"https://example.com/"}}""")
