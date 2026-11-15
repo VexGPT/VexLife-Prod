@@ -474,9 +474,20 @@ svg { display: block; }
 }
 .thought-toggle:hover { color: var(--ink); background: var(--sunken); }
 .thought-mark { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.4; }
-.thinking-now { display: flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: var(--step--1); }
+.thinking-now { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--ink-2); font-size: var(--step--1); }
 .thinking-now .speaker-inline { font-weight: 600; color: var(--ink-2); }
 .thinking-now .thought-mark { animation: turn 2.4s linear infinite; }
+.live-process-panel { flex: 0 0 100%; width: 100%; min-width: 0; }
+.process-history { display: grid; gap: 8px; margin-top: 7px; }
+.process-history > * + * { margin-top: 2px; }
+.process-action {
+  display: flex; align-items: flex-start; gap: 7px;
+  color: var(--ink-2); font-size: var(--step--1); line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.process-action-mark { flex: 0 0 auto; width: 13px; color: var(--ink-3); text-align: center; }
+.process-action[data-state="RETURNED"] .process-action-mark { color: var(--ok); }
+.process-action:not([data-state="ACTIVE"]):not([data-state="RETURNED"]) .process-action-mark { color: var(--down); }
 .reasoning {
   max-width: min(92%, 640px); max-height: 220px; overflow-y: auto; margin-top: 7px;
   overflow-anchor: none; scrollbar-gutter: stable;
@@ -484,6 +495,7 @@ svg { display: block; }
   background: var(--raised); color: var(--ink-2);
   font-size: var(--step--1); line-height: 1.5; white-space: pre-wrap;
 }
+.process-history .reasoning { margin-top: 0; max-width: min(96%, 680px); }
 .message.waiting[data-has-content="false"] .bubble { display: none; }
 .message.waiting[data-has-content="true"] .bubble { opacity: 0.92; }
 .live-reasoning { margin-left: 0; }
