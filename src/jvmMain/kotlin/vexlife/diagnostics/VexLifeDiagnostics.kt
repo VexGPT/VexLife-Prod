@@ -9,6 +9,7 @@ import java.nio.file.Path
 import java.security.MessageDigest
 import java.time.Duration
 import java.time.Instant
+import java.util.ArrayDeque
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
@@ -59,6 +60,37 @@ class VexLifeDiagnostics(
     @Serializable
     data class EnhancedMarker(val schemaVersion: String, val startedAt: String, val until: String)
 
+    @Serializable
+    data class ProviderStreamTrace(
+        val schemaVersion: String,
+        val idempotencyKey: String,
+        val startedAt: String,
+        val completedAt: String?,
+        val turnRef: String?,
+        val outcome: String?,
+        val failureCode: String?,
+        val reasoning: String,
+        val content: String,
+        val reasoningTruncated: Boolean,
+        val contentTruncated: Boolean,
+    )
+
+    private data class MutableProviderStreamTrace(
+        val idempotencyKey: String,
+        val startedAt: String,
+        var completedAt: String? = null,
+        var turnRef: String? = null,
+        var outcome: String? = null,
+        var failureCode: String? = null,
+        val reasoning: StringBuilder = StringBuilder(),
+        val content: StringBuilder = StringBuilder(),
+        var reasoningTruncated: Boolean = false,
+        var contentTruncated: Boolean = false,
+    )
+
+    private val streamTraceLock = Any()
+    private val streamTraces = ArrayDeque<MutableProviderStreamTrace>()
+
     private val scheduler: ScheduledExecutorService =
         Executors.newSingleThreadScheduledExecutor { runnable ->
             Thread(runnable, "vexlife-prod-diagnostics").apply { isDaemon = true }
@@ -86,6 +118,7 @@ class VexLifeDiagnostics(
             VexLifeDiagnosticsFamily.RecordingEnhanced(marker.until)
         } else {
             runCatching { Files.deleteIfExists(markerPath()) }
+            clearProviderStreamTraces()
             VexLifeDiagnosticsFamily.Recording
         }
     }
@@ -121,18 +154,21 @@ class VexLifeDiagnostics(
             VexLifeDiagnosticsFamily.Effect.BeginEnhancedCapture -> {
                 val now = clock()
                 val until = now.plus(EnhancedCaptureDuration)
+                clearProviderStreamTraces()
                 writeMarker(EnhancedMarker(MarkerSchema, now.toString(), until.toString()))
                 VexLogger.record(VexLogger.Fact.EnhancedCaptureStarted, mapOf("until" to until.toString()))
             }
 
             VexLifeDiagnosticsFamily.Effect.EndEnhancedCapture -> {
                 Files.deleteIfExists(markerPath())
+                clearProviderStreamTraces()
                 VexLogger.record(VexLogger.Fact.EnhancedCaptureStopped)
             }
 
             VexLifeDiagnosticsFamily.Effect.ClearDebugHistory -> {
                 val removed = VexChronologyFile.clear(home)
                 Files.deleteIfExists(markerPath())
+                clearProviderStreamTraces()
                 // The first fact of the new history says the old one was cleared on purpose.
                 VexLogger.record(VexLogger.Fact.DebugHistoryCleared, mapOf("filesRemoved" to removed.toString()))
             }
@@ -142,10 +178,104 @@ class VexLifeDiagnostics(
         return projection(effectsPerformed = true)
     }
 
+    fun beginProviderStreamTrace(idempotencyKey: String) {
+        if (state() !is VexLifeDiagnosticsFamily.RecordingEnhanced) return
+        synchronized(streamTraceLock) {
+            streamTraces.removeIf { it.idempotencyKey == idempotencyKey }
+            streamTraces.addLast(
+                MutableProviderStreamTrace(
+                    idempotencyKey = idempotencyKey,
+                    startedAt = clock().toString(),
+                ),
+            )
+            while (streamTraces.size > MaxProviderStreamTraces) {
+                streamTraces.removeFirst()
+            }
+        }
+    }
+
+    fun observeProviderStreamTrace(
+        idempotencyKey: String,
+        reasoningDelta: String? = null,
+        contentDelta: String? = null,
+    ) {
+        synchronized(streamTraceLock) {
+            val trace = streamTraces.lastOrNull { it.idempotencyKey == idempotencyKey } ?: return
+            reasoningDelta?.let {
+                trace.reasoningTruncated =
+                    appendTailBounded(
+                        target = trace.reasoning,
+                        delta = it,
+                        limit = MaxReasoningTraceCharacters,
+                    ) || trace.reasoningTruncated
+            }
+            contentDelta?.let {
+                trace.contentTruncated =
+                    appendTailBounded(
+                        target = trace.content,
+                        delta = it,
+                        limit = MaxContentTraceCharacters,
+                    ) || trace.contentTruncated
+            }
+        }
+    }
+
+    fun finishProviderStreamTrace(
+        idempotencyKey: String,
+        turnRef: String?,
+        outcome: String,
+        failureCode: String?,
+    ) {
+        synchronized(streamTraceLock) {
+            val trace = streamTraces.lastOrNull { it.idempotencyKey == idempotencyKey } ?: return
+            trace.completedAt = clock().toString()
+            trace.turnRef = turnRef
+            trace.outcome = outcome
+            trace.failureCode = failureCode
+        }
+    }
+
+    internal fun providerStreamTraces(): List<ProviderStreamTrace> =
+        synchronized(streamTraceLock) {
+            streamTraces.map {
+                ProviderStreamTrace(
+                    schemaVersion = ProviderStreamTraceSchema,
+                    idempotencyKey = it.idempotencyKey,
+                    startedAt = it.startedAt,
+                    completedAt = it.completedAt,
+                    turnRef = it.turnRef,
+                    outcome = it.outcome,
+                    failureCode = it.failureCode,
+                    reasoning = it.reasoning.toString(),
+                    content = it.content.toString(),
+                    reasoningTruncated = it.reasoningTruncated,
+                    contentTruncated = it.contentTruncated,
+                )
+            }
+        }
+
+    private fun clearProviderStreamTraces() {
+        synchronized(streamTraceLock) {
+            streamTraces.clear()
+        }
+    }
+
+    private fun appendTailBounded(
+        target: StringBuilder,
+        delta: String,
+        limit: Int,
+    ): Boolean {
+        target.append(delta)
+        if (target.length <= limit) return false
+        target.delete(0, target.length - limit)
+        return true
+    }
+
     /**
      * One bounded ZIP an AI can read without terminal archaeology. Stable refs, states, PIDs,
-     * receipts summaries, failure codes and bounded log tails; no Conversation, prompts, model
-     * reasoning, page contents, tokens or arbitrary Home files.
+     * receipts summaries, failure codes and bounded log tails. Conversation/prompts/page contents
+     * remain excluded. When the person explicitly enables Enhanced Capture, the export may also
+     * contain the bounded recent model reasoning/response stream ring described in its manifest.
      */
     fun export(): ByteArray {
         val entries = linkedMapOf<String, ByteArray>()
@@ -153,8 +283,13 @@ class VexLifeDiagnostics(
             entries[name] = text.toByteArray(StandardCharsets.UTF_8)
         }
 
+        val enhanced = state() is VexLifeDiagnosticsFamily.RecordingEnhanced
+        val traces = if (enhanced) providerStreamTraces() else emptyList()
         val chronology = VexChronologyFile.tail(home, ExportChronologyRecords)
         put("chronology.jsonl", chronology.joinToString("\n", postfix = if (chronology.isEmpty()) "" else "\n"))
+        if (traces.isNotEmpty()) {
+            put("enhanced/provider-stream-traces.json", VexContractJson.encode(traces))
+        }
         put("current/service-lifetime.json", summarizeJson(home.resolve(VexLifeProdMacServiceLifetime.ReceiptRelativePath)))
         listOf(
                 HereticProductIdentity.ProductRuntimeReceiptRelativePath,
@@ -178,10 +313,18 @@ class VexLifeDiagnostics(
                     "formedAt" to JsonPrimitive(clock().toString()),
                     "productSourceSha" to JsonPrimitive(sourceSha),
                     "humanContentIncluded" to JsonPrimitive(false),
+                    "modelStreamContentIncluded" to JsonPrimitive(traces.isNotEmpty()),
+                    "providerStreamTraceLimit" to JsonPrimitive(MaxProviderStreamTraces),
                     "policy" to
                         JsonPrimitive(
-                            "stable refs, states, PIDs, receipt summaries, failure codes and bounded log tails; " +
-                                "no Conversation, prompts, model reasoning, page contents or tokens"
+                            if (traces.isEmpty()) {
+                                "stable refs, states, PIDs, receipt summaries, failure codes and bounded log tails; " +
+                                    "no Conversation, prompts, model reasoning, page contents or tokens"
+                            } else {
+                                "Enhanced Capture explicitly enabled: includes a bounded local ring of recent model " +
+                                    "reasoning/response stream text; excludes human prompts, Conversation, Memory, page " +
+                                    "contents and arbitrary Home files"
+                            }
                         ),
                     "files" to
                         JsonObject(
@@ -394,9 +537,13 @@ class VexLifeDiagnostics(
         const val ProjectionSchema = "vexlife-prod.diagnostics/v1"
         const val ExportSchema = "vexlife-prod.debug-export/v1"
         const val MarkerSchema = "vexlife-prod.enhanced-capture/v1"
+        const val ProviderStreamTraceSchema = "vexlife-prod.provider-stream-trace/v1"
         const val ExportPath = "/api/v1/diagnostics/export"
         const val EnhancedMarkerRelativePath = "runtime/vexlife-prod/logs/enhanced-capture.json"
         val EnhancedCaptureDuration: Duration = Duration.ofHours(2)
+        const val MaxProviderStreamTraces = 30
+        const val MaxReasoningTraceCharacters = 128 * 1024
+        const val MaxContentTraceCharacters = 64 * 1024
         const val ExportChronologyRecords = 5_000
         const val MaxLogTailBytes = 64 * 1024
         const val MaxReceiptChars = 16 * 1024
