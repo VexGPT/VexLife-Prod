@@ -2330,6 +2330,20 @@ class DirectPromptContextTest {
                             "VEXLIFE_SELF_CAPABILITY_FRAME/v1",
                         ),
                 )
+                assertTrue(
+                    materialized.messages.first()
+                        .content
+                        .contains(
+                            "This is a boundary, not a target",
+                        ),
+                )
+                assertTrue(
+                    materialized.messages.first()
+                        .content
+                        .contains(
+                            "ask the person to send another message so I can continue in a fresh turn",
+                        ),
+                )
                 assertFalse(
                     materialized.messages.any {
                         it.content.startsWith(
