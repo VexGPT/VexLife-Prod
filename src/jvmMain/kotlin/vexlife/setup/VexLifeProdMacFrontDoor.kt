@@ -480,16 +480,21 @@ object VexLifeProdMacFrontDoor {
                 )
 
             is VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned -> {
-                val sourceSha = existing.receipt.sourceSha
-                return observed(
-                    if (sourceSha == desiredSourceSha) {
-                        VexLifeProdEntryFamily.Current(desiredSourceSha)
-                    } else {
-                        VexLifeProdEntryFamily.UpdateAvailable(desiredSourceSha)
-                    },
-                    sourceSha = sourceSha,
-                    pid = existing.receipt.launchd.pid,
-                )
+                // Preserve the existing open/update behavior for an already-bound model. Only a
+                // newly selected model may require prerequisite evaluation before service
+                // currentness is allowed to decide the Product-entry State.
+                if (current.modelSelectionState != "HERETIC_ESTABLISHMENT_PENDING") {
+                    val sourceSha = existing.receipt.sourceSha
+                    return observed(
+                        if (sourceSha == desiredSourceSha) {
+                            VexLifeProdEntryFamily.Current(desiredSourceSha)
+                        } else {
+                            VexLifeProdEntryFamily.UpdateAvailable(desiredSourceSha)
+                        },
+                        sourceSha = sourceSha,
+                        pid = existing.receipt.launchd.pid,
+                    )
+                }
             }
 
             else -> Unit
@@ -537,6 +542,21 @@ object VexLifeProdMacFrontDoor {
                     VexLifeProdEntryFamily.SetupRequired(desiredSourceSha)
                 },
                 storage = storage,
+            )
+        }
+
+        if (
+            existing is VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned
+        ) {
+            val sourceSha = existing.receipt.sourceSha
+            return observed(
+                if (sourceSha == desiredSourceSha) {
+                    VexLifeProdEntryFamily.Current(desiredSourceSha)
+                } else {
+                    VexLifeProdEntryFamily.UpdateAvailable(desiredSourceSha)
+                },
+                sourceSha = sourceSha,
+                pid = existing.receipt.launchd.pid,
             )
         }
 
