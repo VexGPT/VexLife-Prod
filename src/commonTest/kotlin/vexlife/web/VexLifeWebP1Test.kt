@@ -326,6 +326,43 @@ class VexLifeWebP1Test {
             ),
         )
     }
+
+    @Test
+    fun ambiguousStreamEndingReconcilesExactSendBeforeShowingUnresolved() {
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts
+                .generate()
+                .javascript
+
+        val reconciliation =
+            javascript.indexOf(
+                "await reconcileSendOutcome(pending)",
+            )
+        val unresolved =
+            javascript.indexOf(
+                "setCompanionStatus('Unavailable', 'Send outcome unresolved', '')",
+            )
+
+        assertTrue(
+            javascript.contains(
+                "headers: { accept: 'application/json', 'content-type': 'application/json' }",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "await completeCanonicalSend(reconciled, false)",
+            ),
+        )
+        assertTrue(
+            reconciliation >=
+                0,
+        )
+        assertTrue(
+            unresolved >
+                reconciliation,
+        )
+    }
+
 }
 
 // [VXG RealForever]

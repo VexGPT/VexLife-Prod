@@ -166,6 +166,10 @@ class DirectCompanionTurnTest {
 
         var calls =
             0
+        var runtimeObservations =
+            0
+        var runtimeReobservations =
+            0
         val progress =
             mutableListOf<DirectCompanionTurn.Progress>()
         val sourceReturnRequest =
@@ -254,7 +258,16 @@ class DirectCompanionTurnTest {
                             emit(
                                 field = "reasoning_content",
                                 delta =
-                                    "PRIVATE_INTERNAL_SOURCE_RETURN_REASONING",
+                                    "initial source-return reasoning visible live",
+                            )
+                            assertTrue(
+                                progress.any {
+                                    it.phase ==
+                                        DirectCompanionTurn.ProgressPhase.Reasoning &&
+                                        it.delta ==
+                                        "initial source-return reasoning visible live"
+                                },
+                                "reasoning must reach the human before answer/control content decides the source-return route",
                             )
                             emit(
                                 field = "content",
@@ -356,6 +369,18 @@ class DirectCompanionTurnTest {
                     hooks =
                         DirectCompanionTurn.Hooks(
                             transport = transport,
+                            currentRuntimeEvidence = {
+                                currentSetup ->
+                                runtimeObservations +=
+                                    1
+                                currentSetup.qualifiedRuntimeEvidence
+                            },
+                            reobserveSameRuntimeEvidence = {
+                                expected ->
+                                runtimeReobservations +=
+                                    1
+                                expected
+                            },
                             progressObserver =
                                 DirectCompanionTurn.ProgressObserver {
                                     progress +=
@@ -372,6 +397,14 @@ class DirectCompanionTurnTest {
             assertEquals(
                 2,
                 calls,
+            )
+            assertEquals(
+                1,
+                runtimeObservations,
+            )
+            assertEquals(
+                1,
+                runtimeReobservations,
             )
             assertEquals(
                 "The exact lantern-garden detail is now grounded in returned source.",
@@ -407,9 +440,9 @@ class DirectCompanionTurnTest {
                     "The exact lantern-garden detail is now grounded in returned source.",
                 ),
             )
-            assertFalse(
+            assertTrue(
                 projectedProgress.contains(
-                    "PRIVATE_INTERNAL_SOURCE_RETURN_REASONING",
+                    "initial source-return reasoning visible live",
                 ),
             )
             assertFalse(
@@ -483,6 +516,103 @@ class DirectCompanionTurnTest {
             )
             assertFalse(
                 trace.rawReasoningPersisted,
+            )
+        } finally {
+            home.parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun sourceReturnRefusesRuntimeReplacementBetweenProviderStages() {
+        val home =
+            productHome()
+        var calls =
+            0
+        val sourceReturnRequest =
+            "VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1" +
+                "\n" +
+                """{"schemaVersion":"vexlife-prod.conversation-source-return-request/v1","queryTerms":["missing-detail"],"speakerScope":"ANY"}"""
+        val transport =
+            DirectCompanionConnection.Transport {
+                calls +=
+                    1
+                DirectCompanionConnection.HttpResult(
+                    status = 200,
+                    body =
+                        """
+                        {
+                          "model": "default_model",
+                          "choices": [
+                            {
+                              "message": {
+                                "role": "assistant",
+                                "content": __CONTENT__
+                              }
+                            }
+                          ]
+                        }
+                        """.trimIndent()
+                            .replace(
+                                "__CONTENT__",
+                                kotlinx.serialization.json.JsonPrimitive(
+                                    sourceReturnRequest,
+                                )
+                                    .toString(),
+                            ),
+                )
+            }
+
+        try {
+            val failure =
+                assertFailsWith<DirectCompanionTurn.TurnException> {
+                    DirectCompanionTurn.performWithHooks(
+                        setup =
+                            setup(
+                                home,
+                            ),
+                        intent =
+                            DirectCompanionTurn.Intent(
+                                idempotencyKey =
+                                    "send.self-development.source-return.runtime-drift.001",
+                                content =
+                                    "Find an older detail if needed.",
+                            ),
+                        hooks =
+                            DirectCompanionTurn.Hooks(
+                                transport = transport,
+                                reobserveSameRuntimeEvidence = {
+                                    expected ->
+                                    expected.copy(
+                                        runtimeReceiptRef =
+                                            "receipt.vexlife-prod.heretic.changed-mid-turn",
+                                    )
+                                },
+                            ),
+                    )
+                }
+
+            assertEquals(
+                1,
+                calls,
+            )
+            assertEquals(
+                "ADMISSION_FAILED",
+                failure.failureCode,
+            )
+            assertTrue(
+                failure.cause
+                    ?.message
+                    ?.contains(
+                        "runtime changed during one direct Companion turn",
+                    ) ==
+                    true,
+            )
+            assertFalse(
+                failure.failureReceipt
+                    ?.currentHeadCommitted
+                    ?: true,
             )
         } finally {
             home.parent

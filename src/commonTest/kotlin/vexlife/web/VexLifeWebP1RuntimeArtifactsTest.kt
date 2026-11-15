@@ -294,7 +294,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "const retireAttempt = status === 400 || retryAllowed === false",
+                "let retireAttempt = status === 400 || retryAllowed === false",
             ),
         )
         assertTrue(
