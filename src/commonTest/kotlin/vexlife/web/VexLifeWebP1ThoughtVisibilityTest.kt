@@ -38,8 +38,25 @@ class VexLifeWebP1ThoughtVisibilityTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "state.streamedReasoning += event.delta",
+                "round.text += event.delta",
             ),
+            "streaming reasoning must append to the current ephemeral thought round",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "liveThoughtRounds: []",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "thoughtRoundsByResponse: new Map()",
+            ),
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "recordThoughtReach(use)",
+            ),
+            "capability request/return boundaries must become ordered thought steps",
         )
         assertTrue(
             bundle.javascript.contains(
@@ -123,9 +140,9 @@ class VexLifeWebP1ThoughtVisibilityTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "applyReasoningViewport(reasoning, 'live', true, false);",
+                "applyReasoningViewport(element, key, true, false);",
             ),
-            "streaming reasoning must not write scrollTop while the human is reading within the nested pane",
+            "streaming thought-round reasoning must not write scrollTop while the human is reading within a nested pane",
         )
         assertTrue(
             bundle.javascript.contains(
@@ -135,9 +152,14 @@ class VexLifeWebP1ThoughtVisibilityTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "state.reasoningViewports.set('live', { followTail: true, scrollTop: 0 });",
+                "state.liveThoughtRounds = [];",
             ),
-            "every fresh Send must begin with a fresh live-reasoning follow state",
+            "every fresh Send must begin with no prior ephemeral thought rounds",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "state.nextThoughtRoundLabel = 'Thinking';",
+            ),
         )
         assertTrue(
             bundle.javascript.contains(
@@ -194,6 +216,18 @@ class VexLifeWebP1ThoughtVisibilityTest {
             ),
         )
 
+        assertFalse(
+            bundle.javascript.contains(
+                "localStorage.setItem('vexlife-prod.presentation.thought-round",
+            ),
+            "thought rounds must not become durable browser storage",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "sessionStorage.setItem('vexlife-prod.presentation.thought-round",
+            ),
+            "thought rounds must remain current-page memory only",
+        )
         assertFalse(
             bundle.javascript.contains(
                 "localStorage.setItem('vexlife-prod.presentation.reasoning",
