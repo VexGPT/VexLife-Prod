@@ -340,6 +340,12 @@ class VexLifeWebP1RuntimeArtifactsTest {
             "presentation must preserve live process state until canonical reconciliation returns",
         )
         assertTrue(
+            Regex(
+                """if \(!retryingExactAttempt\) \{[\s\S]*?state\.liveProcessEntries = \[\];[\s\S]*?resetLiveProcessViewports\(\);[\s\S]*?\}""",
+            ).containsMatchIn(bundle.javascript),
+            "only a genuinely new Send may reset the live process slot",
+        )
+        assertTrue(
             bundle.javascript.contains(
                 "exactNextSafeRoute",
             ) &&
