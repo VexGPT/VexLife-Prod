@@ -197,6 +197,19 @@ object HereticPersistentRuntime {
         val verifiedNotLive: Boolean,
     )
 
+    /**
+     * Immediate generation-engine observation, separate from process/substrate currentness.
+     *
+     * Available means mlx-lm explicitly reports that generation can accept work. Unavailable is a
+     * positive engine-level failure (for current mlx-lm, exact /health 503 + status=unavailable).
+     * Unknown means transport/timeout/malformed observation and never authorizes retirement.
+     */
+    enum class GenerationReadiness {
+        Available,
+        Unavailable,
+        Unknown,
+    }
+
     interface Platform {
         val platform: String
         val architecture: String
@@ -246,16 +259,15 @@ object HereticPersistentRuntime {
         ): Retirement
 
         /**
-         * One immediate health observation for an already-qualified runtime.
+         * One immediate generation-readiness observation.
          *
-         * Interactive currentness must never reuse startup's long readiness wait. A false result
-         * means the generation engine is not currently available and the rightful runtime owner may
-         * recover/rotate it.
+         * This is deliberately separate from exact process/substrate currentness. Unknown is not
+         * permission to mutate lifecycle; only Unavailable is positive generation-loss truth.
          */
-        fun healthy(
+        fun generationReadiness(
             binding: Binding,
-        ): Boolean =
-            true
+        ): GenerationReadiness =
+            GenerationReadiness.Available
 
         fun waitUntilHealthy(
             binding: Binding,
@@ -566,6 +578,8 @@ object HereticPersistentRuntime {
             false
         var switchedModel =
             false
+        var generationUnavailableRotated =
+            false
 
         // Model switch: the Home chose another catalog model than the one this exactly owned runtime
         // serves. The prior receipt is still this Product's own (same authority, environment and
@@ -727,73 +741,120 @@ object HereticPersistentRuntime {
                     }
                 }
 
-                // A live, exactly owned process keeps its lifetime identity while readiness is
-                // re-qualified. Qualification may fail if the generation engine cannot answer, but
-                // that failure is evidence about readiness, not authority to destroy a live process.
-                // Retirement here remains reserved for positive lifecycle facts such as stale
-                // implementation, observed process death, or explicit cancellation.
                 if (
-                    platform.cancellationRequested()
+                    currentPrior.state ==
+                        HereticRuntimeState.Qualified
                 ) {
-                    val cleanup =
-                        platform.retire(
-                            currentPrior,
+                    when (
+                        platform.generationReadiness(
+                            binding,
                         )
-                    require(
-                        cleanup.exactOwnershipVerified &&
-                            cleanup.verifiedNotLive,
                     ) {
-                        "cancelled runtime reuse could not be cleaned up"
+                        GenerationReadiness.Available ->
+                            Unit
+
+                        GenerationReadiness.Unavailable -> {
+                            // Safe lifecycle boundary: exact ownership is already proven and mlx-lm
+                            // positively says its generation worker is unavailable. Recover the
+                            // working predecessor behavior without treating timeout/ambiguity as
+                            // destruction authority.
+                            VexLogger.record(
+                                VexLogger.Fact.RuntimeGenerationUnavailable,
+                                mapOf("pid" to pid.toString()),
+                            )
+                            val retired =
+                                platform.retire(
+                                    currentPrior,
+                                )
+                            require(
+                                retired.exactOwnershipVerified &&
+                                    retired.verifiedNotLive,
+                            ) {
+                                "generation-unavailable exact Heretic runtime could not be retired before recovery"
+                            }
+                            store.delete()
+                            generationUnavailableRotated =
+                                true
+                        }
+
+                        GenerationReadiness.Unknown -> {
+                            VexLogger.record(
+                                VexLogger.Fact.RuntimeGenerationUnknown,
+                                mapOf("pid" to pid.toString()),
+                            )
+                            error(
+                                "qualified Heretic runtime generation readiness is unknown; preserving exact-owned runtime",
+                            )
+                        }
                     }
-                    store.delete()
-                    error(
-                        "Heretic runtime start was cancelled",
-                    )
                 }
 
-                val qualification =
-                    platform.qualify(
-                        binding,
-                    )
-                val qualified =
-                    formReceipt(
-                        binding = binding,
-                        pid = pid,
-                        identity =
-                            currentIdentity,
-                        state =
-                            HereticRuntimeState.Qualified,
-                        formedAt =
-                            platform.now(),
-                        receiptRef =
-                            currentPrior.receiptRef,
-                        processSubstrate =
-                            currentPrior.runtime.processSubstrate,
-                        qualification =
-                            qualification,
-                    )
-
-                store.write(
-                    qualified,
-                )
-
-                return StartResult(
-                    disposition =
-                        if (
-                            currentPrior.state ==
-                                HereticRuntimeState.Starting
+                if (
+                    !generationUnavailableRotated
+                ) {
+                    if (
+                        platform.cancellationRequested()
+                    ) {
+                        val cleanup =
+                            platform.retire(
+                                currentPrior,
+                            )
+                        require(
+                            cleanup.exactOwnershipVerified &&
+                                cleanup.verifiedNotLive,
                         ) {
-                            "RECOVERED_EXACT_STARTING_MLX_RUNTIME"
-                        } else {
-                            "REUSED_EXACT_OWNED_MLX_RUNTIME"
-                        },
-                    pid = pid,
-                    endpoint = qualified.endpoint,
-                    requestModel = qualified.requestModel,
-                    receipt = qualified,
-                    receiptWritePerformed = true,
-                    qualification = qualification,
-                )
+                            "cancelled runtime reuse could not be cleaned up"
+                        }
+                        store.delete()
+                        error(
+                            "Heretic runtime start was cancelled",
+                        )
+                    }
+
+                    val qualification =
+                        platform.qualify(
+                            binding,
+                        )
+                    val qualified =
+                        formReceipt(
+                            binding = binding,
+                            pid = pid,
+                            identity =
+                                currentIdentity,
+                            state =
+                                HereticRuntimeState.Qualified,
+                            formedAt =
+                                platform.now(),
+                            receiptRef =
+                                currentPrior.receiptRef,
+                            processSubstrate =
+                                currentPrior.runtime.processSubstrate,
+                            qualification =
+                                qualification,
+                        )
+
+                    store.write(
+                        qualified,
+                    )
+
+                    return StartResult(
+                        disposition =
+                            if (
+                                currentPrior.state ==
+                                    HereticRuntimeState.Starting
+                            ) {
+                                "RECOVERED_EXACT_STARTING_MLX_RUNTIME"
+                            } else {
+                                "REUSED_EXACT_OWNED_MLX_RUNTIME"
+                            },
+                        pid = pid,
+                        endpoint = qualified.endpoint,
+                        requestModel = qualified.requestModel,
+                        receipt = qualified,
+                        receiptWritePerformed = true,
+                        qualification = qualification,
+                    )
+                }
             } else {
                 val retired =
                     platform.retire(
@@ -982,6 +1043,10 @@ object HereticPersistentRuntime {
                     staleImplementationRotated
                 ) {
                     "ROTATED_STALE_IMPLEMENTATION_AND_STARTED_NEW_EXACT_MLX_RUNTIME"
+                } else if (
+                    generationUnavailableRotated
+                ) {
+                    "RECOVERED_UNAVAILABLE_GENERATION_AND_STARTED_NEW_EXACT_MLX_RUNTIME"
                 } else {
                     "STARTED_NEW_EXACT_MLX_RUNTIME"
                 },
