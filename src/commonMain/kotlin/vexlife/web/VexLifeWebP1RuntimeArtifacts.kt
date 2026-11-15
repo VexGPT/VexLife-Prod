@@ -1281,6 +1281,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 mark.setAttribute('aria-hidden', 'true');
                 mark.textContent = !use?.state ? '↳' : use.state === 'RETURNED' ? '✓' : '!';
                 const text = document.createElement('span');
+                text.className = 'process-action-text';
                 text.textContent = reachText(use);
                 line.append(mark, text);
                 return line;
@@ -1294,6 +1295,104 @@ object VexLifeWebP1RuntimeArtifacts {
                   if (node) history.append(node);
                 });
                 return history.childElementCount ? history : null;
+              };
+
+              const syncLiveProcessEntry = (node, entry, viewportKey) => {
+                if (entry.kind === 'thought') {
+                  const active = Boolean(entry.active);
+                  node.classList.toggle('live-reasoning', active);
+                  node.dataset.liveTail = String(active);
+                  if (node.textContent !== entry.text) node.textContent = entry.text;
+                  // Regression boundary: T004 established that human scrolling owns follow state.
+                  // While a thought is active, update this exact DOM node in place. Never replace it
+                  // on a stream delta: destroying the node invalidates an in-progress scrollbar or
+                  // pointer interaction even if scrollTop is reconstructed afterward.
+                  if (active) {
+                    applyReasoningViewport(node, viewportKey, true, false);
+                  }
+                  return;
+                }
+
+                const use = entry.use;
+                node.dataset.state = use?.state ? String(use.state) : 'ACTIVE';
+                const mark = node.querySelector('.process-action-mark');
+                if (mark) mark.textContent = !use?.state ? '↳' : use.state === 'RETURNED' ? '✓' : '!';
+                const text = node.querySelector('.process-action-text');
+                if (text) text.textContent = reachText(use);
+              };
+
+              const syncLiveProcessHistory = (history) => {
+                const visible = new Set();
+                state.liveProcessEntries.forEach((entry, index) => {
+                  if (entry.kind === 'thought' && (!state.thoughtsVisible || !String(entry.text ?? '').trim())) {
+                    return;
+                  }
+                  const key = String(index);
+                  const viewportKey = 'live.process.' + key;
+                  let node = history.querySelector('[data-process-entry="' + key + '"]');
+                  if (!node) {
+                    node = processEntryNode(entry, viewportKey, true);
+                    if (!node) return;
+                    node.dataset.processEntry = key;
+                    history.append(node);
+                  }
+                  syncLiveProcessEntry(node, entry, viewportKey);
+                  visible.add(key);
+                });
+
+                // Removal is only for a human visibility-control change. Normal streaming is
+                // append/update-only, so older process containers retain stable DOM identity.
+                history.querySelectorAll('[data-process-entry]').forEach((node) => {
+                  if (!visible.has(String(node.dataset.processEntry ?? ''))) node.remove();
+                });
+              };
+
+              const createLiveProcessPanel = () => {
+                const panel = document.createElement('div');
+                panel.className = 'live-process-panel';
+
+                const toggle = document.createElement('button');
+                toggle.type = 'button';
+                toggle.className = 'thought-toggle live-process-toggle';
+                toggle.dataset.liveProcess = 'true';
+                toggle.hidden = true;
+                toggle.append(thoughtMark(), document.createElement('span'));
+
+                const history = document.createElement('div');
+                history.className = 'process-history live-process-history';
+
+                panel.append(toggle, history);
+                return panel;
+              };
+
+              const syncLiveProcessPanel = (thought) => {
+                let panel = thought.querySelector('.live-process-panel');
+                if (!panel) {
+                  panel = createLiveProcessPanel();
+                  thought.append(panel);
+                }
+
+                const hasEntries = state.liveProcessEntries.length > 0;
+                panel.hidden = !hasEntries;
+                if (!hasEntries) return;
+
+                const collapseWithAnswer = Boolean(state.streamedContent);
+                const expanded = collapseWithAnswer ? state.liveProcessExpanded : true;
+                const toggle = panel.querySelector('.live-process-toggle');
+                if (toggle) {
+                  toggle.hidden = !collapseWithAnswer;
+                  toggle.setAttribute('aria-expanded', String(expanded));
+                  const label = toggle.querySelector('span');
+                  if (label) label.textContent = expanded ? 'hide process' : 'view process';
+                }
+
+                const history = panel.querySelector('.live-process-history');
+                if (!history) return;
+
+                // Collapse is visual only. Keep the process DOM mounted so opening it again does
+                // not recreate scrollable children or cut sibling observers such as Speech/Kokoro.
+                history.hidden = !expanded;
+                if (expanded) syncLiveProcessHistory(history);
               };
 
               const reachedLine = (message) => {
@@ -1377,36 +1476,6 @@ object VexLifeWebP1RuntimeArtifacts {
                 return item;
               };
 
-              const liveProcessPanel = () => {
-                if (!state.liveProcessEntries.length) return null;
-                const panel = document.createElement('div');
-                panel.className = 'live-process-panel';
-
-                const collapseWithAnswer = Boolean(state.streamedContent);
-                const expanded = collapseWithAnswer ? state.liveProcessExpanded : true;
-                if (collapseWithAnswer) {
-                  const toggle = document.createElement('button');
-                  toggle.type = 'button';
-                  toggle.className = 'thought-toggle live-process-toggle';
-                  toggle.dataset.liveProcess = 'true';
-                  toggle.setAttribute('aria-expanded', String(expanded));
-                  const label = document.createElement('span');
-                  label.textContent = expanded ? 'hide process' : 'view process';
-                  toggle.append(thoughtMark(), label);
-                  panel.append(toggle);
-                }
-
-                if (expanded) {
-                  const history = processHistoryNode(
-                    state.liveProcessEntries,
-                    'live.process',
-                    true
-                  );
-                  if (history) panel.append(history);
-                }
-                return panel;
-              };
-
               const waitingNode = (sequence) => {
                 const item = document.createElement('li');
                 item.className = 'message message-vex waiting';
@@ -1438,8 +1507,10 @@ object VexLifeWebP1RuntimeArtifacts {
                           ? 'responding…'
                           : 'preparing…';
                 thought.append(who, mark, label);
-                const process = liveProcessPanel();
-                if (process) thought.append(process);
+                // Live process DOM is mounted once for this waiting message. Streaming updates
+                // mutate/append inside it; they do not replace the panel or existing containers.
+                thought.append(createLiveProcessPanel());
+                syncLiveProcessPanel(thought);
 
                 const bubble = document.createElement('div');
                 bubble.className = 'bubble';
@@ -1540,10 +1611,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
 
                 const thought = item.querySelector('.thinking-now');
-                thought?.querySelector('.live-process-panel')?.remove();
-                const process = liveProcessPanel();
-                if (process && thought) thought.append(process);
-                restoreReasoningViewports();
+                // Preserve live DOM identity while Vex streams. This is a continuation of the
+                // T004 scroll-ownership fix: state restoration cannot compensate for destroying
+                // the element a human is actively scrolling/dragging.
+                if (thought) syncLiveProcessPanel(thought);
 
                 const bubble = item.querySelector('.bubble');
                 let paragraph = bubble?.querySelector('p');
@@ -2304,6 +2375,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (streamed && responseKey && state.liveProcessEntries.length) {
                   freezeLiveProcess();
                   state.processEntriesByResponse.set(responseKey, snapshotLiveProcess());
+                  if (state.liveProcessManuallyToggled && state.liveProcessExpanded) {
+                    state.expandedThoughts.add(responseKey);
+                  }
                 } else if (responseKey) {
                   state.processEntriesByResponse.delete(responseKey);
                 }
