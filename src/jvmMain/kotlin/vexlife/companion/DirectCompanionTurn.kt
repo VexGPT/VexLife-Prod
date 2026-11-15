@@ -19,6 +19,7 @@ import vexlife.local.VexLifeProdLocalSetup
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.HereticModelCatalog
 
 /**
  * One direct personal human -> Vex turn over the isolated VexLife-Prod local foundation.
@@ -776,13 +777,22 @@ object DirectCompanionTurn {
             )
         val initialPrior =
             conversationOwner.immediatePriorCompletedTurn()
-        val priorRuntimeObservation =
-            initialPrior
-                ?.let { priorTurn ->
-                    DirectTurnContextStore(productHome)
-                        .read(priorTurn.head.turnRef)
-                        ?.runtimeObservation
-                }
+        val turnContextStore =
+            DirectTurnContextStore(productHome)
+        val vexModelLabelForTurn: (String) -> String? =
+            { turnRef ->
+                turnContextStore
+                    .read(turnRef)
+                    ?.runtimeObservation
+                    ?.modelRef
+                    ?.let { modelRef ->
+                        HereticModelCatalog.entry(modelRef)
+                            ?.handle
+                            ?.removePrefix("heretic-")
+                            ?.uppercase()
+                            ?: modelRef
+                    }
+            }
         DirectWorkingContinuity.requireSuccessorContextCurrent(
             productHome = productHome,
             prior = initialPrior,
@@ -817,7 +827,7 @@ object DirectCompanionTurn {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = initialRuntimeEvidence,
-                priorRuntimeObservation = priorRuntimeObservation,
+                vexModelLabelForTurn = vexModelLabelForTurn,
                 sourceReturnProtocolEnabled = true,
                 foundationalField = hooks.currentFoundationalField(),
             )
@@ -859,7 +869,7 @@ object DirectCompanionTurn {
             browserContext = browserContext,
             personContext = personContext,
             runtimeEvidence = initialRuntimeEvidence,
-            priorRuntimeObservation = priorRuntimeObservation,
+            vexModelLabelForTurn = vexModelLabelForTurn,
             sourceReturnProtocolEnabled = true,
             foundationalField = hooks.currentFoundationalField(),
         )
@@ -943,7 +953,7 @@ object DirectCompanionTurn {
                     browserContext = browserContext,
                     personContext = personContext,
                     runtimeEvidence = stageRuntimeEvidence,
-                    priorRuntimeObservation = priorRuntimeObservation,
+                    vexModelLabelForTurn = vexModelLabelForTurn,
                     sourceReturnProtocolEnabled = baseSourceReturnProtocolEnabled,
                     sourceReturnDiscovery = baseDiscovery,
                     foundationalField = hooks.currentFoundationalField(),
@@ -1025,7 +1035,7 @@ object DirectCompanionTurn {
                     browserContext = browserContext,
                     personContext = personContext,
                     runtimeEvidence = finalRuntimeEvidence,
-                    priorRuntimeObservation = priorRuntimeObservation,
+                    vexModelLabelForTurn = vexModelLabelForTurn,
                     sourceReturnProtocolEnabled = false,
                     sourceReturnDiscovery = discovery,
                     foundationalField = hooks.currentFoundationalField(),
@@ -1076,7 +1086,7 @@ object DirectCompanionTurn {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = finalRuntimeEvidence,
-                priorRuntimeObservation = priorRuntimeObservation,
+                vexModelLabelForTurn = vexModelLabelForTurn,
                 sourceReturnProtocolEnabled = false,
                 sourceReturnDiscovery = discovery,
                 foundationalField = hooks.currentFoundationalField(),
@@ -1142,7 +1152,7 @@ object DirectCompanionTurn {
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
-        priorRuntimeObservation: DirectCompanionConnection.RuntimeObservation?,
+        vexModelLabelForTurn: (String) -> String?,
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
@@ -1173,7 +1183,7 @@ object DirectCompanionTurn {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
-                priorRuntimeObservation = priorRuntimeObservation,
+                vexModelLabelForTurn = vexModelLabelForTurn,
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
                 sourceReturnDiscovery = sourceReturnDiscovery,
@@ -1214,7 +1224,7 @@ object DirectCompanionTurn {
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
-        priorRuntimeObservation: DirectCompanionConnection.RuntimeObservation?,
+        vexModelLabelForTurn: (String) -> String?,
         sourceReturnProtocolEnabled: Boolean,
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
@@ -1239,7 +1249,7 @@ object DirectCompanionTurn {
             browserContext = browserContext,
             personContext = personContext,
             runtimeEvidence = runtimeEvidence,
-            priorRuntimeObservation = priorRuntimeObservation,
+            vexModelLabelForTurn = vexModelLabelForTurn,
             sourceReturnProtocolEnabled =
                 sourceReturnProtocolEnabled,
             sourceReturnDiscovery = sourceReturnDiscovery,
