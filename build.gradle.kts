@@ -2174,6 +2174,20 @@ tasks.register<JavaExec>("generateVexLifeProdScreenLens") {
     args("write", layout.projectDirectory.asFile.absolutePath)
 }
 
+tasks.register<JavaExec>("generateVexLifeSiteData") {
+    group = "vexlife"
+    description = "Write the home page's site data (models, admitted Mac) from the Product's owners."
+    dependsOn(vexLifeWebJvmMain.compileTaskProvider)
+    classpath = files(vexLifeWebJvmMain.output.allOutputs, vexLifeWebJvmMain.runtimeDependencyFiles)
+    mainClass.set("vexlife.site.VexLifeSiteDataKt")
+    args(
+        "write",
+        (project.findProperty("vexlifeSiteDataDir") as String?)
+            ?: layout.buildDirectory.dir("site/data").get().asFile.absolutePath,
+        (project.findProperty("vexlifeSourceSha") as String?) ?: "",
+    )
+}
+
 tasks.register<JavaExec>("checkVexLifeStrings") {
     group = "verification"
     description = "Check the keyed string source: English present, placeholders match, manifest current."

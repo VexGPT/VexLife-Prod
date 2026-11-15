@@ -1,0 +1,99 @@
+# Builds VexLife for the Mac from main, and cuts stable versions when asked.
+# Process and meaning: docs/release/RELEASES.md. This is the ordinary product release route; it
+# publishes only what the Product's own Gradle tasks form (assemble + archive of the exact
+# private service image and its source-bound bootstrap), at one exact commit.
+name: release
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Cut this stable version from the current main commit (e.g. 0.6.0). Leave empty to build main only.'
+        required: false
+        default: ''
+permissions:
+  contents: write
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+jobs:
+  mac:
+    runs-on: macos-latest
+    timeout-minutes: 75
+    env:
+      VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Admit the request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          [ "$GITHUB_REF" = "refs/heads/main" ] || { echo "Releases are built from main only (got $GITHUB_REF)."; exit 1; }
+          if [ -n "$VERSION" ]; then
+            [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Version must look like 0.6.0 (got '$VERSION')."; exit 1; }
+            if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+              echo "v$VERSION already exists; versions are never rebuilt or moved."; exit 1
+            fi
+          fi
+          echo "Host: macOS $(sw_vers -productVersion) / $(uname -m)"
+
+      - name: Test
+        run: ./gradlew --no-daemon jvmTest checkVexLifeStrings
+
+      - name: Form the exact Mac image and bootstrap
+        run: ./gradlew --no-daemon archiveVexLifeProdServiceImage
+
+      - name: Publish the main build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          SHA="$(git rev-parse HEAD)"
+          DIR="build/vexlife-prod-service-image/archives/$SHA"
+          TAG="private-service-image-$SHA"
+          ls -la "$DIR"
+          {
+            echo "Main build of \`$SHA\` for Mac (Apple silicon)."
+            echo
+            echo "Run the bootstrap with \`bash ~/Downloads/<file>.command\`; it verifies the exact image it downloads, then opens the VexLife setup window."
+            echo
+            echo "source-sha: $SHA"
+            for file in "$DIR"/*.command; do
+              echo "sha256 $(basename "$file") $(shasum -a 256 "$file" | awk '{print $1}')"
+            done
+          } > "$RUNNER_TEMP/main-notes.md"
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$DIR"/* --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$TAG" "$DIR"/* --repo "$GITHUB_REPOSITORY" --target "$SHA" --prerelease \
+              --title "Main build ${SHA:0:7}" --notes-file "$RUNNER_TEMP/main-notes.md"
+          fi
+
+      - name: Cut the stable version
+        if: ${{ inputs.version != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          SHA="$(git rev-parse HEAD)"
+          DIR="build/vexlife-prod-service-image/archives/$SHA"
+          {
+            echo "VexLife $VERSION for Mac (Apple silicon), cut from main at \`$SHA\`."
+            echo
+            echo "Accepted feature threshold: see docs/release/RELEASES.md and the merged PRs since the previous version."
+            echo
+            echo "source-sha: $SHA"
+            echo "image-release: private-service-image-$SHA"
+            for file in "$DIR"/*.command; do
+              echo "sha256 $(basename "$file") $(shasum -a 256 "$file" | awk '{print $1}')"
+            done
+          } > "$RUNNER_TEMP/stable-notes.md"
+          gh release create "v$VERSION" "$DIR"/*.command "$DIR"/*.sha256 --repo "$GITHUB_REPOSITORY" \
+            --target "$SHA" --title "VexLife $VERSION" --notes-file "$RUNNER_TEMP/stable-notes.md" --latest
