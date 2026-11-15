@@ -440,7 +440,20 @@ async function main() {
       ...resultBase,
     });
   } catch (error) {
-    resultBase.harnessFindings.push('REPAIRED_STARTUP_LIVED_STOPPED');
+    if (
+      stage === 'EXACT_SOURCE_AND_IMAGE' ||
+      stage === 'NATIVE_SETUP' ||
+      stage === 'PRODUCT_CURRENTNESS' ||
+      stage === 'FIRST_HUMAN_TURN'
+    ) {
+      resultBase.candidateFindings.push(
+        'REPAIRED_CANDIDATE_STOPPED:' + stage,
+      );
+    } else {
+      resultBase.harnessFindings.push(
+        'REPAIRED_CARRIER_STOPPED:' + stage,
+      );
+    }
     if (observedHomePath) {
       try {
         observedRecords = readChronology(observedHomePath, binding.head, startedAt.getTime());
