@@ -68,8 +68,15 @@ object VexLifeCapabilityRequest {
      * unreadable.
      */
     fun parseOrNull(modelContent: String): Parsed? {
-        val rawHeaderIndex = modelContent.indexOf(RequestHeader)
-        if (rawHeaderIndex < 0) return null
+        val rawHeaderIndex =
+            Regex(
+                    "(?m)^" +
+                        Regex.escape(RequestHeader)
+                )
+                .find(modelContent)
+                ?.range
+                ?.first
+                ?: return null
         val headerIndex =
             controlHeaderIndexOrNull(modelContent)
                 ?: return Parsed.Malformed(
