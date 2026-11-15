@@ -479,19 +479,9 @@ object VexLifeProdMacFrontDoor {
                     detail = existing.detail,
                 )
 
-            is VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned -> {
-                val sourceSha = existing.receipt.sourceSha
-                return observed(
-                    if (sourceSha == desiredSourceSha) {
-                        VexLifeProdEntryFamily.Current(desiredSourceSha)
-                    } else {
-                        VexLifeProdEntryFamily.UpdateAvailable(desiredSourceSha)
-                    },
-                    sourceSha = sourceSha,
-                    pid = existing.receipt.launchd.pid,
-                )
-            }
-
+            // A running Product service is only enough to call the entry current/update-ready after
+            // the Home's selected-model prerequisites have also been observed. A newly selected
+            // model may need acquisition even while the prior model's Product service is healthy.
             else -> Unit
         }
 
@@ -537,6 +527,21 @@ object VexLifeProdMacFrontDoor {
                     VexLifeProdEntryFamily.SetupRequired(desiredSourceSha)
                 },
                 storage = storage,
+            )
+        }
+
+        if (
+            existing is VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned
+        ) {
+            val sourceSha = existing.receipt.sourceSha
+            return observed(
+                if (sourceSha == desiredSourceSha) {
+                    VexLifeProdEntryFamily.Current(desiredSourceSha)
+                } else {
+                    VexLifeProdEntryFamily.UpdateAvailable(desiredSourceSha)
+                },
+                sourceSha = sourceSha,
+                pid = existing.receipt.launchd.pid,
             )
         }
 
