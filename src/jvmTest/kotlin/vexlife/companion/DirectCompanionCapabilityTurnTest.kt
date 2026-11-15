@@ -262,6 +262,62 @@ class DirectCompanionCapabilityTurnTest {
     }
 
     @Test
+    fun narratedLateRequestIsCorrectedInsideTheSameTurnInsteadOfEscapingAsAResult() = withHome { home ->
+        val calls = mutableListOf<List<Pair<String, String>>>()
+        val narrated =
+            buildString {
+                append("I can demonstrate that. First I will explain what I am about to do. ")
+                append("x".repeat(700))
+                append("\n")
+                append(fetchControl)
+                append("\nResult: the page says something I have not actually retrieved.")
+            }
+        val transport =
+            DirectCompanionConnection.Transport { call ->
+                calls += messages(call)
+                when (calls.size) {
+                    1 -> reply(narrated)
+                    2 -> {
+                        val returned = calls.last().last()
+                        assertEquals("user", returned.first)
+                        assertTrue(returned.second.startsWith(VexLifeCapabilityRequest.ResultHeader))
+                        assertTrue(returned.second.contains("\"state\":\"INVALID_REQUEST\""))
+                        assertTrue(returned.second.contains("whole reply for this provider stage"))
+                        reply("I had not actually reached the page. The request needs to be emitted by itself.")
+                    }
+                    else -> error("unexpected provider call")
+                }
+            }
+
+        val result =
+            DirectCompanionTurn.performWithHooks(
+                setup = setup(home),
+                intent =
+                    DirectCompanionTurn.Intent(
+                        idempotencyKey = "send.reach.late-control.001",
+                        content = "Demonstrate a web lookup.",
+                    ),
+                hooks =
+                    DirectCompanionTurn.Hooks(
+                        transport = transport,
+                        capabilityOwners =
+                            VexLifeCapabilityBridge.Owners(
+                                webTransport = { _, _ -> error("late malformed request must not contact web") },
+                                resolver = publicResolver,
+                            ),
+                    ),
+            )
+
+        assertEquals(2, calls.size)
+        assertEquals(
+            "I had not actually reached the page. The request needs to be emitted by itself.",
+            result.content,
+        )
+        assertEquals(VexLifeCapabilityBridge.State.INVALID_REQUEST, result.capabilityUses.single().state)
+        assertFalse(result.content.contains("page says something"))
+    }
+
+    @Test
     fun aTurnWithoutRequestsAnswersOnceAndKeepsTheV2Evidence() = withHome { home ->
         var calls = 0
         val result =
