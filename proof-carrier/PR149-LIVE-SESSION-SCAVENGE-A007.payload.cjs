@@ -157,6 +157,110 @@ async function cdpTargets(ports){
   return out;
 }
 
+
+async function inspectCdpTarget(target){
+  if(typeof WebSocket!=='function' || !target?.webSocketDebuggerUrl){
+    return {available:false,reason:typeof WebSocket!=='function'?'NODE_WEBSOCKET_UNAVAILABLE':'NO_WEBSOCKET_URL'};
+  }
+  return await new Promise((resolve)=>{
+    const ws=new WebSocket(target.webSocketDebuggerUrl);
+    let nextId=1;
+    const waiting=new Map();
+    const finish=(value)=>{try{ws.close();}catch(_){} resolve(value);};
+    const timer=setTimeout(()=>finish({available:true,error:'CDP_TIMEOUT'}),12000);
+    const call=(method,params={})=>new Promise((res,rej)=>{
+      const id=nextId++;
+      waiting.set(id,{res,rej});
+      ws.send(JSON.stringify({id,method,params}));
+    });
+    ws.onmessage=(event)=>{
+      try{
+        const msg=JSON.parse(String(event.data));
+        if(msg.id&&waiting.has(msg.id)){
+          const p=waiting.get(msg.id); waiting.delete(msg.id);
+          if(msg.error)p.rej(new Error(msg.error.message||JSON.stringify(msg.error)));
+          else p.res(msg.result);
+        }
+      }catch(_){}
+    };
+    ws.onerror=()=>{clearTimeout(timer);finish({available:true,error:'CDP_WEBSOCKET_ERROR'});};
+    ws.onopen=async()=>{
+      try{
+        await call('Runtime.enable');
+        const dom=await call('Runtime.evaluate',{
+          expression:`JSON.stringify({
+            url:location.href,
+            timelineText:document.querySelector('#timeline')?.innerText??null,
+            speechSettings:localStorage.getItem('vexlife-prod.presentation.speech/v1')
+          })`,
+          returnByValue:true
+        });
+        const root=await call('Runtime.evaluate',{expression:"document.querySelector('#timeline')"});
+        const objectId=root?.result?.objectId;
+        const found={state:null,speech:null};
+        const listenerTypes=[];
+        if(objectId){
+          const ev=await call('DOMDebugger.getEventListeners',{objectId,depth:2,pierce:true});
+          for(const listener of ev.listeners||[]){
+            listenerTypes.push(listener.type);
+            const handlerId=listener?.handler?.objectId;
+            if(!handlerId)continue;
+            const hp=await call('Runtime.getProperties',{objectId:handlerId,ownProperties:false,generatePreview:false});
+            const scopes=(hp.internalProperties||[]).find(x=>x.name==='[[Scopes]]')?.value?.objectId;
+            if(!scopes)continue;
+            const sp=await call('Runtime.getProperties',{objectId:scopes,ownProperties:true,generatePreview:false});
+            for(const scopeEntry of sp.result||[]){
+              const scopeId=scopeEntry?.value?.objectId;
+              if(!scopeId)continue;
+              const vars=await call('Runtime.getProperties',{objectId:scopeId,ownProperties:true,generatePreview:false});
+              for(const v of vars.result||[]){
+                if(v.name!=='state'&&v.name!=='speech')continue;
+                const oid=v?.value?.objectId;
+                if(!oid)continue;
+                const expr=v.name==='state'
+                  ? `function(){return JSON.stringify({
+                      streamedContent:this.streamedContent??null,
+                      streamedReasoningCharacters:String(this.streamedReasoning??'').length,
+                      failedAttempts:(this.failedAttempts??[]).map(a=>({
+                        idempotencyKey:a.idempotencyKey??null,
+                        failureCode:a.failureCode??null,
+                        partialContent:a.partialContent??null,
+                        processEntries:a.processEntries??[]
+                      })),
+                      pending:this.pending??null
+                    })}`
+                  : `function(){return JSON.stringify({
+                      settings:this.settings??null,
+                      stream:this.stream??null,
+                      current:this.current??null,
+                      queue:this.queue??[]
+                    })}`;
+                const value=await call('Runtime.callFunctionOn',{
+                  objectId:oid,
+                  functionDeclaration:expr,
+                  returnByValue:true,
+                  silent:true
+                });
+                try{found[v.name]=JSON.parse(value?.result?.value??'null');}catch(_){found[v.name]=value?.result?.value??null;}
+              }
+            }
+          }
+        }
+        clearTimeout(timer);
+        finish({
+          available:true,
+          page:JSON.parse(dom?.result?.value||'{}'),
+          listenerTypes:[...new Set(listenerTypes)],
+          closure:found
+        });
+      }catch(error){
+        clearTimeout(timer);
+        finish({available:true,error:String(error)});
+      }
+    };
+  });
+}
+
 async function main(){
   const current=await getJson('/api/v1/current-state');
   const probes={};
@@ -169,6 +273,16 @@ async function main(){
 
   const ports=debugPorts();
   const targets=await cdpTargets(ports);
+  const cdpInspections=[];
+  for(const group of targets){
+    for(const target of group.targets||[]){
+      cdpInspections.push({
+        port:group.port,
+        target:{id:target.id,title:target.title,url:target.url},
+        inspection:await inspectCdpTarget(target)
+      });
+    }
+  }
 
   const speechCopies=[];
   for(const [app,p] of Object.entries(probes)){
@@ -202,6 +316,7 @@ async function main(){
       browserProbes:probes,
       remoteDebugPorts:ports,
       cdpVexLifeTargets:targets,
+      cdpInspections,
       speechCopies,
       browserJavascriptAccessible,
       cdpAvailable,
