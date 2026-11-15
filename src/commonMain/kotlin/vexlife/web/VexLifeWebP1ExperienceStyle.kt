@@ -486,7 +486,7 @@ svg { display: block; }
   overflow-wrap: anywhere;
 }
 .process-action-mark { flex: 0 0 auto; width: 13px; color: var(--ink-3); text-align: center; }
-.process-action[data-state="RETURNED"] .process-action-mark { color: var(--ok); }
+.process-action[data-state="RETURNED"] .process-action-mark { color: var(--ready); }
 .process-action:not([data-state="ACTIVE"]):not([data-state="RETURNED"]) .process-action-mark { color: var(--down); }
 .reasoning {
   max-width: min(92%, 640px); max-height: 220px; overflow-y: auto; margin-top: 7px;
