@@ -153,7 +153,7 @@ class VexLifeDiagnosticsTest {
                 }
             }
             assertTrue(names.contains("enhanced/provider-stream-traces.json"))
-            assertTrue(contents.contains(""modelStreamContentIncluded":true"))
+            assertTrue(contents.contains("\"modelStreamContentIncluded\":true"))
             assertTrue(contents.contains("reasoning-34"))
             assertTrue(contents.contains("content-34"))
             assertFalse(contents.contains("reasoning-0"), "oldest traces must be evicted from the bounded ring")
