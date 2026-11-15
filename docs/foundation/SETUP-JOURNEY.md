@@ -65,6 +65,10 @@ window renders card; returns CONTROL:<ref> | CHOOSE_HOME | CHOOSE_LANGUAGE | REC
    typed Effect -> rightful owner realizes it  (progress lines on stderr; Cancel safely = SIGTERM)
    fresh observation                           CURRENT -> OPEN_PRODUCT (+ ready notice)
                                                otherwise -> REFRESH_ENTRY (+ failure, if any)
+   an explicit model choice is Home truth before Set Up / Start may converge:
+     existing Home -> choice must save before Control resolution; failure stops the activation
+     Home absent   -> window may carry the choice through FORM_HOME, then save is required before
+                      the choice is considered honored and current State is re-observed
    the chosen language is saved into the Home once it exists (after FORM_HOME)
    │
    └──► window inspects again (never predicts the successor State)
