@@ -193,16 +193,47 @@ class DirectCompanionCapabilityTurnTest {
             result.capabilityUses,
         )
 
+        // Provider-stage identity comes from the turn owner. Capability reach closes stage one;
+        // the returned result continues through a distinct second provider stage on the same model.
+        val generatingStages =
+            progress.filter {
+                it.phase ==
+                    DirectCompanionTurn.ProgressPhase.Generating
+            }
+        assertEquals(
+            listOf(
+                1,
+                2,
+            ),
+            generatingStages.map {
+                it.providerStageIndex
+            },
+        )
+        assertEquals(
+            1,
+            generatingStages
+                .mapNotNull {
+                    it.providerModelRef
+                }
+                .distinct()
+                .size,
+        )
+
         // The person saw the reach happen, and never saw the control text as an answer.
         assertTrue(
             progress.any {
-                it.phase == DirectCompanionTurn.ProgressPhase.Reaching && it.reach?.handle == "web"
+                it.phase == DirectCompanionTurn.ProgressPhase.Reaching &&
+                    it.reach?.handle == "web" &&
+                    it.providerStageIndex == 1 &&
+                    it.providerModelRef != null
             }
         )
         assertTrue(
             progress.any {
                 it.phase == DirectCompanionTurn.ProgressPhase.Reached &&
-                    it.reach?.state == VexLifeCapabilityBridge.State.RETURNED
+                    it.reach?.state == VexLifeCapabilityBridge.State.RETURNED &&
+                    it.providerStageIndex == 1 &&
+                    it.providerModelRef != null
             }
         )
         assertFalse(
