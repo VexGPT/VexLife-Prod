@@ -498,9 +498,14 @@ A human turn may also carry capability requests (see
 turn is a bounded stage loop: each stage is the same prompt base plus the request/result exchanges so
 far; a capability request is performed by its owner and its typed result is appended; a source-return
 request re-materializes the base exactly as before. At most four capability requests and one source
-return per turn; a fifth request is answered LIMIT_REACHED, and asking again after that ends the turn
-with a failure receipt. Every later stage uses the same read-only runtime re-observation and the same
-foundational field, and the reused base prompt is re-verified at each provider boundary.
+return per turn. A fifth request is answered LIMIT_REACHED and explicitly closes the reach phase:
+Vex should answer from established truth, or—when material outside truth is still missing—share what
+is currently understood, name the missing truth and ask the person for another message so the work
+can continue in a fresh human turn with a fresh bounded request budget. The limit is not a target and
+does not itself mean the human turn failed. Asking for another machine capability after that returned
+limit still fails closed with a failure receipt. Every later stage uses the same read-only runtime
+re-observation and the same foundational field, and the reused base prompt is re-verified at each
+provider boundary.
 
 Presentation transport is not completion authority. When an SSE stream ends ambiguously, the
 presentation may re-present the same idempotency key through the ordinary non-streaming Send contract
