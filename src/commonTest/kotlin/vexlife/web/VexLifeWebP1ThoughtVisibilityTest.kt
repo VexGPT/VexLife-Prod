@@ -312,6 +312,55 @@ class VexLifeWebP1ThoughtVisibilityTest {
                 "sessionStorage.setItem('vexlife-prod.presentation.reasoning",
             ),
         )
+
+        assertTrue(
+            bundle.javascript.contains(
+                "const PROCESS_HISTORY_DB = 'vexlife-prod.presentation.process-history';",
+            ),
+            "completed process history must have a browser-owned archive separate from canonical Conversation",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "await archiveProcessSnapshot(responseKey, processSnapshot);",
+            ),
+            "successful streamed completion must archive the observed process under the canonical response ref",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "await hydrateProcessHistory(messages);",
+            ),
+            "canonical Conversation reload must rehydrate matching browser process history before presentation",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "db.createObjectStore(PROCESS_HISTORY_STORE, { keyPath: 'messageRef' });",
+            ),
+            "browser process history must be keyed by canonical response message identity",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "if (!state.thoughtsVisible || !String(entry.text ?? '').trim())",
+            ),
+            "viewable-thought preference must continue controlling whether raw thought text is displayed",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "return state.thoughtsVisible && String(entry.text ?? '').trim()",
+            ),
+            "raw thought text must not be archived when viewable thoughts are disabled",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "body: JSON.stringify(state.processEntriesByResponse",
+            ),
+            "browser process history must never enter the canonical Send wire request",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "speakFresh(state.processEntriesByResponse",
+            ),
+            "Speech/Kokoro must never read archived visual process history",
+        )
     }
 }
 
