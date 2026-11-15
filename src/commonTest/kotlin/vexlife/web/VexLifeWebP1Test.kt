@@ -2,6 +2,7 @@ package vexlife.web
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
@@ -324,6 +325,57 @@ class VexLifeWebP1Test {
             artifacts.semanticManifest.contains(
                 "\"ref\":\"${VexLifeWebP1.Refs.CompanionRegion.value}\",\"nodeKind\":\"REGION\",\"blueprintKind\":null,\"sourceParentRef\":null,\"containerRef\":\"${VexLifeWebP1.Refs.BodyFrame.value}\",\"placement\":\"FillAvailable\",\"depth\":\"Content\"",
             ),
+        )
+    }
+
+    @Test
+    fun processProjectionUsesExistingSendFactsInsteadOfProviderStages() {
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts
+                .generate()
+                .javascript
+
+        assertTrue(
+            javascript.contains(
+                "liveProcessEntries: []",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "processEntriesByResponse: new Map()",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "appendProcessReasoning(event.delta);",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "projectProcessReach(use);",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "state.processEntriesByResponse.set(responseKey, snapshotLiveProcess())",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "label.textContent = expanded ? 'hide process' : 'view process';",
+            ),
+        )
+        assertFalse(
+            javascript.contains(
+                "providerStageIndex",
+            ),
+            "the browser must project meaningful consequences rather than expose provider invocation numbering",
+        )
+        assertFalse(
+            javascript.contains(
+                "providerModelRef",
+            ),
+            "model identity remains diagnostics/runtime truth rather than primary process UX",
         )
     }
 
