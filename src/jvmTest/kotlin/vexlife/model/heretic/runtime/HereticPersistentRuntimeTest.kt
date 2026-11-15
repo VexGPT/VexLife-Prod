@@ -551,7 +551,7 @@ class HereticPersistentRuntimeTest {
             prior.runtime.pid in
                 platform.alivePids,
         )
-        assertFalse(
+        assertTrue(
             trace.any {
                 it.startsWith(
                     "GENERATION_READINESS_",
