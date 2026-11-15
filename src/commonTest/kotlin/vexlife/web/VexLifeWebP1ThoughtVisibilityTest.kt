@@ -131,6 +131,12 @@ class VexLifeWebP1ThoughtVisibilityTest {
         )
         assertTrue(
             bundle.javascript.contains(
+                "if (state.liveProcessManuallyToggled && state.liveProcessExpanded)",
+            ),
+            "completion must preserve an explicit human choice to keep the live process open",
+        )
+        assertTrue(
+            bundle.javascript.contains(
                 "timelineFollowTail: true",
             ),
             "Conversation following must be explicit presentation state rather than inferred from proximity",
@@ -151,6 +157,54 @@ class VexLifeWebP1ThoughtVisibilityTest {
                 "const updateLiveTurn = () =>",
             ),
             "stream deltas must update the existing live turn instead of rebuilding the whole timeline",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "const syncLiveProcessPanel = (thought) =>",
+            ),
+            "live process rendering must synchronize one mounted panel instead of reconstructing it per delta",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "const syncLiveProcessHistory = (history) =>",
+            ),
+            "streaming process entries must append/update stable child nodes",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "node.dataset.processEntry = key;",
+            ),
+            "each live process entry needs stable DOM identity for the duration of the Send",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "if (node.textContent !== entry.text) node.textContent = entry.text;",
+            ),
+            "active reasoning must mutate the existing scrollable node in place",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "history.hidden = !expanded;",
+            ),
+            "collapsing process history must hide rather than destroy mounted streaming nodes",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "if (thought) syncLiveProcessPanel(thought);",
+            ),
+            "stream updates must converge into the existing live process DOM",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "thought?.querySelector('.live-process-panel')?.remove();",
+            ),
+            "never destroy the live process panel while a human may be scrolling it",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "const process = liveProcessPanel();",
+            ),
+            "the old rebuild-per-delta process projection must not return",
         )
         assertTrue(
             bundle.javascript.contains(
