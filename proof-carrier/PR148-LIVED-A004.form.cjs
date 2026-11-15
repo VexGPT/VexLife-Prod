@@ -63,7 +63,7 @@ const authorityEnvelope = {
 const contentRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'vexlife-prod-pr148-lived-a004-form-'));
 try {
   const authorityPath = path.join(contentRoot, 'authority/effect.json');
-  const payloadPath = path.join(contentRoot, 'payload/run.mjs');
+  const payloadPath = path.join(contentRoot, 'payload/run.cjs');
   const candidatePath = path.join(contentRoot, 'inputs/candidate.json');
 
   fs.mkdirSync(path.dirname(authorityPath), { recursive: true });
