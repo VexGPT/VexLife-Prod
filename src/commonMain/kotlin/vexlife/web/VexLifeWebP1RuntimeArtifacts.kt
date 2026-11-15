@@ -1225,13 +1225,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 speech.stream.thought = 0;
               };
 
-              const thoughtRoundsNode = (rounds, keyPrefix, live = false) => {
+              const thoughtRoundsNode = (rounds, keyPrefix) => {
                 const meaningful = (rounds ?? []).filter(
                   (round) => round.kind === 'reach' || String(round.text ?? '').trim()
                 );
                 if (!meaningful.length) return null;
                 const group = document.createElement('div');
-                group.className = 'thought-rounds' + (live ? ' live-thought-rounds' : '');
+                group.className = 'thought-rounds';
                 meaningful.forEach((round, index) => {
                   if (round.kind === 'reach') {
                     const line = document.createElement('p');
@@ -1242,7 +1242,6 @@ object VexLifeWebP1RuntimeArtifacts {
                   }
                   const detail = document.createElement('details');
                   detail.className = 'thought-round';
-                  if (live && index === meaningful.length - 1 && !round.closed) detail.open = true;
                   const summary = document.createElement('summary');
                   summary.textContent = String(round.label ?? 'Thinking');
                   detail.append(summary);
@@ -1250,13 +1249,83 @@ object VexLifeWebP1RuntimeArtifacts {
                     const box = document.createElement('div');
                     box.className = 'reasoning thought-round-reasoning';
                     const viewportKey = keyPrefix + '.' + index;
-                    bindReasoningViewport(box, viewportKey, live && !round.closed);
+                    bindReasoningViewport(box, viewportKey, false);
                     box.textContent = String(round.text);
                     detail.append(box);
                   }
                   group.append(detail);
                 });
                 return group;
+              };
+
+              // Live thought rounds are updated in place. Streaming growth must never replace a
+              // reasoning viewport the person is currently reading: provider delta != scroll authority.
+              const renderLiveThoughtRounds = (thought) => {
+                if (!thought) return;
+                let group = thought.querySelector('.live-thought-rounds');
+                if (!group) {
+                  group = document.createElement('div');
+                  group.className = 'thought-rounds live-thought-rounds';
+                  thought.append(group);
+                }
+
+                const meaningful = state.liveThoughtRounds.filter(
+                  (round) => round.kind === 'reach' || String(round.text ?? '').trim()
+                );
+                meaningful.forEach((round, index) => {
+                  const selector = '[data-thought-round-index="' + String(index) + '"]';
+                  let node = group.querySelector(selector);
+
+                  if (round.kind === 'reach') {
+                    if (!node || node.tagName !== 'P') {
+                      const replacement = document.createElement('p');
+                      replacement.className = 'thought-round-reach';
+                      replacement.dataset.thoughtRoundIndex = String(index);
+                      if (node) node.replaceWith(replacement);
+                      else group.append(replacement);
+                      node = replacement;
+                    }
+                    node.textContent = reachText(round.use);
+                    return;
+                  }
+
+                  if (!node || node.tagName !== 'DETAILS') {
+                    const replacement = document.createElement('details');
+                    replacement.className = 'thought-round';
+                    replacement.dataset.thoughtRoundIndex = String(index);
+                    replacement.open = index === meaningful.length - 1 && !round.closed;
+                    const summary = document.createElement('summary');
+                    replacement.append(summary);
+                    if (node) node.replaceWith(replacement);
+                    else group.append(replacement);
+                    node = replacement;
+                  }
+
+                  const summary = node.querySelector('summary');
+                  if (summary) summary.textContent = String(round.label ?? 'Thinking');
+
+                  let box = node.querySelector('.thought-round-reasoning');
+                  if (!box) {
+                    box = document.createElement('div');
+                    box.className = 'reasoning thought-round-reasoning';
+                    const viewportKey = 'live.' + index;
+                    bindReasoningViewport(box, viewportKey, true);
+                    node.append(box);
+                  }
+                  if (box.textContent !== String(round.text ?? '')) {
+                    box.textContent = String(round.text ?? '');
+                  }
+                  const viewportKey = 'live.' + index;
+                  // Same rule as the pre-round live reasoning viewport: following may track the
+                  // tail; once the person scrolls away, incoming deltas do not write scrollTop.
+                  applyReasoningViewport(box, viewportKey, true, false);
+                });
+
+                for (const node of [...group.children]) {
+                  const index = Number(node.dataset.thoughtRoundIndex);
+                  if (!Number.isInteger(index) || index >= meaningful.length) node.remove();
+                }
+                if (!meaningful.length) group.remove();
               };
 
               const reachList = (uses) => {
@@ -1312,7 +1381,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 holder.append(toggle);
 
                 if (expanded) {
-                  const group = thoughtRoundsNode(rounds, 'response.' + key, false);
+                  const group = thoughtRoundsNode(rounds, 'response.' + key);
                   if (group) holder.append(group);
                 }
                 return holder;
@@ -1377,10 +1446,7 @@ object VexLifeWebP1RuntimeArtifacts {
                         ? 'responding…'
                         : 'preparing…';
                 thought.append(who, mark, label);
-                if (state.thoughtsVisible) {
-                  const rounds = thoughtRoundsNode(state.liveThoughtRounds, 'live', true);
-                  if (rounds) thought.append(rounds);
-                }
+                if (state.thoughtsVisible) renderLiveThoughtRounds(thought);
 
                 const bubble = document.createElement('div');
                 bubble.className = 'bubble';
@@ -1481,16 +1547,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
 
                 const thought = item.querySelector('.thinking-now');
-                item.querySelector('.live-thought-rounds')?.remove();
-                if (state.thoughtsVisible && thought) {
-                  const rounds = thoughtRoundsNode(state.liveThoughtRounds, 'live', true);
-                  if (rounds) {
-                    thought.append(rounds);
-                    rounds.querySelectorAll('.reasoning[data-scroll-key]').forEach((element) => {
-                      const key = String(element.dataset.scrollKey ?? '');
-                      applyReasoningViewport(element, key, true, false);
-                    });
-                  }
+                if (state.thoughtsVisible) {
+                  renderLiveThoughtRounds(thought);
+                } else {
+                  item.querySelector('.live-thought-rounds')?.remove();
                 }
 
                 const bubble = item.querySelector('.bubble');
