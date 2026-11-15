@@ -512,6 +512,35 @@ presentation may re-present the same idempotency key through the ordinary non-st
 to ask the turn owner for durable truth before showing an unresolved outcome. This is transport
 reconciliation, not model replay.
 
+Presentation must preserve the human-visible process until that canonical reconciliation returns:
+
+~~~text
+stream fault / terminal projection interruption
+-> freeze + snapshot the browser-session process already observed
+-> ask the canonical turn owner
+
+TURN_COMPLETED
+-> attach the preserved process to the completed response
+-> refresh canonical Conversation / Context
+-> retire transient live state only after transfer
+
+TURN_FAILED
+-> preserve one session-only failed-attempt projection
+   (process + failure code + exactNextSafeRoute)
+-> retire the failed idempotency key
+-> offer Try Again as a NEW Send identity
+-> do not copy the attempted prompt back into the composer as if no Send occurred
+
+UNRESOLVED
+-> retain the same pending idempotency key
+-> retain the same process projection
+-> later exact reconciliation does not reset that process slot
+~~~
+
+Raw reasoning remains browser-session-only in every branch. Preserving the human's observed process
+through reconciliation does not create Conversation, Memory, training or cross-restart reasoning
+persistence.
+
 For an ordinary turn it still performs one provider inference. Conditional source return adds a
 second inference only when the first inference emits the exact source-return control request.
 
