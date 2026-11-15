@@ -685,6 +685,9 @@ class VexLifeCapabilityReachTest {
             )
         assertEquals(VexLifeCapabilityBridge.State.LIMIT_REACHED, over.entry.state)
         assertTrue(over.resultMessage.content.contains("No requests are left this turn"))
+        assertTrue(over.resultMessage.content.contains("Do not send another capability request"))
+        assertTrue(over.resultMessage.content.contains("share what you currently understand"))
+        assertTrue(over.resultMessage.content.contains("continue in a fresh turn"))
     }
 }
 
