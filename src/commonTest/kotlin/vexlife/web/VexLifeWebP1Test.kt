@@ -7,6 +7,19 @@ import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexLifeWebP1Test {
     @Test
+    fun capabilityThoughtRoundsStayBrowserSessionPresentationOnly() {
+        val artifacts = VexLifeWebP1RuntimeArtifacts.generate()
+
+        assertTrue(artifacts.javascript.contains("liveThoughtRounds: []"))
+        assertTrue(artifacts.javascript.contains("thoughtRoundsByResponse: new Map()"))
+        assertTrue(artifacts.javascript.contains("recordThoughtReach(use)"))
+        assertTrue(artifacts.javascript.contains("Reviewing result"))
+        assertTrue(artifacts.javascript.contains("view thoughts"))
+        assertTrue(artifacts.css.contains(".thought-rounds"))
+        assertTrue(artifacts.css.contains(".thought-round-reach"))
+    }
+
+    @Test
     fun p1ManifestsEveryCurrentBlueprintCoordinateWithTypedCapabilityBinding() {
         val manifested =
             VexLifeWebP1.Surface
