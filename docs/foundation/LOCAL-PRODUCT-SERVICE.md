@@ -229,6 +229,40 @@ ambiguous presentation stream
 
 The service does not invent another idempotency layer.
 
+### Streaming presentation is an observer, not provider custody
+
+The provider stream is consumed by the direct-turn/Connection path. Browser SSE delivery is a
+downstream projection of those progress facts.
+
+~~~text
+provider InputStream
+-> DirectCompanionConnection / DirectCompanionTurn
+-> bounded presentation queue
+-> separate SSE socket writer
+-> browser
+~~~
+
+The provider-reading thread never performs browser `write/flush`. If the browser is slow, stalls,
+disconnects, or fills the bounded presentation queue, live projection may lose deltas or the
+presentation leg may end; it may not stall provider ingestion, capability execution, Conversation
+completion, or turn durability.
+
+The terminal projection is preferred over queued old deltas. If that terminal projection is not
+observed by the browser, the existing same-idempotency Send reconciliation asks the canonical turn
+owner for durable completed/failed truth without replaying the model.
+
+~~~text
+PRESENTATION TRANSPORT PRESSURE
+!= PROVIDER BACKPRESSURE
+
+LOST LIVE DELTA
+!= LOST CANONICAL TURN
+
+BROWSER DISCONNECT
+!= TURN FAILURE
+~~~
+
+
 ## Current-state awareness read side
 
 The local service exposes one bounded read-only route:
