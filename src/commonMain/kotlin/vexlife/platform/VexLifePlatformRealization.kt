@@ -118,7 +118,9 @@ object VexLifePlatformRealization {
             target: Target,
         ): Resolution =
             byTarget[target]
-                ?.let(Resolution::Supported)
+                ?.let {
+                    Resolution.Supported(it)
+                }
                 ?: Resolution.Unsupported(target)
     }
 
