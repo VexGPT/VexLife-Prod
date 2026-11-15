@@ -140,6 +140,19 @@ function readChronology(homePath, candidateHead, startedEpochMs) {
   return records;
 }
 
+function applyObservedEffects(records, effects) {
+  const facts = new Set(records.map((record) => record.fact));
+  if (
+    facts.has('RUNTIME_START_REQUESTED') ||
+    facts.has('RUNTIME_RECOVERY_REQUESTED') ||
+    facts.has('RUNTIME_RECOVERY_COMPLETED') ||
+    facts.has('RUNTIME_MODEL_SWITCHED') ||
+    facts.has('PROVIDER_INVOCATION_REQUESTED')
+  ) {
+    effects.modelRuntimePerformed = true;
+  }
+}
+
 function segmentForTurn(records, sendIndex, turnRef) {
   let terminalIndex = -1;
   let terminal = null;
@@ -295,6 +308,9 @@ async function main() {
 
   const startedAt = new Date();
   const deadlineMs = startedAt.getTime() + MAX_TOTAL_MS;
+  let stage = 'HOST_PREFLIGHT';
+  let observedHomePath = null;
+  let observedRecords = [];
 
   if (process.platform !== 'darwin' || process.arch !== 'arm64') {
     resultBase.environmentFindings.push('HOST_NOT_DARWIN_ARM64');
@@ -319,6 +335,7 @@ async function main() {
 
   try {
     resultBase.effects.providerOrNetworkEffectPerformed = true;
+    stage = 'EXACT_SOURCE_AND_IMAGE';
 
     run('/usr/bin/git', ['clone', '--no-checkout', 'https://github.com/' + binding.repository + '.git', repo], {
       timeoutMs: 180000,
@@ -378,6 +395,7 @@ async function main() {
       sourceSha: binding.head,
     });
 
+    stage = 'NATIVE_SETUP';
     process.stderr.write('\n[VexLife PR148 lived proof]\n');
     process.stderr.write('Complete the native Setup window that just opened. When VexLife opens in the browser:\n');
     process.stderr.write('1) ensure Viewable Thoughts is enabled;\n');
@@ -388,6 +406,7 @@ async function main() {
 
     run('/usr/bin/open', ['-W', app], { timeoutMs: Math.max(60000, deadlineMs - Date.now()) });
 
+    stage = 'PRODUCT_CURRENTNESS';
     const exactSource = await waitForExactProduct(binding.head, deadlineMs);
     const currentState = await getJson('/api/v1/current-state');
     if (currentState.effectsPerformed !== false) throw new Error('current-state read unexpectedly performed effects');
@@ -395,6 +414,10 @@ async function main() {
     if (!currentState.activeModelRef) throw new Error('current-state lacks active model identity');
 
     const homePath = currentState.homePath;
+    observedHomePath = homePath;
+    resultBase.effects.hostInstallationPerformed =
+      resultBase.beforeState.sourceCurrentness?.sourceSha !== binding.head;
+    stage = 'LIVED_TURNS';
     resultBase.completedStepReceipts.push({
       step: 'exact-product-current',
       state: 'PASS',
@@ -408,6 +431,8 @@ async function main() {
     let records = [];
     while (Date.now() < deadlineMs) {
       records = readChronology(homePath, binding.head, startedAt.getTime());
+      observedRecords = records;
+      applyObservedEffects(records, resultBase.effects);
       analysis = analyzeTurns(records);
 
       if (analysis.state === 'PASS') break;
@@ -432,7 +457,9 @@ async function main() {
       }
 
       const sourceAfterFailure = await tryJson('/api/v1/source-currentness');
+      applyObservedEffects(records, resultBase.effects);
       resultBase.afterState = {
+        stage,
         machineState: state,
         sourceSha: sourceAfterFailure?.sourceSha || null,
         serviceState: sourceAfterFailure?.serviceState || null,
@@ -470,13 +497,13 @@ async function main() {
       throw new Error('exact Product source was not current after the second completed Send');
     }
 
-    const setupCompleted = records.some((record) => record.fact === 'SETUP_EFFECT_COMPLETED');
-    resultBase.effects.hostInstallationPerformed = setupCompleted;
+    applyObservedEffects(records, resultBase.effects);
     resultBase.effects.modelRuntimePerformed = true;
     resultBase.effects.providerOrNetworkEffectPerformed = true;
 
     resultBase.afterState = {
       machineState: 'PASS',
+      stage: 'LIVED_TURNS_COMPLETED',
       sourceSha: afterSource.sourceSha,
       serviceState: afterSource.serviceState,
       servicePid: afterSource.processPid,
@@ -530,7 +557,18 @@ async function main() {
     });
   } catch (error) {
     resultBase.harnessFindings.push('DIRECT_HOST_LIVED_CIRCUIT_STOPPED');
+    if (observedHomePath) {
+      try {
+        observedRecords = readChronology(observedHomePath, binding.head, startedAt.getTime());
+        applyObservedEffects(observedRecords, resultBase.effects);
+      } catch (_) {
+        resultBase.unknownFindings.push('CHRONOLOGY_UNAVAILABLE_AFTER_HOST_STOP');
+      }
+    } else if (stage === 'NATIVE_SETUP' || stage === 'PRODUCT_CURRENTNESS' || stage === 'LIVED_TURNS') {
+      resultBase.unknownFindings.push('HOST_EFFECT_STATE_UNCONFIRMED_AFTER_NATIVE_SETUP_STOP');
+    }
     resultBase.afterState = {
+      stage,
       machineState: 'HARNESS_OR_HOST_FAILURE',
       errorClass: error?.constructor?.name || 'Error',
       errorMessage: String(error?.message || error).slice(0, 1600),
@@ -539,7 +577,7 @@ async function main() {
     writeResult({
       disposition: 'SAFE_FAILURE',
       stopReasonOrNull: 'DIRECT_HOST_LIVED_CIRCUIT_STOPPED',
-      firstSubstantiveFailureOrNull: failureRecord(error, 'DIRECT_HOST'),
+      firstSubstantiveFailureOrNull: failureRecord(error, stage),
       ...resultBase,
     });
   } finally {
