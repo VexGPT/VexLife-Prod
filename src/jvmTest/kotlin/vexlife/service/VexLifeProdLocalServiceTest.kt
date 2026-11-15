@@ -2556,6 +2556,18 @@ class VexLifeProdLocalServiceTest {
                     )
                     assertTrue(
                         stream.contains(
+                            "\"providerStageIndex\":1",
+                        ),
+                    )
+                    assertTrue(
+                        stream.contains(
+                            "\"providerModelRef\":\"" +
+                                currentSetup.qualifiedRuntimeEvidence.modelRef +
+                                "\"",
+                        ),
+                    )
+                    assertTrue(
+                        stream.contains(
                             "data: [DONE]",
                         ),
                     )
@@ -2631,6 +2643,23 @@ class VexLifeProdLocalServiceTest {
                     assertTrue(reaching >= 0 && requested > 0 && returned > requested && completed > returned, stream.take(2000))
                     assertTrue(stream.contains(""""capabilityUses":[{"handle":"home","action":"read","target":"home:config/home.json","state":"RETURNED"}]"""))
                     assertFalse(stream.contains("VEXLIFE_CAPABILITY_REQUEST/v1\\n"), "the control never streams as answer content")
+                    assertTrue(
+                        stream.contains(
+                            "\"providerStageIndex\":1",
+                        ),
+                    )
+                    assertTrue(
+                        stream.contains(
+                            "\"providerStageIndex\":2",
+                        ),
+                    )
+                    assertTrue(
+                        stream.contains(
+                            "\"providerModelRef\":\"" +
+                                currentSetup.qualifiedRuntimeEvidence.modelRef +
+                                "\"",
+                        ),
+                    )
                     assertEquals(2, providerCalls)
                 }
         } finally {
