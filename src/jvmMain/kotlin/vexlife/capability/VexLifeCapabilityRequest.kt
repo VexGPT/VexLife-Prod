@@ -68,7 +68,17 @@ object VexLifeCapabilityRequest {
      * unreadable.
      */
     fun parseOrNull(modelContent: String): Parsed? {
-        val headerIndex = controlHeaderIndexOrNull(modelContent) ?: return null
+        val rawHeaderIndex = modelContent.indexOf(RequestHeader)
+        if (rawHeaderIndex < 0) return null
+        val headerIndex =
+            controlHeaderIndexOrNull(modelContent)
+                ?: return Parsed.Malformed(
+                    reason =
+                        "the capability request header appeared outside the machine-control prefix; " +
+                            "if I intend to reach, the request must be my whole reply for this provider stage",
+                    controlContent = modelContent.substring(rawHeaderIndex).trimEnd(),
+                    controlSha256 = sha256(modelContent.substring(rawHeaderIndex).trimEnd()),
+                )
         val control = modelContent.substring(headerIndex).trimEnd()
         val sha = sha256(control)
         fun malformed(reason: String) = Parsed.Malformed(reason, control, sha)
