@@ -274,6 +274,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 streamedReasoning: '',
                 thoughtsVisible: true,
                 humanReasoningByResponse: new Map(),
+                // Human-only, browser-session thought playback. These rounds are never written back
+                // to Conversation, Context, Memory or runtime evidence and disappear on refresh.
+                liveThoughtRounds: [],
+                thoughtRoundsByResponse: new Map(),
+                nextThoughtRoundLabel: 'Thinking',
                 // What Vex reached during the live turn (bridge uses: handle/action/target/state), and
                 // per completed response for this browser session. Reach, never the content.
                 liveReaches: [],
@@ -1175,6 +1180,85 @@ object VexLifeWebP1RuntimeArtifacts {
                 return words + ' ' + t('workspace.label.reach-state').replace('{state}', settled);
               };
 
+              const currentReasoningRound = () => {
+                let round = state.liveThoughtRounds.at(-1);
+                if (!round || round.kind !== 'reasoning' || round.closed) {
+                  round = {
+                    kind: 'reasoning',
+                    label: state.nextThoughtRoundLabel || 'Thinking',
+                    text: '',
+                    closed: false
+                  };
+                  state.liveThoughtRounds.push(round);
+                  state.nextThoughtRoundLabel = 'Thinking';
+                }
+                return round;
+              };
+
+              const closeCurrentReasoningRound = () => {
+                const round = state.liveThoughtRounds.at(-1);
+                if (round?.kind === 'reasoning') round.closed = true;
+                state.streamedReasoning = '';
+                speech.stream.thought = 0;
+              };
+
+              const recordThoughtReach = (use) => {
+                if (!use?.state) {
+                  closeCurrentReasoningRound();
+                  state.liveThoughtRounds.push({ kind: 'reach', use: { ...use } });
+                  return;
+                }
+                for (let index = state.liveThoughtRounds.length - 1; index >= 0; index -= 1) {
+                  const round = state.liveThoughtRounds[index];
+                  if (
+                    round.kind === 'reach' &&
+                    !round.use?.state &&
+                    round.use?.handle === use.handle &&
+                    round.use?.action === use.action
+                  ) {
+                    round.use = { ...use };
+                    break;
+                  }
+                }
+                state.nextThoughtRoundLabel = 'Reviewing result';
+                state.streamedReasoning = '';
+                speech.stream.thought = 0;
+              };
+
+              const thoughtRoundsNode = (rounds, keyPrefix, live = false) => {
+                const meaningful = (rounds ?? []).filter(
+                  (round) => round.kind === 'reach' || String(round.text ?? '').trim()
+                );
+                if (!meaningful.length) return null;
+                const group = document.createElement('div');
+                group.className = 'thought-rounds' + (live ? ' live-thought-rounds' : '');
+                meaningful.forEach((round, index) => {
+                  if (round.kind === 'reach') {
+                    const line = document.createElement('p');
+                    line.className = 'thought-round-reach';
+                    line.textContent = reachText(round.use);
+                    group.append(line);
+                    return;
+                  }
+                  const detail = document.createElement('details');
+                  detail.className = 'thought-round';
+                  if (live && index === meaningful.length - 1 && !round.closed) detail.open = true;
+                  const summary = document.createElement('summary');
+                  summary.textContent = String(round.label ?? 'Thinking');
+                  detail.append(summary);
+                  if (String(round.text ?? '').trim()) {
+                    const box = document.createElement('div');
+                    box.className = 'reasoning thought-round-reasoning';
+                    const viewportKey = keyPrefix + '.' + index;
+                    bindReasoningViewport(box, viewportKey, live && !round.closed);
+                    box.textContent = String(round.text);
+                    detail.append(box);
+                  }
+                  group.append(detail);
+                });
+                return group;
+              };
+
               const reachList = (uses) => {
                 const list = document.createElement('ul');
                 list.className = 'reaches live-reaches';
@@ -1200,7 +1284,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!state.thoughtsVisible || message.role !== 'vex') return null;
                 const key = String(message.messageRef ?? '');
                 const reasoning = state.humanReasoningByResponse.get(key);
-                if (!reasoning) return null;
+                const capturedRounds = state.thoughtRoundsByResponse.get(key);
+                const rounds =
+                  Array.isArray(capturedRounds) && capturedRounds.length
+                    ? capturedRounds
+                    : reasoning
+                      ? [{ kind: 'reasoning', label: 'Thinking', text: reasoning, closed: true }]
+                      : [];
+                if (!rounds.length) return null;
 
                 const holder = document.createElement('div');
                 holder.className = 'thought';
@@ -1211,16 +1302,18 @@ object VexLifeWebP1RuntimeArtifacts {
                 toggle.dataset.thoughtKey = key;
                 toggle.setAttribute('aria-expanded', String(expanded));
                 const label = document.createElement('span');
-                label.textContent = expanded ? 'hide thoughts' : 'view thoughts';
+                const steps = rounds.filter(
+                  (round) => round.kind === 'reach' || String(round.text ?? '').trim()
+                ).length;
+                label.textContent =
+                  (expanded ? 'hide thoughts' : 'view thoughts') +
+                  (steps > 1 ? ' · ' + steps + ' steps' : '');
                 toggle.append(thoughtMark(), label);
                 holder.append(toggle);
 
                 if (expanded) {
-                  const box = document.createElement('div');
-                  box.className = 'reasoning';
-                  bindReasoningViewport(box, 'response.' + key, false);
-                  box.textContent = reasoning;
-                  holder.append(box);
+                  const group = thoughtRoundsNode(rounds, 'response.' + key, false);
+                  if (group) holder.append(group);
                 }
                 return holder;
               };
@@ -1284,14 +1377,9 @@ object VexLifeWebP1RuntimeArtifacts {
                         ? 'responding…'
                         : 'preparing…';
                 thought.append(who, mark, label);
-                if (state.liveReaches.length) thought.append(reachList(state.liveReaches));
-
-                if (state.thoughtsVisible && state.streamedReasoning) {
-                  const reasoning = document.createElement('div');
-                  reasoning.className = 'reasoning live-reasoning';
-                  bindReasoningViewport(reasoning, 'live', true);
-                  reasoning.textContent = state.streamedReasoning;
-                  thought.append(reasoning);
+                if (state.thoughtsVisible) {
+                  const rounds = thoughtRoundsNode(state.liveThoughtRounds, 'live', true);
+                  if (rounds) thought.append(rounds);
                 }
 
                 const bubble = document.createElement('div');
@@ -1393,26 +1481,16 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
 
                 const thought = item.querySelector('.thinking-now');
-                // Reach lines sit between the label and the live reasoning, in the order Vex asked.
-                item.querySelector('.live-reaches')?.remove();
-                if (state.liveReaches.length && thought) {
-                  const list = reachList(state.liveReaches);
-                  const label = thought.querySelector('.thinking-label');
-                  if (label) label.after(list);
-                  else thought.append(list);
-                }
-                let reasoning = item.querySelector('.live-reasoning');
-                if (state.thoughtsVisible && state.streamedReasoning) {
-                  if (!reasoning) {
-                    reasoning = document.createElement('div');
-                    reasoning.className = 'reasoning live-reasoning';
-                    bindReasoningViewport(reasoning, 'live', true);
-                    thought?.append(reasoning);
+                item.querySelector('.live-thought-rounds')?.remove();
+                if (state.thoughtsVisible && thought) {
+                  const rounds = thoughtRoundsNode(state.liveThoughtRounds, 'live', true);
+                  if (rounds) {
+                    thought.append(rounds);
+                    rounds.querySelectorAll('.reasoning[data-scroll-key]').forEach((element) => {
+                      const key = String(element.dataset.scrollKey ?? '');
+                      applyReasoningViewport(element, key, true, false);
+                    });
                   }
-                  reasoning.textContent = state.streamedReasoning;
-                  applyReasoningViewport(reasoning, 'live', true, false);
-                } else if (reasoning) {
-                  reasoning.remove();
                 }
 
                 const bubble = item.querySelector('.bubble');
@@ -2171,15 +2249,33 @@ object VexLifeWebP1RuntimeArtifacts {
                 root.dataset.vexLastPromptReceiptRef = String(result.promptContext?.receiptRef ?? '');
                 root.dataset.vexLastBrowserContextRef = String(result.promptContext?.browserContextRef ?? '');
                 const reasoning = result.humanReasoning;
+                const responseKey = String(result.responseMessageRef ?? '');
+                const streamedRounds =
+                  state.liveThoughtRounds
+                    .filter((round) => round.kind === 'reach' || String(round.text ?? '').trim())
+                    .map((round) => ({
+                      kind: round.kind,
+                      label: round.label,
+                      text: round.text,
+                      closed: true,
+                      use: round.use ? { ...round.use } : undefined
+                    }));
+                if (streamed && responseKey && streamedRounds.length) {
+                  state.thoughtRoundsByResponse.set(responseKey, streamedRounds);
+                } else if (responseKey) {
+                  state.thoughtRoundsByResponse.delete(responseKey);
+                }
                 if (
                   reasoning?.state === 'PRESENT_EPHEMERAL' &&
                   typeof reasoning.text === 'string' &&
                   reasoning.text.length > 0
                 ) {
-                  state.humanReasoningByResponse.set(String(result.responseMessageRef ?? ''), reasoning.text);
-                } else if (result.responseMessageRef) {
-                  state.humanReasoningByResponse.delete(String(result.responseMessageRef));
-                  state.expandedThoughts.delete(String(result.responseMessageRef));
+                  state.humanReasoningByResponse.set(responseKey, reasoning.text);
+                } else if (responseKey) {
+                  state.humanReasoningByResponse.delete(responseKey);
+                  if (!state.thoughtRoundsByResponse.has(responseKey)) {
+                    state.expandedThoughts.delete(responseKey);
+                  }
                 }
                 if (Array.isArray(result.capabilityUses) && result.capabilityUses.length > 0) {
                   state.reachesByResponse.set(String(result.responseMessageRef ?? ''), result.capabilityUses);
@@ -2201,6 +2297,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.streamPhase = null;
                 state.streamedContent = '';
                 state.streamedReasoning = '';
+                state.liveThoughtRounds = [];
+                state.nextThoughtRoundLabel = 'Thinking';
                 setCompanionStatus('Ready', 'Ready', result.model ?? '');
                 render();
               };
@@ -2238,6 +2336,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.pending = pending;
                 state.sendInFlight = true;
                 state.liveReaches = [];
+                state.liveThoughtRounds = [];
+                state.nextThoughtRoundLabel = 'Thinking';
                 state.streamPhase = 'CheckingRuntime';
                 state.streamedContent = '';
                 state.streamedReasoning = '';
@@ -2273,7 +2373,9 @@ object VexLifeWebP1RuntimeArtifacts {
                     }
                     if (event?.type === 'REASONING_DELTA' && typeof event.delta === 'string') {
                       state.streamPhase = 'Reasoning';
-                      state.streamedReasoning += event.delta;
+                      const round = currentReasoningRound();
+                      round.text += event.delta;
+                      state.streamedReasoning = round.text;
                       setCompanionStatus('Checking', 'Thinking', '');
                       updateLiveTurn();
                       followStreamSpeech(false);
@@ -2283,6 +2385,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       // A request Vex made (state absent) or what came back (state present). The
                       // returned event settles the newest open request of the same handle/action.
                       const use = event.reach;
+                      recordThoughtReach(use);
                       let settled = false;
                       if (use.state) {
                         for (let index = state.liveReaches.length - 1; index >= 0; index -= 1) {
@@ -2323,6 +2426,8 @@ object VexLifeWebP1RuntimeArtifacts {
                   state.streamedContent = '';
                   state.streamedReasoning = '';
                   state.liveReaches = [];
+                  state.liveThoughtRounds = [];
+                  state.nextThoughtRoundLabel = 'Thinking';
 
                   let terminalError = error;
                   let status = Number(error?.vexStatus ?? 0);
