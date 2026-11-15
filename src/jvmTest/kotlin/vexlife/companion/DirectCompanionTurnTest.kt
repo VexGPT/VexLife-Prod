@@ -1943,6 +1943,75 @@ class DirectCompanionTurnTest {
     }
 
     @Test
+    fun clearingThreadMemoryStartsVexFreshWithoutDeletingAndRestoreGivesTheThreadBack() {
+        val home = productHome()
+        val bodies = mutableListOf<String>()
+        fun turn(key: String, content: String, answer: String): DirectCompanionTurn.Result =
+            DirectCompanionTurn.performWithHooks(
+                setup = setup(home),
+                intent = DirectCompanionTurn.Intent(idempotencyKey = key, content = content),
+                hooks =
+                    DirectCompanionTurn.Hooks(
+                        transport =
+                            DirectCompanionConnection.Transport { call ->
+                                bodies += call.body
+                                DirectCompanionConnection.HttpResult(
+                                    status = 200,
+                                    body =
+                                        """{"choices":[{"message":{"role":"assistant","content":__A__}}]}"""
+                                            .replace(
+                                                "__A__",
+                                                kotlinx.serialization.json.JsonPrimitive(answer).toString(),
+                                            ),
+                                )
+                            }
+                    ),
+            )
+
+        try {
+            turn("send.thread.001", "My lantern is called Ember.", "Ember it is.")
+            turn("send.thread.002", "And the garden is Moonvale.", "Moonvale, noted.")
+            assertTrue(bodies.last().contains("My lantern is called Ember."))
+
+            // Clear thread memory: nothing is deleted, and the next turn carries none of it.
+            val thread = vexlife.conversation.VexLifeThreadContext(home)
+            assertEquals(
+                vexlife.conversation.VexLifeThreadContextFamily.StateWhole,
+                thread.projection().state,
+            )
+            val cleared =
+                thread.control(vexlife.conversation.VexLifeThreadContextFamily.ControlClear)
+            assertEquals(vexlife.conversation.VexLifeThreadContextFamily.StateFromHorizon, cleared.state)
+            assertEquals(3L, cleared.horizonSequence)
+            assertEquals(4, DirectConversationStore(home).current().canonicalEvents.size)
+
+            val fresh = turn("send.thread.003", "What is my lantern called?", "I don't know yet.")
+            val freshBody = bodies.last()
+            assertFalse(freshBody.contains("Ember"), "nothing behind the horizon reaches Vex")
+            assertFalse(freshBody.contains("Moonvale"))
+            assertTrue(freshBody.contains("What is my lantern called?"))
+            assertTrue(freshBody.contains("The person cleared thread memory after the first 2 completed exchanges"))
+            assertEquals(3L, fresh.promptContextReceipt.contextHorizonSequence)
+            assertTrue(fresh.promptContextReceipt.selectedConversationEventRefs.isEmpty())
+
+            // The turn after that sees the turn after the horizon, still nothing before it.
+            turn("send.thread.004", "Say it again.", "Still unknown.")
+            assertTrue(bodies.last().contains("What is my lantern called?"))
+            assertFalse(bodies.last().contains("Ember"))
+
+            // Restore: the whole thread is given again.
+            val restored =
+                thread.control(vexlife.conversation.VexLifeThreadContextFamily.ControlRestore)
+            assertEquals(vexlife.conversation.VexLifeThreadContextFamily.StateWhole, restored.state)
+            turn("send.thread.005", "And now?", "Ember, in Moonvale.")
+            assertTrue(bodies.last().contains("My lantern is called Ember."))
+            assertEquals(10, DirectConversationStore(home).current().canonicalEvents.size)
+        } finally {
+            home.parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
     fun providerFailurePreservesRequestSuppressesSameAttemptAndAllowsNewAttempt() {
         val home =
             productHome()

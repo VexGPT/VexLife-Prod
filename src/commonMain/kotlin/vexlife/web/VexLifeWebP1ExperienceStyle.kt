@@ -446,6 +446,11 @@ svg { display: block; }
   border-bottom-right-radius: 4px;
 }
 .message-you .bubble::after { right: 14px; }
+.timeline-horizon {
+  list-style: none; margin: 14px 0; padding: 6px 0; text-align: center;
+  color: var(--ink-3); font-size: var(--step--1);
+  border-top: 1px dashed var(--ink-3); border-bottom: 1px dashed var(--ink-3);
+}
 .message-vex .bubble {
   justify-self: start; background: var(--vex); border-color: var(--vex-rule);
   border-bottom-left-radius: 4px;

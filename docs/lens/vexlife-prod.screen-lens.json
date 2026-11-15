@@ -666,6 +666,30 @@
           "pathwayRef": null,
           "style": "Surface",
           "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.diagnostics.thread-context",
+          "kind": "TEXT",
+          "label": "Thread context",
+          "parentRef": "element.vexlife-workspace.companion.settings.diagnostics",
+          "symbol": "VexLifeWorkspaceBlueprint.ThreadContextState",
+          "declared": "SettingsDiagnostics.content(\"thread-context\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.diagnostics.thread-context-control",
+          "kind": "BUTTON",
+          "label": "Thread context control",
+          "parentRef": "element.vexlife-workspace.companion.settings.diagnostics",
+          "symbol": "VexLifeWorkspaceBlueprint.ThreadContextControl",
+          "declared": "SettingsDiagnostics.control(\"thread-context-control\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
         }
       ]
     }

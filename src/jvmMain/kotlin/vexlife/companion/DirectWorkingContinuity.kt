@@ -139,7 +139,8 @@ object DirectWorkingContinuity {
             !rolloverEligible(
                 current = current,
                 prior = prior,
-            )
+            ) ||
+                behindContextHorizon(productHome, prior)
         ) {
             return null
         }
@@ -246,7 +247,8 @@ object DirectWorkingContinuity {
                 rolloverEligible(
                     current = current,
                     prior = prior,
-                )
+                ) &&
+                !behindContextHorizon(productHome, prior)
 
         if (
             expected ==
@@ -1217,6 +1219,16 @@ object DirectWorkingContinuity {
                 }
         }
     }
+
+    /**
+     * A rollover formed for a turn the person has since put behind the thread context horizon
+     * carries what came before it; it is not given to Vex.
+     */
+    private fun behindContextHorizon(
+        productHome: Path,
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn,
+    ): Boolean =
+        DirectConversationStore(productHome).contextHorizon()?.covers(prior.head.sequence) == true
 
     private fun rolloverEligible(
         current: VexLifeWorkingContinuityOwner.Current,

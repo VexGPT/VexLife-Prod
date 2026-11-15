@@ -66,7 +66,16 @@ class VexLifeStringsTest {
                     vexlife.model.VexLifeModelsFamily.ControlRemove,
                 ).map { "model:control:$it" } +
                 vexlife.model.VexLifeModelsFamily.Files.entries.map { "model:files:${it.name}" } +
-                vexlife.model.heretic.HereticModelCatalog.Standing.entries.map { "model:standing:${it.name}" }
+                vexlife.model.heretic.HereticModelCatalog.Standing.entries.map { "model:standing:${it.name}" } +
+                listOf(
+                    vexlife.conversation.VexLifeThreadContextFamily.StateEmpty,
+                    vexlife.conversation.VexLifeThreadContextFamily.StateWhole,
+                    vexlife.conversation.VexLifeThreadContextFamily.StateFromHorizon,
+                ).map { "thread-context:state:$it" } +
+                listOf(
+                    vexlife.conversation.VexLifeThreadContextFamily.ControlClear,
+                    vexlife.conversation.VexLifeThreadContextFamily.ControlRestore,
+                ).map { "thread-context:control:$it" }
         val known =
             capabilityRefs.toSet() +
             setOf(

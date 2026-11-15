@@ -99,6 +99,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 visionControlPath: ${jsString(VexLifeProdServiceContract.VisionControlPath)},
                 diagnosticsPath: ${jsString(VexLifeProdServiceContract.DiagnosticsPath)},
                 diagnosticsControlPath: ${jsString(VexLifeProdServiceContract.DiagnosticsControlPath)},
+                threadContextPath: ${jsString(VexLifeProdServiceContract.ThreadContextPath)},
+                threadContextControlPath: ${jsString(VexLifeProdServiceContract.ThreadContextControlPath)},
                 modelsPath: ${jsString(VexLifeProdServiceContract.ModelsPath)},
                 modelsControlPath: ${jsString(VexLifeProdServiceContract.ModelsControlPath)},
                 chronologyPath: ${jsString(VexLifeProdServiceContract.ChronologyPath)},
@@ -208,6 +210,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 diagnosticsRecords: byId('diagnostics-records'),
                 diagnosticsEnhanced: byId('diagnostics-enhanced'),
                 diagnosticsClear: byId('diagnostics-clear'),
+                threadContextStatus: byId('thread-context-status'),
+                threadContextControls: byId('thread-context-controls'),
                 vexMemoryDetail: byId('vex-memory-detail'),
                 resourceNote: byId('resource-note'),
                 homeCurrentState: byId('home-current-state'),
@@ -254,6 +258,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 memory: null,
                 diagnostics: null,
                 diagnosticsInFlight: false,
+                threadContext: null,
+                threadContextInFlight: false,
                 // Settings → Models projection (VexLifeModels); refreshed while a download runs.
                 models: null,
                 modelsInFlight: false,
@@ -1634,7 +1640,19 @@ object VexLifeWebP1RuntimeArtifacts {
                   return;
                 }
                 const messages = state.conversation?.messages ?? [];
-                const nodes = messages.map(messageNode);
+                const nodes = [];
+                const horizonSequence = state.conversation?.contextHorizonSequence;
+                for (const message of messages) {
+                  nodes.push(messageNode(message));
+                  // Where the person cleared thread memory: kept on screen, not given to Vex.
+                  if (horizonSequence != null && Number(message.sequence) === Number(horizonSequence)) {
+                    const divider = document.createElement('li');
+                    divider.className = 'timeline-horizon';
+                    divider.dataset.horizonSequence = String(message.sequence);
+                    divider.textContent = t('workspace.label.thread-context-divider');
+                    nodes.push(divider);
+                  }
+                }
                 let sequence = nextSequence();
 
                 for (const attempt of state.failedAttempts) {
@@ -2276,6 +2294,61 @@ object VexLifeWebP1RuntimeArtifacts {
                 } finally {
                   state.diagnosticsInFlight = false;
                   renderDiagnostics();
+                }
+              };
+
+              // Settings → Debug → Thread memory. State and lawful Controls come from
+              // VexLifeThreadContextFamily via the service; nothing here deletes anything.
+              const renderThreadContext = () => {
+                if (!ui.threadContextStatus || !ui.threadContextControls) return;
+                ui.threadContextControls.textContent = '';
+                const projection = state.threadContext;
+                if (!projection) {
+                  ui.threadContextStatus.textContent = '';
+                  return;
+                }
+                const display = projection.display;
+                ui.threadContextStatus.textContent = resolveText(display.status);
+                for (const control of display.controls || []) {
+                  const button = document.createElement('button');
+                  button.type = 'button';
+                  button.className = 'outline-button';
+                  button.dataset.controlRef = control.controlRef;
+                  button.textContent = resolveText(control.label);
+                  button.disabled = state.threadContextInFlight;
+                  button.addEventListener('click', () => void threadContextControl(control.controlRef));
+                  ui.threadContextControls.append(button);
+                }
+              };
+
+              const loadThreadContext = async () => {
+                const response = await fetch(service.threadContextPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                state.threadContext = await readJson(response);
+                renderThreadContext();
+                return state.threadContext;
+              };
+
+              const threadContextControl = async (controlRef) => {
+                if (state.threadContextInFlight) return;
+                state.threadContextInFlight = true;
+                renderThreadContext();
+                try {
+                  const response = await fetch(service.threadContextControlPath, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', accept: 'application/json' },
+                    body: JSON.stringify({ controlRef })
+                  });
+                  state.threadContext = await readJson(response);
+                  await loadConversation().catch(() => {});
+                } catch (error) {
+                  notify(
+                    error?.vexResponse?.code === 'THREAD_BUSY'
+                      ? t('workspace.status.thread-context-busy')
+                      : (error instanceof Error ? error.message : t('workspace.status.thread-context-busy'))
+                  );
+                } finally {
+                  state.threadContextInFlight = false;
+                  renderThreadContext();
                 }
               };
 
@@ -3120,6 +3193,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   void loadSettings().catch(() => {});
                   void loadMemory().catch(() => {});
                   void loadDiagnostics().catch(() => renderDiagnostics());
+                  void loadThreadContext().catch(() => renderThreadContext());
                   void loadModels().catch(() => {});
                   // Observed: the presentation rendered with current service data.
                   reportFact('PRESENTATION_ARRIVED', { presentation: 'workspace' });

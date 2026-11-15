@@ -286,6 +286,12 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           </div>
           <p class="setting-note-line" data-vex-text="workspace.description.diagnostics-enhanced-note"></p>
           <p class="setting-note-line" data-vex-text="workspace.description.diagnostics-export-note"></p>
+          <div class="memory-state" data-vex-ref="${VexLifeWebP1.ThreadContextState.identity.ref}" id="thread-context-state">
+            <p class="memory-label" data-vex-text="workspace.heading.thread-context"></p>
+            <p class="setting-note-line" id="thread-context-status"></p>
+          </div>
+          <p class="setting-note-line" data-vex-text="workspace.description.thread-context"></p>
+          <div class="home-row" data-vex-ref="${VexLifeWebP1.ThreadContextControl.identity.ref}" id="thread-context-controls"></div>
         </section>
 
         <section class="setting setting-renderer">
