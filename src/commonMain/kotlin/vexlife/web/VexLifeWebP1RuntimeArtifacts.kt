@@ -1513,6 +1513,245 @@ object VexLifeWebP1RuntimeArtifacts {
                 applyTimelineViewport(false);
               };
 
+              const renderTicket = () => {
+                const context = state.browserContext;
+                const visible = state.includePage && context;
+                ui.ticket.hidden = !visible;
+                if (!visible) return;
+                ui.ticket.dataset.state = 'Ready';
+                ui.ticketTitle.textContent = context.title || 'Included page';
+                ui.ticketLine.textContent = 'A separately rendered snapshot of this entered URL will be given to Vex on the next turn.';
+                ui.ticketUrl.textContent = context.pageUrl;
+                ui.ticketHash.textContent = '';
+                ui.ticketView.dataset.contextReady = 'true';
+              };
+
+              // Private mode: semantics and copy come from the service (VexLifePrivateModeFamily). The
+              // private transcript exists only in the running service; this renderer only shows it.
+              const isPrivate = () => state.privateMode?.state === 'PRIVATE';
+
+              const renderPrivate = () => {
+                const display = state.privateMode?.display;
+                const privateNow = isPrivate();
+                ui.privateMode.setAttribute('aria-pressed', String(privateNow));
+                ui.privateMode.dataset.private = String(privateNow);
+                ui.privateModeLabel.textContent = String(display?.label ?? 'Kept in your archives');
+                ui.privateMode.title = String(display?.detail ?? '') + (display?.primaryLabel ? ' (' + display.primaryLabel + ')' : '');
+                ui.privateMode.disabled = !display || state.privateInFlight;
+                root.dataset.vexPrivate = String(privateNow);
+                ui.privateBanner.hidden = !privateNow;
+                if (!privateNow) return;
+                ui.privateBannerText.textContent = String(display?.detail ?? '');
+                const notes = (state.privateMode?.keptNotes ?? []).map((note) => {
+                  const item = document.createElement('li');
+                  item.textContent = 'Kept: ' + note;
+                  return item;
+                });
+                ui.privateNotes.replaceChildren(...notes);
+                const proposal = state.privateMode?.proposedNoteOrNull;
+                ui.privateProposal.hidden = !proposal;
+                ui.privateProposalText.textContent = proposal ? 'Vex would keep: “' + proposal + '”' : '';
+                ui.privatePropose.hidden = Boolean(proposal);
+                ui.privatePropose.disabled = state.privateInFlight || !(state.privateMode?.exchanges ?? []).length;
+                ui.privateKeep.disabled = state.privateInFlight;
+                ui.privateDecline.disabled = state.privateInFlight;
+              };
+
+              const loadPrivate = async () => {
+                const response = await fetch(service.privatePath, { headers: { accept: 'application/json' }, cache: 'no-store' });
+                const wasPrivate = isPrivate();
+                state.privateMode = await readJson(response);
+                renderPrivate();
+                if (wasPrivate !== isPrivate()) renderTimeline();
+                if (state.app === apps.archives) renderArchives();
+                return state.privateMode;
+              };
+
+              const privatePost = async (path, body) => {
+                state.privateInFlight = true;
+                renderPrivate();
+                try {
+                  const response = await fetch(path, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', accept: 'application/json' },
+                    body: JSON.stringify(body ?? {})
+                  });
+                  const value = await readJson(response);
+                  state.privateMode = value?.private ?? value;
+                } finally {
+                  state.privateInFlight = false;
+                }
+                renderPrivate();
+                renderTimeline();
+                renderComposer();
+                if (state.app === apps.archives) renderArchives();
+              };
+
+              const togglePrivate = async () => {
+                const controlRef = state.privateMode?.display?.primaryControlRef;
+                if (!controlRef || state.privateInFlight || state.sendInFlight) return;
+                try {
+                  await privatePost(service.privateControlPath, {
+                    controlRef,
+                    requestRef: 'request.vexlife-prod.private.' + crypto.randomUUID().toLowerCase()
+                  });
+                  notify(isPrivate()
+                    ? 'Private mode is on. Nothing here is kept unless you keep a note.'
+                    : 'Private mode is off. Vex will know a private conversation happened.');
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : 'Private mode could not change.');
+                  await loadPrivate().catch(() => {});
+                }
+              };
+
+              const sendPrivate = async () => {
+                const content = ui.draft.value.trim();
+                if (!content || state.privateInFlight) return;
+                state.privatePending = content;
+                ui.draft.value = '';
+                sizeDraft();
+                renderTimeline();
+                try {
+                  if (speech.settings.enabled) audioContext();
+                  await privatePost(service.privateSendPath, { content });
+                  const exchanges = state.privateMode?.exchanges ?? [];
+                  if (speech.settings.enabled && exchanges.length) {
+                    enqueueSpeech(exchanges[exchanges.length - 1].vex, 'private.' + exchanges.length * 2);
+                  }
+                } catch (error) {
+                  if (!ui.draft.value) ui.draft.value = content;
+                  sizeDraft();
+                  notify(error instanceof Error ? error.message : 'Vex could not reply. Nothing was kept.');
+                } finally {
+                  state.privatePending = null;
+                  renderTimeline();
+                  renderComposer();
+                }
+              };
+
+              // The left pane shows one app at a time. Choosing an app is presentation state only.
+              const inSourceTemplate = (pageUrl) =>
+                Boolean(pageUrl) && apps.sourceTemplateScopes.some((scope) => String(pageUrl).startsWith(scope));
+
+              const renderApp = () => {
+                const app = state.app;
+                ui.appSelector.value = app;
+                ui.family.hidden = app !== apps.sourceTemplate;
+                ui.archives.hidden = app !== apps.archives;
+                ui.viewport.hidden = app === apps.archives;
+                ui.addressForm.dataset.app = app;
+                ui.query.disabled = app === apps.archives;
+                if (app === apps.archives) ui.frameStatus.hidden = true;
+                for (const member of ui.family.querySelectorAll('.family-member')) {
+                  const current = String(state.humanPageUrl ?? '').startsWith(member.dataset.familyScope);
+                  if (current) member.setAttribute('aria-current', 'page');
+                  else member.removeAttribute('aria-current');
+                }
+                root.dataset.vexApp = app;
+                if (app === apps.archives) renderArchives();
+              };
+
+              const archiveDayKey = (date) =>
+                date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+
+              const renderArchives = () => {
+                if (!ui.archivesTimeline) return;
+                const messages = (state.conversation?.messages ?? []).filter((message) => !Number.isNaN(Date.parse(message.formedAt)));
+                if (!messages.length) {
+                  ui.archivesSummary.textContent = 'Everything you and Vex say is kept here, in your Vex Home, by day.';
+                  const empty = document.createElement('li');
+                  empty.className = 'archives-empty';
+                  empty.textContent = 'Nothing here yet.';
+                  ui.archivesTimeline.replaceChildren(empty);
+                  return;
+                }
+                const days = new Map();
+                const place = (at, entry) => {
+                  const key = archiveDayKey(at);
+                  if (!days.has(key)) days.set(key, { date: at, messages: [] });
+                  days.get(key).messages.push(entry);
+                };
+                for (const message of messages) place(new Date(message.formedAt), message);
+                for (const interval of state.privateMode?.intervals ?? []) {
+                  if (!Number.isNaN(Date.parse(interval.startedAt))) {
+                    place(new Date(interval.startedAt), { privateInterval: interval, formedAt: interval.startedAt });
+                  }
+                }
+                for (const day of days.values()) day.messages.sort((a, b) => Date.parse(a.formedAt) - Date.parse(b.formedAt));
+                const first = new Date(messages[0].formedAt);
+                ui.archivesSummary.textContent =
+                  messages.length + ' message' + (messages.length === 1 ? '' : 's') + ' over ' + days.size + ' day' + (days.size === 1 ? '' : 's') +
+                  ' since ' + first.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) +
+                  ' · kept in your Vex Home';
+                const items = [...days.entries()].reverse().map(([key, day]) => {
+                  const item = document.createElement('li');
+                  item.className = 'archives-day';
+                  item.dataset.day = key;
+                  const heading = document.createElement('h3');
+                  heading.textContent = day.date.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                  const count = document.createElement('span');
+                  const spoken = day.messages.filter((entry) => !entry.privateInterval).length;
+                  count.textContent = spoken + ' message' + (spoken === 1 ? '' : 's');
+                  heading.append(count);
+                  const entries = document.createElement('ol');
+                  entries.className = 'archives-entries';
+                  for (const message of day.messages) {
+                    const entry = document.createElement('li');
+                    if (message.privateInterval) {
+                      const interval = message.privateInterval;
+                      const from = new Date(interval.startedAt);
+                      const to = new Date(interval.endedAt);
+                      entry.className = 'archives-entry archives-private';
+                      const time = document.createElement('time');
+                      time.dateTime = String(interval.startedAt);
+                      time.textContent = from.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+                      const who = document.createElement('span');
+                      who.className = 'who';
+                      who.textContent = 'Private';
+                      const text = document.createElement('p');
+                      text.textContent =
+                        'Private conversation until ' + to.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) +
+                        ' · ' + interval.exchangeCount + ' exchange' + (interval.exchangeCount === 1 ? '' : 's') + ' · not kept' +
+                        (interval.keptNotes.length ? '\nKept: ' + interval.keptNotes.join('\nKept: ') : '');
+                      entry.append(time, who, text);
+                      entries.append(entry);
+                      continue;
+                    }
+                    entry.className = 'archives-entry';
+                    entry.dataset.eventRef = String(message.eventRef ?? '');
+                    const time = document.createElement('time');
+                    time.dateTime = String(message.formedAt);
+                    time.textContent = new Date(message.formedAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+                    const who = document.createElement('span');
+                    who.className = 'who';
+                    who.textContent = message.role === 'human' ? 'You' : 'Vex';
+                    const text = document.createElement('p');
+                    text.textContent = String(message.content ?? '');
+                    entry.append(time, who, text);
+                    entries.append(entry);
+                  }
+                  item.append(heading, entries);
+                  return item;
+                });
+                ui.archivesTimeline.replaceChildren(...items);
+              };
+
+              const chooseApp = (app) => {
+                if (!apps.keys.includes(app)) return;
+                state.app = app;
+                try {
+                  localStorage.setItem(apps.storageKey, app);
+                } catch {}
+                if (app === apps.archives) {
+                  state.includePage = false;
+                } else if (app === apps.sourceTemplate && !inSourceTemplate(state.humanPageUrl)) {
+                  const home = ui.family.querySelector('.family-member')?.dataset.familyHome;
+                  if (home) navigate(home);
+                }
+                renderApp();
+                renderComposer();
+              };
+
               const renderComposer = () => {
                 const contextEligible = Boolean(state.contextTargetPageUrl);
                 const contextReady = Boolean(state.browserContext);
