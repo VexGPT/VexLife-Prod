@@ -2554,10 +2554,15 @@ object VexLifeWebP1RuntimeArtifacts {
                       });
                 state.pending = pending;
                 state.sendInFlight = true;
-                state.liveReaches = [];
-                state.liveProcessEntries = [];
-                state.liveProcessExpanded = true;
-                state.liveProcessManuallyToggled = false;
+                if (!retryingExactAttempt) {
+                  // A genuinely new Send owns a new live process slot. Reconciliation of the same
+                  // pending idempotency key must preserve the process already observed for it.
+                  state.liveReaches = [];
+                  state.liveProcessEntries = [];
+                  state.liveProcessExpanded = true;
+                  state.liveProcessManuallyToggled = false;
+                  resetLiveProcessViewports();
+                }
                 state.streamPhase = 'CheckingRuntime';
                 state.streamedContent = '';
                 state.streamedReasoning = '';
@@ -2565,7 +2570,6 @@ object VexLifeWebP1RuntimeArtifacts {
                 // stream accumulators/events; neither presentation consumer owns the other.
                 speech.stream = { reply: 0, thought: 0 };
                 if (speech.settings.enabled) audioContext();
-                resetLiveProcessViewports();
                 if (!retryingExactAttempt && newAttemptSeed === null) {
                   ui.draft.value = '';
                   sizeDraft();
