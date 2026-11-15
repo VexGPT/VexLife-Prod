@@ -474,6 +474,16 @@ svg { display: block; }
 }
 .thought-toggle:hover { color: var(--ink); background: var(--sunken); }
 .thought-mark { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.4; }
+.thought-rounds { display: grid; gap: 6px; margin-top: 7px; }
+.thought-round { margin: 0; }
+.thought-round > summary {
+  cursor: pointer; color: var(--ink-2); font-size: var(--step--1); font-weight: 600;
+}
+.thought-round-reach {
+  margin: 0; color: var(--ink-2); font-size: var(--step--1); overflow-wrap: anywhere;
+}
+.thought-round-reach::before { content: "↳ "; color: var(--ink-3); }
+.thought-round-reasoning { margin-top: 5px; }
 .thinking-now { display: flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: var(--step--1); }
 .thinking-now .speaker-inline { font-weight: 600; color: var(--ink-2); }
 .thinking-now .thought-mark { animation: turn 2.4s linear infinite; }
