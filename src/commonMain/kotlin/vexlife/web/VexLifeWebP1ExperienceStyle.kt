@@ -474,9 +474,14 @@ svg { display: block; }
 }
 .thought-toggle:hover { color: var(--ink); background: var(--sunken); }
 .thought-mark { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.4; }
-.thinking-now { display: flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: var(--step--1); }
+.thinking-now { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--ink-2); font-size: var(--step--1); }
 .thinking-now .speaker-inline { font-weight: 600; color: var(--ink-2); }
 .thinking-now .thought-mark { animation: turn 2.4s linear infinite; }
+.live-process-stages { flex: 0 0 100%; width: 100%; display: grid; gap: 9px; margin-top: 2px; }
+.process-stage { min-width: 0; }
+.process-stage + .process-stage { margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--rule); }
+.process-stage-heading { margin: 0 2px 2px; overflow-wrap: anywhere; }
+.process-stage .reasoning { max-width: min(92%, 640px); }
 .reasoning {
   max-width: min(92%, 640px); max-height: 220px; overflow-y: auto; margin-top: 7px;
   overflow-anchor: none; scrollbar-gutter: stable;
