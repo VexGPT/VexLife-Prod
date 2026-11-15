@@ -274,6 +274,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 streamedReasoning: '',
                 thoughtsVisible: true,
                 humanReasoningByResponse: new Map(),
+                // Ephemeral browser-session projection of owner-supplied provider stages. Stage
+                // identity comes from DirectCompanionTurn; presentation never infers stage changes.
+                liveProcessStages: [],
+                processStagesByResponse: new Map(),
                 // What Vex reached during the live turn (bridge uses: handle/action/target/state), and
                 // per completed response for this browser session. Reach, never the content.
                 liveReaches: [],
@@ -1196,11 +1200,94 @@ object VexLifeWebP1RuntimeArtifacts {
                 return line;
               };
 
+              const ensureLiveProcessStage = (stageIndex, modelRef) => {
+                const index = Number(stageIndex);
+                if (!Number.isInteger(index) || index <= 0) return null;
+                let stage = state.liveProcessStages.find((candidate) => candidate.index === index);
+                if (!stage) {
+                  stage = {
+                    index,
+                    modelRef: String(modelRef ?? ''),
+                    reasoning: '',
+                    reaches: [],
+                    responding: false
+                  };
+                  state.liveProcessStages.push(stage);
+                  state.liveProcessStages.sort((left, right) => left.index - right.index);
+                } else if (!stage.modelRef && modelRef) {
+                  stage.modelRef = String(modelRef);
+                }
+                return stage;
+              };
+
+              const settleReach = (uses, use) => {
+                if (!Array.isArray(uses) || !use) return;
+                if (use.state) {
+                  for (let index = uses.length - 1; index >= 0; index -= 1) {
+                    const open = uses[index];
+                    if (!open.state && open.handle === use.handle && open.action === use.action) {
+                      uses[index] = { ...use };
+                      return;
+                    }
+                  }
+                }
+                uses.push({ ...use });
+              };
+
+              const snapshotLiveProcessStages = () =>
+                state.liveProcessStages.map((stage) => ({
+                  index: stage.index,
+                  modelRef: stage.modelRef,
+                  reasoning: stage.reasoning,
+                  reaches: stage.reaches.map((use) => ({ ...use })),
+                  responding: Boolean(stage.responding)
+                }));
+
+              const processStageNode = (stage, viewportKey, live) => {
+                const section = document.createElement('div');
+                section.className = 'process-stage';
+                section.dataset.providerStageIndex = String(stage.index);
+
+                const heading = document.createElement('p');
+                heading.className = 'receipt-line process-stage-heading';
+                heading.textContent =
+                  'Stage ' +
+                  String(stage.index) +
+                  (stage.modelRef ? ' · ' + stage.modelRef : '');
+                section.append(heading);
+
+                if (stage.reasoning) {
+                  const box = document.createElement('div');
+                  box.className = 'reasoning' + (live ? ' live-reasoning' : '');
+                  bindReasoningViewport(box, viewportKey, live);
+                  box.textContent = stage.reasoning;
+                  section.append(box);
+                }
+
+                if (stage.reaches.length) {
+                  section.append(reachList(stage.reaches));
+                }
+                return section;
+              };
+
+              const appendProcessStages = (holder, stages, keyPrefix, live) => {
+                for (const stage of stages) {
+                  holder.append(
+                    processStageNode(
+                      stage,
+                      keyPrefix + '.stage.' + String(stage.index),
+                      live
+                    )
+                  );
+                }
+              };
+
               const completedThoughtNode = (message) => {
                 if (!state.thoughtsVisible || message.role !== 'vex') return null;
                 const key = String(message.messageRef ?? '');
+                const stages = state.processStagesByResponse.get(key) ?? [];
                 const reasoning = state.humanReasoningByResponse.get(key);
-                if (!reasoning) return null;
+                if (!stages.length && !reasoning) return null;
 
                 const holder = document.createElement('div');
                 holder.className = 'thought';
@@ -1216,11 +1303,17 @@ object VexLifeWebP1RuntimeArtifacts {
                 holder.append(toggle);
 
                 if (expanded) {
-                  const box = document.createElement('div');
-                  box.className = 'reasoning';
-                  bindReasoningViewport(box, 'response.' + key, false);
-                  box.textContent = reasoning;
-                  holder.append(box);
+                  if (stages.length) {
+                    appendProcessStages(holder, stages, 'response.' + key, false);
+                  } else {
+                    // Non-streaming/idempotent recovery has only the final response-local
+                    // projection. Keep that truthful fallback without pretending it was a stage log.
+                    const box = document.createElement('div');
+                    box.className = 'reasoning';
+                    bindReasoningViewport(box, 'response.' + key, false);
+                    box.textContent = reasoning;
+                    holder.append(box);
+                  }
                 }
                 return holder;
               };
@@ -1284,14 +1377,12 @@ object VexLifeWebP1RuntimeArtifacts {
                         ? 'responding…'
                         : 'preparing…';
                 thought.append(who, mark, label);
-                if (state.liveReaches.length) thought.append(reachList(state.liveReaches));
 
-                if (state.thoughtsVisible && state.streamedReasoning) {
-                  const reasoning = document.createElement('div');
-                  reasoning.className = 'reasoning live-reasoning';
-                  bindReasoningViewport(reasoning, 'live', true);
-                  reasoning.textContent = state.streamedReasoning;
-                  thought.append(reasoning);
+                if (state.thoughtsVisible && state.liveProcessStages.length) {
+                  const stages = document.createElement('div');
+                  stages.className = 'live-process-stages';
+                  appendProcessStages(stages, state.liveProcessStages, 'live', true);
+                  thought.append(stages);
                 }
 
                 const bubble = document.createElement('div');
@@ -1393,26 +1484,18 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
 
                 const thought = item.querySelector('.thinking-now');
-                // Reach lines sit between the label and the live reasoning, in the order Vex asked.
-                item.querySelector('.live-reaches')?.remove();
-                if (state.liveReaches.length && thought) {
-                  const list = reachList(state.liveReaches);
-                  const label = thought.querySelector('.thinking-label');
-                  if (label) label.after(list);
-                  else thought.append(list);
-                }
-                let reasoning = item.querySelector('.live-reasoning');
-                if (state.thoughtsVisible && state.streamedReasoning) {
-                  if (!reasoning) {
-                    reasoning = document.createElement('div');
-                    reasoning.className = 'reasoning live-reasoning';
-                    bindReasoningViewport(reasoning, 'live', true);
-                    thought?.append(reasoning);
+                let stages = item.querySelector('.live-process-stages');
+                if (state.thoughtsVisible && state.liveProcessStages.length && thought) {
+                  if (!stages) {
+                    stages = document.createElement('div');
+                    stages.className = 'live-process-stages';
+                    thought.append(stages);
                   }
-                  reasoning.textContent = state.streamedReasoning;
-                  applyReasoningViewport(reasoning, 'live', true, false);
-                } else if (reasoning) {
-                  reasoning.remove();
+                  stages.replaceChildren();
+                  appendProcessStages(stages, state.liveProcessStages, 'live', true);
+                  restoreReasoningViewports();
+                } else if (stages) {
+                  stages.remove();
                 }
 
                 const bubble = item.querySelector('.bubble');
@@ -1428,245 +1511,6 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
 
                 applyTimelineViewport(false);
-              };
-
-              const renderTicket = () => {
-                const context = state.browserContext;
-                const visible = state.includePage && context;
-                ui.ticket.hidden = !visible;
-                if (!visible) return;
-                ui.ticket.dataset.state = 'Ready';
-                ui.ticketTitle.textContent = context.title || 'Included page';
-                ui.ticketLine.textContent = 'A separately rendered snapshot of this entered URL will be given to Vex on the next turn.';
-                ui.ticketUrl.textContent = context.pageUrl;
-                ui.ticketHash.textContent = '';
-                ui.ticketView.dataset.contextReady = 'true';
-              };
-
-              // Private mode: semantics and copy come from the service (VexLifePrivateModeFamily). The
-              // private transcript exists only in the running service; this renderer only shows it.
-              const isPrivate = () => state.privateMode?.state === 'PRIVATE';
-
-              const renderPrivate = () => {
-                const display = state.privateMode?.display;
-                const privateNow = isPrivate();
-                ui.privateMode.setAttribute('aria-pressed', String(privateNow));
-                ui.privateMode.dataset.private = String(privateNow);
-                ui.privateModeLabel.textContent = String(display?.label ?? 'Kept in your archives');
-                ui.privateMode.title = String(display?.detail ?? '') + (display?.primaryLabel ? ' (' + display.primaryLabel + ')' : '');
-                ui.privateMode.disabled = !display || state.privateInFlight;
-                root.dataset.vexPrivate = String(privateNow);
-                ui.privateBanner.hidden = !privateNow;
-                if (!privateNow) return;
-                ui.privateBannerText.textContent = String(display?.detail ?? '');
-                const notes = (state.privateMode?.keptNotes ?? []).map((note) => {
-                  const item = document.createElement('li');
-                  item.textContent = 'Kept: ' + note;
-                  return item;
-                });
-                ui.privateNotes.replaceChildren(...notes);
-                const proposal = state.privateMode?.proposedNoteOrNull;
-                ui.privateProposal.hidden = !proposal;
-                ui.privateProposalText.textContent = proposal ? 'Vex would keep: “' + proposal + '”' : '';
-                ui.privatePropose.hidden = Boolean(proposal);
-                ui.privatePropose.disabled = state.privateInFlight || !(state.privateMode?.exchanges ?? []).length;
-                ui.privateKeep.disabled = state.privateInFlight;
-                ui.privateDecline.disabled = state.privateInFlight;
-              };
-
-              const loadPrivate = async () => {
-                const response = await fetch(service.privatePath, { headers: { accept: 'application/json' }, cache: 'no-store' });
-                const wasPrivate = isPrivate();
-                state.privateMode = await readJson(response);
-                renderPrivate();
-                if (wasPrivate !== isPrivate()) renderTimeline();
-                if (state.app === apps.archives) renderArchives();
-                return state.privateMode;
-              };
-
-              const privatePost = async (path, body) => {
-                state.privateInFlight = true;
-                renderPrivate();
-                try {
-                  const response = await fetch(path, {
-                    method: 'POST',
-                    headers: { 'content-type': 'application/json', accept: 'application/json' },
-                    body: JSON.stringify(body ?? {})
-                  });
-                  const value = await readJson(response);
-                  state.privateMode = value?.private ?? value;
-                } finally {
-                  state.privateInFlight = false;
-                }
-                renderPrivate();
-                renderTimeline();
-                renderComposer();
-                if (state.app === apps.archives) renderArchives();
-              };
-
-              const togglePrivate = async () => {
-                const controlRef = state.privateMode?.display?.primaryControlRef;
-                if (!controlRef || state.privateInFlight || state.sendInFlight) return;
-                try {
-                  await privatePost(service.privateControlPath, {
-                    controlRef,
-                    requestRef: 'request.vexlife-prod.private.' + crypto.randomUUID().toLowerCase()
-                  });
-                  notify(isPrivate()
-                    ? 'Private mode is on. Nothing here is kept unless you keep a note.'
-                    : 'Private mode is off. Vex will know a private conversation happened.');
-                } catch (error) {
-                  notify(error instanceof Error ? error.message : 'Private mode could not change.');
-                  await loadPrivate().catch(() => {});
-                }
-              };
-
-              const sendPrivate = async () => {
-                const content = ui.draft.value.trim();
-                if (!content || state.privateInFlight) return;
-                state.privatePending = content;
-                ui.draft.value = '';
-                sizeDraft();
-                renderTimeline();
-                try {
-                  if (speech.settings.enabled) audioContext();
-                  await privatePost(service.privateSendPath, { content });
-                  const exchanges = state.privateMode?.exchanges ?? [];
-                  if (speech.settings.enabled && exchanges.length) {
-                    enqueueSpeech(exchanges[exchanges.length - 1].vex, 'private.' + exchanges.length * 2);
-                  }
-                } catch (error) {
-                  if (!ui.draft.value) ui.draft.value = content;
-                  sizeDraft();
-                  notify(error instanceof Error ? error.message : 'Vex could not reply. Nothing was kept.');
-                } finally {
-                  state.privatePending = null;
-                  renderTimeline();
-                  renderComposer();
-                }
-              };
-
-              // The left pane shows one app at a time. Choosing an app is presentation state only.
-              const inSourceTemplate = (pageUrl) =>
-                Boolean(pageUrl) && apps.sourceTemplateScopes.some((scope) => String(pageUrl).startsWith(scope));
-
-              const renderApp = () => {
-                const app = state.app;
-                ui.appSelector.value = app;
-                ui.family.hidden = app !== apps.sourceTemplate;
-                ui.archives.hidden = app !== apps.archives;
-                ui.viewport.hidden = app === apps.archives;
-                ui.addressForm.dataset.app = app;
-                ui.query.disabled = app === apps.archives;
-                if (app === apps.archives) ui.frameStatus.hidden = true;
-                for (const member of ui.family.querySelectorAll('.family-member')) {
-                  const current = String(state.humanPageUrl ?? '').startsWith(member.dataset.familyScope);
-                  if (current) member.setAttribute('aria-current', 'page');
-                  else member.removeAttribute('aria-current');
-                }
-                root.dataset.vexApp = app;
-                if (app === apps.archives) renderArchives();
-              };
-
-              const archiveDayKey = (date) =>
-                date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
-
-              const renderArchives = () => {
-                if (!ui.archivesTimeline) return;
-                const messages = (state.conversation?.messages ?? []).filter((message) => !Number.isNaN(Date.parse(message.formedAt)));
-                if (!messages.length) {
-                  ui.archivesSummary.textContent = 'Everything you and Vex say is kept here, in your Vex Home, by day.';
-                  const empty = document.createElement('li');
-                  empty.className = 'archives-empty';
-                  empty.textContent = 'Nothing here yet.';
-                  ui.archivesTimeline.replaceChildren(empty);
-                  return;
-                }
-                const days = new Map();
-                const place = (at, entry) => {
-                  const key = archiveDayKey(at);
-                  if (!days.has(key)) days.set(key, { date: at, messages: [] });
-                  days.get(key).messages.push(entry);
-                };
-                for (const message of messages) place(new Date(message.formedAt), message);
-                for (const interval of state.privateMode?.intervals ?? []) {
-                  if (!Number.isNaN(Date.parse(interval.startedAt))) {
-                    place(new Date(interval.startedAt), { privateInterval: interval, formedAt: interval.startedAt });
-                  }
-                }
-                for (const day of days.values()) day.messages.sort((a, b) => Date.parse(a.formedAt) - Date.parse(b.formedAt));
-                const first = new Date(messages[0].formedAt);
-                ui.archivesSummary.textContent =
-                  messages.length + ' message' + (messages.length === 1 ? '' : 's') + ' over ' + days.size + ' day' + (days.size === 1 ? '' : 's') +
-                  ' since ' + first.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) +
-                  ' · kept in your Vex Home';
-                const items = [...days.entries()].reverse().map(([key, day]) => {
-                  const item = document.createElement('li');
-                  item.className = 'archives-day';
-                  item.dataset.day = key;
-                  const heading = document.createElement('h3');
-                  heading.textContent = day.date.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-                  const count = document.createElement('span');
-                  const spoken = day.messages.filter((entry) => !entry.privateInterval).length;
-                  count.textContent = spoken + ' message' + (spoken === 1 ? '' : 's');
-                  heading.append(count);
-                  const entries = document.createElement('ol');
-                  entries.className = 'archives-entries';
-                  for (const message of day.messages) {
-                    const entry = document.createElement('li');
-                    if (message.privateInterval) {
-                      const interval = message.privateInterval;
-                      const from = new Date(interval.startedAt);
-                      const to = new Date(interval.endedAt);
-                      entry.className = 'archives-entry archives-private';
-                      const time = document.createElement('time');
-                      time.dateTime = String(interval.startedAt);
-                      time.textContent = from.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-                      const who = document.createElement('span');
-                      who.className = 'who';
-                      who.textContent = 'Private';
-                      const text = document.createElement('p');
-                      text.textContent =
-                        'Private conversation until ' + to.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) +
-                        ' · ' + interval.exchangeCount + ' exchange' + (interval.exchangeCount === 1 ? '' : 's') + ' · not kept' +
-                        (interval.keptNotes.length ? '\nKept: ' + interval.keptNotes.join('\nKept: ') : '');
-                      entry.append(time, who, text);
-                      entries.append(entry);
-                      continue;
-                    }
-                    entry.className = 'archives-entry';
-                    entry.dataset.eventRef = String(message.eventRef ?? '');
-                    const time = document.createElement('time');
-                    time.dateTime = String(message.formedAt);
-                    time.textContent = new Date(message.formedAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-                    const who = document.createElement('span');
-                    who.className = 'who';
-                    who.textContent = message.role === 'human' ? 'You' : 'Vex';
-                    const text = document.createElement('p');
-                    text.textContent = String(message.content ?? '');
-                    entry.append(time, who, text);
-                    entries.append(entry);
-                  }
-                  item.append(heading, entries);
-                  return item;
-                });
-                ui.archivesTimeline.replaceChildren(...items);
-              };
-
-              const chooseApp = (app) => {
-                if (!apps.keys.includes(app)) return;
-                state.app = app;
-                try {
-                  localStorage.setItem(apps.storageKey, app);
-                } catch {}
-                if (app === apps.archives) {
-                  state.includePage = false;
-                } else if (app === apps.sourceTemplate && !inSourceTemplate(state.humanPageUrl)) {
-                  const home = ui.family.querySelector('.family-member')?.dataset.familyHome;
-                  if (home) navigate(home);
-                }
-                renderApp();
-                renderComposer();
               };
 
               const renderComposer = () => {
@@ -2170,16 +2014,28 @@ object VexLifeWebP1RuntimeArtifacts {
                 root.dataset.vexLastContextPath = String(result.contextPath ?? '');
                 root.dataset.vexLastPromptReceiptRef = String(result.promptContext?.receiptRef ?? '');
                 root.dataset.vexLastBrowserContextRef = String(result.promptContext?.browserContextRef ?? '');
+                const responseKey = String(result.responseMessageRef ?? '');
                 const reasoning = result.humanReasoning;
                 if (
                   reasoning?.state === 'PRESENT_EPHEMERAL' &&
                   typeof reasoning.text === 'string' &&
                   reasoning.text.length > 0
                 ) {
-                  state.humanReasoningByResponse.set(String(result.responseMessageRef ?? ''), reasoning.text);
+                  state.humanReasoningByResponse.set(responseKey, reasoning.text);
                 } else if (result.responseMessageRef) {
-                  state.humanReasoningByResponse.delete(String(result.responseMessageRef));
-                  state.expandedThoughts.delete(String(result.responseMessageRef));
+                  state.humanReasoningByResponse.delete(responseKey);
+                }
+                if (responseKey && state.liveProcessStages.length) {
+                  state.processStagesByResponse.set(responseKey, snapshotLiveProcessStages());
+                } else if (responseKey) {
+                  state.processStagesByResponse.delete(responseKey);
+                }
+                if (
+                  responseKey &&
+                  !state.humanReasoningByResponse.has(responseKey) &&
+                  !state.processStagesByResponse.has(responseKey)
+                ) {
+                  state.expandedThoughts.delete(responseKey);
                 }
                 if (Array.isArray(result.capabilityUses) && result.capabilityUses.length > 0) {
                   state.reachesByResponse.set(String(result.responseMessageRef ?? ''), result.capabilityUses);
@@ -2201,6 +2057,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.streamPhase = null;
                 state.streamedContent = '';
                 state.streamedReasoning = '';
+                state.liveProcessStages = [];
                 setCompanionStatus('Ready', 'Ready', result.model ?? '');
                 render();
               };
@@ -2238,6 +2095,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.pending = pending;
                 state.sendInFlight = true;
                 state.liveReaches = [];
+                state.liveProcessStages = [];
                 state.streamPhase = 'CheckingRuntime';
                 state.streamedContent = '';
                 state.streamedReasoning = '';
@@ -2261,6 +2119,9 @@ object VexLifeWebP1RuntimeArtifacts {
                   await readEventStream(response, (event) => {
                     if (event?.type === 'PHASE') {
                       state.streamPhase = String(event.phase ?? '');
+                      if (event.providerStageIndex) {
+                        ensureLiveProcessStage(event.providerStageIndex, event.providerModelRef);
+                      }
                       if (state.streamPhase === 'CheckingRuntime') {
                         setCompanionStatus('Checking', 'Checking Vex', '');
                       } else if (state.streamPhase === 'Reconnecting') {
@@ -2274,27 +2135,18 @@ object VexLifeWebP1RuntimeArtifacts {
                     if (event?.type === 'REASONING_DELTA' && typeof event.delta === 'string') {
                       state.streamPhase = 'Reasoning';
                       state.streamedReasoning += event.delta;
+                      const stage = ensureLiveProcessStage(event.providerStageIndex, event.providerModelRef);
+                      if (stage) stage.reasoning += event.delta;
                       setCompanionStatus('Checking', 'Thinking', '');
                       updateLiveTurn();
                       followStreamSpeech(false);
                       return;
                     }
                     if (event?.type === 'REACH' && event.reach) {
-                      // A request Vex made (state absent) or what came back (state present). The
-                      // returned event settles the newest open request of the same handle/action.
                       const use = event.reach;
-                      let settled = false;
-                      if (use.state) {
-                        for (let index = state.liveReaches.length - 1; index >= 0; index -= 1) {
-                          const open = state.liveReaches[index];
-                          if (!open.state && open.handle === use.handle && open.action === use.action) {
-                            state.liveReaches[index] = use;
-                            settled = true;
-                            break;
-                          }
-                        }
-                      }
-                      if (!settled) state.liveReaches.push(use);
+                      const stage = ensureLiveProcessStage(event.providerStageIndex, event.providerModelRef);
+                      if (stage) settleReach(stage.reaches, use);
+                      settleReach(state.liveReaches, use);
                       setCompanionStatus('Checking', reachText(use), '');
                       updateLiveTurn();
                       return;
@@ -2302,6 +2154,8 @@ object VexLifeWebP1RuntimeArtifacts {
                     if (event?.type === 'CONTENT_DELTA' && typeof event.delta === 'string') {
                       state.streamPhase = 'Responding';
                       state.streamedContent += event.delta;
+                      const stage = ensureLiveProcessStage(event.providerStageIndex, event.providerModelRef);
+                      if (stage) stage.responding = true;
                       setCompanionStatus('Checking', 'Responding', '');
                       updateLiveTurn();
                       followStreamSpeech(false);
@@ -2345,6 +2199,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   }
 
                   state.sendInFlight = false;
+                  state.liveProcessStages = [];
                   if (retireAttempt) {
                     state.pending = null;
                     if (!ui.draft.value) ui.draft.value = pending.content;
