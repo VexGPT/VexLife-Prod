@@ -280,6 +280,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 // raw streamedReasoning/streamedContent buffers consumed by Speech/Kokoro.
                 liveProcessEntries: [],
                 processEntriesByResponse: new Map(),
+                // Session-only presentation of terminal failed Sends. Conversation/recovery remains
+                // the semantic owner; this only preserves what the human already saw in this browser
+                // so terminal failure does not erase the process before the next lawful Control.
+                failedAttempts: [],
                 liveProcessExpanded: true,
                 liveProcessManuallyToggled: false,
                 // What Vex reached during the live turn (bridge uses: handle/action/target/state), and
@@ -1258,6 +1262,26 @@ object VexLifeWebP1RuntimeArtifacts {
                     ? { kind: 'thought', text: entry.text, active: false }
                     : { kind: 'reach', use: cloneReach(entry.use) });
 
+              const clearLiveProcessState = () => {
+                state.streamPhase = null;
+                state.streamedContent = '';
+                state.streamedReasoning = '';
+                state.liveReaches = [];
+                state.liveProcessEntries = [];
+                state.liveProcessExpanded = true;
+                state.liveProcessManuallyToggled = false;
+                resetLiveProcessViewports();
+              };
+
+              const failureRouteLabel = (route) =>
+                route === 'RESUME_LAST_VALID_HEAD_THEN_FORM_NEW_SEND_ATTEMPT'
+                  ? 'Try again from the last completed turn with a new Send.'
+                  : route === 'FORM_NEW_SEND_ATTEMPT_AND_RETRY'
+                    ? 'Try again as a new Send.'
+                    : route
+                      ? 'Next: ' + String(route).replaceAll('_', ' ').toLowerCase() + '.'
+                      : 'This Send stopped before Vex completed a reply.';
+
               const processEntryNode = (entry, viewportKey, live) => {
                 if (entry.kind === 'thought') {
                   if (!state.thoughtsVisible || !String(entry.text ?? '').trim()) return null;
@@ -1527,6 +1551,59 @@ object VexLifeWebP1RuntimeArtifacts {
                 return item;
               };
 
+              const failedAttemptNode = (attempt, sequence) => {
+                const item = document.createElement('li');
+                item.className = 'message message-vex failed-attempt';
+                item.dataset.failedAttemptKey = String(attempt.idempotencyKey ?? '');
+
+                const index = document.createElement('p');
+                index.className = 'message-index';
+                index.textContent = '[' + String(sequence).padStart(2, '0') + ']';
+
+                const thought = document.createElement('div');
+                thought.className = 'thought';
+                const who = document.createElement('span');
+                who.className = 'speaker-inline';
+                who.textContent = 'Vex';
+                const mark = thoughtMark();
+                const label = document.createElement('span');
+                label.className = 'thinking-label';
+                label.textContent = 'stopped before finishing';
+                thought.append(who, mark, label);
+
+                const history =
+                  processHistoryNode(
+                    attempt.processEntries ?? [],
+                    'failed.' + String(attempt.idempotencyKey ?? ''),
+                    false
+                  );
+                if (history) thought.append(history);
+
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                const detail = document.createElement('p');
+                detail.textContent =
+                  String(attempt.failureCode ?? 'TURN_FAILED') +
+                  ' · ' +
+                  failureRouteLabel(attempt.exactNextSafeRoute);
+                bubble.append(detail);
+
+                const retry = document.createElement('button');
+                retry.type = 'button';
+                retry.className = 'thought-toggle failed-attempt-retry';
+                retry.dataset.failedAttemptKey = String(attempt.idempotencyKey ?? '');
+                retry.textContent = 'Try Again';
+                retry.disabled = state.sendInFlight;
+                bubble.append(retry);
+
+                const speaker = document.createElement('p');
+                speaker.className = 'speaker';
+                speaker.textContent = 'Vex';
+
+                item.append(index, thought, bubble, speaker);
+                return item;
+              };
+
               const renderTimeline = () => {
                 if (!ui.timeline) return;
                 ui.timeline.dataset.private = String(isPrivate());
@@ -1558,9 +1635,21 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
                 const messages = state.conversation?.messages ?? [];
                 const nodes = messages.map(messageNode);
+                let sequence = nextSequence();
+
+                for (const attempt of state.failedAttempts) {
+                  nodes.push(messageNode({
+                    role: 'human',
+                    content: attempt.content,
+                    sequence,
+                    eventRef: 'presentation.failed.' + attempt.idempotencyKey
+                  }));
+                  sequence += 1;
+                  nodes.push(failedAttemptNode(attempt, sequence));
+                  sequence += 1;
+                }
 
                 if (state.pending) {
-                  const sequence = nextSequence();
                   nodes.push(messageNode({
                     role: 'human',
                     content: state.pending.content,
@@ -1901,8 +1990,10 @@ object VexLifeWebP1RuntimeArtifacts {
                     : contextEligible && !contextReady
                       ? 'Page context is available on demand.'
                       : state.pending && !state.sendInFlight
-                        ? 'The prior Send outcome is unresolved. Send again to retry that exact attempt.'
-                        : '';
+                        ? 'The prior Send outcome is unresolved. Send again to reconcile that exact attempt.'
+                        : state.failedAttempts.length
+                          ? 'A prior Send stopped. Its process is preserved here; use Try Again to form a new Send.'
+                          : '';
                 ui.send.disabled = privateNow
                   ? state.privateInFlight || !ui.draft.value.trim()
                   : state.sendInFlight || (!state.pending && !ui.draft.value.trim());
@@ -2365,16 +2456,21 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderSettings();
               };
 
-              const completeCanonicalSend = async (result, streamed) => {
+              const completeCanonicalSend = async (result, streamed, preservedProcess = null) => {
                 if (streamed) followStreamSpeech(true);
                 state.sendInFlight = false;
                 root.dataset.vexLastContextPath = String(result.contextPath ?? '');
                 root.dataset.vexLastPromptReceiptRef = String(result.promptContext?.receiptRef ?? '');
                 root.dataset.vexLastBrowserContextRef = String(result.promptContext?.browserContextRef ?? '');
                 const responseKey = String(result.responseMessageRef ?? '');
-                if (streamed && responseKey && state.liveProcessEntries.length) {
-                  freezeLiveProcess();
-                  state.processEntriesByResponse.set(responseKey, snapshotLiveProcess());
+                const completedProcess =
+                  Array.isArray(preservedProcess)
+                    ? preservedProcess
+                    : state.liveProcessEntries.length
+                      ? (freezeLiveProcess(), snapshotLiveProcess())
+                      : [];
+                if (responseKey && completedProcess.length) {
+                  state.processEntriesByResponse.set(responseKey, completedProcess);
                   if (state.liveProcessManuallyToggled && state.liveProcessExpanded) {
                     state.expandedThoughts.add(responseKey);
                   }
@@ -2409,13 +2505,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
 
                 state.pending = null;
-                state.streamPhase = null;
-                state.streamedContent = '';
-                state.streamedReasoning = '';
-                state.liveProcessEntries = [];
-                state.liveProcessExpanded = true;
-                state.liveProcessManuallyToggled = false;
-                resetLiveProcessViewports();
+                clearLiveProcessState();
                 setCompanionStatus('Ready', 'Ready', result.model ?? '');
                 render();
               };
@@ -2434,22 +2524,34 @@ object VexLifeWebP1RuntimeArtifacts {
                 return readJson(response);
               };
 
-              const send = async () => {
+              const send = async (newAttemptSeed = null) => {
                 if (isPrivate()) {
                   await sendPrivate();
                   return;
                 }
                 if (state.sendInFlight) return;
 
-                const retrying = state.pending !== null;
-                const content = retrying ? state.pending.content : ui.draft.value.trim();
+                const retryingExactAttempt = state.pending !== null && newAttemptSeed === null;
+                const content =
+                  newAttemptSeed
+                    ? String(newAttemptSeed.content ?? '').trim()
+                    : retryingExactAttempt
+                      ? state.pending.content
+                      : ui.draft.value.trim();
                 if (!content) return;
 
-                const pending = state.pending ?? Object.freeze({
-                  idempotencyKey: 'send.' + crypto.randomUUID().toLowerCase(),
-                  content,
-                  browserContext: state.includePage ? state.browserContext : null
-                });
+                const pending =
+                  newAttemptSeed
+                    ? Object.freeze({
+                        idempotencyKey: 'send.' + crypto.randomUUID().toLowerCase(),
+                        content,
+                        browserContext: newAttemptSeed.browserContext ?? null
+                      })
+                    : state.pending ?? Object.freeze({
+                        idempotencyKey: 'send.' + crypto.randomUUID().toLowerCase(),
+                        content,
+                        browserContext: state.includePage ? state.browserContext : null
+                      });
                 state.pending = pending;
                 state.sendInFlight = true;
                 state.liveReaches = [];
@@ -2464,11 +2566,19 @@ object VexLifeWebP1RuntimeArtifacts {
                 speech.stream = { reply: 0, thought: 0 };
                 if (speech.settings.enabled) audioContext();
                 resetLiveProcessViewports();
-                if (!retrying) {
+                if (!retryingExactAttempt && newAttemptSeed === null) {
                   ui.draft.value = '';
                   sizeDraft();
                 }
-                setCompanionStatus('Checking', retrying ? 'Retrying exact Send' : 'Checking Vex', '');
+                setCompanionStatus(
+                  'Checking',
+                  retryingExactAttempt
+                    ? 'Retrying exact Send'
+                    : newAttemptSeed
+                      ? 'Trying again'
+                      : 'Checking Vex',
+                  ''
+                );
                 render();
 
                 try {
@@ -2545,14 +2655,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   if (!result) throw new Error('Vex stream ended without a completed turn.');
                   await completeCanonicalSend(result, true);
                 } catch (error) {
-                  state.streamPhase = null;
-                  state.streamedContent = '';
-                  state.streamedReasoning = '';
-                  state.liveReaches = [];
-                  state.liveProcessEntries = [];
-                  state.liveProcessExpanded = true;
-                  state.liveProcessManuallyToggled = false;
-                  resetLiveProcessViewports();
+                  // Preserve what the human already saw until the canonical turn owner returns
+                  // terminal truth. Presentation transport is not authority to erase process state.
+                  freezeLiveProcess();
+                  const interruptedProcess = snapshotLiveProcess();
 
                   let terminalError = error;
                   let status = Number(error?.vexStatus ?? 0);
@@ -2564,7 +2670,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     render();
                     try {
                       const reconciled = await reconcileSendOutcome(pending);
-                      await completeCanonicalSend(reconciled, false);
+                      await completeCanonicalSend(reconciled, false, interruptedProcess);
                       return;
                     } catch (reconciliationError) {
                       terminalError = reconciliationError;
@@ -2576,11 +2682,23 @@ object VexLifeWebP1RuntimeArtifacts {
 
                   state.sendInFlight = false;
                   if (retireAttempt) {
+                    const failure = terminalError?.vexResponse ?? {};
+                    state.failedAttempts.push({
+                      idempotencyKey: pending.idempotencyKey,
+                      content: pending.content,
+                      browserContext: pending.browserContext ?? null,
+                      failureCode: String(failure.code ?? terminalError?.name ?? 'TURN_FAILED'),
+                      exactNextSafeRoute: failure.exactNextSafeRoute ?? null,
+                      processEntries: interruptedProcess
+                    });
                     state.pending = null;
-                    if (!ui.draft.value) ui.draft.value = pending.content;
+                    clearLiveProcessState();
                     setCompanionStatus('Unavailable', 'Send failed', '');
                   } else {
+                    // Outcome is still unresolved: keep the same idempotency key and the process the
+                    // human watched. A later exact retry/reconciliation must not look like a new Send.
                     state.pending = pending;
+                    state.streamPhase = 'Reconnecting';
                     setCompanionStatus('Unavailable', 'Send outcome unresolved', '');
                     reportFact(
                       'SEND_OUTCOME_UNRESOLVED_SHOWN',
@@ -2891,6 +3009,19 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.jumpLatest.hidden = state.timelineFollowTail;
               });
               ui.timeline.addEventListener('click', (event) => {
+                const retryFailed = event.target.closest('.failed-attempt-retry');
+                if (retryFailed) {
+                  if (state.sendInFlight) return;
+                  const key = String(retryFailed.dataset.failedAttemptKey ?? '');
+                  const failed = state.failedAttempts.find((attempt) => attempt.idempotencyKey === key);
+                  if (!failed) return;
+                  void send({
+                    content: failed.content,
+                    browserContext: failed.browserContext
+                  });
+                  return;
+                }
+
                 const liveToggle = event.target.closest('.live-process-toggle');
                 if (liveToggle) {
                   state.liveProcessExpanded = !state.liveProcessExpanded;
