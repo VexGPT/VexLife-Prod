@@ -2065,6 +2065,9 @@ class VexLifeProdLocalService private constructor(
                     writer.cancel(
                         true,
                     )
+                    runCatching {
+                        exchange.responseBody.close()
+                    }
                 }
         }
     }
