@@ -978,26 +978,117 @@ object VexLifeProdMacFrontDoorProcess {
             "selected Vex Home path must be absolute"
         }
         val selectedHome = productHome.normalize()
-        // A model chosen in the window is the Home's choice as soon as a Home exists to hold it:
-        // before the Control (so Set Up acquires and starts exactly that model) and again after it
-        // (so a Home formed by this very activation holds it too).
-        val chosenModel = model?.let { requireNotNull(vexlife.model.heretic.HereticModelCatalog.byHandle(it)) { "model $it is not offered" } }
-        fun persistChosenModel() {
-            if (chosenModel != null) {
-                runCatching { hooks.persistModel(selectedHome, chosenModel) }
-                    .onSuccess { saved -> if (saved) VexLogger.record(VexLogger.Fact.PersonModelChosen, mapOf("model" to chosenModel.handle)) }
+        val chosenModel =
+            model?.let {
+                requireNotNull(vexlife.model.heretic.HereticModelCatalog.byHandle(it)) {
+                    "model $it is not offered"
+                }
+            }
+
+        fun observeState(): String =
+            runCatching { hooks.observeSemanticStateRef(desiredSourceSha, selectedHome) }
+                .getOrDefault(StateUnobserved)
+                .also {
+                    VexLogger.record(
+                        VexLogger.Fact.EntryStateObserved,
+                        mapOf("stateRef" to it, "via" to "model-persistence", "controlRef" to controlRef),
+                    )
+                }
+
+        fun modelPersistenceFailure(error: Throwable): ActivationProjection {
+            val failure = VexLifeProdSetupFailure.classify(error, language)
+            VexLogger.record(
+                VexLogger.Fact.SetupEffectFailed,
+                mapOf(
+                    "controlRef" to controlRef,
+                    "failureRef" to failure.failureRef,
+                    "effectRef" to "PERSIST_SELECTED_MODEL",
+                ),
+                detail = failure.technicalDetail,
+            )
+            return ActivationProjection(
+                schemaVersion = ActivationSchema,
+                controlRef = controlRef,
+                semanticStateRef = observeState(),
+                manifestationRef = ManifestationRefreshEntry,
+                failure = failure,
+            )
+        }
+
+        // An explicit model choice belongs to the Home before any Set Up / Start convergence can
+        // inspect prerequisites. Before a Home exists, persistModel truthfully returns false and
+        // ControlFormHome may proceed while the window carries the choice. For an existing Home,
+        // failure to save the human's choice must stop the activation; otherwise Setup could
+        // converge the previously selected/default model while the UI still shows the new choice.
+        var modelSavedBeforeControl =
+            chosenModel == null
+        if (chosenModel != null) {
+            val saved =
+                try {
+                    hooks.persistModel(selectedHome, chosenModel)
+                } catch (error: Exception) {
+                    return modelPersistenceFailure(error)
+                }
+            if (saved) {
+                modelSavedBeforeControl = true
+                VexLogger.record(
+                    VexLogger.Fact.PersonModelChosen,
+                    mapOf("model" to chosenModel.handle),
+                )
+            } else if (controlRef != VexLifeProdEntryFamily.ControlFormHome) {
+                return modelPersistenceFailure(
+                    IllegalStateException(
+                        "selected model could not be saved before Product convergence",
+                    )
+                )
             }
         }
-        persistChosenModel()
-        val projection = activateOnce(controlRef, desiredSourceSha, selectedHome, hooks, language)
-        persistChosenModel()
+
+        var projection =
+            activateOnce(controlRef, desiredSourceSha, selectedHome, hooks, language)
+
+        // ControlFormHome is the only admitted case where the choice may legitimately have had no
+        // Home to live in before the Control. Once Home formation succeeds, persistence becomes a
+        // required part of honoring that same human choice, and the returned State is re-observed
+        // after the choice becomes Home truth.
+        if (
+            chosenModel != null &&
+                !modelSavedBeforeControl &&
+                projection.failure == null
+        ) {
+            val saved =
+                try {
+                    hooks.persistModel(selectedHome, chosenModel)
+                } catch (error: Exception) {
+                    return modelPersistenceFailure(error)
+                }
+            if (!saved) {
+                return modelPersistenceFailure(
+                    IllegalStateException(
+                        "selected model could not be saved after Home formation",
+                    )
+                )
+            }
+            VexLogger.record(
+                VexLogger.Fact.PersonModelChosen,
+                mapOf("model" to chosenModel.handle),
+            )
+            projection =
+                projection.copy(
+                    semanticStateRef = observeState(),
+                )
+        }
+
         // Whatever the Control did, a language the person chose is theirs once a Home exists to
         // hold it. Saving it never changes the activation's outcome.
         if (persistLanguage) {
             runCatching { hooks.persistLanguage(selectedHome, language) }
                 .onSuccess { saved ->
                     if (saved) {
-                        VexLogger.record(VexLogger.Fact.PersonLanguageSaved, mapOf("language" to language))
+                        VexLogger.record(
+                            VexLogger.Fact.PersonLanguageSaved,
+                            mapOf("language" to language),
+                        )
                     }
                 }
         }
