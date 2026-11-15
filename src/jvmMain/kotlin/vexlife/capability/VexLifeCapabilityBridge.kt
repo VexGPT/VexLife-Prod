@@ -718,7 +718,10 @@ object VexLifeCapabilityBridge {
             if (remaining > 0 && body.state != State.LIMIT_REACHED) {
                 "You can make another request ($remaining left this turn) or answer the person now."
             } else {
-                "No requests are left this turn; answer the person now from what you have."
+                "No requests are left this turn. Do not send another capability request in this turn. " +
+                    "Answer the person now from what you have. If a responsible answer still needs more " +
+                    "outside truth, share what you currently understand and what remains missing, then " +
+                    "ask the person to send another message so you can continue in a fresh turn."
             }
         return listOf(
                 VexLifeCapabilityRequest.ResultHeader,
