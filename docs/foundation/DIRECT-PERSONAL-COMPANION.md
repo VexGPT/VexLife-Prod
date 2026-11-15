@@ -521,12 +521,16 @@ source-return first inference
 -> canonical human RESPONSE
 ~~~
 
-A progress gate buffers only long enough to distinguish an ordinary answer from the exact
-source-return header. On an ordinary answer, early reasoning may therefore be delayed until the first
-content bytes prove the output is not internal control; the buffered reasoning then flushes and live
-streaming continues. It is delayed, not persisted or discarded. Internal retrieval reasoning/control
-JSON is never projected as the human answer. If the final inference attempts another source-return
-request, the turn fails closed before RESPONSE/context/head commit.
+The progress gate withholds only assistant **content** while it could still be an internal
+control envelope. Reasoning is projected as it arrives, including reasoning that leads to a
+capability/source-return request, so the Product does not recreate the lived regression where minutes
+of thinking appear as one late block. Once content is classified as an internal control, that control
+content remains machine-only. If the final inference attempts another source-return request, the turn
+fails closed before RESPONSE/context/head commit.
+
+Physical delivery of those progress events is a separate service/presentation responsibility. The
+canonical provider/turn path must not wait on a browser socket merely because the human projection is
+slow; see `LOCAL-PRODUCT-SERVICE.md`.
 
 ## Writer serialization
 
