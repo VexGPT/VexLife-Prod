@@ -274,6 +274,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 streamedReasoning: '',
                 thoughtsVisible: true,
                 humanReasoningByResponse: new Map(),
+                // Human-readable browser-session projection of facts already emitted by the Send
+                // stream. This is deliberately not a turn/stage owner: it may open/freeze visual
+                // containers, but it never feeds DirectCompanionTurn, capability execution, or the
+                // raw streamedReasoning/streamedContent buffers consumed by Speech/Kokoro.
+                liveProcessEntries: [],
+                processEntriesByResponse: new Map(),
+                liveProcessExpanded: true,
+                liveProcessManuallyToggled: false,
                 // What Vex reached during the live turn (bridge uses: handle/action/target/state), and
                 // per completed response for this browser session. Reach, never the content.
                 liveReaches: [],
@@ -392,9 +400,12 @@ object VexLifeWebP1RuntimeArtifacts {
 
               // Speech: the Vextreme Spiral FAB's Read Aloud, ported and extended. When Speech is on, Vex
               // is read aloud as it streams, and its thoughts too if the person chooses. It reads the
-              // Conversation projections, never the DOM. Kokoro voices run on this machine after a
-              // one-time model download; system voices are limited to those that run on this machine.
-              // Either way the words are never sent to a speech service.
+              // Conversation/raw stream projections, never the DOM. The visual process projection is
+              // a sibling observer of that same stream: freezing/reordering visual containers must
+              // never become Speech input, drop speech deltas, or feed execution back upstream.
+              // Kokoro voices run on this machine after a one-time model download; system voices are
+              // limited to those that run on this machine. Either way the words are never sent to a
+              // speech service.
               const SPEECH_SETTINGS = 'vexlife-prod.presentation.speech/v1';
               const KOKORO_MODULE_URL = 'https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/+esm';
               const KOKORO_MODEL_ID = 'onnx-community/Kokoro-82M-v1.0-ONNX';
@@ -1123,8 +1134,17 @@ object VexLifeWebP1RuntimeArtifacts {
               const restoreReasoningViewports = () => {
                 ui.timeline.querySelectorAll('.reasoning[data-scroll-key]').forEach((element) => {
                   const key = String(element.dataset.scrollKey ?? '');
-                  applyReasoningViewport(element, key, key === 'live');
+                  const liveTail = element.dataset.liveTail === 'true';
+                  applyReasoningViewport(element, key, liveTail);
                 });
+              };
+
+              const resetLiveProcessViewports = () => {
+                for (const key of state.reasoningViewports.keys()) {
+                  if (key === 'live' || key.startsWith('live.process.')) {
+                    state.reasoningViewports.delete(key);
+                  }
+                }
               };
 
               const applyTimelineViewport = (restoreReadingPosition = true) => {
@@ -1186,9 +1206,101 @@ object VexLifeWebP1RuntimeArtifacts {
                 return list;
               };
 
+              const cloneReach = (use) => ({
+                handle: String(use?.handle ?? ''),
+                action: String(use?.action ?? ''),
+                target: use?.target == null ? null : String(use.target),
+                state: use?.state == null ? null : String(use.state)
+              });
+
+              const freezeActiveProcessThought = () => {
+                const entry = state.liveProcessEntries[state.liveProcessEntries.length - 1];
+                if (entry?.kind === 'thought' && entry.active) entry.active = false;
+              };
+
+              const appendProcessReasoning = (delta) => {
+                let entry = state.liveProcessEntries[state.liveProcessEntries.length - 1];
+                if (entry?.kind !== 'thought' || !entry.active) {
+                  entry = { kind: 'thought', text: '', active: true };
+                  state.liveProcessEntries.push(entry);
+                }
+                entry.text += String(delta ?? '');
+              };
+
+              const projectProcessReach = (use) => {
+                freezeActiveProcessThought();
+                const next = cloneReach(use);
+                if (next.state) {
+                  for (let index = state.liveProcessEntries.length - 1; index >= 0; index -= 1) {
+                    const entry = state.liveProcessEntries[index];
+                    if (
+                      entry?.kind === 'reach' &&
+                      !entry.use.state &&
+                      entry.use.handle === next.handle &&
+                      entry.use.action === next.action &&
+                      entry.use.target === next.target
+                    ) {
+                      entry.use = next;
+                      return;
+                    }
+                  }
+                }
+                state.liveProcessEntries.push({ kind: 'reach', use: next });
+              };
+
+              const freezeLiveProcess = () => {
+                freezeActiveProcessThought();
+              };
+
+              const snapshotLiveProcess = () =>
+                state.liveProcessEntries.map((entry) =>
+                  entry.kind === 'thought'
+                    ? { kind: 'thought', text: entry.text, active: false }
+                    : { kind: 'reach', use: cloneReach(entry.use) });
+
+              const processEntryNode = (entry, viewportKey, live) => {
+                if (entry.kind === 'thought') {
+                  if (!state.thoughtsVisible || !String(entry.text ?? '').trim()) return null;
+                  const box = document.createElement('div');
+                  box.className = 'reasoning process-thought' + (live && entry.active ? ' live-reasoning' : '');
+                  box.dataset.liveTail = String(Boolean(live && entry.active));
+                  bindReasoningViewport(box, viewportKey, live && entry.active);
+                  // Keep the exact provider text as the source projection. Markdown is a separate
+                  // presentation concern; freezing a process container must never rewrite the
+                  // stream that Speech/Kokoro or canonical completion observes.
+                  box.textContent = entry.text;
+                  return box;
+                }
+
+                const use = entry.use;
+                const line = document.createElement('div');
+                line.className = 'process-action';
+                line.dataset.state = use?.state ? String(use.state) : 'ACTIVE';
+                const mark = document.createElement('span');
+                mark.className = 'process-action-mark';
+                mark.setAttribute('aria-hidden', 'true');
+                mark.textContent = !use?.state ? '↳' : use.state === 'RETURNED' ? '✓' : '!';
+                const text = document.createElement('span');
+                text.textContent = reachText(use);
+                line.append(mark, text);
+                return line;
+              };
+
+              const processHistoryNode = (entries, keyPrefix, live) => {
+                const history = document.createElement('div');
+                history.className = 'process-history';
+                entries.forEach((entry, index) => {
+                  const node = processEntryNode(entry, keyPrefix + '.' + String(index), live);
+                  if (node) history.append(node);
+                });
+                return history.childElementCount ? history : null;
+              };
+
               const reachedLine = (message) => {
                 if (message.role !== 'vex') return null;
-                const uses = state.reachesByResponse.get(String(message.messageRef ?? ''));
+                const key = String(message.messageRef ?? '');
+                if (state.processEntriesByResponse.has(key)) return null;
+                const uses = state.reachesByResponse.get(key);
                 if (!uses || !uses.length) return null;
                 const line = document.createElement('p');
                 line.className = 'receipt-line reached-line';
@@ -1197,10 +1309,13 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const completedThoughtNode = (message) => {
-                if (!state.thoughtsVisible || message.role !== 'vex') return null;
+                if (message.role !== 'vex') return null;
                 const key = String(message.messageRef ?? '');
-                const reasoning = state.humanReasoningByResponse.get(key);
-                if (!reasoning) return null;
+                const entries = state.processEntriesByResponse.get(key) ?? [];
+                const reasoning = state.thoughtsVisible ? state.humanReasoningByResponse.get(key) : null;
+                const hasVisibleProcess =
+                  entries.some((entry) => entry.kind === 'reach' || (state.thoughtsVisible && String(entry.text ?? '').trim()));
+                if (!hasVisibleProcess && !reasoning) return null;
 
                 const holder = document.createElement('div');
                 holder.className = 'thought';
@@ -1211,16 +1326,25 @@ object VexLifeWebP1RuntimeArtifacts {
                 toggle.dataset.thoughtKey = key;
                 toggle.setAttribute('aria-expanded', String(expanded));
                 const label = document.createElement('span');
-                label.textContent = expanded ? 'hide thoughts' : 'view thoughts';
+                label.textContent = expanded ? 'hide process' : 'view process';
                 toggle.append(thoughtMark(), label);
                 holder.append(toggle);
 
                 if (expanded) {
-                  const box = document.createElement('div');
-                  box.className = 'reasoning';
-                  bindReasoningViewport(box, 'response.' + key, false);
-                  box.textContent = reasoning;
-                  holder.append(box);
+                  const process = entries.length
+                    ? processHistoryNode(entries, 'response.' + key + '.process', false)
+                    : null;
+                  if (process) {
+                    holder.append(process);
+                  } else if (reasoning) {
+                    // Non-streaming/idempotent recovery may have only response-local reasoning.
+                    // Keep that truthful fallback without inventing missing process boundaries.
+                    const box = document.createElement('div');
+                    box.className = 'reasoning';
+                    bindReasoningViewport(box, 'response.' + key, false);
+                    box.textContent = reasoning;
+                    holder.append(box);
+                  }
                 }
                 return holder;
               };
@@ -1253,6 +1377,36 @@ object VexLifeWebP1RuntimeArtifacts {
                 return item;
               };
 
+              const liveProcessPanel = () => {
+                if (!state.liveProcessEntries.length) return null;
+                const panel = document.createElement('div');
+                panel.className = 'live-process-panel';
+
+                const collapseWithAnswer = Boolean(state.streamedContent);
+                const expanded = collapseWithAnswer ? state.liveProcessExpanded : true;
+                if (collapseWithAnswer) {
+                  const toggle = document.createElement('button');
+                  toggle.type = 'button';
+                  toggle.className = 'thought-toggle live-process-toggle';
+                  toggle.dataset.liveProcess = 'true';
+                  toggle.setAttribute('aria-expanded', String(expanded));
+                  const label = document.createElement('span');
+                  label.textContent = expanded ? 'hide process' : 'view process';
+                  toggle.append(thoughtMark(), label);
+                  panel.append(toggle);
+                }
+
+                if (expanded) {
+                  const history = processHistoryNode(
+                    state.liveProcessEntries,
+                    'live.process',
+                    true
+                  );
+                  if (history) panel.append(history);
+                }
+                return panel;
+              };
+
               const waitingNode = (sequence) => {
                 const item = document.createElement('li');
                 item.className = 'message message-vex waiting';
@@ -1279,20 +1433,13 @@ object VexLifeWebP1RuntimeArtifacts {
                     : state.streamPhase === 'Reconnecting'
                       ? 'reconnecting Vex…'
                       : state.streamPhase === 'Generating' || state.streamPhase === 'Reasoning'
-                      ? 'thinking…'
-                      : state.streamPhase === 'Responding'
-                        ? 'responding…'
-                        : 'preparing…';
+                        ? 'thinking…'
+                        : state.streamPhase === 'Responding'
+                          ? 'responding…'
+                          : 'preparing…';
                 thought.append(who, mark, label);
-                if (state.liveReaches.length) thought.append(reachList(state.liveReaches));
-
-                if (state.thoughtsVisible && state.streamedReasoning) {
-                  const reasoning = document.createElement('div');
-                  reasoning.className = 'reasoning live-reasoning';
-                  bindReasoningViewport(reasoning, 'live', true);
-                  reasoning.textContent = state.streamedReasoning;
-                  thought.append(reasoning);
-                }
+                const process = liveProcessPanel();
+                if (process) thought.append(process);
 
                 const bubble = document.createElement('div');
                 bubble.className = 'bubble';
@@ -1393,27 +1540,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
 
                 const thought = item.querySelector('.thinking-now');
-                // Reach lines sit between the label and the live reasoning, in the order Vex asked.
-                item.querySelector('.live-reaches')?.remove();
-                if (state.liveReaches.length && thought) {
-                  const list = reachList(state.liveReaches);
-                  const label = thought.querySelector('.thinking-label');
-                  if (label) label.after(list);
-                  else thought.append(list);
-                }
-                let reasoning = item.querySelector('.live-reasoning');
-                if (state.thoughtsVisible && state.streamedReasoning) {
-                  if (!reasoning) {
-                    reasoning = document.createElement('div');
-                    reasoning.className = 'reasoning live-reasoning';
-                    bindReasoningViewport(reasoning, 'live', true);
-                    thought?.append(reasoning);
-                  }
-                  reasoning.textContent = state.streamedReasoning;
-                  applyReasoningViewport(reasoning, 'live', true, false);
-                } else if (reasoning) {
-                  reasoning.remove();
-                }
+                thought?.querySelector('.live-process-panel')?.remove();
+                const process = liveProcessPanel();
+                if (process && thought) thought.append(process);
+                restoreReasoningViewports();
 
                 const bubble = item.querySelector('.bubble');
                 let paragraph = bubble?.querySelector('p');
@@ -2170,16 +2300,23 @@ object VexLifeWebP1RuntimeArtifacts {
                 root.dataset.vexLastContextPath = String(result.contextPath ?? '');
                 root.dataset.vexLastPromptReceiptRef = String(result.promptContext?.receiptRef ?? '');
                 root.dataset.vexLastBrowserContextRef = String(result.promptContext?.browserContextRef ?? '');
+                const responseKey = String(result.responseMessageRef ?? '');
+                if (streamed && responseKey && state.liveProcessEntries.length) {
+                  freezeLiveProcess();
+                  state.processEntriesByResponse.set(responseKey, snapshotLiveProcess());
+                } else if (responseKey) {
+                  state.processEntriesByResponse.delete(responseKey);
+                }
                 const reasoning = result.humanReasoning;
                 if (
                   reasoning?.state === 'PRESENT_EPHEMERAL' &&
                   typeof reasoning.text === 'string' &&
                   reasoning.text.length > 0
                 ) {
-                  state.humanReasoningByResponse.set(String(result.responseMessageRef ?? ''), reasoning.text);
+                  state.humanReasoningByResponse.set(responseKey, reasoning.text);
                 } else if (result.responseMessageRef) {
-                  state.humanReasoningByResponse.delete(String(result.responseMessageRef));
-                  state.expandedThoughts.delete(String(result.responseMessageRef));
+                  state.humanReasoningByResponse.delete(responseKey);
+                  if (!state.processEntriesByResponse.has(responseKey)) state.expandedThoughts.delete(responseKey);
                 }
                 if (Array.isArray(result.capabilityUses) && result.capabilityUses.length > 0) {
                   state.reachesByResponse.set(String(result.responseMessageRef ?? ''), result.capabilityUses);
@@ -2201,6 +2338,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.streamPhase = null;
                 state.streamedContent = '';
                 state.streamedReasoning = '';
+                state.liveProcessEntries = [];
+                state.liveProcessExpanded = true;
+                state.liveProcessManuallyToggled = false;
+                resetLiveProcessViewports();
                 setCompanionStatus('Ready', 'Ready', result.model ?? '');
                 render();
               };
@@ -2238,12 +2379,17 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.pending = pending;
                 state.sendInFlight = true;
                 state.liveReaches = [];
+                state.liveProcessEntries = [];
+                state.liveProcessExpanded = true;
+                state.liveProcessManuallyToggled = false;
                 state.streamPhase = 'CheckingRuntime';
                 state.streamedContent = '';
                 state.streamedReasoning = '';
+                // Speech and the visual process projection intentionally share only these raw
+                // stream accumulators/events; neither presentation consumer owns the other.
                 speech.stream = { reply: 0, thought: 0 };
                 if (speech.settings.enabled) audioContext();
-                state.reasoningViewports.set('live', { followTail: true, scrollTop: 0 });
+                resetLiveProcessViewports();
                 if (!retrying) {
                   ui.draft.value = '';
                   sizeDraft();
@@ -2274,8 +2420,10 @@ object VexLifeWebP1RuntimeArtifacts {
                     if (event?.type === 'REASONING_DELTA' && typeof event.delta === 'string') {
                       state.streamPhase = 'Reasoning';
                       state.streamedReasoning += event.delta;
+                      appendProcessReasoning(event.delta);
                       setCompanionStatus('Checking', 'Thinking', '');
                       updateLiveTurn();
+                      // Kokoro consumes the raw aggregate above, never the visual containers.
                       followStreamSpeech(false);
                       return;
                     }
@@ -2295,6 +2443,7 @@ object VexLifeWebP1RuntimeArtifacts {
                         }
                       }
                       if (!settled) state.liveReaches.push(use);
+                      projectProcessReach(use);
                       setCompanionStatus('Checking', reachText(use), '');
                       updateLiveTurn();
                       return;
@@ -2302,8 +2451,11 @@ object VexLifeWebP1RuntimeArtifacts {
                     if (event?.type === 'CONTENT_DELTA' && typeof event.delta === 'string') {
                       state.streamPhase = 'Responding';
                       state.streamedContent += event.delta;
+                      freezeActiveProcessThought();
+                      if (!state.liveProcessManuallyToggled) state.liveProcessExpanded = false;
                       setCompanionStatus('Checking', 'Responding', '');
                       updateLiveTurn();
+                      // Final-answer speech remains on the same raw stream as T004.
                       followStreamSpeech(false);
                       return;
                     }
@@ -2323,6 +2475,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   state.streamedContent = '';
                   state.streamedReasoning = '';
                   state.liveReaches = [];
+                  state.liveProcessEntries = [];
+                  state.liveProcessExpanded = true;
+                  state.liveProcessManuallyToggled = false;
+                  resetLiveProcessViewports();
 
                   let terminalError = error;
                   let status = Number(error?.vexStatus ?? 0);
@@ -2661,10 +2817,20 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.jumpLatest.hidden = state.timelineFollowTail;
               });
               ui.timeline.addEventListener('click', (event) => {
+                const liveToggle = event.target.closest('.live-process-toggle');
+                if (liveToggle) {
+                  state.liveProcessExpanded = !state.liveProcessExpanded;
+                  state.liveProcessManuallyToggled = true;
+                  updateLiveTurn();
+                  return;
+                }
                 const toggle = event.target.closest('.thought-toggle');
                 if (!toggle) return;
                 const key = String(toggle.dataset.thoughtKey ?? '');
-                if (!key || !state.humanReasoningByResponse.has(key)) return;
+                if (
+                  !key ||
+                  (!state.humanReasoningByResponse.has(key) && !state.processEntriesByResponse.has(key))
+                ) return;
                 if (state.expandedThoughts.has(key)) state.expandedThoughts.delete(key);
                 else state.expandedThoughts.add(key);
                 renderTimeline();
