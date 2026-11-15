@@ -224,8 +224,20 @@ VEXLIFE_CAPABILITY_RESULT/v1 in the next stage of the same human turn
   state RETURNED | NOT_FOUND | REFUSED | FAILED | INVALID_REQUEST | NOT_AVAILABLE |
         LIMIT_REACHED | HELD_TOKEN_BUDGET
         ↓
-Vex continues the same reply (or asks again)
+Vex continues the same reply while requests remain
+        ↓
+LIMIT_REACHED / no requests remain
+  -> no further capability request in this human turn
+  -> answer from established truth
+  -> if material outside truth is still missing, share current understanding + missing truth
+     and ask the person for another message / fresh human turn
 ~~~
+
+The per-turn request bound is a safety/current-attention boundary, not a target and not a
+conversation-failure condition. A fresh human message may begin another bounded turn with a fresh
+request budget while canonical Conversation carries the prior human-visible response forward. If Vex
+ignores the returned limit truth and emits another machine-control request anyway, the existing
+fail-closed turn guard still applies.
 
 Conversation Source Return keeps its own lived request form and once-per-turn law; the Atlas lists
 it as `conversation` so one `atlas list` names everything Vex can reach.
