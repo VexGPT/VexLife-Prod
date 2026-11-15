@@ -569,8 +569,6 @@ object DirectPromptContext {
             null,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
-        priorRuntimeObservation: DirectCompanionConnection.RuntimeObservation? =
-            null,
         sourceReturnProtocolEnabled: Boolean =
             false,
         foundationalField: VexLifeFoundationalField.Reading? = null,
@@ -585,7 +583,7 @@ object DirectPromptContext {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
-                priorRuntimeObservation = priorRuntimeObservation,
+                vexModelLabelForTurn = vexModelLabelForTurn,
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
                 foundationalField = foundationalField,
@@ -818,6 +816,7 @@ object DirectPromptContext {
         selected: List<DirectConversationStore.Event>,
         recentConversation: DirectConversationStore.RecentCompletedConversation?,
         sourceReturnProjection: DirectConversationSourceReturn.Projection?,
+        vexModelLabelForTurn: ((String) -> String?)? = null,
     ): Materialization {
         val workingContinuity =
             fixed.workingContinuity
@@ -880,7 +879,7 @@ object DirectPromptContext {
                                             "selected direct Conversation event has unsupported provider role",
                                         )
                                 },
-                            content = event.content,
+                            content = providerConversationContent(event, vexModelLabelForTurn),
                         ),
                     )
                 }
@@ -1270,7 +1269,7 @@ object DirectPromptContext {
             null,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
-        priorRuntimeObservation: DirectCompanionConnection.RuntimeObservation? =
+        vexModelLabelForTurn: ((String) -> String?)? =
             null,
         sourceReturnProtocolEnabled: Boolean =
             false,
@@ -1301,7 +1300,6 @@ object DirectPromptContext {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
-                priorRuntimeObservation = priorRuntimeObservation,
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
                 foundationalField = foundationalField,
@@ -1388,7 +1386,21 @@ object DirectPromptContext {
                                 prior,
                             ),
                     )
-                    source.events
+                    var visible = source.events
+                    if (vexModelLabelForTurn != null) {
+                        while (
+                            visible.size > 2 &&
+                                visible.sumOf {
+                                    estimatedMessageTokens(
+                                        providerConversationContent(it, vexModelLabelForTurn),
+                                    )
+                                } >
+                                afterSourceReturn
+                        ) {
+                            visible = visible.drop(2)
+                        }
+                    }
+                    visible
                 }
             }
         val selectedConversationRefs =
@@ -1411,7 +1423,7 @@ object DirectPromptContext {
         val selectedConversationTokens =
             selected.sumOf {
                 estimatedMessageTokens(
-                    it.content,
+                    providerConversationContent(it, vexModelLabelForTurn),
                 )
             }
         require(
@@ -1488,6 +1500,7 @@ object DirectPromptContext {
             selected = selected,
             recentConversation = recentConversation,
             sourceReturnProjection = sourceReturnProjection,
+            vexModelLabelForTurn = vexModelLabelForTurn,
         )
     }
 
@@ -1510,7 +1523,7 @@ object DirectPromptContext {
             null,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence? =
             null,
-        priorRuntimeObservation: DirectCompanionConnection.RuntimeObservation? =
+        vexModelLabelForTurn: ((String) -> String?)? =
             null,
         sourceReturnProtocolEnabled: Boolean =
             false,
@@ -1534,7 +1547,7 @@ object DirectPromptContext {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
-                priorRuntimeObservation = priorRuntimeObservation,
+                vexModelLabelForTurn = vexModelLabelForTurn,
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
                 sourceReturnDiscovery =
@@ -1812,7 +1825,7 @@ object DirectPromptContext {
         browserContext: BrowserContext?,
         personContext: PersonContext?,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
-        priorRuntimeObservation: DirectCompanionConnection.RuntimeObservation? = null,
+        vexModelLabelForTurn: ((String) -> String?)? = null,
         sourceReturnProtocolEnabled: Boolean =
             false,
         foundationalField: VexLifeFoundationalField.Reading? = null,
@@ -1934,7 +1947,6 @@ object DirectPromptContext {
                     currentRequest = currentRequest,
                     workingRolloverCurrent = workingContinuity != null,
                     runtimeEvidence = runtimeEvidence,
-                    priorRuntimeObservation = priorRuntimeObservation,
                 )
             } else {
                 null
@@ -1978,7 +1990,7 @@ object DirectPromptContext {
                         add(
                             CompanionProviderMessage(
                                 role = "assistant",
-                                content = response.content,
+                                content = providerConversationContent(response, vexModelLabelForTurn),
                             ),
                         )
                     }
@@ -1999,7 +2011,7 @@ object DirectPromptContext {
                 add(
                     CompanionProviderMessage(
                         role = "user",
-                        content = currentRequest.content,
+                        content = providerConversationContent(currentRequest, vexModelLabelForTurn),
                     ),
                 )
             }
@@ -2104,7 +2116,6 @@ object DirectPromptContext {
         currentRequest: DirectConversationStore.Event,
         workingRolloverCurrent: Boolean,
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
-        priorRuntimeObservation: DirectCompanionConnection.RuntimeObservation?,
     ): ConversationExtent {
         require(currentRequest.sequence >= 0 && currentRequest.sequence % 2 == 0L) {
             "direct prompt Conversation extent requires a REQUEST at an even canonical sequence"
@@ -2126,66 +2137,45 @@ object DirectPromptContext {
                         "This prompt shows the newest of them that fit, exactly as written. Any " +
                         "that are not shown here are still in the record."
             }
-
-        val perspective =
+        val currentModel =
             runtimeEvidence
-                ?.let { current ->
-                    val currentLabel =
-                        HereticModelCatalog.entry(current.modelRef)
-                            ?.humanLabel
-                            ?: current.modelRef
-                    val prior = priorRuntimeObservation
-                    val relation =
-                        when {
-                            count == 0L -> "NO_PRIOR_COMPLETED_VEX_REPLY"
-                            prior == null -> "PRIOR_RUNTIME_PROVENANCE_UNAVAILABLE"
-                            prior.modelRef != current.modelRef ->
-                                "MODEL_CHANGED_SINCE_PRIOR_VEX_REPLY"
-                            prior.runtimeReceiptRef != current.runtimeReceiptRef ->
-                                "RUNTIME_CHANGED_SAME_MODEL_SINCE_PRIOR_VEX_REPLY"
-                            else -> "SAME_RUNTIME_BINDING_AS_PRIOR_VEX_REPLY"
-                        }
-                    buildList {
-                        add("currentInferenceModel=$currentLabel")
-                        add("currentInferenceModelRef=${current.modelRef}")
-                        add("currentRuntimeReceiptRef=${current.runtimeReceiptRef}")
-                        if (prior != null) {
-                            val priorLabel =
-                                HereticModelCatalog.entry(prior.modelRef)
-                                    ?.humanLabel
-                                    ?: prior.modelRef
-                            add("priorVexReplyModel=$priorLabel")
-                            add("priorVexReplyModelRef=${prior.modelRef}")
-                            add("priorVexReplyRuntimeReceiptRef=${prior.runtimeReceiptRef}")
-                        }
-                        add("inferenceContinuityRelation=$relation")
-                        add(
-                            "The provider preserves person/Vex roles as user/assistant. Prior " +
-                                "assistant messages are shared Conversation history; their presence " +
-                                "does not mean this current inference produced them.",
-                        )
-                        add(
-                            "UI turn numbers are not carried in these provider messages. When an " +
-                                "exact older turn must be located, use the Conversation's source " +
-                                "addressing rather than guessing from visible numbering.",
-                        )
-                    }
+                ?.modelRef
+                ?.let { modelRef ->
+                    HereticModelCatalog.entry(modelRef)
+                        ?.handle
+                        ?.removePrefix("heretic-")
+                        ?.uppercase()
+                        ?: modelRef
                 }
-                .orEmpty()
 
         return ConversationExtent(
             priorCompletedExchangeCount = count,
             systemContent =
-                (
-                    listOf(
+                listOfNotNull(
                         ConversationExtentHeader,
                         "priorCompletedExchanges=$count",
+                        currentModel?.let { "Me now [Vex $it]." },
                         statement,
-                    ) +
-                        perspective
                     )
                     .joinToString("\n"),
         )
+    }
+
+    private fun providerConversationContent(
+        event: DirectConversationStore.Event,
+        vexModelLabelForTurn: ((String) -> String?)?,
+    ): String {
+        if (vexModelLabelForTurn == null) return event.content
+        return when (event.eventKind) {
+            "REQUEST" ->
+                "Human [${event.formedAt}][${event.sequence}]:\n${event.content}"
+            "RESPONSE" -> {
+                val model = vexModelLabelForTurn(event.turnRef)
+                val me = if (model == null) "Me [Vex]" else "Me [Vex $model]"
+                "$me[${event.sequence}]:\n${event.content}"
+            }
+            else -> event.content
+        }
     }
 
     private fun personContextSystemContent(context: PersonContext): String =
