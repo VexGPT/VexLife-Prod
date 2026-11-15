@@ -76,6 +76,8 @@ object VexLogger {
 
         // Heretic runtime (Python/MLX)
         RuntimeCurrentnessLost(Owner.HereticRuntime),
+        RuntimeGenerationUnavailable(Owner.HereticRuntime),
+        RuntimeGenerationUnknown(Owner.HereticRuntime),
         RuntimeRecoveryRequested(Owner.HereticRuntime),
         RuntimeRecoveryCompleted(Owner.HereticRuntime),
         RuntimeRecoveryFailed(Owner.HereticRuntime),
