@@ -357,8 +357,12 @@ class VexLifeWebP1Test {
         )
         assertTrue(
             javascript.contains(
-                "state.processEntriesByResponse.set(responseKey, snapshotLiveProcess())",
-            ),
+                "const completedProcess =",
+            ) &&
+                javascript.contains(
+                    "state.processEntriesByResponse.set(responseKey, completedProcess)",
+                ),
+            "completed presentation must attach the process snapshot selected before transient live state is cleared",
         )
         assertTrue(
             javascript.contains(
@@ -402,8 +406,12 @@ class VexLifeWebP1Test {
         )
         assertTrue(
             javascript.contains(
-                "await completeCanonicalSend(reconciled, false)",
-            ),
+                "const interruptedProcess = snapshotLiveProcess()",
+            ) &&
+                javascript.contains(
+                    "await completeCanonicalSend(reconciled, false, interruptedProcess)",
+                ),
+            "ambiguous stream reconciliation must carry forward the process the human already observed",
         )
         assertTrue(
             reconciliation >=
