@@ -1371,8 +1371,24 @@ object VexLifeProdServiceContract {
         /** For REACH: the request Vex made (state null) or its returned state. */
         val reach: CapabilityUse? =
             null,
+        /** 1-based provider stage identity supplied by DirectCompanionTurn; null outside provider work. */
+        val providerStageIndex: Int? =
+            null,
+        /** Exact Product model identity serving [providerStageIndex]. */
+        val providerModelRef: String? =
+            null,
     ) {
         init {
+            require(
+                (providerStageIndex == null && providerModelRef == null) ||
+                    (
+                        providerStageIndex != null &&
+                            providerStageIndex > 0 &&
+                            !providerModelRef.isNullOrBlank()
+                    ),
+            ) {
+                "provider stage projection must carry one positive index and model together"
+            }
             require(
                 type in
                     setOf(
