@@ -1212,6 +1212,17 @@ object DirectCompanionTurn {
                 foundationalField = foundationalField,
                 conversationExtentIncluded = true,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                conversationRuntimeModelRefForTurn = {
+                    turnRef ->
+                    DirectTurnContextStore(
+                        productHome,
+                    )
+                        .read(
+                            turnRef,
+                        )
+                        ?.runtimeObservation
+                        ?.modelRef
+                },
             )
         val selectedMemory =
             selectedMemoryAtCap
@@ -1276,6 +1287,17 @@ object DirectCompanionTurn {
             foundationalField = foundationalField,
             conversationExtentIncluded = true,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+            conversationRuntimeModelRefForTurn = {
+                turnRef ->
+                DirectTurnContextStore(
+                    productHome,
+                )
+                    .read(
+                        turnRef,
+                    )
+                    ?.runtimeObservation
+                    ?.modelRef
+            },
         )
     }
 
