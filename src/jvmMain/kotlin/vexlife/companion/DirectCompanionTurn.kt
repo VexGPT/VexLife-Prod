@@ -221,6 +221,31 @@ object DirectCompanionTurn {
                     }
                 }
 
+        /**
+         * The stream stopped before it finished. Answer text still held while it might have become
+         * a control request is released to the person — unless it was opening one — so a stopped
+         * stream never swallows what Vex had already said.
+         */
+        fun releaseOnStop() {
+            if (mode != SourceReturnProgressMode.Pending) return
+            val observed = contentPrefix.toString()
+            val openingControl =
+                observed.isBlank() ||
+                    controlHeaderIndex(observed) != null ||
+                    ControlHeaders.any { header ->
+                        (4..header.length).any { length ->
+                            observed.trimEnd().endsWith(header.take(length))
+                        }
+                    }
+            if (openingControl) {
+                mode = SourceReturnProgressMode.InternalControl
+                bufferedContent.clear()
+            } else {
+                mode = SourceReturnProgressMode.HumanAnswer
+                flushContent()
+            }
+        }
+
         fun finish(
             finalContent: String,
         ): Boolean {
@@ -468,6 +493,29 @@ object DirectCompanionTurn {
         intent: Intent,
         hooks: Hooks,
     ): Result {
+        // The answer text this turn shows the person, so a turn that stops keeps it.
+        val visibleAnswer = DirectIncompleteTurn.Visible()
+        return performObserved(
+            setup,
+            intent,
+            hooks.copy(
+                progressObserver =
+                    ProgressObserver { progress ->
+                        if (progress.phase == ProgressPhase.Responding)
+                            visibleAnswer.append(progress.delta)
+                        hooks.progressObserver?.observe(progress)
+                    }
+            ),
+            visibleAnswer,
+        )
+    }
+
+    private fun performObserved(
+        setup: VexLifeProdLocalSetup.Result,
+        intent: Intent,
+        hooks: Hooks,
+        visibleAnswer: DirectIncompleteTurn.Visible,
+    ): Result {
         require(
             setup.state ==
                 "LOCAL_HERETIC_FOUNDATION_READY",
@@ -695,6 +743,15 @@ object DirectCompanionTurn {
                             null
                         }
 
+                    if (request != null) {
+                        DirectIncompleteTurn.keep(
+                            productHome = productHome,
+                            request = request,
+                            failureCode = failureCode(error),
+                            visible = visibleAnswer,
+                            formedAt = hooks.now(),
+                        )
+                    }
                     VexLogger.record(
                         VexLogger.Fact.TurnFailed,
                         listOfNotNull(
@@ -1257,14 +1314,19 @@ object DirectCompanionTurn {
             ),
         )
         val inference =
-            DirectCompanionConnection.invoke(
-                runtime = runtimeEvidence,
-                messages = messages,
-                transport = hooks.transport,
-                progressObserver =
-                    progressGate.connectionObserver(),
-                now = hooks.now,
-            )
+            try {
+                DirectCompanionConnection.invoke(
+                    runtime = runtimeEvidence,
+                    messages = messages,
+                    transport = hooks.transport,
+                    progressObserver =
+                        progressGate.connectionObserver(),
+                    now = hooks.now,
+                )
+            } catch (stopped: Throwable) {
+                progressGate.releaseOnStop()
+                throw stopped
+            }
         val controlLike =
             progressGate.finish(
                 inference.content,
@@ -1661,6 +1723,10 @@ object DirectCompanionTurn {
             null
         }
     }
+
+    /** The failure receipt of [turnRef], or null when there is none or it cannot be read. */
+    internal fun failureReceiptOrNull(productHome: Path, turnRef: String): FailureReceipt? =
+        runCatching { readFailureReceipt(productHome, turnRef) }.getOrNull()
 
     private fun readFailureReceipt(
         productHome: Path,

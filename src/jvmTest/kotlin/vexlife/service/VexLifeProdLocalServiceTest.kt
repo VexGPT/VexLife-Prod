@@ -2572,6 +2572,91 @@ class VexLifeProdLocalServiceTest {
     }
 
     @Test
+    fun aStreamThatStopsShowsWhatCameThroughAndTheConversationKeepsShowingIt() {
+        val parent = Files.createTempDirectory("vexlife-prod-service-incomplete-").toAbsolutePath()
+        val root = parent.resolve("VexLife-Prod")
+        try {
+            bootstrapHome(root)
+            val currentSetup = setup(root)
+            val transport =
+                object : DirectCompanionConnection.StreamingTransport {
+                    override fun post(
+                        call: DirectCompanionConnection.HttpCall,
+                    ): DirectCompanionConnection.HttpResult = error("stream test")
+
+                    override fun postStreaming(
+                        call: DirectCompanionConnection.HttpCall,
+                        onLine: (String) -> Unit,
+                    ): DirectCompanionConnection.StreamingHttpResult {
+                        onLine("""data: {"model":"default_model","choices":[{"delta":{"role":"assistant","reasoning":"Thinking it through."}}]}""")
+                        onLine("")
+                        onLine("""data: {"model":"default_model","choices":[{"delta":{"role":"assistant","content":"Rounds matter less than confidence."}}]}""")
+                        onLine("")
+                        // Closed before [DONE].
+                        return DirectCompanionConnection.StreamingHttpResult(200, "e".repeat(64))
+                    }
+                }
+
+            VexLifeProdLocalService.startForTest(
+                    sourceSha = "e".repeat(40),
+                    setup = currentSetup,
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor { _, _ -> error("streams only") },
+                    streamingTurnExecutor =
+                        VexLifeProdLocalService.StreamingTurnExecutor { setup, intent, observer ->
+                            DirectCompanionTurn.performWithHooks(
+                                setup = setup,
+                                intent = intent,
+                                hooks =
+                                    DirectCompanionTurn.Hooks(
+                                        transport = transport,
+                                        progressObserver = observer,
+                                        now = { Instant.parse("2026-11-15T16:30:00Z") },
+                                    ),
+                            )
+                        },
+                )
+                .use { service ->
+                    val stream =
+                        postEventStream(
+                                service.origin,
+                                VexLifeProdServiceContract.ConversationSendPath,
+                                json.encodeToString(
+                                    VexLifeProdServiceContract.SendRequest(
+                                        idempotencyKey = "send.vexlife.browser.incomplete.001",
+                                        content = "Was four rounds too limiting?",
+                                    )
+                                ),
+                            )
+                            .body()
+                    val content = stream.indexOf("\"type\":\"CONTENT_DELTA\"")
+                    val failed = stream.indexOf("\"type\":\"FAILED\"")
+                    assertTrue(content >= 0, "the held answer reached the person before the failure")
+                    assertTrue(failed > content)
+                    val turnRef =
+                        Regex(""""turnRef":"(turn\.[^"]+)"""").find(stream.substring(failed))
+                            ?.groupValues
+                            ?.get(1)
+                    assertNotNull(turnRef, "FAILED names the turn so its kept answer can be matched")
+
+                    val projection =
+                        json.decodeFromString<VexLifeProdServiceContract.ConversationProjection>(
+                            get(service.origin, VexLifeProdServiceContract.ConversationPath).body()
+                        )
+                    assertTrue(projection.messages.isEmpty())
+                    assertEquals(1, projection.abandonedAttemptCount)
+                    val kept = projection.incompleteTurns.single()
+                    assertEquals(turnRef, kept.turnRef)
+                    assertEquals("Was four rounds too limiting?", kept.requestContent)
+                    assertEquals("Rounds matter less than confidence.", kept.partialAnswer)
+                    assertEquals("CONNECTION_EndpointResponseInvalid", kept.failureCode)
+                }
+        } finally {
+            parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
     fun streamingSendShowsEachReachAndTheCompletedResponseNamesIt() {
         val parent = Files.createTempDirectory("vexlife-prod-service-reach-").toAbsolutePath()
         val root = parent.resolve("VexLife-Prod")

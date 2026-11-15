@@ -686,6 +686,49 @@ NEW SEND ATTEMPT
 -> LAST VALID CANONICAL HEAD
 ~~~
 
+### A turn that did not finish stays visible (2026-11-15)
+
+Lived failure: the provider stream closed before `[DONE]` after Vex had finished thinking and had
+already answered at length; the failure erased the answer from the timeline, and a reload would
+also have hidden the person's own message (it is an abandoned attempt, outside the canonical chain).
+
+Cause → effect now:
+
+~~~text
+answer text held by the control gate (might still become a control request)
+  + stream stops
+  -> released to the person unless it was opening a control request
+     (`SourceReturnProgressGate.releaseOnStop`)
+
+answer text shown to the person during the turn
+  -> accumulated by the turn (`DirectIncompleteTurn.Visible`, first 64 Ki characters)
+  + turn fails after its request is durable
+  -> kept beside the failure receipt:
+     recovery/direct-companion/<turnRef>.incomplete-answer.json
+     (TURN_INCOMPLETE_ANSWER_KEPT; content never in the chronology)
+
+GET /api/v1/conversation
+  -> incompleteTurns: every abandoned attempt, oldest first:
+     the person's message, what came through, why it stopped, the next safe route
+  -> the browser shows each where it happened, after any reload, with Try Again;
+     while the page is open, the session's process history for that turn is laid over it
+     (FAILED names the turn: error.turnRef)
+~~~
+
+Permanent:
+
+~~~text
+TERMINAL FAILURE
+!= PERMISSION TO ERASE WHAT THE PERSON ALREADY SAW
+
+KEPT INCOMPLETE ANSWER
+!= COMPLETED EXCHANGE
+!= MODEL INPUT / MEMORY / CANONICAL CHAIN
+~~~
+
+Reasoning is kept exactly as for completed turns: session-scoped while the page is open, and in
+Diagnostics Enhanced Capture when the person turned that on.
+
 ## Current proof formed in source
 
 Tests are source-formed for:

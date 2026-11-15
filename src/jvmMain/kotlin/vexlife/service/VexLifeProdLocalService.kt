@@ -25,6 +25,7 @@ import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.browser.VexLifeProdFrameHost
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
+import vexlife.companion.DirectIncompleteTurn
 import vexlife.companion.DirectPromptContext
 import vexlife.companion.DirectTurnContextStore
 import vexlife.conversation.DirectConversationIdentity
@@ -743,6 +744,7 @@ class VexLifeProdLocalService private constructor(
                         message = "direct Companion turn failed",
                         retrySameSendAttemptAllowed = error.retrySameSendAttemptAllowed,
                         exactNextSafeRoute = error.exactNextSafeRoute,
+                        turnRef = error.failureReceipt?.turnRef,
                     ),
             )
         } catch (
@@ -2061,6 +2063,7 @@ class VexLifeProdLocalService private constructor(
                             message = "direct Companion turn failed",
                             retrySameSendAttemptAllowed = error.retrySameSendAttemptAllowed,
                             exactNextSafeRoute = error.exactNextSafeRoute,
+                            turnRef = error.failureReceipt?.turnRef,
                         ),
                 ),
             )
@@ -2424,11 +2427,10 @@ class VexLifeProdLocalService private constructor(
     }
 
     private fun conversationProjection(): VexLifeProdServiceContract.ConversationProjection {
+        val productHome = Path.of(startupSetup.productHome)
         val snapshot =
             DirectConversationStore(
-                Path.of(
-                    startupSetup.productHome,
-                ),
+                productHome,
             )
                 .current()
 
@@ -2474,6 +2476,22 @@ class VexLifeProdLocalService private constructor(
             messages = messages,
             abandonedAttemptCount = snapshot.abandonedAttempts.size,
             effectsPerformed = false,
+            incompleteTurns =
+                DirectIncompleteTurn.observe(productHome, snapshot).map {
+                    VexLifeProdServiceContract.IncompleteTurn(
+                        turnRef = it.turnRef,
+                        requestEventRef = it.requestEventRef,
+                        requestContent = it.requestContent,
+                        requestSequence = it.requestSequence,
+                        requestFormedAt = it.requestFormedAt,
+                        partialAnswer = it.partialAnswer,
+                        partialAnswerTruncated = it.partialAnswerTruncated,
+                        answerRecordedNotCommitted = it.answerRecordedNotCommitted,
+                        failureCode = it.failureCode,
+                        exactNextSafeRoute = it.exactNextSafeRoute,
+                        stoppedAt = it.stoppedAt,
+                    )
+                },
         )
     }
 

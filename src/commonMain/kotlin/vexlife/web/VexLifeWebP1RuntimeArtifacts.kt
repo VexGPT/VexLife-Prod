@@ -1555,6 +1555,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 const item = document.createElement('li');
                 item.className = 'message message-vex failed-attempt';
                 item.dataset.failedAttemptKey = String(attempt.idempotencyKey ?? '');
+                if (attempt.turnRef) item.dataset.incompleteTurnRef = String(attempt.turnRef);
+                item.dataset.kept = String(Boolean(attempt.kept));
 
                 const index = document.createElement('p');
                 index.className = 'message-index';
@@ -1574,7 +1576,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const history =
                   processHistoryNode(
                     attempt.processEntries ?? [],
-                    'failed.' + String(attempt.idempotencyKey ?? ''),
+                    'failed.' + String(attempt.turnRef ?? attempt.idempotencyKey ?? ''),
                     false
                   );
                 if (history) thought.append(history);
@@ -1586,8 +1588,17 @@ object VexLifeWebP1RuntimeArtifacts {
                   partial.className = 'failed-attempt-partial';
                   partial.textContent = attempt.partialContent;
                   bubble.append(partial);
+                  const note = document.createElement('p');
+                  note.className = 'failed-attempt-note';
+                  note.textContent = attempt.answerRecordedNotCommitted
+                    ? 'This answer was written but the turn did not finish.'
+                    : attempt.partialAnswerTruncated
+                      ? 'This is the start of what came through before it stopped.'
+                      : 'This is what came through before it stopped.';
+                  bubble.append(note);
                 }
                 const detail = document.createElement('p');
+                detail.className = 'failed-attempt-detail';
                 detail.textContent =
                   String(attempt.failureCode ?? 'TURN_FAILED') +
                   ' · ' +
@@ -1598,6 +1609,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 retry.type = 'button';
                 retry.className = 'thought-toggle failed-attempt-retry';
                 retry.dataset.failedAttemptKey = String(attempt.idempotencyKey ?? '');
+                if (attempt.turnRef) retry.dataset.incompleteTurnRef = String(attempt.turnRef);
                 retry.textContent = 'Try Again';
                 retry.disabled = state.sendInFlight;
                 bubble.append(retry);
@@ -1640,10 +1652,65 @@ object VexLifeWebP1RuntimeArtifacts {
                   return;
                 }
                 const messages = state.conversation?.messages ?? [];
-                const nodes = messages.map(messageNode);
+                const nodes = [];
+                const sessionByTurn = new Map(
+                  state.failedAttempts
+                    .filter((attempt) => attempt.turnRef)
+                    .map((attempt) => [String(attempt.turnRef), attempt])
+                );
+                // Every turn that did not finish is kept by the Product and shown where it happened:
+                // the person's message, what came through, and why it stopped. The session's own
+                // process history for the same turn is laid over it while this page is open.
+                const kept = (state.conversation?.incompleteTurns ?? []).map((turn) => {
+                  const session = sessionByTurn.get(String(turn.turnRef));
+                  return {
+                    kept: true,
+                    turnRef: turn.turnRef,
+                    idempotencyKey: session?.idempotencyKey ?? '',
+                    content: turn.requestContent,
+                    browserContext: session?.browserContext ?? null,
+                    failureCode: turn.failureCode ?? session?.failureCode ?? 'TURN_FAILED',
+                    exactNextSafeRoute: turn.exactNextSafeRoute ?? session?.exactNextSafeRoute ?? null,
+                    processEntries: session?.processEntries ?? [],
+                    partialContent: turn.partialAnswer ?? session?.partialContent ?? '',
+                    partialAnswerTruncated: Boolean(turn.partialAnswerTruncated),
+                    answerRecordedNotCommitted: Boolean(turn.answerRecordedNotCommitted),
+                    sequence: Number(turn.requestSequence) || 0,
+                    at: Date.parse(String(turn.requestFormedAt ?? '')) || 0
+                  };
+                });
+                const keptTurnRefs = new Set(kept.map((attempt) => String(attempt.turnRef)));
+                let keptIndex = 0;
+                for (const message of messages) {
+                  const at = Date.parse(String(message.formedAt ?? '')) || 0;
+                  while (keptIndex < kept.length && kept[keptIndex].at && at && kept[keptIndex].at < at) {
+                    const attempt = kept[keptIndex];
+                    nodes.push(messageNode({
+                      role: 'human',
+                      content: attempt.content,
+                      sequence: attempt.sequence,
+                      eventRef: 'presentation.kept.' + attempt.turnRef
+                    }));
+                    nodes.push(failedAttemptNode(attempt, attempt.sequence + 1));
+                    keptIndex += 1;
+                  }
+                  nodes.push(messageNode(message));
+                }
                 let sequence = nextSequence();
+                for (; keptIndex < kept.length; keptIndex += 1) {
+                  const attempt = kept[keptIndex];
+                  nodes.push(messageNode({
+                    role: 'human',
+                    content: attempt.content,
+                    sequence: attempt.sequence,
+                    eventRef: 'presentation.kept.' + attempt.turnRef
+                  }));
+                  nodes.push(failedAttemptNode(attempt, attempt.sequence + 1));
+                  sequence = Math.max(sequence, attempt.sequence + 2);
+                }
 
                 for (const attempt of state.failedAttempts) {
+                  if (attempt.turnRef && keptTurnRefs.has(String(attempt.turnRef))) continue;
                   nodes.push(messageNode({
                     role: 'human',
                     content: attempt.content,
@@ -2700,6 +2767,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       browserContext: pending.browserContext ?? null,
                       failureCode: String(failure.code ?? terminalError?.name ?? 'TURN_FAILED'),
                       exactNextSafeRoute: failure.exactNextSafeRoute ?? null,
+                      turnRef: failure.turnRef ?? null,
                       processEntries: interruptedProcess,
                       partialContent: interruptedContent
                     });
@@ -3028,11 +3096,18 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (retryFailed) {
                   if (state.sendInFlight) return;
                   const key = String(retryFailed.dataset.failedAttemptKey ?? '');
-                  const failed = state.failedAttempts.find((attempt) => attempt.idempotencyKey === key);
-                  if (!failed) return;
+                  const turnRef = String(retryFailed.dataset.incompleteTurnRef ?? '');
+                  const failed =
+                    (key && state.failedAttempts.find((attempt) => attempt.idempotencyKey === key)) ||
+                    (turnRef && state.failedAttempts.find((attempt) => attempt.turnRef === turnRef));
+                  const kept =
+                    !failed && turnRef
+                      ? (state.conversation?.incompleteTurns ?? []).find((turn) => turn.turnRef === turnRef)
+                      : null;
+                  if (!failed && !kept) return;
                   void send({
-                    content: failed.content,
-                    browserContext: failed.browserContext
+                    content: failed ? failed.content : kept.requestContent,
+                    browserContext: failed ? failed.browserContext : null
                   });
                   return;
                 }
