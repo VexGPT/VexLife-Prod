@@ -493,6 +493,15 @@ boundary. Before the final stage, the turn performs one **read-only** runtime-cu
 with no recovery route and requires the same runtime receipt. If that runtime disappeared or was
 replaced, the turn fails before provider call #2 rather than silently substituting a runtime mid-turn.
 
+A human turn may also carry capability requests (see
+[CAPABILITY-ATLAS-SELF-FRAME.md](CAPABILITY-ATLAS-SELF-FRAME.md#requestreturn-reach-2026-11-14)). The
+turn is a bounded stage loop: each stage is the same prompt base plus the request/result exchanges so
+far; a capability request is performed by its owner and its typed result is appended; a source-return
+request re-materializes the base exactly as before. At most four capability requests and one source
+return per turn; a fifth request is answered LIMIT_REACHED, and asking again after that ends the turn
+with a failure receipt. Every later stage uses the same read-only runtime re-observation and the same
+foundational field, and the reused base prompt is re-verified at each provider boundary.
+
 Presentation transport is not completion authority. When an SSE stream ends ambiguously, the
 presentation may re-present the same idempotency key through the ordinary non-streaming Send contract
 to ask the turn owner for durable truth before showing an unresolved outcome. This is transport

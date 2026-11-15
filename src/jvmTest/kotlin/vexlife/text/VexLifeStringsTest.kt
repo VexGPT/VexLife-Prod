@@ -55,7 +55,12 @@ class VexLifeStringsTest {
 
     @Test
     fun workspaceDataKeysNameRealDiagnosticsRefs() {
+        val capabilityRefs =
+            vexlife.capability.VexLifeCapabilityAtlas.definitions().flatMap { definition ->
+                definition.actions.map { "capability:${definition.handle}:${it.action}" }
+            } + "capability:trace:USES"
         val known =
+            capabilityRefs.toSet() +
             setOf(
                 "diagnostics:state:" + vexlife.diagnostics.VexLifeDiagnosticsFamily.StateRecording,
                 "diagnostics:state:" + vexlife.diagnostics.VexLifeDiagnosticsFamily.StateRecordingEnhanced,

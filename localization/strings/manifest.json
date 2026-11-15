@@ -2285,6 +2285,14 @@
       "enHash": "4059f0d4ba0d",
       "langs": []
     },
+    "workspace.label.reach-state": {
+      "enHash": "c78c8f2223c8",
+      "langs": []
+    },
+    "workspace.label.reached": {
+      "enHash": "71b4d0d05045",
+      "langs": []
+    },
     "workspace.status.diagnostics-enhanced-off": {
       "enHash": "1700f60d8457",
       "langs": []
@@ -2299,6 +2307,30 @@
     },
     "workspace.status.diagnostics-unavailable": {
       "enHash": "394035d406e5",
+      "langs": []
+    },
+    "workspace.status.reach-atlas": {
+      "enHash": "1dd9f945ca1e",
+      "langs": []
+    },
+    "workspace.status.reach-github": {
+      "enHash": "45ef73b634bb",
+      "langs": []
+    },
+    "workspace.status.reach-home": {
+      "enHash": "c58220d914d4",
+      "langs": []
+    },
+    "workspace.status.reach-memory": {
+      "enHash": "238b3df1556e",
+      "langs": []
+    },
+    "workspace.status.reach-web-fetch": {
+      "enHash": "478b7d0c4d22",
+      "langs": []
+    },
+    "workspace.status.reach-web-search": {
+      "enHash": "28787e0d826f",
       "langs": []
     }
   }

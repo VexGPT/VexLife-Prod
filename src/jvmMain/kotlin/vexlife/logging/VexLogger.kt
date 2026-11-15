@@ -46,6 +46,7 @@ object VexLogger {
         Browser("browser"),
         Presentation("presentation"),
         Diagnostics("diagnostics"),
+        Capability("capability"),
     }
 
     /**
@@ -89,6 +90,10 @@ object VexLogger {
         TurnCompleted(Owner.Conversation),
         TurnFailed(Owner.Conversation),
         SendAttemptTerminalizedAfterLoss(Owner.Conversation),
+
+        // Capability bridge: a request Vex made, and what its owner returned.
+        CapabilityRequestObserved(Owner.Capability),
+        CapabilityResultReturned(Owner.Capability),
 
         // Browser and presentation, reported by the web presentation that observed them
         BrowserPageIdentityObserved(Owner.Browser),

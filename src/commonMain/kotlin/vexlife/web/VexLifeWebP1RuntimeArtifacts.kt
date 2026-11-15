@@ -267,6 +267,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 streamedReasoning: '',
                 thoughtsVisible: true,
                 humanReasoningByResponse: new Map(),
+                // What Vex reached during the live turn (bridge uses: handle/action/target/state), and
+                // per completed response for this browser session. Reach, never the content.
+                liveReaches: [],
+                reachesByResponse: new Map(),
                 expandedThoughts: new Set(),
                 timelineFollowTail: true,
                 timelineScrollTop: 0,
@@ -1140,6 +1144,51 @@ object VexLifeWebP1RuntimeArtifacts {
                 return mark;
               };
 
+              // Reach in the person's words: the bridge names handle/action/target, the words are keyed.
+              const reachText = (use) => {
+                const target = String(use?.target ?? '')
+                  .replace(/^home:/u, '')
+                  .replace(/^search: /u, '')
+                  .replace(/^memory: /u, '');
+                const key =
+                  use?.handle === 'web' && use?.action === 'search'
+                    ? 'workspace.status.reach-web-search'
+                    : use?.handle === 'web'
+                      ? 'workspace.status.reach-web-fetch'
+                      : use?.handle === 'github'
+                        ? 'workspace.status.reach-github'
+                        : use?.handle === 'home'
+                          ? 'workspace.status.reach-home'
+                          : use?.handle === 'memory'
+                            ? 'workspace.status.reach-memory'
+                            : 'workspace.status.reach-atlas';
+                const words = t(key).replace('{target}', target);
+                if (!use?.state || use.state === 'RETURNED') return words;
+                const settled = String(use.state).toLowerCase().replace(/_/gu, ' ');
+                return words + ' ' + t('workspace.label.reach-state').replace('{state}', settled);
+              };
+
+              const reachList = (uses) => {
+                const list = document.createElement('ul');
+                list.className = 'reaches live-reaches';
+                for (const use of uses) {
+                  const line = document.createElement('li');
+                  line.textContent = reachText(use);
+                  list.append(line);
+                }
+                return list;
+              };
+
+              const reachedLine = (message) => {
+                if (message.role !== 'vex') return null;
+                const uses = state.reachesByResponse.get(String(message.messageRef ?? ''));
+                if (!uses || !uses.length) return null;
+                const line = document.createElement('p');
+                line.className = 'receipt-line reached-line';
+                line.textContent = t('workspace.label.reached') + ': ' + uses.map(reachText).join(' · ');
+                return line;
+              };
+
               const completedThoughtNode = (message) => {
                 if (!state.thoughtsVisible || message.role !== 'vex') return null;
                 const key = String(message.messageRef ?? '');
@@ -1192,6 +1241,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 const thought = completedThoughtNode(message);
                 if (thought) item.append(index, thought, bubble, speaker);
                 else item.append(index, bubble, speaker);
+                const reached = reachedLine(message);
+                if (reached) item.append(reached);
                 return item;
               };
 
@@ -1226,6 +1277,7 @@ object VexLifeWebP1RuntimeArtifacts {
                         ? 'responding…'
                         : 'preparing…';
                 thought.append(who, mark, label);
+                if (state.liveReaches.length) thought.append(reachList(state.liveReaches));
 
                 if (state.thoughtsVisible && state.streamedReasoning) {
                   const reasoning = document.createElement('div');
@@ -1334,6 +1386,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
 
                 const thought = item.querySelector('.thinking-now');
+                // Reach lines sit between the label and the live reasoning, in the order Vex asked.
+                item.querySelector('.live-reaches')?.remove();
+                if (state.liveReaches.length && thought) {
+                  const list = reachList(state.liveReaches);
+                  const label = thought.querySelector('.thinking-label');
+                  if (label) label.after(list);
+                  else thought.append(list);
+                }
                 let reasoning = item.querySelector('.live-reasoning');
                 if (state.thoughtsVisible && state.streamedReasoning) {
                   if (!reasoning) {
@@ -2028,6 +2088,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   state.humanReasoningByResponse.delete(String(result.responseMessageRef));
                   state.expandedThoughts.delete(String(result.responseMessageRef));
                 }
+                if (Array.isArray(result.capabilityUses) && result.capabilityUses.length > 0) {
+                  state.reachesByResponse.set(String(result.responseMessageRef ?? ''), result.capabilityUses);
+                }
+                state.liveReaches = [];
 
                 // Canonical Conversation/Context own completion. Streaming presentation is only a
                 // projection, so refresh from those durable owners before retiring the pending Send.
@@ -2080,6 +2144,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 });
                 state.pending = pending;
                 state.sendInFlight = true;
+                state.liveReaches = [];
                 state.streamPhase = 'CheckingRuntime';
                 state.streamedContent = '';
                 state.streamedReasoning = '';
@@ -2121,6 +2186,26 @@ object VexLifeWebP1RuntimeArtifacts {
                       followStreamSpeech(false);
                       return;
                     }
+                    if (event?.type === 'REACH' && event.reach) {
+                      // A request Vex made (state absent) or what came back (state present). The
+                      // returned event settles the newest open request of the same handle/action.
+                      const use = event.reach;
+                      let settled = false;
+                      if (use.state) {
+                        for (let index = state.liveReaches.length - 1; index >= 0; index -= 1) {
+                          const open = state.liveReaches[index];
+                          if (!open.state && open.handle === use.handle && open.action === use.action) {
+                            state.liveReaches[index] = use;
+                            settled = true;
+                            break;
+                          }
+                        }
+                      }
+                      if (!settled) state.liveReaches.push(use);
+                      setCompanionStatus('Checking', reachText(use), '');
+                      updateLiveTurn();
+                      return;
+                    }
                     if (event?.type === 'CONTENT_DELTA' && typeof event.delta === 'string') {
                       state.streamPhase = 'Responding';
                       state.streamedContent += event.delta;
@@ -2144,6 +2229,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   state.streamPhase = null;
                   state.streamedContent = '';
                   state.streamedReasoning = '';
+                  state.liveReaches = [];
 
                   let terminalError = error;
                   let status = Number(error?.vexStatus ?? 0);

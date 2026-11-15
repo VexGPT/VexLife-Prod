@@ -342,16 +342,14 @@ class VexLifeFoundationalFieldTest {
     @Test
     fun theReachModuleStillAgreesWithTheCapabilityRegistry() {
         val reach = body.modules.single { it.moduleRef == "foundational.reach" }
-        assertTrue(
-            reach.kernel.any {
-                it.contains("their handles are absent here")
-            }
+        val definitions = VexLifeCapabilityAtlas.registry().definitions
+        // The field states what is present; the registry is the owner of what is present.
+        assertEquals(
+            definitions.any { it.capabilityRef.contains("atlas") },
+            reach.kernel.any { it.contains("The Atlas is present here") },
         )
-        assertTrue(
-            VexLifeCapabilityAtlas.registry().definitions.none {
-                it.capabilityRef.contains("atlas") || it.capabilityRef.contains("process")
-            }
-        )
+        assertTrue(reach.kernel.any { it.contains("Process Factory") && it.contains("its handles are absent here") })
+        assertTrue(definitions.none { it.capabilityRef.contains("process") })
     }
 }
 

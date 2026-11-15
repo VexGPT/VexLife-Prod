@@ -10,6 +10,8 @@ import vexlife.logging.VexLogger
 import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
 import vexlife.conversation.DirectConversationIdentity
+import vexlife.capability.VexLifeCapabilityBridge
+import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.conversation.DirectConversationStore
 import vexlife.filesystem.VexOwnedPath
 import vexlife.foundational.VexLifeFoundationalField
@@ -40,12 +42,17 @@ object DirectCompanionTurn {
         Generating,
         Reasoning,
         Responding,
+        /** Vex asked the host for something; [Progress.reach] names it. */
+        Reaching,
+        /** The host returned that request's result; [Progress.reach] carries its state. */
+        Reached,
     }
 
     data class Progress(
         val phase: ProgressPhase,
         val delta: String? = null,
         val accumulatedCharacters: Int = 0,
+        val reach: VexLifeCapabilityBridge.Use? = null,
     )
 
     fun interface ProgressObserver {
@@ -100,6 +107,8 @@ object DirectCompanionTurn {
          */
         val humanReasoning: String? =
             null,
+        /** What Vex reached in this turn (handle, action, target, state) — never the content. */
+        val capabilityUses: List<VexLifeCapabilityBridge.Use> = emptyList(),
     )
 
     @Serializable
@@ -168,11 +177,24 @@ object DirectCompanionTurn {
             "final source-return inference cannot request Conversation source again in the same human turn",
         )
 
+    private class CapabilityRequestLimitException :
+        IllegalStateException(
+            "Vex requested a capability again after this turn's requests were used up",
+        )
+
     private enum class SourceReturnProgressMode {
         Pending,
         HumanAnswer,
         InternalControl,
     }
+
+    /** Machine-only control headers; content that opens with one never reaches the person. */
+    private val ControlHeaders =
+        listOf(DirectConversationSourceReturn.RequestHeader, VexLifeCapabilityRequest.RequestHeader)
+
+    private fun controlHeaderIndex(content: String): Int? =
+        DirectConversationSourceReturn.controlHeaderIndexOrNull(content)
+            ?: VexLifeCapabilityRequest.controlHeaderIndexOrNull(content)
 
     private class SourceReturnProgressGate(
         private val observer: ProgressObserver?,
@@ -202,20 +224,18 @@ object DirectCompanionTurn {
         fun finish(
             finalContent: String,
         ): Boolean {
-            val header =
-                DirectConversationSourceReturn.RequestHeader
             val controlLike =
-                DirectConversationSourceReturn.controlHeaderIndexOrNull(
+                controlHeaderIndex(
                     finalContent,
                 ) !=
                     null ||
-                    (
+                    ControlHeaders.any { header ->
                         finalContent.length <=
                             header.length &&
-                        header.startsWith(
-                            finalContent,
-                        )
-                    )
+                            header.startsWith(
+                                finalContent,
+                            )
+                    }
 
             if (
                 mode ==
@@ -270,10 +290,8 @@ object DirectCompanionTurn {
                             )
                             val observed =
                                 contentPrefix.toString()
-                            val header =
-                                DirectConversationSourceReturn.RequestHeader
                             when {
-                                DirectConversationSourceReturn.controlHeaderIndexOrNull(
+                                controlHeaderIndex(
                                     observed,
                                 ) !=
                                     null -> {
@@ -284,7 +302,7 @@ object DirectCompanionTurn {
 
                                 observed.length <=
                                     DirectConversationSourceReturn.MaximumControlPreambleCharacters +
-                                        header.length ->
+                                        ControlHeaders.maxOf { it.length } ->
                                     Unit
 
                                 else -> {
@@ -352,6 +370,8 @@ object DirectCompanionTurn {
         },
         val progressObserver: ProgressObserver? =
             null,
+        /** How capability owners reach the web/Home/Memory; replaced in tests. */
+        val capabilityOwners: VexLifeCapabilityBridge.Owners = VexLifeCapabilityBridge.Owners(),
         /** The foundational field as its owner reads it now; re-read at each provider boundary. */
         val currentFoundationalField: () -> VexLifeFoundationalField.Reading = {
             VexLifeFoundationalField.readCurrent()
@@ -391,6 +411,7 @@ object DirectCompanionTurn {
     private data class ProviderStage(
         val inference: DirectCompanionConnection.Result,
         val sourceReturnRequest: DirectConversationSourceReturn.Request?,
+        val capabilityRequest: VexLifeCapabilityRequest.Parsed?,
     )
 
     private data class FinalProviderTurn(
@@ -398,6 +419,8 @@ object DirectCompanionTurn {
         val inference: DirectCompanionConnection.Result,
         val workingContinuity: DirectWorkingContinuity.Prepared,
         val sourceReturnTrace: DirectConversationSourceReturn.Trace?,
+        val capabilityTrace: VexLifeCapabilityBridge.Trace?,
+        val capabilityUses: List<VexLifeCapabilityBridge.Use>,
     )
 
     fun perform(
@@ -569,6 +592,8 @@ object DirectCompanionTurn {
                         providerTurn.workingContinuity
                     val sourceReturnTrace =
                         providerTurn.sourceReturnTrace
+                    val capabilityTrace =
+                        providerTurn.capabilityTrace
 
                     response =
                         appendResponse(
@@ -590,6 +615,7 @@ object DirectCompanionTurn {
                             runtimeObservation = inference.runtimeObservation,
                             invocationEvidence = inference.invocationEvidence,
                             sourceReturnTrace = sourceReturnTrace,
+                            capabilityTrace = capabilityTrace,
                             formedAt = hooks.now(),
                         )
 
@@ -607,6 +633,7 @@ object DirectCompanionTurn {
                             "turnRef" to identity.turnRef,
                             "model" to (response.model ?: "unknown"),
                             "sourceReturn" to if (sourceReturnTrace != null) "used" else "none",
+                            "capabilityRequests" to (capabilityTrace?.entries?.size ?: 0).toString(),
                         ),
                     )
                     CompletedTurn(
@@ -632,6 +659,7 @@ object DirectCompanionTurn {
                                 runtimeObservation = inference.runtimeObservation,
                                 invocationEvidence = inference.invocationEvidence,
                                 humanReasoning = inference.sealedHumanReasoning,
+                                capabilityUses = providerTurn.capabilityUses,
                             ),
                         turnRef = request.turnRef,
                         workingContinuity = workingContinuity,
@@ -826,91 +854,210 @@ object DirectCompanionTurn {
             sourceReturnProtocolEnabled = true,
             foundationalField = hooks.currentFoundationalField(),
         )
-        val initialStage =
-            invokeProviderStage(
-                runtimeEvidence = initialRuntimeEvidence,
-                messages =
-                    initialPrompt.materialization.messages,
-                hooks = hooks,
-                sourceReturnRequestAllowed = true,
-            )
-        val sourceReturnRequest =
-            initialStage.sourceReturnRequest
-                ?: return FinalProviderTurn(
-                    prompt = initialPrompt,
-                    inference = initialStage.inference,
-                    workingContinuity =
-                        initialWorkingContinuity,
-                    sourceReturnTrace = null,
-                )
+        // One human turn may take several provider stages: capability requests (bounded by the
+        // bridge) and at most one Conversation source return. All stages share one runtime binding,
+        // one foundational field and one prompt base; each later stage is the base plus the
+        // request/result exchanges so far, so Vex continues the same reply with what came back.
+        var base = initialPrompt
+        var baseWorkingContinuity = initialWorkingContinuity
+        var baseMemoryAvailability = initialMemoryAvailability
+        var baseSourceReturnProtocolEnabled = true
+        var baseDiscovery: DirectConversationSourceReturn.Discovery? = null
+        var stageRuntimeEvidence = initialRuntimeEvidence
+        var sourceReturnTrace: DirectConversationSourceReturn.Trace? = null
+        val exchanges = mutableListOf<VexLifeCapabilityBridge.Exchange>()
 
-        val excludedSourceRefs =
-            buildSet {
-                addAll(
-                    initialPrompt.materialization.receipt.selectedConversationEventRefs,
-                )
-                initialPrompt.materialization.receipt.successorPriorResponseEventRef
-                    ?.let(
-                        ::add,
-                    )
+        fun exchangeMessages(): List<CompanionProviderMessage> =
+            exchanges.flatMap { listOf(it.assistantMessage, it.resultMessage) }
+
+        // A later stage of the same human turn is not a new runtime lifecycle boundary: observe
+        // currentness without recovery and require the exact runtime already proved for stage one.
+        fun sameRuntime(): HereticModelConfiguration.QualifiedRuntimeEvidence =
+            hooks.reobserveSameRuntimeEvidence(initialRuntimeEvidence).also { current ->
+                require(current.runtimeReceiptRef == initialRuntimeEvidence.runtimeReceiptRef) {
+                    "runtime changed during one direct Companion turn"
+                }
             }
-        val discovery =
-            DirectConversationSourceReturn.discover(
-                conversationOwner = conversationOwner,
-                request = sourceReturnRequest,
-                excludedEventRefs = excludedSourceRefs,
-            )
 
-        val finalMemoryAvailability =
-            hooks.currentMemoryContext(
-                productHome,
-            )
-        // Source return is a second provider stage of this same human turn, not a fresh
-        // runtime-lifecycle boundary. Re-observe currentness without recovery and require the same
-        // receipt/process identity already proved before the first provider call. A runtime that
-        // disappeared or was replaced ends this turn instead of being silently substituted.
-        val finalRuntimeEvidence =
-            hooks.reobserveSameRuntimeEvidence(
-                initialRuntimeEvidence,
-            )
-                .also {
-                    current ->
-                    require(
-                        current.runtimeReceiptRef ==
-                            initialRuntimeEvidence.runtimeReceiptRef,
-                    ) {
-                        "runtime changed during one direct Companion turn"
-                    }
+        while (true) {
+            val stage =
+                invokeProviderStage(
+                    runtimeEvidence = stageRuntimeEvidence,
+                    messages = base.materialization.messages + exchangeMessages(),
+                    hooks = hooks,
+                    sourceReturnRequestAllowed = sourceReturnTrace == null,
+                    capabilityRequestsAllowed = exchanges.size <= VexLifeCapabilityBridge.MaximumRequestsPerTurn,
+                )
+
+            val capabilityRequest = stage.capabilityRequest
+            if (capabilityRequest != null) {
+                val pendingUse = VexLifeCapabilityBridge.describeUse(capabilityRequest)
+                emitProgress(hooks.progressObserver, Progress(phase = ProgressPhase.Reaching, reach = pendingUse))
+                val usedTokens = exchangeMessages().sumOf { DirectPromptContext.estimatedMessageTokens(it.content) }
+                val exchange =
+                    VexLifeCapabilityBridge.perform(
+                        parsed = capabilityRequest,
+                        admission =
+                            VexLifeCapabilityBridge.Admission(
+                                productHome = productHome,
+                                availableCapabilityRefs =
+                                    base.materialization.receipt.capabilityFrameSnapshot
+                                        ?.availableCapabilityRefs
+                                        .orEmpty()
+                                        .toSet(),
+                                requestNumber = exchanges.size + 1,
+                                tokensAvailable =
+                                    base.materialization.receipt.capabilityExchangeAllowanceTokens - usedTokens,
+                            ),
+                        owners = hooks.capabilityOwners,
+                        estimateTokens = DirectPromptContext::estimatedMessageTokens,
+                    )
+                exchanges += exchange
+                emitProgress(hooks.progressObserver, Progress(phase = ProgressPhase.Reached, reach = exchange.use))
+
+                stageRuntimeEvidence = sameRuntime()
+                // The base prompt is reused, so it must still be current at this provider boundary.
+                reverifyContinuityPrompt(
+                    selection = base,
+                    conversationOwner = conversationOwner,
+                    productHome = productHome,
+                    prior = conversationOwner.immediatePriorCompletedTurn(),
+                    currentRequest = currentRequest,
+                    memoryAvailability =
+                        hooks.currentMemoryContext(productHome).also { current ->
+                            require(current == baseMemoryAvailability) {
+                                "VexLife Memory availability changed between provider stages of one turn"
+                            }
+                        },
+                    memoryContextAtCap = hooks.memoryContextAtCap,
+                    workingContinuityContext = workingContinuityContext,
+                    browserContext = browserContext,
+                    personContext = personContext,
+                    runtimeEvidence = stageRuntimeEvidence,
+                    sourceReturnProtocolEnabled = baseSourceReturnProtocolEnabled,
+                    sourceReturnDiscovery = baseDiscovery,
+                    foundationalField = hooks.currentFoundationalField(),
+                )
+                continue
+            }
+
+            val sourceReturnRequest = stage.sourceReturnRequest
+            if (sourceReturnRequest == null) {
+                return FinalProviderTurn(
+                    prompt = base,
+                    inference = stage.inference,
+                    workingContinuity = baseWorkingContinuity,
+                    sourceReturnTrace = sourceReturnTrace,
+                    capabilityTrace =
+                        exchanges.takeIf { it.isNotEmpty() }?.let { done -> VexLifeCapabilityBridge.trace(done.map { it.entry }) },
+                    capabilityUses = exchanges.map { it.use },
+                )
+            }
+
+            val excludedSourceRefs =
+                buildSet {
+                    addAll(
+                        initialPrompt.materialization.receipt.selectedConversationEventRefs,
+                    )
+                    initialPrompt.materialization.receipt.successorPriorResponseEventRef
+                        ?.let(
+                            ::add,
+                        )
                 }
-        val finalPrior =
-            conversationOwner.immediatePriorCompletedTurn()
-        DirectWorkingContinuity.requireSuccessorContextCurrent(
-            productHome = productHome,
-            prior = finalPrior,
-            currentRequest = currentRequest,
-            expected = workingContinuityContext,
-        )
-        val currentFinalMemoryAvailability =
-            hooks.currentMemoryContext(
-                productHome,
-            )
-                .also {
-                    current ->
-                    require(
-                        current ==
-                            finalMemoryAvailability,
-                    ) {
-                        "VexLife Memory availability changed before final source-return provider invocation"
-                    }
-                }
-        val finalPrompt =
-            materializeContinuityPrompt(
-                conversationOwner = conversationOwner,
+            val discovery =
+                DirectConversationSourceReturn.discover(
+                    conversationOwner = conversationOwner,
+                    request = sourceReturnRequest,
+                    excludedEventRefs = excludedSourceRefs,
+                )
+
+            val finalMemoryAvailability =
+                hooks.currentMemoryContext(
+                    productHome,
+                )
+            // Source return is a later provider stage of this same human turn, not a fresh
+            // runtime-lifecycle boundary. A runtime that disappeared or was replaced ends this turn
+            // instead of being silently substituted.
+            val finalRuntimeEvidence = sameRuntime()
+            val finalPrior =
+                conversationOwner.immediatePriorCompletedTurn()
+            DirectWorkingContinuity.requireSuccessorContextCurrent(
                 productHome = productHome,
                 prior = finalPrior,
                 currentRequest = currentRequest,
+                expected = workingContinuityContext,
+            )
+            val currentFinalMemoryAvailability =
+                hooks.currentMemoryContext(
+                    productHome,
+                )
+                    .also {
+                        current ->
+                        require(
+                            current ==
+                                finalMemoryAvailability,
+                        ) {
+                            "VexLife Memory availability changed before final source-return provider invocation"
+                        }
+                    }
+            val finalPrompt =
+                materializeContinuityPrompt(
+                    conversationOwner = conversationOwner,
+                    productHome = productHome,
+                    prior = finalPrior,
+                    currentRequest = currentRequest,
+                    memoryAvailability =
+                        currentFinalMemoryAvailability,
+                    memoryContextAtCap =
+                        hooks.memoryContextAtCap,
+                    workingContinuityContext =
+                        workingContinuityContext,
+                    browserContext = browserContext,
+                    personContext = personContext,
+                    runtimeEvidence = finalRuntimeEvidence,
+                    sourceReturnProtocolEnabled = false,
+                    sourceReturnDiscovery = discovery,
+                    foundationalField = hooks.currentFoundationalField(),
+                )
+            // Source return adds exact older Conversation; it must not change the ground Vex was given
+            // when it asked for it.
+            require(
+                finalPrompt.materialization.receipt.foundationalField ==
+                    initialPrompt.materialization.receipt.foundationalField,
+            ) {
+                "foundational field changed between the two inferences of one human turn"
+            }
+            val finalWorkingContinuity =
+                DirectWorkingContinuity.prepare(
+                    productHome = productHome,
+                    currentRequest = currentRequest,
+                    promptContext =
+                        finalPrompt.materialization.receipt,
+                    memoryContext =
+                        finalPrompt.memoryContext,
+                    priorSuccessorContext =
+                        workingContinuityContext,
+                )
+            reverifyContinuityPrompt(
+                selection = finalPrompt,
+                conversationOwner = conversationOwner,
+                productHome = productHome,
+                prior =
+                    conversationOwner.immediatePriorCompletedTurn(),
+                currentRequest = currentRequest,
                 memoryAvailability =
-                    currentFinalMemoryAvailability,
+                    hooks.currentMemoryContext(
+                        productHome,
+                    )
+                        .also {
+                            current ->
+                            require(
+                                current ==
+                                    finalMemoryAvailability,
+                            ) {
+                                "VexLife Memory availability changed at the final source-return provider boundary"
+                            }
+                        },
                 memoryContextAtCap =
                     hooks.memoryContextAtCap,
                 workingContinuityContext =
@@ -922,110 +1069,51 @@ object DirectCompanionTurn {
                 sourceReturnDiscovery = discovery,
                 foundationalField = hooks.currentFoundationalField(),
             )
-        // Source return adds exact older Conversation; it must not change the ground Vex was given
-        // when it asked for it.
-        require(
-            finalPrompt.materialization.receipt.foundationalField ==
-                initialPrompt.materialization.receipt.foundationalField,
-        ) {
-            "foundational field changed between the two inferences of one human turn"
-        }
-        val finalWorkingContinuity =
-            DirectWorkingContinuity.prepare(
-                productHome = productHome,
-                currentRequest = currentRequest,
-                promptContext =
-                    finalPrompt.materialization.receipt,
-                memoryContext =
-                    finalPrompt.memoryContext,
-                priorSuccessorContext =
-                    workingContinuityContext,
-            )
-        reverifyContinuityPrompt(
-            selection = finalPrompt,
-            conversationOwner = conversationOwner,
-            productHome = productHome,
-            prior =
-                conversationOwner.immediatePriorCompletedTurn(),
-            currentRequest = currentRequest,
-            memoryAvailability =
-                hooks.currentMemoryContext(
-                    productHome,
+
+            val sourceReturnTokens =
+                finalPrompt.materialization.receipt.sourceReturnEstimatedSystemMessageTokens
+            require(
+                sourceReturnTokens >
+                    0,
+            ) {
+                "final source-return prompt has no exact source-return projection"
+            }
+            val projection =
+                DirectConversationSourceReturn.project(
+                    discovery = discovery,
+                    availableTokens = sourceReturnTokens,
                 )
-                    .also {
-                        current ->
-                        require(
-                            current ==
-                                finalMemoryAvailability,
-                        ) {
-                            "VexLife Memory availability changed at the final source-return provider boundary"
-                        }
-                    },
-            memoryContextAtCap =
-                hooks.memoryContextAtCap,
-            workingContinuityContext =
-                workingContinuityContext,
-            browserContext = browserContext,
-            personContext = personContext,
-            runtimeEvidence = finalRuntimeEvidence,
-            sourceReturnProtocolEnabled = false,
-            sourceReturnDiscovery = discovery,
-            foundationalField = hooks.currentFoundationalField(),
-        )
-
-        val sourceReturnTokens =
-            finalPrompt.materialization.receipt.sourceReturnEstimatedSystemMessageTokens
-        require(
-            sourceReturnTokens >
-                0,
-        ) {
-            "final source-return prompt has no exact source-return projection"
+            require(
+                projection.state ==
+                    finalPrompt.materialization.receipt.sourceReturnState &&
+                    projection.sourceEventRefs ==
+                    finalPrompt.materialization.receipt.sourceReturnSourceEventRefs &&
+                    projection.systemMessageSha256 ==
+                    finalPrompt.materialization.receipt.sourceReturnSystemMessageSha256,
+            ) {
+                "source-return attempt projection differs from the exact final prompt projection"
+            }
+            val attemptTrace =
+                DirectConversationSourceReturn.formAttemptTrace(
+                    initialPrompt =
+                        initialPrompt.materialization.receipt,
+                    inference = stage.inference,
+                    discovery = discovery,
+                    projection = projection,
+                )
+            sourceReturnTrace =
+                DirectConversationSourceReturn.formTrace(
+                    attempt = attemptTrace,
+                    finalPrompt =
+                        finalPrompt.materialization.receipt,
+                )
+            base = finalPrompt
+            baseWorkingContinuity = finalWorkingContinuity
+            baseMemoryAvailability = finalMemoryAvailability
+            baseSourceReturnProtocolEnabled = false
+            baseDiscovery = discovery
+            stageRuntimeEvidence = finalRuntimeEvidence
         }
-        val projection =
-            DirectConversationSourceReturn.project(
-                discovery = discovery,
-                availableTokens = sourceReturnTokens,
-            )
-        require(
-            projection.state ==
-                finalPrompt.materialization.receipt.sourceReturnState &&
-                projection.sourceEventRefs ==
-                finalPrompt.materialization.receipt.sourceReturnSourceEventRefs &&
-                projection.systemMessageSha256 ==
-                finalPrompt.materialization.receipt.sourceReturnSystemMessageSha256,
-        ) {
-            "source-return attempt projection differs from the exact final prompt projection"
-        }
-        val attemptTrace =
-            DirectConversationSourceReturn.formAttemptTrace(
-                initialPrompt =
-                    initialPrompt.materialization.receipt,
-                inference = initialStage.inference,
-                discovery = discovery,
-                projection = projection,
-            )
-        val finalStage =
-            invokeProviderStage(
-                runtimeEvidence = finalRuntimeEvidence,
-                messages =
-                    finalPrompt.materialization.messages,
-                hooks = hooks,
-                sourceReturnRequestAllowed = false,
-            )
-        val sourceReturnTrace =
-            DirectConversationSourceReturn.formTrace(
-                attempt = attemptTrace,
-                finalPrompt =
-                    finalPrompt.materialization.receipt,
-            )
-
-        return FinalProviderTurn(
-            prompt = finalPrompt,
-            inference = finalStage.inference,
-            workingContinuity =
-                finalWorkingContinuity,
-            sourceReturnTrace = sourceReturnTrace,
-        )
     }
 
     private fun materializeContinuityPrompt(
@@ -1046,6 +1134,8 @@ object DirectCompanionTurn {
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
         foundationalField: VexLifeFoundationalField.Reading,
+        // Ordinary direct turns admit capability requests; the prompt keeps their room free.
+        capabilityRequestsAdmitted: Boolean = true,
     ): ContinuityPromptSelection {
         var selectedMemoryAtCap: VexLifeMemoryContract.Context? =
             null
@@ -1075,6 +1165,7 @@ object DirectCompanionTurn {
                 sourceReturnDiscovery = sourceReturnDiscovery,
                 foundationalField = foundationalField,
                 conversationExtentIncluded = true,
+                capabilityRequestsAdmitted = capabilityRequestsAdmitted,
             )
         val selectedMemory =
             selectedMemoryAtCap
@@ -1113,6 +1204,7 @@ object DirectCompanionTurn {
         sourceReturnDiscovery: DirectConversationSourceReturn.Discovery? =
             null,
         foundationalField: VexLifeFoundationalField.Reading,
+        capabilityRequestsAdmitted: Boolean = true,
     ) {
         DirectPromptContext.reverifyContinuity(
             materialization =
@@ -1137,6 +1229,7 @@ object DirectCompanionTurn {
             sourceReturnDiscovery = sourceReturnDiscovery,
             foundationalField = foundationalField,
             conversationExtentIncluded = true,
+            capabilityRequestsAdmitted = capabilityRequestsAdmitted,
         )
     }
 
@@ -1145,6 +1238,7 @@ object DirectCompanionTurn {
         messages: List<CompanionProviderMessage>,
         hooks: Hooks,
         sourceReturnRequestAllowed: Boolean,
+        capabilityRequestsAllowed: Boolean,
     ): ProviderStage {
         val progressGate =
             SourceReturnProgressGate(
@@ -1157,6 +1251,7 @@ object DirectCompanionTurn {
             mapOf(
                 "runtimeReceiptRef" to runtimeEvidence.runtimeReceiptRef,
                 "stage" to if (sourceReturnRequestAllowed) "initial" else "final",
+                "capabilityRequests" to if (capabilityRequestsAllowed) "admitted" else "exhausted",
                 "messageCount" to messages.size.toString(),
                 "approxChars" to messages.sumOf { it.content.length }.toString(),
             ),
@@ -1174,16 +1269,25 @@ object DirectCompanionTurn {
             progressGate.finish(
                 inference.content,
             )
+        val capabilityRequest = VexLifeCapabilityRequest.parseOrNull(inference.content)
         val sourceReturnRequest =
-            DirectConversationSourceReturn.parseRequestOrNull(
-                inference.content,
-            )
+            if (capabilityRequest != null) {
+                null
+            } else {
+                DirectConversationSourceReturn.parseRequestOrNull(
+                    inference.content,
+                )
+            }
         require(
             !controlLike ||
                 sourceReturnRequest !=
-                null,
+                null ||
+                capabilityRequest != null,
         ) {
             "provider output resembles an incomplete Conversation source-return control request"
+        }
+        if (capabilityRequest != null && !capabilityRequestsAllowed) {
+            throw CapabilityRequestLimitException()
         }
         if (
             !sourceReturnRequestAllowed &&
@@ -1196,6 +1300,7 @@ object DirectCompanionTurn {
         return ProviderStage(
             inference = inference,
             sourceReturnRequest = sourceReturnRequest,
+            capabilityRequest = capabilityRequest,
         )
     }
 
@@ -1389,6 +1494,11 @@ object DirectCompanionTurn {
                 promptContextReceipt = context.promptContext,
                 runtimeObservation = context.runtimeObservation,
                 invocationEvidence = context.invocationEvidence,
+                capabilityUses =
+                    context.capabilityTrace
+                        ?.entries
+                        ?.map { VexLifeCapabilityBridge.Use(it.handle, it.action, it.target, it.state) }
+                        .orEmpty(),
             )
         }
 

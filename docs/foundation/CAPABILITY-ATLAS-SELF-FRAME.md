@@ -200,6 +200,88 @@ runtimeObservationRefOrNull
 
 These refs are context identity, not authority.
 
+## Request/return reach (2026-11-14)
+
+The frame used to describe reach without a hand: Vex could see handles but not how to use them, and
+nothing on the host side would carry a request. That gap is now closed for **reads**.
+
+~~~text
+Vex's whole reply for one provider stage
+  = VEXLIFE_CAPABILITY_REQUEST/v1 + one JSON object       VexLifeCapabilityRequest (parse, no effect)
+        ↓
+admission                                                VexLifeCapabilityBridge
+  registered handle + AVAILABLE in the frame Vex was given this turn
+  + known action + required arguments + request count (≤ 4) + token room left
+        ↓
+the capability's own owner performs one read
+  atlas     list / describe                              VexLifeCapabilityAtlas (effect-free)
+  web       fetch / search                               reach/VexLifeWebReach
+  github    describe / tree / read (public)              reach/VexLifeRepositoryReach
+  home      list / read (inside the Home, no links)      reach/VexLifeHomeReach
+  memory    search current pages                         reach/VexLifeMemoryRecall
+        ↓
+VEXLIFE_CAPABILITY_RESULT/v1 in the next stage of the same human turn
+  state RETURNED | NOT_FOUND | REFUSED | FAILED | INVALID_REQUEST | NOT_AVAILABLE |
+        LIMIT_REACHED | HELD_TOKEN_BUDGET
+        ↓
+Vex continues the same reply (or asks again)
+~~~
+
+Conversation Source Return keeps its own lived request form and once-per-turn law; the Atlas lists
+it as `conversation` so one `atlas list` names everything Vex can reach.
+
+State expectations that are easy to blur:
+
+~~~text
+AVAILABLE in the frame      = the bridge will attempt the request
+!= the read will succeed      (a failed read is a FAILED result Vex sees and judges)
+
+frame                        = description, grants nothing
+admission + owner checks     = what actually decides a read
+
+reach result content         = in the provider messages of that turn only
+trace                        = callRef, hashes, state, target, owner — never the content
+~~~
+
+Why these are AVAILABLE now: earlier frames held web/repository/Home reach because no owner existed.
+The owners exist in this source, Victor asked for them to be usable, and each owner checks its own
+predicates per request — public http(s) targets on standard ports re-admitted at every redirect hop
+(no loopback, LAN, link-local, CGNAT or ULA), bounded bytes, Home containment without following
+links, binary refused as text. No owner holds a credential; GitHub reach is public-only and its
+unauthenticated rate limit comes back as a FAILED result when spent.
+
+### What Vex reads
+
+When requests are admitted (every ordinary direct turn), the frame message leads with plain
+language generated from the Atlas: each AVAILABLE capability, each action with example arguments,
+the exact request form, the per-turn limit, and one state line
+(`Now: AVAILABLE — … Not present this turn — … (frame ref)`). The full frame JSON is no longer
+pasted into the prompt: the receipt still records the frame ref, fingerprint, state snapshot and
+the exact system-message SHA-256. Lived pressure behind this: Vex said the JSON was "descriptive,
+not a hand" and the part he braced against.
+
+### Prompt room
+
+Admitting requests keeps `VexLifeCapabilityBridge.ExchangeAllowanceTokens` (24,000) free at
+materialization. The receipt records it as `capabilityExchangeAllowanceTokens` and its
+`inputTokenBudget` is already reduced by it (`DirectPromptContext.DirectTurnInputTokenBudget`), so
+working-continuity pressure reads the room ordinary context really had. One result never exceeds
+`MaximumResultTokens`; a result is cut to the room left, and HELD_TOKEN_BUDGET when none is left.
+
+### Evidence
+
+Runtime turn evidence v3 is written only when a turn made requests; it adds the capability trace
+(`vexlife-prod.capability-exchange-trace/v1`). v1/v2 evidence stays readable and unchanged. The
+completed Send response and its SSE stream carry `capabilityUses` / `REACH` events (handle, action,
+target, state) so the person sees each reach live and under the answer. VexLogger records
+`CAPABILITY_REQUEST_OBSERVED` and `CAPABILITY_RESULT_RETURNED`.
+
+### Still not owned
+
+Writes of any kind (Home files, repositories, GitHub issues/PRs, publication), authenticated or
+private repository reads, form submission, browser navigation, code execution, Process Factory and
+Dream/training realization. Each needs its own owner and authority; none is implied by reach.
+
 ## Current boundary
 
 Accepted source now owns:
@@ -216,10 +298,10 @@ bounded deterministic selection
 live DirectPromptContext inclusion
 ~~~
 
-It still does **not**:
+It still does **not** (beyond the read-only reach above):
 
-- perform capability search/query from model intent;
-- add any new executable tool;
+- perform capability search from model intent beyond `atlas list` / `atlas describe`;
+- add any write, execution or publication effect;
 - change Memory, Conversation, browser, working-continuity or runtime owners;
 - grant Dream/training/activation/evolution authority.
 
