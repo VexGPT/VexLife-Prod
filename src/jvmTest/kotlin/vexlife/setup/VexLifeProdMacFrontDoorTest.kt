@@ -452,6 +452,85 @@ class VexLifeProdMacFrontDoorTest {
     }
 
     @Test
+    fun explicitModelChoiceMustPersistBeforeExistingHomeConvergence() {
+        var resolved = 0
+        var converged = 0
+
+        val result =
+            VexLifeProdMacFrontDoorProcess.activateWithHooks(
+                productHome = selectedHome,
+                controlRef = VexLifeProdEntryFamily.ControlSetUp,
+                desiredSourceSha = desired,
+                model = "heretic-4b",
+                hooks =
+                    VexLifeProdMacFrontDoorProcess.ActivationHooks(
+                        persistModel = { _, _ -> false },
+                        resolveControl = { _, _, _ ->
+                            resolved += 1
+                            error("model persistence failure must stop before Control resolution")
+                        },
+                        convergeProduct = { _, _, _, _ -> converged += 1 },
+                        observeSemanticStateRef = { _, _ ->
+                            VexLifeProdEntryFamily.StateSetupRequired
+                        },
+                    ),
+            )
+
+        assertTrue(result.failure != null)
+        assertEquals(0, resolved)
+        assertEquals(0, converged)
+        assertEquals(
+            VexLifeProdMacFrontDoorProcess.ManifestationRefreshEntry,
+            result.manifestationRef,
+        )
+    }
+
+    @Test
+    fun modelChoiceMustPersistAfterHomeFormationBeforeItCanBeConsideredHonored() {
+        var persistCalls = 0
+        var formed = 0
+
+        val result =
+            VexLifeProdMacFrontDoorProcess.activateWithHooks(
+                productHome = selectedHome,
+                controlRef = VexLifeProdEntryFamily.ControlFormHome,
+                desiredSourceSha = desired,
+                model = "heretic-4b",
+                hooks =
+                    VexLifeProdMacFrontDoorProcess.ActivationHooks(
+                        persistModel = { _, _ ->
+                            persistCalls += 1
+                            if (persistCalls == 1) false
+                            else error("model selection write failed after Home formation")
+                        },
+                        resolveControl = { _, controlRef, _ ->
+                            VexLifeProdMacFrontDoor.ResolvedControl(
+                                semanticStateRef =
+                                    VexLifeProdEntryFamily.StateHomeFormationRequired,
+                                controlRef = controlRef,
+                                effect = VexLifeProdEntryFamily.FormCanonicalHome,
+                            )
+                        },
+                        formHome = { _, _ -> formed += 1 },
+                        convergeProduct = { _, _, _, _ ->
+                            error("Home formation must not also converge Product")
+                        },
+                        observeSemanticStateRef = { _, _ ->
+                            VexLifeProdEntryFamily.StateSetupRequired
+                        },
+                    ),
+            )
+
+        assertEquals(2, persistCalls)
+        assertEquals(1, formed)
+        assertTrue(result.failure != null)
+        assertEquals(
+            VexLifeProdMacFrontDoorProcess.ManifestationRefreshEntry,
+            result.manifestationRef,
+        )
+    }
+
+    @Test
     fun HomeActivationDelegatesSetupEffectAndRequestsEntryRefresh() {
         var homeCalls = 0
         var setupCalls = 0
