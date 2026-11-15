@@ -1906,6 +1906,193 @@ class DirectPromptContextTest {
     }
 
     @Test
+    fun continuityCarriesCanonicalCoordinatesAndRuntimeModelAttribution() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-coordinates-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            home(
+                productHome,
+            )
+            val store =
+                DirectConversationStore(
+                    productHome,
+                )
+
+            store.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef = "turn.self-development.coordinates.001",
+                        requestMessageRef = "message.self-development.human.coordinates.001",
+                        content = "First request",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-15T01:00:00Z",
+                            ),
+                    )
+                val response =
+                    appendResponse(
+                        request = request,
+                        responseMessageRef = "message.self-development.companion.coordinates.001",
+                        content = "First response",
+                        model = "provider-model-label",
+                        endpointOrigin = "http://127.0.0.1:8765",
+                        runtimeObservationRef = "observation.vexlife-prod.model-runtime.coordinates.001",
+                        invocationEvidenceRef = "evidence.vexlife-prod.model-runtime-invocation.coordinates.001",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-15T01:00:01Z",
+                            ),
+                    )
+                val context =
+                    CanonicalLivedContextFixture.write(
+                        productHome = productHome,
+                        request = request,
+                        response = response,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-15T01:00:02Z",
+                            ),
+                    )
+                commitCompletedTurn(
+                    request = request,
+                    response = response,
+                    contextSha256 = context.sha256,
+                    formedAt =
+                        Instant.parse(
+                            "2026-11-15T01:00:03Z",
+                        ),
+                )
+            }
+
+            store.withWriterLease {
+                val prior =
+                    requireNotNull(
+                        immediatePriorCompletedTurn(),
+                    )
+                val current =
+                    beginRequest(
+                        turnRef = "turn.self-development.coordinates.002",
+                        requestMessageRef = "message.self-development.human.coordinates.002",
+                        content = "Second request",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-15T02:00:00Z",
+                            ),
+                    )
+                val currentRuntime =
+                    runtimeEvidence()
+                val historicalRuntimeModel =
+                    "model.vexlife-prod.heretic.test-previous"
+                val materialized =
+                    DirectPromptContext.materializeContinuity(
+                        conversationOwner = this,
+                        prior = prior,
+                        currentRequest = current,
+                        runtimeEvidence = currentRuntime,
+                        conversationExtentIncluded = true,
+                        conversationRuntimeModelRefForTurn = {
+                            turnRef ->
+                            if (
+                                turnRef ==
+                                    prior.responseEvent.turnRef
+                            ) {
+                                historicalRuntimeModel
+                            } else {
+                                null
+                            }
+                        },
+                    )
+
+                val system =
+                    materialized.messages
+                        .filter {
+                            it.role ==
+                                "system"
+                        }
+                        .joinToString(
+                            "\n",
+                        ) {
+                            it.content
+                        }
+                assertTrue(
+                    system.contains(
+                        DirectPromptContext.ConversationCoordinatesHeader,
+                    ),
+                )
+                assertTrue(
+                    system.contains(
+                        "\"sequence\":0",
+                    ),
+                )
+                assertTrue(
+                    system.contains(
+                        "\"formedAt\":\"2026-11-15T01:00:00Z\"",
+                    ),
+                )
+                assertTrue(
+                    system.contains(
+                        "\"formedAt\":\"2026-11-15T01:00:01Z\"",
+                    ),
+                )
+                assertTrue(
+                    system.contains(
+                        "\"conversationModelOrNull\":\"provider-model-label\"",
+                    ),
+                )
+                assertTrue(
+                    system.contains(
+                        "\"runtimeModelRefOrNull\":\"$historicalRuntimeModel\"",
+                    ),
+                )
+                assertTrue(
+                    system.contains(
+                        "currentRequestSequence=2",
+                    ),
+                )
+                assertTrue(
+                    system.contains(
+                        "currentRequestFormedAt=2026-11-15T02:00:00Z",
+                    ),
+                )
+                assertTrue(
+                    system.contains(
+                        "currentRuntimeModelRef=" +
+                            currentRuntime.modelRef,
+                    ),
+                )
+                assertEquals(
+                    listOf(
+                        "First request",
+                        "First response",
+                        "Second request",
+                    ),
+                    materialized.messages
+                        .filter {
+                            it.role !=
+                                "system"
+                        }
+                        .map {
+                            it.content
+                        },
+                    "provenance must not rewrite the exact Conversation text",
+                )
+            }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun workingCheckpointSuccessorKeepsExactPriorVexResponseWithoutReplayingPriorHumanRequest() {
         val parent =
             Files.createTempDirectory(
