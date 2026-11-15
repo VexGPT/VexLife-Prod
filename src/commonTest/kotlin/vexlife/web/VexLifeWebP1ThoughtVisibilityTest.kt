@@ -140,9 +140,21 @@ class VexLifeWebP1ThoughtVisibilityTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "applyReasoningViewport(element, key, true, false);",
+                "applyReasoningViewport(box, viewportKey, true, false);",
             ),
             "streaming thought-round reasoning must not write scrollTop while the human is reading within a nested pane",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "const renderLiveThoughtRounds = (thought) =>",
+            ),
+            "live thought rounds need an in-place renderer rather than per-delta replacement",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "item.querySelector('.live-thought-rounds')?.remove();\n                if (state.thoughtsVisible && thought)",
+            ),
+            "a provider delta must not replace the live reasoning viewport the human is reading",
         )
         assertTrue(
             bundle.javascript.contains(
