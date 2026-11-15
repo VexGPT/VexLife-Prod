@@ -1301,6 +1301,7 @@ object DirectPromptContext {
                 browserContext = browserContext,
                 personContext = personContext,
                 runtimeEvidence = runtimeEvidence,
+                priorRuntimeObservation = priorRuntimeObservation,
                 sourceReturnProtocolEnabled =
                     sourceReturnProtocolEnabled,
                 foundationalField = foundationalField,
