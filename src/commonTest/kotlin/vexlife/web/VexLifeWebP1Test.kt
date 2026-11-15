@@ -328,6 +328,36 @@ class VexLifeWebP1Test {
     }
 
     @Test
+    fun thoughtsUseTurnOwnedProviderStagesAndPreserveThemAcrossCompletion() {
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts
+                .generate()
+                .javascript
+
+        assertTrue(
+            javascript.contains(
+                "ensureLiveProcessStage(event.providerStageIndex, event.providerModelRef)",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "state.processStagesByResponse.set(responseKey, snapshotLiveProcessStages())",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "section.dataset.providerStageIndex = String(stage.index)",
+            ),
+        )
+        assertFalse(
+            javascript.contains(
+                "currentReasoningRound",
+            ),
+            "presentation must not infer its own execution-stage owner",
+        )
+    }
+
+    @Test
     fun ambiguousStreamEndingReconcilesExactSendBeforeShowingUnresolved() {
         val javascript =
             VexLifeWebP1RuntimeArtifacts
