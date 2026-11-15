@@ -1978,6 +1978,7 @@ object DirectPromptContext {
                 conversationExtent(
                     currentRequest = currentRequest,
                     workingRolloverCurrent = workingContinuity != null,
+                    currentRuntimeModelRef = runtimeEvidence?.modelRef,
                 )
             } else {
                 null
@@ -2291,6 +2292,7 @@ object DirectPromptContext {
     private fun conversationExtent(
         currentRequest: DirectConversationStore.Event,
         workingRolloverCurrent: Boolean,
+        currentRuntimeModelRef: String?,
     ): ConversationExtent {
         require(currentRequest.sequence >= 0 && currentRequest.sequence % 2 == 0L) {
             "direct prompt Conversation extent requires a REQUEST at an even canonical sequence"
@@ -2315,7 +2317,17 @@ object DirectPromptContext {
         return ConversationExtent(
             priorCompletedExchangeCount = count,
             systemContent =
-                listOf(ConversationExtentHeader, "priorCompletedExchanges=$count", statement)
+                buildList {
+                        add(ConversationExtentHeader)
+                        add("priorCompletedExchanges=$count")
+                        add("currentRequestSequence=" + currentRequest.sequence)
+                        add("currentRequestFormedAt=" + currentRequest.formedAt)
+                        currentRuntimeModelRef
+                            ?.let {
+                                add("currentRuntimeModelRef=" + it)
+                            }
+                        add(statement)
+                    }
                     .joinToString("\n"),
         )
     }
