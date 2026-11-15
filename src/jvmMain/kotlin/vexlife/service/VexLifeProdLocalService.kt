@@ -1849,6 +1849,8 @@ class VexLifeProdLocalService private constructor(
                                     VexLifeProdServiceContract.SendStreamEvent(
                                         type = "PHASE",
                                         phase = progress.phase.name,
+                                        providerStageIndex = progress.providerStageIndex,
+                                        providerModelRef = progress.providerModelRef,
                                     )
 
                                 DirectCompanionTurn.ProgressPhase.Reasoning ->
@@ -1856,6 +1858,8 @@ class VexLifeProdLocalService private constructor(
                                         type = "REASONING_DELTA",
                                         delta = progress.delta,
                                         accumulatedCharacters = progress.accumulatedCharacters,
+                                        providerStageIndex = progress.providerStageIndex,
+                                        providerModelRef = progress.providerModelRef,
                                     )
 
                                 DirectCompanionTurn.ProgressPhase.Responding ->
@@ -1863,6 +1867,8 @@ class VexLifeProdLocalService private constructor(
                                         type = "CONTENT_DELTA",
                                         delta = progress.delta,
                                         accumulatedCharacters = progress.accumulatedCharacters,
+                                        providerStageIndex = progress.providerStageIndex,
+                                        providerModelRef = progress.providerModelRef,
                                     )
 
                                 DirectCompanionTurn.ProgressPhase.Reaching,
@@ -1880,6 +1886,8 @@ class VexLifeProdLocalService private constructor(
                                                         if (progress.phase == DirectCompanionTurn.ProgressPhase.Reached) it.state.name else null,
                                                 )
                                             },
+                                        providerStageIndex = progress.providerStageIndex,
+                                        providerModelRef = progress.providerModelRef,
                                     )
                             }
                         emit(
