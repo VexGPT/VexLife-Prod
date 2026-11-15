@@ -80,7 +80,7 @@ class VexLifeCapabilityReachTest {
         assertTrue(fenced.call.arguments.isEmpty())
 
         assertNull(VexLifeCapabilityRequest.parseOrNull("I can answer from what I have."))
-        assertNull(
+        assertIs<VexLifeCapabilityRequest.Parsed.Malformed>(
             VexLifeCapabilityRequest.parseOrNull(
                 "x".repeat(600) + "\nVEXLIFE_CAPABILITY_REQUEST/v1\n{}"
             )
