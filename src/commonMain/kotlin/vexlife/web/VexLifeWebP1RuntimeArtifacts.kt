@@ -1335,9 +1335,8 @@ object VexLifeWebP1RuntimeArtifacts {
                     if (!node) return;
                     node.dataset.processEntry = key;
                     history.append(node);
-                  } else {
-                    syncLiveProcessEntry(node, entry, viewportKey);
                   }
+                  syncLiveProcessEntry(node, entry, viewportKey);
                   visible.add(key);
                 });
 
