@@ -384,6 +384,57 @@ class DirectCompanionCapabilityTurnTest {
     }
 
     @Test
+    fun exhaustedReachMayCloseAsAHumanContinuationInsteadOfFailingTheTurn() = withHome { home ->
+        var calls = 0
+        val listControl =
+            VexLifeCapabilityRequest.RequestHeader +
+                "\n" +
+                """{"capability":"atlas","action":"list"}"""
+        val continuation =
+            "I understand the current shape, but I still need outside truth to finish confidently. " +
+                "Send another message and I can continue from here with a fresh reach budget."
+
+        val result =
+            DirectCompanionTurn.performWithHooks(
+                setup = setup(home),
+                intent =
+                    DirectCompanionTurn.Intent(
+                        idempotencyKey = "send.reach.limit-human-continuation.001",
+                        content = "Keep looking until you can answer confidently.",
+                    ),
+                hooks =
+                    DirectCompanionTurn.Hooks(
+                        transport = { call ->
+                            calls++
+                            if (calls <= VexLifeCapabilityBridge.MaximumRequestsPerTurn + 1) {
+                                reply(listControl)
+                            } else {
+                                val returned = messages(call).last()
+                                assertEquals("user", returned.first)
+                                assertTrue(returned.second.contains("\"state\":\"LIMIT_REACHED\""))
+                                assertTrue(returned.second.contains("Do not send another capability request"))
+                                assertTrue(returned.second.contains("share what you currently understand"))
+                                assertTrue(returned.second.contains("continue in a fresh turn"))
+                                reply(continuation)
+                            }
+                        }
+                    ),
+            )
+
+        assertEquals(VexLifeCapabilityBridge.MaximumRequestsPerTurn + 2, calls)
+        assertEquals("TURN_COMPLETED", result.state)
+        assertEquals(continuation, result.content)
+        assertEquals(
+            VexLifeCapabilityBridge.MaximumRequestsPerTurn + 1,
+            result.capabilityUses.size,
+        )
+        assertEquals(
+            VexLifeCapabilityBridge.State.LIMIT_REACHED,
+            result.capabilityUses.last().state,
+        )
+    }
+
+    @Test
     fun requestsAreBoundedPerTurnAndOneTooManyEndsTheTurnVisibly() = withHome { home ->
         var calls = 0
         val listControl =
