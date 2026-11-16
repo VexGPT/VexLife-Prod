@@ -1,0 +1,66 @@
+# Read-only candidate proof for the Mac application artifact.
+# Publishing remains owned by release.yml on main.
+name: mac-app-proof
+on:
+  push:
+    branches-ignore: [main]
+    paths:
+      - 'build.gradle.kts'
+      - 'packaging/**'
+      - '.github/workflows/mac-app-proof.yml'
+      - '.github/workflows/release.yml'
+      - 'docs/release/**'
+      - 'site/assets/site.js'
+  pull_request:
+    paths:
+      - 'build.gradle.kts'
+      - 'packaging/**'
+      - '.github/workflows/mac-app-proof.yml'
+      - '.github/workflows/release.yml'
+      - 'docs/release/**'
+      - 'site/assets/site.js'
+permissions:
+  contents: read
+concurrency:
+  group: mac-app-proof-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: true
+jobs:
+  mac:
+    runs-on: macos-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Test
+        run: ./gradlew --no-daemon jvmTest checkVexLifeStrings
+
+      - name: Form exact VexLife.app and DMG
+        run: |
+          set -euo pipefail
+          ./gradlew --no-daemon -PvexlifeAppVersion=0.0.0 archiveVexLifeProdMacApplication
+          SHA="$(git rev-parse HEAD)"
+          APP_DIR="build/vexlife-prod-mac-application/$SHA"
+          test -f "$APP_DIR/VexLife-macOS-AppleSilicon.dmg"
+          test -f "$APP_DIR/VexLife-macOS-AppleSilicon.dmg.sha256"
+          test -f "$APP_DIR/VexLife-macOS-AppleSilicon.receipt.json"
+          shasum -a 256 -c "$APP_DIR/VexLife-macOS-AppleSilicon.dmg.sha256"
+          /usr/bin/hdiutil verify "$APP_DIR/VexLife-macOS-AppleSilicon.dmg"
+          /usr/bin/plutil -extract distributionTrust raw -o -             packaging/macos-app/release-contract.json |             grep -Fx 'AD_HOC_SIGNATURE_NO_DEVELOPER_ID_NO_NOTARIZATION'
+          echo "Candidate source: $SHA"
+          cat "$APP_DIR/VexLife-macOS-AppleSilicon.receipt.json"
+
+      - name: Retain exact DMG proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: vexlife-macos-arm64-${{ github.event.pull_request.head.sha || github.sha }}
+          if-no-files-found: error
+          path: |
+            build/vexlife-prod-mac-application/*/VexLife-macOS-AppleSilicon.dmg
+            build/vexlife-prod-mac-application/*/VexLife-macOS-AppleSilicon.dmg.sha256
+            build/vexlife-prod-mac-application/*/VexLife-macOS-AppleSilicon.receipt.json
