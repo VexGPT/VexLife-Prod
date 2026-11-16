@@ -730,10 +730,16 @@ object VexLifeCapabilityBridge {
         val remaining = pacing.budget - requestNumber
         val next =
             if (remaining > 0 && body.state != State.LIMIT_REACHED) {
-                if (exact) "You can make another request ($remaining left this turn) or answer the person now."
-                else
-                    "Reach this turn is bounded but ample; the host will say when it runs out. Request " +
-                        "what would materially improve your understanding, and answer when you are confident."
+                when {
+                    pacing.framing == VexLifeReachPacingFamily.Framing.TASK_CENTERED ->
+                        (if (exact) "($remaining requests left this turn.) " else "") +
+                            "Continue the task: read again only if something decision-changing is still " +
+                            "unproven; once the evidence is saturated, answer the person."
+                    exact -> "You can make another request ($remaining left this turn) or answer the person now."
+                    else ->
+                        "Reach this turn is bounded but ample; the host will say when it runs out. Request " +
+                            "what would materially improve your understanding, and answer when you are confident."
+                }
             } else {
                 "No requests are left this turn. Do not send another capability request in this turn. " +
                     "Answer the person now from what you have. If a responsible answer still needs more " +

@@ -17,6 +17,7 @@ class VexLifeReachPacing(private val productHome: Path) {
         val schemaVersion: String,
         val budget: Int,
         val counter: VexLifeReachPacingFamily.Counter,
+        val framing: VexLifeReachPacingFamily.Framing = VexLifeReachPacingFamily.Framing.STANDARD,
     )
 
     @Serializable
@@ -24,6 +25,7 @@ class VexLifeReachPacing(private val productHome: Path) {
         val schemaVersion: String,
         val budget: Int,
         val counter: VexLifeReachPacingFamily.Counter,
+        val framing: VexLifeReachPacingFamily.Framing,
         val display: VexLifeReachPacingFamily.DisplayState,
         val effectsPerformed: Boolean,
     )
@@ -37,7 +39,7 @@ class VexLifeReachPacing(private val productHome: Path) {
         runCatching {
             VexDurableContractFile.read<Stored>(productHome, path)
                 ?.takeIf { it.schemaVersion == Schema }
-                ?.let { VexLifeReachPacingFamily.State(it.budget, it.counter) }
+                ?.let { VexLifeReachPacingFamily.State(it.budget, it.counter, it.framing) }
         }
             .getOrNull() ?: VexLifeReachPacingFamily.Default
 
@@ -47,6 +49,7 @@ class VexLifeReachPacing(private val productHome: Path) {
             schemaVersion = ProjectionSchema,
             budget = state.budget,
             counter = state.counter,
+            framing = state.framing,
             display = VexLifeReachPacingFamily.displayStateFor(state),
             effectsPerformed = effectsPerformed,
         )
@@ -62,13 +65,14 @@ class VexLifeReachPacing(private val productHome: Path) {
                 VexDurableContractFile.write(
                     productHome,
                     path,
-                    Stored(Schema, effect.state.budget, effect.state.counter),
+                    Stored(Schema, effect.state.budget, effect.state.counter, effect.state.framing),
                 )
                 VexLogger.record(
                     VexLogger.Fact.ReachPacingChosen,
                     mapOf(
                         "budget" to effect.state.budget.toString(),
                         "counter" to effect.state.counter.name,
+                        "framing" to effect.state.framing.name,
                     ),
                 )
             }

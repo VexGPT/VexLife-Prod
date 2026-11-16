@@ -259,6 +259,7 @@ object DirectPromptContext {
         /** The reach budget and counter this turn had, when not the default (VexLifeReachPacingFamily). */
         @EncodeDefault(EncodeDefault.Mode.NEVER) val capabilityRequestBudget: Int? = null,
         @EncodeDefault(EncodeDefault.Mode.NEVER) val capabilityRequestCounter: String? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val capabilityRequestFraming: String? = null,
         val trainingSelectionPerformed: Boolean,
         val effectsPerformed: Boolean,
     )
@@ -476,6 +477,9 @@ object DirectPromptContext {
         val capabilityRequestBudget: Int? = null,
         @EncodeDefault(EncodeDefault.Mode.NEVER)
         val capabilityRequestCounter: String? = null,
+        /** TASK_CENTERED when the turn framed reach as task work (absent means the standard frame). */
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val capabilityRequestFraming: String? = null,
     )
 
     /**
@@ -1151,6 +1155,11 @@ object DirectPromptContext {
                 capabilityExchangeAllowanceTokens = fixed.capabilityExchangeAllowanceTokens,
                 capabilityRequestBudget = fixed.reachPacing?.takeIf { !it.isDefault }?.budget,
                 capabilityRequestCounter = fixed.reachPacing?.takeIf { !it.isDefault }?.counter?.name,
+                capabilityRequestFraming =
+                    fixed.reachPacing
+                        ?.framing
+                        ?.takeIf { it != VexLifeReachPacingFamily.Framing.STANDARD }
+                        ?.name,
                 trainingSelectionPerformed = false,
                 effectsPerformed = false,
             )
@@ -1256,6 +1265,7 @@ object DirectPromptContext {
                 capabilityExchangeAllowanceTokens = core.capabilityExchangeAllowanceTokens,
                 capabilityRequestBudget = core.capabilityRequestBudget,
                 capabilityRequestCounter = core.capabilityRequestCounter,
+                capabilityRequestFraming = core.capabilityRequestFraming,
                 effectsPerformed = core.effectsPerformed,
             )
 
@@ -2327,6 +2337,17 @@ object DirectPromptContext {
                 add("To ask, my whole reply is the header line and one JSON object, nothing else:")
                 add(VexLifeCapabilityRequest.RequestHeader)
                 add("""{"capability":"web","action":"fetch","arguments":{"url":"https://example.com/"}}""")
+                if (pacing.framing == VexLifeReachPacingFamily.Framing.TASK_CENTERED) {
+                    add(
+                        "The person's question is the task; reach is a means, not the object. When I am asked to inspect, " +
+                            "verify or learn from source, bounded read-only reads are ordinary work in service of that task: " +
+                            "I name what the answer must prove, then read what proves it, without re-justifying each read. " +
+                            "I stop when the evidence is saturated — the claim is source-proven, clearly disproven, or the " +
+                            "source is unavailable, or the last reads brought no new decision-changing truth — and I answer " +
+                            "with the uncertainty that remains. The request cap is a safety backstop, not the reason I stop. " +
+                            "This low ceremony is for reading only; writing, configuration, processes and Memory changes still need the person's authority.",
+                    )
+                }
                 add(
                     "The result comes back as ${VexLifeCapabilityRequest.ResultHeader}; then I continue my reply to the person, or ask again while requests remain. " +
                         (if (pacing.counter == VexLifeReachPacingFamily.Counter.EXACT)

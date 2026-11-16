@@ -294,6 +294,8 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <div data-vex-ref="${VexLifeWebP1.ReachPacingControl.identity.ref}" id="reach-pacing-controls">
             <div class="home-row" id="reach-pacing-budgets"></div>
             <div class="home-row" id="reach-pacing-counters"></div>
+            <p class="setting-note-line" id="reach-pacing-framing-status"></p>
+            <div class="home-row" id="reach-pacing-framings"></div>
           </div>
         </section>
 

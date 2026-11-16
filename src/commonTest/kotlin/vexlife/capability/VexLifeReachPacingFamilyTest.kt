@@ -46,4 +46,36 @@ class VexLifeReachPacingFamilyTest {
         assertEquals(listOf(false, true, false), display.budgets.map { it.selected })
         assertEquals(listOf(false, true), display.counters.map { it.selected })
     }
+
+    @Test
+    fun framingIsTheThirdVariableAndDefaultsToTheStandardFrame() {
+        assertEquals(VexLifeReachPacingFamily.Framing.STANDARD, family.Default.framing)
+        val task =
+            family.resolve(
+                family.Default,
+                VexLifeReachPacingFamily.SetFraming(VexLifeReachPacingFamily.Framing.TASK_CENTERED),
+            )
+        assertEquals(
+            VexLifeReachPacingFamily.State(
+                4,
+                VexLifeReachPacingFamily.Counter.EXACT,
+                VexLifeReachPacingFamily.Framing.TASK_CENTERED,
+            ),
+            task?.admittedState,
+            "the first suggested comparison: the same budget of 4 with only the framing changed",
+        )
+        assertNull(
+            family.resolve(
+                family.Default,
+                VexLifeReachPacingFamily.SetFraming(VexLifeReachPacingFamily.Framing.STANDARD),
+            )
+        )
+        assertEquals(
+            VexLifeReachPacingFamily.SetFraming(VexLifeReachPacingFamily.Framing.TASK_CENTERED),
+            family.controlForRef("FRAMING_TASK_CENTERED"),
+        )
+        val display = family.displayStateFor(task!!.admittedState!!)
+        assertEquals("workspace.status.reach-pacing-framing-task", display.framingStatus.key)
+        assertEquals(listOf(false, true), display.framings.map { it.selected })
+    }
 }

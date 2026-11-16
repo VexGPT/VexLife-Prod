@@ -213,6 +213,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 reachPacingStatus: byId('reach-pacing-status'),
                 reachPacingBudgets: byId('reach-pacing-budgets'),
                 reachPacingCounters: byId('reach-pacing-counters'),
+                reachPacingFramingStatus: byId('reach-pacing-framing-status'),
+                reachPacingFramings: byId('reach-pacing-framings'),
                 vexMemoryDetail: byId('vex-memory-detail'),
                 resourceNote: byId('resource-note'),
                 homeCurrentState: byId('home-current-state'),
@@ -2293,6 +2295,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 const projection = state.reachPacing;
                 ui.reachPacingBudgets.textContent = '';
                 ui.reachPacingCounters.textContent = '';
+                ui.reachPacingFramings.textContent = '';
+                ui.reachPacingFramingStatus.textContent = '';
                 if (!projection) {
                   ui.reachPacingStatus.textContent = '';
                   return;
@@ -2314,6 +2318,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 };
                 group(ui.reachPacingBudgets, display.budgets);
                 group(ui.reachPacingCounters, display.counters);
+                ui.reachPacingFramingStatus.textContent = resolveText(display.framingStatus);
+                group(ui.reachPacingFramings, display.framings);
               };
 
               const loadReachPacing = async () => {

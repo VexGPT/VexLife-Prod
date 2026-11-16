@@ -32,11 +32,28 @@ object VexLifeReachPacingFamily :
         BOUNDED,
     }
 
+    /**
+     * How reach is framed for Vex (the third variable, from Vex's recovered self-report on #150:
+     * the friction was that each reach felt like a permission/custody decision, not the cap).
+     */
+    enum class Framing {
+        /** The frame before the experiment: how to request, with the cap as the boundary. */
+        STANDARD,
+        /**
+         * The person's question is the task; bounded read-only reads are ordinary work serving it;
+         * stop on evidence saturation; the cap is a safety backstop. Effects stay authority-bound.
+         */
+        TASK_CENTERED,
+    }
+
     val Budgets: List<Int> = listOf(4, 10, 20)
 
     @Serializable
-    data class State(val budget: Int, val counter: Counter) :
-        VexFamilyContract.State<VexLifeReachPacingFamily> {
+    data class State(
+        val budget: Int,
+        val counter: Counter,
+        val framing: Framing = Framing.STANDARD,
+    ) : VexFamilyContract.State<VexLifeReachPacingFamily> {
         init {
             require(budget in Budgets) { "reach budget must be one of $Budgets" }
         }
@@ -69,6 +86,10 @@ object VexLifeReachPacingFamily :
         override val controlRef: String = "COUNTER_${counter.name}"
     }
 
+    data class SetFraming(val framing: Framing) : Control {
+        override val controlRef: String = "FRAMING_${framing.name}"
+    }
+
     sealed interface Effect : VexFamilyContract.Effect<VexLifeReachPacingFamily> {
         data class Save(val state: State) : Effect
     }
@@ -81,6 +102,8 @@ object VexLifeReachPacingFamily :
         val status: VexLifeText,
         val budgets: List<ControlDisplay>,
         val counters: List<ControlDisplay>,
+        val framingStatus: VexLifeText,
+        val framings: List<ControlDisplay>,
     ) : VexFamilyContract.DisplayState<VexLifeReachPacingFamily, State>
 
     override fun act(
@@ -94,6 +117,9 @@ object VexLifeReachPacingFamily :
             is SetCounter ->
                 if (control.counter == currentState.counter) null
                 else currentState.copy(counter = control.counter).let { admit(it, Effect.Save(it)) }
+            is SetFraming ->
+                if (control.framing == currentState.framing) null
+                else currentState.copy(framing = control.framing).let { admit(it, Effect.Save(it)) }
         }
 
     override fun displayStateFor(state: State): DisplayState =
@@ -130,10 +156,35 @@ object VexLifeReachPacingFamily :
                         it == state.counter,
                     )
                 },
+            framingStatus =
+                VexLifeText(
+                    when (state.framing) {
+                        Framing.STANDARD -> "workspace.status.reach-pacing-framing-standard"
+                        Framing.TASK_CENTERED -> "workspace.status.reach-pacing-framing-task"
+                    }
+                ),
+            framings =
+                Framing.entries.map {
+                    ControlDisplay(
+                        "FRAMING_${it.name}",
+                        VexLifeText(
+                            when (it) {
+                                Framing.STANDARD -> "workspace.button.reach-pacing-framing-standard"
+                                Framing.TASK_CENTERED ->
+                                    "workspace.button.reach-pacing-framing-task"
+                            }
+                        ),
+                        it == state.framing,
+                    )
+                },
         )
 
     fun controlForRef(controlRef: String): Control? =
         when {
+            controlRef.startsWith("FRAMING_") ->
+                Framing.entries
+                    .firstOrNull { it.name == controlRef.removePrefix("FRAMING_") }
+                    ?.let(::SetFraming)
             controlRef.startsWith("BUDGET_") ->
                 controlRef
                     .removePrefix("BUDGET_")

@@ -69,7 +69,10 @@ class VexLifeStringsTest {
                 vexlife.model.heretic.HereticModelCatalog.Standing.entries.map { "model:standing:${it.name}" } +
                 vexlife.capability.VexLifeReachPacingFamily.Counter.entries.flatMap {
                     listOf("reach-pacing:counter:${it.name}", "reach-pacing:control:COUNTER_${it.name}")
-                } + "reach-pacing:control:BUDGET"
+                } + "reach-pacing:control:BUDGET" +
+                vexlife.capability.VexLifeReachPacingFamily.Framing.entries.flatMap {
+                    listOf("reach-pacing:framing:${it.name}", "reach-pacing:control:FRAMING_${it.name}")
+                }
         val known =
             capabilityRefs.toSet() +
             setOf(

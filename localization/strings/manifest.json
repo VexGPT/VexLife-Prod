@@ -2397,6 +2397,14 @@
       "enHash": "71309701f88c",
       "langs": []
     },
+    "workspace.button.reach-pacing-framing-standard": {
+      "enHash": "ddd100c7abce",
+      "langs": []
+    },
+    "workspace.button.reach-pacing-framing-task": {
+      "enHash": "73e375604932",
+      "langs": []
+    },
     "workspace.description.diagnostics": {
       "enHash": "7b79ef07573f",
       "langs": []
@@ -2563,6 +2571,14 @@
     },
     "workspace.status.reach-pacing-exact": {
       "enHash": "aa109d01342d",
+      "langs": []
+    },
+    "workspace.status.reach-pacing-framing-standard": {
+      "enHash": "6d39907b0256",
+      "langs": []
+    },
+    "workspace.status.reach-pacing-framing-task": {
+      "enHash": "45a140a1b937",
       "langs": []
     },
     "workspace.status.reach-web-fetch": {

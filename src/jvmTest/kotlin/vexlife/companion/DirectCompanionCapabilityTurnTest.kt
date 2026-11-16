@@ -272,6 +272,7 @@ class DirectCompanionCapabilityTurnTest {
         val pacing = vexlife.capability.VexLifeReachPacing(home)
         pacing.control("BUDGET_10")
         pacing.control("COUNTER_BOUNDED")
+        pacing.control("FRAMING_TASK_CENTERED")
         val calls = mutableListOf<List<Pair<String, String>>>()
         val transport = DirectCompanionConnection.Transport { call ->
             calls += messages(call)
@@ -300,12 +301,16 @@ class DirectCompanionCapabilityTurnTest {
         val firstSystem = calls[0].filter { it.first == "system" }.joinToString("\n") { it.second }
         assertTrue(firstSystem.contains("Reach this turn is bounded and ample"))
         assertFalse(firstSystem.contains("Up to 4 requests per turn"))
+        assertTrue(firstSystem.contains("The person's question is the task"))
+        assertTrue(firstSystem.contains("The request cap is a safety backstop, not the reason I stop."))
+        assertTrue(firstSystem.contains("writing, configuration, processes and Memory changes still need the person's authority"))
         val returned = calls[1].last().second
         assertTrue(returned.contains("\"request\":\"1\""))
-        assertTrue(returned.contains("bounded but ample"))
+        assertTrue(returned.contains("Continue the task"))
         val receipt = result.promptContextReceipt
         assertEquals(10, receipt.capabilityRequestBudget)
         assertEquals("BOUNDED", receipt.capabilityRequestCounter)
+        assertEquals("TASK_CENTERED", receipt.capabilityRequestFraming)
         assertEquals(36_000, receipt.capabilityExchangeAllowanceTokens)
     }
 

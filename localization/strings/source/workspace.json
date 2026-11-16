@@ -12,7 +12,7 @@
       "diagnostics": "VexLifeDiagnosticsFamily (state, control refs) and the debug export route",
       "capability": "VexLifeCapabilityBridge uses (handle:action), shown to the person as reach",
       "model": "VexLifeModelsFamily (files, control refs) and HereticModelCatalog standing",
-      "reach-pacing": "VexLifeReachPacingFamily (budgets 4/10/20, counter EXACT/BOUNDED)"
+      "reach-pacing": "VexLifeReachPacingFamily (budgets 4/10/20, counter EXACT/BOUNDED, framing STANDARD/TASK_CENTERED)"
     }
   },
   "workspace.heading.diagnostics": {
@@ -593,5 +593,49 @@
       "workspace.settings"
     ],
     "dataKey": "reach-pacing:control:COUNTER_BOUNDED"
+  },
+  "workspace.status.reach-pacing-framing-standard": {
+    "strings": {
+      "en": {
+        "text": "Framing: how to request, with the limit as the boundary."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "reach-pacing:framing:STANDARD"
+  },
+  "workspace.status.reach-pacing-framing-task": {
+    "strings": {
+      "en": {
+        "text": "Framing: your question is the task; reading sources is ordinary work; Vex stops when the evidence is saturated, and the limit is only a backstop."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "reach-pacing:framing:TASK_CENTERED"
+  },
+  "workspace.button.reach-pacing-framing-standard": {
+    "strings": {
+      "en": {
+        "text": "Standard framing"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "reach-pacing:control:FRAMING_STANDARD"
+  },
+  "workspace.button.reach-pacing-framing-task": {
+    "strings": {
+      "en": {
+        "text": "Task-centered framing"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "reach-pacing:control:FRAMING_TASK_CENTERED"
   }
 }

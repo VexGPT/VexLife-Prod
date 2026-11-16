@@ -715,6 +715,17 @@ class VexLifeCapabilityReachTest {
         assertTrue(exact.resultMessage.content.contains("\"request\":\"2 of 4\""), "the default is unchanged")
         assertTrue(exact.resultMessage.content.contains("(2 left this turn)"))
 
+        val taskCentered =
+            VexLifeCapabilityBridge.perform(
+                request("""{"capability":"atlas","action":"list"}"""),
+                admission(home, number = 2)
+                    .copy(pacing = VexLifeReachPacingFamily.Default.copy(framing = VexLifeReachPacingFamily.Framing.TASK_CENTERED)),
+                estimateTokens = tokens,
+            )
+        assertTrue(taskCentered.resultMessage.content.contains("Continue the task"))
+        assertTrue(taskCentered.resultMessage.content.contains("once the evidence is saturated, answer the person"))
+        assertFalse(taskCentered.resultMessage.content.contains("You can make another request"))
+
         val trace = VexLifeCapabilityBridge.trace(List(11) { fifth.entry.copy(requestNumber = it + 1) }, bounded)
         assertEquals(10, trace.maximumRequestsPerTurn)
         assertEquals(36_000, trace.exchangeAllowanceTokens)
