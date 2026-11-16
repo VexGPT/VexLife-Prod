@@ -1,4 +1,4 @@
-# Releases: main builds, stable versions and the VexLife home
+# Releases: intentional previews, stable versions and the VexLife home
 
 `[VXG RealForever]`
 
@@ -12,11 +12,11 @@ stable version records that Victor accepted a lived feature threshold.
 | Channel | What it is | Made by | Tag |
 |---|---|---|---|
 | Pull-request proof | Exact candidate app/DMG proof. Never a public release. | `mac-app-proof` workflow on packaging/release branches and PRs | workflow artifact only |
-| Main build | Every commit that lands on `main`, built for Mac Apple silicon. Newest work, least lived. | `release` workflow on every push to `main` | `private-service-image-<sha>` prerelease |
-| Stable | A feature threshold on `main` that was lived and accepted. | `release` workflow, run by hand with a version | `v<major>.<minor>.<patch>`, marked latest |
+| Preview | An intentional downloadable snapshot of current `main` for sharing/testing. Ordinary merges do not publish one. | `release` workflow, run by hand with channel = `preview` | `private-service-image-<sha>` prerelease |
+| Stable | A feature threshold on `main` that was lived and accepted. | `release` workflow, run by hand with channel = `stable` and a version | `v<major>.<minor>.<patch>`, marked latest |
 
-The historical main tag name remains `private-service-image-<sha>` for compatibility with the current
-release/page catalog, but the release now carries two related Product artifacts:
+The historical preview tag name remains `private-service-image-<sha>` for compatibility with the current
+release/page catalog, but a published preview or stable release carries the Product artifacts below:
 
 - **preferred human download:** `VexLife-macOS-AppleSilicon.dmg`, containing `VexLife.app` plus
   an Applications shortcut;
@@ -71,28 +71,37 @@ to embed that local-only Vision runtime. Vision distribution remains separately 
 laundered into the DMG.
 
 For stable runs, the workflow supplies the requested semantic version as
-`-PvexlifeAppVersion=<major.minor.patch>`. Continuous main builds use `0.0.0` as the internal app
-version and remain identified externally by exact source SHA/release tag. Cutting a stable version
-does not replace the continuous DMG for that SHA; the stable DMG is a separately version-stamped
-artifact bound to the same source.
+`-PvexlifeAppVersion=<major.minor.patch>`. A preview uses `0.0.0` internally and remains identified
+externally by its exact source SHA/release tag. Ordinary merges to `main` do not publish anything.
+Victor or a continuing instance chooses when a source threshold is worth publishing.
 
-## Cutting a stable version
+## Publishing from GitHub — no manual tag or build work
 
-When Victor says a threshold on `main` is good (for example "this is good, tag it as 0.7.0"):
+There is no required calendar schedule. A release is an intentional cutoff.
 
-1. Confirm `main` is the commit that was lived: the merged PRs since the previous version, their
-   lived checks, and the required current proof.
-2. Run **Actions → release → Run workflow** on `main` with `version` = `0.7.0`
-   (or `gh workflow run release --ref main -f version=0.7.0`).
-3. The workflow first requires the exact SHA's already-published main build. It then tests and forms
-   a version-stamped stable DMG from that same source **without rewriting the main build**, and
-   creates `v0.7.0` at that commit. A version that exists is never rebuilt or moved; a wrong
-   version gets a new, higher version.
-4. The `pages` workflow redeploys after `release` completes; the version appears in the Mac
-   download list.
+For a stable threshold, Victor can say to an instance, "this is a good cutoff; release 0.1.0," or do
+the same thing himself in GitHub:
 
-Versions follow semver; while VexLife is before 1.0 a minor version marks a feature threshold and a
-patch marks a fix to an accepted version.
+1. Merge the work that belongs in the cutoff so the desired source is on `main`.
+2. Open **Actions → release → Run workflow**.
+3. Leave the branch as **main**, choose **stable**, and enter a version such as `0.1.0`.
+4. Click **Run workflow**.
+
+The workflow then tests that exact `main`, forms the version-stamped DMG, creates the Git tag
+`v0.1.0` automatically, creates the GitHub Release, uploads the DMG/checksums/receipt, and causes
+the Pages site to refresh. Victor does **not** manually create a tag, edit a version file, build a
+DMG, or upload release assets.
+
+For a shareable build that is not yet a stable version, run the same workflow with
+**channel = preview** and leave version empty. That publishes one prerelease from the current
+`main`. Merges by themselves create no public download.
+
+Versions follow semver while VexLife is before 1.0:
+
+- `0.1.0 → 0.2.0`: a new accepted feature threshold;
+- `0.1.0 → 0.1.1`: a fix to that accepted line.
+
+A version that already exists is never rebuilt or moved; a correction gets a new version.
 
 ## The VexLife home (GitHub Pages)
 
@@ -105,8 +114,9 @@ Source: `site/`. Deployed by `.github/workflows/pages.yml` on changes to the sit
   with SHA-256 values read from the release notes.
 
 The page prefers a Mac `.dmg` when a release contains one and falls back to the predecessor
-bootstrap otherwise. Windows remains visibly in preparation until a Windows realization actually
-exists and has real-machine proof.
+bootstrap otherwise. It labels the unversioned channel as **Preview**, not as an always-current main
+build, because previews are intentional rather than automatic. Windows remains visibly in preparation
+until a Windows realization actually exists and has real-machine proof.
 
 **Repository setting:** GitHub Pages → Build and deployment → Source is configured to
 **GitHub Actions** as of 2026-11-15.
@@ -134,6 +144,7 @@ download exact PR/release DMG
 -> open DMG
 -> drag VexLife.app to Applications
 -> explicitly allow the unsigned app if macOS requires it
+-> macOS may separately confirm the bundled `java` runtime; choose Open only for the trusted exact release
 -> launch
 -> existing Setup Journey
 -> Product CURRENT
