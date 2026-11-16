@@ -8,8 +8,9 @@ package vexlife.model.heretic
  * represents those already-owned meanings at the inference boundary, and which parts of that
  * representation have actually been qualified.
  *
- * Every field is explicit. Adding a model must choose one complete [Profile]; no model silently
- * inherits sampling, reasoning, capability or message-format defaults from the Connection.
+ * Every offered model chooses one complete [Profile]. Representation may be shared where source
+ * proves it is the same, but generation choices are explicit per model so a new model cannot
+ * silently inherit another model's defaults from the Connection.
  */
 object HereticCompanionProvider {
     enum class MessageProtocol {
@@ -49,25 +50,56 @@ object HereticCompanionProvider {
         HIGH("high"),
     }
 
-    enum class GenerationBasis {
-        /** Exact settings carried from the certified model's pinned generation configuration. */
-        PINNED_MODEL_GENERATION_CONFIG,
+    enum class SamplingBasis {
+        /** Exact values carried from one pinned model-owned generation configuration. */
+        PINNED_MODEL_FILE,
 
-        /** Explicit settings chosen from the model/provider's published deployment guidance. */
+        /** Values explicitly published for this model or its exact source lineage. */
         PROVIDER_RECOMMENDATION,
     }
 
-    data class Generation(
-        val basis: GenerationBasis,
+    data class Sampling(
+        val basis: SamplingBasis,
+        /** Stable source coordinate for why these values were selected. */
+        val sourceRef: String,
         val temperature: Double,
         val topP: Double,
         val topK: Int,
-        val maxOutputTokens: Int,
+    ) {
+        init {
+            require(
+                sourceRef.matches(
+                    Regex(
+                        "[a-z0-9][a-z0-9._:-]+",
+                    ),
+                ) &&
+                    temperature >=
+                    0.0 &&
+                    topP in
+                    0.0..1.0 &&
+                    topK >=
+                    0,
+            ) {
+                "Companion sampling configuration is invalid"
+            }
+        }
+    }
+
+    data class Generation(
+        val sampling: Sampling,
+        /**
+         * VexLife-owned output bound. Provider recommendations do not own Product attention/custody.
+         */
+        val productMaxOutputTokens: Int,
+        /** Provider-native reasoning control when the representation earns one. */
         val reasoningEffort: ReasoningEffort?,
     ) {
         init {
-            require(temperature >= 0.0 && topP in 0.0..1.0 && topK >= 0 && maxOutputTokens > 0) {
-                "Companion generation profile is invalid"
+            require(
+                productMaxOutputTokens >
+                    0,
+            ) {
+                "Companion output-token bound must be positive"
             }
         }
     }
@@ -83,21 +115,39 @@ object HereticCompanionProvider {
         val generation: Generation,
     ) {
         init {
-            require(profileRef.matches(Regex("[a-z0-9][a-z0-9._-]+"))) {
+            require(
+                profileRef.matches(
+                    Regex(
+                        "[a-z0-9][a-z0-9._-]+",
+                    ),
+                ),
+            ) {
                 "Companion provider profile ref is invalid"
             }
-            require(modelIdentity == null || modelIdentity.isNotBlank()) {
+            require(
+                modelIdentity ==
+                    null ||
+                    modelIdentity.isNotBlank(),
+            ) {
                 "Companion provider model identity must be absent or non-blank"
             }
             require(
-                (messageProtocol == MessageProtocol.HARMONY) ==
-                    (reasoningRepresentation == ReasoningRepresentation.HARMONY_CHANNELS)
+                (
+                    messageProtocol ==
+                        MessageProtocol.HARMONY
+                ) ==
+                    (
+                        reasoningRepresentation ==
+                            ReasoningRepresentation.HARMONY_CHANNELS
+                    ),
             ) {
                 "Harmony message and reasoning representations must move together"
             }
             require(
-                messageProtocol == MessageProtocol.HARMONY ||
-                    generation.reasoningEffort == null
+                messageProtocol ==
+                    MessageProtocol.HARMONY ||
+                    generation.reasoningEffort ==
+                    null,
             ) {
                 "Reasoning-effort levels are currently earned only by the Harmony profile"
             }
@@ -105,13 +155,12 @@ object HereticCompanionProvider {
     }
 
     object Profiles {
-        /**
-         * Current Qwen relationship, unchanged: VexLife's text-control reach is qualified and the
-         * certified generation settings remain explicit here rather than hidden in the Connection.
-         */
-        val Qwen =
+        private fun qwen(
+            profileRef: String,
+            sampling: Sampling,
+        ): Profile =
             Profile(
-                profileRef = "companion-profile.vexlife-prod.qwen.reasoning-fields.v1",
+                profileRef = profileRef,
                 messageProtocol = MessageProtocol.OPENAI_CHAT,
                 reasoningRepresentation = ReasoningRepresentation.REASONING_FIELDS,
                 capabilityRepresentation = CapabilityRepresentation.VEXLIFE_CONTROL_TEXT,
@@ -120,27 +169,62 @@ object HereticCompanionProvider {
                 modelIdentity = null,
                 generation =
                     Generation(
-                        basis = GenerationBasis.PINNED_MODEL_GENERATION_CONFIG,
-                        temperature = 1.0,
-                        topP = 0.95,
-                        topK = 20,
-                        maxOutputTokens = 16_000,
+                        sampling = sampling,
+                        productMaxOutputTokens = 16_000,
                         reasoningEffort = null,
                     ),
             )
 
+        val Qwen27B =
+            qwen(
+                profileRef = "companion-profile.vexlife-prod.qwen27b.reasoning-fields.v1",
+                sampling =
+                    Sampling(
+                        basis = SamplingBasis.PINNED_MODEL_FILE,
+                        sourceRef = "source.vexlife-prod.qwen27b.generation-config.d0d0ed2e37cd",
+                        temperature = 1.0,
+                        topP = 0.95,
+                        topK = 20,
+                    ),
+            )
+
+        val Qwen9B =
+            qwen(
+                profileRef = "companion-profile.vexlife-prod.qwen9b.reasoning-fields.v1",
+                sampling =
+                    Sampling(
+                        basis = SamplingBasis.PROVIDER_RECOMMENDATION,
+                        sourceRef = "source.provider.foresee.qwen38-9b.sampling.v1",
+                        temperature = 0.6,
+                        topP = 0.95,
+                        topK = 20,
+                    ),
+            )
+
+        val Qwen4B =
+            qwen(
+                profileRef = "companion-profile.vexlife-prod.qwen4b.reasoning-fields.v1",
+                sampling =
+                    Sampling(
+                        basis = SamplingBasis.PROVIDER_RECOMMENDATION,
+                        sourceRef = "source.provider.qwen38-4b-lineage.sampling.v1",
+                        temperature = 0.6,
+                        topP = 0.95,
+                        topK = 20,
+                    ),
+            )
+
         /**
-         * GPT-OSS speaks Harmony. OpenAI's published gpt-oss guidance recommends temperature 1.0
-         * and top-p 1.0; top-k is therefore disabled instead of inheriting Qwen's top-k 20.
+         * GPT-OSS speaks Harmony. OpenAI publishes temperature 1.0 and top-p 1.0 for gpt-oss;
+         * VexLife therefore disables an inherited top-k filter instead of carrying Qwen's top-k 20.
          *
-         * Harmony-native function carriage is the intended capability representation, but the
-         * Product's pinned mlx-lm 0.32.0 bridge has not yet been lived-qualified for that mapping.
-         * Reach therefore stays HELD here rather than being falsely advertised through Qwen's
-         * text-control convention.
+         * Medium reasoning effort is explicit here instead of remaining an invisible template
+         * default. Harmony-native function carriage is the intended capability representation, but
+         * the pinned mlx-lm 0.32.0 bridge has not yet been lived-qualified for that mapping.
          */
-        val GptOssHarmony =
+        val GptOss20B =
             Profile(
-                profileRef = "companion-profile.vexlife-prod.gpt-oss.harmony.v1",
+                profileRef = "companion-profile.vexlife-prod.gpt-oss20b.harmony.v1",
                 messageProtocol = MessageProtocol.HARMONY,
                 reasoningRepresentation = ReasoningRepresentation.HARMONY_CHANNELS,
                 capabilityRepresentation = CapabilityRepresentation.HARMONY_FUNCTIONS,
@@ -149,11 +233,15 @@ object HereticCompanionProvider {
                 modelIdentity = "You are Vex.",
                 generation =
                     Generation(
-                        basis = GenerationBasis.PROVIDER_RECOMMENDATION,
-                        temperature = 1.0,
-                        topP = 1.0,
-                        topK = 0,
-                        maxOutputTokens = 16_000,
+                        sampling =
+                            Sampling(
+                                basis = SamplingBasis.PROVIDER_RECOMMENDATION,
+                                sourceRef = "source.provider.openai.gpt-oss.sampling.v1",
+                                temperature = 1.0,
+                                topP = 1.0,
+                                topK = 0,
+                            ),
+                        productMaxOutputTokens = 16_000,
                         reasoningEffort = ReasoningEffort.MEDIUM,
                     ),
             )

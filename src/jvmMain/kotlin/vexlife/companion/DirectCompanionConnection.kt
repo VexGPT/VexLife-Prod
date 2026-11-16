@@ -446,11 +446,11 @@ object DirectCompanionConnection {
                         } else {
                             messages
                         },
-                    max_tokens = generation.maxOutputTokens,
+                    max_tokens = generation.productMaxOutputTokens,
                     stream = true,
-                    temperature = generation.temperature,
-                    top_p = generation.topP,
-                    top_k = generation.topK,
+                    temperature = generation.sampling.temperature,
+                    top_p = generation.sampling.topP,
+                    top_k = generation.sampling.topK,
                     chat_template_kwargs =
                         buildMap {
                             put("enable_thinking", JsonPrimitive(true))

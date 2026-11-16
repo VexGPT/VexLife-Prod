@@ -184,6 +184,19 @@ object DirectCompanionTurn {
             "Vex requested a capability again after this turn's requests were used up",
         )
 
+    private class CapabilityProviderBridgeHeldException :
+        IllegalStateException(
+            "the selected model's capability provider bridge is not qualified",
+        )
+
+    private enum class CapabilityRequestAdmission(
+        val logValue: String,
+    ) {
+        ADMITTED("admitted"),
+        EXHAUSTED("exhausted"),
+        HELD_PROVIDER_BRIDGE("held_provider_bridge"),
+    }
+
     private enum class SourceReturnProgressMode {
         Pending,
         HumanAnswer,
@@ -899,10 +912,18 @@ object DirectCompanionTurn {
                     messages = base.materialization.messages + exchangeMessages(),
                     hooks = hooks,
                     sourceReturnRequestAllowed = sourceReturnTrace == null,
-                    capabilityRequestsAllowed =
-                        capabilityRequestsAdmitted &&
+                    capabilityRequestAdmission =
+                        when {
+                            !capabilityRequestsAdmitted ->
+                                CapabilityRequestAdmission.HELD_PROVIDER_BRIDGE
+
                             exchanges.size <=
-                                VexLifeCapabilityBridge.MaximumRequestsPerTurn,
+                                VexLifeCapabilityBridge.MaximumRequestsPerTurn ->
+                                CapabilityRequestAdmission.ADMITTED
+
+                            else ->
+                                CapabilityRequestAdmission.EXHAUSTED
+                        },
                 )
 
             val capabilityRequest = stage.capabilityRequest
@@ -1256,7 +1277,7 @@ object DirectCompanionTurn {
         messages: List<CompanionProviderMessage>,
         hooks: Hooks,
         sourceReturnRequestAllowed: Boolean,
-        capabilityRequestsAllowed: Boolean,
+        capabilityRequestAdmission: CapabilityRequestAdmission,
     ): ProviderStage {
         val progressGate =
             SourceReturnProgressGate(
@@ -1269,7 +1290,7 @@ object DirectCompanionTurn {
             mapOf(
                 "runtimeReceiptRef" to runtimeEvidence.runtimeReceiptRef,
                 "stage" to if (sourceReturnRequestAllowed) "initial" else "final",
-                "capabilityRequests" to if (capabilityRequestsAllowed) "admitted" else "exhausted",
+                "capabilityRequests" to capabilityRequestAdmission.logValue,
                 "messageCount" to messages.size.toString(),
                 "approxChars" to messages.sumOf { it.content.length }.toString(),
             ),
@@ -1304,8 +1325,22 @@ object DirectCompanionTurn {
         ) {
             "provider output resembles an incomplete Conversation source-return control request"
         }
-        if (capabilityRequest != null && !capabilityRequestsAllowed) {
-            throw CapabilityRequestLimitException()
+        if (
+            capabilityRequest !=
+                null
+        ) {
+            when (
+                capabilityRequestAdmission
+            ) {
+                CapabilityRequestAdmission.ADMITTED ->
+                    Unit
+
+                CapabilityRequestAdmission.EXHAUSTED ->
+                    throw CapabilityRequestLimitException()
+
+                CapabilityRequestAdmission.HELD_PROVIDER_BRIDGE ->
+                    throw CapabilityProviderBridgeHeldException()
+            }
         }
         if (
             !sourceReturnRequestAllowed &&
@@ -1844,6 +1879,9 @@ object DirectCompanionTurn {
 
             is RepeatedSourceReturnRequestException ->
                 "SOURCE_RETURN_RECURSION_NOT_ADMITTED"
+
+            is CapabilityProviderBridgeHeldException ->
+                "CAPABILITY_PROVIDER_BRIDGE_HELD"
 
             is IllegalArgumentException ->
                 "ADMISSION_FAILED"

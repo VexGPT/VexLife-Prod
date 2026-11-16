@@ -69,11 +69,12 @@ class VexLifeModels(
         val capabilityRepresentation: String,
         val capabilityStanding: String,
         val reasoningEffort: String?,
-        val generationBasis: String,
+        val samplingBasis: String,
+        val samplingSourceRef: String,
         val temperature: Double,
         val topP: Double,
         val topK: Int,
-        val maxOutputTokens: Int,
+        val productMaxOutputTokens: Int,
     )
 
     @Serializable
@@ -147,11 +148,12 @@ class VexLifeModels(
                                 capabilityRepresentation = profile.capabilityRepresentation.name,
                                 capabilityStanding = profile.capabilityStanding.name,
                                 reasoningEffort = profile.generation.reasoningEffort?.name,
-                                generationBasis = profile.generation.basis.name,
-                                temperature = profile.generation.temperature,
-                                topP = profile.generation.topP,
-                                topK = profile.generation.topK,
-                                maxOutputTokens = profile.generation.maxOutputTokens,
+                                samplingBasis = profile.generation.sampling.basis.name,
+                                samplingSourceRef = profile.generation.sampling.sourceRef,
+                                temperature = profile.generation.sampling.temperature,
+                                topP = profile.generation.sampling.topP,
+                                topK = profile.generation.sampling.topK,
+                                productMaxOutputTokens = profile.generation.productMaxOutputTokens,
                             )
                         },
                     display = VexLifeModelsFamily.displayStateFor(state),
