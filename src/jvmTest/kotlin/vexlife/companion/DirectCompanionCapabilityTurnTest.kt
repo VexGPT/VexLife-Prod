@@ -111,7 +111,7 @@ class DirectCompanionCapabilityTurnTest {
             status = 200,
             headers = mapOf("content-type" to listOf("text/html")),
             body =
-                "<html><title>Kites</title><body><p>Fly the kite on a 30 m line.</p></body></html>"
+                "<html><head><title>Kites</title></head><body><p>Fly the kite on a 30 m line.</p></body></html>"
                     .toByteArray(StandardCharsets.UTF_8),
             truncated = false,
         )
