@@ -21,6 +21,7 @@ import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.capability.reach.VexLifeWebReach
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -468,6 +469,149 @@ class DirectCompanionCapabilityTurnTest {
         // Four admitted requests, one answered LIMIT_REACHED, then the sixth stage still asked.
         assertEquals(VexLifeCapabilityBridge.MaximumRequestsPerTurn + 2, calls)
         assertNotNull(failure.failureReceipt)
+    }
+
+    /** The same turn with the gpt-oss model: setup bound to it, runtime proved for it. */
+    private fun gptOssSetup(home: Path): VexLifeProdLocalSetup.Result {
+        val entry = HereticModelCatalog.Models.GptOss20B
+        val runtime =
+            HereticModelConfiguration.QualifiedRuntimeEvidence(
+                runtimeReceiptRef = "receipt.vexlife-prod.heretic.reach.gpt-oss",
+                runtimeState = HereticRuntimeState.Qualified,
+                modelRef = entry.modelRef,
+                modelProfileRef = entry.identity.modelProfileRef,
+                artifactRef = entry.identity.artifactSetRef,
+                artifactContentSetSha256 = entry.identity.artifactContentSetSha256,
+                runtimeAdapterRef = entry.identity.runtimeAdapterRef,
+                runtimeClass = entry.identity.runtimeClass,
+                endpoint = entry.identity.endpoint,
+                requestModel = entry.identity.requestModel,
+                qualification = HereticRuntimeQualification.qualified(),
+            )
+        return setup(home)
+            .copy(
+                qualifiedRuntimeEvidence = runtime,
+                endpoint = runtime.endpoint,
+                requestModel = runtime.requestModel,
+            )
+    }
+
+    /** A harmony reply as the pinned mlx-lm server streams it: inline markers, small chunks. */
+    private fun harmonyStream(replies: (Int, JsonObject) -> String) =
+        object : DirectCompanionConnection.StreamingTransport {
+            var calls = 0
+
+            override fun post(call: DirectCompanionConnection.HttpCall) = error("streams")
+
+            override fun postStreaming(
+                call: DirectCompanionConnection.HttpCall,
+                onLine: (String) -> Unit,
+            ): DirectCompanionConnection.StreamingHttpResult {
+                calls++
+                val text = replies(calls, Json.parseToJsonElement(call.body).jsonObject)
+                for (chunk in text.chunked(6)) {
+                    onLine(
+                        "data: " +
+                            """{"model":"default_model","choices":[{"delta":{"role":"assistant","content":""" +
+                            kotlinx.serialization.json.JsonPrimitive(chunk) +
+                            "}}]}"
+                    )
+                }
+                onLine("""data: {"model":"default_model","choices":[{"delta":{},"finish_reason":"stop"}]}""")
+                onLine("data: [DONE]")
+                return DirectCompanionConnection.StreamingHttpResult(200, "d".repeat(64))
+            }
+        }
+
+    @Test
+    fun gptOssCallsReachAsItsOwnToolAndAnswersFromWhatCameBack() = withHome { home ->
+        val requests = mutableListOf<JsonObject>()
+        val progress = mutableListOf<DirectCompanionTurn.Progress>()
+        val transport =
+            harmonyStream { call, body ->
+                requests += body
+                when (call) {
+                    // The call gpt-oss makes when the template declares tools; the server strips
+                    // the <|call|> it stops on.
+                    1 ->
+                        "<|channel|>analysis<|message|>They ask what the page says. I'll fetch it.<|end|>" +
+                            "<|start|>assistant<|channel|>commentary to=functions.web_fetch <|constrain|>json" +
+                            """<|message|>{"url":"https://example.com/kites"}"""
+                    2 ->
+                        "<|channel|>analysis<|message|>The page gives 30 m.<|end|>" +
+                            "<|start|>assistant<|channel|>final<|message|>The page says to fly it on a 30 m line."
+                    else -> error("unexpected provider call")
+                }
+            }
+        val result =
+            DirectCompanionTurn.performWithHooks(
+                setup = gptOssSetup(home),
+                intent =
+                    DirectCompanionTurn.Intent(
+                        idempotencyKey = "send.reach.gpt-oss.001",
+                        content = "What does example.com say about kites?",
+                    ),
+                hooks =
+                    DirectCompanionTurn.Hooks(
+                        transport = transport,
+                        capabilityOwners =
+                            VexLifeCapabilityBridge.Owners(webTransport = page, resolver = publicResolver),
+                        progressObserver = { progress += it },
+                        now = { Instant.parse("2026-11-16T12:00:00Z") },
+                    ),
+            )
+
+        // Stage one declared the frame's reach as harmony tools, and never gpt-oss's own browser.
+        fun functionNames(body: JsonObject) =
+            body["tools"]?.jsonArray.orEmpty().map {
+                it.jsonObject.getValue("function").jsonObject.getValue("name").jsonPrimitive.content
+            }
+        assertTrue("web_fetch" in functionNames(requests[0]))
+        assertTrue("github_read" in functionNames(requests[0]))
+        assertFalse("builtin_tools" in requests[0].getValue("chat_template_kwargs").jsonObject)
+
+        // Stage two carries Vex's call and the host's result as the template's tool call + tool
+        // message, with the page's own words in it.
+        val sent = requests[1].getValue("messages").jsonArray.map { it.jsonObject }
+        val call = sent[sent.size - 2]
+        assertEquals("assistant", call.getValue("role").jsonPrimitive.content)
+        val function = call.getValue("tool_calls").jsonArray.single().jsonObject.getValue("function").jsonObject
+        assertEquals("web_fetch", function.getValue("name").jsonPrimitive.content)
+        assertEquals(
+            """{"url":"https://example.com/kites"}""",
+            function.getValue("arguments").jsonPrimitive.content,
+        )
+        val returned = sent.last()
+        assertEquals("tool", returned.getValue("role").jsonPrimitive.content)
+        val returnedText = returned.getValue("content").jsonPrimitive.content
+        assertTrue(returnedText.startsWith(VexLifeCapabilityRequest.ResultHeader))
+        assertTrue(returnedText.contains("Fly the kite on a 30 m line."))
+        assertTrue(returnedText.contains("\"state\":\"RETURNED\""))
+
+        // The answer came after a real round trip through the bridge, recorded as one use.
+        assertEquals("The page says to fly it on a 30 m line.", result.content)
+        assertEquals(
+            listOf(
+                VexLifeCapabilityBridge.Use(
+                    "web",
+                    "fetch",
+                    "https://example.com/kites",
+                    VexLifeCapabilityBridge.State.RETURNED,
+                )
+            ),
+            result.capabilityUses,
+        )
+        val trace = assertNotNull(assertNotNull(DirectTurnContextStore(home).read(result.turnRef)).capabilityTrace)
+        assertEquals(VexLifeCapabilityRequest.sha256(returnedText), trace.entries.single().resultSha256)
+
+        // The person saw the reach and the thinking, never the call as an answer.
+        assertTrue(progress.any { it.phase == DirectCompanionTurn.ProgressPhase.Reached })
+        val answered =
+            progress
+                .filter { it.phase == DirectCompanionTurn.ProgressPhase.Responding }
+                .joinToString("") { it.delta.orEmpty() }
+        assertFalse(answered.contains("example.com/kites"))
+        assertFalse(answered.contains(VexLifeCapabilityRequest.RequestHeader))
     }
 }
 

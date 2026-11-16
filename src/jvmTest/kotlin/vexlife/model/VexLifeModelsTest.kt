@@ -40,7 +40,7 @@ class VexLifeModelsTest {
 
     private fun models(
         home: Path,
-        serving: String? = HereticModelCatalog.Certified27B.modelRef,
+        serving: String? = HereticModelCatalog.Models.Qwen27B.modelRef,
         failDownload: Boolean = true,
     ) =
         VexLifeModels(
@@ -80,7 +80,7 @@ class VexLifeModelsTest {
 
     @Test
     fun usingADownloadedModelSavesTheChoiceForTheNextStart() = withHome { home, fixture ->
-        val nine = HereticModelCatalog.Candidate9B
+        val nine = HereticModelCatalog.Models.Qwen9B
         // Every member present by size: the model counts as downloaded.
         nine.members
             .filter { it.expectedBytes < 50_000_000 }
@@ -118,7 +118,7 @@ class VexLifeModelsTest {
 
     @Test
     fun removingAModelFreesItsFilesAndKeepsItOffered() = withHome { home, _ ->
-        val four = HereticModelCatalog.Candidate4B
+        val four = HereticModelCatalog.Models.Qwen4B
         place(home, four, "config.json")
         models(home).use { owner ->
             val after = owner.control(VexLifeModelsFamily.ControlRemove, "heretic-4b")
