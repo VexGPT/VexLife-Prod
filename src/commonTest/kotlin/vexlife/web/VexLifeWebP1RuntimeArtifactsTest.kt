@@ -538,6 +538,79 @@ class VexLifeWebP1RuntimeArtifactsTest {
             ),
         )
     }
+
+    @Test
+    fun vexTextPresentationMapsRepliesAndThinkingWithoutTakingTruthOrScrollOwnership() {
+        val bundle = VexLifeWebP1RuntimeArtifacts.generate()
+        val javascript = bundle.javascript
+        val presentation =
+            javascript.substring(
+                javascript.indexOf("const markdownElement = "),
+                javascript.indexOf("const messageNode = "),
+            )
+
+        assertTrue(!presentation.contains("innerHTML"), "TextPresentation builds DOM nodes, never markup")
+        assertTrue(presentation.contains("/^(https?:\\/\\/|mailto:)/i"), "only web and mail links are linked")
+        assertTrue(
+            javascript.contains("bubble.append(textPresentationBody(message.content));"),
+            "completed Vex replies should use the shared TextPresentation relationship",
+        )
+        assertTrue(
+            javascript.contains("box.append(textPresentationBody(entry.text));"),
+            "human-visible process reasoning should use the same TextPresentation relationship",
+        )
+        assertTrue(
+            javascript.contains("box.append(textPresentationBody(reasoning));"),
+            "response-local reasoning fallback should use TextPresentation too",
+        )
+        assertTrue(
+            javascript.contains("paragraph.textContent = String(message.content ?? '');"),
+            "the person's message is shown exactly as written",
+        )
+
+        // The frame queue is presentation-local and can carry both live reply and live reasoning
+        // surfaces without turning either one into the other's scroll owner.
+        assertTrue(javascript.contains("const liveTextPresentationQueue = new Map();"))
+        assertTrue(
+            javascript.contains(
+                "scheduleLiveTextPresentation(body, state.streamedContent, () => applyTimelineViewport(false));",
+            ),
+        )
+        assertTrue(
+            javascript.contains("applyReasoningViewport(node, viewportKey, true, false);") &&
+                javascript.contains("applyTimelineViewport(false);"),
+            "reasoning geometry should notify its own viewport and the independent timeline owner",
+        )
+        assertTrue(
+            javascript.contains("applyTextPresentationChildren(container, markdownBlockNodes(text, 0));"),
+        )
+        assertTrue(
+            javascript.contains("applyTextPresentationChildren(current, Array.from(projected.childNodes));"),
+        )
+        assertTrue(javascript.contains("parent.insertBefore(projected, current);"))
+        assertFalse(
+            javascript.contains("node.textContent = entry.text"),
+            "live reasoning must keep the scrollable viewport mounted instead of replacing it with raw text",
+        )
+        assertFalse(
+            javascript.contains("container.replaceChildren(...markdownBlockNodes(text, 0));"),
+            "ordinary streaming must not replace the whole TextPresentation body",
+        )
+        assertTrue(
+            javascript.contains("container.replaceChildren(document.createTextNode(text));"),
+            "presentation failure must fail open to exact owner-provided text",
+        )
+
+        assertTrue(
+            bundle.css.contains(".text-presentation { min-width: 0; white-space: normal; }"),
+            "shared Web manifestation styling should be owner-neutral",
+        )
+        assertTrue(
+            bundle.css.contains(".reasoning {") &&
+                bundle.css.contains("max-height: 220px; overflow-y: auto;"),
+            "the reasoning viewport must remain the independent scroll owner",
+        )
+    }
 }
 
 // [VXG RealForever]

@@ -432,7 +432,7 @@ svg { display: block; }
 }
 .bubble {
   grid-area: bubble; position: relative;
-  max-width: min(92%, 640px); padding: 10px 14px 11px;
+  max-width: 96%; padding: 10px 14px 11px;
   border-radius: 12px; border: 1px solid;
   overflow-wrap: anywhere;
 }
@@ -457,14 +457,34 @@ svg { display: block; }
 .message-you .speaker { justify-self: end; }
 .message-vex .speaker { justify-self: start; }
 
-.bubble p { margin: 0 0 0.6em; }
-.bubble p:last-child { margin-bottom: 0; }
-.bubble ul, .bubble ol { margin: 0.2em 0 0.6em; padding-left: 1.3em; }
-.bubble li { margin: 0.15em 0; }
-.bubble code { font-family: var(--mono); font-size: 0.86em; padding: 1px 4px; border-radius: 4px; background: var(--sunken); }
-.bubble pre { margin: 0.4em 0 0.7em; padding: 10px 12px; border-radius: 8px; background: var(--sunken); overflow-x: auto; }
-.bubble pre code { padding: 0; background: none; }
+.bubble > p { margin: 0 0 0.6em; }
+.bubble > p:last-child { margin-bottom: 0; }
+
+/* TextPresentation is shared by Vex replies and human-visible reasoning. Markdown is the current
+   interpretation grammar; these rules are Web manifestation only. The host surface keeps scroll
+   ownership: timeline for replies, .reasoning for thinking. Tables/code therefore wrap and never
+   introduce another presentation-owned scroller. */
+.text-presentation { min-width: 0; white-space: normal; }
+.text-presentation p { margin: 0 0 0.6em; }
+.text-presentation p:last-child { margin-bottom: 0; }
+.text-presentation ul, .text-presentation ol { margin: 0.2em 0 0.6em; padding-left: 1.3em; }
+.text-presentation li { margin: 0.15em 0; }
+.text-presentation code { font-family: var(--mono); font-size: 0.86em; padding: 1px 4px; border-radius: 4px; background: var(--sunken); }
+.text-presentation pre { margin: 0.4em 0 0.7em; padding: 10px 12px; border-radius: 8px; background: var(--sunken); white-space: pre-wrap; overflow-wrap: anywhere; }
+.text-presentation pre code { padding: 0; background: none; }
 .prose-heading { font-weight: 650; }
+.text-presentation > :first-child { margin-top: 0; }
+.text-presentation > :last-child { margin-bottom: 0; }
+.text-presentation .prose-heading { margin: 0.7em 0 0.35em; line-height: 1.3; }
+.text-presentation .md-h1 { font-size: 1.25em; }
+.text-presentation .md-h2 { font-size: 1.15em; }
+.text-presentation .md-h3 { font-size: 1.05em; }
+.text-presentation a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.text-presentation blockquote { margin: 0.4em 0 0.7em; padding: 0 0 0 10px; border-left: 3px solid var(--vex-rule); color: var(--ink-2); }
+.text-presentation hr { border: 0; border-top: 1px solid var(--vex-rule); margin: 0.8em 0; }
+.text-presentation table { width: 100%; border-collapse: collapse; margin: 0.4em 0 0.7em; font-size: 0.92em; line-height: 1.4; }
+.text-presentation th, .text-presentation td { border: 1px solid var(--vex-rule); padding: 4px 8px; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+.text-presentation th { font-weight: 650; background: var(--sunken); }
 
 .thought { grid-area: thought; justify-self: start; margin: 0 0 7px; }
 .thought-toggle {
@@ -489,13 +509,13 @@ svg { display: block; }
 .process-action[data-state="RETURNED"] .process-action-mark { color: var(--ready); }
 .process-action:not([data-state="ACTIVE"]):not([data-state="RETURNED"]) .process-action-mark { color: var(--down); }
 .reasoning {
-  max-width: min(92%, 640px); max-height: 220px; overflow-y: auto; margin-top: 7px;
+  max-width: 96%; max-height: 220px; overflow-y: auto; margin-top: 7px;
   overflow-anchor: none; scrollbar-gutter: stable;
   padding: 10px 12px; border: 1px solid var(--rule-strong); border-radius: 8px;
   background: var(--raised); color: var(--ink-2);
   font-size: var(--step--1); line-height: 1.5; white-space: pre-wrap;
 }
-.process-history .reasoning { margin-top: 0; max-width: min(96%, 680px); }
+.process-history .reasoning { margin-top: 0; max-width: 98%; }
 .message.waiting[data-has-content="false"] .bubble { display: none; }
 .message.waiting[data-has-content="true"] .bubble { opacity: 0.92; }
 .live-reasoning { margin-left: 0; }
@@ -723,15 +743,34 @@ a.outline-button { display: inline-flex; align-items: center; justify-content: c
   }
   .brand-name { display: none; }
   .utilities { grid-column: 1 / -1; justify-self: stretch; padding: 0; background: none; border: 0; overflow-x: auto; }
+
+  /* The authored Browser↔Companion relationship remains one Seam. Narrow presentation
+     reorients only its renderer manifestation: the same allocation/collapse state becomes
+     top/bottom instead of left/right. */
   .frame, .frame[data-collapsed] {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 34vh 0 minmax(0, 1fr);
+    grid-template-rows: minmax(0, var(--before)) 12px minmax(0, 1fr);
   }
-  .seam { display: none; }
-  .frame .region-browser, .frame .region-companion { visibility: visible; grid-column: 1; }
+  .frame[data-collapsed="before"] { grid-template-rows: 0 12px minmax(0, 1fr); }
+  .frame[data-collapsed="after"] { grid-template-rows: minmax(0, 1fr) 12px 0; }
+
+  .frame .region-browser, .frame .region-companion { grid-column: 1; }
   .frame .region-browser { grid-row: 1; }
   .frame .region-companion { grid-row: 3; }
-  .region-browser { border-bottom: 1px solid var(--rule); }
+
+  .seam {
+    display: flex; flex-direction: row; grid-column: 1; grid-row: 2;
+    border-inline: 0; border-block: 1px solid var(--rule);
+    cursor: row-resize;
+  }
+  .frame.resizing { cursor: row-resize; }
+  /* Narrow/touch layouts cannot rely on hover to reveal the existing collapse affordances. */
+  .seam-collapse { width: 26px; height: 18px; opacity: 1; }
+  .seam-collapse-before svg,
+  .seam-collapse-after svg { transform: rotate(90deg); }
+  .seam-grip svg { transform: rotate(90deg) scale(0.8); }
+
+  .region-browser { border-bottom: 0; }
 }
 
 .message.waiting .speaker { display: none; }

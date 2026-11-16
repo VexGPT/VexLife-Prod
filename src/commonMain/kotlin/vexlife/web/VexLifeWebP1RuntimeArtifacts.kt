@@ -1298,10 +1298,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   box.className = 'reasoning process-thought' + (live && entry.active ? ' live-reasoning' : '');
                   box.dataset.liveTail = String(Boolean(live && entry.active));
                   bindReasoningViewport(box, viewportKey, live && entry.active);
-                  // Keep the exact provider text as the source projection. Markdown is a separate
-                  // presentation concern; freezing a process container must never rewrite the
-                  // stream that Speech/Kokoro or canonical completion observes.
-                  box.textContent = entry.text;
+                  // The reasoning viewport remains the scroll owner. TextPresentation lives inside
+                  // that mounted viewport so Markdown readability can evolve without replacing the
+                  // scrollbar/pointer surface or changing the raw reasoning owned by the stream.
+                  box.append(textPresentationBody(entry.text));
                   return box;
                 }
 
@@ -1335,13 +1335,26 @@ object VexLifeWebP1RuntimeArtifacts {
                   const active = Boolean(entry.active);
                   node.classList.toggle('live-reasoning', active);
                   node.dataset.liveTail = String(active);
-                  if (node.textContent !== entry.text) node.textContent = entry.text;
+                  let body = node.querySelector('.text-presentation');
+                  if (!body) {
+                    body = textPresentationBody(entry.text);
+                    node.append(body);
+                  }
                   // Regression boundary: T004 established that human scrolling owns follow state.
-                  // While a thought is active, update this exact DOM node in place. Never replace it
-                  // on a stream delta: destroying the node invalidates an in-progress scrollbar or
-                  // pointer interaction even if scrollTop is reconstructed afterward.
+                  // Keep this exact reasoning viewport mounted. Only its inner TextPresentation
+                  // changes. If the human is following the tail, restore the tail after geometry
+                  // changes; if the human scrolled away, leave scrollTop untouched.
                   if (active) {
-                    applyReasoningViewport(node, viewportKey, true, false);
+                    scheduleLiveTextPresentation(
+                      body,
+                      entry.text,
+                      () => {
+                        applyReasoningViewport(node, viewportKey, true, false);
+                        applyTimelineViewport(false);
+                      }
+                    );
+                  } else {
+                    presentText(body, entry.text);
                   }
                   return;
                 }
@@ -1474,13 +1487,394 @@ object VexLifeWebP1RuntimeArtifacts {
                     const box = document.createElement('div');
                     box.className = 'reasoning';
                     bindReasoningViewport(box, 'response.' + key, false);
-                    box.textContent = reasoning;
+                    box.append(textPresentationBody(reasoning));
                     holder.append(box);
                   }
                 }
                 return holder;
               };
 
+              // Current TextPresentation interpretation grammar: Markdown.
+              // Pattern recognition produces detached DOM nodes using createElement/textContent only;
+              // it never creates HTML markup strings. The same grammar can serve reply and reasoning
+              // text because custody stays upstream and each host surface keeps its own scroll owner.
+              const markdownElement = (tag, className, children) => {
+                const node = document.createElement(tag);
+                if (className) node.className = className;
+                for (const child of children || []) node.append(child);
+                return node;
+              };
+
+              const markdownSafeHref = (url) => /^(https?:\/\/|mailto:)/i.test(url) ? url : null;
+
+              const markdownWordChar = (character) => Boolean(character) && /[\p{L}\p{N}]/u.test(character);
+
+              const markdownInlinePatterns = [
+                { kind: 'code', re: /``([^\n]+?)``/ },
+                { kind: 'code', re: /`([^`\n]+)`/ },
+                { kind: 'link', re: /\[([^\]\n]+)\]\(([^()\s]+(?:\([^()\s]*\))?[^()\s]*)\)/ },
+                { kind: 'url', re: /https?:\/\/[^\s<>()\[\]{}"']+/ },
+                { kind: 'strong', re: /\*\*(?=\S)([^\n]*?\S)\*\*/ },
+                { kind: 'strong', re: /__(?=\S)([^\n]*?\S)__/, word: true },
+                { kind: 'del', re: /~~(?=\S)([^\n]*?\S)~~/ },
+                { kind: 'em', re: /\*(?=[^\s*])([^*\n]*?[^\s*])\*/ },
+                { kind: 'em', re: /_(?=[^\s_])([^_\n]*?[^\s_])_/, word: true }
+              ];
+
+              const markdownInlineNodes = (text, depth) => {
+                const nodes = [];
+                let rest = String(text);
+                let guard = 0;
+                while (rest && guard < 10000) {
+                  guard += 1;
+                  let best = null;
+                  for (const rule of markdownInlinePatterns) {
+                    const match = rule.re.exec(rest);
+                    if (!match) continue;
+                    if (rule.word) {
+                      // snake_case and __init__ stay text: an underscore delimiter needs a boundary.
+                      const before = rest.charAt(match.index - 1);
+                      const after = rest.charAt(match.index + match[0].length);
+                      if (markdownWordChar(before) || markdownWordChar(after)) continue;
+                    }
+                    if (!best || match.index < best.match.index) best = { rule, match };
+                  }
+                  if (!best || (depth || 0) > 8) {
+                    nodes.push(document.createTextNode(rest));
+                    break;
+                  }
+                  const { rule, match } = best;
+                  if (match.index > 0) nodes.push(document.createTextNode(rest.slice(0, match.index)));
+                  if (rule.kind === 'code') {
+                    const code = document.createElement('code');
+                    code.textContent = match[1];
+                    nodes.push(code);
+                  } else if (rule.kind === 'link') {
+                    const href = markdownSafeHref(match[2]);
+                    if (href) {
+                      const link = markdownElement('a', null, markdownInlineNodes(match[1], (depth || 0) + 1));
+                      link.href = href;
+                      link.target = '_blank';
+                      link.rel = 'noopener noreferrer';
+                      nodes.push(link);
+                    } else {
+                      nodes.push(document.createTextNode(match[0]));
+                    }
+                  } else if (rule.kind === 'url') {
+                    let url = match[0];
+                    while (/[.,;:!?)]/.test(url.charAt(url.length - 1))) url = url.slice(0, -1);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    link.textContent = url;
+                    nodes.push(link);
+                    rest = rest.slice(match.index + url.length);
+                    continue;
+                  } else {
+                    nodes.push(markdownElement(rule.kind, null, markdownInlineNodes(match[1], (depth || 0) + 1)));
+                  }
+                  rest = rest.slice(match.index + match[0].length);
+                }
+                return nodes;
+              };
+
+              const markdownSplitRow = (line) => {
+                let text = line.trim();
+                if (text.startsWith('|')) text = text.slice(1);
+                if (text.endsWith('|') && !text.endsWith('\\|')) text = text.slice(0, -1);
+                const cells = [];
+                let current = '';
+                for (let index = 0; index < text.length; index += 1) {
+                  const character = text.charAt(index);
+                  if (character === '\\' && text.charAt(index + 1) === '|') {
+                    current += '|';
+                    index += 1;
+                  } else if (character === '|') {
+                    cells.push(current.trim());
+                    current = '';
+                  } else {
+                    current += character;
+                  }
+                }
+                cells.push(current.trim());
+                return cells;
+              };
+
+              const markdownFullMatch = (re, line) => {
+                const match = line.match(re);
+                return match && match[0].length === line.length ? match : null;
+              };
+
+              const markdownTableSeparator = (line) =>
+                Boolean(line) && line.includes('-') && Boolean(markdownFullMatch(/\s*\|?(?:\s*:?-+:?\s*\|)*\s*:?-+:?\s*\|?\s*/, line));
+
+              const markdownFence = /^\s{0,3}(`{3,}|~{3,})\s*([\w+#.-]*)/;
+              const markdownHeading = /^\s{0,3}(#{1,6})\s+(.*)/;
+              const markdownRule = /\s{0,3}([-*_])(?:\s*\1){2,}\s*/;
+              const markdownItem = /^(\s*)([-*+]|\d{1,9}[.)])\s+(.*)/;
+              const markdownQuote = /^\s{0,3}>\s?(.*)/;
+
+              const markdownStartsBlock = (line, next) =>
+                markdownFence.test(line) || markdownHeading.test(line) || Boolean(markdownFullMatch(markdownRule, line)) ||
+                markdownQuote.test(line) || markdownItem.test(line) ||
+                (line.includes('|') && markdownTableSeparator(next));
+
+              const markdownBlockNodes = (source, depth) => {
+                const lines = String(source).replace(/\r\n?/g, '\n').split('\n');
+                const out = [];
+                let index = 0;
+                const blank = (line) => !line || !line.trim();
+                if (depth > 6) return [markdownElement('p', null, [document.createTextNode(String(source))])];
+                while (index < lines.length) {
+                  const line = lines[index];
+                  if (blank(line)) {
+                    index += 1;
+                    continue;
+                  }
+                  let match = line.match(markdownFence);
+                  if (match) {
+                    const marker = match[1];
+                    const body = [];
+                    index += 1;
+                    while (index < lines.length && !lines[index].trim().startsWith(marker)) {
+                      body.push(lines[index]);
+                      index += 1;
+                    }
+                    index += 1;
+                    const code = document.createElement('code');
+                    if (match[2]) code.dataset.language = match[2];
+                    code.textContent = body.join('\n');
+                    out.push(markdownElement('pre', null, [code]));
+                    continue;
+                  }
+                  match = line.match(markdownHeading);
+                  if (match) {
+                    const level = match[1].length;
+                    const heading = markdownElement('p', 'prose-heading md-h' + level, markdownInlineNodes(match[2].replace(/\s+#+\s*(?![\s\S])/, ''), 0));
+                    heading.setAttribute('role', 'heading');
+                    heading.setAttribute('aria-level', String(Math.min(6, level + 2)));
+                    out.push(heading);
+                    index += 1;
+                    continue;
+                  }
+                  if (markdownFullMatch(markdownRule, line)) {
+                    out.push(document.createElement('hr'));
+                    index += 1;
+                    continue;
+                  }
+                  if (line.includes('|') && markdownTableSeparator(lines[index + 1])) {
+                    const header = markdownSplitRow(line);
+                    const aligns = markdownSplitRow(lines[index + 1]).map((cell) =>
+                      cell.startsWith(':') && cell.endsWith(':') ? 'center' : cell.endsWith(':') ? 'right' : cell.startsWith(':') ? 'left' : ''
+                    );
+                    index += 2;
+                    const rows = [];
+                    while (index < lines.length && !blank(lines[index]) && lines[index].includes('|')) {
+                      rows.push(markdownSplitRow(lines[index]));
+                      index += 1;
+                    }
+                    const cell = (tag, text, column) => {
+                      const node = markdownElement(tag, null, markdownInlineNodes(text, 0));
+                      if (aligns[column]) node.style.textAlign = aligns[column];
+                      return node;
+                    };
+                    const head = markdownElement('thead', null, [markdownElement('tr', null, header.map((text, column) => cell('th', text, column)))]);
+                    const body = markdownElement('tbody', null, rows.map((row) =>
+                      markdownElement('tr', null, header.map((_, column) => cell('td', row[column] ?? '', column)))
+                    ));
+                    out.push(markdownElement('table', 'md-table', [head, body]));
+                    continue;
+                  }
+                  match = line.match(markdownQuote);
+                  if (match) {
+                    const quoted = [];
+                    while (index < lines.length && (match = lines[index].match(markdownQuote))) {
+                      quoted.push(match[1]);
+                      index += 1;
+                    }
+                    out.push(markdownElement('blockquote', null, markdownBlockNodes(quoted.join('\n'), depth + 1)));
+                    continue;
+                  }
+                  match = line.match(markdownItem);
+                  if (match) {
+                    const indent = match[1].length;
+                    const ordered = /\d/.test(match[2]);
+                    const list = document.createElement(ordered ? 'ol' : 'ul');
+                    if (ordered) {
+                      const start = parseInt(match[2], 10);
+                      if (start !== 1) list.start = start;
+                    }
+                    const items = [];
+                    while (index < lines.length) {
+                      const current = lines[index];
+                      const item = current.match(markdownItem);
+                      if (item && item[1].length === indent && /\d/.test(item[2]) === ordered) {
+                        items.push([item[3]]);
+                        index += 1;
+                      } else if (!blank(current) && items.length && current.match(/^\s*/)[0].length > indent) {
+                        items[items.length - 1].push(current.slice(Math.min(current.match(/^\s*/)[0].length, indent + 2)));
+                        index += 1;
+                      } else if (blank(current) && items.length && index + 1 < lines.length) {
+                        const following = lines[index + 1];
+                        const nextItem = following.match(markdownItem);
+                        const continues =
+                          (nextItem && nextItem[1].length === indent && /\d/.test(nextItem[2]) === ordered) ||
+                          (!blank(following) && following.match(/^\s*/)[0].length > indent);
+                        if (!continues) break;
+                        items[items.length - 1].push('');
+                        index += 1;
+                      } else {
+                        break;
+                      }
+                    }
+                    for (const itemLines of items) {
+                      const content = markdownBlockNodes(itemLines.join('\n'), depth + 1);
+                      const li = document.createElement('li');
+                      // A one-paragraph item is written inline, as people expect from a short list.
+                      if (content.length && content[0].tagName === 'P' && !content[0].classList.contains('prose-heading')) {
+                        li.append(...content[0].childNodes);
+                        li.append(...content.slice(1));
+                      } else {
+                        li.append(...content);
+                      }
+                      list.append(li);
+                    }
+                    out.push(list);
+                    continue;
+                  }
+                  const paragraph = [];
+                  while (index < lines.length && !blank(lines[index]) &&
+                    (!paragraph.length || !markdownStartsBlock(lines[index], lines[index + 1]))) {
+                    paragraph.push(lines[index]);
+                    index += 1;
+                  }
+                  const node = document.createElement('p');
+                  paragraph.forEach((text, position) => {
+                    if (position > 0) node.append(document.createElement('br'));
+                    node.append(...markdownInlineNodes(text.trim(), 0));
+                  });
+                  out.push(node);
+                }
+                return out;
+              };
+
+              // VexArchitecture TextPresentation boundary:
+              // - exact text remains owned by the relationship that produced it: canonical/live
+              //   response text stays with Conversation/Send, ephemeral reasoning stays session-only;
+              // - TextPresentation only asks how that exact text should become human-readable;
+              // - one interpretation grammar recognizes presentation patterns in the source text;
+              // - current Web realization uses Markdown patterns to form visible text structure;
+              // - applying that presentation keeps compatible mounted nodes and changes only the
+              //   smallest incompatible visible subtree;
+              // - each host surface keeps its own interaction owner: timeline scroll for replies,
+              //   reasoningViewport for thinking/process text.
+              //
+              // TextPresentation names the reusable relationship, not a new truth owner.
+              // Markdown is one interpretation grammar; DOM is one platform manifestation.
+              // RESPONSE TEXT != REASONING TEXT, even when both use the same TextPresentation.
+              //
+              // EVOLUTION / REUSE NOTE FOR FUTURE IMPLEMENTERS:
+              // Do not duplicate this Web DOM machinery into Android, iOS, another template system,
+              // or a non-Markdown presentation just because those realizations do not exist yet.
+              // Start from TextPresentation: exact owner-provided text -> recognized presentation
+              // meaning -> platform-specific manifestation. Reuse that relationship and keep each
+              // platform's concrete realization local. If two or more real consumers need the same
+              // presentation structure, that repeated pressure may earn a shared typed
+              // TextPresentation structure above the platform renderers. Until then, do not invent
+              // a portable AST or make this Web implementation the cross-platform authority.
+              //
+              // This is not Relay/convergence: no second independently-owned truth is composed here.
+              // DOM identity and presentedTextByBody are presentation-local realization/currentness only.
+              const sameTextPresentationKind = (current, projected) =>
+                current.nodeType === projected.nodeType &&
+                (current.nodeType !== 1 || current.tagName === projected.tagName);
+
+              const applyTextPresentationAttributes = (current, projected) => {
+                const next = new Map(
+                  Array.from(projected.attributes).map((attribute) => [attribute.name, attribute.value])
+                );
+                for (const attribute of Array.from(current.attributes)) {
+                  if (!next.has(attribute.name)) current.removeAttribute(attribute.name);
+                }
+                for (const [name, value] of next) {
+                  if (current.getAttribute(name) !== value) current.setAttribute(name, value);
+                }
+              };
+
+              const applyTextPresentationNode = (parent, current, projected) => {
+                if (!sameTextPresentationKind(current, projected)) {
+                  parent.insertBefore(projected, current);
+                  current.remove();
+                  return projected;
+                }
+                if (current.nodeType === 3) {
+                  if (current.nodeValue !== projected.nodeValue) current.nodeValue = projected.nodeValue;
+                  return current;
+                }
+                applyTextPresentationAttributes(current, projected);
+                applyTextPresentationChildren(current, Array.from(projected.childNodes));
+                return current;
+              };
+
+              const applyTextPresentationChildren = (parent, projectedChildren) => {
+                let index = 0;
+                for (const projected of projectedChildren) {
+                  const current = parent.childNodes[index] || null;
+                  if (current) applyTextPresentationNode(parent, current, projected);
+                  else parent.append(projected);
+                  index += 1;
+                }
+                while (parent.childNodes.length > projectedChildren.length) {
+                  parent.childNodes[parent.childNodes.length - 1].remove();
+                }
+              };
+
+              const presentedTextByBody = new WeakMap();
+
+              const presentText = (container, source) => {
+                const text = String(source ?? '');
+                if (presentedTextByBody.get(container) === text) return;
+                try {
+                  // Reconsider presentation from the exact current source while mutating only the
+                  // nested DOM subtrees whose projected structure or content actually changed.
+                  applyTextPresentationChildren(container, markdownBlockNodes(text, 0));
+                  container.removeAttribute('data-markdown-fallback');
+                } catch {
+                  // Presentation failure must never erase answer text that already exists.
+                  container.replaceChildren(document.createTextNode(text));
+                  container.setAttribute('data-markdown-fallback', 'true');
+                }
+                presentedTextByBody.set(container, text);
+              };
+
+              const textPresentationBody = (source) => {
+                const body = document.createElement('div');
+                body.className = 'text-presentation';
+                presentText(body, source);
+                return body;
+              };
+
+              // Live TextPresentation is frame-batched across all mounted surfaces. The queue is
+              // presentation-local only: it does not own source currentness or scroll intent.
+              // Each queued surface supplies its own afterPresent continuation so the rightful
+              // interaction owner can respond to changed geometry without being collapsed together.
+              let liveTextPresentationFrame = 0;
+              const liveTextPresentationQueue = new Map();
+              const scheduleLiveTextPresentation = (body, source, afterPresent = null) => {
+                liveTextPresentationQueue.set(body, { source: String(source ?? ''), afterPresent });
+                if (liveTextPresentationFrame) return;
+                liveTextPresentationFrame = requestAnimationFrame(() => {
+                  liveTextPresentationFrame = 0;
+                  const pending = Array.from(liveTextPresentationQueue.entries());
+                  liveTextPresentationQueue.clear();
+                  for (const [target, presentation] of pending) {
+                    if (!target?.isConnected) continue;
+                    presentText(target, presentation.source);
+                    if (typeof presentation.afterPresent === 'function') presentation.afterPresent();
+                  }
+                });
+              };
               const messageNode = (message) => {
                 const item = document.createElement('li');
                 const human = message.role === 'human';
@@ -1493,9 +1887,14 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 const bubble = document.createElement('div');
                 bubble.className = 'bubble';
-                const paragraph = document.createElement('p');
-                paragraph.textContent = String(message.content ?? '');
-                bubble.append(paragraph);
+                if (human) {
+                  // What the person wrote is shown exactly as written.
+                  const paragraph = document.createElement('p');
+                  paragraph.textContent = String(message.content ?? '');
+                  bubble.append(paragraph);
+                } else {
+                  bubble.append(textPresentationBody(message.content));
+                }
 
                 const speaker = document.createElement('p');
                 speaker.className = 'speaker';
@@ -1547,11 +1946,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 const bubble = document.createElement('div');
                 bubble.className = 'bubble';
-                if (state.streamedContent) {
-                  const paragraph = document.createElement('p');
-                  paragraph.textContent = state.streamedContent;
-                  bubble.append(paragraph);
-                }
+                if (state.streamedContent) bubble.append(textPresentationBody(state.streamedContent));
                 const speaker = document.createElement('p');
                 speaker.className = 'speaker';
                 speaker.textContent = 'Vex';
@@ -1715,15 +2110,15 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (thought) syncLiveProcessPanel(thought);
 
                 const bubble = item.querySelector('.bubble');
-                let paragraph = bubble?.querySelector('p');
+                let body = bubble?.querySelector('.text-presentation');
                 if (state.streamedContent) {
-                  if (!paragraph && bubble) {
-                    paragraph = document.createElement('p');
-                    bubble.append(paragraph);
+                  if (!body && bubble) {
+                    body = textPresentationBody('');
+                    bubble.append(body);
                   }
-                  if (paragraph) paragraph.textContent = state.streamedContent;
-                } else if (paragraph) {
-                  paragraph.remove();
+                  if (body) scheduleLiveTextPresentation(body, state.streamedContent, () => applyTimelineViewport(false));
+                } else if (body) {
+                  body.remove();
                 }
 
                 applyTimelineViewport(false);
@@ -2791,18 +3186,51 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderComposer();
               };
 
+              // Browser + Companion keep one allocation/collapse relationship across responsive
+              // manifestations. Wide screens place the Seam left/right; narrow screens manifest the
+              // same relationship top/bottom. Responsive orientation is renderer-owned and does not
+              // create a second spatial state machine.
+              const NARROW_BROWSER_DEFAULT_SHARE = 0.34;
+              const narrowWorkspace = () => window.matchMedia('(max-width: 860px)').matches;
+              const currentSplitShare = (narrow = narrowWorkspace()) =>
+                state.allocation ??
+                (narrow ? NARROW_BROWSER_DEFAULT_SHARE : browser.authoredBrowserShare);
+
               const applySplit = () => {
-                const share = state.allocation ?? browser.authoredBrowserShare;
+                const narrow = narrowWorkspace();
+                // Preserve the lived narrow composition until the human explicitly resizes. Once an
+                // allocation is chosen, the same value carries across both renderer orientations.
+                const share = currentSplitShare(narrow);
+                const percent = Math.round(share * 100);
+                const browserCollapsed = state.collapsed === 'before';
+                const companionCollapsed = state.collapsed === 'after';
                 ui.frame.dataset.collapsed = state.collapsed ?? 'none';
                 ui.frame.style.setProperty('--before', (share * 100).toFixed(2) + '%');
-                ui.seam.setAttribute('aria-valuenow', String(Math.round(share * 100)));
-                ui.seam.setAttribute('aria-valuetext', 'Browser ' + Math.round(share * 100) + ' percent');
+                ui.seam.setAttribute('aria-orientation', narrow ? 'horizontal' : 'vertical');
+                ui.seam.setAttribute('aria-valuenow', String(percent));
+                ui.seam.setAttribute(
+                  'aria-valuetext',
+                  browserCollapsed
+                    ? 'Browser collapsed'
+                    : companionCollapsed
+                      ? 'Companion collapsed'
+                      : 'Browser ' + percent + ' percent ' + (narrow ? 'height' : 'width')
+                );
+                const browserAction = (browserCollapsed ? 'Show' : 'Hide') + ' browser';
+                const companionAction = (companionCollapsed ? 'Show' : 'Hide') + ' companion';
+                ui.collapseBefore.setAttribute('aria-label', browserAction);
+                ui.collapseBefore.title = browserAction;
+                ui.collapseAfter.setAttribute('aria-label', companionAction);
+                ui.collapseAfter.title = companionAction;
               };
 
-              const setSplitFromClientX = (clientX) => {
+              const setSplitFromPointer = (clientX, clientY) => {
                 const rect = ui.frame.getBoundingClientRect();
-                if (rect.width <= 0) return;
-                state.allocation = Math.min(0.85, Math.max(0.15, (clientX - rect.left) / rect.width));
+                const narrow = narrowWorkspace();
+                const span = narrow ? rect.height : rect.width;
+                if (span <= 0) return;
+                const position = narrow ? (clientY - rect.top) : (clientX - rect.left);
+                state.allocation = Math.min(0.85, Math.max(0.15, position / span));
                 state.collapsed = 'none';
                 applySplit();
               };
@@ -3144,7 +3572,7 @@ object VexLifeWebP1RuntimeArtifacts {
               });
               ui.seam.addEventListener('pointermove', (event) => {
                 if (!ui.seam.hasPointerCapture(event.pointerId)) return;
-                setSplitFromClientX(event.clientX);
+                setSplitFromPointer(event.clientX, event.clientY);
               });
               ui.seam.addEventListener('pointerup', (event) => {
                 if (ui.seam.hasPointerCapture(event.pointerId)) ui.seam.releasePointerCapture(event.pointerId);
@@ -3157,10 +3585,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 applySplit();
               });
               ui.seam.addEventListener('keydown', (event) => {
-                const current = state.allocation ?? browser.authoredBrowserShare;
-                if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                const narrow = narrowWorkspace();
+                const current = currentSplitShare(narrow);
+                const decrease = narrow ? 'ArrowUp' : 'ArrowLeft';
+                const increase = narrow ? 'ArrowDown' : 'ArrowRight';
+                if (event.key === decrease || event.key === increase) {
                   event.preventDefault();
-                  state.allocation = Math.min(0.85, Math.max(0.15, current + (event.key === 'ArrowLeft' ? -0.05 : 0.05)));
+                  state.allocation = Math.min(0.85, Math.max(0.15, current + (event.key === decrease ? -0.05 : 0.05)));
                   state.collapsed = 'none';
                   applySplit();
                 } else if (event.key === 'Home' || event.key === 'Enter') {
@@ -3170,6 +3601,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   applySplit();
                 }
               });
+              window.addEventListener('resize', applySplit);
 
               void loadWorkspaceStrings().catch(() => applyStaticText());
               ui.diagnosticsEnhanced?.addEventListener('click', () => {

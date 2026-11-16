@@ -178,9 +178,27 @@ class VexLifeWebP1ThoughtVisibilityTest {
         )
         assertTrue(
             bundle.javascript.contains(
-                "if (node.textContent !== entry.text) node.textContent = entry.text;",
+                "let body = node.querySelector('.text-presentation');",
             ),
-            "active reasoning must mutate the existing scrollable node in place",
+            "active reasoning must keep presentation inside the existing scrollable viewport",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "scheduleLiveTextPresentation(",
+            ),
+            "active reasoning presentation should be frame-batched without replacing its viewport",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "applyReasoningViewport(node, viewportKey, true, false);",
+            ),
+            "reasoning geometry changes must return to the reasoning viewport owner",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "node.textContent = entry.text",
+            ),
+            "raw reasoning replacement must not overwrite the mounted TextPresentation subtree",
         )
         assertTrue(
             bundle.javascript.contains(

@@ -299,6 +299,52 @@ VexWeb owns stable relationships such as Frame / Seam / Region / containment / i
 The renderer owns concrete measurements, colors, typography, bubble geometry and responsive
 breakpoints.
 
+Current Browser / Companion responsive manifestation keeps one authored relationship:
+
+~~~text
+BrowserCompanionSeam
++ one Allocation
++ one collapse state
+
+wide renderer
+-> vertical handle
+-> Browser left / Companion right
+-> pointer X + Left/Right keyboard movement
+
+narrow renderer (<= 860px)
+-> horizontal handle
+-> Browser above / Companion below
+-> preserves the prior ~34% Browser-height default until the human resizes
+-> pointer Y + Up/Down keyboard movement
+
+same collapse-before
+-> Browser hidden in either orientation
+
+same collapse-after
+-> Companion hidden in either orientation
+
+narrow/touch manifestation
+-> existing collapse controls remain visibly available without hover
+~~~
+
+The narrow stack is not another authored Seam and does not create a second allocation/collapse owner.
+The handle changes manifestation with the viewport while the Browser / Companion relationship remains
+the same. The narrow ~34% Browser share is a renderer default only: once the human explicitly resizes,
+that chosen Allocation carries across wide and narrow manifestations.
+
+Conversation bubble/reasoning measure is likewise renderer-owned and now follows the available
+Companion pane (96% maximum width) rather than a fixed pixel ceiling. That visual measure does not
+become semantic Conversation meaning.
+
+Permanent:
+
+~~~text
+RESPONSIVE MANIFESTATION != NEW SPATIAL OWNER
+NARROW STACK != SECOND SEAM
+ORIENTATION CHANGE != NEW COLLAPSE STATE
+WIDER CONVERSATION MEASURE != CONVERSATION SEMANTICS
+~~~
+
 A future renderer or VexBoard projection should be able to recover the composition above from
 source identity and containment without reverse-engineering CSS.
 

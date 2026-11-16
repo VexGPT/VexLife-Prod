@@ -125,6 +125,30 @@ Do not turn constants into launcher parameters merely because a shell variable i
 
 When one source identity changes, recompute only its true dependents. A new commit does **not** by itself justify changing the window, sequence, ports, process topology, owner boundaries, recovery semantics, or presentation selection.
 
+## Release and Pages routing
+
+Public website topology is durable even while release implementation evolves:
+
+~~~text
+main
+  = Product/source authoring
+
+gh-pages
+  = generated GitHub Pages publication bytes
+~~~
+
+Do not hand-author product meaning on `gh-pages`, and do not treat a commit landing on `main` as
+permission to publish a build. When Victor asks to "deploy", "publish", or "release" VexLife,
+descend to the current release owner/process on `main` and use its exact source-bound formation
+route. If `docs/release/RELEASES.md` exists on current `main`, it owns the ordinary release and
+Pages process.
+
+The `gh-pages` branch is the intended branch-published Pages target. Its existence records
+deployment topology only; it does not promote an unmerged PR/candidate into accepted Product source.
+Under hosted-runner billing constraints, prefer the current VexRelay/local repository-operation route
+when the release owner admits it; GitHub Actions may be an optional executor, not a second release
+meaning.
+
 ## Current route
 
 `docs/foundation/INDEX.md` owns current product-source state. VexWork
