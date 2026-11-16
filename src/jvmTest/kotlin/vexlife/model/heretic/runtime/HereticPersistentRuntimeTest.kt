@@ -57,6 +57,7 @@ class HereticPersistentRuntimeTest {
         var clock = 0L
         var retireCalls = 0
         var provisionalRetireCalls = 0
+        val processIdentityArgs = mutableListOf<List<String>>()
 
         override fun environmentCurrent(binding: HereticPersistentRuntime.Binding): Boolean {
             trace += "ENVIRONMENT_CURRENT"
@@ -73,6 +74,7 @@ class HereticPersistentRuntimeTest {
             args: List<String>,
         ): HereticPersistentRuntime.ProcessIdentity? {
             trace += "PROCESS_IDENTITY_$pid"
+            processIdentityArgs += args
             if (!identityAvailable) return null
             return HereticPersistentRuntime.ProcessIdentity(
                 pid = pid,
@@ -235,6 +237,7 @@ class HereticPersistentRuntimeTest {
         state: HereticRuntimeState = HereticRuntimeState.Qualified,
         implementationSha: String = binding.implementationIdentity.classSha256,
         pid: Long = 4242L,
+        runtimeArgs: List<String> = HereticPersistentRuntime.serverArgs(binding),
     ): HereticPersistentRuntime.Receipt =
         HereticPersistentRuntime.Receipt(
             schemaVersion = HereticPersistentRuntime.ReceiptSchema,
@@ -264,7 +267,7 @@ class HereticPersistentRuntimeTest {
                 pid = pid,
                 processGroupId = pid,
                 exactOwnedDetachedGroup = true,
-                args = HereticPersistentRuntime.serverArgs(binding),
+                args = runtimeArgs,
                 processSubstrate = substrate(pid),
             ),
             effects = HereticRuntimeEffectBoundary.QualifiedRuntime,
@@ -702,6 +705,66 @@ class HereticPersistentRuntimeTest {
         assertEquals("ROTATED_STALE_IMPLEMENTATION_AND_STARTED_NEW_EXACT_MLX_RUNTIME", result.disposition)
         assertTrue(trace.indexOf("RETIRE_Qualified") < trace.indexOf("SPAWN"))
         assertTrue(trace.contains("STORE_DELETE"))
+    }
+
+    @Test
+    fun exactOwnedPrePromptCacheRuntimeRotatesIntoCurrentLaunchContract() {
+        val trace = mutableListOf<String>()
+        val current = binding()
+        val currentArgs = HereticPersistentRuntime.serverArgs(current)
+        val predecessorArgs = currentArgs.dropLast(2)
+        assertFalse("--prompt-cache-size" in predecessorArgs)
+
+        val staleSha =
+            if (current.implementationIdentity.classSha256 == "a".repeat(64)) {
+                "b".repeat(64)
+            } else {
+                "a".repeat(64)
+            }
+        val prior =
+            receipt(
+                binding = current,
+                implementationSha = staleSha,
+                runtimeArgs = predecessorArgs,
+            )
+        val store = Store(prior, trace)
+        val platform = Platform(trace).also { it.alivePids += prior.runtime.pid }
+
+        val result = HereticPersistentRuntime.startOrReuse(current, store, platform)
+
+        assertEquals(
+            "ROTATED_STALE_IMPLEMENTATION_AND_STARTED_NEW_EXACT_MLX_RUNTIME",
+            result.disposition,
+        )
+        assertTrue(trace.indexOf("RETIRE_Qualified") < trace.indexOf("SPAWN"))
+        assertTrue(predecessorArgs in platform.processIdentityArgs)
+        assertTrue(currentArgs in platform.processIdentityArgs)
+        assertEquals(currentArgs, result.receipt.runtime.args)
+        assertTrue(trace.contains("STORE_DELETE"))
+    }
+
+    @Test
+    fun arbitraryPriorRuntimeArgsNeverAuthorizeRetirement() {
+        val trace = mutableListOf<String>()
+        val current = binding()
+        val prior =
+            receipt(
+                binding = current,
+                implementationSha = "a".repeat(64),
+                runtimeArgs = listOf("-m", "mlx_lm.server", "--unexpected-runtime-contract"),
+            )
+        val store = Store(prior, trace)
+        val platform = Platform(trace).also { it.alivePids += prior.runtime.pid }
+
+        val error =
+            assertFailsWith<IllegalStateException> {
+                HereticPersistentRuntime.startOrReuse(current, store, platform)
+            }
+
+        assertTrue(error.message?.contains("does not match the current binding") == true)
+        assertEquals(0, platform.retireCalls)
+        assertFalse(trace.contains("STORE_DELETE"))
+        assertFalse(trace.contains("SPAWN"))
     }
 
     private fun bindingFor(model: vexlife.model.heretic.HereticModelCatalog.Entry): HereticPersistentRuntime.Binding =

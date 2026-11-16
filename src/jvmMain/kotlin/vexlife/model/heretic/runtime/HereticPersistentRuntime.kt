@@ -532,28 +532,71 @@ object HereticPersistentRuntime {
         )
     }
 
+    private enum class ServerLaunchContract {
+        CURRENT,
+        PRE_PROMPT_CACHE_LIMIT,
+    }
+
     fun serverArgs(
         binding: Binding,
+    ): List<String> =
+        serverArgs(
+            binding = binding,
+            contract = ServerLaunchContract.CURRENT,
+        )
+
+    private fun serverArgs(
+        binding: Binding,
+        contract: ServerLaunchContract,
     ): List<String> {
         validateBinding(
             binding,
         )
 
-        return listOf(
-            "-m",
-            "mlx_lm.server",
-            "--model",
-            binding.modelPath,
-            "--host",
-            "127.0.0.1",
-            "--port",
-            Port.toString(),
-            "--chat-template-args",
-            "{\"enable_thinking\":false}",
-            "--prompt-cache-size",
-            PromptCacheSequences.toString(),
-        )
+        val base =
+            listOf(
+                "-m",
+                "mlx_lm.server",
+                "--model",
+                binding.modelPath,
+                "--host",
+                "127.0.0.1",
+                "--port",
+                Port.toString(),
+                "--chat-template-args",
+                "{\"enable_thinking\":false}",
+            )
+        return when (contract) {
+            ServerLaunchContract.CURRENT ->
+                base +
+                    listOf(
+                        "--prompt-cache-size",
+                        PromptCacheSequences.toString(),
+                    )
+
+            ServerLaunchContract.PRE_PROMPT_CACHE_LIMIT ->
+                base
+        }
     }
+
+    /**
+     * Exact launch argv from a runtime contract this owner previously emitted. This is migration
+     * recognition only: arbitrary argv drift remains unowned and cannot authorize retirement.
+     */
+    private fun acceptedPriorServerArgs(
+        binding: Binding,
+        receipt: Receipt,
+    ): List<String>? =
+        ServerLaunchContract.entries
+            .map { contract ->
+                serverArgs(
+                    binding = binding,
+                    contract = contract,
+                )
+            }
+            .firstOrNull { accepted ->
+                accepted == receipt.runtime.args
+            }
 
     fun startOrReuse(
         binding: Binding,
@@ -601,17 +644,50 @@ object HereticPersistentRuntime {
         // chosen model starts. A receipt that is not provably ours still fails below.
         val priorModel =
             prior?.let { HereticModelCatalog.entry(it.modelRef) }
+        val priorModelBinding =
+            if (
+                prior !=
+                    null &&
+                    priorModel !=
+                    null
+            ) {
+                binding.copy(
+                    model = priorModel,
+                    modelPath = prior.modelPath,
+                )
+            } else {
+                null
+            }
+        val priorModelArgs =
+            if (
+                prior !=
+                    null &&
+                    priorModelBinding !=
+                    null
+            ) {
+                acceptedPriorServerArgs(
+                    binding = priorModelBinding,
+                    receipt = prior,
+                )
+            } else {
+                null
+            }
         if (
             prior !=
                 null &&
                 priorModel !=
                 null &&
+                priorModelBinding !=
+                null &&
+                priorModelArgs !=
+                null &&
                 priorModel.modelRef !=
                 binding.model.modelRef &&
                 receiptBinds(
-                    binding.copy(model = priorModel, modelPath = prior.modelPath),
-                    prior,
+                    binding = priorModelBinding,
+                    receipt = prior,
                     requireImplementationSha = false,
+                    expectedArgs = priorModelArgs,
                 )
         ) {
             if (
@@ -621,7 +697,7 @@ object HereticPersistentRuntime {
             ) {
                 requireExactOwnedProcess(
                     prior,
-                    prior.runtime.args,
+                    priorModelArgs,
                     platform,
                 )
             }
@@ -644,19 +720,29 @@ object HereticPersistentRuntime {
             )
         }
 
+        val acceptedPriorArgs =
+            prior?.let {
+                acceptedPriorServerArgs(
+                    binding = binding,
+                    receipt = it,
+                )
+            }
         if (
             !switchedModel &&
             prior !=
                 null &&
                 !receiptBinds(
-                    binding,
-                    prior,
+                    binding = binding,
+                    receipt = prior,
                     requireImplementationSha = true,
                 ) &&
+                acceptedPriorArgs !=
+                null &&
                 receiptBinds(
-                    binding,
-                    prior,
+                    binding = binding,
+                    receipt = prior,
                     requireImplementationSha = false,
+                    expectedArgs = acceptedPriorArgs,
                 )
         ) {
             if (
@@ -666,7 +752,7 @@ object HereticPersistentRuntime {
             ) {
                 requireExactOwnedProcess(
                     prior,
-                    args,
+                    acceptedPriorArgs,
                     platform,
                 )
             }
@@ -1171,12 +1257,11 @@ object HereticPersistentRuntime {
         binding: Binding,
         receipt: Receipt,
         requireImplementationSha: Boolean,
-    ): Boolean {
-        val expectedArgs =
+        expectedArgs: List<String> =
             serverArgs(
                 binding,
-            )
-
+            ),
+    ): Boolean {
         val identity =
             binding.model.identity
         return receipt.schemaVersion ==
