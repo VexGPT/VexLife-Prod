@@ -1569,6 +1569,20 @@
         "zh"
       ]
     },
+    "setup.label.model-choice-with-reach": {
+      "enHash": "09fdc83da7c5",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
     "setup.label.place-cloud-storage": {
       "enHash": "f1122a5788b3",
       "langs": [
@@ -2061,6 +2075,34 @@
     },
     "setup.status.model-present": {
       "enHash": "e8ed18047920",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.model-reach-held": {
+      "enHash": "cc06063a0900",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.model-reach-ready": {
+      "enHash": "c3e8063509bb",
       "langs": [
         "ar",
         "de",

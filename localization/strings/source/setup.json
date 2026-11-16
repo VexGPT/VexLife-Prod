@@ -6339,5 +6339,116 @@
     "surfaces": [
       "setup.card"
     ]
+  },
+  "setup.label.model-choice-with-reach": {
+    "strings": {
+      "en": {
+        "text": "{choice} · {reach}"
+      },
+      "ja": {
+        "text": "{choice} · {reach}"
+      },
+      "zh": {
+        "text": "{choice} · {reach}"
+      },
+      "ko": {
+        "text": "{choice} · {reach}"
+      },
+      "fr": {
+        "text": "{choice} · {reach}"
+      },
+      "de": {
+        "text": "{choice} · {reach}"
+      },
+      "es": {
+        "text": "{choice} · {reach}"
+      },
+      "pt": {
+        "text": "{choice} · {reach}"
+      },
+      "ar": {
+        "text": "{choice} · {reach}"
+      },
+      "hi": {
+        "text": "{choice} · {reach}"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.status.model-reach-ready": {
+    "strings": {
+      "en": {
+        "text": "outside sources available"
+      },
+      "ja": {
+        "text": "外部ソースを利用可能"
+      },
+      "zh": {
+        "text": "可访问外部来源"
+      },
+      "ko": {
+        "text": "외부 소스 사용 가능"
+      },
+      "fr": {
+        "text": "sources externes disponibles"
+      },
+      "de": {
+        "text": "externe Quellen verfügbar"
+      },
+      "es": {
+        "text": "fuentes externas disponibles"
+      },
+      "pt": {
+        "text": "fontes externas disponíveis"
+      },
+      "ar": {
+        "text": "المصادر الخارجية متاحة"
+      },
+      "hi": {
+        "text": "बाहरी स्रोत उपलब्ध"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
+  },
+  "setup.status.model-reach-held": {
+    "strings": {
+      "en": {
+        "text": "outside sources not yet available with this model"
+      },
+      "ja": {
+        "text": "このモデルでは外部ソースはまだ利用できません"
+      },
+      "zh": {
+        "text": "此模型暂时无法访问外部来源"
+      },
+      "ko": {
+        "text": "이 모델에서는 아직 외부 소스를 사용할 수 없음"
+      },
+      "fr": {
+        "text": "sources externes pas encore disponibles avec ce modèle"
+      },
+      "de": {
+        "text": "externe Quellen mit diesem Modell noch nicht verfügbar"
+      },
+      "es": {
+        "text": "las fuentes externas aún no están disponibles con este modelo"
+      },
+      "pt": {
+        "text": "fontes externas ainda não disponíveis com este modelo"
+      },
+      "ar": {
+        "text": "المصادر الخارجية غير متاحة بعد مع هذا النموذج"
+      },
+      "hi": {
+        "text": "इस मॉडल के साथ बाहरी स्रोत अभी उपलब्ध नहीं हैं"
+      }
+    },
+    "surfaces": [
+      "setup.window"
+    ]
   }
 }
