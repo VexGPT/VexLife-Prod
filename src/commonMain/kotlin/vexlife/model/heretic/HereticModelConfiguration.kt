@@ -190,12 +190,6 @@ object HereticModelConfiguration {
             "Heretic model configuration Companion lineage drift"
         }
         require(
-            value.runtimeReceiptPath in
-                admittedRuntimeReceiptPaths,
-        ) {
-            "Heretic model configuration runtime receipt owner drift"
-        }
-        require(
             !value.automaticFallback &&
                 !value.automaticDownload &&
                 !value.automaticActivation,
@@ -229,7 +223,9 @@ object HereticModelConfiguration {
             value.endpoint ==
             identity.endpoint &&
             value.requestModel ==
-            identity.requestModel
+            identity.requestModel &&
+            value.runtimeReceiptPath in
+            admittedRuntimeReceiptPaths
     }
 
     fun validate(
