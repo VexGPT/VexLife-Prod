@@ -72,7 +72,9 @@ laundered into the DMG.
 
 For stable runs, the workflow supplies the requested semantic version as
 `-PvexlifeAppVersion=<major.minor.patch>`. Continuous main builds use `0.0.0` as the internal app
-version and remain identified externally by exact source SHA/release tag.
+version and remain identified externally by exact source SHA/release tag. Cutting a stable version
+does not replace the continuous DMG for that SHA; the stable DMG is a separately version-stamped
+artifact bound to the same source.
 
 ## Cutting a stable version
 
@@ -82,9 +84,10 @@ When Victor says a threshold on `main` is good (for example "this is good, tag i
    lived checks, and the required current proof.
 2. Run **Actions → release → Run workflow** on `main` with `version` = `0.7.0`
    (or `gh workflow run release --ref main -f version=0.7.0`).
-3. The workflow tests, forms the exact Mac application/DMG plus predecessor recovery artifacts,
-   publishes/refreshes the main build for that commit, and creates `v0.7.0` at that commit.
-   A version that exists is never rebuilt or moved; a wrong version gets a new, higher version.
+3. The workflow first requires the exact SHA's already-published main build. It then tests and forms
+   a version-stamped stable DMG from that same source **without rewriting the main build**, and
+   creates `v0.7.0` at that commit. A version that exists is never rebuilt or moved; a wrong
+   version gets a new, higher version.
 4. The `pages` workflow redeploys after `release` completes; the version appears in the Mac
    download list.
 
