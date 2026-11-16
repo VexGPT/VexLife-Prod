@@ -420,6 +420,11 @@ val macApplicationReleaseContractSource =
         "packaging/macos-app/release-contract.json",
     )
 
+val macApplicationBrandMarkSource =
+    layout.projectDirectory.file(
+        "packaging/macos-app/vextreme-mark.svg",
+    )
+
 val macApplicationVersionProperty =
     providers.gradleProperty(
         "vexlifeAppVersion",
@@ -2210,6 +2215,9 @@ tasks.register(
     inputs.file(
         macApplicationReleaseContractSource,
     )
+    inputs.file(
+        macApplicationBrandMarkSource,
+    )
     inputs.property(
         "vexlifeAppVersion",
         macApplicationVersionProperty.orElse(
@@ -2390,6 +2398,134 @@ tasks.register(
         Files.createDirectories(
             resources,
         )
+
+        // VexLife reuses the current Vextreme brand mark rather than inventing a second app logo.
+        // qlmanage renders the exact source SVG with macOS's native SVG/Quick Look stack, then
+        // iconutil forms the ordinary multi-resolution application icon resource.
+        val iconWork =
+            outputRoot.resolve(
+                "icon-work",
+            )
+        Files.createDirectories(
+            iconWork,
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/qlmanage",
+                "-t",
+                "-s",
+                "1024",
+                "-o",
+                iconWork.toString(),
+                macApplicationBrandMarkSource
+                    .asFile
+                    .toPath()
+                    .toString(),
+            ),
+        )
+        val renderedBrandMark =
+            Files.list(
+                iconWork,
+            )
+                .use {
+                    stream ->
+                    stream
+                        .filter {
+                            Files.isRegularFile(
+                                it,
+                                LinkOption.NOFOLLOW_LINKS,
+                            ) &&
+                                it.fileName
+                                    .toString()
+                                    .endsWith(
+                                        ".png",
+                                    )
+                        }
+                        .toList()
+                        .singleOrNull()
+                }
+                ?: error(
+                    "macOS did not render exactly one Vextreme brand-mark PNG",
+                )
+        require(
+            Files.size(
+                renderedBrandMark,
+            ) >
+                0,
+        ) {
+            "rendered Vextreme brand mark is empty"
+        }
+
+        val iconset =
+            iconWork.resolve(
+                "VexLife.iconset",
+            )
+        Files.createDirectories(
+            iconset,
+        )
+        listOf(
+            16,
+            32,
+            128,
+            256,
+            512,
+        )
+            .forEach {
+                points ->
+                listOf(
+                    points to
+                        "icon_${points}x${points}.png",
+                    points * 2 to
+                        "icon_${points}x${points}@2x.png",
+                )
+                    .forEach {
+                        (pixels, filename) ->
+                        runExactCommand(
+                            listOf(
+                                "/usr/bin/sips",
+                                "-z",
+                                pixels.toString(),
+                                pixels.toString(),
+                                renderedBrandMark.toString(),
+                                "--out",
+                                iconset.resolve(
+                                    filename,
+                                )
+                                    .toString(),
+                            ),
+                        )
+                    }
+            }
+
+        val applicationIcon =
+            resources.resolve(
+                "VexLife.icns",
+            )
+        runExactCommand(
+            listOf(
+                "/usr/bin/iconutil",
+                "-c",
+                "icns",
+                iconset.toString(),
+                "-o",
+                applicationIcon.toString(),
+            ),
+        )
+        require(
+            Files.isRegularFile(
+                applicationIcon,
+                LinkOption.NOFOLLOW_LINKS,
+            ) &&
+                Files.size(
+                    applicationIcon,
+                ) >
+                0,
+        ) {
+            "VexLife application icon was not formed"
+        }
+        deleteTreeNoFollow(
+            iconWork,
+        )
         runExactCommand(
             listOf(
                 "/usr/bin/ditto",
@@ -2487,6 +2623,16 @@ tasks.register(
                 "VexLifeProdDistributionTrust",
                 "-string",
                 macApplicationDistributionTrust,
+                infoPlist.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/plutil",
+                "-replace",
+                "CFBundleIconFile",
+                "-string",
+                "VexLife.icns",
                 infoPlist.toString(),
             ),
         )
