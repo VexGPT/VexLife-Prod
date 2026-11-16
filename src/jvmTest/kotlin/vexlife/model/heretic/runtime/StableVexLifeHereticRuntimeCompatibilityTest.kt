@@ -253,7 +253,7 @@ class StableVexLifeHereticRuntimeCompatibilityTest {
                         processGroupId = pid,
                         exactOwnedDetachedGroup = true,
                         args =
-                            HereticPersistentRuntime.serverArgs(
+                            StableVexLifeHereticRuntimeCompatibility.stableRuntimeServerArgs(
                                 binding,
                             ),
                         processSubstrate =
@@ -353,7 +353,7 @@ class StableVexLifeHereticRuntimeCompatibilityTest {
                         processGroupId = pid,
                         exactOwnedDetachedGroup = true,
                         args =
-                            HereticPersistentRuntime.serverArgs(
+                            StableVexLifeHereticRuntimeCompatibility.stableRuntimeServerArgs(
                                 binding,
                             ),
                         processSubstrate =
