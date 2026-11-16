@@ -61,7 +61,8 @@ archiveVexLifeProdMacApplication
   -> archiveVexLifeProdServiceImage
   -> exact source-bound private image
   -> osacompile existing native Setup Journey as VexLife.app
-  -> replace the applet-native applet.icns with the source-owned Vextreme mark
+  -> render the Vextreme mark through a source-owned 1024x1024 app-icon canvas
+  -> replace the applet-native applet.icns with that full-canvas artwork
   -> remove osacompile's generated Assets.car / CFBundleIconName precedence
   -> embed exact private image in Contents/Resources
   -> bind bundle/source/trust metadata

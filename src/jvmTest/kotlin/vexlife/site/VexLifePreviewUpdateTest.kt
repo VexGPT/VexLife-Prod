@@ -12,6 +12,8 @@ class VexLifePreviewUpdateTest {
     private val releaseContract =
         Files.readString(root.resolve("packaging/macos-app/release-contract.json"))
     private val buildSource = Files.readString(root.resolve("build.gradle.kts"))
+    private val appIconArtwork =
+        Files.readString(root.resolve("packaging/macos-app/vextreme-app-icon.svg"))
 
     @Test
     fun newestTwoPreviewsRemainSelectableDuringUpdateComparison() {
@@ -42,5 +44,13 @@ class VexLifePreviewUpdateTest {
             "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension",
         )
         assertContains(buildSource, "Open Privacy & Security.webloc")
+    }
+
+    @Test
+    fun appIconUsesAFullCanvasCompositionInsteadOfThumbnailingTheRawMark() {
+        assertContains(appIconArtwork, "width=\"1024\" height=\"1024\"")
+        assertContains(appIconArtwork, "translate(62 62) scale(7.5)")
+        assertContains(buildSource, "macApplicationIconArtworkSource")
+        assertContains(buildSource, "packaging/macos-app/vextreme-app-icon.svg")
     }
 }
