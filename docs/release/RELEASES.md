@@ -75,26 +75,35 @@ For stable runs, the workflow supplies the requested semantic version as
 externally by its exact source SHA/release tag. Ordinary merges to `main` do not publish anything.
 Victor or a continuing instance chooses when a source threshold is worth publishing.
 
-## Publishing from GitHub — no manual tag or build work
+## One release process; executor chosen by current constraints
 
-There is no required calendar schedule. A release is an intentional cutoff.
+There is no required calendar schedule. A release is an intentional cutoff, and the release meaning
+does not change based on who executes it.
 
-For a stable threshold, Victor can say to an instance, "this is a good cutoff; release 0.1.0," or do
-the same thing himself in GitHub:
+The source-owned Mac publication process is:
 
-1. Merge the work that belongs in the cutoff so the desired source is on `main`.
-2. Open **Actions → release → Run workflow**.
-3. Leave the branch as **main**, choose **stable**, and enter a version such as `0.1.0`.
-4. Click **Run workflow**.
+~~~text
+tools/release/publish-mac-release.sh preview
+tools/release/publish-mac-release.sh stable 0.1.0
+~~~
 
-The workflow then tests that exact `main`, forms the version-stamped DMG, creates the Git tag
-`v0.1.0` automatically, creates the GitHub Release, uploads the DMG/checksums/receipt, and causes
-the Pages site to refresh. Victor does **not** manually create a tag, edit a version file, build a
-DMG, or upload release assets.
+It requires a clean exact current `origin/main`, runs the Product tests, forms/verifies the DMG and
+publishes the GitHub Release. For a stable version, `gh release create` creates the `vX.Y.Z` tag at
+that exact source automatically. Victor never manually creates/moves a tag, edits a version file,
+builds a DMG or uploads assets.
 
-For a shareable build that is not yet a stable version, run the same workflow with
-**channel = preview** and leave version empty. That publishes one prerelease from the current
-`main`. Merges by themselves create no public download.
+Two executors may lawfully invoke that same process:
+
+- **VexRelay / Victor's Mac — billing-aware primary route.** New Relay formation consumes current
+  contract `source.vexrelay.current-contract/v1`; the current contract admits host profile
+  `macos-victor` and routes repository operations through the current repository adapter. The Relay
+  task runs the source-owned script rather than reproducing its release logic in the task.
+- **GitHub Actions — optional hosted route.** **Actions → release → Run workflow** is a thin
+  `workflow_dispatch` wrapper around the same script. Choose `preview`, or choose `stable` and
+  enter a version such as `0.1.0`.
+
+Ordinary merges to `main` publish nothing. A shareable preview or stable version exists only when
+one of these executors intentionally runs the release process.
 
 Versions follow semver while VexLife is before 1.0:
 
@@ -105,21 +114,59 @@ A version that already exists is never rebuilt or moved; a correction gets a new
 
 ## The VexLife home (GitHub Pages)
 
-Source: `site/`. Deployed by `.github/workflows/pages.yml` on changes to the site, after every
-`release` run, and by hand. At deploy time:
+`site/` remains the authored site source. Formation is source-owned by:
 
-- `data/models.json` is formed by `./gradlew generateVexLifeSiteData` from
-  `HereticModelCatalog` and the Mac host profile;
-- `data/releases.json` is formed by `.github/release/releases-snapshot.py` from GitHub Releases,
-  with SHA-256 values read from the release notes.
+~~~text
+tools/site/form-pages-site.sh
+~~~
+
+That process copies the authored site, forms `data/models.json` from the Product's model/host owners,
+forms `data/releases.json` from actual GitHub Releases, and adds `.nojekyll`. The resulting directory
+is the complete static site; neither GitHub Actions nor VexRelay owns alternate page meaning.
+
+### Recommended billing-aware publication profile: gh-pages branch
+
+The direct publication process is:
+
+~~~text
+tools/site/publish-gh-pages.sh
+~~~
+
+It requires a clean exact current `origin/main`, forms the site through the same source-owned process,
+then pushes only the formed static bytes to the root of a dedicated `gh-pages` branch.
+
+For this profile the one repository setting is:
+
+~~~text
+Settings
+-> Pages
+-> Build and deployment
+-> Source: Deploy from a branch
+-> Branch: gh-pages
+-> Folder: /(root)
+~~~
+
+VexRelay can run that publication script through the current repository-operations route. A connected
+provider worker with exact repository authority can also realize the equivalent `gh-pages` update
+directly. GitHub may still show its internal Pages deployment run after the branch changes, but no
+custom VexLife site-build workflow is required to form the bytes.
+
+### Optional GitHub Actions publication profile
+
+`.github/workflows/pages.yml` is retained as a **manual-only** wrapper around
+`tools/site/form-pages-site.sh`. It applies only while the repository Pages source is configured as
+**GitHub Actions**. It does not run on ordinary pushes/releases.
+
+The repository can use either final Pages profile, but Pages has one active source mode at a time.
+Switching executor must not fork site formation logic.
 
 The page prefers a Mac `.dmg` when a release contains one and falls back to the predecessor
 bootstrap otherwise. It labels the unversioned channel as **Preview**, not as an always-current main
-build, because previews are intentional rather than automatic. Windows remains visibly in preparation
-until a Windows realization actually exists and has real-machine proof.
+build. Windows remains visibly in preparation until a Windows realization actually exists and has
+real-machine proof.
 
-**Repository setting:** GitHub Pages → Build and deployment → Source is configured to
-**GitHub Actions** as of 2026-11-15.
+Current observed setting as of 2026-11-15: **GitHub Actions**. Do not switch it to branch publication
+until this source stack is accepted and the `gh-pages` branch has been formed.
 
 Walkthrough screenshots remain lived evidence: `site/walkthrough/<step>.png` for the steps in
 `site/data/walkthrough.json` (language, home, model, setup, ready). A step without its screenshot
