@@ -19,12 +19,14 @@ class VexLifePublicSpiralTest {
     @Test
     fun publicHomePinsTheSharedSpiralAndRegistersOnlyTruthfulPageFeatures() {
         assertContains(page, "VEX_SPIRAL_FEATURES")
-        assertContains(page, "Vextreme@0fd053e9a0aa12572bd9b31b3b4d49534da8c549/widgets/vex-fab.js")
-        assertContains(page, "Vextreme@0fd053e9a0aa12572bd9b31b3b4d49534da8c549/components/vex-spiral-features.js")
+        assertContains(page, "Vextreme@da073582bc3147642b78640f8c72290396fc2489/widgets/vex-fab.js")
+        assertContains(page, "Vextreme@da073582bc3147642b78640f8c72290396fc2489/components/vex-spiral-features.js")
         assertContains(page, "id: 'theme'")
         assertContains(page, "id: 'support'")
         assertContains(page, "id: 'terrain'")
         assertContains(page, "target: '#theme-toggle'")
+        val themeEntry = page.substringAfter("id: 'theme'").substringBefore("},")
+        assertFalse(themeEntry.contains("icon:"))
         assertContains(page, "https://vgong24.github.io/Vextreme/pages/vex-support.html")
         assertContains(page, "https://vgong24.github.io/Vextreme/pages/terrain-map.html")
     }
@@ -39,9 +41,11 @@ class VexLifePublicSpiralTest {
     }
 
     @Test
-    fun existingThemeControlRemainsTheBehaviorOwnerBehindTheSpiralProjection() {
+    fun existingThemeControlRemainsTheBehaviorAndIconOwnerBehindTheSpiralProjection() {
         assertContains(page, "id=\"theme-toggle\"")
         assertContains(page, "id=\"theme-toggle\" aria-label=\"Switch between dark and light\" hidden")
+        assertContains(script, "data-vex-spiral-icon")
+        assertContains(script, "light ? '☀️' : '🌙'")
         assertContains(css, ".spiral-actions")
         assertContains(css, "#vex-spiral-trigger")
     }
