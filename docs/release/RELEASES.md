@@ -54,8 +54,8 @@ Source: `site/`. Deployed by `.github/workflows/pages.yml` on changes to the sit
 The page falls back to the public GitHub API when the snapshot is missing. Windows is shown as in
 preparation until a Windows realization exists and has run on a real PC.
 
-One-time setting (owner): **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-Until then Pages keeps serving the README through Jekyll and the `pages` deploy job fails.
+Pages source: **GitHub Actions** (set by the owner on 2026-11-15, replacing the Jekyll README
+site). The first `pages` run after this lands on `main` replaces the README page with `site/`.
 
 Walkthrough screenshots: `site/walkthrough/<step>.png` for the steps in `site/data/walkthrough.json`
 (language, home, model, setup, ready), captured from a real first run on an Apple-silicon Mac. A
