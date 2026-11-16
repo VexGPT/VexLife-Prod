@@ -304,6 +304,9 @@ object VexLifeCapabilityBridge {
         val untrusted: Boolean,
         val truncated: Boolean = false,
         val facts: Map<String, String> = emptyMap(),
+        /** Character coordinate inside one already-extracted source, when continuation is supported. */
+        val sourceOffset: Int? = null,
+        val sourceTotalCharacters: Int? = null,
     )
 
     private const val FormReminder =
@@ -453,39 +456,91 @@ object VexLifeCapabilityBridge {
         when (action) {
             "fetch" -> {
                 val url = args.string("url").orEmpty()
-                when (
-                    val outcome = VexLifeWebReach.fetch(url, owners.webTransport, owners.resolver)
+                val parsedOffset = args.integer("offset")
+                if (
+                    "offset" in args &&
+                    parsedOffset ==
+                        null
                 ) {
-                    is VexLifeWebReach.Outcome.Fetched ->
+                    Body(
+                        State.INVALID_REQUEST,
+                        url,
+                        "web fetch offset must be one integer character coordinate",
+                        untrusted = false,
+                    )
+                } else {
+                    val offset = parsedOffset ?: 0
+                    if (offset < 0) {
                         Body(
-                            State.RETURNED,
-                            outcome.page.finalUrl,
-                            outcome.page.text,
-                            untrusted = true,
-                            truncated = outcome.page.bytesTruncated,
-                            facts =
-                                listOfNotNull(
-                                        "status" to outcome.page.status.toString(),
-                                        "contentType" to outcome.page.contentType,
-                                        outcome.page.title?.let { "title" to it },
-                                        outcome.page.redirects
-                                            .takeIf { it.isNotEmpty() }
-                                            ?.let { "redirectedTo" to it.last() },
-                                    )
-                                    .toMap(),
-                        )
-                    is VexLifeWebReach.Outcome.Refused ->
-                        Body(State.REFUSED, url, outcome.reason, untrusted = false)
-                    is VexLifeWebReach.Outcome.Failed ->
-                        Body(
-                            if (outcome.status == 404 || outcome.status == 410) State.NOT_FOUND
-                            else State.FAILED,
+                            State.REFUSED,
                             url,
-                            outcome.reason,
+                            "web fetch offset must be zero or greater",
                             untrusted = false,
                         )
-                    is VexLifeWebReach.Outcome.Found ->
-                        Body(State.FAILED, url, "unexpected search result", untrusted = false)
+                    } else {
+                        when (
+                        val outcome = VexLifeWebReach.fetch(url, owners.webTransport, owners.resolver)
+                    ) {
+                        is VexLifeWebReach.Outcome.Fetched -> {
+                            val readable = outcome.page.text
+                            if (offset > readable.length) {
+                                Body(
+                                    State.NOT_FOUND,
+                                    outcome.page.finalUrl,
+                                    "The requested offset $offset is past the current readable page length ${readable.length}.",
+                                    untrusted = false,
+                                    facts =
+                                        mapOf(
+                                            "sourceCharacters" to readable.length.toString(),
+                                        ),
+                                )
+                            } else {
+                                Body(
+                                    State.RETURNED,
+                                    outcome.page.finalUrl,
+                                    readable.substring(offset),
+                                    untrusted = true,
+                                    truncated = outcome.page.bytesTruncated,
+                                    facts =
+                                        listOfNotNull(
+                                                "status" to outcome.page.status.toString(),
+                                                "contentType" to outcome.page.contentType,
+                                                outcome.page.title?.let { "title" to it },
+                                                outcome.page.redirects
+                                                    .takeIf { it.isNotEmpty() }
+                                                    ?.let { "redirectedTo" to it.last() },
+                                                if (outcome.page.bytesTruncated) {
+                                                    "networkTruncated" to "true"
+                                                } else {
+                                                    null
+                                                },
+                                            )
+                                            .toMap(),
+                                    sourceOffset = offset,
+                                    sourceTotalCharacters = readable.length,
+                                )
+                            }
+                        }
+
+                        is VexLifeWebReach.Outcome.Refused ->
+                            Body(State.REFUSED, url, outcome.reason, untrusted = false)
+
+                        is VexLifeWebReach.Outcome.Failed ->
+                            Body(
+                                if (outcome.status == 404 || outcome.status == 410) {
+                                    State.NOT_FOUND
+                                } else {
+                                    State.FAILED
+                                },
+                                url,
+                                outcome.reason,
+                                untrusted = false,
+                            )
+
+                            is VexLifeWebReach.Outcome.Found ->
+                                Body(State.FAILED, url, "unexpected search result", untrusted = false)
+                        }
+                    }
                 }
             }
             else -> {
@@ -706,16 +761,48 @@ object VexLifeCapabilityBridge {
     }
 
     private fun resultMessage(body: Body, text: String, cut: Boolean, requestNumber: Int): String {
+        val returnedStart = body.sourceOffset
+        val returnedEnd =
+            if (
+                returnedStart != null &&
+                body.sourceTotalCharacters != null
+            ) {
+                returnedStart + text.length
+            } else {
+                null
+            }
+        val nextOffset =
+            returnedEnd
+                ?.takeIf {
+                    it <
+                        requireNotNull(
+                            body.sourceTotalCharacters,
+                        )
+                }
         val meta = buildMap {
             put("request", "$requestNumber of $MaximumRequestsPerTurn")
             put("state", body.state.name)
             body.target?.let { put("target", it) }
             putAll(body.facts)
-            if (cut || body.truncated) put("truncated", "true")
+            body.sourceTotalCharacters?.let { put("sourceCharacters", it.toString()) }
+            returnedStart?.let { put("returnedStart", it.toString()) }
+            returnedEnd?.let { put("returnedEnd", it.toString()) }
+            nextOffset?.let {
+                put("nextOffset", it.toString())
+                put("more", "true")
+            }
+            if (cut || body.truncated || nextOffset != null) put("truncated", "true")
         }
         val remaining = MaximumRequestsPerTurn - requestNumber
         val next =
-            if (remaining > 0 && body.state != State.LIMIT_REACHED) {
+            if (
+                nextOffset != null &&
+                remaining > 0 &&
+                body.state != State.LIMIT_REACHED
+            ) {
+                "More of this source remains. To continue this same page, fetch the same URL with offset $nextOffset. " +
+                    "You can make another request ($remaining left this turn) or answer the person now."
+            } else if (remaining > 0 && body.state != State.LIMIT_REACHED) {
                 "You can make another request ($remaining left this turn) or answer the person now."
             } else {
                 "No requests are left this turn. Do not send another capability request in this turn. " +
@@ -752,6 +839,11 @@ object VexLifeCapabilityBridge {
             ?.contentOrNull
             ?.trim()
             ?.takeIf { it.isNotEmpty() }
+
+    private fun JsonObject.integer(name: String): Int? =
+        (this[name] as? JsonPrimitive)
+            ?.contentOrNull
+            ?.toIntOrNull()
 }
 
 // [VXG RealForever]

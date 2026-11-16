@@ -12,15 +12,16 @@ import vexlife.text.VexLifeText
  *
  * Lawfulness (what each Control may do, by State):
  * ```
- * Use        files present, not already chosen          -> ChooseModel (takes effect at next start)
- * Download   files absent or partial, nothing running    -> AcquireModel (resumes a partial)
- * Redownload files damaged (wrong size), nothing running -> RemoveModel then AcquireModel
- * Remove     files here, not chosen, not serving, idle   -> RemoveModel (the model stays offered)
+ * Use        files present, chosen/serving not both current -> SwitchModel
+ * Download   files absent or partial, nothing running         -> AcquireModel (resumes a partial)
+ * Redownload files damaged, nothing running                   -> RemoveModel then AcquireModel
+ * Remove     files here, not chosen, not serving, idle        -> RemoveModel
  * ```
  *
- * The model the runtime serves and the model the Home chose are never removed: removing them would
- * break the running Vex or the next start. Choosing a model does not start it — Setup's own Start
- * switches the runtime, because this service process holds no runtime-start authority.
+ * Use means the person's intention is for this model to become the model serving Vex now. It stays
+ * lawful when a prior switch failed (chosen but not serving), and for the currently-serving model
+ * when another target is chosen (so the person can cancel/revert the pending relationship). The
+ * Family owns this meaning; concrete runtime convergence remains with LocalSetup/runtime owners.
  */
 object VexLifeModelsFamily :
     VexFamilyContract<
@@ -42,8 +43,11 @@ object VexLifeModelsFamily :
         val downloading: Boolean,
         val chosen: Boolean,
         val serving: Boolean,
+        val switching: Boolean,
         /** Any model's download is running (one at a time per Home). */
         val anyDownloadRunning: Boolean,
+        /** One model-switch convergence is active for this Home. */
+        val anySwitchRunning: Boolean,
     ) : VexFamilyContract.State<VexLifeModelsFamily>
 
     sealed interface Control : VexFamilyContract.Control<VexLifeModelsFamily> {
@@ -67,7 +71,7 @@ object VexLifeModelsFamily :
     }
 
     sealed interface Effect : VexFamilyContract.Effect<VexLifeModelsFamily> {
-        data object ChooseModel : Effect
+        data object SwitchModel : Effect
 
         data object AcquireModel : Effect
 
@@ -92,16 +96,22 @@ object VexLifeModelsFamily :
         currentState: State,
         control: Control,
     ): Act<VexLifeModelsFamily, State, Effect>? {
-        val idle = !currentState.downloading && !currentState.anyDownloadRunning
+        val idle =
+            !currentState.downloading &&
+                !currentState.anyDownloadRunning &&
+                !currentState.anySwitchRunning
         return when (control) {
             Use ->
                 if (
                     currentState.files == Files.PRESENT &&
-                        !currentState.chosen &&
-                        !currentState.downloading
-                )
-                    stay(Effect.ChooseModel)
-                else null
+                        !(currentState.chosen && currentState.serving) &&
+                        !currentState.switching &&
+                        idle
+                ) {
+                    stay(Effect.SwitchModel)
+                } else {
+                    null
+                }
             Download ->
                 if (
                     (currentState.files == Files.ABSENT || currentState.files == Files.PARTIAL) &&
@@ -130,6 +140,7 @@ object VexLifeModelsFamily :
             handle = state.handle,
             status =
                 when {
+                    state.switching -> VexLifeText("workspace.status.model-switching")
                     state.downloading -> VexLifeText("workspace.status.model-downloading")
                     state.files == Files.PRESENT ->
                         VexLifeText("workspace.status.model-on-this-mac")
@@ -141,7 +152,7 @@ object VexLifeModelsFamily :
             notes =
                 listOfNotNull(
                     VexLifeText("workspace.label.model-serving").takeIf { state.serving },
-                    VexLifeText("workspace.label.model-chosen-next-start").takeIf {
+                    VexLifeText("workspace.label.model-chosen-pending").takeIf {
                         state.chosen && !state.serving
                     },
                     VexLifeText("workspace.label.model-chosen").takeIf {

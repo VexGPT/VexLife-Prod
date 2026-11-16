@@ -14,6 +14,8 @@ import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -31,6 +33,8 @@ import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.local.VexLifeProdSetupProgress
+import vexlife.model.VexLifeModels
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.continuity.VexLifePrivateConversation
 import vexlife.continuity.VexLifePrivateModeFamily
@@ -65,6 +69,9 @@ class VexLifeProdLocalService private constructor(
     private val visionRuntime: VisionRuntime?,
     private val currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
     private val memoryReader: (Path) -> VexLifeMemoryContract.Context,
+    private val servingModelRef: () -> String?,
+    private val servingRuntimeReceiptRef: () -> String,
+    private val modelSwitcher: VexLifeModels.Switcher?,
     privateCompletionOverride: VexLifePrivateConversation.Completion? = null,
 ) : AutoCloseable {
     private val privateConversation = VexLifePrivateConversation(Path.of(startupSetup.productHome))
@@ -74,16 +81,17 @@ class VexLifeProdLocalService private constructor(
             it.startObserving()
         }
 
-    /** Settings → Models; the model this service's runtime serves is the one it started with. */
+    /** Settings → Models projects the current serving Session; runtime effects stay outside it. */
     private val models =
-        vexlife.model.VexLifeModels(
+        VexLifeModels(
             productHome = Path.of(startupSetup.productHome),
-            servingModelRef = { startupSetup.qualifiedRuntimeEvidence.modelRef },
+            servingModelRef = servingModelRef,
             totalMemoryBytes = {
                 runCatching {
                     vexlife.model.heretic.runtime.HereticMacHostProfile.observeCurrent().observation.totalMemoryBytes
                 }.getOrNull()
             },
+            switcher = modelSwitcher,
         )
 
     private val privateCompletion =
@@ -267,6 +275,91 @@ class VexLifeProdLocalService private constructor(
                         }
                     }
 
+            val sessionRef =
+                AtomicReference(
+                    session,
+                )
+            val sessionFence =
+                ReentrantReadWriteLock(
+                    true,
+                )
+
+            fun <T> withCurrentSession(
+                block: (VexLifeProdLocalSetup.Session) -> T,
+            ): T {
+                val read =
+                    sessionFence.readLock()
+                read.lock()
+                return try {
+                    block(
+                        sessionRef.get(),
+                    )
+                } finally {
+                    read.unlock()
+                }
+            }
+
+            val switcher =
+                VexLifeModels.Switcher {
+                    entry,
+                    observe,
+                    ->
+                    observe(
+                        VexLifeModels.SwitchPhase.WAITING_FOR_CURRENT_TURN,
+                    )
+                    val write =
+                        sessionFence.writeLock()
+                    write.lock()
+                    try {
+                        observe(
+                            VexLifeModels.SwitchPhase.PREPARING_TARGET,
+                        )
+                        val current =
+                            sessionRef.get()
+                        val next =
+                            VexLifeProdLocalSetup.establishSession(
+                                productHome =
+                                    Path.of(
+                                        current.result.productHome,
+                                    ),
+                                allowAcquisition = false,
+                                allowRuntimeStart = true,
+                                progress =
+                                    object :
+                                        VexLifeProdSetupProgress {
+                                        override fun phase(
+                                            phase: VexLifeProdSetupProgress.Phase,
+                                        ) {
+                                            if (
+                                                phase ==
+                                                    VexLifeProdSetupProgress.Phase.StartingLocalModel
+                                            ) {
+                                                observe(
+                                                    VexLifeModels.SwitchPhase.SWITCHING_RUNTIME,
+                                                )
+                                            }
+                                        }
+
+                                        override fun artifactBytes(
+                                            completedBytes: Long,
+                                            totalBytes: Long,
+                                        ) = Unit
+                                    },
+                            )
+                        require(
+                            next.result.qualifiedRuntimeEvidence.modelRef ==
+                                entry.modelRef,
+                        ) {
+                            "model switch qualified a runtime other than the selected target"
+                        }
+                        sessionRef.set(
+                            next,
+                        )
+                    } finally {
+                        write.unlock()
+                    }
+                }
+
             return startAt(
                 sourceSha = sourceSha,
                 startupSetup = session.result,
@@ -285,10 +378,13 @@ class VexLifeProdLocalService private constructor(
                         _,
                         intent,
                         ->
-                        DirectCompanionTurn.perform(
-                            session = session,
-                            intent = intent,
-                        )
+                        withCurrentSession {
+                            current ->
+                            DirectCompanionTurn.perform(
+                                session = current,
+                                intent = intent,
+                            )
+                        }
                     },
                 streamingTurnExecutor =
                     StreamingTurnExecutor {
@@ -296,11 +392,14 @@ class VexLifeProdLocalService private constructor(
                         intent,
                         observer,
                         ->
-                        DirectCompanionTurn.perform(
-                            session = session,
-                            intent = intent,
-                            progressObserver = observer,
-                        )
+                        withCurrentSession {
+                            current ->
+                            DirectCompanionTurn.perform(
+                                session = current,
+                                intent = intent,
+                                progressObserver = observer,
+                            )
+                        }
                     },
                 dreamExecutor = ProductDreamExecutor,
                 currentStateObserver = {
@@ -311,6 +410,37 @@ class VexLifeProdLocalService private constructor(
                     )
                 },
                 visionRuntime = visionRuntime,
+                servingModelRef = {
+                    sessionRef
+                        .get()
+                        .result
+                        .qualifiedRuntimeEvidence
+                        .modelRef
+                },
+                servingRuntimeReceiptRef = {
+                    sessionRef
+                        .get()
+                        .result
+                        .qualifiedRuntimeEvidence
+                        .runtimeReceiptRef
+                },
+                modelSwitcher = switcher,
+                privateCompletion =
+                    VexLifePrivateConversation.Completion {
+                        messages ->
+                        withCurrentSession {
+                            current ->
+                            DirectCompanionConnection
+                                .invoke(
+                                    runtime =
+                                        current.currentQualifiedRuntimeEvidence(),
+                                    messages = messages,
+                                )
+                                .let {
+                                    it.content to it.sealedHumanReasoning
+                                }
+                        }
+                    },
             )
         }
 
@@ -328,6 +458,9 @@ class VexLifeProdLocalService private constructor(
                 null,
             memoryReader: ((Path) -> VexLifeMemoryContract.Context)? = null,
             privateCompletion: VexLifePrivateConversation.Completion? = null,
+            servingModelRef: (() -> String?)? = null,
+            servingRuntimeReceiptRef: (() -> String)? = null,
+            modelSwitcher: VexLifeModels.Switcher? = null,
         ): VexLifeProdLocalService =
             startAt(
                 sourceSha = sourceSha,
@@ -349,6 +482,17 @@ class VexLifeProdLocalService private constructor(
                 currentStateObserver = currentStateObserver,
                 memoryReader = memoryReader ?: ProductMemoryReader,
                 privateCompletion = privateCompletion,
+                servingModelRef =
+                    servingModelRef
+                        ?: {
+                            setup.qualifiedRuntimeEvidence.modelRef
+                        },
+                servingRuntimeReceiptRef =
+                    servingRuntimeReceiptRef
+                        ?: {
+                            setup.qualifiedRuntimeEvidence.runtimeReceiptRef
+                        },
+                modelSwitcher = modelSwitcher,
             )
 
         private fun startAt(
@@ -363,6 +507,13 @@ class VexLifeProdLocalService private constructor(
             currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
             memoryReader: (Path) -> VexLifeMemoryContract.Context = ProductMemoryReader,
             privateCompletion: VexLifePrivateConversation.Completion? = null,
+            servingModelRef: () -> String? = {
+                startupSetup.qualifiedRuntimeEvidence.modelRef
+            },
+            servingRuntimeReceiptRef: () -> String = {
+                startupSetup.qualifiedRuntimeEvidence.runtimeReceiptRef
+            },
+            modelSwitcher: VexLifeModels.Switcher? = null,
         ): VexLifeProdLocalService {
             require(
                 SourceShaPattern.matches(
@@ -429,6 +580,9 @@ class VexLifeProdLocalService private constructor(
                         visionRuntime = visionRuntime,
                         currentStateObserver = currentStateObserver,
                         memoryReader = memoryReader,
+                        servingModelRef = servingModelRef,
+                        servingRuntimeReceiptRef = servingRuntimeReceiptRef,
+                        modelSwitcher = modelSwitcher,
                         privateCompletionOverride = privateCompletion,
                     )
 
@@ -807,8 +961,10 @@ class VexLifeProdLocalService private constructor(
                     processPid = ProcessHandle.current().pid(),
                     frameHostOrigin = frameOrigin,
                     runtimeCurrentness = "NOT_REOBSERVED_BY_SERVICE",
+                    // Wire name retained for v3 compatibility; after an in-process model switch
+                    // this is the runtime receipt bound to the service's current Session.
                     startupQualifiedRuntimeReceiptRef =
-                        startupSetup.qualifiedRuntimeEvidence.runtimeReceiptRef,
+                        servingRuntimeReceiptRef(),
                     currentConversationHeadSha256 =
                         conversation.currentConversationHeadSha256,
                     effectsPerformed = false,
@@ -1363,6 +1519,18 @@ class VexLifeProdLocalService private constructor(
 
     private fun handlePrivateSend(exchange: HttpExchange) {
         requireMethod(exchange, "POST")
+        if (
+            models.switchInProgress() ||
+                models.switchHeld()
+        ) {
+            respondError(
+                exchange,
+                409,
+                "MODEL_SWITCH_NOT_CURRENT",
+                "Vex's local model is changing or held; this Private message was not sent.",
+            )
+            return
+        }
         requireJson(exchange)
         val request = JsonCodec.decodeFromString<VexLifeProdServiceContract.PrivateSendRequest>(requestText(exchange))
         if (!requirePrivateOpen(exchange)) return
@@ -1668,6 +1836,28 @@ class VexLifeProdLocalService private constructor(
             exchange,
             "POST",
         )
+        if (
+            models.switchInProgress()
+        ) {
+            respondError(
+                exchange,
+                409,
+                "MODEL_SWITCH_IN_PROGRESS",
+                "Vex is switching local models; this message was not sent.",
+            )
+            return
+        }
+        if (
+            models.switchHeld()
+        ) {
+            respondError(
+                exchange,
+                409,
+                "MODEL_SWITCH_HELD",
+                "The last model switch did not complete. Retry the chosen model or choose the currently serving model.",
+            )
+            return
+        }
         // A message written while Private mode is on must never reach canonical Conversation.
         if (privateConversation.state() is VexLifePrivateModeFamily.Private) {
             respondError(exchange, 409, "PRIVATE_MODE_ON", "Private mode is on; this message was not kept.")

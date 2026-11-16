@@ -5,6 +5,7 @@ import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
 import vexlife.filesystem.VexOwnedPath
 import vexlife.home.VexLifeProdHome
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 
@@ -34,6 +35,14 @@ class FileHereticModelConfigurationStore(
         val writePerformed: Boolean,
     )
 
+    private sealed interface ScopedSnapshot {
+        data object Unconfigured : ScopedSnapshot
+
+        data class Heretic(
+            val value: HereticModelConfiguration.Value,
+        ) : ScopedSnapshot
+    }
+
     private val productHome =
         VexOwnedPath.requireRoot(
             productHome,
@@ -47,53 +56,114 @@ class FileHereticModelConfigurationStore(
             VexLifeProdHome.validateManifest(
                 manifest,
             )
-        val path =
-            configurationPath(
-                currentManifest,
-            )
-        val text =
-            VexDurableContractFile.readText(
-                ownedRoot = productHome,
-                path = path,
-            )
-                ?: return Snapshot.Unconfigured(
+        return when (
+            val scoped =
+                readSelectionScope(
+                    currentManifest,
+                )
+        ) {
+            ScopedSnapshot.Unconfigured ->
+                Snapshot.Unconfigured(
                     VexLifeProdHome.initialProductModelConfiguration(),
                 )
 
-        return when (
-            VexContractJson.schemaVersion(
-                text,
-            )
-        ) {
-            VexLifeProdHome.InitialModelConfigurationSchema ->
-                Snapshot.Unconfigured(
-                    VexLifeProdHome.validateInitialModelConfiguration(
-                        VexContractJson.decode(
-                            text,
-                        ),
-                    ),
-                )
-
-            HereticModelConfiguration.Schema -> {
-                val scope =
-                    bindingScope(
-                        currentManifest,
-                    )
+            is ScopedSnapshot.Heretic ->
                 Snapshot.Heretic(
                     HereticModelConfiguration.validate(
-                        value =
-                            VexContractJson.decode(
-                                text,
+                        value = scoped.value,
+                        homeIdentity =
+                            bindingScope(
+                                currentManifest,
                             ),
-                        homeIdentity = scope,
                     ),
+                )
+        }
+    }
+
+    /**
+     * Converges a Home onto one model this Product can actually serve now.
+     *
+     * A stale/no-longer-offered selection is historical state, not a prerequisite. Setup replaces
+     * it with the current recommended offered model and writes a fresh pending binding. The old
+     * record's Home/Companion scope must still be exact, and no automatic authority bit is accepted
+     * from that record.
+     */
+    fun ensureSupportedSelection(
+        manifest: VexLifeProdHome.Manifest,
+        totalMemoryBytes: Long?,
+    ): Transition {
+        val currentManifest =
+            VexLifeProdHome.validateManifest(
+                manifest,
+            )
+        val fallback =
+            HereticModelCatalog.recommendedFor(
+                totalMemoryBytes,
+            )
+        return when (
+            val scoped =
+                readSelectionScope(
+                    currentManifest,
+                )
+        ) {
+            ScopedSnapshot.Unconfigured -> {
+                val pending =
+                    HereticModelConfiguration.pending(
+                        bindingScope(
+                            currentManifest,
+                        ),
+                        fallback,
+                    )
+                write(
+                    currentManifest,
+                    pending,
+                )
+                Transition(
+                    state = "HERETIC_SELECTED_PENDING",
+                    value = pending,
+                    writePerformed = true,
                 )
             }
 
-            else ->
-                error(
-                    "VexLife-Prod runtime model binding schema is not admitted",
-                )
+            is ScopedSnapshot.Heretic -> {
+                if (
+                    HereticModelConfiguration.productIdentityCurrent(
+                        scoped.value,
+                    )
+                ) {
+                    Transition(
+                        state =
+                            if (
+                                HereticModelConfiguration.isBound(
+                                    scoped.value,
+                                )
+                            ) {
+                                "HERETIC_ALREADY_BOUND"
+                            } else {
+                                "HERETIC_ALREADY_SELECTED_PENDING"
+                            },
+                        value = scoped.value,
+                        writePerformed = false,
+                    )
+                } else {
+                    val pending =
+                        HereticModelConfiguration.pending(
+                            bindingScope(
+                                currentManifest,
+                            ),
+                            fallback,
+                        )
+                    write(
+                        currentManifest,
+                        pending,
+                    )
+                    Transition(
+                        state = "HERETIC_DEFAULTED_UNSUPPORTED_SELECTION_PENDING",
+                        value = pending,
+                        writePerformed = true,
+                    )
+                }
+            }
         }
     }
 
@@ -157,26 +227,102 @@ class FileHereticModelConfigurationStore(
      */
     fun selectModel(
         manifest: VexLifeProdHome.Manifest,
-        model: vexlife.model.heretic.HereticModelCatalog.Entry,
-    ): Transition {
-        val currentManifest = VexLifeProdHome.validateManifest(manifest)
-        val current = read(currentManifest)
-        if (current is Snapshot.Heretic && current.value.modelRef == model.modelRef) {
-            return Transition(
-                state =
-                    if (HereticModelConfiguration.isBound(current.value)) "HERETIC_ALREADY_BOUND"
-                    else "HERETIC_ALREADY_SELECTED_PENDING",
-                value = current.value,
-                writePerformed = false,
-            )
-        }
-        val pending = HereticModelConfiguration.pending(bindingScope(currentManifest), model)
-        write(currentManifest, pending)
-        return Transition(
-            state = if (current is Snapshot.Heretic) "HERETIC_MODEL_SWITCHED_PENDING" else "HERETIC_SELECTED_PENDING",
-            value = pending,
-            writePerformed = true,
+        model: HereticModelCatalog.Entry,
+    ): Transition =
+        selectModelFromExplicitHumanChoice(
+            manifest = manifest,
+            model = model,
         )
+
+    /**
+     * Explicit human choice may replace a stale Product model identity, but never a foreign Home or
+     * Companion scope. The historical record is not treated as current; the new selected model is
+     * written fresh as EstablishmentPending.
+     */
+    fun selectModelFromExplicitHumanChoice(
+        manifest: VexLifeProdHome.Manifest,
+        model: HereticModelCatalog.Entry,
+    ): Transition {
+        val currentManifest =
+            VexLifeProdHome.validateManifest(
+                manifest,
+            )
+        return when (
+            val scoped =
+                readSelectionScope(
+                    currentManifest,
+                )
+        ) {
+            ScopedSnapshot.Unconfigured -> {
+                val pending =
+                    HereticModelConfiguration.pending(
+                        bindingScope(
+                            currentManifest,
+                        ),
+                        model,
+                    )
+                write(
+                    currentManifest,
+                    pending,
+                )
+                Transition(
+                    state = "HERETIC_SELECTED_PENDING",
+                    value = pending,
+                    writePerformed = true,
+                )
+            }
+
+            is ScopedSnapshot.Heretic -> {
+                if (
+                    HereticModelConfiguration.productIdentityCurrent(
+                        scoped.value,
+                    ) &&
+                    scoped.value.modelRef ==
+                    model.modelRef
+                ) {
+                    Transition(
+                        state =
+                            if (
+                                HereticModelConfiguration.isBound(
+                                    scoped.value,
+                                )
+                            ) {
+                                "HERETIC_ALREADY_BOUND"
+                            } else {
+                                "HERETIC_ALREADY_SELECTED_PENDING"
+                            },
+                        value = scoped.value,
+                        writePerformed = false,
+                    )
+                } else {
+                    val pending =
+                        HereticModelConfiguration.pending(
+                            bindingScope(
+                                currentManifest,
+                            ),
+                            model,
+                        )
+                    write(
+                        currentManifest,
+                        pending,
+                    )
+                    Transition(
+                        state =
+                            if (
+                                HereticModelConfiguration.productIdentityCurrent(
+                                    scoped.value,
+                                )
+                            ) {
+                                "HERETIC_MODEL_SWITCHED_PENDING"
+                            } else {
+                                "HERETIC_MODEL_REPLACED_STALE_IDENTITY_PENDING"
+                            },
+                        value = pending,
+                        writePerformed = true,
+                    )
+                }
+            }
+        }
     }
 
     /** The catalog model this Home has chosen, or the catalog default when it has not chosen yet. */
@@ -294,6 +440,49 @@ class FileHereticModelConfigurationStore(
                 ),
             value = current,
         )
+    }
+
+    private fun readSelectionScope(
+        manifest: VexLifeProdHome.Manifest,
+    ): ScopedSnapshot {
+        val path =
+            configurationPath(
+                manifest,
+            )
+        val text =
+            VexDurableContractFile.readText(
+                ownedRoot = productHome,
+                path = path,
+            )
+                ?: return ScopedSnapshot.Unconfigured
+
+        return when (
+            VexContractJson.schemaVersion(
+                text,
+            )
+        ) {
+            VexLifeProdHome.InitialModelConfigurationSchema ->
+                ScopedSnapshot.Unconfigured
+
+            HereticModelConfiguration.Schema ->
+                ScopedSnapshot.Heretic(
+                    HereticModelConfiguration.validateSelectionScope(
+                        value =
+                            VexContractJson.decode(
+                                text,
+                            ),
+                        homeIdentity =
+                            bindingScope(
+                                manifest,
+                            ),
+                    ),
+                )
+
+            else ->
+                error(
+                    "VexLife-Prod runtime model binding schema is not admitted",
+                )
+        }
     }
 
     private fun configurationPath(

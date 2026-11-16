@@ -107,7 +107,7 @@ object HereticArtifactDeliveryCatalog {
             ),
         ) +
             HereticModelCatalog.Entries
-                .filter { it !== HereticModelCatalog.Certified27B }
+                .filter { it !== HereticModelCatalog.Models.Qwen27B }
                 .flatMap(::channelsFor)
 
     /**

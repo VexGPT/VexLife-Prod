@@ -13,7 +13,7 @@ class HereticModelCatalogTest {
 
     @Test
     fun theCertified27BIsTheUnchangedDefaultAndTheOthersAreCandidates() {
-        val certified = HereticModelCatalog.Certified27B
+        val certified = HereticModelCatalog.Models.Qwen27B
         assertEquals(HereticModelCatalog.Default, certified)
         assertEquals(HereticProductIdentity.Current, certified.identity)
         assertEquals(HereticArtifactCatalog.Members, certified.members)
@@ -23,18 +23,18 @@ class HereticModelCatalogTest {
         assertEquals(
             listOf(HereticModelCatalog.Standing.CANDIDATE, HereticModelCatalog.Standing.CANDIDATE),
             listOf(
-                HereticModelCatalog.Candidate9B.standing,
-                HereticModelCatalog.Candidate4B.standing,
+                HereticModelCatalog.Models.Qwen9B.standing,
+                HereticModelCatalog.Models.Qwen4B.standing,
             ),
         )
     }
 
     @Test
     fun eachModelIsPinnedToOneProviderRevisionWithExactBytes() {
-        assertEquals(6_736_900_225L, HereticModelCatalog.Candidate9B.totalBytes)
-        assertEquals(10, HereticModelCatalog.Candidate9B.members.size)
-        assertEquals(3_054_412_642L, HereticModelCatalog.Candidate4B.totalBytes)
-        assertEquals(11, HereticModelCatalog.Candidate4B.members.size)
+        assertEquals(6_736_900_225L, HereticModelCatalog.Models.Qwen9B.totalBytes)
+        assertEquals(10, HereticModelCatalog.Models.Qwen9B.members.size)
+        assertEquals(3_054_412_642L, HereticModelCatalog.Models.Qwen4B.totalBytes)
+        assertEquals(11, HereticModelCatalog.Models.Qwen4B.members.size)
         for (entry in HereticModelCatalog.Entries) {
             assertTrue(
                 entry.members.all { it.sourceRef.endsWith(entry.providerRevision) },
@@ -53,15 +53,93 @@ class HereticModelCatalogTest {
     }
 
     @Test
+    fun gptOss20BIsOfferedPinnedAndHarmonyButNeverStartedByDefault() {
+        val oss = HereticModelCatalog.Models.GptOss20B
+        assertEquals(12_104_201_036L, oss.totalBytes)
+        assertEquals(12, oss.members.size)
+        assertEquals(HereticModelCatalog.Standing.CANDIDATE, oss.standing)
+        assertEquals(HereticCompanionProvider.Profiles.GptOss20B, oss.companionProfile)
+        assertEquals(
+            HereticCompanionProvider.CapabilityStanding.QUALIFYING,
+            oss.companionProfile.capabilityStanding,
+        )
+        assertEquals(
+            "10c6bad646aa379476f3d8c1c595b77ce618d7e106665cfcefd06ad12935bf75",
+            oss.identity.artifactContentSetSha256,
+        )
+        assertEquals(24 * gib, oss.recommendedMemoryBytes)
+        assertTrue(HereticModelCatalog.fits(oss, 24 * gib))
+        assertFalse(oss.autoRecommended)
+        // Offered between the 27B and the 9B by the memory it wants; chosen only by the person.
+        assertEquals(
+            listOf("heretic-27b", "gpt-oss-20b", "heretic-9b", "heretic-4b"),
+            HereticModelCatalog.Entries.map { it.handle },
+        )
+        for (memory in listOf(8L, 16L, 24L, 32L, 64L)) {
+            assertTrue(HereticModelCatalog.recommendedFor(memory * gib) != oss, "$memory GiB")
+        }
+        assertEquals(
+            HereticCompanionProvider.Profiles.Qwen27B,
+            HereticModelCatalog.Models.Qwen27B.companionProfile,
+        )
+        assertEquals(
+            HereticCompanionProvider.Profiles.Qwen9B,
+            HereticModelCatalog.Models.Qwen9B.companionProfile,
+        )
+        assertEquals(
+            HereticCompanionProvider.Profiles.Qwen4B,
+            HereticModelCatalog.Models.Qwen4B.companionProfile,
+        )
+    }
+
+    @Test
+    fun everyOfferedModelChoosesACompleteProviderProfileWithoutConnectionDefaults() {
+        for (entry in HereticModelCatalog.Entries) {
+            val profile = entry.companionProfile
+            assertTrue(profile.profileRef.isNotBlank(), entry.handle)
+            assertTrue(profile.generation.productMaxOutputTokens > 0, entry.handle)
+            assertTrue(profile.generation.sampling.sourceRef.isNotBlank(), entry.handle)
+            assertTrue(profile.generation.sampling.temperature >= 0.0, entry.handle)
+            assertTrue(profile.generation.sampling.topP in 0.0..1.0, entry.handle)
+            assertTrue(profile.generation.sampling.topK >= 0, entry.handle)
+        }
+
+        val qwen27 = HereticCompanionProvider.Profiles.Qwen27B
+        assertEquals(1.0, qwen27.generation.sampling.temperature)
+        assertEquals(0.95, qwen27.generation.sampling.topP)
+        assertEquals(20, qwen27.generation.sampling.topK)
+        assertEquals(
+            HereticCompanionProvider.CapabilityStanding.QUALIFIED,
+            qwen27.capabilityStanding,
+        )
+
+        val qwen9 = HereticCompanionProvider.Profiles.Qwen9B
+        assertEquals(0.6, qwen9.generation.sampling.temperature)
+        assertEquals(0.95, qwen9.generation.sampling.topP)
+        assertEquals(20, qwen9.generation.sampling.topK)
+
+        val qwen4 = HereticCompanionProvider.Profiles.Qwen4B
+        assertEquals(0.6, qwen4.generation.sampling.temperature)
+        assertEquals(0.95, qwen4.generation.sampling.topP)
+        assertEquals(20, qwen4.generation.sampling.topK)
+
+        val oss = HereticCompanionProvider.Profiles.GptOss20B
+        assertEquals(1.0, oss.generation.sampling.temperature)
+        assertEquals(1.0, oss.generation.sampling.topP)
+        assertEquals(0, oss.generation.sampling.topK)
+        assertEquals(HereticCompanionProvider.ReasoningEffort.MEDIUM, oss.generation.reasoningEffort)
+    }
+
+    @Test
     fun aMacStartsWithTheLargestModelThatFitsItsMemory() {
-        assertEquals(HereticModelCatalog.Certified27B, HereticModelCatalog.recommendedFor(64 * gib))
-        assertEquals(HereticModelCatalog.Certified27B, HereticModelCatalog.recommendedFor(32 * gib))
-        assertEquals(HereticModelCatalog.Candidate9B, HereticModelCatalog.recommendedFor(24 * gib))
-        assertEquals(HereticModelCatalog.Candidate9B, HereticModelCatalog.recommendedFor(16 * gib))
-        assertEquals(HereticModelCatalog.Candidate4B, HereticModelCatalog.recommendedFor(8 * gib))
-        assertEquals(HereticModelCatalog.Candidate4B, HereticModelCatalog.recommendedFor(4 * gib))
+        assertEquals(HereticModelCatalog.Models.Qwen27B, HereticModelCatalog.recommendedFor(64 * gib))
+        assertEquals(HereticModelCatalog.Models.Qwen27B, HereticModelCatalog.recommendedFor(32 * gib))
+        assertEquals(HereticModelCatalog.Models.Qwen9B, HereticModelCatalog.recommendedFor(24 * gib))
+        assertEquals(HereticModelCatalog.Models.Qwen9B, HereticModelCatalog.recommendedFor(16 * gib))
+        assertEquals(HereticModelCatalog.Models.Qwen4B, HereticModelCatalog.recommendedFor(8 * gib))
+        assertEquals(HereticModelCatalog.Models.Qwen4B, HereticModelCatalog.recommendedFor(4 * gib))
         assertEquals(HereticModelCatalog.Default, HereticModelCatalog.recommendedFor(null))
-        assertFalse(HereticModelCatalog.fits(HereticModelCatalog.Candidate4B, null))
+        assertFalse(HereticModelCatalog.fits(HereticModelCatalog.Models.Qwen4B, null))
     }
 
     @Test
@@ -71,13 +149,13 @@ class HereticModelCatalogTest {
                 "home.vexlife.test",
                 "companion-lineage.vexlife.test",
             )
-        val nine = HereticModelConfiguration.pending(scope, HereticModelCatalog.Candidate9B)
-        assertEquals(HereticModelCatalog.Candidate9B.modelRef, nine.modelRef)
-        assertEquals(HereticModelCatalog.Candidate9B, HereticModelConfiguration.selected(nine))
+        val nine = HereticModelConfiguration.pending(scope, HereticModelCatalog.Models.Qwen9B)
+        assertEquals(HereticModelCatalog.Models.Qwen9B.modelRef, nine.modelRef)
+        assertEquals(HereticModelCatalog.Models.Qwen9B, HereticModelConfiguration.selected(nine))
         assertNotNull(HereticModelConfiguration.validate(nine, scope))
         // The single-model-era value shape still reads as the certified default.
         assertEquals(
-            HereticModelCatalog.Certified27B,
+            HereticModelCatalog.Models.Qwen27B,
             HereticModelConfiguration.selected(HereticModelConfiguration.pending(scope)),
         )
         runCatching {

@@ -143,7 +143,11 @@ object VexLifeProdSetupModel {
         val home = productHome.normalize()
         val location = VexLifeProdHomeFiles.observeLocation(home)
         if (location !is VexLifeProdHomeFiles.Location.Existing) return false
-        FileHereticModelConfigurationStore(home).selectModel(location.home.manifest, model)
+        FileHereticModelConfigurationStore(home)
+            .selectModelFromExplicitHumanChoice(
+                location.home.manifest,
+                model,
+            )
         return true
     }
 

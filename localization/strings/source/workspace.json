@@ -384,16 +384,6 @@
       "workspace.settings"
     ]
   },
-  "workspace.label.model-chosen-next-start": {
-    "strings": {
-      "en": {
-        "text": "Vex switches to this model the next time VexLife starts"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
   "workspace.label.model-chosen": {
     "strings": {
       "en": {
@@ -458,16 +448,6 @@
       "workspace.settings"
     ]
   },
-  "workspace.status.model-chosen-restart": {
-    "strings": {
-      "en": {
-        "text": "Chosen. Restart VexLife (open VexLife Setup and press Start) to switch to it."
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
   "workspace.status.model-removed": {
     "strings": {
       "en": {
@@ -501,7 +481,7 @@
   "workspace.status.models-switch-pending": {
     "strings": {
       "en": {
-        "text": "Vex switches to the chosen model the next time VexLife starts."
+        "text": "The selected model and the model serving Vex do not match yet."
       }
     },
     "surfaces": [
@@ -516,6 +496,91 @@
     },
     "surfaces": [
       "workspace.settings"
+    ]
+  },
+  "workspace.label.model-chosen-pending": {
+    "strings": {
+      "en": {
+        "text": "selected · becoming the serving model"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-switching": {
+    "strings": {
+      "en": {
+        "text": "switching"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-switch-requested": {
+    "strings": {
+      "en": {
+        "text": "Switch accepted. Preparing {model}."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-switch-waiting": {
+    "strings": {
+      "en": {
+        "text": "Waiting for the current Vex turn to finish before switching to {model}."
+      }
+    },
+    "surfaces": [
+      "workspace.settings",
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.model-switch-preparing": {
+    "strings": {
+      "en": {
+        "text": "Checking {model} and its local runtime."
+      }
+    },
+    "surfaces": [
+      "workspace.settings",
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.model-switch-runtime": {
+    "strings": {
+      "en": {
+        "text": "Switching the local model to {model}."
+      }
+    },
+    "surfaces": [
+      "workspace.settings",
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.model-switched": {
+    "strings": {
+      "en": {
+        "text": "Vex is now using {model}."
+      }
+    },
+    "surfaces": [
+      "workspace.settings",
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.model-switch-failed": {
+    "strings": {
+      "en": {
+        "text": "Could not switch to {model}: {reason}"
+      }
+    },
+    "surfaces": [
+      "workspace.settings",
+      "workspace.conversation"
     ]
   }
 }

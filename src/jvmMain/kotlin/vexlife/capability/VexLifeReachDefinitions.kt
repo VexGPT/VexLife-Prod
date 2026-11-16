@@ -110,11 +110,17 @@ internal object VexLifeReachDefinitions {
                                 "Fetch one public http(s) URL and return its readable text and links.",
                             arguments =
                                 listOf(
-                                    arg("url", "string", true, "An absolute http or https URL.")
+                                    arg("url", "string", true, "An absolute http or https URL."),
+                                    arg(
+                                        "offset",
+                                        "integer",
+                                        false,
+                                        "Character offset in the extracted readable text. Omit for the beginning; use nextOffset from a truncated result to continue the same page.",
+                                    ),
                                 ),
                             exampleArguments = """{"url":"https://example.com/"}""",
                             returns =
-                                "Final URL, status, title and the page text (bounded), with links.",
+                                "Final URL, status, title and one bounded readable-text slice with returnedStart/returnedEnd and nextOffset when more of the current page remains.",
                         ),
                         Action(
                             action = "search",

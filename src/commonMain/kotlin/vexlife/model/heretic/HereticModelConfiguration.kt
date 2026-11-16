@@ -161,7 +161,14 @@ object HereticModelConfiguration {
         )
     }
 
-    fun validate(
+    /**
+     * Scope/authority validation for convergence and explicit model replacement.
+     *
+     * A stale Product identity does not become current here. This proves only that the record
+     * belongs to this exact Home/Companion scope and carries no hidden fallback/download/start
+     * authority.
+     */
+    fun validateSelectionScope(
         value: Value,
         homeIdentity: BindingScope,
     ): Value {
@@ -183,28 +190,6 @@ object HereticModelConfiguration {
         ) {
             "Heretic model configuration Companion lineage drift"
         }
-        val identity = HereticModelCatalog.entry(value.modelRef)?.identity
-        require(
-            identity != null &&
-                value.modelProfileRef ==
-                identity.modelProfileRef &&
-                value.artifactRef ==
-                identity.artifactSetRef &&
-                value.artifactContentSetSha256 ==
-                identity.artifactContentSetSha256 &&
-                value.runtimeAdapterRef ==
-                identity.runtimeAdapterRef &&
-                value.runtimeClass ==
-                identity.runtimeClass &&
-                value.endpoint ==
-                identity.endpoint &&
-                value.requestModel ==
-                identity.requestModel &&
-                value.runtimeReceiptPath in
-                admittedRuntimeReceiptPaths,
-        ) {
-            "Heretic model configuration product identity drift"
-        }
         require(
             !value.automaticFallback &&
                 !value.automaticDownload &&
@@ -212,8 +197,54 @@ object HereticModelConfiguration {
         ) {
             "Heretic model configuration cannot grant fallback/download/activation authority"
         }
-
         return value
+    }
+
+    fun productIdentityCurrent(
+        value: Value,
+    ): Boolean {
+        val identity =
+            HereticModelCatalog.entry(
+                value.modelRef,
+            )
+                ?.identity
+                ?: return false
+
+        return value.modelProfileRef ==
+            identity.modelProfileRef &&
+            value.artifactRef ==
+            identity.artifactSetRef &&
+            value.artifactContentSetSha256 ==
+            identity.artifactContentSetSha256 &&
+            value.runtimeAdapterRef ==
+            identity.runtimeAdapterRef &&
+            value.runtimeClass ==
+            identity.runtimeClass &&
+            value.endpoint ==
+            identity.endpoint &&
+            value.requestModel ==
+            identity.requestModel &&
+            value.runtimeReceiptPath in
+            admittedRuntimeReceiptPaths
+    }
+
+    fun validate(
+        value: Value,
+        homeIdentity: BindingScope,
+    ): Value {
+        val scoped =
+            validateSelectionScope(
+                value = value,
+                homeIdentity = homeIdentity,
+            )
+        require(
+            productIdentityCurrent(
+                scoped,
+            ),
+        ) {
+            "Heretic model configuration product identity drift"
+        }
+        return scoped
     }
 
     fun isBound(

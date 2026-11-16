@@ -96,7 +96,7 @@ class VexLifeProdSetupModelTest {
             assertTrue(chosen.effectsPerformed)
             assertTrue(chosen.savedInHome)
             assertEquals(
-                HereticModelCatalog.Candidate9B,
+                HereticModelCatalog.Models.Qwen9B,
                 FileHereticModelConfigurationStore(home).selectedModel(fixture.manifest),
             )
             // Asked again with no window choice, the Home's choice wins over what fits the Mac.
