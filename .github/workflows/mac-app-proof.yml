@@ -37,6 +37,20 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      - name: Check executor-neutral release and Pages scripts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          bash -n tools/release/publish-mac-release.sh
+          bash -n tools/site/form-pages-site.sh
+          bash -n tools/site/publish-gh-pages.sh
+          bash tools/site/form-pages-site.sh "$RUNNER_TEMP/vexlife-pages-site"
+          test -f "$RUNNER_TEMP/vexlife-pages-site/index.html"
+          test -f "$RUNNER_TEMP/vexlife-pages-site/data/models.json"
+          test -f "$RUNNER_TEMP/vexlife-pages-site/data/releases.json"
+          test -f "$RUNNER_TEMP/vexlife-pages-site/.nojekyll"
+
       - name: Test
         run: ./gradlew --no-daemon jvmTest checkVexLifeStrings
 
