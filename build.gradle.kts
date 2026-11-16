@@ -415,6 +415,16 @@ val releaseContractSource =
         "packaging/private-service-image/release-contract.json",
     )
 
+val macApplicationReleaseContractSource =
+    layout.projectDirectory.file(
+        "packaging/macos-app/release-contract.json",
+    )
+
+val macApplicationVersionProperty =
+    providers.gradleProperty(
+        "vexlifeAppVersion",
+    )
+
 val visionRuntimeContractSource =
     layout.projectDirectory.file(
         "packaging/private-service-image/vision-runtime-contract.json",
@@ -519,6 +529,82 @@ val bootstrapTemplateSource =
             "bootstrapTemplateRelativePath",
         ),
     )
+
+val macApplicationReleaseContractText =
+    macApplicationReleaseContractSource
+        .asFile
+        .readText(
+            StandardCharsets.UTF_8,
+        )
+
+val macApplicationReleaseSchemaVersion =
+    requiredJsonString(
+        macApplicationReleaseContractText,
+        "schemaVersion",
+    )
+val macApplicationHumanName =
+    requiredJsonString(
+        macApplicationReleaseContractText,
+        "humanName",
+    )
+val macApplicationBundleIdentifier =
+    requiredJsonString(
+        macApplicationReleaseContractText,
+        "bundleIdentifier",
+    )
+val macApplicationPlatform =
+    requiredJsonString(
+        macApplicationReleaseContractText,
+        "platform",
+    )
+val macApplicationName =
+    requiredJsonString(
+        macApplicationReleaseContractText,
+        "applicationName",
+    )
+val macApplicationDiskImageName =
+    requiredJsonString(
+        macApplicationReleaseContractText,
+        "diskImageName",
+    )
+val macApplicationEmbeddedImageRelativePath =
+    requiredJsonString(
+        macApplicationReleaseContractText,
+        "embeddedImageRelativePath",
+    )
+val macApplicationEmbeddedSetupLauncherRelativePath =
+    requiredJsonString(
+        macApplicationReleaseContractText,
+        "embeddedSetupLauncherRelativePath",
+    )
+val macApplicationDistributionTrust =
+    requiredJsonString(
+        macApplicationReleaseContractText,
+        "distributionTrust",
+    )
+
+require(
+    macApplicationReleaseSchemaVersion ==
+        "vexlife-prod.macos-application-release/v1" &&
+        macApplicationHumanName ==
+        "VexLife" &&
+        macApplicationBundleIdentifier ==
+        "com.vexlife.prod" &&
+        macApplicationPlatform ==
+        "darwin-arm64" &&
+        macApplicationName ==
+        "VexLife.app" &&
+        macApplicationDiskImageName ==
+        "VexLife-macOS-AppleSilicon.dmg" &&
+        macApplicationEmbeddedImageRelativePath ==
+        "private-service-image" &&
+        macApplicationEmbeddedSetupLauncherRelativePath ==
+        "private-service-image/bin/vexlife-prod-setup" &&
+        macApplicationDistributionTrust ==
+        "AD_HOC_SIGNATURE_NO_DEVELOPER_ID_NO_NOTARIZATION"
+) {
+    "VexLife-Prod macOS application release contract identity drift"
+}
 
 val visionRuntimeContractText =
     visionRuntimeContractSource
@@ -2084,6 +2170,460 @@ tasks.register(
                 bootstrapSha256 +
                 "\t" +
                 currentBootstrapPath,
+        )
+    }
+}
+
+val macApplicationOutputRoot =
+    layout.buildDirectory.dir(
+        "vexlife-prod-mac-application",
+    )
+
+tasks.register(
+    "archiveVexLifeProdMacApplication",
+) {
+    group =
+        "distribution"
+    description =
+        "Form the source-bound ad-hoc-signed VexLife.app and unsigned Apple-silicon DMG."
+
+    dependsOn(
+        "archiveVexLifeProdServiceImage",
+    )
+
+    inputs.file(
+        serviceImageSourceIdentityFile,
+    )
+    inputs.dir(
+        serviceImageOutputRoot,
+    )
+    inputs.file(
+        setupWindowSource,
+    )
+    inputs.file(
+        macApplicationReleaseContractSource,
+    )
+    inputs.property(
+        "vexlifeAppVersion",
+        macApplicationVersionProperty.orElse(
+            "0.0.0",
+        ),
+    )
+    outputs.dir(
+        macApplicationOutputRoot,
+    )
+    outputs.upToDateWhen {
+        false
+    }
+
+    doLast {
+        val sourceSha =
+            Files.readString(
+                serviceImageSourceIdentityFile
+                    .get()
+                    .asFile
+                    .toPath(),
+                StandardCharsets.UTF_8,
+            )
+                .trim()
+        require(
+            sourceSha.matches(
+                Regex(
+                    "[0-9a-f]{40}",
+                ),
+            ),
+        ) {
+            "macOS application requires one admitted exact source SHA"
+        }
+
+        val applicationVersion =
+            macApplicationVersionProperty
+                .orNull
+                ?.trim()
+                ?.takeIf {
+                    it.isNotEmpty()
+                }
+                ?: "0.0.0"
+        require(
+            applicationVersion.matches(
+                Regex(
+                    "[0-9]+\\.[0-9]+\\.[0-9]+",
+                ),
+            ),
+        ) {
+            "VexLife macOS application version must be major.minor.patch"
+        }
+
+        val repositoryRoot =
+            rootDir
+                .toPath()
+                .toAbsolutePath()
+                .normalize()
+        val buildVersion =
+            runExactCommand(
+                listOf(
+                    "git",
+                    "-C",
+                    repositoryRoot.toString(),
+                    "rev-list",
+                    "--count",
+                    sourceSha,
+                ),
+            )
+        require(
+            buildVersion.matches(
+                Regex(
+                    "[1-9][0-9]*",
+                ),
+            ),
+        ) {
+            "VexLife macOS application build version must be one positive Git revision count"
+        }
+
+        require(
+            System.getProperty(
+                "os.name",
+            ) ==
+                "Mac OS X" &&
+                System.getProperty(
+                    "os.arch",
+                ) in
+                    setOf(
+                        "aarch64",
+                        "arm64",
+                    ),
+        ) {
+            "VexLife macOS application must be formed on macOS arm64"
+        }
+
+        val imageRoot =
+            serviceImageOutputRoot
+                .get()
+                .asFile
+                .toPath()
+                .resolve(
+                    sourceSha,
+                )
+                .toAbsolutePath()
+                .normalize()
+        val imageManifest =
+            Files.readString(
+                imageRoot.resolve(
+                    "service-image.json",
+                ),
+                StandardCharsets.UTF_8,
+            )
+        require(
+            Regex(
+                "\\"sourceSha\\"\\s*:\\s*\\"" +
+                    sourceSha +
+                    "\\"",
+            )
+                .containsMatchIn(
+                    imageManifest,
+                ) &&
+                !Regex(
+                    "\\"releaseDisposition\\"\\s*:\\s*\\"LOCAL_ONLY_NO_RELEASE\\"",
+                )
+                    .containsMatchIn(
+                        imageManifest,
+                    ),
+        ) {
+            "public VexLife.app cannot embed a mismatched image or a local-only Vision runtime"
+        }
+
+        val outputRoot =
+            macApplicationOutputRoot
+                .get()
+                .asFile
+                .toPath()
+                .resolve(
+                    sourceSha,
+                )
+                .toAbsolutePath()
+                .normalize()
+        if (
+            Files.exists(
+                outputRoot,
+                LinkOption.NOFOLLOW_LINKS,
+            )
+        ) {
+            deleteTreeNoFollow(
+                outputRoot,
+            )
+        }
+        Files.createDirectories(
+            outputRoot,
+        )
+
+        val applicationBundle =
+            outputRoot.resolve(
+                macApplicationName,
+            )
+        runExactCommand(
+            listOf(
+                "/usr/bin/osacompile",
+                "-o",
+                applicationBundle.toString(),
+                setupWindowSource
+                    .asFile
+                    .toPath()
+                    .toString(),
+            ),
+        )
+
+        val resources =
+            applicationBundle.resolve(
+                "Contents/Resources",
+            )
+        val embeddedImage =
+            resources.resolve(
+                macApplicationEmbeddedImageRelativePath,
+            )
+        Files.createDirectories(
+            resources,
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/ditto",
+                imageRoot.toString(),
+                embeddedImage.toString(),
+            ),
+        )
+        Files.copy(
+            macApplicationReleaseContractSource
+                .asFile
+                .toPath(),
+            resources.resolve(
+                "vexlife-macos-application-release.json",
+            ),
+            StandardCopyOption.REPLACE_EXISTING,
+        )
+
+        val infoPlist =
+            applicationBundle.resolve(
+                "Contents/Info.plist",
+            )
+        require(
+            Files.isRegularFile(
+                infoPlist,
+                LinkOption.NOFOLLOW_LINKS,
+            ),
+        ) {
+            "VexLife.app is missing Info.plist"
+        }
+
+        runExactCommand(
+            listOf(
+                "/usr/bin/plutil",
+                "-replace",
+                "CFBundleIdentifier",
+                "-string",
+                macApplicationBundleIdentifier,
+                infoPlist.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/plutil",
+                "-replace",
+                "CFBundleShortVersionString",
+                "-string",
+                applicationVersion,
+                infoPlist.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/plutil",
+                "-replace",
+                "CFBundleVersion",
+                "-string",
+                buildVersion,
+                infoPlist.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/plutil",
+                "-insert",
+                "LSMultipleInstancesProhibited",
+                "-bool",
+                "YES",
+                infoPlist.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/plutil",
+                "-insert",
+                "VexLifeProdExpectedSourceSha",
+                "-string",
+                sourceSha,
+                infoPlist.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/plutil",
+                "-insert",
+                "VexLifeProdEmbeddedSetupLauncherRelativePath",
+                "-string",
+                macApplicationEmbeddedSetupLauncherRelativePath,
+                infoPlist.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/plutil",
+                "-insert",
+                "VexLifeProdDistributionTrust",
+                "-string",
+                macApplicationDistributionTrust,
+                infoPlist.toString(),
+            ),
+        )
+
+        // There is intentionally no Developer ID here. Ad-hoc signing restores the bundle seal after
+        // Product-owned metadata/resources are bound; it does not claim Apple identity or notarization.
+        runExactCommand(
+            listOf(
+                "/usr/bin/codesign",
+                "--force",
+                "--sign",
+                "-",
+                "--timestamp=none",
+                applicationBundle.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/codesign",
+                "--verify",
+                "--strict",
+                applicationBundle.toString(),
+            ),
+        )
+
+        val applicationPayloadSha256 =
+            payloadFingerprint(
+                applicationBundle,
+            )
+
+        val diskImageStage =
+            outputRoot.resolve(
+                "dmg-stage",
+            )
+        Files.createDirectories(
+            diskImageStage,
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/ditto",
+                applicationBundle.toString(),
+                diskImageStage
+                    .resolve(
+                        macApplicationName,
+                    )
+                    .toString(),
+            ),
+        )
+        Files.createSymbolicLink(
+            diskImageStage.resolve(
+                "Applications",
+            ),
+            Path.of(
+                "/Applications",
+            ),
+        )
+
+        val diskImage =
+            outputRoot.resolve(
+                macApplicationDiskImageName,
+            )
+        runExactCommand(
+            listOf(
+                "/usr/bin/hdiutil",
+                "create",
+                "-volname",
+                macApplicationHumanName,
+                "-srcfolder",
+                diskImageStage.toString(),
+                "-ov",
+                "-format",
+                "UDZO",
+                diskImage.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/hdiutil",
+                "verify",
+                diskImage.toString(),
+            ),
+        )
+        deleteTreeNoFollow(
+            diskImageStage,
+        )
+
+        val diskImageSha256 =
+            sha256(
+                diskImage,
+            )
+        val diskImageBytes =
+            Files.size(
+                diskImage,
+            )
+        Files.writeString(
+            outputRoot.resolve(
+                macApplicationDiskImageName +
+                    ".sha256",
+            ),
+            diskImageSha256 +
+                "  " +
+                macApplicationDiskImageName +
+                "\n",
+            StandardCharsets.UTF_8,
+        )
+
+        val receipt =
+            buildString {
+                appendLine("{")
+                appendLine("  \\"schemaVersion\\": \\"vexlife-prod.macos-application-archive-receipt/v1\\",")
+                appendLine("  \\"truthClass\\": \\"SOURCE_BOUND_OPEN_SOURCE_MAC_APPLICATION\\",")
+                appendLine("  \\"sourceSha\\": \\"" + sourceSha + "\\",")
+                appendLine("  \\"platform\\": \\"" + macApplicationPlatform + "\\",")
+                appendLine("  \\"bundleIdentifier\\": \\"" + macApplicationBundleIdentifier + "\\",")
+                appendLine("  \\"applicationVersion\\": \\"" + applicationVersion + "\\",")
+                appendLine("  \\"buildVersion\\": \\"" + buildVersion + "\\",")
+                appendLine("  \\"applicationName\\": \\"" + macApplicationName + "\\",")
+                appendLine("  \\"applicationPayloadSha256\\": \\"" + applicationPayloadSha256 + "\\",")
+                appendLine("  \\"diskImageName\\": \\"" + macApplicationDiskImageName + "\\",")
+                appendLine("  \\"diskImageSha256\\": \\"" + diskImageSha256 + "\\",")
+                appendLine("  \\"diskImageBytes\\": " + diskImageBytes + ",")
+                appendLine("  \\"distributionTrust\\": \\"" + macApplicationDistributionTrust + "\\",")
+                appendLine("  \\"notarized\\": false")
+                appendLine("}")
+            }
+        Files.writeString(
+            outputRoot.resolve(
+                "VexLife-macOS-AppleSilicon.receipt.json",
+            ),
+            receipt,
+            StandardCharsets.UTF_8,
+        )
+
+        println(
+            "VEXLIFE_PROD_MAC_APPLICATION\\t" +
+                sourceSha +
+                "\\t" +
+                applicationBundle +
+                "\\t" +
+                applicationPayloadSha256 +
+                "\\t" +
+                diskImage +
+                "\\t" +
+                diskImageSha256,
         )
     }
 }
