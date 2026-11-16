@@ -9,6 +9,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.home.VexLifeProdHome
+import vexlife.contract.VexContractJson
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -266,6 +267,178 @@ class FileHereticModelConfigurationStoreTest {
             parent.toFile().deleteRecursively()
         }
     }
+    @Test
+    fun explicitHumanChoiceMayReplaceStaleProductIdentityWithoutAcceptingItAsCurrent() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-model-choice-stale-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            val fixture =
+                CanonicalVexLifeHomeFixture.form(
+                    home,
+                )
+            val store =
+                FileHereticModelConfigurationStore(
+                    home,
+                )
+            store.selectHeretic(
+                fixture.manifest,
+            )
+            val current =
+                assertIs<FileHereticModelConfigurationStore.Snapshot.Heretic>(
+                    store.read(
+                        fixture.manifest,
+                    ),
+                )
+                    .value
+            val stale =
+                current.copy(
+                    modelProfileRef =
+                        "model-profile.vexlife-prod.experimental-stale.001",
+                )
+            Files.writeString(
+                home.resolve(
+                    VexLifeProdHome.ModelConfigurationRelativePath,
+                ),
+                VexContractJson.encode(
+                    stale,
+                ),
+            )
+
+            val failure =
+                assertFailsWith<IllegalArgumentException> {
+                    store.read(
+                        fixture.manifest,
+                    )
+                }
+            assertEquals(
+                "Heretic model configuration product identity drift",
+                failure.message,
+            )
+
+            val replacement =
+                store.selectModelFromExplicitHumanChoice(
+                    fixture.manifest,
+                    vexlife.model.heretic.HereticModelCatalog.Models.Qwen27B,
+                )
+
+            assertEquals(
+                "HERETIC_MODEL_REPLACED_STALE_IDENTITY_PENDING",
+                replacement.state,
+            )
+            assertTrue(
+                replacement.writePerformed,
+            )
+            assertEquals(
+                vexlife.model.heretic.HereticModelCatalog.Models.Qwen27B.modelRef,
+                replacement.value.modelRef,
+            )
+
+            val repaired =
+                assertIs<FileHereticModelConfigurationStore.Snapshot.Heretic>(
+                    store.read(
+                        fixture.manifest,
+                    ),
+                )
+            assertEquals(
+                vexlife.model.heretic.HereticModelCatalog.Models.Qwen27B.modelRef,
+                repaired.value.modelRef,
+            )
+            assertEquals(
+                HereticModelConfiguration.State.EstablishmentPending,
+                repaired.value.state,
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun explicitHumanChoiceStillRefusesAStaleRecordFromAnotherHomeScope() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-model-choice-foreign-scope-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        try {
+            val fixture =
+                CanonicalVexLifeHomeFixture.form(
+                    home,
+                )
+            val store =
+                FileHereticModelConfigurationStore(
+                    home,
+                )
+            store.selectHeretic(
+                fixture.manifest,
+            )
+            val current =
+                assertIs<FileHereticModelConfigurationStore.Snapshot.Heretic>(
+                    store.read(
+                        fixture.manifest,
+                    ),
+                )
+                    .value
+            val foreign =
+                current.copy(
+                    homeRef =
+                        "vex-home.device.vexlife.foreign",
+                    modelProfileRef =
+                        "model-profile.vexlife-prod.experimental-stale.001",
+                )
+            val path =
+                home.resolve(
+                    VexLifeProdHome.ModelConfigurationRelativePath,
+                )
+            Files.writeString(
+                path,
+                VexContractJson.encode(
+                    foreign,
+                ),
+            )
+            val before =
+                Files.readString(
+                    path,
+                )
+
+            val failure =
+                assertFailsWith<IllegalArgumentException> {
+                    store.selectModelFromExplicitHumanChoice(
+                        fixture.manifest,
+                        vexlife.model.heretic.HereticModelCatalog.Models.Qwen27B,
+                    )
+                }
+            assertEquals(
+                "Heretic model configuration Home identity drift",
+                failure.message,
+            )
+            assertEquals(
+                before,
+                Files.readString(
+                    path,
+                ),
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
 }
 
 // [VXG RealForever]
