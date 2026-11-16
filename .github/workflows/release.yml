@@ -1,17 +1,10 @@
-# Builds VexLife for the Mac from exact source. Pull requests prove the package without publishing;
-# main publishes the continuously updated build, and an explicit version cuts a stable release.
+# Builds and publishes VexLife for the Mac from main, and cuts stable versions when asked.
+# Candidate app/DMG formation is proved separately by mac-app-proof.yml with read-only permissions.
 # Process and meaning: docs/release/RELEASES.md.
 name: release
 on:
   push:
     branches: [main]
-  pull_request:
-    paths:
-      - 'build.gradle.kts'
-      - 'packaging/**'
-      - '.github/workflows/release.yml'
-      - 'docs/release/**'
-      - 'site/**'
   workflow_dispatch:
     inputs:
       version:
@@ -21,8 +14,8 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: release-${{ github.event_name }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: release-main
+  cancel-in-progress: false
 jobs:
   mac:
     runs-on: macos-latest
@@ -31,8 +24,6 @@ jobs:
       VERSION: ${{ inputs.version }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -43,16 +34,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            [ -z "$VERSION" ] || { echo "A pull-request proof cannot cut a stable version."; exit 1; }
-            echo "Proof-only candidate: $(git rev-parse HEAD)"
-          else
-            [ "$GITHUB_REF" = "refs/heads/main" ] || { echo "Releases are built from main only (got $GITHUB_REF)."; exit 1; }
-            if [ -n "$VERSION" ]; then
-              [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Version must look like 0.6.0 (got '$VERSION')."; exit 1; }
-              if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-                echo "v$VERSION already exists; versions are never rebuilt or moved."; exit 1
-              fi
+          [ "$GITHUB_REF" = "refs/heads/main" ] || { echo "Releases are built from main only (got $GITHUB_REF)."; exit 1; }
+          if [ -n "$VERSION" ]; then
+            [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Version must look like 0.6.0 (got '$VERSION')."; exit 1; }
+            if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+              echo "v$VERSION already exists; versions are never rebuilt or moved."; exit 1
             fi
           fi
           echo "Host: macOS $(sw_vers -productVersion) / $(uname -m)"
@@ -71,19 +57,7 @@ jobs:
           echo "Predecessor/bootstrap lineage:"
           ls -la "build/vexlife-prod-service-image/archives/$SHA"
 
-      - name: Retain the pull-request DMG proof
-        if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: vexlife-macos-arm64-${{ github.event.pull_request.head.sha }}
-          if-no-files-found: error
-          path: |
-            build/vexlife-prod-mac-application/*/VexLife-macOS-AppleSilicon.dmg
-            build/vexlife-prod-mac-application/*/VexLife-macOS-AppleSilicon.dmg.sha256
-            build/vexlife-prod-mac-application/*/VexLife-macOS-AppleSilicon.receipt.json
-
       - name: Publish the main build
-        if: ${{ github.event_name != 'pull_request' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -116,7 +90,7 @@ jobs:
           fi
 
       - name: Cut the stable version
-        if: ${{ github.event_name != 'pull_request' && inputs.version != '' }}
+        if: ${{ inputs.version != '' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
