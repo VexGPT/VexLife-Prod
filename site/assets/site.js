@@ -173,23 +173,77 @@
       next.append(text('p', 'After downloading', 'eyebrow'));
       var steps = document.createElement('ol');
       if (mac.kind === 'dmg') {
-        steps.append(text('li', 'Open the downloaded disk image and drag VexLife to Applications.'));
-        var securityStep = document.createElement('li');
-        securityStep.append(document.createTextNode('Open VexLife. This open-source build is not Apple-notarized, so macOS may show “VexLife Not Opened.” Choose Done, then open Privacy & Security. Scroll to Security and choose Open Anyway only if you trust this exact GitHub release and source commit. If the direct Settings button below does not open from your browser, use Apple menu → System Settings → Privacy & Security.'));
-        var securityActions = document.createElement('div');
-        securityActions.className = 'actions';
-        securityActions.style.marginTop = '12px';
-        var securityLink = text('a', 'Open Privacy & Security', 'btn btn-outline');
-        securityLink.href = 'x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension';
-        var appleHelp = text('a', 'Apple instructions', 'btn btn-outline');
+        next.className = 'mac-trust-flow';
+
+        var trustHead = document.createElement('div');
+        trustHead.className = 'mac-trust-head';
+        trustHead.append(text('p', 'First time on this Mac', 'eyebrow'));
+        trustHead.append(text('h4', 'macOS may block VexLife before VexLife can open.', 'mac-trust-title'));
+        trustHead.append(text('p', 'That approval happens before VexLife setup. You only need this path when macOS shows “VexLife Not Opened.”', 'mac-trust-copy'));
+        next.append(trustHead);
+
+        var quick = document.createElement('ol');
+        quick.className = 'mac-trust-steps';
+        quick.append(text('li', 'Download VexLife, drag it to Applications, then open VexLife once.'));
+        quick.append(text('li', 'If macOS blocks it, choose Done. The Security row below now becomes available for this exact app.'));
+        var allowStep = document.createElement('li');
+        allowStep.append(document.createTextNode('Choose '));
+        var allowLink = text('a', 'Allow VexLife on this Mac');
+        allowLink.href = 'x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension';
+        allowStep.append(allowLink, document.createTextNode(', then click Open Anyway in the “VexLife was blocked” row.'));
+        quick.append(allowStep);
+        next.append(quick);
+
+        var visuals = document.createElement('div');
+        visuals.className = 'mac-trust-visuals';
+
+        var blocked = document.createElement('article');
+        blocked.className = 'mac-trust-screen';
+        blocked.append(text('p', '01 · First launch', 'mac-trust-kicker'));
+        var blockedDialog = document.createElement('div');
+        blockedDialog.className = 'gatekeeper-dialog';
+        blockedDialog.append(text('strong', '“VexLife” Not Opened'));
+        blockedDialog.append(text('p', 'Apple could not verify “VexLife” is free of malware that may harm your Mac or compromise your privacy.'));
+        blockedDialog.append(text('span', 'Done', 'macos-button'));
+        blocked.append(blockedDialog);
+        blocked.append(text('p', 'Seeing this is the trigger. Click Done, then use the approval button above.', 'mac-trust-caption'));
+
+        var security = document.createElement('article');
+        security.className = 'mac-trust-screen mac-trust-screen-security';
+        security.append(text('p', '02 · Privacy & Security', 'mac-trust-kicker'));
+        var settings = document.createElement('div');
+        settings.className = 'security-mock';
+        settings.append(text('p', 'Security', 'security-heading'));
+        var securityRow = document.createElement('div');
+        securityRow.className = 'security-open-row';
+        securityRow.append(text('strong', '“VexLife” was blocked to protect your Mac.'));
+        securityRow.append(text('span', 'Open Anyway', 'macos-button macos-button-secondary'));
+        settings.append(securityRow);
+        settings.append(text('p', 'Apple could not verify “VexLife” is free of malware that may harm your Mac or compromise your privacy.', 'security-explainer'));
+        security.append(settings);
+        security.append(text('p', 'This is the row to look for. Open Anyway appears only after the blocked launch.', 'mac-trust-caption'));
+
+        visuals.append(blocked, security);
+        next.append(visuals);
+
+        var trustActions = document.createElement('div');
+        trustActions.className = 'actions mac-trust-actions';
+        var openSecurity = text('a', 'Allow VexLife on this Mac', 'btn btn-outline');
+        openSecurity.href = 'x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension';
+        var appleHelp = text('a', 'Apple instructions', 'trust-text-link');
         appleHelp.href = 'https://support.apple.com/102445';
         appleHelp.target = '_blank';
         appleHelp.rel = 'noopener noreferrer';
-        securityActions.append(securityLink, appleHelp);
-        securityStep.append(securityActions);
-        steps.append(securityStep);
-        steps.append(text('li', 'macOS asks you to confirm the exception. Choose Open only if you still trust this exact release. macOS may then separately ask whether to open “java”, the bundled runtime VexLife uses; the same trust decision applies.'));
-        steps.append(text('li', 'VexLife Setup then shows what it found before it changes anything.'));
+        trustActions.append(openSecurity, appleHelp);
+        next.append(trustActions);
+
+        var bridge = document.createElement('p');
+        bridge.className = 'mac-trust-bridge';
+        bridge.append(document.createTextNode('Once macOS allows VexLife to open, '));
+        var firstRun = text('a', 'continue to VexLife First run');
+        firstRun.href = '#walkthrough';
+        bridge.append(firstRun, document.createTextNode('.'));
+        next.append(bridge);
       } else {
         steps.append(text('li', 'Open Terminal (Applications → Utilities).'));
         var run = document.createElement('li');
