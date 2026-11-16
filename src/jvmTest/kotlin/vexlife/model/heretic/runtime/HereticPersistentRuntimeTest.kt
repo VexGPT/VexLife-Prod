@@ -734,6 +734,25 @@ class HereticPersistentRuntimeTest {
         )
 
     @Test
+    fun serverKeepsOnlyTheNewestWarmPromptCache() {
+        val args = HereticPersistentRuntime.serverArgs(binding())
+
+        val cacheFlag = args.indexOf("--prompt-cache-size")
+        assertTrue(cacheFlag >= 0)
+        assertEquals(
+            HereticPersistentRuntime.PromptCacheSequences.toString(),
+            args[cacheFlag + 1],
+        )
+        assertEquals(1, HereticPersistentRuntime.PromptCacheSequences)
+
+        // This first safety step is deliberately narrow. Do not silently claim active-KV or
+        // prefill tuning that has not yet been earned by one-cache lived stress evidence.
+        assertFalse("--prompt-cache-bytes" in args)
+        assertFalse("--kv-bits" in args)
+        assertFalse("--prefill-step-size" in args)
+    }
+
+    @Test
     fun aBindingNamesTheCatalogModelItsFilesAre() {
         val nine = bindingFor(vexlife.model.heretic.HereticModelCatalog.Candidate9B)
         assertEquals(vexlife.model.heretic.HereticModelCatalog.Candidate9B.modelRef, nine.model.modelRef)
