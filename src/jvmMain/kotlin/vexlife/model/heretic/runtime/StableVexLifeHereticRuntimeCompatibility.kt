@@ -445,15 +445,11 @@ object StableVexLifeHereticRuntimeCompatibility {
                 keepAlive = substrate.keepAlive,
                 pid = substrate.pid,
             )
-        require(
-            MacUserLaunchdProcess.receiptCurrent(
-                receipt = productEraReceipt,
-                host = launchdHost,
-                expectedPid = receipt.runtime.pid,
-            ),
-        ) {
-            "stable VexLife Heretic launchd substrate is not current enough for exact migration"
-        }
+        // The predecessor v1 receipt intentionally did not persist its environment map,
+        // so today's v2 plist byte-reconstruction cannot be required retroactively. Exact ownership
+        // was already re-proved above using the predecessor's own receipt contract, launchd
+        // coordinate/PID and exact process argv/process-group identity. Retire through the same
+        // launchd coordinate semantics the v1 owner used.
         val retired =
             MacUserLaunchdProcess.retire(
                 receipt = productEraReceipt,
