@@ -9,7 +9,8 @@
       "setup.window": "the native setup window's own chrome (language and Home choosers, progress panel, process failures)",
       "setup.progress": "progress lines written while an Effect runs",
       "setup.failure": "explanations of an Effect that did not complete",
-      "setup.notice": "the one-time notice after setup reaches a current VexLife"
+      "setup.notice": "the one-time notice after setup reaches a current VexLife",
+      "setup.model-choice": "the Product-resolved model-choice options displayed by the native Setup chooser"
     },
     "dataKeyOwners": {
       "entry": "VexLifeProdEntryFamily (state, control, step refs)",
@@ -6189,7 +6190,7 @@
       }
     },
     "surfaces": [
-      "setup.card"
+      "setup.model-choice"
     ]
   },
   "setup.status.model-recommended": {
@@ -6226,7 +6227,7 @@
       }
     },
     "surfaces": [
-      "setup.card"
+      "setup.model-choice"
     ]
   },
   "setup.status.model-fits": {
@@ -6263,7 +6264,7 @@
       }
     },
     "surfaces": [
-      "setup.card"
+      "setup.model-choice"
     ]
   },
   "setup.status.model-needs-memory": {
@@ -6300,7 +6301,7 @@
       }
     },
     "surfaces": [
-      "setup.card"
+      "setup.model-choice"
     ]
   },
   "setup.label.found-chosen-model": {
@@ -6374,7 +6375,7 @@
       }
     },
     "surfaces": [
-      "setup.window"
+      "setup.model-choice"
     ]
   },
   "setup.status.model-reach-ready": {
@@ -6411,7 +6412,7 @@
       }
     },
     "surfaces": [
-      "setup.window"
+      "setup.model-choice"
     ]
   },
   "setup.status.model-reach-held": {
@@ -6448,7 +6449,7 @@
       }
     },
     "surfaces": [
-      "setup.window"
+      "setup.model-choice"
     ]
   }
 }
