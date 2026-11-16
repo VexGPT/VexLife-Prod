@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "vextreme.vexlocalbridge-task-manifest/v1",
+  "artifactClass": "EXECUTABLE_RELAY",
+  "taskRef": "task.vexlocalbridge.vexlife-prod.model-selection-convergence-lived.011",
+  "attemptRef": "attempt.vexlocalbridge.vexlife-prod.model-selection-convergence-lived.a011",
+  "packageRef": "package.vexlocalbridge.vexlife-prod.model-selection-convergence-lived.a011",
+  "requestRef": "request.vexlocalbridge.vexlife-prod.model-selection-convergence-lived.a011",
+  "correlationRef": "correlation.vexlocalbridge.model-selection-convergence-lived.a011",
+  "taskStorageKey": "vexlife-prod-model-selection-convergence-lived",
+  "attemptStorageKey": "attempt-a011",
+  "requestingRoleRef": "Operations[VexLife-Prod]",
+  "requestingInstanceRef": "instance.operations.vexlife-prod.model-selection-convergence-lived",
+  "parentOperationsRef": "github.pull.vexlife-prod.204",
+  "returnRouteRef": "github.pull.vexlife-prod.204",
+  "hostProfileRef": "macos-victor",
+  "repositoryExecutionProfileRefOrNull": "profile.repository.vextreme-sdk.macos-v1",
+  "repositoryRefOrNull": "VexGPT/VexLife-Prod",
+  "baseRefOrNull": "f3dd731732dd894d00bf0f5f6c5d8a8204b8e313",
+  "headRefOrNull": "c50a431a0b7ec30f19760a328d4213df6094781d",
+  "treeRefOrNull": "314767916173605c76d61c4a1f05f79bbc5d542f",
+  "branchRefOrNull": "VXG-111626-model-selection-convergence-a001",
+  "claimRefOrNull": "github.pull.vexlife-prod.204",
+  "exactPathRefs": [],
+  "authorityBinding": {
+    "authoritySchemaRef": "vextreme.effect-transaction/v1",
+    "authorityEnvelopePath": "authority/effect.json",
+    "authorityEnvelopeSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "semanticAdmissionRef": "github.pull.vexlife-prod.204",
+    "transactionRef": "transaction.vexlife-prod.model-selection-convergence-lived.a011",
+    "transactionVersion": 1,
+    "allowedEffectRefs": [
+      "effect.vexrelay.execute"
+    ],
+    "heldEffectRefs": [
+      "effect.vexlife-prod.source-mutation",
+      "effect.vexlife-prod.product-runtime",
+      "effect.vexlife-prod.home-mutation",
+      "effect.vexlife-prod.merge"
+    ]
+  },
+  "payload": {
+    "payloadClass": "VEXRELAY_TASK_ARCHIVE",
+    "payloadRuntime": "NATIVE_VEXRELAY",
+    "payloadPath": "payload/inner-vexrelay.zip",
+    "payloadSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "typedArgv": [],
+    "immutableInputs": [
+      {
+        "path": "inputs/vexrelay-binding.json",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    ]
+  },
+  "executionStateAtFormation": "TASK_PREPARED",
+  "singleUseNonce": "nonce-vlb-vexlife-prod-model-selection-convergence-lived-a011-20261116",
+  "stopConditions": [
+    "stop.on.identity.drift",
+    "stop.on.first.substantive.failure"
+  ],
+  "archiveDigestBinding": "FILENAME_SHA256"
+}
