@@ -1,24 +1,10 @@
 # Read-only candidate proof for the Mac application artifact.
-# Publishing remains owned by release.yml on main.
+# Billing-aware default: manual only. VexRelay/local or direct-host execution may prove
+# the same source-owned packaging without consuming hosted macOS Actions minutes.
+# Publishing remains owned by the source-owned release process on main.
 name: mac-app-proof
 on:
-  push:
-    branches-ignore: [main]
-    paths:
-      - 'build.gradle.kts'
-      - 'packaging/**'
-      - '.github/workflows/mac-app-proof.yml'
-      - '.github/workflows/release.yml'
-      - 'docs/release/**'
-      - 'site/assets/site.js'
-  pull_request:
-    paths:
-      - 'build.gradle.kts'
-      - 'packaging/**'
-      - '.github/workflows/mac-app-proof.yml'
-      - '.github/workflows/release.yml'
-      - 'docs/release/**'
-      - 'site/assets/site.js'
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:
@@ -71,6 +57,8 @@ jobs:
           trap '/usr/bin/hdiutil detach "$MOUNT" >/dev/null 2>&1 || true' EXIT
           /usr/bin/plutil -extract CFBundleIconFile raw -o - "$MOUNT/VexLife.app/Contents/Info.plist" | grep -Fx 'VexLife.icns'
           test -s "$MOUNT/VexLife.app/Contents/Resources/VexLife.icns"
+          test -s "$MOUNT/.VolumeIcon.icns"
+          /usr/bin/xattr -p com.apple.FinderInfo "$MOUNT" >/dev/null
           /usr/bin/hdiutil detach "$MOUNT"
           trap - EXIT
           /usr/bin/plutil -extract distributionTrust raw -o -             packaging/macos-app/release-contract.json |             grep -Fx 'AD_HOC_SIGNATURE_NO_DEVELOPER_ID_NO_NOTARIZATION'
