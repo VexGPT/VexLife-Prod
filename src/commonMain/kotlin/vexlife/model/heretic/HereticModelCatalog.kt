@@ -423,131 +423,150 @@ object HereticModelCatalog {
      * Setup, Settings, artifact delivery/materialization and runtime selection consume [Entries];
      * they do not need model-specific branches merely because another model is offered.
      */
+private val Qwen27BDefinition =
+        Entry(
+            identity = HereticProductIdentity.Current,
+            handle = "heretic-27b",
+            humanLabel = HereticProductIdentity.HumanModelLabel,
+            providerRepository = "donedynamics/Qwen3.8-27B-heretic-MLX-4bit",
+            providerRevision = "808b82a2bd04b2bac362b5d0b7a1197aeea59e57",
+            members = HereticArtifactCatalog.Members,
+            modelRootRelativePath = "models/heretic/qwen3.8-27b-mlx4",
+            recommendedMemoryBytes = 32 * HereticModelCatalog.GiB,
+            companionProfile = HereticCompanionProvider.Profiles.Qwen27B,
+            standing = Standing.CERTIFIED,
+        )
+
+    /** Same Qwen3.8 Heretic family, 9B at 5-bit: about 6.7 GB of weights. */
+    private val Qwen9BDefinition =
+        Entry(
+            identity =
+                HereticModelCatalog.providerPublished(
+                    modelRef = "model.vexlife-prod.heretic.qwen3.8-9b.mlx5.5901a94ba7c7",
+                    modelBundleRef =
+                        "model-bundle.vexlife.heretic.qwen3.8-9b.mlx5.5901a94ba7c7.001",
+                    modelProfileRef =
+                        "model-profile.vexlife-prod.qwen38-9b-heretic-mlx5.candidate.20261114A",
+                    artifactSetRef = "artifact.vexlife-prod.qwen3.8-9b-heretic-mlx-5bit.8a3eec7d",
+                    contentSetSha256 =
+                        "5901a94ba7c70a1bbf4d4d46a15e76d1f29e148921bf2d5a95098a918859318d",
+                    providerRevision = "8a3eec7d4b298cc5100a191bbb870d2fb7446bb5",
+                    custodyRef =
+                        "resolution.vexlife-prod.artifact-pin.qwen38-9b-heretic-mlx5.20261114A",
+                ),
+            handle = "heretic-9b",
+            humanLabel = "Heretic 9B (5-bit, MLX)",
+            providerRepository = "Foresee/Qwen3.8-9B-heretic-uncensored-5bit-MLX",
+            providerRevision = "8a3eec7d4b298cc5100a191bbb870d2fb7446bb5",
+            members = HereticModelCatalog.NineBMembers,
+            modelRootRelativePath = "models/heretic/qwen3.8-9b-mlx5",
+            recommendedMemoryBytes = 16 * HereticModelCatalog.GiB,
+            companionProfile = HereticCompanionProvider.Profiles.Qwen9B,
+            standing = Standing.CANDIDATE,
+        )
+
+    /**
+     * Smallest offered: a 4B distilled from Qwen3.8 on a Qwen3.5 base, Heretic + abliterated,
+     * 4-bit: about 3 GB of weights, for 8-16 GB Macs. A different lineage than 27B/9B, said
+     * plainly.
+     */
+    private val Qwen4BDefinition =
+        Entry(
+            identity =
+                HereticModelCatalog.providerPublished(
+                    modelRef = "model.vexlife-prod.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20",
+                    modelBundleRef =
+                        "model-bundle.vexlife.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20.001",
+                    modelProfileRef =
+                        "model-profile.vexlife-prod.qwen38-4b-distill-heretic-mlx4.candidate.20261114A",
+                    artifactSetRef =
+                        "artifact.vexlife-prod.qwen3.8-4b-distill-heretic-mlx-4bit.f47bef77",
+                    contentSetSha256 =
+                        "d2f8f4028f2030f994c6182a8c52cc429cab0d5b635dfa2801218ba736b89aea",
+                    providerRevision = "f47bef776bcd49b552219c14c4da949c8b49e336",
+                    custodyRef =
+                        "resolution.vexlife-prod.artifact-pin.qwen38-4b-distill-heretic-mlx4.20261114A",
+                ),
+            handle = "heretic-4b",
+            humanLabel = "Heretic 4B Distill (4-bit, MLX)",
+            providerRepository = "yachen4ever/Qwen3.8-4B-Distill-Heretic-Abliterated-MLX-4bit",
+            providerRevision = "f47bef776bcd49b552219c14c4da949c8b49e336",
+            members = HereticModelCatalog.FourBMembers,
+            modelRootRelativePath = "models/heretic/qwen3.8-4b-distill-mlx4",
+            recommendedMemoryBytes = 8 * HereticModelCatalog.GiB,
+            companionProfile = HereticCompanionProvider.Profiles.Qwen4B,
+            standing = Standing.CANDIDATE,
+        )
+
+    /**
+     * OpenAI gpt-oss-20b decensored by p-e-w with Heretic's Arbitrary-Rank Ablation (ARA v3; card:
+     * KL divergence 0.0554, refusals 3/100), converted to MLX (MXFP4 experts, 8-bit attention) with
+     * mlx-lm 0.29.1. A mixture of experts: 21B parameters, about 3.6B active per token, so it
+     * answers quickly for its size. Harmony response format; not started by default.
+     */
+    private val GptOss20BDefinition =
+        Entry(
+            identity =
+                HereticModelCatalog.providerPublished(
+                    modelRef = "model.vexlife-prod.heretic.gpt-oss-20b-ara-v3.mlx-mxfp4.10c6bad646aa",
+                    modelBundleRef =
+                        "model-bundle.vexlife.heretic.gpt-oss-20b-ara-v3.mlx-mxfp4.10c6bad646aa.001",
+                    modelProfileRef =
+                        "model-profile.vexlife-prod.gpt-oss-20b-heretic-ara-v3-mlx.candidate.20261115A",
+                    artifactSetRef =
+                        "artifact.vexlife-prod.gpt-oss-20b-heretic-ara-v3-mlx.227eba2d",
+                    contentSetSha256 =
+                        "10c6bad646aa379476f3d8c1c595b77ce618d7e106665cfcefd06ad12935bf75",
+                    providerRevision = "227eba2dcf295c662074309446929c4a5226d587",
+                    custodyRef =
+                        "resolution.vexlife-prod.artifact-pin.gpt-oss-20b-heretic-ara-v3-mlx.20261115A",
+                ),
+            handle = "gpt-oss-20b",
+            humanLabel = "Heretic gpt-oss 20B (MXFP4, MLX)",
+            providerRepository = "D8A/gpt-oss-20b-heretic-ara-v3-mlx-8Bit",
+            providerRevision = "227eba2dcf295c662074309446929c4a5226d587",
+            members = HereticModelCatalog.GptOss20BMembers,
+            modelRootRelativePath = "models/heretic/gpt-oss-20b-ara-v3-mlx",
+            recommendedMemoryBytes = 24 * HereticModelCatalog.GiB,
+            companionProfile = HereticCompanionProvider.Profiles.GptOss20B,
+            standing = Standing.CANDIDATE,
+            autoRecommended = false,
+        )
+
+    /**
+     * Stable parent-bound model positions for Setup, Settings, tests and future source readers.
+     *
+     * The actual [Entry] instances are constructed by the outer catalog before this nested scope is
+     * read. That preserves `HereticModelCatalog.Models.<Model>` without creating a JVM
+     * outer/nested initialization cycle.
+     */
     object Models {
-        val Qwen27B =
-            Entry(
-                identity = HereticProductIdentity.Current,
-                handle = "heretic-27b",
-                humanLabel = HereticProductIdentity.HumanModelLabel,
-                providerRepository = "donedynamics/Qwen3.8-27B-heretic-MLX-4bit",
-                providerRevision = "808b82a2bd04b2bac362b5d0b7a1197aeea59e57",
-                members = HereticArtifactCatalog.Members,
-                modelRootRelativePath = "models/heretic/qwen3.8-27b-mlx4",
-                recommendedMemoryBytes = 32 * HereticModelCatalog.GiB,
-                companionProfile = HereticCompanionProvider.Profiles.Qwen27B,
-                standing = Standing.CERTIFIED,
-            )
+        val Qwen27B: Entry
+            get() = Qwen27BDefinition
 
-        /** Same Qwen3.8 Heretic family, 9B at 5-bit: about 6.7 GB of weights. */
-        val Qwen9B =
-            Entry(
-                identity =
-                    HereticModelCatalog.providerPublished(
-                        modelRef = "model.vexlife-prod.heretic.qwen3.8-9b.mlx5.5901a94ba7c7",
-                        modelBundleRef =
-                            "model-bundle.vexlife.heretic.qwen3.8-9b.mlx5.5901a94ba7c7.001",
-                        modelProfileRef =
-                            "model-profile.vexlife-prod.qwen38-9b-heretic-mlx5.candidate.20261114A",
-                        artifactSetRef = "artifact.vexlife-prod.qwen3.8-9b-heretic-mlx-5bit.8a3eec7d",
-                        contentSetSha256 =
-                            "5901a94ba7c70a1bbf4d4d46a15e76d1f29e148921bf2d5a95098a918859318d",
-                        providerRevision = "8a3eec7d4b298cc5100a191bbb870d2fb7446bb5",
-                        custodyRef =
-                            "resolution.vexlife-prod.artifact-pin.qwen38-9b-heretic-mlx5.20261114A",
-                    ),
-                handle = "heretic-9b",
-                humanLabel = "Heretic 9B (5-bit, MLX)",
-                providerRepository = "Foresee/Qwen3.8-9B-heretic-uncensored-5bit-MLX",
-                providerRevision = "8a3eec7d4b298cc5100a191bbb870d2fb7446bb5",
-                members = HereticModelCatalog.NineBMembers,
-                modelRootRelativePath = "models/heretic/qwen3.8-9b-mlx5",
-                recommendedMemoryBytes = 16 * HereticModelCatalog.GiB,
-                companionProfile = HereticCompanionProvider.Profiles.Qwen9B,
-                standing = Standing.CANDIDATE,
-            )
+        val Qwen9B: Entry
+            get() = Qwen9BDefinition
 
-        /**
-         * Smallest offered: a 4B distilled from Qwen3.8 on a Qwen3.5 base, Heretic + abliterated,
-         * 4-bit: about 3 GB of weights, for 8-16 GB Macs. A different lineage than 27B/9B, said
-         * plainly.
-         */
-        val Qwen4B =
-            Entry(
-                identity =
-                    HereticModelCatalog.providerPublished(
-                        modelRef = "model.vexlife-prod.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20",
-                        modelBundleRef =
-                            "model-bundle.vexlife.heretic.qwen3.8-4b-distill.mlx4.d2f8f4028f20.001",
-                        modelProfileRef =
-                            "model-profile.vexlife-prod.qwen38-4b-distill-heretic-mlx4.candidate.20261114A",
-                        artifactSetRef =
-                            "artifact.vexlife-prod.qwen3.8-4b-distill-heretic-mlx-4bit.f47bef77",
-                        contentSetSha256 =
-                            "d2f8f4028f2030f994c6182a8c52cc429cab0d5b635dfa2801218ba736b89aea",
-                        providerRevision = "f47bef776bcd49b552219c14c4da949c8b49e336",
-                        custodyRef =
-                            "resolution.vexlife-prod.artifact-pin.qwen38-4b-distill-heretic-mlx4.20261114A",
-                    ),
-                handle = "heretic-4b",
-                humanLabel = "Heretic 4B Distill (4-bit, MLX)",
-                providerRepository = "yachen4ever/Qwen3.8-4B-Distill-Heretic-Abliterated-MLX-4bit",
-                providerRevision = "f47bef776bcd49b552219c14c4da949c8b49e336",
-                members = HereticModelCatalog.FourBMembers,
-                modelRootRelativePath = "models/heretic/qwen3.8-4b-distill-mlx4",
-                recommendedMemoryBytes = 8 * HereticModelCatalog.GiB,
-                companionProfile = HereticCompanionProvider.Profiles.Qwen4B,
-                standing = Standing.CANDIDATE,
-            )
+        val Qwen4B: Entry
+            get() = Qwen4BDefinition
 
-        /**
-         * OpenAI gpt-oss-20b decensored by p-e-w with Heretic's Arbitrary-Rank Ablation (ARA v3; card:
-         * KL divergence 0.0554, refusals 3/100), converted to MLX (MXFP4 experts, 8-bit attention) with
-         * mlx-lm 0.29.1. A mixture of experts: 21B parameters, about 3.6B active per token, so it
-         * answers quickly for its size. Harmony response format; not started by default.
-         */
-        val GptOss20B =
-            Entry(
-                identity =
-                    HereticModelCatalog.providerPublished(
-                        modelRef = "model.vexlife-prod.heretic.gpt-oss-20b-ara-v3.mlx-mxfp4.10c6bad646aa",
-                        modelBundleRef =
-                            "model-bundle.vexlife.heretic.gpt-oss-20b-ara-v3.mlx-mxfp4.10c6bad646aa.001",
-                        modelProfileRef =
-                            "model-profile.vexlife-prod.gpt-oss-20b-heretic-ara-v3-mlx.candidate.20261115A",
-                        artifactSetRef =
-                            "artifact.vexlife-prod.gpt-oss-20b-heretic-ara-v3-mlx.227eba2d",
-                        contentSetSha256 =
-                            "10c6bad646aa379476f3d8c1c595b77ce618d7e106665cfcefd06ad12935bf75",
-                        providerRevision = "227eba2dcf295c662074309446929c4a5226d587",
-                        custodyRef =
-                            "resolution.vexlife-prod.artifact-pin.gpt-oss-20b-heretic-ara-v3-mlx.20261115A",
-                    ),
-                handle = "gpt-oss-20b",
-                humanLabel = "Heretic gpt-oss 20B (MXFP4, MLX)",
-                providerRepository = "D8A/gpt-oss-20b-heretic-ara-v3-mlx-8Bit",
-                providerRevision = "227eba2dcf295c662074309446929c4a5226d587",
-                members = HereticModelCatalog.GptOss20BMembers,
-                modelRootRelativePath = "models/heretic/gpt-oss-20b-ara-v3-mlx",
-                recommendedMemoryBytes = 24 * HereticModelCatalog.GiB,
-                companionProfile = HereticCompanionProvider.Profiles.GptOss20B,
-                standing = Standing.CANDIDATE,
-                autoRecommended = false,
-            )
+        val GptOss20B: Entry
+            get() = GptOss20BDefinition
     }
 
     /** Offered models, by the memory each wants, largest first. */
     val Entries: List<Entry> =
         listOf(
-            Models.Qwen27B,
-            Models.GptOss20B,
-            Models.Qwen9B,
-            Models.Qwen4B,
+            Qwen27BDefinition,
+            GptOss20BDefinition,
+            Qwen9BDefinition,
+            Qwen4BDefinition,
         )
 
     /**
      * What a Home without a choice gets: the certified model, unchanged from before the catalog.
      */
-    val Default: Entry = Models.Qwen27B
+    val Default: Entry = Qwen27BDefinition
 
     fun entry(modelRef: String): Entry? = Entries.firstOrNull { it.modelRef == modelRef }
 
