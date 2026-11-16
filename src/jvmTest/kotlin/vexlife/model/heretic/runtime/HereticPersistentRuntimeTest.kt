@@ -789,7 +789,7 @@ class HereticPersistentRuntimeTest {
             )
 
         assertEquals(
-            "STARTED_NEW_EXACT_MLX_RUNTIME",
+            "SWITCHED_MODEL_AND_STARTED_NEW_EXACT_MLX_RUNTIME",
             result.disposition,
         )
         assertTrue(trace.indexOf("RETIRE_Qualified") < trace.indexOf("SPAWN"))
