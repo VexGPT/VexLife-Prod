@@ -432,7 +432,7 @@ svg { display: block; }
 }
 .bubble {
   grid-area: bubble; position: relative;
-  max-width: min(92%, 640px); padding: 10px 14px 11px;
+  max-width: 96%; padding: 10px 14px 11px;
   border-radius: 12px; border: 1px solid;
   overflow-wrap: anywhere;
 }
@@ -509,13 +509,13 @@ svg { display: block; }
 .process-action[data-state="RETURNED"] .process-action-mark { color: var(--ready); }
 .process-action:not([data-state="ACTIVE"]):not([data-state="RETURNED"]) .process-action-mark { color: var(--down); }
 .reasoning {
-  max-width: min(92%, 640px); max-height: 220px; overflow-y: auto; margin-top: 7px;
+  max-width: 96%; max-height: 220px; overflow-y: auto; margin-top: 7px;
   overflow-anchor: none; scrollbar-gutter: stable;
   padding: 10px 12px; border: 1px solid var(--rule-strong); border-radius: 8px;
   background: var(--raised); color: var(--ink-2);
   font-size: var(--step--1); line-height: 1.5; white-space: pre-wrap;
 }
-.process-history .reasoning { margin-top: 0; max-width: min(96%, 680px); }
+.process-history .reasoning { margin-top: 0; max-width: 98%; }
 .message.waiting[data-has-content="false"] .bubble { display: none; }
 .message.waiting[data-has-content="true"] .bubble { opacity: 0.92; }
 .live-reasoning { margin-left: 0; }
@@ -743,15 +743,34 @@ a.outline-button { display: inline-flex; align-items: center; justify-content: c
   }
   .brand-name { display: none; }
   .utilities { grid-column: 1 / -1; justify-self: stretch; padding: 0; background: none; border: 0; overflow-x: auto; }
+
+  /* The authored Browser↔Companion relationship remains one Seam. Narrow presentation
+     reorients only its renderer manifestation: the same allocation/collapse state becomes
+     top/bottom instead of left/right. */
   .frame, .frame[data-collapsed] {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 34vh 0 minmax(0, 1fr);
+    grid-template-rows: minmax(0, var(--before)) 12px minmax(0, 1fr);
   }
-  .seam { display: none; }
-  .frame .region-browser, .frame .region-companion { visibility: visible; grid-column: 1; }
+  .frame[data-collapsed="before"] { grid-template-rows: 0 12px minmax(0, 1fr); }
+  .frame[data-collapsed="after"] { grid-template-rows: minmax(0, 1fr) 12px 0; }
+
+  .frame .region-browser, .frame .region-companion { grid-column: 1; }
   .frame .region-browser { grid-row: 1; }
   .frame .region-companion { grid-row: 3; }
-  .region-browser { border-bottom: 1px solid var(--rule); }
+
+  .seam {
+    display: flex; flex-direction: row; grid-column: 1; grid-row: 2;
+    border-inline: 0; border-block: 1px solid var(--rule);
+    cursor: row-resize;
+  }
+  .frame.resizing { cursor: row-resize; }
+  /* Narrow/touch layouts cannot rely on hover to reveal the existing collapse affordances. */
+  .seam-collapse { width: 26px; height: 18px; opacity: 1; }
+  .seam-collapse-before svg,
+  .seam-collapse-after svg { transform: rotate(90deg); }
+  .seam-grip svg { transform: rotate(90deg) scale(0.8); }
+
+  .region-browser { border-bottom: 0; }
 }
 
 .message.waiting .speaker { display: none; }

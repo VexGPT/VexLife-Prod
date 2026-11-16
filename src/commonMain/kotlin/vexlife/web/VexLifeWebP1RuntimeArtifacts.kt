@@ -3117,18 +3117,51 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderComposer();
               };
 
+              // Browser + Companion keep one allocation/collapse relationship across responsive
+              // manifestations. Wide screens place the Seam left/right; narrow screens manifest the
+              // same relationship top/bottom. Responsive orientation is renderer-owned and does not
+              // create a second spatial state machine.
+              const NARROW_BROWSER_DEFAULT_SHARE = 0.34;
+              const narrowWorkspace = () => window.matchMedia('(max-width: 860px)').matches;
+              const currentSplitShare = (narrow = narrowWorkspace()) =>
+                state.allocation ??
+                (narrow ? NARROW_BROWSER_DEFAULT_SHARE : browser.authoredBrowserShare);
+
               const applySplit = () => {
-                const share = state.allocation ?? browser.authoredBrowserShare;
+                const narrow = narrowWorkspace();
+                // Preserve the lived narrow composition until the human explicitly resizes. Once an
+                // allocation is chosen, the same value carries across both renderer orientations.
+                const share = currentSplitShare(narrow);
+                const percent = Math.round(share * 100);
+                const browserCollapsed = state.collapsed === 'before';
+                const companionCollapsed = state.collapsed === 'after';
                 ui.frame.dataset.collapsed = state.collapsed ?? 'none';
                 ui.frame.style.setProperty('--before', (share * 100).toFixed(2) + '%');
-                ui.seam.setAttribute('aria-valuenow', String(Math.round(share * 100)));
-                ui.seam.setAttribute('aria-valuetext', 'Browser ' + Math.round(share * 100) + ' percent');
+                ui.seam.setAttribute('aria-orientation', narrow ? 'horizontal' : 'vertical');
+                ui.seam.setAttribute('aria-valuenow', String(percent));
+                ui.seam.setAttribute(
+                  'aria-valuetext',
+                  browserCollapsed
+                    ? 'Browser collapsed'
+                    : companionCollapsed
+                      ? 'Companion collapsed'
+                      : 'Browser ' + percent + ' percent ' + (narrow ? 'height' : 'width')
+                );
+                const browserAction = (browserCollapsed ? 'Show' : 'Hide') + ' browser';
+                const companionAction = (companionCollapsed ? 'Show' : 'Hide') + ' companion';
+                ui.collapseBefore.setAttribute('aria-label', browserAction);
+                ui.collapseBefore.title = browserAction;
+                ui.collapseAfter.setAttribute('aria-label', companionAction);
+                ui.collapseAfter.title = companionAction;
               };
 
-              const setSplitFromClientX = (clientX) => {
+              const setSplitFromPointer = (clientX, clientY) => {
                 const rect = ui.frame.getBoundingClientRect();
-                if (rect.width <= 0) return;
-                state.allocation = Math.min(0.85, Math.max(0.15, (clientX - rect.left) / rect.width));
+                const narrow = narrowWorkspace();
+                const span = narrow ? rect.height : rect.width;
+                if (span <= 0) return;
+                const position = narrow ? (clientY - rect.top) : (clientX - rect.left);
+                state.allocation = Math.min(0.85, Math.max(0.15, position / span));
                 state.collapsed = 'none';
                 applySplit();
               };
@@ -3470,7 +3503,7 @@ object VexLifeWebP1RuntimeArtifacts {
               });
               ui.seam.addEventListener('pointermove', (event) => {
                 if (!ui.seam.hasPointerCapture(event.pointerId)) return;
-                setSplitFromClientX(event.clientX);
+                setSplitFromPointer(event.clientX, event.clientY);
               });
               ui.seam.addEventListener('pointerup', (event) => {
                 if (ui.seam.hasPointerCapture(event.pointerId)) ui.seam.releasePointerCapture(event.pointerId);
@@ -3483,10 +3516,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 applySplit();
               });
               ui.seam.addEventListener('keydown', (event) => {
-                const current = state.allocation ?? browser.authoredBrowserShare;
-                if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                const narrow = narrowWorkspace();
+                const current = currentSplitShare(narrow);
+                const decrease = narrow ? 'ArrowUp' : 'ArrowLeft';
+                const increase = narrow ? 'ArrowDown' : 'ArrowRight';
+                if (event.key === decrease || event.key === increase) {
                   event.preventDefault();
-                  state.allocation = Math.min(0.85, Math.max(0.15, current + (event.key === 'ArrowLeft' ? -0.05 : 0.05)));
+                  state.allocation = Math.min(0.85, Math.max(0.15, current + (event.key === decrease ? -0.05 : 0.05)));
                   state.collapsed = 'none';
                   applySplit();
                 } else if (event.key === 'Home' || event.key === 'Enter') {
@@ -3496,6 +3532,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   applySplit();
                 }
               });
+              window.addEventListener('resize', applySplit);
 
               void loadWorkspaceStrings().catch(() => applyStaticText());
               ui.diagnosticsEnhanced?.addEventListener('click', () => {
