@@ -446,6 +446,9 @@ svg { display: block; }
   border-bottom-right-radius: 4px;
 }
 .message-you .bubble::after { right: 14px; }
+.failed-attempt-partial { white-space: pre-wrap; margin: 0 0 6px; }
+.failed-attempt-note { margin: 0 0 6px; color: var(--ink-3); font-size: var(--step--1); font-style: italic; }
+.failed-attempt-detail { margin: 0 0 6px; color: var(--ink-2); font-size: var(--step--1); }
 .message-vex .bubble {
   justify-self: start; background: var(--vex); border-color: var(--vex-rule);
   border-bottom-left-radius: 4px;

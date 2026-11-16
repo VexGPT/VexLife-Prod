@@ -1943,6 +1943,177 @@ class DirectCompanionTurnTest {
     }
 
     @Test
+    fun aStreamThatStopsKeepsTheAnswerThePersonAlreadyReadAndShowsItAgainAfterReload() {
+        val home = productHome()
+        val shown = StringBuilder()
+        val transport =
+            object : DirectCompanionConnection.StreamingTransport {
+                override fun post(
+                    call: DirectCompanionConnection.HttpCall,
+                ): DirectCompanionConnection.HttpResult = error("this turn streams")
+
+                override fun postStreaming(
+                    call: DirectCompanionConnection.HttpCall,
+                    onLine: (String) -> Unit,
+                ): DirectCompanionConnection.StreamingHttpResult {
+                    fun emit(field: String, delta: String) {
+                        onLine(
+                            """data: {"model":"default_model","choices":[{"delta":{"role":"assistant","__FIELD__":__DELTA__}}]}"""
+                                .replace("__FIELD__", field)
+                                .replace(
+                                    "__DELTA__",
+                                    kotlinx.serialization.json.JsonPrimitive(delta).toString(),
+                                )
+                        )
+                        onLine("")
+                    }
+                    emit("reasoning_content", "Weighing rounds against confidence.")
+                    emit("content", "Honestly, the four rounds were ")
+                    emit("content", "not the limit;\n| what | why |\n| confidence | it decides |")
+                    // The provider closes here without [DONE].
+                    return DirectCompanionConnection.StreamingHttpResult(
+                        status = 200,
+                        responseBodySha256 = "0".repeat(64),
+                    )
+                }
+            }
+
+        try {
+            val error =
+                assertFailsWith<DirectCompanionTurn.TurnException> {
+                    DirectCompanionTurn.performWithHooks(
+                        setup = setup(home),
+                        intent =
+                            DirectCompanionTurn.Intent(
+                                idempotencyKey = "send.self-development.incomplete.001",
+                                content = "Was the four-round limit too tight?",
+                            ),
+                        hooks =
+                            DirectCompanionTurn.Hooks(
+                                transport = transport,
+                                progressObserver =
+                                    DirectCompanionTurn.ProgressObserver {
+                                        if (it.phase == DirectCompanionTurn.ProgressPhase.Responding)
+                                            shown.append(it.delta)
+                                    },
+                                now = { Instant.parse("2026-11-15T16:00:00Z") },
+                            ),
+                    )
+                }
+            assertEquals("CONNECTION_EndpointResponseInvalid", error.failureCode)
+            val receipt = assertNotNull(error.failureReceipt)
+            assertEquals(
+                "Honestly, the four rounds were not the limit;\n| what | why |\n| confidence | it decides |",
+                shown.toString(),
+                "the person was shown the answer as it streamed",
+            )
+
+            // A reload reads only durable state: the message, the answer so far and why it stopped.
+            val observed =
+                DirectIncompleteTurn.observe(home, DirectConversationStore(home).current()).single()
+            assertEquals(receipt.turnRef, observed.turnRef)
+            assertEquals("Was the four-round limit too tight?", observed.requestContent)
+            assertEquals(shown.toString(), observed.partialAnswer)
+            assertFalse(observed.partialAnswerTruncated)
+            assertFalse(observed.answerRecordedNotCommitted)
+            assertEquals("CONNECTION_EndpointResponseInvalid", observed.failureCode)
+            assertEquals("FORM_NEW_SEND_ATTEMPT_AND_RETRY", observed.exactNextSafeRoute)
+
+            // Kept beside the failure receipt; reasoning stays session-scoped as for completed turns.
+            val kept =
+                Files.readString(
+                    home.resolve("recovery/direct-companion/${receipt.turnRef}.incomplete-answer.json")
+                )
+            assertTrue(kept.contains("Honestly, the four rounds"))
+            assertFalse(kept.contains("Weighing rounds"))
+
+            // The kept answer is evidence, not a completed exchange: the canonical chain is unchanged.
+            assertNull(DirectConversationStore(home).current().head)
+        } finally {
+            home.parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun aTurnThatCompletesCanonicallyIsNeverKeptOrShownAsIncomplete() {
+        val home = productHome()
+        val turnRefs = mutableListOf<String>()
+        try {
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup(home),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey = "send.self-development.completed.001",
+                            content = "Give me the long feedback.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport =
+                                DirectCompanionConnection.Transport {
+                                    DirectCompanionConnection.HttpResult(
+                                        status = 200,
+                                        body =
+                                            """{"choices":[{"message":{"role":"assistant","content":"Here is the long feedback."}}]}""",
+                                    )
+                                },
+                            progressObserver =
+                                DirectCompanionTurn.ProgressObserver { progress ->
+                                    progress.turnRef?.let { turnRefs += it }
+                                },
+                        ),
+                )
+            assertEquals(listOf(result.turnRef), turnRefs, "the first phase names the turn")
+            assertTrue(
+                DirectIncompleteTurn.observe(home, DirectConversationStore(home).current()).isEmpty(),
+                "a canonical completion is not an incomplete turn",
+            )
+            assertFalse(
+                Files.exists(
+                    home.resolve("recovery/direct-companion/${result.turnRef}.incomplete-answer.json")
+                )
+            )
+            assertEquals(
+                result.turnRef,
+                DirectConversationStore(home).current().canonicalEvents.last().turnRef,
+            )
+        } finally {
+            home.parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun aTurnThatStopsBeforeAnyAnswerStillShowsThePersonsMessageAfterReload() {
+        val home = productHome()
+        try {
+            assertFailsWith<DirectCompanionTurn.TurnException> {
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup(home),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey = "send.self-development.incomplete.002",
+                            content = "Are you there?",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport =
+                                DirectCompanionConnection.Transport {
+                                    DirectCompanionConnection.HttpResult(status = 503, body = "")
+                                }
+                        ),
+                )
+            }
+            val observed =
+                DirectIncompleteTurn.observe(home, DirectConversationStore(home).current()).single()
+            assertEquals("Are you there?", observed.requestContent)
+            assertNull(observed.partialAnswer)
+            assertEquals("CONNECTION_EndpointHttpError", observed.failureCode)
+        } finally {
+            home.parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
     fun providerFailurePreservesRequestSuppressesSameAttemptAndAllowsNewAttempt() {
         val home =
             productHome()

@@ -343,6 +343,23 @@ class VexLifeWebP1RuntimeArtifactsTest {
             "session-only failed-attempt evidence must remain bounded",
         )
         assertTrue(
+            bundle.javascript.contains("state.conversation?.incompleteTurns ?? []") &&
+                bundle.javascript.contains("partialContent: turn.partialAnswer ?? session?.partialContent ?? ''") &&
+                bundle.javascript.contains("turnRef: failure.turnRef ?? state.liveTurnRef ?? null,") &&
+                bundle.javascript.contains("if (attempt.turnRef && keptTurnRefs.has(String(attempt.turnRef))) continue;"),
+            "a turn that did not finish is shown from Product-kept state after reload, once, with the session's process laid over it",
+        )
+        assertTrue(
+            bundle.javascript.contains("kept.requestContent"),
+            "Try Again works for a kept turn after reload",
+        )
+        assertTrue(
+            bundle.javascript.contains("if (attempt.turnRef && completedTurnRefs.has(String(attempt.turnRef))) continue;") &&
+                bundle.javascript.contains("turnRef: failure.turnRef ?? state.liveTurnRef ?? null,") &&
+                bundle.javascript.contains("confirmed: Boolean(failure.turnRef),"),
+            "a turn that completed canonically is never shown as stopped, even after this page lost its stream",
+        )
+        assertTrue(
             bundle.javascript.contains(
                 "className = 'thought-toggle failed-attempt-retry'",
             ) &&

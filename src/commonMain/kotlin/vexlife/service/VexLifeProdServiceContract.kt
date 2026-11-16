@@ -384,6 +384,27 @@ object VexLifeProdServiceContract {
         val messages: List<ConversationMessage>,
         val abandonedAttemptCount: Int,
         val effectsPerformed: Boolean,
+        /**
+         * Every human turn that did not finish, oldest first: the person's message, what came
+         * through of Vex's answer, and why it stopped. Kept outside the canonical chain; shown in
+         * place so a reload never hides it.
+         */
+        val incompleteTurns: List<IncompleteTurn> = emptyList(),
+    )
+
+    @Serializable
+    data class IncompleteTurn(
+        val turnRef: String,
+        val requestEventRef: String,
+        val requestContent: String,
+        val requestSequence: Long,
+        val requestFormedAt: String,
+        val partialAnswer: String?,
+        val partialAnswerTruncated: Boolean,
+        val answerRecordedNotCommitted: Boolean,
+        val failureCode: String?,
+        val exactNextSafeRoute: String?,
+        val stoppedAt: String?,
     )
 
     @Serializable
@@ -1368,6 +1389,8 @@ object VexLifeProdServiceContract {
             null,
         val error: ErrorResponse? =
             null,
+        /** The turn these events belong to, named on its first PHASE event. */
+        val turnRef: String? = null,
         /** For REACH: the request Vex made (state null) or its returned state. */
         val reach: CapabilityUse? =
             null,
@@ -1396,6 +1419,8 @@ object VexLifeProdServiceContract {
         val message: String,
         val retrySameSendAttemptAllowed: Boolean?,
         val exactNextSafeRoute: String?,
+        /** For a failed Send: the turn it formed, so its kept incomplete answer can be matched. */
+        val turnRef: String? = null,
     )
 
     private fun requireSha256(
