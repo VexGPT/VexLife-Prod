@@ -547,6 +547,114 @@ class VexLifeProdLocalSetupTest {
     }
 
     @Test
+    fun priorStableLaunchContractMigratesBeforeCurrentProductRuntimeStart() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-local-setup-migrate-stable-runtime-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+        val trace =
+            mutableListOf<String>()
+
+        try {
+            CanonicalVexLifeHomeFixture.form(
+                home,
+            )
+            val stableEvidence =
+                HereticModelConfiguration.QualifiedRuntimeEvidence(
+                    runtimeReceiptRef = "receipt.vexlife.heretic-persistent-runtime.prior.test",
+                    runtimeState = HereticRuntimeState.Qualified,
+                    modelRef = HereticProductIdentity.ModelRef,
+                    modelProfileRef = HereticProductIdentity.ModelProfileRef,
+                    artifactRef = HereticProductIdentity.ArtifactSetRef,
+                    artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
+                    runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
+                    runtimeClass = HereticProductIdentity.RuntimeClass,
+                    endpoint = HereticProductIdentity.Endpoint,
+                    requestModel = HereticProductIdentity.RequestModel,
+                    qualification = HereticRuntimeQualification.qualified(),
+                )
+            val base =
+                hooks(
+                    trace,
+                )
+            val result =
+                VexLifeProdLocalSetup.establishAt(
+                    productHome = home,
+                    allowAcquisition = true,
+                    hooks =
+                        base.copy(
+                            observeStableRuntime = { _, _ ->
+                                trace += "STABLE_RUNTIME"
+                                StableVexLifeHereticRuntimeCompatibility.Observation(
+                                    evidence = stableEvidence,
+                                    receiptRelativePath =
+                                        HereticProductIdentity.StableRuntimeReceiptRelativePath,
+                                    pid = 4242L,
+                                    launchContract =
+                                        HereticPersistentRuntime.ServerLaunchContract
+                                            .PRE_PROMPT_CACHE_LIMIT,
+                                )
+                            },
+                            retireStableRuntime = { _, _, observation ->
+                                trace += "RETIRE_STABLE_RUNTIME"
+                                StableVexLifeHereticRuntimeCompatibility.Retirement(
+                                    state = "RETIRED_STABLE_PRIOR_LAUNCH_CONTRACT",
+                                    launchContract = observation.launchContract,
+                                    exactOwnershipVerified = true,
+                                    verifiedNotLive = true,
+                                    receiptDeleted = true,
+                                )
+                            },
+                            startRuntime = { _, binding, _ ->
+                                trace += "RUNTIME"
+                                runtimeResult(
+                                    binding,
+                                )
+                            },
+                        ),
+                )
+
+            assertTrue(
+                result.runtimeDisposition.startsWith(
+                    "MIGRATED_STABLE_PRIOR_LAUNCH_CONTRACT_TO_",
+                ),
+            )
+            assertTrue(
+                trace.indexOf(
+                    "RETIRE_STABLE_RUNTIME",
+                ) <
+                    trace.indexOf(
+                        "RUNTIME",
+                    ),
+            )
+            assertEquals(
+                HereticProductIdentity.ProductRuntimeReceiptRelativePath,
+                assertIs<FileHereticModelConfigurationStore.Snapshot.Heretic>(
+                        FileHereticModelConfigurationStore(home).read(
+                            requireNotNull(
+                                VexLifeProdHomeFiles.observeExisting(
+                                    home,
+                                ),
+                            )
+                                .manifest,
+                        ),
+                    )
+                    .value
+                    .runtimeReceiptPath,
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun currentStableVexLifeRuntimeIsBorrowedWithoutProductRuntimeStart() {
         val parent =
             Files.createTempDirectory("vexlife-prod-local-setup-borrow-stable-runtime-")

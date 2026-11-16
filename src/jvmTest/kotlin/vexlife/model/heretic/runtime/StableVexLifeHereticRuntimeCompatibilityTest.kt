@@ -152,6 +152,10 @@ class StableVexLifeHereticRuntimeCompatibilityTest {
     private fun substrate(
         pid: Long,
         binding: HereticPersistentRuntime.Binding,
+        args: List<String> =
+            HereticPersistentRuntime.serverArgs(
+                binding,
+            ),
     ): StableVexLifeHereticRuntimeCompatibility.StableMacUserLaunchdProcessReceipt =
         StableVexLifeHereticRuntimeCompatibility.StableMacUserLaunchdProcessReceipt(
             schemaVersion =
@@ -162,10 +166,7 @@ class StableVexLifeHereticRuntimeCompatibilityTest {
             domainTarget = "gui/501",
             plistPath = "/tmp/vexlife-runtime-compat/stable.plist",
             programPath = binding.pythonPath,
-            programArguments =
-                HereticPersistentRuntime.serverArgs(
-                    binding,
-                ),
+            programArguments = args,
             workingDirectory = binding.pythonEnvironmentRoot,
             stdoutPath = "/tmp/vexlife-runtime-compat/stable.out.log",
             stderrPath = "/tmp/vexlife-runtime-compat/stable.err.log",
@@ -268,6 +269,117 @@ class StableVexLifeHereticRuntimeCompatibilityTest {
             listOf(
                 "ENVIRONMENT_CURRENT",
                 "PROCESS_ALIVE",
+            ),
+            platform.trace,
+        )
+    }
+
+    @Test
+    fun exactPriorStableLaunchContractIsRecognizedInsteadOfRejectedAsInvalidIdentity() {
+        val binding =
+            binding()
+        val pid =
+            4242L
+        val priorArgs =
+            HereticPersistentRuntime.serverArgs(
+                binding = binding,
+                contract =
+                    HereticPersistentRuntime.ServerLaunchContract.PRE_PROMPT_CACHE_LIMIT,
+            )
+        val platform =
+            Platform(
+                expectedPid = pid,
+                expectedProcessGroupId = pid,
+            )
+        val receipt =
+            StableVexLifeHereticRuntimeCompatibility.Receipt(
+                schemaVersion = StableVexLifeHereticRuntimeCompatibility.ReceiptSchema,
+                receiptRef = "receipt.vexlife.heretic-persistent-runtime.prior-contract-test",
+                state = StableVexLifeHereticRuntimeCompatibility.QualifiedState,
+                formedAt = "2026-11-05T19:44:00-08:00",
+                authorityRef = StableVexLifeHereticRuntimeCompatibility.StableAuthorityRef,
+                modelRef = HereticProductIdentity.ModelRef,
+                modelProfileRef = HereticProductIdentity.ModelProfileRef,
+                artifactRef = HereticProductIdentity.ArtifactSetRef,
+                artifactCustodyEvidenceRef = HereticProductIdentity.ArtifactCustodyEvidenceRef,
+                artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
+                runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
+                runtimeClass = HereticProductIdentity.RuntimeClass,
+                transportClass = HereticProductIdentity.TransportClass,
+                hostExecutionProfileRef =
+                    StableVexLifeHereticRuntimeCompatibility.StableHostExecutionProfileRef,
+                pythonVersion = HereticProductIdentity.PythonVersion,
+                mlxLmVersion = HereticProductIdentity.MlxLmVersion,
+                trainerSourceCommit = HereticProductIdentity.TrainerSourceCommit,
+                modelPath = binding.modelPath,
+                pythonPath = binding.pythonPath,
+                pythonEnvironmentRoot = binding.pythonEnvironmentRoot,
+                endpoint = HereticProductIdentity.Endpoint,
+                requestModel = HereticProductIdentity.RequestModel,
+                sourceIdentity =
+                    StableVexLifeHereticRuntimeCompatibility.SourceIdentity(
+                        repository =
+                            StableVexLifeHereticRuntimeCompatibility.StableOwnerRepository,
+                        modulePath =
+                            StableVexLifeHereticRuntimeCompatibility.StableOwnerModulePath,
+                        moduleSha256 = "a".repeat(64),
+                    ),
+                runtime =
+                    StableVexLifeHereticRuntimeCompatibility.RuntimeProcess(
+                        pid = pid,
+                        processGroupId = pid,
+                        exactOwnedDetachedGroup = true,
+                        args = priorArgs,
+                        processSubstrate =
+                            substrate(
+                                pid = pid,
+                                binding = binding,
+                                args = priorArgs,
+                            ),
+                    ),
+                effects = HereticRuntimeEffectBoundary.QualifiedRuntime,
+                qualification = HereticRuntimeQualification.qualified(),
+            )
+        val launchdHost =
+            object : MacUserLaunchdProcess.Host {
+                override val uid =
+                    501L
+
+                override fun launchctl(
+                    args: List<String>,
+                ): MacUserLaunchdProcess.CommandResult =
+                    MacUserLaunchdProcess.CommandResult(
+                        status = 0,
+                        stdout = "pid = $pid",
+                        stderr = "",
+                    )
+
+                override fun processAlive(
+                    pid: Long,
+                ): Boolean =
+                    pid ==
+                        4242L
+            }
+
+        val observed =
+            requireNotNull(
+                StableVexLifeHereticRuntimeCompatibility.observeReceipt(
+                    receipt = receipt,
+                    binding = binding,
+                    platform = platform,
+                    launchdHost = launchdHost,
+                ),
+            )
+
+        assertEquals(
+            HereticPersistentRuntime.ServerLaunchContract.PRE_PROMPT_CACHE_LIMIT,
+            observed.launchContract,
+        )
+        assertEquals(
+            listOf(
+                "ENVIRONMENT_CURRENT",
+                "PROCESS_ALIVE",
+                "PROCESS_IDENTITY",
             ),
             platform.trace,
         )
