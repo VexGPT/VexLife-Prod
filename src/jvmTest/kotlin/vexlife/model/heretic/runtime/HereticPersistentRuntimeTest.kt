@@ -735,9 +735,9 @@ class HereticPersistentRuntimeTest {
 
     @Test
     fun aBindingNamesTheCatalogModelItsFilesAre() {
-        val nine = bindingFor(vexlife.model.heretic.HereticModelCatalog.Candidate9B)
-        assertEquals(vexlife.model.heretic.HereticModelCatalog.Candidate9B.modelRef, nine.model.modelRef)
-        assertEquals(vexlife.model.heretic.HereticModelCatalog.Certified27B.modelRef, binding().model.modelRef)
+        val nine = bindingFor(vexlife.model.heretic.HereticModelCatalog.Models.Qwen9B)
+        assertEquals(vexlife.model.heretic.HereticModelCatalog.Models.Qwen9B.modelRef, nine.model.modelRef)
+        assertEquals(vexlife.model.heretic.HereticModelCatalog.Models.Qwen27B.modelRef, binding().model.modelRef)
         assertTrue(HereticPersistentRuntime.serverArgs(nine).contains("/tmp/vexlife-prod-test/heretic-9b"))
     }
 
@@ -747,19 +747,19 @@ class HereticPersistentRuntimeTest {
         val prior = receipt(binding())
         val store = Store(prior, trace)
         val platform = Platform(trace).also { it.alivePids += prior.runtime.pid }
-        val nine = bindingFor(vexlife.model.heretic.HereticModelCatalog.Candidate9B)
+        val nine = bindingFor(vexlife.model.heretic.HereticModelCatalog.Models.Qwen9B)
 
         val result = HereticPersistentRuntime.startOrReuse(nine, store, platform)
 
         assertEquals("SWITCHED_MODEL_AND_STARTED_NEW_EXACT_MLX_RUNTIME", result.disposition)
         assertTrue(trace.indexOf("RETIRE_Qualified") < trace.indexOf("SPAWN"))
-        assertEquals(vexlife.model.heretic.HereticModelCatalog.Candidate9B.modelRef, result.receipt.modelRef)
+        assertEquals(vexlife.model.heretic.HereticModelCatalog.Models.Qwen9B.modelRef, result.receipt.modelRef)
         assertEquals(
-            vexlife.model.heretic.HereticModelCatalog.Candidate9B.identity.artifactContentSetSha256,
+            vexlife.model.heretic.HereticModelCatalog.Models.Qwen9B.identity.artifactContentSetSha256,
             result.receipt.artifactContentSetSha256,
         )
         assertEquals(
-            vexlife.model.heretic.HereticModelCatalog.Candidate9B.modelRef,
+            vexlife.model.heretic.HereticModelCatalog.Models.Qwen9B.modelRef,
             HereticPersistentRuntime.configurationEvidence(nine, result.receipt).modelRef,
         )
     }
@@ -772,7 +772,7 @@ class HereticPersistentRuntimeTest {
         val platform = Platform(trace).also { it.alivePids += foreign.runtime.pid }
 
         assertFailsWith<IllegalStateException> {
-            HereticPersistentRuntime.startOrReuse(bindingFor(vexlife.model.heretic.HereticModelCatalog.Candidate4B), store, platform)
+            HereticPersistentRuntime.startOrReuse(bindingFor(vexlife.model.heretic.HereticModelCatalog.Models.Qwen4B), store, platform)
         }
         assertEquals(0, platform.retireCalls)
         assertFalse(trace.contains("SPAWN"))
