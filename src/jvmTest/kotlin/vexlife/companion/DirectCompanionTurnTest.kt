@@ -1975,6 +1975,20 @@ class DirectCompanionTurnTest {
 
             // Clear thread memory: nothing is deleted, and the next turn carries none of it.
             val thread = vexlife.conversation.VexLifeThreadContext(home)
+
+            // Only a genuinely active Conversation writer is projected as THREAD_BUSY.
+            val busy =
+                DirectConversationStore(home).withWriterLease(
+                    instanceRef = "instance.vexlife.test.thread-context.busy",
+                ) {
+                    assertFailsWith<vexlife.conversation.VexLifeThreadContext.Refused> {
+                        thread.control(
+                            vexlife.conversation.VexLifeThreadContextFamily.ControlClear,
+                        )
+                    }
+                }
+            assertEquals("THREAD_BUSY", busy.code)
+
             assertEquals(
                 vexlife.conversation.VexLifeThreadContextFamily.StateWhole,
                 thread.projection().state,

@@ -34,11 +34,13 @@ class VexLifeThreadContext(
 
     private fun store() = DirectConversationStore(productHome)
 
-    fun state(): VexLifeThreadContextFamily.State {
-        val store = store()
-        val head = store.current().head ?: return VexLifeThreadContextFamily.Empty
+    private fun state(
+        snapshot: DirectConversationStore.Snapshot,
+        horizon: DirectConversationStore.ContextHorizon?,
+    ): VexLifeThreadContextFamily.State {
+        val head = snapshot.head ?: return VexLifeThreadContextFamily.Empty
         val exchanges = (head.sequence + 1) / 2
-        val horizon = store.contextHorizon() ?: return VexLifeThreadContextFamily.Whole(exchanges)
+        if (horizon == null) return VexLifeThreadContextFamily.Whole(exchanges)
         return VexLifeThreadContextFamily.FromHorizon(
             exchangesBehind = horizon.exchangesBehind,
             exchangesSince = exchanges - horizon.exchangesBehind,
@@ -46,9 +48,20 @@ class VexLifeThreadContext(
         )
     }
 
-    fun projection(effectsPerformed: Boolean = false): Projection {
-        val state = state()
-        val horizon = store().contextHorizon()
+    fun state(): VexLifeThreadContextFamily.State {
+        val store = store()
+        return state(
+            snapshot = store.current(),
+            horizon = store.contextHorizon(),
+        )
+    }
+
+    private fun projection(
+        snapshot: DirectConversationStore.Snapshot,
+        horizon: DirectConversationStore.ContextHorizon?,
+        effectsPerformed: Boolean,
+    ): Projection {
+        val state = state(snapshot, horizon)
         return Projection(
             schemaVersion = Schema,
             state = state.stateRef,
@@ -66,19 +79,37 @@ class VexLifeThreadContext(
         )
     }
 
+    fun projection(effectsPerformed: Boolean = false): Projection {
+        val store = store()
+        return projection(
+            snapshot = store.current(),
+            horizon = store.contextHorizon(),
+            effectsPerformed = effectsPerformed,
+        )
+    }
+
     fun control(controlRef: String): Projection {
         val control =
             VexLifeThreadContextFamily.controlForRef(controlRef)
                 ?: throw Refused("UNKNOWN_CONTROL", "unknown thread context control")
-        val act =
-            VexLifeThreadContextFamily.resolve(state(), control)
-                ?: throw Refused(
-                    "CONTROL_NOT_LAWFUL",
-                    "that control is not available in this state",
-                )
-        val effect = act.effect ?: return projection()
+        val store = store()
+
         try {
-            store().withWriterLease(instanceRef = InstanceRefPrefix + UUID.randomUUID()) {
+            return store.withWriterLease(instanceRef = InstanceRefPrefix + UUID.randomUUID()) {
+                // Resolve Control against exact current State while the Conversation writer boundary
+                // that makes that State stable is held.
+                val currentState =
+                    state(
+                        snapshot = current(),
+                        horizon = contextHorizon(),
+                    )
+                val act =
+                    VexLifeThreadContextFamily.resolve(currentState, control)
+                        ?: throw Refused(
+                            "CONTROL_NOT_LAWFUL",
+                            "that control is not available in this state",
+                        )
+                val effect = act.effect
                 when (effect) {
                     VexLifeThreadContextFamily.Effect.SetHorizon -> {
                         val horizon = setContextHorizon(clock())
@@ -98,18 +129,42 @@ class VexLifeThreadContext(
                             mapOf("removed" to removed.toString()),
                         )
                     }
+                    null -> Unit
                 }
+
+                projection(
+                    snapshot = current(),
+                    horizon = contextHorizon(),
+                    effectsPerformed = effect != null,
+                )
             }
         } catch (error: Refused) {
             throw error
         } catch (error: Exception) {
-            // The lease is held by a turn in flight (or its recovery): nothing changed.
-            throw Refused(
-                "THREAD_BUSY",
-                "Vex is in the middle of a turn; try again when it has answered",
-            )
+            // Only observed writer ownership becomes a thread-control refusal. Other failures keep
+            // their real identity instead of being mislabeled as "Vex is answering."
+            when (runCatching { store.threadWriterCurrentness() }.getOrNull()?.state) {
+                "ACTIVE" ->
+                    throw Refused(
+                        "THREAD_BUSY",
+                        "Vex is in the middle of a turn; try again when it has answered",
+                    )
+
+                "RECOVERY_REQUIRED" ->
+                    throw Refused(
+                        "THREAD_RECOVERY_REQUIRED",
+                        "the prior thread writer must be recovered before thread context can change",
+                    )
+
+                "BLOCKED" ->
+                    throw Refused(
+                        "THREAD_WRITER_UNVERIFIABLE",
+                        "thread writer ownership cannot be verified, so thread context was not changed",
+                    )
+
+                else -> throw error
+            }
         }
-        return projection(effectsPerformed = true)
     }
 
     companion object {
