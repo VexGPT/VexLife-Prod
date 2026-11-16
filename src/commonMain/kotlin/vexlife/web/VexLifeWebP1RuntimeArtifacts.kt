@@ -1446,7 +1446,10 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const completedThoughtNode = (message) => {
                 if (message.role !== 'vex') return null;
-                const key = String(message.messageRef ?? '');
+                // Durable Conversation responses use messageRef. Private responses intentionally do
+                // not become Conversation messages, so their existing eventRef is enough as a
+                // presentation-local key for the same ephemeral thought UI.
+                const key = String(message.messageRef ?? message.eventRef ?? '');
                 const entries = state.processEntriesByResponse.get(key) ?? [];
                 const reasoning = state.thoughtsVisible ? state.humanReasoningByResponse.get(key) : null;
                 const hasVisibleProcess =
@@ -2004,10 +2007,21 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.timeline.dataset.private = String(isPrivate());
                 if (isPrivate()) {
                   const exchanges = state.privateMode?.exchanges ?? [];
-                  const nodes = exchanges.flatMap((exchange, index) => [
-                    messageNode({ role: 'human', content: exchange.human, sequence: index * 2 + 1, eventRef: 'private.' + (index * 2 + 1) }),
-                    messageNode({ role: 'vex', content: exchange.vex, sequence: index * 2 + 2, eventRef: 'private.' + (index * 2 + 2) })
-                  ]);
+                  const nodes = exchanges.flatMap((exchange, index) => {
+                    const humanKey = 'private.' + (index * 2 + 1);
+                    const vexKey = 'private.' + (index * 2 + 2);
+                    const reasoning = String(exchange.sealedHumanReasoning ?? '').trim();
+                    if (reasoning) {
+                      state.humanReasoningByResponse.set(vexKey, reasoning);
+                    } else {
+                      state.humanReasoningByResponse.delete(vexKey);
+                      state.expandedThoughts.delete(vexKey);
+                    }
+                    return [
+                      messageNode({ role: 'human', content: exchange.human, sequence: index * 2 + 1, eventRef: humanKey }),
+                      messageNode({ role: 'vex', content: exchange.vex, sequence: index * 2 + 2, eventRef: vexKey })
+                    ];
+                  });
                   if (state.privatePending) {
                     nodes.push(messageNode({ role: 'human', content: state.privatePending, sequence: exchanges.length * 2 + 1, eventRef: 'private.pending' }));
                     nodes.push(waitingNode(exchanges.length * 2 + 2));
@@ -2027,6 +2041,12 @@ object VexLifeWebP1RuntimeArtifacts {
                   applyTimelineViewport();
                   markReading();
                   return;
+                }
+                for (const key of Array.from(state.humanReasoningByResponse.keys())) {
+                  if (!key.startsWith('private.')) continue;
+                  state.humanReasoningByResponse.delete(key);
+                  state.expandedThoughts.delete(key);
+                  state.reasoningViewports.delete('response.' + key);
                 }
                 const messages = state.conversation?.messages ?? [];
                 const nodes = messages.map(messageNode);

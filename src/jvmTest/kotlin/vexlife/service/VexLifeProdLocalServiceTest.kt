@@ -755,10 +755,15 @@ class VexLifeProdLocalServiceTest {
     fun privateModeKeepsNothingButTheIntervalAndTheAgreedNote() {
         val root = Files.createTempDirectory("vexlife-prod-service-private-").toAbsolutePath().resolve("VexLife-Prod")
         val calls = mutableListOf<List<vexlife.companion.CompanionProviderMessage>>()
+        val privateReasoning = "I **noticed** this only inside the private conversation."
         val completion =
             vexlife.continuity.VexLifePrivateConversation.Completion { messages ->
                 calls += messages
-                if (messages.first().content.startsWith("VEXLIFE_PRIVATE_NOTE/v1")) "Victor is nervous about Friday." else "I hear you."
+                if (messages.first().content.startsWith("VEXLIFE_PRIVATE_NOTE/v1")) {
+                    "Victor is nervous about Friday." to null
+                } else {
+                    "I hear you." to privateReasoning
+                }
             }
         val secret = "something only for this private conversation"
 
@@ -803,6 +808,7 @@ class VexLifeProdLocalServiceTest {
                         )
                     assertEquals(listOf(secret), afterSend.exchanges.map { it.human })
                     assertEquals("I hear you.", afterSend.exchanges.single().vex)
+                    assertEquals(privateReasoning, afterSend.exchanges.single().sealedHumanReasoning)
                     val system = calls.last().first().content
                     assertTrue(system.startsWith("VEXLIFE_PRIVATE_CONVERSATION/v1"))
                     assertTrue("VEXLIFE_CURRENT_MEMORY_CONTEXT/v1" in system, "Vex still knows what it knew")
@@ -833,6 +839,10 @@ class VexLifeProdLocalServiceTest {
 
             val written = Files.walk(root).use { paths -> paths.filter { Files.isRegularFile(it) }.toList() }
             assertTrue(written.none { secret in Files.readString(it, Charsets.ISO_8859_1) }, "the private transcript is never written")
+            assertTrue(
+                written.none { privateReasoning in Files.readString(it, Charsets.ISO_8859_1) },
+                "private sealed reasoning is never written",
+            )
             assertTrue(written.any { it.toString().contains("private-intervals") })
         } finally {
             root.parent.toFile().deleteRecursively()

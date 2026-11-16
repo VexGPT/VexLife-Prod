@@ -476,7 +476,12 @@ object VexLifeProdServiceContract {
 
     /** One private exchange, held only in the running service. */
     @Serializable
-    data class PrivateExchange(val human: String, val vex: String, val at: String)
+    data class PrivateExchange(
+        val human: String,
+        val vex: String,
+        val sealedHumanReasoning: String?,
+        val at: String,
+    )
 
     /** What survives a private conversation: when it was, how long, and the agreed notes. */
     @Serializable

@@ -89,7 +89,12 @@ class VexLifeProdLocalService private constructor(
     private val privateCompletion =
         privateCompletionOverride
             ?: VexLifePrivateConversation.Completion { messages ->
-                DirectCompanionConnection.invoke(runtime = startupSetup.qualifiedRuntimeEvidence, messages = messages).content
+                DirectCompanionConnection
+                    .invoke(
+                        runtime = startupSetup.qualifiedRuntimeEvidence,
+                        messages = messages,
+                    )
+                    .let { it.content to it.sealedHumanReasoning }
             }
 
     companion object {
@@ -1280,7 +1285,15 @@ class VexLifeProdLocalService private constructor(
             state = state.stateRef,
             display = VexLifePrivateModeFamily.displayStateFor(state),
             startedAtOrNull = snapshot?.startedAt?.toString(),
-            exchanges = snapshot?.exchanges.orEmpty().map { VexLifeProdServiceContract.PrivateExchange(it.human, it.vex, it.at.toString()) },
+            exchanges =
+                snapshot?.exchanges.orEmpty().map {
+                    VexLifeProdServiceContract.PrivateExchange(
+                        human = it.human,
+                        vex = it.vex,
+                        sealedHumanReasoning = it.sealedHumanReasoning,
+                        at = it.at.toString(),
+                    )
+                },
             keptNotes = snapshot?.keptNotes.orEmpty(),
             proposedNoteOrNull = snapshot?.proposedNote,
             intervals =
