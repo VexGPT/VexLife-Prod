@@ -53,6 +53,34 @@ class HereticModelCatalogTest {
     }
 
     @Test
+    fun gptOss20BIsOfferedPinnedAndHarmonyButNeverStartedByDefault() {
+        val oss = HereticModelCatalog.CandidateGptOss20B
+        assertEquals(12_104_201_036L, oss.totalBytes)
+        assertEquals(12, oss.members.size)
+        assertEquals(HereticModelCatalog.Standing.CANDIDATE, oss.standing)
+        assertEquals(HereticModelCatalog.ResponseFormat.HARMONY, oss.responseFormat)
+        assertEquals(
+            "10c6bad646aa379476f3d8c1c595b77ce618d7e106665cfcefd06ad12935bf75",
+            oss.identity.artifactContentSetSha256,
+        )
+        assertEquals(24 * gib, oss.recommendedMemoryBytes)
+        assertTrue(HereticModelCatalog.fits(oss, 24 * gib))
+        assertFalse(oss.autoRecommended)
+        // Offered between the 27B and the 9B by the memory it wants; chosen only by the person.
+        assertEquals(
+            listOf("heretic-27b", "gpt-oss-20b", "heretic-9b", "heretic-4b"),
+            HereticModelCatalog.Entries.map { it.handle },
+        )
+        for (memory in listOf(8L, 16L, 24L, 32L, 64L)) {
+            assertTrue(HereticModelCatalog.recommendedFor(memory * gib) != oss, "$memory GiB")
+        }
+        assertTrue(
+            HereticModelCatalog.Entries.filter { it != oss }
+                .all { it.responseFormat == HereticModelCatalog.ResponseFormat.REASONING_FIELDS }
+        )
+    }
+
+    @Test
     fun aMacStartsWithTheLargestModelThatFitsItsMemory() {
         assertEquals(HereticModelCatalog.Certified27B, HereticModelCatalog.recommendedFor(64 * gib))
         assertEquals(HereticModelCatalog.Certified27B, HereticModelCatalog.recommendedFor(32 * gib))
