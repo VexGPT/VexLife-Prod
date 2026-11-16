@@ -572,6 +572,11 @@ val macApplicationDiskImageName =
         macApplicationReleaseContractText,
         "diskImageName",
     )
+val macApplicationDiskImageVolumeIconName =
+    requiredJsonString(
+        macApplicationReleaseContractText,
+        "diskImageVolumeIconName",
+    )
 val macApplicationEmbeddedImageRelativePath =
     requiredJsonString(
         macApplicationReleaseContractText,
@@ -2701,10 +2706,28 @@ tasks.register(
             ),
         )
 
-        val diskImage =
+        val writableDiskImage =
             outputRoot.resolve(
-                macApplicationDiskImageName,
+                "VexLife-macOS-AppleSilicon.writable.dmg",
             )
+        val diskImageMount =
+            outputRoot.resolve(
+                "dmg-mount",
+            )
+        if (
+            Files.exists(
+                diskImageMount,
+                LinkOption.NOFOLLOW_LINKS,
+            )
+        ) {
+            deleteTreeNoFollow(
+                diskImageMount,
+            )
+        }
+        Files.createDirectories(
+            diskImageMount,
+        )
+
         runExactCommand(
             listOf(
                 "/usr/bin/hdiutil",
@@ -2715,7 +2738,108 @@ tasks.register(
                 diskImageStage.toString(),
                 "-ov",
                 "-format",
+                "UDRW",
+                writableDiskImage.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/hdiutil",
+                "attach",
+                writableDiskImage.toString(),
+                "-readwrite",
+                "-nobrowse",
+                "-mountpoint",
+                diskImageMount.toString(),
+            ),
+        )
+        try {
+            val diskImageVolumeIcon =
+                diskImageMount.resolve(
+                    macApplicationDiskImageVolumeIconName,
+                )
+            Files.copy(
+                applicationIcon,
+                diskImageVolumeIcon,
+                StandardCopyOption.REPLACE_EXISTING,
+            )
+            require(
+                Files.isRegularFile(
+                    diskImageVolumeIcon,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) &&
+                    Files.size(
+                        diskImageVolumeIcon,
+                    ) >
+                    0,
+            ) {
+                "VexLife DMG volume icon was not formed"
+            }
+
+            val setFile =
+                runExactCommand(
+                    listOf(
+                        "/usr/bin/xcrun",
+                        "--find",
+                        "SetFile",
+                    ),
+                )
+            val setFilePath =
+                Path.of(
+                    setFile,
+                )
+                    .toAbsolutePath()
+                    .normalize()
+            require(
+                Files.isRegularFile(
+                    setFilePath,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) &&
+                    Files.isExecutable(
+                        setFilePath,
+                    ),
+            ) {
+                "SetFile is unavailable for VexLife DMG volume icon formation"
+            }
+
+            runExactCommand(
+                listOf(
+                    setFilePath.toString(),
+                    "-c",
+                    "icnC",
+                    diskImageVolumeIcon.toString(),
+                ),
+            )
+            runExactCommand(
+                listOf(
+                    setFilePath.toString(),
+                    "-a",
+                    "C",
+                    diskImageMount.toString(),
+                ),
+            )
+        } finally {
+            runExactCommand(
+                listOf(
+                    "/usr/bin/hdiutil",
+                    "detach",
+                    diskImageMount.toString(),
+                ),
+            )
+        }
+
+        val diskImage =
+            outputRoot.resolve(
+                macApplicationDiskImageName,
+            )
+        runExactCommand(
+            listOf(
+                "/usr/bin/hdiutil",
+                "convert",
+                writableDiskImage.toString(),
+                "-format",
                 "UDZO",
+                "-o",
                 diskImage.toString(),
             ),
         )
@@ -2726,8 +2850,15 @@ tasks.register(
                 diskImage.toString(),
             ),
         )
+
         deleteTreeNoFollow(
             diskImageStage,
+        )
+        deleteTreeNoFollow(
+            diskImageMount,
+        )
+        Files.deleteIfExists(
+            writableDiskImage,
         )
 
         val diskImageSha256 =
