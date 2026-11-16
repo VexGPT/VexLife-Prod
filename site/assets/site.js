@@ -175,13 +175,17 @@
       if (mac.kind === 'dmg') {
         steps.append(text('li', 'Open the downloaded disk image and drag VexLife to Applications.'));
         var securityStep = document.createElement('li');
-        securityStep.append(document.createTextNode('Open VexLife. This open-source build is not Apple-notarized, so macOS may show “VexLife Not Opened.” Choose Done, then open Privacy & Security. Scroll to Security and choose Open Anyway only if you trust this exact GitHub release and source commit.'));
+        securityStep.append(document.createTextNode('Open VexLife. This open-source build is not Apple-notarized, so macOS may show “VexLife Not Opened.” Choose Done, then open Privacy & Security. Scroll to Security and choose Open Anyway only if you trust this exact GitHub release and source commit. If the direct Settings button below does not open from your browser, use Apple menu → System Settings → Privacy & Security.'));
         var securityActions = document.createElement('div');
         securityActions.className = 'actions';
         securityActions.style.marginTop = '12px';
         var securityLink = text('a', 'Open Privacy & Security', 'btn btn-outline');
         securityLink.href = 'x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension';
-        securityActions.append(securityLink);
+        var appleHelp = text('a', 'Apple instructions', 'btn btn-outline');
+        appleHelp.href = 'https://support.apple.com/102445';
+        appleHelp.target = '_blank';
+        appleHelp.rel = 'noopener noreferrer';
+        securityActions.append(securityLink, appleHelp);
         securityStep.append(securityActions);
         steps.append(securityStep);
         steps.append(text('li', 'macOS asks you to confirm the exception. Choose Open only if you still trust this exact release. macOS may then separately ask whether to open “java”, the bundled runtime VexLife uses; the same trust decision applies.'));

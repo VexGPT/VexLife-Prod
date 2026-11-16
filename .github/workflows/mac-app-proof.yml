@@ -62,8 +62,10 @@ jobs:
             echo "CFBundleIconName must be absent so the applet asset catalog cannot override applet.icns" >&2
             exit 1
           fi
-          test -s "$MOUNT/Open Privacy & Security.webloc"
-          grep -F 'x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension' "$MOUNT/Open Privacy & Security.webloc"
+          test ! -e "$MOUNT/Open Privacy & Security.webloc"
+          test ! -e "$MOUNT/.fseventsd"
+          test ! -e "$MOUNT/.Spotlight-V100"
+          test ! -e "$MOUNT/.Trashes"
           test -s "$MOUNT/.VolumeIcon.icns"
           /usr/bin/xattr -p com.apple.FinderInfo "$MOUNT" >/dev/null
           /usr/bin/hdiutil detach "$MOUNT"

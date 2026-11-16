@@ -4,6 +4,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertContains
+import kotlin.test.assertFalse
 
 /** Release-surface invariants for preview comparison and branded Mac disk images. */
 class VexLifePreviewUpdateTest {
@@ -43,7 +44,15 @@ class VexLifePreviewUpdateTest {
             siteScript,
             "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension",
         )
-        assertContains(buildSource, "Open Privacy & Security.webloc")
+        assertContains(siteScript, "https://support.apple.com/102445")
+        assertFalse(buildSource.contains("Open Privacy & Security.webloc"))
+    }
+
+    @Test
+    fun sealedDiskImageStripsMountTimeBookkeeping() {
+        assertContains(buildSource, "\".fseventsd\"")
+        assertContains(buildSource, "\".Spotlight-V100\"")
+        assertContains(buildSource, "\".Trashes\"")
     }
 
     @Test

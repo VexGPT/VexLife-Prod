@@ -2736,26 +2736,6 @@ tasks.register(
             ),
         )
 
-        val privacySecurityHelper =
-            diskImageStage.resolve(
-                "Open Privacy & Security.webloc",
-            )
-        Files.writeString(
-            privacySecurityHelper,
-            """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-            <plist version="1.0">
-            <dict>
-              <key>URL</key>
-              <string>x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension</string>
-            </dict>
-            </plist>
-            """.trimIndent() +
-                "\n",
-            StandardCharsets.UTF_8,
-        )
-
         val writableDiskImage =
             outputRoot.resolve(
                 "VexLife-macOS-AppleSilicon.writable.dmg",
@@ -2876,6 +2856,23 @@ tasks.register(
                     diskImageMount.toString(),
                 ),
             )
+
+            // These are macOS mount-time bookkeeping directories, not VexLife payload.
+            // Remove any that were created while the writable image was mounted so the
+            // sealed DMG stays visually minimal when Finder hidden files are visible.
+            listOf(
+                ".fseventsd",
+                ".Spotlight-V100",
+                ".Trashes",
+            )
+                .forEach {
+                    bookkeepingName ->
+                    deleteTreeNoFollow(
+                        diskImageMount.resolve(
+                            bookkeepingName,
+                        ),
+                    )
+                }
         } finally {
             runExactCommand(
                 listOf(
