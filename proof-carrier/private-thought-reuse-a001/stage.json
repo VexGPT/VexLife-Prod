@@ -1,0 +1,39 @@
+{
+  "repositoryRef": "primary",
+  "expectedBase": "0487227550c8a01d1998ffb41af3946740bdb6d5",
+  "expectedHead": "670d311110d36d2bf882e842fca7928939393f95",
+  "expectedTree": "03cb44620623276a46356c15d802c8371a2a7d89",
+  "branch": "VXG-111626-chatgpt-private-thought-parity-a001",
+  "proofCommands": [
+    {
+      "command": "/bin/bash",
+      "args": [
+        "-lc",
+        "set -euo pipefail; J21=\"$(/usr/libexec/java_home -v 21 2>/dev/null)\" || { printf \"%s\\n\" \"Private thought reuse A001: JDK 21 is unavailable.\" >&2; exit 21; }; [ -n \"$J21\" ] && [ -x \"$J21/bin/java\" ] || { printf \"%s\\n\" \"Private thought reuse A001: resolved JDK is invalid.\" >&2; exit 22; }; export JAVA_HOME=\"$J21\"; export PATH=\"$JAVA_HOME/bin:$PATH\"; \"$JAVA_HOME/bin/java\" -version; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" jvmTest compileKotlinJs compileTestKotlinJs checkVexLifeStrings; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" -PvexlifeAppVersion=0.0.0 archiveVexLifeProdMacApplication; APP_DIR=\"build/vexlife-prod-mac-application/670d311110d36d2bf882e842fca7928939393f95\"; DMG=\"$APP_DIR/VexLife-macOS-AppleSilicon.dmg\"; SUM=\"$APP_DIR/VexLife-macOS-AppleSilicon.dmg.sha256\"; RECEIPT=\"$APP_DIR/VexLife-macOS-AppleSilicon.receipt.json\"; test -f \"$DMG\" && test -f \"$SUM\" && test -f \"$RECEIPT\"; (cd \"$APP_DIR\" && /usr/bin/shasum -a 256 -c \"VexLife-macOS-AppleSilicon.dmg.sha256\"); /usr/bin/hdiutil verify \"$DMG\"; /bin/mkdir -p \"$HOME/Downloads/VEXLIFE-PRIVATE-THOUGHT-REUSE-A001-670d311110d3\"; /bin/cp -f \"$DMG\" \"$HOME/Downloads/VEXLIFE-PRIVATE-THOUGHT-REUSE-A001-670d311110d3/VexLife-macOS-AppleSilicon.dmg\"; /bin/cp -f \"$SUM\" \"$HOME/Downloads/VEXLIFE-PRIVATE-THOUGHT-REUSE-A001-670d311110d3/VexLife-macOS-AppleSilicon.dmg.sha256\"; /bin/cp -f \"$RECEIPT\" \"$HOME/Downloads/VEXLIFE-PRIVATE-THOUGHT-REUSE-A001-670d311110d3/VexLife-macOS-AppleSilicon.receipt.json\"; /usr/bin/shasum -a 256 \"$HOME/Downloads/VEXLIFE-PRIVATE-THOUGHT-REUSE-A001-670d311110d3/VexLife-macOS-AppleSilicon.dmg\"; printf \"%s\\n\" \"Private thought reuse A001 artifact: $HOME/Downloads/VEXLIFE-PRIVATE-THOUGHT-REUSE-A001-670d311110d3/VexLife-macOS-AppleSilicon.dmg\"; [ -z \"$(/usr/bin/git status --porcelain=v1 -uall)\" ] || { /usr/bin/git status --porcelain=v1 -uall >&2; exit 31; }"
+      ],
+      "proofClass": "TEST",
+      "candidateEvidence": true,
+      "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+      "predicateRef": "predicate.vexlife-prod.private-thought-reuse-lived-mac.source-build",
+      "timeoutMs": 1200000
+    }
+  ],
+  "maxFiles": 10,
+  "stateRef": "state.vexlife-prod.private-thought-reuse-lived-mac",
+  "currentLifecycleState": "SOURCE_READY",
+  "currentGoal": "Prove exact PR #186 Private thought-reuse source/build and form one local unsigned Mac DMG for lived testing.",
+  "remainingGoals": [
+    "Install/open the exact local DMG on the Mac.",
+    "Enter Private mode and send a prompt that causes Vex to reason and use Markdown in the final reply.",
+    "Confirm the completed private Vex message exposes the existing view process toggle and the reasoning uses the existing TextPresentation Markdown renderer.",
+    "Leave Private mode and confirm the private transcript/thought presentation disappears rather than entering Conversation or Home.",
+    "Return the canonical Relay RETURN and lived observation to PR #186."
+  ],
+  "onPass": {
+    "lifecycleState": "SOURCE_READY",
+    "nextFunction": "F08.EXECUTE_OR_HANDOFF",
+    "nextOwner": "Victor",
+    "whyThisIsNext": "Exact source/build/DMG formation is complete; lived Private thought-presentation behavior remains a host/human effect."
+  },
+  "resultFilename": "RETURN-VEXLIFE-PRIVATE-THOUGHT-REUSE-LIVED-MAC-A001.zip"
+}
