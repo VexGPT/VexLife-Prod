@@ -1,0 +1,128 @@
+# Builds and publishes VexLife for the Mac from main, and cuts stable versions when asked.
+# Candidate app/DMG formation is proved separately by mac-app-proof.yml with read-only permissions.
+# Process and meaning: docs/release/RELEASES.md.
+name: release
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Cut this stable version from the current main commit (e.g. 0.6.0). Leave empty to build main only.'
+        required: false
+        default: ''
+permissions:
+  contents: write
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+jobs:
+  mac:
+    runs-on: macos-latest
+    timeout-minutes: 75
+    env:
+      VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Admit the request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          [ "$GITHUB_REF" = "refs/heads/main" ] || { echo "Releases are built from main only (got $GITHUB_REF)."; exit 1; }
+          if [ -n "$VERSION" ]; then
+            [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Version must look like 0.6.0 (got '$VERSION')."; exit 1; }
+            if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+              echo "v$VERSION already exists; versions are never rebuilt or moved."; exit 1
+            fi
+            SHA="$(git rev-parse HEAD)"
+            MAIN_TAG="private-service-image-$SHA"
+            gh release view "$MAIN_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || {
+              echo "Stable $VERSION requires the already-published main build $MAIN_TAG."; exit 1;
+            }
+            MAIN_TARGET="$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$MAIN_TAG" --jq '.target_commitish')"
+            [ "$MAIN_TARGET" = "$SHA" ] || {
+              echo "Main build $MAIN_TAG does not target the stable source $SHA (got $MAIN_TARGET)."; exit 1;
+            }
+          fi
+          echo "Host: macOS $(sw_vers -productVersion) / $(uname -m)"
+
+      - name: Test
+        run: ./gradlew --no-daemon jvmTest checkVexLifeStrings
+
+      - name: Form the exact Mac application and release lineage
+        run: |
+          set -euo pipefail
+          APP_VERSION="${VERSION:-0.0.0}"
+          ./gradlew --no-daemon -PvexlifeAppVersion="$APP_VERSION" archiveVexLifeProdMacApplication
+          SHA="$(git rev-parse HEAD)"
+          echo "Mac application:"
+          ls -la "build/vexlife-prod-mac-application/$SHA"
+          echo "Predecessor/bootstrap lineage:"
+          ls -la "build/vexlife-prod-service-image/archives/$SHA"
+
+      - name: Publish the main build
+        if: ${{ github.event_name == 'push' || inputs.version == '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          SHA="$(git rev-parse HEAD)"
+          SERVICE_DIR="build/vexlife-prod-service-image/archives/$SHA"
+          APP_DIR="build/vexlife-prod-mac-application/$SHA"
+          TAG="private-service-image-$SHA"
+          {
+            echo "Main build of \`$SHA\` for Mac (Apple silicon)."
+            echo
+            echo "Preferred download: \`VexLife-macOS-AppleSilicon.dmg\`. Open it, drag VexLife to Applications, then open VexLife."
+            echo
+            echo "**Trust:** this open-source build is ad-hoc signed but is not Apple Developer ID signed or notarized. macOS may require explicit approval before first launch."
+            echo
+            echo "The source-bound bootstrap remains attached as recovery/predecessor carriage."
+            echo
+            echo "source-sha: $SHA"
+            for file in "$APP_DIR"/*.dmg "$SERVICE_DIR"/*.command; do
+              echo "sha256 $(basename "$file") $(shasum -a 256 "$file" | awk '{print $1}')"
+            done
+          } > "$RUNNER_TEMP/main-notes.md"
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$SERVICE_DIR"/* "$APP_DIR"/*.dmg "$APP_DIR"/*.sha256 "$APP_DIR"/*.receipt.json --clobber --repo "$GITHUB_REPOSITORY"
+            gh release edit "$TAG" --notes-file "$RUNNER_TEMP/main-notes.md" --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$TAG" "$SERVICE_DIR"/* "$APP_DIR"/*.dmg "$APP_DIR"/*.sha256 "$APP_DIR"/*.receipt.json \
+              --repo "$GITHUB_REPOSITORY" --target "$SHA" --prerelease \
+              --title "Main build ${SHA:0:7}" --notes-file "$RUNNER_TEMP/main-notes.md"
+          fi
+
+      - name: Cut the stable version
+        if: ${{ inputs.version != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          SHA="$(git rev-parse HEAD)"
+          SERVICE_DIR="build/vexlife-prod-service-image/archives/$SHA"
+          APP_DIR="build/vexlife-prod-mac-application/$SHA"
+          {
+            echo "VexLife $VERSION for Mac (Apple silicon), cut from main at \`$SHA\`."
+            echo
+            echo "Accepted feature threshold: see docs/release/RELEASES.md and the merged PRs since the previous version."
+            echo
+            echo "**Trust:** this open-source build is ad-hoc signed but is not Apple Developer ID signed or notarized."
+            echo
+            echo "source-sha: $SHA"
+            echo "image-release: private-service-image-$SHA"
+            for file in "$APP_DIR"/*.dmg "$SERVICE_DIR"/*.command; do
+              echo "sha256 $(basename "$file") $(shasum -a 256 "$file" | awk '{print $1}')"
+            done
+          } > "$RUNNER_TEMP/stable-notes.md"
+          gh release create "v$VERSION" \
+            "$APP_DIR"/*.dmg "$APP_DIR"/*.sha256 "$APP_DIR"/*.receipt.json \
+            "$SERVICE_DIR"/*.command "$SERVICE_DIR"/*.sha256 \
+            --repo "$GITHUB_REPOSITORY" --target "$SHA" --title "VexLife $VERSION" \
+            --notes-file "$RUNNER_TEMP/stable-notes.md" --latest

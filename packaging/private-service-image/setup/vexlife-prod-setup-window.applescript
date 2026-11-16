@@ -39,7 +39,7 @@ property selectedModel : ""
 
 on run
 	set sourceSha to my bundleString("VexLifeProdExpectedSourceSha")
-	set setupLauncher to my bundleString("VexLifeProdSetupLauncher")
+	set setupLauncher to my resolvedSetupLauncher()
 	if not my isFullHex(sourceSha, 40) then
 		my showMessage("VexLife could not start.", "The staged VexLife version identity is invalid. Nothing was changed.", "Close")
 		return
@@ -565,6 +565,19 @@ on boundedText(value)
 	return sourceText
 end boundedText
 
+on resolvedSetupLauncher()
+	-- The predecessor bootstrap supplies an absolute staged launcher. A durable VexLife.app instead
+	-- carries the same exact private image beneath Contents/Resources and supplies only this relative
+	-- coordinate. The renderer chooses carriage; it does not change setup/process meaning.
+	set directPath to my bundleString("VexLifeProdSetupLauncher")
+	if directPath is not missing value and directPath is not "" then return directPath
+	set relativePath to my bundleString("VexLifeProdEmbeddedSetupLauncherRelativePath")
+	if relativePath is missing value or relativePath is "" then return missing value
+	set resourcesPath to current application's NSBundle's mainBundle()'s resourcePath()
+	if resourcesPath is missing value then return missing value
+	return (resourcesPath as text) & "/" & relativePath
+end resolvedSetupLauncher
+
 on bundleString(keyName)
 	set value to current application's NSBundle's mainBundle()'s objectForInfoDictionaryKey:keyName
 	if value is missing value then return missing value
@@ -581,6 +594,6 @@ on isFullHex(value, expectedLength)
 	return (matches as integer) is 1
 end isFullHex
 
--- This AppKit projection is not a signed/public build and owns no Home, model, runtime,
--- service or lifecycle meaning.
+-- This AppKit projection owns no Home, model, runtime, service, lifecycle or distribution-trust
+-- meaning. The enclosing bootstrap/app bundle owns only its carriage and identity.
 -- [VXG RealForever]
