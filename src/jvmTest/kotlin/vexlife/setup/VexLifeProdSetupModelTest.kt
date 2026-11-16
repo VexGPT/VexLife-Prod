@@ -48,6 +48,12 @@ class VexLifeProdSetupModelTest {
             assertTrue(
                 first.models.first { it.handle == "heretic-4b" }.line.contains("fits this Mac")
             )
+            assertTrue(
+                first.models.first { it.handle == "heretic-9b" }.line.contains("outside sources available")
+            )
+            val gptOss = first.models.first { it.handle == "gpt-oss-20b" }
+            assertEquals("HELD_PROVIDER_BRIDGE", gptOss.capabilityStanding)
+            assertTrue(gptOss.line.contains("outside sources not yet available with this model"))
 
             val chosen = VexLifeProdSetupModel.choose(absent, "heretic-4b", "ja", 16 * gib)
             assertEquals("heretic-4b", chosen.selected)
@@ -55,6 +61,9 @@ class VexLifeProdSetupModelTest {
             assertFalse(chosen.effectsPerformed, "nothing is written before a Home exists")
             assertTrue(
                 chosen.models.first { it.handle == "heretic-4b" }.line.contains("この Mac で動作")
+            )
+            assertTrue(
+                chosen.models.first { it.handle == "heretic-4b" }.line.contains("外部ソースを利用可能")
             )
         } finally {
             parent.toFile().deleteRecursively()

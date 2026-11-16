@@ -2306,12 +2306,37 @@ object VexLifeWebP1RuntimeArtifacts {
                     .replace('{size}', gibText(model.totalBytes))
                     .replace('{memory}', gibText(model.recommendedMemoryBytes))
                     .replace('{fit}', t(model.fitsThisMac ? 'workspace.label.model-fits' : 'workspace.label.model-tight'));
+                  const companion = model.companion || {};
+                  const reachLabel = companion.capabilityStanding === 'QUALIFIED'
+                    ? t('workspace.label.model-reach-ready')
+                    : t('workspace.label.model-reach-held');
                   const notes = document.createElement('p');
                   notes.className = 'model-notes';
                   notes.textContent = [
                     ...(model.display.notes || []).map(resolveText),
-                    model.standing === 'CANDIDATE' ? t('workspace.label.model-candidate') : ''
+                    model.standing === 'CANDIDATE' ? t('workspace.label.model-candidate') : '',
+                    reachLabel,
+                    t('workspace.label.model-reasoning-visible'),
+                    companion.reasoningEffort
+                      ? t('workspace.label.model-reasoning-effort').replace('{effort}', String(companion.reasoningEffort).toLowerCase())
+                      : ''
                   ].filter(Boolean).join(' · ');
+                  const behavior = document.createElement('details');
+                  behavior.className = 'model-behavior';
+                  const behaviorSummary = document.createElement('summary');
+                  behaviorSummary.textContent = t('workspace.label.model-behavior');
+                  const behaviorDetail = document.createElement('p');
+                  behaviorDetail.className = 'setting-note-line';
+                  behaviorDetail.textContent = t('workspace.description.model-behavior')
+                    .replace('{profile}', String(companion.profileRef ?? 'unknown'))
+                    .replace('{protocol}', String(companion.messageProtocol ?? 'unknown').toLowerCase())
+                    .replace('{capability}', String(companion.capabilityRepresentation ?? 'unknown').toLowerCase())
+                    .replace('{samplingSource}', String(companion.samplingSourceRef ?? 'unknown'))
+                    .replace('{temperature}', String(companion.temperature ?? 'unknown'))
+                    .replace('{topP}', String(companion.topP ?? 'unknown'))
+                    .replace('{topK}', String(companion.topK ?? 'unknown'))
+                    .replace('{maxOutput}', String(companion.productMaxOutputTokens ?? 'unknown'));
+                  behavior.append(behaviorSummary, behaviorDetail);
                   const controls = document.createElement('div');
                   controls.className = 'model-controls';
                   for (const control of model.display.controls || []) {
@@ -2323,7 +2348,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     button.addEventListener('click', () => { void modelControl(control.controlRef, model.handle); });
                     controls.append(button);
                   }
-                  row.append(name, controls, facts, notes);
+                  row.append(name, controls, facts, notes, behavior);
                   ui.modelsList.append(row);
                 }
                 const lines = [];

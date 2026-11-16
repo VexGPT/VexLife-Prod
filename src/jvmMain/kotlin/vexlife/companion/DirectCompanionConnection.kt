@@ -22,6 +22,8 @@ import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import vexlife.model.heretic.HereticCompanionProvider
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeState
@@ -42,9 +44,6 @@ import vexlife.model.heretic.HereticRuntimeState
  * human disclosure, or presentation.
  */
 object DirectCompanionConnection {
-    const val OutputTokenLimit =
-        16_000
-
     const val RuntimeObservationSchema =
         "vexlife-prod.model-runtime-observation/v1"
 
@@ -92,11 +91,9 @@ object DirectCompanionConnection {
             mapOf(
                 "include_usage" to true,
             ),
-        // Exact certified generation_config.json sampling projection:
-        // sha256=d0d0ed2e37cdfafef4a5067d5ea2407b05f4fb50526e47c008a5b235d50240fb
-        val temperature: Double = 1.0,
-        val top_p: Double = 0.95,
-        val top_k: Int = 20,
+        val temperature: Double,
+        val top_p: Double,
+        val top_k: Int,
         val chat_template_kwargs: Map<String, JsonPrimitive>,
     )
 
@@ -420,22 +417,61 @@ object DirectCompanionConnection {
             origin.resolve(
                 "/v1/chat/completions",
             )
+        val entry =
+            requireNotNull(
+                HereticModelCatalog.entry(
+                    runtime.modelRef,
+                ),
+            ) {
+                "qualified runtime model is not offered by the current Product"
+            }
+        val profile =
+            entry.companionProfile
         val harmony =
-            vexlife.model.heretic.HereticModelCatalog.entry(runtime.modelRef)?.responseFormat ==
-                vexlife.model.heretic.HereticModelCatalog.ResponseFormat.HARMONY
+            profile.messageProtocol ==
+                HereticCompanionProvider.MessageProtocol.HARMONY
+        val generation =
+            profile.generation
         val requestBody =
             JsonCodec.encodeToString(
                 RequestPayload(
                     model = runtime.requestModel,
-                    messages = if (harmony) leadingSystemAsOne(messages) else messages,
-                    max_tokens = OutputTokenLimit,
+                    messages =
+                        if (
+                            profile.coalesceLeadingSystemMessages
+                        ) {
+                            leadingSystemAsOne(
+                                messages,
+                            )
+                        } else {
+                            messages
+                        },
+                    max_tokens = generation.productMaxOutputTokens,
                     stream = true,
+                    temperature = generation.sampling.temperature,
+                    top_p = generation.sampling.topP,
+                    top_k = generation.sampling.topK,
                     chat_template_kwargs =
                         buildMap {
                             put("enable_thinking", JsonPrimitive(true))
-                            // The harmony template otherwise opens with "You are ChatGPT…"; who
-                            // Vex is comes from the foundational field, so it names only that.
-                            if (harmony) put("model_identity", JsonPrimitive(HarmonyModelIdentity))
+                            profile.modelIdentity
+                                ?.let {
+                                    put(
+                                        "model_identity",
+                                        JsonPrimitive(
+                                            it,
+                                        ),
+                                    )
+                                }
+                            generation.reasoningEffort
+                                ?.let {
+                                    put(
+                                        "reasoning_effort",
+                                        JsonPrimitive(
+                                            it.wireValue,
+                                        ),
+                                    )
+                                }
                         },
                 ),
             )
@@ -465,7 +501,18 @@ object DirectCompanionConnection {
                 invokeBulk(
                     transport = transport,
                     call = call,
-                ).let { if (harmony) harmonized(it) else it }
+                ).let {
+                    if (
+                        profile.reasoningRepresentation ==
+                            HereticCompanionProvider.ReasoningRepresentation.HARMONY_CHANNELS
+                    ) {
+                        harmonized(
+                            it,
+                        )
+                    } else {
+                        it
+                    }
+                }
             }
 
         val content =
@@ -971,8 +1018,6 @@ object DirectCompanionConnection {
      * and silently drops later ones; the leading system messages are sent as one so none of
      * what Vex is given is lost.
      */
-    const val HarmonyModelIdentity = "You are Vex."
-
     private fun leadingSystemAsOne(
         messages: List<CompanionProviderMessage>,
     ): List<CompanionProviderMessage> {

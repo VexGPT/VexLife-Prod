@@ -3,6 +3,7 @@ package vexlife.setup
 import java.nio.file.Path
 import kotlinx.serialization.Serializable
 import vexlife.home.VexLifeProdHomeFiles
+import vexlife.model.heretic.HereticCompanionProvider
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.text.VexLifeStrings
@@ -33,6 +34,8 @@ object VexLifeProdSetupModel {
         val fits: Boolean,
         val recommended: Boolean,
         val standing: String,
+        /** Human-relevant Companion capability currentness, visible before choosing a model. */
+        val capabilityStanding: String,
     )
 
     @Serializable
@@ -112,16 +115,36 @@ object VexLifeProdSetupModel {
                                     gib = mapOf("memory" to entry.recommendedMemoryBytes),
                                 )
                         }
+                    val reach =
+                        VexLifeText(
+                            when (
+                                entry.companionProfile.capabilityStanding
+                            ) {
+                                HereticCompanionProvider.CapabilityStanding.QUALIFIED ->
+                                    "setup.status.model-reach-ready"
+
+                                HereticCompanionProvider.CapabilityStanding.HELD_PROVIDER_BRIDGE ->
+                                    "setup.status.model-reach-held"
+                            },
+                        )
                     Model(
                         handle = entry.handle,
                         label = entry.humanLabel,
                         line =
                             VexLifeStrings.resolve(
                                 VexLifeText(
-                                    key = "setup.label.model-choice",
-                                    args = mapOf("model" to entry.humanLabel),
-                                    gib = mapOf("size" to entry.totalBytes),
-                                    parts = mapOf("fit" to fit),
+                                    key = "setup.label.model-choice-with-reach",
+                                    parts =
+                                        mapOf(
+                                            "choice" to
+                                                VexLifeText(
+                                                    key = "setup.label.model-choice",
+                                                    args = mapOf("model" to entry.humanLabel),
+                                                    gib = mapOf("size" to entry.totalBytes),
+                                                    parts = mapOf("fit" to fit),
+                                                ),
+                                            "reach" to reach,
+                                        ),
                                 ),
                                 language,
                             ),
@@ -129,6 +152,7 @@ object VexLifeProdSetupModel {
                         fits = fits,
                         recommended = entry == recommended && fits,
                         standing = entry.standing.name,
+                        capabilityStanding = entry.companionProfile.capabilityStanding.name,
                     )
                 },
             effectsPerformed = false,

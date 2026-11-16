@@ -66,7 +66,10 @@ class VexLifeStringsTest {
                     vexlife.model.VexLifeModelsFamily.ControlRemove,
                 ).map { "model:control:$it" } +
                 vexlife.model.VexLifeModelsFamily.Files.entries.map { "model:files:${it.name}" } +
-                vexlife.model.heretic.HereticModelCatalog.Standing.entries.map { "model:standing:${it.name}" }
+                vexlife.model.heretic.HereticModelCatalog.Standing.entries.map { "model:standing:${it.name}" } +
+                vexlife.model.heretic.HereticCompanionProvider.CapabilityStanding.entries.map {
+                    "model:capability-standing:${it.name}"
+                }
         val known =
             capabilityRefs.toSet() +
             setOf(

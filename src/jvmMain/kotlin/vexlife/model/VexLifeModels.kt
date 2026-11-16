@@ -11,6 +11,7 @@ import kotlinx.serialization.Serializable
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetupLease
 import vexlife.logging.VexLogger
+import vexlife.model.heretic.HereticCompanionProvider
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.HereticArtifactDelivery
@@ -61,6 +62,22 @@ class VexLifeModels(
     private val lastOutcome = AtomicReference<Outcome?>(null)
 
     @Serializable
+    data class CompanionBehavior(
+        val profileRef: String,
+        val messageProtocol: String,
+        val reasoningRepresentation: String,
+        val capabilityRepresentation: String,
+        val capabilityStanding: String,
+        val reasoningEffort: String?,
+        val samplingBasis: String,
+        val samplingSourceRef: String,
+        val temperature: Double,
+        val topP: Double,
+        val topK: Int,
+        val productMaxOutputTokens: Int,
+    )
+
+    @Serializable
     data class Row(
         val handle: String,
         val label: String,
@@ -72,6 +89,8 @@ class VexLifeModels(
         val chosen: Boolean,
         val serving: Boolean,
         val downloadedBytes: Long?,
+        /** Model/provider behavior that materially shapes the Companion, hoisted for visibility. */
+        val companion: CompanionBehavior,
         val display: VexLifeModelsFamily.DisplayState,
     )
 
@@ -120,6 +139,23 @@ class VexLifeModels(
                         running
                             ?.takeIf { it.handle == entry.handle }
                             ?.let { it.baseBytes + downloadedBytes.get() },
+                    companion =
+                        entry.companionProfile.let { profile ->
+                            CompanionBehavior(
+                                profileRef = profile.profileRef,
+                                messageProtocol = profile.messageProtocol.name,
+                                reasoningRepresentation = profile.reasoningRepresentation.name,
+                                capabilityRepresentation = profile.capabilityRepresentation.name,
+                                capabilityStanding = profile.capabilityStanding.name,
+                                reasoningEffort = profile.generation.reasoningEffort?.name,
+                                samplingBasis = profile.generation.sampling.basis.name,
+                                samplingSourceRef = profile.generation.sampling.sourceRef,
+                                temperature = profile.generation.sampling.temperature,
+                                topP = profile.generation.sampling.topP,
+                                topK = profile.generation.sampling.topK,
+                                productMaxOutputTokens = profile.generation.productMaxOutputTokens,
+                            )
+                        },
                     display = VexLifeModelsFamily.displayStateFor(state),
                 )
             }

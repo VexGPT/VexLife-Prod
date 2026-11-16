@@ -7,6 +7,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import vexlife.model.heretic.HereticCompanionProvider
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -130,8 +131,15 @@ class HarmonyResponseSplitterTest {
         )
         val request = Json.parseToJsonElement(body).jsonObject
         assertEquals(
-            "You are Vex.",
+            HereticCompanionProvider.Profiles.GptOss20B.modelIdentity,
             request["chat_template_kwargs"]!!.jsonObject["model_identity"]!!.jsonPrimitive.content,
+        )
+        assertEquals(1.0, request["temperature"]!!.jsonPrimitive.content.toDouble())
+        assertEquals(1.0, request["top_p"]!!.jsonPrimitive.content.toDouble())
+        assertEquals(0, request["top_k"]!!.jsonPrimitive.content.toInt())
+        assertEquals(
+            "medium",
+            request["chat_template_kwargs"]!!.jsonObject["reasoning_effort"]!!.jsonPrimitive.content,
         )
         val sent = request["messages"]!!.jsonArray
         assertEquals(2, sent.size)

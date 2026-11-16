@@ -58,7 +58,11 @@ class HereticModelCatalogTest {
         assertEquals(12_104_201_036L, oss.totalBytes)
         assertEquals(12, oss.members.size)
         assertEquals(HereticModelCatalog.Standing.CANDIDATE, oss.standing)
-        assertEquals(HereticModelCatalog.ResponseFormat.HARMONY, oss.responseFormat)
+        assertEquals(HereticCompanionProvider.Profiles.GptOss20B, oss.companionProfile)
+        assertEquals(
+            HereticCompanionProvider.CapabilityStanding.HELD_PROVIDER_BRIDGE,
+            oss.companionProfile.capabilityStanding,
+        )
         assertEquals(
             "10c6bad646aa379476f3d8c1c595b77ce618d7e106665cfcefd06ad12935bf75",
             oss.identity.artifactContentSetSha256,
@@ -74,10 +78,56 @@ class HereticModelCatalogTest {
         for (memory in listOf(8L, 16L, 24L, 32L, 64L)) {
             assertTrue(HereticModelCatalog.recommendedFor(memory * gib) != oss, "$memory GiB")
         }
-        assertTrue(
-            HereticModelCatalog.Entries.filter { it != oss }
-                .all { it.responseFormat == HereticModelCatalog.ResponseFormat.REASONING_FIELDS }
+        assertEquals(
+            HereticCompanionProvider.Profiles.Qwen27B,
+            HereticModelCatalog.Models.Qwen27B.companionProfile,
         )
+        assertEquals(
+            HereticCompanionProvider.Profiles.Qwen9B,
+            HereticModelCatalog.Models.Qwen9B.companionProfile,
+        )
+        assertEquals(
+            HereticCompanionProvider.Profiles.Qwen4B,
+            HereticModelCatalog.Models.Qwen4B.companionProfile,
+        )
+    }
+
+    @Test
+    fun everyOfferedModelChoosesACompleteProviderProfileWithoutConnectionDefaults() {
+        for (entry in HereticModelCatalog.Entries) {
+            val profile = entry.companionProfile
+            assertTrue(profile.profileRef.isNotBlank(), entry.handle)
+            assertTrue(profile.generation.productMaxOutputTokens > 0, entry.handle)
+            assertTrue(profile.generation.sampling.sourceRef.isNotBlank(), entry.handle)
+            assertTrue(profile.generation.sampling.temperature >= 0.0, entry.handle)
+            assertTrue(profile.generation.sampling.topP in 0.0..1.0, entry.handle)
+            assertTrue(profile.generation.sampling.topK >= 0, entry.handle)
+        }
+
+        val qwen27 = HereticCompanionProvider.Profiles.Qwen27B
+        assertEquals(1.0, qwen27.generation.sampling.temperature)
+        assertEquals(0.95, qwen27.generation.sampling.topP)
+        assertEquals(20, qwen27.generation.sampling.topK)
+        assertEquals(
+            HereticCompanionProvider.CapabilityStanding.QUALIFIED,
+            qwen27.capabilityStanding,
+        )
+
+        val qwen9 = HereticCompanionProvider.Profiles.Qwen9B
+        assertEquals(0.6, qwen9.generation.sampling.temperature)
+        assertEquals(0.95, qwen9.generation.sampling.topP)
+        assertEquals(20, qwen9.generation.sampling.topK)
+
+        val qwen4 = HereticCompanionProvider.Profiles.Qwen4B
+        assertEquals(0.6, qwen4.generation.sampling.temperature)
+        assertEquals(0.95, qwen4.generation.sampling.topP)
+        assertEquals(20, qwen4.generation.sampling.topK)
+
+        val oss = HereticCompanionProvider.Profiles.GptOss20B
+        assertEquals(1.0, oss.generation.sampling.temperature)
+        assertEquals(1.0, oss.generation.sampling.topP)
+        assertEquals(0, oss.generation.sampling.topK)
+        assertEquals(HereticCompanionProvider.ReasoningEffort.MEDIUM, oss.generation.reasoningEffort)
     }
 
     @Test

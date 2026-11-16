@@ -11,7 +11,7 @@
     "dataKeyOwners": {
       "diagnostics": "VexLifeDiagnosticsFamily (state, control refs) and the debug export route",
       "capability": "VexLifeCapabilityBridge uses (handle:action), shown to the person as reach",
-      "model": "VexLifeModelsFamily (files, control refs) and HereticModelCatalog standing"
+      "model": "VexLifeModelsFamily (files, control refs), HereticModelCatalog standing, and HereticCompanionProvider capability standing"
     }
   },
   "workspace.heading.diagnostics": {
@@ -512,6 +512,68 @@
     "strings": {
       "en": {
         "text": "{free} GiB free on this disk"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-reach-ready": {
+    "strings": {
+      "en": {
+        "text": "Outside sources: ready"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "model:capability-standing:QUALIFIED"
+  },
+  "workspace.label.model-reach-held": {
+    "strings": {
+      "en": {
+        "text": "Outside sources: not yet available with this model"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "model:capability-standing:HELD_PROVIDER_BRIDGE"
+  },
+  "workspace.label.model-reasoning-visible": {
+    "strings": {
+      "en": {
+        "text": "Reasoning: visible"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-reasoning-effort": {
+    "strings": {
+      "en": {
+        "text": "Reasoning effort: {effort}"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-behavior": {
+    "strings": {
+      "en": {
+        "text": "Model behavior"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.model-behavior": {
+    "strings": {
+      "en": {
+        "text": "Profile {profile} · protocol {protocol} · capability bridge {capability} · sampling source {samplingSource} · temperature {temperature} · top-p {topP} · top-k {topK} · max output {maxOutput} tokens"
       }
     },
     "surfaces": [
