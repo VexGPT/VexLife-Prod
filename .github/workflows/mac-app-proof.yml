@@ -57,6 +57,8 @@ jobs:
           trap '/usr/bin/hdiutil detach "$MOUNT" >/dev/null 2>&1 || true' EXIT
           /usr/bin/plutil -extract CFBundleIconFile raw -o - "$MOUNT/VexLife.app/Contents/Info.plist" | grep -Fx 'VexLife.icns'
           test -s "$MOUNT/VexLife.app/Contents/Resources/VexLife.icns"
+          test -s "$MOUNT/.VolumeIcon.icns"
+          /usr/bin/xattr -p com.apple.FinderInfo "$MOUNT" >/dev/null
           /usr/bin/hdiutil detach "$MOUNT"
           trap - EXIT
           /usr/bin/plutil -extract distributionTrust raw -o -             packaging/macos-app/release-contract.json |             grep -Fx 'AD_HOC_SIGNATURE_NO_DEVELOPER_ID_NO_NOTARIZATION'
