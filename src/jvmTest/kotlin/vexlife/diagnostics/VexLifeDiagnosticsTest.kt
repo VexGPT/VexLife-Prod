@@ -59,8 +59,18 @@ class VexLifeDiagnosticsTest {
 
             diagnostics.control(VexLifeDiagnosticsFamily.ControlStartEnhanced)
             assertIs<VexLifeDiagnosticsFamily.RecordingEnhanced>(diagnostics.state())
+            diagnostics.beginProviderStreamTrace("send.expiring")
+            diagnostics.observeProviderStreamTrace(
+                "send.expiring",
+                reasoningDelta = "temporary thought",
+            )
+            assertEquals(1, diagnostics.providerStreamTraces().size)
             now = now.plusSeconds(3 * 3600)
             assertEquals(VexLifeDiagnosticsFamily.Recording, diagnostics.state(), "it ends by itself")
+            assertTrue(
+                diagnostics.providerStreamTraces().isEmpty(),
+                "expired enhanced capture erases stream traces",
+            )
 
             val failure = home.resolve("recovery/direct-companion/turn.json")
             Files.createDirectories(failure.parent)
@@ -104,6 +114,125 @@ class VexLifeDiagnosticsTest {
             assertTrue(contents.contains("TURN_FAILED"))
             assertTrue(contents.contains("\"humanContentIncluded\":false"))
             assertFalse(contents.contains(conversationSecret), "Conversation never enters the export")
+        }
+    }
+
+    @Test
+    fun enhancedCaptureKeepsBoundedProviderStreamsWithTerminalMachineState() {
+        withHome { home ->
+            val diagnostics = VexLifeDiagnostics(home, sha)
+
+            diagnostics.beginProviderStreamTrace("send.not-enabled")
+            assertTrue(
+                diagnostics.providerStreamTraces().isEmpty(),
+                "normal diagnostics must not retain model stream text",
+            )
+
+            diagnostics.control(VexLifeDiagnosticsFamily.ControlStartEnhanced)
+            repeat(35) { index ->
+                val key = "send.$index"
+                diagnostics.beginProviderStreamTrace(key)
+                diagnostics.observeProviderStreamTrace(
+                    idempotencyKey = key,
+                    reasoningDelta = "reasoning-$index",
+                    contentDelta = "content-$index",
+                )
+                diagnostics.finishProviderStreamTrace(
+                    idempotencyKey = key,
+                    turnRef = "turn.$index",
+                    outcome = "TURN_FAILED",
+                    failureCode = "CONNECTION_EndpointResponseInvalid",
+                )
+            }
+
+            val traces = diagnostics.providerStreamTraces()
+            assertEquals(30, traces.size)
+            assertEquals("send.5", traces.first().idempotencyKey)
+            assertEquals("send.34", traces.last().idempotencyKey)
+            assertEquals("reasoning-34", traces.last().reasoning)
+            assertEquals("content-34", traces.last().content)
+            assertTrue(traces.last().serviceHeapMaxMb != null)
+            assertTrue(traces.last().hostTotalMemoryMb != null)
+
+            val names = mutableListOf<String>()
+            val contents = StringBuilder()
+            ZipInputStream(ByteArrayInputStream(diagnostics.export())).use { zip ->
+                while (true) {
+                    val entry = zip.nextEntry ?: break
+                    names += entry.name
+                    contents.append(String(zip.readAllBytes()))
+                }
+            }
+            assertTrue(names.contains("enhanced/provider-stream-traces.json"))
+            assertTrue(contents.contains("\"modelStreamContentIncluded\":true"))
+            assertTrue(contents.contains("reasoning-34"))
+            assertTrue(contents.contains("content-34"))
+            assertFalse(
+                contents.contains("reasoning-0"),
+                "oldest traces must be evicted from the bounded ring",
+            )
+
+            diagnostics.control(VexLifeDiagnosticsFamily.ControlStopEnhanced)
+            assertTrue(
+                diagnostics.providerStreamTraces().isEmpty(),
+                "stopping enhanced capture erases raw stream traces",
+            )
+        }
+    }
+
+    @Test
+    fun exportPreservesDistinctRuntimeLogPathsInsteadOfOverwritingSameBasename() {
+        withHome { home ->
+            val first = home.resolve("runtime/heretic/mlx-lm-server.err.log")
+            val second = home.resolve("runtime/vexlife-prod/mlx-lm-server.err.log")
+            Files.createDirectories(first.parent)
+            Files.createDirectories(second.parent)
+            Files.writeString(first, "old-runtime-log")
+            Files.writeString(second, "current-runtime-log")
+
+            val diagnostics = VexLifeDiagnostics(home, sha)
+            val names = mutableListOf<String>()
+            val contents = StringBuilder()
+            ZipInputStream(ByteArrayInputStream(diagnostics.export())).use { zip ->
+                while (true) {
+                    val entry = zip.nextEntry ?: break
+                    names += entry.name
+                    contents.append(String(zip.readAllBytes()))
+                }
+            }
+
+            assertTrue(names.contains("logs/runtime/heretic/mlx-lm-server.err.log"), names.toString())
+            assertTrue(
+                names.contains("logs/runtime/vexlife-prod/mlx-lm-server.err.log"),
+                names.toString(),
+            )
+            assertTrue(names.contains("current/runtime-log-index.json"))
+            assertTrue(contents.contains("old-runtime-log"))
+            assertTrue(contents.contains("current-runtime-log"))
+            assertTrue(contents.contains("\"runtimeLogPathsPreserved\":true"))
+        }
+    }
+
+    @Test
+    fun turnFailureSnapshotIsRecordedAtFailureTimeWithoutHumanContent() {
+        withHome { home ->
+            val diagnostics = VexLifeDiagnostics(home, sha)
+            diagnostics.recordTurnFailureSnapshot(
+                turnRef = "turn.failure.001",
+                failureCode = "CONNECTION_EndpointResponseInvalid",
+            )
+
+            val chronology = VexChronologyFile.tail(home, 20).joinToString("\n")
+            assertTrue(chronology.contains("\"fact\":\"PROCESS_SNAPSHOT_OBSERVED\""))
+            assertTrue(chronology.contains("\"reason\":\"TURN_FAILED\""))
+            assertTrue(chronology.contains("\"turnRef\":\"turn.failure.001\""))
+            assertTrue(
+                chronology.contains(
+                    "\"failureCode\":\"CONNECTION_EndpointResponseInvalid\""
+                )
+            )
+            assertTrue(chronology.contains("\"serviceHeapMaxMb\":"))
+            assertFalse(chronology.contains("human prompt"))
         }
     }
 
