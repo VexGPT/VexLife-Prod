@@ -169,6 +169,7 @@ The Product now offers more than one local Heretic model. `HereticModelCatalog`
 | handle | model | weights | wants | standing |
 |---|---|---|---|---|
 | `heretic-27b` | Qwen3.8 27B Heretic, MLX 4-bit — `donedynamics/Qwen3.8-27B-heretic-MLX-4bit@808b82a2` | 15.15 GB, 11 members | 32 GiB | CERTIFIED (the identity above, unchanged) |
+| `gpt-oss-20b` | OpenAI gpt-oss-20b, Heretic ARA v3 by p-e-w (card: KL 0.0554, refusals 3/100), MLX MXFP4 experts + 8-bit attention — `D8A/gpt-oss-20b-heretic-ara-v3-mlx-8Bit@227eba2d` | 12.10 GB, 12 members, content set `10c6bad6…` | 24 GiB | CANDIDATE · harmony · chosen only by the person |
 | `heretic-9b` | Qwen3.8 9B Heretic, MLX 5-bit — `Foresee/Qwen3.8-9B-heretic-uncensored-5bit-MLX@8a3eec7d` | 6.74 GB, 10 members, content set `5901a94b…` | 16 GiB | CANDIDATE |
 | `heretic-4b` | Qwen3.8→Qwen3.5 4B Distill, Heretic + abliterated, MLX 4-bit — `yachen4ever/Qwen3.8-4B-Distill-Heretic-Abliterated-MLX-4bit@f47bef77` | 3.05 GB, 11 members, content set `d2f8f402…` | 8 GiB | CANDIDATE |
 
@@ -180,6 +181,30 @@ the same formula that reproduces the certified `329658ee…`. All three share th
 MLX_LM_DIRECT_RUNTIME, mlx-lm 0.32.0, Python 3.14.7, loopback endpoint, `default_model`). The 9B and
 4B chat templates are the standard Qwen3.5 template (same `<think>` handling, no reasoning-effort
 preamble); the 27B's adds reasoning-effort instructions.
+
+**gpt-oss-20B (2026-11-15).** A mixture of experts (21B parameters, about 3.6B active per token),
+so it answers quickly for its size. It speaks OpenAI *harmony*, which the Product-pinned mlx-lm
+0.32.0 does not separate (its server recognizes `<think>`-style markers only): the reply arrives in
+`content` as `<|channel|>analysis<|message|>…<|end|><|start|>assistant<|channel|>final<|message|>…`.
+The entry declares `responseFormat = HARMONY`, and the Connection then:
+
+~~~text
+analysis / commentary channel  -> thinking (Viewable thoughts), never the answer
+final channel                  -> the answer (and where a capability request is found)
+markers                        -> never shown
+leading system messages        -> sent as one (the harmony template keeps only the first
+                                  system message, as its developer message, and drops the rest)
+model_identity                 -> "You are Vex." (the template otherwise opens with
+                                  "You are ChatGPT…"; who Vex is comes from the foundational field)
+~~~
+
+Checked here: the pinned `chat_template.jinja` renders a merged system message, a user turn, an
+assistant capability request and the user-role host result without raising. Sampling still uses
+the 27B's projection (temperature 1.0, top_p 0.95, top_k 20); per-model sampling is owed.
+
+Runtime qualification is unchanged ("Reply with OK.", one token: the first harmony marker is
+non-empty text). `autoRecommended = false`: Setup never starts a Home on it by itself; a Mac with
+24 GiB still starts on the 9B until the lived comparison is made.
 
 CANDIDATE means: exact bytes pinned, qualified at every start by the same runtime qualification as
 the certified model (health, model enumeration, one real chat completion), lived comparison still
