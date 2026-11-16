@@ -131,6 +131,29 @@ object StableVexLifeHereticRuntimeCompatibility {
             "gui/\\d+",
         )
 
+    /**
+     * Exact argv contract owned by the stable VexLife predecessor.
+     *
+     * This must remain independent from VexLife-Prod's current runtime launch policy. Product-owned
+     * runtime flags may evolve without retroactively changing the identity of an already-owned
+     * stable VexLife process/receipt.
+     */
+    internal fun stableRuntimeServerArgs(
+        binding: HereticPersistentRuntime.Binding,
+    ): List<String> =
+        listOf(
+            "-m",
+            "mlx_lm.server",
+            "--model",
+            binding.modelPath,
+            "--host",
+            "127.0.0.1",
+            "--port",
+            HereticPersistentRuntime.Port.toString(),
+            "--chat-template-args",
+            "{\"enable_thinking\":false}",
+        )
+
     fun observe(
         productHome: Path,
         binding: HereticPersistentRuntime.Binding,
@@ -242,7 +265,7 @@ object StableVexLifeHereticRuntimeCompatibility {
         }
 
         val expectedArgs =
-            HereticPersistentRuntime.serverArgs(
+            stableRuntimeServerArgs(
                 binding,
             )
         require(
