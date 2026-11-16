@@ -387,6 +387,12 @@ class VexLifeWebP1RuntimeArtifactsTest {
             ),
             "VisionQuickAccess should realize its authored LocalInteraction instead of bypassing Vision",
         )
+        assertTrue(
+            bundle.javascript.contains(
+                "if (!event.isTrusted) return;",
+            ),
+            "synthetic LocalInteraction activation must not be mistaken for outside-click dismissal",
+        )
         assertTrue(bundle.javascript.contains("'theme-quick-action'"))
         assertTrue(bundle.javascript.contains("'support-quick-action'"))
         assertTrue(bundle.javascript.contains("https://vgong24.github.io/Vextreme/pages/vex-support.html"))
