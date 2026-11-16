@@ -458,6 +458,8 @@ object VexLifeWebP1 {
     val DiagnosticsEnhancedCapture = blueprintSurface(VexLifeWorkspaceBlueprint.DiagnosticsEnhancedCapture)
     val DiagnosticsClearHistory = blueprintSurface(VexLifeWorkspaceBlueprint.DiagnosticsClearHistory)
     val DiagnosticsExport = blueprintSurface(VexLifeWorkspaceBlueprint.DiagnosticsExport)
+    val ThreadContextState = blueprintSurface(VexLifeWorkspaceBlueprint.ThreadContextState)
+    val ThreadContextControl = blueprintSurface(VexLifeWorkspaceBlueprint.ThreadContextControl)
 
     val SettingsDiagnostics =
         blueprintSurface(
@@ -468,6 +470,8 @@ object VexLifeWebP1 {
                     DiagnosticsEnhancedCapture,
                     DiagnosticsClearHistory,
                     DiagnosticsExport,
+                    ThreadContextState,
+                    ThreadContextControl,
                 ),
         )
 

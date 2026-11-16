@@ -44,6 +44,7 @@ class DirectConversationStore(
         const val ContextSchema =
             VexLifeConversationContract.ContextSchema
 
+        const val ContextHorizonSchema = "vexlife-prod.thread-context-horizon/v1"
         const val ThreadWriterLeaseSchema =
             "vexlife.thread-writer-lease/v1"
 
@@ -168,6 +169,27 @@ class DirectConversationStore(
     )
 
     @ConsistentCopyVisibility
+    /**
+     * Where the thread's context begins: the completed head at which the person cleared thread
+     * memory. That turn and every turn before it stay in the record and on screen, but are not
+     * given to Vex — not as recent Conversation, not through Conversation source return, and not
+     * through a working rollover formed before it.
+     */
+    @Serializable
+    data class ContextHorizon(
+        val schemaVersion: String,
+        val horizonHeadSha256: String,
+        /** The sequence of that head's RESPONSE; every event at or before it is behind the horizon. */
+        val horizonSequence: Long,
+        val formedAt: String,
+    ) {
+        /** Completed exchanges behind the horizon. */
+        val exchangesBehind: Long
+            get() = (horizonSequence + 1) / 2
+
+        fun covers(sequence: Long): Boolean = sequence <= horizonSequence
+    }
+
     data class RecentCompletedConversation internal constructor(
         val events: List<Event>,
         val exactEventFileReadCount: Int,
@@ -272,6 +294,28 @@ class DirectConversationStore(
 
         fun immediatePriorCompletedTurn(): ImmediatePriorCompletedTurn? =
             readImmediatePriorCompletedTurn()
+
+        fun contextHorizon(): ContextHorizon? = readContextHorizon()
+
+        /**
+         * Clears thread memory: from the next turn Vex is given nothing at or before the current
+         * completed head. Nothing is deleted. Null when there is no completed turn to clear.
+         */
+        fun setContextHorizon(formedAt: Instant): ContextHorizon? {
+            val head = readHeadRecord() ?: return null
+            val horizon =
+                ContextHorizon(
+                    schemaVersion = ContextHorizonSchema,
+                    horizonHeadSha256 = head.conversationHeadSha256,
+                    horizonSequence = head.sequence,
+                    formedAt = formedAt.toString(),
+                )
+            VexDurableContractFile.write(productHome, contextHorizonPath, horizon)
+            return horizon
+        }
+
+        /** Gives Vex the whole thread again. True when a horizon was removed. */
+        fun removeContextHorizon(): Boolean = Files.deleteIfExists(contextHorizonPath)
 
         fun recentCompletedConversation(
             availableTokens: Int,
@@ -732,6 +776,32 @@ class DirectConversationStore(
                 DirectConversationIdentity.ThreadRef +
                 "/heads",
         )
+
+    private val contextHorizonPath: Path =
+        VexOwnedPath.resolveInside(
+            this.productHome,
+            "conversations/" +
+                manifest.currentCompanionLineageRef +
+                "/" +
+                DirectConversationIdentity.ThreadRef +
+                "/context-horizon.json",
+        )
+
+    fun contextHorizon(): ContextHorizon? = readContextHorizon()
+
+    private fun readContextHorizon(): ContextHorizon? {
+        val horizon =
+            VexDurableContractFile.read<ContextHorizon>(productHome, contextHorizonPath) ?: return null
+        require(
+            horizon.schemaVersion == ContextHorizonSchema &&
+                horizon.horizonSequence >= 1 &&
+                horizon.horizonSequence % 2 == 1L &&
+                horizon.horizonHeadSha256.matches(Regex("[0-9a-f]{64}")),
+        ) {
+            "thread context horizon shape is invalid"
+        }
+        return horizon
+    }
 
     private val currentHeadPath: Path =
         VexOwnedPath.resolveInside(
@@ -1632,6 +1702,7 @@ class DirectConversationStore(
                     wholeHistoryEventEnumerationPerformed = true,
                 )
 
+        val horizon = readContextHorizon()
         val newestFirst =
             mutableListOf<List<Event>>()
         val visitedHeads =
@@ -1679,6 +1750,8 @@ class DirectConversationStore(
                     )
             headReads +=
                 1
+            // Turns at or before the thread context horizon are not given to Vex.
+            if (horizon != null && horizon.covers(head.sequence)) break
 
             expectedCurrentHead
                 ?.let {

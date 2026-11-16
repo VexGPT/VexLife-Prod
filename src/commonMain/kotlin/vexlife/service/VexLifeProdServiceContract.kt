@@ -112,6 +112,8 @@ object VexLifeProdServiceContract {
     const val ModelsPath = "/api/v1/models"
     const val ModelsControlPath = "/api/v1/models/control"
     const val DiagnosticsControlPath = "/api/v1/diagnostics/control"
+    const val ThreadContextPath = "/api/v1/thread-context"
+    const val ThreadContextControlPath = "/api/v1/thread-context/control"
     const val DiagnosticsExportPath = "/api/v1/diagnostics/export"
     const val ChronologyPath = "/api/v1/chronology"
     /** The workspace scope's words in the person's language. Routes take no query parameters. */
@@ -384,6 +386,11 @@ object VexLifeProdServiceContract {
         val messages: List<ConversationMessage>,
         val abandonedAttemptCount: Int,
         val effectsPerformed: Boolean,
+        /**
+         * The response sequence at which the person cleared thread memory: Vex is not given that
+         * turn or anything before it. Null when Vex is given the whole thread.
+         */
+        val contextHorizonSequence: Long? = null,
     )
 
     @Serializable

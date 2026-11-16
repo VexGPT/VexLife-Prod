@@ -11,7 +11,8 @@
     "dataKeyOwners": {
       "diagnostics": "VexLifeDiagnosticsFamily (state, control refs) and the debug export route",
       "capability": "VexLifeCapabilityBridge uses (handle:action), shown to the person as reach",
-      "model": "VexLifeModelsFamily (files, control refs) and HereticModelCatalog standing"
+      "model": "VexLifeModelsFamily (files, control refs) and HereticModelCatalog standing",
+      "thread-context": "VexLifeThreadContextFamily (state, control refs)"
     }
   },
   "workspace.heading.diagnostics": {
@@ -516,6 +517,101 @@
     },
     "surfaces": [
       "workspace.settings"
+    ]
+  },
+  "workspace.heading.thread-context": {
+    "strings": {
+      "en": {
+        "text": "Thread memory"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.thread-context": {
+    "strings": {
+      "en": {
+        "text": "For testing: clearing thread memory starts Vex fresh from the next turn. Nothing is deleted — the conversation stays here and in the record; Vex is just not given what came before. Memory pages are unchanged. Restore gives Vex the whole thread again."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.thread-context-empty": {
+    "strings": {
+      "en": {
+        "text": "Nothing to clear yet: this thread has no finished turn."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "thread-context:state:EMPTY"
+  },
+  "workspace.status.thread-context-whole": {
+    "strings": {
+      "en": {
+        "text": "Vex is given this thread ({exchanges} exchanges, as many as fit)."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "thread-context:state:WHOLE"
+  },
+  "workspace.status.thread-context-cleared": {
+    "strings": {
+      "en": {
+        "text": "Cleared {at}: Vex is not given the {behind} exchanges before that; {since} since."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "thread-context:state:FROM_HORIZON"
+  },
+  "workspace.button.thread-context-clear": {
+    "strings": {
+      "en": {
+        "text": "Clear thread memory"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "thread-context:control:CLEAR_THREAD_MEMORY"
+  },
+  "workspace.button.thread-context-restore": {
+    "strings": {
+      "en": {
+        "text": "Restore thread memory"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "thread-context:control:RESTORE_THREAD_MEMORY"
+  },
+  "workspace.status.thread-context-busy": {
+    "strings": {
+      "en": {
+        "text": "Vex is answering; try again when the turn finishes."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.thread-context-divider": {
+    "strings": {
+      "en": {
+        "text": "Thread memory cleared here — Vex is not given anything above this line."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
     ]
   }
 }
