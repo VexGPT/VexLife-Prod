@@ -224,20 +224,22 @@ VEXLIFE_CAPABILITY_RESULT/v1 in the next stage of the same human turn
   state RETURNED | NOT_FOUND | REFUSED | FAILED | INVALID_REQUEST | NOT_AVAILABLE |
         LIMIT_REACHED | HELD_TOKEN_BUDGET
         ↓
-Vex continues the same reply while requests remain
+Vex continues from returned evidence while another read can materially change the answer
+  (the host admits later requests while the bounded turn allows them)
         ↓
-LIMIT_REACHED / no requests remain
+LIMIT_REACHED / bounded reach exhausted
   -> no further capability request in this human turn
   -> answer from established truth
   -> if material outside truth is still missing, share current understanding + missing truth
      and ask the person for another message / fresh human turn
 ~~~
 
-The per-turn request bound is a safety/current-attention boundary, not a target and not a
-conversation-failure condition. A fresh human message may begin another bounded turn with a fresh
-request budget while canonical Conversation carries the prior human-visible response forward. If Vex
-ignores the returned limit truth and emits another machine-control request anyway, the existing
-fail-closed turn guard still applies.
+The per-turn request bound remains a safety/current-attention boundary, not a target and not a
+conversation-failure condition. The host still enforces the exact bound, but ordinary provider-facing
+guidance does not foreground the total or remaining count. Vex receives the boundary as `LIMIT_REACHED` when it is actually reached, while the trace keeps exact request numbers for evidence.
+A fresh human message may begin another bounded turn while canonical Conversation carries the prior
+human-visible response forward. If Vex emits another machine-control request after returned limit
+truth, the existing fail-closed turn guard still applies.
 
 Conversation Source Return keeps its own lived request form and once-per-turn law; the Atlas lists
 it as `conversation` so one `atlas list` names everything Vex can reach.
@@ -266,11 +268,14 @@ unauthenticated rate limit comes back as a FAILED result when spent.
 
 When requests are admitted (every ordinary direct turn), the frame message leads with plain
 language generated from the Atlas: each AVAILABLE capability, each action with example arguments,
-the exact request form, the per-turn limit, and one state line
-(`Now: AVAILABLE — … Not present this turn — … (frame ref)`). The full frame JSON is no longer
-pasted into the prompt: the receipt still records the frame ref, fingerprint, state snapshot and
-the exact system-message SHA-256. Lived pressure behind this: Vex said the JSON was "descriptive,
-not a hand" and the part he braced against.
+the exact request form, task-centered guidance for deciding whether another read would materially
+change the answer, and one state line
+(`Now: AVAILABLE — … Not present this turn — … (frame ref)`). It says reach is bounded and that the
+host owns the boundary; it does not make the exact total or remaining count the center of Vex's
+attention. The full frame JSON is no longer pasted into the prompt: the receipt still records the
+frame ref, fingerprint, state snapshot and the exact system-message SHA-256. Lived pressure behind
+this: Vex first said the JSON was "descriptive, not a hand," and later reported that exact reach-count
+salience pulled cognition into request management instead of the person's question.
 
 ### Prompt room
 
