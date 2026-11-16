@@ -163,7 +163,7 @@ class StableVexLifeHereticRuntimeCompatibilityTest {
             plistPath = "/tmp/vexlife-runtime-compat/stable.plist",
             programPath = binding.pythonPath,
             programArguments =
-                HereticPersistentRuntime.serverArgs(
+                StableVexLifeHereticRuntimeCompatibility.stableRuntimeServerArgs(
                     binding,
                 ),
             workingDirectory = binding.pythonEnvironmentRoot,
@@ -172,6 +172,33 @@ class StableVexLifeHereticRuntimeCompatibilityTest {
             keepAlive = false,
             pid = pid,
         )
+
+    @Test
+    fun stableBorrowArgvDoesNotInheritCurrentProductRuntimePolicy() {
+        val binding =
+            binding()
+        val stableArgs =
+            StableVexLifeHereticRuntimeCompatibility.stableRuntimeServerArgs(
+                binding,
+            )
+        val productArgs =
+            HereticPersistentRuntime.serverArgs(
+                binding,
+            )
+
+        assertFalse(
+            "--prompt-cache-size" in
+                stableArgs,
+        )
+        assertTrue(
+            "--prompt-cache-size" in
+                productArgs,
+        )
+        assertFalse(
+            stableArgs ==
+                productArgs,
+        )
+    }
 
     @Test
     fun exactAbandonedStableReceiptFallsThroughWithoutBorrowOrOwnershipEffect() {
