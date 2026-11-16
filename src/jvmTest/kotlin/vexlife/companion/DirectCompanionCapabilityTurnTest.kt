@@ -269,6 +269,197 @@ class DirectCompanionCapabilityTurnTest {
     }
 
     @Test
+    fun aLongWebReadReturnsAContinuationOffsetAndTheNextRequestReachesLaterSource() =
+        withHome {
+            home ->
+            val tail = "FINAL-PARAGRAPH-SENTINEL"
+            val readable =
+                "A".repeat(
+                    50_000,
+                ) +
+                    tail
+            val longPage =
+                VexLifeWebReach.Transport {
+                    request,
+                    _,
+                    ->
+                    assertEquals(
+                        "https://example.com/long",
+                        request.uri.toString(),
+                    )
+                    VexLifeWebReach.Response(
+                        status = 200,
+                        headers =
+                            mapOf(
+                                "content-type" to
+                                    listOf(
+                                        "text/plain",
+                                    ),
+                            ),
+                        body =
+                            readable.toByteArray(
+                                StandardCharsets.UTF_8,
+                            ),
+                        truncated = false,
+                    )
+                }
+
+            fun fetch(
+                requestNumber: Int,
+                offset: Int? =
+                    null,
+            ): VexLifeCapabilityBridge.Exchange {
+                val arguments =
+                    buildString {
+                        append(
+                            """{"url":"https://example.com/long"""",
+                        )
+                        offset?.let {
+                            append(
+                                ""","offset":$it""",
+                            )
+                        }
+                        append(
+                            "}",
+                        )
+                    }
+                val control =
+                    VexLifeCapabilityRequest.RequestHeader +
+                        "\n" +
+                        """{"capability":"web","action":"fetch","arguments":$arguments}"""
+                val parsed =
+                    assertNotNull(
+                        VexLifeCapabilityRequest.parseOrNull(
+                            control,
+                        ),
+                    )
+                return VexLifeCapabilityBridge.perform(
+                    parsed = parsed,
+                    admission =
+                        VexLifeCapabilityBridge.Admission(
+                            productHome = home,
+                            availableCapabilityRefs =
+                                setOf(
+                                    "capability.vexlife.web.read",
+                                ),
+                            requestNumber = requestNumber,
+                            tokensAvailable =
+                                VexLifeCapabilityBridge.ExchangeAllowanceTokens,
+                        ),
+                    owners =
+                        VexLifeCapabilityBridge.Owners(
+                            webTransport = longPage,
+                            resolver = publicResolver,
+                        ),
+                    estimateTokens = DirectPromptContext::estimatedMessageTokens,
+                )
+            }
+
+            fun metadata(
+                exchange: VexLifeCapabilityBridge.Exchange,
+            ): JsonObject =
+                Json
+                    .parseToJsonElement(
+                        exchange.resultMessage.content
+                            .lineSequence()
+                            .drop(
+                                2,
+                            )
+                            .first(),
+                    )
+                    .jsonObject
+
+            val first =
+                fetch(
+                    requestNumber = 1,
+                )
+            val firstMeta =
+                metadata(
+                    first,
+                )
+            assertEquals(
+                "0",
+                firstMeta
+                    .getValue(
+                        "returnedStart",
+                    )
+                    .jsonPrimitive
+                    .content,
+            )
+            val nextOffset =
+                firstMeta
+                    .getValue(
+                        "nextOffset",
+                    )
+                    .jsonPrimitive
+                    .content
+                    .toInt()
+            assertTrue(
+                nextOffset in 1 until readable.length,
+            )
+            assertEquals(
+                readable.length.toString(),
+                firstMeta
+                    .getValue(
+                        "sourceCharacters",
+                    )
+                    .jsonPrimitive
+                    .content,
+            )
+            assertEquals(
+                "true",
+                firstMeta
+                    .getValue(
+                        "truncated",
+                    )
+                    .jsonPrimitive
+                    .content,
+            )
+            assertFalse(
+                first.resultMessage.content.contains(
+                    tail,
+                ),
+            )
+
+            val second =
+                fetch(
+                    requestNumber = 2,
+                    offset = nextOffset,
+                )
+            val secondMeta =
+                metadata(
+                    second,
+                )
+            assertEquals(
+                nextOffset.toString(),
+                secondMeta
+                    .getValue(
+                        "returnedStart",
+                    )
+                    .jsonPrimitive
+                    .content,
+            )
+            assertEquals(
+                readable.length.toString(),
+                secondMeta
+                    .getValue(
+                        "returnedEnd",
+                    )
+                    .jsonPrimitive
+                    .content,
+            )
+            assertTrue(
+                second.resultMessage.content.contains(
+                    tail,
+                ),
+            )
+            assertFalse(
+                "nextOffset" in
+                    secondMeta,
+            )
+        }
+
+    @Test
     fun narratedLateRequestIsCorrectedInsideTheSameTurnInsteadOfEscapingAsAResult() = withHome { home ->
         val calls = mutableListOf<List<Pair<String, String>>>()
         val narrated =

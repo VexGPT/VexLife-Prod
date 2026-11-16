@@ -39,6 +39,8 @@ class HarmonyCapabilityToolsTest {
         val fetch = tools.first().function
         assertEquals(listOf("url"), fetch.parameters.required)
         assertEquals("string", fetch.parameters.properties.getValue("url").type)
+        assertEquals("integer", fetch.parameters.properties.getValue("offset").type)
+        assertTrue("offset" !in fetch.parameters.required)
         assertTrue(fetch.description.startsWith("Fetch one public http(s) URL"))
         val tree = tools.single { it.function.name == "github_tree" }.function
         assertEquals(listOf("repository"), tree.parameters.required)

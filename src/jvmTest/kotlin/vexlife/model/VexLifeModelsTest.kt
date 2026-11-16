@@ -40,13 +40,15 @@ class VexLifeModelsTest {
 
     private fun models(
         home: Path,
-        serving: String? = HereticModelCatalog.Models.Qwen27B.modelRef,
+        serving: () -> String? = { HereticModelCatalog.Models.Qwen27B.modelRef },
+        switcher: VexLifeModels.Switcher? = null,
         failDownload: Boolean = true,
     ) =
         VexLifeModels(
             productHome = home,
-            servingModelRef = { serving },
+            servingModelRef = serving,
             totalMemoryBytes = { 16 * gib },
+            switcher = switcher,
             acquirer = { _ ->
                 HereticArtifactMaterialization.Acquirer { _, _ ->
                     if (failDownload) error("network unavailable in test")
@@ -79,9 +81,8 @@ class VexLifeModelsTest {
     }
 
     @Test
-    fun usingADownloadedModelSavesTheChoiceForTheNextStart() = withHome { home, fixture ->
+    fun usingADownloadedModelConvergesTheServingModelNow() = withHome { home, fixture ->
         val nine = HereticModelCatalog.Models.Qwen9B
-        // Every member present by size: the model counts as downloaded.
         nine.members
             .filter { it.expectedBytes < 50_000_000 }
             .forEach { place(home, nine, it.filename) }
@@ -93,27 +94,58 @@ class VexLifeModelsTest {
                     it.setLength(member.expectedBytes)
                 }
             }
-        models(home).use { owner ->
-            val after = owner.control(VexLifeModelsFamily.ControlUse, "heretic-9b")
-            assertEquals("CHOSEN", after.lastOutcome?.state)
-            assertTrue(after.switchPending)
-            assertEquals(
-                nine,
-                FileHereticModelConfigurationStore(home).selectedModel(fixture.manifest),
-            )
-            // The 27B the runtime still serves cannot be removed; the chosen 9B cannot either.
-            assertFalse(
-                VexLifeModelsFamily.ControlRemove in
-                    after.models
-                        .first { it.handle == "heretic-27b" }
-                        .display
-                        .controls
-                        .map { it.controlRef }
-            )
-            val refused = owner.control(VexLifeModelsFamily.ControlRemove, "heretic-9b")
-            assertEquals("NOT_LAWFUL_NOW", refused.lastOutcome?.state)
-            assertTrue(Files.exists(folder.resolve("config.json")))
-        }
+
+        var serving: String? = HereticModelCatalog.Models.Qwen27B.modelRef
+        val phases = mutableListOf<VexLifeModels.SwitchPhase>()
+        val switcher =
+            VexLifeModels.Switcher {
+                entry,
+                observe,
+                ->
+                observe(VexLifeModels.SwitchPhase.WAITING_FOR_CURRENT_TURN)
+                observe(VexLifeModels.SwitchPhase.PREPARING_TARGET)
+                observe(VexLifeModels.SwitchPhase.SWITCHING_RUNTIME)
+                phases +=
+                    listOf(
+                        VexLifeModels.SwitchPhase.WAITING_FOR_CURRENT_TURN,
+                        VexLifeModels.SwitchPhase.PREPARING_TARGET,
+                        VexLifeModels.SwitchPhase.SWITCHING_RUNTIME,
+                    )
+                serving = entry.modelRef
+            }
+
+        models(
+            home = home,
+            serving = { serving },
+            switcher = switcher,
+        )
+            .use {
+                owner ->
+                val accepted = owner.control(VexLifeModelsFamily.ControlUse, "heretic-9b")
+                assertEquals("SWITCHING", accepted.lastOutcome?.state)
+                assertTrue(accepted.switchPending)
+
+                owner.awaitIdle()
+                val after = owner.projection()
+                assertEquals("SWITCHED", after.lastOutcome?.state)
+                assertFalse(after.switchPending)
+                assertEquals(null, after.switching)
+                assertTrue(after.models.first { it.handle == "heretic-9b" }.chosen)
+                assertTrue(after.models.first { it.handle == "heretic-9b" }.serving)
+                assertEquals(
+                    listOf(
+                        VexLifeModels.SwitchPhase.WAITING_FOR_CURRENT_TURN,
+                        VexLifeModels.SwitchPhase.PREPARING_TARGET,
+                        VexLifeModels.SwitchPhase.SWITCHING_RUNTIME,
+                    ),
+                    phases,
+                )
+                assertEquals(
+                    nine,
+                    FileHereticModelConfigurationStore(home).selectedModel(fixture.manifest),
+                )
+                assertTrue(Files.exists(folder.resolve("config.json")))
+            }
     }
 
     @Test
