@@ -37,10 +37,11 @@ import vexlife.memory.VexLifeMemoryContract
  * - A malformed request costs one request and returns the exact form, so Vex can correct it.
  */
 object VexLifeCapabilityBridge {
-    const val MaximumRequestsPerTurn = 4
+    /** The default reach budget; the Home's [VexLifeReachPacingFamily] setting decides each turn's. */
+    val MaximumRequestsPerTurn: Int = VexLifeReachPacingFamily.Default.budget
 
-    /** Prompt room kept free at materialization for request/result exchanges in one turn. */
-    const val ExchangeAllowanceTokens = 24_000
+    /** Prompt room kept free at the default pacing for request/result exchanges in one turn. */
+    val ExchangeAllowanceTokens: Int = VexLifeReachPacingFamily.Default.exchangeAllowanceTokens
 
     /** One result never takes more than this, so later requests in the turn still have room. */
     const val MaximumResultTokens = 9_000
@@ -75,6 +76,8 @@ object VexLifeCapabilityBridge {
         val requestNumber: Int,
         /** Tokens still free for this exchange's two messages. */
         val tokensAvailable: Int,
+        /** This turn's reach budget and how Vex is told about it. */
+        val pacing: VexLifeReachPacingFamily.State = VexLifeReachPacingFamily.Default,
     )
 
     @Serializable
@@ -114,7 +117,8 @@ object VexLifeCapabilityBridge {
             require(
                 schemaVersion == TraceSchema &&
                     entries.isNotEmpty() &&
-                    entries.size <= MaximumRequestsPerTurn + 1
+                    maximumRequestsPerTurn in VexLifeReachPacingFamily.Budgets &&
+                    entries.size <= maximumRequestsPerTurn + 1
             ) {
                 "capability exchange trace is invalid"
             }
@@ -144,13 +148,16 @@ object VexLifeCapabilityBridge {
         val use: Use,
     )
 
-    fun trace(entries: List<TraceEntry>): Trace =
+    fun trace(
+        entries: List<TraceEntry>,
+        pacing: VexLifeReachPacingFamily.State = VexLifeReachPacingFamily.Default,
+    ): Trace =
         Trace(
             schemaVersion = TraceSchema,
             truthClass = "REQUEST_RETURN_CAPABILITY_EXCHANGES_OF_ONE_HUMAN_TURN",
             entries = entries,
-            maximumRequestsPerTurn = MaximumRequestsPerTurn,
-            exchangeAllowanceTokens = ExchangeAllowanceTokens,
+            maximumRequestsPerTurn = pacing.budget,
+            exchangeAllowanceTokens = pacing.exchangeAllowanceTokens,
             rawResultContentPersisted = false,
             effectAuthorityGranted = false,
         )
@@ -210,11 +217,11 @@ object VexLifeCapabilityBridge {
                         parsed.reason + ". " + FormReminder,
                         untrusted = false,
                     )
-                admission.requestNumber > MaximumRequestsPerTurn ->
+                admission.requestNumber > admission.pacing.budget ->
                     Body(
                         State.LIMIT_REACHED,
                         null,
-                        "This turn already used its $MaximumRequestsPerTurn requests.",
+                        "This turn already used its reach.",
                         untrusted = false,
                     )
                 definition == null ->
@@ -686,7 +693,7 @@ object VexLifeCapabilityBridge {
         estimateTokens: (String) -> Int,
     ): Triple<String, Boolean, State> {
         fun compose(state: State, text: String, cut: Boolean): String =
-            resultMessage(body.copy(state = state), text, cut, admission.requestNumber)
+            resultMessage(body.copy(state = state), text, cut, admission.requestNumber, admission.pacing)
         val full = compose(body.state, body.text, false)
         if (estimateTokens(full) <= maximumTokens) return Triple(full, false, body.state)
         var length = minOf(body.text.length, maxOf(0, maximumTokens) * 3)
@@ -705,18 +712,34 @@ object VexLifeCapabilityBridge {
         return Triple(held, false, State.HELD_TOKEN_BUDGET)
     }
 
-    private fun resultMessage(body: Body, text: String, cut: Boolean, requestNumber: Int): String {
+    private fun resultMessage(
+        body: Body,
+        text: String,
+        cut: Boolean,
+        requestNumber: Int,
+        pacing: VexLifeReachPacingFamily.State,
+    ): String {
+        val exact = pacing.counter == VexLifeReachPacingFamily.Counter.EXACT
         val meta = buildMap {
-            put("request", "$requestNumber of $MaximumRequestsPerTurn")
+            put("request", if (exact) "$requestNumber of ${pacing.budget}" else "$requestNumber")
             put("state", body.state.name)
             body.target?.let { put("target", it) }
             putAll(body.facts)
             if (cut || body.truncated) put("truncated", "true")
         }
-        val remaining = MaximumRequestsPerTurn - requestNumber
+        val remaining = pacing.budget - requestNumber
         val next =
             if (remaining > 0 && body.state != State.LIMIT_REACHED) {
-                "You can make another request ($remaining left this turn) or answer the person now."
+                when {
+                    pacing.framing == VexLifeReachPacingFamily.Framing.TASK_CENTERED ->
+                        (if (exact) "($remaining requests left this turn.) " else "") +
+                            "Continue the task: read again only if something decision-changing is still " +
+                            "unproven; once the evidence is saturated, answer the person."
+                    exact -> "You can make another request ($remaining left this turn) or answer the person now."
+                    else ->
+                        "Reach this turn is bounded but ample; the host will say when it runs out. Request " +
+                            "what would materially improve your understanding, and answer when you are confident."
+                }
             } else {
                 "No requests are left this turn. Do not send another capability request in this turn. " +
                     "Answer the person now from what you have. If a responsible answer still needs more " +

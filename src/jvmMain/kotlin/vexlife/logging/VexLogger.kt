@@ -105,6 +105,7 @@ object VexLogger {
         // Capability bridge: a request Vex made, and what its owner returned.
         CapabilityRequestObserved(Owner.Capability),
         CapabilityResultReturned(Owner.Capability),
+        ReachPacingChosen(Owner.Capability),
 
         // Browser and presentation, reported by the web presentation that observed them
         BrowserPageIdentityObserved(Owner.Browser),

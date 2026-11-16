@@ -2385,6 +2385,26 @@
       "enHash": "99cbaa8ea1dd",
       "langs": []
     },
+    "workspace.button.reach-pacing-budget": {
+      "enHash": "ffa33fafcdb1",
+      "langs": []
+    },
+    "workspace.button.reach-pacing-counter-bounded": {
+      "enHash": "bc9884741f58",
+      "langs": []
+    },
+    "workspace.button.reach-pacing-counter-exact": {
+      "enHash": "4902dd2b3ccb",
+      "langs": []
+    },
+    "workspace.button.reach-pacing-framing-standard": {
+      "enHash": "ddd100c7abce",
+      "langs": []
+    },
+    "workspace.button.reach-pacing-framing-task": {
+      "enHash": "73e375604932",
+      "langs": []
+    },
     "workspace.description.diagnostics": {
       "enHash": "7b79ef07573f",
       "langs": []
@@ -2405,12 +2425,20 @@
       "enHash": "3f9eef16b166",
       "langs": []
     },
+    "workspace.description.reach-pacing": {
+      "enHash": "70f6b6cfb786",
+      "langs": []
+    },
     "workspace.heading.diagnostics": {
       "enHash": "d6991174308f",
       "langs": []
     },
     "workspace.heading.models": {
       "enHash": "c595dae8d3cd",
+      "langs": []
+    },
+    "workspace.heading.reach-pacing": {
+      "enHash": "aee748199f4a",
       "langs": []
     },
     "workspace.label.diagnostics-no-records": {
@@ -2535,6 +2563,22 @@
     },
     "workspace.status.reach-memory": {
       "enHash": "238b3df1556e",
+      "langs": []
+    },
+    "workspace.status.reach-pacing-bounded": {
+      "enHash": "8679bad0b0b6",
+      "langs": []
+    },
+    "workspace.status.reach-pacing-exact": {
+      "enHash": "aa109d01342d",
+      "langs": []
+    },
+    "workspace.status.reach-pacing-framing-standard": {
+      "enHash": "6d39907b0256",
+      "langs": []
+    },
+    "workspace.status.reach-pacing-framing-task": {
+      "enHash": "45a140a1b937",
       "langs": []
     },
     "workspace.status.reach-web-fetch": {
