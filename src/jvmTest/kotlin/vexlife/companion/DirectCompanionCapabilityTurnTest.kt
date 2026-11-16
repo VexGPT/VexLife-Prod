@@ -584,9 +584,54 @@ class DirectCompanionCapabilityTurnTest {
         val returned = sent.last()
         assertEquals("tool", returned.getValue("role").jsonPrimitive.content)
         val returnedText = returned.getValue("content").jsonPrimitive.content
-        assertTrue(returnedText.startsWith(VexLifeCapabilityRequest.ResultHeader))
-        assertTrue(returnedText.contains("Fly the kite on a 30 m line."))
-        assertTrue(returnedText.contains("\"state\":\"RETURNED\""))
+        val providerResult =
+            Json
+                .parseToJsonElement(
+                    returnedText,
+                )
+                .jsonObject
+        assertEquals(
+            HarmonyCapabilityTools.ProviderResultSchema,
+            providerResult
+                .getValue(
+                    "schemaVersion",
+                )
+                .jsonPrimitive
+                .content,
+        )
+        assertEquals(
+            "RETURNED",
+            providerResult
+                .getValue(
+                    "metadata",
+                )
+                .jsonObject
+                .getValue(
+                    "state",
+                )
+                .jsonPrimitive
+                .content,
+        )
+        assertEquals(
+            "Fly the kite on a 30 m line.",
+            providerResult
+                .getValue(
+                    "content",
+                )
+                .jsonPrimitive
+                .content,
+        )
+        assertFalse(
+            providerResult
+                .getValue(
+                    "content",
+                )
+                .jsonPrimitive
+                .content
+                .contains(
+                    "You can make another request",
+                ),
+        )
 
         // The answer came after a real round trip through the bridge, recorded as one use.
         assertEquals("The page says to fly it on a 30 m line.", result.content)
@@ -601,8 +646,29 @@ class DirectCompanionCapabilityTurnTest {
             ),
             result.capabilityUses,
         )
-        val trace = assertNotNull(assertNotNull(DirectTurnContextStore(home).read(result.turnRef)).capabilityTrace)
-        assertEquals(VexLifeCapabilityRequest.sha256(returnedText), trace.entries.single().resultSha256)
+        val trace =
+            assertNotNull(
+                assertNotNull(
+                    DirectTurnContextStore(
+                        home,
+                    )
+                        .read(
+                            result.turnRef,
+                        ),
+                )
+                    .capabilityTrace,
+            )
+        assertEquals(
+            VexLifeCapabilityBridge.State.RETURNED,
+            trace.entries.single().state,
+        )
+        assertEquals(
+            64,
+            trace.entries.single().resultSha256.length,
+        )
+        assertFalse(
+            trace.rawResultContentPersisted,
+        )
 
         // The person saw the reach and the thinking, never the call as an answer.
         assertTrue(progress.any { it.phase == DirectCompanionTurn.ProgressPhase.Reached })

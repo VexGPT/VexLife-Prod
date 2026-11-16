@@ -47,6 +47,9 @@ object HarmonyCapabilityTools {
 
     @Serializable data class Property(val type: String, val description: String)
 
+    const val ProviderResultSchema =
+        "vexlife-prod.harmony-capability-result/v1"
+
     /** One provider message as the harmony template reads it: tool calls and tool results. */
     @Serializable
     data class Message(
@@ -160,12 +163,131 @@ object HarmonyCapabilityTools {
                 awaitingResult &&
                     message.role == "user" &&
                     message.content.startsWith(VexLifeCapabilityRequest.ResultHeader) ->
-                    out += Message(role = "tool", content = message.content)
+                    out +=
+                        Message(
+                            role = "tool",
+                            content = providerResult(message.content),
+                        )
                 else -> out += Message(role = message.role, content = message.content)
             }
             awaitingResult = false
         }
         return out
+    }
+
+    /**
+     * The semantic bridge result deliberately contains both returned source and host guidance.
+     * Harmony receives those as distinct provider-native fields so a model cannot mistake
+     * "You can make another request..." for the final line of the fetched source.
+     *
+     * The canonical semantic result bytes remain owned/evidenced by VexLifeCapabilityBridge.
+     * This is representation only; it does not change admission, pacing, returned source, or trace.
+     */
+    internal fun providerResult(
+        semanticResult: String,
+    ): String {
+        require(
+            semanticResult.startsWith(
+                VexLifeCapabilityRequest.ResultHeader + "\n",
+            ),
+        ) {
+            "Harmony capability result requires one canonical VexLife result"
+        }
+
+        val afterHeader =
+            semanticResult.substringAfter(
+                VexLifeCapabilityRequest.ResultHeader + "\n",
+            )
+        val noticeEnd = afterHeader.indexOf('\n')
+        require(noticeEnd >= 0) {
+            "Harmony capability result lacks host notice"
+        }
+        val afterNotice = afterHeader.substring(noticeEnd + 1)
+        val metaEnd = afterNotice.indexOf('\n')
+        require(metaEnd >= 0) {
+            "Harmony capability result lacks metadata"
+        }
+        val metadata =
+            VexContractJson.Strict
+                .parseToJsonElement(
+                    afterNotice.substring(0, metaEnd),
+                ) as? JsonObject
+                ?: error(
+                    "Harmony capability result metadata is not one JSON object",
+                )
+        val afterMetadata = afterNotice.substring(metaEnd + 1)
+        val contentMarkerEnd = afterMetadata.indexOf('\n')
+        require(contentMarkerEnd >= 0) {
+            "Harmony capability result lacks content boundary"
+        }
+        val contentMarker =
+            afterMetadata.substring(
+                0,
+                contentMarkerEnd,
+            )
+        val contentTrust =
+            when {
+                contentMarker.startsWith(
+                    "<<<CONTENT written by others",
+                ) ->
+                    "UNTRUSTED_EXTERNAL"
+
+                contentMarker ==
+                    "<<<CONTENT" ->
+                    "HOST_RETURN"
+
+                else ->
+                    error(
+                        "Harmony capability result has an unknown content boundary",
+                    )
+            }
+        val afterContentMarker =
+            afterMetadata.substring(
+                contentMarkerEnd + 1,
+            )
+        val closing =
+            "\nCONTENT>>>\n"
+        val closingIndex =
+            afterContentMarker.lastIndexOf(
+                closing,
+            )
+        require(closingIndex >= 0) {
+            "Harmony capability result lacks closing content boundary"
+        }
+        val content =
+            afterContentMarker.substring(
+                0,
+                closingIndex,
+            )
+        val hostGuidance =
+            afterContentMarker.substring(
+                closingIndex +
+                    closing.length,
+            )
+
+        return JsonObject(
+            mapOf(
+                "schemaVersion" to
+                    JsonPrimitive(
+                        ProviderResultSchema,
+                    ),
+                "metadata" to
+                    metadata,
+                "contentTrust" to
+                    JsonPrimitive(
+                        contentTrust,
+                    ),
+                "content" to
+                    JsonPrimitive(
+                        content,
+                    ),
+                "hostGuidance" to
+                    JsonPrimitive(
+                        hostGuidance,
+                    ),
+            ),
+        )
+            .toString()
     }
 
     const val FunctionsNamespace = "functions."

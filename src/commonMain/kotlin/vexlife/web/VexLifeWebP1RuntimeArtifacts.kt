@@ -2696,6 +2696,11 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const gibText = (bytes) => (Number(bytes) / 1073741824).toFixed(1);
 
+              const servingModelLabel = () => {
+                const serving = (state.models?.models || []).find((model) => model.serving);
+                return serving?.label ?? '';
+              };
+
               // Settings → Models. Rows, states and lawful Controls come from VexLifeModelsFamily via
               // the service; this renderer only lays them out and returns the chosen Control ref.
               const renderModels = () => {
@@ -2748,6 +2753,13 @@ object VexLifeWebP1RuntimeArtifacts {
                   lines.push(t('workspace.label.model-free-space').replace('{free}', gibText(projection.freeStorageBytes)));
                 }
                 if (ui.modelsNote) ui.modelsNote.textContent = lines.join(' ');
+                if (ui.companionStatus?.dataset.state === 'Ready') {
+                  setCompanionStatus(
+                    'Ready',
+                    'Ready',
+                    servingModelLabel() || ui.companionStatusModel.textContent
+                  );
+                }
               };
 
               const loadModels = async () => {
@@ -2771,6 +2783,9 @@ object VexLifeWebP1RuntimeArtifacts {
                     body: JSON.stringify({ controlRef, handle })
                   });
                   state.models = await readJson(response);
+                  if (controlRef === 'USE_MODEL' && state.models?.lastOutcome?.message) {
+                    notify(resolveText(state.models.lastOutcome.message));
+                  }
                 } catch (error) {
                   notify(error instanceof Error ? error.message : 'Models are not available.');
                 } finally {
@@ -2858,7 +2873,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.conversation = nextConversation;
                 const messages = state.conversation?.messages ?? [];
                 const latest = [...messages].reverse().find((message) => message.role === 'vex' && message.model);
-                setCompanionStatus('Ready', 'Ready', latest?.model ?? '');
+                setCompanionStatus(
+                  'Ready',
+                  'Ready',
+                  servingModelLabel() || latest?.model || ''
+                );
                 if (renderNow && priorIdentity !== nextIdentity) {
                   renderTimeline();
                   if (state.app === apps.archives) renderArchives();
@@ -2921,7 +2940,11 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 state.pending = null;
                 clearLiveProcessState();
-                setCompanionStatus('Ready', 'Ready', result.model ?? '');
+                setCompanionStatus(
+                  'Ready',
+                  'Ready',
+                  servingModelLabel() || result.model || ''
+                );
                 render();
               };
 
