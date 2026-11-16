@@ -8,6 +8,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import vexlife.contract.VexContractJson
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.home.VexLifeProdHome
@@ -409,6 +410,77 @@ class VexLifeProdLocalSetupTest {
                 runtimeResult(binding)
             },
         )
+
+    @Test
+    fun setupDefaultsUnsupportedHistoricalSelectionBeforeFormingRuntimeRequirements() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-local-setup-selection-convergence-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+        val trace =
+            mutableListOf<String>()
+        try {
+            val fixture =
+                CanonicalVexLifeHomeFixture.form(
+                    home,
+                )
+            val store =
+                FileHereticModelConfigurationStore(
+                    home,
+                )
+            store.selectHeretic(
+                fixture.manifest,
+            )
+            val current =
+                assertIs<FileHereticModelConfigurationStore.Snapshot.Heretic>(
+                    store.read(
+                        fixture.manifest,
+                    ),
+                )
+                    .value
+            Files.writeString(
+                home.resolve(
+                    VexLifeProdHome.ModelConfigurationRelativePath,
+                ),
+                VexContractJson.encode(
+                    current.copy(
+                        modelRef = "model.vexlife-prod.experimental.gpt-oss.removed",
+                        modelProfileRef =
+                            "model-profile.vexlife-prod.experimental.gpt-oss.removed",
+                        artifactRef = "artifact.vexlife-prod.experimental.gpt-oss.removed",
+                        artifactContentSetSha256 = "b".repeat(64),
+                    ),
+                ),
+            )
+
+            val result =
+                VexLifeProdLocalSetup.establishAt(
+                    productHome = home,
+                    allowAcquisition = true,
+                    hooks = hooks(trace),
+                )
+
+            assertEquals(
+                "HERETIC_DEFAULTED_UNSUPPORTED_SELECTION_PENDING",
+                result.modelSelectionDisposition,
+            )
+            assertEquals(
+                HereticProductIdentity.ModelRef,
+                result.qualifiedRuntimeEvidence.modelRef,
+            )
+            assertTrue("ARTIFACTS" in trace)
+            assertTrue("RUNTIME" in trace)
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
 
     @Test
     fun establishedCanonicalHomeComposesRuntimeWithoutIdentityRewrite() {
