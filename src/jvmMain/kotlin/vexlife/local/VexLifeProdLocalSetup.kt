@@ -451,18 +451,14 @@ object VexLifeProdLocalSetup {
 
         val modelConfiguration = FileHereticModelConfigurationStore(canonicalHome)
 
-        // A Home that has not chosen a model yet starts with the largest offered model that fits
-        // this Mac; a Home that chose keeps its choice (a bound 27B Home stays exactly as it was).
+        // A persisted selection is preference/history, not a requirement that an obsolete model
+        // must still exist. Converge it onto one model this Product can serve now before any
+        // materialization/runtime requirement is formed.
         val selected =
-            when (modelConfiguration.read(home.manifest)) {
-                is FileHereticModelConfigurationStore.Snapshot.Unconfigured ->
-                    modelConfiguration.selectModel(
-                        home.manifest,
-                        HereticModelCatalog.recommendedFor(host.observation.totalMemoryBytes),
-                    )
-                is FileHereticModelConfigurationStore.Snapshot.Heretic ->
-                    modelConfiguration.selectHeretic(home.manifest)
-            }
+            modelConfiguration.ensureSupportedSelection(
+                manifest = home.manifest,
+                totalMemoryBytes = host.observation.totalMemoryBytes,
+            )
         // The Home's own choice decides which catalog model is materialized and run. A Home that
         // never chose is given the certified default, exactly as before the catalog existed.
         val model = HereticModelConfiguration.selected(selected.value)
