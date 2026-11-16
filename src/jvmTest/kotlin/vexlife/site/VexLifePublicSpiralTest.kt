@@ -14,13 +14,12 @@ class VexLifePublicSpiralTest {
     private val root: Path = Path.of("").toAbsolutePath()
     private val page = Files.readString(root.resolve("site/index.html"))
     private val css = Files.readString(root.resolve("site/assets/site.css"))
-    private val script = Files.readString(root.resolve("site/assets/site.js"))
 
     @Test
     fun publicHomePinsTheSharedSpiralAndRegistersOnlyTruthfulPageFeatures() {
         assertContains(page, "VEX_SPIRAL_FEATURES")
-        assertContains(page, "Vextreme@da073582bc3147642b78640f8c72290396fc2489/widgets/vex-fab.js")
-        assertContains(page, "Vextreme@da073582bc3147642b78640f8c72290396fc2489/components/vex-spiral-features.js")
+        assertContains(page, "Vextreme@bf4d7a34da2766d6b3d1b048ba9063ae1943128e/widgets/vex-fab.js")
+        assertContains(page, "Vextreme@bf4d7a34da2766d6b3d1b048ba9063ae1943128e/components/vex-spiral-features.js")
         assertContains(page, "id: 'theme'")
         assertContains(page, "id: 'support'")
         assertContains(page, "id: 'terrain'")
@@ -41,30 +40,15 @@ class VexLifePublicSpiralTest {
     }
 
     @Test
-    fun existingThemeControlRemainsTheBehaviorAndIconOwnerBehindTheSpiralProjection() {
+    fun existingThemeControlIsRecycledIntoTheSpiralWithoutAProxy() {
         assertContains(page, "id=\"theme-toggle\"")
-        assertContains(page, "id=\"theme-toggle\" aria-label=\"Switch between dark and light\" hidden")
-        assertContains(script, "data-vex-spiral-icon")
-        assertContains(script, "light ? '☀️' : '🌙'")
+        assertContains(page, "target: '#theme-toggle'")
+        assertContains(script, "toggle.textContent = light ? '☀️' : '🌙'")
+        assertContains(script, "event.stopPropagation()")
         assertContains(css, ".spiral-actions")
         assertContains(css, "#vex-spiral-trigger")
-    }
-
-    @Test
-    fun openCloseAndReopenUseOneHeaderProjectionCircuit() {
-        assertContains(script, "vex:spiral-change")
-        assertContains(script, "header.dataset.spiralOpen")
-        assertContains(script, "node.inert = true")
-        assertContains(script, "node.inert = false")
-        assertContains(css, "data-spiral-open=\"true\"")
-        assertContains(css, "translateX(92px) scale(0.72)")
-        assertContains(css, "translateX(64px) scale(0.80)")
-    }
-
-    @Test
-    fun terrainIsVisuallyQuieterInsideTheSpiral() {
-        assertContains(css, "[data-vex-spiral-feature-id=\"terrain\"]")
-        assertContains(css, "font-size: 14px")
+        assertFalse(css.contains("data-spiral-open"))
+        assertFalse(script.contains("vex:spiral-change"))
     }
 }
 
