@@ -744,6 +744,63 @@ class HereticPersistentRuntimeTest {
     }
 
     @Test
+    fun exactOwnedRuntimeForNoLongerOfferedModelRetiresWithoutRequiringThatModel() {
+        val trace = mutableListOf<String>()
+        val current = binding()
+        val obsoleteModelPath = "/tmp/vexlife-prod-test/models/heretic/obsolete-gpt-oss"
+        val obsoleteArgs =
+            HereticPersistentRuntime
+                .serverArgs(
+                    current,
+                )
+                .map {
+                    if (
+                        it ==
+                            current.modelPath
+                    ) {
+                        obsoleteModelPath
+                    } else {
+                        it
+                    }
+                }
+        val prior =
+            receipt(
+                binding = current,
+                runtimeArgs = obsoleteArgs,
+            )
+                .copy(
+                    modelRef = "model.vexlife-prod.experimental.gpt-oss.removed",
+                    modelProfileRef = "model-profile.vexlife-prod.experimental.gpt-oss.removed",
+                    artifactRef = "artifact.vexlife-prod.experimental.gpt-oss.removed",
+                    artifactCustodyEvidenceRef =
+                        "resolution.vexlife-prod.experimental.gpt-oss.removed",
+                    artifactContentSetSha256 = "b".repeat(64),
+                    modelPath = obsoleteModelPath,
+                    trainerSourceCommit = "c".repeat(40),
+                )
+        val store = Store(prior, trace)
+        val platform = Platform(trace).also { it.alivePids += prior.runtime.pid }
+
+        val result =
+            HereticPersistentRuntime.startOrReuse(
+                current,
+                store,
+                platform,
+            )
+
+        assertEquals(
+            "STARTED_NEW_EXACT_MLX_RUNTIME",
+            result.disposition,
+        )
+        assertTrue(trace.indexOf("RETIRE_Qualified") < trace.indexOf("SPAWN"))
+        assertTrue(obsoleteArgs in platform.processIdentityArgs)
+        assertTrue(HereticPersistentRuntime.serverArgs(current) in platform.processIdentityArgs)
+        assertTrue(trace.contains("STORE_DELETE"))
+        assertEquals(1, platform.retireCalls)
+        assertEquals(current.model.modelRef, result.receipt.modelRef)
+    }
+
+    @Test
     fun arbitraryPriorRuntimeArgsNeverAuthorizeRetirement() {
         val trace = mutableListOf<String>()
         val current = binding()

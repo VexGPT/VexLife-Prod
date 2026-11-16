@@ -552,13 +552,28 @@ object HereticPersistentRuntime {
         validateBinding(
             binding,
         )
+        return serverArgs(
+            modelPath = binding.modelPath,
+            contract = contract,
+        )
+    }
+
+    private fun serverArgs(
+        modelPath: String,
+        contract: ServerLaunchContract,
+    ): List<String> {
+        require(
+            modelPath.isNotBlank(),
+        ) {
+            "Heretic runtime launch contract requires one model path"
+        }
 
         val base =
             listOf(
                 "-m",
                 "mlx_lm.server",
                 "--model",
-                binding.modelPath,
+                modelPath,
                 "--host",
                 "127.0.0.1",
                 "--port",
@@ -587,9 +602,18 @@ object HereticPersistentRuntime {
         binding: Binding,
         args: List<String>,
     ): ServerLaunchContract? =
+        serverLaunchContract(
+            modelPath = binding.modelPath,
+            args = args,
+        )
+
+    private fun serverLaunchContract(
+        modelPath: String,
+        args: List<String>,
+    ): ServerLaunchContract? =
         ServerLaunchContract.entries.firstOrNull { contract ->
             serverArgs(
-                binding = binding,
+                modelPath = modelPath,
                 contract = contract,
             ) == args
         }
@@ -605,6 +629,62 @@ object HereticPersistentRuntime {
             ?.let {
                 receipt.runtime.args
             }
+
+    /**
+     * Retirement-only ownership for a Product runtime whose model is no longer offered.
+     *
+     * Serving eligibility is intentionally not part of this proof. A historical model may be
+     * ineligible to serve now while the process/lifetime it left behind remains exactly owned and
+     * therefore safely retireable. Model-specific identity is not promoted to current truth.
+     */
+    private fun receiptOwnsRetirableRuntimeLineage(
+        binding: Binding,
+        receipt: Receipt,
+        expectedArgs: List<String>,
+    ): Boolean {
+        val current =
+            binding.model.identity
+
+        return receipt.schemaVersion ==
+            ReceiptSchema &&
+            receipt.authorityRef ==
+            binding.authorityRef &&
+            receipt.runtimeAdapterRef ==
+            current.runtimeAdapterRef &&
+            receipt.runtimeClass ==
+            current.runtimeClass &&
+            receipt.transportClass ==
+            current.transportClass &&
+            receipt.hostExecutionProfileRef ==
+            current.hostExecutionProfileRef &&
+            receipt.pythonVersion ==
+            current.pythonVersion &&
+            receipt.mlxLmVersion ==
+            current.mlxLmVersion &&
+            receipt.pythonPath ==
+            binding.pythonPath &&
+            receipt.pythonEnvironmentRoot ==
+            binding.pythonEnvironmentRoot &&
+            receipt.endpoint ==
+            current.endpoint &&
+            receipt.requestModel ==
+            current.requestModel &&
+            receipt.implementationIdentity.repository ==
+            binding.implementationIdentity.repository &&
+            receipt.implementationIdentity.classResource ==
+            binding.implementationIdentity.classResource &&
+            receipt.runtime.pid >
+            0 &&
+            receipt.runtime.processGroupId >
+            0 &&
+            receipt.runtime.exactOwnedDetachedGroup &&
+            receipt.runtime.args ==
+            expectedArgs &&
+            receipt.runtime.processSubstrate.pid ==
+            receipt.runtime.pid &&
+            receipt.effects ==
+            HereticRuntimeEffectBoundary.QualifiedRuntime
+    }
 
     fun startOrReuse(
         binding: Binding,
@@ -652,6 +732,74 @@ object HereticPersistentRuntime {
         // chosen model starts. A receipt that is not provably ours still fails below.
         val priorModel =
             prior?.let { HereticModelCatalog.entry(it.modelRef) }
+
+        // A Product-owned runtime may outlive the catalog entry that selected it (for example an
+        // experimental model removed by a later/narrower build). "No longer offered" means it may
+        // not serve now; it does not erase lifecycle ownership needed to retire the exact process.
+        val unsupportedPriorArgs =
+            if (
+                prior !=
+                    null &&
+                priorModel ==
+                    null
+            ) {
+                serverLaunchContract(
+                    modelPath = prior.modelPath,
+                    args = prior.runtime.args,
+                )
+                    ?.let {
+                        prior.runtime.args
+                    }
+            } else {
+                null
+            }
+        if (
+            prior !=
+                null &&
+                priorModel ==
+                    null &&
+                unsupportedPriorArgs !=
+                    null &&
+                receiptOwnsRetirableRuntimeLineage(
+                    binding = binding,
+                    receipt = prior,
+                    expectedArgs = unsupportedPriorArgs,
+                )
+        ) {
+            if (
+                platform.processAlive(
+                    prior.runtime.pid,
+                )
+            ) {
+                requireExactOwnedProcess(
+                    prior,
+                    unsupportedPriorArgs,
+                    platform,
+                )
+            }
+            val retired =
+                platform.retire(
+                    prior,
+                )
+            require(
+                retired.exactOwnershipVerified &&
+                    retired.verifiedNotLive,
+            ) {
+                "unsupported-model exact Heretic runtime could not be retired before current model start"
+            }
+            store.delete()
+            switchedModel =
+                true
+            VexLogger.record(
+                VexLogger.Fact.RuntimeModelSwitched,
+                mapOf(
+                    "from" to prior.modelRef,
+                    "to" to binding.model.handle,
+                    "reason" to "PRIOR_MODEL_NOT_OFFERED",
+                ),
+            )
+        }
+
         val priorModelBinding =
             if (
                 prior !=
