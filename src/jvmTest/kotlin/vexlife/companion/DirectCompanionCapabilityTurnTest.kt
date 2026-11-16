@@ -317,6 +317,72 @@ class DirectCompanionCapabilityTurnTest {
     }
 
     @Test
+    fun currentReachPacingSupersedesHistoricalConversationLimitClaims() = withHome { home ->
+        DirectCompanionTurn.performWithHooks(
+            setup = setup(home),
+            intent =
+                DirectCompanionTurn.Intent(
+                    idempotencyKey = "send.reach.pacing.history.001",
+                    content = "What reach limit are you working with?",
+                ),
+            hooks =
+                DirectCompanionTurn.Hooks(
+                    transport = { reply("I have up to 4 requests per turn.") },
+                    now = { Instant.parse("2026-11-15T19:00:00Z") },
+                ),
+        )
+
+        val pacing = vexlife.capability.VexLifeReachPacing(home)
+        pacing.control("BUDGET_10")
+        pacing.control("COUNTER_BOUNDED")
+
+        val calls = mutableListOf<List<Pair<String, String>>>()
+        val result =
+            DirectCompanionTurn.performWithHooks(
+                setup = setup(home),
+                intent =
+                    DirectCompanionTurn.Intent(
+                        idempotencyKey = "send.reach.pacing.history.002",
+                        content = "Use the current reach setting for this turn.",
+                    ),
+                hooks =
+                    DirectCompanionTurn.Hooks(
+                        transport = { call ->
+                            calls += messages(call)
+                            reply("I will use the current reach setting.")
+                        },
+                        now = { Instant.parse("2026-11-15T19:01:00Z") },
+                    ),
+            )
+
+        val providerMessages = calls.single()
+        assertTrue(
+            providerMessages.any {
+                it.first == "assistant" && it.second.contains("I have up to 4 requests per turn.")
+            },
+            "historical Conversation remains exact rather than being rewritten",
+        )
+        val currentSystem =
+            providerMessages.filter { it.first == "system" }.joinToString("\n") { it.second }
+        assertTrue(
+            currentSystem.contains("Current reach pacing for this turn allows up to 10 requests.")
+        )
+        assertTrue(
+            currentSystem.contains(
+                "This current-turn setting overrides any earlier Conversation statements about reach limits."
+            )
+        )
+        assertTrue(
+            currentSystem.contains(
+                "The host does not expose the exact running or remaining count"
+            )
+        )
+
+        assertEquals(10, result.promptContextReceipt.capabilityRequestBudget)
+        assertEquals("BOUNDED", result.promptContextReceipt.capabilityRequestCounter)
+    }
+
+    @Test
     fun narratedLateRequestIsCorrectedInsideTheSameTurnInsteadOfEscapingAsAResult() = withHome { home ->
         val calls = mutableListOf<List<Pair<String, String>>>()
         val narrated =
