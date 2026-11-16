@@ -158,6 +158,8 @@ class DirectCompanionCapabilityTurnTest {
         assertFalse(firstSystem.contains("What I can reach this turn, and how to ask for it."))
         assertFalse(firstSystem.contains(VexLifeCapabilityRequest.RequestHeader))
         assertTrue(firstSystem.contains("VEXLIFE_FOUNDATIONAL_FIELD/v1"))
+        assertTrue(firstSystem.contains("No outside-source capability reach is admitted in this turn."))
+        assertTrue(firstSystem.contains(VexLifeCapabilityRequest.ResultHeader))
         assertEquals(0, result.promptContextReceipt.capabilityExchangeAllowanceTokens)
         val frame = assertNotNull(result.promptContextReceipt.capabilityFrameSnapshot)
         assertFalse("capability.vexlife.web.read" in frame.availableCapabilityRefs)

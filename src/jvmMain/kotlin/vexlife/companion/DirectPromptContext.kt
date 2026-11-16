@@ -2335,6 +2335,7 @@ object DirectPromptContext {
             "VEXLIFE_SELF_CAPABILITY_FRAME/v1",
             "These are current bounded capability handles, not effect authority or proof that an effect already occurred.",
             "Use AVAILABLE/HELD/UNAVAILABLE/UNKNOWN as currentness context. Any effect still belongs to its rightful owner and current authority.",
+            "No outside-source capability reach is admitted in this turn. Do not claim that web, repository, Home, or Memory source was fetched unless a real ${VexLifeCapabilityRequest.ResultHeader} message is present.",
             VexContractJson.compactEncode(frame),
         )
             .joinToString("\n")
