@@ -226,9 +226,9 @@ class FileHereticModelConfigurationStoreTest {
             val store = FileHereticModelConfigurationStore(home)
             store.selectHeretic(fixture.manifest)
             store.bindQualified(manifest = fixture.manifest, qualifiedRuntime = qualifiedRuntime())
-            assertEquals(vexlife.model.heretic.HereticModelCatalog.Certified27B, store.selectedModel(fixture.manifest))
+            assertEquals(vexlife.model.heretic.HereticModelCatalog.Models.Qwen27B, store.selectedModel(fixture.manifest))
 
-            val nine = vexlife.model.heretic.HereticModelCatalog.Candidate9B
+            val nine = vexlife.model.heretic.HereticModelCatalog.Models.Qwen9B
             val switched = store.selectModel(fixture.manifest, nine)
             assertEquals("HERETIC_MODEL_SWITCHED_PENDING", switched.state)
             assertEquals(HereticModelConfiguration.State.EstablishmentPending, switched.value.state)

@@ -64,7 +64,7 @@ class HarmonyResponseSplitterTest {
 
     @Test
     fun aHarmonyModelStreamsItsAnalysisAsThinkingAndSendsOneSystemMessage() {
-        val entry = HereticModelCatalog.CandidateGptOss20B
+        val entry = HereticModelCatalog.Models.GptOss20B
         val runtime =
             HereticModelConfiguration.QualifiedRuntimeEvidence(
                 runtimeReceiptRef = "receipt.vexlife-prod.heretic.test",
