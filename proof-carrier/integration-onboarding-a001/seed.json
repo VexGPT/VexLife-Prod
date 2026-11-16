@@ -1,0 +1,204 @@
+{
+  "schemaVersion": "vex.relay.task/v2",
+  "continuity": "[VXG RealForever]",
+  "taskRef": "task.vexlife-prod.gpt-oss-product-spiral-integration-lived-mac.001",
+  "attemptRef": "attempt.vexlife-prod.gpt-oss-product-spiral-integration-lived-mac.a001",
+  "requestRef": "request.vexlife-prod.gpt-oss-product-spiral-integration-lived-mac.a001",
+  "correlationRef": "correlation.vexlife-prod.gpt-oss-product-spiral-integration-lived-mac.a001",
+  "packageRef": "package.vexlife-prod.gpt-oss-product-spiral-integration-lived-mac.a001",
+  "original": {
+    "originalIntent": "Exercise one fresh VexLife-Prod integration branch that inherits exact #153 gpt-oss/Harmony source and exact #194 Product Spiral source without changing either source lane.",
+    "originalGoal": "Prove the exact integration source/build and form one unsigned Mac DMG so onboarding can be exercised with an explicit non-gpt-oss model choice.",
+    "userProtectedIntent": "Keep gpt-oss offered but unused for this lived path; preserve the normal onboarding/model-selection owners and avoid mutating the canonical Home merely to bypass an unrelated gpt-oss runtime exception.",
+    "sourceRefs": [
+      "github.pull.vexlife-prod.153",
+      "github.pull.vexlife-prod.194",
+      "github.pull.vexlife-prod.199",
+      "source.vexrelay.current-contract/v1"
+    ]
+  },
+  "lane": {
+    "entryClass": "SAME_LANE_ROLE_TRANSITION",
+    "scopeMode": "STAGE_BOUNDED",
+    "laneRef": "lane.vexlife-prod.gpt-oss-product-spiral-integration",
+    "parentRootRef": "root.vexlife-prod.new-beginnings",
+    "workRef": "work.vexlife-prod.gpt-oss-product-spiral.integration",
+    "claimRef": "github.pull.vexlife-prod.199",
+    "returnRouteRef": "github.pull.vexlife-prod.199",
+    "ownerRef": "owner.vexlife-prod.integration-test",
+    "rootHubRef": "hub.vexlife-prod.new-beginnings"
+  },
+  "role": {
+    "activeRole": "CODER",
+    "roleRef": "role.coder.vexlife-prod.integration-lived-mac",
+    "instanceRef": "instance.vexrelay.vexlife-prod.integration-lived-mac.a001",
+    "occupancyRef": "occupancy.vexrelay.vexlife-prod.integration-lived-mac.a001",
+    "providerBindingRef": "provider.vexlocalbridge.macos-victor.integration-lived-mac.a001",
+    "threadRef": "thread.vexlife-prod.integration-test",
+    "authorityEnvelopeRef": "authority-envelope.vexlife-prod.integration-lived-mac.a001"
+  },
+  "capabilities": {
+    "platformGitHubRead": "AVAILABLE",
+    "platformGitHubWrite": "UNAVAILABLE"
+  },
+  "execution": {
+    "hostProfile": "macos-victor",
+    "executionSurface": "MAC_ZIP_RUN_COMMAND",
+    "singleUseNonce": "nonce-vexlife-prod-integration-lived-mac-a001-20261116",
+    "duplicateAttemptMarker": "marker.vexlife-prod.integration-lived-mac.a001",
+    "duplicateProtectionMode": "OUTER_RELAY_BOUND",
+    "formedAt": "__FORMED_AT__",
+    "expiresAtOrNull": "__EXPIRES_AT__"
+  },
+  "workspace": {
+    "mode": "RUN_ROOT",
+    "projectRef": "project.vexlife-prod.integration-lived-mac",
+    "projectPath": "workspace",
+    "createRoot": false,
+    "createProjectPath": true
+  },
+  "repositories": [
+    {
+      "repositoryRef": "primary",
+      "mode": "CLONE_IN_WORKSPACE",
+      "cloneTransport": "GITHUB_GH",
+      "githubHostname": "github.com",
+      "nameWithOwner": "VexGPT/VexLife-Prod",
+      "localPath": "repositories/primary",
+      "remote": "origin",
+      "baseBranch": "main",
+      "acceptedBase": "655e7c78cefba06a5e87afad285bb25a08632f05",
+      "checkoutRef": "7215656f9b53b02b341852deb21f8229724a9223",
+      "expectedHead": "7215656f9b53b02b341852deb21f8229724a9223",
+      "branch": "VXG-111626-gpt-oss-product-spiral-integration-a001",
+      "expectedRemoteUrl": null
+    }
+  ],
+  "authority": {
+    "authorityRef": "authority.vexlife-prod.integration-lived-mac.a001",
+    "authorityMode": "EXACT_STAGE_EFFECTS",
+    "grantedEffects": [
+      "CHECK_AUTH",
+      "READ_REPOSITORY",
+      "CHECK_STATE",
+      "RUN_LOCAL_COMMAND",
+      "QUERY_PROVIDER",
+      "FORM_RESULT"
+    ],
+    "conditionalEffects": [],
+    "consumedEffects": [],
+    "remainingEffects": [
+      "CHECK_AUTH",
+      "READ_REPOSITORY",
+      "CHECK_STATE",
+      "RUN_LOCAL_COMMAND",
+      "QUERY_PROVIDER",
+      "FORM_RESULT"
+    ],
+    "heldEffects": [
+      "WRITE_SOURCE",
+      "CREATE_COMMIT",
+      "PUSH_BRANCH",
+      "UPDATE_COORDINATION_METADATA",
+      "APPROVE_EXACT_HEAD",
+      "MARK_READY",
+      "ORDINARY_MERGE",
+      "POST_MERGE_VERIFY",
+      "MODEL_RUNTIME",
+      "HOME_MUTATION"
+    ],
+    "repositoryMembranes": [
+      {
+        "repositoryRef": "primary",
+        "allowedPaths": [
+          ".github",
+          "build.gradle.kts",
+          "docs",
+          "localization",
+          "packaging",
+          "site",
+          "src",
+          "tools"
+        ]
+      }
+    ],
+    "allowedExecutables": [
+      "/bin/bash",
+      "git",
+      "gh",
+      "node"
+    ],
+    "allowedEnvironment": [],
+    "remoteObservationOwner": "Operations",
+    "allowMutationLoop": false,
+    "stopConditions": [
+      "STOP_ON_UNKNOWN",
+      "STOP_ON_AUTH_BLOCK",
+      "STOP_ON_BASE_OR_BRANCH_DRIFT",
+      "STOP_ON_TEST_FAILURE"
+    ]
+  },
+  "source": {
+    "sourceSetRef": "source-set.vexlife-prod.gpt-oss-product-spiral-integration",
+    "sourceVersionRef": "7215656f9b53b02b341852deb21f8229724a9223",
+    "overlapEvidenceRef": "github.pull.vexlife-prod.199",
+    "activeConflictState": "NONE",
+    "candidateState": "EXACT",
+    "candidateHead": "7215656f9b53b02b341852deb21f8229724a9223",
+    "candidateTree": "9e33ea323fe8d9b6630d6347b007762d2ce07a27",
+    "expectedChangedPaths": [
+      {
+        "repositoryRef": "primary",
+        "path": "docs/foundation/HERETIC-PRODUCT-MODEL.md"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/model/heretic/HereticModelCatalog.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/web/VexLifeWebP1ExperienceStyle.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/web/VexLifeWebP1RuntimeArtifacts.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonTest/kotlin/vexlife/model/heretic/HereticModelCatalogTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonTest/kotlin/vexlife/web/VexLifeVisionQuickAccessTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonTest/kotlin/vexlife/web/VexLifeWebP1RuntimeArtifactsTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmMain/kotlin/vexlife/companion/DirectCompanionConnection.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmMain/kotlin/vexlife/companion/HarmonyResponseSplitter.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmTest/kotlin/vexlife/companion/HarmonyResponseSplitterTest.kt"
+      }
+    ],
+    "intentionallyUnchangedAuthorizedPaths": []
+  },
+  "policy": {
+    "maxOuterReturnFiles": 10,
+    "maxSelectedSourceEntries": 10,
+    "maxSelectedSourceBytes": 700000,
+    "maxDiffBytes": 7000000,
+    "requireRacePreflightBeforeMutation": false,
+    "requireLocalValidationBeforePublish": false,
+    "requireInputPackageManifest": true,
+    "signoffCommit": true,
+    "draftPullRequest": true
+  }
+}
