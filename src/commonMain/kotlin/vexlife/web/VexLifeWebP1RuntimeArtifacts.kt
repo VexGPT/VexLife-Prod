@@ -1084,6 +1084,9 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 document.addEventListener('click', (event) => {
                   if (!state.quickActionsOpen) return;
+                  // Authored LocalInteractions may activate an existing Product Control with a
+                  // synthetic click. Only a real human click outside the Spiral dismisses it.
+                  if (!event.isTrusted) return;
                   if (
                     ui.quickActions.contains(event.target) ||
                     ui.speech?.contains(event.target) ||
