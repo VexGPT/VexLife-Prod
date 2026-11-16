@@ -41,6 +41,7 @@ class HereticPersistentRuntimeTest {
         override val architecture = "arm64"
 
         val alivePids = mutableSetOf<Long>()
+        val processIdentityArgs = mutableListOf<List<String>>()
         var environmentIsCurrent = true
         var identityAvailable = true
         var processGroupId = 4242L
@@ -73,6 +74,7 @@ class HereticPersistentRuntimeTest {
             args: List<String>,
         ): HereticPersistentRuntime.ProcessIdentity? {
             trace += "PROCESS_IDENTITY_$pid"
+            processIdentityArgs += args
             if (!identityAvailable) return null
             return HereticPersistentRuntime.ProcessIdentity(
                 pid = pid,
@@ -675,9 +677,21 @@ class HereticPersistentRuntimeTest {
     }
 
     @Test
-    fun staleImplementationExactOwnedRuntimeRotatesBeforeReplacement() {
+    fun staleImplementationExactOwnedRuntimeRotatesEvenWhenLaunchPolicyChanged() {
         val trace = mutableListOf<String>()
         val current = binding()
+        val currentArgs = HereticPersistentRuntime.serverArgs(current)
+        val cacheIndex = currentArgs.indexOf("--prompt-cache-size")
+        assertTrue(cacheIndex >= 0)
+
+        val priorArgs =
+            currentArgs
+                .toMutableList()
+                .also {
+                    it.removeAt(cacheIndex + 1)
+                    it.removeAt(cacheIndex)
+                }
+                .toList()
         val staleSha =
             if (
                 current.implementationIdentity.classSha256 ==
@@ -693,15 +707,35 @@ class HereticPersistentRuntimeTest {
                     64,
                 )
             }
-        val prior = receipt(current, implementationSha = staleSha)
+        val formedPrior = receipt(current, implementationSha = staleSha)
+        val prior =
+            formedPrior.copy(
+                runtime =
+                    formedPrior.runtime.copy(
+                        args = priorArgs,
+                    ),
+            )
         val store = Store(prior, trace)
         val platform = Platform(trace).also { it.alivePids += prior.runtime.pid }
 
+        assertFailsWith<IllegalArgumentException> {
+            HereticPersistentRuntime.configurationEvidence(
+                binding = current,
+                receipt = prior,
+            )
+        }
+
         val result = HereticPersistentRuntime.startOrReuse(current, store, platform)
 
-        assertEquals("ROTATED_STALE_IMPLEMENTATION_AND_STARTED_NEW_EXACT_MLX_RUNTIME", result.disposition)
+        assertEquals(
+            "ROTATED_STALE_IMPLEMENTATION_AND_STARTED_NEW_EXACT_MLX_RUNTIME",
+            result.disposition,
+        )
         assertTrue(trace.indexOf("RETIRE_Qualified") < trace.indexOf("SPAWN"))
         assertTrue(trace.contains("STORE_DELETE"))
+        assertEquals(priorArgs, platform.processIdentityArgs.first())
+        assertEquals(currentArgs, result.receipt.runtime.args)
+        assertEquals(1, result.receipt.runtime.args[result.receipt.runtime.args.indexOf("--prompt-cache-size") + 1].toInt())
     }
 
     private fun bindingFor(model: vexlife.model.heretic.HereticModelCatalog.Entry): HereticPersistentRuntime.Binding =
