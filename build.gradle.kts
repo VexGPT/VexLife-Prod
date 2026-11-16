@@ -2315,15 +2315,15 @@ tasks.register(
             )
         require(
             Regex(
-                "\\"sourceSha\\"\\s*:\\s*\\"" +
+                "\\\"sourceSha\\\"\\s*:\\s*\\\"" +
                     sourceSha +
-                    "\\"",
+                    "\\\"",
             )
                 .containsMatchIn(
                     imageManifest,
                 ) &&
                 !Regex(
-                    "\\"releaseDisposition\\"\\s*:\\s*\\"LOCAL_ONLY_NO_RELEASE\\"",
+                    "\\\"releaseDisposition\\\"\\s*:\\s*\\\"LOCAL_ONLY_NO_RELEASE\\\"",
                 )
                     .containsMatchIn(
                         imageManifest,
