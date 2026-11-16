@@ -268,6 +268,90 @@ class DirectCompanionCapabilityTurnTest {
     }
 
     @Test
+    fun everyProviderStageRecordsWhatItCostAndWhyItStoppedButNeverItsText() = withHome { home ->
+        var calls = 0
+        val transport = DirectCompanionConnection.Transport {
+            calls++
+            when (calls) {
+                1 -> reply(fetchControl)
+                2 -> reply("The page says to fly it on a 30 m line.")
+                else -> error("unexpected provider call")
+            }
+        }
+        val records =
+            vexlife.logging.VexLogger.capturing { captured ->
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup(home),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey = "send.reach.measure.001",
+                            content = "What does example.com say about kites?",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            capabilityOwners =
+                                VexLifeCapabilityBridge.Owners(
+                                    webTransport = page,
+                                    resolver = publicResolver,
+                                ),
+                            now = { Instant.parse("2026-11-16T12:00:00Z") },
+                        ),
+                )
+                captured.toList()
+            }
+        val stages =
+            records.filter { it.fact == vexlife.logging.VexLogger.Fact.ProviderStageObserved.wire }
+        assertEquals(2, stages.size, "one record per provider stage")
+        assertEquals(listOf("COMPLETED", "COMPLETED"), stages.map { it.refs["stop"] })
+        // The request stage is visible as a request written where requests are read.
+        assertEquals("true", stages[0].refs["controlHeaderInAnswer"])
+        assertEquals("false", stages[1].refs["controlHeaderInAnswer"])
+        stages.forEach { record ->
+            assertTrue(record.refs.values.none { "kite" in it || "30 m" in it })
+            assertEquals(null, record.detail)
+        }
+    }
+
+    @Test
+    fun aStageThatSpendsItsOutputLimitThinkingIsRecordedAsSuchBeforeTheTurnFails() = withHome {
+        home ->
+        val records =
+            vexlife.logging.VexLogger.capturing { captured ->
+                assertFailsWith<Exception> {
+                    DirectCompanionTurn.performWithHooks(
+                        setup = setup(home),
+                        intent =
+                            DirectCompanionTurn.Intent(
+                                idempotencyKey = "send.reach.measure.002",
+                                content = "Read https://example.com/kites for me.",
+                            ),
+                        hooks =
+                            DirectCompanionTurn.Hooks(
+                                transport = DirectCompanionConnection.Transport {
+                                    DirectCompanionConnection.HttpResult(
+                                        200,
+                                        """{"model":"default_model","choices":[{"finish_reason":"length",""" +
+                                            """"message":{"role":"assistant","content":"",""" +
+                                            """"reasoning":"I should fetch it before answering."}}]}""",
+                                    )
+                                },
+                                now = { Instant.parse("2026-11-16T12:00:00Z") },
+                            ),
+                    )
+                }
+                captured.toList()
+            }
+        val stage =
+            records.single {
+                it.fact == vexlife.logging.VexLogger.Fact.ProviderStageObserved.wire
+            }
+        assertEquals("OUTPUT_LIMIT_DURING_REASONING", stage.refs["stop"])
+        assertEquals("length", stage.refs["finishReason"])
+        assertEquals("false", stage.refs["controlHeaderInReasoning"])
+    }
+
+    @Test
     fun narratedLateRequestIsCorrectedInsideTheSameTurnInsteadOfEscapingAsAResult() = withHome { home ->
         val calls = mutableListOf<List<Pair<String, String>>>()
         val narrated =

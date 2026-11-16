@@ -1233,6 +1233,17 @@ object DirectCompanionTurn {
         )
     }
 
+    /** What one provider stage cost and why it stopped: counts and enums, never content. */
+    private fun recordStage(
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        measurement: DirectCompanionConnection.StageMeasurement,
+    ) {
+        VexLogger.record(
+            VexLogger.Fact.ProviderStageObserved,
+            mapOf("runtimeReceiptRef" to runtimeEvidence.runtimeReceiptRef) + measurement.refs(),
+        )
+    }
+
     private fun invokeProviderStage(
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
         messages: List<CompanionProviderMessage>,
@@ -1257,14 +1268,22 @@ object DirectCompanionTurn {
             ),
         )
         val inference =
-            DirectCompanionConnection.invoke(
-                runtime = runtimeEvidence,
-                messages = messages,
-                transport = hooks.transport,
-                progressObserver =
-                    progressGate.connectionObserver(),
-                now = hooks.now,
-            )
+            try {
+                DirectCompanionConnection.invoke(
+                    runtime = runtimeEvidence,
+                    messages = messages,
+                    transport = hooks.transport,
+                    progressObserver =
+                        progressGate.connectionObserver(),
+                    now = hooks.now,
+                )
+            } catch (failure: DirectCompanionConnection.ConnectionException) {
+                // A stage that stopped still says how it stopped: output limit while thinking,
+                // stream closed before [DONE], or no answer at all.
+                failure.measurement?.let { recordStage(runtimeEvidence, it) }
+                throw failure
+            }
+        recordStage(runtimeEvidence, inference.measurement)
         val controlLike =
             progressGate.finish(
                 inference.content,
