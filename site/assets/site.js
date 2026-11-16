@@ -35,6 +35,10 @@
   var syncToggle = function () {
     var light = document.documentElement.getAttribute('data-theme') === 'foundation-light';
     toggle.textContent = light ? 'Dark' : 'Light';
+
+    // Theme remains the one visual-state owner. The Spiral adapter only mirrors this projection.
+    // This follows the established Vextreme theme convention: current light -> ☀️, current dark -> 🌙.
+    toggle.setAttribute('data-vex-spiral-icon', light ? '☀️' : '🌙');
   };
   toggle.addEventListener('click', function () {
     var next = document.documentElement.getAttribute('data-theme') === 'foundation-light' ? 'foundation' : 'foundation-light';
