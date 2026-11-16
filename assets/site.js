@@ -111,7 +111,7 @@
       .filter(function (release) { return release.channel === 'main' && release.mac; })
       .sort(function (a, b) { return String(b.publishedAt).localeCompare(String(a.publishedAt)); });
     var choices = stable.slice();
-    if (mains[0]) choices.push(mains[0]);
+    mains.slice(0, 2).forEach(function (release) { choices.push(release); });
 
     var select = byId('mac-version');
     var badge = byId('mac-badge');
