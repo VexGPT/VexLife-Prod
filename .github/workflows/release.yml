@@ -67,9 +67,9 @@ jobs:
           APP_DIR="build/vexlife-prod-mac-application/$SHA"
           TAG="private-service-image-$SHA"
           {
-            echo "Main build of `$SHA` for Mac (Apple silicon)."
+            echo "Main build of \`$SHA\` for Mac (Apple silicon)."
             echo
-            echo "Preferred download: `VexLife-macOS-AppleSilicon.dmg`. Open it, drag VexLife to Applications, then open VexLife."
+            echo "Preferred download: \`VexLife-macOS-AppleSilicon.dmg\`. Open it, drag VexLife to Applications, then open VexLife."
             echo
             echo "**Trust:** this open-source build is ad-hoc signed but is not Apple Developer ID signed or notarized. macOS may require explicit approval before first launch."
             echo
@@ -99,7 +99,7 @@ jobs:
           SERVICE_DIR="build/vexlife-prod-service-image/archives/$SHA"
           APP_DIR="build/vexlife-prod-mac-application/$SHA"
           {
-            echo "VexLife $VERSION for Mac (Apple silicon), cut from main at `$SHA`."
+            echo "VexLife $VERSION for Mac (Apple silicon), cut from main at \`$SHA\`."
             echo
             echo "Accepted feature threshold: see docs/release/RELEASES.md and the merged PRs since the previous version."
             echo
