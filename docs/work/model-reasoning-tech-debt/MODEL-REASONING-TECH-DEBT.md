@@ -18,6 +18,75 @@ The Product circuit is not reopened here. This work is about the quality and eff
 
 The lived transcript is preserved beside this note as evidence.
 
+A second evidence file is also preserved:
+`2026-11-15-recovered-self-report-after-restart.txt`.
+
+That response was recovered after a VexLife restart from the previously failed/lost feedback turn. It materially changes the leading hypothesis:
+
+~~~text
+4 REQUESTS
+!= PROVEN PRIMARY LIMITER
+
+REQUEST / PERMISSION / CUSTODY CEREMONY
+-> CAN MAKE ORDINARY READ-ONLY WORK FEEL SCARCE
+-> CAN PULL REASONING TOWARD PROTOCOL MANAGEMENT
+-> CAN DISPLACE THE HUMAN'S ACTUAL QUESTION
+~~~
+
+Vex's own recovered description was that the natural unit for source work is the **task**:
+
+~~~text
+inspect
+-> gather exact evidence
+-> answer
+~~~
+
+and that the hard request cap should be a **safety valve**, not the reason work stops.
+
+## Recovered self-report — stronger hypothesis
+
+The recovered response gives a sharper candidate relationship than "raise 4 to 20":
+
+~~~text
+PERSON'S QUESTION
+= TASK
+
+READ-ONLY REACH
+= NORMAL WORK SERVING THE TASK
+
+STOP CONDITION
+= claim source-proven / disproven / clearly unavailable
+  OR next read no longer changes the decision
+
+HARD CAP
+= backstop
+!= center of reasoning
+~~~
+
+It also proposed a trust ladder:
+
+~~~text
+READ-ONLY EXACT SOURCE
+-> high trust / low ceremony
+-> source quality + evidence sufficiency govern continuation
+
+PUBLIC WEB
+-> external content
+-> verify precise claims
+
+EFFECTFUL ACTION
+-> authority + verification required
+-> confidence alone is insufficient
+~~~
+
+This evidence argues that experiment design must separate at least three variables:
+
+1. **budget size** — 4 / 10 / 20;
+2. **budget salience** — exact remaining count vs bounded/ample wording;
+3. **task/reach framing** — whether ordinary bounded read-only source acquisition is framed as normal work or as a repeated permission/custody decision.
+
+A larger budget can mask the pressure without fixing the relationship.
+
 ## Observed pressure
 
 The PR #141 inspection succeeded, but the reasoning repeatedly spent time on:
@@ -40,30 +109,41 @@ limited read budget
 
 This is not evidence that Vex cannot reason or that GitHub reach is broken.
 
-## Investigation 1 — reach budget
+## Investigation 1 — reach budget, salience and task framing
 
 Current threshold keeps MaximumRequestsPerTurn = 4.
 
-Victor's lived observation is that four creates artificial scarcity and causes economizing behavior.
+The first lived transcript suggested artificial scarcity. The recovered self-report refines that interpretation: **four itself was not experienced as the main limiter**. The stronger pressure was that every reach felt like something that had to be justified, conserved and managed.
 
-Proposed experiment, not accepted law:
+Therefore the experiment must not ask only "is 20 better than 4?"
+
+Proposed matrix, not accepted law:
 
 ~~~text
-4 vs 10 vs 20 read requests
-same task
-same model
-same source state
-compare behavior
+budget:
+  4 / 10 / 20
+
+counter presentation:
+  exact remaining count
+  vs bounded / ample
+
+task framing:
+  request-management emphasis
+  vs task-centered low-ceremony read-only work
 ~~~
 
 Questions:
 
-- Does 20 reduce scarcity-induced overplanning?
-- Does a larger ceiling merely encourage unnecessary reads?
-- Should Vex see an exact remaining counter, or only know the budget is bounded and ample?
+- Does 4 + bounded/task-centered framing already remove most scarcity behavior?
+- Does 20 merely hide an overly ceremonial reach relationship?
+- Does an exact remaining counter itself create rationing behavior?
+- Can bounded read-only source work be treated as normal execution of the human's task without weakening authority around writes/effects?
+- Does a larger ceiling encourage unnecessary reads after evidence is already sufficient?
 - Should independent read-only capability classes share one ceiling?
 
-Twenty is a candidate experimental ceiling, not a permanent architecture decision.
+Twenty remains an experimental ceiling, not a permanent architecture decision.
+
+The recovered response also suggested "6" as an example standing grant. That number is evidence of desired **reasonable boundedness**, not a Product requirement.
 
 ## Investigation 2 — bounded batch / parallel retrieval
 
@@ -231,14 +311,26 @@ This work should not yet:
 
 ## Candidate experiment sequence
 
-1. Budget: 4 vs 10 vs 20.
-2. Exact remaining counter vs bounded/ample wording.
-3. PR-native read-only GitHub reach.
-4. Bounded batch/parallel read-set.
-5. Truncation continuation coordinates.
-6. Structured working investigation state.
-7. Intent/object/scope-before-answer prompt posture.
-8. Compare source coverage, unsupported assumptions, provider stages, capability calls, repeated deliberation, time-to-first-material-read, final answer quality and appropriate requests for another turn.
+1. **Framing first:** same budget (4), compare exact-count/permission-heavy wording against bounded/task-centered low-ceremony read-only wording.
+2. **Then budget:** 4 vs 10 vs 20 under the better framing, so budget size is not confounded with scarcity language.
+3. Measure whether Vex stops from **evidence saturation** rather than request anxiety:
+   - source-proven;
+   - disproven;
+   - clearly unavailable;
+   - next read no longer decision-changing.
+4. PR-native read-only GitHub reach.
+5. Bounded batch/parallel read-set.
+6. Truncation continuation coordinates.
+7. Structured working investigation state.
+8. Intent/object/scope-before-answer prompt posture.
+9. Compare source coverage, unsupported assumptions, provider stages, capability calls, repeated deliberation, time-to-first-material-read, final answer quality and appropriate requests for another turn.
+
+The key comparison is no longer "more calls = better." It is:
+
+~~~text
+DOES THE FRAME LET VEX TREAT READ-ONLY SOURCE ACQUISITION AS NORMAL WORK
+WHILE KEEPING EFFECTFUL AUTHORITY SHARP?
+~~~
 
 ## Experiment harness formed (2026-11-15, Claude, stacked on this PR)
 
