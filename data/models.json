@@ -1,6 +1,6 @@
 {
     "schemaVersion": "vexlife-prod.site-data/v1",
-    "sourceSha": "5446449a1d0b63ff0e1d8c885a12eb46defeac23",
+    "sourceSha": "3574b7afd4eee12938b92f152a77b2af6d8ef38c",
     "mac": {
         "chip": "Apple silicon (M1 or later)",
         "minimumMemoryBytes": 8589934592
