@@ -21,9 +21,14 @@ rm -rf -- "$OUT"
 mkdir -p "$OUT/data"
 cp -R "$ROOT/site/." "$OUT/"
 
-"$ROOT/gradlew" --no-daemon -q generateVexLifeSiteData   -PvexlifeSiteDataDir="$OUT/data"   -PvexlifeSourceSha="$SOURCE_SHA"
+"$ROOT/gradlew" -p "$ROOT" --no-daemon -q generateVexLifeSiteData \
+  -PvexlifeSiteDataDir="$OUT/data" \
+  -PvexlifeSourceSha="$SOURCE_SHA"
 
-python3 "$ROOT/.github/release/releases-snapshot.py"   --repository "$REPOSITORY"   --main-sha "$SOURCE_SHA"   --out "$OUT/data/releases.json"
+python3 "$ROOT/.github/release/releases-snapshot.py" \
+  --repository "$REPOSITORY" \
+  --main-sha "$SOURCE_SHA" \
+  --out "$OUT/data/releases.json"
 
 # Branch-published Pages should serve the already-formed static bytes exactly as they are.
 touch "$OUT/.nojekyll"
