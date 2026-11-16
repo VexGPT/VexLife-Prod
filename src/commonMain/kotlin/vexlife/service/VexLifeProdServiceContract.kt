@@ -387,7 +387,7 @@ object VexLifeProdServiceContract {
         val abandonedAttemptCount: Int,
         val effectsPerformed: Boolean,
         /**
-         * The response sequence at which the person cleared thread memory: Vex is not given that
+         * The response sequence at which the thread context horizon begins: Vex is not given that
          * turn or anything before it. Null when Vex is given the whole thread.
          */
         val contextHorizonSequence: Long? = null,

@@ -1943,7 +1943,7 @@ class DirectCompanionTurnTest {
     }
 
     @Test
-    fun clearingThreadMemoryStartsVexFreshWithoutDeletingAndRestoreGivesTheThreadBack() {
+    fun threadContextHorizonStartsVexFreshWithoutDeletingAndRestoreGivesTheThreadBack() {
         val home = productHome()
         val bodies = mutableListOf<String>()
         fun turn(key: String, content: String, answer: String): DirectCompanionTurn.Result =
@@ -1973,7 +1973,7 @@ class DirectCompanionTurnTest {
             turn("send.thread.002", "And the garden is Moonvale.", "Moonvale, noted.")
             assertTrue(bodies.last().contains("My lantern is called Ember."))
 
-            // Clear thread memory: nothing is deleted, and the next turn carries none of it.
+            // Start fresh: nothing is deleted, and the next turn carries none of the prior thread context.
             val thread = vexlife.conversation.VexLifeThreadContext(home)
 
             // Only a genuinely active Conversation writer is projected as THREAD_BUSY.
@@ -2004,7 +2004,7 @@ class DirectCompanionTurnTest {
             assertFalse(freshBody.contains("Ember"), "nothing behind the horizon reaches Vex")
             assertFalse(freshBody.contains("Moonvale"))
             assertTrue(freshBody.contains("What is my lantern called?"))
-            assertTrue(freshBody.contains("The person cleared thread memory after the first 2 completed exchanges"))
+            assertTrue(freshBody.contains("The person chose to start this thread fresh after the first 2 completed exchanges"))
             assertEquals(3L, fresh.promptContextReceipt.contextHorizonSequence)
             assertTrue(fresh.promptContextReceipt.selectedConversationEventRefs.isEmpty())
 

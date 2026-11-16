@@ -159,7 +159,7 @@ object DirectPromptContext {
         /** The input budget ordinary context may use: [InputTokenBudget] less the exchange allowance. */
         val inputTokenBudget: Int = InputTokenBudget,
         val capabilityExchangeAllowanceTokens: Int = 0,
-        /** The thread context horizon in force for this turn, when the person cleared thread memory. */
+        /** The thread context horizon in force for this turn, when the person set a thread context horizon. */
         val contextHorizon: DirectConversationStore.ContextHorizon? = null,
     )
 
@@ -256,7 +256,7 @@ object DirectPromptContext {
         val conversationExtentEstimatedSystemMessageTokens: Int,
         /** Prompt room kept free for capability request/result exchanges; 0 when none admitted. */
         @EncodeDefault(EncodeDefault.Mode.NEVER) val capabilityExchangeAllowanceTokens: Int = 0,
-        /** The response sequence at which the person cleared thread memory; null when never. */
+        /** The response sequence at which the person set the thread context horizon; null when never. */
         @EncodeDefault(EncodeDefault.Mode.NEVER) val contextHorizonSequence: Long? = null,
         val trainingSelectionPerformed: Boolean,
         val effectsPerformed: Boolean,
@@ -468,7 +468,7 @@ object DirectPromptContext {
         @EncodeDefault(EncodeDefault.Mode.NEVER)
         val capabilityExchangeAllowanceTokens: Int = 0,
         /**
-         * The response sequence at which the person cleared thread memory: nothing at or before it
+         * The response sequence at which the person set the thread context horizon: nothing at or before it
          * was given to Vex. Null when the whole thread was available.
          */
         @EncodeDefault(EncodeDefault.Mode.NEVER)
@@ -2122,7 +2122,7 @@ object DirectPromptContext {
                     val behind = contextHorizon.exchangesBehind
                     val since = count - behind
                     "Before this request the durable record of this Conversation holds $exchanges. " +
-                        "The person cleared thread memory after the first ${counted(behind)}: " +
+                        "The person chose to start this thread fresh after the first ${counted(behind)}: " +
                         "those stay in the record but are not given to you, and Conversation " +
                         "source return does not reach them. Since then it holds ${counted(since)}; " +
                         "this prompt shows the newest of those that fit, exactly as written."

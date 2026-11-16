@@ -170,8 +170,8 @@ class DirectConversationStore(
 
     @ConsistentCopyVisibility
     /**
-     * Where the thread's context begins: the completed head at which the person cleared thread
-     * memory. That turn and every turn before it stay in the record and on screen, but are not
+     * Where the thread's supplied context begins: the completed head at which the person chose to
+     * start fresh. That turn and every turn before it stay in the record and on screen, but are not
      * given to Vex — not as recent Conversation, not through Conversation source return, and not
      * through a working rollover formed before it.
      */
@@ -298,8 +298,8 @@ class DirectConversationStore(
         fun contextHorizon(): ContextHorizon? = readContextHorizon()
 
         /**
-         * Clears thread memory: from the next turn Vex is given nothing at or before the current
-         * completed head. Nothing is deleted. Null when there is no completed turn to clear.
+         * Sets the thread context horizon: from the next turn Vex is given nothing at or before
+         * the current completed head. Nothing is deleted. Null when there is no completed turn to clear.
          */
         fun setContextHorizon(formedAt: Instant): ContextHorizon? {
             val head = readHeadRecord() ?: return null

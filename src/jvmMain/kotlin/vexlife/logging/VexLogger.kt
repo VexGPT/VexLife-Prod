@@ -100,8 +100,8 @@ object VexLogger {
         ProviderInvocationRequested(Owner.Conversation),
         TurnCompleted(Owner.Conversation),
         TurnFailed(Owner.Conversation),
-        ThreadMemoryCleared(Owner.Conversation),
-        ThreadMemoryRestored(Owner.Conversation),
+        ThreadContextHorizonSet(Owner.Conversation),
+        ThreadContextHorizonRemoved(Owner.Conversation),
         SendAttemptTerminalizedAfterLoss(Owner.Conversation),
 
         // Capability bridge: a request Vex made, and what its owner returned.

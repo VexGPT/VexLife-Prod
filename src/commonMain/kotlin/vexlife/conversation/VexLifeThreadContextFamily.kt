@@ -8,7 +8,7 @@ import vexlife.text.VexLifeText
  * Product semantic owner for how much of this thread Vex is given.
  *
  * Why it exists: while testing, the person wants Vex to start without inheriting the whole
- * Conversation, but nothing they and Vex said may be erased. Clearing thread memory therefore sets
+ * Conversation, but nothing they and Vex said may be erased. Clearing supplied thread context therefore sets
  * a context horizon at the current completed turn: everything at or before it stays in the record
  * and on screen, and is no longer given to Vex (recent Conversation, Conversation source return, a
  * working rollover formed before it). Restoring removes the horizon. Memory pages are a separate
@@ -120,8 +120,8 @@ object VexLifeThreadContextFamily :
     const val StateEmpty = "EMPTY"
     const val StateWhole = "WHOLE"
     const val StateFromHorizon = "FROM_HORIZON"
-    const val ControlClear = "CLEAR_THREAD_MEMORY"
-    const val ControlRestore = "RESTORE_THREAD_MEMORY"
+    const val ControlClear = "CLEAR_THREAD_CONTEXT"
+    const val ControlRestore = "RESTORE_THREAD_CONTEXT"
 }
 
 // [VXG RealForever]

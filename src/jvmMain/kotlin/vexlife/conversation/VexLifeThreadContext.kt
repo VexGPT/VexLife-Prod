@@ -23,7 +23,7 @@ class VexLifeThreadContext(
         val schemaVersion: String,
         val state: String,
         val exchanges: Long,
-        /** The response sequence at which thread memory was cleared; null when it was not. */
+        /** The response sequence at which the thread context horizon was set; null when absent. */
         val horizonSequence: Long?,
         val clearedAt: String?,
         val display: VexLifeThreadContextFamily.DisplayState,
@@ -114,7 +114,7 @@ class VexLifeThreadContext(
                     VexLifeThreadContextFamily.Effect.SetHorizon -> {
                         val horizon = setContextHorizon(clock())
                         VexLogger.record(
-                            VexLogger.Fact.ThreadMemoryCleared,
+                            VexLogger.Fact.ThreadContextHorizonSet,
                             mapOf(
                                 "horizonSequence" to
                                     (horizon?.horizonSequence?.toString() ?: "none"),
@@ -125,7 +125,7 @@ class VexLifeThreadContext(
                     VexLifeThreadContextFamily.Effect.RemoveHorizon -> {
                         val removed = removeContextHorizon()
                         VexLogger.record(
-                            VexLogger.Fact.ThreadMemoryRestored,
+                            VexLogger.Fact.ThreadContextHorizonRemoved,
                             mapOf("removed" to removed.toString()),
                         )
                     }
