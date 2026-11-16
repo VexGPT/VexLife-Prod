@@ -179,6 +179,32 @@ a:hover { text-decoration-color: var(--text-primary); }
 .control { flex: 0 0 auto; font: var(--text-mono-xs); letter-spacing: var(--tracking-mono); text-transform: uppercase; color: var(--text-secondary); background: transparent; border: var(--border-w) solid var(--border-default); border-radius: var(--radius-sm); padding: 6px 10px; cursor: pointer; }
 .control:hover { color: var(--text-primary); border-color: var(--border-strong); }
 
+/* Shared Vex ecosystem Spiral — local visual projection only. */
+.spiral-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  --vex-spiral-orb-bg: var(--bg-surface);
+  --vex-spiral-orb-hover-bg: var(--bg-raised);
+  --vex-spiral-orb-border: var(--border-default);
+  --vex-spiral-orb-fg: var(--text-secondary);
+}
+.spiral-actions #vex-spiral-fab.vex-spiral-fab--nav #vex-spiral-trigger {
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border-color: var(--border-default);
+  box-shadow: none;
+}
+.spiral-actions #vex-spiral-fab.vex-spiral-fab--nav #vex-spiral-trigger:hover {
+  color: var(--text-primary);
+  background: var(--bg-raised);
+  border-color: var(--border-strong);
+}
+.spiral-actions .vex-ecosystem-spiral-feature:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
 @media (max-width: 900px) {
   .header-inner {
     min-height: 92px;
