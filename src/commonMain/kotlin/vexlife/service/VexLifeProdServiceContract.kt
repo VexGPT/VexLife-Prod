@@ -1389,6 +1389,8 @@ object VexLifeProdServiceContract {
             null,
         val error: ErrorResponse? =
             null,
+        /** The turn these events belong to, named on its first PHASE event. */
+        val turnRef: String? = null,
         /** For REACH: the request Vex made (state null) or its returned state. */
         val reach: CapabilityUse? =
             null,

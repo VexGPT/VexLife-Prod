@@ -715,9 +715,21 @@ GET /api/v1/conversation
      (FAILED names the turn: error.turnRef)
 ~~~
 
+A lost presentation stream is not a failed turn (lived 2026-11-15: an answer that vanished from the
+browser was on the canonical head after restart). The first PHASE event names the turn
+(`turnRef`); a session attempt whose turn appears in the canonical Conversation is shown only as
+that completion, and a stream lost without the turn reporting its end says so instead of claiming
+the turn stopped. Kept incomplete answers are written only when the turn owner itself fails.
+
 Permanent:
 
 ~~~text
+BROWSER STREAM / PROJECTION LOST
+!= CANONICAL TURN FAILED
+
+CANONICAL TURN COMPLETED
+-> shown as that completion, never as stopped or incomplete
+
 TERMINAL FAILURE
 != PERMISSION TO ERASE WHAT THE PERSON ALREADY SAW
 

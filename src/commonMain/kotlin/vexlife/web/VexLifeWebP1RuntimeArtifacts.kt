@@ -271,6 +271,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 sendInFlight: false,
                 streamPhase: null,
                 streamedContent: '',
+                liveTurnRef: null,
                 streamedReasoning: '',
                 thoughtsVisible: true,
                 humanReasoningByResponse: new Map(),
@@ -1264,6 +1265,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const clearLiveProcessState = () => {
                 state.streamPhase = null;
+                state.liveTurnRef = null;
                 state.streamedContent = '';
                 state.streamedReasoning = '';
                 state.liveReaches = [];
@@ -1597,6 +1599,13 @@ object VexLifeWebP1RuntimeArtifacts {
                       : 'This is what came through before it stopped.';
                   bubble.append(note);
                 }
+                if (!attempt.kept && attempt.confirmed === false) {
+                  const unconfirmed = document.createElement('p');
+                  unconfirmed.className = 'failed-attempt-note';
+                  unconfirmed.textContent =
+                    'This page lost the stream before the turn reported its end. If Vex finished, its answer replaces this when the conversation refreshes.';
+                  bubble.append(unconfirmed);
+                }
                 const detail = document.createElement('p');
                 detail.className = 'failed-attempt-detail';
                 detail.textContent =
@@ -1680,6 +1689,11 @@ object VexLifeWebP1RuntimeArtifacts {
                   };
                 });
                 const keptTurnRefs = new Set(kept.map((attempt) => String(attempt.turnRef)));
+                // A turn that completed canonically is shown only as that completion, even if this
+                // page lost its stream and once showed it as stopped.
+                const completedTurnRefs = new Set(
+                  messages.filter((message) => message.role !== 'human').map((message) => String(message.turnRef))
+                );
                 let keptIndex = 0;
                 for (const message of messages) {
                   const at = Date.parse(String(message.formedAt ?? '')) || 0;
@@ -1711,6 +1725,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 for (const attempt of state.failedAttempts) {
                   if (attempt.turnRef && keptTurnRefs.has(String(attempt.turnRef))) continue;
+                  if (attempt.turnRef && completedTurnRefs.has(String(attempt.turnRef))) continue;
                   nodes.push(messageNode({
                     role: 'human',
                     content: attempt.content,
@@ -2630,6 +2645,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (!retryingExactAttempt) {
                   // A genuinely new Send owns a new live process slot. Reconciliation of the same
                   // pending idempotency key must preserve the process already observed for it.
+                  state.liveTurnRef = null;
                   state.liveReaches = [];
                   state.liveProcessEntries = [];
                   state.liveProcessExpanded = true;
@@ -2666,6 +2682,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   });
                   let result = null;
                   await readEventStream(response, (event) => {
+                    if (typeof event?.turnRef === 'string' && event.turnRef) state.liveTurnRef = event.turnRef;
                     if (event?.type === 'PHASE') {
                       state.streamPhase = String(event.phase ?? '');
                       if (state.streamPhase === 'CheckingRuntime') {
@@ -2767,7 +2784,9 @@ object VexLifeWebP1RuntimeArtifacts {
                       browserContext: pending.browserContext ?? null,
                       failureCode: String(failure.code ?? terminalError?.name ?? 'TURN_FAILED'),
                       exactNextSafeRoute: failure.exactNextSafeRoute ?? null,
-                      turnRef: failure.turnRef ?? null,
+                      turnRef: failure.turnRef ?? state.liveTurnRef ?? null,
+                      // Only a failure the turn owner reported is a stopped turn; a lost stream is not.
+                      confirmed: Boolean(failure.turnRef),
                       processEntries: interruptedProcess,
                       partialContent: interruptedContent
                     });

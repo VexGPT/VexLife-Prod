@@ -2638,6 +2638,11 @@ class VexLifeProdLocalServiceTest {
                             ?.groupValues
                             ?.get(1)
                     assertNotNull(turnRef, "FAILED names the turn so its kept answer can be matched")
+                    assertTrue(
+                        stream.contains("\"turnRef\":\"$turnRef\"") &&
+                            stream.indexOf("\"turnRef\":\"$turnRef\"") < content,
+                        "the first PHASE names the turn, before any answer text",
+                    )
 
                     val projection =
                         json.decodeFromString<VexLifeProdServiceContract.ConversationProjection>(

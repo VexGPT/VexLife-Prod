@@ -1979,6 +1979,7 @@ class VexLifeProdLocalService private constructor(
                                     VexLifeProdServiceContract.SendStreamEvent(
                                         type = "PHASE",
                                         phase = progress.phase.name,
+                                        turnRef = progress.turnRef,
                                     )
 
                                 DirectCompanionTurn.ProgressPhase.Reasoning ->

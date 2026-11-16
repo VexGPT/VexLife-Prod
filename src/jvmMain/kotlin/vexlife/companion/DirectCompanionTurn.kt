@@ -53,6 +53,11 @@ object DirectCompanionTurn {
         val delta: String? = null,
         val accumulatedCharacters: Int = 0,
         val reach: VexLifeCapabilityBridge.Use? = null,
+        /**
+         * The turn this progress belongs to, named from its first phase, so a presentation whose
+         * stream breaks can still recognize the same turn when it later completes canonically.
+         */
+        val turnRef: String? = null,
     )
 
     fun interface ProgressObserver {
@@ -605,6 +610,7 @@ object DirectCompanionTurn {
                         hooks.progressObserver,
                         Progress(
                             phase = ProgressPhase.CheckingRuntime,
+                            turnRef = identity.turnRef,
                         ),
                     )
                     val workingSuccessorContext =

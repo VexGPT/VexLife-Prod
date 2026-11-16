@@ -2035,6 +2035,54 @@ class DirectCompanionTurnTest {
     }
 
     @Test
+    fun aTurnThatCompletesCanonicallyIsNeverKeptOrShownAsIncomplete() {
+        val home = productHome()
+        val turnRefs = mutableListOf<String>()
+        try {
+            val result =
+                DirectCompanionTurn.performWithHooks(
+                    setup = setup(home),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey = "send.self-development.completed.001",
+                            content = "Give me the long feedback.",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport =
+                                DirectCompanionConnection.Transport {
+                                    DirectCompanionConnection.HttpResult(
+                                        status = 200,
+                                        body =
+                                            """{"choices":[{"message":{"role":"assistant","content":"Here is the long feedback."}}]}""",
+                                    )
+                                },
+                            progressObserver =
+                                DirectCompanionTurn.ProgressObserver { progress ->
+                                    progress.turnRef?.let { turnRefs += it }
+                                },
+                        ),
+                )
+            assertEquals(listOf(result.turnRef), turnRefs, "the first phase names the turn")
+            assertTrue(
+                DirectIncompleteTurn.observe(home, DirectConversationStore(home).current()).isEmpty(),
+                "a canonical completion is not an incomplete turn",
+            )
+            assertFalse(
+                Files.exists(
+                    home.resolve("recovery/direct-companion/${result.turnRef}.incomplete-answer.json")
+                )
+            )
+            assertEquals(
+                result.turnRef,
+                DirectConversationStore(home).current().canonicalEvents.last().turnRef,
+            )
+        } finally {
+            home.parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
     fun aTurnThatStopsBeforeAnyAnswerStillShowsThePersonsMessageAfterReload() {
         val home = productHome()
         try {
