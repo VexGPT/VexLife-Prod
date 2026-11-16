@@ -179,6 +179,118 @@ class FileHereticModelConfigurationStore(
         )
     }
 
+    /**
+     * Explicit human replacement of the Product model choice.
+     *
+     * Normal [read] stays strict. This path exists only for a person deliberately choosing a
+     * currently offered model when an older experimental Product identity can no longer validate.
+     * The stale record must still prove the exact Home/Companion scope and no automatic authority;
+     * it is never promoted to current identity.
+     */
+    fun selectModelFromExplicitHumanChoice(
+        manifest: VexLifeProdHome.Manifest,
+        model: vexlife.model.heretic.HereticModelCatalog.Entry,
+    ): Transition {
+        val currentManifest =
+            VexLifeProdHome.validateManifest(
+                manifest,
+            )
+        val path =
+            configurationPath(
+                currentManifest,
+            )
+        val text =
+            VexDurableContractFile.readText(
+                ownedRoot = productHome,
+                path = path,
+            )
+
+        val current =
+            text?.let {
+                when (
+                    VexContractJson.schemaVersion(
+                        it,
+                    )
+                ) {
+                    VexLifeProdHome.InitialModelConfigurationSchema ->
+                        null
+
+                    HereticModelConfiguration.Schema ->
+                        HereticModelConfiguration.validateSelectionScope(
+                            value =
+                                VexContractJson.decode(
+                                    it,
+                                ),
+                            homeIdentity =
+                                bindingScope(
+                                    currentManifest,
+                                ),
+                        )
+
+                    else ->
+                        error(
+                            "VexLife-Prod runtime model binding schema is not admitted",
+                        )
+                }
+            }
+
+        if (
+            current !=
+                null &&
+                HereticModelConfiguration.productIdentityCurrent(
+                    current,
+                ) &&
+                current.modelRef ==
+                model.modelRef
+        ) {
+            return Transition(
+                state =
+                    if (
+                        HereticModelConfiguration.isBound(
+                            current,
+                        )
+                    ) {
+                        "HERETIC_ALREADY_BOUND"
+                    } else {
+                        "HERETIC_ALREADY_SELECTED_PENDING"
+                    },
+                value = current,
+                writePerformed = false,
+            )
+        }
+
+        val pending =
+            HereticModelConfiguration.pending(
+                bindingScope(
+                    currentManifest,
+                ),
+                model,
+            )
+        write(
+            currentManifest,
+            pending,
+        )
+
+        return Transition(
+            state =
+                when {
+                    current ==
+                        null ->
+                        "HERETIC_SELECTED_PENDING"
+
+                    HereticModelConfiguration.productIdentityCurrent(
+                        current,
+                    ) ->
+                        "HERETIC_MODEL_SWITCHED_PENDING"
+
+                    else ->
+                        "HERETIC_MODEL_REPLACED_STALE_IDENTITY_PENDING"
+                },
+            value = pending,
+            writePerformed = true,
+        )
+    }
+
     /** The catalog model this Home has chosen, or the catalog default when it has not chosen yet. */
     fun selectedModel(manifest: VexLifeProdHome.Manifest): vexlife.model.heretic.HereticModelCatalog.Entry =
         when (val current = read(manifest)) {
