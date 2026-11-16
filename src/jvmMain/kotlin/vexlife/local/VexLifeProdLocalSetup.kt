@@ -242,6 +242,20 @@ object VexLifeProdLocalSetup {
                     platform = MacHereticRuntimePlatform(productHome = productHome),
                 )
             },
+        val retireStableRuntime:
+            (
+                productHome: Path,
+                binding: HereticPersistentRuntime.Binding,
+                observation: StableVexLifeHereticRuntimeCompatibility.Observation,
+            ) -> StableVexLifeHereticRuntimeCompatibility.Retirement =
+            { productHome, binding, observation ->
+                StableVexLifeHereticRuntimeCompatibility.retirePriorExact(
+                    productHome = productHome,
+                    binding = binding,
+                    expected = observation,
+                    platform = MacHereticRuntimePlatform(productHome = productHome),
+                )
+            },
         val observeCurrentProductRuntime:
             (
                 productHome: Path,
@@ -474,7 +488,39 @@ object VexLifeProdLocalSetup {
                 environment = environment,
             )
 
-        val borrowedStableRuntime = hooks.observeStableRuntime(canonicalHome, binding)
+        val observedStableRuntime =
+            hooks.observeStableRuntime(
+                canonicalHome,
+                binding,
+            )
+        var migratedStablePredecessor = false
+        val borrowedStableRuntime =
+            if (
+                observedStableRuntime !=
+                    null &&
+                observedStableRuntime.launchContract !=
+                    HereticPersistentRuntime.ServerLaunchContract.CURRENT &&
+                allowRuntimeStart
+            ) {
+                hooks.progress.phase(VexLifeProdSetupProgress.Phase.StartingLocalModel)
+                val retirement =
+                    hooks.retireStableRuntime(
+                        canonicalHome,
+                        binding,
+                        observedStableRuntime,
+                    )
+                require(
+                    retirement.exactOwnershipVerified &&
+                        retirement.verifiedNotLive &&
+                        retirement.receiptDeleted,
+                ) {
+                    "stable VexLife Heretic predecessor was not exactly retired before Product runtime start"
+                }
+                migratedStablePredecessor = true
+                null
+            } else {
+                observedStableRuntime
+            }
 
         val availabilityAct =
             requireNotNull(
@@ -532,7 +578,15 @@ object VexLifeProdLocalSetup {
                                     binding = binding,
                                     receipt = runtime.receipt,
                                 )
-                            ) to runtime.disposition
+                            ) to
+                                if (
+                                    migratedStablePredecessor
+                                ) {
+                                    "MIGRATED_STABLE_PRIOR_LAUNCH_CONTRACT_TO_" +
+                                        runtime.disposition
+                                } else {
+                                    runtime.disposition
+                                }
                         }
 
                         HereticRuntimeAvailability.Effect.ObserveCurrentProductOwnedRuntime -> {

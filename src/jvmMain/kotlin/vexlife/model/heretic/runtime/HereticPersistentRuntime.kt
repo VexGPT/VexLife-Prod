@@ -532,7 +532,7 @@ object HereticPersistentRuntime {
         )
     }
 
-    private enum class ServerLaunchContract {
+    enum class ServerLaunchContract {
         CURRENT,
         PRE_PROMPT_CACHE_LIMIT,
     }
@@ -545,7 +545,7 @@ object HereticPersistentRuntime {
             contract = ServerLaunchContract.CURRENT,
         )
 
-    private fun serverArgs(
+    internal fun serverArgs(
         binding: Binding,
         contract: ServerLaunchContract,
     ): List<String> {
@@ -583,19 +583,27 @@ object HereticPersistentRuntime {
      * Exact launch argv from a runtime contract this owner previously emitted. This is migration
      * recognition only: arbitrary argv drift remains unowned and cannot authorize retirement.
      */
+    internal fun serverLaunchContract(
+        binding: Binding,
+        args: List<String>,
+    ): ServerLaunchContract? =
+        ServerLaunchContract.entries.firstOrNull { contract ->
+            serverArgs(
+                binding = binding,
+                contract = contract,
+            ) == args
+        }
+
     private fun acceptedPriorServerArgs(
         binding: Binding,
         receipt: Receipt,
     ): List<String>? =
-        ServerLaunchContract.entries
-            .map { contract ->
-                serverArgs(
-                    binding = binding,
-                    contract = contract,
-                )
-            }
-            .firstOrNull { accepted ->
-                accepted == receipt.runtime.args
+        serverLaunchContract(
+            binding = binding,
+            args = receipt.runtime.args,
+        )
+            ?.let {
+                receipt.runtime.args
             }
 
     fun startOrReuse(
