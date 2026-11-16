@@ -1,8 +1,8 @@
 {
   "schemaVersion": "vexlife-prod.site-releases/v1",
   "repository": "VexGPT/VexLife-Prod",
-  "mainSha": "fe3f35a8465cb26e05d5342df897d1c417f2cccc",
-  "formedAt": "2026-11-16T08:06:14+00:00",
+  "mainSha": "0487227550c8a01d1998ffb41af3946740bdb6d5",
+  "formedAt": "2026-11-16T08:22:00+00:00",
   "releases": [
     {
       "tag": "private-service-image-bf39d0d0e3a826f6b5e329a37eea8791aaacaf20",
