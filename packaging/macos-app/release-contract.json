@@ -15,7 +15,10 @@
     "sourcePath": "assets/logo/vextreme-mark.svg",
     "sourceSha256": "8c0e352b1e78147403c6e4fc5af6d9f1b639b3e35d0b584c042efee9f575fdc5",
     "localPath": "packaging/macos-app/vextreme-mark.svg",
-    "applicationIconName": "applet.icns"
+    "applicationIconName": "applet.icns",
+    "appIconArtworkPath": "packaging/macos-app/vextreme-app-icon.svg",
+    "appIconCanvas": "1024x1024",
+    "appIconComposition": "CENTERED_FULL_CANVAS"
   },
   "diskImageVolumeIconName": ".VolumeIcon.icns"
 }
