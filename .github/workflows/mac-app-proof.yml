@@ -49,7 +49,7 @@ jobs:
           test -f "$APP_DIR/VexLife-macOS-AppleSilicon.dmg"
           test -f "$APP_DIR/VexLife-macOS-AppleSilicon.dmg.sha256"
           test -f "$APP_DIR/VexLife-macOS-AppleSilicon.receipt.json"
-          shasum -a 256 -c "$APP_DIR/VexLife-macOS-AppleSilicon.dmg.sha256"
+          (cd "$APP_DIR" && shasum -a 256 -c "VexLife-macOS-AppleSilicon.dmg.sha256")
           /usr/bin/hdiutil verify "$APP_DIR/VexLife-macOS-AppleSilicon.dmg"
           /usr/bin/plutil -extract distributionTrust raw -o -             packaging/macos-app/release-contract.json |             grep -Fx 'AD_HOC_SIGNATURE_NO_DEVELOPER_ID_NO_NOTARIZATION'
           echo "Candidate source: $SHA"
