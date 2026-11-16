@@ -1,0 +1,37 @@
+# Optional GitHub-hosted executor for the source-owned VexLife release process.
+# VexRelay/local macOS execution can run tools/release/publish-mac-release.sh directly instead.
+name: release
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: 'What do you want to publish?'
+        required: true
+        type: choice
+        options:
+          - preview
+          - stable
+        default: preview
+      version:
+        description: 'Stable only: version like 0.1.0. Leave empty for a preview.'
+        required: false
+        default: ''
+permissions:
+  contents: write
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+jobs:
+  mac:
+    runs-on: macos-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Publish the exact VexLife cutoff
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash tools/release/publish-mac-release.sh "${{ inputs.channel }}" "${{ inputs.version }}"

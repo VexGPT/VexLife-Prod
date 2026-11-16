@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "vexlife-prod.macos-application-release/v1",
+  "humanName": "VexLife",
+  "bundleIdentifier": "com.vexlife.prod",
+  "platform": "darwin-arm64",
+  "applicationName": "VexLife.app",
+  "diskImageName": "VexLife-macOS-AppleSilicon.dmg",
+  "embeddedImageRelativePath": "private-service-image",
+  "embeddedSetupLauncherRelativePath": "private-service-image/bin/vexlife-prod-setup",
+  "distributionTrust": "AD_HOC_SIGNATURE_NO_DEVELOPER_ID_NO_NOTARIZATION",
+  "minimumMacOSVersion": "14.0",
+  "brandMark": {
+    "sourceRepository": "vgong24/Vextreme",
+    "sourceCommit": "469f65c84236b220be3b3c6d1a207821da8eda2e",
+    "sourcePath": "assets/logo/vextreme-mark.svg",
+    "sourceSha256": "8c0e352b1e78147403c6e4fc5af6d9f1b639b3e35d0b584c042efee9f575fdc5",
+    "localPath": "packaging/macos-app/vextreme-mark.svg",
+    "applicationIconName": "applet.icns"
+  },
+  "diskImageVolumeIconName": ".VolumeIcon.icns"
+}
