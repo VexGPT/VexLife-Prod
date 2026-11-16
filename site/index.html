@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<!--
+  VexLife home — the public page for downloading VexLife.
+  Source: site/ in VexGPT/VexLife-Prod, deployed by .github/workflows/pages.yml.
+  Releases, models and requirements are read from data/*.json, formed at deploy time from GitHub
+  Releases and the Product's own owners (see docs/release/RELEASES.md). Nothing here is restated by
+  hand. Design: Vextreme Design Foundation tokens (see assets/site.css).
+-->
+<html lang="en" data-theme="foundation">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VexLife — a companion that lives on your Mac</title>
+<meta name="description" content="Download VexLife: Vex, a personal companion that runs on your own Mac with a local model, your own Home, and nothing sent away.">
+<link rel="icon" href="assets/vexlife-mark.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+<script>
+  // Theme before first paint: the person's last choice, else their system preference.
+  (function () {
+    var theme = null;
+    try { theme = localStorage.getItem('vexlife-theme'); } catch (error) {}
+    if (theme !== 'foundation' && theme !== 'foundation-light') {
+      theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'foundation-light' : 'foundation';
+    }
+    document.documentElement.setAttribute('data-theme', theme);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="family-rail">
+      <span class="family-mark" aria-hidden="true"></span>
+      <nav class="family" aria-label="Vextreme, VexLife, and VexWork homes">
+        <a href="https://vgong24.github.io/Vextreme/pages/terrain-map.html">Vextreme</a>
+        <span class="family-separator" aria-hidden="true">/</span>
+        <a class="family-current" href="./" aria-current="page">VexLife</a>
+        <span class="family-separator" aria-hidden="true">/</span>
+        <a href="https://vexgpt.github.io/VexWork/">VexWork</a>
+      </nav>
+    </div>
+    <nav class="nav" aria-label="VexLife sections">
+      <a href="#download">Download</a>
+      <a href="#walkthrough">First run</a>
+      <a href="#requirements">Requirements</a>
+      <a href="#versions">Versions</a>
+      <a href="https://github.com/VexGPT/VexLife-Prod">Source</a>
+    </nav>
+    <button class="control" type="button" id="theme-toggle" aria-label="Switch between dark and light">Light</button>
+  </div>
+</header>
+
+<main id="main" class="shell">
+  <section class="section" aria-labelledby="hero-title">
+    <p class="eyebrow">A companion that lives on your Mac</p>
+    <h1 class="display" id="hero-title">Vex, on your own machine.</h1>
+    <p class="lede">VexLife runs Vex on your Mac with a local model you choose. Your conversation, Memory and settings live in your own Vex Home. Vex can look things up when you ask, and you can watch what it reaches for.</p>
+    <div class="actions">
+      <a class="btn" href="#download">Download for Mac</a>
+      <a class="btn btn-outline" href="#walkthrough">See the first run</a>
+    </div>
+  </section>
+
+  <section class="section" id="download" aria-labelledby="download-title">
+    <p class="eyebrow">Download</p>
+    <h2 class="h2" id="download-title">Get VexLife</h2>
+    <p class="lede" id="download-lede">Choose a version. Stable versions are accepted cutoffs; a preview is an intentionally published build from <span class="mono">main</span>.</p>
+    <div class="grid">
+      <article class="card" id="platform-mac" data-platform="macos-arm64">
+        <div class="card-head">
+          <h3 class="card-title">Mac · Apple silicon</h3>
+          <span class="badge badge-info" id="mac-badge">Loading</span>
+        </div>
+        <p class="card-body">For Macs with an M-series chip. Memory decides which models fit; see Requirements.</p>
+        <div class="field">
+          <label for="mac-version">Version</label>
+          <select class="select" id="mac-version" disabled><option>Loading versions…</option></select>
+        </div>
+        <div class="actions">
+          <a class="btn" id="mac-download" aria-disabled="true" href="#download">Download for Mac</a>
+          <a class="btn btn-outline" id="mac-notes" aria-disabled="true" href="#versions">Release notes</a>
+        </div>
+        <dl class="facts" id="mac-facts"></dl>
+        <div class="next" id="mac-next" hidden></div>
+      </article>
+
+      <article class="card card--pending" id="platform-windows" data-platform="windows-x64">
+        <div class="card-head">
+          <h3 class="card-title">Windows</h3>
+          <span class="badge badge-pending">In preparation</span>
+        </div>
+        <p class="card-body">Not available yet. VexLife's local model runtime is built on Apple's MLX, which runs only on Apple silicon. A Windows realization needs its own model runtime and is being prepared; nothing is offered here until it exists and has been run on a real Windows PC.</p>
+        <div class="actions">
+          <span class="btn btn-outline" aria-disabled="true" role="link">Download for Windows</span>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" id="walkthrough" aria-labelledby="walkthrough-title">
+    <p class="eyebrow">First run</p>
+    <h2 class="h2" id="walkthrough-title">What setup asks, and what it leaves alone</h2>
+    <p class="lede" id="walkthrough-note">Every step shows what VexLife found and what it is about to do before anything happens.</p>
+    <ol class="steps" id="walkthrough-steps"></ol>
+    <p class="prose muted" id="walkthrough-links"></p>
+  </section>
+
+  <section class="section" id="requirements" aria-labelledby="requirements-title">
+    <p class="eyebrow">Requirements</p>
+    <h2 class="h2" id="requirements-title">What your Mac needs</h2>
+    <p class="lede" id="requirements-lede">A Mac with Apple silicon. Each model wants a different amount of memory; setup suggests the largest one that fits.</p>
+    <table class="table" id="models-table" hidden>
+      <thead><tr><th scope="col">Model</th><th scope="col">Download</th><th scope="col">Memory it wants</th><th scope="col">Standing</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section class="section" id="versions" aria-labelledby="versions-title">
+    <p class="eyebrow">Versions</p>
+    <h2 class="h2" id="versions-title">Stable, preview, and how a version is made</h2>
+    <div class="grid">
+      <div class="card">
+        <div class="card-head"><h3 class="card-title">Stable</h3><span class="badge badge-active">Accepted</span></div>
+        <p class="card-body">A version (v0.6.0, v0.7.0…) is cut from <span class="mono">main</span> when a feature threshold has been lived and accepted. Each one is built from one exact commit.</p>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3 class="card-title">Preview</h3><span class="badge badge-info">Intentional</span></div>
+        <p class="card-body">A preview is published from <span class="mono">main</span> only when a newer build is worth sharing or testing. Merging a PR alone does not create a public download.</p>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3 class="card-title">Process</h3><span class="badge">For contributors</span></div>
+        <p class="card-body">How builds and versions are made — readable by people and by AI instances continuing the work: <a href="https://github.com/VexGPT/VexLife-Prod/blob/main/docs/release/RELEASES.md">RELEASES.md</a>.</p>
+      </div>
+    </div>
+    <ul class="prose" id="version-list"></ul>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="shell" id="footer-line">VexLife · <a href="https://github.com/VexGPT/VexLife-Prod">VexGPT/VexLife-Prod</a></div>
+</footer>
+
+<script src="assets/site.js"></script>
+</body>
+</html>

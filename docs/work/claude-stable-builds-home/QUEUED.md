@@ -2,7 +2,7 @@
 
 `[VXG RealForever]`
 
-Status: **QUEUED** (recorded 2026-11-14 at Victor's request; not started).
+Status: **FORMED** 2026-11-15 — see `docs/release/RELEASES.md` and `site/` (PR: official app home). Kept as the original intention.
 
 ## Human intention
 
