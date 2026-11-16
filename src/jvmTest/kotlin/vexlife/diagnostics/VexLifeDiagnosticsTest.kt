@@ -112,6 +112,43 @@ class VexLifeDiagnosticsTest {
     }
 
     @Test
+    fun theExportKeepsEveryRuntimeLogAndCarriesNoKeptAnswerText() {
+        withHome { home ->
+            // Two runtime roots each hold an mlx-lm-server.err.log; the current one must survive.
+            val older = home.resolve("runtime/heretic/old-root/mlx-lm-server.err.log")
+            val current = home.resolve("runtime/vexlife-prod/heretic/mlx-lm-server.err.log")
+            Files.createDirectories(older.parent)
+            Files.createDirectories(current.parent)
+            Files.writeString(older, "2026-11-12 old stderr")
+            Files.writeString(current, "2026-11-16 current stderr: generator stopped")
+            val kept = home.resolve("recovery/direct-companion/turn.x.incomplete-answer.json")
+            Files.createDirectories(kept.parent)
+            Files.writeString(
+                kept,
+                """{"schemaVersion":"vexlife-prod.direct-incomplete-answer/v1","turnRef":"turn.x",""" +
+                    """"failureCode":"CONNECTION_EndpointResponseInvalid","partialAnswer":"words only Vex said",""" +
+                    """"streamedCharacters":19}""",
+            )
+
+            val entries = linkedMapOf<String, String>()
+            ZipInputStream(ByteArrayInputStream(VexLifeDiagnostics(home, sha).export())).use { zip ->
+                while (true) {
+                    val entry = zip.nextEntry ?: break
+                    entries[entry.name] = String(zip.readAllBytes())
+                }
+            }
+            assertTrue(
+                entries["logs/runtime/vexlife-prod/heretic/mlx-lm-server.err.log"]!!.contains("current stderr")
+            )
+            assertTrue(entries["logs/runtime/heretic/old-root/mlx-lm-server.err.log"]!!.contains("old stderr"))
+            val summary = entries.getValue("recovery/turn.x.incomplete-answer.json")
+            assertTrue(summary.contains("\"failureCode\":\"CONNECTION_EndpointResponseInvalid\""))
+            assertTrue(summary.contains("\"partialAnswerIncluded\":false"))
+            assertFalse(entries.values.any { it.contains("words only Vex said") }, "kept answer text never enters the export")
+        }
+    }
+
+    @Test
     fun enhancedCaptureKeepsOnlyThirtyRecentProviderStreamsAndExportsThemExplicitly() {
         withHome { home ->
             val diagnostics = VexLifeDiagnostics(home, sha)

@@ -302,8 +302,13 @@ class VexLifeDiagnostics(
         put("environment/environment.json", VexContractJson.encode(environment()))
         tailFile(home.resolve(VexLifeProdMacServiceLifetime.StdoutRelativePath))?.let { put("logs/service.out.log", it) }
         tailFile(home.resolve(VexLifeProdMacServiceLifetime.StderrRelativePath))?.let { put("logs/service.err.log", it) }
-        findRuntimeLogs().forEach { path -> tailFile(path)?.let { put("logs/" + path.fileName, it) } }
+        // Home-relative names: two runtime roots can each hold an mlx-lm-server.err.log, and the
+        // current one must not be overwritten by an older one inside the export.
+        findRuntimeLogs().forEach { path ->
+            tailFile(path)?.let { put("logs/" + home.relativize(path).toString().replace('\\', '/'), it) }
+        }
         recoveryReceipts().forEach { (name, text) -> put("recovery/$name", text) }
+        incompleteAnswerSummaries().forEach { (name, text) -> put("recovery/$name", text) }
         put("RESULT-SUMMARY.txt", summary(chronology, entries.keys))
 
         val manifest =
@@ -494,6 +499,8 @@ class VexLifeDiagnostics(
             .getOrNull()
     }
 
+    private val IncompleteAnswerSuffix = ".incomplete-answer.json"
+
     private fun findRuntimeLogs(): List<Path> {
         val runtime = home.resolve("runtime")
         if (!Files.isDirectory(runtime, LinkOption.NOFOLLOW_LINKS)) return emptyList()
@@ -507,11 +514,43 @@ class VexLifeDiagnostics(
         if (!Files.isDirectory(directory, LinkOption.NOFOLLOW_LINKS)) return emptyList()
         return Files.list(directory).use { stream ->
             stream
-                .filter { it.fileName.toString().endsWith(".json") }
+                .filter {
+                    it.fileName.toString().endsWith(".json") &&
+                        !it.fileName.toString().endsWith(IncompleteAnswerSuffix)
+                }
                 .toList()
                 .sortedBy { runCatching { Files.getLastModifiedTime(it).toMillis() }.getOrDefault(0L) }
                 .takeLast(MaxRecoveryReceipts)
                 .map { it.fileName.toString() to summarizeJson(it) }
+        }
+    }
+
+    /**
+     * A kept incomplete answer is Vex's own words: the export carries only its shape (turn, failure,
+     * length, digest, time), never the text, so the export's no-model-content policy holds.
+     */
+    private fun incompleteAnswerSummaries(): List<Pair<String, String>> {
+        val directory = home.resolve("recovery/direct-companion")
+        if (!Files.isDirectory(directory, LinkOption.NOFOLLOW_LINKS)) return emptyList()
+        return Files.list(directory).use { stream ->
+            stream
+                .filter { it.fileName.toString().endsWith(IncompleteAnswerSuffix) }
+                .toList()
+                .sortedBy { runCatching { Files.getLastModifiedTime(it).toMillis() }.getOrDefault(0L) }
+                .takeLast(MaxRecoveryReceipts)
+                .map { file ->
+                    val summary =
+                        runCatching {
+                                val json = Json.parseToJsonElement(Files.readString(file)).jsonObject
+                                JsonObject(
+                                    json.filterKeys { it != "partialAnswer" } +
+                                        ("partialAnswerIncluded" to JsonPrimitive(false))
+                                )
+                                    .toString() + "\n"
+                            }
+                            .getOrElse { "{\"present\":true,\"readable\":false}\n" }
+                    file.fileName.toString() to summary
+                }
         }
     }
 
