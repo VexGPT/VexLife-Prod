@@ -13,6 +13,9 @@ package vexlife.model.heretic
  * silently inherit another model's defaults from the Connection.
  */
 object HereticCompanionProvider {
+    /** Product-owned output custody bound shared by the currently offered local Companion profiles. */
+    const val ProductMaxOutputTokens = 16_000
+
     enum class MessageProtocol {
         OPENAI_CHAT,
         HARMONY,
@@ -170,7 +173,7 @@ object HereticCompanionProvider {
                 generation =
                     Generation(
                         sampling = sampling,
-                        productMaxOutputTokens = 16_000,
+                        productMaxOutputTokens = ProductMaxOutputTokens,
                         reasoningEffort = null,
                     ),
             )
@@ -241,7 +244,7 @@ object HereticCompanionProvider {
                                 topP = 1.0,
                                 topK = 0,
                             ),
-                        productMaxOutputTokens = 16_000,
+                        productMaxOutputTokens = ProductMaxOutputTokens,
                         reasoningEffort = ReasoningEffort.MEDIUM,
                     ),
             )

@@ -62,7 +62,7 @@ class VexLifeModels(
     private val lastOutcome = AtomicReference<Outcome?>(null)
 
     @Serializable
-    data class Companion(
+    data class CompanionBehavior(
         val profileRef: String,
         val messageProtocol: String,
         val reasoningRepresentation: String,
@@ -90,7 +90,7 @@ class VexLifeModels(
         val serving: Boolean,
         val downloadedBytes: Long?,
         /** Model/provider behavior that materially shapes the Companion, hoisted for visibility. */
-        val companion: Companion,
+        val companion: CompanionBehavior,
         val display: VexLifeModelsFamily.DisplayState,
     )
 
@@ -141,7 +141,7 @@ class VexLifeModels(
                             ?.let { it.baseBytes + downloadedBytes.get() },
                     companion =
                         entry.companionProfile.let { profile ->
-                            Companion(
+                            CompanionBehavior(
                                 profileRef = profile.profileRef,
                                 messageProtocol = profile.messageProtocol.name,
                                 reasoningRepresentation = profile.reasoningRepresentation.name,

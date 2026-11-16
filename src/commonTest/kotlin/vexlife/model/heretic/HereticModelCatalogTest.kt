@@ -104,16 +104,29 @@ class HereticModelCatalogTest {
             assertTrue(profile.generation.sampling.topK >= 0, entry.handle)
         }
 
-        val qwen = HereticCompanionProvider.Profiles.Qwen
-        assertEquals(1.0, qwen.generation.temperature)
-        assertEquals(0.95, qwen.generation.topP)
-        assertEquals(20, qwen.generation.topK)
-        assertEquals(HereticCompanionProvider.CapabilityStanding.QUALIFIED, qwen.capabilityStanding)
+        val qwen27 = HereticCompanionProvider.Profiles.Qwen27B
+        assertEquals(1.0, qwen27.generation.sampling.temperature)
+        assertEquals(0.95, qwen27.generation.sampling.topP)
+        assertEquals(20, qwen27.generation.sampling.topK)
+        assertEquals(
+            HereticCompanionProvider.CapabilityStanding.QUALIFIED,
+            qwen27.capabilityStanding,
+        )
+
+        val qwen9 = HereticCompanionProvider.Profiles.Qwen9B
+        assertEquals(0.6, qwen9.generation.sampling.temperature)
+        assertEquals(0.95, qwen9.generation.sampling.topP)
+        assertEquals(20, qwen9.generation.sampling.topK)
+
+        val qwen4 = HereticCompanionProvider.Profiles.Qwen4B
+        assertEquals(0.6, qwen4.generation.sampling.temperature)
+        assertEquals(0.95, qwen4.generation.sampling.topP)
+        assertEquals(20, qwen4.generation.sampling.topK)
 
         val oss = HereticCompanionProvider.Profiles.GptOss20B
-        assertEquals(1.0, oss.generation.temperature)
-        assertEquals(1.0, oss.generation.topP)
-        assertEquals(0, oss.generation.topK)
+        assertEquals(1.0, oss.generation.sampling.temperature)
+        assertEquals(1.0, oss.generation.sampling.topP)
+        assertEquals(0, oss.generation.sampling.topK)
         assertEquals(HereticCompanionProvider.ReasoningEffort.MEDIUM, oss.generation.reasoningEffort)
     }
 
