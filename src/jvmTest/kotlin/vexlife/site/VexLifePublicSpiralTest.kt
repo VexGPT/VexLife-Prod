@@ -19,8 +19,8 @@ class VexLifePublicSpiralTest {
     @Test
     fun publicHomePinsTheSharedSpiralAndRegistersOnlyTruthfulPageFeatures() {
         assertContains(page, "VEX_SPIRAL_FEATURES")
-        assertContains(page, "Vextreme@bf4d7a34da2766d6b3d1b048ba9063ae1943128e/widgets/vex-fab.js")
-        assertContains(page, "Vextreme@bf4d7a34da2766d6b3d1b048ba9063ae1943128e/components/vex-spiral-features.js")
+        assertContains(page, "Vextreme@e16e75a4af3fd7f98f60eeaa60b9ae684b356024/widgets/vex-fab.js")
+        assertContains(page, "Vextreme@e16e75a4af3fd7f98f60eeaa60b9ae684b356024/components/vex-spiral-features.js")
         assertContains(page, "id: 'theme'")
         assertContains(page, "id: 'support'")
         assertContains(page, "id: 'terrain'")
