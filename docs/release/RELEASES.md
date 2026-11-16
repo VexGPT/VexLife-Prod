@@ -43,7 +43,10 @@ Developer ID
 
 There are no paid Apple credentials in the repository or workflow. The DMG can therefore be built and
 published without an Apple Developer Program membership, but macOS may require the person to
-explicitly allow the app before first launch. The download page says this directly.
+explicitly allow the app before first launch. The Apple-owned Gatekeeper alert cannot be customized
+by VexLife. After a blocked launch, the download page and DMG therefore provide a direct
+`Open Privacy & Security` route; the person still makes the protected `Open Anyway` decision in
+System Settings. The helper never clears quarantine or changes Gatekeeper policy.
 
 If a future legitimate Developer ID/notarization capability becomes available, it should extend this
 same application artifact boundary; absence of that credential must not block ordinary app/DMG
@@ -58,6 +61,8 @@ archiveVexLifeProdMacApplication
   -> archiveVexLifeProdServiceImage
   -> exact source-bound private image
   -> osacompile existing native Setup Journey as VexLife.app
+  -> replace the applet-native applet.icns with the source-owned Vextreme mark
+  -> remove osacompile's generated Assets.car / CFBundleIconName precedence
   -> embed exact private image in Contents/Resources
   -> bind bundle/source/trust metadata
   -> restore an ad-hoc bundle seal
