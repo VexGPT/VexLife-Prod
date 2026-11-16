@@ -18,10 +18,12 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeState
@@ -402,6 +404,12 @@ object DirectCompanionConnection {
         now: () -> Instant = {
             Instant.now()
         },
+        /**
+         * The capabilities this stage may request, as the turn's frame reports them. A harmony
+         * model is offered them as its native tools ([HarmonyCapabilityTools]); a model that writes
+         * the request as its reply already reads them from the frame text.
+         */
+        capabilityOffer: List<VexLifeCapabilityAtlas.Definition> = emptyList(),
     ): Result {
         requireQualifiedRuntime(
             runtime,
@@ -423,22 +431,23 @@ object DirectCompanionConnection {
         val harmony =
             vexlife.model.heretic.HereticModelCatalog.entry(runtime.modelRef)?.responseFormat ==
                 vexlife.model.heretic.HereticModelCatalog.ResponseFormat.HARMONY
-        val requestBody =
-            JsonCodec.encodeToString(
-                RequestPayload(
-                    model = runtime.requestModel,
-                    messages = if (harmony) leadingSystemAsOne(messages) else messages,
-                    max_tokens = OutputTokenLimit,
-                    stream = true,
-                    chat_template_kwargs =
-                        buildMap {
-                            put("enable_thinking", JsonPrimitive(true))
-                            // The harmony template otherwise opens with "You are ChatGPT…"; who
-                            // Vex is comes from the foundational field, so it names only that.
-                            if (harmony) put("model_identity", JsonPrimitive(HarmonyModelIdentity))
-                        },
-                ),
+        val payload =
+            RequestPayload(
+                model = runtime.requestModel,
+                messages = if (harmony) leadingSystemAsOne(messages) else messages,
+                max_tokens = OutputTokenLimit,
+                stream = true,
+                chat_template_kwargs =
+                    buildMap {
+                        put("enable_thinking", JsonPrimitive(true))
+                        // The harmony template otherwise opens with "You are ChatGPT…"; who
+                        // Vex is comes from the foundational field, so it names only that.
+                        if (harmony) put("model_identity", JsonPrimitive(HarmonyModelIdentity))
+                    },
             )
+        val requestBody =
+            if (harmony) harmonyRequestBody(payload, capabilityOffer)
+            else JsonCodec.encodeToString(payload)
         val requestBodySha256 =
             sha256(
                 requestBody,
@@ -460,12 +469,13 @@ object DirectCompanionConnection {
                     call = call,
                     progressObserver = progressObserver,
                     harmony = harmony,
+                    capabilityOffer = capabilityOffer,
                 )
             } else {
                 invokeBulk(
                     transport = transport,
                     call = call,
-                ).let { if (harmony) harmonized(it) else it }
+                ).let { if (harmony) harmonized(it, capabilityOffer) else it }
             }
 
         val content =
@@ -707,12 +717,14 @@ object DirectCompanionConnection {
         call: HttpCall,
         progressObserver: ProgressObserver?,
         harmony: Boolean = false,
+        capabilityOffer: List<VexLifeCapabilityAtlas.Definition> = emptyList(),
     ): ProviderCompletion {
         val content =
             StringBuilder()
         val reasoning =
             StringBuilder()
         val splitter = if (harmony) HarmonyResponseSplitter() else null
+        val toolCall = HarmonyToolCall()
 
         fun appendReasoning(delta: String) {
             reasoning.append(delta)
@@ -741,6 +753,9 @@ object DirectCompanionConnection {
                 when (it.kind) {
                     HarmonyResponseSplitter.Kind.Thinking -> appendReasoning(it.text)
                     HarmonyResponseSplitter.Kind.Answer -> appendContent(it.text)
+                    // Held, never streamed as the answer: it becomes this stage's request below.
+                    HarmonyResponseSplitter.Kind.ToolCall ->
+                        if (!toolCall.accept(it)) appendReasoning(it.text)
                 }
             }
         var reportedModel: String? =
@@ -916,6 +931,16 @@ object DirectCompanionConnection {
                 "streaming Companion endpoint closed before [DONE]",
             )
         }
+        toolCall.recipient?.let { recipient ->
+            // gpt-oss stops at the call. With no answer before it, the call is this stage's whole
+            // reply: the same control text the gate and the bridge already read, so it is never
+            // shown as Vex's answer. After an answer, it is kept where the person can see it.
+            if (content.isEmpty()) {
+                content.append(HarmonyCapabilityTools.control(recipient, toolCall.arguments(), capabilityOffer))
+            } else {
+                appendReasoning("\n$recipient ${toolCall.arguments()}")
+            }
+        }
         if (
             content.isEmpty()
         ) {
@@ -973,6 +998,44 @@ object DirectCompanionConnection {
      */
     const val HarmonyModelIdentity = "You are Vex."
 
+    /**
+     * One native call in a harmony stream. gpt-oss stops generating at its first call, so a second
+     * recipient is not a second request; its text stays visible as thinking instead.
+     */
+    private class HarmonyToolCall {
+        var recipient: String? = null
+            private set
+
+        private val text = StringBuilder()
+
+        fun accept(piece: HarmonyResponseSplitter.Piece): Boolean {
+            val to = piece.recipient ?: return false
+            if (recipient != null && recipient != to) return false
+            recipient = to
+            text.append(piece.text)
+            return true
+        }
+
+        fun arguments(): String = text.toString().trim()
+    }
+
+    /**
+     * The request body for the harmony template: the turn's messages with capability exchanges
+     * as tool calls and tool results, and the offered capabilities as its `functions` tools. The
+     * sampling and template fields are the same payload every model is sent.
+     */
+    private fun harmonyRequestBody(
+        payload: RequestPayload,
+        capabilityOffer: List<VexLifeCapabilityAtlas.Definition>,
+    ): String {
+        val fields = JsonCodec.encodeToJsonElement(payload).jsonObject.toMutableMap()
+        fields["messages"] = JsonCodec.encodeToJsonElement(HarmonyCapabilityTools.messages(payload.messages))
+        HarmonyCapabilityTools.tools(capabilityOffer)
+            .takeIf { it.isNotEmpty() }
+            ?.let { fields["tools"] = JsonCodec.encodeToJsonElement(it) }
+        return JsonCodec.encodeToString(JsonObject(fields))
+    }
+
     private fun leadingSystemAsOne(
         messages: List<CompanionProviderMessage>,
     ): List<CompanionProviderMessage> {
@@ -984,13 +1047,28 @@ object DirectCompanionConnection {
     }
 
     /** A whole (non-streamed) harmony reply, split the same way as a streamed one. */
-    private fun harmonized(completion: ProviderCompletion): ProviderCompletion {
+    private fun harmonized(
+        completion: ProviderCompletion,
+        capabilityOffer: List<VexLifeCapabilityAtlas.Definition>,
+    ): ProviderCompletion {
         val splitter = HarmonyResponseSplitter()
         val pieces = splitter.accept(completion.content) + splitter.finish()
-        val answer =
+        val toolCall = HarmonyToolCall()
+        val heldAsThinking = pieces.filter { it.kind == HarmonyResponseSplitter.Kind.ToolCall && !toolCall.accept(it) }
+        val spoken =
             pieces.filter { it.kind == HarmonyResponseSplitter.Kind.Answer }.joinToString("") { it.text }
+        val answer =
+            toolCall.recipient
+                ?.takeIf { spoken.isEmpty() }
+                ?.let { HarmonyCapabilityTools.control(it, toolCall.arguments(), capabilityOffer) }
+                ?: spoken
         val thinking =
-            pieces.filter { it.kind == HarmonyResponseSplitter.Kind.Thinking }.joinToString("") { it.text }
+            (pieces.filter { it.kind == HarmonyResponseSplitter.Kind.Thinking } + heldAsThinking)
+                .joinToString("") { it.text } +
+                toolCall.recipient
+                    ?.takeIf { spoken.isNotEmpty() }
+                    ?.let { "\n$it ${toolCall.arguments()}" }
+                    .orEmpty()
         if (thinking.isEmpty() && answer == completion.content) return completion
         if (answer.isEmpty()) {
             fail(

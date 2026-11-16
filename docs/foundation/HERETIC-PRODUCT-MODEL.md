@@ -190,7 +190,8 @@ The entry declares `responseFormat = HARMONY`, and the Connection then:
 
 ~~~text
 analysis / commentary channel  -> thinking (Viewable thoughts), never the answer
-final channel                  -> the answer (and where a capability request is found)
+final channel                  -> the answer (and where a text capability request is found)
+to=functions.<handle>_<action> -> a capability request (see "Reach as harmony tools" below)
 markers                        -> never shown
 leading system messages        -> sent as one (the harmony template keeps only the first
                                   system message, as its developer message, and drops the rest)
@@ -198,9 +199,38 @@ model_identity                 -> "You are Vex." (the template otherwise opens w
                                   "You are ChatGPT…"; who Vex is comes from the foundational field)
 ~~~
 
-Checked here: the pinned `chat_template.jinja` renders a merged system message, a user turn, an
-assistant capability request and the user-role host result without raising. Sampling still uses
-the 27B's projection (temperature 1.0, top_p 0.95, top_k 20); per-model sampling is owed.
+**Reach as harmony tools (2026-11-16).** Lived: with reach described only as developer text and no
+tool declared, gpt-oss reasoned "we don't have remote fetch capabilities" and wrote a page summary
+from nothing. The harmony template models tools natively (`tools` → a `functions` namespace, and a
+system line routing calls to the commentary channel); the request sent none. Now
+(`HarmonyCapabilityTools`, harmony entries only):
+
+~~~text
+frame's AVAILABLE request/return capabilities (atlas, web, github, home, memory)
+  -> one function per action, <handle>_<action>, typed from the Atlas      request `tools`
+  -> gpt-oss: <|channel|>commentary to=functions.web_fetch … {"url": …}      (stops at <|call|>)
+  -> Connection: the same VEXLIFE_CAPABILITY_REQUEST/v1 control text any model writes
+  -> VexLifeCapabilityBridge.perform — unchanged admission, pacing, owners, receipts
+  -> next stage: assistant tool_calls + role "tool" result (the template's own form)
+  -> Vex's final answer from what came back
+~~~
+
+Not offered: gpt-oss's builtin `browser` / `python` (they would reach past the bridge). No tools are
+offered once the turn's requests are exhausted. A name that was not offered still becomes a request
+the bridge answers, so a mistaken call is told what exists instead of vanishing. The frame text
+still describes the text form; either form reaches the same bridge. Other models' requests are
+byte-for-byte unchanged. Conversation source return is still text-only here.
+
+Checked here: the pinned `chat_template.jinja` (sha `a4c9919c…`) and pinned `tokenizer.json`
+(`0614fe83…`), through `transformers` `apply_chat_template` after mlx-lm 0.32.0's own
+`process_message_content`, render both stage requests of
+`DirectCompanionCapabilityTurnTest.gptOssCallsReachAsItsOwnToolAndAnswersFromWhatCameBack`: stage
+one declares `namespace functions { … web_fetch … }` and the commentary routing line; stage two ends
+`<|start|>assistant to=functions.web_fetch<|channel|>commentary json<|message|>{"url": …}<|call|>`
+`<|start|>functions.web_fetch to=assistant<|channel|>commentary<|message|>"VEXLIFE_CAPABILITY_RESULT/v1…"`.
+Owed: one lived Mac turn with a real web or repository round trip whose returned text is
+distinctive; an answer without a returned result is a failure. Sampling still uses the 27B's
+projection (temperature 1.0, top_p 0.95, top_k 20); per-model sampling is owed.
 
 Runtime qualification is unchanged ("Reply with OK.", one token: the first harmony marker is
 non-empty text). `autoRecommended = false`: Setup never starts a Home on it by itself; a Mac with

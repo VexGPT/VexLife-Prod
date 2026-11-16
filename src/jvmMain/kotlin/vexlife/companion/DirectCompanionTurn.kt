@@ -10,8 +10,10 @@ import vexlife.logging.VexLogger
 import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
 import vexlife.conversation.DirectConversationIdentity
+import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
+import vexlife.capability.VexLifeReachDefinitions
 import vexlife.conversation.DirectConversationStore
 import vexlife.filesystem.VexOwnedPath
 import vexlife.foundational.VexLifeFoundationalField
@@ -880,13 +882,23 @@ object DirectCompanionTurn {
             }
 
         while (true) {
+            val capabilityRequestsAllowed =
+                exchanges.size <= VexLifeCapabilityBridge.MaximumRequestsPerTurn
             val stage =
                 invokeProviderStage(
                     runtimeEvidence = stageRuntimeEvidence,
                     messages = base.materialization.messages + exchangeMessages(),
                     hooks = hooks,
                     sourceReturnRequestAllowed = sourceReturnTrace == null,
-                    capabilityRequestsAllowed = exchanges.size <= VexLifeCapabilityBridge.MaximumRequestsPerTurn,
+                    capabilityRequestsAllowed = capabilityRequestsAllowed,
+                    capabilityOffer =
+                        if (capabilityRequestsAllowed) {
+                            offeredCapabilities(
+                                base.materialization.receipt.capabilityFrameSnapshot
+                                    ?.availableCapabilityRefs
+                                    .orEmpty()
+                            )
+                        } else emptyList(),
                 )
 
             val capabilityRequest = stage.capabilityRequest
@@ -1233,12 +1245,26 @@ object DirectCompanionTurn {
         )
     }
 
+    /**
+     * The request/return capabilities this turn's frame reports available, in envelope order: what
+     * a provider that models tools natively is offered for this stage. The frame stays the truth;
+     * this is only its requestable part.
+     */
+    private fun offeredCapabilities(
+        availableCapabilityRefs: List<String>,
+    ): List<VexLifeCapabilityAtlas.Definition> =
+        VexLifeReachDefinitions.EnvelopeCapabilityRefs
+            .filter { it in availableCapabilityRefs }
+            .mapNotNull { VexLifeCapabilityAtlas.resolve(it) }
+            .filter { it.actions.isNotEmpty() }
+
     private fun invokeProviderStage(
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
         messages: List<CompanionProviderMessage>,
         hooks: Hooks,
         sourceReturnRequestAllowed: Boolean,
         capabilityRequestsAllowed: Boolean,
+        capabilityOffer: List<VexLifeCapabilityAtlas.Definition>,
     ): ProviderStage {
         val progressGate =
             SourceReturnProgressGate(
@@ -1264,6 +1290,7 @@ object DirectCompanionTurn {
                 progressObserver =
                     progressGate.connectionObserver(),
                 now = hooks.now,
+                capabilityOffer = capabilityOffer,
             )
         val controlLike =
             progressGate.finish(

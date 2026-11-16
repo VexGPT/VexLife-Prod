@@ -38,16 +38,44 @@ class HarmonyResponseSplitterTest {
     }
 
     @Test
-    fun commentaryIsThinkingAndAReturnEndsTheReply() {
-        val (thinking, answer) =
-            split(
-                listOf(
-                    "<|channel|>commentary to=functions.lookup <|constrain|>json<|message|>{\"q\":1}<|call|>",
-                    "ignored after the call",
-                )
-            )
-        assertEquals("{\"q\":1}", thinking)
+    fun aCallAddressedToAToolIsACallAndNeitherThinkingNorTheAnswer() {
+        fun calls(chunks: List<String>): List<HarmonyResponseSplitter.Piece> {
+            val splitter = HarmonyResponseSplitter()
+            return (chunks.flatMap { splitter.accept(it) } + splitter.finish()).filter {
+                it.kind == HarmonyResponseSplitter.Kind.ToolCall
+            }
+        }
+        // The two header orders gpt-oss writes; the server strips the stopping <|call|>.
+        val afterAnalysis =
+            "<|channel|>analysis<|message|>I need the page.<|end|>" +
+                "<|start|>assistant<|channel|>commentary to=functions.web_fetch <|constrain|>json" +
+                "<|message|>{\"url\":\"https://example.com/\"}"
+        val firstMessage =
+            " to=functions.web_fetch<|channel|>commentary json<|message|>{\"url\":\"https://example.com/\"}"
+        for (reply in listOf(afterAnalysis, firstMessage)) {
+            for (chunks in listOf(listOf(reply), reply.map { it.toString() }, reply.chunked(5))) {
+                val call = calls(chunks)
+                assertEquals(setOf("functions.web_fetch"), call.map { it.recipient }.toSet(), reply)
+                assertEquals("{\"url\":\"https://example.com/\"}", call.joinToString("") { it.text })
+            }
+        }
+        val (thinking, answer) = split(listOf(afterAnalysis, "<|call|>", "ignored after the call"))
+        assertEquals("I need the page.", thinking)
         assertEquals("", answer)
+    }
+
+    @Test
+    fun commentaryToNoOneIsThinkingAndAToolsOwnOutputIsNeverACall() {
+        val splitter = HarmonyResponseSplitter()
+        val pieces =
+            splitter.accept(
+                "<|channel|>commentary<|message|>Checking the page first.<|end|>" +
+                    "<|start|>functions.web_fetch to=assistant<|channel|>commentary<|message|>made up<|end|>"
+            ) + splitter.finish()
+        assertEquals(
+            listOf(HarmonyResponseSplitter.Piece(HarmonyResponseSplitter.Kind.Thinking, "Checking the page first.made up")),
+            pieces,
+        )
     }
 
     @Test
