@@ -23,6 +23,6 @@ class VexLifePreviewUpdateTest {
     @Test
     fun macReleaseContractBindsTheBrandedMountedVolumeIcon() {
         assertContains(releaseContract, "\"diskImageVolumeIconName\": \".VolumeIcon.icns\"")
-        assertContains(releaseContract, "\"applicationIconName\": \"VexLife.icns\"")
+        assertContains(releaseContract, "\"applicationIconName\": \"applet.icns\"")
     }
 }

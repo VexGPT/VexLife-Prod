@@ -55,8 +55,8 @@ jobs:
           mkdir -p "$MOUNT"
           /usr/bin/hdiutil attach "$APP_DIR/VexLife-macOS-AppleSilicon.dmg" -readonly -nobrowse -mountpoint "$MOUNT"
           trap '/usr/bin/hdiutil detach "$MOUNT" >/dev/null 2>&1 || true' EXIT
-          /usr/bin/plutil -extract CFBundleIconFile raw -o - "$MOUNT/VexLife.app/Contents/Info.plist" | grep -Fx 'VexLife.icns'
-          test -s "$MOUNT/VexLife.app/Contents/Resources/VexLife.icns"
+          /usr/bin/plutil -extract CFBundleIconFile raw -o - "$MOUNT/VexLife.app/Contents/Info.plist" | grep -Fx 'applet.icns'
+          test -s "$MOUNT/VexLife.app/Contents/Resources/applet.icns"
           test -s "$MOUNT/.VolumeIcon.icns"
           /usr/bin/xattr -p com.apple.FinderInfo "$MOUNT" >/dev/null
           /usr/bin/hdiutil detach "$MOUNT"

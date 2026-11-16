@@ -2502,10 +2502,15 @@ tasks.register(
                     }
             }
 
+        // osacompile forms an AppleScript applet whose native icon resource is applet.icns.
+        // Replace that exact resource instead of asking Launch Services to switch filenames.
         val applicationIcon =
             resources.resolve(
-                "VexLife.icns",
+                "applet.icns",
             )
+        Files.deleteIfExists(
+            applicationIcon,
+        )
         runExactCommand(
             listOf(
                 "/usr/bin/iconutil",
@@ -2637,7 +2642,7 @@ tasks.register(
                 "-replace",
                 "CFBundleIconFile",
                 "-string",
-                "VexLife.icns",
+                "applet.icns",
                 infoPlist.toString(),
             ),
         )
@@ -2807,6 +2812,14 @@ tasks.register(
                     setFilePath.toString(),
                     "-c",
                     "icnC",
+                    diskImageVolumeIcon.toString(),
+                ),
+            )
+            runExactCommand(
+                listOf(
+                    setFilePath.toString(),
+                    "-a",
+                    "V",
                     diskImageVolumeIcon.toString(),
                 ),
             )
