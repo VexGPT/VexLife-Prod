@@ -121,13 +121,13 @@
       badge.textContent = 'Not published yet';
       badge.className = 'badge badge-pending';
       byId('download-lede').textContent =
-        'No build has been published yet. The first one appears here when main is built; stable versions follow once a feature threshold is accepted.';
+        'No public build has been published yet. A preview appears only when one is intentionally published; stable versions appear when a feature threshold is accepted.';
       return;
     }
     choices.forEach(function (release, index) {
       var label = release.channel === 'stable'
         ? release.tag + ' — Stable · ' + day(release.publishedAt)
-        : 'Main build · ' + String(release.sourceSha || '').slice(0, 7) + ' · ' + day(release.publishedAt);
+        : 'Preview · ' + String(release.sourceSha || '').slice(0, 7) + ' · ' + day(release.publishedAt);
       var option = text('option', label);
       option.value = String(index);
       select.append(option);
@@ -143,7 +143,7 @@
       var notes = byId('mac-notes');
       notes.href = release.url;
       notes.removeAttribute('aria-disabled');
-      badge.textContent = release.channel === 'stable' ? 'Stable' : 'Main build';
+      badge.textContent = release.channel === 'stable' ? 'Stable' : 'Preview';
       badge.className = 'badge ' + (release.channel === 'stable' ? 'badge-active' : 'badge-info');
 
       var facts = byId('mac-facts');
@@ -175,6 +175,7 @@
       if (mac.kind === 'dmg') {
         steps.append(text('li', 'Open the downloaded disk image and drag VexLife to Applications.'));
         steps.append(text('li', 'Open VexLife. This open-source build is not Apple-notarized, so macOS may block the first launch. If it does, explicitly allow VexLife in System Settings → Privacy & Security only if you trust this exact GitHub release and source commit.'));
+        steps.append(text('li', 'macOS may then separately ask whether to open “java”, the bundled runtime VexLife uses. If you trust this exact release, choose Open.'));
         steps.append(text('li', 'VexLife Setup then shows what it found before it changes anything.'));
       } else {
         steps.append(text('li', 'Open Terminal (Applications → Utilities).'));
