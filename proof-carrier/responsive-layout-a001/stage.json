@@ -1,0 +1,38 @@
+{
+  "repositoryRef": "primary",
+  "expectedBase": "bf39d0d0e3a826f6b5e329a37eea8791aaacaf20",
+  "expectedHead": "3112d6dca9776a80e800382948a3dac8eebe6b2b",
+  "expectedTree": "9d3235b05e1d379c98fc754268ff6840dc221852",
+  "branch": "VXG-111526-chatgpt-responsive-conversation-layout-a001",
+  "proofCommands": [
+    {
+      "command": "/bin/bash",
+      "args": [
+        "-lc",
+        "set -euo pipefail; J21=\"$(/usr/libexec/java_home -v 21 2>/dev/null)\" || { printf \"%s\\n\" \"Responsive layout A001: JDK 21 is unavailable.\" >&2; exit 21; }; [ -n \"$J21\" ] && [ -x \"$J21/bin/java\" ] || { printf \"%s\\n\" \"Responsive layout A001: resolved JDK is invalid.\" >&2; exit 22; }; export JAVA_HOME=\"$J21\"; export PATH=\"$JAVA_HOME/bin:$PATH\"; \"$JAVA_HOME/bin/java\" -version; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" jvmTest compileKotlinJs compileTestKotlinJs checkVexLifeStrings; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" -PvexlifeAppVersion=0.0.0 archiveVexLifeProdMacApplication; APP_DIR=\"build/vexlife-prod-mac-application/3112d6dca9776a80e800382948a3dac8eebe6b2b\"; DMG=\"$APP_DIR/VexLife-macOS-AppleSilicon.dmg\"; SUM=\"$APP_DIR/VexLife-macOS-AppleSilicon.dmg.sha256\"; RECEIPT=\"$APP_DIR/VexLife-macOS-AppleSilicon.receipt.json\"; test -f \"$DMG\" && test -f \"$SUM\" && test -f \"$RECEIPT\"; (cd \"$APP_DIR\" && /usr/bin/shasum -a 256 -c \"VexLife-macOS-AppleSilicon.dmg.sha256\"); /usr/bin/hdiutil verify \"$DMG\"; /bin/mkdir -p \"$HOME/Downloads/VEXLIFE-RESPONSIVE-LAYOUT-A001-3112d6dca977\"; /bin/cp -f \"$DMG\" \"$HOME/Downloads/VEXLIFE-RESPONSIVE-LAYOUT-A001-3112d6dca977/VexLife-macOS-AppleSilicon.dmg\"; /bin/cp -f \"$SUM\" \"$HOME/Downloads/VEXLIFE-RESPONSIVE-LAYOUT-A001-3112d6dca977/VexLife-macOS-AppleSilicon.dmg.sha256\"; /bin/cp -f \"$RECEIPT\" \"$HOME/Downloads/VEXLIFE-RESPONSIVE-LAYOUT-A001-3112d6dca977/VexLife-macOS-AppleSilicon.receipt.json\"; /usr/bin/shasum -a 256 \"$HOME/Downloads/VEXLIFE-RESPONSIVE-LAYOUT-A001-3112d6dca977/VexLife-macOS-AppleSilicon.dmg\"; printf \"%s\\n\" \"Responsive layout A001 artifact: $HOME/Downloads/VEXLIFE-RESPONSIVE-LAYOUT-A001-3112d6dca977/VexLife-macOS-AppleSilicon.dmg\"; [ -z \"$(/usr/bin/git status --porcelain=v1 -uall)\" ] || { /usr/bin/git status --porcelain=v1 -uall >&2; exit 31; }"
+      ],
+      "proofClass": "TEST",
+      "candidateEvidence": true,
+      "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+      "predicateRef": "predicate.vexlife-prod.responsive-layout-lived-mac.source-build",
+      "timeoutMs": 1200000
+    }
+  ],
+  "maxFiles": 10,
+  "stateRef": "state.vexlife-prod.responsive-layout-lived-mac",
+  "currentLifecycleState": "SOURCE_READY",
+  "currentGoal": "Prove exact PR #180 responsive-layout source/build and form one local unsigned Mac DMG for lived width/collapse testing.",
+  "remainingGoals": [
+    "Install/open the exact local DMG on the Mac.",
+    "Collapse Browser on a wide surface and confirm Conversation/reasoning expands fluidly with the Companion pane.",
+    "Shrink below 860px, collapse/reopen Browser and Companion vertically, drag the horizontal seam, then cross the breakpoint and confirm the human-chosen allocation carries.",
+    "Return the canonical Relay RETURN and lived observation to PR #180."
+  ],
+  "onPass": {
+    "lifecycleState": "SOURCE_READY",
+    "nextFunction": "F08.EXECUTE_OR_HANDOFF",
+    "nextOwner": "Victor",
+    "whyThisIsNext": "Exact source/build/DMG formation is complete; the remaining effect is lived human observation of responsive width/collapse behavior."
+  },
+  "resultFilename": "RETURN-VEXLIFE-RESPONSIVE-LAYOUT-LIVED-MAC-A001.zip"
+}
