@@ -165,6 +165,7 @@
       if (mac.sha256) fact('SHA-256', mac.sha256);
       if (release.sourceSha) fact('Source', release.sourceSha.slice(0, 12), 'https://github.com/' + Repository + '/commit/' + release.sourceSha);
       fact('Published', day(release.publishedAt));
+      if (mac.kind === 'dmg') fact('Apple trust', 'Open-source build · not Developer ID signed or notarized');
 
       var next = byId('mac-next');
       next.textContent = '';
@@ -173,7 +174,8 @@
       var steps = document.createElement('ol');
       if (mac.kind === 'dmg') {
         steps.append(text('li', 'Open the downloaded disk image and drag VexLife to Applications.'));
-        steps.append(text('li', 'Open VexLife. Setup shows what it found before it changes anything.'));
+        steps.append(text('li', 'Open VexLife. This open-source build is not Apple-notarized, so macOS may block the first launch. If it does, explicitly allow VexLife in System Settings → Privacy & Security only if you trust this exact GitHub release and source commit.'));
+        steps.append(text('li', 'VexLife Setup then shows what it found before it changes anything.'));
       } else {
         steps.append(text('li', 'Open Terminal (Applications → Utilities).'));
         var run = document.createElement('li');
