@@ -11,7 +11,8 @@
     "dataKeyOwners": {
       "diagnostics": "VexLifeDiagnosticsFamily (state, control refs) and the debug export route",
       "capability": "VexLifeCapabilityBridge uses (handle:action), shown to the person as reach",
-      "model": "VexLifeModelsFamily (files, control refs) and HereticModelCatalog standing"
+      "model": "VexLifeModelsFamily (files, control refs) and HereticModelCatalog standing",
+      "reach-pacing": "VexLifeReachPacingFamily (budgets 4/10/20, counter EXACT/BOUNDED, framing STANDARD/TASK_CENTERED)"
     }
   },
   "workspace.heading.diagnostics": {
@@ -517,5 +518,124 @@
     "surfaces": [
       "workspace.settings"
     ]
+  },
+  "workspace.heading.reach-pacing": {
+    "strings": {
+      "en": {
+        "text": "Reach pacing (experiment)"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.reach-pacing": {
+    "strings": {
+      "en": {
+        "text": "How much Vex may look up in one turn, and whether it sees an exact count. Applies from the next turn; each turn's choice is recorded in what Vex received. Compare how Vex works with each."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.reach-pacing-exact": {
+    "strings": {
+      "en": {
+        "text": "Up to {budget} lookups per turn; Vex sees exactly how many remain."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "reach-pacing:counter:EXACT"
+  },
+  "workspace.status.reach-pacing-bounded": {
+    "strings": {
+      "en": {
+        "text": "Up to {budget} lookups per turn; Vex is told only that reach is bounded and ample, and when it runs out."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "reach-pacing:counter:BOUNDED"
+  },
+  "workspace.button.reach-pacing-budget": {
+    "strings": {
+      "en": {
+        "text": "{budget} per turn"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "reach-pacing:control:BUDGET"
+  },
+  "workspace.button.reach-pacing-counter-exact": {
+    "strings": {
+      "en": {
+        "text": "Exact count"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "reach-pacing:control:COUNTER_EXACT"
+  },
+  "workspace.button.reach-pacing-counter-bounded": {
+    "strings": {
+      "en": {
+        "text": "Bounded only"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "reach-pacing:control:COUNTER_BOUNDED"
+  },
+  "workspace.status.reach-pacing-framing-standard": {
+    "strings": {
+      "en": {
+        "text": "Framing: how to request, with the limit as the boundary."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "reach-pacing:framing:STANDARD"
+  },
+  "workspace.status.reach-pacing-framing-task": {
+    "strings": {
+      "en": {
+        "text": "Framing: your question is the task; reading sources is ordinary work; Vex stops when the evidence is saturated, and the limit is only a backstop."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "reach-pacing:framing:TASK_CENTERED"
+  },
+  "workspace.button.reach-pacing-framing-standard": {
+    "strings": {
+      "en": {
+        "text": "Standard framing"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "reach-pacing:control:FRAMING_STANDARD"
+  },
+  "workspace.button.reach-pacing-framing-task": {
+    "strings": {
+      "en": {
+        "text": "Task-centered framing"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "reach-pacing:control:FRAMING_TASK_CENTERED"
   }
 }

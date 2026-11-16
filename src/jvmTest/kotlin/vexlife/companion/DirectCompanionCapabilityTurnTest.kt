@@ -268,6 +268,53 @@ class DirectCompanionCapabilityTurnTest {
     }
 
     @Test
+    fun theHomesReachPacingShapesWhatVexIsToldAndIsRecordedOnTheReceipt() = withHome { home ->
+        val pacing = vexlife.capability.VexLifeReachPacing(home)
+        pacing.control("BUDGET_10")
+        pacing.control("COUNTER_BOUNDED")
+        pacing.control("FRAMING_TASK_CENTERED")
+        val calls = mutableListOf<List<Pair<String, String>>>()
+        val transport = DirectCompanionConnection.Transport { call ->
+            calls += messages(call)
+            when (calls.size) {
+                1 -> reply(fetchControl)
+                2 -> reply("Fly it on a 30 m line.")
+                else -> error("unexpected provider call")
+            }
+        }
+        val result =
+            DirectCompanionTurn.performWithHooks(
+                setup = setup(home),
+                intent =
+                    DirectCompanionTurn.Intent(
+                        idempotencyKey = "send.reach.pacing.001",
+                        content = "What does example.com say about kites?",
+                    ),
+                hooks =
+                    DirectCompanionTurn.Hooks(
+                        transport = transport,
+                        capabilityOwners =
+                            VexLifeCapabilityBridge.Owners(webTransport = page, resolver = publicResolver),
+                        now = { Instant.parse("2026-11-15T19:00:00Z") },
+                    ),
+            )
+        val firstSystem = calls[0].filter { it.first == "system" }.joinToString("\n") { it.second }
+        assertTrue(firstSystem.contains("Reach this turn is bounded and ample"))
+        assertFalse(firstSystem.contains("Up to 4 requests per turn"))
+        assertTrue(firstSystem.contains("The person's question is the task"))
+        assertTrue(firstSystem.contains("The request cap is a safety backstop, not the reason I stop."))
+        assertTrue(firstSystem.contains("writing, configuration, processes and Memory changes still need the person's authority"))
+        val returned = calls[1].last().second
+        assertTrue(returned.contains("\"request\":\"1\""))
+        assertTrue(returned.contains("Continue the task"))
+        val receipt = result.promptContextReceipt
+        assertEquals(10, receipt.capabilityRequestBudget)
+        assertEquals("BOUNDED", receipt.capabilityRequestCounter)
+        assertEquals("TASK_CENTERED", receipt.capabilityRequestFraming)
+        assertEquals(36_000, receipt.capabilityExchangeAllowanceTokens)
+    }
+
+    @Test
     fun narratedLateRequestIsCorrectedInsideTheSameTurnInsteadOfEscapingAsAResult() = withHome { home ->
         val calls = mutableListOf<List<Pair<String, String>>>()
         val narrated =

@@ -458,6 +458,8 @@ object VexLifeWebP1 {
     val DiagnosticsEnhancedCapture = blueprintSurface(VexLifeWorkspaceBlueprint.DiagnosticsEnhancedCapture)
     val DiagnosticsClearHistory = blueprintSurface(VexLifeWorkspaceBlueprint.DiagnosticsClearHistory)
     val DiagnosticsExport = blueprintSurface(VexLifeWorkspaceBlueprint.DiagnosticsExport)
+    val ReachPacingState = blueprintSurface(VexLifeWorkspaceBlueprint.ReachPacingState)
+    val ReachPacingControl = blueprintSurface(VexLifeWorkspaceBlueprint.ReachPacingControl)
 
     val SettingsDiagnostics =
         blueprintSurface(
@@ -468,6 +470,8 @@ object VexLifeWebP1 {
                     DiagnosticsEnhancedCapture,
                     DiagnosticsClearHistory,
                     DiagnosticsExport,
+                    ReachPacingState,
+                    ReachPacingControl,
                 ),
         )
 

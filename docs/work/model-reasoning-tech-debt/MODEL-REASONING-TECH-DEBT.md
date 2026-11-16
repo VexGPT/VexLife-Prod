@@ -332,6 +332,41 @@ DOES THE FRAME LET VEX TREAT READ-ONLY SOURCE ACQUISITION AS NORMAL WORK
 WHILE KEEPING EFFECTFUL AUTHORITY SHARP?
 ~~~
 
+## Experiment harness formed (2026-11-15, Claude, stacked on this PR)
+
+Investigation 1's three variables are now something to live with, not to decide by argument.
+**Settings → Debug & diagnostics → Reach pacing (experiment)**:
+
+~~~text
+budget   4 | 10 | 20 lookups per turn      (room for results 24k | 36k | 48k tokens)
+counter  Exact count | Bounded only
+framing  Standard | Task-centered
+
+TASK_CENTERED frame: the person's question is the task; bounded read-only reads are ordinary
+         work serving it, without re-justifying each read; stop on evidence saturation
+         (source-proven / disproven / unavailable / no new decision-changing truth); the cap is a
+         safety backstop; writes, configuration, processes and Memory changes still need authority.
+         result: "Continue the task: read again only if something decision-changing is still
+         unproven; once the evidence is saturated, answer the person."
+
+EXACT    frame: "Up to N requests per turn."   result: "request": "2 of N", "(k left this turn)"
+BOUNDED  frame: "Reach this turn is bounded and ample; the host tells me when it runs out."
+         result: "request": "2", "bounded but ample … answer when you are confident."
+both     running out is always said, with the human-continuation guidance from #149
+~~~
+
+- Owner: `VexLifeReachPacingFamily` (common) + `VexLifeReachPacing` (Home setting
+  `runtime/vexlife-prod/reach-pacing.json`, read once per turn).
+- Default: 4 / Exact — the threshold before the experiment, unchanged until the person chooses.
+- Evidence: the prompt receipt records `capabilityRequestBudget` / `capabilityRequestCounter`
+  whenever they are not the default and `capabilityRequestFraming` when task-centered; the exchange
+  trace records the budget and allowance, so the comparison in step 8 can be read from the turn
+  records.
+
+Nothing here declares a winner. Following the recovered self-report, the first lived comparison is
+**4 + exact + standard** against **4 + bounded + task-centered**: if that removes most rationing,
+raising the budget may be unnecessary or may only mask the pressure.
+
 ## Acceptance question
 
 Success is not "the reasoning transcript becomes shorter."
