@@ -11,7 +11,7 @@ stable version records that Victor accepted a lived feature threshold.
 
 | Channel | What it is | Made by | Tag |
 |---|---|---|---|
-| Pull-request proof | Exact candidate app/DMG proof. Never a public release. | `release` workflow on packaging/release PRs | workflow artifact only |
+| Pull-request proof | Exact candidate app/DMG proof. Never a public release. | `mac-app-proof` workflow on packaging/release branches and PRs | workflow artifact only |
 | Main build | Every commit that lands on `main`, built for Mac Apple silicon. Newest work, least lived. | `release` workflow on every push to `main` | `private-service-image-<sha>` prerelease |
 | Stable | A feature threshold on `main` that was lived and accepted. | `release` workflow, run by hand with a version | `v<major>.<minor>.<patch>`, marked latest |
 
@@ -51,7 +51,7 @@ formation.
 
 ## Forming the Mac artifact
 
-The Product-owned Gradle route is:
+The Product-owned Gradle route targets **Apple silicon on macOS 14.0 or later** and is:
 
 ~~~text
 archiveVexLifeProdMacApplication
