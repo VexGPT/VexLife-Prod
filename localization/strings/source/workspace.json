@@ -553,7 +553,7 @@
   "workspace.status.reach-pacing-bounded": {
     "strings": {
       "en": {
-        "text": "Up to {budget} lookups per turn; Vex is told only that reach is bounded and ample, and when it runs out."
+        "text": "Up to {budget} lookups per turn; Vex is told the current selected limit but not the exact remaining count. The host tells Vex when the limit is reached."
       }
     },
     "surfaces": [

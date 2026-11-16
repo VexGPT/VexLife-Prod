@@ -2350,9 +2350,11 @@ object DirectPromptContext {
                 }
                 add(
                     "The result comes back as ${VexLifeCapabilityRequest.ResultHeader}; then I continue my reply to the person, or ask again while requests remain. " +
+                        "Current reach pacing for this turn allows up to ${pacing.budget} requests. " +
+                        "This current-turn setting overrides any earlier Conversation statements about reach limits. " +
                         (if (pacing.counter == VexLifeReachPacingFamily.Counter.EXACT)
-                            "Up to ${pacing.budget} requests per turn. "
-                        else "Reach this turn is bounded and ample; the host tells me when it runs out. ") +
+                            "The host shows the exact request and remaining count. "
+                        else "The host does not expose the exact running or remaining count; it tells me when the limit is reached. ") +
                         "This is a boundary, not a target: I stop reaching as soon as I have enough truth. " +
                         "If no requests remain, I do not emit another capability request. I answer the person from what is established; if important outside truth is still missing, " +
                         "I share what I currently understand, name what is still missing, and ask the person to send another message so I can continue in a fresh turn. " +

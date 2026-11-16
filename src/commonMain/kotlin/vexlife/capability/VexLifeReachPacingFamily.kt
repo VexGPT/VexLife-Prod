@@ -28,7 +28,7 @@ object VexLifeReachPacingFamily :
     enum class Counter {
         /** Vex sees "request 2 of 4" and how many remain. The threshold before this experiment. */
         EXACT,
-        /** Vex knows reach is bounded and ample, and is told only when it has run out. */
+        /** Vex knows the selected total budget, but not the exact running/remaining count; exhaustion is explicit. */
         BOUNDED,
     }
 

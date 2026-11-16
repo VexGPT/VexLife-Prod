@@ -299,8 +299,10 @@ class DirectCompanionCapabilityTurnTest {
                     ),
             )
         val firstSystem = calls[0].filter { it.first == "system" }.joinToString("\n") { it.second }
-        assertTrue(firstSystem.contains("Reach this turn is bounded and ample"))
-        assertFalse(firstSystem.contains("Up to 4 requests per turn"))
+        assertTrue(firstSystem.contains("Current reach pacing for this turn allows up to 10 requests."))
+        assertTrue(firstSystem.contains("This current-turn setting overrides any earlier Conversation statements about reach limits."))
+        assertTrue(firstSystem.contains("The host does not expose the exact running or remaining count"))
+        assertFalse(firstSystem.contains("Current reach pacing for this turn allows up to 4 requests."))
         assertTrue(firstSystem.contains("The person's question is the task"))
         assertTrue(firstSystem.contains("The request cap is a safety backstop, not the reason I stop."))
         assertTrue(firstSystem.contains("writing, configuration, processes and Memory changes still need the person's authority"))
