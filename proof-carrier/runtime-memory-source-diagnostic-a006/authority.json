@@ -1,0 +1,16 @@
+{
+  "authoritySchemaRef": "vextreme.effect-transaction/v1",
+  "semanticAdmissionRef": "github.pull.vexlife-prod.193",
+  "transactionRef": "transaction.vexlife-prod.runtime-memory-source-diagnostic.a006",
+  "transactionVersion": 1,
+  "allowedEffectRefs": [
+    "effect.vexrelay.execute"
+  ],
+  "heldEffectRefs": [
+    "effect.vexlife-prod.source-mutation",
+    "effect.vexlife-prod.product-runtime",
+    "effect.vexlife-prod.home-mutation",
+    "effect.vexlife-prod.conversation-send",
+    "effect.vexlife-prod.merge"
+  ]
+}
