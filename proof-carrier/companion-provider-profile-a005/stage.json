@@ -1,0 +1,37 @@
+{
+  "repositoryRef": "primary",
+  "expectedBase": "54c874b57191651152b049e145a0f7cc5113561f",
+  "expectedHead": "3cf6c385b1db16446f81d320f8b6dc563b63f28d",
+  "expectedTree": "8e496b39fa5eedf2c46f4452520c44a42013dc8d",
+  "branch": "VXG-111626-companion-provider-profile-a001",
+  "proofCommands": [
+    {
+      "command": "/bin/bash",
+      "args": [
+        "-lc",
+        "set -euo pipefail; HEAD='3cf6c385b1db16446f81d320f8b6dc563b63f28d'; J21=\"$(/usr/libexec/java_home -v 21 2>/dev/null)\" || { printf \"%s\\n\" \"Provider profile A005: JDK 21 unavailable.\" >&2; exit 21; }; [ -n \"$J21\" ] && [ -x \"$J21/bin/java\" ] || exit 22; export JAVA_HOME=\"$J21\"; export PATH=\"$JAVA_HOME/bin:$PATH\"; \"$JAVA_HOME/bin/java\" -version; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" jvmTest compileKotlinJs compileTestKotlinJs checkVexLifeStrings; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" -PvexlifeAppVersion=0.0.0 archiveVexLifeProdMacApplication; APP_DIR=\"build/vexlife-prod-mac-application/$HEAD\"; DMG=\"$APP_DIR/VexLife-macOS-AppleSilicon.dmg\"; SUM=\"$APP_DIR/VexLife-macOS-AppleSilicon.dmg.sha256\"; RECEIPT=\"$APP_DIR/VexLife-macOS-AppleSilicon.receipt.json\"; test -f \"$DMG\" && test -f \"$SUM\" && test -f \"$RECEIPT\"; (cd \"$APP_DIR\" && /usr/bin/shasum -a 256 -c \"VexLife-macOS-AppleSilicon.dmg.sha256\"); /usr/bin/hdiutil verify \"$DMG\"; [ -z \"$(/usr/bin/git status --porcelain=v1 -uall)\" ] || { /usr/bin/git status --porcelain=v1 -uall >&2; exit 31; }"
+      ],
+      "proofClass": "TEST",
+      "candidateEvidence": true,
+      "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+      "predicateRef": "predicate.vexlife-prod.companion-provider-profile.source-build.a005",
+      "timeoutMs": 1200000
+    }
+  ],
+  "maxFiles": 10,
+  "stateRef": "state.vexlife-prod.companion-provider-profile",
+  "currentLifecycleState": "SOURCE_READY",
+  "currentGoal": "Prove corrected exact #201 source/build/localization/AppKit/DMG formation.",
+  "remainingGoals": [
+    "Currentize this architecture onto the accepted runtime + reach floor after those predecessors merge.",
+    "Qualify Harmony-native VexLife capability carriage before changing GPT-OSS capability standing to QUALIFIED.",
+    "Run lived model-quality and capability comparisons on the integrated floor."
+  ],
+  "onPass": {
+    "lifecycleState": "SOURCE_READY",
+    "nextFunction": "F08.EXECUTE_OR_HANDOFF",
+    "nextOwner": "Operations",
+    "whyThisIsNext": "Corrected source/build proof is complete; integration order still requires accepted runtime and reach floors before lived provider-profile qualification."
+  },
+  "resultFilename": "RETURN-VEXLIFE-COMPANION-PROVIDER-PROFILE-MAC-A005.zip"
+}
