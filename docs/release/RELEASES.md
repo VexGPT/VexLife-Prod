@@ -61,6 +61,7 @@ archiveVexLifeProdMacApplication
   -> embed exact private image in Contents/Resources
   -> bind bundle/source/trust metadata
   -> restore an ad-hoc bundle seal
+  -> reuse VexLife.icns as the mounted DMG volume icon
   -> form + verify VexLife-macOS-AppleSilicon.dmg
   -> SHA-256 + release receipt
 ~~~
@@ -162,8 +163,9 @@ Switching executor must not fork site formation logic.
 
 The page prefers a Mac `.dmg` when a release contains one and falls back to the predecessor
 bootstrap otherwise. It labels the unversioned channel as **Preview**, not as an always-current main
-build. Windows remains visibly in preparation until a Windows realization actually exists and has
-real-machine proof.
+build. The selector keeps at most the two newest Preview releases visible so an update can be compared
+against its immediate predecessor before that older Preview is intentionally withdrawn. Windows remains
+visibly in preparation until a Windows realization actually exists and has real-machine proof.
 
 Current observed setting as of 2026-11-15: **Deploy from a branch → gh-pages → /(root)**.
 Victor switched the repository to this profile and the public VexLife page loaded successfully from
