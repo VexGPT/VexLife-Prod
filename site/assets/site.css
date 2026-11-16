@@ -131,7 +131,26 @@ a:hover { text-decoration-color: var(--text-primary); }
   align-items: center;
   gap: clamp(12px, 2vw, 24px);
 }
-.family-rail { display: flex; align-items: center; gap: 12px; margin-right: auto; min-width: 0; flex-shrink: 0; }
+.family-rail {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-right: auto;
+  min-width: 0;
+  max-width: 360px;
+  flex-shrink: 0;
+  opacity: 1;
+  overflow: visible;
+  filter: blur(0);
+  transform: translateX(0) scale(1);
+  transform-origin: right center;
+  transition:
+    max-width 0.36s cubic-bezier(0.2, 0.78, 0.2, 1),
+    margin-right 0.36s cubic-bezier(0.2, 0.78, 0.2, 1),
+    opacity 0.16s ease,
+    filter 0.24s ease,
+    transform 0.36s cubic-bezier(0.2, 0.78, 0.2, 1);
+}
 .family-mark {
   width: 28px;
   height: 28px;
@@ -173,7 +192,26 @@ a:hover { text-decoration-color: var(--text-primary); }
   text-align: center;
   justify-self: center;
 }
-.nav { display: flex; gap: var(--space-5); margin-left: auto; font: var(--text-body-sm); flex-wrap: wrap; }
+.nav {
+  display: flex;
+  gap: var(--space-5);
+  margin-left: auto;
+  max-width: 560px;
+  overflow: hidden;
+  font: var(--text-body-sm);
+  flex-wrap: wrap;
+  opacity: 1;
+  filter: blur(0);
+  transform: translateX(0) scale(1);
+  transform-origin: right center;
+  transition:
+    max-width 0.36s cubic-bezier(0.2, 0.78, 0.2, 1),
+    margin-left 0.36s cubic-bezier(0.2, 0.78, 0.2, 1),
+    gap 0.36s cubic-bezier(0.2, 0.78, 0.2, 1),
+    opacity 0.14s ease,
+    filter 0.22s ease,
+    transform 0.36s cubic-bezier(0.2, 0.78, 0.2, 1);
+}
 .nav a { color: var(--text-tertiary); text-decoration: none; }
 .nav a:hover, .nav a:focus-visible { color: var(--text-primary); }
 .control { flex: 0 0 auto; font: var(--text-mono-xs); letter-spacing: var(--tracking-mono); text-transform: uppercase; color: var(--text-secondary); background: transparent; border: var(--border-w) solid var(--border-default); border-radius: var(--radius-sm); padding: 6px 10px; cursor: pointer; }
@@ -203,6 +241,43 @@ a:hover { text-decoration-color: var(--text-primary); }
 .spiral-actions .vex-ecosystem-spiral-feature:hover {
   color: var(--text-primary);
   border-color: var(--border-strong);
+}
+
+
+/*
+ * One reversible header circuit:
+ * closed  -> family/section navigation is visible, Spiral children are collapsed
+ * opening -> navigation contracts toward the Spiral while feature orbs expand from it
+ * closing -> the same transforms run backward; reopening uses the same state relationship
+ *
+ * The shared component owns Spiral open/closed projection. VexLife owns only how its chrome
+ * manifests that state.
+ */
+.header-inner[data-spiral-open="true"] .family-rail {
+  max-width: 0;
+  margin-right: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  filter: blur(3px);
+  transform: translateX(92px) scale(0.72);
+}
+.header-inner[data-spiral-open="true"] .nav {
+  max-width: 0;
+  margin-left: 0;
+  gap: 0;
+  opacity: 0;
+  pointer-events: none;
+  filter: blur(2px);
+  transform: translateX(64px) scale(0.80);
+}
+.header-inner[data-spiral-open="true"] .spiral-actions {
+  margin-left: auto;
+}
+
+/* Terrain is a navigation affordance, not the visual focal point of the opened Spiral. */
+.spiral-actions [data-vex-spiral-feature-id="terrain"] {
+  font-size: 14px;
 }
 
 @media (max-width: 900px) {
