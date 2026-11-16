@@ -14,12 +14,13 @@ class VexLifePublicSpiralTest {
     private val root: Path = Path.of("").toAbsolutePath()
     private val page = Files.readString(root.resolve("site/index.html"))
     private val css = Files.readString(root.resolve("site/assets/site.css"))
+    private val script = Files.readString(root.resolve("site/assets/site.js"))
 
     @Test
     fun publicHomePinsTheSharedSpiralAndRegistersOnlyTruthfulPageFeatures() {
         assertContains(page, "VEX_SPIRAL_FEATURES")
-        assertContains(page, "Vextreme@04ee63c4bf9d2ccbbb03e93514a8a67d242c49db/widgets/vex-fab.js")
-        assertContains(page, "Vextreme@04ee63c4bf9d2ccbbb03e93514a8a67d242c49db/components/vex-spiral-features.js")
+        assertContains(page, "Vextreme@0fd053e9a0aa12572bd9b31b3b4d49534da8c549/widgets/vex-fab.js")
+        assertContains(page, "Vextreme@0fd053e9a0aa12572bd9b31b3b4d49534da8c549/components/vex-spiral-features.js")
         assertContains(page, "id: 'theme'")
         assertContains(page, "id: 'support'")
         assertContains(page, "id: 'terrain'")
@@ -43,6 +44,23 @@ class VexLifePublicSpiralTest {
         assertContains(page, "id=\"theme-toggle\" aria-label=\"Switch between dark and light\" hidden")
         assertContains(css, ".spiral-actions")
         assertContains(css, "#vex-spiral-trigger")
+    }
+
+    @Test
+    fun openCloseAndReopenUseOneHeaderProjectionCircuit() {
+        assertContains(script, "vex:spiral-change")
+        assertContains(script, "header.dataset.spiralOpen")
+        assertContains(script, "node.inert = true")
+        assertContains(script, "node.inert = false")
+        assertContains(css, "data-spiral-open=\"true\"")
+        assertContains(css, "translateX(92px) scale(0.72)")
+        assertContains(css, "translateX(64px) scale(0.80)")
+    }
+
+    @Test
+    fun terrainIsVisuallyQuieterInsideTheSpiral() {
+        assertContains(css, "[data-vex-spiral-feature-id=\"terrain\"]")
+        assertContains(css, "font-size: 14px")
     }
 }
 
