@@ -7,6 +7,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import vexlife.contract.VexContractJson
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.home.VexLifeProdHome
 import vexlife.model.heretic.HereticModelConfiguration
@@ -209,6 +210,154 @@ class FileHereticModelConfigurationStoreTest {
             assertEquals(
                 HereticProductIdentity.ProductRuntimeReceiptRelativePath,
                 rebound.value.runtimeReceiptPath,
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun unsupportedPersistedModelDefaultsToCurrentRecommendedModelWithoutNeedingTheOldModel() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-model-selection-convergence-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+        try {
+            val fixture =
+                CanonicalVexLifeHomeFixture.form(
+                    home,
+                )
+            val store =
+                FileHereticModelConfigurationStore(
+                    home,
+                )
+            store.selectHeretic(
+                fixture.manifest,
+            )
+            val current =
+                assertIs<FileHereticModelConfigurationStore.Snapshot.Heretic>(
+                    store.read(
+                        fixture.manifest,
+                    ),
+                )
+                    .value
+            val unsupported =
+                current.copy(
+                    modelRef = "model.vexlife-prod.experimental.gpt-oss.removed",
+                    modelProfileRef = "model-profile.vexlife-prod.experimental.gpt-oss.removed",
+                    artifactRef = "artifact.vexlife-prod.experimental.gpt-oss.removed",
+                    artifactContentSetSha256 = "b".repeat(64),
+                )
+            Files.writeString(
+                home.resolve(
+                    VexLifeProdHome.ModelConfigurationRelativePath,
+                ),
+                VexContractJson.encode(
+                    unsupported,
+                ),
+            )
+
+            val transition =
+                store.ensureSupportedSelection(
+                    fixture.manifest,
+                    totalMemoryBytes = 64L * 1024L * 1024L * 1024L,
+                )
+
+            assertEquals(
+                "HERETIC_DEFAULTED_UNSUPPORTED_SELECTION_PENDING",
+                transition.state,
+            )
+            assertTrue(transition.writePerformed)
+            assertEquals(
+                vexlife.model.heretic.HereticModelCatalog.Certified27B,
+                HereticModelConfiguration.selected(
+                    transition.value,
+                ),
+            )
+            assertFalse(transition.value.automaticFallback)
+            assertFalse(transition.value.automaticDownload)
+            assertFalse(transition.value.automaticActivation)
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun unsupportedSelectionFromAnotherHomeScopeCannotAutoDefault() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-model-selection-foreign-scope-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+        try {
+            val fixture =
+                CanonicalVexLifeHomeFixture.form(
+                    home,
+                )
+            val store =
+                FileHereticModelConfigurationStore(
+                    home,
+                )
+            store.selectHeretic(
+                fixture.manifest,
+            )
+            val current =
+                assertIs<FileHereticModelConfigurationStore.Snapshot.Heretic>(
+                    store.read(
+                        fixture.manifest,
+                    ),
+                )
+                    .value
+            val foreign =
+                current.copy(
+                    homeRef = "vex-home.device.vexlife.foreign",
+                    modelRef = "model.vexlife-prod.experimental.gpt-oss.removed",
+                )
+            val path =
+                home.resolve(
+                    VexLifeProdHome.ModelConfigurationRelativePath,
+                )
+            Files.writeString(
+                path,
+                VexContractJson.encode(
+                    foreign,
+                ),
+            )
+            val before =
+                Files.readString(
+                    path,
+                )
+
+            val failure =
+                assertFailsWith<IllegalArgumentException> {
+                    store.ensureSupportedSelection(
+                        fixture.manifest,
+                        totalMemoryBytes = 64L * 1024L * 1024L * 1024L,
+                    )
+                }
+
+            assertEquals(
+                "Heretic model configuration Home identity drift",
+                failure.message,
+            )
+            assertEquals(
+                before,
+                Files.readString(
+                    path,
+                ),
             )
         } finally {
             parent
