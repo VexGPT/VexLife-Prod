@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "vextreme.vexlocalbridge-task-manifest/v1",
+  "artifactClass": "EXECUTABLE_RELAY",
+  "taskRef": "task.vexlocalbridge.vexlife-prod.gpt-oss-provider-qualification-source.001",
+  "attemptRef": "attempt.vexlocalbridge.vexlife-prod.gpt-oss-provider-qualification-source.a005",
+  "packageRef": "package.vexlocalbridge.vexlife-prod.gpt-oss-provider-qualification-source.a005",
+  "requestRef": "request.vexlocalbridge.vexlife-prod.gpt-oss-provider-qualification-source.a005",
+  "correlationRef": "correlation.vexlocalbridge.gpt-oss-provider-qualification-source.a005",
+  "taskStorageKey": "vexlife-prod-gpt-oss-provider-qualification-source",
+  "attemptStorageKey": "attempt-a005",
+  "requestingRoleRef": "Operations[VexLife-Prod]",
+  "requestingInstanceRef": "instance.operations.vexlife-prod.gpt-oss-provider-qualification-source",
+  "parentOperationsRef": "github.pull.vexlife-prod.191",
+  "returnRouteRef": "github.pull.vexlife-prod.191",
+  "hostProfileRef": "macos-victor",
+  "repositoryExecutionProfileRefOrNull": "profile.repository.vextreme-sdk.macos-v1",
+  "repositoryRefOrNull": "VexGPT/VexLife-Prod",
+  "baseRefOrNull": "ebca4be1db1d8f2858e437ca43d9c4800cb9ee55",
+  "headRefOrNull": "514d400d1895e2bbf466073ea1fb81a5c0d67040",
+  "treeRefOrNull": "6bd3db599a5135351e83b217c188f1344430ce7d",
+  "branchRefOrNull": "VXG-111626-gpt-oss-catalog-lived-mac-build-a001",
+  "claimRefOrNull": "github.pull.vexlife-prod.191",
+  "exactPathRefs": [],
+  "authorityBinding": {
+    "authoritySchemaRef": "vextreme.effect-transaction/v1",
+    "authorityEnvelopePath": "authority/effect.json",
+    "authorityEnvelopeSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "semanticAdmissionRef": "github.pull.vexlife-prod.191",
+    "transactionRef": "transaction.vexlife-prod.gpt-oss-provider-qualification-source.a005",
+    "transactionVersion": 1,
+    "allowedEffectRefs": [
+      "effect.vexrelay.execute"
+    ],
+    "heldEffectRefs": [
+      "effect.vexlife-prod.source-mutation",
+      "effect.vexlife-prod.product-runtime",
+      "effect.vexlife-prod.home-mutation",
+      "effect.vexlife-prod.merge"
+    ]
+  },
+  "payload": {
+    "payloadClass": "VEXRELAY_TASK_ARCHIVE",
+    "payloadRuntime": "NATIVE_VEXRELAY",
+    "payloadPath": "payload/inner-vexrelay.zip",
+    "payloadSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "typedArgv": [],
+    "immutableInputs": [
+      {
+        "path": "inputs/vexrelay-binding.json",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    ]
+  },
+  "executionStateAtFormation": "TASK_PREPARED",
+  "singleUseNonce": "nonce-vlb-vexlife-prod-gpt-oss-provider-qualification-source-a005-20261116",
+  "stopConditions": [
+    "stop.on.identity.drift",
+    "stop.on.first.substantive.failure"
+  ],
+  "archiveDigestBinding": "FILENAME_SHA256"
+}
