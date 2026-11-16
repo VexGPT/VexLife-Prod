@@ -1,0 +1,39 @@
+{
+  "repositoryRef": "primary",
+  "expectedBase": "370f6347f79133b507d156c20262b9342df3005f",
+  "expectedHead": "20c0ff9e674dd04d6cdbfb92bf4e1cbb9363f745",
+  "expectedTree": "5106d0d799ddfc759ce0b80a4de91de689b3430f",
+  "branch": "VXG-111626-runtime-migration-gpt-oss-lived-carrier-a002",
+  "proofCommands": [
+    {
+      "command": "/bin/bash",
+      "args": [
+        "-lc",
+        "set -euo pipefail; HEAD='20c0ff9e674dd04d6cdbfb92bf4e1cbb9363f745'; SHORT='20c0ff9e674d'; J21=\"$(/usr/libexec/java_home -v 21 2>/dev/null)\" || { printf \"%s\\n\" \"Runtime migration A002: JDK 21 unavailable.\" >&2; exit 21; }; [ -n \"$J21\" ] && [ -x \"$J21/bin/java\" ] || exit 22; export JAVA_HOME=\"$J21\"; export PATH=\"$JAVA_HOME/bin:$PATH\"; \"$JAVA_HOME/bin/java\" -version; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" jvmTest compileKotlinJs compileTestKotlinJs checkVexLifeStrings; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" -PvexlifeAppVersion=0.0.0 archiveVexLifeProdMacApplication; APP_DIR=\"build/vexlife-prod-mac-application/$HEAD\"; DMG=\"$APP_DIR/VexLife-macOS-AppleSilicon.dmg\"; SUM=\"$APP_DIR/VexLife-macOS-AppleSilicon.dmg.sha256\"; RECEIPT=\"$APP_DIR/VexLife-macOS-AppleSilicon.receipt.json\"; test -f \"$DMG\" && test -f \"$SUM\" && test -f \"$RECEIPT\"; (cd \"$APP_DIR\" && /usr/bin/shasum -a 256 -c \"VexLife-macOS-AppleSilicon.dmg.sha256\"); /usr/bin/hdiutil verify \"$DMG\"; OUT=\"$HOME/Downloads/VEXLIFE-RUNTIME-MIGRATION-GPT-OSS-A002-$SHORT\"; /bin/mkdir -p \"$OUT\"; /bin/cp -f \"$DMG\" \"$OUT/VexLife-macOS-AppleSilicon.dmg\"; /bin/cp -f \"$SUM\" \"$OUT/VexLife-macOS-AppleSilicon.dmg.sha256\"; /bin/cp -f \"$RECEIPT\" \"$OUT/VexLife-macOS-AppleSilicon.receipt.json\"; /usr/bin/shasum -a 256 \"$OUT/VexLife-macOS-AppleSilicon.dmg\"; printf \"%s\\n\" \"Corrected lived artifact: $OUT/VexLife-macOS-AppleSilicon.dmg\"; [ -z \"$(/usr/bin/git status --porcelain=v1 -uall)\" ] || { /usr/bin/git status --porcelain=v1 -uall >&2; exit 31; }"
+      ],
+      "proofClass": "TEST",
+      "candidateEvidence": true,
+      "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+      "predicateRef": "predicate.vexlife-prod.runtime-migration-gpt-oss-lived.source-build.a002",
+      "timeoutMs": 1200000
+    }
+  ],
+  "maxFiles": 10,
+  "stateRef": "state.vexlife-prod.runtime-migration-gpt-oss-lived",
+  "currentLifecycleState": "SOURCE_READY",
+  "currentGoal": "Prove exact #197 composition and form corrected lived-test DMG.",
+  "remainingGoals": [
+    "Open the exact #197 DMG against the Home holding the predecessor runtime receipt.",
+    "Verify startup retires the exact predecessor runtime instead of surfacing binding mismatch.",
+    "Complete one ordinary GPT-OSS turn.",
+    "Run the failure-relevant substantial turn followed immediately by another substantial follow-up.",
+    "Return lived observations; merge #195 only after migration and runtime-stress gates pass."
+  ],
+  "onPass": {
+    "lifecycleState": "SOURCE_READY",
+    "nextFunction": "F08.EXECUTE_OR_HANDOFF",
+    "nextOwner": "Victor+Operations",
+    "whyThisIsNext": "Exact corrected source/build/DMG is complete; lived runtime migration and stress remain."
+  },
+  "resultFilename": "RETURN-VEXLIFE-RUNTIME-MIGRATION-GPT-OSS-LIVED-MAC-A002.zip"
+}
