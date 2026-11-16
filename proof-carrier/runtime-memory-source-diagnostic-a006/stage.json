@@ -1,0 +1,38 @@
+{
+  "repositoryRef": "primary",
+  "expectedBase": "655e7c78cefba06a5e87afad285bb25a08632f05",
+  "expectedHead": "238608c6a3659f81a6b44496f8f1dd9231737efc",
+  "expectedTree": "4c2703d645041839a26ae9406cdd8a3150ec2242",
+  "branch": "VXG-111626-runtime-memory-currentized-test-a001",
+  "proofCommands": [
+    {
+      "command": "/bin/bash",
+      "args": [
+        "-lc",
+        "set -uo pipefail\nJ21=\"$(/usr/libexec/java_home -v 21 2>/dev/null || true)\"\nprintf 'A006 java_home_21=%s\\n' \"$J21\"\nif [ -n \"$J21\" ] && [ -x \"$J21/bin/java\" ]; then \"$J21/bin/java\" -version 2>&1; fi\nexport JAVA_HOME=\"$J21\"\nexport PATH=\"$JAVA_HOME/bin:$PATH\"\nFAIL_LOG=\"$(mktemp -t vexlife-a006-gradle.XXXXXX)\"\nxml_summary() {\n  if [ -d build/test-results/jvmTest ]; then\n    printf '%s\\n' '--- A006 jvmTest XML failures ---'\n    /usr/bin/grep -H -E '<testsuite|<testcase|<failure|<error' build/test-results/jvmTest/*.xml 2>/dev/null | /usr/bin/tail -n 300 || true\n  fi\n}\nrun_gradle() {\n  : > \"$FAIL_LOG\"\n  set +e\n  ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" \"$@\" >\"$FAIL_LOG\" 2>&1\n  STATUS=$?\n  set -e\n  /usr/bin/tail -n 400 \"$FAIL_LOG\"\n  if [ \"$STATUS\" -ne 0 ]; then\n    xml_summary\n    exit \"$STATUS\"\n  fi\n}\nset -e\nrun_gradle compileKotlinJvm compileTestKotlinJvm\nrun_gradle jvmTest --tests 'vexlife.model.heretic.runtime.HereticPersistentRuntimeTest' --tests 'vexlife.model.heretic.runtime.StableVexLifeHereticRuntimeCompatibilityTest' --stacktrace\nrun_gradle jvmTest --stacktrace\ntest -z \"$(/usr/bin/git status --porcelain=v1 -uall)\" || { /usr/bin/git status --porcelain=v1 -uall >&2; exit 31; }\nprintf '%s\\n' 'A006 source diagnostic PASS: affected runtime tests and full jvmTest passed.'"
+      ],
+      "proofClass": "TEST",
+      "candidateEvidence": true,
+      "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+      "predicateRef": "predicate.vexlife-prod.runtime-memory-source-diagnostic.a006",
+      "timeoutMs": 1200000
+    }
+  ],
+  "maxFiles": 10,
+  "stateRef": "state.vexlife-prod.runtime-memory-source-diagnostic",
+  "currentLifecycleState": "SOURCE_READY",
+  "currentGoal": "Identify the exact JVM source/build predicate that stopped A005 without touching Product runtime/Home.",
+  "remainingGoals": [
+    "Consume the exact failing affected/full JVM test evidence.",
+    "Repair only the source predicate actually established by A006 if needed.",
+    "Re-run source/build proof before Product runtime currentization.",
+    "Only after exact one-cache runtime currentness passes, run the lived three-turn/multi-stage stress."
+  ],
+  "onPass": {
+    "lifecycleState": "SOURCE_READY",
+    "nextFunction": "F08.EXECUTE_OR_HANDOFF",
+    "nextOwner": "Operations[VexLife-Prod]",
+    "whyThisIsNext": "Affected runtime tests and full jvmTest are green; resume the previously held exact Product runtime currentization proof."
+  },
+  "resultFilename": "RETURN-VEXLIFE-RUNTIME-MEMORY-SOURCE-DIAG-A006.zip"
+}
