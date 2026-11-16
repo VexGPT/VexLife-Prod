@@ -66,8 +66,8 @@
       "remote": "origin",
       "baseBranch": "main",
       "acceptedBase": "bf39d0d0e3a826f6b5e329a37eea8791aaacaf20",
-      "checkoutRef": "3112d6dca9776a80e800382948a3dac8eebe6b2b",
-      "expectedHead": "3112d6dca9776a80e800382948a3dac8eebe6b2b",
+      "checkoutRef": "d0b0f4b319dfbcc95bcff2a6de41031d9b257a18",
+      "expectedHead": "d0b0f4b319dfbcc95bcff2a6de41031d9b257a18",
       "branch": "VXG-111526-chatgpt-responsive-conversation-layout-a001",
       "expectedRemoteUrl": null
     }
@@ -138,17 +138,29 @@
   },
   "source": {
     "sourceSetRef": "source-set.vexlife-prod.responsive-layout-lived-mac",
-    "sourceVersionRef": "3112d6dca9776a80e800382948a3dac8eebe6b2b",
+    "sourceVersionRef": "d0b0f4b319dfbcc95bcff2a6de41031d9b257a18",
     "overlapEvidenceRef": "github.pull.vexlife-prod.180",
     "activeConflictState": "NONE",
     "candidateState": "EXACT",
-    "candidateHead": "3112d6dca9776a80e800382948a3dac8eebe6b2b",
-    "candidateTree": "9d3235b05e1d379c98fc754268ff6840dc221852",
+    "candidateHead": "d0b0f4b319dfbcc95bcff2a6de41031d9b257a18",
+    "candidateTree": "62aa57b4beb6c0fd3a68ca0312f429682b02e8d5",
     "expectedChangedPaths": [
-      "docs/foundation/VEXWEB-GENERATED-P1-WORKSPACE.md",
-      "src/commonMain/kotlin/vexlife/web/VexLifeWebP1ExperienceStyle.kt",
-      "src/commonMain/kotlin/vexlife/web/VexLifeWebP1RuntimeArtifacts.kt",
-      "src/commonTest/kotlin/vexlife/web/VexLifeWebP1ResponsiveLayoutTest.kt"
+      {
+        "repositoryRef": "primary",
+        "path": "docs/foundation/VEXWEB-GENERATED-P1-WORKSPACE.md"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/web/VexLifeWebP1ExperienceStyle.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/web/VexLifeWebP1RuntimeArtifacts.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonTest/kotlin/vexlife/web/VexLifeWebP1ResponsiveLayoutTest.kt"
+      }
     ],
     "intentionallyUnchangedAuthorizedPaths": []
   },
