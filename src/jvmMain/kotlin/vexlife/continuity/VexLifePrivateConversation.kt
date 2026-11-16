@@ -26,12 +26,23 @@ class VexLifePrivateConversation(
     private val productHome: Path,
     private val now: () -> Instant = { Instant.now() },
 ) {
-    /** One provider call; the default speaks to the qualified local runtime. */
+    /**
+     * One provider call; the default speaks to the qualified local runtime.
+     *
+     * The pair carries exactly what the existing Connection already owns for human presentation:
+     * final content plus optional sealed human reasoning. Private mode keeps both only in this
+     * in-memory transcript; neither value is made durable by this boundary.
+     */
     fun interface Completion {
-        fun complete(messages: List<CompanionProviderMessage>): String
+        fun complete(messages: List<CompanionProviderMessage>): Pair<String, String?>
     }
 
-    data class Exchange(val human: String, val vex: String, val at: Instant)
+    data class Exchange(
+        val human: String,
+        val vex: String,
+        val sealedHumanReasoning: String?,
+        val at: Instant,
+    )
 
     data class Snapshot(
         val startedAt: Instant,
@@ -95,13 +106,18 @@ class VexLifePrivateConversation(
     fun send(content: String, contextSystemMessage: String?, completion: Completion): Exchange {
         val (open, messages) = beginCall { prompt(it, PrivateSystem, contextSystemMessage, content) }
         try {
+            val completed = completion.complete(messages)
             val reply =
-                completion.complete(messages).trim().ifEmpty {
+                completed.first.trim().ifEmpty {
                     error("Vex returned an empty private reply")
                 }
+            val reasoning =
+                completed.second
+                    ?.trim()
+                    ?.takeIf(String::isNotEmpty)
             return synchronized(this) {
                 check(session === open) { "the private conversation ended while Vex was replying" }
-                Exchange(content, reply, now()).also { open.exchanges += it }
+                Exchange(content, reply, reasoning, now()).also { open.exchanges += it }
             }
         } finally {
             endCall(open)
@@ -119,7 +135,7 @@ class VexLifePrivateConversation(
             }
         try {
             val note =
-                completion.complete(messages).trim().take(NoteCharacterLimit).ifEmpty {
+                completion.complete(messages).first.trim().take(NoteCharacterLimit).ifEmpty {
                     error("Vex proposed an empty note")
                 }
             return synchronized(this) {

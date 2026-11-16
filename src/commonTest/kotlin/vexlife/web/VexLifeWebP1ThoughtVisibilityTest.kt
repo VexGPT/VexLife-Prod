@@ -33,6 +33,39 @@ class VexLifeWebP1ThoughtVisibilityTest {
         )
         assertTrue(
             bundle.javascript.contains(
+                "message.messageRef ?? message.eventRef ?? ''",
+            ),
+            "the existing completed thought renderer should accept Private's existing presentation-local event identity",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "const reasoning = String(exchange.sealedHumanReasoning ?? '').trim();",
+            ) &&
+                bundle.javascript.contains(
+                    "state.humanReasoningByResponse.set(vexKey, reasoning);",
+                ),
+            "Private reasoning should enter the existing ephemeral reasoning presentation map",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "if (!key.startsWith('private.')) continue;",
+            ) &&
+                bundle.javascript.contains(
+                    "state.reasoningViewports.delete('response.' + key);",
+                ),
+            "leaving Private must retire only Private presentation-local reasoning state",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "privateThoughtNode",
+            ) ||
+                bundle.javascript.contains(
+                    "privateReasoningByResponse",
+                ),
+            "Private must reuse the existing thought renderer and reasoning map rather than fork them",
+        )
+        assertTrue(
+            bundle.javascript.contains(
                 "accept: 'text/event-stream'",
             ),
         )

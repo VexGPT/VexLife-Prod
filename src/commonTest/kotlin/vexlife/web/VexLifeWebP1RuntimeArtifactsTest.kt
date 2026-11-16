@@ -556,6 +556,12 @@ class VexLifeWebP1RuntimeArtifactsTest {
             "completed Vex replies should use the shared TextPresentation relationship",
         )
         assertTrue(
+            javascript.contains(
+                "messageNode({ role: 'vex', content: exchange.vex, sequence: index * 2 + 2, eventRef: vexKey })",
+            ),
+            "Private Vex replies should keep using the same messageNode/TextPresentation path",
+        )
+        assertTrue(
             javascript.contains("box.append(textPresentationBody(entry.text));"),
             "human-visible process reasoning should use the same TextPresentation relationship",
         )
