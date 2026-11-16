@@ -11,16 +11,21 @@ package vexlife.companion
  *
  * Owns: recognizing harmony markers across arbitrary chunk boundaries and classifying each piece of
  * text by channel. `final` (and text outside any channel) is the answer; `analysis` and
- * `commentary` are thinking. Markers themselves are never emitted. A stream that does not open with
- * a marker is passed through as answer, so a server that already separates harmony keeps working.
+ * `commentary` are thinking. A message addressed to a tool (`to=functions.web_fetch`) is a
+ * [Kind.ToolCall] carrying that recipient: gpt-oss's own way of asking for reach, which the
+ * Connection hands to the bridge as a capability request ([HarmonyCapabilityTools]). Markers
+ * themselves are never emitted. A stream that does not open with a marker is passed through as
+ * answer, so a server that already separates harmony keeps working.
  */
 class HarmonyResponseSplitter {
     enum class Kind {
         Thinking,
         Answer,
+        /** The arguments of a call to [Piece.recipient], e.g. `functions.web_fetch`. */
+        ToolCall,
     }
 
-    data class Piece(val kind: Kind, val text: String)
+    data class Piece(val kind: Kind, val text: String, val recipient: String? = null)
 
     private enum class Mode {
         Undetermined,
@@ -33,6 +38,7 @@ class HarmonyResponseSplitter {
     private val pending = StringBuilder()
     private var mode = Mode.Undetermined
     private var channel: Kind = Kind.Answer
+    private var recipient: String? = null
 
     fun accept(delta: String): List<Piece> {
         if (delta.isEmpty()) return emptyList()
@@ -47,9 +53,11 @@ class HarmonyResponseSplitter {
         val out = mutableListOf<Piece>()
         fun emit(kind: Kind, text: String) {
             if (text.isEmpty()) return
+            val to = recipient.takeIf { kind == Kind.ToolCall }
             val last = out.lastOrNull()
-            if (last != null && last.kind == kind) out[out.size - 1] = Piece(kind, last.text + text)
-            else out += Piece(kind, text)
+            if (last != null && last.kind == kind && last.recipient == to) {
+                out[out.size - 1] = last.copy(text = last.text + text)
+            } else out += Piece(kind, text, to)
         }
         while (true) {
             when (mode) {
@@ -60,8 +68,12 @@ class HarmonyResponseSplitter {
                             if (final) pending.setLength(0)
                             return out
                         }
-                        leading.startsWith("<|") -> mode = Mode.Header
-                        "<|".startsWith(leading) && !final -> return out
+                        // The generation prompt ends `<|start|>assistant`, so a first message
+                        // addressed to a tool opens with its recipient instead of a marker.
+                        leading.startsWith("<|") || leading.startsWith(RecipientPrefix) ->
+                            mode = Mode.Header
+                        ("<|".startsWith(leading) || RecipientPrefix.startsWith(leading)) && !final ->
+                            return out
                         else -> mode = Mode.PassThrough
                     }
                 }
@@ -91,11 +103,20 @@ class HarmonyResponseSplitter {
                         return out
                     }
                     val header = text.substring(0, open)
+                    // `to=assistant` heads a tool's own output, never a call Vex makes.
+                    recipient =
+                        Recipient.find(header)?.groupValues?.get(1)?.takeUnless {
+                            it == "assistant" || it == "user"
+                        }
                     channel =
-                        when (ChannelName.find(header)?.groupValues?.get(1)?.lowercase()) {
-                            "analysis",
-                            "commentary" -> Kind.Thinking
-                            else -> Kind.Answer
+                        when {
+                            recipient != null -> Kind.ToolCall
+                            else ->
+                                when (ChannelName.find(header)?.groupValues?.get(1)?.lowercase()) {
+                                    "analysis",
+                                    "commentary" -> Kind.Thinking
+                                    else -> Kind.Answer
+                                }
                         }
                     pending.delete(0, open + Message.length)
                     mode = Mode.Message
@@ -140,6 +161,8 @@ class HarmonyResponseSplitter {
         val Openings = listOf("<|start|>", "<|channel|>")
         val Markers = Endings + Openings + listOf(Message, "<|constrain|>")
         val ChannelName = Regex("""<\|channel\|>\s*([A-Za-z_]+)""")
+        const val RecipientPrefix = "to="
+        val Recipient = Regex("""(?:^|[\s>])to=([A-Za-z0-9_.\-]+)""")
         const val MaximumHeaderCharacters = 256
     }
 }
