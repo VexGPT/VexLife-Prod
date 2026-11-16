@@ -1047,6 +1047,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 trigger.addEventListener('click', (event) => {
                   event.stopPropagation();
                   state.quickActionsOpen = !state.quickActionsOpen;
+                  if (!state.quickActionsOpen) {
+                    state.languageOpen = false;
+                    speech.open = false;
+                    speech.choosing = false;
+                  }
                   renderQuickActions();
                 });
 
@@ -1085,6 +1090,9 @@ object VexLifeWebP1RuntimeArtifacts {
                     ui.languagePanel?.contains(event.target)
                   ) return;
                   state.quickActionsOpen = false;
+                  state.languageOpen = false;
+                  speech.open = false;
+                  speech.choosing = false;
                   renderQuickActions();
                 });
               };
