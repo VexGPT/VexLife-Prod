@@ -57,6 +57,7 @@ for name in seed stage authority outer-task; do
     > "$SPEC_DIR/$name.json"
 done
 
+set +e
 "$NODE" --input-type=module - "$SDK_ROOT" "$SPEC_DIR" <<'NODEFORM'
 import fs from 'node:fs';
 import os from 'node:os';
@@ -115,3 +116,18 @@ const child = spawnSync('/bin/bash', [runner, formed.outer.finalZip], {
 if (child.error) throw child.error;
 process.exit(child.status ?? 2);
 NODEFORM
+STATUS=$?
+set -e
+
+if [ "$STATUS" -eq 0 ]; then
+  PREVIEW_CMD="$HOME/Downloads/VEXLIFE-PRODUCT-SPIRAL-VIEW-A001-f96c308deca9/VIEW-VEXLIFE-PRODUCT-SPIRAL.command"
+  if [ -x "$PREVIEW_CMD" ]; then
+    printf '%s\n' 'Relay PASS. Opening isolated Product Spiral view-only preview...'
+    "$PREVIEW_CMD"
+    exit $?
+  fi
+  printf '%s\n' "Relay PASS but preview launcher was not found: $PREVIEW_CMD" >&2
+  exit 41
+fi
+
+exit "$STATUS"
