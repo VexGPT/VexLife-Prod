@@ -3,40 +3,90 @@
 `[VXG RealForever]`
 
 This is the process a person or an AI instance follows to publish VexLife. It is short on purpose:
-every step is carried out by a workflow, and every page that lists builds reads what the workflows
-published. Nothing here decides that a build is good; a stable version records that it was
-accepted.
+every mechanical step is carried by source-owned build/workflow paths, and every page that lists
+builds reads what those workflows actually published. Nothing here decides that a build is good; a
+stable version records that Victor accepted a lived feature threshold.
 
 ## Channels
 
 | Channel | What it is | Made by | Tag |
 |---|---|---|---|
-| Main build | Every commit that lands on `main`, built for the Mac. Newest work, least lived. | `release` workflow, on every push to `main` | `private-service-image-<sha>` (prerelease) |
-| Stable | A feature threshold on `main` that was lived and accepted. | `release` workflow, run by hand with a version | `v<major>.<minor>.<patch>` (marked latest) |
-| Drafts | Open PRs. Never published as builds. | — | — |
+| Pull-request proof | Exact candidate app/DMG proof. Never a public release. | `release` workflow on packaging/release PRs | workflow artifact only |
+| Main build | Every commit that lands on `main`, built for Mac Apple silicon. Newest work, least lived. | `release` workflow on every push to `main` | `private-service-image-<sha>` prerelease |
+| Stable | A feature threshold on `main` that was lived and accepted. | `release` workflow, run by hand with a version | `v<major>.<minor>.<patch>`, marked latest |
 
-A main build release carries the Product's own formed artifacts at that exact commit
-(`archiveVexLifeProdServiceImage`): the private service image archive, its receipt, and the
-source-bound bootstrap `vexlife-prod-bootstrap-darwin-arm64-<sha>.command` (plus the current-name
-copy and digests). The bootstrap downloads that image from that release and verifies its SHA-256,
-so a main build release is never deleted while a stable version points at it.
+The historical main tag name remains `private-service-image-<sha>` for compatibility with the current
+release/page catalog, but the release now carries two related Product artifacts:
 
-A stable version release carries the bootstrap of its commit, notes with `source-sha:`,
-`image-release:` and `sha256 <file> <digest>` lines, and is marked latest.
+- **preferred human download:** `VexLife-macOS-AppleSilicon.dmg`, containing `VexLife.app` plus
+  an Applications shortcut;
+- **recovery/predecessor carriage:** the exact private service image archive/receipt and
+  source-bound bootstrap `.command`.
+
+`VexLife.app` embeds the same exact source-bound private service image beneath its Resources and
+uses the existing native Setup Journey / Product Entry owners. Packaging does not create a second
+setup decision tree.
+
+## Current Mac trust boundary
+
+The public Mac build is intentionally honest about what exists today:
+
+~~~text
+GitHub repository + exact release + source SHA + SHA-256
++ ad-hoc macOS bundle signature
+= open-source provenance / exact release identity
+
+Developer ID
++ Apple notarization
+= NOT PRESENT
+~~~
+
+There are no paid Apple credentials in the repository or workflow. The DMG can therefore be built and
+published without an Apple Developer Program membership, but macOS may require the person to
+explicitly allow the app before first launch. The download page says this directly.
+
+If a future legitimate Developer ID/notarization capability becomes available, it should extend this
+same application artifact boundary; absence of that credential must not block ordinary app/DMG
+formation.
+
+## Forming the Mac artifact
+
+The Product-owned Gradle route is:
+
+~~~text
+archiveVexLifeProdMacApplication
+  -> archiveVexLifeProdServiceImage
+  -> exact source-bound private image
+  -> osacompile existing native Setup Journey as VexLife.app
+  -> embed exact private image in Contents/Resources
+  -> bind bundle/source/trust metadata
+  -> restore an ad-hoc bundle seal
+  -> form + verify VexLife-macOS-AppleSilicon.dmg
+  -> SHA-256 + release receipt
+~~~
+
+The current Vision runtime contract remains
+`LOCAL_QUALIFIED_NOT_DISTRIBUTABLE / LOCAL_ONLY_NO_RELEASE`. A public app build therefore refuses
+to embed that local-only Vision runtime. Vision distribution remains separately held rather than
+laundered into the DMG.
+
+For stable runs, the workflow supplies the requested semantic version as
+`-PvexlifeAppVersion=<major.minor.patch>`. Continuous main builds use `0.0.0` as the internal app
+version and remain identified externally by exact source SHA/release tag.
 
 ## Cutting a stable version
 
 When Victor says a threshold on `main` is good (for example "this is good, tag it as 0.7.0"):
 
 1. Confirm `main` is the commit that was lived: the merged PRs since the previous version, their
-   lived checks, and `main` green.
+   lived checks, and the required current proof.
 2. Run **Actions → release → Run workflow** on `main` with `version` = `0.7.0`
    (or `gh workflow run release --ref main -f version=0.7.0`).
-3. The workflow tests, forms the exact Mac image and bootstrap, publishes the main build for that
-   commit (if it is not there yet) and creates `v0.7.0` at that commit. A version that exists is
-   never rebuilt or moved; a wrong version gets a new, higher version.
-4. The `pages` workflow redeploys the home page when `release` completes; the version appears in
-   the Mac download list.
+3. The workflow tests, forms the exact Mac application/DMG plus predecessor recovery artifacts,
+   publishes/refreshes the main build for that commit, and creates `v0.7.0` at that commit.
+   A version that exists is never rebuilt or moved; a wrong version gets a new, higher version.
+4. The `pages` workflow redeploys after `release` completes; the version appears in the Mac
+   download list.
 
 Versions follow semver; while VexLife is before 1.0 a minor version marks a feature threshold and a
 patch marks a fix to an accepted version.
@@ -46,25 +96,48 @@ patch marks a fix to an accepted version.
 Source: `site/`. Deployed by `.github/workflows/pages.yml` on changes to the site, after every
 `release` run, and by hand. At deploy time:
 
-- `data/models.json` is formed by `./gradlew generateVexLifeSiteData` from `HereticModelCatalog` and
-  the Mac host profile — the Requirements table is never restated by hand;
-- `data/releases.json` is formed by `.github/release/releases-snapshot.py` from GitHub Releases
-  (stable = `v*` not prerelease; main = `private-service-image-*`), with digests from the notes.
+- `data/models.json` is formed by `./gradlew generateVexLifeSiteData` from
+  `HereticModelCatalog` and the Mac host profile;
+- `data/releases.json` is formed by `.github/release/releases-snapshot.py` from GitHub Releases,
+  with SHA-256 values read from the release notes.
 
-The page falls back to the public GitHub API when the snapshot is missing. Windows is shown as in
-preparation until a Windows realization exists and has run on a real PC.
+The page prefers a Mac `.dmg` when a release contains one and falls back to the predecessor
+bootstrap otherwise. Windows remains visibly in preparation until a Windows realization actually
+exists and has real-machine proof.
 
-One-time setting (owner): **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-Until then Pages keeps serving the README through Jekyll and the `pages` deploy job fails.
+**Repository setting:** GitHub Pages → Build and deployment → Source is configured to
+**GitHub Actions** as of 2026-11-15.
 
-Walkthrough screenshots: `site/walkthrough/<step>.png` for the steps in `site/data/walkthrough.json`
-(language, home, model, setup, ready), captured from a real first run on an Apple-silicon Mac. A
-step without its screenshot says so.
+Walkthrough screenshots remain lived evidence: `site/walkthrough/<step>.png` for the steps in
+`site/data/walkthrough.json` (language, home, model, setup, ready). A step without its screenshot
+says so.
 
-## Not yet (Official Application trajectory)
+## Proof boundary
 
-The Mac download is the source-bound bootstrap script. The signed, notarized `VexLife.app` in a
-versioned `.dmg` is the Official Application work (VexWork `project.vexlife.official-application`,
-PR #139): bundle identity, Developer ID signing, notarization and the contained workspace. When a
-release carries a `*-macos*.dmg` (or `*-darwin*.dmg`), the home page offers it in place of the
-script with no page change. No `.exe` is built until a Windows model runtime exists.
+A macOS runner can prove that the exact source:
+
+- passes the repository JVM/string checks;
+- compiles the existing native AppKit setup renderer;
+- forms `VexLife.app` with the exact embedded private image;
+- verifies the ad-hoc bundle seal;
+- forms and verifies the DMG;
+- emits exact hashes/receipt.
+
+That is **artifact proof**, not lived product completion. The remaining human/host proof after an
+exact PR DMG exists is the ordinary route:
+
+~~~text
+download exact PR/release DMG
+-> open DMG
+-> drag VexLife.app to Applications
+-> explicitly allow the unsigned app if macOS requires it
+-> launch
+-> existing Setup Journey
+-> Product CURRENT
+-> real Vex turn
+~~~
+
+The repository's Mac startup integrity rule still applies: packaging PASS is not sustained-lifetime
+or Conversation PASS.
+
+<!-- [VXG RealForever][VEXLIFE-PROD][RELEASES] -->
