@@ -1,0 +1,40 @@
+{
+  "repositoryRef": "primary",
+  "expectedBase": "655e7c78cefba06a5e87afad285bb25a08632f05",
+  "expectedHead": "7215656f9b53b02b341852deb21f8229724a9223",
+  "expectedTree": "9e33ea323fe8d9b6630d6347b007762d2ce07a27",
+  "branch": "VXG-111626-gpt-oss-product-spiral-integration-a001",
+  "proofCommands": [
+    {
+      "command": "/bin/bash",
+      "args": [
+        "-lc",
+        "set -euo pipefail; J21=\"$(/usr/libexec/java_home -v 21 2>/dev/null)\" || { printf \"%s\\n\" \"Integration A001: JDK 21 is unavailable.\" >&2; exit 21; }; [ -n \"$J21\" ] && [ -x \"$J21/bin/java\" ] || { printf \"%s\\n\" \"Integration A001: resolved JDK is invalid.\" >&2; exit 22; }; export JAVA_HOME=\"$J21\"; export PATH=\"$JAVA_HOME/bin:$PATH\"; \"$JAVA_HOME/bin/java\" -version; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" jvmTest compileKotlinJs compileTestKotlinJs checkVexLifeStrings generateVexLifeWebP1 verifyVexLifeWebP1; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" -PvexlifeAppVersion=0.0.0 archiveVexLifeProdMacApplication; APP_DIR=\"build/vexlife-prod-mac-application/7215656f9b53b02b341852deb21f8229724a9223\"; DMG=\"$APP_DIR/VexLife-macOS-AppleSilicon.dmg\"; SUM=\"$APP_DIR/VexLife-macOS-AppleSilicon.dmg.sha256\"; RECEIPT=\"$APP_DIR/VexLife-macOS-AppleSilicon.receipt.json\"; test -f \"$DMG\" && test -f \"$SUM\" && test -f \"$RECEIPT\"; (cd \"$APP_DIR\" && /usr/bin/shasum -a 256 -c \"VexLife-macOS-AppleSilicon.dmg.sha256\"); /usr/bin/hdiutil verify \"$DMG\"; OUT=\"$HOME/Downloads/VEXLIFE-INTEGRATION-ONBOARDING-A001-7215656f9b53\"; /bin/mkdir -p \"$OUT\"; /bin/cp -f \"$DMG\" \"$OUT/VexLife-macOS-AppleSilicon.dmg\"; /bin/cp -f \"$SUM\" \"$OUT/VexLife-macOS-AppleSilicon.dmg.sha256\"; /bin/cp -f \"$RECEIPT\" \"$OUT/VexLife-macOS-AppleSilicon.receipt.json\"; /usr/bin/shasum -a 256 \"$OUT/VexLife-macOS-AppleSilicon.dmg\"; printf \"%s\\n\" \"Integration onboarding artifact: $OUT/VexLife-macOS-AppleSilicon.dmg\"; [ -z \"$(/usr/bin/git status --porcelain=v1 -uall)\" ] || { /usr/bin/git status --porcelain=v1 -uall >&2; exit 31; }"
+      ],
+      "proofClass": "TEST",
+      "candidateEvidence": true,
+      "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+      "predicateRef": "predicate.vexlife-prod.integration-lived-mac.source-build",
+      "timeoutMs": 1200000
+    }
+  ],
+  "maxFiles": 10,
+  "stateRef": "state.vexlife-prod.integration-lived-mac",
+  "currentLifecycleState": "SOURCE_READY",
+  "currentGoal": "Prove exact PR #199 integration source/build and form one local unsigned Mac DMG for onboarding with a non-gpt-oss model.",
+  "remainingGoals": [
+    "Install/open the exact A001 integration DMG.",
+    "In onboarding, select a fresh disposable Home rather than Victor's canonical Home for this integration test.",
+    "Explicitly choose heretic-9b or heretic-27b; do not choose gpt-oss-20b for this run.",
+    "Continue the ordinary onboarding flow and observe whether setup reaches the Product presentation.",
+    "Inspect the Product Spiral on the resulting presentation.",
+    "Return the canonical Relay RETURN ZIP and lived observation to PR #199."
+  ],
+  "onPass": {
+    "lifecycleState": "SOURCE_READY",
+    "nextFunction": "F08.EXECUTE_OR_HANDOFF",
+    "nextOwner": "Victor",
+    "whyThisIsNext": "Exact combined source/build/DMG formation is complete; onboarding and Product Spiral remain lived host/human effects."
+  },
+  "resultFilename": "RETURN-VEXLIFE-GPT-OSS-PRODUCT-SPIRAL-INTEGRATION-LIVED-MAC-A001.zip"
+}
