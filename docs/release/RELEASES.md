@@ -165,8 +165,10 @@ bootstrap otherwise. It labels the unversioned channel as **Preview**, not as an
 build. Windows remains visibly in preparation until a Windows realization actually exists and has
 real-machine proof.
 
-Current observed setting as of 2026-11-15: **GitHub Actions**. Do not switch it to branch publication
-until this source stack is accepted and the `gh-pages` branch has been formed.
+Current observed setting as of 2026-11-15: **Deploy from a branch → gh-pages → /(root)**.
+Victor switched the repository to this profile and the public VexLife page loaded successfully from
+the formed `gh-pages` branch. Future publication should therefore update `gh-pages` through the
+source-owned branch-publish route unless the repository setting is intentionally changed again.
 
 Walkthrough screenshots remain lived evidence: `site/walkthrough/<step>.png` for the steps in
 `site/data/walkthrough.json` (language, home, model, setup, ready). A step without its screenshot
