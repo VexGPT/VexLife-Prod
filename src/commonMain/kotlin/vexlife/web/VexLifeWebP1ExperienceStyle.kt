@@ -508,7 +508,10 @@ svg { display: block; }
 .model-row[data-chosen="true"] { border-color: var(--ink-2); }
 .model-row .model-name { font-weight: 600; }
 .model-row .model-facts, .model-row .model-notes { color: var(--ink-2); font-size: var(--step--1); grid-column: 1; }
-.model-row .model-controls { grid-column: 2; grid-row: 1 / span 3; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.model-row .model-behavior { grid-column: 1; color: var(--ink-2); font-size: var(--step--1); }
+.model-row .model-behavior summary { cursor: pointer; color: var(--ink-2); }
+.model-row .model-behavior .setting-note-line { margin: 5px 0 0; overflow-wrap: anywhere; }
+.model-row .model-controls { grid-column: 2; grid-row: 1 / span 4; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .model-row .model-controls .outline-button { height: 30px; padding: 0 10px; }
 
 .receipt-line {

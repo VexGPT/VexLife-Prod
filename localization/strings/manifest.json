@@ -2443,6 +2443,10 @@
       "enHash": "b228dfcf5fd2",
       "langs": []
     },
+    "workspace.description.model-behavior": {
+      "enHash": "7fca56d1b8ea",
+      "langs": []
+    },
     "workspace.description.models": {
       "enHash": "3f9eef16b166",
       "langs": []
@@ -2461,6 +2465,10 @@
     },
     "workspace.label.diagnostics-records": {
       "enHash": "4059f0d4ba0d",
+      "langs": []
+    },
+    "workspace.label.model-behavior": {
+      "enHash": "ac9639d73dab",
       "langs": []
     },
     "workspace.label.model-candidate": {
@@ -2485,6 +2493,22 @@
     },
     "workspace.label.model-free-space": {
       "enHash": "23215e90e89b",
+      "langs": []
+    },
+    "workspace.label.model-reach-held": {
+      "enHash": "6685db91f45c",
+      "langs": []
+    },
+    "workspace.label.model-reach-ready": {
+      "enHash": "c7f35a99b786",
+      "langs": []
+    },
+    "workspace.label.model-reasoning-effort": {
+      "enHash": "f26baa08dc9b",
+      "langs": []
+    },
+    "workspace.label.model-reasoning-visible": {
+      "enHash": "acfda786cccd",
       "langs": []
     },
     "workspace.label.model-serving": {

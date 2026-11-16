@@ -384,6 +384,20 @@ class VexLifeWebP1Test {
     }
 
     @Test
+    fun modelSettingsExposeHumanMeaningAndExactProviderConfiguration() {
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts
+                .generate()
+                .javascript
+
+        assertTrue(javascript.contains("workspace.label.model-reach-ready"))
+        assertTrue(javascript.contains("workspace.label.model-reach-held"))
+        assertTrue(javascript.contains("workspace.label.model-behavior"))
+        assertTrue(javascript.contains("samplingSourceRef"))
+        assertTrue(javascript.contains("productMaxOutputTokens"))
+    }
+
+    @Test
     fun ambiguousStreamEndingReconcilesExactSendBeforeShowingUnresolved() {
         val javascript =
             VexLifeWebP1RuntimeArtifacts
