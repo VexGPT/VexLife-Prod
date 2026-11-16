@@ -11,6 +11,7 @@ class VexLifePreviewUpdateTest {
     private val siteScript = Files.readString(root.resolve("site/assets/site.js"))
     private val releaseContract =
         Files.readString(root.resolve("packaging/macos-app/release-contract.json"))
+    private val buildSource = Files.readString(root.resolve("build.gradle.kts"))
 
     @Test
     fun newestTwoPreviewsRemainSelectableDuringUpdateComparison() {
@@ -24,5 +25,22 @@ class VexLifePreviewUpdateTest {
     fun macReleaseContractBindsTheBrandedMountedVolumeIcon() {
         assertContains(releaseContract, "\"diskImageVolumeIconName\": \".VolumeIcon.icns\"")
         assertContains(releaseContract, "\"applicationIconName\": \"applet.icns\"")
+    }
+
+    @Test
+    fun appleScriptAssetCatalogCannotOverrideTheSourceOwnedAppletIcon() {
+        assertContains(buildSource, "resources.resolve(\n                \"Assets.car\",")
+        assertContains(buildSource, "\"CFBundleIconName\"")
+        assertContains(buildSource, "\"CFBundleIconFile\"")
+        assertContains(buildSource, "\"applet\"")
+    }
+
+    @Test
+    fun unsignedFirstLaunchOffersTheSupportedPrivacySecurityRoute() {
+        assertContains(
+            siteScript,
+            "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension",
+        )
+        assertContains(buildSource, "Open Privacy & Security.webloc")
     }
 }

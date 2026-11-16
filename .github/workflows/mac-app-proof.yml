@@ -55,8 +55,15 @@ jobs:
           mkdir -p "$MOUNT"
           /usr/bin/hdiutil attach "$APP_DIR/VexLife-macOS-AppleSilicon.dmg" -readonly -nobrowse -mountpoint "$MOUNT"
           trap '/usr/bin/hdiutil detach "$MOUNT" >/dev/null 2>&1 || true' EXIT
-          /usr/bin/plutil -extract CFBundleIconFile raw -o - "$MOUNT/VexLife.app/Contents/Info.plist" | grep -Fx 'applet.icns'
+          /usr/bin/plutil -extract CFBundleIconFile raw -o - "$MOUNT/VexLife.app/Contents/Info.plist" | grep -Fx 'applet'
           test -s "$MOUNT/VexLife.app/Contents/Resources/applet.icns"
+          test ! -e "$MOUNT/VexLife.app/Contents/Resources/Assets.car"
+          if /usr/bin/plutil -extract CFBundleIconName raw -o - "$MOUNT/VexLife.app/Contents/Info.plist" >/dev/null 2>&1; then
+            echo "CFBundleIconName must be absent so the applet asset catalog cannot override applet.icns" >&2
+            exit 1
+          fi
+          test -s "$MOUNT/Open Privacy & Security.webloc"
+          grep -F 'x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension' "$MOUNT/Open Privacy & Security.webloc"
           test -s "$MOUNT/.VolumeIcon.icns"
           /usr/bin/xattr -p com.apple.FinderInfo "$MOUNT" >/dev/null
           /usr/bin/hdiutil detach "$MOUNT"
