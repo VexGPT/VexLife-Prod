@@ -7,5 +7,6 @@
   "diskImageName": "VexLife-macOS-AppleSilicon.dmg",
   "embeddedImageRelativePath": "private-service-image",
   "embeddedSetupLauncherRelativePath": "private-service-image/bin/vexlife-prod-setup",
-  "distributionTrust": "AD_HOC_SIGNATURE_NO_DEVELOPER_ID_NO_NOTARIZATION"
+  "distributionTrust": "AD_HOC_SIGNATURE_NO_DEVELOPER_ID_NO_NOTARIZATION",
+  "minimumMacOSVersion": "14.0"
 }
