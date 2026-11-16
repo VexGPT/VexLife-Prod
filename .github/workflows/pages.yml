@@ -25,7 +25,6 @@ jobs:
       - name: Form the exact static site
         env:
           GH_TOKEN: ${{ github.token }}
-          VEXLIFE_SOURCE_SHA: ${{ github.sha }}
         run: bash tools/site/form-pages-site.sh "$PWD/_site"
       - uses: actions/upload-pages-artifact@v3
         with:
