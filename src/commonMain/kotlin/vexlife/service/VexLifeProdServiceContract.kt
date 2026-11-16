@@ -112,6 +112,8 @@ object VexLifeProdServiceContract {
     const val ModelsPath = "/api/v1/models"
     const val ModelsControlPath = "/api/v1/models/control"
     const val DiagnosticsControlPath = "/api/v1/diagnostics/control"
+    const val ReachPacingPath = "/api/v1/reach-pacing"
+    const val ReachPacingControlPath = "/api/v1/reach-pacing/control"
     const val DiagnosticsExportPath = "/api/v1/diagnostics/export"
     const val ChronologyPath = "/api/v1/chronology"
     /** The workspace scope's words in the person's language. Routes take no query parameters. */
