@@ -130,7 +130,7 @@ class HarmonyResponseSplitterTest {
         )
         val request = Json.parseToJsonElement(body).jsonObject
         assertEquals(
-            HereticCompanionProvider.Profiles.GptOssHarmony.modelIdentity,
+            HereticCompanionProvider.Profiles.GptOss20B.modelIdentity,
             request["chat_template_kwargs"]!!.jsonObject["model_identity"]!!.jsonPrimitive.content,
         )
         assertEquals(1.0, request["temperature"]!!.jsonPrimitive.content.toDouble())

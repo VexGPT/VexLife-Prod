@@ -157,8 +157,11 @@ class DirectCompanionCapabilityTurnTest {
         val firstSystem = calls.single().filter { it.first == "system" }.joinToString("\n") { it.second }
         assertFalse(firstSystem.contains("What I can reach this turn, and how to ask for it."))
         assertFalse(firstSystem.contains(VexLifeCapabilityRequest.RequestHeader))
+        assertTrue(firstSystem.contains("VEXLIFE_FOUNDATIONAL_FIELD/v1"))
         assertEquals(0, result.promptContextReceipt.capabilityExchangeAllowanceTokens)
-        assertEquals(null, result.promptContextReceipt.capabilityFrameSnapshot)
+        val frame = assertNotNull(result.promptContextReceipt.capabilityFrameSnapshot)
+        assertFalse("capability.vexlife.web.read" in frame.availableCapabilityRefs)
+        assertFalse("capability.vexlife.repository.read" in frame.availableCapabilityRefs)
         assertTrue(result.capabilityUses.isEmpty())
     }
 

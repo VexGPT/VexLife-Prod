@@ -71,6 +71,7 @@ class VexLifeModelsTest {
             assertEquals(1.0, qwenCompanion.temperature)
             assertEquals(0.95, qwenCompanion.topP)
             assertEquals(20, qwenCompanion.topK)
+            assertEquals("PINNED_MODEL_FILE", qwenCompanion.samplingBasis)
 
             val oss = projection.models.first { it.handle == "gpt-oss-20b" }
             assertEquals("HELD_PROVIDER_BRIDGE", oss.companion.capabilityStanding)
