@@ -54,6 +54,18 @@ object HereticPersistentRuntime {
     const val OwnershipPollMs =
         50L
 
+    /**
+     * VexLife serves one human turn at a time. Keep only the newest reusable mlx-lm prompt cache:
+     * the immediate continuation benefits from a warm prefix, while older parallel-style cache
+     * entries only accumulate unified-memory pressure.
+     *
+     * This is the first bounded runtime-safety candidate earned by the lived 10-sequence/~20 GB
+     * cache failure. Active-KV/prefill controls remain unchanged until one-cache stress evidence
+     * proves they are also needed.
+     */
+    const val PromptCacheSequences =
+        1
+
     private val RefPattern =
         Regex(
             "[A-Za-z0-9][A-Za-z0-9._:/-]*",
@@ -538,6 +550,8 @@ object HereticPersistentRuntime {
             Port.toString(),
             "--chat-template-args",
             "{\"enable_thinking\":false}",
+            "--prompt-cache-size",
+            PromptCacheSequences.toString(),
         )
     }
 
