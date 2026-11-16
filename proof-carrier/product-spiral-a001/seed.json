@@ -1,0 +1,174 @@
+{
+  "schemaVersion": "vex.relay.task/v2",
+  "continuity": "[VXG RealForever]",
+  "taskRef": "task.vexlife-prod.product-spiral-lived-mac.001",
+  "attemptRef": "attempt.vexlife-prod.product-spiral-lived-mac.a001",
+  "requestRef": "request.vexlife-prod.product-spiral-lived-mac.a001",
+  "correlationRef": "correlation.vexlife-prod.product-spiral-lived-mac.a001",
+  "packageRef": "package.vexlife-prod.product-spiral-lived-mac.a001",
+  "original": {
+    "originalIntent": "Port the accepted Vex ecosystem Spiral interaction into the installed VexLife Product by reusing the Product's existing typed Speech, Language, and VisionQuickAccess controls rather than recreating a parallel quick-action system.",
+    "originalGoal": "Prove PR #194 exact source/build and form one unsigned VexLife DMG for lived Product Spiral testing on Victor's Mac.",
+    "userProtectedIntent": "Preserve VexArchitecture ownership: existing Product controls keep their behavior/state; the Spiral is presentation only; no Vextreme runtime FAB dependency is introduced into the downloadable app.",
+    "sourceRefs": [
+      "github.pull.vexlife-prod.194",
+      "source.vexrelay.current-contract/v1"
+    ]
+  },
+  "lane": {
+    "entryClass": "SAME_LANE_ROLE_TRANSITION",
+    "scopeMode": "STAGE_BOUNDED",
+    "laneRef": "lane.vexlife-prod.product-spiral",
+    "parentRootRef": "root.vexlife-prod.new-beginnings",
+    "workRef": "work.vexlife-prod.product-spiral",
+    "claimRef": "github.pull.vexlife-prod.194",
+    "returnRouteRef": "github.pull.vexlife-prod.194",
+    "ownerRef": "owner.vexlife-prod.product-spiral",
+    "rootHubRef": "hub.vexlife-prod.new-beginnings"
+  },
+  "role": {
+    "activeRole": "CODER",
+    "roleRef": "role.coder.vexlife-prod.product-spiral-lived-mac",
+    "instanceRef": "instance.vexrelay.vexlife-prod.product-spiral-lived-mac.a001",
+    "occupancyRef": "occupancy.vexrelay.vexlife-prod.product-spiral-lived-mac.a001",
+    "providerBindingRef": "provider.vexlocalbridge.macos-victor.product-spiral-lived-mac.a001",
+    "threadRef": "thread.vexlife-prod.product-spiral",
+    "authorityEnvelopeRef": "authority-envelope.vexlife-prod.product-spiral-lived-mac.a001"
+  },
+  "capabilities": {
+    "platformGitHubRead": "AVAILABLE",
+    "platformGitHubWrite": "UNAVAILABLE"
+  },
+  "execution": {
+    "hostProfile": "macos-victor",
+    "executionSurface": "MAC_ZIP_RUN_COMMAND",
+    "singleUseNonce": "nonce-vexlife-prod-product-spiral-lived-mac-a001-20261116",
+    "duplicateAttemptMarker": "marker.vexlife-prod.product-spiral-lived-mac.a001",
+    "duplicateProtectionMode": "OUTER_RELAY_BOUND",
+    "formedAt": "__FORMED_AT__",
+    "expiresAtOrNull": "__EXPIRES_AT__"
+  },
+  "workspace": {
+    "mode": "RUN_ROOT",
+    "projectRef": "project.vexlife-prod.product-spiral",
+    "projectPath": "workspace",
+    "createRoot": false,
+    "createProjectPath": true
+  },
+  "repositories": [
+    {
+      "repositoryRef": "primary",
+      "mode": "CLONE_IN_WORKSPACE",
+      "cloneTransport": "GITHUB_GH",
+      "githubHostname": "github.com",
+      "nameWithOwner": "VexGPT/VexLife-Prod",
+      "localPath": "repositories/primary",
+      "remote": "origin",
+      "baseBranch": "main",
+      "acceptedBase": "655e7c78cefba06a5e87afad285bb25a08632f05",
+      "checkoutRef": "13e5cd184ec0e980b4138c38bc68373384956e21",
+      "expectedHead": "13e5cd184ec0e980b4138c38bc68373384956e21",
+      "branch": "VXG-111626-chatgpt-product-spiral-a001",
+      "expectedRemoteUrl": null
+    }
+  ],
+  "authority": {
+    "authorityRef": "authority.vexlife-prod.product-spiral-lived-mac.a001",
+    "authorityMode": "EXACT_STAGE_EFFECTS",
+    "grantedEffects": [
+      "CHECK_AUTH",
+      "READ_REPOSITORY",
+      "CHECK_STATE",
+      "RUN_LOCAL_COMMAND",
+      "QUERY_PROVIDER",
+      "FORM_RESULT"
+    ],
+    "conditionalEffects": [],
+    "consumedEffects": [],
+    "remainingEffects": [
+      "CHECK_AUTH",
+      "READ_REPOSITORY",
+      "CHECK_STATE",
+      "RUN_LOCAL_COMMAND",
+      "QUERY_PROVIDER",
+      "FORM_RESULT"
+    ],
+    "heldEffects": [
+      "WRITE_SOURCE",
+      "CREATE_COMMIT",
+      "PUSH_BRANCH",
+      "UPDATE_COORDINATION_METADATA",
+      "APPROVE_EXACT_HEAD",
+      "MARK_READY",
+      "ORDINARY_MERGE",
+      "POST_MERGE_VERIFY",
+      "MODEL_RUNTIME",
+      "HOME_MUTATION"
+    ],
+    "repositoryMembranes": [
+      {
+        "repositoryRef": "primary",
+        "allowedPaths": [
+          ".github",
+          "build.gradle.kts",
+          "docs",
+          "localization",
+          "packaging",
+          "site",
+          "src",
+          "tools"
+        ]
+      }
+    ],
+    "allowedExecutables": [
+      "/bin/bash",
+      "git",
+      "gh",
+      "node"
+    ],
+    "allowedEnvironment": [],
+    "remoteObservationOwner": "Operations",
+    "allowMutationLoop": false,
+    "stopConditions": [
+      "STOP_ON_UNKNOWN",
+      "STOP_ON_AUTH_BLOCK",
+      "STOP_ON_BASE_OR_BRANCH_DRIFT",
+      "STOP_ON_TEST_FAILURE"
+    ]
+  },
+  "source": {
+    "sourceSetRef": "source-set.vexlife-prod.product-spiral-lived-mac",
+    "sourceVersionRef": "13e5cd184ec0e980b4138c38bc68373384956e21",
+    "overlapEvidenceRef": "github.pull.vexlife-prod.194",
+    "activeConflictState": "NONE",
+    "candidateState": "EXACT",
+    "candidateHead": "13e5cd184ec0e980b4138c38bc68373384956e21",
+    "candidateTree": "5569399f8bba829508b473e70fe03ff63a5d26ee",
+    "expectedChangedPaths": [
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/web/VexLifeWebP1ExperienceStyle.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/web/VexLifeWebP1RuntimeArtifacts.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonTest/kotlin/vexlife/web/VexLifeWebP1RuntimeArtifactsTest.kt"
+      }
+    ],
+    "intentionallyUnchangedAuthorizedPaths": []
+  },
+  "policy": {
+    "maxOuterReturnFiles": 10,
+    "maxSelectedSourceEntries": 10,
+    "maxSelectedSourceBytes": 500000,
+    "maxDiffBytes": 5000000,
+    "requireRacePreflightBeforeMutation": false,
+    "requireLocalValidationBeforePublish": false,
+    "requireInputPackageManifest": true,
+    "signoffCommit": true,
+    "draftPullRequest": true
+  }
+}
