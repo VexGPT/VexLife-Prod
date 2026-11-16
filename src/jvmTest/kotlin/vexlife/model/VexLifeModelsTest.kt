@@ -65,6 +65,21 @@ class VexLifeModelsTest {
             val certified = projection.models.first { it.handle == "heretic-27b" }
             assertTrue(certified.chosen && certified.serving)
             assertFalse(certified.fitsThisMac)
+            val qwenCompanion = certified.companion
+            assertEquals("QUALIFIED", qwenCompanion.capabilityStanding)
+            assertEquals("VEXLIFE_CONTROL_TEXT", qwenCompanion.capabilityRepresentation)
+            assertEquals(1.0, qwenCompanion.temperature)
+            assertEquals(0.95, qwenCompanion.topP)
+            assertEquals(20, qwenCompanion.topK)
+
+            val oss = projection.models.first { it.handle == "gpt-oss-20b" }
+            assertEquals("HELD_PROVIDER_BRIDGE", oss.companion.capabilityStanding)
+            assertEquals("HARMONY_FUNCTIONS", oss.companion.capabilityRepresentation)
+            assertEquals("MEDIUM", oss.companion.reasoningEffort)
+            assertEquals(1.0, oss.companion.temperature)
+            assertEquals(1.0, oss.companion.topP)
+            assertEquals(0, oss.companion.topK)
+
             assertTrue(projection.models.first { it.handle == "heretic-9b" }.fitsThisMac)
             assertEquals(
                 listOf(VexLifeModelsFamily.ControlDownload),

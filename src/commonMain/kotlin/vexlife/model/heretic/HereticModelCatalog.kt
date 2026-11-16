@@ -27,21 +27,6 @@ object HereticModelCatalog {
         CANDIDATE,
     }
 
-    /**
-     * How the model's answer and thinking come back from the Product-pinned mlx-lm server.
-     * - REASONING_FIELDS: the server separates thinking into `reasoning`/`reasoning_content`
-     *   (Qwen `<think>` models) and `content` is the answer.
-     * - HARMONY: OpenAI gpt-oss. mlx-lm 0.32.0 returns the harmony channels inline in `content`
-     *   (`<|channel|>analysis<|message|>…<|end|><|start|>assistant<|channel|>final<|message|>…`);
-     *   the Connection splits analysis/commentary into thinking and final into the answer, and
-     *   sends the leading system messages as one, because the harmony template keeps only the
-     *   first system message as its developer message.
-     */
-    enum class ResponseFormat {
-        REASONING_FIELDS,
-        HARMONY,
-    }
-
     data class Entry(
         val identity: HereticProductIdentity.Value,
         /** Short stable name used by Setup, Settings and keyed words. */
@@ -54,8 +39,9 @@ object HereticModelCatalog {
         val modelRootRelativePath: String,
         /** Unified memory this model wants to run comfortably beside macOS and VexLife. */
         val recommendedMemoryBytes: Long,
+        /** Complete provider/model representation relationship; never inherited implicitly. */
+        val companionProfile: HereticCompanionProvider.Profile,
         val standing: Standing,
-        val responseFormat: ResponseFormat = ResponseFormat.REASONING_FIELDS,
         /**
          * Whether Setup may start a Home on this model by itself. A newly added model family is
          * the person's choice until its lived comparison has been made.
@@ -448,6 +434,7 @@ object HereticModelCatalog {
                 members = HereticArtifactCatalog.Members,
                 modelRootRelativePath = "models/heretic/qwen3.8-27b-mlx4",
                 recommendedMemoryBytes = 32 * HereticModelCatalog.GiB,
+                companionProfile = HereticCompanionProvider.Profiles.Qwen,
                 standing = Standing.CERTIFIED,
             )
 
@@ -475,6 +462,7 @@ object HereticModelCatalog {
                 members = HereticModelCatalog.NineBMembers,
                 modelRootRelativePath = "models/heretic/qwen3.8-9b-mlx5",
                 recommendedMemoryBytes = 16 * HereticModelCatalog.GiB,
+                companionProfile = HereticCompanionProvider.Profiles.Qwen,
                 standing = Standing.CANDIDATE,
             )
 
@@ -507,6 +495,7 @@ object HereticModelCatalog {
                 members = HereticModelCatalog.FourBMembers,
                 modelRootRelativePath = "models/heretic/qwen3.8-4b-distill-mlx4",
                 recommendedMemoryBytes = 8 * HereticModelCatalog.GiB,
+                companionProfile = HereticCompanionProvider.Profiles.Qwen,
                 standing = Standing.CANDIDATE,
             )
 
@@ -540,8 +529,8 @@ object HereticModelCatalog {
                 members = HereticModelCatalog.GptOss20BMembers,
                 modelRootRelativePath = "models/heretic/gpt-oss-20b-ara-v3-mlx",
                 recommendedMemoryBytes = 24 * HereticModelCatalog.GiB,
+                companionProfile = HereticCompanionProvider.Profiles.GptOssHarmony,
                 standing = Standing.CANDIDATE,
-                responseFormat = ResponseFormat.HARMONY,
                 autoRecommended = false,
             )
     }
@@ -617,6 +606,9 @@ object HereticModelCatalog {
         }
         require(Entries.map { it.handle }.distinct().size == Entries.size) {
             "model handles must be unique"
+        }
+        require(Entries.all { it.companionProfile.profileRef.isNotBlank() }) {
+            "every offered model requires one explicit Companion provider profile"
         }
         require(Entries.map { it.modelRootRelativePath }.distinct().size == Entries.size) {
             "model folders must be unique"

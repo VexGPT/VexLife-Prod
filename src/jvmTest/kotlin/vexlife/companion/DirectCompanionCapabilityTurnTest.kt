@@ -21,6 +21,7 @@ import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.capability.reach.VexLifeWebReach
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -44,7 +45,10 @@ class DirectCompanionCapabilityTurnTest {
         return home
     }
 
-    private fun setup(home: Path) =
+    private fun setup(
+        home: Path,
+        model: HereticModelCatalog.Entry = HereticModelCatalog.Models.Qwen27B,
+    ) =
         VexLifeProdLocalSetup.Result(
             state = "LOCAL_HERETIC_FOUNDATION_READY",
             productHome = home.toString(),
@@ -60,18 +64,18 @@ class DirectCompanionCapabilityTurnTest {
                 HereticModelConfiguration.QualifiedRuntimeEvidence(
                     runtimeReceiptRef = "receipt.vexlife-prod.heretic.reach",
                     runtimeState = HereticRuntimeState.Qualified,
-                    modelRef = HereticProductIdentity.ModelRef,
-                    modelProfileRef = HereticProductIdentity.ModelProfileRef,
-                    artifactRef = HereticProductIdentity.ArtifactSetRef,
-                    artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
-                    runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
-                    runtimeClass = HereticProductIdentity.RuntimeClass,
-                    endpoint = HereticProductIdentity.Endpoint,
-                    requestModel = HereticProductIdentity.RequestModel,
+                    modelRef = model.identity.modelRef,
+                    modelProfileRef = model.identity.modelProfileRef,
+                    artifactRef = model.identity.artifactSetRef,
+                    artifactContentSetSha256 = model.identity.artifactContentSetSha256,
+                    runtimeAdapterRef = model.identity.runtimeAdapterRef,
+                    runtimeClass = model.identity.runtimeClass,
+                    endpoint = model.identity.endpoint,
+                    requestModel = model.identity.requestModel,
                     qualification = HereticRuntimeQualification.qualified(),
                 ),
-            endpoint = HereticProductIdentity.Endpoint,
-            requestModel = HereticProductIdentity.RequestModel,
+            endpoint = model.identity.endpoint,
+            requestModel = model.identity.requestModel,
         )
 
     private fun reply(content: String) =
@@ -128,6 +132,34 @@ class DirectCompanionCapabilityTurnTest {
         } finally {
             home.parent.toFile().deleteRecursively()
         }
+    }
+
+    @Test
+    fun heldProviderBridgeDoesNotAdvertiseReachToGptOss() = withHome { home ->
+        val calls = mutableListOf<List<Pair<String, String>>>()
+        val result =
+            DirectCompanionTurn.performWithHooks(
+                setup = setup(home, HereticModelCatalog.Models.GptOss20B),
+                intent =
+                    DirectCompanionTurn.Intent(
+                        idempotencyKey = "send.reach.gpt-oss-held.001",
+                        content = "Can you read example.com for me?",
+                    ),
+                hooks =
+                    DirectCompanionTurn.Hooks(
+                        transport = { call ->
+                            calls += messages(call)
+                            reply("I cannot reach outside sources through this model profile yet.")
+                        }
+                    ),
+            )
+
+        val firstSystem = calls.single().filter { it.first == "system" }.joinToString("\n") { it.second }
+        assertFalse(firstSystem.contains("What I can reach this turn, and how to ask for it."))
+        assertFalse(firstSystem.contains(VexLifeCapabilityRequest.RequestHeader))
+        assertEquals(0, result.promptContextReceipt.capabilityExchangeAllowanceTokens)
+        assertEquals(null, result.promptContextReceipt.capabilityFrameSnapshot)
+        assertTrue(result.capabilityUses.isEmpty())
     }
 
     @Test

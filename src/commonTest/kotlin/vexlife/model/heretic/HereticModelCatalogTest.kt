@@ -58,7 +58,11 @@ class HereticModelCatalogTest {
         assertEquals(12_104_201_036L, oss.totalBytes)
         assertEquals(12, oss.members.size)
         assertEquals(HereticModelCatalog.Standing.CANDIDATE, oss.standing)
-        assertEquals(HereticModelCatalog.ResponseFormat.HARMONY, oss.responseFormat)
+        assertEquals(HereticCompanionProvider.Profiles.GptOssHarmony, oss.companionProfile)
+        assertEquals(
+            HereticCompanionProvider.CapabilityStanding.HELD_PROVIDER_BRIDGE,
+            oss.companionProfile.capabilityStanding,
+        )
         assertEquals(
             "10c6bad646aa379476f3d8c1c595b77ce618d7e106665cfcefd06ad12935bf75",
             oss.identity.artifactContentSetSha256,
@@ -76,8 +80,32 @@ class HereticModelCatalogTest {
         }
         assertTrue(
             HereticModelCatalog.Entries.filter { it != oss }
-                .all { it.responseFormat == HereticModelCatalog.ResponseFormat.REASONING_FIELDS }
+                .all { it.companionProfile == HereticCompanionProvider.Profiles.Qwen }
         )
+    }
+
+    @Test
+    fun everyOfferedModelChoosesACompleteProviderProfileWithoutConnectionDefaults() {
+        for (entry in HereticModelCatalog.Entries) {
+            val profile = entry.companionProfile
+            assertTrue(profile.profileRef.isNotBlank(), entry.handle)
+            assertTrue(profile.generation.maxOutputTokens > 0, entry.handle)
+            assertTrue(profile.generation.temperature >= 0.0, entry.handle)
+            assertTrue(profile.generation.topP in 0.0..1.0, entry.handle)
+            assertTrue(profile.generation.topK >= 0, entry.handle)
+        }
+
+        val qwen = HereticCompanionProvider.Profiles.Qwen
+        assertEquals(1.0, qwen.generation.temperature)
+        assertEquals(0.95, qwen.generation.topP)
+        assertEquals(20, qwen.generation.topK)
+        assertEquals(HereticCompanionProvider.CapabilityStanding.QUALIFIED, qwen.capabilityStanding)
+
+        val oss = HereticCompanionProvider.Profiles.GptOssHarmony
+        assertEquals(1.0, oss.generation.temperature)
+        assertEquals(1.0, oss.generation.topP)
+        assertEquals(0, oss.generation.topK)
+        assertEquals(HereticCompanionProvider.ReasoningEffort.MEDIUM, oss.generation.reasoningEffort)
     }
 
     @Test

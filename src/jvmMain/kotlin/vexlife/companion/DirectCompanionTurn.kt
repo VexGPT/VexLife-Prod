@@ -18,6 +18,8 @@ import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.memory.VexLifeMemoryContract
+import vexlife.model.heretic.HereticCompanionProvider
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 
 /**
@@ -774,6 +776,15 @@ object DirectCompanionTurn {
             hooks.currentRuntimeEvidence(
                 setup,
             )
+        val companionProfile =
+            HereticModelCatalog
+                .requireEntry(
+                    initialRuntimeEvidence.modelRef,
+                )
+                .companionProfile
+        val capabilityRequestsAdmitted =
+            companionProfile.capabilityStanding ==
+                HereticCompanionProvider.CapabilityStanding.QUALIFIED
         val initialPrior =
             conversationOwner.immediatePriorCompletedTurn()
         DirectWorkingContinuity.requireSuccessorContextCurrent(
@@ -812,6 +823,7 @@ object DirectCompanionTurn {
                 runtimeEvidence = initialRuntimeEvidence,
                 sourceReturnProtocolEnabled = true,
                 foundationalField = hooks.currentFoundationalField(),
+                capabilityRequestsAdmitted = capabilityRequestsAdmitted,
             )
         val initialWorkingContinuity =
             DirectWorkingContinuity.prepare(
@@ -853,6 +865,7 @@ object DirectCompanionTurn {
             runtimeEvidence = initialRuntimeEvidence,
             sourceReturnProtocolEnabled = true,
             foundationalField = hooks.currentFoundationalField(),
+            capabilityRequestsAdmitted = capabilityRequestsAdmitted,
         )
         // One human turn may take several provider stages: capability requests (bounded by the
         // bridge) and at most one Conversation source return. All stages share one runtime binding,
@@ -886,7 +899,10 @@ object DirectCompanionTurn {
                     messages = base.materialization.messages + exchangeMessages(),
                     hooks = hooks,
                     sourceReturnRequestAllowed = sourceReturnTrace == null,
-                    capabilityRequestsAllowed = exchanges.size <= VexLifeCapabilityBridge.MaximumRequestsPerTurn,
+                    capabilityRequestsAllowed =
+                        capabilityRequestsAdmitted &&
+                            exchanges.size <=
+                                VexLifeCapabilityBridge.MaximumRequestsPerTurn,
                 )
 
             val capabilityRequest = stage.capabilityRequest
@@ -937,6 +953,7 @@ object DirectCompanionTurn {
                     sourceReturnProtocolEnabled = baseSourceReturnProtocolEnabled,
                     sourceReturnDiscovery = baseDiscovery,
                     foundationalField = hooks.currentFoundationalField(),
+                    capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 )
                 continue
             }
@@ -1018,6 +1035,7 @@ object DirectCompanionTurn {
                     sourceReturnProtocolEnabled = false,
                     sourceReturnDiscovery = discovery,
                     foundationalField = hooks.currentFoundationalField(),
+                    capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 )
             // Source return adds exact older Conversation; it must not change the ground Vex was given
             // when it asked for it.
