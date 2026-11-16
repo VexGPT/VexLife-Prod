@@ -1,0 +1,39 @@
+{
+  "repositoryRef": "primary",
+  "expectedBase": "5065c9cb5e8b89ec520701c4250cc498728808da",
+  "expectedHead": "4044aeba5399a8d510fd84a0e049fce586afdec5",
+  "expectedTree": "288cb9f552797a8cb5071ca920b5a49e4c6f6b7c",
+  "branch": "VXG-111626-runtime-one-cache-27b-lived-a010",
+  "proofCommands": [
+    {
+      "command": "/bin/bash",
+      "args": [
+        "-lc",
+        "set -euo pipefail; HEAD='4044aeba5399a8d510fd84a0e049fce586afdec5'; SHORT='4044aeba5399'; J21=\"$(/usr/libexec/java_home -v 21 2>/dev/null)\" || { printf \"%s\\n\" \"Runtime one-cache 27B A010: JDK 21 unavailable.\" >&2; exit 21; }; [ -n \"$J21\" ] && [ -x \"$J21/bin/java\" ] || exit 22; export JAVA_HOME=\"$J21\"; export PATH=\"$JAVA_HOME/bin:$PATH\"; \"$JAVA_HOME/bin/java\" -version; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" jvmTest compileKotlinJs compileTestKotlinJs checkVexLifeStrings; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" -PvexlifeAppVersion=0.0.0 archiveVexLifeProdMacApplication; APP_DIR=\"build/vexlife-prod-mac-application/$HEAD\"; DMG=\"$APP_DIR/VexLife-macOS-AppleSilicon.dmg\"; SUM=\"$APP_DIR/VexLife-macOS-AppleSilicon.dmg.sha256\"; RECEIPT=\"$APP_DIR/VexLife-macOS-AppleSilicon.receipt.json\"; test -f \"$DMG\" && test -f \"$SUM\" && test -f \"$RECEIPT\"; (cd \"$APP_DIR\" && /usr/bin/shasum -a 256 -c \"VexLife-macOS-AppleSilicon.dmg.sha256\"); /usr/bin/hdiutil verify \"$DMG\"; OUT=\"$HOME/Downloads/VEXLIFE-RUNTIME-ONE-CACHE-27B-A010-$SHORT\"; /bin/mkdir -p \"$OUT\"; /bin/cp -f \"$DMG\" \"$OUT/VexLife-macOS-AppleSilicon.dmg\"; /bin/cp -f \"$SUM\" \"$OUT/VexLife-macOS-AppleSilicon.dmg.sha256\"; /bin/cp -f \"$RECEIPT\" \"$OUT/VexLife-macOS-AppleSilicon.receipt.json\"; /usr/bin/shasum -a 256 \"$OUT/VexLife-macOS-AppleSilicon.dmg\"; printf \"%s\\n\" \"Lived build: $OUT/VexLife-macOS-AppleSilicon.dmg\"; [ -z \"$(/usr/bin/git status --porcelain=v1 -uall)\" ] || { /usr/bin/git status --porcelain=v1 -uall >&2; exit 31; }"
+      ],
+      "proofClass": "TEST",
+      "candidateEvidence": true,
+      "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+      "predicateRef": "predicate.vexlife-prod.runtime-one-cache-27b-lived.source-build.a010",
+      "timeoutMs": 1200000
+    }
+  ],
+  "maxFiles": 10,
+  "stateRef": "state.vexlife-prod.runtime-one-cache-27b-lived",
+  "currentLifecycleState": "SOURCE_READY",
+  "currentGoal": "Prove exact #203 and form the lived certified-27B DMG.",
+  "remainingGoals": [
+    "Install/open the exact A010 DMG.",
+    "If Setup asks, explicitly choose Certified Heretic 27B.",
+    "Verify known prior stable runtime migrates without generic identity exception.",
+    "Complete ordinary + substantial + immediate substantial follow-up turns.",
+    "Return lived observations; merge #195 only after this gate passes."
+  ],
+  "onPass": {
+    "lifecycleState": "SOURCE_READY",
+    "nextFunction": "F08.EXECUTE_OR_HANDOFF",
+    "nextOwner": "Victor+Operations",
+    "whyThisIsNext": "Exact source/build/DMG is complete; the remaining predicate is lived stable-runtime migration and stress."
+  },
+  "resultFilename": "RETURN-VEXLIFE-RUNTIME-ONE-CACHE-27B-LIVED-MAC-A010.zip"
+}
