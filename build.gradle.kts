@@ -2533,6 +2533,15 @@ tasks.register(
         ) {
             "VexLife application icon was not formed"
         }
+
+        // Current osacompile applets also ship an asset catalog and CFBundleIconName=applet.
+        // Apple DTS documents that this catalog can keep the generic applet artwork active even
+        // after applet.icns is replaced. Remove the generated catalog so Finder uses our icns.
+        Files.deleteIfExists(
+            resources.resolve(
+                "Assets.car",
+            ),
+        )
         deleteTreeNoFollow(
             iconWork,
         )
@@ -2639,10 +2648,18 @@ tasks.register(
         runExactCommand(
             listOf(
                 "/usr/bin/plutil",
+                "-remove",
+                "CFBundleIconName",
+                infoPlist.toString(),
+            ),
+        )
+        runExactCommand(
+            listOf(
+                "/usr/bin/plutil",
                 "-replace",
                 "CFBundleIconFile",
                 "-string",
-                "applet.icns",
+                "applet",
                 infoPlist.toString(),
             ),
         )
@@ -2709,6 +2726,26 @@ tasks.register(
             Path.of(
                 "/Applications",
             ),
+        )
+
+        val privacySecurityHelper =
+            diskImageStage.resolve(
+                "Open Privacy & Security.webloc",
+            )
+        Files.writeString(
+            privacySecurityHelper,
+            """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+            <plist version="1.0">
+            <dict>
+              <key>URL</key>
+              <string>x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension</string>
+            </dict>
+            </plist>
+            """.trimIndent() +
+                "\n",
+            StandardCharsets.UTF_8,
         )
 
         val writableDiskImage =
