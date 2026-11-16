@@ -666,7 +666,7 @@ object HereticPersistentRuntime {
             ) {
                 requireExactOwnedProcess(
                     prior,
-                    args,
+                    prior.runtime.args,
                     platform,
                 )
             }
@@ -1177,6 +1177,10 @@ object HereticPersistentRuntime {
                 binding,
             )
 
+        // requireImplementationSha=false is used only to establish same Product ownership lineage
+        // before an exact retirement/rotation. An implementation change may lawfully change launch
+        // argv, so the prior runtime remains rotation-authorized by its own recorded argv. Exact
+        // currentness/configuration still requires both current implementation SHA and current argv.
         val identity =
             binding.model.identity
         return receipt.schemaVersion ==
@@ -1231,8 +1235,11 @@ object HereticPersistentRuntime {
             receipt.runtime.processGroupId >
             0 &&
             receipt.runtime.exactOwnedDetachedGroup &&
-            receipt.runtime.args ==
-            expectedArgs &&
+            (
+                !requireImplementationSha ||
+                    receipt.runtime.args ==
+                    expectedArgs
+            ) &&
             receipt.runtime.processSubstrate.pid ==
             receipt.runtime.pid &&
             receipt.effects ==
