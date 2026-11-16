@@ -1,0 +1,39 @@
+{
+  "repositoryRef": "primary",
+  "expectedBase": "ebca4be1db1d8f2858e437ca43d9c4800cb9ee55",
+  "expectedHead": "562e095ecf52feaee8f4aae682632607bcc8584e",
+  "expectedTree": "4b26334fe2f8439ea7cdb239813acffe0740772d",
+  "branch": "VXG-111626-gpt-oss-catalog-lived-mac-build-a001",
+  "proofCommands": [
+    {
+      "command": "/bin/bash",
+      "args": [
+        "-lc",
+        "set -euo pipefail; HEAD='562e095ecf52feaee8f4aae682632607bcc8584e'; SHORT='562e095ecf52'; J21=\"$(/usr/libexec/java_home -v 21 2>/dev/null)\" || { printf \"%s\\n\" \"GPT-OSS provider qualification A006: JDK 21 unavailable.\" >&2; exit 21; }; [ -n \"$J21\" ] && [ -x \"$J21/bin/java\" ] || exit 22; export JAVA_HOME=\"$J21\"; export PATH=\"$JAVA_HOME/bin:$PATH\"; \"$JAVA_HOME/bin/java\" -version; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" jvmTest compileKotlinJs compileTestKotlinJs checkVexLifeStrings; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" -PvexlifeAppVersion=0.0.0 archiveVexLifeProdMacApplication; APP_DIR=\"build/vexlife-prod-mac-application/$HEAD\"; DMG=\"$APP_DIR/VexLife-macOS-AppleSilicon.dmg\"; SUM=\"$APP_DIR/VexLife-macOS-AppleSilicon.dmg.sha256\"; RECEIPT=\"$APP_DIR/VexLife-macOS-AppleSilicon.receipt.json\"; test -f \"$DMG\" && test -f \"$SUM\" && test -f \"$RECEIPT\"; (cd \"$APP_DIR\" && /usr/bin/shasum -a 256 -c \"VexLife-macOS-AppleSilicon.dmg.sha256\"); /usr/bin/hdiutil verify \"$DMG\"; OUT=\"$HOME/Downloads/VEXLIFE-GPT-OSS-PROVIDER-QUAL-SOURCE-A006-$SHORT\"; /bin/mkdir -p \"$OUT\"; /bin/cp -f \"$DMG\" \"$OUT/VexLife-macOS-AppleSilicon.dmg\"; /bin/cp -f \"$SUM\" \"$OUT/VexLife-macOS-AppleSilicon.dmg.sha256\"; /bin/cp -f \"$RECEIPT\" \"$OUT/VexLife-macOS-AppleSilicon.receipt.json\"; /usr/bin/shasum -a 256 \"$OUT/VexLife-macOS-AppleSilicon.dmg\"; printf \"%s\\n\" \"Qualification build: $OUT/VexLife-macOS-AppleSilicon.dmg\"; [ -z \"$(/usr/bin/git status --porcelain=v1 -uall)\" ] || { /usr/bin/git status --porcelain=v1 -uall >&2; exit 31; }"
+      ],
+      "proofClass": "TEST",
+      "candidateEvidence": true,
+      "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+      "predicateRef": "predicate.vexlife-prod.gpt-oss-provider-qualification.source-build.a006",
+      "timeoutMs": 1200000
+    }
+  ],
+  "maxFiles": 10,
+  "stateRef": "state.vexlife-prod.gpt-oss-provider-qualification-source",
+  "currentLifecycleState": "SOURCE_READY",
+  "currentGoal": "Re-prove exact source/build/DMG after A005's single test-fixture correction.",
+  "remainingGoals": [
+    "Install/open exact A006 build.",
+    "GPT-OSS follows web.fetch nextOffset on a long public page and answers from later source without host-guidance confusion.",
+    "Use Qwen in Settings; current turn finishes, new sends hold, switch phases remain visible, existing runtime owner retires GPT and qualifies Qwen, current Session/receipt becomes Qwen.",
+    "Qwen follows the same long-page continuation contract.",
+    "Compare returned-source evidence and serving/runtime currentness across both models."
+  ],
+  "onPass": {
+    "lifecycleState": "SOURCE_READY",
+    "nextFunction": "F08.EXECUTE_OR_HANDOFF",
+    "nextOwner": "Victor+Operations",
+    "whyThisIsNext": "Exact source/build/DMG is clean; remaining merge-threshold effects are the lived cross-model switch/reach circuit."
+  },
+  "resultFilename": "RETURN-VEXLIFE-GPT-OSS-PROVIDER-QUALIFICATION-SOURCE-MAC-A006.zip"
+}
