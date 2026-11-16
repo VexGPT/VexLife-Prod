@@ -1644,7 +1644,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const horizonSequence = state.conversation?.contextHorizonSequence;
                 for (const message of messages) {
                   nodes.push(messageNode(message));
-                  // Where the person cleared thread memory: kept on screen, not given to Vex.
+                  // Where the thread context horizon begins: kept on screen, not supplied to Vex.
                   if (horizonSequence != null && Number(message.sequence) === Number(horizonSequence)) {
                     const divider = document.createElement('li');
                     divider.className = 'timeline-horizon';

@@ -676,22 +676,22 @@ NEW SEND ATTEMPT
 -> LAST VALID CANONICAL HEAD
 ~~~
 
-## Thread memory horizon (2026-11-15)
+## Thread context horizon (2026-11-15)
 
-For testing, the person can clear thread memory in Settings → Debug & diagnostics. Nothing is
-deleted.
+For testing, the person can start Vex fresh from the current point in Settings → Debug & diagnostics.
+Nothing is deleted.
 
 ~~~text
-Clear thread memory
+Start fresh from here
   -> VexLifeThreadContextFamily: Whole -> SetHorizon (under the thread writer lease;
      a turn in flight keeps the context it started with: THREAD_BUSY)
   -> conversations/<lineage>/<thread>/context-horizon.json = current completed head
   -> next turn: recent Conversation stops at the horizon; Conversation source return and a
      working rollover formed before it do not reach behind it
-  -> the extent message tells Vex the person cleared thread memory after the first N exchanges
+  -> the extent message tells Vex the person chose to start this thread fresh after the first N exchanges
   -> prompt receipt: contextHorizonSequence
   -> timeline: a divider where it was cleared; everything above stays on screen
-Restore thread memory -> RemoveHorizon -> the whole thread is given again
+Restore earlier context -> RemoveHorizon -> the whole thread is given again
 ~~~
 
 Memory pages are a separate owner and are unchanged by this control.
@@ -699,9 +699,10 @@ Memory pages are a separate owner and are unchanged by this control.
 Permanent:
 
 ~~~text
-CLEAR THREAD MEMORY
-= CONTEXT HORIZON
+START FRESH FROM HERE
+= THREAD CONTEXT HORIZON
 != DELETE CONVERSATION
+!= ALTER VEXLIFE MEMORY
 ~~~
 
 ## Current proof formed in source

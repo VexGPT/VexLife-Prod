@@ -2386,11 +2386,11 @@
       "langs": []
     },
     "workspace.button.thread-context-clear": {
-      "enHash": "8f7fa8733899",
+      "enHash": "6c4374f98a5d",
       "langs": []
     },
     "workspace.button.thread-context-restore": {
-      "enHash": "7ff5be61f517",
+      "enHash": "cea335fa22a2",
       "langs": []
     },
     "workspace.description.diagnostics": {
@@ -2414,7 +2414,7 @@
       "langs": []
     },
     "workspace.description.thread-context": {
-      "enHash": "3db3f525d431",
+      "enHash": "279614977188",
       "langs": []
     },
     "workspace.heading.diagnostics": {
@@ -2426,7 +2426,7 @@
       "langs": []
     },
     "workspace.heading.thread-context": {
-      "enHash": "6f45cee278f7",
+      "enHash": "44b9df3c7675",
       "langs": []
     },
     "workspace.label.diagnostics-no-records": {
@@ -2478,7 +2478,7 @@
       "langs": []
     },
     "workspace.label.thread-context-divider": {
-      "enHash": "52bc46faadb9",
+      "enHash": "205400665b57",
       "langs": []
     },
     "workspace.status.diagnostics-enhanced-off": {
@@ -2570,7 +2570,7 @@
       "langs": []
     },
     "workspace.status.thread-context-cleared": {
-      "enHash": "dfdb9a8485c5",
+      "enHash": "f702a27d4ac3",
       "langs": []
     },
     "workspace.status.thread-context-empty": {

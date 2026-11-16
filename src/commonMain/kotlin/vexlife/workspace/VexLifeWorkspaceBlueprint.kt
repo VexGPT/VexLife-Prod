@@ -190,7 +190,7 @@ object VexLifeWorkspaceBlueprint :
     val DiagnosticsEnhancedCapture = SettingsDiagnostics.control("enhanced-capture")
     val DiagnosticsClearHistory = SettingsDiagnostics.control("clear-history")
     val DiagnosticsExport = SettingsDiagnostics.control("export")
-    /** How much of this thread Vex is given, and Clear / Restore thread memory. */
+    /** How much of this thread Vex is given, with Start fresh / Restore context controls. */
     val ThreadContextState = SettingsDiagnostics.content("thread-context")
     val ThreadContextControl = SettingsDiagnostics.control("thread-context-control")
 }
