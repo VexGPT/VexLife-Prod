@@ -1,0 +1,61 @@
+# Deploys the VexLife home (site/) to GitHub Pages. Data is formed here, at deploy time:
+#   data/models.json   from the Product's model catalog and Mac profile (generateVexLifeSiteData)
+#   data/releases.json from GitHub Releases (.github/release/releases-snapshot.py)
+# Requires Settings -> Pages -> Source: GitHub Actions (see docs/release/RELEASES.md).
+name: pages
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - 'docs/release/**'
+      - 'src/commonMain/kotlin/vexlife/model/heretic/**'
+      - '.github/release/**'
+      - '.github/workflows/pages.yml'
+  workflow_run:
+    workflows: [release]
+    types: [completed]
+  release:
+    types: [published, edited, deleted]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Assemble the site
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          SHA="$(git rev-parse HEAD)"
+          mkdir -p _site
+          cp -R site/. _site/
+          ./gradlew --no-daemon -q generateVexLifeSiteData -PvexlifeSiteDataDir="$PWD/_site/data" -PvexlifeSourceSha="$SHA"
+          python3 .github/release/releases-snapshot.py --repository "$GITHUB_REPOSITORY" --main-sha "$SHA" --out _site/data/releases.json
+          ls -R _site | head -50
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

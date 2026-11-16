@@ -5,6 +5,9 @@
 VexLife Prod is the clean product container for rebuilding VexLife from explicit human/product
 intention and compiler-constrained relationships rather than historical implementation shape.
 
+**Download VexLife:** <https://vexgpt.github.io/VexLife-Prod/> — stable versions and the main build
+for Mac (Apple silicon). How builds and versions are made: [docs/release/RELEASES.md](docs/release/RELEASES.md).
+
 ## Current human outcome
 
 ~~~text

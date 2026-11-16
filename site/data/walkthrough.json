@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "vexlife-prod.site-walkthrough/v1",
+  "source": "docs/foundation/SETUP-JOURNEY.md",
+  "screenLens": "docs/lens/vexlife-prod.screen-lens.json",
+  "note": "Screenshots are captured from a real first run on an Apple-silicon Mac and placed in site/walkthrough/<step>.png. Until then each step shows what the window asks and what stays unchanged.",
+  "steps": [
+    {
+      "id": "language",
+      "title": "Choose your language",
+      "body": "The setup window opens in your Mac's language and lists every language in its own name. Nothing is written yet.",
+      "unchanged": "No files, no downloads."
+    },
+    {
+      "id": "home",
+      "title": "Choose where your Vex Home lives",
+      "body": "Your Vex Home holds the conversation, Memory, settings and model files. ~/.vexlife is suggested; you can type a path or choose a folder. Protected folders such as Documents or iCloud are explained before anything is formed.",
+      "unchanged": "An existing Home is recognized and reused, never replaced."
+    },
+    {
+      "id": "model",
+      "title": "Choose a model",
+      "body": "VexLife shows each offered model with its download size, the memory it wants and whether it fits this Mac, and suggests the largest that fits. You can add or remove models later in Settings → Models.",
+      "unchanged": "Choosing a model is not a download."
+    },
+    {
+      "id": "setup",
+      "title": "See what will happen, then set up",
+      "body": "Before any effect the window shows what it found (Home, Mac, free space, model, service) and exactly what setup will do. Setup verifies or downloads the model's exact files, starts the local model runtime and the VexLife service, with progress and a safe Cancel.",
+      "unchanged": "Nothing outside your Vex Home is changed. No broad permissions are asked for."
+    },
+    {
+      "id": "ready",
+      "title": "Talk with Vex",
+      "body": "When everything is current, the VexLife workspace opens. Vex answers on your Mac with the model you chose; its thoughts are viewable, and what it looks up shows in the conversation.",
+      "unchanged": "Your conversation and Memory stay in your Vex Home."
+    }
+  ]
+}
