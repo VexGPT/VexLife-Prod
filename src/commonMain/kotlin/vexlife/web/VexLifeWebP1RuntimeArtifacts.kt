@@ -294,17 +294,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 timelineFollowTail: true,
                 timelineScrollTop: 0,
                 reasoningViewports: new Map(),
-                theme: null
+                theme: null,
+                quickActionsOpen: false
               };
-
-              const QUICK_ACTIONS = [
-                { key: 'journeys', label: 'Journeys', icon: '<path d="M4 15.5c0-2 1.6-3 3.4-3.4l3.4-.8 2.2-4.3c.4-.8 1.4-1 2-.3l.6.6c.5.5.5 1.3 0 1.8l-1 1.2 2.8.8c1.4.4 2.4 1.7 2.4 3.2v1.2H4z"/><path d="M8 12l1.4 2M11 11.4l1.3 2"/>' },
-                { key: 'speech', label: 'Speech', bound: true, icon: '<path d="M4 9.5h3.2L11.5 6v12l-4.3-3.5H4z"/><path d="M15 9.2a4 4 0 0 1 0 5.6M17.6 6.8a7.3 7.3 0 0 1 0 10.4"/>' },
-                { key: 'theme', label: 'Light or dark', bound: true, icon: '<circle cx="12" cy="12" r="3.8"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/>' },
-                { key: 'language', label: 'Language', bound: true, icon: '<path d="M5 20.5V4M5 4.5h12.5l-2 3.5 2 3.5H5"/>' },
-                { key: 'evolution', label: 'Evolution', icon: '<path d="M12.2 12.1c.4-.6-.3-1.4-1-1.2-1.3.4-1.3 2.3-.1 3 1.8 1 4-.5 3.9-2.6-.1-3-3.6-4.3-6-2.8-3.1 2-2.6 6.9.7 8.3 3.9 1.6 8.3-1.2 8.2-5.6"/>' },
-                { key: 'vision', label: 'Vision', icon: '<path d="M3 12s3.6-5.2 9-5.2 9 5.2 9 5.2-3.6 5.2-9 5.2S3 12 3 12Z"/><circle cx="12" cy="12" r="2.8"/>' }
-              ];
 
               const readJson = async (response) => {
                 const value = await response.json();
@@ -938,6 +930,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   renderLanguage();
                   renderSpeechVoices();
                   renderSpeech();
+                  renderQuickActions();
                   const name = state.settings.languages.find((language) => language.code === code)?.name ?? code;
                   notify('Vex will reply in ' + name + '.');
                 } catch (error) {
@@ -945,34 +938,213 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
               };
 
+              const quickActionSvg = (paths) =>
+                '<svg viewBox="0 0 24 24" aria-hidden="true">' + paths + '</svg>';
+
+              const configureSourceQuickAction = (id, action, label, icon) => {
+                const button = byId(id);
+                const item = button?.closest('li');
+                if (!button || !item) return null;
+                item.hidden = false;
+                item.className = 'quick-action-item';
+                button.hidden = false;
+                button.type = 'button';
+                button.className = 'quick-action';
+                button.dataset.action = action;
+                button.dataset.bound = 'true';
+                button.setAttribute('aria-label', label);
+                button.title = label;
+                button.innerHTML = quickActionSvg(icon);
+                return { item, button };
+              };
+
+              const createQuickActionButton = (id, action, label, glyph) => {
+                const item = document.createElement('li');
+                item.className = 'quick-action-item';
+                const button = document.createElement('button');
+                button.id = id;
+                button.type = 'button';
+                button.className = 'quick-action quick-action-glyph';
+                button.dataset.action = action;
+                button.dataset.bound = 'true';
+                button.setAttribute('aria-label', label);
+                button.title = label;
+                button.textContent = glyph;
+                item.append(button);
+                return { item, button };
+              };
+
+              const initializeQuickActions = () => {
+                if (!ui.quickActions || byId('quick-actions-trigger')) return;
+
+                const sourceItems = [...ui.quickActions.children];
+                const speechAction = configureSourceQuickAction(
+                  'speech-source',
+                  'speech',
+                  'Speech',
+                  '<path d="M4 9.5h3.2L11.5 6v12l-4.3-3.5H4z"/><path d="M15 9.2a4 4 0 0 1 0 5.6M17.6 6.8a7.3 7.3 0 0 1 0 10.4"/>'
+                );
+                const languageAction = configureSourceQuickAction(
+                  'language-source',
+                  'language',
+                  'Language',
+                  '<path d="M5 20.5V4M5 4.5h12.5l-2 3.5 2 3.5H5"/>'
+                );
+                const visionAction = configureSourceQuickAction(
+                  'vision-quick-access-source',
+                  'vision',
+                  'Vision',
+                  '<path d="M3 12s3.6-5.2 9-5.2 9 5.2 9 5.2-3.6 5.2-9 5.2S3 12 3 12Z"/><circle cx="12" cy="12" r="2.8"/>'
+                );
+                const themeAction = createQuickActionButton(
+                  'theme-quick-action',
+                  'theme',
+                  'Toggle dark / light theme',
+                  currentTheme() === 'dark' ? '🌙' : '☀️'
+                );
+
+                const supportItem = document.createElement('li');
+                supportItem.className = 'quick-action-item';
+                const support = document.createElement('a');
+                support.id = 'support-quick-action';
+                support.className = 'quick-action quick-action-glyph';
+                support.dataset.action = 'support';
+                support.dataset.bound = 'true';
+                support.href = 'https://vgong24.github.io/Vextreme/pages/vex-support.html';
+                support.target = '_blank';
+                support.rel = 'noopener noreferrer';
+                support.setAttribute('aria-label', 'Support Vextreme and VexLife');
+                support.title = 'Support the creator';
+                support.textContent = '🫴';
+                supportItem.append(support);
+
+                const triggerItem = document.createElement('li');
+                triggerItem.className = 'quick-action-trigger-item';
+                const trigger = document.createElement('button');
+                trigger.id = 'quick-actions-trigger';
+                trigger.type = 'button';
+                trigger.className = 'quick-action quick-action-trigger quick-action-glyph';
+                trigger.setAttribute('aria-label', 'Open quick actions');
+                trigger.setAttribute('aria-expanded', 'false');
+                trigger.textContent = '🌀';
+                triggerItem.append(trigger);
+
+                const visibleSourceItems = new Set(
+                  [speechAction?.item, languageAction?.item, visionAction?.item].filter(Boolean)
+                );
+                const preservedSourceItems = sourceItems.filter((item) => !visibleSourceItems.has(item));
+                ui.quickActions.replaceChildren(
+                  ...preservedSourceItems,
+                  ...(speechAction ? [speechAction.item] : []),
+                  themeAction.item,
+                  ...(languageAction ? [languageAction.item] : []),
+                  ...(visionAction ? [visionAction.item] : []),
+                  supportItem,
+                  triggerItem
+                );
+                ui.quickActions.dataset.open = 'false';
+
+                trigger.addEventListener('click', (event) => {
+                  event.stopPropagation();
+                  state.quickActionsOpen = !state.quickActionsOpen;
+                  if (!state.quickActionsOpen) {
+                    state.languageOpen = false;
+                    speech.open = false;
+                    speech.choosing = false;
+                  }
+                  renderQuickActions();
+                });
+
+                themeAction.button.addEventListener('click', (event) => {
+                  event.stopPropagation();
+                  toggleTheme();
+                  renderQuickActions();
+                });
+
+                speechAction?.button.addEventListener('click', (event) => {
+                  event.stopPropagation();
+                  state.languageOpen = false;
+                  speech.open = !speech.open;
+                  if (!speech.open) speech.choosing = false;
+                  renderSpeechVoices();
+                  renderQuickActions();
+                });
+
+                languageAction?.button.addEventListener('click', (event) => {
+                  event.stopPropagation();
+                  state.languageOpen = !state.languageOpen;
+                  if (state.languageOpen) speech.open = false;
+                  renderQuickActions();
+                });
+
+                visionAction?.button.addEventListener('click', (event) => {
+                  event.stopPropagation();
+                  ui.visionControl?.click();
+                });
+
+                document.addEventListener('click', (event) => {
+                  if (!state.quickActionsOpen) return;
+                  // Authored LocalInteractions may activate an existing Product Control with a
+                  // synthetic click. Only a real human click outside the Spiral dismisses it.
+                  if (!event.isTrusted) return;
+                  if (
+                    ui.quickActions.contains(event.target) ||
+                    ui.speech?.contains(event.target) ||
+                    ui.languagePanel?.contains(event.target)
+                  ) return;
+                  state.quickActionsOpen = false;
+                  state.languageOpen = false;
+                  speech.open = false;
+                  speech.choosing = false;
+                  renderQuickActions();
+                });
+              };
+
               const renderQuickActions = () => {
                 if (!ui.quickActions) return;
-                const sourceOnly = [...ui.quickActions.children].filter((item) => item.hidden);
-                const items = QUICK_ACTIONS.map((action) => {
-                  const item = document.createElement('li');
-                  const button = document.createElement('button');
-                  const visionDisplay = state.vision?.display;
-                  const visionBound = action.key === 'vision' && Boolean(visionDisplay?.primaryControlRef);
-                  const bound = visionBound || Boolean(action.bound);
-                  button.type = 'button';
-                  button.className = 'quick-action';
-                  button.dataset.action = action.key;
-                  button.dataset.bound = String(bound);
-                  if (action.key === 'vision') button.dataset.indicator = String(visionDisplay?.indicatorRef ?? 'None');
-                  button.disabled = action.key === 'vision' && state.visionInFlight;
-                  button.setAttribute('aria-label', action.key === 'vision'
-                    ? String(visionDisplay?.label ?? 'Vision · Held')
-                    : (bound ? action.label : action.label + ' (Held)'));
-                  button.title = action.key === 'vision'
-                    ? (state.visionInFlight
-                        ? 'Vision · Working'
-                        : String(visionDisplay?.label ?? 'Vision · Held') + (visionDisplay?.primaryLabel ? ' — ' + visionDisplay.primaryLabel : ''))
-                    : (bound ? action.label : action.label + ': not connected yet');
-                  button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + action.icon + '</svg>';
-                  item.append(button);
-                  return item;
-                });
-                ui.quickActions.replaceChildren(...sourceOnly, ...items);
+
+                const trigger = byId('quick-actions-trigger');
+                if (trigger) {
+                  trigger.setAttribute('aria-expanded', String(state.quickActionsOpen));
+                  trigger.setAttribute('aria-label', state.quickActionsOpen ? 'Close quick actions' : 'Open quick actions');
+                }
+                ui.quickActions.dataset.open = String(state.quickActionsOpen);
+
+                const theme = byId('theme-quick-action');
+                if (theme) {
+                  theme.textContent = currentTheme() === 'dark' ? '🌙' : '☀️';
+                  theme.title = 'Toggle theme';
+                  theme.setAttribute('aria-label', 'Toggle dark / light theme');
+                }
+
+                const speechButton = byId('speech-source');
+                if (speechButton) {
+                  speechButton.dataset.bound = 'true';
+                  speechButton.setAttribute('aria-expanded', String(speech.open));
+                  speechButton.setAttribute('aria-pressed', String(speech.settings.enabled));
+                  speechButton.dataset.active = String(speech.settings.enabled);
+                }
+
+                const languageButton = byId('language-source');
+                if (languageButton) {
+                  languageButton.dataset.bound = 'true';
+                  languageButton.setAttribute('aria-expanded', String(state.languageOpen));
+                }
+
+                const visionButton = byId('vision-quick-access-source');
+                if (visionButton) {
+                  const display = state.vision?.display;
+                  const bound = Boolean(display?.primaryControlRef);
+                  const label = String(display?.label ?? 'Vision · Held');
+                  visionButton.dataset.bound = String(bound);
+                  visionButton.dataset.indicator = String(display?.indicatorRef ?? 'None');
+                  visionButton.disabled = !bound || state.visionInFlight;
+                  visionButton.setAttribute('aria-label', label);
+                  visionButton.title = state.visionInFlight
+                    ? 'Vision · Working'
+                    : label + (display?.primaryLabel ? ' — ' + display.primaryLabel : '');
+                }
+
                 renderSpeech();
                 renderLanguage();
               };
@@ -3210,6 +3382,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               loadThoughtVisibility();
               applyTheme();
+              initializeQuickActions();
               renderQuickActions();
               applySplit();
               render();
@@ -3308,38 +3481,6 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderComposer();
               });
 
-              ui.quickActions.addEventListener('click', (event) => {
-                const button = event.target.closest('.quick-action');
-                if (!button) return;
-                const action = QUICK_ACTIONS.find((candidate) => candidate.key === button.dataset.action);
-                if (!action) return;
-                if (action.key === 'theme') {
-                  toggleTheme();
-                  return;
-                }
-                if (action.key === 'language') {
-                  state.languageOpen = !state.languageOpen;
-                  if (state.languageOpen) speech.open = false;
-                  renderLanguage();
-                  renderSpeech();
-                  return;
-                }
-                if (action.key === 'speech') {
-                  state.languageOpen = false;
-                  renderLanguage();
-                  speech.open = !speech.open;
-                  if (!speech.open) speech.choosing = false;
-                  renderSpeechVoices();
-                  renderSpeech();
-                  return;
-                }
-                if (action.key === 'vision') {
-                  void activateVision();
-                  return;
-                }
-                notify(action.label + " isn't connected in this workspace yet.");
-              });
-
               ui.visionControl.addEventListener('click', () => {
                 void activateVision();
               });
@@ -3404,10 +3545,13 @@ object VexLifeWebP1RuntimeArtifacts {
                   renderSpeech();
                 } else if (speech.open) {
                   speech.open = false;
-                  renderSpeech();
+                  renderQuickActions();
                 } else if (state.languageOpen) {
                   state.languageOpen = false;
-                  renderLanguage();
+                  renderQuickActions();
+                } else if (state.quickActionsOpen) {
+                  state.quickActionsOpen = false;
+                  renderQuickActions();
                 }
               });
 
