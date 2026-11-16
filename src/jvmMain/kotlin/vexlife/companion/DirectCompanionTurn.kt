@@ -11,6 +11,8 @@ import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.capability.VexLifeCapabilityBridge
+import vexlife.capability.VexLifeReachPacing
+import vexlife.capability.VexLifeReachPacingFamily
 import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.conversation.DirectConversationStore
 import vexlife.filesystem.VexOwnedPath
@@ -829,6 +831,8 @@ object DirectCompanionTurn {
         personContext: DirectPromptContext.PersonContext?,
         hooks: Hooks,
     ): FinalProviderTurn {
+        // One reach pacing for the whole turn: the person's Debug choice, read once.
+        val reachPacing = VexLifeReachPacing(productHome).current()
         val initialMemoryAvailability =
             hooks.currentMemoryContext(
                 productHome,
@@ -860,6 +864,7 @@ object DirectCompanionTurn {
                 }
         val initialPrompt =
             materializeContinuityPrompt(
+                reachPacing = reachPacing,
                 conversationOwner = conversationOwner,
                 productHome = productHome,
                 prior = initialPrior,
@@ -888,6 +893,7 @@ object DirectCompanionTurn {
                     workingContinuityContext,
             )
         reverifyContinuityPrompt(
+                reachPacing = reachPacing,
             selection = initialPrompt,
             conversationOwner = conversationOwner,
             productHome = productHome,
@@ -949,7 +955,7 @@ object DirectCompanionTurn {
                     messages = base.materialization.messages + exchangeMessages(),
                     hooks = hooks,
                     sourceReturnRequestAllowed = sourceReturnTrace == null,
-                    capabilityRequestsAllowed = exchanges.size <= VexLifeCapabilityBridge.MaximumRequestsPerTurn,
+                    capabilityRequestsAllowed = exchanges.size <= reachPacing.budget,
                 )
 
             val capabilityRequest = stage.capabilityRequest
@@ -971,6 +977,7 @@ object DirectCompanionTurn {
                                 requestNumber = exchanges.size + 1,
                                 tokensAvailable =
                                     base.materialization.receipt.capabilityExchangeAllowanceTokens - usedTokens,
+                                pacing = reachPacing,
                             ),
                         owners = hooks.capabilityOwners,
                         estimateTokens = DirectPromptContext::estimatedMessageTokens,
@@ -981,6 +988,7 @@ object DirectCompanionTurn {
                 stageRuntimeEvidence = sameRuntime()
                 // The base prompt is reused, so it must still be current at this provider boundary.
                 reverifyContinuityPrompt(
+                reachPacing = reachPacing,
                     selection = base,
                     conversationOwner = conversationOwner,
                     productHome = productHome,
@@ -1012,7 +1020,7 @@ object DirectCompanionTurn {
                     workingContinuity = baseWorkingContinuity,
                     sourceReturnTrace = sourceReturnTrace,
                     capabilityTrace =
-                        exchanges.takeIf { it.isNotEmpty() }?.let { done -> VexLifeCapabilityBridge.trace(done.map { it.entry }) },
+                        exchanges.takeIf { it.isNotEmpty() }?.let { done -> VexLifeCapabilityBridge.trace(done.map { it.entry }, reachPacing) },
                     capabilityUses = exchanges.map { it.use },
                 )
             }
@@ -1065,6 +1073,7 @@ object DirectCompanionTurn {
                     }
             val finalPrompt =
                 materializeContinuityPrompt(
+                reachPacing = reachPacing,
                     conversationOwner = conversationOwner,
                     productHome = productHome,
                     prior = finalPrior,
@@ -1102,6 +1111,7 @@ object DirectCompanionTurn {
                         workingContinuityContext,
                 )
             reverifyContinuityPrompt(
+                reachPacing = reachPacing,
                 selection = finalPrompt,
                 conversationOwner = conversationOwner,
                 productHome = productHome,
@@ -1199,6 +1209,7 @@ object DirectCompanionTurn {
         foundationalField: VexLifeFoundationalField.Reading,
         // Ordinary direct turns admit capability requests; the prompt keeps their room free.
         capabilityRequestsAdmitted: Boolean = true,
+        reachPacing: VexLifeReachPacingFamily.State = VexLifeReachPacingFamily.Default,
     ): ContinuityPromptSelection {
         var selectedMemoryAtCap: VexLifeMemoryContract.Context? =
             null
@@ -1229,6 +1240,7 @@ object DirectCompanionTurn {
                 foundationalField = foundationalField,
                 conversationExtentIncluded = true,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                reachPacing = reachPacing,
             )
         val selectedMemory =
             selectedMemoryAtCap
@@ -1268,6 +1280,7 @@ object DirectCompanionTurn {
             null,
         foundationalField: VexLifeFoundationalField.Reading,
         capabilityRequestsAdmitted: Boolean = true,
+        reachPacing: VexLifeReachPacingFamily.State = VexLifeReachPacingFamily.Default,
     ) {
         DirectPromptContext.reverifyContinuity(
             materialization =
@@ -1293,6 +1306,7 @@ object DirectCompanionTurn {
             foundationalField = foundationalField,
             conversationExtentIncluded = true,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+            reachPacing = reachPacing,
         )
     }
 

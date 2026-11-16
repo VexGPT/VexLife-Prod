@@ -141,6 +141,8 @@ class VexLifeDiagnosticsTest {
                 entries["logs/runtime/vexlife-prod/heretic/mlx-lm-server.err.log"]!!.contains("current stderr")
             )
             assertTrue(entries["logs/runtime/heretic/old-root/mlx-lm-server.err.log"]!!.contains("old stderr"))
+            assertTrue(entries.containsKey("current/runtime-log-index.json"))
+            assertTrue(entries.getValue("manifest.json").contains("\"runtimeLogPathsPreserved\":true"))
             val summary = entries.getValue("recovery/turn.x.incomplete-answer.json")
             assertTrue(summary.contains("\"failureCode\":\"CONNECTION_EndpointResponseInvalid\""))
             assertTrue(summary.contains("\"partialAnswerIncluded\":false"))
@@ -179,6 +181,8 @@ class VexLifeDiagnosticsTest {
             assertEquals("send.34", traces.last().idempotencyKey)
             assertEquals("reasoning-34", traces.last().reasoning)
             assertEquals("content-34", traces.last().content)
+            assertTrue(traces.last().serviceHeapMaxMb != null)
+            assertTrue(traces.last().hostTotalMemoryMb != null)
 
             val names = mutableListOf<String>()
             val contents = StringBuilder()
@@ -197,6 +201,22 @@ class VexLifeDiagnosticsTest {
 
             diagnostics.control(VexLifeDiagnosticsFamily.ControlStopEnhanced)
             assertTrue(diagnostics.providerStreamTraces().isEmpty(), "stopping enhanced capture erases raw stream traces")
+        }
+    }
+
+    @Test
+    fun turnFailureSnapshotIsRecordedImmediately() {
+        withHome { home ->
+            val diagnostics = VexLifeDiagnostics(home, sha)
+            diagnostics.recordTurnFailureSnapshot(
+                turnRef = "turn.failure.001",
+                failureCode = "CONNECTION_EndpointResponseInvalid",
+            )
+            val chronology = VexChronologyFile.tail(home, 20).joinToString("\n")
+            assertTrue(chronology.contains("\"fact\":\"PROCESS_SNAPSHOT_OBSERVED\""))
+            assertTrue(chronology.contains("\"reason\":\"TURN_FAILED\""))
+            assertTrue(chronology.contains("\"turnRef\":\"turn.failure.001\""))
+            assertTrue(chronology.contains("\"failureCode\":\"CONNECTION_EndpointResponseInvalid\""))
         }
     }
 

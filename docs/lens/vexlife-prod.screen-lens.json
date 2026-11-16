@@ -666,6 +666,30 @@
           "pathwayRef": null,
           "style": "Surface",
           "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.diagnostics.reach-pacing",
+          "kind": "TEXT",
+          "label": "Reach pacing",
+          "parentRef": "element.vexlife-workspace.companion.settings.diagnostics",
+          "symbol": "VexLifeWorkspaceBlueprint.ReachPacingState",
+          "declared": "SettingsDiagnostics.content(\"reach-pacing\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.diagnostics.reach-pacing-control",
+          "kind": "BUTTON",
+          "label": "Reach pacing control",
+          "parentRef": "element.vexlife-workspace.companion.settings.diagnostics",
+          "symbol": "VexLifeWorkspaceBlueprint.ReachPacingControl",
+          "declared": "SettingsDiagnostics.control(\"reach-pacing-control\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
         }
       ]
     }

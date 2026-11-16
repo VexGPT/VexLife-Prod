@@ -24,6 +24,7 @@ import vexlife.text.VexLifeStrings
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.browser.VexLifeProdFrameHost
 import vexlife.companion.DirectCompanionConnection
+import vexlife.capability.VexLifeReachPacing
 import vexlife.companion.DirectCompanionTurn
 import vexlife.companion.DirectIncompleteTurn
 import vexlife.companion.DirectPromptContext
@@ -656,6 +657,22 @@ class VexLifeProdLocalService private constructor(
 
                 VexLifeProdServiceContract.DiagnosticsControlPath -> handleDiagnosticsControl(exchange)
 
+                VexLifeProdServiceContract.ReachPacingPath -> {
+                    requireMethod(exchange, "GET")
+                    respondJson(exchange = exchange, status = 200, value = reachPacing().projection())
+                }
+
+                VexLifeProdServiceContract.ReachPacingControlPath -> {
+                    requireMethod(exchange, "POST")
+                    requireJson(exchange)
+                    val request = JsonCodec.decodeFromString<DiagnosticsControlRequest>(requestText(exchange))
+                    try {
+                        respondJson(exchange = exchange, status = 200, value = reachPacing().control(request.controlRef))
+                    } catch (refused: VexLifeReachPacing.Refused) {
+                        respondError(exchange, 422, refused.code, refused.message ?: refused.code)
+                    }
+                }
+
                 VexLifeProdServiceContract.ModelsPath -> {
                     requireMethod(exchange, "GET")
                     respondJson(exchange = exchange, status = 200, value = models.projection())
@@ -1177,6 +1194,8 @@ class VexLifeProdLocalService private constructor(
         val request = JsonCodec.decodeFromString<DiagnosticsControlRequest>(requestText(exchange))
         respondJson(exchange = exchange, status = 200, value = diagnostics.control(request.controlRef))
     }
+
+    private fun reachPacing() = VexLifeReachPacing(Path.of(startupSetup.productHome))
 
     private fun handleDiagnosticsExport(exchange: HttpExchange) {
         requireMethod(exchange, "GET")
@@ -2054,6 +2073,12 @@ class VexLifeProdLocalService private constructor(
                     failureCode = error.failureCode,
                 )
             }
+            runCatching {
+                diagnostics.recordTurnFailureSnapshot(
+                    turnRef = error.failureReceipt?.turnRef,
+                    failureCode = error.failureCode,
+                )
+            }
             offerTerminal(
                 VexLifeProdServiceContract.SendStreamEvent(
                     type = "FAILED",
@@ -2077,6 +2102,12 @@ class VexLifeProdLocalService private constructor(
                     turnRef = null,
                     outcome = "SERVICE_FAILURE",
                     failureCode = error.javaClass.simpleName,
+                )
+            }
+            runCatching {
+                diagnostics.recordTurnFailureSnapshot(
+                    turnRef = null,
+                    failureCode = "SERVICE_FAILURE:" + error.javaClass.simpleName,
                 )
             }
             offerTerminal(

@@ -73,6 +73,21 @@ class VexLifeDiagnostics(
         val content: String,
         val reasoningTruncated: Boolean,
         val contentTruncated: Boolean,
+        val runtimePid: Long?,
+        val runtimeAlive: Boolean?,
+        val serviceHeapUsedMb: Long?,
+        val serviceHeapMaxMb: Long?,
+        val hostTotalMemoryMb: Long?,
+        val hostFreeMemoryMb: Long?,
+        val homeVolumeFreeMb: Long?,
+    )
+
+    @Serializable
+    data class RuntimeLogIndexEntry(
+        val homeRelativePath: String,
+        val exportPath: String,
+        val bytes: Long,
+        val modifiedAt: String?,
     )
 
     private data class MutableProviderStreamTrace(
@@ -86,6 +101,13 @@ class VexLifeDiagnostics(
         val content: StringBuilder = StringBuilder(),
         var reasoningTruncated: Boolean = false,
         var contentTruncated: Boolean = false,
+        var runtimePid: Long? = null,
+        var runtimeAlive: Boolean? = null,
+        var serviceHeapUsedMb: Long? = null,
+        var serviceHeapMaxMb: Long? = null,
+        var hostTotalMemoryMb: Long? = null,
+        var hostFreeMemoryMb: Long? = null,
+        var homeVolumeFreeMb: Long? = null,
     )
 
     private val streamTraceLock = Any()
@@ -226,13 +248,42 @@ class VexLifeDiagnostics(
         outcome: String,
         failureCode: String?,
     ) {
+        val runtime = runCatching { runtimeProcess() }.getOrNull()
+        val environment = runCatching { environment() }.getOrNull()
         synchronized(streamTraceLock) {
             val trace = streamTraces.lastOrNull { it.idempotencyKey == idempotencyKey } ?: return
             trace.completedAt = clock().toString()
             trace.turnRef = turnRef
             trace.outcome = outcome
             trace.failureCode = failureCode
+            trace.runtimePid = runtime?.pid
+            trace.runtimeAlive = runtime?.alive
+            trace.serviceHeapUsedMb = environment?.serviceHeapUsedMb
+            trace.serviceHeapMaxMb = environment?.serviceHeapMaxMb
+            trace.hostTotalMemoryMb = environment?.hostTotalMemoryMb
+            trace.hostFreeMemoryMb = environment?.hostFreeMemoryMb
+            trace.homeVolumeFreeMb = environment?.homeVolumeFreeMb
         }
+    }
+
+    fun recordTurnFailureSnapshot(turnRef: String?, failureCode: String) {
+        val runtime = runCatching { runtimeProcess() }.getOrNull()
+        val environment = runCatching { environment() }.getOrNull()
+        VexLogger.record(
+            VexLogger.Fact.ProcessSnapshotObserved,
+            buildMap {
+                put("reason", "TURN_FAILED")
+                turnRef?.let { put("turnRef", it) }
+                put("failureCode", failureCode)
+                put("runtimePid", runtime?.pid?.toString() ?: "none")
+                put("runtimeAlive", runtime?.alive?.toString() ?: "unknown")
+                put("serviceHeapUsedMb", environment?.serviceHeapUsedMb?.toString() ?: "unknown")
+                put("serviceHeapMaxMb", environment?.serviceHeapMaxMb?.toString() ?: "unknown")
+                put("hostTotalMemoryMb", environment?.hostTotalMemoryMb?.toString() ?: "unknown")
+                put("hostFreeMemoryMb", environment?.hostFreeMemoryMb?.toString() ?: "unknown")
+                put("homeVolumeFreeMb", environment?.homeVolumeFreeMb?.toString() ?: "unknown")
+            },
+        )
     }
 
     internal fun providerStreamTraces(): List<ProviderStreamTrace> =
@@ -250,6 +301,13 @@ class VexLifeDiagnostics(
                     content = it.content.toString(),
                     reasoningTruncated = it.reasoningTruncated,
                     contentTruncated = it.contentTruncated,
+                    runtimePid = it.runtimePid,
+                    runtimeAlive = it.runtimeAlive,
+                    serviceHeapUsedMb = it.serviceHeapUsedMb,
+                    serviceHeapMaxMb = it.serviceHeapMaxMb,
+                    hostTotalMemoryMb = it.hostTotalMemoryMb,
+                    hostFreeMemoryMb = it.hostFreeMemoryMb,
+                    homeVolumeFreeMb = it.homeVolumeFreeMb,
                 )
             }
         }
@@ -304,9 +362,20 @@ class VexLifeDiagnostics(
         tailFile(home.resolve(VexLifeProdMacServiceLifetime.StderrRelativePath))?.let { put("logs/service.err.log", it) }
         // Home-relative names: two runtime roots can each hold an mlx-lm-server.err.log, and the
         // current one must not be overwritten by an older one inside the export.
-        findRuntimeLogs().forEach { path ->
-            tailFile(path)?.let { put("logs/" + home.relativize(path).toString().replace('\\', '/'), it) }
-        }
+        val runtimeLogIndex =
+            findRuntimeLogs().mapNotNull { path ->
+                val relative = home.relativize(path).toString().replace('\\', '/')
+                val exportPath = "logs/$relative"
+                val tail = tailFile(path) ?: return@mapNotNull null
+                put(exportPath, tail)
+                RuntimeLogIndexEntry(
+                    homeRelativePath = relative,
+                    exportPath = exportPath,
+                    bytes = runCatching { Files.size(path) }.getOrDefault(0L),
+                    modifiedAt = runCatching { Files.getLastModifiedTime(path).toInstant().toString() }.getOrNull(),
+                )
+            }
+        put("current/runtime-log-index.json", VexContractJson.encode(runtimeLogIndex))
         recoveryReceipts().forEach { (name, text) -> put("recovery/$name", text) }
         incompleteAnswerSummaries().forEach { (name, text) -> put("recovery/$name", text) }
         put("RESULT-SUMMARY.txt", summary(chronology, entries.keys))
@@ -320,6 +389,7 @@ class VexLifeDiagnostics(
                     "humanContentIncluded" to JsonPrimitive(false),
                     "modelStreamContentIncluded" to JsonPrimitive(traces.isNotEmpty()),
                     "providerStreamTraceLimit" to JsonPrimitive(MaxProviderStreamTraces),
+                    "runtimeLogPathsPreserved" to JsonPrimitive(true),
                     "policy" to
                         JsonPrimitive(
                             if (traces.isEmpty()) {
@@ -505,7 +575,13 @@ class VexLifeDiagnostics(
         val runtime = home.resolve("runtime")
         if (!Files.isDirectory(runtime, LinkOption.NOFOLLOW_LINKS)) return emptyList()
         return Files.walk(runtime, 4).use { stream ->
-            stream.filter { it.fileName.toString().startsWith("mlx-lm-server.") && it.fileName.toString().endsWith(".log") }.toList()
+            stream
+                .filter {
+                    it.fileName.toString().startsWith("mlx-lm-server.") &&
+                        it.fileName.toString().endsWith(".log")
+                }
+                .toList()
+                .sortedBy { home.relativize(it).toString() }
         }
     }
 
