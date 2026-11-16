@@ -34,48 +34,21 @@
   var toggle = byId('theme-toggle');
   var syncToggle = function () {
     var light = document.documentElement.getAttribute('data-theme') === 'foundation-light';
-    toggle.textContent = light ? 'Dark' : 'Light';
 
-    // Theme remains the one visual-state owner. The Spiral adapter only mirrors this projection.
-    // This follows the established Vextreme theme convention: current light -> ☀️, current dark -> 🌙.
-    toggle.setAttribute('data-vex-spiral-icon', light ? '☀️' : '🌙');
+    // This exact control is moved into the shared Spiral. It remains the one Theme control and
+    // renders the same current-theme glyph convention as Vextreme's stable Theme FAB.
+    toggle.textContent = light ? '☀️' : '🌙';
+    toggle.setAttribute('aria-label', 'Toggle dark / light theme');
+    toggle.title = 'Toggle theme';
   };
-  toggle.addEventListener('click', function () {
+  toggle.addEventListener('click', function (event) {
+    event.stopPropagation();
     var next = document.documentElement.getAttribute('data-theme') === 'foundation-light' ? 'foundation' : 'foundation-light';
     document.documentElement.setAttribute('data-theme', next);
     try { localStorage.setItem('vexlife-theme', next); } catch (error) {}
     syncToggle();
   });
   syncToggle();
-
-  // Spiral chrome projection ----------------------------------------------------------------
-  // The shared public Spiral remains the open/close owner. VexLife observes that presentation
-  // state and moves its ordinary navigation out of the same visual coordinate while the feature
-  // controls expand. Closing restores the exact same nodes; reopening repeats the same circuit.
-  var header = document.querySelector('.header-inner');
-  var headerFamily = header && header.querySelector('.family-rail');
-  var headerNav = header && header.querySelector('.nav');
-
-  var projectSpiralOpen = function (open) {
-    if (!header) return;
-    header.dataset.spiralOpen = String(Boolean(open));
-
-    [headerFamily, headerNav].forEach(function (node) {
-      if (!node) return;
-      if (open) {
-        node.setAttribute('aria-hidden', 'true');
-        node.inert = true;
-      } else {
-        node.removeAttribute('aria-hidden');
-        node.inert = false;
-      }
-    });
-  };
-
-  document.addEventListener('vex:spiral-change', function (event) {
-    if (!event.detail || typeof event.detail.open !== 'boolean') return;
-    projectSpiralOpen(event.detail.open);
-  });
 
   // Releases --------------------------------------------------------------------------------
 
