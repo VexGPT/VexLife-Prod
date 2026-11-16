@@ -44,6 +44,35 @@
   });
   syncToggle();
 
+  // Spiral chrome projection ----------------------------------------------------------------
+  // The shared public Spiral remains the open/close owner. VexLife observes that presentation
+  // state and moves its ordinary navigation out of the same visual coordinate while the feature
+  // controls expand. Closing restores the exact same nodes; reopening repeats the same circuit.
+  var header = document.querySelector('.header-inner');
+  var headerFamily = header && header.querySelector('.family-rail');
+  var headerNav = header && header.querySelector('.nav');
+
+  var projectSpiralOpen = function (open) {
+    if (!header) return;
+    header.dataset.spiralOpen = String(Boolean(open));
+
+    [headerFamily, headerNav].forEach(function (node) {
+      if (!node) return;
+      if (open) {
+        node.setAttribute('aria-hidden', 'true');
+        node.inert = true;
+      } else {
+        node.removeAttribute('aria-hidden');
+        node.inert = false;
+      }
+    });
+  };
+
+  document.addEventListener('vex:spiral-change', function (event) {
+    if (!event.detail || typeof event.detail.open !== 'boolean') return;
+    projectSpiralOpen(event.detail.open);
+  });
+
   // Releases --------------------------------------------------------------------------------
 
   var macAssetOf = function (assets) {
