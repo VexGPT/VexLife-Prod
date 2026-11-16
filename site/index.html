@@ -51,7 +51,10 @@
       <a href="#versions">Versions</a>
       <a href="https://github.com/VexGPT/VexLife-Prod">Source</a>
     </nav>
-    <button class="control" type="button" id="theme-toggle" aria-label="Switch between dark and light">Light</button>
+    <div class="spiral-actions" id="vex-nav-actions" aria-label="Page tools">
+      <!-- Existing local Theme behavior remains the owner; the shared Spiral only activates it. -->
+      <button class="control" type="button" id="theme-toggle" aria-label="Switch between dark and light" hidden>Light</button>
+    </div>
   </div>
 </header>
 
@@ -157,5 +160,46 @@
 </footer>
 
 <script src="assets/site.js"></script>
+<script>
+  /*
+   * Vex ecosystem Spiral registration for the PUBLIC VexLife arrival/download surface.
+   *
+   * This surface truthfully owns:
+   * - its existing browser-local Foundation theme control;
+   * - navigation to canonical Vextreme Support;
+   * - navigation to the public Vextreme Terrain.
+   *
+   * Intentionally absent:
+   * - Vextreme page-language localization (this page has no Vextreme string-bundle authority);
+   * - installed-Product reply language / Speech / Vision / Vex Summon (those belong to VexLife Home/runtime).
+   *
+   * Absence is the feature gate. The shared host does not know these capability names.
+   */
+  window.VEX_SPIRAL_FEATURES = [
+    {
+      id: 'theme',
+      label: 'Light or dark',
+      title: 'Toggle theme',
+      target: '#theme-toggle'
+    },
+    {
+      id: 'support',
+      label: 'Support Vextreme and VexLife',
+      title: 'Support the creator',
+      icon: '🫴',
+      href: 'https://vgong24.github.io/Vextreme/pages/vex-support.html'
+    },
+    {
+      id: 'terrain',
+      label: 'Open Vextreme Terrain',
+      title: 'Vextreme Terrain Map',
+      icon: '🗺️',
+      href: 'https://vgong24.github.io/Vextreme/pages/terrain-map.html'
+    }
+  ];
+</script>
+<!-- Shared presentation mechanism is exact-commit pinned; VexLife owns only its registration above. -->
+<script defer src="https://cdn.jsdelivr.net/gh/vgong24/Vextreme@e16e75a4af3fd7f98f60eeaa60b9ae684b356024/widgets/vex-fab.js"></script>
+<script defer src="https://cdn.jsdelivr.net/gh/vgong24/Vextreme@e16e75a4af3fd7f98f60eeaa60b9ae684b356024/components/vex-spiral-features.js"></script>
 </body>
 </html>
