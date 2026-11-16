@@ -354,16 +354,47 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "Whole-history enumeration: ",
             ),
         )
-        assertTrue(
+        assertFalse(
+            bundle.javascript.contains(
+                "const QUICK_ACTIONS = [",
+            ),
+            "the renderer must not recreate a second quick-action registry",
+        )
+        assertFalse(
             bundle.javascript.contains(
                 "Journeys",
             ),
+            "held Journeys must not be presented as a connected quick action",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "Evolution",
+            ),
+            "held Evolution must not be presented as a connected quick action",
         )
         assertTrue(
             bundle.javascript.contains(
-                "Light or dark",
+                "configureSourceQuickAction",
             ),
+            "typed source Controls should be mounted into the Product Spiral",
         )
+        assertTrue(bundle.javascript.contains("byId('speech-source')"))
+        assertTrue(bundle.javascript.contains("byId('language-source')"))
+        assertTrue(bundle.javascript.contains("byId('vision-quick-access-source')"))
+        assertTrue(
+            bundle.javascript.contains(
+                "ui.visionControl?.click();",
+            ),
+            "VisionQuickAccess should realize its authored LocalInteraction instead of bypassing Vision",
+        )
+        assertTrue(bundle.javascript.contains("id = 'theme-quick-action'").not())
+        assertTrue(bundle.javascript.contains("'theme-quick-action'"))
+        assertTrue(bundle.javascript.contains("'support-quick-action'"))
+        assertTrue(bundle.javascript.contains("https://vgong24.github.io/Vextreme/pages/vex-support.html"))
+        assertTrue(bundle.javascript.contains("'quick-actions-trigger'"))
+        assertTrue(bundle.javascript.contains("state.quickActionsOpen"))
+        assertTrue(bundle.css.contains(".quick-actions[data-open=\"false\"] > .quick-action-item"))
+        assertTrue(bundle.css.contains(".quick-action-trigger[aria-expanded=\"true\"]"))
         assertTrue(
             bundle.html.contains(
                 "Current resources",
