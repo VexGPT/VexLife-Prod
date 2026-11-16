@@ -582,6 +582,11 @@ val macApplicationDistributionTrust =
         macApplicationReleaseContractText,
         "distributionTrust",
     )
+val macApplicationMinimumMacOSVersion =
+    requiredJsonString(
+        macApplicationReleaseContractText,
+        "minimumMacOSVersion",
+    )
 
 require(
     macApplicationReleaseSchemaVersion ==
@@ -601,7 +606,9 @@ require(
         macApplicationEmbeddedSetupLauncherRelativePath ==
         "private-service-image/bin/vexlife-prod-setup" &&
         macApplicationDistributionTrust ==
-        "AD_HOC_SIGNATURE_NO_DEVELOPER_ID_NO_NOTARIZATION"
+        "AD_HOC_SIGNATURE_NO_DEVELOPER_ID_NO_NOTARIZATION" &&
+        macApplicationMinimumMacOSVersion ==
+        "14.0"
 ) {
     "VexLife-Prod macOS application release contract identity drift"
 }
@@ -2484,6 +2491,17 @@ tasks.register(
             ),
         )
 
+        runExactCommand(
+            listOf(
+                "/usr/bin/plutil",
+                "-insert",
+                "LSMinimumSystemVersion",
+                "-string",
+                macApplicationMinimumMacOSVersion,
+                infoPlist.toString(),
+            ),
+        )
+
         // There is intentionally no Developer ID here. Ad-hoc signing restores the bundle seal after
         // Product-owned metadata/resources are bound; it does not claim Apple identity or notarization.
         runExactCommand(
@@ -2614,15 +2632,15 @@ tasks.register(
         )
 
         println(
-            "VEXLIFE_PROD_MAC_APPLICATION\\t" +
+            "VEXLIFE_PROD_MAC_APPLICATION\t" +
                 sourceSha +
-                "\\t" +
+                "\t" +
                 applicationBundle +
-                "\\t" +
+                "\t" +
                 applicationPayloadSha256 +
-                "\\t" +
+                "\t" +
                 diskImage +
-                "\\t" +
+                "\t" +
                 diskImageSha256,
         )
     }
