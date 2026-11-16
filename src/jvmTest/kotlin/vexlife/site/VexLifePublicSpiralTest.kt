@@ -14,6 +14,7 @@ class VexLifePublicSpiralTest {
     private val root: Path = Path.of("").toAbsolutePath()
     private val page = Files.readString(root.resolve("site/index.html"))
     private val css = Files.readString(root.resolve("site/assets/site.css"))
+    private val script = Files.readString(root.resolve("site/assets/site.js"))
 
     @Test
     fun publicHomePinsTheSharedSpiralAndRegistersOnlyTruthfulPageFeatures() {
