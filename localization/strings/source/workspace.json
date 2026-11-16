@@ -532,7 +532,7 @@
   "workspace.description.reach-pacing": {
     "strings": {
       "en": {
-        "text": "How much Vex may look up in one turn, and whether it sees an exact count. Applies from the next turn; each turn's choice is recorded in what Vex received. Compare how Vex works with each."
+        "text": "How much Vex may look up in one turn. Vex is always told the current selected limit; choose whether it also sees the exact running and remaining count. Applies from the next turn; each turn's choice is recorded in what Vex received. Compare how Vex works with each."
       }
     },
     "surfaces": [
@@ -575,7 +575,7 @@
   "workspace.button.reach-pacing-counter-exact": {
     "strings": {
       "en": {
-        "text": "Exact count"
+        "text": "Exact remaining count"
       }
     },
     "surfaces": [
@@ -586,7 +586,7 @@
   "workspace.button.reach-pacing-counter-bounded": {
     "strings": {
       "en": {
-        "text": "Bounded only"
+        "text": "Selected limit only"
       }
     },
     "surfaces": [

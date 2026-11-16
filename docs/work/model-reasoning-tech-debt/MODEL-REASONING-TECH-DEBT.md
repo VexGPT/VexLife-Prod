@@ -350,7 +350,7 @@ TASK_CENTERED frame: the person's question is the task; bounded read-only reads 
          unproven; once the evidence is saturated, answer the person."
 
 EXACT    frame: "Up to N requests per turn."   result: "request": "2 of N", "(k left this turn)"
-BOUNDED  frame: "Reach this turn is bounded and ample; the host tells me when it runs out."
+BOUNDED  frame: "Current reach pacing allows up to N requests; the selected limit is current over historical Conversation, while the exact running/remaining count stays hidden until exhaustion."
          result: "request": "2", "bounded but ample … answer when you are confident."
 both     running out is always said, with the human-continuation guidance from #149
 ~~~

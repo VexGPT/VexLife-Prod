@@ -2390,11 +2390,11 @@
       "langs": []
     },
     "workspace.button.reach-pacing-counter-bounded": {
-      "enHash": "2f8712d01e69",
+      "enHash": "bc9884741f58",
       "langs": []
     },
     "workspace.button.reach-pacing-counter-exact": {
-      "enHash": "71309701f88c",
+      "enHash": "4902dd2b3ccb",
       "langs": []
     },
     "workspace.button.reach-pacing-framing-standard": {
@@ -2426,7 +2426,7 @@
       "langs": []
     },
     "workspace.description.reach-pacing": {
-      "enHash": "8c20df812fb8",
+      "enHash": "70f6b6cfb786",
       "langs": []
     },
     "workspace.heading.diagnostics": {
