@@ -65,6 +65,14 @@ jobs:
           test -f "$APP_DIR/VexLife-macOS-AppleSilicon.receipt.json"
           (cd "$APP_DIR" && shasum -a 256 -c "VexLife-macOS-AppleSilicon.dmg.sha256")
           /usr/bin/hdiutil verify "$APP_DIR/VexLife-macOS-AppleSilicon.dmg"
+          MOUNT="$RUNNER_TEMP/vexlife-dmg"
+          mkdir -p "$MOUNT"
+          /usr/bin/hdiutil attach "$APP_DIR/VexLife-macOS-AppleSilicon.dmg" -readonly -nobrowse -mountpoint "$MOUNT"
+          trap '/usr/bin/hdiutil detach "$MOUNT" >/dev/null 2>&1 || true' EXIT
+          /usr/bin/plutil -extract CFBundleIconFile raw -o - "$MOUNT/VexLife.app/Contents/Info.plist" | grep -Fx 'VexLife.icns'
+          test -s "$MOUNT/VexLife.app/Contents/Resources/VexLife.icns"
+          /usr/bin/hdiutil detach "$MOUNT"
+          trap - EXIT
           /usr/bin/plutil -extract distributionTrust raw -o -             packaging/macos-app/release-contract.json |             grep -Fx 'AD_HOC_SIGNATURE_NO_DEVELOPER_ID_NO_NOTARIZATION'
           echo "Candidate source: $SHA"
           cat "$APP_DIR/VexLife-macOS-AppleSilicon.receipt.json"
