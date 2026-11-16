@@ -34,9 +34,15 @@
   var toggle = byId('theme-toggle');
   var syncToggle = function () {
     var light = document.documentElement.getAttribute('data-theme') === 'foundation-light';
-    toggle.textContent = light ? 'Dark' : 'Light';
+
+    // This exact control is moved into the shared Spiral. It remains the one Theme control and
+    // renders the same current-theme glyph convention as Vextreme's stable Theme FAB.
+    toggle.textContent = light ? '☀️' : '🌙';
+    toggle.setAttribute('aria-label', 'Toggle dark / light theme');
+    toggle.title = 'Toggle theme';
   };
-  toggle.addEventListener('click', function () {
+  toggle.addEventListener('click', function (event) {
+    event.stopPropagation();
     var next = document.documentElement.getAttribute('data-theme') === 'foundation-light' ? 'foundation' : 'foundation-light';
     document.documentElement.setAttribute('data-theme', next);
     try { localStorage.setItem('vexlife-theme', next); } catch (error) {}
