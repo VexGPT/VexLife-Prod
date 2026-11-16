@@ -97,7 +97,7 @@ object DirectCompanionConnection {
         val temperature: Double = 1.0,
         val top_p: Double = 0.95,
         val top_k: Int = 20,
-        val chat_template_kwargs: Map<String, Boolean>,
+        val chat_template_kwargs: Map<String, JsonPrimitive>,
     )
 
     data class HttpCall(
@@ -420,18 +420,23 @@ object DirectCompanionConnection {
             origin.resolve(
                 "/v1/chat/completions",
             )
+        val harmony =
+            vexlife.model.heretic.HereticModelCatalog.entry(runtime.modelRef)?.responseFormat ==
+                vexlife.model.heretic.HereticModelCatalog.ResponseFormat.HARMONY
         val requestBody =
             JsonCodec.encodeToString(
                 RequestPayload(
                     model = runtime.requestModel,
-                    messages = messages,
+                    messages = if (harmony) leadingSystemAsOne(messages) else messages,
                     max_tokens = OutputTokenLimit,
                     stream = true,
                     chat_template_kwargs =
-                        mapOf(
-                            "enable_thinking" to
-                                true,
-                        ),
+                        buildMap {
+                            put("enable_thinking", JsonPrimitive(true))
+                            // The harmony template otherwise opens with "You are ChatGPT…"; who
+                            // Vex is comes from the foundational field, so it names only that.
+                            if (harmony) put("model_identity", JsonPrimitive(HarmonyModelIdentity))
+                        },
                 ),
             )
         val requestBodySha256 =
@@ -454,12 +459,13 @@ object DirectCompanionConnection {
                     transport = transport,
                     call = call,
                     progressObserver = progressObserver,
+                    harmony = harmony,
                 )
             } else {
                 invokeBulk(
                     transport = transport,
                     call = call,
-                )
+                ).let { if (harmony) harmonized(it) else it }
             }
 
         val content =
@@ -700,11 +706,43 @@ object DirectCompanionConnection {
         transport: StreamingTransport,
         call: HttpCall,
         progressObserver: ProgressObserver?,
+        harmony: Boolean = false,
     ): ProviderCompletion {
         val content =
             StringBuilder()
         val reasoning =
             StringBuilder()
+        val splitter = if (harmony) HarmonyResponseSplitter() else null
+
+        fun appendReasoning(delta: String) {
+            reasoning.append(delta)
+            progressObserver?.observe(
+                Progress(
+                    kind = ProgressKind.Reasoning,
+                    delta = delta,
+                    accumulatedCharacters = reasoning.codePointCount(),
+                )
+            )
+        }
+
+        fun appendContent(delta: String) {
+            content.append(delta)
+            progressObserver?.observe(
+                Progress(
+                    kind = ProgressKind.Content,
+                    delta = delta,
+                    accumulatedCharacters = content.codePointCount(),
+                )
+            )
+        }
+
+        fun route(pieces: List<HarmonyResponseSplitter.Piece>) =
+            pieces.forEach {
+                when (it.kind) {
+                    HarmonyResponseSplitter.Kind.Thinking -> appendReasoning(it.text)
+                    HarmonyResponseSplitter.Kind.Answer -> appendContent(it.text)
+                }
+            }
         var reportedModel: String? =
             null
         var finishReason: String? =
@@ -749,6 +787,7 @@ object DirectCompanionConnection {
                 ) {
                     done =
                         true
+                    splitter?.let { route(it.finish()) }
                     return@postStreaming
                 }
 
@@ -847,18 +886,7 @@ object DirectCompanionConnection {
                     reasoningDelta !=
                         null
                 ) {
-                    reasoning.append(
-                        reasoningDelta,
-                    )
-                    progressObserver
-                        ?.observe(
-                            Progress(
-                                kind = ProgressKind.Reasoning,
-                                delta = reasoningDelta,
-                                accumulatedCharacters =
-                                    reasoning.codePointCount(),
-                            ),
-                        )
+                    appendReasoning(reasoningDelta)
                 }
 
                 stringOrNull(
@@ -871,18 +899,8 @@ object DirectCompanionConnection {
                     )
                     ?.let {
                         contentDelta ->
-                        content.append(
-                            contentDelta,
-                        )
-                        progressObserver
-                            ?.observe(
-                                Progress(
-                                    kind = ProgressKind.Content,
-                                    delta = contentDelta,
-                                    accumulatedCharacters =
-                                        content.codePointCount(),
-                                ),
-                            )
+                        if (splitter == null) appendContent(contentDelta)
+                        else route(splitter.accept(contentDelta))
                     }
             }
 
@@ -945,6 +963,52 @@ object DirectCompanionConnection {
                 ),
             finishReason = finishReason,
             assistantRoleObserved = assistantRoleObserved,
+        )
+    }
+
+    /**
+     * The harmony chat template keeps only the first system message (as its developer message)
+     * and silently drops later ones; the leading system messages are sent as one so none of
+     * what Vex is given is lost.
+     */
+    const val HarmonyModelIdentity = "You are Vex."
+
+    private fun leadingSystemAsOne(
+        messages: List<CompanionProviderMessage>,
+    ): List<CompanionProviderMessage> {
+        val leading = messages.takeWhile { it.role == "system" }
+        if (leading.size <= 1) return messages
+        return listOf(
+            leading.first().copy(content = leading.joinToString("\n\n") { it.content })
+        ) + messages.drop(leading.size)
+    }
+
+    /** A whole (non-streamed) harmony reply, split the same way as a streamed one. */
+    private fun harmonized(completion: ProviderCompletion): ProviderCompletion {
+        val splitter = HarmonyResponseSplitter()
+        val pieces = splitter.accept(completion.content) + splitter.finish()
+        val answer =
+            pieces.filter { it.kind == HarmonyResponseSplitter.Kind.Answer }.joinToString("") { it.text }
+        val thinking =
+            pieces.filter { it.kind == HarmonyResponseSplitter.Kind.Thinking }.joinToString("") { it.text }
+        if (thinking.isEmpty() && answer == completion.content) return completion
+        if (answer.isEmpty()) {
+            fail(
+                FailureCode.EndpointResponseInvalid,
+                "harmony response carried no final answer",
+            )
+        }
+        return completion.copy(
+            content = answer,
+            reasoning =
+                reasoningObservation(
+                    JsonObject(
+                        buildMap {
+                            put("content", JsonPrimitive(answer))
+                            if (thinking.isNotEmpty()) put("reasoning", JsonPrimitive(thinking))
+                        }
+                    )
+                ),
         )
     }
 
