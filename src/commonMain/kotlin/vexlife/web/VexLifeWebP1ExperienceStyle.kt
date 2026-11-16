@@ -457,14 +457,34 @@ svg { display: block; }
 .message-you .speaker { justify-self: end; }
 .message-vex .speaker { justify-self: start; }
 
-.bubble p { margin: 0 0 0.6em; }
-.bubble p:last-child { margin-bottom: 0; }
-.bubble ul, .bubble ol { margin: 0.2em 0 0.6em; padding-left: 1.3em; }
-.bubble li { margin: 0.15em 0; }
-.bubble code { font-family: var(--mono); font-size: 0.86em; padding: 1px 4px; border-radius: 4px; background: var(--sunken); }
-.bubble pre { margin: 0.4em 0 0.7em; padding: 10px 12px; border-radius: 8px; background: var(--sunken); overflow-x: auto; }
-.bubble pre code { padding: 0; background: none; }
+.bubble > p { margin: 0 0 0.6em; }
+.bubble > p:last-child { margin-bottom: 0; }
+
+/* TextPresentation is shared by Vex replies and human-visible reasoning. Markdown is the current
+   interpretation grammar; these rules are Web manifestation only. The host surface keeps scroll
+   ownership: timeline for replies, .reasoning for thinking. Tables/code therefore wrap and never
+   introduce another presentation-owned scroller. */
+.text-presentation { min-width: 0; white-space: normal; }
+.text-presentation p { margin: 0 0 0.6em; }
+.text-presentation p:last-child { margin-bottom: 0; }
+.text-presentation ul, .text-presentation ol { margin: 0.2em 0 0.6em; padding-left: 1.3em; }
+.text-presentation li { margin: 0.15em 0; }
+.text-presentation code { font-family: var(--mono); font-size: 0.86em; padding: 1px 4px; border-radius: 4px; background: var(--sunken); }
+.text-presentation pre { margin: 0.4em 0 0.7em; padding: 10px 12px; border-radius: 8px; background: var(--sunken); white-space: pre-wrap; overflow-wrap: anywhere; }
+.text-presentation pre code { padding: 0; background: none; }
 .prose-heading { font-weight: 650; }
+.text-presentation > :first-child { margin-top: 0; }
+.text-presentation > :last-child { margin-bottom: 0; }
+.text-presentation .prose-heading { margin: 0.7em 0 0.35em; line-height: 1.3; }
+.text-presentation .md-h1 { font-size: 1.25em; }
+.text-presentation .md-h2 { font-size: 1.15em; }
+.text-presentation .md-h3 { font-size: 1.05em; }
+.text-presentation a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.text-presentation blockquote { margin: 0.4em 0 0.7em; padding: 0 0 0 10px; border-left: 3px solid var(--vex-rule); color: var(--ink-2); }
+.text-presentation hr { border: 0; border-top: 1px solid var(--vex-rule); margin: 0.8em 0; }
+.text-presentation table { width: 100%; border-collapse: collapse; margin: 0.4em 0 0.7em; font-size: 0.92em; line-height: 1.4; }
+.text-presentation th, .text-presentation td { border: 1px solid var(--vex-rule); padding: 4px 8px; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+.text-presentation th { font-weight: 650; background: var(--sunken); }
 
 .thought { grid-area: thought; justify-self: start; margin: 0 0 7px; }
 .thought-toggle {

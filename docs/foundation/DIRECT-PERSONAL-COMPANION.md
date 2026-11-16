@@ -342,6 +342,67 @@ content deltas
 -> streamed answer stays visible until canonical Conversation refresh replaces it
 ~~~
 
+Vex's human-visible text uses one `TextPresentation` relationship (2026-11-15). The exact
+text remains owned upstream; presentation does not change its custody or durability.
+
+~~~text
+owner-provided exact text
+├─ live reply text
+│    owner while in flight: streamedContent / Send presentation
+│    terminal owner: canonical Conversation RESPONSE
+│
+└─ human-visible reasoning text
+     owner while present: ephemeral browser-session reasoning/process custody
+     never canonical Conversation / Memory
+        ↓
+TextPresentation
+  asks only: how should this exact text become human-readable?
+  current interpretation grammar: Markdown patterns
+        ↓
+current platform manifestation: Web DOM
+├─ reply body inside the Conversation timeline
+└─ reasoning body inside the mounted .reasoning viewport
+        ↓
+rightful interaction owner remains separate
+├─ reply geometry -> timeline follow/read state
+└─ reasoning geometry -> reasoningViewport follow/read state
+
+TEXT PRESENTATION != TEXT TRUTH OWNER
+TEXT PRESENTATION != CONVERSATION / MEMORY
+TEXT PRESENTATION != REASONING CUSTODY
+TEXT PRESENTATION != RELAY / CONVERGENCE
+SAME PRESENTATION GRAMMAR != SAME DURABILITY
+SAME PRESENTATION GRAMMAR != SAME SCROLL OWNER
+INTERPRETATION GRAMMAR != PRESENTATION OWNER
+PLATFORM MANIFESTATION != PRESENTATION OWNER
+DOM IDENTITY != RESPONSE / REASONING IDENTITY
+
+current Markdown patterns -> paragraph / heading / quote / list / table / code / inline emphasis / links
+links                     -> http(s) / mailto only; others stay text; target=_blank rel=noopener noreferrer
+tables / code             -> wrap inside the host surface; TextPresentation creates no nested scroller
+presentation failure      -> exact owner-provided text remains visible as plain text
+Speech / Kokoro           -> consume the raw upstream text, never the visual presentation tree
+~~~
+
+The live presentation queue batches all mounted TextPresentation surfaces at most once per animation
+frame. The queue is not a currentness owner. After a presentation changes geometry, the host surface's
+own interaction owner responds: `reasoningViewport` may follow the thought tail while the Conversation
+timeline independently follows or preserves the person's reading position.
+
+`TextPresentation` is intentionally broader than Markdown and Web. Markdown is one interpretation
+grammar and Web DOM is one manifestation of the relationship. A future template grammar,
+Android/Compose manifestation, iOS manifestation or other presentation technology should start from
+the same relationship rather than duplicate this Web DOM machinery.
+
+A shared typed presentation structure is not yet claimed. If two or more real consumers need the same
+intermediate structure, that repeated pressure may earn one above the platform manifestations. Until
+then, current Web source remains one concrete realization and must not become cross-platform authority.
+
+Why this is presentation rather than convergence: every recognized structure is derived from one exact
+owner-provided text source. It does not compose independently-owned truths into new relationship truth.
+No durable presentation AST, HTML string, Conversation representation or Memory representation is
+introduced. The presentation-local cache exists only to avoid repeated Web manifestation work and
+preserve human interaction with already-mounted visible structure.
 The human's `Viewable thoughts` preference is a separate local presentation decision:
 
 ~~~text
