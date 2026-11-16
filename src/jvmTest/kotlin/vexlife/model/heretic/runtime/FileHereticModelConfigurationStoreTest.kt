@@ -302,6 +302,8 @@ class FileHereticModelConfigurationStoreTest {
                 current.copy(
                     modelProfileRef =
                         "model-profile.vexlife-prod.experimental-stale.001",
+                    runtimeReceiptPath =
+                        "runtime/vexlife-prod/experimental-runtime-receipt.json",
                 )
             Files.writeString(
                 home.resolve(
