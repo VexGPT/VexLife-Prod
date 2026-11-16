@@ -538,6 +538,15 @@ class VexLifeWebP1RuntimeArtifactsTest {
             ),
         )
     }
+
+    @Test
+    fun threadMemoryIsADebugControlAndAVisibleHorizonNeverADeletion() {
+        val bundle = VexLifeWebP1RuntimeArtifacts.generate()
+        assertTrue(bundle.javascript.contains("service.threadContextControlPath"))
+        assertTrue(bundle.javascript.contains("divider.className = 'timeline-horizon'"))
+        assertTrue(bundle.javascript.contains("t('workspace.label.thread-context-divider')"))
+        assertTrue(bundle.javascript.contains("void loadThreadContext()"))
+    }
 }
 
 // [VXG RealForever]

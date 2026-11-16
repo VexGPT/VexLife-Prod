@@ -34,7 +34,7 @@ rightful owner accepts / observes a fact
 | Service process | `SERVICE_PROCESS_STARTED`, `SERVICE_LISTENING`, `SERVICE_START_FAILED`, `SERVICE_PROCESS_TERMINATING` (JVM shutdown hook; a hard kill leaves no record, which is evidence too) |
 | Service lifetime owner | `SERVICE_RETIRED_VERIFIED`, `SERVICE_STARTED_CURRENT`, `SERVICE_REUSED_CURRENT` |
 | Heretic runtime | `RUNTIME_CURRENTNESS_LOST`, `RUNTIME_RECOVERY_REQUESTED/COMPLETED/FAILED`, `RUNTIME_RETIRED_UNHEALTHY`, `RUNTIME_START_REQUESTED`, `RUNTIME_QUALIFIED`, `RUNTIME_MODEL_SWITCHED` (from/to handle), `RUNTIME_PROCESS_LIVE/NO_LONGER_LIVE` (PID observer, transitions only, never probes health) |
-| Conversation | `SEND_ACCEPTED`, `PROVIDER_INVOCATION_REQUESTED`, `TURN_COMPLETED`, `TURN_FAILED` (with whether a failure receipt was written) |
+| Conversation | `SEND_ACCEPTED`, `PROVIDER_INVOCATION_REQUESTED`, `TURN_COMPLETED`, `TURN_FAILED` (with whether a failure receipt was written), `THREAD_CONTEXT_HORIZON_SET` / `_REMOVED` |
 | Web presentation (`POST /api/v1/chronology`, Browser/Presentation facts only) | `PRESENTATION_ARRIVED`, `SEND_OUTCOME_UNRESOLVED_SHOWN`, `BROWSER_PAGE_IDENTITY_OBSERVED`, `BROWSER_PAGE_UNLOCATED`, `BROWSER_CONTEXT_REQUESTED/READY/INVALIDATED` |
 | Settings → Models | `MODEL_CONTROL_ACCEPTED`, `MODEL_DOWNLOAD_STARTED/COMPLETED/FAILED`, `MODEL_FILES_REMOVED` (files, freed bytes) |
 | Capability bridge | `CAPABILITY_REQUEST_OBSERVED` (callRef, request number, handle, action), `CAPABILITY_RESULT_RETURNED` (state, tokens, truncated) — never the returned content |

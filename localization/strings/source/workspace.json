@@ -11,7 +11,8 @@
     "dataKeyOwners": {
       "diagnostics": "VexLifeDiagnosticsFamily (state, control refs) and the debug export route",
       "capability": "VexLifeCapabilityBridge uses (handle:action), shown to the person as reach",
-      "model": "VexLifeModelsFamily (files, control refs) and HereticModelCatalog standing"
+      "model": "VexLifeModelsFamily (files, control refs) and HereticModelCatalog standing",
+      "thread-context": "VexLifeThreadContextFamily (state, control refs)"
     }
   },
   "workspace.heading.diagnostics": {
@@ -516,6 +517,101 @@
     },
     "surfaces": [
       "workspace.settings"
+    ]
+  },
+  "workspace.heading.thread-context": {
+    "strings": {
+      "en": {
+        "text": "Thread context"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.thread-context": {
+    "strings": {
+      "en": {
+        "text": "For testing: Start fresh from here makes the next Vex turn use only what comes after this point in the thread. Nothing is deleted — the earlier conversation stays on screen and in the record. VexLife Memory pages are unchanged. Restore earlier context gives Vex the whole thread again."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.thread-context-empty": {
+    "strings": {
+      "en": {
+        "text": "Nothing to clear yet: this thread has no finished turn."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "thread-context:state:EMPTY"
+  },
+  "workspace.status.thread-context-whole": {
+    "strings": {
+      "en": {
+        "text": "Vex is given this thread ({exchanges} exchanges, as many as fit)."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "thread-context:state:WHOLE"
+  },
+  "workspace.status.thread-context-cleared": {
+    "strings": {
+      "en": {
+        "text": "Started fresh {at}: Vex is not given the {behind} earlier exchanges; {since} since."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "thread-context:state:FROM_HORIZON"
+  },
+  "workspace.button.thread-context-clear": {
+    "strings": {
+      "en": {
+        "text": "Start fresh from here"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "thread-context:control:CLEAR_THREAD_CONTEXT"
+  },
+  "workspace.button.thread-context-restore": {
+    "strings": {
+      "en": {
+        "text": "Restore earlier context"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "thread-context:control:RESTORE_THREAD_CONTEXT"
+  },
+  "workspace.status.thread-context-busy": {
+    "strings": {
+      "en": {
+        "text": "Vex is answering; try again when the turn finishes."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.thread-context-divider": {
+    "strings": {
+      "en": {
+        "text": "Vex starts fresh here — earlier conversation stays in the record but is not supplied as thread context."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
     ]
   }
 }

@@ -29,6 +29,7 @@ import vexlife.companion.DirectPromptContext
 import vexlife.companion.DirectTurnContextStore
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
+import vexlife.conversation.VexLifeThreadContext
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.memory.VexLifeCurrentMemoryReader
@@ -655,6 +656,13 @@ class VexLifeProdLocalService private constructor(
 
                 VexLifeProdServiceContract.DiagnosticsControlPath -> handleDiagnosticsControl(exchange)
 
+                VexLifeProdServiceContract.ThreadContextPath -> {
+                    requireMethod(exchange, "GET")
+                    respondJson(exchange = exchange, status = 200, value = threadContext().projection())
+                }
+
+                VexLifeProdServiceContract.ThreadContextControlPath -> handleThreadContextControl(exchange)
+
                 VexLifeProdServiceContract.ModelsPath -> {
                     requireMethod(exchange, "GET")
                     respondJson(exchange = exchange, status = 200, value = models.projection())
@@ -1174,6 +1182,19 @@ class VexLifeProdLocalService private constructor(
         requireJson(exchange)
         val request = JsonCodec.decodeFromString<DiagnosticsControlRequest>(requestText(exchange))
         respondJson(exchange = exchange, status = 200, value = diagnostics.control(request.controlRef))
+    }
+
+    private fun threadContext() = VexLifeThreadContext(Path.of(startupSetup.productHome))
+
+    private fun handleThreadContextControl(exchange: HttpExchange) {
+        requireMethod(exchange, "POST")
+        requireJson(exchange)
+        val request = JsonCodec.decodeFromString<DiagnosticsControlRequest>(requestText(exchange))
+        try {
+            respondJson(exchange = exchange, status = 200, value = threadContext().control(request.controlRef))
+        } catch (refused: VexLifeThreadContext.Refused) {
+            respondError(exchange, 409, refused.code, refused.message ?: refused.code)
+        }
     }
 
     private fun handleDiagnosticsExport(exchange: HttpExchange) {
@@ -2379,11 +2400,10 @@ class VexLifeProdLocalService private constructor(
     }
 
     private fun conversationProjection(): VexLifeProdServiceContract.ConversationProjection {
+        val productHome = Path.of(startupSetup.productHome)
         val snapshot =
             DirectConversationStore(
-                Path.of(
-                    startupSetup.productHome,
-                ),
+                productHome,
             )
                 .current()
 
@@ -2429,6 +2449,8 @@ class VexLifeProdLocalService private constructor(
             messages = messages,
             abandonedAttemptCount = snapshot.abandonedAttempts.size,
             effectsPerformed = false,
+            contextHorizonSequence =
+                runCatching { DirectConversationStore(productHome).contextHorizon() }.getOrNull()?.horizonSequence,
         )
     }
 

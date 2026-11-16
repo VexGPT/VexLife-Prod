@@ -296,8 +296,10 @@ object DirectConversationSourceReturn {
             )
         val snapshot =
             conversationOwner.current()
+        // Conversation behind the thread context horizon is not given to Vex, even on request.
+        val horizon = conversationOwner.contextHorizon()
         val events =
-            snapshot.canonicalEvents
+            snapshot.canonicalEvents.filter { horizon?.covers(it.sequence) != true }
         require(
             events.size %
                 2 ==

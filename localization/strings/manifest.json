@@ -2385,6 +2385,14 @@
       "enHash": "99cbaa8ea1dd",
       "langs": []
     },
+    "workspace.button.thread-context-clear": {
+      "enHash": "6c4374f98a5d",
+      "langs": []
+    },
+    "workspace.button.thread-context-restore": {
+      "enHash": "cea335fa22a2",
+      "langs": []
+    },
     "workspace.description.diagnostics": {
       "enHash": "7b79ef07573f",
       "langs": []
@@ -2405,12 +2413,20 @@
       "enHash": "3f9eef16b166",
       "langs": []
     },
+    "workspace.description.thread-context": {
+      "enHash": "279614977188",
+      "langs": []
+    },
     "workspace.heading.diagnostics": {
       "enHash": "d6991174308f",
       "langs": []
     },
     "workspace.heading.models": {
       "enHash": "c595dae8d3cd",
+      "langs": []
+    },
+    "workspace.heading.thread-context": {
+      "enHash": "44b9df3c7675",
       "langs": []
     },
     "workspace.label.diagnostics-no-records": {
@@ -2459,6 +2475,10 @@
     },
     "workspace.label.reached": {
       "enHash": "71b4d0d05045",
+      "langs": []
+    },
+    "workspace.label.thread-context-divider": {
+      "enHash": "205400665b57",
       "langs": []
     },
     "workspace.status.diagnostics-enhanced-off": {
@@ -2543,6 +2563,22 @@
     },
     "workspace.status.reach-web-search": {
       "enHash": "28787e0d826f",
+      "langs": []
+    },
+    "workspace.status.thread-context-busy": {
+      "enHash": "422e80ef6018",
+      "langs": []
+    },
+    "workspace.status.thread-context-cleared": {
+      "enHash": "f702a27d4ac3",
+      "langs": []
+    },
+    "workspace.status.thread-context-empty": {
+      "enHash": "4905a2f9e516",
+      "langs": []
+    },
+    "workspace.status.thread-context-whole": {
+      "enHash": "48c84db13599",
       "langs": []
     }
   }

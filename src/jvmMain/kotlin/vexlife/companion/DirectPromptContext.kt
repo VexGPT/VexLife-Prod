@@ -159,6 +159,8 @@ object DirectPromptContext {
         /** The input budget ordinary context may use: [InputTokenBudget] less the exchange allowance. */
         val inputTokenBudget: Int = InputTokenBudget,
         val capabilityExchangeAllowanceTokens: Int = 0,
+        /** The thread context horizon in force for this turn, when the person set a thread context horizon. */
+        val contextHorizon: DirectConversationStore.ContextHorizon? = null,
     )
 
     private data class ConversationExtent(
@@ -254,6 +256,8 @@ object DirectPromptContext {
         val conversationExtentEstimatedSystemMessageTokens: Int,
         /** Prompt room kept free for capability request/result exchanges; 0 when none admitted. */
         @EncodeDefault(EncodeDefault.Mode.NEVER) val capabilityExchangeAllowanceTokens: Int = 0,
+        /** The response sequence at which the person set the thread context horizon; null when never. */
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val contextHorizonSequence: Long? = null,
         val trainingSelectionPerformed: Boolean,
         val effectsPerformed: Boolean,
     )
@@ -463,6 +467,12 @@ object DirectPromptContext {
          */
         @EncodeDefault(EncodeDefault.Mode.NEVER)
         val capabilityExchangeAllowanceTokens: Int = 0,
+        /**
+         * The response sequence at which the person set the thread context horizon: nothing at or before it
+         * was given to Vex. Null when the whole thread was available.
+         */
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val contextHorizonSequence: Long? = null,
     )
 
     /**
@@ -1136,6 +1146,7 @@ object DirectPromptContext {
                 conversationExtentEstimatedSystemMessageTokens =
                     fixed.conversationExtent?.systemContent?.let(::estimatedMessageTokens) ?: 0,
                 capabilityExchangeAllowanceTokens = fixed.capabilityExchangeAllowanceTokens,
+                contextHorizonSequence = fixed.contextHorizon?.horizonSequence,
                 trainingSelectionPerformed = false,
                 effectsPerformed = false,
             )
@@ -1239,6 +1250,7 @@ object DirectPromptContext {
                 conversationExtentEstimatedSystemMessageTokens =
                     core.conversationExtentEstimatedSystemMessageTokens,
                 capabilityExchangeAllowanceTokens = core.capabilityExchangeAllowanceTokens,
+                contextHorizonSequence = core.contextHorizonSequence,
                 effectsPerformed = core.effectsPerformed,
             )
 
@@ -1284,8 +1296,10 @@ object DirectPromptContext {
             "direct continuity prompt cannot advertise another source return while projecting returned source"
         }
 
+        val contextHorizon = conversationOwner.contextHorizon()
         val fixed =
             verifyFixedContext(
+                contextHorizon = contextHorizon,
                 prior = prior,
                 currentRequest = currentRequest,
                 memoryAvailabilityContext =
@@ -1368,7 +1382,8 @@ object DirectPromptContext {
                 ) {
                     require(
                         sourceReturnProjection !=
-                            null,
+                            null ||
+                            contextHorizon?.covers(requireNotNull(prior).head.sequence) == true,
                     ) {
                         "ordinary continuity prompt requires the exact immediate prior completed turn to remain present"
                     }
@@ -1807,6 +1822,7 @@ object DirectPromptContext {
         foundationalField: VexLifeFoundationalField.Reading? = null,
         conversationExtentIncluded: Boolean = false,
         capabilityRequestsAdmitted: Boolean = false,
+        contextHorizon: DirectConversationStore.ContextHorizon? = null,
     ): VerifiedFixedContext {
         // Admitting capability requests keeps room free for their exchanges in this turn; ordinary
         // context (field, Memory, Conversation) is formed inside the reduced budget.
@@ -1922,6 +1938,7 @@ object DirectPromptContext {
                 conversationExtent(
                     currentRequest = currentRequest,
                     workingRolloverCurrent = workingContinuity != null,
+                    contextHorizon = contextHorizon,
                 )
             } else {
                 null
@@ -2068,6 +2085,7 @@ object DirectPromptContext {
             fixedInputTokenEstimate = fixedEstimate,
             inputTokenBudget = inputTokenBudget,
             capabilityExchangeAllowanceTokens = capabilityExchangeAllowanceTokens,
+            contextHorizon = contextHorizon,
         )
     }
 
@@ -2090,14 +2108,25 @@ object DirectPromptContext {
     private fun conversationExtent(
         currentRequest: DirectConversationStore.Event,
         workingRolloverCurrent: Boolean,
+        contextHorizon: DirectConversationStore.ContextHorizon? = null,
     ): ConversationExtent {
         require(currentRequest.sequence >= 0 && currentRequest.sequence % 2 == 0L) {
             "direct prompt Conversation extent requires a REQUEST at an even canonical sequence"
         }
         val count = currentRequest.sequence / 2
         val exchanges = if (count == 1L) "1 completed exchange" else "$count completed exchanges"
+        fun counted(n: Long) = if (n == 1L) "1 completed exchange" else "$n completed exchanges"
         val statement =
             when {
+                contextHorizon != null -> {
+                    val behind = contextHorizon.exchangesBehind
+                    val since = count - behind
+                    "Before this request the durable record of this Conversation holds $exchanges. " +
+                        "The person chose to start this thread fresh after the first ${counted(behind)}: " +
+                        "those stay in the record but are not given to you, and Conversation " +
+                        "source return does not reach them. Since then it holds ${counted(since)}; " +
+                        "this prompt shows the newest of those that fit, exactly as written."
+                }
                 count == 0L ->
                     "The durable record of this Conversation holds no completed exchange before " +
                         "this request."
