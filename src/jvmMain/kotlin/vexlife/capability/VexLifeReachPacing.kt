@@ -8,8 +8,11 @@ import vexlife.logging.VexLogger
 
 /**
  * The Home's reach pacing setting ([VexLifeReachPacingFamily]): read once at the start of every
- * turn, changed only by the person in Settings → Debug. An unreadable or absent setting is the
- * default threshold.
+ * turn, changed only by the person in Settings → Debug.
+ *
+ * Absence means the person has never selected an experiment value, so the pre-experiment default
+ * applies. A present but unreadable, obsolete or invalid record is not the default: collapsing that
+ * condition would make storage failure look like a human choice.
  */
 class VexLifeReachPacing(private val productHome: Path) {
     @Serializable
@@ -35,13 +38,15 @@ class VexLifeReachPacing(private val productHome: Path) {
     private val path: Path
         get() = VexOwnedPath.resolveInside(productHome, RelativePath)
 
-    fun current(): VexLifeReachPacingFamily.State =
-        runCatching {
+    fun current(): VexLifeReachPacingFamily.State {
+        val stored =
             VexDurableContractFile.read<Stored>(productHome, path)
-                ?.takeIf { it.schemaVersion == Schema }
-                ?.let { VexLifeReachPacingFamily.State(it.budget, it.counter, it.framing) }
+                ?: return VexLifeReachPacingFamily.Default
+        require(stored.schemaVersion == Schema) {
+            "reach pacing setting schema is not current"
         }
-            .getOrNull() ?: VexLifeReachPacingFamily.Default
+        return VexLifeReachPacingFamily.State(stored.budget, stored.counter, stored.framing)
+    }
 
     fun projection(effectsPerformed: Boolean = false): Projection {
         val state = current()

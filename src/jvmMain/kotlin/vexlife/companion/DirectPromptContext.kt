@@ -471,7 +471,7 @@ object DirectPromptContext {
         val capabilityExchangeAllowanceTokens: Int = 0,
         /**
          * The reach budget and counter wording this turn had, when it was not the default threshold
-         * (the reach pacing experiment). Absent means 4 requests with an exact counter.
+         * (the reach pacing experiment). Absent means 4 requests, exact counter and standard framing.
          */
         @EncodeDefault(EncodeDefault.Mode.NEVER)
         val capabilityRequestBudget: Int? = null,
