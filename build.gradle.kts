@@ -425,6 +425,11 @@ val macApplicationBrandMarkSource =
         "packaging/macos-app/vextreme-mark.svg",
     )
 
+val macApplicationIconArtworkSource =
+    layout.projectDirectory.file(
+        "packaging/macos-app/vextreme-app-icon.svg",
+    )
+
 val macApplicationVersionProperty =
     providers.gradleProperty(
         "vexlifeAppVersion",
@@ -2223,6 +2228,9 @@ tasks.register(
     inputs.file(
         macApplicationBrandMarkSource,
     )
+    inputs.file(
+        macApplicationIconArtworkSource,
+    )
     inputs.property(
         "vexlifeAppVersion",
         macApplicationVersionProperty.orElse(
@@ -2404,9 +2412,9 @@ tasks.register(
             resources,
         )
 
-        // VexLife reuses the current Vextreme brand mark rather than inventing a second app logo.
-        // qlmanage renders the exact source SVG with macOS's native SVG/Quick Look stack, then
-        // iconutil forms the ordinary multi-resolution application icon resource.
+        // VexLife reuses the current Vextreme mark, but the app icon needs a real icon canvas.
+        // The source-owned 1024x1024 artwork centers/scales the mark intentionally so Quick Look
+        // cannot turn a tiny 120x120 logo into a "logo printed on a blank page" icon.
         val iconWork =
             outputRoot.resolve(
                 "icon-work",
@@ -2422,13 +2430,13 @@ tasks.register(
                 "1024",
                 "-o",
                 iconWork.toString(),
-                macApplicationBrandMarkSource
+                macApplicationIconArtworkSource
                     .asFile
                     .toPath()
                     .toString(),
             ),
         )
-        val renderedBrandMark =
+        val renderedAppIcon =
             Files.list(
                 iconWork,
             )
@@ -2454,7 +2462,7 @@ tasks.register(
                 )
         require(
             Files.size(
-                renderedBrandMark,
+                renderedAppIcon,
             ) >
                 0,
         ) {
@@ -2491,7 +2499,7 @@ tasks.register(
                                 "-z",
                                 pixels.toString(),
                                 pixels.toString(),
-                                renderedBrandMark.toString(),
+                                renderedAppIcon.toString(),
                                 "--out",
                                 iconset.resolve(
                                     filename,
