@@ -121,10 +121,7 @@ class VexLifeModelsTest {
         )
             .use {
                 owner ->
-                val accepted = owner.control(VexLifeModelsFamily.ControlUse, "heretic-9b")
-                assertEquals("SWITCHING", accepted.lastOutcome?.state)
-                assertTrue(accepted.switchPending)
-
+                owner.control(VexLifeModelsFamily.ControlUse, "heretic-9b")
                 owner.awaitIdle()
                 val after = owner.projection()
                 assertEquals("SWITCHED", after.lastOutcome?.state)

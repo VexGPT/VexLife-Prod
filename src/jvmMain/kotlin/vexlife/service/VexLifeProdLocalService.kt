@@ -70,6 +70,7 @@ class VexLifeProdLocalService private constructor(
     private val currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
     private val memoryReader: (Path) -> VexLifeMemoryContract.Context,
     private val servingModelRef: () -> String?,
+    private val servingRuntimeReceiptRef: () -> String,
     private val modelSwitcher: VexLifeModels.Switcher?,
     privateCompletionOverride: VexLifePrivateConversation.Completion? = null,
 ) : AutoCloseable {
@@ -416,6 +417,13 @@ class VexLifeProdLocalService private constructor(
                         .qualifiedRuntimeEvidence
                         .modelRef
                 },
+                servingRuntimeReceiptRef = {
+                    sessionRef
+                        .get()
+                        .result
+                        .qualifiedRuntimeEvidence
+                        .runtimeReceiptRef
+                },
                 modelSwitcher = switcher,
                 privateCompletion =
                     VexLifePrivateConversation.Completion {
@@ -451,6 +459,7 @@ class VexLifeProdLocalService private constructor(
             memoryReader: ((Path) -> VexLifeMemoryContract.Context)? = null,
             privateCompletion: VexLifePrivateConversation.Completion? = null,
             servingModelRef: (() -> String?)? = null,
+            servingRuntimeReceiptRef: (() -> String)? = null,
             modelSwitcher: VexLifeModels.Switcher? = null,
         ): VexLifeProdLocalService =
             startAt(
@@ -478,6 +487,11 @@ class VexLifeProdLocalService private constructor(
                         ?: {
                             setup.qualifiedRuntimeEvidence.modelRef
                         },
+                servingRuntimeReceiptRef =
+                    servingRuntimeReceiptRef
+                        ?: {
+                            setup.qualifiedRuntimeEvidence.runtimeReceiptRef
+                        },
                 modelSwitcher = modelSwitcher,
             )
 
@@ -495,6 +509,9 @@ class VexLifeProdLocalService private constructor(
             privateCompletion: VexLifePrivateConversation.Completion? = null,
             servingModelRef: () -> String? = {
                 startupSetup.qualifiedRuntimeEvidence.modelRef
+            },
+            servingRuntimeReceiptRef: () -> String = {
+                startupSetup.qualifiedRuntimeEvidence.runtimeReceiptRef
             },
             modelSwitcher: VexLifeModels.Switcher? = null,
         ): VexLifeProdLocalService {
@@ -564,6 +581,7 @@ class VexLifeProdLocalService private constructor(
                         currentStateObserver = currentStateObserver,
                         memoryReader = memoryReader,
                         servingModelRef = servingModelRef,
+                        servingRuntimeReceiptRef = servingRuntimeReceiptRef,
                         modelSwitcher = modelSwitcher,
                         privateCompletionOverride = privateCompletion,
                     )
@@ -943,8 +961,10 @@ class VexLifeProdLocalService private constructor(
                     processPid = ProcessHandle.current().pid(),
                     frameHostOrigin = frameOrigin,
                     runtimeCurrentness = "NOT_REOBSERVED_BY_SERVICE",
+                    // Wire name retained for v3 compatibility; after an in-process model switch
+                    // this is the runtime receipt bound to the service's current Session.
                     startupQualifiedRuntimeReceiptRef =
-                        startupSetup.qualifiedRuntimeEvidence.runtimeReceiptRef,
+                        servingRuntimeReceiptRef(),
                     currentConversationHeadSha256 =
                         conversation.currentConversationHeadSha256,
                     effectsPerformed = false,

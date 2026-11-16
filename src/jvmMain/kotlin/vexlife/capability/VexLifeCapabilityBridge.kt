@@ -456,16 +456,29 @@ object VexLifeCapabilityBridge {
         when (action) {
             "fetch" -> {
                 val url = args.string("url").orEmpty()
-                val offset = args.integer("offset") ?: 0
-                if (offset < 0) {
+                val parsedOffset = args.integer("offset")
+                if (
+                    "offset" in args &&
+                    parsedOffset ==
+                        null
+                ) {
                     Body(
-                        State.REFUSED,
+                        State.INVALID_REQUEST,
                         url,
-                        "web fetch offset must be zero or greater",
+                        "web fetch offset must be one integer character coordinate",
                         untrusted = false,
                     )
                 } else {
-                    when (
+                    val offset = parsedOffset ?: 0
+                    if (offset < 0) {
+                        Body(
+                            State.REFUSED,
+                            url,
+                            "web fetch offset must be zero or greater",
+                            untrusted = false,
+                        )
+                    } else {
+                        when (
                         val outcome = VexLifeWebReach.fetch(url, owners.webTransport, owners.resolver)
                     ) {
                         is VexLifeWebReach.Outcome.Fetched -> {
@@ -524,8 +537,9 @@ object VexLifeCapabilityBridge {
                                 untrusted = false,
                             )
 
-                        is VexLifeWebReach.Outcome.Found ->
-                            Body(State.FAILED, url, "unexpected search result", untrusted = false)
+                            is VexLifeWebReach.Outcome.Found ->
+                                Body(State.FAILED, url, "unexpected search result", untrusted = false)
+                        }
                     }
                 }
             }
