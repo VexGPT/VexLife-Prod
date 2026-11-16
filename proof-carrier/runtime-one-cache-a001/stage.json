@@ -1,0 +1,36 @@
+{
+  "repositoryRef": "primary",
+  "expectedBase": "655e7c78cefba06a5e87afad285bb25a08632f05",
+  "expectedHead": "63356951c1e692293612f95434e03f1b7e1d47f0",
+  "expectedTree": "1cbe0b13ff332c99cf18e6d805d17270ab12805c",
+  "branch": "VXG-111626-runtime-one-cache-current-main-a001",
+  "proofCommands": [
+    {
+      "command": "/bin/bash",
+      "args": [
+        "-lc",
+        "set -euo pipefail; J21=\"$(/usr/libexec/java_home -v 21 2>/dev/null)\" || { printf \"%s\\n\" \"Runtime one-cache A001: JDK 21 unavailable.\" >&2; exit 21; }; [ -n \"$J21\" ] && [ -x \"$J21/bin/java\" ] || exit 22; export JAVA_HOME=\"$J21\"; export PATH=\"$JAVA_HOME/bin:$PATH\"; \"$JAVA_HOME/bin/java\" -version; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" jvmTest compileKotlinJs compileTestKotlinJs checkVexLifeStrings; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" -PvexlifeAppVersion=0.0.0 archiveVexLifeProdMacApplication; APP_DIR=\"build/vexlife-prod-mac-application/63356951c1e692293612f95434e03f1b7e1d47f0\"; DMG=\"$APP_DIR/VexLife-macOS-AppleSilicon.dmg\"; SUM=\"$APP_DIR/VexLife-macOS-AppleSilicon.dmg.sha256\"; RECEIPT=\"$APP_DIR/VexLife-macOS-AppleSilicon.receipt.json\"; test -f \"$DMG\" && test -f \"$SUM\" && test -f \"$RECEIPT\"; (cd \"$APP_DIR\" && /usr/bin/shasum -a 256 -c \"VexLife-macOS-AppleSilicon.dmg.sha256\"); /usr/bin/hdiutil verify \"$DMG\"; [ -z \"$(/usr/bin/git status --porcelain=v1 -uall)\" ] || { /usr/bin/git status --porcelain=v1 -uall >&2; exit 31; }"
+      ],
+      "proofClass": "TEST",
+      "candidateEvidence": true,
+      "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+      "predicateRef": "predicate.vexlife-prod.runtime-one-cache.source-build.a001",
+      "timeoutMs": 1200000
+    }
+  ],
+  "maxFiles": 10,
+  "stateRef": "state.vexlife-prod.runtime-one-cache",
+  "currentLifecycleState": "SOURCE_READY",
+  "currentGoal": "Prove exact #195 source/build/DMG formation.",
+  "remainingGoals": [
+    "Run lived failure-relevant runtime stress using temporary #196 carrier after source/build PASS.",
+    "Merge #195 only if the one-cache candidate survives the lived failure shape."
+  ],
+  "onPass": {
+    "lifecycleState": "SOURCE_READY",
+    "nextFunction": "F08.EXECUTE_OR_HANDOFF",
+    "nextOwner": "Victor+Operations",
+    "whyThisIsNext": "Exact #195 source/build is complete; lived runtime stress remains."
+  },
+  "resultFilename": "RETURN-VEXLIFE-RUNTIME-ONE-CACHE-MAC-A001.zip"
+}
