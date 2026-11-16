@@ -423,7 +423,7 @@ object HereticModelCatalog {
      * Setup, Settings, artifact delivery/materialization and runtime selection consume [Entries];
      * they do not need model-specific branches merely because another model is offered.
      */
-private val Qwen27BDefinition =
+    private val Qwen27BDefinition =
         Entry(
             identity = HereticProductIdentity.Current,
             handle = "heretic-27b",
