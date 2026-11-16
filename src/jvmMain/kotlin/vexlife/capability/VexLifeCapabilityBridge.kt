@@ -707,7 +707,7 @@ object VexLifeCapabilityBridge {
 
     private fun resultMessage(body: Body, text: String, cut: Boolean, requestNumber: Int): String {
         val meta = buildMap {
-            put("request", "$requestNumber of $MaximumRequestsPerTurn")
+            put("request", requestNumber.toString())
             put("state", body.state.name)
             body.target?.let { put("target", it) }
             putAll(body.facts)
@@ -716,12 +716,12 @@ object VexLifeCapabilityBridge {
         val remaining = MaximumRequestsPerTurn - requestNumber
         val next =
             if (remaining > 0 && body.state != State.LIMIT_REACHED) {
-                "You can make another request ($remaining left this turn) or answer the person now."
+                "Continue from this returned evidence. Use another read when its result can materially " +
+                    "change what you understand; otherwise answer the person."
             } else {
-                "No requests are left this turn. Do not send another capability request in this turn. " +
-                    "Answer the person now from what you have. If a responsible answer still needs more " +
-                    "outside truth, share what you currently understand and what remains missing, then " +
-                    "ask the person to send another message so you can continue in a fresh turn."
+                "This turn's reach boundary is now reached. Answer the person from established truth. " +
+                    "If material outside truth is still missing, name what remains missing and continue " +
+                    "when the person sends another message."
             }
         return listOf(
                 VexLifeCapabilityRequest.ResultHeader,

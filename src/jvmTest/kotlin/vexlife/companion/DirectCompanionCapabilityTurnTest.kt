@@ -170,12 +170,13 @@ class DirectCompanionCapabilityTurnTest {
         assertFalse(firstSystem.contains("\"capabilityEntries\""))
         assertTrue(firstSystem.contains("- web: Read the public web"))
         assertTrue(firstSystem.contains(VexLifeCapabilityRequest.RequestHeader))
-        assertTrue(firstSystem.contains("This is a boundary, not a target"))
         assertTrue(
             firstSystem.contains(
-                "ask the person to send another message so I can continue in a fresh turn"
+                "Read-only reaching is ordinary work serving the person's question."
             )
         )
+        assertTrue(firstSystem.contains("the host owns that boundary"))
+        assertFalse(firstSystem.contains("Up to 4 requests per turn"))
 
         // Stage two is stage one plus Vex's own request and the host's typed result.
         assertEquals(calls[0], calls[1].dropLast(2))
