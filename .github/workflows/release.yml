@@ -40,6 +40,15 @@ jobs:
             if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
               echo "v$VERSION already exists; versions are never rebuilt or moved."; exit 1
             fi
+            SHA="$(git rev-parse HEAD)"
+            MAIN_TAG="private-service-image-$SHA"
+            gh release view "$MAIN_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || {
+              echo "Stable $VERSION requires the already-published main build $MAIN_TAG."; exit 1;
+            }
+            MAIN_TARGET="$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$MAIN_TAG" --jq '.target_commitish')"
+            [ "$MAIN_TARGET" = "$SHA" ] || {
+              echo "Main build $MAIN_TAG does not target the stable source $SHA (got $MAIN_TARGET)."; exit 1;
+            }
           fi
           echo "Host: macOS $(sw_vers -productVersion) / $(uname -m)"
 
@@ -58,6 +67,7 @@ jobs:
           ls -la "build/vexlife-prod-service-image/archives/$SHA"
 
       - name: Publish the main build
+        if: ${{ github.event_name == 'push' || inputs.version == '' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
