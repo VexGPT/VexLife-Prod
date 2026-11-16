@@ -295,7 +295,7 @@ class VexLifeProdMacFrontDoorTest {
 
     @Test
     fun runningPriorProductCannotMaskPendingSelectedModelAcquisition() {
-        val model = HereticModelCatalog.Candidate9B
+        val model = HereticModelCatalog.Models.Qwen9B
         val pendingModel =
             currentState().copy(
                 freeStorageBytes = 100L * 1024L * 1024L * 1024L,
