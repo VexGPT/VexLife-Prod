@@ -996,6 +996,16 @@ class VexLifeWorkingContinuityOwner(
                 pressureInput = pressureInput,
                 workingSet = workingSet,
                 priorCheckpoint = current?.checkpoint,
+                rolloverLineageActive =
+                    current
+                        ?.commitReceipt
+                        ?.let {
+                            receipt ->
+                            receipt.disposition ==
+                                "ROLLOVER_COMMITTED" &&
+                                receipt.successorContextRequired
+                        } ==
+                        true,
             )
         require(derived == plan) {
             "working continuity owner source truth does not re-derive the exact plan"
