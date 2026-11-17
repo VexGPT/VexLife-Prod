@@ -1,0 +1,113 @@
+{
+  "schemaVersion": "vexlife-prod.upstream-family-realization-proof/v1",
+  "continuity": "[VXG RealForever]",
+  "attempt": "R010",
+  "productCarrierPr": 227,
+  "productSourceSha": "4878af1e712fd78a1f21dffef87a354676a404c6",
+  "execution": "LOCAL_RELAY_NO_GITHUB_ACTIONS",
+  "earnedBeforeThisAttempt": {
+    "r009ReturnSha256": "d599152012e37bc4ce9943adb920b393802dfe8d8d73de82109fd09439076758",
+    "r009Disposition": "PASS",
+    "runtimeRealizationPromotion": "PASS",
+    "windows4BLivedPath": "PASS"
+  },
+  "purpose": "prove ordinary Product Entry and Settings model semantics consume exact target-realization coverage while preserving Mac adapter behavior and the already-earned Windows lived runtime path",
+  "semanticChain": [
+    "VexLifeProdEntryFamily",
+    "VexLifeModelsFamily",
+    "HereticRuntimeRealization",
+    "HereticRuntimeAvailability",
+    "rightful platform/runtime owner",
+    "qualified realization evidence",
+    "Product binding",
+    "VexLifeProdRuntimeSession.Foundation",
+    "shared Product body"
+  ],
+  "changesUnderProof": {
+    "entryFamily": {
+      "journeyFirstStep": "HOST",
+      "hostHeldFields": [
+        "observedHardware",
+        "requiredHardware",
+        "totalMemoryBytes",
+        "requiredMemoryBytes"
+      ],
+      "modelTargetHeldState": "MODEL_TARGET_HELD",
+      "automaticFallbackForUnsupportedSelection": false
+    },
+    "modelsFamily": {
+      "stateIncludes": "realizableOnTarget",
+      "useRequiresRealization": true,
+      "downloadRequiresRealization": true,
+      "redownloadRequiresRealization": true,
+      "removeMayRemainLawfulForStrayFiles": true
+    },
+    "realizationTopology": {
+      "supportsModelTarget": true,
+      "modelsForTarget": true,
+      "windowsX64CurrentModels": [
+        "heretic-4b"
+      ]
+    },
+    "setupModel": {
+      "targetRefProjected": true,
+      "recommendationFiltersByTargetBeforeMemory": true,
+      "unsupportedExplicitChoiceRejected": true
+    },
+    "settingsModels": {
+      "schemaVersion": "vexlife-prod.models/v2",
+      "targetRefProjected": true,
+      "realizableOnTargetProjected": true,
+      "fitsThisDeviceProjected": true,
+      "servingTargetDerivedFromRealizationRef": true
+    },
+    "macAdapter": {
+      "target": "target.vexlife-prod.macos.arm64",
+      "usesAcceptedCurrentStateModelObservation": true,
+      "mapsAppleHardwareIntoPortableHostHeld": true,
+      "hookDrivenTestFixturesHostPortable": true
+    },
+    "presentation": {
+      "portableHostKeys": true,
+      "portableModelTargetKeys": true,
+      "setupLanguagesPreserved": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ],
+      "fitsThisMacWireFieldRemoved": true
+    }
+  },
+  "proofPolicy": {
+    "stringManifestCheck": "checkVexLifeStrings",
+    "selectedTests": [
+      "VexLifeProdEntryFamilyTest",
+      "VexLifeModelsFamilyTest",
+      "VexLifeModelsTest",
+      "HereticModelCatalogTest",
+      "HereticProductModelTest",
+      "HereticRuntimeRealizationTest",
+      "HereticRuntimeRealizationSequenceTest",
+      "HereticRuntimeRealizationArchitectureTest",
+      "HereticRuntimeAvailabilityTest",
+      "HereticRuntimeContractTest",
+      "DirectCompanionConnectionTest",
+      "DirectCompanionTurnTest",
+      "VexLifeProdLocalSetupTest",
+      "VexLifeProdServiceProcessTest",
+      "VexLifeProdSetupModelTest",
+      "VexLifeProdMacFrontDoorTest",
+      "VexLifeProdSetupProcessTest",
+      "VexLifeWebP1RuntimeArtifactsTest"
+    ],
+    "livedWindowsReproof": true,
+    "realHomeMutation": false,
+    "githubActions": false
+  }
+}
