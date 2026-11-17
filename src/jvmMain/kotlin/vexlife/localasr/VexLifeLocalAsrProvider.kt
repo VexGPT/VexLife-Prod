@@ -47,8 +47,12 @@ internal interface VexLifeLocalAsrProvider {
         const val StateReady = "READY"
         const val StateUnavailable = "UNAVAILABLE"
 
-        fun fromEnvironment(): VexLifeLocalAsrProvider =
-            WhisperCppCliProvider.observeEnvironment()
+        fun fromHome(
+            productHome: Path,
+        ): VexLifeLocalAsrProvider =
+            WhisperCppCliProvider.observeHome(
+                productHome,
+            )
     }
 }
 
@@ -235,45 +239,86 @@ private class WhisperCppCliProvider private constructor(
         private const val ExpectedModelSha256 =
             "a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002"
 
-        private const val ExecutableEnvironment =
-            "VEXLIFE_LOCAL_ASR_WHISPER_CLI"
+        const val ProviderRootRelativePath =
+            "runtime/vexlife-prod/local-asr/whispercpp/v1.9.5"
 
-        private const val ModelEnvironment =
-            "VEXLIFE_LOCAL_ASR_WHISPER_MODEL"
+        const val ExecutableRelativePath =
+            ProviderRootRelativePath +
+                "/bin/whisper-cli"
 
-        private const val SourceEnvironment =
-            "VEXLIFE_LOCAL_ASR_WHISPER_SOURCE_SHA"
+        const val ModelRelativePath =
+            ProviderRootRelativePath +
+                "/models/ggml-base.en.bin"
 
-        fun observeEnvironment(): WhisperCppCliProvider {
+        const val SourceIdentityRelativePath =
+            ProviderRootRelativePath +
+                "/provider-source.txt"
+
+        fun observeHome(
+            productHome: Path,
+        ): WhisperCppCliProvider {
+            val home =
+                productHome
+                    .toAbsolutePath()
+                    .normalize()
             val executable =
-                System.getenv(
-                    ExecutableEnvironment,
-                )
-                    ?.takeIf(
-                        String::isNotBlank,
+                home
+                    .resolve(
+                        ExecutableRelativePath,
                     )
-                    ?.let(
-                        Path::of,
-                    )
-                    ?.toAbsolutePath()
-                    ?.normalize()
+                    .normalize()
             val model =
-                System.getenv(
-                    ModelEnvironment,
+                home
+                    .resolve(
+                        ModelRelativePath,
+                    )
+                    .normalize()
+            val sourceIdentity =
+                home
+                    .resolve(
+                        SourceIdentityRelativePath,
+                    )
+                    .normalize()
+
+            fun insideHome(
+                path: Path,
+            ): Boolean =
+                path.startsWith(
+                    home,
                 )
-                    ?.takeIf(
-                        String::isNotBlank,
-                    )
-                    ?.let(
-                        Path::of,
-                    )
-                    ?.toAbsolutePath()
-                    ?.normalize()
+
+            require(
+                insideHome(
+                    executable,
+                ) &&
+                    insideHome(
+                        model,
+                    ) &&
+                    insideHome(
+                        sourceIdentity,
+                    ),
+            ) {
+                "local ASR provider paths must remain inside Vex Home"
+            }
+
             val sourceSha =
-                System.getenv(
-                    SourceEnvironment,
-                )
-                    ?.trim()
+                if (
+                    Files.isRegularFile(
+                        sourceIdentity,
+                        LinkOption.NOFOLLOW_LINKS,
+                    )
+                ) {
+                    runCatching {
+                        Files.readString(
+                            sourceIdentity,
+                            StandardCharsets.UTF_8,
+                        )
+                            .trim()
+                    }
+                        .getOrNull()
+                } else {
+                    null
+                }
 
             fun unavailable(
                 detailRef: String,
@@ -307,8 +352,6 @@ private class WhisperCppCliProvider private constructor(
             }
 
             if (
-                executable ==
-                    null ||
                 !Files.isRegularFile(
                     executable,
                     LinkOption.NOFOLLOW_LINKS,
@@ -323,8 +366,6 @@ private class WhisperCppCliProvider private constructor(
             }
 
             if (
-                model ==
-                    null ||
                 !Files.isRegularFile(
                     model,
                     LinkOption.NOFOLLOW_LINKS,
