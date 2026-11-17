@@ -1,0 +1,29 @@
+name: windows-4b-realization-proof
+
+on:
+  pull_request:
+    paths:
+      - 'src/commonMain/kotlin/vexlife/model/heretic/HereticRuntimeRealization.kt'
+      - 'src/commonMain/kotlin/vexlife/model/heretic/HereticModelConfiguration.kt'
+      - 'src/commonTest/kotlin/vexlife/model/heretic/HereticRuntimeRealizationTest.kt'
+      - '.github/workflows/windows-4b-realization-proof.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  proof:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Prove realization seam
+        shell: pwsh
+        run: |
+          .\gradlew.bat --no-daemon --max-workers=1 jvmTest --tests "vexlife.model.heretic.HereticRuntimeRealizationTest"
