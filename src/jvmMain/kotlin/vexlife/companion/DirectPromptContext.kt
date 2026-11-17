@@ -7,6 +7,7 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.capability.VexLifeReachDefinitions
 import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
@@ -1079,6 +1080,11 @@ object DirectPromptContext {
                             null ->
                             "FIRST_TURN"
 
+                        selected.isEmpty() &&
+                            workingContinuity ==
+                            null ->
+                            ConversationOverlapHeldTokenBudget
+
                         workingContinuity !=
                             null ->
                             "WORKING_CHECKPOINT_SUCCESSOR"
@@ -1578,9 +1584,14 @@ object DirectPromptContext {
                 if (
                     source.events.isEmpty()
                 ) {
+                    // Not even the exact immediate prior turn fits. That is a truthful terminal
+                    // degradation only when older source still has a way back this turn: returned
+                    // source already, or continuity revisit admitted in the frame. The receipt
+                    // names it (CONVERSATION_OVERLAP_HELD_TOKEN_BUDGET) instead of failing the Send.
                     require(
                         sourceReturnProjection !=
-                            null,
+                            null ||
+                            continuityRevisitAdmitted(fixed),
                     ) {
                         "ordinary continuity prompt requires the exact immediate prior completed turn to remain present"
                     }
@@ -2453,6 +2464,14 @@ object DirectPromptContext {
     }
 
     const val CurrentStateHeader = "VEXLIFE_CURRENT_STATE/v1"
+
+    /** Context mode when durable Conversation exists but not one exact recent event fits. */
+    const val ConversationOverlapHeldTokenBudget = "CONVERSATION_OVERLAP_HELD_TOKEN_BUDGET"
+
+    private fun continuityRevisitAdmitted(fixed: VerifiedFixedContext): Boolean =
+        fixed.capabilityFrame?.frame?.availableCapabilityRefs?.contains(
+            VexLifeReachDefinitions.RevisitRef,
+        ) == true
 
     internal val CurrentStateLead =
         listOf(

@@ -36,7 +36,7 @@ internal object VexLifeReachDefinitions {
     const val RevisitResource = "resource.vexlife-prod.continuity.revisit"
 
     const val RevisitExampleArguments =
-        """{"queries":[{"terms":["launch date"]},{"terms":["ship day","release"]},""" +
+        """{"queries":[["launch","date"],["ship day"],""" +
             """{"corrections":true,"window":{"lastHours":5,"lastTurns":20}}]}"""
 
     private val Roles = listOf(VexLifeCapabilityAtlas.CompanionRoleRef)
@@ -321,13 +321,14 @@ internal object VexLifeReachDefinitions {
             ),
             Definition(
                 capabilityRef = RevisitRef,
-                handle = "revisit",
+                handle = "continuity",
                 purpose =
-                    "Gather older context in one request: several queries at once over this " +
-                        "Conversation's exact turns, my Memory pages and where the work stands. " +
-                        "Exact words come back with when they were said, turns already in view are " +
-                        "named instead of repeated, and anything not returned is listed with how " +
-                        "to ask for it.",
+                    "Revisit older continuity in one request: several queries at once over this " +
+                        "Conversation's exact turns, my current Memory and where the work stands. " +
+                        "Exact words come back with when they were said, what is already in view " +
+                        "(turns or Memory) is named instead of repeated, the statements the work " +
+                        "names as current are resolved through Memory, and anything not returned " +
+                        "is listed with how to ask for it.",
                 defaultStage = VexLifeCapabilityAtlas.Stage.EXECUTABLE,
                 roleRefs = Roles,
                 platformRefs = Platforms,
@@ -341,17 +342,19 @@ internal object VexLifeReachDefinitions {
                 actions =
                     listOf(
                         Action(
-                            action = "gather",
+                            action = "revisit",
                             purpose =
-                                "Run up to 6 queries together. Give different wordings of the same " +
-                                    "question as separate queries: words are matched exactly.",
+                                "Run up to 6 queries together. The terms of one query are clues " +
+                                    "that must all appear; different wordings of the same question " +
+                                    "go in separate queries, because words are matched exactly.",
                             arguments =
                                 listOf(
                                     arg(
                                         "queries",
                                         "object[]",
                                         true,
-                                        "Each has terms (up to 6), seedRefs (turn or event refs), " +
+                                        "Each is an array of clue terms, or an object with terms " +
+                                            "(up to 6, all must appear), seedRefs (turn or event refs), " +
                                             "window {lastHours, lastTurns} (either reaches), " +
                                             "corrections: true, speaker ANY|HUMAN|VEX, or from " +
                                             "(an offset to read on in one seeded event).",

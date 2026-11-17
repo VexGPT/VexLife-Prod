@@ -167,6 +167,50 @@ class DirectPromptCurrentStateTest {
             )
         }
     }
+
+    @Test
+    fun whenNotOneExactRecentEventFitsTheDegradationIsNamedAndContinuityStaysReachable() =
+        withHome { home ->
+            val store = DirectConversationStore(home)
+            store.withWriterLease {
+                complete(home, ask("huge", "Paste: " + "p".repeat(800_000)), "Received.")
+            }
+            store.withWriterLease {
+                val request = ask("after", "Where were we?")
+                val prior = immediatePriorCompletedTurn()
+                val held =
+                    DirectPromptContext.materializeContinuity(
+                        conversationOwner = this,
+                        prior = prior,
+                        currentRequest = request,
+                        runtimeEvidence = runtimeEvidence(),
+                        sourceReturnProtocolEnabled = true,
+                        conversationExtentIncluded = true,
+                        capabilityRequestsAdmitted = true,
+                    )
+                assertEquals(
+                    DirectPromptContext.ConversationOverlapHeldTokenBudget,
+                    held.receipt.contextMode,
+                )
+                assertTrue(held.receipt.selectedConversationEventRefs.isEmpty())
+                assertTrue(
+                    vexlife.capability.VexLifeReachDefinitions.RevisitRef in
+                        held.receipt.capabilityFrameSnapshot!!.availableCapabilityRefs
+                )
+                // Without a way back to older source this turn, the Send still refuses, as before.
+                kotlin.test.assertFailsWith<IllegalArgumentException> {
+                    DirectPromptContext.materializeContinuity(
+                        conversationOwner = this,
+                        prior = prior,
+                        currentRequest = request,
+                        runtimeEvidence = runtimeEvidence(),
+                        sourceReturnProtocolEnabled = true,
+                        conversationExtentIncluded = true,
+                        capabilityRequestsAdmitted = false,
+                    )
+                }
+            }
+        }
 }
 
 // [VXG RealForever]

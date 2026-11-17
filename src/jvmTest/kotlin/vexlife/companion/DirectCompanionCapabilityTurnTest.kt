@@ -171,7 +171,7 @@ class DirectCompanionCapabilityTurnTest {
         assertFalse(firstSystem.contains("Now: AVAILABLE"))
         val firstCurrent =
             calls[0].single { it.first == "user" && it.second.startsWith(DirectPromptContext.CurrentStateHeader) }.second
-        assertTrue(firstCurrent.contains("Now: AVAILABLE — atlas, conversation, github, home"))
+        assertTrue(firstCurrent.contains("Now: AVAILABLE — atlas, continuity, conversation, github, home"))
         assertFalse(firstSystem.contains("\"capabilityEntries\""))
         assertTrue(firstSystem.contains("- web: Read the public web"))
         assertTrue(firstSystem.contains(VexLifeCapabilityRequest.RequestHeader))

@@ -16,6 +16,8 @@ import vexlife.conversation.DirectConversationStore
 import vexlife.filesystem.VexOwnedPath
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.continuity.VexLifeContextRevisit
+import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticModelConfiguration
@@ -734,6 +736,7 @@ object DirectCompanionTurn {
                     )
                 }
 
+                val plan = completed.workingContinuity.plan?.state?.name ?: "NONE"
                 try {
                     hooks.commitWorkingContinuity(
                         productHome,
@@ -741,11 +744,20 @@ object DirectCompanionTurn {
                         completed.workingContinuity,
                         hooks.now(),
                     )
+                    VexLogger.record(
+                        VexLogger.Fact.WorkingContinuityCommitted,
+                        mapOf("turnRef" to completed.turnRef, "plan" to plan),
+                    )
                 } catch (
-                    _: Throwable,
+                    error: Throwable,
                 ) {
                     // The Conversation head is already committed. Working continuity is
                     // post-completion stewardship and must never retroactively become a failed send.
+                    VexLogger.record(
+                        VexLogger.Fact.WorkingContinuityCommitFailed,
+                        mapOf("turnRef" to completed.turnRef, "plan" to plan),
+                        detail = error.javaClass.simpleName,
+                    )
                 }
 
                 completed.result
@@ -875,6 +887,40 @@ object DirectCompanionTurn {
         var stageRuntimeEvidence = initialRuntimeEvidence
         var sourceReturnTrace: DirectConversationSourceReturn.Trace? = null
         val exchanges = mutableListOf<VexLifeCapabilityBridge.Exchange>()
+        // Exact current-turn custody for continuity reach: this turn binds which Conversation,
+        // Memory and working position belong to it; the bridge only admits the request. Each owner
+        // is read at most once for the whole turn, on first need.
+        val turnSources =
+            VexLifeContextRevisit.TurnSources(
+                readConversation = { conversationOwner.current() },
+                memory = { baseMemoryAvailability },
+                readWorking = {
+                    val position = baseWorkingContinuity.workingSet
+                    val committed =
+                        VexLifeWorkingContinuityOwner(productHome)
+                            .readCurrent(currentRequest.companionLineageRef, currentRequest.threadRef)
+                    VexLifeContextRevisit.WorkingDirectory(
+                        checkpointRef = committed?.checkpoint?.checkpointRef,
+                        disposition = committed?.commitReceipt?.disposition,
+                        cursorEventRef = committed?.checkpoint?.workingSet?.cursorEventRef,
+                        openLoopRefs = position.openLoopRefs,
+                        currentStatementRefs = position.currentStatementRefs,
+                        activeWorkNodeRefs = position.activeWorkNodeRefs,
+                        currentIntentReceiptRefs = position.currentIntentReceiptRefs,
+                    )
+                },
+                promptResidentEventRefs = {
+                    val receipt = base.materialization.receipt
+                    (receipt.selectedConversationEventRefs +
+                            listOfNotNull(receipt.successorPriorResponseEventRef) +
+                            receipt.sourceReturnSourceEventRefs)
+                        .toSet()
+                },
+                promptResidentStatementRefs = {
+                    base.memoryContext.takeIf { it.included }?.pages.orEmpty().map { it.statementRef }.toSet()
+                },
+                now = hooks.now,
+            )
 
         fun exchangeMessages(): List<CompanionProviderMessage> =
             exchanges.flatMap { listOf(it.assistantMessage, it.resultMessage) }
@@ -917,8 +963,7 @@ object DirectCompanionTurn {
                                 requestNumber = exchanges.size + 1,
                                 tokensAvailable =
                                     base.materialization.receipt.capabilityExchangeAllowanceTokens - usedTokens,
-                                promptResidentEventRefs =
-                                    base.materialization.receipt.selectedConversationEventRefs.toSet(),
+                                turnSources = turnSources,
                             ),
                         owners = hooks.capabilityOwners,
                         estimateTokens = DirectPromptContext::estimatedMessageTokens,
