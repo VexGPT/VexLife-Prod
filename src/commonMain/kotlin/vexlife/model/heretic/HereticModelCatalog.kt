@@ -379,14 +379,16 @@ object HereticModelCatalog {
 
     fun byHandle(handle: String): Entry? = Entries.firstOrNull { it.handle == handle }
 
-    /** Whether [entry] wants no more memory than this Mac has. Unknown memory fits nothing. */
+    /** Whether [entry] wants no more memory than this host reports. Unknown memory fits nothing. */
     fun fits(entry: Entry, totalMemoryBytes: Long?): Boolean =
         totalMemoryBytes != null && totalMemoryBytes >= entry.recommendedMemoryBytes
 
     /**
-     * The model a Home that has not chosen yet starts with on this Mac: the largest offered model
-     * that fits its memory (the certified 27B on a Mac like Victor's), the smallest when none fits,
-     * the certified default when memory is unknown. The person can choose any offered model.
+     * Catalog-only memory recommendation across all offered models.
+     *
+     * This deliberately does NOT answer whether a model has a runtime realization for the current
+     * target. Platform/setup consumers must intersect catalog choice with [HereticRuntimeRealization]
+     * coverage before presenting or persisting a runnable choice.
      */
     fun recommendedFor(totalMemoryBytes: Long?): Entry =
         if (totalMemoryBytes == null) Default
