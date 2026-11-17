@@ -383,11 +383,13 @@ object VexLifeWebP1RuntimeArtifacts {
                   'aria-label',
                   active ? 'Stop local dictation' : capability.ready ? 'Start local dictation' : 'Local dictation unavailable'
                 );
-                ui.voiceInput.title = active
-                  ? 'Stop local dictation'
-                  : capability.ready
-                    ? 'Start local dictation · on-device only'
-                    : capability.detail;
+                ui.voiceInput.title = dictation.mode === 'error' && dictation.status
+                  ? dictation.status
+                  : active
+                    ? 'Stop local dictation'
+                    : capability.ready
+                      ? 'Start local dictation · on-device only'
+                      : capability.detail;
                 if (ui.voiceInputOverlay) ui.voiceInputOverlay.hidden = !overlay;
                 if (ui.voiceInputStatus) {
                   ui.voiceInputStatus.textContent =
@@ -495,10 +497,15 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const dictationErrorMessage = (error) => {
                 const code = String(error ?? '');
-                if (code === 'not-allowed' || code === 'service-not-allowed') {
+                if (
+                  code === 'not-allowed' ||
+                  code === 'service-not-allowed' ||
+                  code === 'NotAllowedError' ||
+                  code === 'Permission denied'
+                ) {
                   return 'Microphone permission is needed for local dictation.';
                 }
-                if (code === 'audio-capture') return 'No usable microphone is available.';
+                if (code === 'audio-capture' || code === 'NotFoundError') return 'No usable microphone is available.';
                 if (code === 'language-not-supported') {
                   return 'On-device dictation is not available for the selected language.';
                 }
@@ -651,7 +658,12 @@ object VexLifeWebP1RuntimeArtifacts {
                   if (session !== dictation.session) return;
                   dictation.desiredActive = false;
                   dictation.mode = 'error';
-                  dictation.status = dictationErrorMessage(error instanceof Error ? error.message : error);
+                  const failure = error instanceof DOMException
+                    ? error.name
+                    : error instanceof Error
+                      ? error.message
+                      : error;
+                  dictation.status = dictationErrorMessage(failure);
                   await stopVoiceWaveform();
                   renderVoiceInput();
                 }
@@ -1278,6 +1290,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const chooseLanguage = async (code) => {
+                if (dictation.desiredActive) await stopVoiceInput(true);
                 try {
                   const response = await fetch(service.settingsPath, {
                     method: 'POST',
