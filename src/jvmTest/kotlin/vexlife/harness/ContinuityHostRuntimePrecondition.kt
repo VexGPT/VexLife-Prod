@@ -13,7 +13,8 @@ import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
  * Host-proof precondition only.
  *
  * This is deliberately outside the continuity-pressure experiment. It selects the existing
- * catalog-owned Qwen4B relationship through the Product model-configuration owner, then may realize
+ * catalog-owned certified Qwen27B relationship through the Product model-configuration owner for
+ * the short semantic discriminator, then may realize
  * that Product runtime only from already-present prerequisites. Acquisition is forbidden. The
  * canonical Conversation writer must already be IDLE; this command never repairs it.
  */
@@ -51,7 +52,7 @@ object ContinuityHostRuntimePrecondition {
             modelConfiguration.read(home.manifest)
                 as? FileHereticModelConfigurationStore.Snapshot.Heretic
                 ?: error("selected Vex Home has no Product runtime model selection")
-        val targetModel = HereticModelCatalog.Candidate4B
+        val targetModel = HereticModelCatalog.Certified27B
         val selection =
             modelConfiguration.selectModel(
                 manifest = home.manifest,
