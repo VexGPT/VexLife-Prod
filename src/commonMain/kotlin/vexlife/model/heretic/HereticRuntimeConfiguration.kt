@@ -22,6 +22,7 @@ object HereticRuntimeConfiguration {
 
     const val RecommendationLivedSafetyFloor = "LIVED_SAFETY_FLOOR"
     const val RecommendationExperimentalCandidate = "EXPERIMENTAL_CANDIDATE"
+    const val RecommendationHeldExperiment = "HELD_EXPERIMENT"
     const val RecommendationSafeFloorUntuned = "SAFE_FLOOR_UNTUNED"
 
     @Serializable
@@ -109,9 +110,12 @@ object HereticRuntimeConfiguration {
 
             HereticModelCatalog.Models.Qwen4B.modelRef ->
                 Recommendation(
-                    promptCacheEntries = Qwen4BExperimentalPromptCacheEntries,
+                    // The lived cache-3 run started successfully but then remained in one provider
+                    // generation for 7+ minutes while the person observed repetitive output.
+                    // Preserve 1 as the recommendation until a focused successor earns >1.
+                    promptCacheEntries = SafetyFloorPromptCacheEntries,
                     maximumPromptCacheEntries = Qwen4BExperimentalPromptCacheEntries,
-                    standing = RecommendationExperimentalCandidate,
+                    standing = RecommendationHeldExperiment,
                     reasonKey = "workspace.description.model-cache-recommendation-4b",
                 )
 
