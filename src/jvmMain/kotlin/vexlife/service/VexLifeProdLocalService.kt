@@ -805,6 +805,11 @@ class VexLifeProdLocalService private constructor(
                         exchange,
                     )
 
+                VexLifeProdServiceContract.ConversationTurnPath ->
+                    handleConversationTurn(
+                        exchange,
+                    )
+
                 VexLifeProdServiceContract.ConversationPath ->
                     handleConversation(
                         exchange,
@@ -1301,6 +1306,53 @@ class VexLifeProdLocalService private constructor(
             status = 409,
             code = "VISION_LOOK_NOT_YET_ADMITTED_FROM_PERSISTENT_SCOPE",
             message = "VexLife Vision LOOK remains held until the persistent-scope LOOK executor is accepted",
+        )
+    }
+
+    private fun conversationTurnState():
+        VexLifeConversationTurnFamily.State {
+        val active =
+            activeTurn.get()
+        return VexLifeConversationTurnFamily.observe(
+            activeAttemptRef =
+                active
+                    ?.attempt
+                    ?.ref,
+            cancellationRequested =
+                active
+                    ?.cancellation
+                    ?.cancellationRequested
+                    ?: false,
+        )
+    }
+
+    private fun conversationTurnProjection():
+        VexLifeProdServiceContract.ConversationTurnProjection {
+        val state =
+            conversationTurnState()
+        return VexLifeProdServiceContract.ConversationTurnProjection(
+            schemaVersion =
+                VexLifeProdServiceContract.ConversationTurnProjectionSchema,
+            state = state.stateRef,
+            display =
+                VexLifeConversationTurnFamily.displayStateFor(
+                    state,
+                ),
+            effectsPerformed = false,
+        )
+    }
+
+    private fun handleConversationTurn(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "GET",
+        )
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value = conversationTurnProjection(),
         )
     }
 
