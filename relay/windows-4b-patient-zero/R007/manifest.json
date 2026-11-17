@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "vexlife-prod.windows-4b-runtime-realization-promotion/v1",
+  "continuity": "[VXG RealForever]",
+  "attempt": "R007",
+  "productCarrierPr": 227,
+  "productSourceSha": "5597bd071ec0832f0e9bc4993bc4064e315f5998",
+  "execution": "LOCAL_RELAY_NO_GITHUB_ACTIONS",
+  "purpose": "prove the post-R006 architecture promotion preserves the lived Windows path while making MLX/llama.cpp one readable realization contract",
+  "earnedBeforeThisAttempt": {
+    "r006TerminalPatientZero": true,
+    "windows4BEndToEnd": true,
+    "sharedServiceFixedPort": true,
+    "conversationRestartContinuity": true
+  },
+  "architecturePromotion": {
+    "realizationOwner": "vexlife.model.heretic.HereticRuntimeRealization",
+    "sequenceOwner": "vexlife.model.heretic.HereticRuntimeRealizationSequence",
+    "sequenceStages": [
+      "PRODUCT_MODEL_SELECTION",
+      "REALIZATION_RESOLUTION",
+      "ARTIFACT",
+      "ENVIRONMENT",
+      "RUNTIME_BINARY",
+      "PROCESS",
+      "QUALIFICATION_HEALTH",
+      "QUALIFICATION_MODEL_EXPOSURE",
+      "QUALIFICATION_COMPLETION",
+      "RECEIPT",
+      "PRODUCT_BINDING",
+      "RUNTIME_SESSION"
+    ],
+    "portableSession": "vexlife.local.VexLifeProdRuntimeSession.Foundation",
+    "portableSessionFields": [
+      "state",
+      "productHome",
+      "qualifiedRuntimeEvidence"
+    ],
+    "servicePlatformSeam": "vexlife.service.VexLifeProdLocalService.PlatformProjection",
+    "runtimeBehaviorSource": "HereticRuntimeRealization only",
+    "sharedQualificationSemantics": {
+      "healthPath": "/health",
+      "modelsPath": "/v1/models",
+      "completionPath": "/v1/chat/completions",
+      "maxTokens": 1,
+      "temperature": 0,
+      "enableThinking": false,
+      "stream": false
+    },
+    "modelExposureDifference": {
+      "macMlx": "EXACT_MATERIALIZATION_PATH",
+      "windowsLlamaCpp": "EXACT_REQUEST_MODEL_ALIAS"
+    },
+    "macSetupFieldsExposedToSharedSession": false
+  },
+  "proofPolicy": {
+    "preRuntimeGate": "selected cross-platform architecture tests plus complete test-source compilation",
+    "selectedTests": [
+      "HereticModelCatalogTest",
+      "HereticProductModelTest",
+      "HereticRuntimeRealizationTest",
+      "HereticRuntimeRealizationSequenceTest",
+      "HereticRuntimeRealizationArchitectureTest",
+      "HereticRuntimeAvailabilityTest",
+      "HereticRuntimeContractTest",
+      "DirectCompanionConnectionTest",
+      "VexLifeProdLocalSetupTest",
+      "VexLifeProdServiceProcessTest",
+      "VexLifeProdSetupProcessTest"
+    ],
+    "livedWindowsReproof": true,
+    "realHomeMutation": false,
+    "githubActions": false
+  }
+}
