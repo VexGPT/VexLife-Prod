@@ -39,6 +39,7 @@ object VexLifeModelsFamily :
     data class State(
         val handle: String,
         val files: Files,
+        val realizableOnTarget: Boolean,
         val downloading: Boolean,
         val chosen: Boolean,
         val serving: Boolean,
@@ -96,7 +97,8 @@ object VexLifeModelsFamily :
         return when (control) {
             Use ->
                 if (
-                    currentState.files == Files.PRESENT &&
+                    currentState.realizableOnTarget &&
+                        currentState.files == Files.PRESENT &&
                         !currentState.chosen &&
                         !currentState.downloading
                 )
@@ -104,13 +106,19 @@ object VexLifeModelsFamily :
                 else null
             Download ->
                 if (
-                    (currentState.files == Files.ABSENT || currentState.files == Files.PARTIAL) &&
+                    currentState.realizableOnTarget &&
+                        (currentState.files == Files.ABSENT || currentState.files == Files.PARTIAL) &&
                         idle
                 )
                     stay(Effect.AcquireModel)
                 else null
             Redownload ->
-                if (currentState.files == Files.DAMAGED && idle && !currentState.serving)
+                if (
+                    currentState.realizableOnTarget &&
+                        currentState.files == Files.DAMAGED &&
+                        idle &&
+                        !currentState.serving
+                )
                     stay(Effect.ReplaceModel)
                 else null
             Remove ->
@@ -130,9 +138,11 @@ object VexLifeModelsFamily :
             handle = state.handle,
             status =
                 when {
+                    !state.realizableOnTarget ->
+                        VexLifeText("workspace.status.model-not-supported-on-this-device")
                     state.downloading -> VexLifeText("workspace.status.model-downloading")
                     state.files == Files.PRESENT ->
-                        VexLifeText("workspace.status.model-on-this-mac")
+                        VexLifeText("workspace.status.model-on-this-device")
                     state.files == Files.PARTIAL ->
                         VexLifeText("workspace.status.model-partly-downloaded")
                     state.files == Files.DAMAGED -> VexLifeText("workspace.status.model-damaged")
