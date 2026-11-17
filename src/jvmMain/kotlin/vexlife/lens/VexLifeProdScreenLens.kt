@@ -362,7 +362,7 @@ object VexLifeProdScreenLens {
             disposition = "SCAE_FAMILY",
             summary =
                 "The same ConversationTurn Family decides whether Stop is lawful for the exact Active attempt. RequestCancel is realized by request-local cancellation; the persistent model runtime is not stopped.",
-            returns = "Cancelling then Ready Family DisplayState plus terminal cancellation truth",
+            returns = "fresh Family DisplayState after cancellation request, then Ready after terminal release",
             returnRef = "$n.turn-projection",
             nodes =
                 listOf(
@@ -415,7 +415,7 @@ object VexLifeProdScreenLens {
                         "cancellation requested → same Family",
                         "VexLifeConversationTurnFamily.observe",
                         Common + "conversation/VexLifeConversationTurnFamily.kt",
-                        "The active attempt plus request-local cancellation truth becomes State.Cancelling.",
+                        "If execution is still active, the active attempt plus request-local cancellation truth becomes State.Cancelling; a fast terminal release may already observe Ready.",
                     ),
                     node(
                         "$n.turn",
