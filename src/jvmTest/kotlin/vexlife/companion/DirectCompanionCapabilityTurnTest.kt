@@ -167,7 +167,12 @@ class DirectCompanionCapabilityTurnTest {
         // Stage one was told what it can reach and exactly how to ask.
         val firstSystem = calls[0].filter { it.first == "system" }.joinToString("\n") { it.second }
         assertTrue(firstSystem.contains("What I can reach this turn, and how to ask for it."))
-        assertTrue(firstSystem.contains("Now: AVAILABLE — atlas, conversation, github, home"))
+        // This turn's states are current state: after history, in VexLife's envelope, not the
+        // stable system block.
+        assertFalse(firstSystem.contains("Now: AVAILABLE"))
+        val firstCurrent =
+            calls[0].single { it.first == "user" && it.second.startsWith(DirectPromptContext.CurrentStateHeader) }.second
+        assertTrue(firstCurrent.contains("Now: AVAILABLE — atlas, conversation, github, home"))
         assertFalse(firstSystem.contains("\"capabilityEntries\""))
         assertTrue(firstSystem.contains("- web: Read the public web"))
         assertTrue(firstSystem.contains(VexLifeCapabilityRequest.RequestHeader))
