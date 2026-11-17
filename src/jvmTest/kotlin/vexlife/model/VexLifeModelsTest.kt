@@ -90,7 +90,7 @@ class VexLifeModelsTest {
                     productHome = home,
                     target = HereticRuntimeRealization.WindowsX64,
                     servingModelRef = {
-                        HereticModelCatalog.Candidate4B.modelRef
+                        null
                     },
                     totalMemoryBytes = {
                         64 * gib
