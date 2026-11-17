@@ -81,12 +81,19 @@ object VexLifeWebP1RuntimeArtifacts {
 
         fun voiceDisplay(state: VexLifeVoiceInputFamily.State): String {
             val display = VexLifeVoiceInputFamily.displayStateFor(state)
-            return
-                "Object.freeze({statusKey:" + jsString(display.status.key) +
-                    ",primaryControlRef:" + jsNullable(display.primaryControlRef) +
-                    ",primaryLabelKey:" + jsNullable(display.primaryLabel?.key) +
-                    ",active:" + display.active +
-                    ",attention:" + jsString(display.attention.name) + "})"
+            return buildString {
+                append("Object.freeze({statusKey:")
+                append(jsString(display.status.key))
+                append(",primaryControlRef:")
+                append(jsNullable(display.primaryControlRef))
+                append(",primaryLabelKey:")
+                append(jsNullable(display.primaryLabel?.key))
+                append(",active:")
+                append(display.active)
+                append(",attention:")
+                append(jsString(display.attention.name))
+                append("})")
+            }
         }
 
         val voiceLanguage =
