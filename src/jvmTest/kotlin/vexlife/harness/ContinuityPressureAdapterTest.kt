@@ -11,6 +11,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import vexlife.companion.DirectCompanionConnection
+import vexlife.companion.DirectContinuityOverlapTail
 
 /**
  * The harness adapter runs the shared canonical scenario through the real owners and returns the
@@ -126,6 +127,104 @@ class ContinuityPressureAdapterTest {
             val analysis =
                 Json.parseToJsonElement(Files.readString(dir.resolve("analysis.json"))).jsonObject
             assertEquals("true", analysis.getValue("matchesRecordedSummary").jsonPrimitive.content)
+        } finally {
+            dir.toFile().deleteRecursively()
+        }
+    }
+
+    /**
+     * Through the real turn loop (DirectCompanionTurn, the Working Continuity owners and
+     * DirectPromptContext; only the provider is a fixture): once a rollover is committed, every
+     * later turn stays a bounded WORKING_CHECKPOINT_SUCCESSOR even after pressure falls to Watch or
+     * Normal. Each one advances the rollover lineage with its own request as the cursor, and no
+     * pre-rollover history is replayed. Before the rollover-lineage fix the turn after the first
+     * successor fell back to RECENT_COMPLETED_TURNS, replayed the old Conversation and rolled over
+     * again at once.
+     */
+    @Test
+    fun afterRolloverEveryLaterTurnStaysABoundedSuccessorAsPressureFalls() {
+        val dir = Files.createTempDirectory("vexlife-prod-continuity-pressure-rollover-lineage-")
+        try {
+            val engineered =
+                config(ContinuityPressureAdapter.Stage.projection, dir, sets = 3)
+                    .copy(effectiveInputTokenBudget = 80_000, turnsPerSet = 5, payloadScale = 7)
+            assertEquals(0, ContinuityPressureAdapter.run(engineered))
+            val result =
+                Json.parseToJsonElement(Files.readString(dir.resolve("result.json"))).jsonObject
+            val turns = result.getValue("turns").jsonArray.map { it.jsonObject }
+            fun ext(t: kotlinx.serialization.json.JsonObject) =
+                t.getValue("implementationExtensions")
+                    .jsonObject
+                    .getValue("vexlife-prod.claude-c20/v1")
+                    .jsonObject
+            fun text(t: kotlinx.serialization.json.JsonObject, key: String) =
+                ext(t)[key]?.jsonPrimitive?.content
+            fun mode(t: kotlinx.serialization.json.JsonObject) =
+                t.getValue("prompt").jsonObject.getValue("contextMode").jsonPrimitive.content
+            fun selected(t: kotlinx.serialization.json.JsonObject) =
+                t.getValue("prompt")
+                    .jsonObject
+                    .getValue("selectedConversationEventRefs")
+                    .jsonArray
+                    .map {
+                        it.jsonPrimitive.content
+                    }
+
+            val rollover = turns.indexOfFirst {
+                text(it, "workingContinuityDisposition") == "ROLLOVER_COMMITTED"
+            }
+            assertTrue(
+                rollover in 0 until turns.size - 2,
+                "a rollover is committed with turns after it",
+            )
+            val after = turns.drop(rollover + 1)
+            val formation =
+                turns
+                    .filter { it.getValue("setRef").jsonPrimitive.content == "set.formation" }
+                    .flatMap {
+                        listOf(text(it, "requestEventRef")!!, text(it, "responseEventRef")!!)
+                    }
+                    .toSet()
+
+            after.forEach { t ->
+                val ordinal = t.getValue("ordinal").jsonPrimitive.content
+                assertEquals(
+                    "WORKING_CHECKPOINT_SUCCESSOR",
+                    mode(t),
+                    "turn $ordinal stays a successor",
+                )
+                assertEquals(
+                    "ROLLOVER_COMMITTED",
+                    text(t, "workingContinuityDisposition"),
+                    "turn $ordinal",
+                )
+                assertEquals(
+                    text(t, "requestEventRef"),
+                    text(t, "cursorEventRef"),
+                    "turn $ordinal advances the lineage to its own request",
+                )
+                assertTrue(
+                    selected(t).size <= 2 * DirectContinuityOverlapTail.MaximumPairs,
+                    "turn $ordinal is bounded",
+                )
+                assertTrue(
+                    selected(t).none { it in formation },
+                    "turn $ordinal replays no pre-rollover formation",
+                )
+            }
+            assertTrue(
+                after.any { text(it, "pressureState") in setOf("Watch", "Normal") },
+                "the lineage holds after pressure itself has fallen",
+            )
+            assertEquals(
+                "false",
+                result
+                    .getValue("summary")
+                    .jsonObject
+                    .getValue("postRolloverReplayOscillation")
+                    .jsonPrimitive
+                    .content,
+            )
         } finally {
             dir.toFile().deleteRecursively()
         }

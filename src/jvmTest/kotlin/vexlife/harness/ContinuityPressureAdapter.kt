@@ -1112,6 +1112,8 @@ object ContinuityPressureAdapter {
                                     json.encodeToJsonElement(carried.map { it.second }),
                                 )
                                 put("configurationChanged", changed)
+                                put("requestEventRef", o.result.requestEventRef)
+                                put("responseEventRef", o.result.responseEventRef)
                                 put("pressureState", o.pressureState)
                                 put("planState", o.planState)
                                 put("checkpointRef", o.checkpointRef)
