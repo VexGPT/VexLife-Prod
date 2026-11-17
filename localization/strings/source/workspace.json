@@ -272,7 +272,7 @@
   "workspace.description.models": {
     "strings": {
       "en": {
-        "text": "Choose which local Heretic model Vex thinks with. Smaller models answer sooner and need less memory. Download a model to add it, and remove models you don't use to free space — they stay here to download again."
+        "text": "Choose which local model Vex uses. Smaller models usually respond sooner and use less memory. Selecting a model does not change the running model until you press Start."
       }
     },
     "surfaces": [
@@ -575,34 +575,34 @@
   "workspace.heading.model-swap-process": {
     "strings": {
       "en": {
-        "text": "Model swap process"
+        "text": "Current model"
       },
       "ar": {
-        "text": "عملية تبديل النموذج"
+        "text": "النموذج الحالي"
       },
       "de": {
-        "text": "Modellwechselprozess"
+        "text": "Aktuelles Modell"
       },
       "es": {
-        "text": "Proceso de cambio de modelo"
+        "text": "Modelo actual"
       },
       "fr": {
-        "text": "Processus de changement de modèle"
+        "text": "Modèle actuel"
       },
       "hi": {
-        "text": "मॉडल बदलने की प्रक्रिया"
+        "text": "वर्तमान मॉडल"
       },
       "ja": {
-        "text": "モデル切り替えプロセス"
+        "text": "現在のモデル"
       },
       "ko": {
-        "text": "모델 전환 과정"
+        "text": "현재 모델"
       },
       "pt": {
-        "text": "Processo de troca de modelo"
+        "text": "Modelo atual"
       },
       "zh": {
-        "text": "模型切换流程"
+        "text": "当前模型"
       }
     },
     "surfaces": [
@@ -649,34 +649,34 @@
   "workspace.heading.model-configuration": {
     "strings": {
       "en": {
-        "text": "Selected model configuration"
+        "text": "Performance & memory"
       },
       "ar": {
-        "text": "إعدادات النموذج المحدد"
+        "text": "الأداء والذاكرة"
       },
       "de": {
-        "text": "Konfiguration des ausgewählten Modells"
+        "text": "Leistung & Speicher"
       },
       "es": {
-        "text": "Configuración del modelo seleccionado"
+        "text": "Rendimiento y memoria"
       },
       "fr": {
-        "text": "Configuration du modèle sélectionné"
+        "text": "Performances et mémoire"
       },
       "hi": {
-        "text": "चुने गए मॉडल की कॉन्फ़िगरेशन"
+        "text": "प्रदर्शन और मेमोरी"
       },
       "ja": {
-        "text": "選択したモデルの設定"
+        "text": "性能とメモリ"
       },
       "ko": {
-        "text": "선택한 모델 구성"
+        "text": "성능 및 메모리"
       },
       "pt": {
-        "text": "Configuração do modelo selecionado"
+        "text": "Desempenho e memória"
       },
       "zh": {
-        "text": "所选模型配置"
+        "text": "性能与内存"
       }
     },
     "surfaces": [
@@ -686,34 +686,34 @@
   "workspace.label.model-prompt-cache-entries": {
     "strings": {
       "en": {
-        "text": "Warm prompt cache entries"
+        "text": "Keep recent conversation ready"
       },
       "ar": {
-        "text": "إدخالات ذاكرة التخزين المؤقت الدافئة للموجه"
+        "text": "إبقاء المحادثة الأخيرة جاهزة"
       },
       "de": {
-        "text": "Warme Prompt-Cache-Einträge"
+        "text": "Letzte Unterhaltung bereithalten"
       },
       "es": {
-        "text": "Entradas activas de caché de prompts"
+        "text": "Mantener lista la conversación reciente"
       },
       "fr": {
-        "text": "Entrées actives du cache de prompt"
+        "text": "Garder la conversation récente prête"
       },
       "hi": {
-        "text": "वार्म प्रॉम्प्ट कैश एंट्रियाँ"
+        "text": "हाल की बातचीत तैयार रखें"
       },
       "ja": {
-        "text": "ウォーム・プロンプトキャッシュ数"
+        "text": "最近の会話をすぐ使える状態にする"
       },
       "ko": {
-        "text": "웜 프롬프트 캐시 항목"
+        "text": "최근 대화를 바로 쓸 수 있게 유지"
       },
       "pt": {
-        "text": "Entradas ativas do cache de prompts"
+        "text": "Manter a conversa recente pronta"
       },
       "zh": {
-        "text": "热提示缓存条目"
+        "text": "让最近的对话保持就绪"
       }
     },
     "surfaces": [
@@ -723,34 +723,34 @@
   "workspace.description.model-prompt-cache-entries": {
     "strings": {
       "en": {
-        "text": "How many distinct MLX KV prompt-cache entries may stay warm. More can reduce repeated prefill, but each long cache consumes unified memory."
+        "text": "Vex can keep some of the recent conversation ready between replies. Keeping more ready may reduce waiting on follow-up replies, but it uses more memory. Standard is recommended."
       },
       "ar": {
-        "text": "عدد إدخالات ذاكرة التخزين المؤقت KV الخاصة بـ MLX التي يمكن إبقاؤها دافئة. قد يقلل المزيد منها من إعادة الملء المتكررة، لكن كل ذاكرة تخزين مؤقت طويلة تستهلك ذاكرة موحدة."
+        "text": "يمكن لـ Vex إبقاء جزء من المحادثة الأخيرة جاهزًا بين الردود. إبقاء المزيد جاهزًا قد يقلل انتظار الردود التالية، لكنه يستخدم ذاكرة أكبر. يُوصى بالإعداد القياسي."
       },
       "de": {
-        "text": "Wie viele unterschiedliche MLX-KV-Prompt-Cache-Einträge warm gehalten werden dürfen. Mehr Einträge können wiederholtes Prefill reduzieren, aber jeder lange Cache verbraucht Unified Memory."
+        "text": "Vex kann Teile der letzten Unterhaltung zwischen Antworten bereithalten. Mehr bereitzuhalten kann Wartezeit bei Folgeantworten verringern, benötigt aber mehr Speicher. Standard wird empfohlen."
       },
       "es": {
-        "text": "Cuántas entradas distintas de caché KV de prompts de MLX pueden mantenerse activas. Más entradas pueden reducir el prefill repetido, pero cada caché larga consume memoria unificada."
+        "text": "Vex puede mantener parte de la conversación reciente lista entre respuestas. Mantener más preparada puede reducir la espera en respuestas siguientes, pero usa más memoria. Se recomienda Estándar."
       },
       "fr": {
-        "text": "Nombre d’entrées distinctes du cache KV de prompt MLX qui peuvent rester actives. Davantage d’entrées peut réduire les prefill répétés, mais chaque cache long consomme de la mémoire unifiée."
+        "text": "Vex peut garder une partie de la conversation récente prête entre les réponses. En garder davantage peut réduire l’attente pour les réponses suivantes, mais utilise plus de mémoire. Standard est recommandé."
       },
       "hi": {
-        "text": "MLX की कितनी अलग KV प्रॉम्प्ट-कैश एंट्रियाँ वार्म रखी जा सकती हैं। अधिक एंट्रियाँ बार-बार होने वाले प्रीफिल को घटा सकती हैं, लेकिन हर लंबा कैश यूनिफाइड मेमोरी का उपयोग करता है।"
+        "text": "Vex जवाबों के बीच हाल की बातचीत का कुछ हिस्सा तैयार रख सकता है। अधिक हिस्सा तैयार रखने से अगले जवाब का इंतज़ार कम हो सकता है, लेकिन अधिक मेमोरी लगेगी। Standard की सलाह दी जाती है।"
       },
       "ja": {
-        "text": "保持しておく MLX の KV プロンプトキャッシュの個数です。増やすと繰り返しのプリフィルを減らせる可能性がありますが、長いキャッシュごとにユニファイドメモリを消費します。"
+        "text": "Vex は返信の間、最近の会話の一部をすぐ使える状態に保てます。多く保つほど次の返信の待ち時間が減る可能性がありますが、より多くのメモリを使います。Standard を推奨します。"
       },
       "ko": {
-        "text": "따뜻하게 유지할 수 있는 서로 다른 MLX KV 프롬프트 캐시 항목 수입니다. 더 많이 유지하면 반복 프리필을 줄일 수 있지만, 긴 캐시마다 통합 메모리를 사용합니다."
+        "text": "Vex는 답변 사이에 최근 대화 일부를 바로 사용할 수 있게 유지할 수 있습니다. 더 많이 유지하면 후속 답변 대기 시간이 줄 수 있지만 메모리를 더 사용합니다. Standard를 권장합니다."
       },
       "pt": {
-        "text": "Quantas entradas distintas do cache KV de prompts do MLX podem permanecer ativas. Mais entradas podem reduzir o prefill repetido, mas cada cache longo consome memória unificada."
+        "text": "O Vex pode manter parte da conversa recente pronta entre respostas. Manter mais conteúdo pronto pode reduzir a espera nas respostas seguintes, mas usa mais memória. Recomenda-se Standard."
       },
       "zh": {
-        "text": "允许保持热状态的不同 MLX KV 提示缓存条目数量。更多条目可能减少重复预填充，但每个长缓存都会占用统一内存。"
+        "text": "Vex 可以在两次回复之间让最近对话的一部分保持就绪。保留得越多，后续回复的等待时间可能越短，但会占用更多内存。建议使用 Standard。"
       }
     },
     "surfaces": [
@@ -1061,34 +1061,34 @@
   "workspace.description.model-cache-recommendation-4b": {
     "strings": {
       "en": {
-        "text": "1 is the current recommended safety setting. Values 2–3 remain experimental; the lived cache-3 run stayed active but entered a long repetitive generation and memory pressure, so 3 is held until a focused rerun earns it."
+        "text": "Standard is recommended right now. Higher levels are still experimental because the highest setting previously caused a long repetitive response and heavy memory use."
       },
       "ar": {
-        "text": "القيمة 1 هي إعداد الأمان الموصى به حاليًا. تبقى القيم 2–3 تجريبية؛ ظل تشغيل cache-3 حيًا لكنه دخل في توليد تكراري طويل مع ضغط على الذاكرة، لذلك تبقى 3 معلّقة حتى يثبتها اختبار مركز."
+        "text": "يُنصح حاليًا بالإعداد القياسي. لا تزال المستويات الأعلى تجريبية لأن أعلى إعداد تسبب سابقًا في استجابة تكرارية طويلة واستخدام مرتفع للذاكرة."
       },
       "de": {
-        "text": "1 ist derzeit die empfohlene Sicherheitseinstellung. Werte 2–3 bleiben experimentell; der Live-Lauf mit Cache 3 blieb aktiv, geriet aber in eine lange Wiederholungsschleife mit Speicherdruck. Daher bleibt 3 gehalten, bis ein gezielter Test es bestätigt."
+        "text": "Standard wird derzeit empfohlen. Höhere Stufen bleiben experimentell, weil die höchste Einstellung zuvor zu einer langen Wiederholungsschleife und hoher Speichernutzung führte."
       },
       "es": {
-        "text": "1 es la configuración de seguridad recomendada actualmente. Los valores 2–3 siguen siendo experimentales; la prueba real con caché 3 siguió activa, pero entró en una generación repetitiva prolongada con presión de memoria, así que 3 queda retenido hasta que una prueba enfocada lo valide."
+        "text": "Se recomienda Estándar por ahora. Los niveles superiores siguen siendo experimentales porque la configuración más alta produjo antes una respuesta larga y repetitiva y un uso elevado de memoria."
       },
       "fr": {
-        "text": "1 est le réglage de sécurité actuellement recommandé. Les valeurs 2–3 restent expérimentales ; l’essai réel avec le cache à 3 est resté actif mais est entré dans une longue génération répétitive avec pression mémoire. La valeur 3 reste donc en attente d’un nouvel essai ciblé."
+        "text": "Standard est recommandé pour le moment. Les niveaux supérieurs restent expérimentaux, car le réglage le plus élevé a précédemment provoqué une longue réponse répétitive et une forte utilisation de la mémoire."
       },
       "hi": {
-        "text": "1 वर्तमान अनुशंसित सुरक्षा सेटिंग है। 2–3 अभी प्रयोगात्मक हैं; cache-3 का वास्तविक रन चलता रहा, लेकिन लंबी दोहराव वाली जनरेशन और मेमोरी दबाव में चला गया, इसलिए 3 को केंद्रित पुनः परीक्षण तक रोक कर रखा गया है।"
+        "text": "अभी Standard की सलाह दी जाती है। ऊँचे स्तर अभी भी प्रयोगात्मक हैं क्योंकि सबसे ऊँची सेटिंग ने पहले लंबा दोहराव वाला जवाब और भारी मेमोरी उपयोग पैदा किया था।"
       },
       "ja": {
-        "text": "1 が現在の推奨安全設定です。2～3 は引き続き実験扱いです。cache=3 の実運用ではプロセス自体は生存しましたが、長い反復生成とメモリ圧迫が発生したため、3 は再検証で有効性が確認されるまで保留です。"
+        "text": "現在は Standard を推奨します。高い設定はまだ実験段階です。以前、最大設定で長い反復応答と大きなメモリ使用が発生しました。"
       },
       "ko": {
-        "text": "1이 현재 권장 안전 설정입니다. 2–3은 계속 실험값입니다. cache 3 실사용에서는 프로세스는 살아 있었지만 긴 반복 생성과 메모리 압박이 발생했으므로, 3은 집중 재시험에서 검증될 때까지 보류합니다."
+        "text": "현재는 Standard를 권장합니다. 높은 단계는 아직 실험적입니다. 이전에 가장 높은 설정에서 긴 반복 응답과 높은 메모리 사용이 발생했습니다."
       },
       "pt": {
-        "text": "1 é a configuração de segurança recomendada atualmente. Os valores 2–3 continuam experimentais; o teste real com cache 3 permaneceu ativo, mas entrou em uma geração repetitiva longa com pressão de memória, então 3 fica retido até que um novo teste focado o valide."
+        "text": "Standard é recomendado por enquanto. Os níveis mais altos continuam experimentais porque a configuração máxima anteriormente causou uma resposta longa e repetitiva e alto uso de memória."
       },
       "zh": {
-        "text": "1 是当前推荐的安全设置。2–3 仍属实验值；cache=3 的实际运行保持存活，但进入了长时间重复生成并出现内存压力，因此 3 暂时保持为待验证状态，直到专项复测证明它可用。"
+        "text": "目前建议使用 Standard。更高档位仍属实验性，因为最高设置此前曾导致长时间重复回复和较高的内存占用。"
       }
     },
     "surfaces": [
@@ -1135,34 +1135,34 @@
   "workspace.label.model-state-serving": {
     "strings": {
       "en": {
-        "text": "Serving: {model}"
+        "text": "Vex is using {model}"
       },
       "ar": {
-        "text": "قيد التشغيل: {model}"
+        "text": "يستخدم Vex حاليًا {model}"
       },
       "de": {
-        "text": "Aktiv: {model}"
+        "text": "Vex verwendet {model}"
       },
       "es": {
-        "text": "En servicio: {model}"
+        "text": "Vex está usando {model}"
       },
       "fr": {
-        "text": "En service : {model}"
+        "text": "Vex utilise {model}"
       },
       "hi": {
-        "text": "सेवा दे रहा है: {model}"
+        "text": "Vex अभी {model} का उपयोग कर रहा है"
       },
       "ja": {
-        "text": "稼働中: {model}"
+        "text": "Vex は {model} を使用中"
       },
       "ko": {
-        "text": "실행 중: {model}"
+        "text": "Vex가 {model}을 사용 중"
       },
       "pt": {
-        "text": "Em uso: {model}"
+        "text": "Vex está usando {model}"
       },
       "zh": {
-        "text": "正在运行：{model}"
+        "text": "Vex 正在使用 {model}"
       }
     },
     "surfaces": [
@@ -1172,34 +1172,34 @@
   "workspace.label.model-state-selected": {
     "strings": {
       "en": {
-        "text": "Selected: {model}"
+        "text": "Selected next: {model}"
       },
       "ar": {
-        "text": "محدد: {model}"
+        "text": "المحدد للتشغيل التالي: {model}"
       },
       "de": {
-        "text": "Ausgewählt: {model}"
+        "text": "Als Nächstes ausgewählt: {model}"
       },
       "es": {
-        "text": "Seleccionado: {model}"
+        "text": "Seleccionado para después: {model}"
       },
       "fr": {
-        "text": "Sélectionné : {model}"
+        "text": "Sélectionné ensuite : {model}"
       },
       "hi": {
-        "text": "चुना गया: {model}"
+        "text": "अगला चुना गया: {model}"
       },
       "ja": {
-        "text": "選択中: {model}"
+        "text": "次に選択: {model}"
       },
       "ko": {
-        "text": "선택됨: {model}"
+        "text": "다음으로 선택됨: {model}"
       },
       "pt": {
-        "text": "Selecionado: {model}"
+        "text": "Selecionado em seguida: {model}"
       },
       "zh": {
-        "text": "已选择：{model}"
+        "text": "下一步已选择：{model}"
       }
     },
     "surfaces": [
@@ -1283,34 +1283,34 @@
   "workspace.label.model-cache-current": {
     "strings": {
       "en": {
-        "text": "Warm cache entries: {current} · recommended: {recommended}."
+        "text": "Using {current} · Recommended: {recommended}."
       },
       "ar": {
-        "text": "إدخالات التخزين المؤقت الدافئة: {current} · الموصى به: {recommended}."
+        "text": "قيد الاستخدام: {current} · الموصى به: {recommended}."
       },
       "de": {
-        "text": "Warme Cache-Einträge: {current} · empfohlen: {recommended}."
+        "text": "Aktiv: {current} · Empfohlen: {recommended}."
       },
       "es": {
-        "text": "Entradas activas de caché: {current} · recomendado: {recommended}."
+        "text": "En uso: {current} · Recomendado: {recommended}."
       },
       "fr": {
-        "text": "Entrées de cache actives : {current} · recommandé : {recommended}."
+        "text": "Actuel : {current} · Recommandé : {recommended}."
       },
       "hi": {
-        "text": "वार्म कैश एंट्रियाँ: {current} · अनुशंसित: {recommended}."
+        "text": "अभी: {current} · अनुशंसित: {recommended}."
       },
       "ja": {
-        "text": "ウォームキャッシュ: {current} · 推奨: {recommended}."
+        "text": "現在: {current} · 推奨: {recommended}."
       },
       "ko": {
-        "text": "웜 캐시 항목: {current} · 권장: {recommended}."
+        "text": "현재: {current} · 권장: {recommended}."
       },
       "pt": {
-        "text": "Entradas ativas de cache: {current} · recomendado: {recommended}."
+        "text": "Em uso: {current} · Recomendado: {recommended}."
       },
       "zh": {
-        "text": "热缓存条目：{current} · 推荐：{recommended}。"
+        "text": "当前：{current} · 推荐：{recommended}。"
       }
     },
     "surfaces": [
@@ -1320,34 +1320,34 @@
   "workspace.heading.model-activation": {
     "strings": {
       "en": {
-        "text": "Start Model"
+        "text": "Apply model"
       },
       "ar": {
-        "text": "تشغيل النموذج"
+        "text": "تطبيق النموذج"
       },
       "de": {
-        "text": "Modell starten"
+        "text": "Modell anwenden"
       },
       "es": {
-        "text": "Iniciar modelo"
+        "text": "Aplicar modelo"
       },
       "fr": {
-        "text": "Démarrer le modèle"
+        "text": "Appliquer le modèle"
       },
       "hi": {
-        "text": "मॉडल शुरू करें"
+        "text": "मॉडल लागू करें"
       },
       "ja": {
-        "text": "モデルを開始"
+        "text": "モデルを適用"
       },
       "ko": {
-        "text": "모델 시작"
+        "text": "모델 적용"
       },
       "pt": {
-        "text": "Iniciar modelo"
+        "text": "Aplicar modelo"
       },
       "zh": {
-        "text": "启动模型"
+        "text": "应用模型"
       }
     },
     "surfaces": [
@@ -1357,34 +1357,256 @@
   "workspace.description.model-start-effect": {
     "strings": {
       "en": {
-        "text": "This is the step that changes the model Vex is using. It applies the selected model and configuration."
+        "text": "Choosing a model or changing its settings does not affect Vex until you start it. This is the step that changes the model Vex is using."
       },
       "ar": {
-        "text": "هذه هي الخطوة التي تغيّر النموذج الذي يستخدمه Vex. وهي تطبّق النموذج والإعداد المحددين."
+        "text": "اختيار نموذج أو تغيير إعداداته لا يؤثر على Vex حتى تقوم بتشغيله. هذه هي الخطوة التي تغيّر النموذج الذي يستخدمه Vex."
       },
       "de": {
-        "text": "Dieser Schritt ändert das Modell, das Vex verwendet. Er übernimmt das ausgewählte Modell und seine Konfiguration."
+        "text": "Die Auswahl eines Modells oder das Ändern seiner Einstellungen wirkt sich erst aus, wenn du es startest. Dieser Schritt ändert das Modell, das Vex verwendet."
       },
       "es": {
-        "text": "Este es el paso que cambia el modelo que usa Vex. Aplica el modelo y la configuración seleccionados."
+        "text": "Elegir un modelo o cambiar sus ajustes no afecta a Vex hasta que lo inicias. Este es el paso que cambia el modelo que Vex está usando."
       },
       "fr": {
-        "text": "C’est l’étape qui change le modèle utilisé par Vex. Elle applique le modèle et la configuration sélectionnés."
+        "text": "Choisir un modèle ou modifier ses réglages n’affecte pas Vex tant que vous ne le démarrez pas. C’est cette étape qui change le modèle utilisé par Vex."
       },
       "hi": {
-        "text": "यही वह चरण है जो Vex द्वारा उपयोग किए जा रहे मॉडल को बदलता है। यह चुने गए मॉडल और कॉन्फ़िगरेशन को लागू करता है।"
+        "text": "मॉडल चुनने या उसकी सेटिंग बदलने से Vex पर तब तक असर नहीं पड़ता जब तक आप उसे शुरू नहीं करते। यही चरण Vex द्वारा उपयोग किए जा रहे मॉडल को बदलता है।"
       },
       "ja": {
-        "text": "ここで Vex が使用するモデルが切り替わります。選択したモデルと設定が適用されます。"
+        "text": "モデルを選んだり設定を変えたりしても、開始するまでは Vex に反映されません。ここで Vex が使用するモデルが切り替わります。"
       },
       "ko": {
-        "text": "이 단계에서 Vex가 사용하는 모델이 바뀝니다. 선택한 모델과 구성이 적용됩니다."
+        "text": "모델을 선택하거나 설정을 바꿔도 시작하기 전까지는 Vex에 적용되지 않습니다. 이 단계에서 Vex가 사용하는 모델이 바뀝니다."
       },
       "pt": {
-        "text": "Esta é a etapa que muda o modelo usado pelo Vex. Ela aplica o modelo e a configuração selecionados."
+        "text": "Escolher um modelo ou alterar suas configurações não afeta o Vex até você iniciá-lo. Esta é a etapa que muda o modelo que o Vex está usando."
       },
       "zh": {
-        "text": "这一步会更改 Vex 正在使用的模型，并应用所选模型及其配置。"
+        "text": "选择模型或更改设置都不会立即影响 Vex，直到你启动它。这一步才会更改 Vex 正在使用的模型。"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-cache-current-recommended": {
+    "strings": {
+      "en": {
+        "text": "Using {current} — recommended."
+      },
+      "ar": {
+        "text": "قيد الاستخدام: {current} — الموصى به."
+      },
+      "de": {
+        "text": "Aktiv: {current} — empfohlen."
+      },
+      "es": {
+        "text": "En uso: {current} — recomendado."
+      },
+      "fr": {
+        "text": "Actuel : {current} — recommandé."
+      },
+      "hi": {
+        "text": "अभी: {current} — अनुशंसित।"
+      },
+      "ja": {
+        "text": "現在: {current} — 推奨。"
+      },
+      "ko": {
+        "text": "현재: {current} — 권장."
+      },
+      "pt": {
+        "text": "Em uso: {current} — recomendado."
+      },
+      "zh": {
+        "text": "当前：{current} — 推荐。"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-cache-level-1": {
+    "strings": {
+      "en": {
+        "text": "Standard"
+      },
+      "ar": {
+        "text": "قياسي"
+      },
+      "de": {
+        "text": "Standard"
+      },
+      "es": {
+        "text": "Estándar"
+      },
+      "fr": {
+        "text": "Standard"
+      },
+      "hi": {
+        "text": "Standard"
+      },
+      "ja": {
+        "text": "Standard"
+      },
+      "ko": {
+        "text": "Standard"
+      },
+      "pt": {
+        "text": "Standard"
+      },
+      "zh": {
+        "text": "Standard"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-cache-level-2": {
+    "strings": {
+      "en": {
+        "text": "More recent conversation ready"
+      },
+      "ar": {
+        "text": "إبقاء المزيد من المحادثة الأخيرة جاهزًا"
+      },
+      "de": {
+        "text": "Mehr der letzten Unterhaltung bereithalten"
+      },
+      "es": {
+        "text": "Mantener lista más conversación reciente"
+      },
+      "fr": {
+        "text": "Garder davantage de conversation récente prête"
+      },
+      "hi": {
+        "text": "हाल की बातचीत का अधिक हिस्सा तैयार रखें"
+      },
+      "ja": {
+        "text": "最近の会話をより多く準備"
+      },
+      "ko": {
+        "text": "최근 대화를 더 많이 준비"
+      },
+      "pt": {
+        "text": "Manter mais da conversa recente pronta"
+      },
+      "zh": {
+        "text": "让更多最近对话保持就绪"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-cache-level-3": {
+    "strings": {
+      "en": {
+        "text": "Most recent conversation ready"
+      },
+      "ar": {
+        "text": "إبقاء أكبر قدر من المحادثة الأخيرة جاهزًا"
+      },
+      "de": {
+        "text": "Möglichst viel der letzten Unterhaltung bereithalten"
+      },
+      "es": {
+        "text": "Mantener lista la mayor parte de la conversación reciente"
+      },
+      "fr": {
+        "text": "Garder le plus de conversation récente prête"
+      },
+      "hi": {
+        "text": "हाल की बातचीत का सबसे अधिक हिस्सा तैयार रखें"
+      },
+      "ja": {
+        "text": "最近の会話を最大限準備"
+      },
+      "ko": {
+        "text": "최근 대화를 가장 많이 준비"
+      },
+      "pt": {
+        "text": "Manter o máximo da conversa recente pronta"
+      },
+      "zh": {
+        "text": "让最多的最近对话保持就绪"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-recommended": {
+    "strings": {
+      "en": {
+        "text": "Recommended"
+      },
+      "ar": {
+        "text": "موصى به"
+      },
+      "de": {
+        "text": "Empfohlen"
+      },
+      "es": {
+        "text": "Recomendado"
+      },
+      "fr": {
+        "text": "Recommandé"
+      },
+      "hi": {
+        "text": "अनुशंसित"
+      },
+      "ja": {
+        "text": "推奨"
+      },
+      "ko": {
+        "text": "권장"
+      },
+      "pt": {
+        "text": "Recomendado"
+      },
+      "zh": {
+        "text": "推荐"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-experimental": {
+    "strings": {
+      "en": {
+        "text": "Experimental"
+      },
+      "ar": {
+        "text": "تجريبي"
+      },
+      "de": {
+        "text": "Experimentell"
+      },
+      "es": {
+        "text": "Experimental"
+      },
+      "fr": {
+        "text": "Expérimental"
+      },
+      "hi": {
+        "text": "प्रयोगात्मक"
+      },
+      "ja": {
+        "text": "実験的"
+      },
+      "ko": {
+        "text": "실험적"
+      },
+      "pt": {
+        "text": "Experimental"
+      },
+      "zh": {
+        "text": "实验性"
       }
     },
     "surfaces": [
