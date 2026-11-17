@@ -17,7 +17,7 @@ class VexLifeModelsFamilyTest {
     ) =
         VexLifeModelsFamily.State(
             "heretic-9b",
-            files,
+            artifactPresence,
             downloading,
             chosen,
             serving,

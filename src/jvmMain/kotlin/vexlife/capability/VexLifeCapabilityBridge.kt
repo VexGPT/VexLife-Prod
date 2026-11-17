@@ -221,7 +221,7 @@ object VexLifeCapabilityBridge {
                     Body(
                         ResultState.INVALID_REQUEST,
                         null,
-                        "No capability is named \"${call!!.capability}\". " + handlesLine(),
+                        "No capability is named \"${call.capability}\". " + handlesLine(),
                         untrusted = false,
                     )
                 definition.capabilityRef !in VexLifeReachDefinitions.EnvelopeCapabilityRefs ->
@@ -238,7 +238,7 @@ object VexLifeCapabilityBridge {
                         "${definition.handle} is not AVAILABLE in this turn's frame.",
                         untrusted = false,
                     )
-                else -> dispatch(definition, call!!, admission, ownerBindings)
+                else -> dispatch(definition, call, admission, ownerBindings)
             }
 
         val maximumTokens =
