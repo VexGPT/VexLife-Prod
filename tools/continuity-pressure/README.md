@@ -58,8 +58,8 @@ node tools/continuity-pressure/run.mjs --stage quick \
   capacity or Product hard token limit.
 - **Host runtime precondition (outside the experiment):** the GitHub-backed Mac host-proof carriage
   first requires the canonical Conversation writer to be `IDLE`. It then selects the Product-owned
-  runtime route explicitly, with `allowAcquisition=false` and `allowRuntimeStart=true`, for the
-  already-bound Product model. A historical stable-VexLife predecessor that is not borrowable is
+  runtime route explicitly, with `allowAcquisition=false` and `allowRuntimeStart=true`, after the
+  Product model-configuration owner selects the catalog-owned `Candidate4B` entry. A historical stable-VexLife predecessor that is not borrowable is
   preserved untouched rather than repaired/deleted/retired by the experiment. Product-owned runtime
   start still performs its own exact process census and port-occupancy checks before spawning.
   This may realize/currentize the selected Product runtime in the canonical runtime namespace, but
