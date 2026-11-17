@@ -9,6 +9,7 @@ import java.time.DateTimeException
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
@@ -25,6 +26,7 @@ import vexlife.logging.VexLogger
 import vexlife.text.VexLifeStrings
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.browser.VexLifeProdFrameHost
+import vexlife.companion.DirectCompanionCancellation
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
 import vexlife.companion.DirectPromptContext
@@ -76,6 +78,8 @@ class VexLifeProdLocalService private constructor(
 ) : AutoCloseable {
     private val privateConversation = VexLifePrivateConversation(Path.of(startupSetup.productHome))
     private val personSettings = VexLifePersonSettingsStore(Path.of(startupSetup.productHome))
+    private val activeTurns =
+        ConcurrentHashMap<String, DirectCompanionCancellation>()
     private val diagnostics =
         VexLifeDiagnostics(home = Path.of(startupSetup.productHome), sourceSha = sourceSha).also {
             it.startObserving()
@@ -391,6 +395,7 @@ class VexLifeProdLocalService private constructor(
                         _,
                         intent,
                         observer,
+                        cancellation,
                         ->
                         withCurrentSession {
                             current ->
@@ -398,6 +403,7 @@ class VexLifeProdLocalService private constructor(
                                 session = current,
                                 intent = intent,
                                 progressObserver = observer,
+                                cancellation = cancellation,
                             )
                         }
                     },
@@ -630,6 +636,7 @@ class VexLifeProdLocalService private constructor(
             setup: VexLifeProdLocalSetup.Result,
             intent: DirectCompanionTurn.Intent,
             progressObserver: DirectCompanionTurn.ProgressObserver,
+            cancellation: DirectCompanionCancellation,
         ): DirectCompanionTurn.Result
     }
 
