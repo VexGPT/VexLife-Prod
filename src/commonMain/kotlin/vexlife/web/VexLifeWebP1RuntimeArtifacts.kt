@@ -142,6 +142,189 @@ object VexLifeWebP1RuntimeArtifacts {
                     voiceDisplay(VexLifeVoiceInputFamily.Failed(voiceExampleLanguage, it))
             }
 
+        fun voiceSemanticState(
+            state: VexLifeVoiceInputFamily.State?,
+        ): String {
+            if (state == null) return "null"
+            val holdReason =
+                (state as? VexLifeVoiceInputFamily.Held)
+                    ?.reason
+                    ?.reasonRef
+            val failureReason =
+                (state as? VexLifeVoiceInputFamily.Failed)
+                    ?.reason
+                    ?.reasonRef
+            return buildString {
+                append("Object.freeze({stateRef:")
+                append(jsString(state.stateRef))
+                append(",holdReasonRef:")
+                append(jsNullable(holdReason))
+                append(",failureReasonRef:")
+                append(jsNullable(failureReason))
+                append("})")
+            }
+        }
+
+        fun voiceAct(
+            state: VexLifeVoiceInputFamily.State,
+            control: VexLifeVoiceInputFamily.Control,
+        ): String {
+            val act =
+                VexLifeVoiceInputFamily.resolve(
+                    currentState = state,
+                    control = control,
+                )
+                    ?: return "null"
+            return buildString {
+                append("Object.freeze({admittedState:")
+                append(voiceSemanticState(act.admittedState))
+                append(",effectRef:")
+                append(jsNullable(act.effect?.effectRef))
+                append("})")
+            }
+        }
+
+        val voiceExampleStates =
+            listOf(
+                VexLifeVoiceInputFamily.Ready(voiceExampleLanguage),
+                VexLifeVoiceInputFamily.CheckingLanguage(voiceExampleLanguage),
+                VexLifeVoiceInputFamily.InstallingLanguage(voiceExampleLanguage),
+                VexLifeVoiceInputFamily.RequestingMicrophone(voiceExampleLanguage),
+                VexLifeVoiceInputFamily.Listening(voiceExampleLanguage),
+                VexLifeVoiceInputFamily.Stopping(voiceExampleLanguage),
+                VexLifeVoiceInputFamily.Held(
+                    VexLifeVoiceInputFamily.HoldReason.LocalRecognitionUnavailable
+                ),
+                VexLifeVoiceInputFamily.Failed(
+                    voiceExampleLanguage,
+                    VexLifeVoiceInputFamily.FailureReason.Unknown,
+                ),
+            )
+        val voiceActByState =
+            voiceExampleStates.joinToString(
+                separator = ",",
+                prefix = "{",
+                postfix = "}",
+            ) { state ->
+                jsString(state.stateRef) +
+                    ":Object.freeze({" +
+                    jsString(VexLifeVoiceInputFamily.ControlStart) +
+                    ":" +
+                    voiceAct(state, VexLifeVoiceInputFamily.Start) +
+                    "," +
+                    jsString(VexLifeVoiceInputFamily.ControlStop) +
+                    ":" +
+                    voiceAct(state, VexLifeVoiceInputFamily.Stop) +
+                    "})"
+            }
+
+        val voiceCapabilityStateByFacts =
+            buildList {
+                for (localRecognition in listOf(false, true)) {
+                    for (microphoneApi in listOf(false, true)) {
+                        for (audioFeedback in listOf(false, true)) {
+                            val key =
+                                listOf(
+                                    localRecognition,
+                                    microphoneApi,
+                                    audioFeedback,
+                                )
+                                    .joinToString(":") {
+                                        if (it) "1" else "0"
+                                    }
+                            add(
+                                jsString(key) +
+                                    ":" +
+                                    voiceSemanticState(
+                                        VexLifeVoiceInputFamily.observeCapability(
+                                            personLanguageCode =
+                                                voiceExampleLanguage.personLanguageCode,
+                                            localRecognitionAvailable = localRecognition,
+                                            microphoneApiAvailable = microphoneApi,
+                                            audioFeedbackAvailable = audioFeedback,
+                                        )
+                                    )
+                            )
+                        }
+                    }
+                }
+            }
+                .joinToString(
+                    separator = ",",
+                    prefix = "{",
+                    postfix = "}",
+                )
+
+        val voiceLanguageAvailabilityStateByProviderValue =
+            listOf(
+                "available" to VexLifeVoiceInputFamily.LocalLanguageObservation.Available,
+                "downloadable" to VexLifeVoiceInputFamily.LocalLanguageObservation.InstallRequired,
+                "downloading" to VexLifeVoiceInputFamily.LocalLanguageObservation.InstallRequired,
+                "unavailable" to VexLifeVoiceInputFamily.LocalLanguageObservation.Unavailable,
+            )
+                .joinToString(
+                    separator = ",",
+                    prefix = "{",
+                    postfix = "}",
+                ) { (providerValue, observation) ->
+                    jsString(providerValue) +
+                        ":" +
+                        voiceSemanticState(
+                            VexLifeVoiceInputFamily.observeLocalLanguage(
+                                voiceExampleLanguage,
+                                observation,
+                            )
+                        )
+                }
+
+        val voiceLanguageInstallStateBySuccess =
+            listOf(
+                true to null,
+                false to
+                    VexLifeVoiceInputFamily.observeFailure(
+                        voiceExampleLanguage,
+                        VexLifeVoiceInputFamily.FailureReason.LanguageUnavailable,
+                    ),
+            )
+                .joinToString(
+                    separator = ",",
+                    prefix = "{",
+                    postfix = "}",
+                ) { (success, state) ->
+                    jsString(success.toString()) +
+                        ":" +
+                        voiceSemanticState(state)
+                }
+
+        val voiceFailureStateByReason =
+            VexLifeVoiceInputFamily.FailureReason.entries.joinToString(
+                separator = ",",
+                prefix = "{",
+                postfix = "}",
+            ) { reason ->
+                jsString(reason.reasonRef) +
+                    ":" +
+                    voiceSemanticState(
+                        VexLifeVoiceInputFamily.observeFailure(
+                            voiceExampleLanguage,
+                            reason,
+                        )
+                    )
+            }
+
+        val voiceMicrophoneRequestState =
+            voiceSemanticState(
+                VexLifeVoiceInputFamily.observeMicrophoneRequestStarted(
+                    voiceExampleLanguage
+                )
+            )
+        val voiceRecognitionStartedState =
+            voiceSemanticState(
+                VexLifeVoiceInputFamily.observeRecognitionStarted(
+                    voiceExampleLanguage
+                )
+            )
+
         return """
             // Generated VexLife-Prod A003-faithful presentation over current New-Beginnings owners.
             (() => {
@@ -244,12 +427,16 @@ object VexLifeWebP1RuntimeArtifacts {
                 languages: Object.freeze($voiceLanguage),
                 displayByState: Object.freeze($voiceStateDisplays),
                 holdDisplayByReason: Object.freeze($voiceHoldDisplays),
-                failureDisplayByReason: Object.freeze($voiceFailureDisplays)
-              });
-              // Browser-provider vocabulary stays local to this adapter boundary.
-              const localRecognitionAvailability = Object.freeze({
-                available: 'available',
-                unavailable: 'unavailable'
+                failureDisplayByReason: Object.freeze($voiceFailureDisplays),
+                actByState: Object.freeze($voiceActByState),
+                capabilityStateByFacts: Object.freeze($voiceCapabilityStateByFacts),
+                languageAvailabilityStateByProviderValue:
+                  Object.freeze($voiceLanguageAvailabilityStateByProviderValue),
+                languageInstallStateBySuccess:
+                  Object.freeze($voiceLanguageInstallStateBySuccess),
+                failureStateByReason: Object.freeze($voiceFailureStateByReason),
+                microphoneRequestState: $voiceMicrophoneRequestState,
+                recognitionStartedState: $voiceRecognitionStartedState
               });
 
               const byId = (id) => document.getElementById(id);
