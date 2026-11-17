@@ -2236,7 +2236,7 @@ object DirectPromptContext {
         )
     }
 
-    private const val ReachFrameTokenBudget = 7_000
+    private const val ReachFrameTokenBudget = 16_000
 
     /** Request/return reach admitted in an ordinary direct turn (VexLifeReachDefinitions). */
     private val DirectTurnReachRefs =
