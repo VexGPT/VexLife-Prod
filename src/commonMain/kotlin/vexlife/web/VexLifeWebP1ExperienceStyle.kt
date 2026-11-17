@@ -778,6 +778,10 @@ a.outline-button { display: inline-flex; align-items: center; justify-content: c
   .brand-name { display: none; }
   .utilities { grid-column: 1 / -1; justify-self: stretch; padding: 0; background: none; border: 0; overflow-x: auto; }
 
+  .model-choice-row { grid-template-columns: minmax(0, 1fr); }
+  .model-choice-actions { justify-content: flex-start; }
+  .model-start-button { width: 100%; min-width: 0; }
+
   /* The authored Browser↔Companion relationship remains one Seam. Narrow presentation
      reorients only its renderer manifestation: the same allocation/collapse state becomes
      top/bottom instead of left/right. */
