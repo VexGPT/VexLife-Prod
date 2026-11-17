@@ -46,7 +46,8 @@ object VexLifeCapabilityBridge {
     /** One result never takes more than this, so later requests in the turn still have room. */
     const val MaximumResultTokens = 9_000
 
-    const val TraceSchema = "vexlife-prod.capability-exchange-trace/v1"
+    const val TraceSchemaV1 = "vexlife-prod.capability-exchange-trace/v1"
+    const val TraceSchema = "vexlife-prod.capability-exchange-trace/v2"
 
     enum class State {
         RETURNED,
@@ -126,7 +127,7 @@ object VexLifeCapabilityBridge {
     ) {
         init {
             require(
-                schemaVersion == TraceSchema &&
+                schemaVersion in setOf(TraceSchemaV1, TraceSchema) &&
                     entries.isNotEmpty() &&
                     entries.size <= MaximumRequestsPerTurn + 1
             ) {
