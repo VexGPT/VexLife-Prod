@@ -2272,6 +2272,7 @@ object DirectPromptContext {
             "capability.vexlife.home.read",
             "capability.vexlife.memory.recall",
             "capability.vexlife.conversation.source-return",
+            "capability.vexlife.continuity.revisit",
         )
 
     /**
@@ -2298,6 +2299,7 @@ object DirectPromptContext {
                 listOf(bridge),
             ),
             available("resource.vexlife-prod.conversation.canonical", currentRequest.threadRef),
+            available("resource.vexlife-prod.continuity.revisit", currentRequest.threadRef),
         )
     }
 

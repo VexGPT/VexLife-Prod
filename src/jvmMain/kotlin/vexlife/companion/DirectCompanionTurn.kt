@@ -908,6 +908,8 @@ object DirectCompanionTurn {
                                 requestNumber = exchanges.size + 1,
                                 tokensAvailable =
                                     base.materialization.receipt.capabilityExchangeAllowanceTokens - usedTokens,
+                                promptResidentEventRefs =
+                                    base.materialization.receipt.selectedConversationEventRefs.toSet(),
                             ),
                         owners = hooks.capabilityOwners,
                         estimateTokens = DirectPromptContext::estimatedMessageTokens,

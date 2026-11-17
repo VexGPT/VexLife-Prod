@@ -25,6 +25,7 @@ internal object VexLifeReachDefinitions {
     const val HomeRef = "capability.vexlife.home.read"
     const val MemoryRef = "capability.vexlife.memory.recall"
     const val ConversationRef = "capability.vexlife.conversation.source-return"
+    const val RevisitRef = "capability.vexlife.continuity.revisit"
 
     const val AtlasResource = "resource.vexlife-prod.capability.registry"
     const val WebResource = "resource.vexlife-prod.network.public-web"
@@ -32,6 +33,11 @@ internal object VexLifeReachDefinitions {
     const val HomeResource = "resource.vexlife-prod.home.files"
     const val MemoryResource = "resource.vexlife-prod.memory.current-pages"
     const val ConversationResource = "resource.vexlife-prod.conversation.canonical"
+    const val RevisitResource = "resource.vexlife-prod.continuity.revisit"
+
+    const val RevisitExampleArguments =
+        """{"queries":[{"terms":["launch date"]},{"terms":["ship day","release"]},""" +
+            """{"corrections":true,"window":{"lastHours":5,"lastTurns":20}}]}"""
 
     private val Roles = listOf(VexLifeCapabilityAtlas.CompanionRoleRef)
     private val Platforms = listOf(VexLifeCapabilityAtlas.MacPlatformRef)
@@ -313,11 +319,71 @@ internal object VexLifeReachDefinitions {
                     "src/jvmMain/kotlin/vexlife/companion/DirectConversationSourceReturn.kt",
                 priority = 44,
             ),
+            Definition(
+                capabilityRef = RevisitRef,
+                handle = "revisit",
+                purpose =
+                    "Gather older context in one request: several queries at once over this " +
+                        "Conversation's exact turns, my Memory pages and where the work stands. " +
+                        "Exact words come back with when they were said, turns already in view are " +
+                        "named instead of repeated, and anything not returned is listed with how " +
+                        "to ask for it.",
+                defaultStage = VexLifeCapabilityAtlas.Stage.EXECUTABLE,
+                roleRefs = Roles,
+                platformRefs = Platforms,
+                permissionRef = VexLifeCapabilityAtlas.PermissionNone,
+                resourceRef = RevisitResource,
+                effectClass = "READ_ONLY_LOCAL",
+                resourceClass = "CONTINUITY_OWNERS",
+                modelParticipationClass = "REQUEST_RETURN",
+                sourcePath = "src/jvmMain/kotlin/vexlife/continuity/VexLifeContextRevisit.kt",
+                priority = 45,
+                actions =
+                    listOf(
+                        Action(
+                            action = "gather",
+                            purpose =
+                                "Run up to 6 queries together. Give different wordings of the same " +
+                                    "question as separate queries: words are matched exactly.",
+                            arguments =
+                                listOf(
+                                    arg(
+                                        "queries",
+                                        "object[]",
+                                        true,
+                                        "Each has terms (up to 6), seedRefs (turn or event refs), " +
+                                            "window {lastHours, lastTurns} (either reaches), " +
+                                            "corrections: true, speaker ANY|HUMAN|VEX, or from " +
+                                            "(an offset to read on in one seeded event).",
+                                    ),
+                                    arg(
+                                        "scopes",
+                                        "string[]",
+                                        false,
+                                        "CONVERSATION, MEMORY, WORKING_CONTINUITY; all when omitted.",
+                                    ),
+                                    arg(
+                                        "order",
+                                        "string",
+                                        false,
+                                        "CURRENT_FIRST (default) or CHRONOLOGICAL.",
+                                    ),
+                                    arg("maxTurns", "number", false, "1-12, default 6."),
+                                    arg("maxTokens", "number", false, "500-8000, default 6000."),
+                                ),
+                            exampleArguments = RevisitExampleArguments,
+                            returns =
+                                "Where the work stands, corrections in the person's own words, " +
+                                    "matching turns with every query that found them, Memory " +
+                                    "pages, what was not returned and what was searched.",
+                        )
+                    ),
+            ),
         )
 
     /** The capabilities whose requests travel in [VexLifeCapabilityRequest] envelopes. */
     val EnvelopeCapabilityRefs: List<String> =
-        listOf(AtlasRef, WebRef, RepositoryRef, HomeRef, MemoryRef)
+        listOf(AtlasRef, WebRef, RepositoryRef, HomeRef, MemoryRef, RevisitRef)
 }
 
 // [VXG RealForever]
