@@ -181,7 +181,7 @@ class DirectPromptFoundationalFieldTest {
                 assertEquals(whole.evidence, turnContext.foundationalField)
                 assertEquals(kernel, turnContext.prefixMessages.first().content)
                 assertEquals(
-                    (fixed.prefixMessages + turnContext.suffixMessages).sumOf { tokens(it.content) },
+                    (turnContext.prefixMessages + turnContext.suffixMessages).sumOf { tokens(it.content) },
                     turnContext.turnContextInputTokenEstimate,
                 )
             }
