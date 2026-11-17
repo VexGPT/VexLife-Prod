@@ -1,0 +1,37 @@
+{
+  "repositoryRef": "primary",
+  "expectedBase": "9de6191b2fd415768af2625227edf1ae80c2f439",
+  "expectedHead": "565a3b9ad3cd9c65ba00d7117350dea7e1d76a81",
+  "expectedTree": "e2780ab85e59517aa6f9c3435584f8bb70b15fd9",
+  "branch": "VXG-111726-chatgpt-product-voice-input-family-circuit-a001",
+  "proofCommands": [
+    {
+      "command": "/bin/bash",
+      "args": [
+        "-lc",
+        "set -euo pipefail; J21=\"$(/usr/libexec/java_home -v 21 2>/dev/null)\" || { printf \"%s\\n\" \"VoiceInput Family Circuit A002: JDK 21 is unavailable.\" >&2; exit 21; }; [ -n \"$J21\" ] && [ -x \"$J21/bin/java\" ] || { printf \"%s\\n\" \"VoiceInput Family Circuit A002: resolved JDK is invalid.\" >&2; exit 22; }; export JAVA_HOME=\"$J21\"; export PATH=\"$JAVA_HOME/bin:$PATH\"; \"$JAVA_HOME/bin/java\" -version; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" jvmTest compileKotlinJs compileTestKotlinJs checkVexLifeStrings; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" generateVexLifeWebP1; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" verifyVexLifeWebP1; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" -PvexlifeAppVersion=0.0.0 archiveVexLifeProdMacApplication; APP_DIR=\"build/vexlife-prod-mac-application/565a3b9ad3cd9c65ba00d7117350dea7e1d76a81\"; DMG=\"$APP_DIR/VexLife-macOS-AppleSilicon.dmg\"; SUM=\"$APP_DIR/VexLife-macOS-AppleSilicon.dmg.sha256\"; RECEIPT=\"$APP_DIR/VexLife-macOS-AppleSilicon.receipt.json\"; test -f \"$DMG\" && test -f \"$SUM\" && test -f \"$RECEIPT\"; (cd \"$APP_DIR\" && /usr/bin/shasum -a 256 -c \"VexLife-macOS-AppleSilicon.dmg.sha256\"); /usr/bin/hdiutil verify \"$DMG\"; OUT=\"$HOME/Downloads/VEXLIFE-VOICE-INPUT-FAMILY-CIRCUIT-A002-565a3b9ad3cd\"; /bin/mkdir -p \"$OUT\"; /bin/cp -f \"$DMG\" \"$OUT/VexLife-macOS-AppleSilicon.dmg\"; /bin/cp -f \"$SUM\" \"$OUT/VexLife-macOS-AppleSilicon.dmg.sha256\"; /bin/cp -f \"$RECEIPT\" \"$OUT/VexLife-macOS-AppleSilicon.receipt.json\"; /usr/bin/shasum -a 256 \"$OUT/VexLife-macOS-AppleSilicon.dmg\"; printf \"%s\\n\" \"VoiceInput Family Circuit A002 artifact: $OUT/VexLife-macOS-AppleSilicon.dmg\"; [ -z \"$(/usr/bin/git status --porcelain=v1 -uall)\" ] || { /usr/bin/git status --porcelain=v1 -uall >&2; exit 31; }"
+      ],
+      "proofClass": "TEST",
+      "candidateEvidence": true,
+      "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+      "predicateRef": "predicate.vexlife-prod.voice-input-family-circuit-lived-mac.source-build-dmg.a002",
+      "timeoutMs": 1200000
+    }
+  ],
+  "maxFiles": 10,
+  "stateRef": "state.vexlife-prod.voice-input-family-circuit-lived-mac",
+  "currentLifecycleState": "SOURCE_READY",
+  "currentGoal": "Prove exact PR #231 after the A001 lived failure: browser microphone permission is requested before local language availability/install, exact VoiceInput browser boundary facts reach the existing VexLogger chronology, and local-only recognition/Composer boundaries remain unchanged.",
+  "remainingGoals": [
+    "Return the canonical Relay RETURN to PR #231 / Operations.",
+    "Consume exact A002 source/build/DMG evidence against frozen head/tree 565a3b9ad3cd9c65ba00d7117350dea7e1d76a81 / e2780ab85e59517aa6f9c3435584f8bb70b15fd9.",
+    "If PASS, launch the exact A002 DMG, verify served source currentness, click mic, then export one debug ZIP only if VoiceInput still fails so VexLogger reveals the exact browser stage/code."
+  ],
+  "onPass": {
+    "lifecycleState": "SOURCE_READY",
+    "nextFunction": "F10.REVIEW",
+    "nextOwner": "Operations",
+    "whyThisIsNext": "Permission-first VoiceInput + VexLogger source/build/DMG formation is complete; lived browser permission/language/recognition truth is next."
+  },
+  "resultFilename": "RETURN-VEXLIFE-VOICE-INPUT-FAMILY-CIRCUIT-A002.zip"
+}
