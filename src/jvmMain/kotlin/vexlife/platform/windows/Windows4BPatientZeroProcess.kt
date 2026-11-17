@@ -20,6 +20,7 @@ import vexlife.conversation.DirectConversationStore
 import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
@@ -735,7 +736,7 @@ object Windows4BPatientZeroProcess {
         bindingDisposition: String,
         runtimeDisposition: String,
         runtime: Windows4BPatientZeroRuntime.Started,
-    ): VexLifeProdLocalSetup.Session {
+    ): VexLifeProdRuntimeSession {
         val evidence =
             runtime.evidence
         val result =
@@ -768,66 +769,67 @@ object Windows4BPatientZeroProcess {
                     evidence.requestModel,
             )
 
-        return VexLifeProdLocalSetup.Session(
-            result =
-                result,
-            currentRuntimeEvidence = {
+        return object :
+            VexLifeProdRuntimeSession {
+            override val result: VexLifeProdLocalSetup.Result =
+                result
+
+            override fun currentQualifiedRuntimeEvidence(
+                onRecovery: (() -> Unit)?,
+            ): HereticModelConfiguration.QualifiedRuntimeEvidence =
                 Windows4BPatientZeroRuntime.observeCurrent(
                     runtime,
                 )
-            },
-        )
+
+            override fun observeCurrentQualifiedRuntimeEvidence():
+                HereticModelConfiguration.QualifiedRuntimeEvidence =
+                Windows4BPatientZeroRuntime.observeCurrent(
+                    runtime,
+                )
+        }
     }
 
     private fun startSharedService(
         sourceSha: String,
-        session: VexLifeProdLocalSetup.Session,
+        session: VexLifeProdRuntimeSession,
         home: VexLifeProdHomeFiles.Result,
         model: HereticModelCatalog.Entry,
         modelPath: Path,
     ): VexLifeProdLocalService =
-        VexLifeProdLocalService.startForTest(
+        VexLifeProdLocalService.start(
             sourceSha =
                 sourceSha,
-            setup =
-                session.result,
-            turnExecutor = {
-                _,
-                intent,
-                ->
-                DirectCompanionTurn.perform(
-                    session =
-                        session,
-                    intent =
-                        intent,
-                )
-            },
-            streamingTurnExecutor = {
-                _,
-                intent,
-                observer,
-                ->
-                DirectCompanionTurn.perform(
-                    session =
-                        session,
-                    intent =
-                        intent,
-                    progressObserver =
-                        observer,
-                )
-            },
-            currentStateObserver = {
-                windowsCurrentState(
-                    home =
-                        home,
-                    model =
-                        model,
-                    modelPath =
-                        modelPath,
-                )
-            },
-            hostTotalMemoryBytes =
-                ::currentTotalMemoryBytes,
+            session =
+                session,
+            visionRuntimeExecutablePathOrNull =
+                null,
+            platformProjection =
+                object :
+                    VexLifeProdLocalService.PlatformProjection {
+                    override fun observeCurrentState(
+                        productHome: Path,
+                    ): VexLifeProdServiceContract.CurrentStateProjection {
+                        require(
+                            productHome ==
+                                Path.of(
+                                    home.productHome,
+                                ),
+                        ) {
+                            "Windows Product service changed the selected technical Home"
+                        }
+                        return windowsCurrentState(
+                            home =
+                                home,
+                            model =
+                                model,
+                            modelPath =
+                                modelPath,
+                        )
+                    }
+
+                    override fun totalMemoryBytes(): Long? =
+                        currentTotalMemoryBytes()
+                },
         )
 
     private fun windowsCurrentState(
