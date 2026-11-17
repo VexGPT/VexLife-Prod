@@ -517,5 +517,55 @@
     "surfaces": [
       "workspace.settings"
     ]
+  },
+  "workspace.label.model-fits-this-device": {
+    "strings": {
+      "en": {
+        "text": "fits this device"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-tight-on-this-device": {
+    "strings": {
+      "en": {
+        "text": "more than this device has"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-not-supported-on-this-device": {
+    "strings": {
+      "en": {
+        "text": "not supported on this device"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-on-this-device": {
+    "strings": {
+      "en": {
+        "text": "on this device"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-not-supported-on-this-device": {
+    "strings": {
+      "en": {
+        "text": "not supported on this device"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
   }
 }
