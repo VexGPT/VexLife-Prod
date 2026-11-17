@@ -2191,27 +2191,56 @@ class VexLifeProdLocalService private constructor(
     private fun handleStreamingSend(
         exchange: HttpExchange,
         intent: DirectCompanionTurn.Intent,
+        begin: VexLifeConversationTurnFamily.BeginTurn,
         executor: StreamingTurnExecutor,
     ) {
+        require(
+            intent.idempotencyKey ==
+                begin.attempt.ref,
+        ) {
+            "Conversation Send realization must preserve the Family attempt identity"
+        }
+
         val cancellation =
             DirectCompanionCancellation()
+        val active =
+            ActiveTurn(
+                attempt = begin.attempt,
+                cancellation = cancellation,
+            )
         if (
-            activeTurns.putIfAbsent(
-                intent.idempotencyKey,
-                cancellation,
-            ) !=
-            null
+            !activeTurn.compareAndSet(
+                null,
+                active,
+            )
         ) {
             respondError(
                 exchange = exchange,
                 status = 409,
-                code = "SEND_ALREADY_ACTIVE",
-                message = "This exact Send attempt is already active.",
+                code = "CONVERSATION_SEND_NOT_LAWFUL_NOW",
+                message = "Another Conversation turn is already active.",
             )
             return
         }
+
+        check(
+            conversationTurnState() ==
+                VexLifeConversationTurnFamily.Active(
+                    begin.attempt,
+                ),
+        ) {
+            "active Send realization did not return through ConversationTurn Family observation"
+        }
+
         val executionBinding =
             cancellation.bindCurrentThread()
+
+        fun retireActiveTurn() {
+            activeTurn.compareAndSet(
+                active,
+                null,
+            )
+        }
 
         try {
         exchange.responseHeaders.set(
@@ -2422,6 +2451,7 @@ class VexLifeProdLocalService private constructor(
                     cancellation,
                 )
 
+            retireActiveTurn()
             offerTerminal(
                 VexLifeProdServiceContract.SendStreamEvent(
                     type = "COMPLETED",
@@ -2434,6 +2464,7 @@ class VexLifeProdLocalService private constructor(
         } catch (
             error: DirectCompanionTurn.TurnException,
         ) {
+            retireActiveTurn()
             offerTerminal(
                 VexLifeProdServiceContract.SendStreamEvent(
                     type = "FAILED",
@@ -2450,6 +2481,7 @@ class VexLifeProdLocalService private constructor(
         } catch (
             _: Throwable,
         ) {
+            retireActiveTurn()
             offerTerminal(
                 VexLifeProdServiceContract.SendStreamEvent(
                     type = "FAILED",
@@ -2494,10 +2526,7 @@ class VexLifeProdLocalService private constructor(
                 }
         }
         } finally {
-            activeTurns.remove(
-                intent.idempotencyKey,
-                cancellation,
-            )
+            retireActiveTurn()
             executionBinding.close()
         }
     }
