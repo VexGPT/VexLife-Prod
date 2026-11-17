@@ -270,27 +270,6 @@ object VexLifeConversationTurnFamily :
                 )
         }
 
-    fun controlForRef(
-        controlRef: String,
-        attempt: Attempt,
-    ): Control? =
-        when (
-            controlRef
-        ) {
-            ControlSend ->
-                Send(
-                    attempt,
-                )
-
-            ControlStop ->
-                Stop(
-                    attempt,
-                )
-
-            else ->
-                null
-        }
-
     const val StateReady =
         "READY"
 
