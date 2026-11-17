@@ -60,7 +60,7 @@ class HereticModelCatalogTest {
         assertEquals(HereticModelCatalog.Standing.CANDIDATE, oss.standing)
         assertEquals(HereticCompanionProvider.Profiles.GptOss20B, oss.companionProfile)
         assertEquals(
-            HereticCompanionProvider.CapabilityStanding.QUALIFYING,
+            HereticCompanionProvider.CapabilityStanding.HELD_PROVIDER_BRIDGE,
             oss.companionProfile.capabilityStanding,
         )
         assertEquals(
