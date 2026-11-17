@@ -118,9 +118,9 @@ class VexLifeProdEntryFamilyTest {
             VexLifeProdEntryFamily.HostHeld(
                 desiredSourceSha = sourceSha,
                 reasonRef = "CHIP_MODEL_UNSUPPORTED",
-                chipModel = "Apple M2",
+                observedHardware = "Apple M2",
                 totalMemoryBytes = 16L * 1024L * 1024L * 1024L,
-                requiredChipModel = "Apple M4 Pro",
+                requiredHardware = "Apple M4 Pro",
                 requiredMemoryBytes = 12L * 1024L * 1024L * 1024L,
                 homePresent = false,
             ),
@@ -299,15 +299,15 @@ class VexLifeProdEntryFamilyTest {
     }
 
     @Test
-    fun hostHoldNamesTheObservedMacAndTheCertifiedRequirement() {
+    fun hostHoldNamesObservedHardwareAndTheTargetRequirement() {
         val state = allStates().filterIsInstance<VexLifeProdEntryFamily.HostHeld>().single()
         val detail = VexLifeProdEntryFamily.Semantics.displayStateFor(state).detail
         val observed = detail.parts.getValue("observed")
         val requirement = detail.parts.getValue("requirement")
-        assertEquals("setup.description.host-reason-chip", detail.parts.getValue("reason").key)
-        assertEquals("Apple M2", observed.args["chip"])
+        assertEquals("setup.description.host-reason-hardware", detail.parts.getValue("reason").key)
+        assertEquals("Apple M2", observed.args["hardware"])
         assertEquals(16L shl 30, observed.parts.getValue("memory").gib["memory"])
-        assertEquals("Apple M4 Pro", requirement.args["chip"])
+        assertEquals("Apple M4 Pro", requirement.args["hardware"])
         assertEquals(12L shl 30, requirement.gib["memory"])
         assertEquals("setup.description.host-nothing-created", detail.parts.getValue("outcome").key)
     }
