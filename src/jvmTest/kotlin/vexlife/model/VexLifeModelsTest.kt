@@ -9,6 +9,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.model.heretic.HereticModelCatalog
+import vexlife.model.heretic.HereticRuntimeConfiguration
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.HereticArtifactMaterialization
 
@@ -69,7 +70,10 @@ class VexLifeModelsTest {
             assertFalse(certified.fitsThisMac)
             assertTrue(projection.models.first { it.handle == "heretic-9b" }.fitsThisMac)
             assertEquals(
-                listOf(VexLifeModelsFamily.ControlDownload),
+                listOf(
+                    VexLifeModelsFamily.ControlSelect,
+                    VexLifeModelsFamily.ControlDownload,
+                ),
                 projection.models
                     .first { it.handle == "heretic-4b" }
                     .display
@@ -121,7 +125,33 @@ class VexLifeModelsTest {
         )
             .use {
                 owner ->
-                owner.control(VexLifeModelsFamily.ControlUse, "heretic-9b")
+                val selected =
+                    owner.control(
+                        VexLifeModelsFamily.ControlSelect,
+                        "heretic-9b",
+                    )
+                assertEquals(
+                    VexLifeModels.OutcomeState.Selected.stateRef,
+                    selected.lastOutcome?.state,
+                )
+                assertTrue(
+                    selected.models.first { it.handle == "heretic-9b" }.chosen,
+                )
+                assertFalse(
+                    selected.models.first { it.handle == "heretic-9b" }.serving,
+                )
+                assertEquals(
+                    HereticModelCatalog.Models.Qwen27B.modelRef,
+                    serving,
+                )
+                assertTrue(
+                    phases.isEmpty(),
+                )
+
+                owner.control(
+                    VexLifeModelsFamily.ControlUse,
+                    "heretic-9b",
+                )
                 owner.awaitIdle()
                 val after = owner.projection()
                 assertEquals(VexLifeModels.OutcomeState.Switched.stateRef, after.lastOutcome?.state)
@@ -155,11 +185,87 @@ class VexLifeModelsTest {
             val row = after.models.first { it.handle == "heretic-4b" }
             assertEquals(0L, row.presentBytes)
             assertEquals(
-                listOf(VexLifeModelsFamily.ControlDownload),
+                listOf(
+                    VexLifeModelsFamily.ControlSelect,
+                    VexLifeModelsFamily.ControlDownload,
+                ),
                 row.display.controls.map { it.controlRef },
             )
         }
     }
+
+    @Test
+    fun selectedModelConfigurationChangesWithoutStartingTheRuntime() =
+        withHome { home, _ ->
+            models(
+                home = home,
+            )
+                .use {
+                    owner ->
+                    val before =
+                        owner.projection()
+                            .models
+                            .first {
+                                it.handle == "heretic-4b"
+                            }
+                    assertEquals(
+                        1,
+                        before.runtimeConfiguration.promptCacheEntries,
+                    )
+                    assertEquals(
+                        3,
+                        before.runtimeConfiguration.recommendedPromptCacheEntries,
+                    )
+                    assertEquals(
+                        3,
+                        before.runtimeConfiguration.maximumPromptCacheEntries,
+                    )
+                    assertEquals(
+                        HereticRuntimeConfiguration.RecommendationExperimentalCandidate,
+                        before.runtimeConfiguration.recommendationStanding,
+                    )
+
+                    owner.control(
+                        VexLifeModelsFamily.ControlSelect,
+                        "heretic-4b",
+                    )
+                    val configured =
+                        owner.control(
+                            VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration,
+                            "heretic-4b",
+                        )
+                    val four =
+                        configured.models.first {
+                            it.handle == "heretic-4b"
+                        }
+
+                    assertTrue(
+                        four.chosen,
+                    )
+                    assertFalse(
+                        four.serving,
+                    )
+                    assertEquals(
+                        HereticRuntimeConfiguration.ModeRecommended,
+                        four.runtimeConfiguration.mode,
+                    )
+                    assertEquals(
+                        3,
+                        four.runtimeConfiguration.promptCacheEntries,
+                    )
+                    assertEquals(
+                        "heretic-27b",
+                        configured.servingHandle,
+                    )
+                    assertEquals(
+                        "heretic-4b",
+                        configured.selectedHandle,
+                    )
+                    assertFalse(
+                        configured.switching != null,
+                    )
+                }
+        }
 
     @Test
     fun aDownloadThatCannotFinishSaysSoAndLeavesNothingRunning() = withHome { home, _ ->
