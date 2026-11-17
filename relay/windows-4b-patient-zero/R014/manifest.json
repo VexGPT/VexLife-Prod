@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "vexlife-prod.windows-cpu-setup-platform-proof/v1",
+  "continuity": "[VXG RealForever]",
+  "attempt": "R014",
+  "productCarrierPr": 227,
+  "productSourceSha": "305659bffad32f56446b650cd225772d0d76a432",
+  "execution": "LOCAL_RELAY_NO_GITHUB_ACTIONS",
+  "earnedBeforeThisAttempt": {
+    "r013ReturnSha256": "a8a7fda7709bea4429a6a1a9471c75e30eaf0d2c3f8aea29f3b8f29dbe8a6126",
+    "r013Disposition": "PASS",
+    "sharedEntryObservation": "PASS",
+    "windows4BLivedPath": "PASS"
+  },
+  "purpose": "prove the corrected Windows b10107 CPU realization identity plus the shared Product setup-platform seam without regressing Mac semantics or the already-earned Windows Conversation/restart path",
+  "windowsRuntimeCorrection": {
+    "backend": "CPU",
+    "providerRepository": "ggml-org/llama.cpp",
+    "releaseTag": "b10107",
+    "sourceCommit": "c0bc8591e8815c63cb01dd3f051a8b0df02501c9",
+    "archiveFilename": "llama-b10107-bin-win-cpu-x64.zip",
+    "archiveBytes": 18213827,
+    "archiveSha256": "52133a0a5a8f6035b1bdd2f89c3425ea8b742413d9bdb9a2dee30e3a1681b18c",
+    "llamaServerSha256": "af3e56d6bdb84a9b6bd50f6ad748809370bc29be42d58088041408b2933d80f7",
+    "runtimeAdapterRef": "adapter.runtime.llama-cpp.windows-x64.cpu.patient-zero.001",
+    "gpuOffloadFlagRequested": false
+  },
+  "setupPlatformPromotion": {
+    "interface": "vexlife.setup.VexLifeProdSetupPlatform",
+    "sharedServiceLifetimeResult": "vexlife.service.VexLifeProdServiceLifetime",
+    "sharedSetupProcessUsesPlatform": true,
+    "macImplementation": "vexlife.setup.VexLifeProdMacSetupPlatform",
+    "windowsImplementationComplete": false,
+    "heldMissingWindowsPredicate": "Windows private service image + product-owned runtime-binary/model materialization/service lifetime"
+  },
+  "proofPolicy": {
+    "stringManifestCheck": "checkVexLifeStrings",
+    "selectedTests": [
+      "VexLifeProdEntryFamilyTest",
+      "VexLifeModelsFamilyTest",
+      "VexLifeModelsTest",
+      "HereticModelCatalogTest",
+      "HereticProductModelTest",
+      "HereticRuntimeRealizationTest",
+      "HereticRuntimeRealizationSequenceTest",
+      "HereticRuntimeRealizationArchitectureTest",
+      "HereticRuntimeAvailabilityTest",
+      "HereticRuntimeContractTest",
+      "DirectCompanionConnectionTest",
+      "DirectCompanionTurnTest",
+      "VexLifeProdLocalSetupTest",
+      "VexLifeProdServiceProcessTest",
+      "VexLifeProdSetupModelTest",
+      "VexLifeProdSetupLanguageTest",
+      "VexLifeProdEntryObservationTest",
+      "VexLifeProdMacFrontDoorTest",
+      "VexLifeProdSetupProcessTest",
+      "VexLifeWebP1RuntimeArtifactsTest"
+    ],
+    "livedWindowsReproof": true,
+    "realHomeMutation": false,
+    "githubActions": false
+  }
+}
