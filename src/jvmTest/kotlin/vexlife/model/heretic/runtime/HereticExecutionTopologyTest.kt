@@ -50,10 +50,7 @@ class HereticExecutionTopologyTest {
             assertEquals(4, keyValueHeads.value)
             assertEquals(256, headDimension.value)
             assertEquals(true, cacheEnabled.value)
-            assertEquals(
-                HereticExecutionTopology.Provenance.MODEL_ARTIFACT,
-                fullAttentionInterval.provenance,
-            )
+            assertEquals(HereticExecutionTopology.Provenance.MODEL_ARTIFACT, fullAttentionInterval.provenance)
             assertEquals(
                 HereticExecutionTopology.ChangeBoundary.MODEL_ARTIFACT_CHANGE,
                 fullAttentionInterval.changeBoundary,
@@ -65,35 +62,24 @@ class HereticExecutionTopologyTest {
             assertEquals("0.32.0", mlxLmVersion.value)
             assertEquals(1, promptCacheEntries.value)
             assertEquals(10, promptCacheEntries.inheritedDefault)
-            assertEquals(
-                HereticExecutionTopology.Provenance.PRODUCT_SOURCE,
-                promptCacheEntries.provenance,
-            )
+            assertEquals(HereticExecutionTopology.Provenance.PRODUCT_SOURCE, promptCacheEntries.provenance)
             assertEquals(
                 HereticExecutionTopology.ChangeBoundary.RUNTIME_RESTART,
                 promptCacheEntries.changeBoundary,
             )
-
             assertEquals(2_048, prefillStepSize.value)
             assertEquals(
                 HereticExecutionTopology.Provenance.PINNED_MLX_LM_DEFAULT,
                 prefillStepSize.provenance,
             )
             assertEquals(2_048, prefillStepSize.inheritedDefault)
-
             assertNull(kvBits.value)
             assertNull(kvBits.inheritedDefault)
-            assertEquals(
-                HereticExecutionTopology.Provenance.PINNED_MLX_LM_DEFAULT,
-                kvBits.provenance,
-            )
+            assertEquals(HereticExecutionTopology.Provenance.PINNED_MLX_LM_DEFAULT, kvBits.provenance)
             assertEquals(64, kvGroupSize.value)
             assertEquals(HereticExecutionTopology.EffectiveState.DORMANT, kvGroupSize.state)
             assertEquals(5_000, quantizedKvStart.value)
-            assertEquals(
-                HereticExecutionTopology.EffectiveState.DORMANT,
-                quantizedKvStart.state,
-            )
+            assertEquals(HereticExecutionTopology.EffectiveState.DORMANT, quantizedKvStart.state)
             assertEquals(8, promptConcurrency.value)
             assertEquals(32, decodeConcurrency.value)
         }
@@ -124,24 +110,18 @@ class HereticExecutionTopologyTest {
 
     @Test
     fun observedTopologyRefusesConfigBytesThatAreNotThePinnedArtifactMember() {
-        val home =
-            Files.createTempDirectory("vexlife-execution-topology-")
-                .toAbsolutePath()
+        val home = Files.createTempDirectory("vexlife-execution-topology-").toAbsolutePath()
         try {
             val model = HereticModelCatalog.Models.Qwen27B
             val config =
-                home
-                    .resolve(model.modelRootRelativePath)
+                home.resolve(model.modelRootRelativePath)
                     .resolve(model.providerRevision)
                     .resolve("config.json")
             Files.createDirectories(config.parent)
             Files.writeString(config, qwenConfig)
 
             assertFailsWith<IllegalArgumentException> {
-                HereticExecutionTopology.observe(
-                    productHome = home,
-                    model = model,
-                )
+                HereticExecutionTopology.observe(productHome = home, model = model)
             }
         } finally {
             home.toFile().deleteRecursively()
