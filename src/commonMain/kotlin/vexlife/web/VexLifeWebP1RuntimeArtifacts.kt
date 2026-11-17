@@ -2717,10 +2717,13 @@ object VexLifeWebP1RuntimeArtifacts {
                         .replace('{done}', gibText(model.downloadedBytes))
                         .replace('{total}', gibText(model.totalBytes))
                     : resolveText(model.display.status);
+                  const fitKey = !model.realizableOnTarget
+                    ? 'workspace.label.model-not-supported-on-this-device'
+                    : (model.fitsThisDevice ? 'workspace.label.model-fits-this-device' : 'workspace.label.model-tight-on-this-device');
                   facts.textContent = status + ' · ' + t('workspace.label.model-facts')
                     .replace('{size}', gibText(model.totalBytes))
                     .replace('{memory}', gibText(model.recommendedMemoryBytes))
-                    .replace('{fit}', t(model.fitsThisMac ? 'workspace.label.model-fits' : 'workspace.label.model-tight'));
+                    .replace('{fit}', t(fitKey));
                   const notes = document.createElement('p');
                   notes.className = 'model-notes';
                   notes.textContent = [
