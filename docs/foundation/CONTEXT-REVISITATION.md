@@ -191,8 +191,8 @@ EXPERIMENT BUDGET != ORDINARY PRODUCT BUDGET != HARD MODEL LIMIT
 
 Working Continuity thresholds are absolute multiples of the 16k output reserve, so the budget changes
 headroom, not the thresholds: below about 48k plus the 24k exchange allowance every turn starts at
-ROLLOVER_REQUIRED. The adapter's default of 52k is the smallest round budget whose curve crosses
-CHECKPOINT and then ROLLOVER inside the scenario's pressure set.
+ROLLOVER_REQUIRED. At the adapter's default of 52k the run starts at CHECKPOINT_RECOMMENDED and
+crosses ROLLOVER inside the scenario's pressure set (turn 18 of 30).
 
 ## Proof
 

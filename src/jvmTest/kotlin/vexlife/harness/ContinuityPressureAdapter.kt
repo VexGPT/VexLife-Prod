@@ -63,10 +63,10 @@ object ContinuityPressureAdapter {
         "65c81bfdcc0935d261204566bfc05468317c59e962eabceffb9f7e0fca359cc1"
 
     /**
-     * Default experiment budget. With this Product's pressure policy (headroom thresholds at 1/2/3
-     * output reserves of 16k) and the 24k capability exchange allowance, 52k is the smallest round
-     * budget whose pressure curve crosses CHECKPOINT and ROLLOVER inside the scenario's pressure
-     * set instead of starting at ROLLOVER on turn one.
+     * Default experiment budget. This Product's pressure policy puts headroom thresholds at 1/2/3
+     * output reserves of 16k, and 24k is kept for capability exchanges. At 52k the run starts at
+     * CHECKPOINT_RECOMMENDED and crosses ROLLOVER inside the scenario's pressure set; any budget
+     * below about 48k + 24k is at ROLLOVER from turn one.
      */
     const val DefaultEffectiveInputTokenBudget = 52_000
 
