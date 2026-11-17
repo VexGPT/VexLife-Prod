@@ -102,14 +102,14 @@ class VexLifeModelsTest {
                 entry,
                 observe,
                 ->
-                observe(VexLifeModels.SwitchPhase.WAITING_FOR_CURRENT_TURN)
-                observe(VexLifeModels.SwitchPhase.PREPARING_TARGET)
-                observe(VexLifeModels.SwitchPhase.SWITCHING_RUNTIME)
+                observe(VexLifeModels.SwitchPhase.WaitingForCurrentTurn)
+                observe(VexLifeModels.SwitchPhase.PreparingTarget)
+                observe(VexLifeModels.SwitchPhase.SwitchingRuntime)
                 phases +=
                     listOf(
-                        VexLifeModels.SwitchPhase.WAITING_FOR_CURRENT_TURN,
-                        VexLifeModels.SwitchPhase.PREPARING_TARGET,
-                        VexLifeModels.SwitchPhase.SWITCHING_RUNTIME,
+                        VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
+                        VexLifeModels.SwitchPhase.PreparingTarget,
+                        VexLifeModels.SwitchPhase.SwitchingRuntime,
                     )
                 serving = entry.modelRef
             }
@@ -124,16 +124,16 @@ class VexLifeModelsTest {
                 owner.control(VexLifeModelsFamily.ControlUse, "heretic-9b")
                 owner.awaitIdle()
                 val after = owner.projection()
-                assertEquals(VexLifeModels.OutcomeState.SWITCHED, after.lastOutcome?.state)
+                assertEquals(VexLifeModels.OutcomeState.Switched.stateRef, after.lastOutcome?.state)
                 assertFalse(after.switchPending)
                 assertEquals(null, after.switching)
                 assertTrue(after.models.first { it.handle == "heretic-9b" }.chosen)
                 assertTrue(after.models.first { it.handle == "heretic-9b" }.serving)
                 assertEquals(
                     listOf(
-                        VexLifeModels.SwitchPhase.WAITING_FOR_CURRENT_TURN,
-                        VexLifeModels.SwitchPhase.PREPARING_TARGET,
-                        VexLifeModels.SwitchPhase.SWITCHING_RUNTIME,
+                        VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
+                        VexLifeModels.SwitchPhase.PreparingTarget,
+                        VexLifeModels.SwitchPhase.SwitchingRuntime,
                     ),
                     phases,
                 )
@@ -151,7 +151,7 @@ class VexLifeModelsTest {
         place(home, four, "config.json")
         models(home).use { owner ->
             val after = owner.control(VexLifeModelsFamily.ControlRemove, "heretic-4b")
-            assertEquals(VexLifeModels.OutcomeState.REMOVED, after.lastOutcome?.state)
+            assertEquals(VexLifeModels.OutcomeState.Removed.stateRef, after.lastOutcome?.state)
             val row = after.models.first { it.handle == "heretic-4b" }
             assertEquals(0L, row.presentBytes)
             assertEquals(
@@ -168,7 +168,7 @@ class VexLifeModelsTest {
             owner.awaitIdle()
             val after = owner.projection()
             assertNull(after.downloading)
-            assertEquals(VexLifeModels.OutcomeState.FAILED, after.lastOutcome?.state)
+            assertEquals(VexLifeModels.OutcomeState.Failed.stateRef, after.lastOutcome?.state)
             // The model can be downloaded again; nothing about the failure is hidden.
             assertTrue(
                 VexLifeModelsFamily.ControlDownload in

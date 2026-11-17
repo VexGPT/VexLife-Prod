@@ -7,7 +7,6 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetupLease
@@ -65,26 +64,36 @@ class VexLifeModels(
         )
     }
 
-    @Serializable
-    enum class SwitchPhase {
-        @SerialName("REQUESTED")
-        REQUESTED,
+    sealed interface SwitchPhase {
+        val stateRef: String
+        val messageKey: String
 
-        @SerialName("WAITING_FOR_CURRENT_TURN")
-        WAITING_FOR_CURRENT_TURN,
+        data object Requested : SwitchPhase {
+            override val stateRef = "REQUESTED"
+            override val messageKey = "workspace.status.model-switch-requested"
+        }
 
-        @SerialName("PREPARING_TARGET")
-        PREPARING_TARGET,
+        data object WaitingForCurrentTurn : SwitchPhase {
+            override val stateRef = "WAITING_FOR_CURRENT_TURN"
+            override val messageKey = "workspace.status.model-switch-waiting"
+        }
 
-        @SerialName("SWITCHING_RUNTIME")
-        SWITCHING_RUNTIME,
+        data object PreparingTarget : SwitchPhase {
+            override val stateRef = "PREPARING_TARGET"
+            override val messageKey = "workspace.status.model-switch-preparing"
+        }
+
+        data object SwitchingRuntime : SwitchPhase {
+            override val stateRef = "SWITCHING_RUNTIME"
+            override val messageKey = "workspace.status.model-switch-runtime"
+        }
     }
 
     @Serializable
     data class SwitchProjection(
         val handle: String,
         val label: String,
-        val phase: SwitchPhase,
+        val phase: String,
         val message: VexLifeText,
         val startedAt: String,
     )
@@ -111,32 +120,39 @@ class VexLifeModels(
         val display: VexLifeModelsFamily.DisplayState,
     )
 
-    @Serializable
-    enum class OutcomeState {
-        @SerialName("NOT_LAWFUL_NOW")
-        NOT_LAWFUL_NOW,
+    sealed interface OutcomeState {
+        val stateRef: String
 
-        @SerialName("SWITCHING")
-        SWITCHING,
+        data object NotLawfulNow : OutcomeState {
+            override val stateRef = "NOT_LAWFUL_NOW"
+        }
 
-        @SerialName("SWITCHED")
-        SWITCHED,
+        data object Switching : OutcomeState {
+            override val stateRef = "SWITCHING"
+        }
 
-        @SerialName("FAILED")
-        FAILED,
+        data object Switched : OutcomeState {
+            override val stateRef = "SWITCHED"
+        }
 
-        @SerialName("DOWNLOADED")
-        DOWNLOADED,
+        data object Failed : OutcomeState {
+            override val stateRef = "FAILED"
+        }
 
-        @SerialName("REMOVED")
-        REMOVED,
+        data object Downloaded : OutcomeState {
+            override val stateRef = "DOWNLOADED"
+        }
+
+        data object Removed : OutcomeState {
+            override val stateRef = "REMOVED"
+        }
     }
 
     @Serializable
     data class Outcome(
         val handle: String,
         val controlRef: String,
-        val state: OutcomeState,
+        val state: String,
         val message: VexLifeText,
         val at: String,
     )
@@ -227,7 +243,7 @@ class VexLifeModels(
             remember(
                 entry,
                 controlRef,
-                OutcomeState.NOT_LAWFUL_NOW,
+                OutcomeState.NotLawfulNow,
                 VexLifeText("workspace.status.model-control-not-lawful"),
             )
             return projection()
@@ -271,7 +287,7 @@ class VexLifeModels(
                 remember(
                     entry,
                     controlRef,
-                    OutcomeState.REMOVED,
+                    OutcomeState.Removed,
                     VexLifeText(
                         key = "workspace.status.model-removed",
                         gib = mapOf("freed" to removal.freedBytes),
@@ -298,8 +314,8 @@ class VexLifeModels(
             SwitchProjection(
                 handle = entry.handle,
                 label = entry.humanLabel,
-                phase = SwitchPhase.REQUESTED,
-                message = switchMessage(SwitchPhase.REQUESTED, entry),
+                phase = SwitchPhase.Requested.stateRef,
+                message = switchMessage(SwitchPhase.Requested, entry),
                 startedAt = startedAt,
             )
         check(
@@ -313,7 +329,7 @@ class VexLifeModels(
         remember(
             entry,
             controlRef,
-            OutcomeState.SWITCHING,
+            OutcomeState.Switching,
             initial.message,
         )
         executor.execute {
@@ -326,7 +342,7 @@ class VexLifeModels(
                         SwitchProjection(
                             handle = entry.handle,
                             label = entry.humanLabel,
-                            phase = phase,
+                            phase = phase.stateRef,
                             message = switchMessage(phase, entry),
                             startedAt = startedAt,
                         ),
@@ -341,7 +357,7 @@ class VexLifeModels(
                 remember(
                     entry,
                     controlRef,
-                    OutcomeState.SWITCHED,
+                    OutcomeState.Switched,
                     VexLifeText.text(
                         "workspace.status.model-switched",
                         "model" to entry.humanLabel,
@@ -353,7 +369,7 @@ class VexLifeModels(
                 remember(
                     entry,
                     controlRef,
-                    OutcomeState.FAILED,
+                    OutcomeState.Failed,
                     VexLifeText.text(
                         "workspace.status.model-switch-failed",
                         "model" to entry.humanLabel,
@@ -373,19 +389,7 @@ class VexLifeModels(
         entry: HereticModelCatalog.Entry,
     ): VexLifeText =
         VexLifeText.text(
-            when (phase) {
-                SwitchPhase.REQUESTED ->
-                    "workspace.status.model-switch-requested"
-
-                SwitchPhase.WAITING_FOR_CURRENT_TURN ->
-                    "workspace.status.model-switch-waiting"
-
-                SwitchPhase.PREPARING_TARGET ->
-                    "workspace.status.model-switch-preparing"
-
-                SwitchPhase.SWITCHING_RUNTIME ->
-                    "workspace.status.model-switch-runtime"
-            },
+            phase.messageKey,
             "model" to entry.humanLabel,
         )
 
@@ -421,7 +425,7 @@ class VexLifeModels(
                 remember(
                     entry,
                     controlRef,
-                    OutcomeState.DOWNLOADED,
+                    OutcomeState.Downloaded,
                     VexLifeText("workspace.status.model-downloaded"),
                 )
             } catch (error: Exception) {
@@ -433,7 +437,7 @@ class VexLifeModels(
                 remember(
                     entry,
                     controlRef,
-                    OutcomeState.FAILED,
+                    OutcomeState.Failed,
                     VexLifeText.text(
                         "workspace.status.model-download-failed",
                         "reason" to (error.message ?: error.javaClass.simpleName),
@@ -451,7 +455,15 @@ class VexLifeModels(
         state: OutcomeState,
         message: VexLifeText,
     ) {
-        lastOutcome.set(Outcome(entry.handle, controlRef, state, message, now().toString()))
+        lastOutcome.set(
+            Outcome(
+                handle = entry.handle,
+                controlRef = controlRef,
+                state = state.stateRef,
+                message = message,
+                at = now().toString(),
+            ),
+        )
     }
 
     private fun chosenModelRef(): String? = runCatching {
@@ -514,7 +526,7 @@ class VexLifeModels(
         val serving = servingModelRef()
         return switching.get() == null &&
             outcome?.controlRef == VexLifeModelsFamily.ControlUse &&
-            outcome.state == OutcomeState.FAILED &&
+            outcome.state == OutcomeState.Failed.stateRef &&
             chosen != null &&
             serving != null &&
             chosen != serving

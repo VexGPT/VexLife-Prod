@@ -80,7 +80,7 @@ class FileHereticModelConfigurationStoreTest {
                 )
 
             assertEquals(
-                FileHereticModelConfigurationStore.TransitionState.HERETIC_SELECTED_PENDING,
+                FileHereticModelConfigurationStore.TransitionState.SelectedPending,
                 selected.state,
             )
             assertTrue(
@@ -97,7 +97,7 @@ class FileHereticModelConfigurationStoreTest {
                 )
 
             assertEquals(
-                FileHereticModelConfigurationStore.TransitionState.HERETIC_ALREADY_SELECTED_PENDING,
+                FileHereticModelConfigurationStore.TransitionState.AlreadySelectedPending,
                 selectedAgain.state,
             )
             assertFalse(
@@ -111,7 +111,7 @@ class FileHereticModelConfigurationStoreTest {
                 )
 
             assertEquals(
-                FileHereticModelConfigurationStore.TransitionState.HERETIC_BOUND_TO_QUALIFIED_RUNTIME,
+                FileHereticModelConfigurationStore.TransitionState.BoundToQualifiedRuntime,
                 bound.state,
             )
             assertTrue(
@@ -130,7 +130,7 @@ class FileHereticModelConfigurationStoreTest {
                 )
 
             assertEquals(
-                FileHereticModelConfigurationStore.TransitionState.HERETIC_ALREADY_BOUND,
+                FileHereticModelConfigurationStore.TransitionState.AlreadyBound,
                 rebound.state,
             )
             assertFalse(
@@ -204,7 +204,7 @@ class FileHereticModelConfigurationStoreTest {
                 )
 
             assertEquals(
-                FileHereticModelConfigurationStore.TransitionState.HERETIC_REBOUND_TO_QUALIFIED_RUNTIME,
+                FileHereticModelConfigurationStore.TransitionState.ReboundToQualifiedRuntime,
                 rebound.state,
             )
             assertEquals(
@@ -271,7 +271,7 @@ class FileHereticModelConfigurationStoreTest {
                 )
 
             assertEquals(
-                FileHereticModelConfigurationStore.TransitionState.HERETIC_DEFAULTED_UNSUPPORTED_SELECTION_PENDING,
+                FileHereticModelConfigurationStore.TransitionState.DefaultedUnsupportedSelectionPending,
                 transition.state,
             )
             assertTrue(transition.writePerformed)
@@ -379,10 +379,10 @@ class FileHereticModelConfigurationStoreTest {
 
             val nine = vexlife.model.heretic.HereticModelCatalog.Models.Qwen9B
             val switched = store.selectModel(fixture.manifest, nine)
-            assertEquals(FileHereticModelConfigurationStore.TransitionState.HERETIC_MODEL_SWITCHED_PENDING, switched.state)
+            assertEquals(FileHereticModelConfigurationStore.TransitionState.ModelSwitchedPending, switched.state)
             assertEquals(HereticModelConfiguration.State.EstablishmentPending, switched.value.state)
             assertEquals(nine, store.selectedModel(fixture.manifest))
-            assertEquals(FileHereticModelConfigurationStore.TransitionState.HERETIC_ALREADY_SELECTED_PENDING, store.selectModel(fixture.manifest, nine).state)
+            assertEquals(FileHereticModelConfigurationStore.TransitionState.AlreadySelectedPending, store.selectModel(fixture.manifest, nine).state)
 
             // The 27B runtime that was serving this Home cannot bind it now that it chose 9B.
             assertFailsWith<IllegalArgumentException> {
@@ -410,7 +410,7 @@ class FileHereticModelConfigurationStoreTest {
                 )
             assertEquals(HereticModelConfiguration.State.BoundProductModel, bound.value.state)
             assertEquals(nine.modelRef, bound.value.modelRef)
-            assertEquals(FileHereticModelConfigurationStore.TransitionState.HERETIC_ALREADY_BOUND, store.selectModel(fixture.manifest, nine).state)
+            assertEquals(FileHereticModelConfigurationStore.TransitionState.AlreadyBound, store.selectModel(fixture.manifest, nine).state)
         } finally {
             parent.toFile().deleteRecursively()
         }
