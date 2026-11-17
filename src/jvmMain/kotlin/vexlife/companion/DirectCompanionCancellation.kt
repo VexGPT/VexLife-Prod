@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicReference
  * own or terminate the persistent Heretic runtime process.
  */
 class DirectCompanionCancellation {
-    class Cancelled internal constructor :
+    class Cancelled internal constructor() :
         IllegalStateException(
             "direct Companion turn cancelled",
         )
