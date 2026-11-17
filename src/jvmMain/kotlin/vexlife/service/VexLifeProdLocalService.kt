@@ -883,6 +883,11 @@ class VexLifeProdLocalService private constructor(
                         exchange,
                     )
 
+                VexLifeProdServiceContract.ConversationCancelPath ->
+                    handleConversationCancel(
+                        exchange,
+                    )
+
                 VexLifeProdServiceContract.ConversationSendPath ->
                     handleSend(
                         exchange,
@@ -1836,6 +1841,59 @@ class VexLifeProdLocalService private constructor(
                 )
         }
     }
+    private fun handleConversationCancel(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireJson(
+            exchange,
+        )
+        val request =
+            JsonCodec.decodeFromString<VexLifeProdServiceContract.ConversationCancelRequest>(
+                requestText(
+                    exchange,
+                ),
+            )
+        val cancellation =
+            activeTurns[
+                request.idempotencyKey
+            ]
+        val firstEffect =
+            cancellation
+                ?.request(
+                    DirectCompanionCancellation.Reason.PERSON_REQUESTED,
+                )
+                ?: false
+        val requested =
+            cancellation !=
+                null &&
+                cancellation.cancellationRequested
+
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value =
+                VexLifeProdServiceContract.ConversationCancelResponse(
+                    schemaVersion =
+                        VexLifeProdServiceContract.ConversationCancelResponseSchema,
+                    state =
+                        if (
+                            requested
+                        ) {
+                            "CANCEL_REQUESTED"
+                        } else {
+                            "NOT_ACTIVE"
+                        },
+                    idempotencyKey = request.idempotencyKey,
+                    cancellationRequested = requested,
+                    effectsPerformed = firstEffect,
+                ),
+        )
+    }
+
     private fun handleSend(
         exchange: HttpExchange,
     ) {
