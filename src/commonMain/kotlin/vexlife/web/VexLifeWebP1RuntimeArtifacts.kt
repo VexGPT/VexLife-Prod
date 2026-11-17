@@ -2721,7 +2721,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const selectedModel = () =>
-                (state.models?.models || []).find((model) => model.chosen) ?? null;
+                (state.models?.models || []).find((model) => model.targeted) ?? null;
 
               const modelHasControl = (model, controlRef) =>
                 (model?.display?.controls || []).some((control) => control.controlRef === controlRef);
@@ -2757,7 +2757,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     option.value = model.handle;
                     const availability = resolveText(model.display.status);
                     option.textContent = model.label + ' · ' + availability;
-                    option.selected = Boolean(model.chosen);
+                    option.selected = Boolean(model.targeted);
                     return option;
                   });
                   ui.modelChoice.replaceChildren(...options);
@@ -2765,7 +2765,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   ui.modelChoice.onchange = () => {
                     const handle = ui.modelChoice.value;
                     const model = models.find((candidate) => candidate.handle === handle);
-                    if (model && !model.chosen) {
+                    if (model && !model.targeted) {
                       void modelControl(${jsString(VexLifeModelsFamily.ControlSelect)}, handle);
                     }
                   };
@@ -2774,7 +2774,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 for (const model of models) {
                   const row = document.createElement('div');
                   row.className = 'model-row';
-                  row.dataset.chosen = String(Boolean(model.chosen));
+                  row.dataset.chosen = String(Boolean(model.targeted));
                   const name = document.createElement('p');
                   name.className = 'model-name';
                   name.textContent = model.label;
