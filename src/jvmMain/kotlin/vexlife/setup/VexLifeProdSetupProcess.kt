@@ -127,11 +127,11 @@ object VexLifeProdSetupProcess {
                     "VEXLIFE_PROD_SETUP_READY\t" +
                         arguments.expectedSourceSha +
                         "\t" +
-                        session.result.productHome +
+                        session.foundation.productHome +
                         "\t" +
                         installed.imagePath +
                         "\t" +
-                        session.result.qualifiedRuntimeEvidence.runtimeReceiptRef +
+                        session.foundation.qualifiedRuntimeEvidence.runtimeReceiptRef +
                         "\t" +
                         service.pid +
                         "\t" +
@@ -265,7 +265,7 @@ object VexLifeProdSetupProcess {
         val installed =
             hooks.installImage(
                 imageRoot,
-                Path.of(session.result.productHome),
+                Path.of(session.foundation.productHome),
                 arguments.expectedSourceSha,
             )
 
@@ -278,7 +278,7 @@ object VexLifeProdSetupProcess {
 
         hooks.progress.phase(VexLifeProdSetupProgress.Phase.StartingVexLife)
         val service =
-            hooks.startService(Path.of(session.result.productHome), arguments.expectedSourceSha)
+            hooks.startService(Path.of(session.foundation.productHome), arguments.expectedSourceSha)
 
         require(
             service.sourceSha == installed.sourceSha &&
