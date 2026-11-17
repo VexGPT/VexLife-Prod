@@ -16,8 +16,8 @@
   "repositoryExecutionProfileRefOrNull": "profile.repository.vextreme-sdk.macos-v1",
   "repositoryRefOrNull": "VexGPT/VexLife-Prod",
   "baseRefOrNull": "262c208b2e65e828dd867719c29ecd286ae58a80",
-  "headRefOrNull": "0d74a1a70000fff702074310f8ca10b30229d2f7",
-  "treeRefOrNull": "b443078d72e6ae791c207e7a86479dbdb5c1dd44",
+  "headRefOrNull": "02a2efb642defb23f1fa094ff042344d2a7538de",
+  "treeRefOrNull": "8f4700749872a894a7b4751c6fcebbf7ac6a2065",
   "branchRefOrNull": "VXG-111726-effective-execution-topology-a001",
   "claimRefOrNull": "github.pull.vexlife-prod.228",
   "exactPathRefs": [
