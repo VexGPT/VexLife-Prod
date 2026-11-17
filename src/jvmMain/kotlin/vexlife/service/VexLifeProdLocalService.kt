@@ -1883,9 +1883,9 @@ class VexLifeProdLocalService private constructor(
                         if (
                             requested
                         ) {
-                            "CANCEL_REQUESTED"
+                            VexLifeProdServiceContract.ConversationCancelRequested
                         } else {
-                            "NOT_ACTIVE"
+                            VexLifeProdServiceContract.ConversationCancelNotActive
                         },
                     idempotencyKey = request.idempotencyKey,
                     cancellationRequested = requested,
