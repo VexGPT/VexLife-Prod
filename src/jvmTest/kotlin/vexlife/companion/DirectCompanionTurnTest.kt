@@ -1632,29 +1632,37 @@ class DirectCompanionTurnTest {
                     sequence =
                         recoveredRequest.sequence,
                 )
-            val recoveredContext =
-                assertNotNull(
-                    owner.readSuccessorContext(
-                        lineageRef =
-                            firstHead.companionLineageRef,
-                        threadRef =
-                            firstHead.threadRef,
-                        currentRequestEventBinding =
-                            recoveredBinding,
-                    ),
-                )
-
-            assertTrue(
-                failedContext.successorContextRef !=
-                    recoveredContext.successorContextRef,
-            )
+            // The recovered turn was issued its own request-scoped successor Context; its prompt
+            // receipt records which one.
+            val recoveredContextRef =
+                assertNotNull(recovered.promptContextReceipt.workingContinuityContextRef)
+            assertTrue(failedContext.successorContextRef != recoveredContextRef)
             assertEquals(
                 failedRequest.eventRef,
                 failedContext.currentRequestEventBinding.eventRef,
             )
+
+            // The recovered successor continues the rollover lineage: its commit advances the head
+            // to its own request, which supersedes the checkpoint its Context was issued from, so
+            // that Context is evidence now, no longer current.
+            val afterLineage =
+                assertNotNull(
+                    owner.readCurrent(
+                        lineageRef = firstHead.companionLineageRef,
+                        threadRef = firstHead.threadRef,
+                    )
+                )
+            assertEquals("ROLLOVER_COMMITTED", afterLineage.commitReceipt.disposition)
             assertEquals(
                 recovered.requestEventRef,
-                recoveredContext.currentRequestEventBinding.eventRef,
+                afterLineage.checkpoint.workingSet.cursorEventRef,
+            )
+            assertNull(
+                owner.readSuccessorContext(
+                    lineageRef = firstHead.companionLineageRef,
+                    threadRef = firstHead.threadRef,
+                    currentRequestEventBinding = recoveredBinding,
+                )
             )
         } finally {
             home.parent
