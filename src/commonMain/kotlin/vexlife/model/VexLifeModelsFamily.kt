@@ -13,9 +13,9 @@ import vexlife.text.VexLifeText
  *
  * Lawfulness keeps target choice, launch configuration and activation distinct:
  * ```
- * Select      choose the target only; no runtime effect
- * Configure   selected target only; no runtime effect
- * Use/Start   selected + artifacts present + not current, or current config pending -> SwitchModel
+ * Select      stage the Settings target only; no Home/runtime effect
+ * Configure   staged target only; no runtime effect
+ * Use/Start   staged + artifacts present + not current, or current config pending -> SwitchModel
  * Download    artifacts absent or partial, nothing running -> AcquireArtifacts
  * Redownload  artifacts damaged, nothing running           -> ReplaceArtifacts
  * Remove      artifacts here, not chosen, not serving, idle -> RemoveArtifacts
@@ -61,6 +61,8 @@ object VexLifeModelsFamily :
         val artifactPresence: ArtifactPresence,
         val downloading: Boolean,
         val chosen: Boolean,
+        /** Settings-stage target. This may differ from the durable Home choice until Start. */
+        val targeted: Boolean,
         val serving: Boolean,
         val switching: Boolean,
         /** The selected/serving model has configured launch values not active in the current runtime. */
@@ -151,7 +153,7 @@ object VexLifeModelsFamily :
         return when (control) {
             Select ->
                 if (
-                    !currentState.chosen &&
+                    !currentState.targeted &&
                         idle
                 ) {
                     stay(Effect.SelectModel)
@@ -161,8 +163,12 @@ object VexLifeModelsFamily :
             Use ->
                 if (
                     currentState.artifactPresence == ArtifactPresence.Present &&
-                        currentState.chosen &&
-                        (!currentState.serving || currentState.runtimeConfigurationPending) &&
+                        currentState.targeted &&
+                        (
+                            !currentState.chosen ||
+                                !currentState.serving ||
+                                currentState.runtimeConfigurationPending
+                        ) &&
                         !currentState.switching &&
                         idle
                 ) {
@@ -171,13 +177,13 @@ object VexLifeModelsFamily :
                     null
                 }
             UseRecommendedRuntimeConfiguration ->
-                if (currentState.chosen && idle) {
+                if (currentState.targeted && idle) {
                     stay(Effect.UseRecommendedRuntimeConfiguration)
                 } else {
                     null
                 }
             is SetPromptCacheEntries ->
-                if (currentState.chosen && idle) {
+                if (currentState.targeted && idle) {
                     stay(Effect.SetPromptCacheEntries(control.entries))
                 } else {
                     null
@@ -204,6 +210,7 @@ object VexLifeModelsFamily :
                 if (
                     currentState.artifactPresence != ArtifactPresence.Absent &&
                         !currentState.chosen &&
+                        !currentState.targeted &&
                         !currentState.serving &&
                         idle
                 )
