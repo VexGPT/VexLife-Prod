@@ -715,160 +715,55 @@ class DirectCompanionCapabilityTurnTest {
         }
 
     @Test
-    fun gptOssCallsReachAsItsOwnToolAndAnswersFromWhatCameBack() = withHome { home ->
+    fun gptOssReachFailsClosedWhileProviderBridgeIsHeld() = withHome { home ->
         val requests = mutableListOf<JsonObject>()
-        val progress = mutableListOf<DirectCompanionTurn.Progress>()
         val transport =
             harmonyStream { call, body ->
                 requests += body
                 when (call) {
-                    // The call gpt-oss makes when the template declares tools; the server strips
-                    // the <|call|> it stops on.
                     1 ->
                         "<|channel|>analysis<|message|>They ask what the page says. I'll fetch it.<|end|>" +
                             "<|start|>assistant<|channel|>commentary to=functions.web_fetch <|constrain|>json" +
                             """<|message|>{"url":"https://example.com/kites"}"""
-                    2 ->
-                        "<|channel|>analysis<|message|>The page gives 30 m.<|end|>" +
-                            "<|start|>assistant<|channel|>final<|message|>The page says to fly it on a 30 m line."
-                    else -> error("unexpected provider call")
+                    else -> error("held reach must not continue to another provider stage")
                 }
             }
-        val result =
-            DirectCompanionTurn.performWithHooks(
-                setup = gptOssSetup(home),
-                intent =
-                    DirectCompanionTurn.Intent(
-                        idempotencyKey = "send.reach.gpt-oss.001",
-                        content = "What does example.com say about kites?",
-                    ),
-                hooks =
-                    DirectCompanionTurn.Hooks(
-                        transport = transport,
-                        capabilityOwners =
-                            VexLifeCapabilityBridge.OwnerBindings(webTransport = page, resolver = publicResolver),
-                        progressObserver = { progress += it },
-                        now = { Instant.parse("2026-11-16T12:00:00Z") },
-                    ),
-            )
 
-        // Stage one declared the frame's reach as harmony tools, and never gpt-oss's own browser.
-        fun functionNames(body: JsonObject) =
-            body["tools"]?.jsonArray.orEmpty().map {
-                it.jsonObject.getValue("function").jsonObject.getValue("name").jsonPrimitive.content
-            }
-        assertTrue("web_fetch" in functionNames(requests[0]))
-        assertTrue("github_read" in functionNames(requests[0]))
-        assertFalse("builtin_tools" in requests[0].getValue("chat_template_kwargs").jsonObject)
-
-        // Stage two carries Vex's call and the host's result as the template's tool call + tool
-        // message, with the page's own words in it.
-        val sent = requests[1].getValue("messages").jsonArray.map { it.jsonObject }
-        val call = sent[sent.size - 2]
-        assertEquals("assistant", call.getValue("role").jsonPrimitive.content)
-        val function = call.getValue("tool_calls").jsonArray.single().jsonObject.getValue("function").jsonObject
-        assertEquals("web_fetch", function.getValue("name").jsonPrimitive.content)
-        assertEquals(
-            """{"url":"https://example.com/kites"}""",
-            function.getValue("arguments").jsonPrimitive.content,
-        )
-        val returned = sent.last()
-        assertEquals("tool", returned.getValue("role").jsonPrimitive.content)
-        val returnedText = returned.getValue("content").jsonPrimitive.content
-        val providerResult =
-            Json
-                .parseToJsonElement(
-                    returnedText,
-                )
-                .jsonObject
-        assertEquals(
-            HarmonyCapabilityTools.ProviderResultSchema,
-            providerResult
-                .getValue(
-                    "schemaVersion",
-                )
-                .jsonPrimitive
-                .content,
-        )
-        assertEquals(
-            "RETURNED",
-            providerResult
-                .getValue(
-                    "metadata",
-                )
-                .jsonObject
-                .getValue(
-                    "state",
-                )
-                .jsonPrimitive
-                .content,
-        )
-        assertEquals(
-            "Fly the kite on a 30 m line.",
-            providerResult
-                .getValue(
-                    "content",
-                )
-                .jsonPrimitive
-                .content,
-        )
-        assertFalse(
-            providerResult
-                .getValue(
-                    "content",
-                )
-                .jsonPrimitive
-                .content
-                .contains(
-                    "You can make another request",
-                ),
-        )
-
-        // The answer came after a real round trip through the bridge, recorded as one use.
-        assertEquals("The page says to fly it on a 30 m line.", result.content)
-        assertEquals(
-            listOf(
-                VexLifeCapabilityBridge.Use(
-                    "web",
-                    "fetch",
-                    "https://example.com/kites",
-                    VexLifeCapabilityBridge.ResultState.RETURNED,
-                )
-            ),
-            result.capabilityUses,
-        )
-        val trace =
-            assertNotNull(
-                assertNotNull(
-                    DirectTurnContextStore(
-                        home,
-                    )
-                        .read(
-                            result.turnRef,
+        val failure =
+            assertFailsWith<DirectCompanionTurn.TurnException> {
+                DirectCompanionTurn.performWithHooks(
+                    setup = gptOssSetup(home),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey = "send.reach.gpt-oss.held.001",
+                            content = "What does example.com say about kites?",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            capabilityOwners =
+                                VexLifeCapabilityBridge.OwnerBindings(
+                                    webTransport = page,
+                                    resolver = publicResolver,
+                                ),
+                            now = { Instant.parse("2026-11-16T12:00:00Z") },
                         ),
                 )
-                    .capabilityTrace,
-            )
-        assertEquals(
-            VexLifeCapabilityBridge.ResultState.RETURNED,
-            trace.entries.single().state,
-        )
-        assertEquals(
-            64,
-            trace.entries.single().resultSha256.length,
-        )
-        assertFalse(
-            trace.rawResultContentPersisted,
-        )
+            }
 
-        // The person saw the reach and the thinking, never the call as an answer.
-        assertTrue(progress.any { it.phase == DirectCompanionTurn.ProgressPhase.Reached })
-        val answered =
-            progress
-                .filter { it.phase == DirectCompanionTurn.ProgressPhase.Responding }
-                .joinToString("") { it.delta.orEmpty() }
-        assertFalse(answered.contains("example.com/kites"))
-        assertFalse(answered.contains(VexLifeCapabilityRequest.RequestHeader))
+        assertEquals("CAPABILITY_PROVIDER_BRIDGE_HELD", failure.failureCode)
+        assertEquals(
+            "CAPABILITY_PROVIDER_BRIDGE_HELD",
+            assertNotNull(failure.failureReceipt).failureCode,
+        )
+        assertEquals(1, requests.size)
+
+        // GPT-OSS is selectable as a model, but its Harmony reach representation is deliberately
+        // held until that provider bridge earns lived qualification. The turn therefore offers no
+        // reach tools and must not execute the requested owner effect.
+        val request = requests.single()
+        assertTrue(request["tools"]?.jsonArray.orEmpty().isEmpty())
+        assertFalse("builtin_tools" in request.getValue("chat_template_kwargs").jsonObject)
     }
 }
 
