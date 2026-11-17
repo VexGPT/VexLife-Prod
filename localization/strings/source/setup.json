@@ -6339,5 +6339,449 @@
     "surfaces": [
       "setup.card"
     ]
+  },
+  "setup.description.host-reason-platform-portable": {
+    "strings": {
+      "en": {
+        "text": "This operating system is not supported by the selected local runtime target."
+      },
+      "ja": {
+        "text": "このオペレーティングシステムは、選択したローカルランタイム対象ではサポートされていません。"
+      },
+      "zh": {
+        "text": "此操作系统不受所选本地运行时目标支持。"
+      },
+      "ko": {
+        "text": "이 운영 체제는 선택한 로컬 런타임 대상에서 지원되지 않습니다."
+      },
+      "fr": {
+        "text": "Ce système d’exploitation n’est pas pris en charge par la cible d’exécution locale sélectionnée."
+      },
+      "de": {
+        "text": "Dieses Betriebssystem wird vom ausgewählten lokalen Laufzeitziel nicht unterstützt."
+      },
+      "es": {
+        "text": "Este sistema operativo no es compatible con el destino de ejecución local seleccionado."
+      },
+      "pt": {
+        "text": "Este sistema operacional não é compatível com o destino de execução local selecionado."
+      },
+      "ar": {
+        "text": "نظام التشغيل هذا غير مدعوم بواسطة هدف وقت التشغيل المحلي المحدد."
+      },
+      "hi": {
+        "text": "यह ऑपरेटिंग सिस्टम चुने गए लोकल रनटाइम टार्गेट द्वारा समर्थित नहीं है।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.description.host-reason-architecture-portable": {
+    "strings": {
+      "en": {
+        "text": "This device architecture is not supported by the selected local runtime target."
+      },
+      "ja": {
+        "text": "このデバイスのアーキテクチャは、選択したローカルランタイム対象ではサポートされていません。"
+      },
+      "zh": {
+        "text": "此设备架构不受所选本地运行时目标支持。"
+      },
+      "ko": {
+        "text": "이 기기 아키텍처는 선택한 로컬 런타임 대상에서 지원되지 않습니다."
+      },
+      "fr": {
+        "text": "L’architecture de cet appareil n’est pas prise en charge par la cible d’exécution locale sélectionnée."
+      },
+      "de": {
+        "text": "Die Architektur dieses Geräts wird vom ausgewählten lokalen Laufzeitziel nicht unterstützt."
+      },
+      "es": {
+        "text": "La arquitectura de este dispositivo no es compatible con el destino de ejecución local seleccionado."
+      },
+      "pt": {
+        "text": "A arquitetura deste dispositivo não é compatível com o destino de execução local selecionado."
+      },
+      "ar": {
+        "text": "بنية هذا الجهاز غير مدعومة بواسطة هدف وقت التشغيل المحلي المحدد."
+      },
+      "hi": {
+        "text": "इस डिवाइस की आर्किटेक्चर चुने गए लोकल रनटाइम टार्गेट द्वारा समर्थित नहीं है।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.description.host-reason-memory-unknown-portable": {
+    "strings": {
+      "en": {
+        "text": "VexLife couldn't determine this device's memory."
+      },
+      "ja": {
+        "text": "VexLife はこのデバイスのメモリ容量を確認できませんでした。"
+      },
+      "zh": {
+        "text": "VexLife 无法确定此设备的内存。"
+      },
+      "ko": {
+        "text": "VexLife가 이 기기의 메모리를 확인하지 못했습니다."
+      },
+      "fr": {
+        "text": "VexLife n’a pas pu déterminer la mémoire de cet appareil."
+      },
+      "de": {
+        "text": "VexLife konnte den Arbeitsspeicher dieses Geräts nicht bestimmen."
+      },
+      "es": {
+        "text": "VexLife no pudo determinar la memoria de este dispositivo."
+      },
+      "pt": {
+        "text": "O VexLife não conseguiu determinar a memória deste dispositivo."
+      },
+      "ar": {
+        "text": "تعذر على VexLife تحديد ذاكرة هذا الجهاز."
+      },
+      "hi": {
+        "text": "VexLife इस डिवाइस की मेमोरी निर्धारित नहीं कर सका।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.description.host-reason-memory-low-portable": {
+    "strings": {
+      "en": {
+        "text": "This device has less memory than the selected local model needs."
+      },
+      "ja": {
+        "text": "このデバイスのメモリは、選択したローカルモデルに必要な量より少なくなっています。"
+      },
+      "zh": {
+        "text": "此设备的内存少于所选本地模型所需的内存。"
+      },
+      "ko": {
+        "text": "이 기기의 메모리는 선택한 로컬 모델에 필요한 양보다 적습니다."
+      },
+      "fr": {
+        "text": "Cet appareil dispose de moins de mémoire que le modèle local sélectionné n’en nécessite."
+      },
+      "de": {
+        "text": "Dieses Gerät hat weniger Arbeitsspeicher, als das ausgewählte lokale Modell benötigt."
+      },
+      "es": {
+        "text": "Este dispositivo tiene menos memoria de la que necesita el modelo local seleccionado."
+      },
+      "pt": {
+        "text": "Este dispositivo tem menos memória do que o modelo local selecionado precisa."
+      },
+      "ar": {
+        "text": "ذاكرة هذا الجهاز أقل مما يحتاجه النموذج المحلي المحدد."
+      },
+      "hi": {
+        "text": "इस डिवाइस में चुने गए लोकल मॉडल की ज़रूरत से कम मेमोरी है।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.description.host-reason-hardware-portable": {
+    "strings": {
+      "en": {
+        "text": "This device's hardware is not supported by the selected local runtime target."
+      },
+      "ja": {
+        "text": "このデバイスのハードウェアは、選択したローカルランタイム対象ではサポートされていません。"
+      },
+      "zh": {
+        "text": "此设备的硬件不受所选本地运行时目标支持。"
+      },
+      "ko": {
+        "text": "이 기기의 하드웨어는 선택한 로컬 런타임 대상에서 지원되지 않습니다."
+      },
+      "fr": {
+        "text": "Le matériel de cet appareil n’est pas pris en charge par la cible d’exécution locale sélectionnée."
+      },
+      "de": {
+        "text": "Die Hardware dieses Geräts wird vom ausgewählten lokalen Laufzeitziel nicht unterstützt."
+      },
+      "es": {
+        "text": "El hardware de este dispositivo no es compatible con el destino de ejecución local seleccionado."
+      },
+      "pt": {
+        "text": "O hardware deste dispositivo não é compatível com o destino de execução local selecionado."
+      },
+      "ar": {
+        "text": "أجهزة هذا الجهاز غير مدعومة بواسطة هدف وقت التشغيل المحلي المحدد."
+      },
+      "hi": {
+        "text": "इस डिवाइस का हार्डवेयर चुने गए लोकल रनटाइम टार्गेट द्वारा समर्थित नहीं है।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.description.host-requirement-portable": {
+    "strings": {
+      "en": {
+        "text": "This runtime target requires {hardware} and at least {memory} GiB of memory."
+      },
+      "ja": {
+        "text": "このランタイム対象には {hardware} と {memory} GiB 以上のメモリが必要です。"
+      },
+      "zh": {
+        "text": "此运行时目标需要 {hardware}，并且至少需要 {memory} GiB 内存。"
+      },
+      "ko": {
+        "text": "이 런타임 대상에는 {hardware} 및 최소 {memory} GiB 메모리가 필요합니다."
+      },
+      "fr": {
+        "text": "Cette cible d’exécution nécessite {hardware} et au moins {memory} Gio de mémoire."
+      },
+      "de": {
+        "text": "Dieses Laufzeitziel benötigt {hardware} und mindestens {memory} GiB Arbeitsspeicher."
+      },
+      "es": {
+        "text": "Este destino de ejecución requiere {hardware} y al menos {memory} GiB de memoria."
+      },
+      "pt": {
+        "text": "Este destino de execução requer {hardware} e pelo menos {memory} GiB de memória."
+      },
+      "ar": {
+        "text": "يتطلب هدف وقت التشغيل هذا {hardware} وذاكرة لا تقل عن {memory} GiB."
+      },
+      "hi": {
+        "text": "इस रनटाइम टार्गेट के लिए {hardware} और कम से कम {memory} GiB मेमोरी चाहिए।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.description.host-observed-portable": {
+    "strings": {
+      "en": {
+        "text": "This device: {hardware}, {memory}."
+      },
+      "ja": {
+        "text": "このデバイス：{hardware}、{memory}。"
+      },
+      "zh": {
+        "text": "此设备：{hardware}，{memory}。"
+      },
+      "ko": {
+        "text": "이 기기: {hardware}, {memory}."
+      },
+      "fr": {
+        "text": "Cet appareil : {hardware}, {memory}."
+      },
+      "de": {
+        "text": "Dieses Gerät: {hardware}, {memory}."
+      },
+      "es": {
+        "text": "Este dispositivo: {hardware}, {memory}."
+      },
+      "pt": {
+        "text": "Este dispositivo: {hardware}, {memory}."
+      },
+      "ar": {
+        "text": "هذا الجهاز: {hardware}، {memory}."
+      },
+      "hi": {
+        "text": "यह डिवाइस: {hardware}, {memory}।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.step-host": {
+    "strings": {
+      "en": {
+        "text": "This device"
+      },
+      "ja": {
+        "text": "このデバイス"
+      },
+      "zh": {
+        "text": "此设备"
+      },
+      "ko": {
+        "text": "이 기기"
+      },
+      "fr": {
+        "text": "Cet appareil"
+      },
+      "de": {
+        "text": "Dieses Gerät"
+      },
+      "es": {
+        "text": "Este dispositivo"
+      },
+      "pt": {
+        "text": "Este dispositivo"
+      },
+      "ar": {
+        "text": "هذا الجهاز"
+      },
+      "hi": {
+        "text": "यह डिवाइस"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.label.unknown-hardware": {
+    "strings": {
+      "en": {
+        "text": "unknown hardware"
+      },
+      "ja": {
+        "text": "不明なハードウェア"
+      },
+      "zh": {
+        "text": "未知硬件"
+      },
+      "ko": {
+        "text": "알 수 없는 하드웨어"
+      },
+      "fr": {
+        "text": "matériel inconnu"
+      },
+      "de": {
+        "text": "unbekannte Hardware"
+      },
+      "es": {
+        "text": "hardware desconocido"
+      },
+      "pt": {
+        "text": "hardware desconhecido"
+      },
+      "ar": {
+        "text": "أجهزة غير معروفة"
+      },
+      "hi": {
+        "text": "अज्ञात हार्डवेयर"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.status.model-recommended-on-this-device": {
+    "strings": {
+      "en": {
+        "text": "recommended for this device"
+      },
+      "ja": {
+        "text": "このデバイスにおすすめ"
+      },
+      "zh": {
+        "text": "推荐用于此设备"
+      },
+      "ko": {
+        "text": "이 기기에 권장"
+      },
+      "fr": {
+        "text": "recommandé pour cet appareil"
+      },
+      "de": {
+        "text": "für dieses Gerät empfohlen"
+      },
+      "es": {
+        "text": "recomendado para este dispositivo"
+      },
+      "pt": {
+        "text": "recomendado para este dispositivo"
+      },
+      "ar": {
+        "text": "موصى به لهذا الجهاز"
+      },
+      "hi": {
+        "text": "इस डिवाइस के लिए सुझाया गया"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.status.model-fits-this-device": {
+    "strings": {
+      "en": {
+        "text": "fits this device"
+      },
+      "ja": {
+        "text": "このデバイスで動作"
+      },
+      "zh": {
+        "text": "适合此设备"
+      },
+      "ko": {
+        "text": "이 기기에 맞음"
+      },
+      "fr": {
+        "text": "adapté à cet appareil"
+      },
+      "de": {
+        "text": "passt zu diesem Gerät"
+      },
+      "es": {
+        "text": "apto para este dispositivo"
+      },
+      "pt": {
+        "text": "adequado a este dispositivo"
+      },
+      "ar": {
+        "text": "يناسب هذا الجهاز"
+      },
+      "hi": {
+        "text": "इस डिवाइस के लिए उपयुक्त"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.status.model-not-supported-on-this-device": {
+    "strings": {
+      "en": {
+        "text": "not supported on this device"
+      },
+      "ja": {
+        "text": "このデバイスではサポートされていません"
+      },
+      "zh": {
+        "text": "此设备不受支持"
+      },
+      "ko": {
+        "text": "이 기기에서는 지원되지 않음"
+      },
+      "fr": {
+        "text": "non pris en charge sur cet appareil"
+      },
+      "de": {
+        "text": "auf diesem Gerät nicht unterstützt"
+      },
+      "es": {
+        "text": "no compatible con este dispositivo"
+      },
+      "pt": {
+        "text": "não compatível com este dispositivo"
+      },
+      "ar": {
+        "text": "غير مدعوم على هذا الجهاز"
+      },
+      "hi": {
+        "text": "इस डिवाइस पर समर्थित नहीं"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
   }
 }
