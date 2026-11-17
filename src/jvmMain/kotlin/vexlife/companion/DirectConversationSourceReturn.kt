@@ -179,6 +179,7 @@ object DirectConversationSourceReturn {
                 listOf(
                     ProtocolHeader,
                     "If exact older Conversation source that is not already present is necessary to answer the human faithfully, do not guess and do not answer yet.",
+                    "If the human asks what was previously said, named, corrected, decided, or identified and that exact answer is not present, treat it as an exact-source question: request source before answering, even when the human refers to it by paraphrase rather than the original wording.",
                     "Instead emit one source-return control in final assistant content. Do not merely describe it or leave it only in reasoning.",
                     "Never quote or explain the request header in a human answer; emitting that exact header on its own line means you are choosing the internal source-return control.",
                     "Begin the control with this exact request header on its own line:",
