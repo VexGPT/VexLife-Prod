@@ -62,16 +62,22 @@ VexLifeCurrentMemoryReader
 current qualified runtime evidence
         ↓
 DirectPromptContext
-  foundational field kernel, first, in every mode (owner: VexLifeFoundationalField)
-  + current Memory availability truth when source-current
-  + caller-bounded selected Memory from remaining prompt capacity
-  + owner-current working-checkpoint successor when present
-  + exact prior Vex RESPONSE bridge when successor mode is current
-  + source-formed bounded self-capability frame
-  + Conversation extent: how many completed exchanges the record holds before this request
-  + Conversation-owned backward read of the newest contiguous completed REQUEST/RESPONSE suffix
-    that fits ordinary prompt attention
-  + conditional Conversation source-return protocol on the first inference
+  one stable system block:
+    foundational field kernel, first, in every mode (owner: VexLifeFoundationalField)
+    + current Memory availability truth when source-current
+    + caller-bounded selected Memory from remaining prompt capacity
+    + the self-capability frame's stable description: what can be reached and how to ask
+  then exact history:
+    + Conversation-owned backward read of the newest contiguous completed REQUEST/RESPONSE suffix
+      that fits ordinary prompt attention
+    + exact prior Vex RESPONSE bridge when working-successor mode is current
+  then one VexLife current-state envelope (user role, VEXLIFE_CURRENT_STATE/v1):
+    + owner-current working-checkpoint coordinates when present
+    + this request's capability states and frame ref
+    + person context: reply language and private gaps
+    + Conversation extent: how many completed exchanges the record holds before this request
+    + conditional Conversation source-return protocol on the first inference
+  then returned exact older source, when this inference carries it
   + optional admitted browser context
   + current request
 
@@ -261,6 +267,29 @@ The foundational field is owned by `VexLifeFoundationalField`
 the rest of the verified turn context and the exact immediate prior exchange, places it first in the system prefix,
 and records its evidence in prompt receipt v8. It does not write or shorten its words.
 
+### Current state is placed as current
+
+Who owns a value and when it changes are different questions. Person context, this request's
+capability states, the Conversation extent, Working Continuity coordinates and the source-return
+protocol change independently of the exact Conversation history. They therefore travel after that
+history in one host-formed current-state envelope and say they are current **at this request**.
+
+The leading system block keeps only stable prompt material: the foundational field, selected current
+Memory content, and the capability description. The envelope uses the user role because the pinned
+Qwen chat template admits one system message and requires it first. Provider serialization does not
+make that role semantic authority.
+
+~~~text
+OWNERSHIP / ROLE != CURRENTNESS / PLACEMENT
+CANONICAL CURRENT STATE != STABLE PROMPT PREFIX
+PROVIDER SERIALIZATION != SEMANTIC AUTHORITY
+~~~
+
+Prompt receipt v8 records each placed component with its stability class, placement class, provider
+message index, exact digest and source refs. Browser/page text remains untrusted reference material
+even if it contains text that imitates `VEXLIFE_CURRENT_STATE/v1`: host placement evidence and
+owner-formed component refs distinguish the real envelope, and prompt text grants no effect authority.
+
 The Conversation extent is this owner's own statement. A narrow window otherwise looks the same to
 Vex as a short history, so the live turn's prompt says how many completed exchanges the durable record
 holds before the current request, and that any not shown are still in the record. The count is the
@@ -295,9 +324,10 @@ CACHE HIT / MISS
 != CONTINUITY SUCCESS / LOSS
 ~~~
 
-The current Product does not claim that its provider message ordering is cache-optimal. Provider-stage
-measurement records prompt, cached and prefill token counts so later optimization can be judged by
-observed runtime reuse without moving semantic truth into the cache or lying about provider roles.
+This source candidate makes stable/history/current placement explicit so the cache-prefix question can
+be measured without moving semantic truth into the cache or lying about provider roles. Provider-stage
+measurement still owns the lived claim: prompt, cached and prefill token counts must show whether this
+ordering materially improves reuse on the qualified Qwen runtime before the change is accepted.
 
 ### `DirectCompanionConnection`
 
