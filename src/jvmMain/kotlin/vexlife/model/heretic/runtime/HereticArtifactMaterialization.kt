@@ -58,8 +58,22 @@ object HereticArtifactMaterialization {
         )
     }
 
+    const val MaterializedExactState =
+        "HERETIC_ARTIFACTS_MATERIALIZED_EXACT"
+
+    enum class PresenceState {
+        ABSENT,
+        PARTIAL_BY_SIZE,
+        COMPLETE_BY_SIZE_NOT_HASHED,
+        INVALID_SIZE,
+    }
+
+    enum class RemovalState {
+        ALREADY_ABSENT,
+        REMOVED,
+    }
+
     data class Result(
-        val state: String,
         val modelPath: String,
         val providerRevision: String,
         val contentSetSha256: String,
@@ -69,10 +83,14 @@ object HereticArtifactMaterialization {
         val acquiredMemberCount: Int,
         val acquisitionPerformed: Boolean,
         val artifactMutationPerformed: Boolean,
-    )
+    ) {
+        /** Stable external disposition; exact materialization has only one successful state. */
+        val state: String
+            get() = MaterializedExactState
+    }
 
     data class PresenceObservation(
-        val state: String,
+        val state: PresenceState,
         val modelPath: String,
         val providerRevision: String,
         val contentSetSha256: String,
@@ -204,7 +222,7 @@ object HereticArtifactMaterialization {
             VexOwnedPath.DirectoryState.Missing
         ) {
             return PresenceObservation(
-                state = "ABSENT",
+                state = PresenceState.ABSENT,
                 modelPath = modelPath.toString(),
                 providerRevision = plan.providerRevision,
                 contentSetSha256 = plan.contentSetSha256,
@@ -285,18 +303,18 @@ object HereticArtifactMaterialization {
                 when {
                     invalidSizeBytes >
                         0 ->
-                        "INVALID_SIZE"
+                        PresenceState.INVALID_SIZE
 
                     presentBySizeBytes ==
                         0L ->
-                        "ABSENT"
+                        PresenceState.ABSENT
 
                     missingBytes >
                         0 ->
-                        "PARTIAL_BY_SIZE"
+                        PresenceState.PARTIAL_BY_SIZE
 
                     else ->
-                        "COMPLETE_BY_SIZE_NOT_HASHED"
+                        PresenceState.COMPLETE_BY_SIZE_NOT_HASHED
                 },
             modelPath = modelPath.toString(),
             providerRevision = plan.providerRevision,
@@ -461,7 +479,6 @@ object HereticArtifactMaterialization {
         }
 
         return Result(
-            state = "HERETIC_ARTIFACTS_MATERIALIZED_EXACT",
             modelPath = modelPath.toString(),
             providerRevision = plan.providerRevision,
             contentSetSha256 = plan.contentSetSha256,
@@ -479,7 +496,7 @@ object HereticArtifactMaterialization {
     }
 
     data class Removal(
-        val state: String,
+        val state: RemovalState,
         val modelPath: String,
         val removedFiles: Int,
         val freedBytes: Long,
@@ -502,7 +519,7 @@ object HereticArtifactMaterialization {
         val root = VexOwnedPath.resolveInside(home, model.modelRootRelativePath)
         val modelPath = VexOwnedPath.resolveInside(home, "${model.modelRootRelativePath}/${model.providerRevision}")
         if (VexOwnedPath.observeDirectory(home, modelPath) == VexOwnedPath.DirectoryState.Missing) {
-            return Removal("ALREADY_ABSENT", modelPath.toString(), 0, 0)
+            return Removal(RemovalState.ALREADY_ABSENT, modelPath.toString(), 0, 0)
         }
         var removed = 0
         var freed = 0L
@@ -526,7 +543,7 @@ object HereticArtifactMaterialization {
             val empty = Files.list(directory).use { it.findFirst().isEmpty }
             if (empty) Files.delete(directory) else break
         }
-        return Removal("REMOVED", modelPath.toString(), removed, freed)
+        return Removal(RemovalState.REMOVED, modelPath.toString(), removed, freed)
     }
 
     fun computeContentSetSha256(

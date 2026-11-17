@@ -73,7 +73,6 @@ class VexLifeProdLocalSetupTest {
         reuse: Boolean = false,
     ): HereticArtifactMaterialization.Result =
         HereticArtifactMaterialization.Result(
-            state = "HERETIC_ARTIFACTS_MATERIALIZED_EXACT",
             modelPath =
                 home.resolve("models/heretic/qwen3.8-27b-mlx4/" + "8".repeat(40)).toString(),
             providerRevision = "8".repeat(40),
