@@ -387,6 +387,8 @@ object DirectCompanionTurn {
         },
         val progressObserver: ProgressObserver? =
             null,
+        val cancellation: DirectCompanionCancellation? =
+            null,
         /** How capability owners reach the web/Home/Memory; replaced in tests. */
         val capabilityOwners: VexLifeCapabilityBridge.Owners = VexLifeCapabilityBridge.Owners(),
         /** The foundational field as its owner reads it now; re-read at each provider boundary. */
@@ -455,6 +457,8 @@ object DirectCompanionTurn {
         intent: Intent,
         progressObserver: ProgressObserver? =
             null,
+        cancellation: DirectCompanionCancellation? =
+            null,
     ): Result =
         performWithHooks(
             setup = session.result,
@@ -477,6 +481,7 @@ object DirectCompanionTurn {
                         session.observeCurrentQualifiedRuntimeEvidence()
                     },
                     progressObserver = progressObserver,
+                    cancellation = cancellation,
                 ),
         )
 
@@ -570,6 +575,7 @@ object DirectCompanionTurn {
                             "browserContext" to if (intent.browserContext != null) "included" else "none",
                         ),
                     )
+                    hooks.cancellation?.checkpoint()
                     emitProgress(
                         hooks.progressObserver,
                         Progress(
@@ -612,6 +618,7 @@ object DirectCompanionTurn {
                     val capabilityTrace =
                         providerTurn.capabilityTrace
 
+                    hooks.cancellation?.checkpoint()
                     response =
                         appendResponse(
                             request = request,
@@ -636,6 +643,7 @@ object DirectCompanionTurn {
                             formedAt = hooks.now(),
                         )
 
+                    hooks.cancellation?.checkpoint()
                     val head =
                         commitCompletedTurn(
                             request = request,
