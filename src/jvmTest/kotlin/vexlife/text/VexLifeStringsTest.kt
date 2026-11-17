@@ -54,7 +54,7 @@ class VexLifeStringsTest {
     }
 
     @Test
-    fun workspaceDataKeysNameRealDiagnosticsRefs() {
+    fun workspaceDataKeysNameRealSemanticRefs() {
         val capabilityRefs =
             vexlife.capability.VexLifeCapabilityAtlas.definitions().flatMap { definition ->
                 definition.actions.map { "capability:${definition.handle}:${it.action}" }
@@ -66,7 +66,11 @@ class VexLifeStringsTest {
                     vexlife.model.VexLifeModelsFamily.ControlRemove,
                 ).map { "model:control:$it" } +
                 vexlife.model.VexLifeModelsFamily.Files.entries.map { "model:files:${it.name}" } +
-                vexlife.model.heretic.HereticModelCatalog.Standing.entries.map { "model:standing:${it.name}" }
+                vexlife.model.heretic.HereticModelCatalog.Standing.entries.map { "model:standing:${it.name}" } +
+                vexlife.voiceinput.VexLifeVoiceInputFamily.StateRefs.map { "voice-input:state:$it" } +
+                vexlife.voiceinput.VexLifeVoiceInputFamily.ControlRefs.map { "voice-input:control:$it" } +
+                vexlife.voiceinput.VexLifeVoiceInputFamily.HoldReasonRefs.map { "voice-input:reason:$it" } +
+                vexlife.voiceinput.VexLifeVoiceInputFamily.FailureReasonRefs.map { "voice-input:failure:$it" }
         val known =
             capabilityRefs.toSet() +
             setOf(
