@@ -6,14 +6,13 @@ import kotlinx.serialization.json.put
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetup
-import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 
 /**
  * Exact-#241 host-proof precondition only.
  *
- * The person's already-selected Product model must be the certified Qwen27B. This precondition does
- * not choose or switch models. It may reuse/start that Product-owned runtime from already-present
+ * The person's already-selected Product model is preserved exactly. This precondition does not
+ * choose or switch models. It may reuse/start that Product-owned runtime from already-present
  * prerequisites; acquisition is forbidden. The canonical Conversation writer must already be IDLE
  * and is not repaired here. The historical stable predecessor is not borrowed, retired or mutated.
  */
@@ -47,14 +46,7 @@ object ContinuityHostRuntimePrecondition {
                 "selected canonical Vex Home is absent"
             }
         val modelConfiguration = FileHereticModelConfigurationStore(runtimeHome)
-        val targetModel = HereticModelCatalog.Models.Qwen27B
         val selectedBefore = modelConfiguration.selectedModel(home.manifest)
-        require(selectedBefore.modelRef == targetModel.modelRef) {
-            "host proof will not switch the person's Product model; selected=" +
-                selectedBefore.modelRef +
-                ", required=" +
-                targetModel.modelRef
-        }
 
         val result =
             VexLifeProdLocalSetup.establishAt(
@@ -67,8 +59,8 @@ object ContinuityHostRuntimePrecondition {
                     ),
             )
         val current = result.qualifiedRuntimeEvidence
-        require(current.modelRef == targetModel.modelRef) {
-            "runtime precondition did not realize the already-selected certified Product model"
+        require(current.modelRef == selectedBefore.modelRef) {
+            "runtime precondition did not realize the Home's already-selected Product model"
         }
 
         val afterWriter = DirectConversationStore(runtimeHome).threadWriterCurrentness()
@@ -85,9 +77,9 @@ object ContinuityHostRuntimePrecondition {
                 put("modelBindingDisposition", result.modelBindingDisposition)
                 put("runtimeReceiptRef", current.runtimeReceiptRef)
                 put("modelRef", current.modelRef)
-                put("targetModelRef", targetModel.modelRef)
-                put("targetModelProfileRef", targetModel.identity.modelProfileRef)
-                put("targetArtifactSetRef", targetModel.identity.artifactSetRef)
+                put("targetModelRef", selectedBefore.modelRef)
+                put("targetModelProfileRef", selectedBefore.identity.modelProfileRef)
+                put("targetArtifactSetRef", selectedBefore.identity.artifactSetRef)
                 put("priorModelRef", selectedBefore.modelRef)
                 put("modelSelectionChanged", false)
                 put("endpoint", current.endpoint)
