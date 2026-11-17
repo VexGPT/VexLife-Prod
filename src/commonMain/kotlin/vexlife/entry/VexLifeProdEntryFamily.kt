@@ -584,13 +584,13 @@ class VexLifeProdEntryFamily private constructor() :
                         ),
                     "requirement" to
                         VexLifeText(
-                            key = "setup.description.host-requirement",
+                            key = "setup.description.host-requirement-portable",
                             args = mapOf("hardware" to state.requiredHardware),
                             gib = mapOf("memory" to state.requiredMemoryBytes),
                         ),
                     "observed" to
                         VexLifeText(
-                            key = "setup.description.host-observed",
+                            key = "setup.description.host-observed-portable",
                             args =
                                 state.observedHardware
                                     ?.let {
