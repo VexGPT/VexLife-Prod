@@ -2063,6 +2063,27 @@ class VexLifeProdLocalService private constructor(
         intent: DirectCompanionTurn.Intent,
         executor: StreamingTurnExecutor,
     ) {
+        val cancellation =
+            DirectCompanionCancellation()
+        if (
+            activeTurns.putIfAbsent(
+                intent.idempotencyKey,
+                cancellation,
+            ) !=
+            null
+        ) {
+            respondError(
+                exchange = exchange,
+                status = 409,
+                code = "SEND_ALREADY_ACTIVE",
+                message = "This exact Send attempt is already active.",
+            )
+            return
+        }
+        val executionBinding =
+            cancellation.bindCurrentThread()
+
+        try {
         exchange.responseHeaders.set(
             "content-type",
             "text/event-stream; charset=utf-8",
@@ -2268,6 +2289,7 @@ class VexLifeProdLocalService private constructor(
                             event,
                         )
                     },
+                    cancellation,
                 )
 
             offerTerminal(
@@ -2333,6 +2355,13 @@ class VexLifeProdLocalService private constructor(
                         exchange.responseBody.close()
                     }
                 }
+        }
+        } finally {
+            activeTurns.remove(
+                intent.idempotencyKey,
+                cancellation,
+            )
+            executionBinding.close()
         }
     }
 
