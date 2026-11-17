@@ -50,8 +50,8 @@ node tools/continuity-pressure/run.mjs --stage quick \
 ~~~
 
 - **Fast live host-proof profile:** the precondition resolves the target through
-  `HereticModelCatalog.Models.Qwen4B` and its existing child `companionProfile`; no model handle,
-  profile ref, artifact identity or attention architecture is re-authored by the harness. The
+  `HereticModelCatalog.Candidate4B`; its model/profile/artifact identities remain children of that
+  existing catalog entry and are not re-authored by the harness. The
   model-owned Qwen hybrid attention layout remains pinned. The live pressure run uses an
   experiment-only 48k effective selection budget with payload scale 12 and 3×3 scenario turns so
   rollover/successor behavior is reached sooner; this does not change the model's physical context
