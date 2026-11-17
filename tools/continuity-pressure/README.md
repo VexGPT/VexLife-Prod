@@ -51,11 +51,19 @@ node tools/continuity-pressure/run.mjs --stage quick \
 
 - **Fast live host-proof profile:** the precondition resolves the target through
   `HereticModelCatalog.Candidate4B`; its model/profile/artifact identities remain children of that
-  existing catalog entry and are not re-authored by the harness. The
-  model-owned Qwen hybrid attention layout remains pinned. The live pressure run uses an
-  experiment-only 48k effective selection budget with payload scale 12 and 3×3 scenario turns so
-  rollover/successor behavior is reached sooner; this does not change the model's physical context
-  capacity or Product hard token limit.
+  existing catalog entry and are not re-authored by the harness. The model-owned Qwen hybrid
+  attention layout remains pinned. The live pressure run uses an experiment-only 80k effective
+  selection budget with payload scale 12 and 3×3 scenario turns so rollover/successor behavior is
+  reached quickly without making Normal pressure impossible; this does not change the model's
+  physical context capacity or Product hard token limit.
+- **Current provider representation composition:** Claude's #225 ancestry predates the Product's
+  model-specific Companion representation owner and otherwise makes every Qwen inherit the certified
+  27B sampling defaults. The host-proof companion composes current-main
+  `HereticCompanionRepresentation` and binds the existing 27B / 9B / 4B catalog siblings to their
+  current profiles. The Connection consumes that parent-owned profile, so Qwen4B uses its current
+  `temperature=0.6, topP=0.95, topK=20` relationship instead of an experiment-authored model-name
+  switch. No attention architecture, continuity owner, Memory owner, or Product hard token limit is
+  changed by this composition.
 - **Host runtime precondition (outside the experiment):** the GitHub-backed Mac host-proof carriage
   first requires the canonical Conversation writer to be `IDLE`. It then selects the Product-owned
   runtime route explicitly, with `allowAcquisition=false` and `allowRuntimeStart=true`, after the
