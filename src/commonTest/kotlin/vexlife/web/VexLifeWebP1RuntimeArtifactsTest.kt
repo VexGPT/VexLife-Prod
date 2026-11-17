@@ -4,6 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.model.VexLifeModelsFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
@@ -536,6 +537,54 @@ class VexLifeWebP1RuntimeArtifactsTest {
             bundle.html.contains(
                 "allow-top-navigation",
             ),
+        )
+    }
+
+    @Test
+    fun modelSettingsKeepSelectionConfigurationAndActivationAsSeparateControls() {
+        val bundle =
+            VexLifeWebP1RuntimeArtifacts.generate()
+        val javascript =
+            bundle.javascript
+
+        assertTrue(
+            bundle.html.contains(
+                "id=\"model-choice\"",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "id=\"model-prompt-cache-entries\"",
+            ),
+        )
+        assertTrue(
+            bundle.html.contains(
+                "id=\"model-start\"",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "void modelControl(${VexLifeModelsFamily.ControlSelect}",
+            ),
+            "choosing a target must return the Select Control rather than start it",
+        )
+        assertTrue(
+            javascript.contains(
+                "void modelControl(${VexLifeModelsFamily.ControlSetPromptCacheEntries}",
+            ),
+            "the cache slider must return the configuration Control",
+        )
+        assertTrue(
+            javascript.contains(
+                "void modelControl(${VexLifeModelsFamily.ControlUse}",
+            ),
+            "explicit Start must remain the runtime-convergence Control",
+        )
+        assertFalse(
+            javascript.contains(
+                "ui.modelChoice.onchange = () => { void modelControl(${VexLifeModelsFamily.ControlUse}",
+            ),
+            "target selection must never imply runtime activation",
         )
     }
 
