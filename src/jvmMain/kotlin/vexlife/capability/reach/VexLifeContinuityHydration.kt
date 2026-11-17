@@ -13,7 +13,8 @@ import vexlife.memory.VexLifeMemoryContract
  * may fan into several owner reads, fuse duplicate candidates, exact-reopen Conversation source,
  * and return current Memory plus explicit unresolved Working Continuity coordinates.
  *
- * This first slice is lexical + exact-current-anchor only. A lexical miss is not proof that no
+ * This first slice is lexical + exact-current-anchor only. Terms inside one query group are
+ * conjunctive clues; query groups are alternate vantages. A lexical miss is not proof that no
  * relevant durable history exists; semantic candidate location remains a separate successor edge.
  */
 object VexLifeContinuityHydration {
@@ -112,14 +113,22 @@ object VexLifeContinuityHydration {
                 )
             scannedCompletedTurns = maxOf(scannedCompletedTurns, discovery.scannedCompletedTurnCount)
             rawCandidates += discovery.matches.size
-            discovery.matches.forEach { match ->
-                val key = "${match.requestEvent.eventRef}|${match.responseEvent.eventRef}"
-                conversation
-                    .getOrPut(key) {
-                        ConversationAccumulator(match.requestEvent, match.responseEvent)
+            discovery.matches
+                .filter { match ->
+                    query.terms.all { term ->
+                        match.matchedTerms.any { matched ->
+                            matched.equals(term, ignoreCase = true)
+                        }
                     }
-                    .add(query.ref, match.matchedTerms)
-            }
+                }
+                .forEach { match ->
+                    val key = "${match.requestEvent.eventRef}|${match.responseEvent.eventRef}"
+                    conversation
+                        .getOrPut(key) {
+                            ConversationAccumulator(match.requestEvent, match.responseEvent)
+                        }
+                        .add(query.ref, match.matchedTerms)
+                }
 
             when (
                 val recalled =
@@ -131,15 +140,23 @@ object VexLifeContinuityHydration {
             ) {
                 is VexLifeMemoryRecall.Outcome.Found -> {
                     rawCandidates += recalled.matches.size
-                    recalled.matches.forEach { match ->
-                        if (match.statementRef !in excludedMemoryStatementRefs) {
-                            pagesByStatement[match.statementRef]?.let { page ->
-                                memoryMatches
-                                    .getOrPut(match.statementRef) { MemoryAccumulator(page) }
-                                    .add(query.ref, match.matchedTerms)
+                    recalled.matches
+                        .filter { match ->
+                            query.terms.all { term ->
+                                match.matchedTerms.any { matched ->
+                                    matched.equals(term, ignoreCase = true)
+                                }
                             }
                         }
-                    }
+                        .forEach { match ->
+                            if (match.statementRef !in excludedMemoryStatementRefs) {
+                                pagesByStatement[match.statementRef]?.let { page ->
+                                    memoryMatches
+                                        .getOrPut(match.statementRef) { MemoryAccumulator(page) }
+                                        .add(query.ref, match.matchedTerms)
+                                }
+                            }
+                        }
                 }
                 is VexLifeMemoryRecall.Outcome.Refused ->
                     error("invalid continuity Memory query: ${recalled.reason}")
