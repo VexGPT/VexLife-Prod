@@ -1,0 +1,31 @@
+# Temporary sanity execution for the checkpointed R002 readiness harness.
+# This proves script completion only on a hosted Windows VM; it does not replace Victor-host truth.
+name: windows-readiness-r002-harness-proof
+
+on:
+  pull_request:
+    paths:
+      - 'relay/windows-product-baseline/readiness/R002/**'
+      - '.github/workflows/windows-readiness-r002-harness-proof.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  harness:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Execute no-effect readiness harness
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP 'r002-output'
+          New-Item -ItemType Directory -Path $out -Force | Out-Null
+          & '.\relay\windows-product-baseline\readiness\R002\RUN-VEXLIFE-WINDOWS-READINESS.ps1' -ProposedHome (Join-Path $env:RUNNER_TEMP '.vexlife') -OutputDirectory $out
+          $return = Get-ChildItem -LiteralPath $out -Filter 'RETURN-VEXLIFE-WINDOWS-READINESS-R002--sha256-*.zip' -File | Select-Object -First 1
+          if ($null -eq $return) { throw 'R002_RETURN_NOT_FORMED' }
+          Write-Host ('R002 hosted harness PASS: ' + $return.Name)
