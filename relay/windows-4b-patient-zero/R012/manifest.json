@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "vexlife-prod.upstream-family-realization-proof/v1",
+  "continuity": "[VXG RealForever]",
+  "attempt": "R012",
+  "productCarrierPr": 227,
+  "productSourceSha": "c3ac28ec95c39ab49f1351af02c4b986266fe6bb",
+  "execution": "LOCAL_RELAY_NO_GITHUB_ACTIONS",
+  "purpose": "re-prove the upstream Entry/Models Family-to-realization chain after correcting portable setup string ownership/current-use metadata, then re-run the already-earned Windows lived path",
+  "r011": {
+    "returnSha256": "e8bdc7cbb91219f9300b2b057a14d1120b7c682884ef4a11368e9415b92692ac",
+    "disposition": "SAFE_FAILURE",
+    "stringManifestCheck": "PASS",
+    "compileTestKotlinJvm": "PASS",
+    "testsCompleted": 133,
+    "testsFailed": 3,
+    "runtimeReached": false,
+    "failedTests": [
+      "VexLifeProdSetupLanguageTest.aDisplayedControlsWordsMapToTheControlTheyCarry",
+      "VexLifeProdSetupLanguageTest.everyDataKeyNamesARefItsOwnerHas",
+      "VexLifeProdSetupLanguageTest.everyKeyIsUsedAndEveryUsedKeyExists"
+    ],
+    "cause": "portable Entry Family semantics were correct, but setup localization metadata still had missing new Family dataKey links plus orphaned MAC-step / Mac-shaped keys"
+  },
+  "localizationCorrection": {
+    "familyOwnedLinks": {
+      "setup.label.step-host": "entry:step:HOST",
+      "setup.heading.model-target-held": "entry:state:MODEL_TARGET_HELD",
+      "setup.description.model-target-held": "entry:state:MODEL_TARGET_HELD"
+    },
+    "removedOrphanedKeys": [
+      "setup.description.host-reason-platform",
+      "setup.description.host-reason-architecture",
+      "setup.description.host-reason-memory-unknown",
+      "setup.description.host-reason-memory-low",
+      "setup.description.host-reason-chip",
+      "setup.description.host-requirement",
+      "setup.description.host-observed",
+      "setup.label.step-mac",
+      "setup.status.model-recommended",
+      "setup.status.model-fits"
+    ],
+    "preservedMacOwnedKey": "setup.label.unknown-chip",
+    "semanticInvariantChanged": false
+  },
+  "semanticChain": [
+    "VexLifeProdEntryFamily",
+    "VexLifeModelsFamily",
+    "HereticRuntimeRealization",
+    "HereticRuntimeAvailability",
+    "rightful platform/runtime owner",
+    "qualified realization evidence",
+    "Product binding",
+    "VexLifeProdRuntimeSession.Foundation",
+    "shared Product body"
+  ],
+  "proofPolicy": {
+    "stringManifestCheck": "checkVexLifeStrings",
+    "selectedTests": [
+      "VexLifeProdEntryFamilyTest",
+      "VexLifeModelsFamilyTest",
+      "VexLifeModelsTest",
+      "HereticModelCatalogTest",
+      "HereticProductModelTest",
+      "HereticRuntimeRealizationTest",
+      "HereticRuntimeRealizationSequenceTest",
+      "HereticRuntimeRealizationArchitectureTest",
+      "HereticRuntimeAvailabilityTest",
+      "HereticRuntimeContractTest",
+      "DirectCompanionConnectionTest",
+      "DirectCompanionTurnTest",
+      "VexLifeProdLocalSetupTest",
+      "VexLifeProdServiceProcessTest",
+      "VexLifeProdSetupModelTest",
+      "VexLifeProdSetupLanguageTest",
+      "VexLifeProdMacFrontDoorTest",
+      "VexLifeProdSetupProcessTest",
+      "VexLifeWebP1RuntimeArtifactsTest"
+    ],
+    "livedWindowsReproof": true,
+    "realHomeMutation": false,
+    "githubActions": false
+  }
+}
