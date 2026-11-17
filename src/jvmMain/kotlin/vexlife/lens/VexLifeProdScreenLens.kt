@@ -10,6 +10,7 @@ import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import vexlife.blueprint.VexUiElementRef
+import vexlife.companion.DirectCompanionTurn
 import vexlife.continuity.VexLifePrivateModeFamily
 import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.service.VexLifeProdServiceContract
@@ -420,7 +421,7 @@ object VexLifeProdScreenLens {
                         "$n.turn",
                         "BEHAVIOR",
                         "METHOD",
-                        VexLifeConversationTurnFamily.TerminalReason.CancelledByPerson.ref,
+                        DirectCompanionTurn.FailureCancelledByPerson,
                         "DirectCompanionTurn",
                         Jvm + "companion/DirectCompanionTurn.kt",
                         "The already-durable request receives the Family-owned terminal reason in its failure receipt; no response/head is committed.",
