@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "vexlife-prod.windows-4b-runtime-realization-promotion/v1",
+  "continuity": "[VXG RealForever]",
+  "attempt": "R008",
+  "productCarrierPr": 227,
+  "productSourceSha": "ab00c74e380b3beaf45f0ae4f0747b0c5d5b8c8f",
+  "execution": "LOCAL_RELAY_NO_GITHUB_ACTIONS",
+  "purpose": "prove the promoted realization recipe/session/service architecture after carrying the portable Foundation through the full provider-turn pipeline",
+  "r007": {
+    "returnSha256": "231b523adee932b1cdae1a0ffcb90bf246be4b740dab0193b8e1ea28ef37fe23",
+    "disposition": "SAFE_FAILURE",
+    "runtimeReached": false,
+    "failure": "RUNTIME_REALIZATION_PROMOTION_TESTS_EXIT_1",
+    "firstCompilerError": "DirectCompanionTurn.kt provider stage still expected VexLifeProdLocalSetup.Result while caller supplied VexLifeProdRuntimeSession.Foundation",
+    "secondCompilerError": "the same stale provider-stage parameter then passed LocalSetup.Result to currentRuntimeEvidence, which already required Foundation",
+    "resolutionCommit": "ab00c74e380b3beaf45f0ae4f0747b0c5d5b8c8f"
+  },
+  "architecturePromotion": {
+    "realizationOwner": "vexlife.model.heretic.HereticRuntimeRealization",
+    "sequenceOwner": "vexlife.model.heretic.HereticRuntimeRealizationSequence",
+    "portableSession": "vexlife.local.VexLifeProdRuntimeSession.Foundation",
+    "portableFoundationFields": [
+      "state",
+      "productHome",
+      "qualifiedRuntimeEvidence"
+    ],
+    "providerPipelineCarriesPortableFoundation": true,
+    "servicePlatformSeam": "vexlife.service.VexLifeProdLocalService.PlatformProjection",
+    "runtimeBehaviorSource": "HereticRuntimeRealization only",
+    "macSetupResultInSharedProviderPipeline": false
+  },
+  "proofPolicy": {
+    "preRuntimeGate": "selected cross-platform promotion tests plus complete JVM test-source compilation",
+    "selectedTests": [
+      "HereticModelCatalogTest",
+      "HereticProductModelTest",
+      "HereticRuntimeRealizationTest",
+      "HereticRuntimeRealizationSequenceTest",
+      "HereticRuntimeRealizationArchitectureTest",
+      "HereticRuntimeAvailabilityTest",
+      "HereticRuntimeContractTest",
+      "DirectCompanionConnectionTest",
+      "DirectCompanionTurnTest",
+      "VexLifeProdLocalSetupTest",
+      "VexLifeProdServiceProcessTest",
+      "VexLifeProdSetupProcessTest"
+    ],
+    "livedWindowsReproof": true,
+    "realHomeMutation": false,
+    "githubActions": false
+  }
+}
