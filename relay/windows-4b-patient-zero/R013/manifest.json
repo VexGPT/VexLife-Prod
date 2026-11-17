@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "vexlife-prod.entry-observation-promotion-proof/v1",
+  "continuity": "[VXG RealForever]",
+  "attempt": "R013",
+  "productCarrierPr": 227,
+  "productSourceSha": "a9bc27bc9d42b4cb61c6d47c901beb005f3725f1",
+  "execution": "LOCAL_RELAY_NO_GITHUB_ACTIONS",
+  "earnedBeforeThisAttempt": {
+    "r012ReturnSha256": "b09a728efacc93181097dbf26e77a108e7badf323aff3d4ca77e59fc9fff8cee",
+    "r012Disposition": "PASS",
+    "upstreamFamilyRealizationCircuit": "PASS",
+    "windows4BLivedPath": "PASS"
+  },
+  "purpose": "prove one platform-neutral Product-entry observation decision tree, preserve Mac adapter behavior, and re-run the already-earned Windows lived runtime path",
+  "entryObservationPromotion": {
+    "owner": "vexlife.setup.VexLifeProdEntryObservation",
+    "effectsPerformed": false,
+    "inputs": [
+      "current-state projection",
+      "Home location",
+      "exact runtime target",
+      "host requirement",
+      "existing service observation",
+      "runtime prerequisite presence",
+      "explicit/current model choice"
+    ],
+    "serviceObservationVariants": [
+      "Absent",
+      "RunningOwned",
+      "OwnedNotReady",
+      "HeldUnknown"
+    ],
+    "macAdapterDelegatesDecisionTree": true,
+    "macLaunchdMechanicsRemainInMacAdapter": true,
+    "crossTargetSelectedModel": {
+      "windowsX64WithMacOnly9B": "MODEL_TARGET_HELD",
+      "automaticFallback": false
+    }
+  },
+  "proofPolicy": {
+    "stringManifestCheck": "checkVexLifeStrings",
+    "selectedTests": [
+      "VexLifeProdEntryFamilyTest",
+      "VexLifeModelsFamilyTest",
+      "VexLifeModelsTest",
+      "HereticModelCatalogTest",
+      "HereticProductModelTest",
+      "HereticRuntimeRealizationTest",
+      "HereticRuntimeRealizationSequenceTest",
+      "HereticRuntimeRealizationArchitectureTest",
+      "HereticRuntimeAvailabilityTest",
+      "HereticRuntimeContractTest",
+      "DirectCompanionConnectionTest",
+      "DirectCompanionTurnTest",
+      "VexLifeProdLocalSetupTest",
+      "VexLifeProdServiceProcessTest",
+      "VexLifeProdSetupModelTest",
+      "VexLifeProdSetupLanguageTest",
+      "VexLifeProdEntryObservationTest",
+      "VexLifeProdMacFrontDoorTest",
+      "VexLifeProdSetupProcessTest",
+      "VexLifeWebP1RuntimeArtifactsTest"
+    ],
+    "livedWindowsReproof": true,
+    "realHomeMutation": false,
+    "githubActions": false
+  }
+}
