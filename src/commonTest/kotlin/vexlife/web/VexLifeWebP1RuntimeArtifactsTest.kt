@@ -564,25 +564,25 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             javascript.contains(
-                "void modelControl(${VexLifeModelsFamily.ControlSelect}",
+                "modelControl(\"${VexLifeModelsFamily.ControlSelect}\", handle)",
             ),
             "choosing a target must return the Select Control rather than start it",
         )
         assertTrue(
             javascript.contains(
-                "void modelControl(${VexLifeModelsFamily.ControlSetPromptCacheEntries}",
+                "\"${VexLifeModelsFamily.ControlSetPromptCacheEntries}\"",
             ),
             "the cache slider must return the configuration Control",
         )
         assertTrue(
             javascript.contains(
-                "void modelControl(${VexLifeModelsFamily.ControlUse}",
+                "modelControl(\"${VexLifeModelsFamily.ControlUse}\", selected.handle)",
             ),
             "explicit Start must remain the runtime-convergence Control",
         )
         assertFalse(
             javascript.contains(
-                "ui.modelChoice.onchange = () => { void modelControl(${VexLifeModelsFamily.ControlUse}",
+                "modelChoice.onchange = () => { void modelControl(\"${VexLifeModelsFamily.ControlUse}\"",
             ),
             "target selection must never imply runtime activation",
         )
