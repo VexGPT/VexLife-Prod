@@ -320,6 +320,29 @@ object VexLifeWebP1 {
             VexLifeWorkspaceBlueprint.ContextInspector,
         )
 
+    /**
+     * Voice input is a presentation-local input method for the existing draft. The browser may use
+     * an on-device recognizer, but the transcript still becomes ordinary Composer text and only the
+     * existing Send capability commits it to Conversation.
+     */
+    val VoiceInput =
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.VoiceInput,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions =
+                setOf(
+                    VexWeb.Interaction.Activate,
+                ),
+            binding =
+                VexWebAuthoring.localInteraction(
+                    VexWeb.Identity.Blueprint(
+                        VexLifeWorkspaceBlueprint.Composer,
+                    ),
+                ),
+        )
+
     val Send =
         VexWebAuthoring.element(
             element = VexLifeWorkspaceBlueprint.Send,
@@ -343,6 +366,7 @@ object VexLifeWebP1 {
                 listOf(
                     ContextReceipt,
                     ContextShare,
+                    VoiceInput,
                     Send,
                     Stop,
                 ),
