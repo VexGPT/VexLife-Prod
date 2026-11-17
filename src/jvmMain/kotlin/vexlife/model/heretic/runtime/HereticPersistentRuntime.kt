@@ -640,48 +640,47 @@ object HereticPersistentRuntime {
     private fun serverLaunchContract(
         modelPath: String,
         args: List<String>,
-    ): ServerLaunchContract? =
-        ServerLaunchContract.entries.firstOrNull { contract ->
+    ): ServerLaunchContract? {
+        val predecessor =
             serverArgs(
                 modelPath = modelPath,
-                contract = contract,
-            ) == args
+                contract = ServerLaunchContract.PRE_PROMPT_CACHE_LIMIT,
+            )
+        if (args == predecessor) {
+            return ServerLaunchContract.PRE_PROMPT_CACHE_LIMIT
         }
+        if (
+            args.size == predecessor.size + 2 &&
+            args.dropLast(2) == predecessor &&
+            args[args.lastIndex - 1] == "--prompt-cache-size" &&
+            args.last()
+                .toIntOrNull()
+                ?.let {
+                    runCatching {
+                        HereticRuntimeConfiguration.requirePromptCacheEntries(
+                            it,
+                        )
+                    }
+                        .isSuccess
+                } ==
+                true
+        ) {
+            return ServerLaunchContract.CURRENT
+        }
+        return null
+    }
 
     private fun acceptedPriorServerArgs(
         binding: Binding,
         receipt: Receipt,
-    ): List<String>? {
-        val priorArgs = receipt.runtime.args
-        if (
-            priorArgs.size >= 2 &&
-            priorArgs.dropLast(2) ==
-                serverArgs(
-                    modelPath = receipt.modelPath,
-                    contract = ServerLaunchContract.PRE_PROMPT_CACHE_LIMIT,
-                ) &&
-            priorArgs[priorArgs.lastIndex - 1] == "--prompt-cache-size"
-        ) {
-            val priorLimit =
-                priorArgs.last()
-                    .toIntOrNull()
-                    ?.let {
-                        runCatching {
-                            HereticRuntimeConfiguration.requirePromptCacheEntries(it)
-                        }.getOrNull()
-                    }
-            if (priorLimit != null) {
-                return priorArgs
-            }
-        }
-        return serverLaunchContract(
-            binding = binding,
-            args = priorArgs,
+    ): List<String>? =
+        serverLaunchContract(
+            modelPath = receipt.modelPath,
+            args = receipt.runtime.args,
         )
             ?.let {
-                priorArgs
+                receipt.runtime.args
             }
-    }
 
     /**
      * Retirement-only ownership for a Product runtime whose model is no longer offered.
