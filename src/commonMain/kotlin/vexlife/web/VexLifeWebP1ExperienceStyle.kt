@@ -544,11 +544,14 @@ svg { display: block; }
 .model-choice-notes:empty { display: none; }
 .model-configuration { display: grid; gap: 10px; }
 .model-cache-field {
-  display: grid; grid-template-columns: minmax(150px, auto) minmax(160px, 1fr) 32px;
+  display: grid; grid-template-columns: minmax(150px, auto) minmax(220px, 1fr);
   gap: 10px; align-items: center;
 }
-.model-cache-field input[type="range"] { width: 100%; }
-.model-cache-field output { text-align: right; font-variant-numeric: tabular-nums; font-weight: 650; }
+.model-cache-field select {
+  width: 100%; min-width: 0; min-height: 38px; padding: 0 10px;
+  border: 1px solid var(--rule-strong); border-radius: 7px;
+  background: var(--surface); color: var(--ink);
+}
 .model-configuration-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .model-activation {
   display: grid; gap: 6px; margin-top: 4px; padding-top: 12px; border-top: 1px solid var(--rule);
@@ -780,6 +783,7 @@ a.outline-button { display: inline-flex; align-items: center; justify-content: c
 
   .model-choice-row { grid-template-columns: minmax(0, 1fr); }
   .model-choice-actions { justify-content: flex-start; }
+  .model-cache-field { grid-template-columns: minmax(0, 1fr); }
   .model-start-button { width: 100%; min-width: 0; }
 
   /* The authored Browser↔Companion relationship remains one Seam. Narrow presentation
