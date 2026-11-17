@@ -40,6 +40,36 @@ class HereticRuntimeRealizationTest {
     }
 
     @Test
+    fun currentMacRuntimeIdentityAndRealizationMustMoveDeliberatelyTogether() {
+        val realization =
+            HereticRuntimeRealization.require(
+                modelRef = HereticModelCatalog.Models.Qwen4B.modelRef,
+                target = HereticRuntimeRealization.MacArm64,
+            )
+
+        assertEquals(
+            HereticProductIdentity.RuntimeAdapterRef,
+            realization.runtime.runtimeAdapterRef,
+        )
+        assertEquals(
+            HereticProductIdentity.RuntimeClass,
+            realization.runtime.runtimeClass,
+        )
+        assertEquals(
+            HereticProductIdentity.TransportClass,
+            realization.runtime.transportClass,
+        )
+        assertEquals(
+            HereticProductIdentity.Endpoint,
+            realization.runtime.endpoint,
+        )
+        assertEquals(
+            HereticProductIdentity.RequestModel,
+            realization.runtime.requestModel,
+        )
+    }
+
+    @Test
     fun windowsX64CoverageIsExplicitAndDoesNotInheritTheCatalog() {
         assertEquals(
             listOf(
