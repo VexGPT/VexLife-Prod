@@ -1,0 +1,37 @@
+{
+  "repositoryRef": "primary",
+  "expectedBase": "262c208b2e65e828dd867719c29ecd286ae58a80",
+  "expectedHead": "0d74a1a70000fff702074310f8ca10b30229d2f7",
+  "expectedTree": "b443078d72e6ae791c207e7a86479dbdb5c1dd44",
+  "branch": "VXG-111726-effective-execution-topology-a001",
+  "proofCommands": [
+    {
+      "command": "/bin/bash",
+      "args": [
+        "-lc",
+        "set -euo pipefail; J21=\"$(/usr/libexec/java_home -v 21 2>/dev/null)\" || { printf \"%s\\n\" \"Effective execution topology A001: JDK 21 is unavailable.\" >&2; exit 21; }; [ -n \"$J21\" ] && [ -x \"$J21/bin/java\" ] || { printf \"%s\\n\" \"Effective execution topology A001: resolved JDK is invalid.\" >&2; exit 22; }; export JAVA_HOME=\"$J21\"; export PATH=\"$JAVA_HOME/bin:$PATH\"; \"$JAVA_HOME/bin/java\" -version; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" compileKotlinJvm; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" jvmTest --tests vexlife.model.heretic.runtime.HereticExecutionTopologyTest; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" jvmTest; [ -z \"$(/usr/bin/git status --porcelain=v1 -uall)\" ] || { /usr/bin/git status --porcelain=v1 -uall >&2; exit 31; }"
+      ],
+      "proofClass": "TEST",
+      "candidateEvidence": true,
+      "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+      "predicateRef": "predicate.vexlife-prod.effective-execution-topology.source-tests",
+      "timeoutMs": 1200000
+    }
+  ],
+  "maxFiles": 4,
+  "stateRef": "state.vexlife-prod.effective-execution-topology",
+  "currentLifecycleState": "SOURCE_READY",
+  "currentGoal": "Prove exact PR #228 read-only execution-topology source and tests without any model/runtime/Home effect.",
+  "remainingGoals": [
+    "Consume the canonical Relay RETURN against the frozen PR #228 head/tree.",
+    "Run fresh semantic Assurance over the complete four-path candidate.",
+    "Re-ground integration currentness and merge only if the same-gate predicates remain clear."
+  ],
+  "onPass": {
+    "lifecycleState": "SOURCE_READY",
+    "nextFunction": "F10.REVIEW",
+    "nextOwner": "Operations",
+    "whyThisIsNext": "Exact source/tests are complete; semantic Assurance and integration currentness remain before merge."
+  },
+  "resultFilename": "RETURN-VEXLIFE-EFFECTIVE-EXECUTION-TOPOLOGY-A001.zip"
+}
