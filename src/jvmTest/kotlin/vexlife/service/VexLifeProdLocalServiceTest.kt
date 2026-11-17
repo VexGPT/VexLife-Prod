@@ -2789,6 +2789,13 @@ class VexLifeProdLocalServiceTest {
                             ),
                         stream.body(),
                     )
+                    assertTrue(
+                        stream.body()
+                            .contains(
+                                "data: [DONE]",
+                            ),
+                        "cancelled stream must still deliver its terminal presentation boundary",
+                    )
                     assertEquals(
                         1,
                         providerCalls,
