@@ -31,9 +31,8 @@
     "prior Conversation head survives",
     "second canonical turn recalls prior technical token"
   ],
-  "hostedBuildResolution": {
-    "branch": "VXG-111726-chatgpt-windows-4b-patient-zero-a001",
-    "workflow": "windows-4b-patient-zero-proof.yml",
-    "selection": "LATEST_SUCCESSFUL_EXACT_ARTIFACT_RECEIPT"
-  }
+  "carrierSourceSha": "b115d4405e122bf07574cc0b48de587b08b51824",
+  "hostedBuildRun": 44064465533,
+  "hostedBuildConclusion": "success",
+  "hostedBuildPolicy": "FROZEN_EXACT_BUILD_NO_FURTHER_WINDOWS_ACTIONS_REQUIRED"
 }
