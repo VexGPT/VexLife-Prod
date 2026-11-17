@@ -82,6 +82,12 @@ class VexLifeStringsTest {
                 "diagnostics:control:" + vexlife.diagnostics.VexLifeDiagnosticsFamily.ControlStopEnhanced,
                 "diagnostics:control:" + vexlife.diagnostics.VexLifeDiagnosticsFamily.ControlClearHistory,
                 "diagnostics:export:DEBUG_ZIP",
+                "local-asr:selection:SAVED",
+                "local-asr:state:" + vexlife.localasr.VexLifeLocalAsrProvider.StateReady,
+                "local-asr:state:" + vexlife.localasr.VexLifeLocalAsrProvider.DetailProviderSourceNotCurrent,
+                "local-asr:state:" + vexlife.localasr.VexLifeLocalAsrProvider.DetailProviderExecutableUnavailable,
+                "local-asr:state:" + vexlife.localasr.VexLifeLocalAsrProvider.DetailModelUnavailable,
+                "local-asr:state:" + vexlife.localasr.VexLifeLocalAsrProvider.DetailModelDigestNotCurrent,
             )
         VexLifeStrings.catalog.keys
             .filter { it.startsWith("workspace.") }

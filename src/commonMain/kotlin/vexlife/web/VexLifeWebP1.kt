@@ -488,6 +488,26 @@ object VexLifeWebP1 {
             children = listOf(ModelsList),
         )
 
+    val LocalAsrSelection =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalAsrSelection,
+        )
+
+    val LocalAsrStatus =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalAsrStatus,
+        )
+
+    val SettingsLocalAsr =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.SettingsLocalAsr,
+            children =
+                listOf(
+                    LocalAsrSelection,
+                    LocalAsrStatus,
+                ),
+        )
+
     val DiagnosticsTrace = blueprintSurface(VexLifeWorkspaceBlueprint.DiagnosticsTrace)
     val DiagnosticsEnhancedCapture = blueprintSurface(VexLifeWorkspaceBlueprint.DiagnosticsEnhancedCapture)
     val DiagnosticsClearHistory = blueprintSurface(VexLifeWorkspaceBlueprint.DiagnosticsClearHistory)
@@ -516,6 +536,7 @@ object VexLifeWebP1 {
                     SettingsHome,
                     SettingsContinuity,
                     SettingsModels,
+                    SettingsLocalAsr,
                     SettingsDiagnostics,
                 ),
         )
