@@ -759,5 +759,65 @@
       "workspace.conversation"
     ],
     "dataKey": "voice-input:failure:UNKNOWN"
+  },
+  "workspace.button.conversation-stop": {
+    "strings": {
+      "en": {
+        "text": "Stop"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.conversation-stopping": {
+    "strings": {
+      "en": {
+        "text": "Stopping this turn…"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.conversation-stopped": {
+    "strings": {
+      "en": {
+        "text": "Stopped by you"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.description.conversation-stopped": {
+    "strings": {
+      "en": {
+        "text": "Stopped. Your message is back in the Composer so you can edit or delete it."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.conversation-cancel-not-active": {
+    "strings": {
+      "en": {
+        "text": "That turn is no longer active."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.conversation-cancel-unavailable": {
+    "strings": {
+      "en": {
+        "text": "VexLife could not request Stop."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
   }
 }
