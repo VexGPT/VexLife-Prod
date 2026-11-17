@@ -1,6 +1,7 @@
 package vexlife.web
 
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.voiceinput.VexLifeVoiceInputFamily
 import vexlife.workspace.VexLifeSourceTemplate
@@ -151,6 +152,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 sourceCurrentnessPath: ${jsString(VexLifeProdServiceContract.SourceCurrentnessPath)},
                 currentStatePath: ${jsString(VexLifeProdServiceContract.CurrentStatePath)},
                 conversationPath: ${jsString(VexLifeProdServiceContract.ConversationPath)},
+                conversationTurnPath: ${jsString(VexLifeProdServiceContract.ConversationTurnPath)},
                 contextPath: ${jsString(VexLifeProdServiceContract.ContextPath)},
                 memoryPath: ${jsString(VexLifeProdServiceContract.MemoryPath)},
                 settingsPath: ${jsString(VexLifeProdServiceContract.SettingsPath)},
@@ -192,6 +194,17 @@ object VexLifeWebP1RuntimeArtifacts {
                 captureRendered: ${jsString(VexLifeProdBrowserContract.CaptureRendered)},
                 messageType: 'vexlife.browser-context/v1',
                 authoredBrowserShare: $authoredBrowserShare
+              });
+              // Kotlin ConversationTurn Family vocabulary crossing into presentation. The current
+              // State/DisplayState itself is observed from the service, not invented in JavaScript.
+              const conversationTurn = Object.freeze({
+                control: Object.freeze({
+                  send: ${jsString(VexLifeConversationTurnFamily.ControlSend)},
+                  stop: ${jsString(VexLifeConversationTurnFamily.ControlStop)}
+                }),
+                outcome: Object.freeze({
+                  realized: ${jsString(VexLifeProdServiceContract.ConversationControlOutcome.REALIZED.name)}
+                })
               });
               // Serialization boundary for the Kotlin VoiceInput Family. Browser code realizes
               // Effects but does not invent Product State, Control, reason refs or display keys.
