@@ -3111,6 +3111,16 @@ tasks.register<JavaExec>("continuityPressure") {
     workingDir = projectDir
 }
 
+tasks.register<JavaExec>("continuityPriorRuntimeCleanup") {
+    group = "verification"
+    description = "Host-proof only: retire the exact prior 27B Product runtime using its owning source generation."
+    val test = kotlin.jvm().compilations.getByName("test")
+    dependsOn("jvmTestClasses")
+    classpath = files(test.output.allOutputs, test.runtimeDependencyFiles)
+    mainClass.set("vexlife.harness.ContinuityPriorRuntimeCleanupKt")
+    workingDir = projectDir
+}
+
 tasks.register<JavaExec>("continuityHostRuntimePrecondition") {
     group = "verification"
     description = "Ensure the selected already-installed Product runtime is live for a host continuity proof; no acquisition."
