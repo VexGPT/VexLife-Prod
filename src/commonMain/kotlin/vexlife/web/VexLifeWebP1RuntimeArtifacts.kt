@@ -1667,6 +1667,8 @@ object VexLifeWebP1RuntimeArtifacts {
               const loadSettings = async () => {
                 const response = await fetch(service.settingsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.settings = await readJson(response);
+                observeVoiceInputCapability();
+                renderVoiceInput();
                 renderLanguage();
                 renderSpeechVoices();
                 renderSpeech();
@@ -1674,7 +1676,12 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const chooseLanguage = async (code) => {
-                if (dictation.desiredActive) await stopVoiceInput(true);
+                if (dictation.desiredActive) {
+                  await applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                }
                 try {
                   const response = await fetch(service.settingsPath, {
                     method: 'POST',
@@ -4515,24 +4522,44 @@ object VexLifeWebP1RuntimeArtifacts {
 
               ui.composeForm.addEventListener('submit', (event) => {
                 event.preventDefault();
-                if (dictation.desiredActive) void stopVoiceInput(true);
+                if (dictation.desiredActive) {
+                  void applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                }
                 void send();
               });
 
               ui.draft.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
                   event.preventDefault();
-                  if (dictation.desiredActive) void stopVoiceInput(true);
+                  if (dictation.desiredActive) {
+                    void applyVoiceInputControl({
+                      controlRef: voiceInput.control.stop,
+                      abort: true
+                    });
+                  }
                   void send();
                 }
               });
 
               ui.draft.addEventListener('input', () => {
-                if (dictation.desiredActive) void stopVoiceInput(true);
+                if (dictation.desiredActive) {
+                  void applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                }
                 sizeDraft();
               });
               document.addEventListener('visibilitychange', () => {
-                if (document.hidden && dictation.desiredActive) void stopVoiceInput(true);
+                if (document.hidden && dictation.desiredActive) {
+                  void applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                }
               });
               ui.timeline.addEventListener('scroll', () => {
                 state.timelineScrollTop = ui.timeline.scrollTop;
@@ -4633,6 +4660,8 @@ object VexLifeWebP1RuntimeArtifacts {
               });
               window.addEventListener('resize', applySplit);
 
+              observeVoiceInputCapability();
+              renderVoiceInput();
               void loadWorkspaceStrings().catch(() => applyStaticText());
               ui.diagnosticsEnhanced?.addEventListener('click', () => {
                 const controlRef = ui.diagnosticsEnhanced.dataset.controlRef;
