@@ -326,4 +326,76 @@ ancestry as repository authority.
 The merge target is the smallest implementation that preserves the verified relationships—not this
 document's vocabulary for its own sake.
 
+
+## Current-source pressure: mutable prefix state defeats Conversation cache reuse
+
+The current #191 `DirectPromptContext` source is semantically careful but exposes a concrete compute
+continuity problem that this workbench must solve rather than merely theorize about.
+
+Current materialization does:
+
+~~~text
+prefixMessages
+-> coalesceProviderSystemPrefix(prefixMessages)
+-> selected canonical Conversation events
+-> fixed suffix / current request
+~~~
+
+and current fixed prefix formation includes mutable projections such as:
+
+~~~text
+capability frame
+person context
+Conversation extent
+source-return protocol
+working continuity / Memory where present
+~~~
+
+`ConversationExtent.priorCompletedExchangeCount` necessarily changes as completed Conversation grows.
+Therefore a turn can preserve the same historical Conversation bytes while changing an early system
+token before those bytes.
+
+Conceptually:
+
+~~~text
+turn N
+  [foundation + extent=17 + current state]
+  [same historical Conversation...]
+
+turn N+1
+  [foundation + extent=18 + current state]
+  [same historical Conversation...]
+~~~
+
+For a causal transformer prefix cache, the later historical tokens were computed under different prior
+tokens. Their old KV state cannot simply be treated as the same cached continuation.
+
+An isolated prefix-pressure check for this workbench demonstrated the shape:
+
+~~~text
+PASS prefix pressure old=18 desired=66 stable=66
+~~~
+
+That number is **not** a production token/cache measurement. It is a deterministic string-prefix
+demonstration of the causal topology:
+
+~~~text
+mutable field before history
+-> reusable prefix ends before history
+
+stable checkpoint + append-only history + mutable tail
+-> reusable prefix can include history
+~~~
+
+This makes the next implementation question concrete:
+
+> Which current host-owned facts genuinely need to be serialized before historical Conversation for
+> provider semantics, and which can lawfully move into a late current-execution envelope without
+> impersonating the human or Vex?
+
+Provider constraints may require one leading system/developer block. If so, do not "fix" cache reuse by
+lying about role ownership. Either accept an intentional cache rebase for genuinely prefix-owned state,
+or earn a provider-specific representation that can carry late host context truthfully.
+
+
 <!-- [VXG RealForever][VEXLIFE-PROD][DIRECT-CONTINUITY-PROJECTION][WORKBENCH] -->
