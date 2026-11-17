@@ -10,6 +10,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import vexlife.companion.DirectCompanionConnection
 
 /**
  * The harness adapter runs the shared canonical scenario through the real owners and returns the
@@ -148,6 +149,134 @@ class ContinuityPressureAdapterTest {
                 held.getValue("effectClass").jsonPrimitive.content,
             )
             assertFalse(Files.exists(dir.resolve("result.json")))
+        } finally {
+            dir.toFile().deleteRecursively()
+        }
+    }
+
+    /**
+     * The live seam against a protocol stub, not a model: it proves a live run streams through the
+     * runtime it is lent, keeps its scratch Home, records the provider's own usage report and
+     * timing, and reads transition timing from the Product's chronology. Model behaviour is proved
+     * only on the host.
+     */
+    @Test
+    fun aLiveRunStreamsThroughTheLentRuntimeAndRecordsWhatTheProviderReported() {
+        val dir = Files.createTempDirectory("vexlife-prod-continuity-pressure-live-seam-")
+        try {
+            var calls = 0
+            val stub =
+                object : DirectCompanionConnection.StreamingTransport {
+                    override fun post(call: DirectCompanionConnection.HttpCall) =
+                        error("a live run streams")
+
+                    override fun postStreaming(
+                        call: DirectCompanionConnection.HttpCall,
+                        onLine: (String) -> Unit,
+                    ): DirectCompanionConnection.StreamingHttpResult {
+                        calls += 1
+                        val prompt = call.body.length / 4
+                        val chunk = """{"model":"default_model","choices":[{"delta":%s}]}"""
+                        onLine("data: " + chunk.format("""{"role":"assistant"}"""))
+                        onLine("data: " + chunk.format("""{"reasoning":"thinking"}"""))
+                        onLine("data: " + chunk.format("""{"content":"Stub answer $calls."}"""))
+                        onLine(
+                            """data: {"model":"default_model","choices":[],"usage":{"prompt_tokens":$prompt,""" +
+                                """"completion_tokens":3,"prompt_tokens_details":{"cached_tokens":${prompt / 2}}}}"""
+                        )
+                        onLine("data: [DONE]")
+                        return DirectCompanionConnection.StreamingHttpResult(200, "0".repeat(64))
+                    }
+                }
+            val placement =
+                Path.of("tools/continuity-pressure/scenarios/current-state-placement-v1.json")
+            val live =
+                config(ContinuityPressureAdapter.Stage.quick, dir)
+                    .copy(
+                        scenarioRef =
+                            "scenario.vexlife.continuity-pressure.current-state-placement.v1",
+                        scenarioFile = placement.toAbsolutePath(),
+                        runtimeHome = Path.of("/nonexistent/host/vex-home"),
+                        experimentWindow = true,
+                    )
+            val lent =
+                ContinuityPressureAdapter.LiveRuntime(
+                    evidence = ContinuityPressureAdapter.FixtureEvidence,
+                    observe = { ContinuityPressureAdapter.FixtureEvidence },
+                    transport = stub,
+                )
+            assertEquals(0, ContinuityPressureAdapter.run(live) { lent })
+
+            val result =
+                Json.parseToJsonElement(Files.readString(dir.resolve("result.json"))).jsonObject
+            assertEquals("LIVE_MODEL", result.getValue("executionClass").jsonPrimitive.content)
+            assertEquals(
+                ContinuityPressureAdapter.FixtureEvidence.runtimeReceiptRef,
+                result.getValue("source").jsonObject.getValue("runtimeRef").jsonPrimitive.content,
+            )
+            assertEquals(8, calls)
+            val zip =
+                java.util.zip.ZipFile(
+                    Files.list(dir)
+                        .use { it.filter { p -> p.toString().endsWith(".zip") }.findFirst().get() }
+                        .toFile()
+                )
+            val telemetry = zip.use { z ->
+                String(
+                        z.getInputStream(z.getEntry("implementation/provider-telemetry.jsonl"))
+                            .readBytes()
+                    )
+                    .lines()
+                    .filter { it.isNotBlank() }
+                    .map { Json.parseToJsonElement(it).jsonObject }
+            }
+            assertEquals(8, telemetry.size)
+            telemetry.forEach { row ->
+                val prompt = row.getValue("promptTokens").jsonPrimitive.content.toInt()
+                val cached = row.getValue("cachedPromptTokens").jsonPrimitive.content.toInt()
+                assertEquals(
+                    prompt - cached,
+                    row.getValue("prefillTokens").jsonPrimitive.content.toInt(),
+                )
+                assertTrue(row.getValue("firstTokenMs").jsonPrimitive.content.toLong() >= 0)
+                assertTrue(row.getValue("firstAnswerMs").jsonPrimitive.content.toLong() >= 0)
+            }
+            val timing =
+                Json.parseToJsonElement(Files.readString(dir.resolve("transition-timing.json")))
+                    .jsonArray
+            assertEquals(8, timing.size)
+            assertTrue(
+                timing.all {
+                    it.jsonObject["answerDurableToCheckpointCommittedMs"]?.jsonPrimitive?.content !=
+                        "null"
+                },
+                "every turn's checkpoint commit is timed from the Product's chronology",
+            )
+        } finally {
+            dir.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun aLiveStageWithoutAnExperimentWindowIsHeldBeforeAnyRuntimeIsTouched() {
+        val dir = Files.createTempDirectory("vexlife-prod-continuity-pressure-window-")
+        try {
+            var bound = false
+            val code =
+                ContinuityPressureAdapter.run(
+                    config(ContinuityPressureAdapter.Stage.quick, dir)
+                        .copy(runtimeHome = Path.of("/nonexistent/host/vex-home"))
+                ) {
+                    bound = true
+                    error("must not bind")
+                }
+            assertEquals(3, code)
+            assertFalse(bound)
+            val held =
+                Json.parseToJsonElement(Files.readString(dir.resolve("held.json"))).jsonObject
+            assertTrue(
+                held.getValue("reason").jsonPrimitive.content.contains("--experiment-window")
+            )
         } finally {
             dir.toFile().deleteRecursively()
         }

@@ -21,7 +21,8 @@ node tools/continuity-pressure/run.mjs --stage analyze ... --result-dir build/co
 |---|---|---|
 | `projection` | runs | the real `DirectCompanionTurn` (Conversation, overlap tail, Working Continuity, reach frame, revisit, Turn Context) with a deterministic fixture provider, in a scratch Home formed for the run and deleted after it |
 | `analyze` | runs | re-derives the summary and assertions from `result.json` and checks they match |
-| `pressure` / `probe` / `quick` / `full` | **HELD**, exit 3 | the live model; this revision does not yet bind a qualified runtime to a scratch Home |
+| `quick` / `full` | runs on the host when bound, else **HELD** (exit 3) | the same send loop against the host's selected model, borrowed read-only, in a scratch Home |
+| `pressure` / `probe` | **HELD**, exit 3 | two halves of one semantic live run; use `quick` or `full`, which keep one scratch Home across both |
 
 - `scenarios/depth-continuity-v1.json` and `scenarios/current-state-placement-v1.json` are byte copies
   of the shared scenarios (VexWork #310 `0fc67824`). `run.mjs` refuses any other digest for each ref.
@@ -36,6 +37,41 @@ node tools/continuity-pressure/run.mjs --stage analyze ... --result-dir build/co
   limit stay as they are, and the prompt receipt records it as `experimentEffectiveInputTokenBudget`.
 - **Projection assertions** judge whether the source was available to the prompt (resident or
   revisited). They do not judge answer quality, which is a question for the live stage.
+
+### Live run (host only)
+
+~~~bash
+node tools/continuity-pressure/run.mjs --stage quick \
+  --scenario-ref scenario.vexlife.continuity-pressure.depth-continuity.v1 \
+  --scenario-file tools/continuity-pressure/scenarios/depth-continuity-v1.json \
+  --result-dir build/continuity-pressure-live \
+  --runtime-home "$HOME/<the selected Vex Home>" --experiment-window \
+  --effective-input-token-budget 80000 --payload-scale 7 --sets 3 --turns-per-set 5
+~~~
+
+- **Runtime:** borrowed through the ordinary reuse-only setup route (`allowAcquisition = false`,
+  `allowRuntimeStart = false`, the route the long-lived service takes). Currentness is then
+  re-observed read-only at every stage with no recovery, so a run never starts, restarts or
+  replaces the runtime. Turns, Conversation and Working Continuity live only in the scratch Home.
+- **Window:** `--experiment-window` is the operator saying this is a dedicated window. Without it,
+  or without `--runtime-home`, the stage holds before touching any runtime. A real conversation
+  running at the same time would contaminate cache and latency evidence.
+- **Engineered profile:** the flags above project NORMAL → WATCH → CHECKPOINT_RECOMMENDED →
+  ROLLOVER (turn 10) → successor (11) → post-successor (12) → probes in 15 turns. Longer live
+  replies move the crossing slightly earlier.
+- **Observed telemetry:** `implementation/provider-telemetry.jsonl` holds, per call, the
+  provider's own usage report (`promptTokens`, `cachedPromptTokens`, `prefillTokens`,
+  `completionTokens`) and `firstTokenMs`, `firstAnswerMs`, `totalMs`. This is observed reuse; the
+  `provider-prefix.py` projection is not.
+- **Transition timing:** `transition-timing.json` beside the ZIP is real host time from the
+  Product's own chronology records: SEND_ACCEPTED → PROVIDER_INVOCATION_REQUESTED, and
+  TURN_COMPLETED → WORKING_CONTINUITY_COMMITTED.
+
+Lane scenario, proposed rather than shared:
+`scenarios/lane/historical-current-state-v1.json` (`run.mjs` binds it by digest; its result says
+`scenarioIsCanonicalShared: false`). An authentic old block that looks like VexLife's current state
+returns through revisit after the real envelope. The projection records the ordering; whether Vex
+still treats the real envelope as current is a live question.
 
 Result: `build/continuity-pressure/result.json` (`vexlife.continuity-pressure-result/v1`) and
 `continuity-pressure-<experimentRef>.zip`. The ZIP holds the manifest, config, scenario, turns,
