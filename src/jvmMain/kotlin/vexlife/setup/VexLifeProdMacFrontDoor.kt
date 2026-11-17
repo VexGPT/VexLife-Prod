@@ -387,9 +387,9 @@ object VexLifeProdMacFrontDoor {
         // The model this setup is about: explicit window choice, else Home choice, else the largest
         // model that both fits this host and has an exact Mac realization.
         val chosenModel =
-            VexLifeProdSetupModel.resolve(
-                productHome = selectedHome,
+            VexLifeProdSetupModel.resolveObserved(
                 explicit = model,
+                observedModelRef = current.activeModelRef,
                 target = HereticRuntimeRealization.MacArm64,
                 totalMemoryBytes = current.totalMemoryBytes,
             )
