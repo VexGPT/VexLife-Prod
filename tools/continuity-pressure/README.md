@@ -59,6 +59,11 @@ node tools/continuity-pressure/run.mjs --stage quick \
   stale binding truth holds the run; the harness never repairs a Conversation writer, rewrites a
   model binding, starts/restarts a runtime, or performs acquisition. Turns, Conversation and Working
   Continuity live only in the scratch Home.
+- **Host-proof runtime composition:** this stacked host-proof branch composes the current-main
+  `HereticPersistentRuntime` launch-contract owner onto the older continuity candidate before
+  live execution. This is not continuity ownership and not a broad rebase: the continuity source
+  stays on the independent #225 stack, while the host runtime is judged by the current Product
+  owner that actually knows `CURRENT` versus `PRE_PROMPT_CACHE_LIMIT` launch contracts.
 - **Window:** `--experiment-window` is the operator saying this is a dedicated window. Without it,
   or without `--runtime-home`, the stage holds before touching any runtime. The live binder also
   read-only checks the canonical Conversation writer before the run and before each provider stage;
