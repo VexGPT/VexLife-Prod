@@ -57,8 +57,10 @@ node tools/continuity-pressure/run.mjs --stage quick \
   runtime, or performs acquisition. Currentness is re-observed the same way at every provider stage.
   Turns, Conversation and Working Continuity live only in the scratch Home.
 - **Window:** `--experiment-window` is the operator saying this is a dedicated window. Without it,
-  or without `--runtime-home`, the stage holds before touching any runtime. A real conversation
-  running at the same time would contaminate cache and latency evidence.
+  or without `--runtime-home`, the stage holds before touching any runtime. The live binder also
+  read-only checks the canonical Conversation writer before the run and before each provider stage;
+  any non-IDLE writer holds the experiment with no recovery. This keeps concurrent Conversation use
+  from contaminating cache/latency evidence without asking the operator to repair or interpret it.
 - **Engineered profile:** the flags above project NORMAL → WATCH → CHECKPOINT_RECOMMENDED →
   ROLLOVER (turn 10) → successor (11) → post-successor (12) → probes in 15 turns. Longer live
   replies move the crossing slightly earlier.
