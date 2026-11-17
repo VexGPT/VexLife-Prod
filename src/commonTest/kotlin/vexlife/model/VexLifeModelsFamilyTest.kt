@@ -8,6 +8,7 @@ import kotlin.test.assertNull
 class VexLifeModelsFamilyTest {
     private fun state(
         files: VexLifeModelsFamily.Files,
+        realizableOnTarget: Boolean = true,
         chosen: Boolean = false,
         serving: Boolean = false,
         downloading: Boolean = false,
@@ -16,6 +17,7 @@ class VexLifeModelsFamilyTest {
         VexLifeModelsFamily.State(
             "heretic-9b",
             files,
+            realizableOnTarget,
             downloading,
             chosen,
             serving,
@@ -82,6 +84,39 @@ class VexLifeModelsFamilyTest {
                     VexLifeModelsFamily.Redownload,
                 )
                 ?.effect,
+        )
+    }
+
+    @Test
+    fun aModelWithoutARealizationOnThisTargetCannotBeAcquiredOrUsed() {
+        assertEquals(
+            emptyList(),
+            controls(
+                state(
+                    files = VexLifeModelsFamily.Files.ABSENT,
+                    realizableOnTarget = false,
+                ),
+            ),
+        )
+        assertEquals(
+            listOf(
+                VexLifeModelsFamily.ControlRemove,
+            ),
+            controls(
+                state(
+                    files = VexLifeModelsFamily.Files.PRESENT,
+                    realizableOnTarget = false,
+                ),
+            ),
+        )
+        assertNull(
+            VexLifeModelsFamily.resolve(
+                state(
+                    files = VexLifeModelsFamily.Files.PRESENT,
+                    realizableOnTarget = false,
+                ),
+                VexLifeModelsFamily.Use,
+            ),
         )
     }
 
