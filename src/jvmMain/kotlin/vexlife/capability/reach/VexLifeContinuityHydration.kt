@@ -112,15 +112,16 @@ object VexLifeContinuityHydration {
                     excludedEventRefs = excludedConversationEventRefs,
                 )
             scannedCompletedTurns = maxOf(scannedCompletedTurns, discovery.scannedCompletedTurnCount)
-            rawCandidates += discovery.matches.size
-            discovery.matches
-                .filter { match ->
+            val admittedConversationMatches =
+                discovery.matches.filter { match ->
                     query.terms.all { term ->
                         match.matchedTerms.any { matched ->
                             matched.equals(term, ignoreCase = true)
                         }
                     }
                 }
+            rawCandidates += admittedConversationMatches.size
+            admittedConversationMatches
                 .forEach { match ->
                     val key = "${match.requestEvent.eventRef}|${match.responseEvent.eventRef}"
                     conversation
@@ -139,15 +140,16 @@ object VexLifeContinuityHydration {
                     )
             ) {
                 is VexLifeMemoryRecall.Outcome.Found -> {
-                    rawCandidates += recalled.matches.size
-                    recalled.matches
-                        .filter { match ->
+                    val admittedMemoryMatches =
+                        recalled.matches.filter { match ->
                             query.terms.all { term ->
                                 match.matchedTerms.any { matched ->
                                     matched.equals(term, ignoreCase = true)
                                 }
                             }
                         }
+                    rawCandidates += admittedMemoryMatches.size
+                    admittedMemoryMatches
                         .forEach { match ->
                             if (match.statementRef !in excludedMemoryStatementRefs) {
                                 pagesByStatement[match.statementRef]?.let { page ->
