@@ -375,6 +375,44 @@ supported model while the original Home truth remains intact.
 The setup/model and Settings/model projections carry `targetRef` explicitly so a reader does not
 need to infer which platform/architecture the availability answer was about.
 
+## Product setup platform seam
+
+The shared setup process no longer owns Mac runtime/service realization directly.
+
+~~~text
+VexLifeProdSetupProcess
+  verifies source-bound Product image
+  carries acquisition/runtime-start authority
+  installs exact Product image
+  sequences convergence
+        |
+        v
+VexLifeProdSetupPlatform
+  formFreshHome(...)
+  establishSession(...)
+  startService(...)
+        |
+        +--> Mac implementation: existing LocalSetup + launchd service lifetime
+        |
+        +--> Windows implementation: next unconsumed Product owner
+~~~
+
+`VexLifeProdServiceLifetime` is the portable result returned to shared setup:
+
+~~~text
+sourceSha
+imagePayloadSha256
+pid
+serviceOrigin
+~~~
+
+Platform-specific process receipts, launchd mechanics, Windows process mechanics, and recovery remain
+with their platform owners. Shared setup only proves that the installed image and started service
+belong to the same exact Product source.
+
+Current Windows acquisition is not yet complete because the private service-image contract/build is
+still Mac-shaped. That gap is held explicitly rather than simulated through the patient-zero runner.
+
 ## Runtime realization recipe
 
 Current runtime behavior is no longer inferred from the model catalog or from whichever platform
@@ -408,8 +446,8 @@ Current lived comparison:
 | realization | exact model + `MacArm64` | exact 4B model + `WindowsX64` |
 | artifact | pinned MLX model bundle | pinned GGUF Q4_K_M |
 | environment | Python + mlx-lm required | explicitly not required |
-| runtime binary | explicitly not required; owned by Python environment | exact `llama-server.exe` required |
-| process | launchd user-process substrate | Windows local-process substrate |
+| runtime binary | explicitly not required; owned by Python environment | official llama.cpp b10107 Windows x64 **CPU** release asset; exact `llama-server.exe` required |
+| process | launchd user-process substrate | Windows local-process substrate; current lived proof is CPU, not CUDA/GPU offload |
 | health | `GET /health` | `GET /health` |
 | model exposure | `GET /v1/models`; exact materialization path | `GET /v1/models`; exact request-model alias |
 | completion | `POST /v1/chat/completions`, maxTokens=1, temperature=0, thinking off, non-streaming | same qualification semantics |
