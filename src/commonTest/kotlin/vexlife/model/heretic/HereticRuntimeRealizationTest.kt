@@ -33,6 +33,36 @@ class HereticRuntimeRealizationTest {
     }
 
     @Test
+    fun targetCoverageIsExplicitAndDoesNotInheritTheWholeCatalog() {
+        assertEquals(
+            HereticModelCatalog.Entries,
+            HereticRuntimeRealization.modelsFor(
+                HereticRuntimeRealization.MacArm64,
+            ),
+        )
+        assertEquals(
+            listOf(
+                HereticModelCatalog.Candidate4B,
+            ),
+            HereticRuntimeRealization.modelsFor(
+                HereticRuntimeRealization.WindowsX64,
+            ),
+        )
+        assertTrue(
+            HereticRuntimeRealization.supports(
+                modelRef = HereticModelCatalog.Candidate4B.modelRef,
+                target = HereticRuntimeRealization.WindowsX64,
+            ),
+        )
+        assertFalse(
+            HereticRuntimeRealization.supports(
+                modelRef = HereticModelCatalog.Candidate9B.modelRef,
+                target = HereticRuntimeRealization.WindowsX64,
+            ),
+        )
+    }
+
+    @Test
     fun windows4BResolvesByExactModelAndTarget() {
         val model = HereticModelCatalog.Candidate4B
         val realization =
