@@ -64,6 +64,13 @@ node tools/continuity-pressure/run.mjs --stage quick \
   `temperature=0.6, topP=0.95, topK=20` relationship instead of an experiment-authored model-name
   switch. No attention architecture, continuity owner, Memory owner, or Product hard token limit is
   changed by this composition.
+- **Short semantic discriminator:** after the 4B current-profile run proved that mechanical
+  continuity can be correct while retrieval/use remains model-sensitive, the next host proof
+  temporarily selects the catalog-owned certified `Qwen27B` through the same Product
+  model-configuration owner. It runs only 2 formation + 2 pressure + 2 probe turns with payload
+  scale 16: enough to cross rollover and compare exact-source / paraphrased-source behavior without
+  replaying the 15-turn depth experiment. This is an experiment target change, not a Product default
+  or a continuity-owner change.
 - **Host runtime precondition (outside the experiment):** the GitHub-backed Mac host-proof carriage
   first requires the canonical Conversation writer to be `IDLE`. It then selects the Product-owned
   runtime route explicitly, with `allowAcquisition=false` and `allowRuntimeStart=true`, after the
