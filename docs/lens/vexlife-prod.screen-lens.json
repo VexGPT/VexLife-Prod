@@ -410,10 +410,10 @@
           "parentRef": "element.vexlife-workspace.companion.conversation",
           "symbol": "VexLifeWorkspaceBlueprint.Stop",
           "declared": "Conversation.control(\"stop\")",
-          "intent": null,
-          "pathwayRef": null,
+          "intent": "capability conversation.cancel",
+          "pathwayRef": "pathway.vexlife-prod.conversation.cancel",
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "Trailing"
         },
         {
           "ref": "element.vexlife-workspace.companion.conversation.context-inspector",
@@ -1235,10 +1235,10 @@
     {
       "pathwayRef": "pathway.vexlife-prod.conversation.send",
       "label": "Send to Vex",
-      "disposition": "DIRECT_REGISTRATION",
-      "summary": "The service route calls the turn owner directly; no Conversation Family has earned this meaning yet.",
-      "returns": "the canonical Conversation projection",
-      "returnRef": "vexlife-prod.send.projection",
+      "disposition": "SCAE_FAMILY",
+      "summary": "VexLifeConversationTurnFamily decides whether Send is lawful for the observed turn State. The service realizes BeginTurn; durable Conversation, provider execution and runtime truth remain separate owners.",
+      "returns": "Family turn DisplayState plus the canonical Conversation projection",
+      "returnRef": "vexlife-prod.send.turn-projection",
       "nodes": [
         {
           "ref": "vexlife-prod.send.intent",
@@ -1250,12 +1250,39 @@
           "source": "common:web/VexLifeWebP1.kt"
         },
         {
+          "ref": "vexlife-prod.send.family-intent",
+          "face": "SEMANTIC",
+          "role": "CONTROL",
+          "label": "Ready + Control.Send(attempt)",
+          "symbol": "VexLifeConversationTurnFamily",
+          "summary": "The Family decides lawfulness and returns Effect.BeginTurn for the exact attempt.",
+          "source": "common:conversation/VexLifeConversationTurnFamily.kt"
+        },
+        {
+          "ref": "vexlife-prod.send.effect",
+          "face": "SEMANTIC",
+          "role": "EFFECT",
+          "label": "BeginTurn(attempt)",
+          "symbol": "VexLifeConversationTurnFamily.BeginTurn",
+          "summary": null,
+          "source": "common:conversation/VexLifeConversationTurnFamily.kt"
+        },
+        {
           "ref": "vexlife-prod.send.dispatch",
           "face": "BEHAVIOR",
           "role": "DISPATCH",
           "label": "POST /api/v1/conversation/send",
           "symbol": "VexLifeProdLocalService",
           "summary": null,
+          "source": "jvm:service/VexLifeProdLocalService.kt"
+        },
+        {
+          "ref": "vexlife-prod.send.custody",
+          "face": "DEPTH",
+          "role": "CONTROL",
+          "label": "one active turn slot",
+          "symbol": "VexLifeProdLocalService.ActiveTurn",
+          "summary": "Request-local execution custody only; it is observed by the Family and does not own Conversation or runtime meaning.",
           "source": "jvm:service/VexLifeProdLocalService.kt"
         },
         {
@@ -1313,6 +1340,24 @@
           "source": "jvm:conversation/DirectConversationStore.kt"
         },
         {
+          "ref": "vexlife-prod.send.family-return",
+          "face": "SEMANTIC",
+          "role": "OBSERVATION",
+          "label": "active-turn truth → same Family",
+          "symbol": "VexLifeConversationTurnFamily.observe",
+          "summary": "Active custody yields Active(attempt); terminal release yields Ready. Provider success never manufactures Family State directly.",
+          "source": "common:conversation/VexLifeConversationTurnFamily.kt"
+        },
+        {
+          "ref": "vexlife-prod.send.turn-projection",
+          "face": "BEHAVIOR",
+          "role": "PROJECTION",
+          "label": "Conversation turn DisplayState",
+          "symbol": "VexLifeProdServiceContract.ConversationTurnProjection",
+          "summary": null,
+          "source": "common:service/VexLifeProdServiceContract.kt"
+        },
+        {
           "ref": "vexlife-prod.send.projection",
           "face": "BEHAVIOR",
           "role": "PROJECTION",
@@ -1325,12 +1370,36 @@
       "edges": [
         {
           "from": "vexlife-prod.send.intent",
+          "to": "vexlife-prod.send.family-intent",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.send.family-intent",
+          "to": "vexlife-prod.send.effect",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.send.effect",
           "to": "vexlife-prod.send.dispatch",
           "label": null,
           "kind": "FLOW"
         },
         {
           "from": "vexlife-prod.send.dispatch",
+          "to": "vexlife-prod.send.custody",
+          "label": "BeginTurn realized",
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.send.custody",
+          "to": "vexlife-prod.send.family-return",
+          "label": "Active(attempt)",
+          "kind": "RETURN"
+        },
+        {
+          "from": "vexlife-prod.send.custody",
           "to": "vexlife-prod.send.turn",
           "label": null,
           "kind": "FLOW"
@@ -1366,9 +1435,177 @@
           "kind": "FLOW"
         },
         {
+          "from": "vexlife-prod.send.turn",
+          "to": "vexlife-prod.send.family-return",
+          "label": "terminal release → Ready",
+          "kind": "RETURN"
+        },
+        {
+          "from": "vexlife-prod.send.family-return",
+          "to": "vexlife-prod.send.turn-projection",
+          "label": null,
+          "kind": "RETURN"
+        },
+        {
           "from": "vexlife-prod.send.conversation",
           "to": "vexlife-prod.send.projection",
           "label": null,
+          "kind": "RETURN"
+        }
+      ]
+    },
+    {
+      "pathwayRef": "pathway.vexlife-prod.conversation.cancel",
+      "label": "Stop current Vex turn",
+      "disposition": "SCAE_FAMILY",
+      "summary": "The same ConversationTurn Family decides whether Stop is lawful for the exact Active attempt. RequestCancel is realized by request-local cancellation; the persistent model runtime is not stopped.",
+      "returns": "fresh Family DisplayState after cancellation request, then Ready after terminal release",
+      "returnRef": "vexlife-prod.cancel.turn-projection",
+      "nodes": [
+        {
+          "ref": "vexlife-prod.cancel.intent",
+          "face": "BEHAVIOR",
+          "role": "INTENT",
+          "label": "conversation.cancel",
+          "symbol": "VexLifeWebP1.Refs.ConversationCancelCapability",
+          "summary": null,
+          "source": "common:web/VexLifeWebP1.kt"
+        },
+        {
+          "ref": "vexlife-prod.cancel.family-intent",
+          "face": "SEMANTIC",
+          "role": "CONTROL",
+          "label": "Active(attempt) + Control.Stop(attempt)",
+          "symbol": "VexLifeConversationTurnFamily",
+          "summary": "A stale/different attempt cannot lawfully Stop the current turn.",
+          "source": "common:conversation/VexLifeConversationTurnFamily.kt"
+        },
+        {
+          "ref": "vexlife-prod.cancel.effect",
+          "face": "SEMANTIC",
+          "role": "EFFECT",
+          "label": "RequestCancel(attempt)",
+          "symbol": "VexLifeConversationTurnFamily.RequestCancel",
+          "summary": null,
+          "source": "common:conversation/VexLifeConversationTurnFamily.kt"
+        },
+        {
+          "ref": "vexlife-prod.cancel.dispatch",
+          "face": "BEHAVIOR",
+          "role": "DISPATCH",
+          "label": "POST /api/v1/conversation/cancel",
+          "symbol": "VexLifeProdLocalService",
+          "summary": null,
+          "source": "jvm:service/VexLifeProdLocalService.kt"
+        },
+        {
+          "ref": "vexlife-prod.cancel.cancellation",
+          "face": "DEPTH",
+          "role": "REALIZATION",
+          "label": "request-local cancellation",
+          "symbol": "DirectCompanionCancellation",
+          "summary": "Interrupts only the active turn request and closes request-local resources; it owns no semantic cancellation reason and no persistent runtime handle.",
+          "source": "jvm:companion/DirectCompanionCancellation.kt"
+        },
+        {
+          "ref": "vexlife-prod.cancel.family-cancelling",
+          "face": "SEMANTIC",
+          "role": "OBSERVATION",
+          "label": "cancellation requested → same Family",
+          "symbol": "VexLifeConversationTurnFamily.observe",
+          "summary": "If execution is still active, the active attempt plus request-local cancellation truth becomes State.Cancelling; a fast terminal release may already observe Ready.",
+          "source": "common:conversation/VexLifeConversationTurnFamily.kt"
+        },
+        {
+          "ref": "vexlife-prod.cancel.turn",
+          "face": "BEHAVIOR",
+          "role": "METHOD",
+          "label": "TURN_CANCELLED_BY_PERSON",
+          "symbol": "DirectCompanionTurn",
+          "summary": "The already-durable request receives the turn owner's terminal cancellation code in its failure receipt; no response/head is committed.",
+          "source": "jvm:companion/DirectCompanionTurn.kt"
+        },
+        {
+          "ref": "vexlife-prod.cancel.family-return",
+          "face": "SEMANTIC",
+          "role": "OBSERVATION",
+          "label": "terminal active-slot release → same Family",
+          "symbol": "VexLifeConversationTurnFamily.observe",
+          "summary": "Once execution custody ends, observed truth becomes Ready again.",
+          "source": "common:conversation/VexLifeConversationTurnFamily.kt"
+        },
+        {
+          "ref": "vexlife-prod.cancel.turn-projection",
+          "face": "BEHAVIOR",
+          "role": "PROJECTION",
+          "label": "Conversation turn DisplayState",
+          "symbol": "VexLifeProdServiceContract.ConversationTurnProjection",
+          "summary": null,
+          "source": "common:service/VexLifeProdServiceContract.kt"
+        },
+        {
+          "ref": "vexlife-prod.cancel.result",
+          "face": "BEHAVIOR",
+          "role": "RETURN",
+          "label": "Conversation cancel response",
+          "symbol": "VexLifeProdServiceContract.ConversationCancelResponse",
+          "summary": null,
+          "source": "common:service/VexLifeProdServiceContract.kt"
+        }
+      ],
+      "edges": [
+        {
+          "from": "vexlife-prod.cancel.intent",
+          "to": "vexlife-prod.cancel.family-intent",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.cancel.family-intent",
+          "to": "vexlife-prod.cancel.effect",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.cancel.effect",
+          "to": "vexlife-prod.cancel.dispatch",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.cancel.dispatch",
+          "to": "vexlife-prod.cancel.cancellation",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.cancel.cancellation",
+          "to": "vexlife-prod.cancel.family-cancelling",
+          "label": "Cancelling(attempt)",
+          "kind": "RETURN"
+        },
+        {
+          "from": "vexlife-prod.cancel.family-cancelling",
+          "to": "vexlife-prod.cancel.result",
+          "label": null,
+          "kind": "RETURN"
+        },
+        {
+          "from": "vexlife-prod.cancel.cancellation",
+          "to": "vexlife-prod.cancel.turn",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.cancel.turn",
+          "to": "vexlife-prod.cancel.family-return",
+          "label": "terminal release",
+          "kind": "RETURN"
+        },
+        {
+          "from": "vexlife-prod.cancel.family-return",
+          "to": "vexlife-prod.cancel.turn-projection",
+          "label": "Ready",
           "kind": "RETURN"
         }
       ]

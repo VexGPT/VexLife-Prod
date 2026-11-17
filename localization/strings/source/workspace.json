@@ -12,7 +12,8 @@
       "diagnostics": "VexLifeDiagnosticsFamily (state, control refs) and the debug export route",
       "capability": "VexLifeCapabilityBridge uses (handle:action), shown to the person as reach",
       "model": "VexLifeModelsFamily (files, control refs) and HereticModelCatalog standing",
-      "voice-input": "VexLifeVoiceInputFamily (state, control, hold/failure reason refs)"
+      "voice-input": "VexLifeVoiceInputFamily (state, control, hold/failure reason refs)",
+      "conversation-turn": "VexLifeConversationTurnFamily (state and control refs)"
     }
   },
   "workspace.heading.diagnostics": {
@@ -759,5 +760,100 @@
       "workspace.conversation"
     ],
     "dataKey": "voice-input:failure:UNKNOWN"
+  },
+  "workspace.button.conversation-stop": {
+    "strings": {
+      "en": {
+        "text": "Stop"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "conversation-turn:control:STOP"
+  },
+  "workspace.status.conversation-stopping": {
+    "strings": {
+      "en": {
+        "text": "Stopping this turn…"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "conversation-turn:state:CANCELLING"
+  },
+  "workspace.status.conversation-stopped": {
+    "strings": {
+      "en": {
+        "text": "Stopped by you"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.description.conversation-stopped": {
+    "strings": {
+      "en": {
+        "text": "Stopped. Your message is back in the Composer so you can edit or delete it."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.conversation-cancel-not-active": {
+    "strings": {
+      "en": {
+        "text": "That turn is no longer active."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.conversation-cancel-unavailable": {
+    "strings": {
+      "en": {
+        "text": "VexLife could not request Stop."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.button.conversation-send": {
+    "strings": {
+      "en": {
+        "text": "Send"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "conversation-turn:control:SEND"
+  },
+  "workspace.status.conversation-ready": {
+    "strings": {
+      "en": {
+        "text": "Ready"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "conversation-turn:state:READY"
+  },
+  "workspace.status.conversation-active": {
+    "strings": {
+      "en": {
+        "text": "Vex is working"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "conversation-turn:state:ACTIVE"
   }
 }

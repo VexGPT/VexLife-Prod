@@ -25,12 +25,14 @@ import vexlife.logging.VexLogger
 import vexlife.text.VexLifeStrings
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.browser.VexLifeProdFrameHost
+import vexlife.companion.DirectCompanionCancellation
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
 import vexlife.companion.DirectPromptContext
 import vexlife.companion.DirectTurnContextStore
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
+import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.local.VexLifeProdSetupProgress
@@ -74,8 +76,17 @@ class VexLifeProdLocalService private constructor(
     private val modelSwitcher: VexLifeModels.Switcher?,
     privateCompletionOverride: VexLifePrivateConversation.Completion? = null,
 ) : AutoCloseable {
+    private data class ActiveTurn(
+        val attempt: VexLifeConversationTurnFamily.Attempt,
+        val cancellation: DirectCompanionCancellation,
+    )
+
     private val privateConversation = VexLifePrivateConversation(Path.of(startupSetup.productHome))
     private val personSettings = VexLifePersonSettingsStore(Path.of(startupSetup.productHome))
+    private val activeTurn =
+        AtomicReference<ActiveTurn?>(
+            null,
+        )
     private val diagnostics =
         VexLifeDiagnostics(home = Path.of(startupSetup.productHome), sourceSha = sourceSha).also {
             it.startObserving()
@@ -391,6 +402,7 @@ class VexLifeProdLocalService private constructor(
                         _,
                         intent,
                         observer,
+                        cancellation,
                         ->
                         withCurrentSession {
                             current ->
@@ -398,6 +410,7 @@ class VexLifeProdLocalService private constructor(
                                 session = current,
                                 intent = intent,
                                 progressObserver = observer,
+                                cancellation = cancellation,
                             )
                         }
                     },
@@ -630,6 +643,7 @@ class VexLifeProdLocalService private constructor(
             setup: VexLifeProdLocalSetup.Result,
             intent: DirectCompanionTurn.Intent,
             progressObserver: DirectCompanionTurn.ProgressObserver,
+            cancellation: DirectCompanionCancellation,
         ): DirectCompanionTurn.Result
     }
 
@@ -791,6 +805,11 @@ class VexLifeProdLocalService private constructor(
                         exchange,
                     )
 
+                VexLifeProdServiceContract.ConversationTurnPath ->
+                    handleConversationTurn(
+                        exchange,
+                    )
+
                 VexLifeProdServiceContract.ConversationPath ->
                     handleConversation(
                         exchange,
@@ -873,6 +892,11 @@ class VexLifeProdLocalService private constructor(
 
                 VexLifeProdServiceContract.VisionLookNowPath ->
                     handleVisionLookNow(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.ConversationCancelPath ->
+                    handleConversationCancel(
                         exchange,
                     )
 
@@ -1282,6 +1306,53 @@ class VexLifeProdLocalService private constructor(
             status = 409,
             code = "VISION_LOOK_NOT_YET_ADMITTED_FROM_PERSISTENT_SCOPE",
             message = "VexLife Vision LOOK remains held until the persistent-scope LOOK executor is accepted",
+        )
+    }
+
+    private fun conversationTurnState():
+        VexLifeConversationTurnFamily.State {
+        val active =
+            activeTurn.get()
+        return VexLifeConversationTurnFamily.observe(
+            activeAttemptRef =
+                active
+                    ?.attempt
+                    ?.ref,
+            cancellationRequested =
+                active
+                    ?.cancellation
+                    ?.cancellationRequested
+                    ?: false,
+        )
+    }
+
+    private fun conversationTurnProjection():
+        VexLifeProdServiceContract.ConversationTurnProjection {
+        val state =
+            conversationTurnState()
+        return VexLifeProdServiceContract.ConversationTurnProjection(
+            schemaVersion =
+                VexLifeProdServiceContract.ConversationTurnProjectionSchema,
+            state = state.stateRef,
+            display =
+                VexLifeConversationTurnFamily.displayStateFor(
+                    state,
+                ),
+            effectsPerformed = false,
+        )
+    }
+
+    private fun handleConversationTurn(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "GET",
+        )
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value = conversationTurnProjection(),
         )
     }
 
@@ -1829,6 +1900,100 @@ class VexLifeProdLocalService private constructor(
                 )
         }
     }
+    private fun handleConversationCancel(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireJson(
+            exchange,
+        )
+        val request =
+            JsonCodec.decodeFromString<VexLifeProdServiceContract.ConversationCancelRequest>(
+                requestText(
+                    exchange,
+                ),
+            )
+        val attempt =
+            VexLifeConversationTurnFamily.Attempt(
+                request.attemptRef,
+            )
+        val act =
+            VexLifeConversationTurnFamily.resolve(
+                currentState =
+                    conversationTurnState(),
+                control =
+                    VexLifeConversationTurnFamily.Stop(
+                        attempt,
+                    ),
+            )
+        val effect =
+            act
+                ?.effect as?
+                VexLifeConversationTurnFamily.RequestCancel
+
+        if (
+            effect ==
+                null
+        ) {
+            respondJson(
+                exchange = exchange,
+                status = 200,
+                value =
+                    VexLifeProdServiceContract.ConversationCancelResponse(
+                        schemaVersion =
+                            VexLifeProdServiceContract.ConversationCancelResponseSchema,
+                        controlRef =
+                            VexLifeConversationTurnFamily.ControlStop,
+                        attemptRef = attempt.ref,
+                        outcome =
+                            VexLifeProdServiceContract.ConversationControlOutcome.NOT_LAWFUL_NOW,
+                        turn = conversationTurnProjection(),
+                        effectsPerformed = false,
+                    ),
+            )
+            return
+        }
+
+        val active =
+            activeTurn.get()
+        val realized =
+            active !=
+                null &&
+                active.attempt ==
+                effect.attempt &&
+                active.cancellation.request()
+
+        val projection =
+            conversationTurnProjection()
+        val outcome =
+            if (
+                realized
+            ) {
+                VexLifeProdServiceContract.ConversationControlOutcome.REALIZED
+            } else {
+                VexLifeProdServiceContract.ConversationControlOutcome.NOT_LAWFUL_NOW
+            }
+
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value =
+                VexLifeProdServiceContract.ConversationCancelResponse(
+                    schemaVersion =
+                        VexLifeProdServiceContract.ConversationCancelResponseSchema,
+                    controlRef =
+                        VexLifeConversationTurnFamily.ControlStop,
+                    attemptRef = attempt.ref,
+                    outcome = outcome,
+                    turn = projection,
+                    effectsPerformed = realized,
+                ),
+        )
+    }
+
     private fun handleSend(
         exchange: HttpExchange,
     ) {
@@ -1887,9 +2052,39 @@ class VexLifeProdLocalService private constructor(
                 streaming !=
                 null
         ) {
+            val attempt =
+                VexLifeConversationTurnFamily.Attempt(
+                    request.idempotencyKey,
+                )
+            val begin =
+                VexLifeConversationTurnFamily.resolve(
+                    currentState =
+                        conversationTurnState(),
+                    control =
+                        VexLifeConversationTurnFamily.Send(
+                            attempt,
+                        ),
+                )
+                    ?.effect as?
+                    VexLifeConversationTurnFamily.BeginTurn
+
+            if (
+                begin ==
+                    null
+            ) {
+                respondError(
+                    exchange = exchange,
+                    status = 409,
+                    code = "CONVERSATION_SEND_NOT_LAWFUL_NOW",
+                    message = "A new Conversation Send is not lawful in the current turn state.",
+                )
+                return
+            }
+
             handleStreamingSend(
                 exchange = exchange,
                 intent = intent,
+                begin = begin,
                 executor = streaming,
             )
             return
@@ -1996,8 +2191,58 @@ class VexLifeProdLocalService private constructor(
     private fun handleStreamingSend(
         exchange: HttpExchange,
         intent: DirectCompanionTurn.Intent,
+        begin: VexLifeConversationTurnFamily.BeginTurn,
         executor: StreamingTurnExecutor,
     ) {
+        require(
+            intent.idempotencyKey ==
+                begin.attempt.ref,
+        ) {
+            "Conversation Send realization must preserve the Family attempt identity"
+        }
+
+        val cancellation =
+            DirectCompanionCancellation()
+        val active =
+            ActiveTurn(
+                attempt = begin.attempt,
+                cancellation = cancellation,
+            )
+        if (
+            !activeTurn.compareAndSet(
+                null,
+                active,
+            )
+        ) {
+            respondError(
+                exchange = exchange,
+                status = 409,
+                code = "CONVERSATION_SEND_NOT_LAWFUL_NOW",
+                message = "Another Conversation turn is already active.",
+            )
+            return
+        }
+
+        check(
+            conversationTurnState() ==
+                VexLifeConversationTurnFamily.Active(
+                    begin.attempt,
+                ),
+        ) {
+            "active Send realization did not return through ConversationTurn Family observation"
+        }
+
+        val executionBinding =
+            cancellation.bindCurrentThread()
+
+        fun retireActiveTurn() {
+            activeTurn.compareAndSet(
+                active,
+                null,
+            )
+        }
+
+        try {
         exchange.responseHeaders.set(
             "content-type",
             "text/event-stream; charset=utf-8",
@@ -2203,8 +2448,10 @@ class VexLifeProdLocalService private constructor(
                             event,
                         )
                     },
+                    cancellation,
                 )
 
+            retireActiveTurn()
             offerTerminal(
                 VexLifeProdServiceContract.SendStreamEvent(
                     type = "COMPLETED",
@@ -2217,6 +2464,7 @@ class VexLifeProdLocalService private constructor(
         } catch (
             error: DirectCompanionTurn.TurnException,
         ) {
+            retireActiveTurn()
             offerTerminal(
                 VexLifeProdServiceContract.SendStreamEvent(
                     type = "FAILED",
@@ -2233,6 +2481,7 @@ class VexLifeProdLocalService private constructor(
         } catch (
             _: Throwable,
         ) {
+            retireActiveTurn()
             offerTerminal(
                 VexLifeProdServiceContract.SendStreamEvent(
                     type = "FAILED",
@@ -2250,6 +2499,13 @@ class VexLifeProdLocalService private constructor(
             producerDone.set(
                 true,
             )
+            // The canonical turn is terminal now. Clear only the interrupt issued by this exact
+            // human cancellation so the presentation writer can still deliver the terminal event.
+            if (
+                cancellation.cancellationRequested
+            ) {
+                Thread.interrupted()
+            }
             runCatching {
                     writer.get(
                         5,
@@ -2268,6 +2524,10 @@ class VexLifeProdLocalService private constructor(
                         exchange.responseBody.close()
                     }
                 }
+        }
+        } finally {
+            retireActiveTurn()
+            executionBinding.close()
         }
     }
 

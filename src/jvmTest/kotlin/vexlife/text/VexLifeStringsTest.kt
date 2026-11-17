@@ -70,7 +70,9 @@ class VexLifeStringsTest {
                 vexlife.voiceinput.VexLifeVoiceInputFamily.StateRefs.map { "voice-input:state:$it" } +
                 vexlife.voiceinput.VexLifeVoiceInputFamily.ControlRefs.map { "voice-input:control:$it" } +
                 vexlife.voiceinput.VexLifeVoiceInputFamily.HoldReasonRefs.map { "voice-input:reason:$it" } +
-                vexlife.voiceinput.VexLifeVoiceInputFamily.FailureReasonRefs.map { "voice-input:failure:$it" }
+                vexlife.voiceinput.VexLifeVoiceInputFamily.FailureReasonRefs.map { "voice-input:failure:$it" } +
+                vexlife.conversation.VexLifeConversationTurnFamily.StateRefs.map { "conversation-turn:state:$it" } +
+                vexlife.conversation.VexLifeConversationTurnFamily.ControlRefs.map { "conversation-turn:control:$it" }
         val known =
             capabilityRefs.toSet() +
             setOf(

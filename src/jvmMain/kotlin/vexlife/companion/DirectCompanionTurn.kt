@@ -31,6 +31,9 @@ import vexlife.model.heretic.HereticModelConfiguration
  * Conversation persistence, provider invocation or presentation.
  */
 object DirectCompanionTurn {
+    const val FailureCancelledByPerson =
+        "TURN_CANCELLED_BY_PERSON"
+
     const val FailureReceiptSchema =
         "vexlife-prod.direct-companion-turn-failure/v1"
 
@@ -387,6 +390,8 @@ object DirectCompanionTurn {
         },
         val progressObserver: ProgressObserver? =
             null,
+        val cancellation: DirectCompanionCancellation? =
+            null,
         /** How capability owners reach the web/Home/Memory; replaced in tests. */
         val capabilityOwners: VexLifeCapabilityBridge.Owners = VexLifeCapabilityBridge.Owners(),
         /** The foundational field as its owner reads it now; re-read at each provider boundary. */
@@ -455,6 +460,8 @@ object DirectCompanionTurn {
         intent: Intent,
         progressObserver: ProgressObserver? =
             null,
+        cancellation: DirectCompanionCancellation? =
+            null,
     ): Result =
         performWithHooks(
             setup = session.result,
@@ -477,6 +484,7 @@ object DirectCompanionTurn {
                         session.observeCurrentQualifiedRuntimeEvidence()
                     },
                     progressObserver = progressObserver,
+                    cancellation = cancellation,
                 ),
         )
 
@@ -570,6 +578,7 @@ object DirectCompanionTurn {
                             "browserContext" to if (intent.browserContext != null) "included" else "none",
                         ),
                     )
+                    hooks.cancellation?.checkpoint()
                     emitProgress(
                         hooks.progressObserver,
                         Progress(
@@ -612,6 +621,7 @@ object DirectCompanionTurn {
                     val capabilityTrace =
                         providerTurn.capabilityTrace
 
+                    hooks.cancellation?.checkpoint()
                     response =
                         appendResponse(
                             request = request,
@@ -636,6 +646,7 @@ object DirectCompanionTurn {
                             formedAt = hooks.now(),
                         )
 
+                    hooks.cancellation?.checkpoint()
                     val head =
                         commitCompletedTurn(
                             request = request,
@@ -684,6 +695,9 @@ object DirectCompanionTurn {
                 } catch (
                     error: Throwable,
                 ) {
+                    val terminalError =
+                        hooks.cancellation?.cancelledExceptionOrNull()
+                            ?: error
                     val failure =
                         if (
                             request !=
@@ -698,7 +712,7 @@ object DirectCompanionTurn {
                                         ?.conversationHeadSha256,
                                 failureCode =
                                     failureCode(
-                                        error,
+                                        terminalError,
                                     ),
                                 responseDurablyRecorded =
                                     response !=
@@ -716,12 +730,12 @@ object DirectCompanionTurn {
                         VexLogger.Fact.TurnFailed,
                         listOfNotNull(
                                 "turnRef" to identity.turnRef,
-                                "failureCode" to failureCode(error),
+                                "failureCode" to failureCode(terminalError),
                                 failure?.let { "failureRef" to it.failureRef },
                                 "failureReceipt" to if (failure != null) "written" else "not-written",
                             )
                             .toMap(),
-                        detail = error.javaClass.simpleName + ": " + (error.message ?: ""),
+                        detail = terminalError.javaClass.simpleName + ": " + (terminalError.message ?: ""),
                     )
                     val route =
                         failure
@@ -735,12 +749,12 @@ object DirectCompanionTurn {
                     throw TurnException(
                         failureCode =
                             failureCode(
-                                error,
+                                terminalError,
                             ),
                         failureReceipt = failure,
                         retrySameSendAttemptAllowed = false,
                         exactNextSafeRoute = route,
-                        cause = error,
+                        cause = terminalError,
                     )
                 }
 
@@ -911,6 +925,7 @@ object DirectCompanionTurn {
             }
 
         while (true) {
+            hooks.cancellation?.checkpoint()
             val stage =
                 invokeProviderStage(
                     runtimeEvidence = stageRuntimeEvidence,
@@ -944,9 +959,11 @@ object DirectCompanionTurn {
                             emptyList()
                         },
                 )
+            hooks.cancellation?.checkpoint()
 
             val capabilityRequest = stage.capabilityRequest
             if (capabilityRequest != null) {
+                hooks.cancellation?.checkpoint()
                 val pendingUse = VexLifeCapabilityBridge.describeUse(capabilityRequest)
                 emitProgress(hooks.progressObserver, Progress(phase = ProgressPhase.Reaching, reach = pendingUse))
                 val usedTokens = exchangeMessages().sumOf { DirectPromptContext.estimatedMessageTokens(it.content) }
@@ -968,6 +985,7 @@ object DirectCompanionTurn {
                         owners = hooks.capabilityOwners,
                         estimateTokens = DirectPromptContext::estimatedMessageTokens,
                     )
+                hooks.cancellation?.checkpoint()
                 exchanges += exchange
                 emitProgress(hooks.progressObserver, Progress(phase = ProgressPhase.Reached, reach = exchange.use))
 
@@ -1000,6 +1018,7 @@ object DirectCompanionTurn {
 
             val sourceReturnRequest = stage.sourceReturnRequest
             if (sourceReturnRequest == null) {
+                hooks.cancellation?.checkpoint()
                 return FinalProviderTurn(
                     prompt = base,
                     inference = stage.inference,
@@ -1344,6 +1363,7 @@ object DirectCompanionTurn {
                     progressGate.connectionObserver(),
                 now = hooks.now,
                 capabilityOffer = capabilityOffer,
+                cancellation = hooks.cancellation,
             )
         val controlLike =
             progressGate.finish(
@@ -1914,6 +1934,9 @@ object DirectCompanionTurn {
         when (
             error
         ) {
+            is DirectCompanionCancellation.Cancelled ->
+                FailureCancelledByPerson
+
             is DirectCompanionConnection.ConnectionException ->
                 "CONNECTION_" +
                     error.code.name
