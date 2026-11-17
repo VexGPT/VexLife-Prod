@@ -465,8 +465,8 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains("realizeBeginLocalDictation"))
         assertTrue(bundle.javascript.contains("realizeEndLocalDictation"))
         assertTrue(bundle.javascript.contains("controlRef: voiceInput.control.stop"))
-        assertTrue(bundle.javascript.contains("\\\"downloadable\\\""))
-        assertTrue(bundle.javascript.contains("\\\"downloading\\\""))
+        assertTrue(bundle.javascript.contains("\"downloadable\""))
+        assertTrue(bundle.javascript.contains("\"downloading\""))
         assertFalse(
             bundle.javascript.contains("setVoiceInputState("),
             "VexWeb must apply Family-authored semantic output rather than author State directly",
