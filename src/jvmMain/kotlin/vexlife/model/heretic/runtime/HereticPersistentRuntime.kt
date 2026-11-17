@@ -9,6 +9,7 @@ import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
+import vexlife.model.heretic.HereticRuntimeConfiguration
 import vexlife.model.heretic.HereticRuntimeEffectBoundary
 import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeState
@@ -142,6 +143,8 @@ object HereticPersistentRuntime {
         val implementationIdentity: ImplementationIdentity,
         /** The catalog model this runtime serves; its identity is what receipts must carry. */
         val model: HereticModelCatalog.Entry = HereticModelCatalog.Default,
+        /** Exact Product-owned mlx-lm prompt-cache entry limit for this runtime launch. */
+        val promptCacheEntryLimit: Int = PromptCacheEntryLimit,
     )
 
     data class ProcessIdentity(
@@ -328,6 +331,7 @@ object HereticPersistentRuntime {
         authorityRef: String,
         materialization: HereticArtifactMaterialization.Result,
         environment: HereticPythonEnvironment.Result,
+        promptCacheEntryLimit: Int = PromptCacheEntryLimit,
     ): Binding {
         require(
             RefPattern.matches(
@@ -396,6 +400,10 @@ object HereticPersistentRuntime {
             pythonEnvironmentRoot = environmentRoot.toString(),
             implementationIdentity = currentImplementationIdentity(),
             model = model,
+            promptCacheEntryLimit =
+                HereticRuntimeConfiguration.requirePromptCacheEntries(
+                    promptCacheEntryLimit,
+                ),
         )
     }
 
@@ -555,12 +563,14 @@ object HereticPersistentRuntime {
         return serverArgs(
             modelPath = binding.modelPath,
             contract = contract,
+            promptCacheEntryLimit = binding.promptCacheEntryLimit,
         )
     }
 
     private fun serverArgs(
         modelPath: String,
         contract: ServerLaunchContract,
+        promptCacheEntryLimit: Int = PromptCacheEntryLimit,
     ): List<String> {
         require(
             modelPath.isNotBlank(),
@@ -586,7 +596,11 @@ object HereticPersistentRuntime {
                 base +
                     listOf(
                         "--prompt-cache-size",
-                        PromptCacheEntryLimit.toString(),
+                        HereticRuntimeConfiguration
+                            .requirePromptCacheEntries(
+                                promptCacheEntryLimit,
+                            )
+                            .toString(),
                     )
 
             ServerLaunchContract.PRE_PROMPT_CACHE_LIMIT ->
@@ -621,14 +635,37 @@ object HereticPersistentRuntime {
     private fun acceptedPriorServerArgs(
         binding: Binding,
         receipt: Receipt,
-    ): List<String>? =
-        serverLaunchContract(
+    ): List<String>? {
+        val priorArgs = receipt.runtime.args
+        if (
+            priorArgs.size >= 2 &&
+            priorArgs.dropLast(2) ==
+                serverArgs(
+                    modelPath = receipt.modelPath,
+                    contract = ServerLaunchContract.PRE_PROMPT_CACHE_LIMIT,
+                ) &&
+            priorArgs[priorArgs.lastIndex - 1] == "--prompt-cache-size"
+        ) {
+            val priorLimit =
+                priorArgs.last()
+                    .toIntOrNull()
+                    ?.let {
+                        runCatching {
+                            HereticRuntimeConfiguration.requirePromptCacheEntries(it)
+                        }.getOrNull()
+                    }
+            if (priorLimit != null) {
+                return priorArgs
+            }
+        }
+        return serverLaunchContract(
             binding = binding,
-            args = receipt.runtime.args,
+            args = priorArgs,
         )
             ?.let {
-                receipt.runtime.args
+                priorArgs
             }
+    }
 
     /**
      * Retirement-only ownership for a Product runtime whose model is no longer offered.
@@ -720,6 +757,8 @@ object HereticPersistentRuntime {
         val prior =
             store.read()
         var staleImplementationRotated =
+            false
+        var runtimeConfigurationRotated =
             false
         var switchedModel =
             false
@@ -885,6 +924,47 @@ object HereticPersistentRuntime {
             }
         if (
             !switchedModel &&
+            prior != null &&
+            acceptedPriorArgs != null &&
+            acceptedPriorArgs != args &&
+            receiptBinds(
+                binding = binding,
+                receipt = prior,
+                requireImplementationSha = true,
+                expectedArgs = acceptedPriorArgs,
+            )
+        ) {
+            if (platform.processAlive(prior.runtime.pid)) {
+                requireExactOwnedProcess(
+                    prior,
+                    acceptedPriorArgs,
+                    platform,
+                )
+            }
+            val retired =
+                platform.retire(
+                    prior,
+                )
+            require(
+                retired.exactOwnershipVerified &&
+                    retired.verifiedNotLive,
+            ) {
+                "changed-config exact Heretic runtime could not be retired before configured restart"
+            }
+            store.delete()
+            runtimeConfigurationRotated = true
+            VexLogger.record(
+                VexLogger.Fact.RuntimeModelSwitched,
+                mapOf(
+                    "from" to binding.model.handle,
+                    "to" to binding.model.handle,
+                    "reason" to "RUNTIME_CONFIGURATION_CHANGED",
+                ),
+            )
+        }
+        if (
+            !switchedModel &&
+            !runtimeConfigurationRotated &&
             prior !=
                 null &&
                 !receiptBinds(
@@ -928,6 +1008,7 @@ object HereticPersistentRuntime {
                 true
         } else if (
             !switchedModel &&
+                !runtimeConfigurationRotated &&
                 prior !=
                 null &&
                 !receiptBinds(
@@ -944,6 +1025,7 @@ object HereticPersistentRuntime {
         val currentPrior =
             if (
                 staleImplementationRotated ||
+                    runtimeConfigurationRotated ||
                     switchedModel
             ) {
                 null
@@ -1296,6 +1378,10 @@ object HereticPersistentRuntime {
                 ) {
                     "SWITCHED_MODEL_AND_STARTED_NEW_EXACT_MLX_RUNTIME"
                 } else if (
+                    runtimeConfigurationRotated
+                ) {
+                    "ROTATED_RUNTIME_CONFIGURATION_AND_STARTED_NEW_EXACT_MLX_RUNTIME"
+                } else if (
                     staleImplementationRotated
                 ) {
                     "ROTATED_STALE_IMPLEMENTATION_AND_STARTED_NEW_EXACT_MLX_RUNTIME"
@@ -1406,6 +1492,9 @@ object HereticPersistentRuntime {
             Path.of(
                 binding.pythonEnvironmentRoot,
             ).isAbsolute,
+        )
+        HereticRuntimeConfiguration.requirePromptCacheEntries(
+            binding.promptCacheEntryLimit,
         )
     }
 
