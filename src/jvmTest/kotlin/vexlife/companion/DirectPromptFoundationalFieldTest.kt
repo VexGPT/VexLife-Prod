@@ -141,7 +141,9 @@ class DirectPromptFoundationalFieldTest {
                         .map { system.indexOf(it) }
                 assertTrue(order.all { it >= 0 } && order == order.sorted(), "system order: $order")
                 assertFalse("VEXLIFE_PERSON_CONTEXT/v1" in system)
-                assertTrue(with.messages[1].content.startsWith(DirectPromptContext.CurrentStateHeader))
+                assertTrue(
+                    with.messages[1].content.startsWith(DirectPromptContext.CurrentStateHeader),
+                )
                 assertTrue("VEXLIFE_PERSON_CONTEXT/v1" in with.messages[1].content)
                 assertEquals(without.messages.first().content, system.removePrefix(kernel + "\n\n"))
                 assertEquals("Hello Vex", with.messages.last().content)
@@ -350,7 +352,11 @@ class DirectPromptFoundationalFieldTest {
             assertTrue(evidence.omittedModuleRefs.isEmpty())
             // The field is the whole stable block here; the protocol is current state, later.
             assertTrue(initial.messages.first().content.startsWith(kernel))
-            assertFalse(initial.messages.first().content.contains(DirectConversationSourceReturn.ProtocolHeader))
+            assertFalse(
+                initial.messages.first()
+                    .content
+                    .contains(DirectConversationSourceReturn.ProtocolHeader),
+            )
         }
 
         prompts(room = wholeTokens - 1) { initial ->
