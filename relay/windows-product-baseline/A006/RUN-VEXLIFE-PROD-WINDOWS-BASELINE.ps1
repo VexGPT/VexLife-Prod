@@ -176,7 +176,7 @@ New-Item -ItemType Directory -Path $OutputDirectory -Force|Out-Null
 $gradleProperties=@(
   "org.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8"
   "org.gradle.workers.max=1"
-  "org.gradle.parallel=$false"
+  "org.gradle.parallel=false"
   "kotlin.compiler.execution.strategy=in-process"
 ) -join $NL
 Write-Utf8NoBom -Path (Join-Path $gradleHome "gradle.properties") -Text ($gradleProperties+$NL)
@@ -260,7 +260,7 @@ $environment=[ordered]@{
     gradleMaxHeapBytes=2147483648
     javaToolMaxHeapBytes=1073741824
     maxWorkers=1
-    parallel=false
+    parallel=$false
     kotlinCompilerExecution="in-process"
     fullJvmTestRun=$false
   }
