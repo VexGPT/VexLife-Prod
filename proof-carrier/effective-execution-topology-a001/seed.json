@@ -67,8 +67,8 @@
       "remote": "origin",
       "baseBranch": "main",
       "acceptedBase": "262c208b2e65e828dd867719c29ecd286ae58a80",
-      "checkoutRef": "0d74a1a70000fff702074310f8ca10b30229d2f7",
-      "expectedHead": "0d74a1a70000fff702074310f8ca10b30229d2f7",
+      "checkoutRef": "02a2efb642defb23f1fa094ff042344d2a7538de",
+      "expectedHead": "02a2efb642defb23f1fa094ff042344d2a7538de",
       "branch": "VXG-111726-effective-execution-topology-a001",
       "expectedRemoteUrl": null
     }
@@ -135,12 +135,12 @@
   },
   "source": {
     "sourceSetRef": "source-set.vexlife-prod.effective-execution-topology",
-    "sourceVersionRef": "0d74a1a70000fff702074310f8ca10b30229d2f7",
+    "sourceVersionRef": "02a2efb642defb23f1fa094ff042344d2a7538de",
     "overlapEvidenceRef": "github.pull.vexlife-prod.228",
     "activeConflictState": "NONE",
     "candidateState": "EXACT",
-    "candidateHead": "0d74a1a70000fff702074310f8ca10b30229d2f7",
-    "candidateTree": "b443078d72e6ae791c207e7a86479dbdb5c1dd44",
+    "candidateHead": "02a2efb642defb23f1fa094ff042344d2a7538de",
+    "candidateTree": "8f4700749872a894a7b4751c6fcebbf7ac6a2065",
     "expectedChangedPaths": [
       {
         "repositoryRef": "primary",
