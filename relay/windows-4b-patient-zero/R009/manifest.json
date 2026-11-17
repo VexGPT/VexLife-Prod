@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "vexlife-prod.windows-4b-runtime-realization-promotion/v1",
+  "continuity": "[VXG RealForever]",
+  "attempt": "R009",
+  "productCarrierPr": 227,
+  "productSourceSha": "fe19ae9e881beaf51d6a5c9804fb1b5396157e87",
+  "execution": "LOCAL_RELAY_NO_GITHUB_ACTIONS",
+  "purpose": "prove the promoted runtime-realization architecture with host-portable shared test fixtures, then re-run the already-earned Windows lived path",
+  "r008": {
+    "returnSha256": "f4183ce6a21ad28355d53e8e785436c804e998206bdbd3cd25a2eb5404e65288",
+    "disposition": "SAFE_FAILURE",
+    "runtimeReached": false,
+    "testsCompleted": 73,
+    "testsFailed": 8,
+    "failure": "RUNTIME_REALIZATION_PROMOTION_TESTS_EXIT_1",
+    "cause": "selected shared/Mac compatibility tests still hard-coded POSIX /tmp paths; the new portable Foundation and process parsers correctly require an absolute local Home, so Windows exposed the fixture assumption",
+    "correction": [
+      "VexLifeProdLocalSetupTest session/path fixtures now derive from java.io.tmpdir",
+      "VexLifeProdServiceProcessTest Home/vision fixtures now derive from java.io.tmpdir",
+      "VexLifeProdSetupProcessTest Home/image fixtures now derive from java.io.tmpdir"
+    ],
+    "sharedInvariantChanged": false
+  },
+  "architecturePromotion": {
+    "realizationOwner": "vexlife.model.heretic.HereticRuntimeRealization",
+    "sequenceOwner": "vexlife.model.heretic.HereticRuntimeRealizationSequence",
+    "portableSession": "vexlife.local.VexLifeProdRuntimeSession.Foundation",
+    "portableFoundationFields": [
+      "state",
+      "productHome",
+      "qualifiedRuntimeEvidence"
+    ],
+    "providerPipelineCarriesPortableFoundation": true,
+    "servicePlatformSeam": "vexlife.service.VexLifeProdLocalService.PlatformProjection",
+    "runtimeBehaviorSource": "HereticRuntimeRealization only",
+    "macSetupResultInSharedProviderPipeline": false,
+    "hostSpecificPathSyntaxInSelectedSharedFixtures": false
+  },
+  "proofPolicy": {
+    "preRuntimeGate": "same selected cross-platform promotion suite plus complete JVM test-source compilation",
+    "selectedTests": [
+      "HereticModelCatalogTest",
+      "HereticProductModelTest",
+      "HereticRuntimeRealizationTest",
+      "HereticRuntimeRealizationSequenceTest",
+      "HereticRuntimeRealizationArchitectureTest",
+      "HereticRuntimeAvailabilityTest",
+      "HereticRuntimeContractTest",
+      "DirectCompanionConnectionTest",
+      "DirectCompanionTurnTest",
+      "VexLifeProdLocalSetupTest",
+      "VexLifeProdServiceProcessTest",
+      "VexLifeProdSetupProcessTest"
+    ],
+    "livedWindowsReproof": true,
+    "realHomeMutation": false,
+    "githubActions": false
+  }
+}
