@@ -366,7 +366,6 @@ class HereticArtifactMaterializationTest {
     fun materializerOwnsArtifactMutationButNotRuntimeActivation() {
         val resultType =
             HereticArtifactMaterialization.Result(
-                state = "HERETIC_ARTIFACTS_MATERIALIZED_EXACT",
                 modelPath = "/tmp/model",
                 providerRevision = "0".repeat(40),
                 contentSetSha256 = "0".repeat(64),
@@ -384,10 +383,9 @@ class HereticArtifactMaterializationTest {
         assertFalse(
             resultType.artifactMutationPerformed,
         )
-        assertTrue(
-            resultType.state.contains(
-                "MATERIALIZED",
-            ),
+        assertEquals(
+            HereticArtifactMaterialization.MaterializedExactState,
+            resultType.state,
         )
     }
     @Test
@@ -405,7 +403,7 @@ class HereticArtifactMaterializationTest {
                 )
 
             assertEquals(
-                "ABSENT",
+                HereticArtifactMaterialization.PresenceState.Absent,
                 observation.state,
             )
             assertEquals(
@@ -484,7 +482,7 @@ class HereticArtifactMaterializationTest {
                 )
 
             assertEquals(
-                "INVALID_SIZE",
+                HereticArtifactMaterialization.PresenceState.InvalidSize,
                 observation.state,
             )
             assertEquals(

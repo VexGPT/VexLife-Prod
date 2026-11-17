@@ -2429,8 +2429,8 @@
       "enHash": "9ab2badc2956",
       "langs": []
     },
-    "workspace.label.model-chosen-next-start": {
-      "enHash": "7792d0eb69cc",
+    "workspace.label.model-chosen-pending": {
+      "enHash": "cdcb713ba583",
       "langs": []
     },
     "workspace.label.model-facts": {
@@ -2477,10 +2477,6 @@
       "enHash": "394035d406e5",
       "langs": []
     },
-    "workspace.status.model-chosen-restart": {
-      "enHash": "2f5c0fbd8b77",
-      "langs": []
-    },
     "workspace.status.model-control-not-lawful": {
       "enHash": "633a30d3a33e",
       "langs": []
@@ -2517,8 +2513,36 @@
       "enHash": "2ee3915aac45",
       "langs": []
     },
+    "workspace.status.model-switch-failed": {
+      "enHash": "ff14c4393541",
+      "langs": []
+    },
+    "workspace.status.model-switch-preparing": {
+      "enHash": "a18dd6139b99",
+      "langs": []
+    },
+    "workspace.status.model-switch-requested": {
+      "enHash": "6dbfbbad39a7",
+      "langs": []
+    },
+    "workspace.status.model-switch-runtime": {
+      "enHash": "45cc4c7af62d",
+      "langs": []
+    },
+    "workspace.status.model-switch-waiting": {
+      "enHash": "c83590a1a35b",
+      "langs": []
+    },
+    "workspace.status.model-switched": {
+      "enHash": "b85d0b263d0d",
+      "langs": []
+    },
+    "workspace.status.model-switching": {
+      "enHash": "26ca8127320d",
+      "langs": []
+    },
     "workspace.status.models-switch-pending": {
-      "enHash": "d2afd49aeb2a",
+      "enHash": "cb23c83a88f7",
       "langs": []
     },
     "workspace.status.reach-atlas": {

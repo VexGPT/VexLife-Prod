@@ -21,6 +21,7 @@ import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.capability.reach.VexLifeWebReach
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -110,7 +111,7 @@ class DirectCompanionCapabilityTurnTest {
             status = 200,
             headers = mapOf("content-type" to listOf("text/html")),
             body =
-                "<html><title>Kites</title><body><p>Fly the kite on a 30 m line.</p></body></html>"
+                "<html><head><title>Kites</title></head><body><p>Fly the kite on a 30 m line.</p></body></html>"
                     .toByteArray(StandardCharsets.UTF_8),
             truncated = false,
         )
@@ -154,7 +155,7 @@ class DirectCompanionCapabilityTurnTest {
                     DirectCompanionTurn.Hooks(
                         transport = transport,
                         capabilityOwners =
-                            VexLifeCapabilityBridge.Owners(
+                            VexLifeCapabilityBridge.OwnerBindings(
                                 webTransport = page,
                                 resolver = publicResolver,
                             ),
@@ -193,7 +194,7 @@ class DirectCompanionCapabilityTurnTest {
                     "web",
                     "fetch",
                     "https://example.com/kites",
-                    VexLifeCapabilityBridge.State.RETURNED,
+                    VexLifeCapabilityBridge.ResultState.RETURNED,
                 )
             ),
             result.capabilityUses,
@@ -208,7 +209,7 @@ class DirectCompanionCapabilityTurnTest {
         assertTrue(
             progress.any {
                 it.phase == DirectCompanionTurn.ProgressPhase.Reached &&
-                    it.reach?.state == VexLifeCapabilityBridge.State.RETURNED
+                    it.reach?.state == VexLifeCapabilityBridge.ResultState.RETURNED
             }
         )
         assertFalse(
@@ -268,6 +269,197 @@ class DirectCompanionCapabilityTurnTest {
     }
 
     @Test
+    fun aLongWebReadReturnsAContinuationOffsetAndTheNextRequestReachesLaterSource() =
+        withHome {
+            home ->
+            val tail = "FINAL-PARAGRAPH-SENTINEL"
+            val readable =
+                "A".repeat(
+                    50_000,
+                ) +
+                    tail
+            val longPage =
+                VexLifeWebReach.Transport {
+                    request,
+                    _,
+                    ->
+                    assertEquals(
+                        "https://example.com/long",
+                        request.uri.toString(),
+                    )
+                    VexLifeWebReach.Response(
+                        status = 200,
+                        headers =
+                            mapOf(
+                                "content-type" to
+                                    listOf(
+                                        "text/plain",
+                                    ),
+                            ),
+                        body =
+                            readable.toByteArray(
+                                StandardCharsets.UTF_8,
+                            ),
+                        truncated = false,
+                    )
+                }
+
+            fun fetch(
+                requestNumber: Int,
+                offset: Int? =
+                    null,
+            ): VexLifeCapabilityBridge.Exchange {
+                val arguments =
+                    buildString {
+                        append(
+                            """{"url":"https://example.com/long"""",
+                        )
+                        offset?.let {
+                            append(
+                                ""","offset":$it""",
+                            )
+                        }
+                        append(
+                            "}",
+                        )
+                    }
+                val control =
+                    VexLifeCapabilityRequest.RequestHeader +
+                        "\n" +
+                        """{"capability":"web","action":"fetch","arguments":$arguments}"""
+                val parsed =
+                    assertNotNull(
+                        VexLifeCapabilityRequest.parseOrNull(
+                            control,
+                        ),
+                    )
+                return VexLifeCapabilityBridge.perform(
+                    parsed = parsed,
+                    admission =
+                        VexLifeCapabilityBridge.Admission(
+                            productHome = home,
+                            availableCapabilityRefs =
+                                setOf(
+                                    "capability.vexlife.web.read",
+                                ),
+                            requestNumber = requestNumber,
+                            tokensAvailable =
+                                VexLifeCapabilityBridge.ExchangeAllowanceTokens,
+                        ),
+                    ownerBindings =
+                        VexLifeCapabilityBridge.OwnerBindings(
+                            webTransport = longPage,
+                            resolver = publicResolver,
+                        ),
+                    estimateTokens = DirectPromptContext::estimatedMessageTokens,
+                )
+            }
+
+            fun metadata(
+                exchange: VexLifeCapabilityBridge.Exchange,
+            ): JsonObject =
+                Json
+                    .parseToJsonElement(
+                        exchange.resultMessage.content
+                            .lineSequence()
+                            .drop(
+                                2,
+                            )
+                            .first(),
+                    )
+                    .jsonObject
+
+            val first =
+                fetch(
+                    requestNumber = 1,
+                )
+            val firstMeta =
+                metadata(
+                    first,
+                )
+            assertEquals(
+                "0",
+                firstMeta
+                    .getValue(
+                        "returnedStart",
+                    )
+                    .jsonPrimitive
+                    .content,
+            )
+            val nextOffset =
+                firstMeta
+                    .getValue(
+                        "nextOffset",
+                    )
+                    .jsonPrimitive
+                    .content
+                    .toInt()
+            assertTrue(
+                nextOffset in 1 until readable.length,
+            )
+            assertEquals(
+                readable.length.toString(),
+                firstMeta
+                    .getValue(
+                        "sourceCharacters",
+                    )
+                    .jsonPrimitive
+                    .content,
+            )
+            assertEquals(
+                "true",
+                firstMeta
+                    .getValue(
+                        "truncated",
+                    )
+                    .jsonPrimitive
+                    .content,
+            )
+            assertFalse(
+                first.resultMessage.content.contains(
+                    tail,
+                ),
+            )
+
+            val second =
+                fetch(
+                    requestNumber = 2,
+                    offset = nextOffset,
+                )
+            val secondMeta =
+                metadata(
+                    second,
+                )
+            assertEquals(
+                nextOffset.toString(),
+                secondMeta
+                    .getValue(
+                        "returnedStart",
+                    )
+                    .jsonPrimitive
+                    .content,
+            )
+            assertEquals(
+                readable.length.toString(),
+                secondMeta
+                    .getValue(
+                        "returnedEnd",
+                    )
+                    .jsonPrimitive
+                    .content,
+            )
+            assertTrue(
+                second.resultMessage.content.contains(
+                    tail,
+                ),
+            )
+            assertFalse(
+                "nextOffset" in
+                    secondMeta,
+            )
+        }
+
+    @Test
     fun narratedLateRequestIsCorrectedInsideTheSameTurnInsteadOfEscapingAsAResult() = withHome { home ->
         val calls = mutableListOf<List<Pair<String, String>>>()
         val narrated =
@@ -307,7 +499,7 @@ class DirectCompanionCapabilityTurnTest {
                     DirectCompanionTurn.Hooks(
                         transport = transport,
                         capabilityOwners =
-                            VexLifeCapabilityBridge.Owners(
+                            VexLifeCapabilityBridge.OwnerBindings(
                                 webTransport = { _, _ -> error("late malformed request must not contact web") },
                                 resolver = publicResolver,
                             ),
@@ -319,7 +511,7 @@ class DirectCompanionCapabilityTurnTest {
             "I had not actually reached the page. The request needs to be emitted by itself.",
             result.content,
         )
-        assertEquals(VexLifeCapabilityBridge.State.INVALID_REQUEST, result.capabilityUses.single().state)
+        assertEquals(VexLifeCapabilityBridge.ResultState.INVALID_REQUEST, result.capabilityUses.single().state)
         assertFalse(result.content.contains("page says something"))
     }
 
@@ -380,13 +572,13 @@ class DirectCompanionCapabilityTurnTest {
                             }
                         },
                         capabilityOwners =
-                            VexLifeCapabilityBridge.Owners(
+                            VexLifeCapabilityBridge.OwnerBindings(
                                 webTransport = { _, _ -> error("never contacted") }
                             ),
                     ),
             )
         assertEquals(2, calls)
-        assertEquals(VexLifeCapabilityBridge.State.REFUSED, result.capabilityUses.single().state)
+        assertEquals(VexLifeCapabilityBridge.ResultState.REFUSED, result.capabilityUses.single().state)
     }
 
     @Test
@@ -435,7 +627,7 @@ class DirectCompanionCapabilityTurnTest {
             result.capabilityUses.size,
         )
         assertEquals(
-            VexLifeCapabilityBridge.State.LIMIT_REACHED,
+            VexLifeCapabilityBridge.ResultState.LIMIT_REACHED,
             result.capabilityUses.last().state,
         )
     }
@@ -468,6 +660,110 @@ class DirectCompanionCapabilityTurnTest {
         // Four admitted requests, one answered LIMIT_REACHED, then the sixth stage still asked.
         assertEquals(VexLifeCapabilityBridge.MaximumRequestsPerTurn + 2, calls)
         assertNotNull(failure.failureReceipt)
+    }
+
+    /** The same turn with the gpt-oss model: setup bound to it, runtime proved for it. */
+    private fun gptOssSetup(home: Path): VexLifeProdLocalSetup.Result {
+        val entry = HereticModelCatalog.Models.GptOss20B
+        val runtime =
+            HereticModelConfiguration.QualifiedRuntimeEvidence(
+                runtimeReceiptRef = "receipt.vexlife-prod.heretic.reach.gpt-oss",
+                runtimeState = HereticRuntimeState.Qualified,
+                modelRef = entry.modelRef,
+                modelProfileRef = entry.identity.modelProfileRef,
+                artifactRef = entry.identity.artifactSetRef,
+                artifactContentSetSha256 = entry.identity.artifactContentSetSha256,
+                runtimeAdapterRef = entry.identity.runtimeAdapterRef,
+                runtimeClass = entry.identity.runtimeClass,
+                endpoint = entry.identity.endpoint,
+                requestModel = entry.identity.requestModel,
+                qualification = HereticRuntimeQualification.qualified(),
+            )
+        return setup(home)
+            .copy(
+                qualifiedRuntimeEvidence = runtime,
+                endpoint = runtime.endpoint,
+                requestModel = runtime.requestModel,
+            )
+    }
+
+    /** A harmony reply as the pinned mlx-lm server streams it: inline markers, small chunks. */
+    private fun harmonyStream(replies: (Int, JsonObject) -> String) =
+        object : DirectCompanionConnection.StreamingTransport {
+            var calls = 0
+
+            override fun post(call: DirectCompanionConnection.HttpCall) = error("streams")
+
+            override fun postStreaming(
+                call: DirectCompanionConnection.HttpCall,
+                onLine: (String) -> Unit,
+            ): DirectCompanionConnection.StreamingHttpResult {
+                calls++
+                val text = replies(calls, Json.parseToJsonElement(call.body).jsonObject)
+                for (chunk in text.chunked(6)) {
+                    onLine(
+                        "data: " +
+                            """{"model":"default_model","choices":[{"delta":{"role":"assistant","content":""" +
+                            kotlinx.serialization.json.JsonPrimitive(chunk) +
+                            "}}]}"
+                    )
+                }
+                onLine("""data: {"model":"default_model","choices":[{"delta":{},"finish_reason":"stop"}]}""")
+                onLine("data: [DONE]")
+                return DirectCompanionConnection.StreamingHttpResult(200, "d".repeat(64))
+            }
+        }
+
+    @Test
+    fun gptOssReachFailsClosedWhileProviderBridgeIsHeld() = withHome { home ->
+        val requests = mutableListOf<JsonObject>()
+        val transport =
+            harmonyStream { call, body ->
+                requests += body
+                when (call) {
+                    1 ->
+                        "<|channel|>analysis<|message|>They ask what the page says. I'll fetch it.<|end|>" +
+                            "<|start|>assistant<|channel|>commentary to=functions.web_fetch <|constrain|>json" +
+                            """<|message|>{"url":"https://example.com/kites"}"""
+                    else -> error("held reach must not continue to another provider stage")
+                }
+            }
+
+        val failure =
+            assertFailsWith<DirectCompanionTurn.TurnException> {
+                DirectCompanionTurn.performWithHooks(
+                    setup = gptOssSetup(home),
+                    intent =
+                        DirectCompanionTurn.Intent(
+                            idempotencyKey = "send.reach.gpt-oss.held.001",
+                            content = "What does example.com say about kites?",
+                        ),
+                    hooks =
+                        DirectCompanionTurn.Hooks(
+                            transport = transport,
+                            capabilityOwners =
+                                VexLifeCapabilityBridge.OwnerBindings(
+                                    webTransport = page,
+                                    resolver = publicResolver,
+                                ),
+                            now = { Instant.parse("2026-11-16T12:00:00Z") },
+                        ),
+                )
+            }
+
+        assertEquals("CAPABILITY_PROVIDER_BRIDGE_HELD", failure.failureCode)
+        assertEquals(
+            "CAPABILITY_PROVIDER_BRIDGE_HELD",
+            assertNotNull(failure.failureReceipt).failureCode,
+        )
+        assertEquals(1, requests.size)
+
+        // GPT-OSS is selectable as a model, but its Harmony reach representation is deliberately
+        // held until that provider bridge earns lived qualification. The turn therefore offers no
+        // reach tools and must not execute the requested owner effect.
+        val request = requests.single()
+        assertTrue(request["tools"]?.jsonArray.orEmpty().isEmpty())
+        assertFalse("builtin_tools" in request.getValue("chat_template_kwargs").jsonObject)
     }
 }
 

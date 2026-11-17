@@ -7,19 +7,23 @@ import kotlin.test.assertNull
 /** What each model Control may do, by the model's state in this Home. */
 class VexLifeModelsFamilyTest {
     private fun state(
-        files: VexLifeModelsFamily.Files,
+        artifactPresence: VexLifeModelsFamily.ArtifactPresence,
         chosen: Boolean = false,
         serving: Boolean = false,
         downloading: Boolean = false,
+        switching: Boolean = false,
         anyDownloadRunning: Boolean = downloading,
+        anySwitchRunning: Boolean = switching,
     ) =
         VexLifeModelsFamily.State(
             "heretic-9b",
-            files,
+            artifactPresence,
             downloading,
             chosen,
             serving,
+            switching,
             anyDownloadRunning,
+            anySwitchRunning,
         )
 
     private fun controls(state: VexLifeModelsFamily.State) =
@@ -29,12 +33,12 @@ class VexLifeModelsFamilyTest {
     fun anAbsentModelCanOnlyBeDownloaded() {
         assertEquals(
             listOf(VexLifeModelsFamily.ControlDownload),
-            controls(state(VexLifeModelsFamily.Files.ABSENT)),
+            controls(state(VexLifeModelsFamily.ArtifactPresence.Absent)),
         )
         assertEquals(
-            VexLifeModelsFamily.Effect.AcquireModel,
+            VexLifeModelsFamily.Effect.AcquireArtifacts,
             VexLifeModelsFamily.resolve(
-                    state(VexLifeModelsFamily.Files.ABSENT),
+                    state(VexLifeModelsFamily.ArtifactPresence.Absent),
                     VexLifeModelsFamily.Download,
                 )
                 ?.effect,
@@ -42,26 +46,41 @@ class VexLifeModelsFamilyTest {
     }
 
     @Test
-    fun aPresentModelCanBeUsedOrRemovedUnlessItIsChosenOrServing() {
+    fun aPresentModelCanBeUsedUntilChosenAndServingAreBothCurrent() {
         assertEquals(
             listOf(VexLifeModelsFamily.ControlUse, VexLifeModelsFamily.ControlRemove),
-            controls(state(VexLifeModelsFamily.Files.PRESENT)),
+            controls(state(VexLifeModelsFamily.ArtifactPresence.Present)),
         )
         assertEquals(
             emptyList(),
-            controls(state(VexLifeModelsFamily.Files.PRESENT, chosen = true, serving = true)),
+            controls(state(VexLifeModelsFamily.ArtifactPresence.Present, chosen = true, serving = true)),
+        )
+        assertEquals(
+            listOf(VexLifeModelsFamily.ControlUse),
+            controls(state(VexLifeModelsFamily.ArtifactPresence.Present, serving = true)),
+        )
+        assertEquals(
+            listOf(VexLifeModelsFamily.ControlUse),
+            controls(state(VexLifeModelsFamily.ArtifactPresence.Present, chosen = true)),
         )
         assertNull(
             VexLifeModelsFamily.resolve(
-                state(VexLifeModelsFamily.Files.PRESENT, serving = true),
+                state(VexLifeModelsFamily.ArtifactPresence.Present, serving = true),
                 VexLifeModelsFamily.Remove,
             )
         )
         assertNull(
             VexLifeModelsFamily.resolve(
-                state(VexLifeModelsFamily.Files.PRESENT, chosen = true),
+                state(VexLifeModelsFamily.ArtifactPresence.Present, chosen = true),
                 VexLifeModelsFamily.Remove,
             )
+        )
+        assertEquals(
+            VexLifeModelsFamily.Effect.SwitchModel,
+            VexLifeModelsFamily.resolve(
+                state(VexLifeModelsFamily.ArtifactPresence.Present, chosen = true),
+                VexLifeModelsFamily.Use,
+            )?.effect,
         )
     }
 
@@ -69,16 +88,16 @@ class VexLifeModelsFamilyTest {
     fun aPartialModelResumesAndADamagedOneDownloadsAgain() {
         assertEquals(
             listOf(VexLifeModelsFamily.ControlDownload, VexLifeModelsFamily.ControlRemove),
-            controls(state(VexLifeModelsFamily.Files.PARTIAL)),
+            controls(state(VexLifeModelsFamily.ArtifactPresence.Partial)),
         )
         assertEquals(
             listOf(VexLifeModelsFamily.ControlRedownload, VexLifeModelsFamily.ControlRemove),
-            controls(state(VexLifeModelsFamily.Files.DAMAGED)),
+            controls(state(VexLifeModelsFamily.ArtifactPresence.Damaged)),
         )
         assertEquals(
-            VexLifeModelsFamily.Effect.ReplaceModel,
+            VexLifeModelsFamily.Effect.ReplaceArtifacts,
             VexLifeModelsFamily.resolve(
-                    state(VexLifeModelsFamily.Files.DAMAGED),
+                    state(VexLifeModelsFamily.ArtifactPresence.Damaged),
                     VexLifeModelsFamily.Redownload,
                 )
                 ?.effect,
@@ -87,16 +106,20 @@ class VexLifeModelsFamilyTest {
 
     @Test
     fun whileAnyDownloadRunsNoOtherFileEffectIsLawful() {
-        val busy = state(VexLifeModelsFamily.Files.PARTIAL, anyDownloadRunning = true)
+        val busy = state(VexLifeModelsFamily.ArtifactPresence.Partial, anyDownloadRunning = true)
         assertEquals(emptyList(), controls(busy))
         assertEquals(
             emptyList(),
-            controls(state(VexLifeModelsFamily.Files.PARTIAL, downloading = true)),
+            controls(state(VexLifeModelsFamily.ArtifactPresence.Partial, downloading = true)),
         )
-        // A present model may still be chosen while another one downloads.
+        // Model-file mutation and runtime convergence never overlap.
         assertEquals(
-            listOf(VexLifeModelsFamily.ControlUse),
-            controls(state(VexLifeModelsFamily.Files.PRESENT, anyDownloadRunning = true)),
+            emptyList(),
+            controls(state(VexLifeModelsFamily.ArtifactPresence.Present, anyDownloadRunning = true)),
+        )
+        assertEquals(
+            emptyList(),
+            controls(state(VexLifeModelsFamily.ArtifactPresence.Present, anySwitchRunning = true)),
         )
     }
 }

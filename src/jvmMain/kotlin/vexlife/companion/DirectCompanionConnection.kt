@@ -18,10 +18,15 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import vexlife.capability.VexLifeCapabilityAtlas
+import vexlife.capability.VexLifeCapabilityRequest
+import vexlife.model.heretic.HereticCompanionRepresentation
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeState
@@ -42,9 +47,6 @@ import vexlife.model.heretic.HereticRuntimeState
  * human disclosure, or presentation.
  */
 object DirectCompanionConnection {
-    const val OutputTokenLimit =
-        16_000
-
     const val RuntimeObservationSchema =
         "vexlife-prod.model-runtime-observation/v1"
 
@@ -77,10 +79,92 @@ object DirectCompanionConnection {
         val code: FailureCode,
         message: String,
         cause: Throwable? = null,
+        /** What the stage cost and why it stopped, when the provider answered at all. */
+        val measurement: StageMeasurement? = null,
     ) : IllegalStateException(
         message,
         cause,
     )
+
+    enum class StageStop(
+        val wire: String,
+    ) {
+        COMPLETED("COMPLETED"),
+        OUTPUT_LIMIT_DURING_REASONING("OUTPUT_LIMIT_DURING_REASONING"),
+        OUTPUT_LIMIT_DURING_ANSWER("OUTPUT_LIMIT_DURING_ANSWER"),
+        STREAM_CLOSED_BEFORE_DONE("STREAM_CLOSED_BEFORE_DONE"),
+        ENDED_WITHOUT_ANSWER("ENDED_WITHOUT_ANSWER"),
+    }
+
+    data class StageMeasurement(
+        val stop: StageStop,
+        val finishReason: String?,
+        val promptTokens: Int?,
+        val cachedPromptTokens: Int?,
+        val completionTokens: Int?,
+        val firstTokenMillis: Long?,
+        val firstAnswerMillis: Long?,
+        val totalMillis: Long,
+        val reasoningCharacters: Int,
+        val answerCharacters: Int,
+        val controlHeaderInReasoning: Boolean,
+        val controlHeaderInAnswer: Boolean,
+    ) {
+        val prefillTokens: Int?
+            get() = promptTokens?.let { prompt -> prompt - (cachedPromptTokens ?: 0) }
+
+        fun refs(): Map<String, String> = buildMap {
+            put("stop", stop.wire)
+            finishReason?.let { put("finishReason", it) }
+            promptTokens?.let { put("promptTokens", it.toString()) }
+            cachedPromptTokens?.let { put("cachedPromptTokens", it.toString()) }
+            prefillTokens?.let { put("prefillTokens", it.toString()) }
+            completionTokens?.let { put("completionTokens", it.toString()) }
+            firstTokenMillis?.let { put("firstTokenMs", it.toString()) }
+            firstAnswerMillis?.let { put("firstAnswerMs", it.toString()) }
+            put("totalMs", totalMillis.toString())
+            put("reasoningChars", reasoningCharacters.toString())
+            put("answerChars", answerCharacters.toString())
+            put("controlHeaderInReasoning", controlHeaderInReasoning.toString())
+            put("controlHeaderInAnswer", controlHeaderInAnswer.toString())
+        }
+    }
+
+    private val ControlHeaders =
+        listOf(
+            VexLifeCapabilityRequest.RequestHeader,
+            DirectConversationSourceReturn.RequestHeader,
+        )
+
+    private fun containsControlHeader(text: CharSequence): Boolean =
+        ControlHeaders.any { text.contains(it) }
+
+    private data class Usage(
+        val promptTokens: Int?,
+        val cachedPromptTokens: Int?,
+        val completionTokens: Int?,
+    )
+
+    private fun usageOrNull(element: JsonElement?): Usage? {
+        val usage = element as? JsonObject ?: return null
+        fun count(value: JsonElement?): Int? =
+            (value as? JsonPrimitive)?.contentOrNull?.toIntOrNull()
+        return Usage(
+            promptTokens = count(usage["prompt_tokens"]),
+            cachedPromptTokens =
+                count((usage["prompt_tokens_details"] as? JsonObject)?.get("cached_tokens")),
+            completionTokens = count(usage["completion_tokens"]),
+        )
+    }
+
+    private fun stopFor(done: Boolean, finishReason: String?, answered: Boolean): StageStop =
+        when {
+            !done -> StageStop.STREAM_CLOSED_BEFORE_DONE
+            finishReason == "length" && !answered -> StageStop.OUTPUT_LIMIT_DURING_REASONING
+            finishReason == "length" -> StageStop.OUTPUT_LIMIT_DURING_ANSWER
+            !answered -> StageStop.ENDED_WITHOUT_ANSWER
+            else -> StageStop.COMPLETED
+        }
 
     @Serializable
     private data class RequestPayload(
@@ -92,12 +176,10 @@ object DirectCompanionConnection {
             mapOf(
                 "include_usage" to true,
             ),
-        // Exact certified generation_config.json sampling projection:
-        // sha256=d0d0ed2e37cdfafef4a5067d5ea2407b05f4fb50526e47c008a5b235d50240fb
-        val temperature: Double = 1.0,
-        val top_p: Double = 0.95,
-        val top_k: Int = 20,
-        val chat_template_kwargs: Map<String, Boolean>,
+        val temperature: Double,
+        val top_p: Double,
+        val top_k: Int,
+        val chat_template_kwargs: Map<String, JsonPrimitive>,
     )
 
     data class HttpCall(
@@ -324,6 +406,7 @@ object DirectCompanionConnection {
         val reasoning: ReasoningObservation,
         val finishReason: String?,
         val assistantRoleObserved: Boolean,
+        val measurement: StageMeasurement,
     )
 
     @Serializable
@@ -392,6 +475,8 @@ object DirectCompanionConnection {
         val sealedHumanReasoning: String?,
         val runtimeObservation: RuntimeObservation,
         val invocationEvidence: InvocationEvidence,
+        /** Diagnostics only; not part of durable runtime evidence fingerprints. */
+        val measurement: StageMeasurement,
     )
 
     fun invoke(
@@ -402,6 +487,13 @@ object DirectCompanionConnection {
         now: () -> Instant = {
             Instant.now()
         },
+        /** Monotonic provider-stage timing source. */
+        monotonicNanos: () -> Long = System::nanoTime,
+        /**
+         * The capabilities this stage may request, as the turn's current frame reports them.
+         * Provider-native carriage belongs here; admission and effects remain with VexLifeCapabilityBridge.
+         */
+        capabilityOffer: List<VexLifeCapabilityAtlas.Definition> = emptyList(),
     ): Result {
         requireQualifiedRuntime(
             runtime,
@@ -420,20 +512,76 @@ object DirectCompanionConnection {
             origin.resolve(
                 "/v1/chat/completions",
             )
-        val requestBody =
-            JsonCodec.encodeToString(
-                RequestPayload(
-                    model = runtime.requestModel,
-                    messages = messages,
-                    max_tokens = OutputTokenLimit,
-                    stream = true,
-                    chat_template_kwargs =
-                        mapOf(
-                            "enable_thinking" to
-                                true,
-                        ),
+        val entry =
+            requireNotNull(
+                HereticModelCatalog.entry(
+                    runtime.modelRef,
                 ),
+            ) {
+                "qualified runtime model is not offered by the current Product"
+            }
+        val profile =
+            entry.companionProfile
+        val harmony =
+            profile.messageProtocol ==
+                HereticCompanionRepresentation.MessageProtocol.HARMONY
+        val generation =
+            profile.generation
+        val payload =
+            RequestPayload(
+                model = runtime.requestModel,
+                messages =
+                    if (
+                        profile.coalesceLeadingSystemMessages
+                    ) {
+                        leadingSystemAsOne(
+                            messages,
+                        )
+                    } else {
+                        messages
+                    },
+                max_tokens = generation.productMaxOutputTokens,
+                stream = true,
+                temperature = generation.sampling.temperature,
+                top_p = generation.sampling.topP,
+                top_k = generation.sampling.topK,
+                chat_template_kwargs =
+                    buildMap {
+                        put("enable_thinking", JsonPrimitive(true))
+                        profile.modelIdentity
+                            ?.let {
+                                put(
+                                    "model_identity",
+                                    JsonPrimitive(
+                                        it,
+                                    ),
+                                )
+                            }
+                        generation.reasoningEffort
+                            ?.let {
+                                put(
+                                    "reasoning_effort",
+                                    JsonPrimitive(
+                                        it.wireValue,
+                                    ),
+                                )
+                            }
+                    },
             )
+        val requestBody =
+            if (
+                profile.capabilityRepresentation ==
+                    HereticCompanionRepresentation.CapabilityRepresentation.HARMONY_FUNCTIONS
+            ) {
+                harmonyRequestBody(
+                    payload = payload,
+                    capabilityOffer = capabilityOffer,
+                )
+            } else {
+                JsonCodec.encodeToString(
+                    payload,
+                )
+            }
         val requestBodySha256 =
             sha256(
                 requestBody,
@@ -454,12 +602,28 @@ object DirectCompanionConnection {
                     transport = transport,
                     call = call,
                     progressObserver = progressObserver,
+                    harmony = harmony,
+                    capabilityOffer = capabilityOffer,
+                    monotonicNanos = monotonicNanos,
                 )
             } else {
                 invokeBulk(
                     transport = transport,
                     call = call,
-                )
+                    monotonicNanos = monotonicNanos,
+                ).let {
+                    if (
+                        profile.reasoningRepresentation ==
+                            HereticCompanionRepresentation.ReasoningRepresentation.HARMONY_CHANNELS
+                    ) {
+                        harmonized(
+                            completion = it,
+                            capabilityOffer = capabilityOffer,
+                        )
+                    } else {
+                        it
+                    }
+                }
             }
 
         val content =
@@ -596,13 +760,16 @@ object DirectCompanionConnection {
             sealedHumanReasoning = reasoning.sealedHumanValue,
             runtimeObservation = runtimeObservation,
             invocationEvidence = invocation,
+            measurement = completion.measurement,
         )
     }
 
     private fun invokeBulk(
         transport: Transport,
         call: HttpCall,
+        monotonicNanos: () -> Long,
     ): ProviderCompletion {
+        val startedNanos = monotonicNanos()
         val http =
             post(
                 transport,
@@ -651,18 +818,58 @@ object DirectCompanionConnection {
                     FailureCode.EndpointResponseInvalid,
                     "local Companion response has no assistant message",
                 )
-        val content =
+        val finishReason =
+            stringOrNull(
+                choice[
+                    "finish_reason"
+                ],
+            )
+        val reasoning =
+            reasoningObservation(
+                message,
+            )
+        val answer =
             stringOrNull(
                 message[
                     "content"
                 ],
             )
-                ?.takeIf(
-                    String::isNotEmpty,
-                )
-                ?: fail(
+                .orEmpty()
+        val usage =
+            usageOrNull(
+                parsed[
+                    "usage"
+                ],
+            )
+        val measurement =
+            StageMeasurement(
+                stop =
+                    stopFor(
+                        done = true,
+                        finishReason = finishReason,
+                        answered = answer.isNotEmpty(),
+                    ),
+                finishReason = finishReason,
+                promptTokens = usage?.promptTokens,
+                cachedPromptTokens = usage?.cachedPromptTokens,
+                completionTokens = usage?.completionTokens,
+                firstTokenMillis = null,
+                firstAnswerMillis = null,
+                totalMillis = (monotonicNanos() - startedNanos) / 1_000_000,
+                reasoningCharacters = reasoning.trace.characterCount,
+                answerCharacters = answer.codePointCount(0, answer.length),
+                controlHeaderInReasoning =
+                    reasoning.sealedHumanValue?.let(::containsControlHeader) ?: false,
+                controlHeaderInAnswer = containsControlHeader(answer),
+            )
+        val content =
+            answer.takeIf(
+                String::isNotEmpty,
+            )
+                ?: throw ConnectionException(
                     FailureCode.EndpointResponseInvalid,
                     "local Companion response content is empty",
+                    measurement = measurement,
                 )
 
         return ProviderCompletion(
@@ -677,15 +884,8 @@ object DirectCompanionConnection {
                         "model"
                     ],
                 ),
-            reasoning = reasoningObservation(
-                message,
-            ),
-            finishReason =
-                stringOrNull(
-                    choice[
-                        "finish_reason"
-                    ],
-                ),
+            reasoning = reasoning,
+            finishReason = finishReason,
             assistantRoleObserved =
                 stringOrNull(
                     message[
@@ -693,6 +893,7 @@ object DirectCompanionConnection {
                     ],
                 ) ==
                     "assistant",
+            measurement = measurement,
         )
     }
 
@@ -700,11 +901,62 @@ object DirectCompanionConnection {
         transport: StreamingTransport,
         call: HttpCall,
         progressObserver: ProgressObserver?,
+        harmony: Boolean = false,
+        capabilityOffer: List<VexLifeCapabilityAtlas.Definition> = emptyList(),
+        monotonicNanos: () -> Long,
     ): ProviderCompletion {
+        val startedNanos = monotonicNanos()
+        var firstTokenNanos: Long? = null
+        var firstAnswerNanos: Long? = null
+        var usage: Usage? = null
         val content =
             StringBuilder()
         val reasoning =
             StringBuilder()
+        val splitter = if (harmony) HarmonyResponseSplitter() else null
+        val toolCall = HarmonyToolCall()
+
+        fun appendReasoning(delta: String) {
+            if (firstTokenNanos == null) {
+                firstTokenNanos = monotonicNanos()
+            }
+            reasoning.append(delta)
+            progressObserver?.observe(
+                Progress(
+                    kind = ProgressKind.Reasoning,
+                    delta = delta,
+                    accumulatedCharacters = reasoning.codePointCount(),
+                )
+            )
+        }
+
+        fun appendContent(delta: String) {
+            if (firstAnswerNanos == null) {
+                val at = monotonicNanos()
+                firstAnswerNanos = at
+                if (firstTokenNanos == null) {
+                    firstTokenNanos = at
+                }
+            }
+            content.append(delta)
+            progressObserver?.observe(
+                Progress(
+                    kind = ProgressKind.Content,
+                    delta = delta,
+                    accumulatedCharacters = content.codePointCount(),
+                )
+            )
+        }
+
+        fun route(pieces: List<HarmonyResponseSplitter.Piece>) =
+            pieces.forEach {
+                when (it.kind) {
+                    HarmonyResponseSplitter.Kind.Thinking -> appendReasoning(it.text)
+                    HarmonyResponseSplitter.Kind.Answer -> appendContent(it.text)
+                    HarmonyResponseSplitter.Kind.ToolCall ->
+                        if (!toolCall.accept(it)) appendReasoning(it.text)
+                }
+            }
         var reportedModel: String? =
             null
         var finishReason: String? =
@@ -749,6 +1001,7 @@ object DirectCompanionConnection {
                 ) {
                     done =
                         true
+                    splitter?.let { route(it.finish()) }
                     return@postStreaming
                 }
 
@@ -776,6 +1029,14 @@ object DirectCompanionConnection {
                     ?.let {
                         reportedModel =
                             it
+                    }
+                usageOrNull(
+                    event[
+                        "usage"
+                    ],
+                )
+                    ?.let {
+                        usage = it
                     }
                 val choice =
                     (event[
@@ -847,18 +1108,7 @@ object DirectCompanionConnection {
                     reasoningDelta !=
                         null
                 ) {
-                    reasoning.append(
-                        reasoningDelta,
-                    )
-                    progressObserver
-                        ?.observe(
-                            Progress(
-                                kind = ProgressKind.Reasoning,
-                                delta = reasoningDelta,
-                                accumulatedCharacters =
-                                    reasoning.codePointCount(),
-                            ),
-                        )
+                    appendReasoning(reasoningDelta)
                 }
 
                 stringOrNull(
@@ -871,18 +1121,8 @@ object DirectCompanionConnection {
                     )
                     ?.let {
                         contentDelta ->
-                        content.append(
-                            contentDelta,
-                        )
-                        progressObserver
-                            ?.observe(
-                                Progress(
-                                    kind = ProgressKind.Content,
-                                    delta = contentDelta,
-                                    accumulatedCharacters =
-                                        content.codePointCount(),
-                                ),
-                            )
+                        if (splitter == null) appendContent(contentDelta)
+                        else route(splitter.accept(contentDelta))
                     }
             }
 
@@ -890,20 +1130,70 @@ object DirectCompanionConnection {
             status = http.status,
             redirectLocation = http.redirectLocation,
         )
+
+        fun millisSinceStart(nanos: Long?): Long? =
+            nanos?.let {
+                (it - startedNanos) /
+                    1_000_000
+            }
+
+        fun measurement(
+            answered: Boolean = content.isNotEmpty(),
+        ): StageMeasurement =
+            StageMeasurement(
+                stop =
+                    stopFor(
+                        done = done,
+                        finishReason = finishReason,
+                        answered = answered,
+                    ),
+                finishReason = finishReason,
+                promptTokens = usage?.promptTokens,
+                cachedPromptTokens = usage?.cachedPromptTokens,
+                completionTokens = usage?.completionTokens,
+                firstTokenMillis = millisSinceStart(firstTokenNanos),
+                firstAnswerMillis = millisSinceStart(firstAnswerNanos),
+                totalMillis = (monotonicNanos() - startedNanos) / 1_000_000,
+                reasoningCharacters = reasoning.codePointCount(),
+                answerCharacters = content.codePointCount(),
+                controlHeaderInReasoning = containsControlHeader(reasoning),
+                controlHeaderInAnswer = containsControlHeader(content),
+            )
+
         if (
             !done
         ) {
-            fail(
+            throw ConnectionException(
                 FailureCode.EndpointResponseInvalid,
                 "streaming Companion endpoint closed before [DONE]",
+                measurement = measurement(),
             )
+        }
+        toolCall.recipient?.let {
+            recipient ->
+            if (
+                content.isEmpty()
+            ) {
+                content.append(
+                    HarmonyCapabilityTools.control(
+                        recipient = recipient,
+                        arguments = toolCall.arguments(),
+                        offered = capabilityOffer,
+                    ),
+                )
+            } else {
+                appendReasoning(
+                    "\n$recipient ${toolCall.arguments()}",
+                )
+            }
         }
         if (
             content.isEmpty()
         ) {
-            fail(
+            throw ConnectionException(
                 FailureCode.EndpointResponseInvalid,
                 "streaming Companion response content is empty",
+                measurement = measurement(answered = false),
             )
         }
 
@@ -931,6 +1221,10 @@ object DirectCompanionConnection {
                         )
                     }
             }
+        val stageMeasurement =
+            measurement(
+                answered = true,
+            )
 
         return ProviderCompletion(
             httpStatus = http.status,
@@ -945,6 +1239,116 @@ object DirectCompanionConnection {
                 ),
             finishReason = finishReason,
             assistantRoleObserved = assistantRoleObserved,
+            measurement = stageMeasurement,
+        )
+    }
+
+    /**
+     * The harmony chat template keeps only the first system message (as its developer message)
+     * and silently drops later ones; the leading system messages are sent as one so none of
+     * what Vex is given is lost.
+     */
+    private class HarmonyToolCall {
+        var recipient: String? = null
+            private set
+        private val text = StringBuilder()
+        fun accept(
+            piece: HarmonyResponseSplitter.Piece,
+        ): Boolean {
+            val to = piece.recipient ?: return false
+            if (recipient != null && recipient != to) return false
+            recipient = to
+            text.append(piece.text)
+            return true
+        }
+        fun arguments(): String = text.toString().trim()
+    }
+
+    private fun harmonyRequestBody(
+        payload: RequestPayload,
+        capabilityOffer: List<VexLifeCapabilityAtlas.Definition>,
+    ): String {
+        val fields =
+            JsonCodec.encodeToJsonElement(payload).jsonObject.toMutableMap()
+        fields["messages"] =
+            JsonCodec.encodeToJsonElement(
+                HarmonyCapabilityTools.messages(payload.messages),
+            )
+        HarmonyCapabilityTools
+            .tools(capabilityOffer)
+            .takeIf { it.isNotEmpty() }
+            ?.let {
+                fields["tools"] = JsonCodec.encodeToJsonElement(it)
+            }
+        return JsonCodec.encodeToString(JsonObject(fields))
+    }
+
+    private fun leadingSystemAsOne(
+        messages: List<CompanionProviderMessage>,
+    ): List<CompanionProviderMessage> {
+        val leading = messages.takeWhile { it.role == "system" }
+        if (leading.size <= 1) return messages
+        return listOf(
+            leading.first().copy(content = leading.joinToString("\n\n") { it.content })
+        ) + messages.drop(leading.size)
+    }
+
+    /** A whole (non-streamed) harmony reply, split the same way as a streamed one. */
+    private fun harmonized(
+        completion: ProviderCompletion,
+        capabilityOffer: List<VexLifeCapabilityAtlas.Definition>,
+    ): ProviderCompletion {
+        val splitter = HarmonyResponseSplitter()
+        val pieces = splitter.accept(completion.content) + splitter.finish()
+        val toolCall = HarmonyToolCall()
+        val heldAsThinking =
+            pieces.filter {
+                it.kind == HarmonyResponseSplitter.Kind.ToolCall &&
+                    !toolCall.accept(it)
+            }
+        val spoken =
+            pieces
+                .filter { it.kind == HarmonyResponseSplitter.Kind.Answer }
+                .joinToString("") { it.text }
+        val answer =
+            toolCall.recipient
+                ?.takeIf { spoken.isEmpty() }
+                ?.let {
+                    HarmonyCapabilityTools.control(
+                        recipient = it,
+                        arguments = toolCall.arguments(),
+                        offered = capabilityOffer,
+                    )
+                }
+                ?: spoken
+        val thinking =
+            (
+                pieces.filter { it.kind == HarmonyResponseSplitter.Kind.Thinking } +
+                    heldAsThinking
+            )
+                .joinToString("") { it.text } +
+                toolCall.recipient
+                    ?.takeIf { spoken.isNotEmpty() }
+                    ?.let { "\n$it ${toolCall.arguments()}" }
+                    .orEmpty()
+        if (thinking.isEmpty() && answer == completion.content) return completion
+        if (answer.isEmpty()) {
+            fail(
+                FailureCode.EndpointResponseInvalid,
+                "harmony response carried no final answer",
+            )
+        }
+        return completion.copy(
+            content = answer,
+            reasoning =
+                reasoningObservation(
+                    JsonObject(
+                        buildMap {
+                            put("content", JsonPrimitive(answer))
+                            if (thinking.isNotEmpty()) put("reasoning", JsonPrimitive(thinking))
+                        }
+                    )
+                ),
         )
     }
 

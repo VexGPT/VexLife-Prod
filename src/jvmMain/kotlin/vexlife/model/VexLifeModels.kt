@@ -21,21 +21,24 @@ import vexlife.text.VexLifeText
  * Settings → Models: the offered models as this Home holds them, and the person's model Controls.
  *
  * Effects and their owners:
- * - Use: FileHereticModelConfigurationStore.selectModel (the Home's choice; next start switches)
- * - Download: HereticArtifactMaterialization.materializeCurrent with acquisition, in the background
- * - Redownload: HereticArtifactMaterialization.remove, then the same download
- * - Remove: HereticArtifactMaterialization.remove (frees space; the model stays offered)
+ * - Use: persist the Home's exact choice, then request runtime convergence through [ModelSwitchRealization].
+ * - Download: HereticArtifactMaterialization.materializeCurrent with acquisition, in the background.
+ * - Redownload: HereticArtifactMaterialization.remove, then the same download.
+ * - Remove: HereticArtifactMaterialization.remove (frees space; the model stays offered).
  *
- * Every file effect holds the Home's setup lease, so Setup and Settings never write model files at
- * once. One download runs at a time. Lawfulness is VexLifeModelsFamily's, re-resolved against a
- * fresh observation when each Control arrives; a Control that is not lawful now does nothing.
+ * The Family owns what Use means. [ModelSwitchRealization] is an injected realization seam:
+ * Product construction delegates the effect to LocalSetup/runtime ownership and updates serving truth only after
+ * the target runtime is qualified. This class never kills/spawns a model process itself.
  *
- * This owner holds no runtime-start authority: a chosen model starts at the next Setup Start.
+ * Every artifact effect holds the Home's setup lease, so Setup and Settings never write model files at
+ * once. One background model operation runs at a time. Lawfulness is VexLifeModelsFamily's,
+ * re-resolved against fresh State when each Control arrives.
  */
 class VexLifeModels(
     productHome: Path,
     private val servingModelRef: () -> String?,
     private val totalMemoryBytes: () -> Long?,
+    private val modelSwitchRealization: ModelSwitchRealization? = null,
     private val acquirer: (onProgress: (Long) -> Unit) -> HereticArtifactMaterialization.Acquirer =
         { onProgress ->
             val delivered = mutableMapOf<String, Long>()
@@ -54,9 +57,51 @@ class VexLifeModels(
         Thread(runnable, "vexlife-model-download").apply { isDaemon = true }
     }
 
+    fun interface ModelSwitchRealization {
+        fun switch(
+            entry: HereticModelCatalog.Entry,
+            observe: (SwitchPhase) -> Unit,
+        )
+    }
+
+    sealed interface SwitchPhase {
+        val stateRef: String
+        val messageKey: String
+
+        data object Requested : SwitchPhase {
+            override val stateRef = "REQUESTED"
+            override val messageKey = "workspace.status.model-switch-requested"
+        }
+
+        data object WaitingForCurrentTurn : SwitchPhase {
+            override val stateRef = "WAITING_FOR_CURRENT_TURN"
+            override val messageKey = "workspace.status.model-switch-waiting"
+        }
+
+        data object PreparingTarget : SwitchPhase {
+            override val stateRef = "PREPARING_TARGET"
+            override val messageKey = "workspace.status.model-switch-preparing"
+        }
+
+        data object SwitchingRuntime : SwitchPhase {
+            override val stateRef = "SWITCHING_RUNTIME"
+            override val messageKey = "workspace.status.model-switch-runtime"
+        }
+    }
+
+    @Serializable
+    data class SwitchProjection(
+        val handle: String,
+        val label: String,
+        val phase: String,
+        val message: VexLifeText,
+        val startedAt: String,
+    )
+
     private data class Download(val handle: String, val baseBytes: Long, val totalBytes: Long)
 
     private val download = AtomicReference<Download?>(null)
+    private val switching = AtomicReference<SwitchProjection?>(null)
     private val downloadedBytes = AtomicLong(0)
     private val lastOutcome = AtomicReference<Outcome?>(null)
 
@@ -64,7 +109,7 @@ class VexLifeModels(
     data class Row(
         val handle: String,
         val label: String,
-        val standing: String,
+        val standing: HereticModelCatalog.Standing,
         val totalBytes: Long,
         val presentBytes: Long,
         val recommendedMemoryBytes: Long,
@@ -74,6 +119,34 @@ class VexLifeModels(
         val downloadedBytes: Long?,
         val display: VexLifeModelsFamily.DisplayState,
     )
+
+    sealed interface OutcomeState {
+        val stateRef: String
+
+        data object NotLawfulNow : OutcomeState {
+            override val stateRef = "NOT_LAWFUL_NOW"
+        }
+
+        data object Switching : OutcomeState {
+            override val stateRef = "SWITCHING"
+        }
+
+        data object Switched : OutcomeState {
+            override val stateRef = "SWITCHED"
+        }
+
+        data object Failed : OutcomeState {
+            override val stateRef = "FAILED"
+        }
+
+        data object Downloaded : OutcomeState {
+            override val stateRef = "DOWNLOADED"
+        }
+
+        data object Removed : OutcomeState {
+            override val stateRef = "REMOVED"
+        }
+    }
 
     @Serializable
     data class Outcome(
@@ -91,7 +164,9 @@ class VexLifeModels(
         val totalMemoryBytes: Long?,
         val freeStorageBytes: Long?,
         val downloading: String?,
-        /** The Home chose a model the running runtime does not serve: Setup's Start switches it. */
+        /** One accepted Use is converging the serving runtime through the rightful runtime owner. */
+        val switching: SwitchProjection?,
+        /** Durable selected model differs from the current qualified serving Session. */
         val switchPending: Boolean,
         val lastOutcome: Outcome?,
         val effectsPerformed: Boolean,
@@ -101,15 +176,24 @@ class VexLifeModels(
         val chosen = chosenModelRef()
         val serving = servingModelRef()
         val running = download.get()
+        val currentSwitch = switching.get()
         val memory = totalMemoryBytes()
         val rows =
             HereticModelCatalog.Entries.map { entry ->
                 val presence = HereticArtifactMaterialization.observePresence(home, entry)
-                val state = state(entry, presence, chosen, serving, running)
+                val state =
+                    state(
+                        entry = entry,
+                        presence = presence,
+                        chosen = chosen,
+                        serving = serving,
+                        running = running,
+                        currentSwitch = currentSwitch,
+                    )
                 Row(
                     handle = entry.handle,
                     label = entry.humanLabel,
-                    standing = entry.standing.name,
+                    standing = entry.standing,
                     totalBytes = entry.totalBytes,
                     presentBytes = presence.presentBySizeBytes,
                     recommendedMemoryBytes = entry.recommendedMemoryBytes,
@@ -129,6 +213,7 @@ class VexLifeModels(
             totalMemoryBytes = memory,
             freeStorageBytes = runCatching { Files.getFileStore(home).usableSpace }.getOrNull(),
             downloading = running?.handle,
+            switching = currentSwitch,
             switchPending = chosen != null && serving != null && chosen != serving,
             lastOutcome = lastOutcome.get(),
             effectsPerformed = false,
@@ -144,13 +229,21 @@ class VexLifeModels(
                 "model control $controlRef is not known"
             }
         val presence = HereticArtifactMaterialization.observePresence(home, entry)
-        val state = state(entry, presence, chosenModelRef(), servingModelRef(), download.get())
+        val state =
+            state(
+                entry = entry,
+                presence = presence,
+                chosen = chosenModelRef(),
+                serving = servingModelRef(),
+                running = download.get(),
+                currentSwitch = switching.get(),
+            )
         val act = VexLifeModelsFamily.resolve(state, control)
         if (act == null) {
             remember(
                 entry,
                 controlRef,
-                "NOT_LAWFUL_NOW",
+                OutcomeState.NotLawfulNow,
                 VexLifeText("workspace.status.model-control-not-lawful"),
             )
             return projection()
@@ -160,25 +253,25 @@ class VexLifeModels(
             mapOf("model" to handle, "controlRef" to controlRef),
         )
         when (act.effect) {
-            VexLifeModelsFamily.Effect.ChooseModel -> {
+            VexLifeModelsFamily.Effect.SwitchModel -> {
                 val manifest = requireNotNull(VexLifeProdHomeFiles.observeExisting(home)).manifest
-                FileHereticModelConfigurationStore(home).selectModel(manifest, entry)
-                VexLogger.record(
-                    VexLogger.Fact.PersonModelChosen,
-                    mapOf("model" to handle, "via" to "settings"),
-                )
-                remember(
-                    entry,
-                    controlRef,
-                    "CHOSEN",
-                    VexLifeText("workspace.status.model-chosen-restart"),
+                if (!state.chosen) {
+                    FileHereticModelConfigurationStore(home).selectModel(manifest, entry)
+                    VexLogger.record(
+                        VexLogger.Fact.PersonModelChosen,
+                        mapOf("model" to handle, "via" to "settings"),
+                    )
+                }
+                startSwitch(
+                    entry = entry,
+                    controlRef = controlRef,
                 )
             }
-            VexLifeModelsFamily.Effect.AcquireModel ->
+            VexLifeModelsFamily.Effect.AcquireArtifacts ->
                 startDownload(entry, controlRef, replace = false)
-            VexLifeModelsFamily.Effect.ReplaceModel ->
+            VexLifeModelsFamily.Effect.ReplaceArtifacts ->
                 startDownload(entry, controlRef, replace = true)
-            VexLifeModelsFamily.Effect.RemoveModel -> {
+            VexLifeModelsFamily.Effect.RemoveArtifacts -> {
                 val removal =
                     VexLifeProdLocalSetupLease.acquire(home).use {
                         HereticArtifactMaterialization.remove(home, entry)
@@ -194,7 +287,7 @@ class VexLifeModels(
                 remember(
                     entry,
                     controlRef,
-                    "REMOVED",
+                    OutcomeState.Removed,
                     VexLifeText(
                         key = "workspace.status.model-removed",
                         gib = mapOf("freed" to removal.freedBytes),
@@ -205,6 +298,100 @@ class VexLifeModels(
         }
         return projection()
     }
+
+    private fun startSwitch(
+        entry: HereticModelCatalog.Entry,
+        controlRef: String,
+    ) {
+        val realization =
+            requireNotNull(
+                modelSwitchRealization,
+            ) {
+                "runtime switch realization is unavailable"
+            }
+        val startedAt = now().toString()
+        val initial =
+            SwitchProjection(
+                handle = entry.handle,
+                label = entry.humanLabel,
+                phase = SwitchPhase.Requested.stateRef,
+                message = switchMessage(SwitchPhase.Requested, entry),
+                startedAt = startedAt,
+            )
+        check(
+            switching.compareAndSet(
+                null,
+                initial,
+            ),
+        ) {
+            "another model switch is already active"
+        }
+        remember(
+            entry,
+            controlRef,
+            OutcomeState.Switching,
+            initial.message,
+        )
+        executor.execute {
+            try {
+                realization.switch(
+                    entry,
+                ) {
+                    phase ->
+                    switching.set(
+                        SwitchProjection(
+                            handle = entry.handle,
+                            label = entry.humanLabel,
+                            phase = phase.stateRef,
+                            message = switchMessage(phase, entry),
+                            startedAt = startedAt,
+                        ),
+                    )
+                }
+                require(
+                    servingModelRef() ==
+                        entry.modelRef,
+                ) {
+                    "model switch completed without the target model becoming the serving Session"
+                }
+                remember(
+                    entry,
+                    controlRef,
+                    OutcomeState.Switched,
+                    VexLifeText.text(
+                        "workspace.status.model-switched",
+                        "model" to entry.humanLabel,
+                    ),
+                )
+            } catch (
+                error: Exception,
+            ) {
+                remember(
+                    entry,
+                    controlRef,
+                    OutcomeState.Failed,
+                    VexLifeText.text(
+                        "workspace.status.model-switch-failed",
+                        "model" to entry.humanLabel,
+                        "reason" to (error.message ?: error.javaClass.simpleName),
+                    ),
+                )
+            } finally {
+                switching.set(
+                    null,
+                )
+            }
+        }
+    }
+
+    private fun switchMessage(
+        phase: SwitchPhase,
+        entry: HereticModelCatalog.Entry,
+    ): VexLifeText =
+        VexLifeText.text(
+            phase.messageKey,
+            "model" to entry.humanLabel,
+        )
 
     private fun startDownload(
         entry: HereticModelCatalog.Entry,
@@ -238,7 +425,7 @@ class VexLifeModels(
                 remember(
                     entry,
                     controlRef,
-                    "DOWNLOADED",
+                    OutcomeState.Downloaded,
                     VexLifeText("workspace.status.model-downloaded"),
                 )
             } catch (error: Exception) {
@@ -250,7 +437,7 @@ class VexLifeModels(
                 remember(
                     entry,
                     controlRef,
-                    "FAILED",
+                    OutcomeState.Failed,
                     VexLifeText.text(
                         "workspace.status.model-download-failed",
                         "reason" to (error.message ?: error.javaClass.simpleName),
@@ -265,10 +452,18 @@ class VexLifeModels(
     private fun remember(
         entry: HereticModelCatalog.Entry,
         controlRef: String,
-        state: String,
+        state: OutcomeState,
         message: VexLifeText,
     ) {
-        lastOutcome.set(Outcome(entry.handle, controlRef, state, message, now().toString()))
+        lastOutcome.set(
+            Outcome(
+                handle = entry.handle,
+                controlRef = controlRef,
+                state = state.stateRef,
+                message = message,
+                at = now().toString(),
+            ),
+        )
     }
 
     private fun chosenModelRef(): String? = runCatching {
@@ -287,26 +482,54 @@ class VexLifeModels(
         chosen: String?,
         serving: String?,
         running: Download?,
+        currentSwitch: SwitchProjection?,
     ) =
         VexLifeModelsFamily.State(
             handle = entry.handle,
-            files =
+            artifactPresence =
                 when (presence.state) {
-                    "COMPLETE_BY_SIZE_NOT_HASHED" -> VexLifeModelsFamily.Files.PRESENT
-                    "PARTIAL_BY_SIZE" -> VexLifeModelsFamily.Files.PARTIAL
-                    "INVALID_SIZE" -> VexLifeModelsFamily.Files.DAMAGED
-                    else -> VexLifeModelsFamily.Files.ABSENT
+                    HereticArtifactMaterialization.PresenceState.CompleteBySizeNotHashed ->
+                        VexLifeModelsFamily.ArtifactPresence.Present
+                    HereticArtifactMaterialization.PresenceState.PartialBySize ->
+                        VexLifeModelsFamily.ArtifactPresence.Partial
+                    HereticArtifactMaterialization.PresenceState.InvalidSize ->
+                        VexLifeModelsFamily.ArtifactPresence.Damaged
+                    HereticArtifactMaterialization.PresenceState.Absent ->
+                        VexLifeModelsFamily.ArtifactPresence.Absent
                 },
             downloading = running?.handle == entry.handle,
             chosen = chosen == entry.modelRef,
             serving = serving == entry.modelRef,
+            switching = currentSwitch?.handle == entry.handle,
             anyDownloadRunning = running != null,
+            anySwitchRunning = currentSwitch != null,
         )
 
     /** Waits for a running download to finish (tests and orderly shutdown). */
     internal fun awaitIdle(timeoutMs: Long = 30_000) {
         val deadline = System.currentTimeMillis() + timeoutMs
-        while (download.get() != null && System.currentTimeMillis() < deadline) Thread.sleep(20)
+        while (
+            (download.get() != null || switching.get() != null) &&
+            System.currentTimeMillis() < deadline
+        ) {
+            Thread.sleep(20)
+        }
+    }
+
+    fun switchInProgress(): Boolean =
+        switching.get() !=
+            null
+
+    fun switchHeld(): Boolean {
+        val outcome = lastOutcome.get()
+        val chosen = chosenModelRef()
+        val serving = servingModelRef()
+        return switching.get() == null &&
+            outcome?.controlRef == VexLifeModelsFamily.ControlUse &&
+            outcome.state == OutcomeState.Failed.stateRef &&
+            chosen != null &&
+            serving != null &&
+            chosen != serving
     }
 
     override fun close() {

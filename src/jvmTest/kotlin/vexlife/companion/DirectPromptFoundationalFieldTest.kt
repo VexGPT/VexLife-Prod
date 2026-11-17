@@ -172,17 +172,17 @@ class DirectPromptFoundationalFieldTest {
                 assertFalse(assertNotNull(receipt.foundationalField).effectAuthorityGranted)
                 assertFalse(receipt.effectsPerformed)
 
-                val fixed =
-                    DirectPromptContext.prepareFixed(
+                val turnContext =
+                    DirectPromptContext.prepareTurnContext(
                         prior = null,
                         currentRequest = request,
                         foundationalField = shipped,
                     )
-                assertEquals(whole.evidence, fixed.foundationalField)
-                assertEquals(kernel, fixed.prefixMessages.first().content)
+                assertEquals(whole.evidence, turnContext.foundationalField)
+                assertEquals(kernel, turnContext.prefixMessages.first().content)
                 assertEquals(
-                    (fixed.prefixMessages + fixed.suffixMessages).sumOf { tokens(it.content) },
-                    fixed.fixedInputTokenEstimate,
+                    (turnContext.prefixMessages + turnContext.suffixMessages).sumOf { tokens(it.content) },
+                    turnContext.turnContextInputTokenEstimate,
                 )
             }
         }

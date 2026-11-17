@@ -242,6 +242,20 @@ object VexLifeProdLocalSetup {
                     platform = MacHereticRuntimePlatform(productHome = productHome),
                 )
             },
+        val retireStableRuntime:
+            (
+                productHome: Path,
+                binding: HereticPersistentRuntime.Binding,
+                observation: StableVexLifeHereticRuntimeCompatibility.Observation,
+            ) -> StableVexLifeHereticRuntimeCompatibility.Retirement =
+            { productHome, binding, observation ->
+                StableVexLifeHereticRuntimeCompatibility.retirePriorExact(
+                    productHome = productHome,
+                    binding = binding,
+                    expected = observation,
+                    platform = MacHereticRuntimePlatform(productHome = productHome),
+                )
+            },
         val observeCurrentProductRuntime:
             (
                 productHome: Path,
@@ -437,18 +451,14 @@ object VexLifeProdLocalSetup {
 
         val modelConfiguration = FileHereticModelConfigurationStore(canonicalHome)
 
-        // A Home that has not chosen a model yet starts with the largest offered model that fits
-        // this Mac; a Home that chose keeps its choice (a bound 27B Home stays exactly as it was).
+        // A persisted selection is preference/history, not a requirement that an obsolete model
+        // must still exist. Converge it onto one model this Product can serve now before any
+        // materialization/runtime requirement is formed.
         val selected =
-            when (modelConfiguration.read(home.manifest)) {
-                is FileHereticModelConfigurationStore.Snapshot.Unconfigured ->
-                    modelConfiguration.selectModel(
-                        home.manifest,
-                        HereticModelCatalog.recommendedFor(host.observation.totalMemoryBytes),
-                    )
-                is FileHereticModelConfigurationStore.Snapshot.Heretic ->
-                    modelConfiguration.selectHeretic(home.manifest)
-            }
+            modelConfiguration.ensureSupportedSelection(
+                manifest = home.manifest,
+                totalMemoryBytes = host.observation.totalMemoryBytes,
+            )
         // The Home's own choice decides which catalog model is materialized and run. A Home that
         // never chose is given the certified default, exactly as before the catalog existed.
         val model = HereticModelConfiguration.selected(selected.value)
@@ -474,7 +484,39 @@ object VexLifeProdLocalSetup {
                 environment = environment,
             )
 
-        val borrowedStableRuntime = hooks.observeStableRuntime(canonicalHome, binding)
+        val observedStableRuntime =
+            hooks.observeStableRuntime(
+                canonicalHome,
+                binding,
+            )
+        var migratedStablePredecessor = false
+        val borrowedStableRuntime =
+            if (
+                observedStableRuntime !=
+                    null &&
+                observedStableRuntime.launchContract !=
+                    HereticPersistentRuntime.ServerLaunchContract.CURRENT &&
+                allowRuntimeStart
+            ) {
+                hooks.progress.phase(VexLifeProdSetupProgress.Phase.StartingLocalModel)
+                val retirement =
+                    hooks.retireStableRuntime(
+                        canonicalHome,
+                        binding,
+                        observedStableRuntime,
+                    )
+                require(
+                    retirement.exactOwnershipVerified &&
+                        retirement.verifiedNotLive &&
+                        retirement.receiptDeleted,
+                ) {
+                    "stable VexLife Heretic predecessor was not exactly retired before Product runtime start"
+                }
+                migratedStablePredecessor = true
+                null
+            } else {
+                observedStableRuntime
+            }
 
         val availabilityAct =
             requireNotNull(
@@ -532,7 +574,15 @@ object VexLifeProdLocalSetup {
                                     binding = binding,
                                     receipt = runtime.receipt,
                                 )
-                            ) to runtime.disposition
+                            ) to
+                                if (
+                                    migratedStablePredecessor
+                                ) {
+                                    "MIGRATED_STABLE_PRIOR_LAUNCH_CONTRACT_TO_" +
+                                        runtime.disposition
+                                } else {
+                                    runtime.disposition
+                                }
                         }
 
                         HereticRuntimeAvailability.Effect.ObserveCurrentProductOwnedRuntime -> {
@@ -626,12 +676,12 @@ object VexLifeProdLocalSetup {
                     state = "LOCAL_HERETIC_FOUNDATION_READY",
                     productHome = home.productHome,
                     homeDisposition = home.state,
-                    modelSelectionDisposition = selected.state,
+                    modelSelectionDisposition = selected.state.wire,
                     managedPythonDisposition = managedPython.state,
                     artifactDisposition = materialized.state,
                     environmentDisposition = environment.state,
                     runtimeDisposition = runtimeDisposition,
-                    modelBindingDisposition = bound.state,
+                    modelBindingDisposition = bound.state.wire,
                     modelConfigurationState = bound.value.state,
                     qualifiedRuntimeEvidence = qualifiedRuntimeEvidence,
                     endpoint = qualifiedRuntimeEvidence.endpoint,

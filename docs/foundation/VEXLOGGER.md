@@ -34,11 +34,18 @@ rightful owner accepts / observes a fact
 | Service process | `SERVICE_PROCESS_STARTED`, `SERVICE_LISTENING`, `SERVICE_START_FAILED`, `SERVICE_PROCESS_TERMINATING` (JVM shutdown hook; a hard kill leaves no record, which is evidence too) |
 | Service lifetime owner | `SERVICE_RETIRED_VERIFIED`, `SERVICE_STARTED_CURRENT`, `SERVICE_REUSED_CURRENT` |
 | Heretic runtime | `RUNTIME_CURRENTNESS_LOST`, `RUNTIME_RECOVERY_REQUESTED/COMPLETED/FAILED`, `RUNTIME_RETIRED_UNHEALTHY`, `RUNTIME_START_REQUESTED`, `RUNTIME_QUALIFIED`, `RUNTIME_MODEL_SWITCHED` (from/to handle), `RUNTIME_PROCESS_LIVE/NO_LONGER_LIVE` (PID observer, transitions only, never probes health) |
-| Conversation | `SEND_ACCEPTED`, `PROVIDER_INVOCATION_REQUESTED`, `TURN_COMPLETED`, `TURN_FAILED` (with whether a failure receipt was written) |
+| Conversation | `SEND_ACCEPTED`, `PROVIDER_INVOCATION_REQUESTED`, `PROVIDER_STAGE_OBSERVED` (per stage, also when it stopped: `stop` = `COMPLETED` / `OUTPUT_LIMIT_DURING_REASONING` / `OUTPUT_LIMIT_DURING_ANSWER` / `STREAM_CLOSED_BEFORE_DONE` / `ENDED_WITHOUT_ANSWER`, `finishReason`, the provider's `promptTokens` / `cachedPromptTokens` / `prefillTokens` / `completionTokens`, `firstTokenMs` / `firstAnswerMs` / `totalMs`, `reasoningChars` / `answerChars`, and whether a VexLife request header appeared in the reasoning or the answer — counts and names only, never text), `TURN_COMPLETED`, `TURN_FAILED` (with whether a failure receipt was written) |
 | Web presentation (`POST /api/v1/chronology`, Browser/Presentation facts only) | `PRESENTATION_ARRIVED`, `SEND_OUTCOME_UNRESOLVED_SHOWN`, `BROWSER_PAGE_IDENTITY_OBSERVED`, `BROWSER_PAGE_UNLOCATED`, `BROWSER_CONTEXT_REQUESTED/READY/INVALIDATED` |
-| Settings → Models | `MODEL_CONTROL_ACCEPTED`, `MODEL_DOWNLOAD_STARTED/COMPLETED/FAILED`, `MODEL_FILES_REMOVED` (files, freed bytes) |
+| Settings → Models | `MODEL_CONTROL_ACCEPTED`, `MODEL_DOWNLOAD_STARTED/COMPLETED/FAILED`, `MODEL_FILES_REMOVED` (owner=`models`; files, freed bytes) |
 | Capability bridge | `CAPABILITY_REQUEST_OBSERVED` (callRef, request number, handle, action), `CAPABILITY_RESULT_RETURNED` (state, tokens, truncated) — never the returned content |
 | Diagnostics | `DEBUG_HISTORY_CLEARED`, `DEBUG_EXPORT_FORMED`, `ENHANCED_CAPTURE_STARTED/STOPPED`, `PROCESS_SNAPSHOT_OBSERVED` |
+
+`PROVIDER_STAGE_OBSERVED` answers two questions the chronology could not before:
+
+- **Why a stage ended without a request.** An output limit spent while thinking, a stream that died under memory pressure, and a request written only inside the reasoning used to look alike. A request header seen only in the reasoning was never read as a request.
+- **What a turn cost.** `prefillTokens` is the part of the prompt the runtime had to process rather than reuse from its cache, which is what makes a cold turn (after a model switch, say) slow.
+
+Stage measurement is diagnostics only. It is never part of the durable runtime observation, the invocation evidence, or their fingerprints.
 
 ## Storage
 

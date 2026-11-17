@@ -550,10 +550,10 @@ class VexLifeCapabilityReachTest {
                     """{"capability":"web","action":"fetch","arguments":{"url":"https://example.com/"}}"""
                 ),
                 admission(home),
-                VexLifeCapabilityBridge.Owners(webTransport = transport, resolver = publicResolver),
+                VexLifeCapabilityBridge.OwnerBindings(webTransport = transport, resolver = publicResolver),
                 tokens,
             )
-        assertEquals(VexLifeCapabilityBridge.State.RETURNED, exchange.entry.state)
+        assertEquals(VexLifeCapabilityBridge.ResultState.RETURNED, exchange.entry.state)
         assertEquals("assistant", exchange.assistantMessage.role)
         assertEquals("user", exchange.resultMessage.role)
         assertTrue(exchange.resultMessage.content.startsWith(VexLifeCapabilityRequest.ResultHeader))
@@ -577,10 +577,10 @@ class VexLifeCapabilityReachTest {
                     """{"capability":"web","action":"fetch","arguments":{"url":"https://example.com/"}}"""
                 ),
                 admission(home, available = everythingAvailable - VexLifeReachDefinitions.WebRef),
-                VexLifeCapabilityBridge.Owners(webTransport = transport, resolver = publicResolver),
+                VexLifeCapabilityBridge.OwnerBindings(webTransport = transport, resolver = publicResolver),
                 tokens,
             )
-        assertEquals(VexLifeCapabilityBridge.State.NOT_AVAILABLE, exchange.entry.state)
+        assertEquals(VexLifeCapabilityBridge.ResultState.NOT_AVAILABLE, exchange.entry.state)
         assertTrue(transport.requested.isEmpty())
     }
 
@@ -592,7 +592,7 @@ class VexLifeCapabilityReachTest {
                 admission(home),
                 estimateTokens = tokens,
             )
-        assertEquals(VexLifeCapabilityBridge.State.INVALID_REQUEST, wrongAction.entry.state)
+        assertEquals(VexLifeCapabilityBridge.ResultState.INVALID_REQUEST, wrongAction.entry.state)
         assertTrue(wrongAction.resultMessage.content.contains("describe, tree, read"))
 
         val missing =
@@ -601,7 +601,7 @@ class VexLifeCapabilityReachTest {
                 admission(home),
                 estimateTokens = tokens,
             )
-        assertEquals(VexLifeCapabilityBridge.State.INVALID_REQUEST, missing.entry.state)
+        assertEquals(VexLifeCapabilityBridge.ResultState.INVALID_REQUEST, missing.entry.state)
         assertTrue(missing.resultMessage.content.contains("\"url\""))
 
         val malformed =
@@ -614,7 +614,7 @@ class VexLifeCapabilityReachTest {
                 admission(home),
                 estimateTokens = tokens,
             )
-        assertEquals(VexLifeCapabilityBridge.State.INVALID_REQUEST, malformed.entry.state)
+        assertEquals(VexLifeCapabilityBridge.ResultState.INVALID_REQUEST, malformed.entry.state)
         assertTrue(malformed.resultMessage.content.contains("The exact form"))
     }
 
@@ -628,7 +628,7 @@ class VexLifeCapabilityReachTest {
                 admission(home),
                 estimateTokens = tokens,
             )
-        assertEquals(VexLifeCapabilityBridge.State.RETURNED, described.entry.state)
+        assertEquals(VexLifeCapabilityBridge.ResultState.RETURNED, described.entry.state)
         listOf(
                 "action describe",
                 "action tree",
@@ -660,7 +660,7 @@ class VexLifeCapabilityReachTest {
                 admission(home, tokens = 3_000),
                 estimateTokens = tokens,
             )
-        assertEquals(VexLifeCapabilityBridge.State.RETURNED, cut.entry.state)
+        assertEquals(VexLifeCapabilityBridge.ResultState.RETURNED, cut.entry.state)
         assertTrue(cut.entry.contentTruncated)
         assertTrue(tokens(cut.resultMessage.content) <= 3_000)
 
@@ -672,7 +672,7 @@ class VexLifeCapabilityReachTest {
                 admission(home, tokens = 120),
                 estimateTokens = tokens,
             )
-        assertEquals(VexLifeCapabilityBridge.State.HELD_TOKEN_BUDGET, held.entry.state)
+        assertEquals(VexLifeCapabilityBridge.ResultState.HELD_TOKEN_BUDGET, held.entry.state)
     }
 
     @Test
@@ -683,7 +683,7 @@ class VexLifeCapabilityReachTest {
                 admission(home, number = VexLifeCapabilityBridge.MaximumRequestsPerTurn + 1),
                 estimateTokens = tokens,
             )
-        assertEquals(VexLifeCapabilityBridge.State.LIMIT_REACHED, over.entry.state)
+        assertEquals(VexLifeCapabilityBridge.ResultState.LIMIT_REACHED, over.entry.state)
         assertTrue(over.resultMessage.content.contains("No requests are left this turn"))
         assertTrue(over.resultMessage.content.contains("Do not send another capability request"))
         assertTrue(over.resultMessage.content.contains("share what you currently understand"))

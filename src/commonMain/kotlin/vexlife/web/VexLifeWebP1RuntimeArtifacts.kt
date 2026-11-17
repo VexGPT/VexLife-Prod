@@ -1,6 +1,7 @@
 package vexlife.web
 
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.model.VexLifeModelsFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.workspace.VexLifeSourceTemplate
 import vexlife.workspace.VexLifeWorkspaceApp
@@ -2379,6 +2380,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 const contextReady = Boolean(state.browserContext);
                 const archivesOpen = state.app === apps.archives;
                 const privateNow = isPrivate();
+                const modelSwitching = Boolean(state.models?.switching);
+                const modelSwitchHeld =
+                  Boolean(state.models?.switchPending) &&
+                  state.models?.lastOutcome?.controlRef === ${jsString(VexLifeModelsFamily.ControlUse)} &&
+                  state.models?.lastOutcome?.state === 'FAILED';
                 const canInclude = !archivesOpen && !privateNow && (contextEligible || contextReady);
                 ui.contextShare.disabled = !canInclude || state.contextLoading;
                 ui.contextShare.dataset.state = state.contextLoading
@@ -2394,9 +2400,13 @@ object VexLifeWebP1RuntimeArtifacts {
                   : state.includePage && contextReady
                     ? 'Page included'
                     : 'Include this page';
-                ui.composerHold.textContent = state.contextLoading
-                  ? 'Reading the current page separately for Vex…'
-                  : privateNow
+                ui.composerHold.textContent = modelSwitching
+                  ? resolveText(state.models.switching.message)
+                  : modelSwitchHeld
+                    ? resolveText(state.models.lastOutcome.message)
+                    : state.contextLoading
+                    ? 'Reading the current page separately for Vex…'
+                    : privateNow
                     ? (state.privateInFlight ? 'Vex is replying privately…' : 'Private · nothing here is kept unless you keep a note.')
                   : archivesOpen
                     ? "Vex doesn't see your archives yet."
@@ -2409,9 +2419,9 @@ object VexLifeWebP1RuntimeArtifacts {
                         : state.failedAttempts.length
                           ? 'A prior Send stopped. Its process is preserved here; use Try Again to form a new Send.'
                           : '';
-                ui.send.disabled = privateNow
+                ui.send.disabled = modelSwitching || modelSwitchHeld || (privateNow
                   ? state.privateInFlight || !ui.draft.value.trim()
-                  : state.sendInFlight || (!state.pending && !ui.draft.value.trim());
+                  : state.sendInFlight || (!state.pending && !ui.draft.value.trim()));
                 ui.responseProgress.hidden = true;
                 renderTicket();
               };
@@ -2696,6 +2706,11 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const gibText = (bytes) => (Number(bytes) / 1073741824).toFixed(1);
 
+              const servingModelLabel = () => {
+                const serving = (state.models?.models || []).find((model) => model.serving);
+                return serving?.label ?? '';
+              };
+
               // Settings → Models. Rows, states and lawful Controls come from VexLifeModelsFamily via
               // the service; this renderer only lays them out and returns the chosen Control ref.
               const renderModels = () => {
@@ -2734,7 +2749,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     button.type = 'button';
                     button.className = 'outline-button';
                     button.textContent = resolveText(control.label);
-                    button.disabled = state.modelsInFlight;
+                    button.disabled = state.modelsInFlight || Boolean(projection.switching);
                     button.addEventListener('click', () => { void modelControl(control.controlRef, model.handle); });
                     controls.append(button);
                   }
@@ -2742,20 +2757,42 @@ object VexLifeWebP1RuntimeArtifacts {
                   ui.modelsList.append(row);
                 }
                 const lines = [];
-                if (projection.lastOutcome) lines.push(resolveText(projection.lastOutcome.message));
-                if (projection.switchPending) lines.push(t('workspace.status.models-switch-pending'));
+                if (projection.switching) {
+                  lines.push(resolveText(projection.switching.message));
+                } else if (projection.lastOutcome) {
+                  lines.push(resolveText(projection.lastOutcome.message));
+                }
+                if (projection.switchPending && !projection.switching) {
+                  lines.push(t('workspace.status.models-switch-pending'));
+                }
                 if (projection.freeStorageBytes != null) {
                   lines.push(t('workspace.label.model-free-space').replace('{free}', gibText(projection.freeStorageBytes)));
                 }
                 if (ui.modelsNote) ui.modelsNote.textContent = lines.join(' ');
+                if (projection.switching) {
+                  setCompanionStatus(
+                    'Checking',
+                    resolveText(projection.switching.message),
+                    servingModelLabel() || ui.companionStatusModel.textContent
+                  );
+                } else if (ui.companionStatus?.dataset.state !== 'Unavailable') {
+                  setCompanionStatus(
+                    'Ready',
+                    'Ready',
+                    servingModelLabel() || ui.companionStatusModel.textContent
+                  );
+                }
+                renderComposer();
               };
 
               const loadModels = async () => {
                 const response = await fetch(service.modelsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.models = await readJson(response);
                 renderModels();
-                // A running download is followed until it settles; nothing polls when idle.
-                if (state.models?.downloading) window.setTimeout(() => { void loadModels().catch(() => {}); }, 2000);
+                // Follow only active model work; nothing polls when the relationship is stable.
+                if (state.models?.downloading || state.models?.switching) {
+                  window.setTimeout(() => { void loadModels().catch(() => {}); }, 1000);
+                }
                 return state.models;
               };
 
@@ -2771,12 +2808,18 @@ object VexLifeWebP1RuntimeArtifacts {
                     body: JSON.stringify({ controlRef, handle })
                   });
                   state.models = await readJson(response);
+                  if (controlRef === 'USE_MODEL') {
+                    const message = state.models?.switching?.message ?? state.models?.lastOutcome?.message;
+                    if (message) notify(resolveText(message));
+                  }
                 } catch (error) {
                   notify(error instanceof Error ? error.message : 'Models are not available.');
                 } finally {
                   state.modelsInFlight = false;
                   renderModels();
-                  if (state.models?.downloading) window.setTimeout(() => { void loadModels().catch(() => {}); }, 2000);
+                  if (state.models?.downloading || state.models?.switching) {
+                    window.setTimeout(() => { void loadModels().catch(() => {}); }, 1000);
+                  }
                 }
               };
 
@@ -2858,7 +2901,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.conversation = nextConversation;
                 const messages = state.conversation?.messages ?? [];
                 const latest = [...messages].reverse().find((message) => message.role === 'vex' && message.model);
-                setCompanionStatus('Ready', 'Ready', latest?.model ?? '');
+                setCompanionStatus(
+                  'Ready',
+                  'Ready',
+                  servingModelLabel() || latest?.model || ''
+                );
                 if (renderNow && priorIdentity !== nextIdentity) {
                   renderTimeline();
                   if (state.app === apps.archives) renderArchives();
@@ -2921,7 +2968,11 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 state.pending = null;
                 clearLiveProcessState();
-                setCompanionStatus('Ready', 'Ready', result.model ?? '');
+                setCompanionStatus(
+                  'Ready',
+                  'Ready',
+                  servingModelLabel() || result.model || ''
+                );
                 render();
               };
 

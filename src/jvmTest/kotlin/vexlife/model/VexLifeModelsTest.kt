@@ -40,13 +40,15 @@ class VexLifeModelsTest {
 
     private fun models(
         home: Path,
-        serving: String? = HereticModelCatalog.Certified27B.modelRef,
+        serving: () -> String? = { HereticModelCatalog.Models.Qwen27B.modelRef },
+        modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
         failDownload: Boolean = true,
     ) =
         VexLifeModels(
             productHome = home,
-            servingModelRef = { serving },
+            servingModelRef = serving,
             totalMemoryBytes = { 16 * gib },
+            modelSwitchRealization = modelSwitchRealization,
             acquirer = { _ ->
                 HereticArtifactMaterialization.Acquirer { _, _ ->
                     if (failDownload) error("network unavailable in test")
@@ -79,9 +81,8 @@ class VexLifeModelsTest {
     }
 
     @Test
-    fun usingADownloadedModelSavesTheChoiceForTheNextStart() = withHome { home, fixture ->
-        val nine = HereticModelCatalog.Candidate9B
-        // Every member present by size: the model counts as downloaded.
+    fun usingADownloadedModelConvergesTheServingModelNow() = withHome { home, fixture ->
+        val nine = HereticModelCatalog.Models.Qwen9B
         nine.members
             .filter { it.expectedBytes < 50_000_000 }
             .forEach { place(home, nine, it.filename) }
@@ -93,36 +94,64 @@ class VexLifeModelsTest {
                     it.setLength(member.expectedBytes)
                 }
             }
-        models(home).use { owner ->
-            val after = owner.control(VexLifeModelsFamily.ControlUse, "heretic-9b")
-            assertEquals("CHOSEN", after.lastOutcome?.state)
-            assertTrue(after.switchPending)
-            assertEquals(
-                nine,
-                FileHereticModelConfigurationStore(home).selectedModel(fixture.manifest),
-            )
-            // The 27B the runtime still serves cannot be removed; the chosen 9B cannot either.
-            assertFalse(
-                VexLifeModelsFamily.ControlRemove in
-                    after.models
-                        .first { it.handle == "heretic-27b" }
-                        .display
-                        .controls
-                        .map { it.controlRef }
-            )
-            val refused = owner.control(VexLifeModelsFamily.ControlRemove, "heretic-9b")
-            assertEquals("NOT_LAWFUL_NOW", refused.lastOutcome?.state)
-            assertTrue(Files.exists(folder.resolve("config.json")))
-        }
+
+        var serving: String? = HereticModelCatalog.Models.Qwen27B.modelRef
+        val phases = mutableListOf<VexLifeModels.SwitchPhase>()
+        val modelSwitchRealization =
+            VexLifeModels.ModelSwitchRealization {
+                entry,
+                observe,
+                ->
+                observe(VexLifeModels.SwitchPhase.WaitingForCurrentTurn)
+                observe(VexLifeModels.SwitchPhase.PreparingTarget)
+                observe(VexLifeModels.SwitchPhase.SwitchingRuntime)
+                phases +=
+                    listOf(
+                        VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
+                        VexLifeModels.SwitchPhase.PreparingTarget,
+                        VexLifeModels.SwitchPhase.SwitchingRuntime,
+                    )
+                serving = entry.modelRef
+            }
+
+        models(
+            home = home,
+            serving = { serving },
+            modelSwitchRealization = modelSwitchRealization,
+        )
+            .use {
+                owner ->
+                owner.control(VexLifeModelsFamily.ControlUse, "heretic-9b")
+                owner.awaitIdle()
+                val after = owner.projection()
+                assertEquals(VexLifeModels.OutcomeState.Switched.stateRef, after.lastOutcome?.state)
+                assertFalse(after.switchPending)
+                assertEquals(null, after.switching)
+                assertTrue(after.models.first { it.handle == "heretic-9b" }.chosen)
+                assertTrue(after.models.first { it.handle == "heretic-9b" }.serving)
+                assertEquals(
+                    listOf(
+                        VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
+                        VexLifeModels.SwitchPhase.PreparingTarget,
+                        VexLifeModels.SwitchPhase.SwitchingRuntime,
+                    ),
+                    phases,
+                )
+                assertEquals(
+                    nine,
+                    FileHereticModelConfigurationStore(home).selectedModel(fixture.manifest),
+                )
+                assertTrue(Files.exists(folder.resolve("config.json")))
+            }
     }
 
     @Test
     fun removingAModelFreesItsFilesAndKeepsItOffered() = withHome { home, _ ->
-        val four = HereticModelCatalog.Candidate4B
+        val four = HereticModelCatalog.Models.Qwen4B
         place(home, four, "config.json")
         models(home).use { owner ->
             val after = owner.control(VexLifeModelsFamily.ControlRemove, "heretic-4b")
-            assertEquals("REMOVED", after.lastOutcome?.state)
+            assertEquals(VexLifeModels.OutcomeState.Removed.stateRef, after.lastOutcome?.state)
             val row = after.models.first { it.handle == "heretic-4b" }
             assertEquals(0L, row.presentBytes)
             assertEquals(
@@ -139,7 +168,7 @@ class VexLifeModelsTest {
             owner.awaitIdle()
             val after = owner.projection()
             assertNull(after.downloading)
-            assertEquals("FAILED", after.lastOutcome?.state)
+            assertEquals(VexLifeModels.OutcomeState.Failed.stateRef, after.lastOutcome?.state)
             // The model can be downloaded again; nothing about the failure is hidden.
             assertTrue(
                 VexLifeModelsFamily.ControlDownload in

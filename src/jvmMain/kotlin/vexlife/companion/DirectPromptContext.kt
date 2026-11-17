@@ -16,6 +16,7 @@ import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.memory.VexLifeMemoryContract
+import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelConfiguration
 
 /**
@@ -30,7 +31,7 @@ import vexlife.model.heretic.HereticModelConfiguration
  *
  * The foundational field is placed first in every mode when a caller supplies its Reading. Its words,
  * selection and evidence belong to [VexLifeFoundationalField]; this owner only gives it room, after
- * the current request, the other fixed context and the exact immediate prior turn, and records the
+ * the current request, the rest of this turn's verified context and the exact immediate prior turn, and records the
  * evidence on the receipt.
  *
  * The Conversation extent is this owner's own statement: how many completed exchanges the durable
@@ -64,7 +65,7 @@ object DirectPromptContext {
         VexLifeMemoryContract.ContextInputTokenBudget
 
     const val ReservedOutputTokens =
-        DirectCompanionConnection.OutputTokenLimit
+        HereticCompanionRepresentation.ProductMaxOutputTokens
 
     /**
      * The input budget of an ordinary direct turn: capability requests are admitted there, so their
@@ -138,7 +139,7 @@ object DirectPromptContext {
         val estimatedSystemMessageTokens: Int,
     )
 
-    private data class VerifiedFixedContext(
+    private data class VerifiedTurnContext(
         val memoryAvailability: VerifiedMemory?,
         val workingContinuity: VerifiedWorkingContinuity?,
         val browserContextSha256: String?,
@@ -155,7 +156,7 @@ object DirectPromptContext {
         val conversationExtent: ConversationExtent?,
         val prefixMessages: List<CompanionProviderMessage>,
         val suffixMessages: List<CompanionProviderMessage>,
-        val fixedInputTokenEstimate: Int,
+        val turnContextInputTokenEstimate: Int,
         /** The input budget ordinary context may use: [InputTokenBudget] less the exchange allowance. */
         val inputTokenBudget: Int = InputTokenBudget,
         val capabilityExchangeAllowanceTokens: Int = 0,
@@ -530,7 +531,7 @@ object DirectPromptContext {
     )
 
     @ConsistentCopyVisibility
-    data class FixedContext internal constructor(
+    data class TurnContext internal constructor(
         val currentRequestEventRef: String,
         val currentRequestEventSha256: String,
         val memoryAvailabilityContextRef: String?,
@@ -551,11 +552,11 @@ object DirectPromptContext {
         val priorCompletedExchangeCount: Long?,
         val prefixMessages: List<CompanionProviderMessage>,
         val suffixMessages: List<CompanionProviderMessage>,
-        val fixedInputTokenEstimate: Int,
+        val turnContextInputTokenEstimate: Int,
         val effectsPerformed: Boolean,
     )
 
-    fun prepareFixed(
+    fun prepareTurnContext(
         prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
         currentRequest: DirectConversationStore.Event,
         memoryAvailabilityContext: VexLifeMemoryContract.Context? =
@@ -572,9 +573,9 @@ object DirectPromptContext {
             false,
         foundationalField: VexLifeFoundationalField.Reading? = null,
         conversationExtentIncluded: Boolean = false,
-    ): FixedContext {
-        val fixed =
-            verifyFixedContext(
+    ): TurnContext {
+        val turnContext =
+            verifyTurnContext(
                 prior = prior,
                 currentRequest = currentRequest,
                 memoryAvailabilityContext = memoryAvailabilityContext,
@@ -588,55 +589,55 @@ object DirectPromptContext {
                 conversationExtentIncluded = conversationExtentIncluded,
             )
 
-        return FixedContext(
+        return TurnContext(
             currentRequestEventRef = currentRequest.eventRef,
             currentRequestEventSha256 = currentRequest.eventSha256,
             memoryAvailabilityContextRef =
-                fixed.memoryAvailability
+                turnContext.memoryAvailability
                     ?.context
                     ?.memoryContextRef,
             memoryAvailabilityContextFingerprint =
-                fixed.memoryAvailability
+                turnContext.memoryAvailability
                     ?.context
                     ?.semanticFingerprint,
             workingContinuityContextRef =
-                fixed.workingContinuity
+                turnContext.workingContinuity
                     ?.context
                     ?.successorContextRef,
             workingContinuityContextFingerprint =
-                fixed.workingContinuity
+                turnContext.workingContinuity
                     ?.context
                     ?.semanticFingerprint,
-            browserContextRef = fixed.browserContextRef,
-            browserContextSha256 = fixed.browserContextSha256,
+            browserContextRef = turnContext.browserContextRef,
+            browserContextSha256 = turnContext.browserContextSha256,
             capabilityFrameRef =
-                fixed.capabilityFrame
+                turnContext.capabilityFrame
                     ?.frame
                     ?.selfCapabilityFrameRef,
             capabilityFrameFingerprint =
-                fixed.capabilityFrame
+                turnContext.capabilityFrame
                     ?.frame
                     ?.semanticFingerprint,
             successorPriorResponseEventRef =
-                fixed.successorPriorResponse
+                turnContext.successorPriorResponse
                     ?.eventRef,
             successorPriorResponseEventSha256 =
-                fixed.successorPriorResponse
+                turnContext.successorPriorResponse
                     ?.eventHash,
             successorPriorResponseEventSequence =
-                fixed.successorPriorResponse
+                turnContext.successorPriorResponse
                     ?.sequence,
             sourceReturnProtocolEnabled =
-                fixed.sourceReturnProtocolEnabled,
+                turnContext.sourceReturnProtocolEnabled,
             sourceReturnProtocolSystemMessageSha256 =
-                fixed.sourceReturnProtocolSystemMessageSha256,
+                turnContext.sourceReturnProtocolSystemMessageSha256,
             sourceReturnProtocolEstimatedSystemMessageTokens =
-                fixed.sourceReturnProtocolEstimatedSystemMessageTokens,
-            foundationalField = fixed.foundationalField?.evidence,
-            priorCompletedExchangeCount = fixed.conversationExtent?.priorCompletedExchangeCount,
-            prefixMessages = foundationalFieldMessages(fixed) + fixed.prefixMessages,
-            suffixMessages = fixed.suffixMessages,
-            fixedInputTokenEstimate = fixed.fixedInputTokenEstimate,
+                turnContext.sourceReturnProtocolEstimatedSystemMessageTokens,
+            foundationalField = turnContext.foundationalField?.evidence,
+            priorCompletedExchangeCount = turnContext.conversationExtent?.priorCompletedExchangeCount,
+            prefixMessages = foundationalFieldMessages(turnContext) + turnContext.prefixMessages,
+            suffixMessages = turnContext.suffixMessages,
+            turnContextInputTokenEstimate = turnContext.turnContextInputTokenEstimate,
             effectsPerformed = false,
         )
     }
@@ -663,8 +664,8 @@ object DirectPromptContext {
         foundationalField: VexLifeFoundationalField.Reading? = null,
         conversationExtentIncluded: Boolean = false,
     ): Materialization {
-        val fixed =
-            verifyFixedContext(
+        val turnContext =
+            verifyTurnContext(
                 prior = prior,
                 currentRequest = currentRequest,
                 memoryAvailabilityContext = memoryAvailabilityContext,
@@ -681,23 +682,23 @@ object DirectPromptContext {
             )
         requireSameMemoryFrontier(
             availability =
-                fixed.memoryAvailability
+                turnContext.memoryAvailability
                     ?.context,
             selected =
                 memory
                     ?.context,
         )
         val workingContinuity =
-            fixed.workingContinuity
+            turnContext.workingContinuity
         val browserContextSha256 =
-            fixed.browserContextSha256
+            turnContext.browserContextSha256
         val browserContextRef =
-            fixed.browserContextRef
+            turnContext.browserContextRef
         val capabilityFrame =
-            fixed.capabilityFrame
+            turnContext.capabilityFrame
         val prefixMessages =
             buildList {
-                addAll(foundationalFieldMessages(fixed))
+                addAll(foundationalFieldMessages(turnContext))
                 memory
                     ?.systemContent
                     ?.let {
@@ -709,12 +710,12 @@ object DirectPromptContext {
                         )
                     }
                 addAll(
-                    fixed.prefixMessages,
+                    turnContext.prefixMessages,
                 )
             }
         val suffixMessages =
-            fixed.suffixMessages
-        val selectionFixedEstimate =
+            turnContext.suffixMessages
+        val selectionTurnContextEstimate =
             (
                 prefixMessages +
                     suffixMessages
@@ -726,9 +727,9 @@ object DirectPromptContext {
                 }
 
         require(
-            selectionFixedEstimate <=
+            selectionTurnContextEstimate <=
                 InputTokenBudget &&
-                selectionFixedEstimate +
+                selectionTurnContextEstimate +
                 ReservedOutputTokens <=
                 HardTokenLimit,
         ) {
@@ -747,7 +748,7 @@ object DirectPromptContext {
                 recentConversationSource
                     ?.invoke(
                         InputTokenBudget -
-                            selectionFixedEstimate,
+                            selectionTurnContextEstimate,
                     )
             }
         val selected =
@@ -786,7 +787,7 @@ object DirectPromptContext {
                         )
                     } <=
                         InputTokenBudget -
-                        selectionFixedEstimate,
+                        selectionTurnContextEstimate,
                 ) {
                     "direct prompt recent Conversation source exceeds the remaining input token budget"
                 }
@@ -797,7 +798,7 @@ object DirectPromptContext {
             prior = prior,
             currentRequest = currentRequest,
             browserContext = browserContext,
-            fixed = fixed,
+            turnContext = turnContext,
             memory = memory,
             selected = selected,
             recentConversation = recentConversation,
@@ -809,19 +810,19 @@ object DirectPromptContext {
         prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
         currentRequest: DirectConversationStore.Event,
         browserContext: BrowserContext?,
-        fixed: VerifiedFixedContext,
+        turnContext: VerifiedTurnContext,
         memory: VerifiedMemory?,
         selected: List<DirectConversationStore.Event>,
         recentConversation: DirectConversationStore.RecentCompletedConversation?,
         sourceReturnProjection: DirectConversationSourceReturn.Projection?,
     ): Materialization {
         val workingContinuity =
-            fixed.workingContinuity
+            turnContext.workingContinuity
         val capabilityFrame =
-            fixed.capabilityFrame
+            turnContext.capabilityFrame
         val prefixMessages =
             buildList {
-                addAll(foundationalFieldMessages(fixed))
+                addAll(foundationalFieldMessages(turnContext))
                 memory
                     ?.systemContent
                     ?.let {
@@ -833,7 +834,7 @@ object DirectPromptContext {
                         )
                     }
                 addAll(
-                    fixed.prefixMessages,
+                    turnContext.prefixMessages,
                 )
                 sourceReturnProjection
                     ?.systemContent
@@ -881,7 +882,7 @@ object DirectPromptContext {
                     )
                 }
                 addAll(
-                    fixed.suffixMessages,
+                    turnContext.suffixMessages,
                 )
             }
         val estimate =
@@ -892,7 +893,7 @@ object DirectPromptContext {
             }
         require(
             estimate <=
-                fixed.inputTokenBudget &&
+                turnContext.inputTokenBudget &&
                 estimate +
                 ReservedOutputTokens <=
                 HardTokenLimit,
@@ -962,20 +963,20 @@ object DirectPromptContext {
                 currentRequestEventRef = currentRequest.eventRef,
                 currentRequestEventSha256 = currentRequest.eventSha256,
                 successorPriorResponseEventRef =
-                    fixed.successorPriorResponse
+                    turnContext.successorPriorResponse
                         ?.eventRef,
                 successorPriorResponseEventSha256 =
-                    fixed.successorPriorResponse
+                    turnContext.successorPriorResponse
                         ?.eventHash,
                 successorPriorResponseEventSequence =
-                    fixed.successorPriorResponse
+                    turnContext.successorPriorResponse
                         ?.sequence,
                 sourceReturnProtocolEnabled =
-                    fixed.sourceReturnProtocolEnabled,
+                    turnContext.sourceReturnProtocolEnabled,
                 sourceReturnProtocolSystemMessageSha256 =
-                    fixed.sourceReturnProtocolSystemMessageSha256,
+                    turnContext.sourceReturnProtocolSystemMessageSha256,
                 sourceReturnProtocolEstimatedSystemMessageTokens =
-                    fixed.sourceReturnProtocolEstimatedSystemMessageTokens,
+                    turnContext.sourceReturnProtocolEstimatedSystemMessageTokens,
                 sourceReturnState =
                     sourceReturnProjection
                         ?.state,
@@ -991,18 +992,18 @@ object DirectPromptContext {
                         ?.estimatedSystemMessageTokens
                         ?: 0,
                 memoryAvailabilityContextRef =
-                    fixed.memoryAvailability
+                    turnContext.memoryAvailability
                         ?.context
                         ?.memoryContextRef,
                 memoryAvailabilityContextFingerprint =
-                    fixed.memoryAvailability
+                    turnContext.memoryAvailability
                         ?.context
                         ?.semanticFingerprint,
                 browserContextIncluded =
                     browserContext !=
                         null,
                 browserContextRef =
-                    fixed.browserContextRef,
+                    turnContext.browserContextRef,
                 browserPageUrl =
                     browserContext
                         ?.pageUrl,
@@ -1010,7 +1011,7 @@ object DirectPromptContext {
                     browserContext
                         ?.title,
                 browserContextSha256 =
-                    fixed.browserContextSha256,
+                    turnContext.browserContextSha256,
                 browserContextCharacters =
                     browserContext
                         ?.text
@@ -1018,13 +1019,13 @@ object DirectPromptContext {
                 browserContextCapture =
                     browserContext
                         ?.capture,
-                personContextIncluded = fixed.personContext != null,
-                personContextSystemMessageSha256 = fixed.personContextSystemMessageSha256,
-                personContextEstimatedSystemMessageTokens = fixed.personContextEstimatedSystemMessageTokens,
-                personContext = fixed.personContext,
+                personContextIncluded = turnContext.personContext != null,
+                personContextSystemMessageSha256 = turnContext.personContextSystemMessageSha256,
+                personContextEstimatedSystemMessageTokens = turnContext.personContextEstimatedSystemMessageTokens,
+                personContext = turnContext.personContext,
                 providerMessageSetSha256 = providerMessageSetSha256,
                 providerMaterializedInputTokenEstimate = estimate,
-                inputTokenBudget = fixed.inputTokenBudget,
+                inputTokenBudget = turnContext.inputTokenBudget,
                 reservedOutputTokens = ReservedOutputTokens,
                 hardTokenLimit = HardTokenLimit,
                 wholeHistoryEventEnumerationPerformed =
@@ -1129,13 +1130,13 @@ object DirectPromptContext {
                                     frame.effectAuthorityGranted,
                             )
                         },
-                foundationalField = fixed.foundationalField?.evidence,
-                priorCompletedExchangeCount = fixed.conversationExtent?.priorCompletedExchangeCount,
+                foundationalField = turnContext.foundationalField?.evidence,
+                priorCompletedExchangeCount = turnContext.conversationExtent?.priorCompletedExchangeCount,
                 conversationExtentSystemMessageSha256 =
-                    fixed.conversationExtent?.systemContent?.let(::sha256),
+                    turnContext.conversationExtent?.systemContent?.let(::sha256),
                 conversationExtentEstimatedSystemMessageTokens =
-                    fixed.conversationExtent?.systemContent?.let(::estimatedMessageTokens) ?: 0,
-                capabilityExchangeAllowanceTokens = fixed.capabilityExchangeAllowanceTokens,
+                    turnContext.conversationExtent?.systemContent?.let(::estimatedMessageTokens) ?: 0,
+                capabilityExchangeAllowanceTokens = turnContext.capabilityExchangeAllowanceTokens,
                 trainingSelectionPerformed = false,
                 effectsPerformed = false,
             )
@@ -1284,8 +1285,8 @@ object DirectPromptContext {
             "direct continuity prompt cannot advertise another source return while projecting returned source"
         }
 
-        val fixed =
-            verifyFixedContext(
+        val turnContext =
+            verifyTurnContext(
                 prior = prior,
                 currentRequest = currentRequest,
                 memoryAvailabilityContext =
@@ -1302,13 +1303,13 @@ object DirectPromptContext {
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
             )
         val afterFixed =
-            fixed.inputTokenBudget -
-                fixed.fixedInputTokenEstimate
+            turnContext.inputTokenBudget -
+                turnContext.turnContextInputTokenEstimate
         require(
             afterFixed >=
                 0,
         ) {
-            "direct continuity prompt fixed context exceeds the admitted input budget"
+            "direct continuity prompt turn context exceeds the admitted input budget"
         }
 
         val sourceReturnProjection =
@@ -1338,7 +1339,7 @@ object DirectPromptContext {
             if (
                 prior ==
                     null ||
-                fixed.workingContinuity !=
+                turnContext.workingContinuity !=
                     null
             ) {
                 null
@@ -1354,7 +1355,7 @@ object DirectPromptContext {
             if (
                 prior ==
                     null ||
-                fixed.workingContinuity !=
+                turnContext.workingContinuity !=
                     null
             ) {
                 emptyList()
@@ -1421,7 +1422,7 @@ object DirectPromptContext {
                     selectedConversationTokens,
             )
         val memory =
-            fixed.memoryAvailability
+            turnContext.memoryAvailability
                 ?.context
                 ?.let {
                     availability ->
@@ -1461,7 +1462,7 @@ object DirectPromptContext {
                 }
         require(
             (
-                fixed.memoryAvailability ==
+                turnContext.memoryAvailability ==
                     null
                 ) ==
                 (
@@ -1476,7 +1477,7 @@ object DirectPromptContext {
             prior = prior,
             currentRequest = currentRequest,
             browserContext = browserContext,
-            fixed = fixed,
+            turnContext = turnContext,
             memory = memory,
             selected = selected,
             recentConversation = recentConversation,
@@ -1794,7 +1795,7 @@ object DirectPromptContext {
         }
     }
 
-    private fun verifyFixedContext(
+    private fun verifyTurnContext(
         prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
         currentRequest: DirectConversationStore.Event,
         memoryAvailabilityContext: VexLifeMemoryContract.Context?,
@@ -1807,7 +1808,7 @@ object DirectPromptContext {
         foundationalField: VexLifeFoundationalField.Reading? = null,
         conversationExtentIncluded: Boolean = false,
         capabilityRequestsAdmitted: Boolean = false,
-    ): VerifiedFixedContext {
+    ): VerifiedTurnContext {
         // Admitting capability requests keeps room free for their exchanges in this turn; ordinary
         // context (field, Memory, Conversation) is formed inside the reduced budget.
         val capabilityExchangeAllowanceTokens =
@@ -1817,7 +1818,7 @@ object DirectPromptContext {
             currentRequest.eventKind ==
                 "REQUEST",
         ) {
-            "direct prompt fixed context requires one durable current REQUEST"
+            "direct prompt turn context requires one durable current REQUEST"
         }
 
         val workingContinuity =
@@ -1839,7 +1840,7 @@ object DirectPromptContext {
                     currentRequest.priorEventSha256 ==
                     null,
             ) {
-                "first-turn fixed context requires one genesis request without working rollover"
+                "first-turn turn context requires one genesis request without working rollover"
             }
         } else {
             requireImmediatePriorBinding(
@@ -1860,7 +1861,7 @@ object DirectPromptContext {
                 requireNotNull(
                     prior,
                 ) {
-                    "working-checkpoint successor fixed context requires one exact prior completed turn"
+                    "working-checkpoint successor turn context requires one exact prior completed turn"
                 }
                     .responseEvent
                     .also {
@@ -1990,7 +1991,7 @@ object DirectPromptContext {
                     ),
                 )
             }
-        val otherFixedEstimate =
+        val otherTurnContextEstimate =
             (
                 prefixMessages +
                     suffixMessages
@@ -2010,7 +2011,7 @@ object DirectPromptContext {
                     reading = reading,
                     availableTokens =
                         inputTokenBudget -
-                            otherFixedEstimate -
+                            otherTurnContextEstimate -
                             (if (sourceReturnProtocol == null) SourceReturnProtocolTokens else 0) -
                             (if (prior != null && workingContinuity == null) {
                                 estimatedMessageTokens(prior.requestEvent.content) +
@@ -2025,7 +2026,7 @@ object DirectPromptContext {
             "direct prompt foundational field cannot grant effect authority"
         }
         val fixedEstimate =
-            otherFixedEstimate + (foundational?.evidence?.estimatedSystemMessageTokens ?: 0)
+            otherTurnContextEstimate + (foundational?.evidence?.estimatedSystemMessageTokens ?: 0)
 
         require(
             fixedEstimate <=
@@ -2034,10 +2035,10 @@ object DirectPromptContext {
                 ReservedOutputTokens <=
                 HardTokenLimit,
         ) {
-            "direct prompt fixed current-turn context exceeds the admitted input/output token budget"
+            "direct prompt current-turn context exceeds the admitted input/output token budget"
         }
 
-        return VerifiedFixedContext(
+        return VerifiedTurnContext(
             memoryAvailability = memoryAvailability,
             workingContinuity = workingContinuity,
             browserContextSha256 = browserContextSha256,
@@ -2065,7 +2066,7 @@ object DirectPromptContext {
             conversationExtent = conversationExtent,
             prefixMessages = prefixMessages,
             suffixMessages = suffixMessages,
-            fixedInputTokenEstimate = fixedEstimate,
+            turnContextInputTokenEstimate = fixedEstimate,
             inputTokenBudget = inputTokenBudget,
             capabilityExchangeAllowanceTokens = capabilityExchangeAllowanceTokens,
         )
@@ -2076,9 +2077,9 @@ object DirectPromptContext {
     }
 
     /** The field's own system block, first in the provider prefix; empty when none is carried. */
-    private fun foundationalFieldMessages(fixed: VerifiedFixedContext): List<CompanionProviderMessage> =
+    private fun foundationalFieldMessages(turnContext: VerifiedTurnContext): List<CompanionProviderMessage> =
         listOfNotNull(
-            fixed.foundationalField?.systemContent?.let { CompanionProviderMessage(role = "system", content = it) },
+            turnContext.foundationalField?.systemContent?.let { CompanionProviderMessage(role = "system", content = it) },
         )
 
     /**
@@ -2335,6 +2336,7 @@ object DirectPromptContext {
             "VEXLIFE_SELF_CAPABILITY_FRAME/v1",
             "These are current bounded capability handles, not effect authority or proof that an effect already occurred.",
             "Use AVAILABLE/HELD/UNAVAILABLE/UNKNOWN as currentness context. Any effect still belongs to its rightful owner and current authority.",
+            "No outside-source capability reach is admitted in this turn. Do not claim that web, repository, Home, or Memory source was fetched unless a real ${VexLifeCapabilityRequest.ResultHeader} message is present.",
             VexContractJson.compactEncode(frame),
         )
             .joinToString("\n")
