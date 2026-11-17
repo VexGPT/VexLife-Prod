@@ -42,7 +42,9 @@ Result: `build/continuity-pressure/result.json` (`vexlife.continuity-pressure-re
 residency, capability uses, assertions, summary, `implementation/adapter-report.json` and
 `implementation/provider-calls.jsonl` (every provider call as sent). Each turn's `prompt` carries
 `contextComponents` from the prompt receipt. Revisit owner-read latency is real host time, so it is
-written beside the ZIP as `host-scan-timing.json`, not inside it; the ZIP stays reproducible.
+written beside the ZIP as `host-scan-timing.json`, not inside it. The Product mints turn and event
+refs per run, so a ZIP digest identifies one run; two runs of one head agree once those refs and
+the digests that cover them are normalized.
 
 Provider representation (a projection of the pinned runtime, not telemetry):
 
