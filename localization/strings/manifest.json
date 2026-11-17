@@ -645,8 +645,36 @@
         "zh"
       ]
     },
+    "setup.description.host-observed-portable": {
+      "enHash": "e35ed0a5f4c9",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
     "setup.description.host-reason-architecture": {
       "enHash": "96eba7decad1",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.host-reason-architecture-portable": {
+      "enHash": "74263d5748f4",
       "langs": [
         "ar",
         "de",
@@ -673,8 +701,36 @@
         "zh"
       ]
     },
+    "setup.description.host-reason-hardware-portable": {
+      "enHash": "10f8b22b6fa9",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
     "setup.description.host-reason-memory-low": {
       "enHash": "0e7fa9b8cc8e",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.host-reason-memory-low-portable": {
+      "enHash": "1f7d2fd39bd1",
       "langs": [
         "ar",
         "de",
@@ -701,6 +757,20 @@
         "zh"
       ]
     },
+    "setup.description.host-reason-memory-unknown-portable": {
+      "enHash": "834f8617eae1",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
     "setup.description.host-reason-platform": {
       "enHash": "bac5f7f74465",
       "langs": [
@@ -715,8 +785,36 @@
         "zh"
       ]
     },
+    "setup.description.host-reason-platform-portable": {
+      "enHash": "58dd253551b3",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
     "setup.description.host-requirement": {
       "enHash": "2668f2cec5f0",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.host-requirement-portable": {
+      "enHash": "a767559153fb",
       "langs": [
         "ar",
         "de",
@@ -1765,6 +1863,20 @@
         "zh"
       ]
     },
+    "setup.label.step-host": {
+      "enHash": "e56be5bca9a1",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
     "setup.label.step-mac": {
       "enHash": "a75a25999d0c",
       "langs": [
@@ -1823,6 +1935,20 @@
     },
     "setup.label.unknown-chip": {
       "enHash": "5ce19b7d9524",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.label.unknown-hardware": {
+      "enHash": "79e55bde8d2c",
       "langs": [
         "ar",
         "de",
@@ -2003,6 +2129,20 @@
         "zh"
       ]
     },
+    "setup.status.model-fits-this-device": {
+      "enHash": "a72f66798c41",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
     "setup.status.model-needs-memory": {
       "enHash": "82be12dba07b",
       "langs": [
@@ -2045,6 +2185,20 @@
         "zh"
       ]
     },
+    "setup.status.model-not-supported-on-this-device": {
+      "enHash": "4feb9edcfd55",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
     "setup.status.model-partial": {
       "enHash": "d191ff983095",
       "langs": [
@@ -2075,6 +2229,20 @@
     },
     "setup.status.model-recommended": {
       "enHash": "8874a2845a73",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.model-recommended-on-this-device": {
+      "enHash": "b802d0381441",
       "langs": [
         "ar",
         "de",
@@ -2441,8 +2609,16 @@
       "enHash": "b7cf00fdd907",
       "langs": []
     },
+    "workspace.label.model-fits-this-device": {
+      "enHash": "a72f66798c41",
+      "langs": []
+    },
     "workspace.label.model-free-space": {
       "enHash": "23215e90e89b",
+      "langs": []
+    },
+    "workspace.label.model-not-supported-on-this-device": {
+      "enHash": "4feb9edcfd55",
       "langs": []
     },
     "workspace.label.model-serving": {
@@ -2451,6 +2627,10 @@
     },
     "workspace.label.model-tight": {
       "enHash": "8368cc93803d",
+      "langs": []
+    },
+    "workspace.label.model-tight-on-this-device": {
+      "enHash": "efc1214c9d1d",
       "langs": []
     },
     "workspace.label.reach-state": {
@@ -2503,6 +2683,14 @@
     },
     "workspace.status.model-not-downloaded": {
       "enHash": "0174c76dec2c",
+      "langs": []
+    },
+    "workspace.status.model-not-supported-on-this-device": {
+      "enHash": "4feb9edcfd55",
+      "langs": []
+    },
+    "workspace.status.model-on-this-device": {
+      "enHash": "d1f6332212d1",
       "langs": []
     },
     "workspace.status.model-on-this-mac": {
