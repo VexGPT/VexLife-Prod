@@ -2,8 +2,8 @@
 set -u
 
 REPO='VexGPT/VexLife-Prod'
-HEAD_SHA='847dde3791270c46b7a659cc27914071591d4832'
-TREE_SHA='6c566d0fd6b686e86db0c52db7bdb43c293b89d8'
+HEAD_SHA='7e27e47a6b275d3a2cf92d2888b41833ae340448'
+TREE_SHA='2281f0e9dc7d51b5ec6caeee7a8b782ce6253470'
 BASE_SHA='501e3fe3464303891287598793430b749cc91bc9'
 PR='226'
 SCENARIO_REF='scenario.vexlife.continuity-pressure.depth-continuity.v1'
@@ -65,9 +65,9 @@ scenarioRef=$SCENARIO_REF
 mode=quick
 pressureStrategy=EFFECTIVE_SELECTION_BUDGET
 effectiveInputTokenBudget=80000
-payloadScale=12
+payloadScale=16
 sets=3
-turnsPerSet=3
+turnsPerSet=2
 runtimePreconditionCanonicalRuntimeLifecycleEffectAllowed=true
 runtimePreconditionAcquisitionAllowed=false
 continuityExperimentCanonicalHomeMutationAllowed=false
@@ -196,9 +196,9 @@ set +e
     --experiment-window \
     --pressure-strategy EFFECTIVE_SELECTION_BUDGET \
     --effective-input-token-budget 80000 \
-    --payload-scale 12 \
+    --payload-scale 16 \
     --sets 3 \
-    --turns-per-set 3
+    --turns-per-set 2
 ) > "$RETURN_DIR/live-run.log" 2>&1
 LIVE_EXIT=$?
 set -e 2>/dev/null || true
