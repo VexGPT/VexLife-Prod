@@ -35,7 +35,7 @@ class DirectContinuityProjectionWorkbenchTest {
 
     private data class ExecutionTail(
         val currentStateRef: String,
-        val activeStackRef: String,
+        val workingContinuityFocusRef: String,
         val currentRequestRef: String,
         val transientPayloadRefs: List<String>,
     )
@@ -90,8 +90,8 @@ class DirectContinuityProjectionWorkbenchTest {
                     append("state:")
                     append(tail.currentStateRef)
                     append('\n')
-                    append("stack:")
-                    append(tail.activeStackRef)
+                    append("focus:")
+                    append(tail.workingContinuityFocusRef)
                     append('\n')
                     append("request:")
                     append(tail.currentRequestRef)
@@ -142,7 +142,7 @@ class DirectContinuityProjectionWorkbenchTest {
                 tail =
                     ExecutionTail(
                         currentStateRef = "reach:10-bounded",
-                        activeStackRef = "stack:root",
+                        workingContinuityFocusRef = "focus:root",
                         currentRequestRef = "req-102",
                         transientPayloadRefs = listOf("web-chunk:0-9000"),
                     ),
@@ -172,7 +172,7 @@ class DirectContinuityProjectionWorkbenchTest {
                 tail =
                     ExecutionTail(
                         currentStateRef = "reach:10-bounded",
-                        activeStackRef = "stack:root",
+                        workingContinuityFocusRef = "focus:root",
                         currentRequestRef = "req-102",
                         transientPayloadRefs = emptyList(),
                     ),
@@ -212,7 +212,7 @@ class DirectContinuityProjectionWorkbenchTest {
                 tail =
                     ExecutionTail(
                         currentStateRef = "reach:10-bounded",
-                        activeStackRef = "stack:root",
+                        workingContinuityFocusRef = "focus:root",
                         currentRequestRef = "req-102",
                         transientPayloadRefs = emptyList(),
                     ),
@@ -249,7 +249,7 @@ class DirectContinuityProjectionWorkbenchTest {
                 tail =
                     ExecutionTail(
                         currentStateRef = "reach:10-bounded",
-                        activeStackRef = "stack:root",
+                        workingContinuityFocusRef = "focus:root",
                         currentRequestRef = "req-103",
                         transientPayloadRefs = emptyList(),
                     ),
