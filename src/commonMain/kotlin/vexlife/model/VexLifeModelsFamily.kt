@@ -7,8 +7,10 @@ import vexlife.text.VexLifeText
 /**
  * Product semantic owner for what the person can do with one offered model in Settings → Models.
  *
- * State is one model's relationship to this Home: whether its files are here, whether a download is
- * running, whether the Home chose it, whether the running runtime serves it.
+ * State is one model's relationship to this Home and exact runtime target: whether that target has
+ * a declared realization, whether its files are here, whether a download is running, whether the
+ * Home chose it, whether the running runtime serves it. Target realizability is borrowed from
+ * HereticRuntimeRealization; this Family does not infer support from model names or platform strings.
  *
  * Lawfulness (what each Control may do, by State):
  * ```
@@ -39,6 +41,7 @@ object VexLifeModelsFamily :
     data class State(
         val handle: String,
         val files: Files,
+        /** Exact HereticRuntimeRealization coverage for the projection's target. */
         val realizableOnTarget: Boolean,
         val downloading: Boolean,
         val chosen: Boolean,
