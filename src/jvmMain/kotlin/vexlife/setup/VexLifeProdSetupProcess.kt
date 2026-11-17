@@ -4,20 +4,19 @@ import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import vexlife.home.VexLifeProdHomeFiles
-import vexlife.local.VexLifeProdLocalSetup
 import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.local.VexLifeProdSetupProgress
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
-import vexlife.service.VexLifeProdMacServiceLifetime
+import vexlife.service.VexLifeProdServiceLifetime
 
 /**
  * First-run/repair setup process executed from the private service image.
  *
- * It verifies its own source-bound image, carries explicit human acquisition authorization into
- * LocalSetup, installs the verified image into the established Home, delegates exact service
- * start/reuse to the macOS service-lifetime owner, and only then reports machine-readable
- * completion. It does not open presentation or own the long-lived service process.
+ * It verifies its own source-bound image, carries explicit human acquisition/runtime-start
+ * authorization into one exact platform realization, installs the verified image into the
+ * established Home, delegates exact service start/reuse to that platform owner, and only then
+ * reports machine-readable completion. It does not open presentation or own platform mechanics.
  */
 object VexLifeProdSetupProcess {
     private val GitSha = Regex("[0-9a-f]{40}")
@@ -39,6 +38,7 @@ object VexLifeProdSetupProcess {
 
     internal data class Hooks(
         val progress: VexLifeProdSetupProgress = VexLifeProdSetupProgress.Silent,
+        val platform: VexLifeProdSetupPlatform = VexLifeProdMacSetupPlatform,
         val locateImageRoot: () -> Path = ::currentImageRoot,
         val observeImage:
             (
@@ -52,7 +52,9 @@ object VexLifeProdSetupProcess {
                 )
             },
         val formFreshHome: (productHome: Path) -> VexLifeProdHomeFiles.Result = { productHome ->
-            VexLifeProdLocalSetup.formFreshHome(productHome)
+            platform.formFreshHome(
+                productHome,
+            )
         },
         val establishSession:
             (
@@ -61,7 +63,7 @@ object VexLifeProdSetupProcess {
                 allowRuntimeStart: Boolean,
             ) -> VexLifeProdRuntimeSession =
             { productHome, allowAcquisition, allowRuntimeStart ->
-                VexLifeProdLocalSetup.establishSession(
+                platform.establishSession(
                     productHome = productHome,
                     allowAcquisition = allowAcquisition,
                     allowRuntimeStart = allowRuntimeStart,
@@ -82,11 +84,11 @@ object VexLifeProdSetupProcess {
                 )
             },
         val startService:
-            (productHome: Path, expectedSourceSha: String) -> VexLifeProdMacServiceLifetime.Result =
+            (productHome: Path, expectedSourceSha: String) -> VexLifeProdServiceLifetime =
             { productHome, expectedSourceSha ->
-                VexLifeProdMacServiceLifetime.startOrReuse(
+                platform.startService(
                     productHome = productHome,
-                    desiredSourceSha = expectedSourceSha,
+                    expectedSourceSha = expectedSourceSha,
                 )
             },
         val reportImageVerified: (VexLifeProdPrivateServiceImage.Observation) -> Unit =
@@ -120,7 +122,7 @@ object VexLifeProdSetupProcess {
                 arguments: Arguments,
                 session: VexLifeProdRuntimeSession,
                 installed: VexLifeProdPrivateServiceImageInstaller.Result,
-                service: VexLifeProdMacServiceLifetime.Result,
+                service: VexLifeProdServiceLifetime,
             ) -> Unit =
             { arguments, session, installed, service ->
                 println(
@@ -206,6 +208,7 @@ object VexLifeProdSetupProcess {
         desiredSourceSha: String,
         productHome: Path,
         progress: VexLifeProdSetupProgress = VexLifeProdSetupProgress.Silent,
+        platform: VexLifeProdSetupPlatform = VexLifeProdMacSetupPlatform,
     ) {
         formHomeWithHooks(
             arguments =
@@ -213,6 +216,7 @@ object VexLifeProdSetupProcess {
             hooks =
                 Hooks(
                     progress = progress,
+                    platform = platform,
                     reportImageVerified = { _ -> },
                     reportHomeReady = { _, _ -> },
                 ),
@@ -225,6 +229,7 @@ object VexLifeProdSetupProcess {
         allowRuntimeStart: Boolean,
         productHome: Path,
         progress: VexLifeProdSetupProgress = VexLifeProdSetupProgress.Silent,
+        platform: VexLifeProdSetupPlatform = VexLifeProdMacSetupPlatform,
     ) {
         runWithHooks(
             arguments =
@@ -237,6 +242,7 @@ object VexLifeProdSetupProcess {
             hooks =
                 Hooks(
                     progress = progress,
+                    platform = platform,
                     reportImageVerified = { _ -> },
                     reportReady = { _, _, _, _ -> },
                 ),
