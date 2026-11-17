@@ -18,7 +18,8 @@ public final class SherpaStreamingProbe {
 
     public static void main(String[] args) throws Exception {
         if (args.length != 2) {
-            throw new IllegalArgumentException("usage: SherpaStreamingProbe <model-root> <result-path>");
+            throw new IllegalArgumentException(
+                    "usage: SherpaStreamingProbe <model-root> <result-path>");
         }
 
         Path root = Path.of(args[0]).toAbsolutePath().normalize();
@@ -86,13 +87,19 @@ public final class SherpaStreamingProbe {
                 }
                 partialCount += 1;
                 lastPartial = text;
-                System.out.printf("PARTIAL ms=%d text=%s%n", millisSince(inferenceStart), text);
+                System.out.printf(
+                        "PARTIAL ms=%d text=%s%n",
+                        millisSince(inferenceStart),
+                        text);
             }
 
             if (recognizer.isEndpoint(stream)) {
                 if (!text.isEmpty()) {
                     finalSegments.add(text);
-                    System.out.printf("ENDPOINT ms=%d text=%s%n", millisSince(inferenceStart), text);
+                    System.out.printf(
+                            "ENDPOINT ms=%d text=%s%n",
+                            millisSince(inferenceStart),
+                            text);
                 }
                 endpointCount += 1;
                 lastPartial = "";
@@ -109,24 +116,35 @@ public final class SherpaStreamingProbe {
 
         String tailText = recognizer.getResult(stream).getText().trim();
         if (!tailText.isEmpty()) {
-            if (finalSegments.isEmpty() || !tailText.equals(finalSegments.get(finalSegments.size() - 1))) {
+            if (finalSegments.isEmpty()
+                    || !tailText.equals(finalSegments.get(finalSegments.size() - 1))) {
                 finalSegments.add(tailText);
             }
         }
 
         long inferenceMs = millisSince(inferenceStart);
         long wholeMs = millisSince(wholeStart);
-        String transcript = String.join(" ", finalSegments).replaceAll("\\s+", " ").trim();
-        double realTimeFactor = audioSeconds > 0 ? (inferenceMs / 1000.0) / audioSeconds : -1.0;
+        String transcript =
+                String.join(" ", finalSegments)
+                        .replaceAll("\\s+", " ")
+                        .trim();
+        double realTimeFactor =
+                audioSeconds > 0
+                        ? (inferenceMs / 1000.0) / audioSeconds
+                        : -1.0;
 
         stream.release();
         recognizer.release();
 
-        try (PrintWriter out = new PrintWriter(resultPath.toFile(), StandardCharsets.UTF_8)) {
+        try (PrintWriter out =
+                new PrintWriter(
+                        resultPath.toFile(),
+                        StandardCharsets.UTF_8)) {
             out.println("schema=vexlife-local-asr-sherpa-probe/v1");
             out.println("providerRef=provider.local-asr.sherpa-onnx");
             out.println("providerVersion=2.0.1");
-            out.println("modelRef=sherpa-onnx-streaming-zipformer-en-20M-2023-02-17");
+            out.println(
+                    "modelRef=sherpa-onnx-streaming-zipformer-en-20M-2023-02-17");
             out.println("sampleRate=" + sampleRate);
             out.println("sampleCount=" + samples.length);
             out.printf("audioSeconds=%.3f%n", audioSeconds);
