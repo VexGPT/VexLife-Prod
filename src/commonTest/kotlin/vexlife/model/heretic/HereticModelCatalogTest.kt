@@ -53,6 +53,31 @@ class HereticModelCatalogTest {
     }
 
     @Test
+    fun everyOfferedQwenChoosesItsCurrentProviderProfileWithoutConnectionDefaults() {
+        for (entry in HereticModelCatalog.Entries) {
+            val profile = entry.companionProfile
+            assertTrue(profile.profileRef.isNotBlank(), entry.handle)
+            assertTrue(profile.generation.productMaxOutputTokens > 0, entry.handle)
+            assertTrue(profile.generation.sampling.sourceRef.isNotBlank(), entry.handle)
+        }
+
+        val qwen27 = HereticModelCatalog.Certified27B.companionProfile.generation.sampling
+        assertEquals(1.0, qwen27.temperature)
+        assertEquals(0.95, qwen27.topP)
+        assertEquals(20, qwen27.topK)
+
+        val qwen9 = HereticModelCatalog.Candidate9B.companionProfile.generation.sampling
+        assertEquals(0.6, qwen9.temperature)
+        assertEquals(0.95, qwen9.topP)
+        assertEquals(20, qwen9.topK)
+
+        val qwen4 = HereticModelCatalog.Candidate4B.companionProfile.generation.sampling
+        assertEquals(0.6, qwen4.temperature)
+        assertEquals(0.95, qwen4.topP)
+        assertEquals(20, qwen4.topK)
+    }
+
+    @Test
     fun aMacStartsWithTheLargestModelThatFitsItsMemory() {
         assertEquals(HereticModelCatalog.Certified27B, HereticModelCatalog.recommendedFor(64 * gib))
         assertEquals(HereticModelCatalog.Certified27B, HereticModelCatalog.recommendedFor(32 * gib))
