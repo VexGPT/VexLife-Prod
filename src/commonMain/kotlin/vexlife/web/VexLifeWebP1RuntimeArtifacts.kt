@@ -3852,8 +3852,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   }
 
                   state.sendInFlight = false;
+                  state.sendCancelInFlight = false;
                   if (retireAttempt) {
                     const failure = terminalError?.vexResponse ?? {};
+                    const cancelledByPerson = String(failure.code ?? '') === 'TURN_CANCELLED_BY_PERSON';
                     state.failedAttempts.push({
                       idempotencyKey: pending.idempotencyKey,
                       content: pending.content,
@@ -3862,9 +3864,16 @@ object VexLifeWebP1RuntimeArtifacts {
                       exactNextSafeRoute: failure.exactNextSafeRoute ?? null,
                       processEntries: interruptedProcess
                     });
+                    if (cancelledByPerson && !ui.draft.value.trim()) {
+                      ui.draft.value = pending.content;
+                    }
                     state.pending = null;
                     clearLiveProcessState();
-                    setCompanionStatus('Unavailable', 'Send failed', '');
+                    setCompanionStatus(
+                      cancelledByPerson ? 'Ready' : 'Unavailable',
+                      cancelledByPerson ? 'Stopped by you' : 'Send failed',
+                      servingModelLabel() || ''
+                    );
                   } else {
                     // Outcome is still unresolved: keep the same idempotency key and the process the
                     // human watched. A later exact retry/reconciliation must not look like a new Send.
@@ -3879,7 +3888,14 @@ object VexLifeWebP1RuntimeArtifacts {
 
                   sizeDraft();
                   render();
-                  notify(terminalError instanceof Error ? terminalError.message : 'Send failed.');
+                  const terminalCode = String(terminalError?.vexResponse?.code ?? '');
+                  notify(
+                    terminalCode === 'TURN_CANCELLED_BY_PERSON'
+                      ? 'Stopped. Your message is back in the Composer so you can edit or delete it.'
+                      : terminalError instanceof Error
+                        ? terminalError.message
+                        : 'Send failed.'
+                  );
                 }
               };
 
@@ -4168,6 +4184,10 @@ object VexLifeWebP1RuntimeArtifacts {
 
               ui.voiceInput?.addEventListener('click', () => {
                 void applyVoiceInputControl();
+              });
+
+              ui.stop.addEventListener('click', () => {
+                void cancelSend();
               });
 
               ui.composeForm.addEventListener('submit', (event) => {
