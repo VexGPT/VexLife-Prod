@@ -144,6 +144,8 @@ object ContinuityPressureAdapter {
 
     private val KnownRefTags = setOf("ANCHOR", "CORRECTION", "LESSON")
 
+    private val RouteInDetail = Regex("\\((PROMPT_RESIDENT|HYDRATED_THIS_TURN)\\)")
+
     // ---------------------------------------------------------------- entry
 
     fun run(config: Config): Int {
@@ -759,6 +761,26 @@ object ContinuityPressureAdapter {
                 "FAIL" -> false
                 else -> null
             }
+        // How each assertion's source reached the prompt, and whether it rode a replay turn: a pass
+        // that depends on the post-rollover replay would not survive the epoch spine being fixed.
+        val oscillationSet = oscillations.toSet()
+        val assertionRoutes = turns.flatMap { t ->
+            t.getValue("assertions").jsonArray.map { a ->
+                val obj = a.jsonObject
+                val detail = obj["detail"]?.jsonPrimitive?.content.orEmpty()
+                buildJsonObject {
+                    put("ordinal", ordinal(t))
+                    put("assertionRef", obj.getValue("assertionRef").jsonPrimitive.content)
+                    put("state", obj.getValue("state").jsonPrimitive.content)
+                    put("route", RouteInDetail.find(detail)?.groupValues?.get(1))
+                    put("onReplayOscillationTurn", ordinal(t) in oscillationSet)
+                }
+            }
+        }
+        val passesOnReplay = assertionRoutes.count {
+            it.getValue("state").jsonPrimitive.content == "PASS" &&
+                it.getValue("onReplayOscillationTurn").jsonPrimitive.content == "true"
+        }
         val capabilityCounts =
             turns
                 .flatMap { it.getValue("capabilityUses").jsonArray }
@@ -788,6 +810,8 @@ object ContinuityPressureAdapter {
                         "selectedConversationCountByTurn",
                         json.encodeToJsonElement(turns.map { selected(it).size }),
                     )
+                    put("assertionRoutes", json.encodeToJsonElement(assertionRoutes))
+                    put("passesDependingOnReplayOscillation", passesOnReplay)
                     put(
                         "assertionEvaluation",
                         "source availability to the prompt (resident or revisited); answer quality is a live-stage question",
