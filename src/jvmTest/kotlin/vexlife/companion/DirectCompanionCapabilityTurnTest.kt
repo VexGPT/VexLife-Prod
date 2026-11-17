@@ -396,7 +396,7 @@ class DirectCompanionCapabilityTurnTest {
             VexLifeCapabilityBridge.Use(
                 "continuity",
                 "hydrate",
-                "continuity: orchid-memory-depth, Conversation, retrieval",
+                "continuity",
                 VexLifeCapabilityBridge.State.RETURNED,
             ),
             result.capabilityUses.single(),
