@@ -11,6 +11,7 @@ import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeAvailability
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticRuntimeReceiptStore
 import vexlife.model.heretic.runtime.HereticArtifactDelivery
@@ -462,6 +463,11 @@ object VexLifeProdLocalSetup {
         // The Home's own choice decides which catalog model is materialized and run. A Home that
         // never chose is given the certified default, exactly as before the catalog existed.
         val model = HereticModelConfiguration.selected(selected.value)
+        val realization =
+            HereticRuntimeRealization.require(
+                modelRef = model.modelRef,
+                target = HereticRuntimeRealization.MacArm64,
+            )
 
         hooks.progress.phase(VexLifeProdSetupProgress.Phase.PreparingPython)
         val managedPython = hooks.ensureManagedPython(Path.of(home.productHome), allowAcquisition)
@@ -530,6 +536,8 @@ object VexLifeProdLocalSetup {
                         } ?: HereticRuntimeAvailability.State.StablePredecessorUnavailable,
                     control =
                         HereticRuntimeAvailability.Control.EnsureAvailable(
+                            realizationRef =
+                                realization.realizationRef,
                             // Runtime availability's AcquisitionAllowed mode authorizes the
                             // product-owned runtime owner to start/reuse the exact runtime from
                             // the already-ensured environment above. No download happens at this
@@ -564,7 +572,13 @@ object VexLifeProdLocalSetup {
                     val productRuntimeStore = FileHereticRuntimeReceiptStore(canonicalHome)
 
                     when (availabilityAct.effect) {
-                        HereticRuntimeAvailability.Effect.EnsureProductOwnedRuntime -> {
+                        is HereticRuntimeAvailability.Effect.EnsureProductOwnedRuntime -> {
+                            require(
+                                availabilityAct.effect.realizationRef ==
+                                    realization.realizationRef,
+                            ) {
+                                "runtime availability changed the requested Mac realization"
+                            }
                             hooks.progress.phase(VexLifeProdSetupProgress.Phase.StartingLocalModel)
                             val runtime =
                                 hooks.startRuntime(canonicalHome, binding, productRuntimeStore)
@@ -585,7 +599,13 @@ object VexLifeProdLocalSetup {
                                 }
                         }
 
-                        HereticRuntimeAvailability.Effect.ObserveCurrentProductOwnedRuntime -> {
+                        is HereticRuntimeAvailability.Effect.ObserveCurrentProductOwnedRuntime -> {
+                            require(
+                                availabilityAct.effect.realizationRef ==
+                                    realization.realizationRef,
+                            ) {
+                                "runtime availability changed the requested Mac realization"
+                            }
                             val evidence =
                                 hooks.observeCurrentProductRuntime(
                                     canonicalHome,
