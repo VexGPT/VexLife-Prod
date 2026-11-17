@@ -1,0 +1,15 @@
+{
+  "authoritySchemaRef": "vextreme.effect-transaction/v1",
+  "semanticAdmissionRef": "github.pull.vexlife-prod.212",
+  "transactionRef": "transaction.vexlife-prod.continuity-foundation-final-lived-mac.a009",
+  "transactionVersion": 1,
+  "allowedEffectRefs": [
+    "effect.vexrelay.execute"
+  ],
+  "heldEffectRefs": [
+    "effect.vexlife-prod.source-mutation",
+    "effect.vexlife-prod.product-runtime",
+    "effect.vexlife-prod.home-mutation",
+    "effect.vexlife-prod.merge"
+  ]
+}
