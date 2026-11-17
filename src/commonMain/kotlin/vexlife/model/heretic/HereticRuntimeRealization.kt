@@ -138,6 +138,9 @@ object HereticRuntimeRealization {
         val artifact: ArtifactProfile
             get() = requireRequired(dependencies.artifact, "artifact")
 
+        val runtimeBinary: RuntimeBinaryProfile
+            get() = requireRequired(dependencies.runtimeBinary, "runtimeBinary")
+
         val runtime: RuntimeProfile
             get() = requireRequired(dependencies.runtime, "runtime")
 
