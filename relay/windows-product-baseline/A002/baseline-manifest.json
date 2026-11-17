@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "vexlife-prod.windows-source-baseline/v1",
+  "continuity": "[VXG RealForever]",
+  "attempt": "A002",
+  "sourceRepository": "VexGPT/VexLife-Prod",
+  "sourceCommit": "655e7c78cefba06a5e87afad285bb25a08632f05",
+  "sourceTree": "886c131da9e3c011ed88a6badad401430362b35c",
+  "hostProfileRef": "windows-victor",
+  "effectClass": "PRE_ADMISSION_SOURCE_BUILD_PROOF",
+  "checks": [
+    "jvmTest",
+    "compileKotlinJs",
+    "compileTestKotlinJs",
+    "checkVexLifeStrings"
+  ],
+  "allowedEffects": [
+    "DOWNLOAD_EXACT_GITHUB_SOURCE_ARCHIVE",
+    "DOWNLOAD_GRADLE_BUILD_DEPENDENCIES_INSIDE_ATTEMPT_CAPSULE",
+    "WRITE_ATTEMPT_TEMPORARY_FILES",
+    "FORM_RETURN_ZIP"
+  ],
+  "heldEffects": [
+    "VEX_HOME_MUTATION",
+    "MODEL_WEIGHT_DOWNLOAD",
+    "MODEL_RUNTIME_START",
+    "PRODUCT_SERVICE_START",
+    "PRODUCT_INSTALLATION",
+    "RELEASE_PUBLICATION"
+  ]
+}
