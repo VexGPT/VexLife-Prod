@@ -50,7 +50,7 @@ class FileHereticRuntimeConfigurationStoreTest {
                     HereticModelCatalog.Models.Qwen4B,
                 )
             assertEquals(
-                3,
+                1,
                 recommended.promptCacheEntries,
             )
             assertEquals(
@@ -63,7 +63,7 @@ class FileHereticRuntimeConfigurationStoreTest {
                     home,
                 )
             assertEquals(
-                3,
+                1,
                 reread
                     .effective(
                         HereticModelCatalog.Models.Qwen4B,
