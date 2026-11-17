@@ -799,20 +799,30 @@ object VexLifeWebP1RuntimeArtifacts {
                 sizeDraft();
               };
 
-              const voiceInputFailureReason = (error) => {
+              const voiceInputFailureReason = (error, stage) => {
                 const code = String(error ?? '');
                 if (
-                  code === 'not-allowed' ||
-                  code === 'service-not-allowed' ||
-                  code === 'NotAllowedError' ||
-                  code === 'Permission denied'
+                  stage === 'microphone' &&
+                  (
+                    code === 'not-allowed' ||
+                    code === 'service-not-allowed' ||
+                    code === 'NotAllowedError' ||
+                    code === 'Permission denied'
+                  )
                 ) {
                   return voiceInput.failureReason.microphonePermissionRequired;
                 }
-                if (code === 'audio-capture' || code === 'NotFoundError') {
+                if (
+                  stage === 'microphone' &&
+                  (code === 'audio-capture' || code === 'NotFoundError')
+                ) {
                   return voiceInput.failureReason.microphoneUnavailable;
                 }
-                if (code === 'language-not-supported') {
+                if (
+                  stage === 'language-availability' ||
+                  stage === 'language-install' ||
+                  code === 'language-not-supported'
+                ) {
                   return voiceInput.failureReason.languageUnavailable;
                 }
                 if (code === 'AbortError' || code === 'InvalidStateError') {
@@ -829,12 +839,18 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderVoiceInput();
               };
 
-              const failVoiceInput = async (failureReasonRef) => {
+              const failVoiceInput = async (failureReasonRef, options = {}) => {
                 const language = dictation.language ?? voiceInputLanguage();
                 const semanticState =
                   voiceInput.failureStateByReason[failureReasonRef] ??
                   voiceInput.failureStateByReason[voiceInput.failureReason.unknown];
                 if (!semanticState) return;
+                reportFact('VOICE_INPUT_FAILURE_OBSERVED', {
+                  stage: String(options.stage ?? 'unknown'),
+                  code: String(options.code ?? 'unknown'),
+                  failureReasonRef,
+                  stateRef: dictation.stateRef ?? ''
+                });
                 await settleVoiceInputFailure(semanticState, language);
               };
 
@@ -862,39 +878,99 @@ object VexLifeWebP1RuntimeArtifacts {
                   langs: [language.locale],
                   processLocally: true
                 };
-                const availability = await Recognition.available(options);
+
+                let availability;
+                try {
+                  availability = await Recognition.available(options);
+                } catch (error) {
+                  if (!dictation.desiredActive || session !== dictation.session) return false;
+                  const code =
+                    error instanceof DOMException
+                      ? error.name
+                      : error instanceof Error
+                        ? error.message
+                        : error;
+                  await failVoiceInput(
+                    voiceInputFailureReason(code, 'language-availability'),
+                    { stage: 'language-availability', code }
+                  );
+                  return false;
+                }
                 if (!dictation.desiredActive || session !== dictation.session) return false;
+
+                reportFact('VOICE_INPUT_LANGUAGE_AVAILABILITY_OBSERVED', {
+                  language: language.code,
+                  locale: language.locale,
+                  availability: String(availability)
+                });
 
                 const semanticObservation =
                   voiceInput.languageAvailabilityStateByProviderValue[availability];
                 if (semanticObservation === undefined) {
-                  await failVoiceInput(voiceInput.failureReason.unknown);
+                  await failVoiceInput(
+                    voiceInput.failureReason.unknown,
+                    { stage: 'language-availability', code: String(availability) }
+                  );
                   return false;
                 }
                 if (semanticObservation !== null) {
-                  applyVoiceInputSemanticState(semanticObservation, language);
-                  renderVoiceInput();
                   if (semanticObservation.stateRef === voiceInput.state.failed) {
-                    dictation.desiredActive = false;
-                    dictation.recognition = null;
-                    await stopVoiceWaveform();
-                    renderVoiceInput();
+                    await failVoiceInput(
+                      semanticObservation.failureReasonRef ?? voiceInput.failureReason.unknown,
+                      { stage: 'language-availability', code: String(availability) }
+                    );
                     return false;
                   }
+                  applyVoiceInputSemanticState(semanticObservation, language);
+                  renderVoiceInput();
                 } else {
                   return true;
                 }
 
-                const installed = Boolean(await Recognition.install(options));
+                let installed;
+                try {
+                  installed = Boolean(await Recognition.install(options));
+                  reportFact('VOICE_INPUT_LANGUAGE_INSTALL_OBSERVED', {
+                    language: language.code,
+                    locale: language.locale,
+                    outcome: String(installed)
+                  });
+                } catch (error) {
+                  if (!dictation.desiredActive || session !== dictation.session) return false;
+                  const code =
+                    error instanceof DOMException
+                      ? error.name
+                      : error instanceof Error
+                        ? error.message
+                        : error;
+                  reportFact('VOICE_INPUT_LANGUAGE_INSTALL_OBSERVED', {
+                    language: language.code,
+                    locale: language.locale,
+                    outcome: 'error',
+                    code: String(code)
+                  });
+                  await failVoiceInput(
+                    voiceInputFailureReason(code, 'language-install'),
+                    { stage: 'language-install', code }
+                  );
+                  return false;
+                }
                 if (!dictation.desiredActive || session !== dictation.session) return false;
+
                 const installObservation =
                   voiceInput.languageInstallStateBySuccess[String(installed)];
                 if (installObservation === undefined) {
-                  await failVoiceInput(voiceInput.failureReason.unknown);
+                  await failVoiceInput(
+                    voiceInput.failureReason.unknown,
+                    { stage: 'language-install', code: String(installed) }
+                  );
                   return false;
                 }
                 if (installObservation !== null) {
-                  await settleVoiceInputFailure(installObservation, language);
+                  await failVoiceInput(
+                    installObservation.failureReasonRef ?? voiceInput.failureReason.unknown,
+                    { stage: 'language-install', code: String(installed) }
+                  );
                   return false;
                 }
                 return true;
@@ -917,16 +993,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 dictation.finalTranscript = '';
                 dictation.interimTranscript = '';
 
-                try {
-                  const languageReady =
-                    await ensureLocalDictationLanguage(Recognition, language, session);
-                  if (!dictation.desiredActive || session !== dictation.session || !languageReady) {
-                    return;
-                  }
+                reportFact('VOICE_INPUT_MICROPHONE_REQUESTED', {
+                  language: language.code,
+                  locale: language.locale
+                });
 
-                  applyVoiceInputSemanticState(voiceInput.microphoneRequestState, language);
-                  renderVoiceInput();
-                  const stream = await navigator.mediaDevices.getUserMedia({
+                let stream;
+                try {
+                  stream = await navigator.mediaDevices.getUserMedia({
                     audio: {
                       echoCancellation: true,
                       noiseSuppression: true,
@@ -934,82 +1008,152 @@ object VexLifeWebP1RuntimeArtifacts {
                     },
                     video: false
                   });
-                  if (!dictation.desiredActive || session !== dictation.session) {
-                    for (const track of stream.getTracks()) track.stop();
-                    return;
-                  }
-                  dictation.stream = stream;
-                  await startVoiceWaveform(stream);
-
-                  const recognition = new Recognition();
-                  recognition.lang = language.locale;
-                  recognition.continuous = true;
-                  recognition.interimResults = true;
-                  recognition.maxAlternatives = 1;
-                  recognition.processLocally = true;
-                  dictation.recognition = recognition;
-
-                  recognition.addEventListener('start', () => {
-                    if (session !== dictation.session || !dictation.desiredActive) return;
-                    applyVoiceInputSemanticState(voiceInput.recognitionStartedState, language);
-                    renderVoiceInput();
-                  });
-
-                  recognition.addEventListener('result', (event) => {
-                    if (session !== dictation.session || !dictation.desiredActive) return;
-                    let interim = '';
-                    for (let index = event.resultIndex; index < event.results.length; index += 1) {
-                      const result = event.results[index];
-                      const text = String(result?.[0]?.transcript ?? '').trim();
-                      if (!text) continue;
-                      if (result.isFinal) {
-                        dictation.finalTranscript =
-                          appendTranscriptSegment(dictation.finalTranscript, text);
-                      } else {
-                        interim = appendTranscriptSegment(interim, text);
-                      }
-                    }
-                    dictation.interimTranscript = interim;
-                    projectDictationIntoDraft();
-                  });
-
-                  recognition.addEventListener('error', (event) => {
-                    if (session !== dictation.session || !dictation.desiredActive) return;
-                    if (event.error === 'no-speech') return;
-                    void failVoiceInput(voiceInputFailureReason(event.error));
-                  });
-
-                  recognition.addEventListener('end', () => {
-                    if (session !== dictation.session || !dictation.desiredActive) return;
-                    const track = dictation.stream?.getAudioTracks()?.[0];
-                    if (!track || track.readyState !== 'live') {
-                      void failVoiceInput(voiceInput.failureReason.microphoneUnavailable);
-                      return;
-                    }
-                    setTimeout(() => {
-                      if (session !== dictation.session || !dictation.desiredActive) return;
-                      try {
-                        recognition.start(track);
-                      } catch (error) {
-                        void failVoiceInput(voiceInputFailureReason(error?.name));
-                      }
-                    }, 120);
-                  });
-
-                  const track = stream.getAudioTracks()[0];
-                  if (!track) {
-                    await failVoiceInput(voiceInput.failureReason.microphoneUnavailable);
-                    return;
-                  }
-                  recognition.start(track);
                 } catch (error) {
                   if (session !== dictation.session) return;
-                  const failure = error instanceof DOMException
-                    ? error.name
-                    : error instanceof Error
-                      ? error.message
-                      : error;
-                  await failVoiceInput(voiceInputFailureReason(failure));
+                  const code =
+                    error instanceof DOMException
+                      ? error.name
+                      : error instanceof Error
+                        ? error.message
+                        : error;
+                  await failVoiceInput(
+                    voiceInputFailureReason(code, 'microphone'),
+                    { stage: 'microphone', code }
+                  );
+                  return;
+                }
+
+                if (!dictation.desiredActive || session !== dictation.session) {
+                  for (const track of stream.getTracks()) track.stop();
+                  return;
+                }
+
+                reportFact('VOICE_INPUT_MICROPHONE_GRANTED', {
+                  language: language.code,
+                  locale: language.locale
+                });
+                dictation.stream = stream;
+
+                try {
+                  await startVoiceWaveform(stream);
+                } catch (error) {
+                  const code =
+                    error instanceof DOMException
+                      ? error.name
+                      : error instanceof Error
+                        ? error.message
+                        : error;
+                  await failVoiceInput(
+                    voiceInput.failureReason.unknown,
+                    { stage: 'audio-feedback', code }
+                  );
+                  return;
+                }
+
+                applyVoiceInputSemanticState(voiceInput.languageCheckStartedState, language);
+                renderVoiceInput();
+
+                const languageReady =
+                  await ensureLocalDictationLanguage(Recognition, language, session);
+                if (!dictation.desiredActive || session !== dictation.session || !languageReady) {
+                  return;
+                }
+
+                const recognition = new Recognition();
+                recognition.lang = language.locale;
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                recognition.maxAlternatives = 1;
+                recognition.processLocally = true;
+                dictation.recognition = recognition;
+
+                recognition.addEventListener('start', () => {
+                  if (session !== dictation.session || !dictation.desiredActive) return;
+                  reportFact('VOICE_INPUT_RECOGNITION_STARTED', {
+                    language: language.code,
+                    locale: language.locale
+                  });
+                  applyVoiceInputSemanticState(voiceInput.recognitionStartedState, language);
+                  renderVoiceInput();
+                });
+
+                recognition.addEventListener('result', (event) => {
+                  if (session !== dictation.session || !dictation.desiredActive) return;
+                  let interim = '';
+                  for (let index = event.resultIndex; index < event.results.length; index += 1) {
+                    const result = event.results[index];
+                    const text = String(result?.[0]?.transcript ?? '').trim();
+                    if (!text) continue;
+                    if (result.isFinal) {
+                      dictation.finalTranscript =
+                        appendTranscriptSegment(dictation.finalTranscript, text);
+                    } else {
+                      interim = appendTranscriptSegment(interim, text);
+                    }
+                  }
+                  dictation.interimTranscript = interim;
+                  projectDictationIntoDraft();
+                });
+
+                recognition.addEventListener('error', (event) => {
+                  if (session !== dictation.session || !dictation.desiredActive) return;
+                  if (event.error === 'no-speech') return;
+                  void failVoiceInput(
+                    voiceInputFailureReason(event.error, 'recognition'),
+                    { stage: 'recognition', code: event.error }
+                  );
+                });
+
+                recognition.addEventListener('end', () => {
+                  if (session !== dictation.session || !dictation.desiredActive) return;
+                  const track = dictation.stream?.getAudioTracks()?.[0];
+                  if (!track || track.readyState !== 'live') {
+                    void failVoiceInput(
+                      voiceInput.failureReason.microphoneUnavailable,
+                      { stage: 'microphone-stream', code: 'TRACK_NOT_LIVE' }
+                    );
+                    return;
+                  }
+                  setTimeout(() => {
+                    if (session !== dictation.session || !dictation.desiredActive) return;
+                    try {
+                      recognition.start(track);
+                    } catch (error) {
+                      const code =
+                        error instanceof DOMException
+                          ? error.name
+                          : error instanceof Error
+                            ? error.message
+                            : error;
+                      void failVoiceInput(
+                        voiceInputFailureReason(code, 'recognition'),
+                        { stage: 'recognition-restart', code }
+                      );
+                    }
+                  }, 120);
+                });
+
+                const track = stream.getAudioTracks()[0];
+                if (!track) {
+                  await failVoiceInput(
+                    voiceInput.failureReason.microphoneUnavailable,
+                    { stage: 'microphone-stream', code: 'NO_AUDIO_TRACK' }
+                  );
+                  return;
+                }
+                try {
+                  recognition.start(track);
+                } catch (error) {
+                  const code =
+                    error instanceof DOMException
+                      ? error.name
+                      : error instanceof Error
+                        ? error.message
+                        : error;
+                  await failVoiceInput(
+                    voiceInputFailureReason(code, 'recognition'),
+                    { stage: 'recognition-start', code }
+                  );
                 }
               };
 
