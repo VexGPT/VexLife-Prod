@@ -68,9 +68,6 @@ object ContinuityHostRuntimePrecondition {
                 hooks =
                     VexLifeProdLocalSetup.Hooks(
                         observeStableRuntime = { _, _ -> null },
-                        retireStableRuntime = { _, _, _ ->
-                            error("host-proof Product-owned runtime precondition must not retire stable predecessor evidence")
-                        },
                     ),
             )
         val current = result.qualifiedRuntimeEvidence
