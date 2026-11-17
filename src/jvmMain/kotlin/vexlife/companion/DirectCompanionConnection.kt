@@ -103,6 +103,7 @@ object DirectCompanionConnection {
         val uri: URI,
         val body: String,
         val timeoutMs: Long,
+        val cancellation: DirectCompanionCancellation? = null,
     )
 
     data class HttpResult(
@@ -160,6 +161,7 @@ object DirectCompanionConnection {
         override fun post(
             call: HttpCall,
         ): HttpResult {
+            call.cancellation?.checkpoint()
             val request =
                 request(
                     call = call,
@@ -173,6 +175,7 @@ object DirectCompanionConnection {
                     ),
                 )
 
+            call.cancellation?.checkpoint()
             return HttpResult(
                 status = response.statusCode(),
                 body = response.body(),
@@ -186,6 +189,7 @@ object DirectCompanionConnection {
             call: HttpCall,
             onLine: (String) -> Unit,
         ): StreamingHttpResult {
+            call.cancellation?.checkpoint()
             val response =
                 client.send(
                     request(
@@ -198,33 +202,50 @@ object DirectCompanionConnection {
                 MessageDigest.getInstance(
                     "SHA-256",
                 )
-
-            DigestInputStream(
-                response.body(),
-                digest,
-            )
-                .bufferedReader(
-                    StandardCharsets.UTF_8,
-                )
-                .use {
-                    reader ->
-                    while (
-                        true
-                    ) {
-                        val line =
-                            reader.readLine()
-                                ?: break
-                        if (
-                            response.statusCode() in
-                                200..299
-                        ) {
-                            onLine(
-                                line,
-                            )
+            val body =
+                response.body()
+            val cancellationRegistration =
+                call.cancellation
+                    ?.onCancel {
+                        runCatching {
+                            body.close()
                         }
                     }
-                }
 
+            try {
+                DigestInputStream(
+                    body,
+                    digest,
+                )
+                    .bufferedReader(
+                        StandardCharsets.UTF_8,
+                    )
+                    .use {
+                        reader ->
+                        while (
+                            true
+                        ) {
+                            call.cancellation?.checkpoint()
+                            val line =
+                                reader.readLine()
+                                    ?: break
+                            call.cancellation?.checkpoint()
+                            if (
+                                response.statusCode() in
+                                    200..299
+                            ) {
+                                onLine(
+                                    line,
+                                )
+                            }
+                        }
+                    }
+            } finally {
+                cancellationRegistration
+                    ?.close()
+            }
+
+            call.cancellation?.checkpoint()
             return StreamingHttpResult(
                 status = response.statusCode(),
                 responseBodySha256 = hex(
@@ -406,7 +427,9 @@ object DirectCompanionConnection {
          * Provider-native carriage belongs here; admission and effects remain with VexLifeCapabilityBridge.
          */
         capabilityOffer: List<VexLifeCapabilityAtlas.Definition> = emptyList(),
+        cancellation: DirectCompanionCancellation? = null,
     ): Result {
+        cancellation?.checkpoint()
         requireQualifiedRuntime(
             runtime,
         )
@@ -504,6 +527,7 @@ object DirectCompanionConnection {
                 uri = uri,
                 body = requestBody,
                 timeoutMs = RequestTimeoutMs,
+                cancellation = cancellation,
             )
         val completion =
             if (
