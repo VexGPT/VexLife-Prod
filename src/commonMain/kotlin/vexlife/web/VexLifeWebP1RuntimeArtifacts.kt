@@ -404,25 +404,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 quickActionsOpen: false
               };
 
-              // VoiceInput is the human editing the existing text draft, not Vex Perception.
-              // The Product therefore keeps the durable Conversation input type unchanged: voice is
-              // transcribed locally into the same draft and Send remains the only commit boundary.
-              const DICTATION_LOCALES = Object.freeze({
-                en: 'en-US',
-                ja: 'ja-JP',
-                zh: 'zh-CN',
-                ko: 'ko-KR',
-                fr: 'fr-FR',
-                de: 'de-DE',
-                es: 'es-ES',
-                pt: 'pt-BR',
-                ar: 'ar-SA',
-                hi: 'hi-IN'
-              });
-
+              // VoiceInput execution lives at the browser boundary. Semantic meaning comes from
+              // VexLifeVoiceInputFamily above; browser API strings are converted here and do not leak
+              // into Product State or human-facing copy.
               const dictation = {
-                mode: 'idle',
-                status: '',
+                stateRef: null,
+                holdReasonRef: null,
+                failureReasonRef: null,
+                language: null,
                 desiredActive: false,
                 session: 0,
                 recognition: null,
@@ -443,61 +432,83 @@ object VexLifeWebP1RuntimeArtifacts {
                 return Recognition;
               };
 
-              const dictationLocale = () =>
-                DICTATION_LOCALES[state.settings?.replyLanguage ?? 'en'] ?? 'en-US';
+              const voiceInputLanguage = () => {
+                const code = state.settings?.replyLanguage ?? 'en';
+                const locale = voiceInput.languages[code];
+                return locale ? { code, locale } : null;
+              };
 
-              const voiceInputCapability = () => {
-                if (!localSpeechRecognition()) {
-                  return {
-                    ready: false,
-                    detail: 'Local dictation is not available in this browser yet.'
-                  };
+              const setVoiceInputState = (stateRef, options = {}) => {
+                dictation.stateRef = stateRef;
+                dictation.holdReasonRef = options.holdReasonRef ?? null;
+                dictation.failureReasonRef = options.failureReasonRef ?? null;
+                if (options.language !== undefined) dictation.language = options.language;
+              };
+
+              const observeVoiceInputCapability = () => {
+                const language = voiceInputLanguage();
+                if (!language || !localSpeechRecognition()) {
+                  setVoiceInputState(voiceInput.state.held, {
+                    holdReasonRef: voiceInput.holdReason.localRecognitionUnavailable,
+                    language
+                  });
+                  return;
                 }
                 if (!navigator.mediaDevices?.getUserMedia) {
-                  return {
-                    ready: false,
-                    detail: 'Microphone access is not available in this browser context.'
-                  };
+                  setVoiceInputState(voiceInput.state.held, {
+                    holdReasonRef: voiceInput.holdReason.microphoneApiUnavailable,
+                    language
+                  });
+                  return;
                 }
                 if (!(window.AudioContext || window.webkitAudioContext)) {
-                  return {
-                    ready: false,
-                    detail: 'Live microphone feedback is not available in this browser context.'
-                  };
+                  setVoiceInputState(voiceInput.state.held, {
+                    holdReasonRef: voiceInput.holdReason.audioFeedbackUnavailable,
+                    language
+                  });
+                  return;
                 }
-                return {
-                  ready: true,
-                  detail: 'Dictation stays on this device and edits only this draft.'
-                };
+                setVoiceInputState(voiceInput.state.ready, { language });
+              };
+
+              const voiceInputDisplay = () => {
+                if (dictation.stateRef === voiceInput.state.held) {
+                  return voiceInput.holdDisplayByReason[dictation.holdReasonRef] ?? null;
+                }
+                if (dictation.stateRef === voiceInput.state.failed) {
+                  return voiceInput.failureDisplayByReason[dictation.failureReasonRef] ??
+                    voiceInput.failureDisplayByReason[voiceInput.failureReason.unknown];
+                }
+                return voiceInput.displayByState[dictation.stateRef] ?? null;
               };
 
               const renderVoiceInput = () => {
                 if (!ui.voiceInput) return;
-                const capability = voiceInputCapability();
-                const active = dictation.desiredActive && dictation.mode === 'listening';
-                const busy = ['checking', 'installing', 'requesting', 'listening', 'stopping'].includes(dictation.mode);
-                const overlay = busy || dictation.mode === 'error';
-                ui.voiceInput.disabled = !capability.ready || state.sendInFlight || state.privateInFlight;
-                ui.voiceInput.dataset.state = capability.ready ? dictation.mode : 'held';
-                ui.voiceInput.setAttribute('aria-pressed', String(active));
-                ui.voiceInput.setAttribute('aria-expanded', String(overlay));
-                ui.voiceInput.setAttribute(
-                  'aria-label',
-                  active ? 'Stop local dictation' : capability.ready ? 'Start local dictation' : 'Local dictation unavailable'
-                );
-                ui.voiceInput.title = dictation.mode === 'error' && dictation.status
-                  ? dictation.status
-                  : active
-                    ? 'Stop local dictation'
-                    : capability.ready
-                      ? 'Start local dictation · on-device only'
-                      : capability.detail;
-                if (ui.voiceInputOverlay) ui.voiceInputOverlay.hidden = !overlay;
-                if (ui.voiceInputStatus) {
-                  ui.voiceInputStatus.textContent =
-                    dictation.status ||
-                    (active ? 'Listening locally…' : capability.detail);
+                if (
+                  !dictation.desiredActive &&
+                  (dictation.stateRef === null ||
+                    dictation.stateRef === voiceInput.state.ready ||
+                    dictation.stateRef === voiceInput.state.held)
+                ) {
+                  observeVoiceInputCapability();
                 }
+                const display = voiceInputDisplay();
+                if (!display) return;
+                ui.voiceInput.disabled =
+                  !display.primaryControlRef || state.sendInFlight || state.privateInFlight;
+                ui.voiceInput.dataset.state = dictation.stateRef ?? '';
+                ui.voiceInput.dataset.holdReason = dictation.holdReasonRef ?? '';
+                ui.voiceInput.dataset.failureReason = dictation.failureReasonRef ?? '';
+                ui.voiceInput.setAttribute('aria-pressed', String(Boolean(display.active)));
+                const overlay = display.attention === voiceInput.attentionOverlay;
+                ui.voiceInput.setAttribute('aria-expanded', String(overlay));
+                const humanLabel = display.primaryLabelKey
+                  ? t(display.primaryLabelKey)
+                  : t(display.statusKey);
+                ui.voiceInput.setAttribute('aria-label', humanLabel);
+                ui.voiceInput.title = humanLabel;
+                if (ui.voiceInputOverlay) ui.voiceInputOverlay.hidden = !overlay;
+                if (ui.voiceInputStatus) ui.voiceInputStatus.textContent = t(display.statusKey);
               };
 
               const stopVoiceWaveform = async () => {
@@ -573,15 +584,47 @@ object VexLifeWebP1RuntimeArtifacts {
                 const prefix = dictation.draftPrefix;
                 ui.draft.value =
                   prefix +
-                  (prefix && spoken && !/\s$/u.test(prefix) ? ' ' : '') +
+                  (prefix && spoken && !/\\s$/u.test(prefix) ? ' ' : '') +
                   spoken;
                 sizeDraft();
               };
 
-              const stopVoiceInput = async (abort = false) => {
+              const voiceInputFailureReason = (error) => {
+                const code = String(error ?? '');
+                if (
+                  code === 'not-allowed' ||
+                  code === 'service-not-allowed' ||
+                  code === 'NotAllowedError' ||
+                  code === 'Permission denied'
+                ) {
+                  return voiceInput.failureReason.microphonePermissionRequired;
+                }
+                if (code === 'audio-capture' || code === 'NotFoundError') {
+                  return voiceInput.failureReason.microphoneUnavailable;
+                }
+                if (code === 'language-not-supported') {
+                  return voiceInput.failureReason.languageUnavailable;
+                }
+                if (code === 'AbortError' || code === 'InvalidStateError') {
+                  return voiceInput.failureReason.recognitionStopped;
+                }
+                return voiceInput.failureReason.unknown;
+              };
+
+              const failVoiceInput = async (failureReasonRef) => {
                 dictation.desiredActive = false;
-                dictation.mode = 'stopping';
-                dictation.status = '';
+                setVoiceInputState(voiceInput.state.failed, {
+                  failureReasonRef,
+                  language: dictation.language ?? voiceInputLanguage()
+                });
+                await stopVoiceWaveform();
+                renderVoiceInput();
+              };
+
+              const stopVoiceInput = async (abort = false) => {
+                const language = dictation.language ?? voiceInputLanguage();
+                dictation.desiredActive = false;
+                setVoiceInputState(voiceInput.state.stopping, { language });
                 renderVoiceInput();
                 const recognition = dictation.recognition;
                 dictation.recognition = null;
@@ -592,79 +635,60 @@ object VexLifeWebP1RuntimeArtifacts {
                   } catch {}
                 }
                 await stopVoiceWaveform();
-                dictation.mode = 'idle';
-                dictation.status = '';
+                observeVoiceInputCapability();
                 renderVoiceInput();
               };
 
-              const dictationErrorMessage = (error) => {
-                const code = String(error ?? '');
-                if (
-                  code === 'not-allowed' ||
-                  code === 'service-not-allowed' ||
-                  code === 'NotAllowedError' ||
-                  code === 'Permission denied'
-                ) {
-                  return 'Microphone permission is needed for local dictation.';
-                }
-                if (code === 'audio-capture' || code === 'NotFoundError') return 'No usable microphone is available.';
-                if (code === 'language-not-supported') {
-                  return 'On-device dictation is not available for the selected language.';
-                }
-                if (code === 'no-speech') return 'Listening locally…';
-                return code ? 'Local dictation stopped: ' + code + '.' : 'Local dictation stopped.';
-              };
-
-              const ensureLocalDictationLanguage = async (Recognition, locale) => {
-                dictation.mode = 'checking';
-                dictation.status = 'Checking on-device dictation for ' + locale + '…';
+              const ensureLocalDictationLanguage = async (Recognition, language) => {
+                setVoiceInputState(voiceInput.state.checkingLanguage, { language });
                 renderVoiceInput();
                 const options = {
-                  langs: [locale],
+                  langs: [language.locale],
                   processLocally: true,
                   quality: 'dictation'
                 };
                 const availability = await Recognition.available(options);
-                if (availability === 'available') return true;
-                if (availability === 'unavailable') return false;
-                dictation.mode = 'installing';
-                dictation.status = 'Getting the on-device ' + locale + ' dictation language ready…';
+                if (availability === localRecognitionAvailability.available) return true;
+                if (availability === localRecognitionAvailability.unavailable) return false;
+                setVoiceInputState(voiceInput.state.installingLanguage, { language });
                 renderVoiceInput();
                 return Boolean(await Recognition.install(options));
               };
 
               const startVoiceInput = async () => {
-                if (dictation.desiredActive) {
-                  await stopVoiceInput(false);
-                  return;
-                }
                 if (state.sendInFlight || state.privateInFlight) return;
-                const capability = voiceInputCapability();
-                if (!capability.ready) {
-                  dictation.mode = 'error';
-                  dictation.status = capability.detail;
+                observeVoiceInputCapability();
+                const display = voiceInputDisplay();
+                if (display?.primaryControlRef !== voiceInput.control.start) {
                   renderVoiceInput();
                   return;
                 }
 
                 const Recognition = localSpeechRecognition();
-                const locale = dictationLocale();
+                const language = dictation.language ?? voiceInputLanguage();
+                if (!Recognition || !language) {
+                  observeVoiceInputCapability();
+                  renderVoiceInput();
+                  return;
+                }
+
                 const session = dictation.session + 1;
                 dictation.session = session;
                 dictation.desiredActive = true;
+                dictation.language = language;
                 dictation.draftPrefix = ui.draft.value;
                 dictation.finalTranscript = '';
                 dictation.interimTranscript = '';
 
                 try {
-                  const languageReady = await ensureLocalDictationLanguage(Recognition, locale);
+                  const languageReady = await ensureLocalDictationLanguage(Recognition, language);
                   if (!dictation.desiredActive || session !== dictation.session) return;
                   if (!languageReady) {
-                    throw new Error('language-not-supported');
+                    await failVoiceInput(voiceInput.failureReason.languageUnavailable);
+                    return;
                   }
 
-                  dictation.mode = 'requesting';
-                  dictation.status = 'Allow the microphone to start local dictation.';
+                  setVoiceInputState(voiceInput.state.requestingMicrophone, { language });
                   renderVoiceInput();
                   const stream = await navigator.mediaDevices.getUserMedia({
                     audio: {
@@ -682,7 +706,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   await startVoiceWaveform(stream);
 
                   const recognition = new Recognition();
-                  recognition.lang = locale;
+                  recognition.lang = language.locale;
                   recognition.continuous = true;
                   recognition.interimResults = true;
                   recognition.maxAlternatives = 1;
@@ -691,8 +715,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
                   recognition.addEventListener('start', () => {
                     if (session !== dictation.session || !dictation.desiredActive) return;
-                    dictation.mode = 'listening';
-                    dictation.status = 'Listening locally · speech stays on this device.';
+                    setVoiceInputState(voiceInput.state.listening, { language });
                     renderVoiceInput();
                   });
 
@@ -715,28 +738,15 @@ object VexLifeWebP1RuntimeArtifacts {
 
                   recognition.addEventListener('error', (event) => {
                     if (session !== dictation.session) return;
-                    if (event.error === 'no-speech' && dictation.desiredActive) {
-                      dictation.status = 'Listening locally…';
-                      renderVoiceInput();
-                      return;
-                    }
-                    dictation.desiredActive = false;
-                    dictation.mode = 'error';
-                    dictation.status = dictationErrorMessage(event.error);
-                    void stopVoiceWaveform();
-                    renderVoiceInput();
+                    if (event.error === 'no-speech' && dictation.desiredActive) return;
+                    void failVoiceInput(voiceInputFailureReason(event.error));
                   });
 
                   recognition.addEventListener('end', () => {
-                    if (session !== dictation.session) return;
-                    if (!dictation.desiredActive) return;
+                    if (session !== dictation.session || !dictation.desiredActive) return;
                     const track = dictation.stream?.getAudioTracks()?.[0];
                     if (!track || track.readyState !== 'live') {
-                      dictation.desiredActive = false;
-                      dictation.mode = 'error';
-                      dictation.status = 'The microphone stopped.';
-                      void stopVoiceWaveform();
-                      renderVoiceInput();
+                      void failVoiceInput(voiceInput.failureReason.microphoneUnavailable);
                       return;
                     }
                     setTimeout(() => {
@@ -744,30 +754,34 @@ object VexLifeWebP1RuntimeArtifacts {
                       try {
                         recognition.start(track);
                       } catch (error) {
-                        dictation.desiredActive = false;
-                        dictation.mode = 'error';
-                        dictation.status = dictationErrorMessage(error?.name);
-                        void stopVoiceWaveform();
-                        renderVoiceInput();
+                        void failVoiceInput(voiceInputFailureReason(error?.name));
                       }
                     }, 120);
                   });
 
                   const track = stream.getAudioTracks()[0];
-                  if (!track) throw new Error('audio-capture');
+                  if (!track) {
+                    await failVoiceInput(voiceInput.failureReason.microphoneUnavailable);
+                    return;
+                  }
                   recognition.start(track);
                 } catch (error) {
                   if (session !== dictation.session) return;
-                  dictation.desiredActive = false;
-                  dictation.mode = 'error';
                   const failure = error instanceof DOMException
                     ? error.name
                     : error instanceof Error
                       ? error.message
                       : error;
-                  dictation.status = dictationErrorMessage(failure);
-                  await stopVoiceWaveform();
-                  renderVoiceInput();
+                  await failVoiceInput(voiceInputFailureReason(failure));
+                }
+              };
+
+              const applyVoiceInputControl = async () => {
+                const display = voiceInputDisplay();
+                if (display?.primaryControlRef === voiceInput.control.start) {
+                  await startVoiceInput();
+                } else if (display?.primaryControlRef === voiceInput.control.stop) {
+                  await stopVoiceInput(false);
                 }
               };
 
@@ -3257,6 +3271,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const body = await readJson(response);
                 state.workspaceStrings = body?.strings ?? {};
                 applyStaticText();
+                renderVoiceInput();
                 renderDiagnostics();
               };
 
@@ -4062,7 +4077,7 @@ object VexLifeWebP1RuntimeArtifacts {
               });
 
               ui.voiceInput?.addEventListener('click', () => {
-                void startVoiceInput();
+                void applyVoiceInputControl();
               });
 
               ui.composeForm.addEventListener('submit', (event) => {
