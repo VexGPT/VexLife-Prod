@@ -424,7 +424,7 @@ class VexLifeProdLocalService private constructor(
                         .qualifiedRuntimeEvidence
                         .runtimeReceiptRef
                 },
-                modelSwitchRealization = switcher,
+                modelSwitchRealization = modelSwitchRealization,
                 privateCompletion =
                     VexLifePrivateConversation.Completion {
                         messages ->

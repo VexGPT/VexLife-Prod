@@ -29,7 +29,7 @@ import vexlife.memory.VexLifeMemoryContract
  *   -> one trace entry: hashes and refs, never the returned content itself
  * ```
  *
- * State expectations near the code, because these are easy to blur:
+ * Result-state expectations near the code, because these are easy to blur:
  * - AVAILABLE in the frame means the bridge will try; it is not a promise the read succeeds. A
  *   failed read is a FAILED result Vex can see and judge, not a failed human turn.
  * - The frame grants nothing by itself; admission here plus the owner's own checks do.
@@ -58,7 +58,7 @@ object VexLifeCapabilityBridge {
         HELD_TOKEN_BUDGET,
     }
 
-    /** How the ownerBindings reach the world; replaced in tests, system defaults in the Product. */
+    /** Concrete bindings through which the Bridge delegates to rightful owners. */
     data class OwnerBindings(
         val webTransport: VexLifeWebReach.Transport = VexLifeWebReach.SystemTransport,
         val resolver: VexLifeWebReach.Resolver = VexLifeWebReach.SystemResolver,

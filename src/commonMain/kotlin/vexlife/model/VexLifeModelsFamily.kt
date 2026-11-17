@@ -7,8 +7,8 @@ import vexlife.text.VexLifeText
 /**
  * Product semantic owner for what the person can do with one offered model in Settings → Models.
  *
- * State is one model's relationship to this Home: whether its required artifacts are present, whether a download is
- * running, whether the Home chose it, whether the running runtime serves it.
+ * State is one model's relationship to this Home: whether its required artifacts are present,
+ * whether a download is running, whether the Home chose it, and whether the running runtime serves it.
  *
  * Lawfulness (what each Control may do, by State):
  * ```
@@ -114,13 +114,20 @@ object VexLifeModelsFamily :
                 }
             Download ->
                 if (
-                    (currentState.artifactPresence == ArtifactPresence.ABSENT || currentState.artifactPresence == ArtifactPresence.PARTIAL) &&
+                    (
+                        currentState.artifactPresence == ArtifactPresence.ABSENT ||
+                            currentState.artifactPresence == ArtifactPresence.PARTIAL
+                    ) &&
                         idle
                 )
                     stay(Effect.AcquireArtifacts)
                 else null
             Redownload ->
-                if (currentState.artifactPresence == ArtifactPresence.DAMAGED && idle && !currentState.serving)
+                if (
+                    currentState.artifactPresence == ArtifactPresence.DAMAGED &&
+                        idle &&
+                        !currentState.serving
+                )
                     stay(Effect.ReplaceArtifacts)
                 else null
             Remove ->

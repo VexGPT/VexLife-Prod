@@ -131,7 +131,7 @@ object HereticCompanionRepresentation {
                     ),
                 ),
             ) {
-                "Companion provider profile ref is invalid"
+                "Companion representation profile ref is invalid"
             }
             require(
                 modelIdentity ==

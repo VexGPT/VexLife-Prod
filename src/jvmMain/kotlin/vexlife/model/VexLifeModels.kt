@@ -26,11 +26,11 @@ import vexlife.text.VexLifeText
  * - Redownload: HereticArtifactMaterialization.remove, then the same download.
  * - Remove: HereticArtifactMaterialization.remove (frees space; the model stays offered).
  *
- * The Family owns what Use means. [ModelSwitchRealization] is an injected realization seam: Product construction
- * delegates the effect to LocalSetup/runtime ownership and updates serving truth only after the
+ * The Family owns what Use means. [ModelSwitchRealization] is an injected realization seam:
+ * Product construction delegates the effect to LocalSetup/runtime ownership and updates serving truth only after the
  * target runtime is qualified. This class never kills/spawns a model process itself.
  *
- * Every file effect holds the Home's setup lease, so Setup and Settings never write model files at
+ * Every artifact effect holds the Home's setup lease, so Setup and Settings never write model files at
  * once. One background model operation runs at a time. Lawfulness is VexLifeModelsFamily's,
  * re-resolved against fresh State when each Control arrives.
  */
