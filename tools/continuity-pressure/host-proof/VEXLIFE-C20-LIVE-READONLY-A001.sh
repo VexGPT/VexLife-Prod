@@ -2,8 +2,8 @@
 set -u
 
 REPO='VexGPT/VexLife-Prod'
-HEAD_SHA='45c467b12f49d887acac7e582ded33f4a7470242'
-TREE_SHA='4c2c7ccc495f3441b1dba20b8cb1499a11ce60e3'
+HEAD_SHA='7ef1deaf17fab918479b1da9696930bbd3486eb2'
+TREE_SHA='e633f25fab662733b0725e4cfca100343d694f44'
 BASE_SHA='501e3fe3464303891287598793430b749cc91bc9'
 PR='226'
 SCENARIO_REF='scenario.vexlife.continuity-pressure.depth-continuity.v1'
@@ -150,7 +150,10 @@ set +e
 (
   cd "$SRC" &&
   ./gradlew --offline --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx4g \
-    jvmTest --tests 'vexlife.harness.ContinuityPressureAdapterTest'
+    jvmTest \
+      --tests 'vexlife.harness.ContinuityPressureAdapterTest' \
+      --tests 'vexlife.companion.DirectWorkingContinuityTest.sourceReturnSuccessorPromptPreservesTheSameWorkingContinuityCustody' \
+      --tests 'vexlife.continuity.VexLifeWorkingContinuityOwnerTest.activeRolloverLineageAdvancesCurrentCursorEvenWhenPressureReturnsToNormal'
 ) > "$RETURN_DIR/focused-harness.log" 2>&1
 FOCUSED_EXIT=$?
 set -e 2>/dev/null || true
