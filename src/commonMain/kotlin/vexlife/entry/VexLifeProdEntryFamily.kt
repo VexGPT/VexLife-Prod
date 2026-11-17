@@ -89,15 +89,15 @@ class VexLifeProdEntryFamily private constructor() :
     }
 
     /**
-     * The certified host profile does not admit this Mac for Home formation / model acquisition /
-     * runtime start. [homePresent] lets the journey show an existing Home as preserved.
+     * The selected host/target profile cannot currently realize Product setup/start.
+     * [homePresent] lets the journey show an existing Home as preserved.
      */
     data class HostHeld(
         override val desiredSourceSha: String,
         val reasonRef: String,
-        val chipModel: String?,
+        val observedHardware: String?,
         val totalMemoryBytes: Long?,
-        val requiredChipModel: String,
+        val requiredHardware: String,
         val requiredMemoryBytes: Long,
         val homePresent: Boolean,
     ) : EntryState {
@@ -105,7 +105,7 @@ class VexLifeProdEntryFamily private constructor() :
 
         init {
             require(
-                reasonRef.isNotBlank() && requiredChipModel.isNotBlank() && requiredMemoryBytes > 0
+                reasonRef.isNotBlank() && requiredHardware.isNotBlank() && requiredMemoryBytes > 0
             ) {
                 "held host entry state requires one reason and the certified requirement it failed"
             }
@@ -524,14 +524,14 @@ class VexLifeProdEntryFamily private constructor() :
         )
 
     private fun journey(
-        mac: String,
+        host: String,
         home: String,
         model: String,
         start: String,
         ready: String,
     ): List<JourneyStep> =
         listOf(
-            JourneyStep(JourneyStepMac, text("setup.label.step-mac"), mac),
+            JourneyStep(JourneyStepHost, text("setup.label.step-host"), host),
             JourneyStep(JourneyStepHome, text("setup.label.step-home"), home),
             JourneyStep(JourneyStepModel, text("setup.label.step-model"), model),
             JourneyStep(JourneyStepStart, text("setup.label.step-start"), start),
@@ -579,23 +579,36 @@ class VexLifeProdEntryFamily private constructor() :
                                     "setup.description.host-reason-memory-unknown"
                                 "INSUFFICIENT_SYSTEM_MEMORY" ->
                                     "setup.description.host-reason-memory-low"
-                                else -> "setup.description.host-reason-chip"
+                                else -> "setup.description.host-reason-hardware"
                             }
                         ),
                     "requirement" to
                         VexLifeText(
                             key = "setup.description.host-requirement",
-                            args = mapOf("chip" to state.requiredChipModel),
+                            args = mapOf("hardware" to state.requiredHardware),
                             gib = mapOf("memory" to state.requiredMemoryBytes),
                         ),
                     "observed" to
                         VexLifeText(
                             key = "setup.description.host-observed",
-                            args = state.chipModel?.let { mapOf("chip" to it) } ?: emptyMap(),
+                            args =
+                                state.observedHardware
+                                    ?.let {
+                                        mapOf(
+                                            "hardware" to it,
+                                        )
+                                    }
+                                    ?: emptyMap(),
                             parts =
                                 buildMap {
-                                    if (state.chipModel == null)
-                                        put("chip", text("setup.label.unknown-chip"))
+                                    if (state.observedHardware == null) {
+                                        put(
+                                            "hardware",
+                                            text(
+                                                "setup.label.unknown-hardware",
+                                            ),
+                                        )
+                                    }
                                     put("memory", memoryText(state.totalMemoryBytes))
                                 },
                         ),
@@ -651,7 +664,7 @@ class VexLifeProdEntryFamily private constructor() :
         const val EffectFormCanonicalHome = "FORM_CANONICAL_HOME"
         const val EffectConvergeProduct = "CONVERGE_PRODUCT"
 
-        const val JourneyStepMac = "MAC"
+        const val JourneyStepHost = "HOST"
         const val JourneyStepHome = "HOME"
         const val JourneyStepModel = "MODEL"
         const val JourneyStepStart = "START"
@@ -659,7 +672,7 @@ class VexLifeProdEntryFamily private constructor() :
 
         val JourneyStepRefs =
             listOf(
-                JourneyStepMac,
+                JourneyStepHost,
                 JourneyStepHome,
                 JourneyStepModel,
                 JourneyStepStart,
