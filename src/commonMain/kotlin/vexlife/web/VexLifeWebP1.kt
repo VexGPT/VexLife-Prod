@@ -81,6 +81,11 @@ object VexLifeWebP1 {
                 "conversation.send",
             )
 
+        val ConversationCancelCapability =
+            VexWeb.CapabilityRef.of(
+                "conversation.cancel",
+            )
+
         /** The person's reply language, a Home setting every prompt carries. */
         val ReplyLanguageCapability = VexWeb.CapabilityRef.of("person.reply-language")
 
@@ -311,8 +316,13 @@ object VexLifeWebP1 {
         )
 
     val Stop =
-        blueprintSurface(
-            VexLifeWorkspaceBlueprint.Stop,
+        VexWebAuthoring.element(
+            element = VexLifeWorkspaceBlueprint.Stop,
+            placement = VexWeb.Placement.Trailing,
+            depth = VexWeb.Depth.Content,
+            presentation = VexWeb.Presentation.Surface,
+            interactions = setOf(VexWeb.Interaction.Activate),
+            binding = VexWebAuthoring.capability(Refs.ConversationCancelCapability),
         )
 
     val ContextInspector =
