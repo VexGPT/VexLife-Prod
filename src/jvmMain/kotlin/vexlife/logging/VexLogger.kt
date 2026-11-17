@@ -39,6 +39,7 @@ object VexLogger {
         Entry("entry"),
         Setup("setup"),
         Person("person"),
+        Models("models"),
         ServiceLifetime("service-lifetime"),
         Service("service"),
         HereticRuntime("heretic-runtime"),
@@ -87,11 +88,11 @@ object VexLogger {
         RuntimeModelSwitched(Owner.HereticRuntime),
 
         // Settings → Models: the person's model Controls and the file effects they caused.
-        ModelControlAccepted(Owner.Setup),
-        ModelDownloadStarted(Owner.Setup),
-        ModelDownloadCompleted(Owner.Setup),
-        ModelDownloadFailed(Owner.Setup),
-        ModelFilesRemoved(Owner.Setup),
+        ModelControlAccepted(Owner.Models),
+        ModelDownloadStarted(Owner.Models),
+        ModelDownloadCompleted(Owner.Models),
+        ModelDownloadFailed(Owner.Models),
+        ModelFilesRemoved(Owner.Models),
         RuntimeProcessNoLongerLive(Owner.HereticRuntime),
         RuntimeProcessLive(Owner.HereticRuntime),
 

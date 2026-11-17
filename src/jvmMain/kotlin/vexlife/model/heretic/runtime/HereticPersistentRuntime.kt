@@ -55,7 +55,7 @@ object HereticPersistentRuntime {
         50L
 
     /**
-     * VexLife serves one human turn at a time. Keep only the newest reusable mlx-lm prompt cache:
+     * VexLife serves one human turn at a time. Keep only one mlx-lm prompt-cache entry:
      * the immediate continuation benefits from a warm prefix, while older parallel-style cache
      * entries only accumulate unified-memory pressure.
      *
@@ -63,7 +63,7 @@ object HereticPersistentRuntime {
      * cache failure. Active-KV/prefill controls remain unchanged until one-cache stress evidence
      * proves they are also needed.
      */
-    const val PromptCacheSequences =
+    const val PromptCacheEntryLimit =
         1
 
     private val RefPattern =
@@ -586,7 +586,7 @@ object HereticPersistentRuntime {
                 base +
                     listOf(
                         "--prompt-cache-size",
-                        PromptCacheSequences.toString(),
+                        PromptCacheEntryLimit.toString(),
                     )
 
             ServerLaunchContract.PRE_PROMPT_CACHE_LIMIT ->

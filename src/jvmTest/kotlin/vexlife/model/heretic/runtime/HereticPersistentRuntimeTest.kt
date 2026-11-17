@@ -860,10 +860,10 @@ class HereticPersistentRuntimeTest {
         val cacheFlag = args.indexOf("--prompt-cache-size")
         assertTrue(cacheFlag >= 0)
         assertEquals(
-            HereticPersistentRuntime.PromptCacheSequences.toString(),
+            HereticPersistentRuntime.PromptCacheEntryLimit.toString(),
             args[cacheFlag + 1],
         )
-        assertEquals(1, HereticPersistentRuntime.PromptCacheSequences)
+        assertEquals(1, HereticPersistentRuntime.PromptCacheEntryLimit)
 
         // This first safety step is deliberately narrow. Do not silently claim active-KV or
         // prefill tuning that has not yet been earned by one-cache lived stress evidence.

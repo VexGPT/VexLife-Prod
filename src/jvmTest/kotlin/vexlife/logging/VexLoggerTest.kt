@@ -25,6 +25,7 @@ class VexLoggerTest {
     fun factsHaveOneOwnerAndStableWireNames() {
         assertEquals("SEND_ACCEPTED", VexLogger.Fact.SendAccepted.wire)
         assertEquals("RUNTIME_RETIRED_UNHEALTHY", VexLogger.Fact.RuntimeRetiredUnhealthy.wire)
+        assertEquals(VexLogger.Owner.Models, VexLogger.Fact.ModelControlAccepted.owner)
         assertEquals(VexLogger.Fact.entries.size, VexLogger.Fact.entries.map { it.wire }.toSet().size)
         VexLogger.Fact.entries.forEach { assertEquals(it, VexLogger.Fact.fromWire(it.wire)) }
     }
