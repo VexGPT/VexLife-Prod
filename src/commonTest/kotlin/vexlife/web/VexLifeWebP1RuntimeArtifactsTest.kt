@@ -4,6 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.voiceinput.VexLifeVoiceInputFamily
 import vexlife.workspace.VexLifeWorkspaceBlueprint
@@ -411,14 +412,30 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.html.contains("data-vex-ref=\"${VexLifeWebP1.VoiceInput.identity.ref}\""))
         assertTrue(bundle.html.contains("id=\"voice-waveform\""))
         assertTrue(bundle.html.contains("data-vex-ref=\"${VexLifeWebP1.Stop.identity.ref}\""))
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.ConversationTurnPath))
         assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.ConversationCancelPath))
-        assertTrue(bundle.javascript.contains("body: JSON.stringify({ idempotencyKey: state.pending.idempotencyKey })"))
-        assertTrue(bundle.javascript.contains("ui.send.hidden = state.sendInFlight"))
-        assertTrue(bundle.javascript.contains("ui.stop.hidden = !state.sendInFlight"))
+        assertTrue(bundle.javascript.contains("body: JSON.stringify({ attemptRef })"))
+        assertFalse(bundle.javascript.contains("body: JSON.stringify({ idempotencyKey: state.pending.idempotencyKey })"))
+        assertTrue(bundle.javascript.contains("const turnDisplay = state.conversationTurn?.display ?? null"))
+        assertTrue(bundle.javascript.contains("const sendLawful = turnControlRef === conversationTurn.control.send"))
+        assertTrue(bundle.javascript.contains("const stopLawful = turnControlRef === conversationTurn.control.stop"))
+        assertTrue(bundle.javascript.contains("ui.stop.hidden = !(turnActive || turnCancelling)"))
+        assertTrue(bundle.javascript.contains("await loadConversationTurn();"))
+        assertTrue(bundle.javascript.contains("workspace.button.conversation-send"))
         assertTrue(bundle.javascript.contains("workspace.button.conversation-stop"))
         assertTrue(bundle.javascript.contains("workspace.status.conversation-stopping"))
         assertTrue(bundle.javascript.contains("workspace.status.conversation-stopped"))
         assertTrue(bundle.javascript.contains("state.sendCancelRequested = true"))
+        VexLifeConversationTurnFamily.ControlRefs.forEach { controlRef ->
+            assertTrue(
+                bundle.javascript.contains(controlRef),
+                "ConversationTurn Control ref must reach VexWeb: $controlRef",
+            )
+        }
+        assertFalse(
+            bundle.html.contains(">Send</button>"),
+            "Conversation Send words must come from Family-keyed workspace text",
+        )
         assertTrue(bundle.javascript.contains("window.SpeechRecognition"))
         assertTrue(bundle.javascript.contains("recognition.processLocally = true"))
         assertTrue(bundle.javascript.contains("quality: 'dictation'"))
