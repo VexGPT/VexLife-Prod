@@ -134,8 +134,11 @@ class VexLifeModelsTest {
                     VexLifeModels.OutcomeState.Selected.stateRef,
                     selected.lastOutcome?.state,
                 )
-                assertTrue(
+                assertFalse(
                     selected.models.first { it.handle == "heretic-9b" }.chosen,
+                )
+                assertTrue(
+                    selected.models.first { it.handle == "heretic-9b" }.targeted,
                 )
                 assertFalse(
                     selected.models.first { it.handle == "heretic-9b" }.serving,
@@ -146,6 +149,10 @@ class VexLifeModelsTest {
                 )
                 assertTrue(
                     phases.isEmpty(),
+                )
+                assertEquals(
+                    HereticModelCatalog.Models.Qwen27B,
+                    FileHereticModelConfigurationStore(home).selectedModel(fixture.manifest),
                 )
 
                 owner.control(
@@ -239,8 +246,11 @@ class VexLifeModelsTest {
                             it.handle == "heretic-4b"
                         }
 
-                    assertTrue(
+                    assertFalse(
                         four.chosen,
+                    )
+                    assertTrue(
+                        four.targeted,
                     )
                     assertFalse(
                         four.serving,
@@ -261,8 +271,18 @@ class VexLifeModelsTest {
                         "heretic-4b",
                         configured.selectedHandle,
                     )
-                    assertFalse(
-                        configured.switching != null,
+                    assertNull(
+                        configured.switching,
+                    )
+                    val manifest =
+                        requireNotNull(
+                            vexlife.home.VexLifeProdHomeFiles.observeExisting(
+                                home,
+                            ),
+                        ).manifest
+                    assertEquals(
+                        HereticModelCatalog.Models.Qwen27B,
+                        FileHereticModelConfigurationStore(home).selectedModel(manifest),
                     )
                 }
         }
