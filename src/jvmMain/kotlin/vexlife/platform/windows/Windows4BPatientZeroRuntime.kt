@@ -49,8 +49,8 @@ internal object Windows4BPatientZeroRuntime {
     const val ExistingLlamaServerSha256 =
         "af3e56d6bdb84a9b6bd50f6ad748809370bc29be42d58088041408b2933d80f7"
 
-    const val RuntimeReceiptRelativePath =
-        "runtime/vexlife-prod/windows-4b-patient-zero-runtime-receipt.json"
+    val RuntimeReceiptRelativePath: String =
+        HereticRuntimeRealization.Windows4BPatientZeroReceiptRelativePath
 
     private const val Port =
         18_080
