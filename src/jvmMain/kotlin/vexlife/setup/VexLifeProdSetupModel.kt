@@ -41,6 +41,7 @@ object VexLifeProdSetupModel {
     @Serializable
     data class Projection(
         val schemaVersion: String,
+        val targetRef: String,
         val selected: String,
         val chosen: Boolean,
         val savedInHome: Boolean,
@@ -50,6 +51,7 @@ object VexLifeProdSetupModel {
         init {
             require(
                 schemaVersion == Schema &&
+                    targetRef.isNotBlank() &&
                     models.any { it.handle == selected } &&
                     (!savedInHome || chosen)
             ) {
@@ -158,6 +160,7 @@ object VexLifeProdSetupModel {
             )
         return Projection(
             schemaVersion = Schema,
+            targetRef = target.targetRef,
             selected = selected.handle,
             chosen = explicit != null || saved != null,
             savedInHome = saved == selected,
