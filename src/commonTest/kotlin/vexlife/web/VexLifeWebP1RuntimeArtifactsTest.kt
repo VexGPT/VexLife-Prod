@@ -466,6 +466,23 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains("selectedLocalAsrOption"))
         assertTrue(bundle.javascript.contains("loadLocalAsr"))
         assertTrue(bundle.javascript.contains("selectLocalAsr"))
+        val workspaceStringsStart =
+            bundle.javascript.indexOf("const loadWorkspaceStrings = async () =>")
+        val workspaceStringsEnd =
+            bundle.javascript.indexOf(
+                "// The presentation reports only what it observed itself",
+                workspaceStringsStart,
+            )
+        assertTrue(workspaceStringsStart >= 0 && workspaceStringsEnd > workspaceStringsStart)
+        val workspaceStringsLoad =
+            bundle.javascript.substring(
+                workspaceStringsStart,
+                workspaceStringsEnd,
+            )
+        assertTrue(
+            workspaceStringsLoad.contains("renderLocalAsr();"),
+            "Local ASR must rerender after workspace localization arrives",
+        )
         assertTrue(bundle.javascript.contains("projectDictationIntoDraft"))
         assertTrue(bundle.javascript.contains("ui.draft.value ="))
         assertTrue(bundle.javascript.contains("voiceInput.actByState"))
