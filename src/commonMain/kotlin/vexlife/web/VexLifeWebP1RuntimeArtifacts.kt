@@ -699,14 +699,6 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const renderVoiceInput = () => {
                 if (!ui.voiceInput) return;
-                if (
-                  !dictation.desiredActive &&
-                  (dictation.stateRef === null ||
-                    dictation.stateRef === voiceInput.state.ready ||
-                    dictation.stateRef === voiceInput.state.held)
-                ) {
-                  observeVoiceInputCapability();
-                }
                 const display = voiceInputDisplay();
                 if (!display) return;
                 ui.voiceInput.disabled =
@@ -826,22 +818,26 @@ object VexLifeWebP1RuntimeArtifacts {
                 return voiceInput.failureReason.unknown;
               };
 
-              const failVoiceInput = async (failureReasonRef) => {
+              const settleVoiceInputFailure = async (semanticState, language) => {
                 dictation.desiredActive = false;
                 dictation.recognition = null;
-                setVoiceInputState(voiceInput.state.failed, {
-                  failureReasonRef,
-                  language: dictation.language ?? voiceInputLanguage()
-                });
+                applyVoiceInputSemanticState(semanticState, language);
                 await stopVoiceWaveform();
                 renderVoiceInput();
               };
 
-              const stopVoiceInput = async (abort = false) => {
+              const failVoiceInput = async (failureReasonRef) => {
                 const language = dictation.language ?? voiceInputLanguage();
+                const semanticState =
+                  voiceInput.failureStateByReason[failureReasonRef] ??
+                  voiceInput.failureStateByReason[voiceInput.failureReason.unknown];
+                if (!semanticState) return;
+                await settleVoiceInputFailure(semanticState, language);
+              };
+
+              const realizeEndLocalDictation = async (abort = false) => {
                 dictation.desiredActive = false;
-                setVoiceInputState(voiceInput.state.stopping, { language });
-                renderVoiceInput();
+                dictation.session += 1;
                 const recognition = dictation.recognition;
                 dictation.recognition = null;
                 if (recognition) {
@@ -855,9 +851,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderVoiceInput();
               };
 
-              const ensureLocalDictationLanguage = async (Recognition, language) => {
-                setVoiceInputState(voiceInput.state.checkingLanguage, { language });
-                renderVoiceInput();
+              const ensureLocalDictationLanguage = async (Recognition, language, session) => {
                 // Product dictation means local speech editing the existing Composer draft.
                 // Do not require the browser provider's optional higher "dictation" quality tier;
                 // processLocally is the privacy/custody invariant this Product actually owns.
@@ -866,25 +860,47 @@ object VexLifeWebP1RuntimeArtifacts {
                   processLocally: true
                 };
                 const availability = await Recognition.available(options);
-                if (availability === localRecognitionAvailability.available) return true;
-                if (availability === localRecognitionAvailability.unavailable) return false;
-                setVoiceInputState(voiceInput.state.installingLanguage, { language });
-                renderVoiceInput();
-                return Boolean(await Recognition.install(options));
-              };
+                if (!dictation.desiredActive || session !== dictation.session) return false;
 
-              const startVoiceInput = async () => {
-                if (state.sendInFlight || state.privateInFlight) return;
-                observeVoiceInputCapability();
-                const display = voiceInputDisplay();
-                if (display?.primaryControlRef !== voiceInput.control.start) {
+                const semanticObservation =
+                  voiceInput.languageAvailabilityStateByProviderValue[availability];
+                if (semanticObservation === undefined) {
+                  await failVoiceInput(voiceInput.failureReason.unknown);
+                  return false;
+                }
+                if (semanticObservation !== null) {
+                  applyVoiceInputSemanticState(semanticObservation, language);
                   renderVoiceInput();
-                  return;
+                  if (semanticObservation.stateRef === voiceInput.state.failed) {
+                    dictation.desiredActive = false;
+                    dictation.recognition = null;
+                    await stopVoiceWaveform();
+                    renderVoiceInput();
+                    return false;
+                  }
+                } else {
+                  return true;
                 }
 
+                const installed = Boolean(await Recognition.install(options));
+                if (!dictation.desiredActive || session !== dictation.session) return false;
+                const installObservation =
+                  voiceInput.languageInstallStateBySuccess[String(installed)];
+                if (installObservation === undefined) {
+                  await failVoiceInput(voiceInput.failureReason.unknown);
+                  return false;
+                }
+                if (installObservation !== null) {
+                  await settleVoiceInputFailure(installObservation, language);
+                  return false;
+                }
+                return true;
+              };
+
+              const realizeBeginLocalDictation = async (language) => {
                 const Recognition = localSpeechRecognition();
-                const language = dictation.language ?? voiceInputLanguage();
                 if (!Recognition || !language) {
+                  dictation.desiredActive = false;
                   observeVoiceInputCapability();
                   renderVoiceInput();
                   return;
@@ -899,14 +915,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 dictation.interimTranscript = '';
 
                 try {
-                  const languageReady = await ensureLocalDictationLanguage(Recognition, language);
-                  if (!dictation.desiredActive || session !== dictation.session) return;
-                  if (!languageReady) {
-                    await failVoiceInput(voiceInput.failureReason.languageUnavailable);
+                  const languageReady =
+                    await ensureLocalDictationLanguage(Recognition, language, session);
+                  if (!dictation.desiredActive || session !== dictation.session || !languageReady) {
                     return;
                   }
 
-                  setVoiceInputState(voiceInput.state.requestingMicrophone, { language });
+                  applyVoiceInputSemanticState(voiceInput.microphoneRequestState, language);
                   renderVoiceInput();
                   const stream = await navigator.mediaDevices.getUserMedia({
                     audio: {
@@ -933,7 +948,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
                   recognition.addEventListener('start', () => {
                     if (session !== dictation.session || !dictation.desiredActive) return;
-                    setVoiceInputState(voiceInput.state.listening, { language });
+                    applyVoiceInputSemanticState(voiceInput.recognitionStartedState, language);
                     renderVoiceInput();
                   });
 
@@ -945,7 +960,8 @@ object VexLifeWebP1RuntimeArtifacts {
                       const text = String(result?.[0]?.transcript ?? '').trim();
                       if (!text) continue;
                       if (result.isFinal) {
-                        dictation.finalTranscript = appendTranscriptSegment(dictation.finalTranscript, text);
+                        dictation.finalTranscript =
+                          appendTranscriptSegment(dictation.finalTranscript, text);
                       } else {
                         interim = appendTranscriptSegment(interim, text);
                       }
@@ -994,12 +1010,46 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
               };
 
-              const applyVoiceInputControl = async () => {
+              const applyVoiceInputControl = async (options = {}) => {
+                if (state.sendInFlight || state.privateInFlight) return;
+
+                if (
+                  !dictation.desiredActive &&
+                  (dictation.stateRef === null ||
+                    dictation.stateRef === voiceInput.state.ready ||
+                    dictation.stateRef === voiceInput.state.held)
+                ) {
+                  observeVoiceInputCapability();
+                }
+
                 const display = voiceInputDisplay();
-                if (display?.primaryControlRef === voiceInput.control.start) {
-                  await startVoiceInput();
-                } else if (display?.primaryControlRef === voiceInput.control.stop) {
-                  await stopVoiceInput(false);
+                const controlRef = options.controlRef ?? display?.primaryControlRef ?? null;
+                if (!controlRef) {
+                  renderVoiceInput();
+                  return;
+                }
+
+                const act = voiceInputActFor(controlRef);
+                if (!act) {
+                  renderVoiceInput();
+                  return;
+                }
+
+                const language = dictation.language ?? voiceInputLanguage();
+                if (act.admittedState) {
+                  applyVoiceInputSemanticState(act.admittedState, language);
+                }
+                renderVoiceInput();
+
+                if (act.effectRef === voiceInput.effect.beginLocalDictation) {
+                  if (!language) {
+                    observeVoiceInputCapability();
+                    renderVoiceInput();
+                    return;
+                  }
+                  await realizeBeginLocalDictation(language);
+                } else if (act.effectRef === voiceInput.effect.endLocalDictation) {
+                  await realizeEndLocalDictation(Boolean(options.abort));
                 }
               };
 
