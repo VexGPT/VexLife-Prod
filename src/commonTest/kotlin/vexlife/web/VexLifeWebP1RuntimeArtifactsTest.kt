@@ -554,8 +554,9 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.html.contains(
-                "id=\"model-prompt-cache-entries\"",
+                "<select id=\"model-prompt-cache-entries\">",
             ),
+            "three discrete performance levels should be presented as named choices, not a numeric slider",
         )
         assertTrue(
             bundle.html.contains(
@@ -585,6 +586,24 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             javascript.contains(
+                "workspace.label.model-cache-level-1",
+            ) &&
+                javascript.contains(
+                    "workspace.label.model-cache-level-2",
+                ) &&
+                javascript.contains(
+                    "workspace.label.model-cache-level-3",
+                ),
+            "the UI should explain the three admitted cache values as human-readable levels",
+        )
+        assertFalse(
+            bundle.html.contains(
+                "type=\"range\"",
+            ),
+            "the primary Settings surface should not expose the raw cache count as a slider",
+        )
+        assertTrue(
+            javascript.contains(
                 "modelControl(\"${VexLifeModelsFamily.ControlSelect}\", handle)",
             ),
             "choosing a target must return the Select Control rather than start it",
@@ -593,7 +612,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
             javascript.contains(
                 "\"${VexLifeModelsFamily.ControlSetPromptCacheEntries}\"",
             ),
-            "the cache slider must return the configuration Control",
+            "the performance choice must return the runtime-configuration Control",
         )
         assertTrue(
             javascript.contains(
