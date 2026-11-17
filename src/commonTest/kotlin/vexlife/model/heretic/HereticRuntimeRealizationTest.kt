@@ -112,6 +112,20 @@ class HereticRuntimeRealizationTest {
             "http://127.0.0.1:18080",
             realization.runtime.endpoint,
         )
+        val launch =
+            requireNotNull(
+                realization.runtime.livedLaunchProfile,
+            )
+        assertEquals(
+            16_384,
+            launch.contextTokens,
+        )
+        assertTrue(
+            launch.jinja,
+        )
+        assertNull(
+            launch.gpuOffloadLayers,
+        )
     }
 
     @Test
