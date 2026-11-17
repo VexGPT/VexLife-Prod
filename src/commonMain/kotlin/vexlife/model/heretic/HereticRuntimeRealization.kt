@@ -163,6 +163,33 @@ object HereticRuntimeRealization {
             architecture = Architecture.X86_64,
         )
 
+    private val MacMlxRuntime =
+        RuntimeProfile(
+            // These values match the v1 certified identity for compatibility, but current runtime
+            // behavior is owned here rather than inferred from model identity.
+            runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
+            runtimeClass = HereticProductIdentity.RuntimeClass,
+            transportClass = HereticProductIdentity.TransportClass,
+            endpoint = HereticProductIdentity.Endpoint,
+            requestModel = HereticProductIdentity.RequestModel,
+        )
+
+    private fun openAiLoopbackQualification(
+        qualificationRef: String,
+        modelExposure: ModelExposure,
+    ): QualificationProfile =
+        QualificationProfile(
+            qualificationRef = qualificationRef,
+            healthPath = "/health",
+            modelsPath = "/v1/models",
+            completionPath = "/v1/chat/completions",
+            modelExposure = modelExposure,
+            maxTokens = 1,
+            temperature = 0.0,
+            enableThinking = false,
+            stream = false,
+        )
+
     private fun macMlx(
         model: HereticModelCatalog.Entry,
     ): Value {
@@ -207,13 +234,7 @@ object HereticRuntimeRealization {
                         ),
                     runtime =
                         Requirement.Required(
-                            RuntimeProfile(
-                                runtimeAdapterRef = identity.runtimeAdapterRef,
-                                runtimeClass = identity.runtimeClass,
-                                transportClass = identity.transportClass,
-                                endpoint = identity.endpoint,
-                                requestModel = identity.requestModel,
-                            ),
+                            MacMlxRuntime,
                         ),
                     process =
                         Requirement.Required(
@@ -226,17 +247,11 @@ object HereticRuntimeRealization {
                         ),
                     qualification =
                         Requirement.Required(
-                            QualificationProfile(
+                            openAiLoopbackQualification(
                                 qualificationRef =
                                     "qualification.vexlife-prod.heretic.mlx-openai.v1",
-                                healthPath = "/health",
-                                modelsPath = "/v1/models",
-                                completionPath = "/v1/chat/completions",
-                                modelExposure = ModelExposure.EXACT_MATERIALIZATION_PATH,
-                                maxTokens = 1,
-                                temperature = 0.0,
-                                enableThinking = false,
-                                stream = false,
+                                modelExposure =
+                                    ModelExposure.EXACT_MATERIALIZATION_PATH,
                             ),
                         ),
                 ),
@@ -319,17 +334,11 @@ object HereticRuntimeRealization {
                         ),
                     qualification =
                         Requirement.Required(
-                            QualificationProfile(
+                            openAiLoopbackQualification(
                                 qualificationRef =
                                     "qualification.vexlife-prod.heretic.llama-cpp-openai.v1",
-                                healthPath = "/health",
-                                modelsPath = "/v1/models",
-                                completionPath = "/v1/chat/completions",
-                                modelExposure = ModelExposure.EXACT_REQUEST_MODEL_ALIAS,
-                                maxTokens = 1,
-                                temperature = 0.0,
-                                enableThinking = false,
-                                stream = false,
+                                modelExposure =
+                                    ModelExposure.EXACT_REQUEST_MODEL_ALIAS,
                             ),
                         ),
                 ),
