@@ -6783,5 +6783,79 @@
     "surfaces": [
       "setup.card"
     ]
+  },
+  "setup.heading.model-target-held": {
+    "strings": {
+      "en": {
+        "text": "Model unavailable on this device"
+      },
+      "ja": {
+        "text": "このデバイスではモデルを利用できません"
+      },
+      "zh": {
+        "text": "此设备无法使用该模型"
+      },
+      "ko": {
+        "text": "이 기기에서 모델을 사용할 수 없음"
+      },
+      "fr": {
+        "text": "Modèle indisponible sur cet appareil"
+      },
+      "de": {
+        "text": "Modell auf diesem Gerät nicht verfügbar"
+      },
+      "es": {
+        "text": "Modelo no disponible en este dispositivo"
+      },
+      "pt": {
+        "text": "Modelo indisponível neste dispositivo"
+      },
+      "ar": {
+        "text": "النموذج غير متاح على هذا الجهاز"
+      },
+      "hi": {
+        "text": "इस डिवाइस पर मॉडल उपलब्ध नहीं है"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
+  },
+  "setup.description.model-target-held": {
+    "strings": {
+      "en": {
+        "text": "The selected local model is not supported on this device yet. Choose another model to continue."
+      },
+      "ja": {
+        "text": "選択したローカルモデルは、このデバイスではまだサポートされていません。続行するには別のモデルを選んでください。"
+      },
+      "zh": {
+        "text": "所选本地模型尚不支持此设备。请选择其他模型以继续。"
+      },
+      "ko": {
+        "text": "선택한 로컬 모델은 아직 이 기기에서 지원되지 않습니다. 계속하려면 다른 모델을 선택하세요."
+      },
+      "fr": {
+        "text": "Le modèle local sélectionné n’est pas encore pris en charge sur cet appareil. Choisissez un autre modèle pour continuer."
+      },
+      "de": {
+        "text": "Das ausgewählte lokale Modell wird auf diesem Gerät noch nicht unterstützt. Wähle ein anderes Modell, um fortzufahren."
+      },
+      "es": {
+        "text": "El modelo local seleccionado todavía no es compatible con este dispositivo. Elige otro modelo para continuar."
+      },
+      "pt": {
+        "text": "O modelo local selecionado ainda não é compatível com este dispositivo. Escolha outro modelo para continuar."
+      },
+      "ar": {
+        "text": "النموذج المحلي المحدد غير مدعوم على هذا الجهاز حتى الآن. اختر نموذجًا آخر للمتابعة."
+      },
+      "hi": {
+        "text": "चुना गया लोकल मॉडल अभी इस डिवाइस पर समर्थित नहीं है। जारी रखने के लिए दूसरा मॉडल चुनें।"
+      }
+    },
+    "surfaces": [
+      "setup.card"
+    ]
   }
 }
