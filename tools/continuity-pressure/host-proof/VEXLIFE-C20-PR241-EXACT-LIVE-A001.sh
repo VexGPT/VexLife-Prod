@@ -6,6 +6,7 @@ PR='241'
 CANDIDATE_HEAD='d408a84cc2ab6a79874bead461fc74d1bc2eaca9'
 CANDIDATE_TREE='b058a82fd9e76ed0ef230eb27f2ed86aebe25a55'
 CANDIDATE_BASE='d0cba51decfe9057ac9afc007fdeb37da213cc97'
+PRIOR_RUNTIME_CLEANUP_HEAD='5c9e6ee6270aa4fc6db41807842f8e741dff780d'
 PRECONDITION_TOOLING_HEAD='88eb2484abb0355a4b36bad6a46aa768d98ed0f4'
 SCENARIO_REF='scenario.vexlife.continuity-pressure.depth-continuity.v1'
 SCENARIO_PATH='tools/continuity-pressure/scenarios/depth-continuity-v1.json'
@@ -22,6 +23,7 @@ STATE='FAILED'
 STAGE='BOOTSTRAP'
 DETAIL='not started'
 FOCUSED_EXIT='NOT_RUN'
+PRIOR_RUNTIME_CLEANUP_EXIT='NOT_RUN'
 RUNTIME_PRECONDITION_EXIT='NOT_RUN'
 LIVE_EXIT='NOT_RUN'
 EXPERIMENT_STATUS='NOT_RUN'
@@ -59,6 +61,7 @@ observedHead=$OBSERVED_HEAD
 observedTree=$OBSERVED_TREE
 runtimeHome=$RUNTIME_HOME
 focusedProofExit=$FOCUSED_EXIT
+priorRuntimeCleanupExit=$PRIOR_RUNTIME_CLEANUP_EXIT
 runtimePreconditionExit=$RUNTIME_PRECONDITION_EXIT
 liveHarnessExit=$LIVE_EXIT
 experimentStatus=$EXPERIMENT_STATUS
@@ -161,10 +164,31 @@ if [ ! -d "$RUNTIME_HOME" ] || [ ! -f "$RUNTIME_HOME/config/home.json" ]; then
   finish_and_exit 0
 fi
 
+STAGE='PRIOR_RUNTIME_CLEANUP_TOOLING'
+"$GIT_BIN" -C "$SRC" checkout --detach "$PRIOR_RUNTIME_CLEANUP_HEAD" >> "$RETURN_DIR/clone.log" 2>&1 ||
+  fail_now "$STAGE" 'prior-runtime cleanup tooling checkout failed'
+[ -z "$($GIT_BIN -C "$SRC" status --porcelain=v1 -uall)" ] ||
+  fail_now "$STAGE" 'prior-runtime cleanup tooling source is not clean'
+
+STAGE='PRIOR_RUNTIME_CLEANUP'
+set +e
+(
+  cd "$SRC" &&
+  ./gradlew --offline --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx4g \
+    continuityPriorRuntimeCleanup --args="--runtime-home $RUNTIME_HOME"
+) > "$RETURN_DIR/prior-runtime-cleanup.log" 2>&1
+PRIOR_RUNTIME_CLEANUP_EXIT=$?
+set -e 2>/dev/null || true
+if [ "$PRIOR_RUNTIME_CLEANUP_EXIT" -ne 0 ]; then
+  STATE='HELD'
+  DETAIL="exact prior runtime cleanup could not prove/retire the stale 27B Product runtime; exit $PRIOR_RUNTIME_CLEANUP_EXIT"
+  finish_and_exit 0
+fi
+
 STAGE='RUNTIME_PRECONDITION_TOOLING'
 "$GIT_BIN" -C "$SRC" checkout --detach "$PRECONDITION_TOOLING_HEAD" >> "$RETURN_DIR/clone.log" 2>&1 ||
   fail_now "$STAGE" 'host-proof precondition tooling checkout failed'
-[ -z "$($GIT_BIN -C "$SRC" status --porcelain=v1 -uall)" ] ||
+[ -z "$($GIT_BIN" -C "$SRC" status --porcelain=v1 -uall)" ] ||
   fail_now "$STAGE" 'host-proof tooling source is not clean'
 
 STAGE='RUNTIME_PRECONDITION'
