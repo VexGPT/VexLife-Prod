@@ -5,6 +5,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.service.VexLifeProdServiceContract
+import vexlife.voiceinput.VexLifeVoiceInputFamily
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexLifeWebP1RuntimeArtifactsTest {
@@ -412,6 +413,22 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains("projectDictationIntoDraft"))
         assertTrue(bundle.javascript.contains("ui.draft.value ="))
         assertTrue(bundle.javascript.contains("if (dictation.desiredActive) void stopVoiceInput(true)"))
+        VexLifeVoiceInputFamily.StateRefs.forEach { stateRef ->
+            assertTrue(bundle.javascript.contains(stateRef), "VoiceInput State ref must reach VexWeb: $stateRef")
+        }
+        VexLifeVoiceInputFamily.ControlRefs.forEach { controlRef ->
+            assertTrue(bundle.javascript.contains(controlRef), "VoiceInput Control ref must reach VexWeb: $controlRef")
+        }
+        VexLifeVoiceInputFamily.Text.entries.forEach { text ->
+            assertTrue(bundle.javascript.contains(text.key), "VoiceInput text key must reach VexWeb: ${text.key}")
+        }
+        assertFalse(bundle.javascript.contains("Dictation stays on this device and edits only this draft."))
+        assertFalse(bundle.javascript.contains("Listening locally · speech stays on this device."))
+        assertFalse(bundle.javascript.contains("Microphone permission is needed for local dictation."))
+        assertFalse(
+            bundle.html.contains("Start local dictation"),
+            "VoiceInput markup must carry keyed identity, not renderer-authored English",
+        )
         assertFalse(
             bundle.javascript.contains("window.webkitSpeechRecognition"),
             "VoiceInput must not fall back to the legacy/cloud-capable prefixed recognizer",
