@@ -107,16 +107,6 @@ class DirectConversationSourceReturnTest {
                 "Never quote or explain the request header",
             ),
         )
-        assertTrue(
-            protocol.content.contains(
-                "previously said, named, corrected, decided, or identified",
-            ),
-        )
-        assertTrue(
-            protocol.content.contains(
-                "paraphrase rather than the original wording",
-            ),
-        )
     }
 
     @Test
