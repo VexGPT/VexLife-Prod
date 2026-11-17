@@ -127,12 +127,20 @@ object HereticRuntimeRealization {
 
     private val MacMlxRuntime =
         RuntimeProfile(
-            runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
-            runtimeClass = HereticProductIdentity.RuntimeClass,
-            transportClass = HereticProductIdentity.TransportClass,
-            endpoint = HereticProductIdentity.Endpoint,
-            requestModel = HereticProductIdentity.RequestModel,
-            livedLaunchProfile = null,
+            // Current runtime behavior is declared here deliberately. The parity test against
+            // HereticProductIdentity prevents either owner from drifting silently.
+            runtimeAdapterRef =
+                "adapter.runtime.mlx.macos-victor.001",
+            runtimeClass =
+                "MLX_LM_DIRECT_RUNTIME",
+            transportClass =
+                "MLX_LM_OPENAI_NUMERIC_LOOPBACK",
+            endpoint =
+                "http://127.0.0.1:8765",
+            requestModel =
+                "default_model",
+            livedLaunchProfile =
+                null,
         )
 
     private fun openAiLoopbackQualification(
