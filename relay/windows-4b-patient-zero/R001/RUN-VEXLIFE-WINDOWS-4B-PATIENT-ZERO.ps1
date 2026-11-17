@@ -10,9 +10,11 @@ Set-StrictMode -Version Latest
 
 $Attempt = "R001"
 $Repository = "VexGPT/VexLife-Prod"
-$AppSourceSha = "78f8285c6b14a2145fa8c82342046a70dd31e9be"
-$ActionsRunId = "44063772037"
-$ArtifactName = "windows-4b-patient-zero-$AppSourceSha"
+$CarrierBranch = "VXG-111726-chatgpt-windows-4b-patient-zero-a001"
+$CarrierWorkflow = "windows-4b-patient-zero-proof.yml"
+$BuildSourceSha = $null
+$ActionsRunId = $null
+$ArtifactName = $null
 
 $ModelUrl = "https://huggingface.co/yachen4ever/Qwen3.8-4B-Distill-Heretic-Abliterated-GGUF/resolve/c0807aa5c3a6e689a4dda5db58ab1d10eb40ab61/model-Q4_K_M.gguf?download=true"
 $ModelSha256 = "7b95847ce1684f98d96f13bad2daaeffcfd2f95ea2ff3821ee68943590a10159"
@@ -69,7 +71,7 @@ function Form-Return {
 
     $summary = @(
         "VexLife Windows 4B patient-zero R001"
-        "appSource=$AppSourceSha"
+        "appSource=$BuildSourceSha"
         "actionsRun=$ActionsRunId"
         "disposition=$Disposition"
         "failure=$Failure"
@@ -135,18 +137,23 @@ try {
     Write-Host "Model: current Product heretic-4b only."
     Write-Host ""
 
-    Write-Host "[1/6] Verify hosted VexLife patient-zero build"
+    Write-Host "[1/6] Verify latest successful hosted VexLife patient-zero build"
     $gh = Resolve-Gh
-    $runJson = & $gh run view $ActionsRunId --repo $Repository --json headSha,conclusion 2>$null
+    $runsJson = & $gh run list --repo $Repository --branch $CarrierBranch --workflow $CarrierWorkflow --status success --limit 20 --json databaseId,headSha,conclusion,createdAt 2>$null
     if ($LASTEXITCODE -ne 0) {
-        throw "GITHUB_ACTIONS_RUN_LOOKUP_FAILED"
+        throw "GITHUB_ACTIONS_RUN_LIST_FAILED"
     }
-    $run = $runJson | ConvertFrom-Json
-    if ($run.headSha -ne $AppSourceSha -or $run.conclusion -ne "success") {
-        throw ("HOSTED_BUILD_NOT_CURRENT_OR_SUCCESS head=" + $run.headSha + " conclusion=" + $run.conclusion)
+    $successfulRuns = @($runsJson | ConvertFrom-Json)
+    $run = $successfulRuns | Select-Object -First 1
+    if ($null -eq $run -or $run.conclusion -ne "success" -or [string]::IsNullOrWhiteSpace([string]$run.headSha)) {
+        throw "NO_SUCCESSFUL_PATIENT_ZERO_BUILD_AVAILABLE"
     }
 
-    $ArtifactRoot = Join-Path $env:TEMP ("vexlife-win4b-app-" + $AppSourceSha.Substring(0,12))
+    $ActionsRunId = [string]$run.databaseId
+    $BuildSourceSha = [string]$run.headSha
+    $ArtifactName = "windows-4b-patient-zero-" + $BuildSourceSha
+
+    $ArtifactRoot = Join-Path $env:TEMP ("vexlife-win4b-app-" + $BuildSourceSha.Substring(0,12))
     if (Test-Path -LiteralPath $ArtifactRoot) {
         Remove-Item -LiteralPath $ArtifactRoot -Recurse -Force
     }
@@ -171,7 +178,7 @@ try {
         }
     }
     $bundleSha = Get-LowerSha256 $bundleZip.FullName
-    if ($receiptMap["sourceSha"] -ne $AppSourceSha -or $receiptMap["bundleSha256"] -ne $bundleSha) {
+    if ($receiptMap["sourceSha"] -ne $BuildSourceSha -or $receiptMap["bundleSha256"] -ne $bundleSha) {
         throw "HOSTED_BUNDLE_RECEIPT_MISMATCH"
     }
 
@@ -181,7 +188,7 @@ try {
 
     Write-Checkpoint -Name "01-app-build.json" -Value ([ordered]@{
         stage = "HOSTED_APP_BUILD_VERIFIED"
-        sourceSha = $AppSourceSha
+        sourceSha = $BuildSourceSha
         actionsRun = $ActionsRunId
         bundleSha256 = $bundleSha
         effectsPerformed = $false
@@ -304,7 +311,7 @@ try {
         $Classpath
         "vexlife.platform.windows.Windows4BPatientZeroProcessKt"
         "--source-sha"
-        $AppSourceSha
+        $BuildSourceSha
         "--home"
         $TechnicalHome
         "--model"
