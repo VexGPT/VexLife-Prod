@@ -89,8 +89,8 @@ source, architecture and unresolved truth remain inspectable on the read side.
 
 Depth is not carried in any prompt. A person can read every part with its depth at
 `GET /api/v1/foundational-field` and can give any of it to Vex directly. Vex cannot pull depth into a
-turn by itself: Conversation source return reopens canonical Conversation only, and no second return
-route has been built. The first-person kernel says that missing depth is missing rather than pretending
+turn by itself: Conversation source return and revisit reach Conversation, Memory pages and the
+working checkpoint, not this body. The first-person kernel says that missing depth is missing rather than pretending
 it is present.
 
 Origin and standing are separate facts. Every part of the current body is `PROPOSED`. Accepting a
