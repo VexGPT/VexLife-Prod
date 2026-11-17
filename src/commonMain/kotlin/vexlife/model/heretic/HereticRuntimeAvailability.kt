@@ -5,17 +5,12 @@ import vexlife.semantic.VexFamilyContract
 /**
  * Semantic owner for the question:
  *
- * "What does EnsureAvailable mean against the exact current Heretic runtime relationship?"
+ * "What does EnsureAvailable mean for this exact declared Heretic runtime realization?"
  *
- * This Family does not observe processes, read receipts, start MLX, or qualify a runtime. Those
- * facts/effects remain with StableVexLifeHereticRuntimeCompatibility and HereticPersistentRuntime.
- * It owns only the cross-owner decision that was previously implicit in LocalSetup sequencing:
- *
- * - borrow exact qualified stable-VexLife evidence when it is currently borrowable;
- * - otherwise request the product-owned runtime owner, either observation-only or with acquisition
- *   authority.
- *
- * Borrowing qualified evidence never transfers process ownership.
+ * Static model/platform dependency relationships are owned by [HereticRuntimeRealization]. This
+ * Family owns only dynamic State / Control / Effect meaning against one resolved realizationRef.
+ * Runtime/process owners execute the emitted Effect; they do not rediscover which realization was
+ * intended.
  */
 object HereticRuntimeAvailability :
     VexFamilyContract<
@@ -62,24 +57,17 @@ object HereticRuntimeAvailability :
         ) : State {
             init {
                 val expectedPath =
-                    when (
-                        source
-                    ) {
+                    when (source) {
                         Source.BorrowedStableVexLife ->
                             HereticProductIdentity.StableRuntimeReceiptRelativePath
 
                         Source.VexLifeProdOwned ->
                             HereticRuntimeRealization
-                                .require(
-                                    evidence.realizationRef,
-                                )
+                                .require(evidence.realizationRef)
                                 .runtimeReceiptRelativePath
                     }
 
-                require(
-                    runtimeReceiptPath ==
-                        expectedPath,
-                ) {
+                require(runtimeReceiptPath == expectedPath) {
                     "qualified Heretic runtime source must retain its rightful receipt owner coordinate"
                 }
             }
@@ -90,18 +78,25 @@ object HereticRuntimeAvailability :
         VexFamilyContract.Control<HereticRuntimeAvailability> {
 
         data class EnsureAvailable(
+            val realizationRef: String,
             val productOwnedMode: ProductOwnedMode,
-        ) : Control
+        ) : Control {
+            init {
+                HereticRuntimeRealization.require(realizationRef)
+            }
+        }
     }
 
     sealed interface Effect :
         VexFamilyContract.Effect<HereticRuntimeAvailability> {
 
-        data object EnsureProductOwnedRuntime :
-            Effect
+        data class EnsureProductOwnedRuntime(
+            val realizationRef: String,
+        ) : Effect
 
-        data object ObserveCurrentProductOwnedRuntime :
-            Effect
+        data class ObserveCurrentProductOwnedRuntime(
+            val realizationRef: String,
+        ) : Effect
     }
 
     override fun act(
@@ -112,63 +107,81 @@ object HereticRuntimeAvailability :
         State,
         Effect
     > =
-        when (
-            control
-        ) {
-            is Control.EnsureAvailable ->
-                when (
-                    currentState
-                ) {
+        when (control) {
+            is Control.EnsureAvailable -> {
+                val requested =
+                    HereticRuntimeRealization.require(
+                        control.realizationRef,
+                    )
+
+                when (currentState) {
                     is State.StableBorrowable ->
-                        admit(
-                            State.Qualified(
-                                source =
-                                    Source.BorrowedStableVexLife,
-                                evidence =
-                                    currentState.evidence,
-                                runtimeReceiptPath =
-                                    currentState.runtimeReceiptPath,
-                            ),
-                        )
+                        if (
+                            currentState.evidence.realizationRef ==
+                            requested.realizationRef
+                        ) {
+                            admit(
+                                State.Qualified(
+                                    source = Source.BorrowedStableVexLife,
+                                    evidence = currentState.evidence,
+                                    runtimeReceiptPath = currentState.runtimeReceiptPath,
+                                ),
+                            )
+                        } else {
+                            stay(
+                                effect = effectFor(control),
+                            )
+                        }
 
                     State.StablePredecessorUnavailable ->
                         stay(
-                            effect =
-                                when (
-                                    control.productOwnedMode
-                                ) {
-                                    ProductOwnedMode.AcquisitionAllowed ->
-                                        Effect.EnsureProductOwnedRuntime
-
-                                    ProductOwnedMode.ObservationOnly ->
-                                        Effect.ObserveCurrentProductOwnedRuntime
-                                },
+                            effect = effectFor(control),
                         )
 
                     is State.Qualified ->
-                        stay()
+                        if (
+                            currentState.evidence.realizationRef ==
+                            requested.realizationRef
+                        ) {
+                            stay()
+                        } else {
+                            stay(
+                                effect = effectFor(control),
+                            )
+                        }
                 }
+            }
         }
 
-    /**
-     * Interpret the rightful product-runtime owner's qualified observation after one Family-authored
-     * product-owned Effect has been realized.
-     */
     fun interpretProductOwnedQualified(
         evidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
-    ): State.Qualified =
-        State.Qualified(
-            source =
-                Source.VexLifeProdOwned,
-            evidence =
-                evidence,
-            runtimeReceiptPath =
-                HereticRuntimeRealization
-                    .require(
-                        evidence.realizationRef,
-                    )
-                    .runtimeReceiptRelativePath,
+    ): State.Qualified {
+        val realization =
+            HereticRuntimeRealization.require(
+                evidence.realizationRef,
+            )
+
+        return State.Qualified(
+            source = Source.VexLifeProdOwned,
+            evidence = evidence,
+            runtimeReceiptPath = realization.runtimeReceiptRelativePath,
         )
+    }
+
+    private fun effectFor(
+        control: Control.EnsureAvailable,
+    ): Effect =
+        when (control.productOwnedMode) {
+            ProductOwnedMode.AcquisitionAllowed ->
+                Effect.EnsureProductOwnedRuntime(
+                    realizationRef = control.realizationRef,
+                )
+
+            ProductOwnedMode.ObservationOnly ->
+                Effect.ObserveCurrentProductOwnedRuntime(
+                    realizationRef = control.realizationRef,
+                )
+        }
 }
 
 // [VXG RealForever]
