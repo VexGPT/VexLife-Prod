@@ -255,47 +255,6 @@ object VexLifeWebP1RuntimeArtifacts {
                     postfix = "}",
                 )
 
-        val voiceLanguageAvailabilityStateByProviderValue =
-            listOf(
-                "available" to VexLifeVoiceInputFamily.LocalLanguageObservation.Available,
-                "downloadable" to VexLifeVoiceInputFamily.LocalLanguageObservation.InstallRequired,
-                "downloading" to VexLifeVoiceInputFamily.LocalLanguageObservation.InstallRequired,
-                "unavailable" to VexLifeVoiceInputFamily.LocalLanguageObservation.Unavailable,
-            )
-                .joinToString(
-                    separator = ",",
-                    prefix = "{",
-                    postfix = "}",
-                ) { (providerValue, observation) ->
-                    jsString(providerValue) +
-                        ":" +
-                        voiceSemanticState(
-                            VexLifeVoiceInputFamily.observeLocalLanguage(
-                                voiceExampleLanguage,
-                                observation,
-                            )
-                        )
-                }
-
-        val voiceLanguageInstallStateBySuccess =
-            listOf(
-                true to null,
-                false to
-                    VexLifeVoiceInputFamily.observeFailure(
-                        voiceExampleLanguage,
-                        VexLifeVoiceInputFamily.FailureReason.LanguageUnavailable,
-                    ),
-            )
-                .joinToString(
-                    separator = ",",
-                    prefix = "{",
-                    postfix = "}",
-                ) { (success, state) ->
-                    jsString(success.toString()) +
-                        ":" +
-                        voiceSemanticState(state)
-                }
-
         val voiceFailureStateByReason =
             VexLifeVoiceInputFamily.FailureReason.entries.joinToString(
                 separator = ",",
@@ -312,12 +271,6 @@ object VexLifeWebP1RuntimeArtifacts {
                     )
             }
 
-        val voiceLanguageCheckStartedState =
-            voiceSemanticState(
-                VexLifeVoiceInputFamily.observeLanguageCheckStarted(
-                    voiceExampleLanguage
-                )
-            )
         val voiceRecognitionStartedState =
             voiceSemanticState(
                 VexLifeVoiceInputFamily.observeRecognitionStarted(
@@ -432,12 +385,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 failureDisplayByReason: Object.freeze($voiceFailureDisplays),
                 actByState: Object.freeze($voiceActByState),
                 capabilityStateByFacts: Object.freeze($voiceCapabilityStateByFacts),
-                languageAvailabilityStateByProviderValue:
-                  Object.freeze($voiceLanguageAvailabilityStateByProviderValue),
-                languageInstallStateBySuccess:
-                  Object.freeze($voiceLanguageInstallStateBySuccess),
                 failureStateByReason: Object.freeze($voiceFailureStateByReason),
-                languageCheckStartedState: $voiceLanguageCheckStartedState,
                 recognitionStartedState: $voiceRecognitionStartedState
               });
 
