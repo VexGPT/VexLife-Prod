@@ -371,239 +371,100 @@ object VexLifeProdMacFrontDoor {
         require(productHome.isAbsolute) {
             "selected Vex Home path must be absolute"
         }
-        val selectedHome = productHome.normalize()
-        val current = hooks.observeCurrentState(selectedHome)
-        require(Path.of(current.homePath).normalize() == selectedHome) {
-            "Product-entry current-state projection changed the selected Vex Home coordinate"
-        }
-        require(!current.effectsPerformed) {
-            "Mac front door requires no-effect current-state awareness"
-        }
-
-        val location = hooks.observeHomeLocation(selectedHome)
-        require(Path.of(location.productHome).normalize() == selectedHome) {
-            "Product-entry Home location changed the selected Vex Home coordinate"
-        }
-        // The model this setup is about: explicit window choice, else Home choice, else the largest
-        // model that both fits this host and has an exact Mac realization.
-        val chosenModel =
-            VexLifeProdSetupModel.resolveObserved(
-                explicit = model,
-                observedModelRef = current.activeModelRef,
-                target = HereticRuntimeRealization.MacArm64,
-                totalMemoryBytes = current.totalMemoryBytes,
+        val selectedHome =
+            productHome.normalize()
+        val current =
+            hooks.observeCurrentState(
+                selectedHome,
+            )
+        val location =
+            hooks.observeHomeLocation(
+                selectedHome,
             )
 
-        fun observed(
-            state: VexLifeProdEntryFamily.EntryState,
-            sourceSha: String? = null,
-            pid: Long? = null,
-            detail: String? = null,
-            storage: HereticSetupStorage.Requirement? = null,
-        ) =
-            Observed(
-                currentState = current,
-                location = location,
-                entryState = state,
-                currentServiceSourceSha = sourceSha,
-                currentServicePid = pid,
-                serviceDetail = detail,
-                storage = storage,
-                model = chosenModel,
-            )
-
-        if (current.homeDisposition != location.disposition.wireValue) {
-            // Two no-effect reads of the same coordinate disagreed: something changed it meanwhile.
-            val detail =
-                "the selected Home changed while VexLife was looking (" +
-                    current.homeDisposition +
-                    " then " +
-                    location.disposition.wireValue +
-                    ")"
-            return observed(
-                VexLifeProdEntryFamily.HeldUnknown(
-                    desiredSourceSha = desiredSourceSha,
-                    detail = detail,
-                ),
-                detail = detail,
-            )
-        }
-
-        val hostEligible = current.hostEligibilityState == "ELIGIBLE"
-
-        fun hostHeld(homePresent: Boolean) =
-            VexLifeProdEntryFamily.HostHeld(
-                desiredSourceSha = desiredSourceSha,
-                reasonRef = current.hostEligibilityReason ?: "HOST_UNSUPPORTED",
-                observedHardware = current.chipModel,
-                totalMemoryBytes = current.totalMemoryBytes,
-                requiredHardware = HereticMacHostProfile.RequiredChipModel,
-                requiredMemoryBytes = HereticMacHostProfile.MinimumMemoryBytes,
-                homePresent = homePresent,
-            )
-
-        when (location) {
-            is VexLifeProdHomeFiles.Location.Formable -> {
-                require(
-                    current.homeRef == null &&
-                        current.deviceRef == null &&
-                        current.companionLineageRef == null
+        val service =
+            if (
+                location is
+                VexLifeProdHomeFiles.Location.Existing
+            ) {
+                when (
+                    val existing =
+                        hooks.observeExistingService(
+                            selectedHome,
+                        )
                 ) {
-                    "absent Home current-state projection cannot claim Home/device/Companion identity"
+                    VexLifeProdMacServiceLifetime.ExistingObservation.Absent ->
+                        VexLifeProdEntryObservation.Service.Absent
+
+                    is VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned ->
+                        VexLifeProdEntryObservation.Service.RunningOwned(
+                            sourceSha = existing.receipt.sourceSha,
+                            pid = existing.receipt.launchd.pid,
+                        )
+
+                    is VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady ->
+                        VexLifeProdEntryObservation.Service.OwnedNotReady(
+                            sourceSha = existing.receipt.sourceSha,
+                            pid = existing.receipt.launchd.pid,
+                            substrateAbsent =
+                                existing.launchdObservation ==
+                                    MacUserLaunchdProcess.Observation.Absent,
+                        )
+
+                    is VexLifeProdMacServiceLifetime.ExistingObservation.HeldUnknown ->
+                        VexLifeProdEntryObservation.Service.HeldUnknown(
+                            detail = existing.detail,
+                        )
                 }
-                return observed(
-                    if (hostEligible) {
-                        VexLifeProdEntryFamily.HomeFormationRequired(desiredSourceSha)
-                    } else {
-                        hostHeld(homePresent = false)
-                    }
-                )
+            } else {
+                VexLifeProdEntryObservation.Service.Absent
             }
 
-            is VexLifeProdHomeFiles.Location.Held ->
-                return observed(
-                    VexLifeProdEntryFamily.HomeHeld(
-                        desiredSourceSha = desiredSourceSha,
-                        disposition = location.disposition,
-                        detail = location.detail,
-                    )
-                )
-
-            is VexLifeProdHomeFiles.Location.Existing -> Unit
-        }
-
-        val existing = hooks.observeExistingService(selectedHome)
-
-        when (existing) {
-            is VexLifeProdMacServiceLifetime.ExistingObservation.HeldUnknown ->
-                return observed(
-                    VexLifeProdEntryFamily.HeldUnknown(
-                        desiredSourceSha = desiredSourceSha,
-                        detail = existing.detail,
-                    ),
-                    detail = existing.detail,
-                )
-
-            is VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned -> {
-                // Preserve the existing open/update behavior for an already-bound model. Only a
-                // newly selected model may require prerequisite evaluation before service
-                // currentness is allowed to decide the Product-entry State.
-                if (current.modelSelectionState != "HERETIC_ESTABLISHMENT_PENDING") {
-                    val sourceSha = existing.receipt.sourceSha
-                    return observed(
-                        if (sourceSha == desiredSourceSha) {
-                            VexLifeProdEntryFamily.Current(desiredSourceSha)
-                        } else {
-                            VexLifeProdEntryFamily.UpdateAvailable(desiredSourceSha)
-                        },
-                        sourceSha = sourceSha,
-                        pid = existing.receipt.launchd.pid,
-                    )
-                }
-            }
-
-            else -> Unit
-        }
-
-        if (!hostEligible) {
-            return observed(hostHeld(homePresent = true))
-        }
-
-        if (current.modelArtifactState == "INVALID_SIZE") {
-            return observed(
-                VexLifeProdEntryFamily.ModelFilesHeld(
-                    desiredSourceSha = desiredSourceSha,
-                    invalidBytes = current.modelArtifactInvalidSizeBytes ?: 0L,
-                )
-            )
-        }
-
-        // A selected model whose runtime binding is still pending (setup interrupted after the
-        // download finished) needs runtime start + qualification, not acquisition.
         val modelReady =
             current.modelSelectionState in
-                setOf("HERETIC_ESTABLISHMENT_PENDING", "BOUND_HERETIC_PRODUCT_MODEL") &&
-                current.modelArtifactState == "COMPLETE_BY_SIZE_NOT_HASHED"
-        val runtimeEnvironmentPresent =
-            modelReady && hooks.observeRuntimeEnvironmentPresent(selectedHome)
-
-        if (!runtimeEnvironmentPresent) {
-            val missingModelBytes =
-                current.modelArtifactMissingBytes
-                    ?: chosenModel.totalBytes
-            val storage =
-                HereticSetupStorage.requirement(
-                    missingModelBytes = missingModelBytes,
-                    observedFreeBytes = current.freeStorageBytes,
-                )
-            return observed(
-                if (storage.shortfallObserved) {
-                    VexLifeProdEntryFamily.StorageHeld(
-                        desiredSourceSha = desiredSourceSha,
-                        requiredFreeBytes = storage.requiredFreeBytes,
-                        freeBytes = requireNotNull(current.freeStorageBytes),
-                    )
-                } else {
-                    VexLifeProdEntryFamily.SetupRequired(desiredSourceSha)
-                },
-                storage = storage,
-            )
-        }
-
-        if (
-            existing is VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned
-        ) {
-            val sourceSha = existing.receipt.sourceSha
-            return observed(
-                if (sourceSha == desiredSourceSha) {
-                    VexLifeProdEntryFamily.Current(desiredSourceSha)
-                } else {
-                    VexLifeProdEntryFamily.UpdateAvailable(desiredSourceSha)
-                },
-                sourceSha = sourceSha,
-                pid = existing.receipt.launchd.pid,
-            )
-        }
-
-        return when (existing) {
-            VexLifeProdMacServiceLifetime.ExistingObservation.Absent ->
-                observed(
-                    VexLifeProdEntryFamily.StartRequired(
-                        desiredSourceSha = desiredSourceSha,
-                        priorServiceSourceSha = null,
-                    )
+                setOf(
+                    "HERETIC_ESTABLISHMENT_PENDING",
+                    "BOUND_HERETIC_PRODUCT_MODEL",
+                ) &&
+                current.modelArtifactState ==
+                    "COMPLETE_BY_SIZE_NOT_HASHED"
+        val runtimePrerequisitesPresent =
+            modelReady &&
+                hooks.observeRuntimeEnvironmentPresent(
+                    selectedHome,
                 )
 
-            is VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady -> {
-                val sourceSha = existing.receipt.sourceSha
-                if (existing.launchdObservation == MacUserLaunchdProcess.Observation.Absent) {
-                    // The exact owned receipt survives but launchd no longer carries the service
-                    // (for example after the Mac restarted). That is stopped, not broken.
-                    observed(
-                        VexLifeProdEntryFamily.StartRequired(
-                            desiredSourceSha = desiredSourceSha,
-                            priorServiceSourceSha = sourceSha,
-                        ),
-                        sourceSha = sourceSha,
-                    )
-                } else {
-                    observed(
-                        if (sourceSha == desiredSourceSha) {
-                            VexLifeProdEntryFamily.RepairRequired(desiredSourceSha)
-                        } else {
-                            VexLifeProdEntryFamily.UpdateRepairRequired(desiredSourceSha)
-                        },
-                        sourceSha = sourceSha,
-                        pid = existing.receipt.launchd.pid,
-                    )
-                }
-            }
+        val observed =
+            VexLifeProdEntryObservation.observe(
+                desiredSourceSha = desiredSourceSha,
+                productHome = selectedHome,
+                current = current,
+                location = location,
+                service = service,
+                runtimePrerequisitesPresent = runtimePrerequisitesPresent,
+                target = HereticRuntimeRealization.MacArm64,
+                hostRequirement =
+                    VexLifeProdEntryObservation.HostRequirement(
+                        requiredHardware =
+                            HereticMacHostProfile.RequiredChipModel,
+                        requiredMemoryBytes =
+                            HereticMacHostProfile.MinimumMemoryBytes,
+                    ),
+                explicitModelHandle = model,
+            )
 
-            is VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned,
-            is VexLifeProdMacServiceLifetime.ExistingObservation.HeldUnknown ->
-                error("running/held service observation was already mapped")
-        }
+        return Observed(
+            currentState = observed.currentState,
+            location = observed.location,
+            entryState = observed.entryState,
+            currentServiceSourceSha = observed.currentServiceSourceSha,
+            currentServicePid = observed.currentServicePid,
+            serviceDetail = observed.serviceDetail,
+            storage = observed.storage,
+            model = observed.model,
+        )
     }
+
 }
 
 object VexLifeProdMacFrontDoorProcess {
