@@ -308,7 +308,8 @@ object DirectPromptContext {
                                 "RESPONSE" -> "assistant"
                                 else ->
                                     error(
-                                        "selected direct Conversation event has unsupported provider role",
+                                        "selected direct Conversation event has unsupported " +
+                                            "provider role",
                                     )
                             },
                         content = event.content,
@@ -2367,7 +2368,8 @@ object DirectPromptContext {
     internal val CurrentStateLead =
         listOf(
             CurrentStateHeader,
-            "From VexLife, not a message from the person: what is current at this request. It comes " +
+            "From VexLife, not a message from the person: what is current at this " +
+                "request. It comes " +
                 "after the Conversation because it is current now. It is not a fact from the " +
                 "Conversation's beginning; earlier turns happened under whatever was current then.",
         )
