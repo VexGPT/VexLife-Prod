@@ -1,14 +1,15 @@
 package vexlife.platform.windows
 
 import java.io.BufferedInputStream
+import java.io.InputStream
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
+import java.util.Locale
 import java.util.UUID
-import java.util.zip.CRC32
 import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
 import vexlife.artifact.DirectHttpsArtifactDelivery
@@ -311,8 +312,14 @@ object VexLifeWindowsRuntimeMaterialization {
                                 rawName = rawName,
                                 directory = entry.isDirectory,
                             )
-                        require(seen.add(normalizedName)) {
-                            "Windows runtime archive contains a duplicate path: $rawName"
+                        require(
+                            seen.add(
+                                normalizedName.lowercase(
+                                    Locale.ROOT,
+                                ),
+                            ),
+                        ) {
+                            "Windows runtime archive contains a duplicate Windows path: $rawName"
                         }
 
                         val destination =
@@ -420,7 +427,7 @@ object VexLifeWindowsRuntimeMaterialization {
 
         return runCatching {
                 val expectedFiles =
-                    linkedMapOf<String, Pair<Long, Long>>()
+                    linkedMapOf<String, Pair<Long, String>>()
                 val expectedDirectories =
                     linkedSetOf<String>()
                 val seen =
@@ -440,10 +447,12 @@ object VexLifeWindowsRuntimeMaterialization {
                                     )
                                 require(
                                     seen.add(
-                                        normalizedName,
+                                        normalizedName.lowercase(
+                                            Locale.ROOT,
+                                        ),
                                     ),
                                 ) {
-                                    "Windows runtime archive contains a duplicate path: " +
+                                    "Windows runtime archive contains a duplicate Windows path: " +
                                         entry.name
                                 }
 
@@ -454,17 +463,21 @@ object VexLifeWindowsRuntimeMaterialization {
                                         normalizedName
                                 } else {
                                     require(
-                                        entry.size >= 0 &&
-                                            entry.crc >= 0,
+                                        entry.size >= 0,
                                     ) {
-                                        "Windows runtime archive entry lacks exact size/CRC: " +
+                                        "Windows runtime archive entry lacks exact size: " +
                                             entry.name
                                     }
                                     expectedFiles[
                                         normalizedName
                                     ] =
                                         entry.size to
-                                            entry.crc
+                                            zip.getInputStream(
+                                                    entry,
+                                                )
+                                                .use(
+                                                    ::sha256,
+                                                )
                                 }
                             }
                     }
@@ -514,7 +527,7 @@ object VexLifeWindowsRuntimeMaterialization {
                                 file,
                             ) ==
                             expected.first &&
-                            crc32(
+                            sha256(
                                 file,
                             ) ==
                             expected.second,
@@ -630,6 +643,12 @@ object VexLifeWindowsRuntimeMaterialization {
                 rawName
             }
 
+        val segments =
+            normalizedName
+                .split(
+                    "/",
+                )
+
         require(
             normalizedName.isNotBlank() &&
                 !normalizedName.startsWith(
@@ -644,15 +663,11 @@ object VexLifeWindowsRuntimeMaterialization {
                 !normalizedName.contains(
                     "//",
                 ) &&
-                normalizedName
-                    .split(
-                        "/",
+                segments.none { segment ->
+                    !windowsArchiveSegmentSafe(
+                        segment,
                     )
-                    .none { segment ->
-                        segment ==
-                            ".." ||
-                            segment.isBlank()
-                    },
+                },
         ) {
             "Windows runtime archive contains an unsafe path: $rawName"
         }
@@ -660,41 +675,39 @@ object VexLifeWindowsRuntimeMaterialization {
         return normalizedName
     }
 
-    private fun crc32(
-        path: Path,
-    ): Long {
-        val crc =
-            CRC32()
-        Files.newInputStream(
-                path,
+    private fun windowsArchiveSegmentSafe(
+        segment: String,
+    ): Boolean {
+        if (
+            segment.isBlank() ||
+            segment ==
+                "." ||
+            segment ==
+                ".." ||
+            segment.contains(
+                ":",
+            ) ||
+            segment.endsWith(
+                ".",
+            ) ||
+            segment.endsWith(
+                " ",
             )
-            .use { input ->
-                val buffer =
-                    ByteArray(
-                        1024 *
-                            1024,
-                    )
-                while (
-                    true
-                ) {
-                    val count =
-                        input.read(
-                            buffer,
-                        )
-                    if (
-                        count <
-                        0
-                    ) {
-                        break
-                    }
-                    crc.update(
-                        buffer,
-                        0,
-                        count,
-                    )
-                }
-            }
-        return crc.value
+        ) {
+            return false
+        }
+
+        val deviceStem =
+            segment
+                .substringBefore(
+                    ".",
+                )
+                .uppercase(
+                    Locale.ROOT,
+                )
+
+        return deviceStem !in
+            WindowsReservedDeviceNames
     }
 
     private fun observeFile(
@@ -769,25 +782,74 @@ object VexLifeWindowsRuntimeMaterialization {
 
     private fun sha256(
         path: Path,
+    ): String =
+        Files.newInputStream(
+                path,
+            )
+            .use(
+                ::sha256,
+            )
+
+    private fun sha256(
+        input: InputStream,
     ): String {
         val digest =
             MessageDigest.getInstance(
                 "SHA-256",
             )
-        Files.newInputStream(path).use { input ->
-            val buffer = ByteArray(1024 * 1024)
-            while (true) {
-                val count = input.read(buffer)
-                if (count < 0) break
-                digest.update(buffer, 0, count)
+        val buffer =
+            ByteArray(
+                1024 *
+                    1024,
+            )
+        while (
+            true
+        ) {
+            val count =
+                input.read(
+                    buffer,
+                )
+            if (
+                count <
+                0
+            ) {
+                break
             }
+            digest.update(
+                buffer,
+                0,
+                count,
+            )
         }
         return digest
             .digest()
             .joinToString("") { byte ->
-                "%02x".format(byte.toInt() and 0xff)
+                "%02x".format(
+                    byte.toInt() and
+                        0xff,
+                )
             }
     }
+
+    private val WindowsReservedDeviceNames =
+        buildSet {
+            addAll(
+                listOf(
+                    "CON",
+                    "PRN",
+                    "AUX",
+                    "NUL",
+                ),
+            )
+            (1..9).forEach { index ->
+                add(
+                    "COM$index",
+                )
+                add(
+                    "LPT$index",
+                )
+            }
+        }
 
     private fun deleteTreeNoFollow(
         root: Path,
