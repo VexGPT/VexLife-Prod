@@ -1459,7 +1459,7 @@
       "label": "Stop current Vex turn",
       "disposition": "SCAE_FAMILY",
       "summary": "The same ConversationTurn Family decides whether Stop is lawful for the exact Active attempt. RequestCancel is realized by request-local cancellation; the persistent model runtime is not stopped.",
-      "returns": "Cancelling then Ready Family DisplayState plus terminal cancellation truth",
+      "returns": "fresh Family DisplayState after cancellation request, then Ready after terminal release",
       "returnRef": "vexlife-prod.cancel.turn-projection",
       "nodes": [
         {
@@ -1513,7 +1513,7 @@
           "role": "OBSERVATION",
           "label": "cancellation requested → same Family",
           "symbol": "VexLifeConversationTurnFamily.observe",
-          "summary": "The active attempt plus request-local cancellation truth becomes State.Cancelling.",
+          "summary": "If execution is still active, the active attempt plus request-local cancellation truth becomes State.Cancelling; a fast terminal release may already observe Ready.",
           "source": "common:conversation/VexLifeConversationTurnFamily.kt"
         },
         {
