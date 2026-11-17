@@ -35,6 +35,7 @@ import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 
 class VexLifeProdLocalServiceTest {
@@ -64,6 +65,12 @@ class VexLifeProdLocalServiceTest {
     ): VexLifeProdLocalSetup.Result {
         val runtime =
             HereticModelConfiguration.QualifiedRuntimeEvidence(
+                realizationRef =
+                    HereticRuntimeRealization
+                        .legacyMacV1(
+                            HereticProductIdentity.ModelRef,
+                        )
+                        .realizationRef,
                 runtimeReceiptRef = "receipt.vexlife-prod.heretic.service-test",
                 runtimeState = HereticRuntimeState.Qualified,
                 modelRef = HereticProductIdentity.ModelRef,
