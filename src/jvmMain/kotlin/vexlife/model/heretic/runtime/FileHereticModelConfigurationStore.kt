@@ -29,8 +29,19 @@ class FileHereticModelConfigurationStore(
         ) : Snapshot
     }
 
+    enum class TransitionState {
+        HERETIC_SELECTED_PENDING,
+        HERETIC_ALREADY_BOUND,
+        HERETIC_ALREADY_SELECTED_PENDING,
+        HERETIC_DEFAULTED_UNSUPPORTED_SELECTION_PENDING,
+        HERETIC_MODEL_SWITCHED_PENDING,
+        HERETIC_MODEL_REPLACED_STALE_IDENTITY_PENDING,
+        HERETIC_REBOUND_TO_QUALIFIED_RUNTIME,
+        HERETIC_BOUND_TO_QUALIFIED_RUNTIME,
+    }
+
     data class Transition(
-        val state: String,
+        val state: TransitionState,
         val value: HereticModelConfiguration.Value,
         val writePerformed: Boolean,
     )
@@ -119,7 +130,7 @@ class FileHereticModelConfigurationStore(
                     pending,
                 )
                 Transition(
-                    state = "HERETIC_SELECTED_PENDING",
+                    state = TransitionState.HERETIC_SELECTED_PENDING,
                     value = pending,
                     writePerformed = true,
                 )
@@ -138,9 +149,9 @@ class FileHereticModelConfigurationStore(
                                     scoped.value,
                                 )
                             ) {
-                                "HERETIC_ALREADY_BOUND"
+                                TransitionState.HERETIC_ALREADY_BOUND
                             } else {
-                                "HERETIC_ALREADY_SELECTED_PENDING"
+                                TransitionState.HERETIC_ALREADY_SELECTED_PENDING
                             },
                         value = scoped.value,
                         writePerformed = false,
@@ -158,7 +169,7 @@ class FileHereticModelConfigurationStore(
                         pending,
                     )
                     Transition(
-                        state = "HERETIC_DEFAULTED_UNSUPPORTED_SELECTION_PENDING",
+                        state = TransitionState.HERETIC_DEFAULTED_UNSUPPORTED_SELECTION_PENDING,
                         value = pending,
                         writePerformed = true,
                     )
@@ -193,7 +204,7 @@ class FileHereticModelConfigurationStore(
                     pending,
                 )
                 Transition(
-                    state = "HERETIC_SELECTED_PENDING",
+                    state = TransitionState.HERETIC_SELECTED_PENDING,
                     value = pending,
                     writePerformed = true,
                 )
@@ -207,9 +218,9 @@ class FileHereticModelConfigurationStore(
                                 current.value,
                             )
                         ) {
-                            "HERETIC_ALREADY_BOUND"
+                            TransitionState.HERETIC_ALREADY_BOUND
                         } else {
-                            "HERETIC_ALREADY_SELECTED_PENDING"
+                            TransitionState.HERETIC_ALREADY_SELECTED_PENDING
                         },
                     value = current.value,
                     writePerformed = false,
@@ -266,7 +277,7 @@ class FileHereticModelConfigurationStore(
                     pending,
                 )
                 Transition(
-                    state = "HERETIC_SELECTED_PENDING",
+                    state = TransitionState.HERETIC_SELECTED_PENDING,
                     value = pending,
                     writePerformed = true,
                 )
@@ -287,9 +298,9 @@ class FileHereticModelConfigurationStore(
                                     scoped.value,
                                 )
                             ) {
-                                "HERETIC_ALREADY_BOUND"
+                                TransitionState.HERETIC_ALREADY_BOUND
                             } else {
-                                "HERETIC_ALREADY_SELECTED_PENDING"
+                                TransitionState.HERETIC_ALREADY_SELECTED_PENDING
                             },
                         value = scoped.value,
                         writePerformed = false,
@@ -313,9 +324,9 @@ class FileHereticModelConfigurationStore(
                                     scoped.value,
                                 )
                             ) {
-                                "HERETIC_MODEL_SWITCHED_PENDING"
+                                TransitionState.HERETIC_MODEL_SWITCHED_PENDING
                             } else {
-                                "HERETIC_MODEL_REPLACED_STALE_IDENTITY_PENDING"
+                                TransitionState.HERETIC_MODEL_REPLACED_STALE_IDENTITY_PENDING
                             },
                         value = pending,
                         writePerformed = true,
@@ -373,7 +384,7 @@ class FileHereticModelConfigurationStore(
             bound
         ) {
             return Transition(
-                state = "HERETIC_ALREADY_BOUND",
+                state = TransitionState.HERETIC_ALREADY_BOUND,
                 value = current.value,
                 writePerformed = false,
             )
@@ -400,9 +411,9 @@ class FileHereticModelConfigurationStore(
                     current.value.state ==
                     HereticModelConfiguration.State.BoundProductModel
                 ) {
-                    "HERETIC_REBOUND_TO_QUALIFIED_RUNTIME"
+                    TransitionState.HERETIC_REBOUND_TO_QUALIFIED_RUNTIME
                 } else {
-                    "HERETIC_BOUND_TO_QUALIFIED_RUNTIME"
+                    TransitionState.HERETIC_BOUND_TO_QUALIFIED_RUNTIME
                 },
             value = bound,
             writePerformed = true,
