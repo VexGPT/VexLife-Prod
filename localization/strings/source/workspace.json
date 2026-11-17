@@ -13,7 +13,8 @@
       "capability": "VexLifeCapabilityBridge uses (handle:action), shown to the person as reach",
       "model": "VexLifeModelsFamily (files, control refs) and HereticModelCatalog standing",
       "voice-input": "VexLifeVoiceInputFamily (state, control, hold/failure reason refs)",
-      "conversation-turn": "VexLifeConversationTurnFamily (state and control refs)"
+      "conversation-turn": "VexLifeConversationTurnFamily (state and control refs)",
+      "local-asr": "VexLifeLocalAsrSelection (selected provider/model) plus local provider/model currentness"
     }
   },
   "workspace.heading.diagnostics": {
@@ -676,7 +677,7 @@
   "workspace.status.voice-input-held-local-recognition": {
     "strings": {
       "en": {
-        "text": "Local dictation is not available in this browser yet."
+        "text": "Local dictation is not ready on this device."
       }
     },
     "surfaces": [
@@ -731,7 +732,7 @@
   "workspace.status.voice-input-failed-language": {
     "strings": {
       "en": {
-        "text": "On-device dictation is not available for the selected language."
+        "text": "The selected local speech recognizer does not support this language."
       }
     },
     "surfaces": [
@@ -855,5 +856,121 @@
       "workspace.conversation"
     ],
     "dataKey": "conversation-turn:state:ACTIVE"
+  },
+  "workspace.heading.local-asr": {
+    "strings": {
+      "en": {
+        "text": "Local voice recognition"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.local-asr": {
+    "strings": {
+      "en": {
+        "text": "Choose which qualified local speech recognizer turns your microphone into editable Composer text. Audio stays on this Mac."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.local-asr-selection": {
+    "strings": {
+      "en": {
+        "text": "Recognition provider"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.local-asr-note": {
+    "strings": {
+      "en": {
+        "text": "The microphone uses this selection. The transcript stays editable until you press Send."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.local-asr-ready": {
+    "strings": {
+      "en": {
+        "text": "Ready locally · {provider} · {model} · {size}"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "local-asr:state:READY"
+  },
+  "workspace.status.local-asr-selected": {
+    "strings": {
+      "en": {
+        "text": "Selected {provider} · {model}."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "local-asr:selection:SAVED"
+  },
+  "workspace.status.local-asr-provider-not-current": {
+    "strings": {
+      "en": {
+        "text": "The selected local speech-recognition runtime does not match the qualified provider source."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "local-asr:state:PROVIDER_SOURCE_NOT_CURRENT"
+  },
+  "workspace.status.local-asr-runtime-unavailable": {
+    "strings": {
+      "en": {
+        "text": "The selected local speech-recognition runtime is not on this Mac yet."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "local-asr:state:PROVIDER_EXECUTABLE_UNAVAILABLE"
+  },
+  "workspace.status.local-asr-model-unavailable": {
+    "strings": {
+      "en": {
+        "text": "The selected speech-recognition model is not on this Mac yet."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "local-asr:state:MODEL_UNAVAILABLE"
+  },
+  "workspace.status.local-asr-model-not-current": {
+    "strings": {
+      "en": {
+        "text": "The selected speech-recognition model does not match its qualified bytes."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "local-asr:state:MODEL_DIGEST_NOT_CURRENT"
+  },
+  "workspace.status.local-asr-unavailable": {
+    "strings": {
+      "en": {
+        "text": "The selected local speech recognizer is not ready."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
   }
 }
