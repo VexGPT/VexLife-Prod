@@ -610,6 +610,29 @@ svg { display: block; }
   background: var(--raised); border: 1px solid var(--rule-strong); border-radius: 22px;
 }
 .compose-row textarea::placeholder { color: var(--ink-3); }
+.voice-input-shell { position: relative; flex: none; }
+.voice-input {
+  display: grid; place-items: center; width: 44px; height: 44px; padding: 0;
+  background: var(--surface); color: var(--ink-2); border: 1px solid var(--rule-strong); border-radius: 50%;
+}
+.voice-input:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-2); }
+.voice-input:disabled { color: var(--ink-3); border-color: var(--rule); background: var(--sunken); }
+.voice-input svg {
+  width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.7;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.voice-input[data-state="listening"] { color: var(--ink); border-color: var(--ink); }
+.voice-input-overlay {
+  position: absolute; right: 50%; bottom: calc(100% + 10px); z-index: 25;
+  width: 148px; padding: 10px; transform: translateX(50%);
+  background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 12px; box-shadow: var(--shadow);
+}
+.voice-input-overlay[hidden] { display: none; }
+.voice-input-overlay canvas {
+  display: block; width: 112px; height: 44px; margin: 0 auto 7px;
+  background: var(--sunken); border: 1px solid var(--rule); border-radius: 8px;
+}
+.voice-input-overlay p { margin: 0; color: var(--ink-2); font-size: 11.5px; line-height: 1.35; text-align: center; }
 .send, .stop {
   flex: none; height: 44px; padding: 0 20px;
   border-radius: 9px; font-weight: 700;
