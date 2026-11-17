@@ -122,6 +122,19 @@ object VexLifeProdServiceContract {
     const val FoundationalFieldSchema = "vexlife-prod.local-service-foundational-field/v1"
 
     const val SettingsPath = "/api/v1/settings"
+
+    /** Settings + currentness for the person's selected local speech-to-text realization. */
+    const val LocalAsrPath = "/api/v1/local-asr"
+
+    /** One bounded local-only transcription effect; request body is 16 kHz mono PCM WAV. */
+    const val LocalAsrTranscribePath = "/api/v1/local-asr/transcribe"
+
+    const val LocalAsrProjectionSchema =
+        "vexlife-prod.local-asr-projection/v1"
+
+    const val LocalAsrTranscriptionResponseSchema =
+        "vexlife-prod.local-asr-transcription-response/v1"
+
     const val DiagnosticsPath = "/api/v1/diagnostics"
 
     /** Settings → Models: offered models as this Home holds them, and their Controls. */
@@ -490,6 +503,75 @@ object VexLifeProdServiceContract {
     data class SettingsUpdate(val replyLanguage: String) {
         init {
             vexlife.person.VexLifePersonSettings.languageName(replyLanguage)
+        }
+    }
+
+    @Serializable
+    data class LocalAsrOption(
+        val providerRef: String,
+        val modelRef: String,
+        val providerLabel: String,
+        val modelLabel: String,
+        val languageCodes: List<String>,
+        val modelBytes: Long,
+        val standing: String,
+        val selected: Boolean,
+        val currentState: String,
+        val currentDetailRef: String,
+    )
+
+    @Serializable
+    data class LocalAsrProjection(
+        val schemaVersion: String,
+        val selectedProviderRef: String,
+        val selectedModelRef: String,
+        val options: List<LocalAsrOption>,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    LocalAsrProjectionSchema &&
+                    options.isNotEmpty() &&
+                    options.count { it.selected } == 1 &&
+                    options.any {
+                        it.providerRef == selectedProviderRef &&
+                            it.modelRef == selectedModelRef &&
+                            it.selected
+                    },
+            ) {
+                "local ASR projection is invalid"
+            }
+        }
+    }
+
+    @Serializable
+    data class LocalAsrSelectionUpdate(
+        val providerRef: String,
+        val modelRef: String,
+    )
+
+    @Serializable
+    data class LocalAsrTranscriptionResponse(
+        val schemaVersion: String,
+        val providerRef: String,
+        val modelRef: String,
+        val transcript: String,
+        val inferenceMillis: Long,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion ==
+                    LocalAsrTranscriptionResponseSchema &&
+                    providerRef.isNotBlank() &&
+                    modelRef.isNotBlank() &&
+                    transcript.isNotBlank() &&
+                    inferenceMillis >=
+                    0 &&
+                    effectsPerformed,
+            ) {
+                "local ASR transcription response is invalid"
+            }
         }
     }
 
