@@ -260,6 +260,7 @@ object HereticModelConfiguration {
         setOf(
             HereticProductIdentity.StableRuntimeReceiptRelativePath,
             HereticProductIdentity.ProductRuntimeReceiptRelativePath,
+            HereticRuntimeRealization.Windows4BPatientZeroReceiptRelativePath,
         )
 
     private fun form(
