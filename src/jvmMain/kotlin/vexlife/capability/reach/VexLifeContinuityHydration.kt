@@ -55,6 +55,7 @@ object VexLifeContinuityHydration {
         val scannedCompletedTurns: Int,
         val duplicateCandidatesSuppressed: Int,
         val memoryProjectionState: String,
+        val memoryReasons: List<String>,
         val excludedConversationEventCount: Int,
         val excludedMemoryStatementCount: Int,
     )
@@ -187,6 +188,7 @@ object VexLifeContinuityHydration {
             scannedCompletedTurns = scannedCompletedTurns,
             duplicateCandidatesSuppressed = maxOf(0, rawCandidates - uniqueCandidates),
             memoryProjectionState = memory.projectionState,
+            memoryReasons = memory.reasons,
             excludedConversationEventCount = excludedConversationEventRefs.size,
             excludedMemoryStatementCount = excludedMemoryStatementRefs.size,
         )
@@ -309,6 +311,9 @@ object VexLifeContinuityHydration {
         appendLine("coverage=exact Conversation + current Memory + Working Continuity coordinates")
         appendLine("scannedCompletedTurns=${resolution.scannedCompletedTurns}; duplicateCandidatesSuppressed=${resolution.duplicateCandidatesSuppressed}")
         appendLine("memoryProjectionState=${resolution.memoryProjectionState}")
+        if (resolution.memoryReasons.isNotEmpty()) {
+            appendLine("memoryReasons=" + resolution.memoryReasons.joinToString(" | "))
+        }
         appendLine("alreadyPresentExcluded=conversationEvents:${resolution.excludedConversationEventCount},memoryStatements:${resolution.excludedMemoryStatementCount}")
         appendLine("boundary=no semantic-similarity locator; lexical/current-anchor miss != no relevant durable history")
         appendLine("CONVERSATION_EXACT_SOURCE")
