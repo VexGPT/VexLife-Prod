@@ -4,7 +4,10 @@ import java.nio.file.Path
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import vexlife.conversation.DirectConversationStore
+import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 
 /**
  * Host-proof precondition only.
@@ -38,14 +41,43 @@ object ContinuityHostRuntimePrecondition {
             "canonical Conversation writer must be IDLE before runtime precondition; no recovery performed"
         }
 
-        val session =
-            VexLifeProdLocalSetup.establishSession(
+        val home =
+            requireNotNull(VexLifeProdHomeFiles.observeExisting(runtimeHome)) {
+                "selected canonical Vex Home is absent"
+            }
+        val selectedBefore =
+            FileHereticModelConfigurationStore(runtimeHome).read(home.manifest)
+                as? FileHereticModelConfigurationStore.Snapshot.Heretic
+                ?: error("selected Vex Home has no Product runtime model selection")
+        require(HereticModelConfiguration.isBound(selectedBefore.value)) {
+            "selected Product runtime model must already be bound before host-proof runtime start"
+        }
+        val selectedModelRef = selectedBefore.value.modelRef
+
+        /*
+         * The host-proof precondition is explicitly selecting the Product-owned runtime route.
+         * A non-borrowable historical stable predecessor remains untouched as evidence; it is not
+         * repaired, deleted, retired or reclassified here. Product-owned runtime start still
+         * performs its own exact process census and port-occupancy checks before any spawn.
+         */
+        val result =
+            VexLifeProdLocalSetup.establishAt(
                 productHome = runtimeHome,
                 allowAcquisition = false,
                 allowRuntimeStart = true,
+                hooks =
+                    VexLifeProdLocalSetup.Hooks(
+                        observeStableRuntime = { _, _ -> null },
+                        retireStableRuntime = { _, _, _ ->
+                            error("host-proof Product-owned runtime precondition must not retire stable predecessor evidence")
+                        },
+                    ),
             )
+        val current = result.qualifiedRuntimeEvidence
+        require(current.modelRef == selectedModelRef) {
+            "runtime precondition changed the selected Product model"
+        }
 
-        val current = session.observeCurrentQualifiedRuntimeEvidence()
         val afterWriter = DirectConversationStore(runtimeHome).threadWriterCurrentness()
         require(afterWriter.state == "IDLE" && !afterWriter.recoveryRequired) {
             "canonical Conversation writer changed during runtime precondition"
@@ -55,12 +87,14 @@ object ContinuityHostRuntimePrecondition {
             buildJsonObject {
                 put("state", "PASS")
                 put("effectClass", "HOST_SEMANTIC_MODEL_RUNTIME_PRECONDITION")
-                put("productHome", session.result.productHome)
-                put("runtimeDisposition", session.result.runtimeDisposition)
-                put("modelBindingDisposition", session.result.modelBindingDisposition)
+                put("productHome", result.productHome)
+                put("runtimeDisposition", result.runtimeDisposition)
+                put("modelBindingDisposition", result.modelBindingDisposition)
                 put("runtimeReceiptRef", current.runtimeReceiptRef)
                 put("modelRef", current.modelRef)
                 put("endpoint", current.endpoint)
+                put("stablePredecessorBorrowAttempted", false)
+                put("stablePredecessorMutationPerformed", false)
                 put("acquisitionAllowed", false)
                 put("runtimeStartAllowed", true)
                 put("conversationWriterBefore", beforeWriter.state)
