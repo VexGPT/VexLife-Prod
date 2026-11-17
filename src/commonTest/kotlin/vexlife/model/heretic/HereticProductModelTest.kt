@@ -15,6 +15,12 @@ class HereticProductModelTest {
 
     private fun qualifiedRuntime(): HereticModelConfiguration.QualifiedRuntimeEvidence =
         HereticModelConfiguration.QualifiedRuntimeEvidence(
+            realizationRef =
+                HereticRuntimeRealization
+                    .legacyMacV1(
+                        HereticProductIdentity.ModelRef,
+                    )
+                    .realizationRef,
             runtimeReceiptRef = "receipt.vexlife-prod.heretic.test",
             runtimeState = HereticRuntimeState.Qualified,
             modelRef = HereticProductIdentity.ModelRef,
@@ -179,6 +185,12 @@ class HereticProductModelTest {
     fun boundConfigurationCannotBeFormedFromStartingRuntimeTruth() {
         assertFailsWith<IllegalArgumentException> {
             HereticModelConfiguration.QualifiedRuntimeEvidence(
+                realizationRef =
+                    HereticRuntimeRealization
+                        .legacyMacV1(
+                            HereticProductIdentity.ModelRef,
+                        )
+                        .realizationRef,
                 runtimeReceiptRef = "receipt.vexlife-prod.heretic.test",
                 runtimeState = HereticRuntimeState.Starting,
                 modelRef = HereticProductIdentity.ModelRef,
