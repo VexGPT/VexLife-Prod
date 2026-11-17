@@ -61,40 +61,57 @@ object HereticModelConfiguration {
         val qualification: HereticRuntimeQualification,
     ) {
         init {
-            requirePortableRef(realizationRef, "realizationRef")
-            requirePortableRef(runtimeReceiptRef, "runtimeReceiptRef")
-            require(
-                runtimeState == HereticRuntimeState.Qualified,
-            ) {
-                "Heretic model binding requires a qualified runtime"
-            }
-
-            val realization =
-                HereticRuntimeRealization.require(
-                    realizationRef,
-                )
-            val model =
-                HereticModelCatalog.entry(
-                    modelRef,
-                )
-            val artifact = realization.artifact
-            val runtime = realization.runtime
-
-            require(
-                model != null &&
-                    realization.modelRef == modelRef &&
-                    realization.modelProfileRef == modelProfileRef &&
-                    model.identity.modelProfileRef == modelProfileRef &&
-                    artifact.artifactRef == artifactRef &&
-                    artifact.contentSetSha256 == artifactContentSetSha256 &&
-                    runtime.runtimeAdapterRef == runtimeAdapterRef &&
-                    runtime.runtimeClass == runtimeClass &&
-                    runtime.endpoint == endpoint &&
-                    runtime.requestModel == requestModel,
-            ) {
-                "qualified runtime evidence does not match its declared Heretic realization"
-            }
+            HereticModelConfiguration.requireCurrentQualifiedRuntime(
+                this,
+            )
         }
+    }
+
+    /**
+     * Revalidates qualified runtime truth against the current source-owned realization topology.
+     *
+     * Shared consumers call this instead of comparing evidence to one catalog entry's historical
+     * platform fields. The model catalog answers what the person chose; the realization map answers
+     * how that model is implemented on one exact target.
+     */
+    internal fun requireCurrentQualifiedRuntime(
+        evidence: QualifiedRuntimeEvidence,
+    ): QualifiedRuntimeEvidence {
+        requirePortableRef(evidence.realizationRef, "realizationRef")
+        requirePortableRef(evidence.runtimeReceiptRef, "runtimeReceiptRef")
+        require(
+            evidence.runtimeState == HereticRuntimeState.Qualified,
+        ) {
+            "Heretic model binding requires a qualified runtime"
+        }
+
+        val realization =
+            HereticRuntimeRealization.require(
+                evidence.realizationRef,
+            )
+        val model =
+            HereticModelCatalog.entry(
+                evidence.modelRef,
+            )
+        val artifact = realization.artifact
+        val runtime = realization.runtime
+
+        require(
+            model != null &&
+                realization.modelRef == evidence.modelRef &&
+                realization.modelProfileRef == evidence.modelProfileRef &&
+                model.identity.modelProfileRef == evidence.modelProfileRef &&
+                artifact.artifactRef == evidence.artifactRef &&
+                artifact.contentSetSha256 == evidence.artifactContentSetSha256 &&
+                runtime.runtimeAdapterRef == evidence.runtimeAdapterRef &&
+                runtime.runtimeClass == evidence.runtimeClass &&
+                runtime.endpoint == evidence.endpoint &&
+                runtime.requestModel == evidence.requestModel,
+        ) {
+            "qualified runtime evidence does not match its declared Heretic realization"
+        }
+
+        return evidence
     }
 
     @Serializable
