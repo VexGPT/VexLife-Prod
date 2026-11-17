@@ -107,6 +107,8 @@ class VexLifeModels(
     private data class Download(val handle: String, val baseBytes: Long, val totalBytes: Long)
 
     private val download = AtomicReference<Download?>(null)
+    /** Settings-stage target. Durable Home choice changes only when Start is accepted. */
+    private val targetModelRef = AtomicReference<String?>(null)
     private val switching = AtomicReference<SwitchProjection?>(null)
     private val downloadedBytes = AtomicLong(0)
     private val lastOutcome = AtomicReference<Outcome?>(null)
@@ -132,6 +134,7 @@ class VexLifeModels(
         val recommendedMemoryBytes: Long,
         val fitsThisMac: Boolean,
         val chosen: Boolean,
+        val targeted: Boolean,
         val serving: Boolean,
         val downloadedBytes: Long?,
         val runtimeConfiguration: RuntimeConfigurationProjection,
@@ -203,6 +206,7 @@ class VexLifeModels(
 
     fun projection(): Projection {
         val chosen = chosenModelRef()
+        val target = targetModelRef.get() ?: chosen
         val serving = servingModelRef()
         val running = download.get()
         val currentSwitch = switching.get()
@@ -238,6 +242,7 @@ class VexLifeModels(
                         entry = entry,
                         presence = presence,
                         chosen = chosen,
+                        targeted = target,
                         serving = serving,
                         running = running,
                         currentSwitch = currentSwitch,
@@ -252,6 +257,7 @@ class VexLifeModels(
                     recommendedMemoryBytes = entry.recommendedMemoryBytes,
                     fitsThisMac = HereticModelCatalog.fits(entry, memory),
                     chosen = state.chosen,
+                    targeted = state.targeted,
                     serving = state.serving,
                     downloadedBytes =
                         running
@@ -281,7 +287,7 @@ class VexLifeModels(
         return Projection(
             schemaVersion = Schema,
             models = rows,
-            selectedHandle = rows.singleOrNull { it.chosen }?.handle,
+            selectedHandle = rows.singleOrNull { it.targeted }?.handle,
             servingHandle = rows.singleOrNull { it.serving }?.handle,
             totalMemoryBytes = memory,
             freeStorageBytes = runCatching { Files.getFileStore(home).usableSpace }.getOrNull(),
@@ -317,6 +323,9 @@ class VexLifeModels(
             )
         val chosen =
             chosenModelRef()
+        val target =
+            targetModelRef.get()
+                ?: chosen
         val serving =
             servingModelRef()
         val effectiveRuntimeConfiguration =
@@ -347,6 +356,7 @@ class VexLifeModels(
                 entry = entry,
                 presence = presence,
                 chosen = chosen,
+                targeted = target,
                 serving = serving,
                 running = download.get(),
                 currentSwitch = switching.get(),
@@ -368,23 +378,8 @@ class VexLifeModels(
         )
         when (val effect = act.effect) {
             VexLifeModelsFamily.Effect.SelectModel -> {
-                val manifest =
-                    requireNotNull(
-                        VexLifeProdHomeFiles.observeExisting(
-                            home,
-                        ),
-                    ).manifest
-                FileHereticModelConfigurationStore(home)
-                    .selectModel(
-                        manifest,
-                        entry,
-                    )
-                VexLogger.record(
-                    VexLogger.Fact.PersonModelChosen,
-                    mapOf(
-                        "model" to handle,
-                        "via" to "settings-selection",
-                    ),
+                targetModelRef.set(
+                    entry.modelRef,
                 )
                 remember(
                     entry,
@@ -396,11 +391,32 @@ class VexLifeModels(
                     ),
                 )
             }
-            VexLifeModelsFamily.Effect.SwitchModel ->
+            VexLifeModelsFamily.Effect.SwitchModel -> {
+                if (!state.chosen) {
+                    val manifest =
+                        requireNotNull(
+                            VexLifeProdHomeFiles.observeExisting(
+                                home,
+                            ),
+                        ).manifest
+                    FileHereticModelConfigurationStore(home)
+                        .selectModel(
+                            manifest,
+                            entry,
+                        )
+                    VexLogger.record(
+                        VexLogger.Fact.PersonModelChosen,
+                        mapOf(
+                            "model" to handle,
+                            "via" to "settings-start",
+                        ),
+                    )
+                }
                 startSwitch(
                     entry = entry,
                     controlRef = controlRef,
                 )
+            }
             VexLifeModelsFamily.Effect.UseRecommendedRuntimeConfiguration -> {
                 val configured =
                     FileHereticRuntimeConfigurationStore(home)
@@ -521,6 +537,10 @@ class VexLifeModels(
                 ) {
                     "model switch completed without the target model becoming the serving Session"
                 }
+                targetModelRef.compareAndSet(
+                    entry.modelRef,
+                    null,
+                )
                 remember(
                     entry,
                     controlRef,
@@ -647,6 +667,7 @@ class VexLifeModels(
         entry: HereticModelCatalog.Entry,
         presence: HereticArtifactMaterialization.PresenceObservation,
         chosen: String?,
+        targeted: String?,
         serving: String?,
         running: Download?,
         currentSwitch: SwitchProjection?,
@@ -667,6 +688,7 @@ class VexLifeModels(
                 },
             downloading = running?.handle == entry.handle,
             chosen = chosen == entry.modelRef,
+            targeted = targeted == entry.modelRef,
             serving = serving == entry.modelRef,
             switching = currentSwitch?.handle == entry.handle,
             runtimeConfigurationPending = runtimeConfigurationPending,
