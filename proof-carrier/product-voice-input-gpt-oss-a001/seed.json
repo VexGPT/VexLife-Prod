@@ -1,0 +1,352 @@
+{
+  "schemaVersion": "vex.relay.task/v2",
+  "continuity": "[VXG RealForever]",
+  "taskRef": "task.vexlife-prod.product-voice-input-gpt-oss-lived-mac.001",
+  "attemptRef": "attempt.vexlife-prod.product-voice-input-gpt-oss-lived-mac.a001",
+  "requestRef": "request.vexlife-prod.product-voice-input-gpt-oss-lived-mac.a001",
+  "correlationRef": "correlation.vexlife-prod.product-voice-input-gpt-oss-lived-mac.a001",
+  "packageRef": "package.vexlife-prod.product-voice-input-gpt-oss-lived-mac.a001",
+  "original": {
+    "originalIntent": "Exercise the exact integration of the currentized GPT-OSS/model-runtime convergence lane with the proven Product Spiral + typed local VoiceInput work on Victor's real Mac without mutating either source-owner PR in place.",
+    "originalGoal": "Prove the exact 47-path integration candidate through JVM/JS/localization/VexWeb and form one verified unsigned Apple-silicon DMG for lived launch against Victor's existing Home.",
+    "userProtectedIntent": "Preserve #191 model/runtime convergence and GPT-OSS identity, preserve #221/#194 Spiral and VoiceInput meaning, and reuse the accepted no-prebuilt-ZIP VexRelay carrier. Do not mutate Home/runtime/service during source/build proof and do not merge or publish.",
+    "sourceRefs": [
+      "github.pull.vexlife-prod.191",
+      "github.pull.vexlife-prod.221",
+      "github.pull.vexlife-prod.204",
+      "github.pull.vexlife-prod.205",
+      "source.vexrelay.current-contract/v1"
+    ]
+  },
+  "lane": {
+    "entryClass": "SAME_LANE_ROLE_TRANSITION",
+    "scopeMode": "STAGE_BOUNDED",
+    "laneRef": "lane.vexlife-prod.product-voice-input-gpt-oss-integration",
+    "parentRootRef": "root.vexlife-prod.new-beginnings",
+    "workRef": "work.vexlife-prod.product-voice-input-gpt-oss-integration",
+    "claimRef": "branch.vexlife-prod.product-voice-input-gpt-oss-integration.a001",
+    "returnRouteRef": "branch.vexlife-prod.product-voice-input-gpt-oss-integration.a001",
+    "ownerRef": "owner.vexlife-prod.product-voice-input-gpt-oss-integration",
+    "rootHubRef": "hub.vexlife-prod.new-beginnings"
+  },
+  "role": {
+    "activeRole": "CODER",
+    "roleRef": "role.coder.vexlife-prod.product-voice-input-gpt-oss-lived-mac",
+    "instanceRef": "instance.vexrelay.vexlife-prod.product-voice-input-gpt-oss-lived-mac.a001",
+    "occupancyRef": "occupancy.vexrelay.vexlife-prod.product-voice-input-gpt-oss-lived-mac.a001",
+    "providerBindingRef": "provider.vexlocalbridge.macos-victor.product-voice-input-gpt-oss-lived-mac.a001",
+    "threadRef": "thread.vexlife-prod.product-voice-input-gpt-oss-integration",
+    "authorityEnvelopeRef": "authority-envelope.vexlife-prod.product-voice-input-gpt-oss-lived-mac.a001"
+  },
+  "capabilities": {
+    "platformGitHubRead": "AVAILABLE",
+    "platformGitHubWrite": "UNAVAILABLE"
+  },
+  "execution": {
+    "hostProfile": "macos-victor",
+    "executionSurface": "MAC_ZIP_RUN_COMMAND",
+    "singleUseNonce": "nonce-vexlife-prod-product-voice-input-gpt-oss-lived-mac-a001-20261117",
+    "duplicateAttemptMarker": "marker.vexlife-prod.product-voice-input-gpt-oss-lived-mac.a001",
+    "duplicateProtectionMode": "OUTER_RELAY_BOUND",
+    "formedAt": "__FORMED_AT__",
+    "expiresAtOrNull": "__EXPIRES_AT__"
+  },
+  "workspace": {
+    "mode": "RUN_ROOT",
+    "projectRef": "project.vexlife-prod.product-voice-input-gpt-oss-integration",
+    "projectPath": "workspace",
+    "createRoot": false,
+    "createProjectPath": true
+  },
+  "repositories": [
+    {
+      "repositoryRef": "primary",
+      "mode": "CLONE_IN_WORKSPACE",
+      "cloneTransport": "GITHUB_GH",
+      "githubHostname": "github.com",
+      "nameWithOwner": "VexGPT/VexLife-Prod",
+      "localPath": "repositories/primary",
+      "remote": "origin",
+      "baseBranch": "main",
+      "acceptedBase": "655e7c78cefba06a5e87afad285bb25a08632f05",
+      "checkoutRef": "b3fec60a1a88445f8257f15f34544b9ef90c2e6c",
+      "expectedHead": "b3fec60a1a88445f8257f15f34544b9ef90c2e6c",
+      "branch": "VXG-111726-chatgpt-product-voice-input-gpt-oss-integration-a001",
+      "expectedRemoteUrl": null
+    }
+  ],
+  "authority": {
+    "authorityRef": "authority.vexlife-prod.product-voice-input-gpt-oss-lived-mac.a001",
+    "authorityMode": "EXACT_STAGE_EFFECTS",
+    "grantedEffects": [
+      "CHECK_AUTH",
+      "READ_REPOSITORY",
+      "CHECK_STATE",
+      "RUN_LOCAL_COMMAND",
+      "QUERY_PROVIDER",
+      "FORM_RESULT"
+    ],
+    "conditionalEffects": [],
+    "consumedEffects": [],
+    "remainingEffects": [
+      "CHECK_AUTH",
+      "READ_REPOSITORY",
+      "CHECK_STATE",
+      "RUN_LOCAL_COMMAND",
+      "QUERY_PROVIDER",
+      "FORM_RESULT"
+    ],
+    "heldEffects": [
+      "WRITE_SOURCE",
+      "CREATE_COMMIT",
+      "PUSH_BRANCH",
+      "UPDATE_COORDINATION_METADATA",
+      "APPROVE_EXACT_HEAD",
+      "MARK_READY",
+      "ORDINARY_MERGE",
+      "POST_MERGE_VERIFY",
+      "MODEL_RUNTIME",
+      "HOME_MUTATION"
+    ],
+    "repositoryMembranes": [
+      {
+        "repositoryRef": "primary",
+        "allowedPaths": [
+          "build.gradle.kts",
+          "docs",
+          "localization",
+          "packaging",
+          "site",
+          "src",
+          "tools"
+        ]
+      }
+    ],
+    "allowedExecutables": [
+      "/bin/bash",
+      "git",
+      "gh",
+      "node"
+    ],
+    "allowedEnvironment": [],
+    "remoteObservationOwner": "Operations",
+    "allowMutationLoop": false,
+    "stopConditions": [
+      "STOP_ON_UNKNOWN",
+      "STOP_ON_AUTH_BLOCK",
+      "STOP_ON_BASE_OR_BRANCH_DRIFT",
+      "STOP_ON_TEST_FAILURE"
+    ]
+  },
+  "source": {
+    "sourceSetRef": "source-set.vexlife-prod.product-voice-input-gpt-oss-lived-mac",
+    "sourceVersionRef": "b3fec60a1a88445f8257f15f34544b9ef90c2e6c",
+    "overlapEvidenceRef": "integration.branch.vexlife-prod.product-voice-input-gpt-oss.a001",
+    "activeConflictState": "NONE",
+    "candidateState": "EXACT",
+    "candidateHead": "b3fec60a1a88445f8257f15f34544b9ef90c2e6c",
+    "candidateTree": "4d093e376cb95a0b4220ac305c60387b00bbfd52",
+    "expectedChangedPaths": [
+      {
+        "repositoryRef": "primary",
+        "path": "docs/lens/vexlife-prod.screen-lens.json"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "localization/strings/manifest.json"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "localization/strings/source/workspace.json"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/model/VexLifeModelsFamily.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/model/heretic/HereticArtifactDeliveryCatalog.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/model/heretic/HereticCompanionProvider.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/model/heretic/HereticModelCatalog.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/model/heretic/HereticModelConfiguration.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/voiceinput/VexLifeVoiceInputFamily.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/web/VexLifeWebP1.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/web/VexLifeWebP1ExperienceMarkup.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/web/VexLifeWebP1ExperienceStyle.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/web/VexLifeWebP1RuntimeArtifacts.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/workspace/VexLifeWorkspaceBlueprint.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonTest/kotlin/vexlife/model/VexLifeModelsFamilyTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonTest/kotlin/vexlife/model/heretic/HereticModelCatalogTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonTest/kotlin/vexlife/voiceinput/VexLifeVoiceInputFamilyTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonTest/kotlin/vexlife/web/VexLifeVisionQuickAccessTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonTest/kotlin/vexlife/web/VexLifeWebP1RuntimeArtifactsTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonTest/kotlin/vexlife/web/VexLifeWebP1Test.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonTest/kotlin/vexlife/workspace/VexLifeWorkspaceBlueprintTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmMain/kotlin/vexlife/capability/VexLifeCapabilityBridge.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmMain/kotlin/vexlife/capability/VexLifeReachDefinitions.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmMain/kotlin/vexlife/companion/DirectCompanionConnection.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmMain/kotlin/vexlife/companion/DirectCompanionTurn.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmMain/kotlin/vexlife/companion/DirectPromptContext.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmMain/kotlin/vexlife/companion/HarmonyCapabilityTools.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmMain/kotlin/vexlife/companion/HarmonyResponseSplitter.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmMain/kotlin/vexlife/local/VexLifeProdLocalSetup.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmMain/kotlin/vexlife/model/VexLifeModels.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmMain/kotlin/vexlife/model/heretic/runtime/FileHereticModelConfigurationStore.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmMain/kotlin/vexlife/model/heretic/runtime/HereticPersistentRuntime.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmMain/kotlin/vexlife/model/heretic/runtime/StableVexLifeHereticRuntimeCompatibility.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmMain/kotlin/vexlife/service/VexLifeProdLocalService.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmMain/kotlin/vexlife/setup/VexLifeProdSetupModel.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmTest/kotlin/vexlife/companion/DirectCompanionCapabilityTurnTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmTest/kotlin/vexlife/companion/HarmonyCapabilityToolsTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmTest/kotlin/vexlife/companion/HarmonyResponseSplitterTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmTest/kotlin/vexlife/local/VexLifeProdLocalSetupTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmTest/kotlin/vexlife/model/VexLifeModelsTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmTest/kotlin/vexlife/model/heretic/runtime/FileHereticModelConfigurationStoreTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmTest/kotlin/vexlife/model/heretic/runtime/HereticModelMaterializationTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmTest/kotlin/vexlife/model/heretic/runtime/HereticPersistentRuntimeTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmTest/kotlin/vexlife/model/heretic/runtime/StableVexLifeHereticRuntimeCompatibilityTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmTest/kotlin/vexlife/setup/VexLifeProdMacFrontDoorTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmTest/kotlin/vexlife/setup/VexLifeProdSetupModelTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmTest/kotlin/vexlife/text/VexLifeStringsTest.kt"
+      }
+    ],
+    "intentionallyUnchangedAuthorizedPaths": []
+  },
+  "policy": {
+    "maxOuterReturnFiles": 10,
+    "maxSelectedSourceEntries": 10,
+    "maxSelectedSourceBytes": 500000,
+    "maxDiffBytes": 5000000,
+    "requireRacePreflightBeforeMutation": false,
+    "requireLocalValidationBeforePublish": false,
+    "requireInputPackageManifest": true,
+    "signoffCommit": true,
+    "draftPullRequest": true
+  }
+}
