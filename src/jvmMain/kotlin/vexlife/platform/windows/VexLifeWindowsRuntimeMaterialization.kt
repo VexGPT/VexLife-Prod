@@ -246,8 +246,7 @@ object VexLifeWindowsRuntimeMaterialization {
                 home = home,
                 archivePath = Path.of(afterDownloads.runtimeArchivePath),
                 imagePath = Path.of(afterDownloads.runtimeImagePath),
-                executableRelativePath = binary.executableRelativePath,
-                executableSha256 = binary.executableSha256,
+                binary = binary,
             )
             extracted = true
         }
@@ -269,8 +268,7 @@ object VexLifeWindowsRuntimeMaterialization {
         home: Path,
         archivePath: Path,
         imagePath: Path,
-        executableRelativePath: String,
-        executableSha256: String,
+        binary: HereticRuntimeRealization.RuntimeBinaryProfile,
     ) {
         require(
             !Files.exists(
@@ -346,7 +344,7 @@ object VexLifeWindowsRuntimeMaterialization {
 
             val executable =
                 staging
-                    .resolve(executableRelativePath)
+                    .resolve(binary.executableRelativePath)
                     .normalize()
             require(executable.startsWith(staging)) {
                 "Windows runtime executable escaped extracted image"
@@ -355,7 +353,7 @@ object VexLifeWindowsRuntimeMaterialization {
                 observeFile(
                     executable,
                     expectedBytes = null,
-                    expectedSha256 = executableSha256,
+                    expectedSha256 = binary.executableSha256,
                 ) ==
                     FileState.VERIFIED,
             ) {
@@ -365,15 +363,7 @@ object VexLifeWindowsRuntimeMaterialization {
                 observeRuntimeImage(
                     archivePath = archivePath,
                     imagePath = staging,
-                    binary =
-                        HereticRuntimeRealization.WindowsQwen4B.runtimeBinary
-                            ?.takeIf {
-                                it.executableRelativePath == executableRelativePath &&
-                                    it.executableSha256 == executableSha256
-                            }
-                            ?: error(
-                                "runtime archive extraction requires the declared Windows binary",
-                            ),
+                    binary = binary,
                 ) ==
                     FileState.VERIFIED,
             ) {
@@ -502,12 +492,7 @@ object VexLifeWindowsRuntimeMaterialization {
                     }
                 }
 
-                expectedFiles.forEach {
-                    (
-                        relative,
-                        expected,
-                    ),
-                    ->
+                expectedFiles.forEach { (relative, expected) ->
                     val file =
                         imagePath
                             .resolve(
