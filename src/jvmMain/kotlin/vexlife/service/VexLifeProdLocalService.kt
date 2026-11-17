@@ -2337,6 +2337,13 @@ class VexLifeProdLocalService private constructor(
             producerDone.set(
                 true,
             )
+            // The canonical turn is terminal now. Clear only the interrupt issued by this exact
+            // human cancellation so the presentation writer can still deliver the terminal event.
+            if (
+                cancellation.cancellationRequested
+            ) {
+                Thread.interrupted()
+            }
             runCatching {
                     writer.get(
                         5,
