@@ -1,0 +1,175 @@
+{
+  "schemaVersion": "vex.relay.task/v2",
+  "continuity": "[VXG RealForever]",
+  "taskRef": "task.vexlife-prod.effective-execution-topology.source-owner.001",
+  "attemptRef": "attempt.vexlife-prod.effective-execution-topology.source-owner.a002",
+  "requestRef": "request.vexlife-prod.effective-execution-topology.source-owner.a002",
+  "correlationRef": "correlation.vexlife-prod.effective-execution-topology.source-owner.a002",
+  "packageRef": "package.vexlife-prod.effective-execution-topology.source-owner.a002",
+  "original": {
+    "originalIntent": "Make the effective local-model execution configuration inspectable without changing model/runtime/continuity behavior or moving ownership away from existing sources.",
+    "originalGoal": "Prove the corrected exact PR #228 source and tests after semantic Assurance required explicit layer_types consumption.",
+    "userProtectedIntent": "Keep architecture/runtime/default provenance legible; do not tune full attention, prompt budgets, KV cache, prefill, concurrency, model runtime or Home in this proof.",
+    "sourceRefs": [
+      "github.pull.vexlife-prod.228",
+      "github.issue.vexwork.312",
+      "source.vexrelay.current-contract/v1"
+    ]
+  },
+  "lane": {
+    "entryClass": "SAME_LANE_ROLE_TRANSITION",
+    "scopeMode": "STAGE_BOUNDED",
+    "laneRef": "lane.vexlife-prod.effective-execution-topology",
+    "parentRootRef": "root.vexlife-prod.new-beginnings",
+    "workRef": "work.vexlife-prod.effective-execution-topology",
+    "claimRef": "github.pull.vexlife-prod.228",
+    "returnRouteRef": "github.pull.vexlife-prod.228",
+    "ownerRef": "owner.vexlife-prod.effective-execution-topology",
+    "rootHubRef": "hub.vexlife-prod.new-beginnings"
+  },
+  "role": {
+    "activeRole": "CODER",
+    "roleRef": "role.coder.vexlife-prod.effective-execution-topology",
+    "instanceRef": "instance.vexrelay.vexlife-prod.effective-execution-topology.a002",
+    "occupancyRef": "occupancy.vexrelay.vexlife-prod.effective-execution-topology.a002",
+    "providerBindingRef": "provider.vexlocalbridge.macos-victor.effective-execution-topology.a002",
+    "threadRef": "thread.vexlife-prod.effective-execution-topology",
+    "authorityEnvelopeRef": "authority-envelope.vexlife-prod.effective-execution-topology.a002"
+  },
+  "capabilities": {
+    "platformGitHubRead": "AVAILABLE",
+    "platformGitHubWrite": "UNAVAILABLE"
+  },
+  "execution": {
+    "hostProfile": "macos-victor",
+    "executionSurface": "MAC_ZIP_RUN_COMMAND",
+    "singleUseNonce": "nonce-vexlife-prod-effective-execution-topology-a002-20261117",
+    "duplicateAttemptMarker": "marker.vexlife-prod.effective-execution-topology.a002",
+    "duplicateProtectionMode": "OUTER_RELAY_BOUND",
+    "formedAt": "__FORMED_AT__",
+    "expiresAtOrNull": "__EXPIRES_AT__"
+  },
+  "workspace": {
+    "mode": "RUN_ROOT",
+    "projectRef": "project.vexlife-prod.effective-execution-topology",
+    "projectPath": "workspace",
+    "createRoot": false,
+    "createProjectPath": true
+  },
+  "repositories": [
+    {
+      "repositoryRef": "primary",
+      "mode": "CLONE_IN_WORKSPACE",
+      "cloneTransport": "GITHUB_GH",
+      "githubHostname": "github.com",
+      "nameWithOwner": "VexGPT/VexLife-Prod",
+      "localPath": "repositories/primary",
+      "remote": "origin",
+      "baseBranch": "main",
+      "acceptedBase": "262c208b2e65e828dd867719c29ecd286ae58a80",
+      "checkoutRef": "a7ad839ba93c49c0f6de5adf6952126f2018bb5e",
+      "expectedHead": "a7ad839ba93c49c0f6de5adf6952126f2018bb5e",
+      "branch": "VXG-111726-effective-execution-topology-a002",
+      "expectedRemoteUrl": null
+    }
+  ],
+  "authority": {
+    "authorityRef": "authority.vexlife-prod.effective-execution-topology.a002",
+    "authorityMode": "EXACT_STAGE_EFFECTS",
+    "grantedEffects": [
+      "CHECK_AUTH",
+      "READ_REPOSITORY",
+      "CHECK_STATE",
+      "RUN_LOCAL_COMMAND",
+      "QUERY_PROVIDER",
+      "FORM_RESULT"
+    ],
+    "conditionalEffects": [],
+    "consumedEffects": [],
+    "remainingEffects": [
+      "CHECK_AUTH",
+      "READ_REPOSITORY",
+      "CHECK_STATE",
+      "RUN_LOCAL_COMMAND",
+      "QUERY_PROVIDER",
+      "FORM_RESULT"
+    ],
+    "heldEffects": [
+      "WRITE_SOURCE",
+      "CREATE_COMMIT",
+      "PUSH_BRANCH",
+      "UPDATE_COORDINATION_METADATA",
+      "APPROVE_EXACT_HEAD",
+      "MARK_READY",
+      "ORDINARY_MERGE",
+      "POST_MERGE_VERIFY",
+      "MODEL_RUNTIME",
+      "HOME_MUTATION"
+    ],
+    "repositoryMembranes": [
+      {
+        "repositoryRef": "primary",
+        "allowedPaths": [
+          "build.gradle.kts",
+          "docs",
+          "src",
+          "tools"
+        ]
+      }
+    ],
+    "allowedExecutables": [
+      "/bin/bash",
+      "git",
+      "gh",
+      "node"
+    ],
+    "allowedEnvironment": [],
+    "remoteObservationOwner": "Operations",
+    "allowMutationLoop": false,
+    "stopConditions": [
+      "STOP_ON_UNKNOWN",
+      "STOP_ON_AUTH_BLOCK",
+      "STOP_ON_BASE_OR_BRANCH_DRIFT",
+      "STOP_ON_TEST_FAILURE"
+    ]
+  },
+  "source": {
+    "sourceSetRef": "source-set.vexlife-prod.effective-execution-topology",
+    "sourceVersionRef": "a7ad839ba93c49c0f6de5adf6952126f2018bb5e",
+    "overlapEvidenceRef": "github.pull.vexlife-prod.228",
+    "activeConflictState": "NONE",
+    "candidateState": "EXACT",
+    "candidateHead": "a7ad839ba93c49c0f6de5adf6952126f2018bb5e",
+    "candidateTree": "ac1f6f387606908c71de8bdef0727436015d987c",
+    "expectedChangedPaths": [
+      {
+        "repositoryRef": "primary",
+        "path": "docs/foundation/HERETIC-EXECUTION-TOPOLOGY.md"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "docs/foundation/INDEX.md"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmMain/kotlin/vexlife/model/heretic/runtime/HereticExecutionTopology.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmTest/kotlin/vexlife/model/heretic/runtime/HereticExecutionTopologyTest.kt"
+      }
+    ],
+    "intentionallyUnchangedAuthorizedPaths": []
+  },
+  "policy": {
+    "maxOuterReturnFiles": 10,
+    "maxSelectedSourceEntries": 4,
+    "maxSelectedSourceBytes": 500000,
+    "maxDiffBytes": 1000000,
+    "requireRacePreflightBeforeMutation": false,
+    "requireLocalValidationBeforePublish": false,
+    "requireInputPackageManifest": true,
+    "signoffCommit": true,
+    "draftPullRequest": true
+  }
+}
