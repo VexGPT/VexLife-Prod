@@ -393,6 +393,17 @@ class DirectCompanionCapabilityTurnTest {
         assertEquals(2, calls.size)
         assertEquals(finalAnswer, result.content)
         assertEquals(
+            "CONVERSATION_OVERLAP_HELD_TOKEN_BUDGET",
+            result.promptContextReceipt.contextMode,
+        )
+        assertEquals(
+            2,
+            result.promptContextReceipt.priorCompletedExchangeCount,
+        )
+        assertTrue(
+            result.promptContextReceipt.selectedConversationEventRefs.isEmpty(),
+        )
+        assertEquals(
             VexLifeCapabilityBridge.Use(
                 "continuity",
                 "hydrate",
