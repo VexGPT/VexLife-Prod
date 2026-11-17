@@ -74,7 +74,7 @@ class VexLifeVoiceInputFamilyTest {
                 VexLifeVoiceInputFamily.Start,
             )
         assertEquals(
-            VexLifeVoiceInputFamily.CheckingLanguage(language),
+            VexLifeVoiceInputFamily.RequestingMicrophone(language),
             begin?.admittedState,
         )
         assertEquals(
@@ -137,8 +137,8 @@ class VexLifeVoiceInputFamilyTest {
             ),
         )
         assertEquals(
-            VexLifeVoiceInputFamily.RequestingMicrophone(language),
-            VexLifeVoiceInputFamily.observeMicrophoneRequestStarted(language),
+            VexLifeVoiceInputFamily.CheckingLanguage(language),
+            VexLifeVoiceInputFamily.observeLanguageCheckStarted(language),
         )
         assertEquals(
             VexLifeVoiceInputFamily.Listening(language),
