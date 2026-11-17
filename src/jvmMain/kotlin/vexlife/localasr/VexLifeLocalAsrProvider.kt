@@ -102,7 +102,7 @@ private class WhisperCppCliProvider private constructor(
 
         val started =
             System.nanoTime()
-        val process =
+        val processBuilder =
             ProcessBuilder(
                 executablePath.toString(),
                 "-m",
@@ -116,7 +116,16 @@ private class WhisperCppCliProvider private constructor(
                 "-t",
                 "4",
             )
-                .start()
+        // The Home-owned provider bundle keeps the exact native dylibs beside whisper-cli.
+        // Provider library discovery is concrete realization, not Product/Family meaning.
+        processBuilder
+            .environment()["DYLD_LIBRARY_PATH"] =
+            requireNotNull(
+                executablePath.parent,
+            )
+                .toString()
+        val process =
+            processBuilder.start()
 
         val stdout =
             CompletableFuture.supplyAsync {
