@@ -49,13 +49,58 @@ node tools/continuity-pressure/run.mjs --stage quick \
   --effective-input-token-budget 80000 --payload-scale 7 --sets 3 --turns-per-set 5
 ~~~
 
-- **Runtime:** borrowed through the ordinary reuse-only setup route (`allowAcquisition = false`,
-  `allowRuntimeStart = false`, the route the long-lived service takes). Currentness is then
-  re-observed read-only at every stage with no recovery, so a run never starts, restarts or
-  replaces the runtime. Turns, Conversation and Working Continuity live only in the scratch Home.
+- **Fast live host-proof profile:** the precondition resolves the target through
+  `HereticModelCatalog.Candidate4B`; its model/profile/artifact identities remain children of that
+  existing catalog entry and are not re-authored by the harness. The model-owned Qwen hybrid
+  attention layout remains pinned. The live pressure run uses an experiment-only 80k effective
+  selection budget with payload scale 12 and 3×3 scenario turns so rollover/successor behavior is
+  reached quickly without making Normal pressure impossible; this does not change the model's
+  physical context capacity or Product hard token limit.
+- **Current provider representation composition:** Claude's #225 ancestry predates the Product's
+  model-specific Companion representation owner and otherwise makes every Qwen inherit the certified
+  27B sampling defaults. The host-proof companion composes current-main
+  `HereticCompanionRepresentation` and binds the existing 27B / 9B / 4B catalog siblings to their
+  current profiles. The Connection consumes that parent-owned profile, so Qwen4B uses its current
+  `temperature=0.6, topP=0.95, topK=20` relationship instead of an experiment-authored model-name
+  switch. No attention architecture, continuity owner, Memory owner, or Product hard token limit is
+  changed by this composition.
+- **Short semantic discriminator:** after the 4B current-profile run proved that mechanical
+  continuity can be correct while retrieval/use remains model-sensitive, the next host proof
+  temporarily selects the catalog-owned certified `Qwen27B` through the same Product
+  model-configuration owner. It runs only 2 formation + 2 pressure + 2 probe turns with payload
+  scale 16: enough to cross rollover and compare exact-source / paraphrased-source behavior without
+  replaying the 15-turn depth experiment. This is an experiment target change, not a Product default
+  or a continuity-owner change.
+- **Host runtime precondition (outside the experiment):** the GitHub-backed Mac host-proof carriage
+  first requires the canonical Conversation writer to be `IDLE`. It then selects the Product-owned
+  runtime route explicitly, with `allowAcquisition=false` and `allowRuntimeStart=true`, after the
+  Product model-configuration owner selects the catalog-owned `Candidate4B` entry. A historical stable-VexLife predecessor that is not borrowable is
+  preserved untouched rather than repaired/deleted/retired by the experiment. Product-owned runtime
+  start still performs its own exact process census and port-occupancy checks before spawning.
+  This may realize/currentize the selected Product runtime in the canonical runtime namespace, but
+  cannot download prerequisites and performs no synthetic Conversation turn. Its log/effect is
+  returned separately. The continuity experiment begins only after this precondition and remains
+  canonical-Home read-only.
+- **Runtime:** borrowed only from the Home's already-bound runtime receipt. The live harness does
+  **not** enter LocalSetup: it reads the existing Product model binding, follows its exact
+  `runtimeReceiptPath` to the stable-VexLife or Product-owned runtime owner, and invokes that
+  owner's read-only currentness observation. For a Product-owned runtime, the binding uses the
+  lifecycle implementation identity recorded by the exact receipt that formed that already-running
+  process; a newer harness checkout does not relabel the process as its own. The runtime owner still
+  re-proves the exact receipt/process/substrate before every provider stage. Missing, pending or
+  stale binding truth holds the run; the harness never repairs a Conversation writer, rewrites a
+  model binding, starts/restarts a runtime, or performs acquisition. Turns, Conversation and Working
+  Continuity live only in the scratch Home.
+- **Host-proof runtime composition:** this stacked host-proof branch composes the current-main
+  `HereticPersistentRuntime` launch-contract owner onto the older continuity candidate before
+  live execution. This is not continuity ownership and not a broad rebase: the continuity source
+  stays on the independent #225 stack, while the host runtime is judged by the current Product
+  owner that actually knows `CURRENT` versus `PRE_PROMPT_CACHE_LIMIT` launch contracts.
 - **Window:** `--experiment-window` is the operator saying this is a dedicated window. Without it,
-  or without `--runtime-home`, the stage holds before touching any runtime. A real conversation
-  running at the same time would contaminate cache and latency evidence.
+  or without `--runtime-home`, the stage holds before touching any runtime. The live binder also
+  read-only checks the canonical Conversation writer before the run and before each provider stage;
+  any non-IDLE writer holds the experiment with no recovery. This keeps concurrent Conversation use
+  from contaminating cache/latency evidence without asking the operator to repair or interpret it.
 - **Engineered profile:** the flags above project NORMAL → WATCH → CHECKPOINT_RECOMMENDED →
   ROLLOVER (turn 10) → successor (11) → post-successor (12) → probes in 15 turns. Longer live
   replies move the crossing slightly earlier.

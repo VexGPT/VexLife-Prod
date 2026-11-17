@@ -22,6 +22,8 @@ import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import vexlife.model.heretic.HereticCompanionRepresentation
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeState
@@ -43,7 +45,7 @@ import vexlife.model.heretic.HereticRuntimeState
  */
 object DirectCompanionConnection {
     const val OutputTokenLimit =
-        16_000
+        HereticCompanionRepresentation.ProductMaxOutputTokens
 
     const val RuntimeObservationSchema =
         "vexlife-prod.model-runtime-observation/v1"
@@ -92,11 +94,9 @@ object DirectCompanionConnection {
             mapOf(
                 "include_usage" to true,
             ),
-        // Exact certified generation_config.json sampling projection:
-        // sha256=d0d0ed2e37cdfafef4a5067d5ea2407b05f4fb50526e47c008a5b235d50240fb
-        val temperature: Double = 1.0,
-        val top_p: Double = 0.95,
-        val top_k: Int = 20,
+        val temperature: Double,
+        val top_p: Double,
+        val top_k: Int,
         val chat_template_kwargs: Map<String, Boolean>,
     )
 
@@ -420,13 +420,26 @@ object DirectCompanionConnection {
             origin.resolve(
                 "/v1/chat/completions",
             )
+        val entry =
+            requireNotNull(
+                HereticModelCatalog.entry(
+                    runtime.modelRef,
+                ),
+            ) {
+                "qualified runtime model is not offered by the current Product"
+            }
+        val generation =
+            entry.companionProfile.generation
         val requestBody =
             JsonCodec.encodeToString(
                 RequestPayload(
                     model = runtime.requestModel,
                     messages = messages,
-                    max_tokens = OutputTokenLimit,
+                    max_tokens = generation.productMaxOutputTokens,
                     stream = true,
+                    temperature = generation.sampling.temperature,
+                    top_p = generation.sampling.topP,
+                    top_k = generation.sampling.topK,
                     chat_template_kwargs =
                         mapOf(
                             "enable_thinking" to

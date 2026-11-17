@@ -39,6 +39,8 @@ object HereticModelCatalog {
         val modelRootRelativePath: String,
         /** Unified memory this model wants to run comfortably beside macOS and VexLife. */
         val recommendedMemoryBytes: Long,
+        /** Current provider/model representation relationship for this offered model. */
+        val companionProfile: HereticCompanionRepresentation.Profile,
         val standing: Standing,
     ) {
         val totalBytes: Long
@@ -302,6 +304,7 @@ object HereticModelCatalog {
             members = HereticArtifactCatalog.Members,
             modelRootRelativePath = "models/heretic/qwen3.8-27b-mlx4",
             recommendedMemoryBytes = 32 * GiB,
+            companionProfile = HereticCompanionRepresentation.Profiles.Qwen27B,
             standing = Standing.CERTIFIED,
         )
 
@@ -329,6 +332,7 @@ object HereticModelCatalog {
             members = NineBMembers,
             modelRootRelativePath = "models/heretic/qwen3.8-9b-mlx5",
             recommendedMemoryBytes = 16 * GiB,
+            companionProfile = HereticCompanionRepresentation.Profiles.Qwen9B,
             standing = Standing.CANDIDATE,
         )
 
@@ -361,6 +365,7 @@ object HereticModelCatalog {
             members = FourBMembers,
             modelRootRelativePath = "models/heretic/qwen3.8-4b-distill-mlx4",
             recommendedMemoryBytes = 8 * GiB,
+            companionProfile = HereticCompanionRepresentation.Profiles.Qwen4B,
             standing = Standing.CANDIDATE,
         )
 
@@ -424,6 +429,9 @@ object HereticModelCatalog {
     init {
         require(Entries.map { it.modelRef }.distinct().size == Entries.size) {
             "model refs must be unique"
+        }
+        require(Entries.all { it.companionProfile.profileRef.isNotBlank() }) {
+            "every offered model requires one explicit Companion provider profile"
         }
         require(Entries.map { it.handle }.distinct().size == Entries.size) {
             "model handles must be unique"

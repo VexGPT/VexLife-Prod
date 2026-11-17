@@ -23,6 +23,8 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import vexlife.capability.VexLifeCapabilityRequest
+import vexlife.contract.VexDurableContractFile
+import vexlife.filesystem.VexOwnedPath
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
 import vexlife.companion.DirectPromptContext
@@ -35,12 +37,19 @@ import vexlife.continuity.VexLifeWorkingContinuity
 import vexlife.person.VexLifePersonSettings
 import vexlife.person.VexLifePersonSettingsStore
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.logging.VexLogger
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeState
+import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
+import vexlife.model.heretic.runtime.FileHereticRuntimeReceiptStore
+import vexlife.model.heretic.runtime.HereticPersistentRuntime
+import vexlife.model.heretic.runtime.MacHereticRuntimePlatform
+import vexlife.model.heretic.runtime.StableVexLifeHereticRuntimeCompatibility
 
 /**
  * Claude lane's adapter into the shared VexWork continuity-pressure harness (#310).
@@ -172,7 +181,7 @@ object ContinuityPressureAdapter {
 
     private val KnownRefTags = setOf("ANCHOR", "CORRECTION", "LESSON")
 
-    private val RouteInDetail = Regex("\\((PROMPT_RESIDENT|HYDRATED_THIS_TURN)\\)")
+    private val RouteInDetail = Regex("\\((PROMPT_RESIDENT|SOURCE_RETURN_THIS_TURN|HYDRATED_THIS_TURN)\\)")
 
     // ---------------------------------------------------------------- entry
 
@@ -263,16 +272,187 @@ object ContinuityPressureAdapter {
      * start. On an already set-up Home it observes; currentness is then re-observed read-only for
      * every stage, with no recovery, so an experiment can never restart or replace the runtime.
      */
+    private fun bindingFromReceipt(
+        authorityRef: String,
+        modelRef: String,
+        modelPath: String,
+        pythonPath: String,
+        pythonEnvironmentRoot: String,
+        implementationIdentity: HereticPersistentRuntime.ImplementationIdentity =
+            HereticPersistentRuntime.currentImplementationIdentity(),
+    ): HereticPersistentRuntime.Binding =
+        HereticPersistentRuntime.Binding(
+            schemaVersion = HereticPersistentRuntime.BindingSchema,
+            authorityRef = authorityRef,
+            modelPath = modelPath,
+            pythonPath = pythonPath,
+            pythonEnvironmentRoot = pythonEnvironmentRoot,
+            implementationIdentity = implementationIdentity,
+            model = HereticModelCatalog.requireEntry(modelRef),
+        )
+
+    /**
+     * Observe the runtime already bound by the selected Home without entering LocalSetup.
+     *
+     * LocalSetup's reuse-only route is lifecycle-safe for the Product, but it may still repair an
+     * abandoned Conversation writer or currentize the Product runtime binding. A synthetic live
+     * experiment has no authority to perform either effect on the person's canonical Home.
+     *
+     * The harness therefore follows the Home's already-bound runtimeReceiptPath and asks only that
+     * rightful runtime owner for exact currentness. Missing/pending/stale binding truth holds the
+     * experiment instead of converging or recovering anything.
+     */
+    /**
+     * Diagnostic mirror of the Product runtime owner's private receipt-binding predicate.
+     *
+     * This never admits a runtime. It only names which already-required equalities are false so a
+     * held host experiment can return one actionable boundary instead of the owner's aggregate
+     * error. Admission still belongs exclusively to observeCurrentQualified(...).
+     */
+    private fun productReceiptBindingMismatches(
+        binding: HereticPersistentRuntime.Binding,
+        receipt: HereticPersistentRuntime.Receipt,
+    ): List<String> {
+        val identity = binding.model.identity
+        val expectedArgs = HereticPersistentRuntime.serverArgs(binding)
+        return buildList {
+            if (receipt.schemaVersion != HereticPersistentRuntime.ReceiptSchema) add("RECEIPT_SCHEMA")
+            if (receipt.authorityRef != binding.authorityRef) add("AUTHORITY_REF")
+            if (receipt.modelRef != identity.modelRef) add("MODEL_REF")
+            if (receipt.modelProfileRef != identity.modelProfileRef) add("MODEL_PROFILE_REF")
+            if (receipt.artifactRef != identity.artifactSetRef) add("ARTIFACT_REF")
+            if (receipt.artifactCustodyEvidenceRef != identity.artifactCustodyEvidenceRef) add("ARTIFACT_CUSTODY_EVIDENCE_REF")
+            if (receipt.artifactContentSetSha256 != identity.artifactContentSetSha256) add("ARTIFACT_CONTENT_SET_SHA256")
+            if (receipt.runtimeAdapterRef != identity.runtimeAdapterRef) add("RUNTIME_ADAPTER_REF")
+            if (receipt.runtimeClass != identity.runtimeClass) add("RUNTIME_CLASS")
+            if (receipt.transportClass != identity.transportClass) add("TRANSPORT_CLASS")
+            if (receipt.hostExecutionProfileRef != identity.hostExecutionProfileRef) add("HOST_EXECUTION_PROFILE_REF")
+            if (receipt.pythonVersion != identity.pythonVersion) add("PYTHON_VERSION")
+            if (receipt.mlxLmVersion != identity.mlxLmVersion) add("MLX_LM_VERSION")
+            if (receipt.trainerSourceCommit != identity.trainerSourceCommit) add("TRAINER_SOURCE_COMMIT")
+            if (receipt.modelPath != binding.modelPath) add("MODEL_PATH")
+            if (receipt.pythonPath != binding.pythonPath) add("PYTHON_PATH")
+            if (receipt.pythonEnvironmentRoot != binding.pythonEnvironmentRoot) add("PYTHON_ENVIRONMENT_ROOT")
+            if (receipt.endpoint != identity.endpoint) add("ENDPOINT")
+            if (receipt.requestModel != identity.requestModel) add("REQUEST_MODEL")
+            if (receipt.implementationIdentity.repository != binding.implementationIdentity.repository) add("IMPLEMENTATION_REPOSITORY")
+            if (receipt.implementationIdentity.classResource != binding.implementationIdentity.classResource) add("IMPLEMENTATION_CLASS_RESOURCE")
+            if (receipt.implementationIdentity.classSha256 != binding.implementationIdentity.classSha256) add("IMPLEMENTATION_CLASS_SHA256")
+            if (receipt.runtime.pid <= 0) add("PID")
+            if (receipt.runtime.processGroupId <= 0) add("PROCESS_GROUP_ID")
+            if (!receipt.runtime.exactOwnedDetachedGroup) add("EXACT_OWNED_DETACHED_GROUP")
+            if (receipt.runtime.args != expectedArgs) add("SERVER_ARGS")
+            if (receipt.runtime.processSubstrate.pid != receipt.runtime.pid) add("PROCESS_SUBSTRATE_PID")
+            if (receipt.effects != vexlife.model.heretic.HereticRuntimeEffectBoundary.QualifiedRuntime) add("EFFECT_BOUNDARY")
+            if (receipt.state != HereticRuntimeState.Qualified) add("RECEIPT_STATE")
+            if (receipt.qualification == null) add("QUALIFICATION")
+        }
+    }
+
+    private fun observeBoundRuntimeReadOnly(runtimeHome: Path): HereticModelConfiguration.QualifiedRuntimeEvidence {
+        val home =
+            requireNotNull(VexLifeProdHomeFiles.observeExisting(runtimeHome)) {
+                "selected canonical Vex Home is absent"
+            }
+        val configured =
+            FileHereticModelConfigurationStore(runtimeHome).read(home.manifest)
+                as? FileHereticModelConfigurationStore.Snapshot.Heretic
+                ?: error("selected Vex Home has no bound Product runtime model configuration")
+        require(HereticModelConfiguration.isBound(configured.value)) {
+            "selected Vex Home runtime model configuration is not already bound"
+        }
+
+        val platform = MacHereticRuntimePlatform(productHome = runtimeHome)
+        return when (configured.value.runtimeReceiptPath) {
+            HereticProductIdentity.StableRuntimeReceiptRelativePath -> {
+                val ownedRoot = VexOwnedPath.requireRoot(runtimeHome, "canonical VexLife Home")
+                val receipt =
+                    requireNotNull(
+                        VexDurableContractFile.read<StableVexLifeHereticRuntimeCompatibility.Receipt>(
+                            ownedRoot = ownedRoot,
+                            path =
+                                VexOwnedPath.resolveInside(
+                                    ownedRoot,
+                                    HereticProductIdentity.StableRuntimeReceiptRelativePath,
+                                ),
+                        )
+                    ) {
+                        "selected Vex Home stable runtime receipt is absent"
+                    }
+                require(receipt.modelRef == configured.value.modelRef) {
+                    "stable runtime receipt does not serve the Home's bound model"
+                }
+                val binding =
+                    bindingFromReceipt(
+                        authorityRef = receipt.authorityRef,
+                        modelRef = receipt.modelRef,
+                        modelPath = receipt.modelPath,
+                        pythonPath = receipt.pythonPath,
+                        pythonEnvironmentRoot = receipt.pythonEnvironmentRoot,
+                    )
+                requireNotNull(
+                    StableVexLifeHereticRuntimeCompatibility.observe(
+                        productHome = runtimeHome,
+                        binding = binding,
+                        platform = platform,
+                    )
+                ) {
+                    "selected stable VexLife runtime is not currently borrowable"
+                }.evidence
+            }
+
+            HereticProductIdentity.ProductRuntimeReceiptRelativePath -> {
+                val store = FileHereticRuntimeReceiptStore(runtimeHome)
+                val receipt =
+                    requireNotNull(store.read()) {
+                        "selected Vex Home Product runtime receipt is absent"
+                    }
+                require(receipt.modelRef == configured.value.modelRef) {
+                    "Product runtime receipt does not serve the Home's bound model"
+                }
+                val binding =
+                    bindingFromReceipt(
+                        authorityRef = receipt.authorityRef,
+                        modelRef = receipt.modelRef,
+                        modelPath = receipt.modelPath,
+                        pythonPath = receipt.pythonPath,
+                        pythonEnvironmentRoot = receipt.pythonEnvironmentRoot,
+                        // This experiment borrows an already-owned runtime. Its lifecycle
+                        // implementation identity belongs to the receipt that formed it, not to
+                        // this newer harness candidate. The runtime owner still re-proves exact
+                        // receipt/process/substrate currentness below.
+                        implementationIdentity = receipt.implementationIdentity,
+                    )
+                val mismatches = productReceiptBindingMismatches(binding, receipt)
+                require(mismatches.isEmpty()) {
+                    "Product runtime receipt binding mismatch: " + mismatches.joinToString(",")
+                }
+                HereticPersistentRuntime.observeCurrentQualified(
+                    binding = binding,
+                    store = store,
+                    platform = platform,
+                )
+            }
+
+            else -> error("selected Vex Home runtime receipt owner is not admitted for read-only borrowing")
+        }
+    }
+
     private fun hostRuntime(runtimeHome: Path): LiveRuntime {
-        val session =
-            VexLifeProdLocalSetup.establishSession(
-                productHome = runtimeHome,
-                allowAcquisition = false,
-                allowRuntimeStart = false,
-            )
+        val writer = DirectConversationStore(runtimeHome).threadWriterCurrentness()
+        require(writer.state == "IDLE" && !writer.recoveryRequired) {
+            "canonical Conversation writer is not IDLE; live experiment requires a dedicated window and performs no recovery"
+        }
+        val evidence = observeBoundRuntimeReadOnly(runtimeHome)
         return LiveRuntime(
-            evidence = session.observeCurrentQualifiedRuntimeEvidence(),
-            observe = { session.observeCurrentQualifiedRuntimeEvidence() },
+            evidence = evidence,
+            observe = {
+                val currentWriter = DirectConversationStore(runtimeHome).threadWriterCurrentness()
+                require(currentWriter.state == "IDLE" && !currentWriter.recoveryRequired) {
+                    "canonical Conversation writer became non-IDLE during live experiment; no recovery performed"
+                }
+                observeBoundRuntimeReadOnly(runtimeHome)
+            },
             transport = DirectCompanionConnection.SystemTransport,
         )
     }
@@ -723,7 +903,8 @@ object ContinuityPressureAdapter {
                 }
             }
         } catch (error: Exception) {
-            System.err.println("projection stopped at ordinal $ordinal: ${error.message}")
+            val detail = failureDetail(error)
+            System.err.println("projection stopped at ordinal $ordinal: $detail")
             cleanup(parent, config.keepScratch)
             return writeResult(
                 config,
@@ -736,7 +917,7 @@ object ContinuityPressureAdapter {
                 "ERROR",
                 peakBytes,
                 deleted = !config.keepScratch,
-                failure = error.message,
+                failure = detail,
                 provider = provider,
             )
         }
@@ -758,6 +939,16 @@ object ContinuityPressureAdapter {
             provider,
         )
     }
+
+    private fun failureDetail(error: Throwable): String =
+        generateSequence(error) { current -> current.cause }
+            .take(8)
+            .map { current ->
+                current.javaClass.simpleName +
+                    current.message?.let { ": $it" }.orEmpty()
+            }
+            .distinct()
+            .joinToString(" <- ")
 
     private fun setup(home: Path, evidence: HereticModelConfiguration.QualifiedRuntimeEvidence) =
         VexLifeProdLocalSetup.Result(
@@ -897,6 +1088,7 @@ object ContinuityPressureAdapter {
         return observed.map { o ->
             val receipt = o.result.promptContextReceipt
             val resident = receipt.selectedConversationEventRefs.toSet()
+            val sourceReturned = receipt.sourceReturnSourceEventRefs.toSet()
             val hydrated = o.revisitSourceRefs.toSet()
             val residency =
                 known
@@ -906,6 +1098,7 @@ object ContinuityPressureAdapter {
                         val state =
                             when {
                                 refs.all { it in resident } -> "PROMPT_RESIDENT"
+                                refs.any { it in sourceReturned } -> "SOURCE_RETURN_THIS_TURN"
                                 refs.any { it in hydrated } -> "HYDRATED_THIS_TURN"
                                 else -> "OMITTED_BUDGET"
                             }
@@ -917,7 +1110,14 @@ object ContinuityPressureAdapter {
                     }
             val assertions =
                 o.scenarioTurn.assertionRefs.map { ref ->
-                    assertion(ref, o, observed, resident, hydrated)
+                    assertion(
+                        ref,
+                        o,
+                        observed,
+                        resident,
+                        sourceReturned,
+                        hydrated,
+                    )
                 }
             val snapshot = receipt.capabilityFrameSnapshot
             val priorObserved = observed.lastOrNull { it.ordinal < o.ordinal }
@@ -1149,6 +1349,7 @@ object ContinuityPressureAdapter {
         o: Observed,
         observed: List<Observed>,
         resident: Set<String>,
+        sourceReturned: Set<String>,
         hydrated: Set<String>,
     ): JsonObject {
         val anchorRef = AssertionAnchors[ref]
@@ -1168,6 +1369,7 @@ object ContinuityPressureAdapter {
                         val how =
                             when {
                                 refs.all { it in resident } -> "PROMPT_RESIDENT"
+                                refs.any { it in sourceReturned } -> "SOURCE_RETURN_THIS_TURN"
                                 refs.any { it in hydrated } -> "HYDRATED_THIS_TURN"
                                 else -> null
                             }
@@ -1678,8 +1880,13 @@ object ContinuityPressureAdapter {
                 put("adapterRef", AdapterRef)
                 put(
                     "provider",
-                    "DETERMINISTIC_FIXTURE: echoes 'Reply only: X'; on probe turns asks revisit once with the probe's own content words; " +
-                        "on setting turns reports the reply-language setting the provider input itself carried, and where",
+                    if (provider.live) {
+                        "LIVE_MODEL: exact already-bound host runtime observed read-only; provider calls forwarded unchanged; " +
+                            "usage and timing are observations from the returned stream"
+                    } else {
+                        "DETERMINISTIC_FIXTURE: echoes 'Reply only: X'; on probe turns asks revisit once with the probe's own content words; " +
+                            "on setting turns reports the reply-language setting the provider input itself carried, and where"
+                    },
                 )
                 put(
                     "owners",
