@@ -74,6 +74,10 @@ class VexLifeVoiceInputFamilyTest {
                 VexLifeVoiceInputFamily.Start,
             )
         assertEquals(
+            VexLifeVoiceInputFamily.CheckingLanguage(language),
+            begin?.admittedState,
+        )
+        assertEquals(
             VexLifeVoiceInputFamily.BeginLocalDictation(language),
             begin?.effect,
         )
@@ -83,6 +87,10 @@ class VexLifeVoiceInputFamilyTest {
                 VexLifeVoiceInputFamily.Listening(language),
                 VexLifeVoiceInputFamily.Stop,
             )
+        assertEquals(
+            VexLifeVoiceInputFamily.Stopping(language),
+            end?.admittedState,
+        )
         assertEquals(VexLifeVoiceInputFamily.EndLocalDictation, end?.effect)
 
         assertNull(
@@ -98,6 +106,53 @@ class VexLifeVoiceInputFamilyTest {
                 VexLifeVoiceInputFamily.Stopping(language),
                 VexLifeVoiceInputFamily.Stop,
             )
+        )
+    }
+
+    @Test
+    fun browserObservationsReturnThroughFamilyBeforeChangingSemanticState() {
+        val language = VexLifeVoiceInputFamily.Language.English
+
+        assertNull(
+            VexLifeVoiceInputFamily.observeLocalLanguage(
+                language,
+                VexLifeVoiceInputFamily.LocalLanguageObservation.Available,
+            )
+        )
+        assertEquals(
+            VexLifeVoiceInputFamily.InstallingLanguage(language),
+            VexLifeVoiceInputFamily.observeLocalLanguage(
+                language,
+                VexLifeVoiceInputFamily.LocalLanguageObservation.InstallRequired,
+            ),
+        )
+        assertEquals(
+            VexLifeVoiceInputFamily.Failed(
+                language,
+                VexLifeVoiceInputFamily.FailureReason.LanguageUnavailable,
+            ),
+            VexLifeVoiceInputFamily.observeLocalLanguage(
+                language,
+                VexLifeVoiceInputFamily.LocalLanguageObservation.Unavailable,
+            ),
+        )
+        assertEquals(
+            VexLifeVoiceInputFamily.RequestingMicrophone(language),
+            VexLifeVoiceInputFamily.observeMicrophoneRequestStarted(language),
+        )
+        assertEquals(
+            VexLifeVoiceInputFamily.Listening(language),
+            VexLifeVoiceInputFamily.observeRecognitionStarted(language),
+        )
+        assertEquals(
+            VexLifeVoiceInputFamily.Failed(
+                language,
+                VexLifeVoiceInputFamily.FailureReason.MicrophoneUnavailable,
+            ),
+            VexLifeVoiceInputFamily.observeFailure(
+                language,
+                VexLifeVoiceInputFamily.FailureReason.MicrophoneUnavailable,
+            ),
         )
     }
 
