@@ -13,6 +13,7 @@ import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -33,6 +34,48 @@ class DirectCompanionConnectionTest {
             requestModel = HereticProductIdentity.RequestModel,
             qualification = HereticRuntimeQualification.qualified(),
         )
+
+    private fun qualifiedRuntime(
+        entry: HereticModelCatalog.Entry,
+    ): HereticModelConfiguration.QualifiedRuntimeEvidence =
+        HereticModelConfiguration.QualifiedRuntimeEvidence(
+            runtimeReceiptRef = "receipt.vexlife-prod.heretic.test." + entry.handle,
+            runtimeState = HereticRuntimeState.Qualified,
+            modelRef = entry.modelRef,
+            modelProfileRef = entry.identity.modelProfileRef,
+            artifactRef = entry.identity.artifactSetRef,
+            artifactContentSetSha256 = entry.identity.artifactContentSetSha256,
+            runtimeAdapterRef = entry.identity.runtimeAdapterRef,
+            runtimeClass = entry.identity.runtimeClass,
+            endpoint = entry.identity.endpoint,
+            requestModel = entry.identity.requestModel,
+            qualification = HereticRuntimeQualification.qualified(),
+        )
+
+    @Test
+    fun candidate4BUsesItsOwnSamplingProfileAtTheConnectionBoundary() {
+        var call: DirectCompanionConnection.HttpCall? = null
+
+        DirectCompanionConnection.invoke(
+            runtime = qualifiedRuntime(HereticModelCatalog.Candidate4B),
+            messages = listOf(CompanionProviderMessage(role = "user", content = "sampling probe")),
+            transport =
+                DirectCompanionConnection.Transport { observed ->
+                    call = observed
+                    DirectCompanionConnection.HttpResult(
+                        status = 200,
+                        body =
+                            """{"model":"default_model","choices":[{"finish_reason":"stop","message":{"role":"assistant","content":"ok"}}]}""",
+                    )
+                },
+        )
+
+        val body =
+            Json.parseToJsonElement(requireNotNull(call).body).jsonObject
+        assertEquals("0.6", body.getValue("temperature").jsonPrimitive.content)
+        assertEquals("0.95", body.getValue("top_p").jsonPrimitive.content)
+        assertEquals("20", body.getValue("top_k").jsonPrimitive.content)
+    }
 
     @Test
     fun qualifiedRuntimeOwnsEndpointAndModelForOneActualLoopbackInference() {
