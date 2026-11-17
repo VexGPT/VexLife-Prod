@@ -79,6 +79,23 @@ object VexLifeProdSetupModel {
         explicit: String?,
         target: HereticRuntimeRealization.Target,
         totalMemoryBytes: Long?,
+    ): HereticModelCatalog.Entry =
+        resolveObserved(
+            explicit = explicit,
+            observedModelRef =
+                saved(
+                    productHome,
+                )
+                    ?.modelRef,
+            target = target,
+            totalMemoryBytes = totalMemoryBytes,
+        )
+
+    fun resolveObserved(
+        explicit: String?,
+        observedModelRef: String?,
+        target: HereticRuntimeRealization.Target,
+        totalMemoryBytes: Long?,
     ): HereticModelCatalog.Entry {
         val selected =
             explicit?.let {
@@ -90,7 +107,9 @@ object VexLifeProdSetupModel {
                     "model $it is not offered"
                 }
             }
-                ?: saved(productHome)
+                ?: observedModelRef?.let(
+                    HereticModelCatalog::requireEntry,
+                )
                 ?: recommendedFor(
                     target = target,
                     totalMemoryBytes = totalMemoryBytes,
