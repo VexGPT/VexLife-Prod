@@ -2232,6 +2232,7 @@ object DirectPromptContext {
             "capability.vexlife.repository.read",
             "capability.vexlife.home.read",
             "capability.vexlife.memory.recall",
+            "capability.vexlife.continuity.hydrate",
             "capability.vexlife.conversation.source-return",
         )
 
@@ -2257,6 +2258,11 @@ object DirectPromptContext {
                 "resource.vexlife-prod.memory.current-pages",
                 if (memoryCurrent) VexLifeCapabilityAtlas.ResourceState.AVAILABLE else VexLifeCapabilityAtlas.ResourceState.UNAVAILABLE,
                 listOf(bridge),
+            ),
+            available(
+                "resource.vexlife-prod.continuity.hydration",
+                currentRequest.threadRef,
+                "source-path:src/jvmMain/kotlin/vexlife/capability/reach/VexLifeContinuityHydration.kt",
             ),
             available("resource.vexlife-prod.conversation.canonical", currentRequest.threadRef),
         )
