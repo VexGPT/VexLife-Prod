@@ -253,6 +253,18 @@ class DirectPromptCurrentStateTest {
                 personComponent.providerMessageIndex,
             )
             assertTrue(personComponent.providerMessageIndex < browserComponent.providerMessageIndex)
+            assertEquals(
+                DirectPromptContext.Components.Prompt.ref,
+                envelopeComponent.parentComponentRef,
+            )
+            assertEquals(
+                DirectPromptContext.Components.Prompt.Current.ref,
+                personComponent.parentComponentRef,
+            )
+            assertEquals(
+                DirectPromptContext.Components.Prompt.Live.ref,
+                browserComponent.parentComponentRef,
+            )
 
             val realEnvelope = materialized.messages[envelopeComponent.providerMessageIndex]
             val untrustedBrowser = materialized.messages[browserComponent.providerMessageIndex]
