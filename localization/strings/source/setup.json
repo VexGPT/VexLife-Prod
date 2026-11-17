@@ -1045,270 +1045,6 @@
     ],
     "dataKey": "entry:state:HOST_HELD"
   },
-  "setup.description.host-reason-platform": {
-    "strings": {
-      "en": {
-        "text": "VexLife setup currently runs on macOS only."
-      },
-      "ja": {
-        "text": "VexLife のセットアップは現在 macOS でのみ動作します。"
-      },
-      "zh": {
-        "text": "VexLife 设置目前只支持 macOS。"
-      },
-      "ko": {
-        "text": "VexLife 설정은 현재 macOS에서만 실행됩니다."
-      },
-      "fr": {
-        "text": "La configuration de VexLife fonctionne actuellement sur macOS uniquement."
-      },
-      "de": {
-        "text": "Die Einrichtung von VexLife läuft derzeit nur unter macOS."
-      },
-      "es": {
-        "text": "Por ahora, la configuración de VexLife solo funciona en macOS."
-      },
-      "pt": {
-        "text": "A configuração do VexLife funciona atualmente apenas no macOS."
-      },
-      "ar": {
-        "text": "يعمل إعداد VexLife حاليًا على macOS فقط."
-      },
-      "hi": {
-        "text": "VexLife सेटअप अभी केवल macOS पर चलता है।"
-      }
-    },
-    "surfaces": [
-      "setup.card"
-    ],
-    "dataKey": "host:reason:PLATFORM_UNSUPPORTED"
-  },
-  "setup.description.host-reason-architecture": {
-    "strings": {
-      "en": {
-        "text": "This Mac does not use Apple silicon."
-      },
-      "ja": {
-        "text": "この Mac は Apple シリコンを搭載していません。"
-      },
-      "zh": {
-        "text": "这台 Mac 没有使用 Apple 芯片。"
-      },
-      "ko": {
-        "text": "이 Mac은 Apple 실리콘을 사용하지 않습니다."
-      },
-      "fr": {
-        "text": "Ce Mac n’utilise pas de puce Apple."
-      },
-      "de": {
-        "text": "Dieser Mac verwendet keinen Apple Chip."
-      },
-      "es": {
-        "text": "Este Mac no usa un chip de Apple."
-      },
-      "pt": {
-        "text": "Este Mac não usa um chip da Apple."
-      },
-      "ar": {
-        "text": "جهاز Mac هذا لا يستخدم شريحة Apple."
-      },
-      "hi": {
-        "text": "यह Mac Apple silicon का इस्तेमाल नहीं करता।"
-      }
-    },
-    "surfaces": [
-      "setup.card"
-    ],
-    "dataKey": "host:reason:ARCHITECTURE_UNSUPPORTED"
-  },
-  "setup.description.host-reason-memory-unknown": {
-    "strings": {
-      "en": {
-        "text": "VexLife could not read how much memory this Mac has."
-      },
-      "ja": {
-        "text": "VexLife はこの Mac のメモリ容量を読み取れませんでした。"
-      },
-      "zh": {
-        "text": "VexLife 无法读取这台 Mac 的内存大小。"
-      },
-      "ko": {
-        "text": "VexLife가 이 Mac의 메모리 용량을 읽을 수 없었습니다."
-      },
-      "fr": {
-        "text": "VexLife n’a pas pu lire la quantité de mémoire de ce Mac."
-      },
-      "de": {
-        "text": "VexLife konnte nicht feststellen, wie viel Arbeitsspeicher dieser Mac hat."
-      },
-      "es": {
-        "text": "VexLife no pudo leer cuánta memoria tiene este Mac."
-      },
-      "pt": {
-        "text": "O VexLife não conseguiu ler quanta memória este Mac tem."
-      },
-      "ar": {
-        "text": "تعذّر على VexLife معرفة مقدار ذاكرة جهاز Mac هذا."
-      },
-      "hi": {
-        "text": "VexLife यह नहीं पढ़ सका कि इस Mac में कितनी मेमोरी है।"
-      }
-    },
-    "surfaces": [
-      "setup.card"
-    ],
-    "dataKey": "host:reason:SYSTEM_MEMORY_UNKNOWN"
-  },
-  "setup.description.host-reason-memory-low": {
-    "strings": {
-      "en": {
-        "text": "This Mac has less memory than the local model needs."
-      },
-      "ja": {
-        "text": "この Mac のメモリは、ローカルモデルに必要な量より少なくなっています。"
-      },
-      "zh": {
-        "text": "这台 Mac 的内存少于本地模型的需求。"
-      },
-      "ko": {
-        "text": "이 Mac의 메모리가 로컬 모델에 필요한 양보다 적습니다."
-      },
-      "fr": {
-        "text": "Ce Mac dispose de moins de mémoire que ce dont le modèle local a besoin."
-      },
-      "de": {
-        "text": "Dieser Mac hat weniger Arbeitsspeicher, als das lokale Modell braucht."
-      },
-      "es": {
-        "text": "Este Mac tiene menos memoria de la que necesita el modelo local."
-      },
-      "pt": {
-        "text": "Este Mac tem menos memória do que o modelo local precisa."
-      },
-      "ar": {
-        "text": "ذاكرة جهاز Mac هذا أقل مما يحتاجه النموذج المحلي."
-      },
-      "hi": {
-        "text": "इस Mac में लोकल मॉडल की ज़रूरत से कम मेमोरी है।"
-      }
-    },
-    "surfaces": [
-      "setup.card"
-    ],
-    "dataKey": "host:reason:INSUFFICIENT_SYSTEM_MEMORY"
-  },
-  "setup.description.host-reason-chip": {
-    "strings": {
-      "en": {
-        "text": "This Mac's chip is not yet certified for the local model."
-      },
-      "ja": {
-        "text": "この Mac のチップは、まだローカルモデル用に認定されていません。"
-      },
-      "zh": {
-        "text": "这台 Mac 的芯片尚未获准运行本地模型。"
-      },
-      "ko": {
-        "text": "이 Mac의 칩은 아직 로컬 모델용으로 인증되지 않았습니다."
-      },
-      "fr": {
-        "text": "La puce de ce Mac n’est pas encore certifiée pour le modèle local."
-      },
-      "de": {
-        "text": "Der Chip dieses Mac ist für das lokale Modell noch nicht zertifiziert."
-      },
-      "es": {
-        "text": "El chip de este Mac aún no está certificado para el modelo local."
-      },
-      "pt": {
-        "text": "O chip deste Mac ainda não está certificado para o modelo local."
-      },
-      "ar": {
-        "text": "شريحة جهاز Mac هذا غير معتمدة بعد للنموذج المحلي."
-      },
-      "hi": {
-        "text": "इस Mac की चिप अभी लोकल मॉडल के लिए प्रमाणित नहीं है।"
-      }
-    },
-    "surfaces": [
-      "setup.card"
-    ],
-    "dataKey": "host:reason:CHIP_MODEL_UNSUPPORTED"
-  },
-  "setup.description.host-requirement": {
-    "strings": {
-      "en": {
-        "text": "VexLife's local model currently runs on Macs with an {chip} chip and at least {memory} GiB of memory."
-      },
-      "ja": {
-        "text": "VexLife のローカルモデルは現在、{chip} チップと {memory} GiB 以上のメモリを搭載した Mac で動作します。"
-      },
-      "zh": {
-        "text": "VexLife 的本地模型目前需要配备 {chip} 芯片且至少有 {memory} GiB 内存的 Mac。"
-      },
-      "ko": {
-        "text": "VexLife의 로컬 모델은 현재 {chip} 칩과 {memory} GiB 이상의 메모리를 갖춘 Mac에서 실행됩니다."
-      },
-      "fr": {
-        "text": "Le modèle local de VexLife fonctionne actuellement sur les Mac équipés d’une puce {chip} et d’au moins {memory} Gio de mémoire."
-      },
-      "de": {
-        "text": "Das lokale Modell von VexLife läuft derzeit auf Macs mit einem {chip} Chip und mindestens {memory} GiB Arbeitsspeicher."
-      },
-      "es": {
-        "text": "Por ahora, el modelo local de VexLife funciona en Mac con un chip {chip} y al menos {memory} GiB de memoria."
-      },
-      "pt": {
-        "text": "Atualmente, o modelo local do VexLife funciona em Macs com chip {chip} e pelo menos {memory} GiB de memória."
-      },
-      "ar": {
-        "text": "يعمل النموذج المحلي لـ VexLife حاليًا على أجهزة Mac المزودة بشريحة {chip} وذاكرة لا تقل عن {memory} GiB."
-      },
-      "hi": {
-        "text": "VexLife का लोकल मॉडल अभी उन Mac पर चलता है जिनमें {chip} चिप और कम से कम {memory} GiB मेमोरी हो।"
-      }
-    },
-    "surfaces": [
-      "setup.card"
-    ]
-  },
-  "setup.description.host-observed": {
-    "strings": {
-      "en": {
-        "text": "This Mac: {chip}, {memory}."
-      },
-      "ja": {
-        "text": "この Mac：{chip}、{memory}。"
-      },
-      "zh": {
-        "text": "这台 Mac：{chip}，{memory}。"
-      },
-      "ko": {
-        "text": "이 Mac: {chip}, {memory}."
-      },
-      "fr": {
-        "text": "Ce Mac : {chip}, {memory}."
-      },
-      "de": {
-        "text": "Dieser Mac: {chip}, {memory}."
-      },
-      "es": {
-        "text": "Este Mac: {chip}, {memory}."
-      },
-      "pt": {
-        "text": "Este Mac: {chip}, {memory}."
-      },
-      "ar": {
-        "text": "جهاز Mac هذا: {chip}، {memory}."
-      },
-      "hi": {
-        "text": "यह Mac: {chip}, {memory}।"
-      }
-    },
-    "surfaces": [
-      "setup.card"
-    ]
-  },
   "setup.description.host-home-untouched": {
     "strings": {
       "en": {
@@ -1993,44 +1729,6 @@
       "setup.card"
     ],
     "dataKey": "setup:action:CHOOSE_LANGUAGE"
-  },
-  "setup.label.step-mac": {
-    "strings": {
-      "en": {
-        "text": "This Mac"
-      },
-      "ja": {
-        "text": "この Mac"
-      },
-      "zh": {
-        "text": "这台 Mac"
-      },
-      "ko": {
-        "text": "이 Mac"
-      },
-      "fr": {
-        "text": "Ce Mac"
-      },
-      "de": {
-        "text": "Dieser Mac"
-      },
-      "es": {
-        "text": "Este Mac"
-      },
-      "pt": {
-        "text": "Este Mac"
-      },
-      "ar": {
-        "text": "جهاز Mac هذا"
-      },
-      "hi": {
-        "text": "यह Mac"
-      }
-    },
-    "surfaces": [
-      "setup.card"
-    ],
-    "dataKey": "entry:step:MAC"
   },
   "setup.label.step-home": {
     "strings": {
@@ -6192,80 +5890,6 @@
       "setup.card"
     ]
   },
-  "setup.status.model-recommended": {
-    "strings": {
-      "en": {
-        "text": "recommended for this Mac"
-      },
-      "ja": {
-        "text": "この Mac におすすめ"
-      },
-      "zh": {
-        "text": "推荐用于这台 Mac"
-      },
-      "ko": {
-        "text": "이 Mac에 권장"
-      },
-      "fr": {
-        "text": "recommandé pour ce Mac"
-      },
-      "de": {
-        "text": "für diesen Mac empfohlen"
-      },
-      "es": {
-        "text": "recomendado para este Mac"
-      },
-      "pt": {
-        "text": "recomendado para este Mac"
-      },
-      "ar": {
-        "text": "موصى به لهذا الـ Mac"
-      },
-      "hi": {
-        "text": "इस Mac के लिए सुझाया गया"
-      }
-    },
-    "surfaces": [
-      "setup.card"
-    ]
-  },
-  "setup.status.model-fits": {
-    "strings": {
-      "en": {
-        "text": "fits this Mac"
-      },
-      "ja": {
-        "text": "この Mac で動作"
-      },
-      "zh": {
-        "text": "适合这台 Mac"
-      },
-      "ko": {
-        "text": "이 Mac에 맞음"
-      },
-      "fr": {
-        "text": "adapté à ce Mac"
-      },
-      "de": {
-        "text": "passt zu diesem Mac"
-      },
-      "es": {
-        "text": "apto para este Mac"
-      },
-      "pt": {
-        "text": "adequado a este Mac"
-      },
-      "ar": {
-        "text": "يناسب هذا الـ Mac"
-      },
-      "hi": {
-        "text": "इस Mac के लिए उपयुक्त"
-      }
-    },
-    "surfaces": [
-      "setup.card"
-    ]
-  },
   "setup.status.model-needs-memory": {
     "strings": {
       "en": {
@@ -6634,7 +6258,8 @@
     },
     "surfaces": [
       "setup.card"
-    ]
+    ],
+    "dataKey": "entry:step:HOST"
   },
   "setup.label.unknown-hardware": {
     "strings": {
@@ -6819,7 +6444,8 @@
     },
     "surfaces": [
       "setup.card"
-    ]
+    ],
+    "dataKey": "entry:state:MODEL_TARGET_HELD"
   },
   "setup.description.model-target-held": {
     "strings": {
@@ -6856,6 +6482,7 @@
     },
     "surfaces": [
       "setup.card"
-    ]
+    ],
+    "dataKey": "entry:state:MODEL_TARGET_HELD"
   }
 }
