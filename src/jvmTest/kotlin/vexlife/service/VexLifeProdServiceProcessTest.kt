@@ -1,5 +1,6 @@
 package vexlife.service
 
+import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -13,6 +14,18 @@ import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 
 class VexLifeProdServiceProcessTest {
+    private val productHomePath: Path =
+        Path.of(
+                System.getProperty(
+                    "java.io.tmpdir",
+                ),
+            )
+            .resolve(
+                "vexlife-prod-service-process-test",
+            )
+            .toAbsolutePath()
+            .normalize()
+
     private fun runtimeEvidence(): HereticModelConfiguration.QualifiedRuntimeEvidence =
         HereticModelConfiguration.QualifiedRuntimeEvidence(
             realizationRef =
@@ -40,7 +53,7 @@ class VexLifeProdServiceProcessTest {
 
         return VexLifeProdLocalSetup.Result(
             state = "LOCAL_HERETIC_FOUNDATION_READY",
-            productHome = "/tmp/vexlife-prod-service-process-test",
+            productHome = productHomePath.toString(),
             homeDisposition = "TEST_CURRENT",
             modelSelectionDisposition = "TEST_BOUND",
             managedPythonDisposition = "TEST_REUSED",
@@ -68,7 +81,7 @@ class VexLifeProdServiceProcessTest {
                     "--source-sha",
                     sha,
                     "--home",
-                    "/tmp/vexlife-prod-service-process-test",
+                    productHomePath.toString(),
                 ),
             )
 
@@ -77,9 +90,7 @@ class VexLifeProdServiceProcessTest {
             parsed.sourceSha,
         )
         assertEquals(
-            java.nio.file.Path.of(
-                "/tmp/vexlife-prod-service-process-test",
-            ),
+            productHomePath,
             parsed.productHome,
         )
 
@@ -162,7 +173,7 @@ class VexLifeProdServiceProcessTest {
                             arguments.sourceSha,
                             sourceSha,
                         )
-                        "/tmp/vexlife-prod-service-process-test/vision-runtime/bin/vexlife-vision-runtime"
+                        productHomePath.resolve("vision-runtime/bin/vexlife-vision-runtime").toString()
                     },
                     establishSession = {
                         productHome,
@@ -198,7 +209,7 @@ class VexLifeProdServiceProcessTest {
                             currentSession,
                         )
                         assertEquals(
-                            "/tmp/vexlife-prod-service-process-test/vision-runtime/bin/vexlife-vision-runtime",
+                            productHomePath.resolve("vision-runtime/bin/vexlife-vision-runtime").toString(),
                             visionRuntimeExecutablePathOrNull,
                         )
                         service
