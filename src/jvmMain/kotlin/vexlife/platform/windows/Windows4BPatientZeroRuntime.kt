@@ -556,9 +556,7 @@ internal object Windows4BPatientZeroRuntime {
                 )
 
         val expected =
-            HereticRuntimeRealization
-                .Windows4BPatientZero
-                .requestModel
+            Runtime.requestModel
         val matches =
             data.count {
                 element ->
@@ -585,9 +583,6 @@ internal object Windows4BPatientZeroRuntime {
     }
 
     private fun performQualificationInference() {
-        val realization =
-            HereticRuntimeRealization.Windows4B
-
         val body =
             buildJsonObject {
                 put(
@@ -723,9 +718,7 @@ internal object Windows4BPatientZeroRuntime {
         path: String,
     ): HttpResponse<String> {
         val endpoint =
-            HereticRuntimeRealization
-                .Windows4BPatientZero
-                .endpoint
+            Runtime.endpoint
         val request =
             HttpRequest
                 .newBuilder(
