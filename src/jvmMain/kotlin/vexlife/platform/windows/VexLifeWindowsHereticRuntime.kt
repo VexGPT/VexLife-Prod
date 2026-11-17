@@ -109,6 +109,8 @@ object VexLifeWindowsHereticRuntime {
         val modelPath: String,
         val runtimeImagePath: String,
         val runtimeExecutablePath: String,
+        val workingDirectory: String,
+        val launchArguments: List<String>,
         val logPath: String,
         val effects: HereticRuntimeEffectBoundary.Value,
     ) {
@@ -121,6 +123,9 @@ object VexLifeWindowsHereticRuntime {
                     modelPath.isNotBlank() &&
                     runtimeImagePath.isNotBlank() &&
                     runtimeExecutablePath.isNotBlank() &&
+                    workingDirectory.isNotBlank() &&
+                    launchArguments.isNotEmpty() &&
+                    launchArguments.first() == runtimeExecutablePath &&
                     logPath.isNotBlank() &&
                     qualified.state == QualifiedState,
             ) {
@@ -268,6 +273,8 @@ object VexLifeWindowsHereticRuntime {
                     realization = realization,
                     materialization = materialization,
                     evidence = evidence,
+                    workingDirectory = runtimeImage,
+                    launchArguments = args,
                     logPath = logPath,
                 )
 
@@ -328,6 +335,13 @@ object VexLifeWindowsHereticRuntime {
                 receipt.modelPath == currentMaterialization.modelPath &&
                 receipt.runtimeExecutablePath ==
                     currentMaterialization.runtimeExecutablePath &&
+                receipt.workingDirectory ==
+                    currentMaterialization.runtimeImagePath &&
+                receipt.launchArguments ==
+                    launchArguments(
+                        realization = started.realization,
+                        materialization = currentMaterialization,
+                    ) &&
                 receipt.logPath ==
                     started.logPath.toString(),
         ) {
@@ -459,6 +473,8 @@ object VexLifeWindowsHereticRuntime {
         realization: HereticRuntimeRealization.Value,
         materialization: VexLifeWindowsRuntimeMaterialization.Observation,
         evidence: QualifiedRealizationEvidence,
+        workingDirectory: Path,
+        launchArguments: List<String>,
         logPath: Path,
     ): Path {
         val path =
@@ -488,6 +504,10 @@ object VexLifeWindowsHereticRuntime {
                         materialization.runtimeImagePath,
                     runtimeExecutablePath =
                         materialization.runtimeExecutablePath,
+                    workingDirectory =
+                        workingDirectory.toString(),
+                    launchArguments =
+                        launchArguments,
                     logPath =
                         logPath.toString(),
                     effects =
