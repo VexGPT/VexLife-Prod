@@ -342,6 +342,14 @@ It performs no model, runtime, service, install, Home or release effect.
 Every completed stage is written to Downloads before the next stage begins. If Victor cancels before
 the final RETURN ZIP is formed, the checkpoint directory intentionally remains and can be recovered.
 
+Recovery is source-managed too:
+
+```text
+relay/windows-product-baseline/readiness/R001/RECOVER-VEXLIFE-WINDOWS-READINESS.ps1
+```
+
+Recovery packages the latest retained R001 checkpoint directory and explicitly performs no replay.
+
 This checkpoint policy replaces the earlier all-or-nothing RETURN behavior for lived Windows work.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][WINDOWS][READINESS-R001] -->
