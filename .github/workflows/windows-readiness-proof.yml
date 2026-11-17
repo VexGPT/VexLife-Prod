@@ -1,0 +1,43 @@
+# Temporary off-host proof for the current-main Windows readiness candidate.
+# Standard Windows runners are used only for deterministic source/test proof; real host/Product
+# evidence remains a VexRelay/Victor-host concern.
+name: windows-readiness-proof
+
+on:
+  pull_request:
+    paths:
+      - 'src/commonMain/kotlin/vexlife/platform/**'
+      - 'src/jvmMain/kotlin/vexlife/platform/windows/**'
+      - 'src/commonTest/kotlin/vexlife/platform/**'
+      - 'src/jvmTest/kotlin/vexlife/platform/windows/**'
+      - '.github/workflows/windows-readiness-proof.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-readiness-proof-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 35
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Prove Windows readiness source
+        shell: pwsh
+        run: |
+          .\gradlew.bat --no-daemon --max-workers=1 jvmTest `
+            --tests "vexlife.platform.VexLifePlatformRealizationTest" `
+            --tests "vexlife.platform.windows.VexLifeWindowsHostObservationTest" `
+            --tests "vexlife.platform.windows.VexLifeWindowsReadinessTest"
