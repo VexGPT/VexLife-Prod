@@ -13,6 +13,7 @@ import java.security.MessageDigest
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.TimeUnit
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -28,6 +29,9 @@ import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
+import vexlife.model.heretic.HereticRuntimeEffectBoundary
+import vexlife.contract.VexDurableContractFile
+import vexlife.filesystem.VexOwnedPath
 
 /**
  * Temporary Windows runtime carrier for the current Product's existing heretic-4b choice.
@@ -95,6 +99,89 @@ internal object Windows4BPatientZeroRuntime {
                 }
             }
         }
+    }
+
+    @Serializable
+    data class Receipt(
+        val schemaVersion: String,
+        val state: String,
+        val processPid: Long,
+        val startedAt: String,
+        val modelRef: String,
+        val modelProfileRef: String,
+        val artifactRef: String,
+        val artifactContentSetSha256: String,
+        val runtimeAdapterRef: String,
+        val runtimeClass: String,
+        val endpoint: String,
+        val requestModel: String,
+        val modelPath: String,
+        val modelSha256: String,
+        val llamaServerPath: String,
+        val llamaServerSha256: String,
+        val effects: HereticRuntimeEffectBoundary.Value,
+    )
+
+    fun writeReceipt(
+        productHome: Path,
+        started: Started,
+    ): Path {
+        val home =
+            VexOwnedPath.requireRoot(
+                productHome,
+                "Windows 4B patient-zero Home",
+            )
+        val path =
+            VexOwnedPath.resolveInside(
+                home,
+                RuntimeReceiptRelativePath,
+            )
+        val evidence =
+            started.evidence
+
+        VexDurableContractFile.write(
+            ownedRoot = home,
+            path = path,
+            value =
+                Receipt(
+                    schemaVersion =
+                        "vexlife-prod.windows-4b-patient-zero-runtime-receipt/v1",
+                    state =
+                        "QUALIFIED",
+                    processPid =
+                        started.process.pid(),
+                    startedAt =
+                        started.startedAt,
+                    modelRef =
+                        evidence.modelRef,
+                    modelProfileRef =
+                        evidence.modelProfileRef,
+                    artifactRef =
+                        evidence.artifactRef,
+                    artifactContentSetSha256 =
+                        evidence.artifactContentSetSha256,
+                    runtimeAdapterRef =
+                        evidence.runtimeAdapterRef,
+                    runtimeClass =
+                        evidence.runtimeClass,
+                    endpoint =
+                        evidence.endpoint,
+                    requestModel =
+                        evidence.requestModel,
+                    modelPath =
+                        started.modelPath.toString(),
+                    modelSha256 =
+                        ModelSha256,
+                    llamaServerPath =
+                        started.llamaServerPath.toString(),
+                    llamaServerSha256 =
+                        ExistingLlamaServerSha256,
+                    effects =
+                        HereticRuntimeEffectBoundary.QualifiedRuntime,
+                ),
+        )
+
+        return path
     }
 
     fun start(
