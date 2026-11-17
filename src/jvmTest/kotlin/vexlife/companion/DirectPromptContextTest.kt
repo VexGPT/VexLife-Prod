@@ -804,7 +804,7 @@ class DirectPromptContextTest {
     fun fixedContextMeasuresCurrentTurnWithoutCreatingMemoryPromptBytesOrASecondReceipt() {
         val parent =
             Files.createTempDirectory(
-                "vexlife-prod-direct-prompt-fixed-context-",
+                "vexlife-prod-direct-prompt-turn-context-",
             )
                 .toAbsolutePath()
         val productHome =
@@ -827,14 +827,14 @@ class DirectPromptContextTest {
                 val request =
                     beginRequest(
                         turnRef =
-                            "turn.self-development.fixed-context.001",
+                            "turn.self-development.turn-context.001",
                         requestMessageRef =
-                            "message.self-development.human.fixed-context.001",
+                            "message.self-development.human.turn-context.001",
                         content =
-                            "Measure the fixed current-turn context before selecting Memory bytes.",
+                            "Measure the turn context before selecting Memory bytes.",
                     )
-                val fixed =
-                    DirectPromptContext.prepareFixed(
+                val turnContext =
+                    DirectPromptContext.prepareTurnContext(
                         prior = null,
                         currentRequest = request,
                         memoryAvailabilityContext = memory,
@@ -843,24 +843,24 @@ class DirectPromptContextTest {
 
                 assertEquals(
                     request.eventRef,
-                    fixed.currentRequestEventRef,
+                    turnContext.currentRequestEventRef,
                 )
                 assertEquals(
                     memory.memoryContextRef,
-                    fixed.memoryAvailabilityContextRef,
+                    turnContext.memoryAvailabilityContextRef,
                 )
                 assertNotNull(
-                    fixed.capabilityFrameRef,
+                    turnContext.capabilityFrameRef,
                 )
                 assertTrue(
-                    fixed.prefixMessages.any {
+                    turnContext.prefixMessages.any {
                         it.content.startsWith(
                             "VEXLIFE_SELF_CAPABILITY_FRAME/v1\n",
                         )
                     },
                 )
                 assertTrue(
-                    fixed.prefixMessages.none {
+                    turnContext.prefixMessages.none {
                         it.content.startsWith(
                             "VEXLIFE_CURRENT_MEMORY_CONTEXT/v1\n",
                         )
@@ -870,24 +870,24 @@ class DirectPromptContextTest {
                     listOf(
                         request.content,
                     ),
-                    fixed.suffixMessages.map {
+                    turnContext.suffixMessages.map {
                         it.content
                     },
                 )
                 assertEquals(
                     (
-                        fixed.prefixMessages +
-                            fixed.suffixMessages
+                        turnContext.prefixMessages +
+                            turnContext.suffixMessages
                     )
                         .sumOf {
                             DirectPromptContext.estimatedMessageTokens(
                                 it.content,
                             )
                         },
-                    fixed.fixedInputTokenEstimate,
+                    turnContext.turnContextInputTokenEstimate,
                 )
                 assertFalse(
-                    fixed.effectsPerformed,
+                    turnContext.effectsPerformed,
                 )
 
                 val actual =
@@ -899,16 +899,16 @@ class DirectPromptContextTest {
                     )
 
                 assertEquals(
-                    fixed.capabilityFrameRef,
+                    turnContext.capabilityFrameRef,
                     actual.receipt.capabilityFrameRef,
                 )
                 assertEquals(
-                    fixed.capabilityFrameFingerprint,
+                    turnContext.capabilityFrameFingerprint,
                     actual.receipt.capabilityFrameFingerprint,
                 )
                 assertTrue(
                     actual.receipt.providerMaterializedInputTokenEstimate >
-                        fixed.fixedInputTokenEstimate,
+                        turnContext.turnContextInputTokenEstimate,
                 )
                 assertTrue(
                     actual.messages.any {
@@ -960,8 +960,8 @@ class DirectPromptContextTest {
                         content =
                             "Keep current Memory available without selecting its bytes for this prompt.",
                     )
-                val fixed =
-                    DirectPromptContext.prepareFixed(
+                val turnContext =
+                    DirectPromptContext.prepareTurnContext(
                         prior = null,
                         currentRequest = request,
                         memoryAvailabilityContext = availability,
@@ -982,7 +982,7 @@ class DirectPromptContextTest {
                 )
                 assertEquals(
                     availability.memoryContextRef,
-                    fixed.memoryAvailabilityContextRef,
+                    turnContext.memoryAvailabilityContextRef,
                 )
                 assertEquals(
                     selected.memoryContextRef,
@@ -1011,11 +1011,11 @@ class DirectPromptContextTest {
                     ),
                 )
                 assertEquals(
-                    fixed.capabilityFrameRef,
+                    turnContext.capabilityFrameRef,
                     materialized.receipt.capabilityFrameRef,
                 )
                 assertEquals(
-                    fixed.capabilityFrameFingerprint,
+                    turnContext.capabilityFrameFingerprint,
                     materialized.receipt.capabilityFrameFingerprint,
                 )
 

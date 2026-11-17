@@ -86,7 +86,7 @@ object DirectCompanionConnection {
         cause,
     )
 
-    enum class Stop {
+    enum class StageStop {
         COMPLETED,
         OUTPUT_LIMIT_DURING_REASONING,
         OUTPUT_LIMIT_DURING_ANSWER,
@@ -95,7 +95,7 @@ object DirectCompanionConnection {
     }
 
     data class StageMeasurement(
-        val stop: Stop,
+        val stop: StageStop,
         val finishReason: String?,
         val promptTokens: Int?,
         val cachedPromptTokens: Int?,
@@ -155,13 +155,13 @@ object DirectCompanionConnection {
         )
     }
 
-    private fun stopFor(done: Boolean, finishReason: String?, answered: Boolean): Stop =
+    private fun stopFor(done: Boolean, finishReason: String?, answered: Boolean): StageStop =
         when {
-            !done -> Stop.STREAM_CLOSED_BEFORE_DONE
-            finishReason == "length" && !answered -> Stop.OUTPUT_LIMIT_DURING_REASONING
-            finishReason == "length" -> Stop.OUTPUT_LIMIT_DURING_ANSWER
-            !answered -> Stop.ENDED_WITHOUT_ANSWER
-            else -> Stop.COMPLETED
+            !done -> StageStop.STREAM_CLOSED_BEFORE_DONE
+            finishReason == "length" && !answered -> StageStop.OUTPUT_LIMIT_DURING_REASONING
+            finishReason == "length" -> StageStop.OUTPUT_LIMIT_DURING_ANSWER
+            !answered -> StageStop.ENDED_WITHOUT_ANSWER
+            else -> StageStop.COMPLETED
         }
 
     @Serializable

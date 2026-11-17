@@ -92,7 +92,7 @@ class DirectProviderStageMeasurementTest {
                 )
             )
         val m = result.measurement
-        assertEquals(DirectCompanionConnection.Stop.COMPLETED, m.stop)
+        assertEquals(DirectCompanionConnection.StageStop.COMPLETED, m.stop)
         assertEquals("stop", m.finishReason)
         assertEquals(51_000, m.promptTokens)
         assertEquals(49_500, m.cachedPromptTokens)
@@ -126,7 +126,7 @@ class DirectProviderStageMeasurementTest {
             }
         assertEquals(DirectCompanionConnection.FailureCode.EndpointResponseInvalid, failure.code)
         val m = assertNotNull(failure.measurement)
-        assertEquals(DirectCompanionConnection.Stop.OUTPUT_LIMIT_DURING_REASONING, m.stop)
+        assertEquals(DirectCompanionConnection.StageStop.OUTPUT_LIMIT_DURING_REASONING, m.stop)
         assertEquals(40_000, m.prefillTokens)
         assertEquals(16_000, m.completionTokens)
         assertNull(m.firstAnswerMillis)
@@ -141,7 +141,7 @@ class DirectProviderStageMeasurementTest {
                 invoke(stream(reasoning("Thinking."), answer("The page")))
             }
         val m = assertNotNull(failure.measurement)
-        assertEquals(DirectCompanionConnection.Stop.STREAM_CLOSED_BEFORE_DONE, m.stop)
+        assertEquals(DirectCompanionConnection.StageStop.STREAM_CLOSED_BEFORE_DONE, m.stop)
         assertNull(m.promptTokens, "no usage arrives from a stream that died")
         assertEquals("The page".length, m.answerCharacters)
     }
@@ -157,7 +157,7 @@ class DirectProviderStageMeasurementTest {
                 )
             )
         assertEquals(
-            DirectCompanionConnection.Stop.OUTPUT_LIMIT_DURING_ANSWER,
+            DirectCompanionConnection.StageStop.OUTPUT_LIMIT_DURING_ANSWER,
             result.measurement.stop,
         )
     }
@@ -179,7 +179,7 @@ class DirectProviderStageMeasurementTest {
                 }
             )
         val m = result.measurement
-        assertEquals(DirectCompanionConnection.Stop.COMPLETED, m.stop)
+        assertEquals(DirectCompanionConnection.StageStop.COMPLETED, m.stop)
         assertEquals(800, m.promptTokens)
         assertNull(m.cachedPromptTokens)
         assertEquals(800, m.prefillTokens)
