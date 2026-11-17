@@ -5,6 +5,7 @@ import java.nio.file.LinkOption
 import java.nio.file.Path
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.local.VexLifeProdSetupProgress
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
@@ -58,7 +59,7 @@ object VexLifeProdSetupProcess {
                 productHome: Path,
                 allowAcquisition: Boolean,
                 allowRuntimeStart: Boolean,
-            ) -> VexLifeProdLocalSetup.Session =
+            ) -> VexLifeProdRuntimeSession =
             { productHome, allowAcquisition, allowRuntimeStart ->
                 VexLifeProdLocalSetup.establishSession(
                     productHome = productHome,
@@ -117,7 +118,7 @@ object VexLifeProdSetupProcess {
         val reportReady:
             (
                 arguments: Arguments,
-                session: VexLifeProdLocalSetup.Session,
+                session: VexLifeProdRuntimeSession,
                 installed: VexLifeProdPrivateServiceImageInstaller.Result,
                 service: VexLifeProdMacServiceLifetime.Result,
             ) -> Unit =
