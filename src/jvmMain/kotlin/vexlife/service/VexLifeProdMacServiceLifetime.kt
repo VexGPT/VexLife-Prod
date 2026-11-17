@@ -181,14 +181,14 @@ object VexLifeProdMacServiceLifetime {
 
     data class Result(
         val disposition: String,
-        val sourceSha: String,
-        val imagePayloadSha256: String,
-        val pid: Long,
-        val serviceOrigin: String,
+        override val sourceSha: String,
+        override val imagePayloadSha256: String,
+        override val pid: Long,
+        override val serviceOrigin: String,
         val processStarted: Boolean,
         val priorProcessRetired: Boolean,
         val receiptWritePerformed: Boolean,
-    )
+    ) : VexLifeProdServiceLifetime
 
     fun interface SourceCurrentnessProbe {
         fun observe(
