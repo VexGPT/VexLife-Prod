@@ -668,10 +668,12 @@ object VexLifeWebP1RuntimeArtifacts {
               const ensureLocalDictationLanguage = async (Recognition, language) => {
                 setVoiceInputState(voiceInput.state.checkingLanguage, { language });
                 renderVoiceInput();
+                // Product dictation means local speech editing the existing Composer draft.
+                // Do not require the browser provider's optional higher "dictation" quality tier;
+                // processLocally is the privacy/custody invariant this Product actually owns.
                 const options = {
                   langs: [language.locale],
-                  processLocally: true,
-                  quality: 'dictation'
+                  processLocally: true
                 };
                 const availability = await Recognition.available(options);
                 if (availability === localRecognitionAvailability.available) return true;
