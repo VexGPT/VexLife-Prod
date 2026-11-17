@@ -47,6 +47,11 @@ class VexLifeProdSetupLanguageTest {
                 freeBytes = 5L shl 30,
             ),
             VexLifeProdEntryFamily.ModelFilesHeld(sha, invalidBytes = 1L shl 30),
+            VexLifeProdEntryFamily.ModelTargetHeld(
+                desiredSourceSha = sha,
+                modelRef = "model.vexlife-prod.language-test",
+                targetRef = "target.vexlife-prod.language-test",
+            ),
             VexLifeProdEntryFamily.HeldUnknown(sha, "ownership is not exact"),
         ) +
             VexLifeProdHome.LocationDisposition.entries
@@ -64,9 +69,9 @@ class VexLifeProdSetupLanguageTest {
                         VexLifeProdEntryFamily.HostHeld(
                             desiredSourceSha = sha,
                             reasonRef = reason,
-                            chipModel = if (homePresent) "Apple M2" else null,
+                            observedHardware = if (homePresent) "Apple M2" else null,
                             totalMemoryBytes = if (homePresent) 16L shl 30 else null,
-                            requiredChipModel = "Apple M4 Pro",
+                            requiredHardware = "Apple M4 Pro",
                             requiredMemoryBytes = 12L shl 30,
                             homePresent = homePresent,
                         )
