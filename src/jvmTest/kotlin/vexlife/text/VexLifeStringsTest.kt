@@ -65,7 +65,12 @@ class VexLifeStringsTest {
                     vexlife.model.VexLifeModelsFamily.ControlRedownload,
                     vexlife.model.VexLifeModelsFamily.ControlRemove,
                 ).map { "model:control:$it" } +
-                vexlife.model.VexLifeModelsFamily.Files.entries.map { "model:files:${it.name}" } +
+                listOf(
+                    vexlife.model.VexLifeModelsFamily.ArtifactPresence.Absent,
+                    vexlife.model.VexLifeModelsFamily.ArtifactPresence.Partial,
+                    vexlife.model.VexLifeModelsFamily.ArtifactPresence.Present,
+                    vexlife.model.VexLifeModelsFamily.ArtifactPresence.Damaged,
+                ).map { "model:files:${it.stateRef}" } +
                 vexlife.model.heretic.HereticModelCatalog.Standing.entries.map { "model:standing:${it.name}" }
         val known =
             capabilityRefs.toSet() +

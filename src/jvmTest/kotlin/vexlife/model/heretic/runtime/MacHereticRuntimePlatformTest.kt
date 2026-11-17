@@ -205,7 +205,6 @@ class MacHereticRuntimePlatformTest {
             authorityRef = "authority.vexlife-prod.heretic-runtime.test",
             materialization =
                 HereticArtifactMaterialization.Result(
-                    state = "HERETIC_ARTIFACTS_MATERIALIZED_EXACT",
                     modelPath =
                         root
                             .resolve(
