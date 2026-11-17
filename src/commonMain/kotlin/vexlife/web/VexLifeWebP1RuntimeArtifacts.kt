@@ -3073,6 +3073,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 const modelSwitchHeld =
                   Boolean(state.models?.switchPending) &&
                   state.models?.lastOutcome?.state === 'FAILED';
+                const turnDisplay = state.conversationTurn?.display ?? null;
+                const turnControlRef = turnDisplay?.primaryControlRef ?? null;
+                const turnActive = Boolean(turnDisplay?.active);
+                const turnCancelling = Boolean(turnDisplay?.cancelling);
+                const sendLawful = turnControlRef === conversationTurn.control.send;
+                const stopLawful = turnControlRef === conversationTurn.control.stop;
                 const canInclude = !archivesOpen && !privateNow && (contextEligible || contextReady);
                 ui.contextShare.disabled = !canInclude || state.contextLoading;
                 ui.contextShare.dataset.state = state.contextLoading
@@ -3088,7 +3094,9 @@ object VexLifeWebP1RuntimeArtifacts {
                   : state.includePage && contextReady
                     ? 'Page included'
                     : 'Include this page';
-                ui.composerHold.textContent = modelSwitching
+                ui.composerHold.textContent = turnActive
+                  ? resolveText(turnDisplay.status)
+                  : modelSwitching
                   ? resolveText(state.models.switching.message)
                   : modelSwitchHeld
                     ? resolveText(state.models.lastOutcome.message)
@@ -3107,13 +3115,6 @@ object VexLifeWebP1RuntimeArtifacts {
                         : state.failedAttempts.length
                           ? 'A prior Send stopped. Its process is preserved here; use Try Again to form a new Send.'
                           : '';
-                const turnDisplay = state.conversationTurn?.display ?? null;
-                const turnControlRef = turnDisplay?.primaryControlRef ?? null;
-                const turnActive = Boolean(turnDisplay?.active);
-                const turnCancelling = Boolean(turnDisplay?.cancelling);
-                const sendLawful = turnControlRef === conversationTurn.control.send;
-                const stopLawful = turnControlRef === conversationTurn.control.stop;
-
                 // Family projection owns which Control is lawful. sendInFlight is only transport
                 // bookkeeping while the service is being re-observed.
                 ui.send.hidden = state.sendInFlight || (turnDisplay !== null && !sendLawful);
@@ -3625,11 +3626,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.conversation = nextConversation;
                 const messages = state.conversation?.messages ?? [];
                 const latest = [...messages].reverse().find((message) => message.role === 'vex' && message.model);
-                setCompanionStatus(
-                  'Ready',
-                  'Ready',
-                  servingModelLabel() || latest?.model || ''
-                );
+                if (!state.conversationTurn?.display?.active) {
+                  setCompanionStatus(
+                    'Ready',
+                    t('workspace.status.conversation-ready'),
+                    servingModelLabel() || latest?.model || ''
+                  );
+                }
                 if (renderNow && priorIdentity !== nextIdentity) {
                   renderTimeline();
                   if (state.app === apps.archives) renderArchives();
