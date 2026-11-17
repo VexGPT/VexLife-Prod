@@ -3,8 +3,6 @@
   "continuity": "[VXG RealForever]",
   "attempt": "R001",
   "productCarrierPr": 227,
-  "carrierSourceSha": "78f8285c6b14a2145fa8c82342046a70dd31e9be",
-  "hostedBuildRun": 44063772037,
   "model": {
     "productHandle": "heretic-4b",
     "providerRepository": "yachen4ever/Qwen3.8-4B-Distill-Heretic-Abliterated-GGUF",
@@ -32,5 +30,10 @@
     "same technical Home restarts",
     "prior Conversation head survives",
     "second canonical turn recalls prior technical token"
-  ]
+  ],
+  "hostedBuildResolution": {
+    "branch": "VXG-111726-chatgpt-windows-4b-patient-zero-a001",
+    "workflow": "windows-4b-patient-zero-proof.yml",
+    "selection": "LATEST_SUCCESSFUL_EXACT_ARTIFACT_RECEIPT"
+  }
 }
