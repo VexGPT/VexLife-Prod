@@ -466,7 +466,24 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains("applyVoiceInputSemanticState"))
         assertTrue(bundle.javascript.contains("realizeBeginLocalDictation"))
         assertTrue(bundle.javascript.contains("realizeEndLocalDictation"))
+        assertTrue(bundle.javascript.contains("voiceInput.languageCheckStartedState"))
         assertTrue(bundle.javascript.contains("controlRef: voiceInput.control.stop"))
+        assertTrue(bundle.javascript.contains("VOICE_INPUT_CONTROL_EMITTED"))
+        assertTrue(bundle.javascript.contains("VOICE_INPUT_MICROPHONE_REQUESTED"))
+        assertTrue(bundle.javascript.contains("VOICE_INPUT_MICROPHONE_GRANTED"))
+        assertTrue(bundle.javascript.contains("VOICE_INPUT_LANGUAGE_AVAILABILITY_OBSERVED"))
+        assertTrue(bundle.javascript.contains("VOICE_INPUT_LANGUAGE_INSTALL_OBSERVED"))
+        assertTrue(bundle.javascript.contains("VOICE_INPUT_RECOGNITION_STARTED"))
+        assertTrue(bundle.javascript.contains("VOICE_INPUT_FAILURE_OBSERVED"))
+        val voiceBeginStart = bundle.javascript.indexOf("const realizeBeginLocalDictation")
+        val voiceBeginEnd = bundle.javascript.indexOf("const applyVoiceInputControl", voiceBeginStart)
+        assertTrue(voiceBeginStart >= 0 && voiceBeginEnd > voiceBeginStart)
+        val voiceBegin = bundle.javascript.substring(voiceBeginStart, voiceBeginEnd)
+        assertTrue(
+            voiceBegin.indexOf("navigator.mediaDevices.getUserMedia") <
+                voiceBegin.indexOf("ensureLocalDictationLanguage"),
+            "VoiceInput must establish browser microphone permission before local language checks",
+        )
         assertTrue(bundle.javascript.contains("\"downloadable\""))
         assertTrue(bundle.javascript.contains("\"downloading\""))
         assertFalse(
