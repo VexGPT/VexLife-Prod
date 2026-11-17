@@ -936,6 +936,11 @@ object DirectPromptContext {
                             null ->
                             "WORKING_CHECKPOINT_SUCCESSOR"
 
+                        selected.isEmpty() &&
+                            prior !=
+                            null ->
+                            "CONVERSATION_OVERLAP_HELD_TOKEN_BUDGET"
+
                         selected.size >
                             2 ->
                             "RECENT_COMPLETED_TURNS"
@@ -1334,6 +1339,14 @@ object DirectPromptContext {
             "direct continuity source-return context exceeds remaining prompt attention"
         }
 
+        val continuityHydrationAvailable =
+            fixed.capabilityFrame
+                ?.frame
+                ?.availableCapabilityRefs
+                ?.contains(
+                    "capability.vexlife.continuity.hydrate",
+                ) ==
+                true
         val recentConversation =
             if (
                 prior ==
@@ -1368,7 +1381,8 @@ object DirectPromptContext {
                 ) {
                     require(
                         sourceReturnProjection !=
-                            null,
+                            null ||
+                            continuityHydrationAvailable,
                     ) {
                         "ordinary continuity prompt requires the exact immediate prior completed turn to remain present"
                     }
