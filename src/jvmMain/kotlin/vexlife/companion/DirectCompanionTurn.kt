@@ -31,6 +31,9 @@ import vexlife.model.heretic.HereticModelConfiguration
  * Conversation persistence, provider invocation or presentation.
  */
 object DirectCompanionTurn {
+    const val FailureCancelledByPerson =
+        "TURN_CANCELLED_BY_PERSON"
+
     const val FailureReceiptSchema =
         "vexlife-prod.direct-companion-turn-failure/v1"
 
@@ -1932,7 +1935,7 @@ object DirectCompanionTurn {
             error
         ) {
             is DirectCompanionCancellation.Cancelled ->
-                "TURN_CANCELLED_BY_PERSON"
+                FailureCancelledByPerson
 
             is DirectCompanionConnection.ConnectionException ->
                 "CONNECTION_" +
