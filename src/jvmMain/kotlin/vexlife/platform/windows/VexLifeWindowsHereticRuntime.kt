@@ -109,6 +109,7 @@ object VexLifeWindowsHereticRuntime {
         val modelPath: String,
         val runtimeImagePath: String,
         val runtimeExecutablePath: String,
+        val logPath: String,
         val effects: HereticRuntimeEffectBoundary.Value,
     ) {
         init {
@@ -120,6 +121,7 @@ object VexLifeWindowsHereticRuntime {
                     modelPath.isNotBlank() &&
                     runtimeImagePath.isNotBlank() &&
                     runtimeExecutablePath.isNotBlank() &&
+                    logPath.isNotBlank() &&
                     qualified.state == QualifiedState,
             ) {
                 "Windows Heretic runtime receipt is invalid"
@@ -189,24 +191,28 @@ object VexLifeWindowsHereticRuntime {
 
         val runtimeImage =
             Path.of(
-                materialization.runtimeImagePath,
-            )
-        val logPath =
-            VexOwnedPath.resolveInside(
+                    materialization.runtimeImagePath,
+                )
+                .normalize()
+        val runtimeRoot =
+            requireNotNull(
+                runtimeImage.parent,
+            ) {
+                "Windows runtime image requires one realization root"
+            }
+        require(
+            runtimeRoot.startsWith(
                 home,
-                requireNotNull(
-                        runtimeImage.parent,
-                    )
-                    .let {
-                        home.relativize(
-                            it,
-                        )
-                    }
-                    .resolve(
-                        "logs/llama-server.log",
-                    )
-                    .toString(),
-            )
+            ),
+        ) {
+            "Windows runtime image escaped the Vex Home"
+        }
+        val logPath =
+            runtimeRoot
+                .resolve(
+                    "logs/llama-server.log",
+                )
+                .normalize()
         VexOwnedPath.ensureParent(
             home,
             logPath,
@@ -262,6 +268,7 @@ object VexLifeWindowsHereticRuntime {
                     realization = realization,
                     materialization = materialization,
                     evidence = evidence,
+                    logPath = logPath,
                 )
 
             return Started(
@@ -320,7 +327,9 @@ object VexLifeWindowsHereticRuntime {
                 receipt.qualified == started.evidence &&
                 receipt.modelPath == currentMaterialization.modelPath &&
                 receipt.runtimeExecutablePath ==
-                    currentMaterialization.runtimeExecutablePath,
+                    currentMaterialization.runtimeExecutablePath &&
+                receipt.logPath ==
+                    started.logPath.toString(),
         ) {
             "Windows Heretic runtime receipt no longer identifies the started process"
         }
@@ -450,6 +459,7 @@ object VexLifeWindowsHereticRuntime {
         realization: HereticRuntimeRealization.Value,
         materialization: VexLifeWindowsRuntimeMaterialization.Observation,
         evidence: QualifiedRealizationEvidence,
+        logPath: Path,
     ): Path {
         val path =
             VexOwnedPath.resolveInside(
@@ -478,6 +488,8 @@ object VexLifeWindowsHereticRuntime {
                         materialization.runtimeImagePath,
                     runtimeExecutablePath =
                         materialization.runtimeExecutablePath,
+                    logPath =
+                        logPath.toString(),
                     effects =
                         HereticRuntimeEffectBoundary.QualifiedRuntime,
                 ),
