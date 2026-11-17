@@ -38,12 +38,28 @@ object HereticRuntimeRealization {
         val materializationRootRelativePath: String,
     )
 
+    data class RuntimeLaunchProfile(
+        val contextTokens: Int,
+        val jinja: Boolean,
+        val gpuOffloadLayers: Int?,
+    ) {
+        init {
+            require(contextTokens > 0) {
+                "runtime launch context must be positive"
+            }
+            require(gpuOffloadLayers == null || gpuOffloadLayers >= 0) {
+                "runtime GPU offload layers cannot be negative"
+            }
+        }
+    }
+
     data class RuntimeProfile(
         val runtimeAdapterRef: String,
         val runtimeClass: String,
         val transportClass: String,
         val endpoint: String,
         val requestModel: String,
+        val livedLaunchProfile: RuntimeLaunchProfile?,
     )
 
     data class ProcessProfile(
@@ -115,6 +131,7 @@ object HereticRuntimeRealization {
             transportClass = HereticProductIdentity.TransportClass,
             endpoint = HereticProductIdentity.Endpoint,
             requestModel = HereticProductIdentity.RequestModel,
+            livedLaunchProfile = null,
         )
 
     private fun openAiLoopbackQualification(
@@ -252,6 +269,15 @@ object HereticRuntimeRealization {
                         "http://127.0.0.1:18080",
                     requestModel =
                         "default_model",
+                    livedLaunchProfile =
+                        RuntimeLaunchProfile(
+                            contextTokens =
+                                16_384,
+                            jinja =
+                                true,
+                            gpuOffloadLayers =
+                                null,
+                        ),
                 ),
             process =
                 ProcessProfile(
