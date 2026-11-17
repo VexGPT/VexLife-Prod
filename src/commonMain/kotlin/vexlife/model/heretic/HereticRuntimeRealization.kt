@@ -73,10 +73,19 @@ object HereticRuntimeRealization {
         val providerReleaseTag: String,
         val providerSourceCommit: String,
         val archiveFilename: String,
+        val archiveBytes: Long,
         val archiveSha256: String,
         val filename: String,
         val sha256: String,
-    )
+    ) {
+        val archiveUrl: String =
+            "https://github.com/" +
+                providerRepository +
+                "/releases/download/" +
+                providerReleaseTag +
+                "/" +
+                archiveFilename
+    }
 
     data class RuntimeProfile(
         val runtimeAdapterRef: String,
@@ -319,6 +328,8 @@ object HereticRuntimeRealization {
                                     "c0bc8591e8815c63cb01dd3f051a8b0df02501c9",
                                 archiveFilename =
                                     "llama-b10107-bin-win-cpu-x64.zip",
+                                archiveBytes =
+                                    18_213_827L,
                                 archiveSha256 =
                                     "52133a0a5a8f6035b1bdd2f89c3425ea8b742413d9bdb9a2dee30e3a1681b18c",
                                 filename =
