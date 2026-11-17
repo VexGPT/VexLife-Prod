@@ -282,7 +282,7 @@
   "workspace.label.model-facts": {
     "strings": {
       "en": {
-        "text": "{size} GiB · wants {memory} GiB memory · {fit}"
+        "text": "{size} GiB on disk · about {memory} GiB memory · {fit}"
       }
     },
     "surfaces": [
@@ -612,34 +612,34 @@
   "workspace.label.model-choice": {
     "strings": {
       "en": {
-        "text": "Model choice"
+        "text": "Choose a model"
       },
       "ar": {
-        "text": "اختيار النموذج"
+        "text": "اختر نموذجًا"
       },
       "de": {
-        "text": "Modellauswahl"
+        "text": "Modell auswählen"
       },
       "es": {
-        "text": "Elección del modelo"
+        "text": "Elegir un modelo"
       },
       "fr": {
-        "text": "Choix du modèle"
+        "text": "Choisir un modèle"
       },
       "hi": {
-        "text": "मॉडल चयन"
+        "text": "मॉडल चुनें"
       },
       "ja": {
-        "text": "モデル選択"
+        "text": "モデルを選ぶ"
       },
       "ko": {
         "text": "모델 선택"
       },
       "pt": {
-        "text": "Escolha do modelo"
+        "text": "Escolher um modelo"
       },
       "zh": {
-        "text": "模型选择"
+        "text": "选择模型"
       }
     },
     "surfaces": [
