@@ -232,17 +232,19 @@ class DirectContinuityOverlapTailTest {
                     materialized.receipt.successorPriorResponseEventRef,
                 )
 
+                // Nothing stable is carried here, so no system block: the exact tail, then the
+                // working coordinates as current state, then the request.
                 val roles = materialized.messages.map { it.role }
                 assertEquals(
-                    listOf("system") + List(4) { listOf("user", "assistant") }.flatten() + "user",
+                    List(4) { listOf("user", "assistant") }.flatten() + "user" + "user",
                     roles,
                 )
-                assertTrue(
-                    materialized.messages.first().content.contains("loop.memory-depth.overlap-rule")
-                )
+                val currentState = materialized.messages[materialized.messages.size - 2].content
+                assertTrue(currentState.startsWith(DirectPromptContext.CurrentStateHeader))
+                assertTrue(currentState.contains("loop.memory-depth.overlap-rule"))
                 assertEquals(
                     tail.flatMap { listOf(it.first.content, it.second.content) },
-                    materialized.messages.drop(1).dropLast(1).map { it.content },
+                    materialized.messages.dropLast(2).map { it.content },
                 )
                 assertEquals(current.content, materialized.messages.last().content)
                 assertFalse(
@@ -309,7 +311,7 @@ class DirectContinuityOverlapTailTest {
                     materialized.receipt.selectedConversationEventRefs,
                 )
                 assertEquals(
-                    listOf("system", "assistant", "user"),
+                    listOf("assistant", "user", "user"),
                     materialized.messages.map { it.role },
                 )
                 assertFalse(materialized.messages.any { it.content.startsWith("Paste: ") })

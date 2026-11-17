@@ -23,8 +23,11 @@ node tools/continuity-pressure/run.mjs --stage analyze ... --result-dir build/co
 | `analyze` | runs | re-derives the summary and assertions from `result.json` and checks they match |
 | `pressure` / `probe` / `quick` / `full` | **HELD**, exit 3 | the live model; this revision does not yet bind a qualified runtime to a scratch Home |
 
-- `scenarios/depth-continuity-v1.json` is a byte copy of the shared canonical scenario. `run.mjs` and
-  the adapter refuse any other digest.
+- `scenarios/depth-continuity-v1.json` and `scenarios/current-state-placement-v1.json` are byte copies
+  of the shared scenarios (VexWork #310 `0fc67824`). `run.mjs` refuses any other digest for each ref.
+- **Person settings:** a scenario's `PERSON_SETTING_UPDATE` control is written through the canonical
+  `VexLifePersonSettingsStore` of the scratch Home before its turn; every turn's `PersonContext` is
+  then read fresh from that store, as the service composes it.
 - The adapter lives in test scope (`src/jvmTest/kotlin/vexlife/harness/`) and runs through the
   experiment-only Gradle task `continuityPressure`. Nothing it uses ships in the Product.
 - **Effective selection budget:** the adapter sets the module-internal
@@ -36,7 +39,25 @@ node tools/continuity-pressure/run.mjs --stage analyze ... --result-dir build/co
 
 Result: `build/continuity-pressure/result.json` (`vexlife.continuity-pressure-result/v1`) and
 `continuity-pressure-<experimentRef>.zip`. The ZIP holds the manifest, config, scenario, turns,
-residency, capability uses, assertions, summary and `implementation/adapter-report.json`.
+residency, capability uses, assertions, summary, `implementation/adapter-report.json` and
+`implementation/provider-calls.jsonl` (every provider call as sent). Each turn's `prompt` carries
+`contextComponents` from the prompt receipt. Revisit owner-read latency is real host time, so it is
+written beside the ZIP as `host-scan-timing.json`, not inside it. The Product mints turn and event
+refs per run, so a ZIP digest identifies one run; two runs of one head agree once those refs and
+the digests that cover them are normalized.
+
+Provider representation (a projection of the pinned runtime, not telemetry):
+
+~~~bash
+python3 -I tools/continuity-pressure/provider-prefix.py \
+  --zip build/continuity-pressure/continuity-pressure-<experimentRef>.zip \
+  --model-dir <dir holding the pinned chat_template.jinja, tokenizer.json, tokenizer_config.json> \
+  --out build/continuity-pressure/provider-prefix.json
+~~~
+
+It checks the three pinned digests, renders every call with the pinned template, and replays
+mlx-lm 0.32.0's segment checkpoints for the non-trimmable qwen3_5 cache to report reused and
+prefilled tokens per call. Needs `jinja2` and `tokenizers`.
 
 Relay binding values for this lane:
 
