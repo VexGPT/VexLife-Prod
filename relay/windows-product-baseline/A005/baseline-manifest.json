@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "vexlife-prod.windows-lightweight-source-baseline/v1",
+  "continuity": "[VXG RealForever]",
+  "attempt": "A005",
+  "sourceRepository": "VexGPT/VexLife-Prod",
+  "sourceCommit": "655e7c78cefba06a5e87afad285bb25a08632f05",
+  "sourceTree": "886c131da9e3c011ed88a6badad401430362b35c",
+  "hostTarget": "WINDOWS/X86_64",
+  "checks": [
+    "checkVexLifeStrings",
+    "compileKotlinJs"
+  ],
+  "explicitlyOmitted": [
+    "jvmTest",
+    "compileTestKotlinJs",
+    "MODEL_DOWNLOAD",
+    "MODEL_LOAD",
+    "PRODUCT_RUNTIME_START",
+    "PRODUCT_SERVICE_START"
+  ],
+  "buildEnvelope": {
+    "gradleMaxHeapMiB": 2048,
+    "javaChildMaxHeapMiB": 1024,
+    "maxWorkers": 1,
+    "parallel": false,
+    "kotlinCompilerExecution": "in-process",
+    "visibleStageProgress": true
+  },
+  "modelPolicy": "NO_MODEL_ARTIFACT_OR_RUNTIME_EFFECT"
+}
