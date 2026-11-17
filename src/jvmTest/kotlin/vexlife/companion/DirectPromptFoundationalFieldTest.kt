@@ -26,6 +26,7 @@ import vexlife.memory.VexLifeMemoryContextFixture
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 
 /** How the prompt owner gives the foundational field room, places it and receipts it. */
@@ -47,6 +48,12 @@ class DirectPromptFoundationalFieldTest {
 
     private fun runtimeEvidence() =
         HereticModelConfiguration.QualifiedRuntimeEvidence(
+            realizationRef =
+                HereticRuntimeRealization
+                    .legacyMacV1(
+                        HereticProductIdentity.ModelRef,
+                    )
+                    .realizationRef,
             runtimeReceiptRef = "receipt.vexlife-prod.heretic.prompt-foundational",
             runtimeState = HereticRuntimeState.Qualified,
             modelRef = HereticProductIdentity.ModelRef,
