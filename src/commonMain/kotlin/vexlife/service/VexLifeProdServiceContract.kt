@@ -126,7 +126,7 @@ object VexLifeProdServiceContract {
     /** Settings + currentness for the person's selected local speech-to-text realization. */
     const val LocalAsrPath = "/api/v1/local-asr"
 
-    /** One bounded local-only transcription effect; request body is 16 kHz mono PCM WAV. */
+    /** One bounded local-only transcription effect; request body is one mono PCM WAV. */
     const val LocalAsrTranscribePath = "/api/v1/local-asr/transcribe"
 
     const val LocalAsrProjectionSchema =
