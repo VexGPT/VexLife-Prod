@@ -537,6 +537,21 @@ svg { display: block; }
 .model-row .model-controls { grid-column: 2; grid-row: 1 / span 3; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .model-row .model-controls .outline-button { height: 30px; padding: 0 10px; }
 
+.local-asr-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 1.35fr);
+  gap: 10px 14px; align-items: center; margin: 10px 0 6px;
+}
+.local-asr-row label { color: var(--ink-2); font-size: var(--step--1); }
+.local-asr-row select {
+  width: 100%; min-height: 36px; padding: 7px 34px 7px 10px;
+  background: var(--raised); color: var(--ink);
+  border: 1px solid var(--rule-strong); border-radius: 8px;
+}
+.local-asr-row select:disabled { color: var(--ink-3); background: var(--sunken); }
+@media (max-width: 720px) {
+  .local-asr-row { grid-template-columns: 1fr; }
+}
+
 .receipt-line {
   grid-area: receipt; margin: 6px 2px 0; color: var(--ink-3); font-size: var(--step--1);
 }
