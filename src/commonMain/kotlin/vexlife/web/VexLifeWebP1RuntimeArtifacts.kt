@@ -2755,9 +2755,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   const options = models.map((model) => {
                     const option = document.createElement('option');
                     option.value = model.handle;
-                    const availability = model.presentBytes === model.totalBytes
-                      ? t('workspace.status.model-on-this-mac')
-                      : t('workspace.status.model-not-downloaded');
+                    const availability = resolveText(model.display.status);
                     option.textContent = model.label + ' · ' + availability;
                     option.selected = Boolean(model.chosen);
                     return option;
