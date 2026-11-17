@@ -9,18 +9,27 @@ import kotlin.test.assertNull
 import vexlife.model.heretic.HereticModelCatalog
 
 class HereticExecutionTopologyTest {
+    private val qwenLayerTypes =
+        List(64) { index ->
+            if ((index + 1) % 4 == 0) "full_attention" else "linear_attention"
+        }
+
     private val qwenConfig =
         """
         {
           "architectures": ["Qwen3_5ForConditionalGeneration"],
           "model_type": "qwen3_5",
-          "max_position_embeddings": 262144,
-          "num_hidden_layers": 64,
-          "num_attention_heads": 32,
-          "num_key_value_heads": 4,
-          "head_dim": 256,
-          "full_attention_interval": 4,
-          "use_cache": true
+          "text_config": {
+            "model_type": "qwen3_5_text",
+            "max_position_embeddings": 262144,
+            "num_hidden_layers": 64,
+            "num_attention_heads": 24,
+            "num_key_value_heads": 4,
+            "head_dim": 256,
+            "full_attention_interval": 4,
+            "layer_types": [${qwenLayerTypes.joinToString(",") { "\"$it\"" }}],
+            "use_cache": true
+          }
         }
         """
             .trimIndent()
@@ -40,13 +49,13 @@ class HereticExecutionTopologyTest {
 
         with(topology.architecture) {
             assertEquals("Qwen3_5ForConditionalGeneration", architectureClass.value)
-            assertEquals("qwen3_5", modelType.value)
+            assertEquals("qwen3_5_text", modelType.value)
             assertEquals(262_144, nativeContextTokens.value)
             assertEquals(64, hiddenLayers.value)
             assertEquals(4, fullAttentionInterval.value)
             assertEquals(16, fullAttentionLayers.value)
             assertEquals(48, linearAttentionLayers.value)
-            assertEquals(32, attentionHeads.value)
+            assertEquals(24, attentionHeads.value)
             assertEquals(4, keyValueHeads.value)
             assertEquals(256, headDimension.value)
             assertEquals(true, cacheEnabled.value)
@@ -105,6 +114,20 @@ class HereticExecutionTopologyTest {
             assertEquals(16_000, reservedOutputTokens.value)
             assertEquals(208_000, hardInputOutputTokenLimit.value)
             assertEquals("NOT_CONFIGURED", adaptiveContextPolicyState)
+        }
+    }
+
+    @Test
+    fun topologyRejectsLayerTypesThatConflictWithTheArtifactInterval() {
+        val conflicting =
+            qwenConfig.replaceFirst("\"full_attention\"", "\"linear_attention\"")
+
+        assertFailsWith<IllegalArgumentException> {
+            HereticExecutionTopology.project(
+                model = HereticModelCatalog.Models.Qwen27B,
+                exactModelConfig = conflicting,
+                modelConfigSourceRef = "artifact.test.qwen27b.config",
+            )
         }
     }
 
