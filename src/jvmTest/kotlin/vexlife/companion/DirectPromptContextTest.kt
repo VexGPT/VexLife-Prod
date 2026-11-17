@@ -100,7 +100,7 @@ class DirectPromptContextTest {
                 assertEquals(request.content, told.messages.last().content)
                 val person0 =
                     told.receipt.contextComponents.single {
-                        it.componentRef == DirectPromptContext.ComponentRefs.PersonContext
+                        it.componentRef == DirectPromptContext.Components.Prompt.Current.PersonContext.ref
                     }
                 assertEquals(
                     DirectPromptContext.ComponentStability.MUTABLE_CURRENT,
