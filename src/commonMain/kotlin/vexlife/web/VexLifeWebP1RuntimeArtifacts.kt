@@ -187,6 +187,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 composerHold: byId('composer-hold'),
                 composeForm: byId('compose-form'),
                 draft: byId('draft'),
+                voiceInput: byId('voice-input'),
+                voiceInputOverlay: byId('voice-input-overlay'),
+                voiceInputStatus: byId('voice-input-status'),
+                voiceWaveform: byId('voice-waveform'),
                 send: byId('send'),
                 stop: byId('stop'),
                 contextWindow: byId('context-window'),
@@ -296,6 +300,361 @@ object VexLifeWebP1RuntimeArtifacts {
                 reasoningViewports: new Map(),
                 theme: null,
                 quickActionsOpen: false
+              };
+
+              // VoiceInput is the human editing the existing text draft, not Vex Perception.
+              // The Product therefore keeps the durable Conversation input type unchanged: voice is
+              // transcribed locally into the same draft and Send remains the only commit boundary.
+              const DICTATION_LOCALES = Object.freeze({
+                en: 'en-US',
+                ja: 'ja-JP',
+                zh: 'zh-CN',
+                ko: 'ko-KR',
+                fr: 'fr-FR',
+                de: 'de-DE',
+                es: 'es-ES',
+                pt: 'pt-BR',
+                ar: 'ar-SA',
+                hi: 'hi-IN'
+              });
+
+              const dictation = {
+                mode: 'idle',
+                status: '',
+                desiredActive: false,
+                session: 0,
+                recognition: null,
+                stream: null,
+                audioContext: null,
+                analyser: null,
+                animationFrame: null,
+                draftPrefix: '',
+                finalTranscript: '',
+                interimTranscript: ''
+              };
+
+              const localSpeechRecognition = () => {
+                const Recognition = window.SpeechRecognition;
+                if (!Recognition) return null;
+                if (!('processLocally' in Recognition.prototype)) return null;
+                if (typeof Recognition.available !== 'function' || typeof Recognition.install !== 'function') return null;
+                return Recognition;
+              };
+
+              const dictationLocale = () =>
+                DICTATION_LOCALES[state.settings?.replyLanguage ?? 'en'] ?? 'en-US';
+
+              const voiceInputCapability = () => {
+                if (!localSpeechRecognition()) {
+                  return {
+                    ready: false,
+                    detail: 'Local dictation is not available in this browser yet.'
+                  };
+                }
+                if (!navigator.mediaDevices?.getUserMedia) {
+                  return {
+                    ready: false,
+                    detail: 'Microphone access is not available in this browser context.'
+                  };
+                }
+                if (!(window.AudioContext || window.webkitAudioContext)) {
+                  return {
+                    ready: false,
+                    detail: 'Live microphone feedback is not available in this browser context.'
+                  };
+                }
+                return {
+                  ready: true,
+                  detail: 'Dictation stays on this device and edits only this draft.'
+                };
+              };
+
+              const renderVoiceInput = () => {
+                if (!ui.voiceInput) return;
+                const capability = voiceInputCapability();
+                const active = dictation.desiredActive && dictation.mode === 'listening';
+                const busy = ['checking', 'installing', 'requesting', 'listening', 'stopping'].includes(dictation.mode);
+                const overlay = busy || dictation.mode === 'error';
+                ui.voiceInput.disabled = !capability.ready || state.sendInFlight || state.privateInFlight;
+                ui.voiceInput.dataset.state = capability.ready ? dictation.mode : 'held';
+                ui.voiceInput.setAttribute('aria-pressed', String(active));
+                ui.voiceInput.setAttribute('aria-expanded', String(overlay));
+                ui.voiceInput.setAttribute(
+                  'aria-label',
+                  active ? 'Stop local dictation' : capability.ready ? 'Start local dictation' : 'Local dictation unavailable'
+                );
+                ui.voiceInput.title = active
+                  ? 'Stop local dictation'
+                  : capability.ready
+                    ? 'Start local dictation · on-device only'
+                    : capability.detail;
+                if (ui.voiceInputOverlay) ui.voiceInputOverlay.hidden = !overlay;
+                if (ui.voiceInputStatus) {
+                  ui.voiceInputStatus.textContent =
+                    dictation.status ||
+                    (active ? 'Listening locally…' : capability.detail);
+                }
+              };
+
+              const stopVoiceWaveform = async () => {
+                if (dictation.animationFrame !== null) {
+                  cancelAnimationFrame(dictation.animationFrame);
+                  dictation.animationFrame = null;
+                }
+                if (dictation.stream) {
+                  for (const track of dictation.stream.getTracks()) track.stop();
+                  dictation.stream = null;
+                }
+                const context = dictation.audioContext;
+                dictation.audioContext = null;
+                dictation.analyser = null;
+                if (context && context.state !== 'closed') {
+                  await context.close().catch(() => {});
+                }
+                if (ui.voiceWaveform) {
+                  const context2d = ui.voiceWaveform.getContext('2d');
+                  context2d?.clearRect(0, 0, ui.voiceWaveform.width, ui.voiceWaveform.height);
+                }
+              };
+
+              const drawVoiceWaveform = () => {
+                const analyser = dictation.analyser;
+                const canvas = ui.voiceWaveform;
+                if (!dictation.desiredActive || !analyser || !canvas) return;
+                const context2d = canvas.getContext('2d');
+                if (!context2d) return;
+                const values = new Uint8Array(analyser.frequencyBinCount);
+                analyser.getByteFrequencyData(values);
+                context2d.clearRect(0, 0, canvas.width, canvas.height);
+                context2d.fillStyle = getComputedStyle(ui.voiceInput).color;
+                const bars = 14;
+                const gap = 3;
+                const width = (canvas.width - gap * (bars - 1)) / bars;
+                for (let index = 0; index < bars; index += 1) {
+                  const bucket = Math.floor((index / bars) * values.length);
+                  const normalized = values[bucket] / 255;
+                  const height = Math.max(3, normalized * (canvas.height - 8));
+                  const x = index * (width + gap);
+                  const y = (canvas.height - height) / 2;
+                  context2d.fillRect(x, y, width, height);
+                }
+                dictation.animationFrame = requestAnimationFrame(drawVoiceWaveform);
+              };
+
+              const startVoiceWaveform = async (stream) => {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                const context = new AudioContextClass();
+                await context.resume();
+                const source = context.createMediaStreamSource(stream);
+                const analyser = context.createAnalyser();
+                analyser.fftSize = 128;
+                analyser.smoothingTimeConstant = 0.78;
+                source.connect(analyser);
+                dictation.audioContext = context;
+                dictation.analyser = analyser;
+                drawVoiceWaveform();
+              };
+
+              const appendTranscriptSegment = (existing, next) => {
+                const segment = String(next ?? '').trim();
+                if (!segment) return existing;
+                return existing ? existing + ' ' + segment : segment;
+              };
+
+              const projectDictationIntoDraft = () => {
+                const spoken = [dictation.finalTranscript, dictation.interimTranscript]
+                  .map((value) => String(value ?? '').trim())
+                  .filter(Boolean)
+                  .join(' ');
+                const prefix = dictation.draftPrefix;
+                ui.draft.value =
+                  prefix +
+                  (prefix && spoken && !/\s$/u.test(prefix) ? ' ' : '') +
+                  spoken;
+                sizeDraft();
+              };
+
+              const stopVoiceInput = async (abort = false) => {
+                dictation.desiredActive = false;
+                dictation.mode = 'stopping';
+                dictation.status = '';
+                renderVoiceInput();
+                const recognition = dictation.recognition;
+                dictation.recognition = null;
+                if (recognition) {
+                  try {
+                    if (abort) recognition.abort();
+                    else recognition.stop();
+                  } catch {}
+                }
+                await stopVoiceWaveform();
+                dictation.mode = 'idle';
+                dictation.status = '';
+                renderVoiceInput();
+              };
+
+              const dictationErrorMessage = (error) => {
+                const code = String(error ?? '');
+                if (code === 'not-allowed' || code === 'service-not-allowed') {
+                  return 'Microphone permission is needed for local dictation.';
+                }
+                if (code === 'audio-capture') return 'No usable microphone is available.';
+                if (code === 'language-not-supported') {
+                  return 'On-device dictation is not available for the selected language.';
+                }
+                if (code === 'no-speech') return 'Listening locally…';
+                return code ? 'Local dictation stopped: ' + code + '.' : 'Local dictation stopped.';
+              };
+
+              const ensureLocalDictationLanguage = async (Recognition, locale) => {
+                dictation.mode = 'checking';
+                dictation.status = 'Checking on-device dictation for ' + locale + '…';
+                renderVoiceInput();
+                const options = {
+                  langs: [locale],
+                  processLocally: true,
+                  quality: 'dictation'
+                };
+                const availability = await Recognition.available(options);
+                if (availability === 'available') return true;
+                if (availability === 'unavailable') return false;
+                dictation.mode = 'installing';
+                dictation.status = 'Getting the on-device ' + locale + ' dictation language ready…';
+                renderVoiceInput();
+                return Boolean(await Recognition.install(options));
+              };
+
+              const startVoiceInput = async () => {
+                if (dictation.desiredActive) {
+                  await stopVoiceInput(false);
+                  return;
+                }
+                if (state.sendInFlight || state.privateInFlight) return;
+                const capability = voiceInputCapability();
+                if (!capability.ready) {
+                  dictation.mode = 'error';
+                  dictation.status = capability.detail;
+                  renderVoiceInput();
+                  return;
+                }
+
+                const Recognition = localSpeechRecognition();
+                const locale = dictationLocale();
+                const session = dictation.session + 1;
+                dictation.session = session;
+                dictation.desiredActive = true;
+                dictation.draftPrefix = ui.draft.value;
+                dictation.finalTranscript = '';
+                dictation.interimTranscript = '';
+
+                try {
+                  const languageReady = await ensureLocalDictationLanguage(Recognition, locale);
+                  if (!dictation.desiredActive || session !== dictation.session) return;
+                  if (!languageReady) {
+                    throw new Error('language-not-supported');
+                  }
+
+                  dictation.mode = 'requesting';
+                  dictation.status = 'Allow the microphone to start local dictation.';
+                  renderVoiceInput();
+                  const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                      echoCancellation: true,
+                      noiseSuppression: true,
+                      autoGainControl: true
+                    },
+                    video: false
+                  });
+                  if (!dictation.desiredActive || session !== dictation.session) {
+                    for (const track of stream.getTracks()) track.stop();
+                    return;
+                  }
+                  dictation.stream = stream;
+                  await startVoiceWaveform(stream);
+
+                  const recognition = new Recognition();
+                  recognition.lang = locale;
+                  recognition.continuous = true;
+                  recognition.interimResults = true;
+                  recognition.maxAlternatives = 1;
+                  recognition.processLocally = true;
+                  dictation.recognition = recognition;
+
+                  recognition.addEventListener('start', () => {
+                    if (session !== dictation.session || !dictation.desiredActive) return;
+                    dictation.mode = 'listening';
+                    dictation.status = 'Listening locally · speech stays on this device.';
+                    renderVoiceInput();
+                  });
+
+                  recognition.addEventListener('result', (event) => {
+                    if (session !== dictation.session || !dictation.desiredActive) return;
+                    let interim = '';
+                    for (let index = event.resultIndex; index < event.results.length; index += 1) {
+                      const result = event.results[index];
+                      const text = String(result?.[0]?.transcript ?? '').trim();
+                      if (!text) continue;
+                      if (result.isFinal) {
+                        dictation.finalTranscript = appendTranscriptSegment(dictation.finalTranscript, text);
+                      } else {
+                        interim = appendTranscriptSegment(interim, text);
+                      }
+                    }
+                    dictation.interimTranscript = interim;
+                    projectDictationIntoDraft();
+                  });
+
+                  recognition.addEventListener('error', (event) => {
+                    if (session !== dictation.session) return;
+                    if (event.error === 'no-speech' && dictation.desiredActive) {
+                      dictation.status = 'Listening locally…';
+                      renderVoiceInput();
+                      return;
+                    }
+                    dictation.desiredActive = false;
+                    dictation.mode = 'error';
+                    dictation.status = dictationErrorMessage(event.error);
+                    void stopVoiceWaveform();
+                    renderVoiceInput();
+                  });
+
+                  recognition.addEventListener('end', () => {
+                    if (session !== dictation.session) return;
+                    if (!dictation.desiredActive) return;
+                    const track = dictation.stream?.getAudioTracks()?.[0];
+                    if (!track || track.readyState !== 'live') {
+                      dictation.desiredActive = false;
+                      dictation.mode = 'error';
+                      dictation.status = 'The microphone stopped.';
+                      void stopVoiceWaveform();
+                      renderVoiceInput();
+                      return;
+                    }
+                    setTimeout(() => {
+                      if (session !== dictation.session || !dictation.desiredActive) return;
+                      try {
+                        recognition.start(track);
+                      } catch (error) {
+                        dictation.desiredActive = false;
+                        dictation.mode = 'error';
+                        dictation.status = dictationErrorMessage(error?.name);
+                        void stopVoiceWaveform();
+                        renderVoiceInput();
+                      }
+                    }, 120);
+                  });
+
+                  const track = stream.getAudioTracks()[0];
+                  if (!track) throw new Error('audio-capture');
+                  recognition.start(track);
+                } catch (error) {
+                  if (session !== dictation.session) return;
+                  dictation.desiredActive = false;
+                  dictation.mode = 'error';
+                  dictation.status = dictationErrorMessage(error instanceof Error ? error.message : error);
+                  await stopVoiceWaveform();
+                  renderVoiceInput();
+                }
               };
 
               const readJson = async (response) => {
@@ -2586,6 +2945,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   : state.sendInFlight || (!state.pending && !ui.draft.value.trim());
                 ui.responseProgress.hidden = true;
                 renderTicket();
+                renderVoiceInput();
               };
 
               const setMeter = (meter, parts, text, label, known = true) => {
@@ -3586,19 +3946,31 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderComposer();
               });
 
+              ui.voiceInput?.addEventListener('click', () => {
+                void startVoiceInput();
+              });
+
               ui.composeForm.addEventListener('submit', (event) => {
                 event.preventDefault();
+                if (dictation.desiredActive) void stopVoiceInput(true);
                 void send();
               });
 
               ui.draft.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
                   event.preventDefault();
+                  if (dictation.desiredActive) void stopVoiceInput(true);
                   void send();
                 }
               });
 
-              ui.draft.addEventListener('input', () => sizeDraft());
+              ui.draft.addEventListener('input', () => {
+                if (dictation.desiredActive) void stopVoiceInput(true);
+                sizeDraft();
+              });
+              document.addEventListener('visibilitychange', () => {
+                if (document.hidden && dictation.desiredActive) void stopVoiceInput(true);
+              });
               ui.timeline.addEventListener('scroll', () => {
                 state.timelineScrollTop = ui.timeline.scrollTop;
                 state.timelineFollowTail = isElementAtBottom(ui.timeline);
