@@ -869,6 +869,20 @@
         "zh"
       ]
     },
+    "setup.description.model-target-held": {
+      "enHash": "10ceababd4ce",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
     "setup.description.no-readable-explanation": {
       "enHash": "11de79dde075",
       "langs": [
@@ -1361,6 +1375,20 @@
     },
     "setup.heading.model-files-held": {
       "enHash": "67ed0ecec500",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.model-target-held": {
+      "enHash": "b3b77291ddb7",
       "langs": [
         "ar",
         "de",
