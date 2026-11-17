@@ -86,12 +86,14 @@ object DirectCompanionConnection {
         cause,
     )
 
-    enum class StageStop {
-        COMPLETED,
-        OUTPUT_LIMIT_DURING_REASONING,
-        OUTPUT_LIMIT_DURING_ANSWER,
-        STREAM_CLOSED_BEFORE_DONE,
-        ENDED_WITHOUT_ANSWER,
+    enum class StageStop(
+        val wire: String,
+    ) {
+        COMPLETED("COMPLETED"),
+        OUTPUT_LIMIT_DURING_REASONING("OUTPUT_LIMIT_DURING_REASONING"),
+        OUTPUT_LIMIT_DURING_ANSWER("OUTPUT_LIMIT_DURING_ANSWER"),
+        STREAM_CLOSED_BEFORE_DONE("STREAM_CLOSED_BEFORE_DONE"),
+        ENDED_WITHOUT_ANSWER("ENDED_WITHOUT_ANSWER"),
     }
 
     data class StageMeasurement(
@@ -112,7 +114,7 @@ object DirectCompanionConnection {
             get() = promptTokens?.let { prompt -> prompt - (cachedPromptTokens ?: 0) }
 
         fun refs(): Map<String, String> = buildMap {
-            put("stop", stop.name)
+            put("stop", stop.wire)
             finishReason?.let { put("finishReason", it) }
             promptTokens?.let { put("promptTokens", it.toString()) }
             cachedPromptTokens?.let { put("cachedPromptTokens", it.toString()) }

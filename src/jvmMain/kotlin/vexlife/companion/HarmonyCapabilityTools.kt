@@ -33,14 +33,24 @@ import vexlife.contract.VexContractJson
  */
 @OptIn(ExperimentalSerializationApi::class)
 object HarmonyCapabilityTools {
-    @Serializable data class Tool(val type: String = "function", val function: Function)
+    const val ProviderFunctionType =
+        "function"
+
+    const val ProviderObjectType =
+        "object"
+
+    @Serializable
+    data class Tool(
+        val type: String = ProviderFunctionType,
+        val function: Function,
+    )
 
     @Serializable
     data class Function(val name: String, val description: String, val parameters: Parameters)
 
     @Serializable
     data class Parameters(
-        val type: String = "object",
+        val type: String = ProviderObjectType,
         val properties: Map<String, Property>,
         val required: List<String>,
     )
@@ -58,7 +68,11 @@ object HarmonyCapabilityTools {
         @EncodeDefault(EncodeDefault.Mode.NEVER) val tool_calls: List<ToolCall>? = null,
     )
 
-    @Serializable data class ToolCall(val type: String = "function", val function: Call)
+    @Serializable
+    data class ToolCall(
+        val type: String = ProviderFunctionType,
+        val function: Call,
+    )
 
     /** `arguments` is JSON text, as OpenAI-compatible servers (mlx-lm included) require. */
     @Serializable data class Call(val name: String, val arguments: String)
