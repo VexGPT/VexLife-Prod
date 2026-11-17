@@ -671,7 +671,6 @@ object HereticPersistentRuntime {
     }
 
     private fun acceptedPriorServerArgs(
-        binding: Binding,
         receipt: Receipt,
     ): List<String>? =
         serverLaunchContract(
@@ -876,7 +875,6 @@ object HereticPersistentRuntime {
                     null
             ) {
                 acceptedPriorServerArgs(
-                    binding = priorModelBinding,
                     receipt = prior,
                 )
             } else {
@@ -933,7 +931,6 @@ object HereticPersistentRuntime {
         val acceptedPriorArgs =
             prior?.let {
                 acceptedPriorServerArgs(
-                    binding = binding,
                     receipt = it,
                 )
             }
