@@ -281,12 +281,19 @@ object VexLifeWindowsRuntimeMaterialization {
                     while (true) {
                         val entry = zip.nextEntry ?: break
                         val rawName = entry.name
-                        require(
-                            rawName.isNotBlank() &&
-                                !rawName.startsWith("/") &&
-                                !rawName.startsWith("\\") &&
-                                !rawName.contains("\\") &&
+                        val normalizedName =
+                            if (entry.isDirectory) {
+                                rawName.removeSuffix("/")
+                            } else {
                                 rawName
+                            }
+                        require(
+                            normalizedName.isNotBlank() &&
+                                !normalizedName.startsWith("/") &&
+                                !normalizedName.startsWith("\\") &&
+                                !normalizedName.contains("\\") &&
+                                !normalizedName.contains("//") &&
+                                normalizedName
                                     .split("/")
                                     .none { segment ->
                                         segment == ".." ||
@@ -295,13 +302,13 @@ object VexLifeWindowsRuntimeMaterialization {
                         ) {
                             "Windows runtime archive contains an unsafe path: $rawName"
                         }
-                        require(seen.add(rawName)) {
+                        require(seen.add(normalizedName)) {
                             "Windows runtime archive contains a duplicate path: $rawName"
                         }
 
                         val destination =
                             staging
-                                .resolve(rawName)
+                                .resolve(normalizedName)
                                 .normalize()
                         require(destination.startsWith(staging)) {
                             "Windows runtime archive path escaped staging root"
