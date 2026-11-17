@@ -410,10 +410,10 @@
           "parentRef": "element.vexlife-workspace.companion.conversation",
           "symbol": "VexLifeWorkspaceBlueprint.Stop",
           "declared": "Conversation.control(\"stop\")",
-          "intent": null,
-          "pathwayRef": null,
+          "intent": "capability conversation.cancel",
+          "pathwayRef": "pathway.vexlife-prod.conversation.cancel",
           "style": "Surface",
-          "slot": "InFlow"
+          "slot": "Trailing"
         },
         {
           "ref": "element.vexlife-workspace.companion.conversation.context-inspector",
@@ -1229,6 +1229,87 @@
           "to": "vexlife-prod.local.companion.conversation.voice-input.reveal",
           "label": null,
           "kind": "FLOW"
+        }
+      ]
+    },
+    {
+      "pathwayRef": "pathway.vexlife-prod.conversation.cancel",
+      "label": "Stop current Vex turn",
+      "disposition": "DIRECT_REGISTRATION",
+      "summary": "The person cancels one exact admitted Send attempt. The turn is terminalized; the persistent model runtime is not stopped.",
+      "returns": "a terminal cancellation result for the exact Send attempt",
+      "returnRef": "vexlife-prod.cancel.result",
+      "nodes": [
+        {
+          "ref": "vexlife-prod.cancel.intent",
+          "face": "BEHAVIOR",
+          "role": "INTENT",
+          "label": "conversation.cancel",
+          "symbol": "VexLifeWebP1.Refs.ConversationCancelCapability",
+          "summary": null,
+          "source": "common:web/VexLifeWebP1.kt"
+        },
+        {
+          "ref": "vexlife-prod.cancel.dispatch",
+          "face": "BEHAVIOR",
+          "role": "DISPATCH",
+          "label": "POST /api/v1/conversation/cancel",
+          "symbol": "VexLifeProdLocalService",
+          "summary": null,
+          "source": "jvm:service/VexLifeProdLocalService.kt"
+        },
+        {
+          "ref": "vexlife-prod.cancel.cancellation",
+          "face": "DEPTH",
+          "role": "CONTROL",
+          "label": "PERSON_REQUESTED",
+          "symbol": "DirectCompanionCancellation",
+          "summary": "Interrupts only the active turn request and closes request-local resources; it does not own the persistent Heretic runtime.",
+          "source": "jvm:companion/DirectCompanionCancellation.kt"
+        },
+        {
+          "ref": "vexlife-prod.cancel.turn",
+          "face": "BEHAVIOR",
+          "role": "METHOD",
+          "label": "TURN_CANCELLED_BY_PERSON",
+          "symbol": "DirectCompanionTurn",
+          "summary": "The already-durable request receives a terminal failure receipt; no response/head is committed.",
+          "source": "jvm:companion/DirectCompanionTurn.kt"
+        },
+        {
+          "ref": "vexlife-prod.cancel.result",
+          "face": "BEHAVIOR",
+          "role": "RETURN",
+          "label": "Conversation cancel response",
+          "symbol": "VexLifeProdServiceContract.ConversationCancelResponse",
+          "summary": null,
+          "source": "common:service/VexLifeProdServiceContract.kt"
+        }
+      ],
+      "edges": [
+        {
+          "from": "vexlife-prod.cancel.intent",
+          "to": "vexlife-prod.cancel.dispatch",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.cancel.dispatch",
+          "to": "vexlife-prod.cancel.cancellation",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.cancel.cancellation",
+          "to": "vexlife-prod.cancel.turn",
+          "label": null,
+          "kind": "FLOW"
+        },
+        {
+          "from": "vexlife-prod.cancel.turn",
+          "to": "vexlife-prod.cancel.result",
+          "label": null,
+          "kind": "RETURN"
         }
       ]
     },
