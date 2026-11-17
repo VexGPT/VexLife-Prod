@@ -572,14 +572,15 @@ class VexLifeProdEntryFamily private constructor() :
                     "reason" to
                         text(
                             when (state.reasonRef) {
-                                "PLATFORM_UNSUPPORTED" -> "setup.description.host-reason-platform"
+                                "PLATFORM_UNSUPPORTED" ->
+                                    "setup.description.host-reason-platform-portable"
                                 "ARCHITECTURE_UNSUPPORTED" ->
-                                    "setup.description.host-reason-architecture"
+                                    "setup.description.host-reason-architecture-portable"
                                 "SYSTEM_MEMORY_UNKNOWN" ->
-                                    "setup.description.host-reason-memory-unknown"
+                                    "setup.description.host-reason-memory-unknown-portable"
                                 "INSUFFICIENT_SYSTEM_MEMORY" ->
-                                    "setup.description.host-reason-memory-low"
-                                else -> "setup.description.host-reason-hardware"
+                                    "setup.description.host-reason-memory-low-portable"
+                                else -> "setup.description.host-reason-hardware-portable"
                             }
                         ),
                     "requirement" to
