@@ -116,6 +116,14 @@ object VexLifeWorkspaceBlueprint :
         Conversation.control(
             "context-share",
         )
+    /**
+     * Human voice input is a local drafting affordance. It edits the same text draft and does not
+     * create a second Conversation payload type or open Vex's Perception microphone channel.
+     */
+    val VoiceInput =
+        Conversation.control(
+            "voice-input",
+        )
     val Send =
         Conversation.control(
             "send",
