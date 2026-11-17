@@ -55,3 +55,40 @@ but its returned archive is explicitly not relabeled as a canonical vex.relay.re
 A001/A002 are superseded formation history; A003 is the offered package.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][WINDOWS-HOST-PROBE][A003] -->
+
+
+## Returned host evidence — PASS
+
+Victor returned the exact A003 result archive:
+
+```text
+RETURN-VEXLIFE-WINDOWS-HOST-PROBE-A003--sha256-c1a27432e6d077a81000bc5a6ec385f0a6f7aaac38605aa065ff9c8e946b5de5.zip
+sha256=c1a27432e6d077a81000bc5a6ec385f0a6f7aaac38605aa065ff9c8e946b5de5
+bytes=2461
+```
+
+Archive member hashes were independently rechecked against its `inventory.json`; every listed member matched.
+
+Observed host:
+
+```text
+disposition                  PASS
+osPlatform                   WINDOWS
+osArchitectureRaw            X64
+processArchitectureRaw       X64
+PROCESSOR_ARCHITECTURE       AMD64
+PROCESSOR_ARCHITEW6432       absent
+targetPlatform               WINDOWS
+targetArchitecture           X86_64
+processArchitecture          X86_64
+routeRef                     route.vexlife-prod.windows.x86-64
+mutationPerformed            false
+```
+
+Therefore the patient-zero Windows Product target is grounded as:
+
+```text
+WINDOWS / X86_64
+```
+
+This proves host-target selection only. It does not claim a Windows runtime, package, EXE/MSIX, or public download exists.
