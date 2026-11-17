@@ -385,6 +385,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 pending: null,
                 sendInFlight: false,
                 sendCancelInFlight: false,
+                sendCancelRequested: false,
                 streamPhase: null,
                 streamedContent: '',
                 streamedReasoning: '',
@@ -2654,9 +2655,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 bubble.className = 'bubble';
                 const detail = document.createElement('p');
                 detail.textContent =
-                  String(attempt.failureCode ?? 'TURN_FAILED') +
-                  ' · ' +
-                  failureRouteLabel(attempt.exactNextSafeRoute);
+                  attempt.cancelledByPerson
+                    ? t('workspace.status.conversation-stopped')
+                    : String(attempt.failureCode ?? 'TURN_FAILED') +
+                      ' · ' +
+                      failureRouteLabel(attempt.exactNextSafeRoute);
                 bubble.append(detail);
 
                 const retry = document.createElement('button');
@@ -3093,6 +3096,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.send.hidden = state.sendInFlight;
                 ui.stop.hidden = !state.sendInFlight;
                 ui.stop.disabled = !state.sendInFlight || state.sendCancelInFlight;
+                const stopLabel = t('workspace.button.conversation-stop');
+                ui.stop.textContent = stopLabel;
+                ui.stop.setAttribute('aria-label', stopLabel);
+                ui.stop.title = stopLabel;
                 ui.send.disabled = modelSwitching || modelSwitchHeld || (privateNow
                   ? state.privateInFlight || !ui.draft.value.trim()
                   : state.sendInFlight || (!state.pending && !ui.draft.value.trim()));
@@ -3598,6 +3605,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (streamed) followStreamSpeech(true);
                 state.sendInFlight = false;
                 state.sendCancelInFlight = false;
+                state.sendCancelRequested = false;
                 root.dataset.vexLastContextPath = String(result.contextPath ?? '');
                 root.dataset.vexLastPromptReceiptRef = String(result.promptContext?.receiptRef ?? '');
                 root.dataset.vexLastBrowserContextRef = String(result.promptContext?.browserContextRef ?? '');
@@ -3670,7 +3678,11 @@ object VexLifeWebP1RuntimeArtifacts {
               const cancelSend = async () => {
                 if (!state.sendInFlight || !state.pending || state.sendCancelInFlight) return;
                 state.sendCancelInFlight = true;
-                setCompanionStatus('Checking', 'Stopping this turn', servingModelLabel() || '');
+                setCompanionStatus(
+                  'Checking',
+                  t('workspace.status.conversation-stopping'),
+                  servingModelLabel() || ''
+                );
                 renderComposer();
                 try {
                   const response = await fetch(service.cancelPath, {
@@ -3679,11 +3691,18 @@ object VexLifeWebP1RuntimeArtifacts {
                     body: JSON.stringify({ idempotencyKey: state.pending.idempotencyKey })
                   });
                   const result = await readJson(response);
-                  notify(result.cancellationRequested
-                    ? 'Stopping this turn…'
-                    : 'That turn is no longer active.');
+                  if (result.cancellationRequested) state.sendCancelRequested = true;
+                  notify(
+                    result.cancellationRequested
+                      ? t('workspace.status.conversation-stopping')
+                      : t('workspace.status.conversation-cancel-not-active')
+                  );
                 } catch (error) {
-                  notify(error instanceof Error ? error.message : 'VexLife could not request Stop.');
+                  notify(
+                    error instanceof Error
+                      ? error.message
+                      : t('workspace.status.conversation-cancel-unavailable')
+                  );
                 } finally {
                   state.sendCancelInFlight = false;
                   renderComposer();
@@ -3721,6 +3740,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.pending = pending;
                 state.sendInFlight = true;
                 state.sendCancelInFlight = false;
+                state.sendCancelRequested = false;
                 if (!retryingExactAttempt) {
                   // A genuinely new Send owns a new live process slot. Reconciliation of the same
                   // pending idempotency key must preserve the process already observed for it.
@@ -3853,16 +3873,18 @@ object VexLifeWebP1RuntimeArtifacts {
 
                   state.sendInFlight = false;
                   state.sendCancelInFlight = false;
+                  const cancelledByPerson = state.sendCancelRequested;
+                  state.sendCancelRequested = false;
                   if (retireAttempt) {
                     const failure = terminalError?.vexResponse ?? {};
-                    const cancelledByPerson = String(failure.code ?? '') === 'TURN_CANCELLED_BY_PERSON';
                     state.failedAttempts.push({
                       idempotencyKey: pending.idempotencyKey,
                       content: pending.content,
                       browserContext: pending.browserContext ?? null,
                       failureCode: String(failure.code ?? terminalError?.name ?? 'TURN_FAILED'),
                       exactNextSafeRoute: failure.exactNextSafeRoute ?? null,
-                      processEntries: interruptedProcess
+                      processEntries: interruptedProcess,
+                      cancelledByPerson
                     });
                     if (cancelledByPerson && !ui.draft.value.trim()) {
                       ui.draft.value = pending.content;
@@ -3871,7 +3893,9 @@ object VexLifeWebP1RuntimeArtifacts {
                     clearLiveProcessState();
                     setCompanionStatus(
                       cancelledByPerson ? 'Ready' : 'Unavailable',
-                      cancelledByPerson ? 'Stopped by you' : 'Send failed',
+                      cancelledByPerson
+                        ? t('workspace.status.conversation-stopped')
+                        : 'Send failed',
                       servingModelLabel() || ''
                     );
                   } else {
@@ -3888,10 +3912,9 @@ object VexLifeWebP1RuntimeArtifacts {
 
                   sizeDraft();
                   render();
-                  const terminalCode = String(terminalError?.vexResponse?.code ?? '');
                   notify(
-                    terminalCode === 'TURN_CANCELLED_BY_PERSON'
-                      ? 'Stopped. Your message is back in the Composer so you can edit or delete it.'
+                    cancelledByPerson
+                      ? t('workspace.description.conversation-stopped')
                       : terminalError instanceof Error
                         ? terminalError.message
                         : 'Send failed.'
