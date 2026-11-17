@@ -193,9 +193,7 @@ class HereticPersistentRuntimeTest {
     private fun binding(): HereticPersistentRuntime.Binding =
         HereticPersistentRuntime.bind(
             authorityRef = "authority.vexlife-prod.heretic-runtime.test",
-            materialization = HereticArtifactMaterialization.Result(
-                state = "HERETIC_ARTIFACTS_MATERIALIZED_EXACT",
-                modelPath = "/tmp/vexlife-prod-test/model",
+            materialization = HereticArtifactMaterialization.Result(                modelPath = "/tmp/vexlife-prod-test/model",
                 providerRevision = "8".repeat(40),
                 contentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
                 memberCount = 11,
@@ -828,9 +826,7 @@ class HereticPersistentRuntimeTest {
         HereticPersistentRuntime.bind(
             authorityRef = "authority.vexlife-prod.heretic-runtime.test",
             materialization =
-                HereticArtifactMaterialization.Result(
-                    state = "HERETIC_ARTIFACTS_MATERIALIZED_EXACT",
-                    modelPath = "/tmp/vexlife-prod-test/" + model.handle,
+                HereticArtifactMaterialization.Result(                    modelPath = "/tmp/vexlife-prod-test/" + model.handle,
                     providerRevision = model.providerRevision,
                     contentSetSha256 = model.identity.artifactContentSetSha256,
                     memberCount = model.members.size,

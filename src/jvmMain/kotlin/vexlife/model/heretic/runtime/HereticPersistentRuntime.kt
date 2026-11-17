@@ -342,7 +342,7 @@ object HereticPersistentRuntime {
             }
         require(
             materialization.state ==
-                "HERETIC_ARTIFACTS_MATERIALIZED_EXACT" &&
+                HereticArtifactMaterialization.MaterializedExactState &&
                 model != null &&
                 materialization.memberCount ==
                 model.members.size,

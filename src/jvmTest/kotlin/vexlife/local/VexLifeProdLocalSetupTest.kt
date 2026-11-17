@@ -674,7 +674,6 @@ class VexLifeProdLocalSetupTest {
                             retireStableRuntime = { _, _, observation ->
                                 trace += "RETIRE_STABLE_RUNTIME"
                                 StableVexLifeHereticRuntimeCompatibility.Retirement(
-                                    state = "RETIRED_STABLE_PRIOR_LAUNCH_CONTRACT",
                                     launchContract = observation.launchContract,
                                     exactOwnershipVerified = true,
                                     verifiedNotLive = true,

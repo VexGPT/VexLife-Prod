@@ -123,9 +123,7 @@ class StableVexLifeHereticRuntimeCompatibilityTest {
         HereticPersistentRuntime.bind(
             authorityRef = "authority.vexlife-prod.heretic-runtime.compatibility-test",
             materialization =
-                HereticArtifactMaterialization.Result(
-                    state = "HERETIC_ARTIFACTS_MATERIALIZED_EXACT",
-                    modelPath = "/tmp/vexlife-runtime-compat/model",
+                HereticArtifactMaterialization.Result(                    modelPath = "/tmp/vexlife-runtime-compat/model",
                     providerRevision = "8".repeat(
                         40,
                     ),

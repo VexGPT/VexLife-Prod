@@ -113,13 +113,18 @@ object StableVexLifeHereticRuntimeCompatibility {
             HereticPersistentRuntime.ServerLaunchContract.CURRENT,
     )
 
+    const val RetiredPriorLaunchContractState =
+        "RETIRED_STABLE_PRIOR_LAUNCH_CONTRACT"
+
     data class Retirement(
-        val state: String,
         val launchContract: HereticPersistentRuntime.ServerLaunchContract,
         val exactOwnershipVerified: Boolean,
         val verifiedNotLive: Boolean,
         val receiptDeleted: Boolean,
-    )
+    ) {
+        val state: String
+            get() = RetiredPriorLaunchContractState
+    }
 
     private val RefPattern =
         Regex(
@@ -474,7 +479,6 @@ object StableVexLifeHereticRuntimeCompatibility {
         }
 
         return Retirement(
-            state = "RETIRED_STABLE_PRIOR_LAUNCH_CONTRACT",
             launchContract = expected.launchContract,
             exactOwnershipVerified = true,
             verifiedNotLive = true,
