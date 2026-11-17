@@ -10,11 +10,9 @@ Set-StrictMode -Version Latest
 
 $Attempt = "R001"
 $Repository = "VexGPT/VexLife-Prod"
-$CarrierBranch = "VXG-111726-chatgpt-windows-4b-patient-zero-a001"
-$CarrierWorkflow = "windows-4b-patient-zero-proof.yml"
-$BuildSourceSha = $null
-$ActionsRunId = $null
-$ArtifactName = $null
+$BuildSourceSha = "b115d4405e122bf07574cc0b48de587b08b51824"
+$ActionsRunId = "44064465533"
+$ArtifactName = "windows-4b-patient-zero-$BuildSourceSha"
 
 $ModelUrl = "https://huggingface.co/yachen4ever/Qwen3.8-4B-Distill-Heretic-Abliterated-GGUF/resolve/c0807aa5c3a6e689a4dda5db58ab1d10eb40ab61/model-Q4_K_M.gguf?download=true"
 $ModelSha256 = "7b95847ce1684f98d96f13bad2daaeffcfd2f95ea2ff3821ee68943590a10159"
@@ -137,21 +135,16 @@ try {
     Write-Host "Model: current Product heretic-4b only."
     Write-Host ""
 
-    Write-Host "[1/6] Verify latest successful hosted VexLife patient-zero build"
+    Write-Host "[1/6] Verify frozen successful hosted VexLife patient-zero build"
     $gh = Resolve-Gh
-    $runsJson = & $gh run list --repo $Repository --branch $CarrierBranch --workflow $CarrierWorkflow --status success --limit 20 --json databaseId,headSha,conclusion,createdAt 2>$null
+    $runJson = & $gh run view $ActionsRunId --repo $Repository --json headSha,conclusion 2>$null
     if ($LASTEXITCODE -ne 0) {
-        throw "GITHUB_ACTIONS_RUN_LIST_FAILED"
+        throw "GITHUB_ACTIONS_RUN_LOOKUP_FAILED"
     }
-    $successfulRuns = @($runsJson | ConvertFrom-Json)
-    $run = $successfulRuns | Select-Object -First 1
-    if ($null -eq $run -or $run.conclusion -ne "success" -or [string]::IsNullOrWhiteSpace([string]$run.headSha)) {
-        throw "NO_SUCCESSFUL_PATIENT_ZERO_BUILD_AVAILABLE"
+    $run = $runJson | ConvertFrom-Json
+    if ($run.headSha -ne $BuildSourceSha -or $run.conclusion -ne "success") {
+        throw ("FROZEN_HOSTED_BUILD_NOT_EXACT head=" + $run.headSha + " conclusion=" + $run.conclusion)
     }
-
-    $ActionsRunId = [string]$run.databaseId
-    $BuildSourceSha = [string]$run.headSha
-    $ArtifactName = "windows-4b-patient-zero-" + $BuildSourceSha
 
     $ArtifactRoot = Join-Path $env:TEMP ("vexlife-win4b-app-" + $BuildSourceSha.Substring(0,12))
     if (Test-Path -LiteralPath $ArtifactRoot) {
