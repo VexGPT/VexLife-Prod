@@ -545,6 +545,22 @@ object HereticPersistentRuntime {
         PRE_PROMPT_CACHE_LIMIT,
     }
 
+    fun promptCacheEntryLimit(
+        args: List<String>,
+    ): Int? {
+        val index = args.indexOf("--prompt-cache-size")
+        if (index < 0 || index + 1 >= args.size) {
+            return null
+        }
+        return args[index + 1]
+            .toIntOrNull()
+            ?.let {
+                runCatching {
+                    HereticRuntimeConfiguration.requirePromptCacheEntries(it)
+                }.getOrNull()
+            }
+    }
+
     fun serverArgs(
         binding: Binding,
     ): List<String> =
