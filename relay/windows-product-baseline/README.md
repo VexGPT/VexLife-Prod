@@ -303,7 +303,7 @@ Example:
 
 
 
-## Current real-host successor — readiness R002
+## Current real-host state — readiness R002 PASS
 
 Current Product implementation successor remains:
 
@@ -317,71 +317,125 @@ hosted Windows source proof run=44053924414 PASS
 
 ### R001 — harness automatic-variable SAFE_FAILURE
 
-Victor's first readiness run stopped at stage 1 before any checkpoint formed:
+R001 stopped before checkpoint 1 because PowerShell treated `$host` as built-in `$Host`.
+Source review found the same latent collision for `$home` vs `$HOME`.
 
-```text
-Cannot overwrite variable Host because it is read-only or constant.
-```
+No Product/Home/model/runtime/service effect occurred.
 
-Cause:
+### R002 — real-host readiness PASS
 
-```text
-PowerShell variables are case-insensitive.
-
-$host == $Host
-$home == $HOME
-```
-
-R001 therefore learned no host/Product truth. It performed no Product/Home/model/runtime/service
-effect.
-
-### R002 — corrected checkpointed readiness harness
-
-R002 renames the semantic records:
-
-```text
-$hostObservation
-$homeObservation
-```
-
-and preserves the same no-effect four-stage route:
-
-```text
-[1/4] Windows OS / native architecture / CPU / physical memory
-[2/4] proposed Home path existence + free storage on its volume
-[3/4] graphics / NVIDIA evidence when already present
-[4/4] no-effect readiness summary against #223
-```
-
-The script was sanity-executed end-to-end on a standard GitHub-hosted Windows runner before Victor
-replay:
+R002 was first sanity-executed end-to-end on a standard hosted Windows runner:
 
 ```text
 Actions run 44056068045
-job harness
-Execute no-effect readiness harness PASS
 conclusion SUCCESS
 ```
 
-The temporary hosted workflow was removed after PASS; the run remains durable evidence.
-
-Source-managed R002:
+Victor then returned exact real-host evidence:
 
 ```text
-relay/windows-product-baseline/readiness/R002/
-  RUN-VEXLIFE-WINDOWS-READINESS.ps1
-  RECOVER-VEXLIFE-WINDOWS-READINESS.ps1
+RETURN sha256          a7168ed7b81673ea4813e16266125a9f06f9003b6aa12eb2330633d6f088b1c4
+Windows                Microsoft Windows 11 Pro
+target                 WINDOWS / X86_64
+CPU                    AMD Ryzen 9 5950X
+cores / threads        16 / 32
+system RAM             31.9 GiB
+free RAM at probe      21.8 GiB
+GPU                    NVIDIA GeForce RTX 3080
+nvidia-smi VRAM        10240 MiB
+C: free                ~1.26 TiB
+proposed Home          exists
+effectsPerformed       false
+```
+
+Generic `Win32_VideoController.AdapterRAM` returned a lower 32-bit-sized value; NVIDIA-specific
+`nvidia-smi` is the accelerator VRAM evidence.
+
+The proposed Home path is:
+
+```text
+C:\Users\victo\.vexlife
+EXISTING_DIRECTORY_NOT_CANONICALLY_CLASSIFIED_BY_PROBE
+```
+
+R002 deliberately did not classify or modify that directory.
+
+The exact R002 RETURN is retained under the proof branch. Future public summaries should avoid
+copying raw Home/device/Companion identifiers unnecessarily.
+
+## Current real-host successor — Home contract evidence R003
+
+Why R003 precedes runtime selection:
+
+```text
+existing proposed Home
+-> may already carry Home identity / current device / Companion lineage / model binding
+-> continuity truth must be understood before a Windows runtime/model is selected or materialized
+```
+
+R003 is read-only and consumes only the exact current Product contract coordinates:
+
+```text
+config/home.json
+devices/<manifest.currentDeviceRef>.json
+config/model.json
+runtime/vexlife-prod/model-binding.json
+recovery/bootstrap-receipt.json
+```
+
+It also records presence of expected directory families without enumerating their contents.
+
+R003 explicitly does **not** read:
+
+```text
+conversation bodies
+Memory bodies
+context bodies
+model weight contents
+```
+
+and performs no mutation/runtime/service/install effect.
+
+The harness was sanity-executed against a synthetic Home fixture on hosted Windows before Victor
+handoff:
+
+```text
+Actions run 44057166444
+job harness
+R003 no-effect evidence harness PASS
+conclusion SUCCESS
+```
+
+The temporary hosted workflow was removed after PASS.
+
+Source-managed R003:
+
+```text
+relay/windows-product-baseline/home/R003/
+  RUN-VEXLIFE-WINDOWS-HOME-EVIDENCE.ps1
+  RECOVER-VEXLIFE-WINDOWS-HOME-EVIDENCE.ps1
   manifest.json
 ```
 
-R002 does not compile Product source and performs no model, runtime, service, install, Home or release
-effect.
+Raw Home/device/Companion identifiers belong in the returned human-custody ZIP for exact validation,
+not in public PR prose.
 
-Every completed stage is written to Downloads before the next stage begins. If Victor cancels before
-the final RETURN ZIP is formed, the checkpoint directory intentionally remains.
+### Runtime direction held behind R003
 
-Recovery packages the latest retained R002 checkpoint directory and explicitly performs no replay.
+R002 hardware makes a small CUDA path plausible:
 
-<!-- [VXG RealForever][VEXLIFE-PROD][WINDOWS][READINESS-R002] -->
+```text
+RTX 3080 / 10 GiB VRAM
+31.9 GiB system RAM
+```
+
+Current external runtime evidence shows `llama.cpp` ships Windows x64 CUDA builds and exposes an
+OpenAI-compatible server. The same 4B Heretic/Abliterated lineage used by Claude's MLX candidate also
+has a GGUF sibling for llama.cpp.
+
+That is a **candidate direction**, not yet accepted Product runtime identity. R003 must first reveal
+whether the existing Home already carries a model choice/binding that constrains succession.
+
+<!-- [VXG RealForever][VEXLIFE-PROD][WINDOWS][HOME-R003] -->
 
 <!-- [VXG RealForever][VEXLIFE-PROD][WINDOWS][SOURCE-BASELINE][CURRENT] -->
