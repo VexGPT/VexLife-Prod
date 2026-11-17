@@ -9,6 +9,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.model.heretic.HereticModelCatalog
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.HereticArtifactMaterialization
 
@@ -45,6 +46,7 @@ class VexLifeModelsTest {
     ) =
         VexLifeModels(
             productHome = home,
+            target = HereticRuntimeRealization.MacArm64,
             servingModelRef = { serving },
             totalMemoryBytes = { 16 * gib },
             acquirer = { _ ->
@@ -64,8 +66,8 @@ class VexLifeModelsTest {
             )
             val certified = projection.models.first { it.handle == "heretic-27b" }
             assertTrue(certified.chosen && certified.serving)
-            assertFalse(certified.fitsThisMac)
-            assertTrue(projection.models.first { it.handle == "heretic-9b" }.fitsThisMac)
+            assertFalse(certified.fitsThisDevice)
+            assertTrue(projection.models.first { it.handle == "heretic-9b" }.fitsThisDevice)
             assertEquals(
                 listOf(VexLifeModelsFamily.ControlDownload),
                 projection.models
@@ -77,6 +79,78 @@ class VexLifeModelsTest {
             assertFalse(projection.switchPending)
         }
     }
+
+    @Test
+    fun WindowsTargetListsCatalogModelsButOnlyTheDeclaredRealizationIsUsable() =
+        withHome {
+            home,
+            _,
+            ->
+            VexLifeModels(
+                    productHome = home,
+                    target = HereticRuntimeRealization.WindowsX64,
+                    servingModelRef = {
+                        HereticModelCatalog.Candidate4B.modelRef
+                    },
+                    totalMemoryBytes = {
+                        64 * gib
+                    },
+                    acquirer = { _ ->
+                        HereticArtifactMaterialization.Acquirer {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "target-availability projection must not download",
+                            )
+                        }
+                    },
+                )
+                .use {
+                    owner ->
+                    val projection =
+                        owner.projection()
+                    val twentySeven =
+                        projection.models.first {
+                            it.handle == "heretic-27b"
+                        }
+                    val nine =
+                        projection.models.first {
+                            it.handle == "heretic-9b"
+                        }
+                    val four =
+                        projection.models.first {
+                            it.handle == "heretic-4b"
+                        }
+
+                    assertFalse(twentySeven.realizableOnTarget)
+                    assertFalse(nine.realizableOnTarget)
+                    assertTrue(four.realizableOnTarget)
+                    assertFalse(twentySeven.fitsThisDevice)
+                    assertFalse(nine.fitsThisDevice)
+                    assertTrue(four.fitsThisDevice)
+                    assertEquals(
+                        emptyList(),
+                        twentySeven.display.controls.map {
+                            it.controlRef
+                        },
+                    )
+                    assertEquals(
+                        emptyList(),
+                        nine.display.controls.map {
+                            it.controlRef
+                        },
+                    )
+                    assertEquals(
+                        listOf(
+                            VexLifeModelsFamily.ControlDownload,
+                        ),
+                        four.display.controls.map {
+                            it.controlRef
+                        },
+                    )
+                }
+        }
 
     @Test
     fun usingADownloadedModelSavesTheChoiceForTheNextStart() = withHome { home, fixture ->
