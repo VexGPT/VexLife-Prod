@@ -143,6 +143,23 @@ class VexLifeProdEntryFamily private constructor() :
         override val stateRef: String = StateModelFilesHeld
     }
 
+    data class ModelTargetHeld(
+        override val desiredSourceSha: String,
+        val modelRef: String,
+        val targetRef: String,
+    ) : EntryState {
+        override val stateRef: String = StateModelTargetHeld
+
+        init {
+            require(
+                modelRef.isNotBlank() &&
+                    targetRef.isNotBlank(),
+            ) {
+                "model-target hold requires exact model and target refs"
+            }
+        }
+    }
+
     data class HeldUnknown(override val desiredSourceSha: String, val detail: String) : EntryState {
         override val stateRef: String = StateHeldUnknown
 
@@ -343,6 +360,7 @@ class VexLifeProdEntryFamily private constructor() :
             is HostHeld,
             is StorageHeld,
             is ModelFilesHeld,
+            is ModelTargetHeld,
             is HeldUnknown ->
                 when (control) {
                     Cancel -> stay()
@@ -481,6 +499,15 @@ class VexLifeProdEntryFamily private constructor() :
                             key = "setup.description.model-files-held",
                             gib = mapOf("affected" to state.invalidBytes),
                         ),
+                    journey = journey(Complete, Complete, JourneyHeld, Upcoming, Upcoming),
+                    recheck = true,
+                    cancelLabel = text("setup.button.close"),
+                )
+
+            is ModelTargetHeld ->
+                display(
+                    title = text("setup.heading.model-target-held"),
+                    detail = text("setup.description.model-target-held"),
                     journey = journey(Complete, Complete, JourneyHeld, Upcoming, Upcoming),
                     recheck = true,
                     cancelLabel = text("setup.button.close"),
@@ -636,6 +663,7 @@ class VexLifeProdEntryFamily private constructor() :
         const val StateSetupRequired = "SETUP_REQUIRED"
         const val StateStorageHeld = "STORAGE_HELD"
         const val StateModelFilesHeld = "MODEL_FILES_HELD"
+        const val StateModelTargetHeld = "MODEL_TARGET_HELD"
         const val StateHeldUnknown = "HOLD_UNKNOWN"
 
         val StateRefs =
@@ -651,6 +679,7 @@ class VexLifeProdEntryFamily private constructor() :
                 StateSetupRequired,
                 StateStorageHeld,
                 StateModelFilesHeld,
+                StateModelTargetHeld,
                 StateHeldUnknown,
             )
 
