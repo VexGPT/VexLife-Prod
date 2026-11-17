@@ -8,6 +8,8 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
 import java.util.UUID
+import java.util.zip.CRC32
+import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
 import vexlife.artifact.DirectHttpsArtifactDelivery
 import vexlife.filesystem.VexOwnedPath
@@ -35,6 +37,7 @@ object VexLifeWindowsRuntimeMaterialization {
         val runtimeArchivePath: String,
         val runtimeArchiveState: FileState,
         val runtimeImagePath: String,
+        val runtimeImageState: FileState,
         val runtimeExecutablePath: String,
         val runtimeExecutableState: FileState,
         val effectsPerformed: Boolean,
@@ -43,6 +46,7 @@ object VexLifeWindowsRuntimeMaterialization {
             get() =
                 modelState == FileState.VERIFIED &&
                     runtimeArchiveState == FileState.VERIFIED &&
+                    runtimeImageState == FileState.VERIFIED &&
                     runtimeExecutableState == FileState.VERIFIED
     }
 
@@ -102,6 +106,30 @@ object VexLifeWindowsRuntimeMaterialization {
                 .resolve(binary.executableRelativePath)
                 .normalize()
 
+        val runtimeArchiveState =
+            observeFile(
+                archivePath,
+                expectedBytes = binary.archiveBytes,
+                expectedSha256 = binary.archiveSha256,
+            )
+        val runtimeImageState =
+            if (runtimeArchiveState == FileState.VERIFIED) {
+                observeRuntimeImage(
+                    archivePath = archivePath,
+                    imagePath = imagePath,
+                    binary = binary,
+                )
+            } else if (
+                Files.exists(
+                    imagePath,
+                    LinkOption.NOFOLLOW_LINKS,
+                )
+            ) {
+                FileState.INVALID
+            } else {
+                FileState.ABSENT
+            }
+
         return Observation(
             realizationRef = realization.realizationRef,
             modelPath = modelPath.toString(),
@@ -112,13 +140,9 @@ object VexLifeWindowsRuntimeMaterialization {
                     expectedSha256 = artifact.contentSetSha256,
                 ),
             runtimeArchivePath = archivePath.toString(),
-            runtimeArchiveState =
-                observeFile(
-                    archivePath,
-                    expectedBytes = binary.archiveBytes,
-                    expectedSha256 = binary.archiveSha256,
-                ),
+            runtimeArchiveState = runtimeArchiveState,
             runtimeImagePath = imagePath.toString(),
+            runtimeImageState = runtimeImageState,
             runtimeExecutablePath = executablePath.toString(),
             runtimeExecutableState =
                 observeFile(
@@ -147,8 +171,11 @@ object VexLifeWindowsRuntimeMaterialization {
         require(before.runtimeArchiveState != FileState.INVALID) {
             "existing Windows runtime archive is not the exact declared realization"
         }
-        require(before.runtimeExecutableState != FileState.INVALID) {
+        require(before.runtimeImageState != FileState.INVALID) {
             "existing Windows runtime image is not the exact declared realization"
+        }
+        require(before.runtimeExecutableState != FileState.INVALID) {
+            "existing Windows runtime executable is not the exact declared realization"
         }
 
         if (before.ready) {
@@ -214,7 +241,7 @@ object VexLifeWindowsRuntimeMaterialization {
         var extracted = false
         val afterDownloads = observe(home, realization)
 
-        if (afterDownloads.runtimeExecutableState == FileState.ABSENT) {
+        if (afterDownloads.runtimeImageState == FileState.ABSENT) {
             extractRuntimeArchive(
                 home = home,
                 archivePath = Path.of(afterDownloads.runtimeArchivePath),
@@ -282,26 +309,10 @@ object VexLifeWindowsRuntimeMaterialization {
                         val entry = zip.nextEntry ?: break
                         val rawName = entry.name
                         val normalizedName =
-                            if (entry.isDirectory) {
-                                rawName.removeSuffix("/")
-                            } else {
-                                rawName
-                            }
-                        require(
-                            normalizedName.isNotBlank() &&
-                                !normalizedName.startsWith("/") &&
-                                !normalizedName.startsWith("\\") &&
-                                !normalizedName.contains("\\") &&
-                                !normalizedName.contains("//") &&
-                                normalizedName
-                                    .split("/")
-                                    .none { segment ->
-                                        segment == ".." ||
-                                            segment.isBlank()
-                                    },
-                        ) {
-                            "Windows runtime archive contains an unsafe path: $rawName"
-                        }
+                            normalizedArchiveEntry(
+                                rawName = rawName,
+                                directory = entry.isDirectory,
+                            )
                         require(seen.add(normalizedName)) {
                             "Windows runtime archive contains a duplicate path: $rawName"
                         }
@@ -350,6 +361,24 @@ object VexLifeWindowsRuntimeMaterialization {
             ) {
                 "extracted Windows runtime executable does not match the pinned realization"
             }
+            require(
+                observeRuntimeImage(
+                    archivePath = archivePath,
+                    imagePath = staging,
+                    binary =
+                        HereticRuntimeRealization.WindowsQwen4B.runtimeBinary
+                            ?.takeIf {
+                                it.executableRelativePath == executableRelativePath &&
+                                    it.executableSha256 == executableSha256
+                            }
+                            ?: error(
+                                "runtime archive extraction requires the declared Windows binary",
+                            ),
+                ) ==
+                    FileState.VERIFIED,
+            ) {
+                "extracted Windows runtime image does not match the exact release archive"
+            }
 
             try {
                 Files.move(
@@ -372,6 +401,287 @@ object VexLifeWindowsRuntimeMaterialization {
                 deleteTreeNoFollow(staging)
             }
         }
+    }
+
+    private fun observeRuntimeImage(
+        archivePath: Path,
+        imagePath: Path,
+        binary: HereticRuntimeRealization.RuntimeBinaryProfile,
+    ): FileState {
+        if (
+            !Files.exists(
+                imagePath,
+                LinkOption.NOFOLLOW_LINKS,
+            )
+        ) {
+            return FileState.ABSENT
+        }
+        if (
+            !Files.isDirectory(
+                imagePath,
+                LinkOption.NOFOLLOW_LINKS,
+            ) ||
+            Files.isSymbolicLink(
+                imagePath,
+            )
+        ) {
+            return FileState.INVALID
+        }
+
+        return runCatching {
+                val expectedFiles =
+                    linkedMapOf<String, Pair<Long, Long>>()
+                val expectedDirectories =
+                    linkedSetOf<String>()
+                val seen =
+                    linkedSetOf<String>()
+
+                ZipFile(
+                        archivePath.toFile(),
+                    )
+                    .use { zip ->
+                        zip.entries()
+                            .asSequence()
+                            .forEach { entry ->
+                                val normalizedName =
+                                    normalizedArchiveEntry(
+                                        rawName = entry.name,
+                                        directory = entry.isDirectory,
+                                    )
+                                require(
+                                    seen.add(
+                                        normalizedName,
+                                    ),
+                                ) {
+                                    "Windows runtime archive contains a duplicate path: " +
+                                        entry.name
+                                }
+
+                                if (
+                                    entry.isDirectory
+                                ) {
+                                    expectedDirectories +=
+                                        normalizedName
+                                } else {
+                                    require(
+                                        entry.size >= 0 &&
+                                            entry.crc >= 0,
+                                    ) {
+                                        "Windows runtime archive entry lacks exact size/CRC: " +
+                                            entry.name
+                                    }
+                                    expectedFiles[
+                                        normalizedName
+                                    ] =
+                                        entry.size to
+                                            entry.crc
+                                }
+                            }
+                    }
+
+                expectedDirectories.forEach { relative ->
+                    val directory =
+                        imagePath
+                            .resolve(
+                                relative,
+                            )
+                            .normalize()
+                    require(
+                        directory.startsWith(
+                            imagePath,
+                        ) &&
+                            Files.isDirectory(
+                                directory,
+                                LinkOption.NOFOLLOW_LINKS,
+                            ) &&
+                            !Files.isSymbolicLink(
+                                directory,
+                            ),
+                    ) {
+                        "Windows runtime image directory drift: $relative"
+                    }
+                }
+
+                expectedFiles.forEach {
+                    (
+                        relative,
+                        expected,
+                    ),
+                    ->
+                    val file =
+                        imagePath
+                            .resolve(
+                                relative,
+                            )
+                            .normalize()
+                    require(
+                        file.startsWith(
+                            imagePath,
+                        ) &&
+                            Files.isRegularFile(
+                                file,
+                                LinkOption.NOFOLLOW_LINKS,
+                            ) &&
+                            !Files.isSymbolicLink(
+                                file,
+                            ) &&
+                            Files.size(
+                                file,
+                            ) ==
+                            expected.first &&
+                            crc32(
+                                file,
+                            ) ==
+                            expected.second,
+                    ) {
+                        "Windows runtime image file drift: $relative"
+                    }
+                }
+
+                val actualFiles =
+                    Files.walk(
+                            imagePath,
+                        )
+                        .use { stream ->
+                            stream
+                                .filter { path ->
+                                    Files.isRegularFile(
+                                        path,
+                                        LinkOption.NOFOLLOW_LINKS,
+                                    )
+                                }
+                                .map { path ->
+                                    imagePath
+                                        .relativize(
+                                            path,
+                                        )
+                                        .toString()
+                                        .replace(
+                                            '\\',
+                                            '/',
+                                        )
+                                }
+                                .toList()
+                                .toSet()
+                        }
+
+                require(
+                    actualFiles ==
+                        expectedFiles.keys,
+                ) {
+                    "Windows runtime image contains files outside the exact release archive"
+                }
+
+                val executable =
+                    imagePath
+                        .resolve(
+                            binary.executableRelativePath,
+                        )
+                        .normalize()
+                require(
+                    executable.startsWith(
+                        imagePath,
+                    ) &&
+                        observeFile(
+                            executable,
+                            expectedBytes = null,
+                            expectedSha256 = binary.executableSha256,
+                        ) ==
+                        FileState.VERIFIED,
+                ) {
+                    "Windows runtime executable does not match the pinned release identity"
+                }
+            }
+            .fold(
+                onSuccess = {
+                    FileState.VERIFIED
+                },
+                onFailure = {
+                    FileState.INVALID
+                },
+            )
+    }
+
+    private fun normalizedArchiveEntry(
+        rawName: String,
+        directory: Boolean,
+    ): String {
+        val normalizedName =
+            if (
+                directory
+            ) {
+                rawName.removeSuffix(
+                    "/",
+                )
+            } else {
+                rawName
+            }
+
+        require(
+            normalizedName.isNotBlank() &&
+                !normalizedName.startsWith(
+                    "/",
+                ) &&
+                !normalizedName.startsWith(
+                    "\\",
+                ) &&
+                !normalizedName.contains(
+                    "\\",
+                ) &&
+                !normalizedName.contains(
+                    "//",
+                ) &&
+                normalizedName
+                    .split(
+                        "/",
+                    )
+                    .none { segment ->
+                        segment ==
+                            ".." ||
+                            segment.isBlank()
+                    },
+        ) {
+            "Windows runtime archive contains an unsafe path: $rawName"
+        }
+
+        return normalizedName
+    }
+
+    private fun crc32(
+        path: Path,
+    ): Long {
+        val crc =
+            CRC32()
+        Files.newInputStream(
+                path,
+            )
+            .use { input ->
+                val buffer =
+                    ByteArray(
+                        1024 *
+                            1024,
+                    )
+                while (
+                    true
+                ) {
+                    val count =
+                        input.read(
+                            buffer,
+                        )
+                    if (
+                        count <
+                        0
+                    ) {
+                        break
+                    }
+                    crc.update(
+                        buffer,
+                        0,
+                        count,
+                    )
+                }
+            }
+        return crc.value
     }
 
     private fun observeFile(
