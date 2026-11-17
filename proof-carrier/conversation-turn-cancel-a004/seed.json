@@ -1,0 +1,247 @@
+{
+  "schemaVersion": "vex.relay.task/v2",
+  "continuity": "[VXG RealForever]",
+  "taskRef": "task.vexlife-prod.conversation-turn-cancel-lived-mac.001",
+  "attemptRef": "attempt.vexlife-prod.conversation-turn-cancel-lived-mac.a004",
+  "requestRef": "request.vexlife-prod.conversation-turn-cancel-lived-mac.a004",
+  "correlationRef": "correlation.vexlife-prod.conversation-turn-cancel-lived-mac.a004",
+  "packageRef": "package.vexlife-prod.conversation-turn-cancel-lived-mac.a004",
+  "original": {
+    "originalIntent": "Give the person one Family-connected Stop control for the current direct Vex turn, including provider/repository reach, without killing the persistent Heretic runtime or inventing pause/resume semantics.",
+    "originalGoal": "Prove the exact PR #224 Family-connected Send/Stop circuit after the one-line DirectCompanionCancellation constructor syntax repair, then form one verified unsigned Apple-silicon DMG for lived Stop testing.",
+    "userProtectedIntent": "Follow VexArchitecture relationship traversal: current outside turn custody -> same Family State -> lawful Control -> Effect -> realization -> re-observed custody -> same Family DisplayState. Do not preserve stray Family members, parallel service semantic state, Home/runtime mutation, merge or publication.",
+    "sourceRefs": [
+      "github.pull.vexlife-prod.224",
+      "github.pull.vexlife-prod.221",
+      "github.pull.vexlife-prod.191",
+      "source.vexrelay.current-contract/v1"
+    ]
+  },
+  "lane": {
+    "entryClass": "SAME_LANE_ROLE_TRANSITION",
+    "scopeMode": "STAGE_BOUNDED",
+    "laneRef": "lane.vexlife-prod.conversation-turn-cancel",
+    "parentRootRef": "root.vexlife-prod.new-beginnings",
+    "workRef": "work.vexlife-prod.conversation-turn-cancel",
+    "claimRef": "github.pull.vexlife-prod.224",
+    "returnRouteRef": "github.pull.vexlife-prod.224",
+    "ownerRef": "owner.vexlife-prod.conversation-turn-cancel",
+    "rootHubRef": "hub.vexlife-prod.new-beginnings"
+  },
+  "role": {
+    "activeRole": "CODER",
+    "roleRef": "role.coder.vexlife-prod.conversation-turn-cancel-lived-mac",
+    "instanceRef": "instance.vexrelay.vexlife-prod.conversation-turn-cancel-lived-mac.a002",
+    "occupancyRef": "occupancy.vexrelay.vexlife-prod.conversation-turn-cancel-lived-mac.a002",
+    "providerBindingRef": "provider.vexlocalbridge.macos-victor.conversation-turn-cancel-lived-mac.a002",
+    "threadRef": "thread.vexlife-prod.conversation-turn-cancel",
+    "authorityEnvelopeRef": "authority-envelope.vexlife-prod.conversation-turn-cancel-lived-mac.a002"
+  },
+  "capabilities": {
+    "platformGitHubRead": "AVAILABLE",
+    "platformGitHubWrite": "UNAVAILABLE"
+  },
+  "execution": {
+    "hostProfile": "macos-victor",
+    "executionSurface": "MAC_ZIP_RUN_COMMAND",
+    "singleUseNonce": "nonce-vexlife-prod-conversation-turn-cancel-lived-mac-a004-20261117",
+    "duplicateAttemptMarker": "marker.vexlife-prod.conversation-turn-cancel-lived-mac.a004",
+    "duplicateProtectionMode": "OUTER_RELAY_BOUND",
+    "formedAt": "__FORMED_AT__",
+    "expiresAtOrNull": "__EXPIRES_AT__"
+  },
+  "workspace": {
+    "mode": "RUN_ROOT",
+    "projectRef": "project.vexlife-prod.conversation-turn-cancel",
+    "projectPath": "workspace",
+    "createRoot": false,
+    "createProjectPath": true
+  },
+  "repositories": [
+    {
+      "repositoryRef": "primary",
+      "mode": "CLONE_IN_WORKSPACE",
+      "cloneTransport": "GITHUB_GH",
+      "githubHostname": "github.com",
+      "nameWithOwner": "VexGPT/VexLife-Prod",
+      "localPath": "repositories/primary",
+      "remote": "origin",
+      "baseBranch": "VXG-111726-chatgpt-product-voice-input-gpt-oss-integration-a001",
+      "acceptedBase": "b3fec60a1a88445f8257f15f34544b9ef90c2e6c",
+      "checkoutRef": "9a260906709b0836b40918c59a09ac7ec97d8a7a",
+      "expectedHead": "9a260906709b0836b40918c59a09ac7ec97d8a7a",
+      "branch": "VXG-111726-chatgpt-conversation-turn-cancel-a001",
+      "expectedRemoteUrl": null
+    }
+  ],
+  "authority": {
+    "authorityRef": "authority.vexlife-prod.conversation-turn-cancel-lived-mac.a002",
+    "authorityMode": "EXACT_STAGE_EFFECTS",
+    "grantedEffects": [
+      "CHECK_AUTH",
+      "READ_REPOSITORY",
+      "CHECK_STATE",
+      "RUN_LOCAL_COMMAND",
+      "QUERY_PROVIDER",
+      "FORM_RESULT"
+    ],
+    "conditionalEffects": [],
+    "consumedEffects": [],
+    "remainingEffects": [
+      "CHECK_AUTH",
+      "READ_REPOSITORY",
+      "CHECK_STATE",
+      "RUN_LOCAL_COMMAND",
+      "QUERY_PROVIDER",
+      "FORM_RESULT"
+    ],
+    "heldEffects": [
+      "WRITE_SOURCE",
+      "CREATE_COMMIT",
+      "PUSH_BRANCH",
+      "UPDATE_COORDINATION_METADATA",
+      "APPROVE_EXACT_HEAD",
+      "MARK_READY",
+      "ORDINARY_MERGE",
+      "POST_MERGE_VERIFY",
+      "MODEL_RUNTIME",
+      "HOME_MUTATION"
+    ],
+    "repositoryMembranes": [
+      {
+        "repositoryRef": "primary",
+        "allowedPaths": [
+          "build.gradle.kts",
+          "docs",
+          "localization",
+          "packaging",
+          "site",
+          "src",
+          "tools"
+        ]
+      }
+    ],
+    "allowedExecutables": [
+      "/bin/bash",
+      "git",
+      "gh",
+      "node"
+    ],
+    "allowedEnvironment": [],
+    "remoteObservationOwner": "Operations",
+    "allowMutationLoop": false,
+    "stopConditions": [
+      "STOP_ON_UNKNOWN",
+      "STOP_ON_AUTH_BLOCK",
+      "STOP_ON_BASE_OR_BRANCH_DRIFT",
+      "STOP_ON_TEST_FAILURE"
+    ]
+  },
+  "source": {
+    "sourceSetRef": "source-set.vexlife-prod.conversation-turn-cancel-lived-mac",
+    "sourceVersionRef": "9a260906709b0836b40918c59a09ac7ec97d8a7a",
+    "overlapEvidenceRef": "github.pull.vexlife-prod.224",
+    "activeConflictState": "NONE",
+    "candidateState": "EXACT",
+    "candidateHead": "9a260906709b0836b40918c59a09ac7ec97d8a7a",
+    "candidateTree": "f390ed429b75d108fe732952ea0b455f72716988",
+    "expectedChangedPaths": [
+      {
+        "repositoryRef": "primary",
+        "path": "docs/lens/vexlife-prod.screen-lens.json"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "localization/strings/manifest.json"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "localization/strings/source/workspace.json"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/conversation/VexLifeConversationTurnFamily.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/service/VexLifeProdServiceContract.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/web/VexLifeWebP1.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/web/VexLifeWebP1ExperienceMarkup.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/web/VexLifeWebP1RuntimeArtifacts.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonTest/kotlin/vexlife/conversation/VexLifeConversationTurnFamilyTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonTest/kotlin/vexlife/service/VexLifeProdServiceContractTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonTest/kotlin/vexlife/web/VexLifeWebP1RuntimeArtifactsTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonTest/kotlin/vexlife/web/VexLifeWebP1Test.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmMain/kotlin/vexlife/companion/DirectCompanionCancellation.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmMain/kotlin/vexlife/companion/DirectCompanionConnection.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmMain/kotlin/vexlife/companion/DirectCompanionTurn.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmMain/kotlin/vexlife/lens/VexLifeProdScreenLens.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmMain/kotlin/vexlife/service/VexLifeProdLocalService.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmTest/kotlin/vexlife/companion/DirectCompanionCancellationTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmTest/kotlin/vexlife/lens/VexLifeProdScreenLensTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmTest/kotlin/vexlife/service/VexLifeProdLocalServiceTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmTest/kotlin/vexlife/text/VexLifeStringsTest.kt"
+      }
+    ],
+    "intentionallyUnchangedAuthorizedPaths": []
+  },
+  "policy": {
+    "maxOuterReturnFiles": 10,
+    "maxSelectedSourceEntries": 10,
+    "maxSelectedSourceBytes": 500000,
+    "maxDiffBytes": 5000000,
+    "requireRacePreflightBeforeMutation": false,
+    "requireLocalValidationBeforePublish": false,
+    "requireInputPackageManifest": true,
+    "signoffCommit": true,
+    "draftPullRequest": true
+  }
+}
