@@ -9,6 +9,7 @@ class VexLifeModelsFamilyTest {
     private fun state(
         artifactPresence: VexLifeModelsFamily.ArtifactPresence,
         chosen: Boolean = false,
+        targeted: Boolean = chosen,
         serving: Boolean = false,
         downloading: Boolean = false,
         switching: Boolean = false,
@@ -21,6 +22,7 @@ class VexLifeModelsFamilyTest {
             artifactPresence = artifactPresence,
             downloading = downloading,
             chosen = chosen,
+            targeted = targeted,
             serving = serving,
             switching = switching,
             runtimeConfigurationPending = runtimeConfigurationPending,
@@ -89,7 +91,7 @@ class VexLifeModelsFamilyTest {
         val selected =
             state(
                 VexLifeModelsFamily.ArtifactPresence.Present,
-                chosen = true,
+                targeted = true,
             )
         assertEquals(
             listOf(
@@ -169,7 +171,7 @@ class VexLifeModelsFamilyTest {
 
         val selected =
             unselected.copy(
-                chosen = true,
+                targeted = true,
             )
         assertEquals(
             VexLifeModelsFamily.Effect.UseRecommendedRuntimeConfiguration,
