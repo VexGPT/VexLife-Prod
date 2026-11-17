@@ -69,6 +69,11 @@ object HereticRuntimeRealization {
 
     data class RuntimeBinaryProfile(
         val binaryRef: String,
+        val providerRepository: String,
+        val providerReleaseTag: String,
+        val providerSourceCommit: String,
+        val archiveFilename: String,
+        val archiveSha256: String,
         val filename: String,
         val sha256: String,
     )
@@ -305,7 +310,17 @@ object HereticRuntimeRealization {
                         Requirement.Required(
                             RuntimeBinaryProfile(
                                 binaryRef =
-                                    "runtime-binary.vexlife-prod.llama-cpp.windows-x64.b10107",
+                                    "runtime-binary.vexlife-prod.llama-cpp.windows-x64.cpu.b10107",
+                                providerRepository =
+                                    "ggml-org/llama.cpp",
+                                providerReleaseTag =
+                                    "b10107",
+                                providerSourceCommit =
+                                    "c0bc8591e8815c63cb01dd3f051a8b0df02501c9",
+                                archiveFilename =
+                                    "llama-b10107-bin-win-cpu-x64.zip",
+                                archiveSha256 =
+                                    "52133a0a5a8f6035b1bdd2f89c3425ea8b742413d9bdb9a2dee30e3a1681b18c",
                                 filename =
                                     "llama-server.exe",
                                 sha256 =
@@ -316,7 +331,7 @@ object HereticRuntimeRealization {
                         Requirement.Required(
                             RuntimeProfile(
                                 runtimeAdapterRef =
-                                    "adapter.runtime.llama-cpp.windows-x64.cuda.patient-zero.001",
+                                    "adapter.runtime.llama-cpp.windows-x64.cpu.patient-zero.001",
                                 runtimeClass = "LLAMA_CPP_OPENAI_RUNTIME",
                                 transportClass = "LLAMA_CPP_OPENAI_NUMERIC_LOOPBACK",
                                 endpoint = "http://127.0.0.1:18080",
