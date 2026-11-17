@@ -2549,16 +2549,20 @@ object DirectPromptContext {
      * descriptive, not a hand" — the handles alone did not say how to use them.
      */
     private fun reachFrameContent(frame: VexLifeCapabilityAtlas.Frame): Pair<String, String> {
-        val available = frame.availableCapabilityRefs.toSet()
+        // The request vocabulary is stable; per-turn availability belongs only in current state.
         val reach =
-            frame.capabilityEntries
-                .mapNotNull { entry -> VexLifeCapabilityAtlas.resolve(entry.capabilityRef) }
-                .filter { it.actions.isNotEmpty() && it.capabilityRef in available }
+            DirectTurnReachRefs
+                .mapNotNull(VexLifeCapabilityAtlas::resolve)
+                .filter { it.actions.isNotEmpty() }
                 .sortedBy { it.priority }
         val lines =
             buildList {
                 add("VEXLIFE_SELF_CAPABILITY_FRAME/v1")
-                add("What I can reach this turn, and how to ask for it. The host performs each request through its owner and hands back what actually happened.")
+                add(
+                    "What I can ask VexLife to reach, and how to ask for it. Current availability " +
+                        "comes later with this request's state; the host performs each admitted " +
+                        "request through its owner and hands back what actually happened.",
+                )
                 reach.forEach { definition ->
                     add("- ${definition.handle}: ${definition.purpose}")
                     definition.actions.forEach { action ->
