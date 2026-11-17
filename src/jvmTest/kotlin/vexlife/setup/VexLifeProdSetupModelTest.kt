@@ -117,6 +117,10 @@ class VexLifeProdSetupModelTest {
                 )
 
             assertEquals(
+                HereticRuntimeRealization.WindowsX64.targetRef,
+                observed.targetRef,
+            )
+            assertEquals(
                 "heretic-4b",
                 observed.selected,
             )
