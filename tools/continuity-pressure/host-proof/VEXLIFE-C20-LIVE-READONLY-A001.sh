@@ -64,7 +64,7 @@ experimentStatus=$EXPERIMENT_STATUS
 scenarioRef=$SCENARIO_REF
 mode=quick
 pressureStrategy=EFFECTIVE_SELECTION_BUDGET
-effectiveInputTokenBudget=48000
+effectiveInputTokenBudget=80000
 payloadScale=12
 sets=3
 turnsPerSet=3
@@ -189,7 +189,7 @@ set +e
     --runtime-home "$RUNTIME_HOME" \
     --experiment-window \
     --pressure-strategy EFFECTIVE_SELECTION_BUDGET \
-    --effective-input-token-budget 48000 \
+    --effective-input-token-budget 80000 \
     --payload-scale 12 \
     --sets 3 \
     --turns-per-set 3
