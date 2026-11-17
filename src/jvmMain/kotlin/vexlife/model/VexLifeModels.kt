@@ -25,7 +25,9 @@ import vexlife.text.VexLifeText
  * Settings → Models: the offered models as this Home holds them, and the person's model Controls.
  *
  * Effects and their owners:
- * - Use: persist the Home's exact choice, then request runtime convergence through [ModelSwitchRealization].
+ * - Select: persist the Home's exact target only.
+ * - Runtime configuration: persist admitted launch configuration only.
+ * - Use/Start: request convergence of the already-selected target through [ModelSwitchRealization].
  * - Download: HereticArtifactMaterialization.materializeCurrent with acquisition, in the background.
  * - Redownload: HereticArtifactMaterialization.remove, then the same download.
  * - Remove: HereticArtifactMaterialization.remove (frees space; the model stays offered).
@@ -335,7 +337,8 @@ class VexLifeModels(
                 .getOrNull()
         val runtimeConfigurationPending =
             serving == entry.modelRef &&
-                servingRuntime?.modelRef == entry.modelRef &&
+                servingRuntime != null &&
+                servingRuntime.modelRef == entry.modelRef &&
                 servingRuntime.runtime.args
                     .let(
                         HereticPersistentRuntime::promptCacheEntryLimit,
