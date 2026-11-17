@@ -204,7 +204,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
               </div>
             </div>
             <button class="send" type="submit" data-vex-ref="${VexLifeWebP1.Send.identity.ref}" id="send">Send</button>
-            <button class="stop" type="button" data-vex-ref="${VexLifeWebP1.Stop.identity.ref}" id="stop" hidden>Stop</button>
+            <button class="stop" type="button" data-vex-ref="${VexLifeWebP1.Stop.identity.ref}" id="stop" aria-label="" hidden></button>
           </form>
         </div>
       </div>
