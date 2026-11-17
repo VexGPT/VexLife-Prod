@@ -12,7 +12,11 @@ import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetupLease
 import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticModelCatalog
+import vexlife.model.heretic.HereticRuntimeConfiguration
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
+import vexlife.model.heretic.runtime.FileHereticRuntimeConfigurationStore
+import vexlife.model.heretic.runtime.FileHereticRuntimeReceiptStore
+import vexlife.model.heretic.runtime.HereticPersistentRuntime
 import vexlife.model.heretic.runtime.HereticArtifactDelivery
 import vexlife.model.heretic.runtime.HereticArtifactMaterialization
 import vexlife.text.VexLifeText
@@ -106,6 +110,17 @@ class VexLifeModels(
     private val lastOutcome = AtomicReference<Outcome?>(null)
 
     @Serializable
+    data class RuntimeConfigurationProjection(
+        val promptCacheEntries: Int,
+        val mode: String,
+        val recommendedPromptCacheEntries: Int,
+        val recommendationStanding: String,
+        val recommendation: VexLifeText,
+        val minimumPromptCacheEntries: Int,
+        val maximumPromptCacheEntries: Int,
+    )
+
+    @Serializable
     data class Row(
         val handle: String,
         val label: String,
@@ -117,6 +132,8 @@ class VexLifeModels(
         val chosen: Boolean,
         val serving: Boolean,
         val downloadedBytes: Long?,
+        val runtimeConfiguration: RuntimeConfigurationProjection,
+        val runtimeConfigurationPending: Boolean,
         val display: VexLifeModelsFamily.DisplayState,
     )
 
@@ -129,6 +146,14 @@ class VexLifeModels(
 
         data object Switching : OutcomeState {
             override val stateRef = "SWITCHING"
+        }
+
+        data object Selected : OutcomeState {
+            override val stateRef = "SELECTED"
+        }
+
+        data object Configured : OutcomeState {
+            override val stateRef = "CONFIGURED"
         }
 
         data object Switched : OutcomeState {
@@ -161,6 +186,8 @@ class VexLifeModels(
     data class Projection(
         val schemaVersion: String,
         val models: List<Row>,
+        val selectedHandle: String?,
+        val servingHandle: String?,
         val totalMemoryBytes: Long?,
         val freeStorageBytes: Long?,
         val downloading: String?,
@@ -178,9 +205,33 @@ class VexLifeModels(
         val running = download.get()
         val currentSwitch = switching.get()
         val memory = totalMemoryBytes()
+        val runtimeConfigurationStore =
+            FileHereticRuntimeConfigurationStore(
+                home,
+            )
+        val servingRuntime =
+            runCatching {
+                FileHereticRuntimeReceiptStore(home).read()
+            }.getOrNull()
+        val servingPromptCacheEntries =
+            servingRuntime
+                ?.runtime
+                ?.args
+                ?.let(
+                    HereticPersistentRuntime::promptCacheEntryLimit,
+                )
         val rows =
             HereticModelCatalog.Entries.map { entry ->
                 val presence = HereticArtifactMaterialization.observePresence(home, entry)
+                val runtimeConfiguration =
+                    runtimeConfigurationStore.effective(
+                        entry,
+                    )
+                val runtimeConfigurationPending =
+                    serving == entry.modelRef &&
+                        servingRuntime?.modelRef == entry.modelRef &&
+                        servingPromptCacheEntries != null &&
+                        servingPromptCacheEntries != runtimeConfiguration.promptCacheEntries
                 val state =
                     state(
                         entry = entry,
@@ -189,6 +240,7 @@ class VexLifeModels(
                         serving = serving,
                         running = running,
                         currentSwitch = currentSwitch,
+                        runtimeConfigurationPending = runtimeConfigurationPending,
                     )
                 Row(
                     handle = entry.handle,
@@ -204,12 +256,32 @@ class VexLifeModels(
                         running
                             ?.takeIf { it.handle == entry.handle }
                             ?.let { it.baseBytes + downloadedBytes.get() },
+                    runtimeConfiguration =
+                        RuntimeConfigurationProjection(
+                            promptCacheEntries = runtimeConfiguration.promptCacheEntries,
+                            mode = runtimeConfiguration.mode,
+                            recommendedPromptCacheEntries =
+                                runtimeConfiguration.recommendedPromptCacheEntries,
+                            recommendationStanding =
+                                runtimeConfiguration.recommendationStanding,
+                            recommendation =
+                                VexLifeText(
+                                    runtimeConfiguration.recommendationReasonKey,
+                                ),
+                            minimumPromptCacheEntries =
+                                HereticRuntimeConfiguration.MinimumPromptCacheEntries,
+                            maximumPromptCacheEntries =
+                                HereticRuntimeConfiguration.MaximumPromptCacheEntries,
+                        ),
+                    runtimeConfigurationPending = runtimeConfigurationPending,
                     display = VexLifeModelsFamily.displayStateFor(state),
                 )
             }
         return Projection(
             schemaVersion = Schema,
             models = rows,
+            selectedHandle = rows.singleOrNull { it.chosen }?.handle,
+            servingHandle = rows.singleOrNull { it.serving }?.handle,
             totalMemoryBytes = memory,
             freeStorageBytes = runCatching { Files.getFileStore(home).usableSpace }.getOrNull(),
             downloading = running?.handle,
@@ -221,11 +293,20 @@ class VexLifeModels(
     }
 
     /** One Control, re-resolved against a fresh observation; the projection after it. */
-    fun control(controlRef: String, handle: String): Projection {
+    fun control(
+        controlRef: String,
+        handle: String,
+        promptCacheEntries: Int? = null,
+    ): Projection {
         val entry =
             requireNotNull(HereticModelCatalog.byHandle(handle)) { "model $handle is not offered" }
         val control =
-            requireNotNull(VexLifeModelsFamily.controlForRef(controlRef)) {
+            requireNotNull(
+                VexLifeModelsFamily.controlForRef(
+                    controlRef = controlRef,
+                    promptCacheEntries = promptCacheEntries,
+                ),
+            ) {
                 "model control $controlRef is not known"
             }
         val presence = HereticArtifactMaterialization.observePresence(home, entry)
@@ -252,19 +333,72 @@ class VexLifeModels(
             VexLogger.Fact.ModelControlAccepted,
             mapOf("model" to handle, "controlRef" to controlRef),
         )
-        when (act.effect) {
-            VexLifeModelsFamily.Effect.SwitchModel -> {
-                val manifest = requireNotNull(VexLifeProdHomeFiles.observeExisting(home)).manifest
-                if (!state.chosen) {
-                    FileHereticModelConfigurationStore(home).selectModel(manifest, entry)
-                    VexLogger.record(
-                        VexLogger.Fact.PersonModelChosen,
-                        mapOf("model" to handle, "via" to "settings"),
+        when (val effect = act.effect) {
+            VexLifeModelsFamily.Effect.SelectModel -> {
+                val manifest =
+                    requireNotNull(
+                        VexLifeProdHomeFiles.observeExisting(
+                            home,
+                        ),
+                    ).manifest
+                FileHereticModelConfigurationStore(home)
+                    .selectModel(
+                        manifest,
+                        entry,
                     )
-                }
+                VexLogger.record(
+                    VexLogger.Fact.PersonModelChosen,
+                    mapOf(
+                        "model" to handle,
+                        "via" to "settings-selection",
+                    ),
+                )
+                remember(
+                    entry,
+                    controlRef,
+                    OutcomeState.Selected,
+                    VexLifeText.text(
+                        "workspace.status.model-selected",
+                        "model" to entry.humanLabel,
+                    ),
+                )
+            }
+            VexLifeModelsFamily.Effect.SwitchModel ->
                 startSwitch(
                     entry = entry,
                     controlRef = controlRef,
+                )
+            VexLifeModelsFamily.Effect.UseRecommendedRuntimeConfiguration -> {
+                val configured =
+                    FileHereticRuntimeConfigurationStore(home)
+                        .useRecommended(
+                            entry,
+                        )
+                remember(
+                    entry,
+                    controlRef,
+                    OutcomeState.Configured,
+                    VexLifeText.text(
+                        "workspace.status.model-runtime-configured",
+                        "entries" to configured.promptCacheEntries.toString(),
+                    ),
+                )
+            }
+            is VexLifeModelsFamily.Effect.SetPromptCacheEntries -> {
+                val configured =
+                    FileHereticRuntimeConfigurationStore(home)
+                        .setPromptCacheEntries(
+                            model = entry,
+                            promptCacheEntries = effect.entries,
+                        )
+                remember(
+                    entry,
+                    controlRef,
+                    OutcomeState.Configured,
+                    VexLifeText.text(
+                        "workspace.status.model-runtime-configured",
+                        "entries" to configured.promptCacheEntries.toString(),
+                    ),
                 )
             }
             VexLifeModelsFamily.Effect.AcquireArtifacts ->
@@ -483,6 +617,7 @@ class VexLifeModels(
         serving: String?,
         running: Download?,
         currentSwitch: SwitchProjection?,
+        runtimeConfigurationPending: Boolean = false,
     ) =
         VexLifeModelsFamily.State(
             handle = entry.handle,
@@ -501,6 +636,7 @@ class VexLifeModels(
             chosen = chosen == entry.modelRef,
             serving = serving == entry.modelRef,
             switching = currentSwitch?.handle == entry.handle,
+            runtimeConfigurationPending = runtimeConfigurationPending,
             anyDownloadRunning = running != null,
             anySwitchRunning = currentSwitch != null,
         )
