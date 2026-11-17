@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetupLease
@@ -66,9 +67,16 @@ class VexLifeModels(
 
     @Serializable
     enum class SwitchPhase {
+        @SerialName("REQUESTED")
         REQUESTED,
+
+        @SerialName("WAITING_FOR_CURRENT_TURN")
         WAITING_FOR_CURRENT_TURN,
+
+        @SerialName("PREPARING_TARGET")
         PREPARING_TARGET,
+
+        @SerialName("SWITCHING_RUNTIME")
         SWITCHING_RUNTIME,
     }
 
@@ -105,11 +113,22 @@ class VexLifeModels(
 
     @Serializable
     enum class OutcomeState {
+        @SerialName("NOT_LAWFUL_NOW")
         NOT_LAWFUL_NOW,
+
+        @SerialName("SWITCHING")
         SWITCHING,
+
+        @SerialName("SWITCHED")
         SWITCHED,
+
+        @SerialName("FAILED")
         FAILED,
+
+        @SerialName("DOWNLOADED")
         DOWNLOADED,
+
+        @SerialName("REMOVED")
         REMOVED,
     }
 

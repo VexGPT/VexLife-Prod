@@ -1,5 +1,6 @@
 package vexlife.model.heretic
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
@@ -26,7 +27,10 @@ import kotlinx.serialization.Serializable
 object HereticModelCatalog {
     @Serializable
     enum class Standing {
+        @SerialName("CERTIFIED")
         CERTIFIED,
+
+        @SerialName("CANDIDATE")
         CANDIDATE,
     }
 
