@@ -173,6 +173,7 @@ private class WhisperCppCliProvider private constructor(
                     ": " +
                     standardError
                         .lineSequence()
+                        .toList()
                         .takeLast(
                             3,
                         )
