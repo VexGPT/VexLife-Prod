@@ -221,7 +221,7 @@ object VexLifeCapabilityBridge {
                     Body(
                         ResultState.INVALID_REQUEST,
                         null,
-                        "No capability is named \"${call.capability}\". " + handlesLine(),
+                        "No capability is named \"${requireNotNull(call).capability}\". " + handlesLine(),
                         untrusted = false,
                     )
                 definition.capabilityRef !in VexLifeReachDefinitions.EnvelopeCapabilityRefs ->

@@ -170,7 +170,7 @@ object VexLifeProdCurrentState {
                             },
                         runtimeCurrentness = "CONFIGURATION_ONLY_NOT_REOBSERVED",
                         runtimeReceiptPath = current.runtimeReceiptPath,
-                        artifactState = artifacts.state,
+                        artifactState = artifacts.state.stateRef,
                         artifactTotalBytes = artifacts.totalBytes,
                         artifactPresentBySizeBytes = artifacts.presentBySizeBytes,
                         artifactMissingBytes = artifacts.missingBytes,
