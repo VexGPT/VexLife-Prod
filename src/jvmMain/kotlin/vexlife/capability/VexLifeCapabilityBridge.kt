@@ -770,7 +770,7 @@ object VexLifeCapabilityBridge {
             }
         return Body(
             state = state,
-            target = "continuity: " + groups.flatten().joinToString(", "),
+            target = "continuity",
             text = projection.text,
             untrusted = false,
             truncated = projection.contentTruncated,
