@@ -202,7 +202,17 @@ object VexLifeWebP1RuntimeArtifacts {
                 memoryText: byId('memory-text'),
                 memoryNote: byId('memory-note'),
                 vexMemoryLabel: byId('vex-memory-label'),
+                modelsState: byId('models-state'),
+                modelsCurrentState: byId('models-current-state'),
+                modelChoice: byId('model-choice'),
+                modelChoiceFacts: byId('model-choice-facts'),
+                modelChoiceNotes: byId('model-choice-notes'),
                 modelsList: byId('models-list'),
+                modelConfiguration: byId('model-configuration'),
+                modelConfigurationRecommendation: byId('model-configuration-recommendation'),
+                modelPromptCacheEntries: byId('model-prompt-cache-entries'),
+                modelUseRecommended: byId('model-use-recommended'),
+                modelStart: byId('model-start'),
                 modelsNote: byId('models-note'),
                 diagnosticsStatus: byId('diagnostics-status'),
                 diagnosticsCapture: byId('diagnostics-capture'),
@@ -2711,51 +2721,197 @@ object VexLifeWebP1RuntimeArtifacts {
                 return serving?.label ?? '';
               };
 
-              // Settings → Models. Rows, states and lawful Controls come from VexLifeModelsFamily via
-              // the service; this renderer only lays them out and returns the chosen Control ref.
+              const selectedModel = () =>
+                (state.models?.models || []).find((model) => model.targeted) ?? null;
+
+              const modelHasControl = (model, controlRef) =>
+                (model?.display?.controls || []).some((control) => control.controlRef === controlRef);
+
+              const modelCacheLevelName = (value) => {
+                const key =
+                  value === 1 ? 'workspace.label.model-cache-level-1' :
+                  value === 2 ? 'workspace.label.model-cache-level-2' :
+                  'workspace.label.model-cache-level-3';
+                return t(key);
+              };
+
+              const modelCacheLevelLabel = (value, recommended) => {
+                const parts = [modelCacheLevelName(value)];
+                if (value === recommended) {
+                  parts.push(t('workspace.label.model-recommended'));
+                } else if (value > 1) {
+                  parts.push(t('workspace.label.model-experimental'));
+                }
+                return parts.join(' · ');
+              };
+
+              // Settings -> Models. Selection, launch configuration and activation remain separate
+              // Controls. The renderer never turns a selection/config edit into a runtime effect.
               const renderModels = () => {
                 if (!ui.modelsList) return;
                 ui.modelsList.textContent = '';
                 const projection = state.models;
                 if (!projection) return;
-                for (const model of projection.models || []) {
-                  const row = document.createElement('div');
-                  row.className = 'model-row';
-                  row.dataset.chosen = String(Boolean(model.chosen));
-                  const name = document.createElement('p');
-                  name.className = 'model-name';
-                  name.textContent = model.label;
-                  const facts = document.createElement('p');
-                  facts.className = 'model-facts';
-                  const status = model.downloadedBytes != null
+
+                const models = projection.models || [];
+                const selected = selectedModel();
+                const serving = models.find((model) => model.serving) ?? null;
+
+                if (ui.modelsCurrentState) {
+                  const stateParts = [
+                    t('workspace.label.model-state-serving').replace('{model}', serving?.label ?? t('workspace.label.model-none'))
+                  ];
+                  if (selected && (!serving || selected.handle !== serving.handle)) {
+                    stateParts.push(
+                      t('workspace.label.model-state-selected')
+                        .replace('{model}', selected.label)
+                    );
+                  }
+                  if (projection.switching) {
+                    stateParts.push(resolveText(projection.switching.message));
+                  } else if (selected?.runtimeConfigurationPending) {
+                    stateParts.push(t('workspace.status.model-runtime-configuration-pending'));
+                  }
+                  ui.modelsCurrentState.textContent = stateParts.join(' · ');
+                }
+
+                if (ui.modelChoice) {
+                  const options = models.map((model) => {
+                    const option = document.createElement('option');
+                    option.value = model.handle;
+                    const availability = resolveText(model.display.status);
+                    option.textContent = model.label + ' · ' + availability;
+                    option.selected = Boolean(model.targeted);
+                    return option;
+                  });
+                  ui.modelChoice.replaceChildren(...options);
+                  ui.modelChoice.disabled = state.modelsInFlight || Boolean(projection.switching);
+                  ui.modelChoice.onchange = () => {
+                    const handle = ui.modelChoice.value;
+                    const model = models.find((candidate) => candidate.handle === handle);
+                    if (model && !model.targeted) {
+                      void modelControl(${jsString(VexLifeModelsFamily.ControlSelect)}, handle);
+                    }
+                  };
+                }
+
+                if (selected) {
+                  const status = selected.downloadedBytes != null
                     ? t('workspace.status.model-downloading')
-                        .replace('{done}', gibText(model.downloadedBytes))
-                        .replace('{total}', gibText(model.totalBytes))
-                    : resolveText(model.display.status);
-                  facts.textContent = status + ' · ' + t('workspace.label.model-facts')
-                    .replace('{size}', gibText(model.totalBytes))
-                    .replace('{memory}', gibText(model.recommendedMemoryBytes))
-                    .replace('{fit}', t(model.fitsThisMac ? 'workspace.label.model-fits' : 'workspace.label.model-tight'));
-                  const notes = document.createElement('p');
-                  notes.className = 'model-notes';
-                  notes.textContent = [
-                    ...(model.display.notes || []).map(resolveText),
-                    model.standing === 'CANDIDATE' ? t('workspace.label.model-candidate') : ''
-                  ].filter(Boolean).join(' · ');
-                  const controls = document.createElement('div');
-                  controls.className = 'model-controls';
-                  for (const control of model.display.controls || []) {
+                        .replace('{done}', gibText(selected.downloadedBytes))
+                        .replace('{total}', gibText(selected.totalBytes))
+                    : resolveText(selected.display.status);
+
+                  if (ui.modelChoiceFacts) {
+                    ui.modelChoiceFacts.textContent =
+                      status + ' · ' +
+                      t('workspace.label.model-facts')
+                        .replace('{size}', gibText(selected.totalBytes))
+                        .replace('{memory}', gibText(selected.recommendedMemoryBytes))
+                        .replace('{fit}', t(selected.fitsThisMac ? 'workspace.label.model-fits' : 'workspace.label.model-tight'));
+                  }
+
+                  if (ui.modelChoiceNotes) {
+                    ui.modelChoiceNotes.textContent = [
+                      ...(selected.display.notes || []).map(resolveText),
+                      selected.standing === 'CANDIDATE' ? t('workspace.label.model-candidate') : ''
+                    ].filter(Boolean).join(' · ');
+                  }
+
+                  for (const control of selected.display.controls || []) {
+                    if (![
+                      ${jsString(VexLifeModelsFamily.ControlDownload)},
+                      ${jsString(VexLifeModelsFamily.ControlRedownload)},
+                      ${jsString(VexLifeModelsFamily.ControlRemove)}
+                    ].includes(control.controlRef)) continue;
                     const button = document.createElement('button');
                     button.type = 'button';
                     button.className = 'outline-button';
                     button.textContent = resolveText(control.label);
                     button.disabled = state.modelsInFlight || Boolean(projection.switching);
-                    button.addEventListener('click', () => { void modelControl(control.controlRef, model.handle); });
-                    controls.append(button);
+                    button.addEventListener('click', () => {
+                      void modelControl(control.controlRef, selected.handle);
+                    });
+                    ui.modelsList.append(button);
                   }
-                  row.append(name, controls, facts, notes);
-                  ui.modelsList.append(row);
+                } else {
+                  if (ui.modelChoiceFacts) ui.modelChoiceFacts.textContent = '';
+                  if (ui.modelChoiceNotes) ui.modelChoiceNotes.textContent = '';
                 }
+
+                if (ui.modelConfiguration) ui.modelConfiguration.hidden = !selected;
+                if (selected) {
+                  const config = selected.runtimeConfiguration;
+                  if (ui.modelConfigurationRecommendation) {
+                    const currentName =
+                      modelCacheLevelName(config.promptCacheEntries);
+                    const recommendedName =
+                      modelCacheLevelName(config.recommendedPromptCacheEntries);
+                    const summary =
+                      config.promptCacheEntries === config.recommendedPromptCacheEntries
+                        ? t('workspace.label.model-cache-current-recommended')
+                            .replace('{current}', currentName)
+                        : t('workspace.label.model-cache-current')
+                            .replace('{current}', currentName)
+                            .replace('{recommended}', recommendedName);
+                    ui.modelConfigurationRecommendation.textContent =
+                      summary + ' ' + resolveText(config.recommendation);
+                  }
+                  if (ui.modelPromptCacheEntries) {
+                    const options = [];
+                    for (
+                      let value = config.minimumPromptCacheEntries;
+                      value <= config.maximumPromptCacheEntries;
+                      value += 1
+                    ) {
+                      const option = document.createElement('option');
+                      option.value = String(value);
+                      option.textContent =
+                        modelCacheLevelLabel(
+                          value,
+                          config.recommendedPromptCacheEntries
+                        );
+                      option.selected = value === config.promptCacheEntries;
+                      options.push(option);
+                    }
+                    ui.modelPromptCacheEntries.replaceChildren(...options);
+                    ui.modelPromptCacheEntries.disabled = state.modelsInFlight || Boolean(projection.switching);
+                    ui.modelPromptCacheEntries.onchange = () => {
+                      void modelControl(
+                        ${jsString(VexLifeModelsFamily.ControlSetPromptCacheEntries)},
+                        selected.handle,
+                        Number(ui.modelPromptCacheEntries.value)
+                      );
+                    };
+                  }
+                  if (ui.modelUseRecommended) {
+                    const alreadyRecommended =
+                      config.promptCacheEntries === config.recommendedPromptCacheEntries;
+                    ui.modelUseRecommended.hidden = alreadyRecommended;
+                    ui.modelUseRecommended.disabled =
+                      alreadyRecommended ||
+                      state.modelsInFlight ||
+                      Boolean(projection.switching) ||
+                      !modelHasControl(selected, ${jsString(VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration)});
+                    ui.modelUseRecommended.onclick = () => {
+                      void modelControl(
+                        ${jsString(VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration)},
+                        selected.handle
+                      );
+                    };
+                  }
+                  if (ui.modelStart) {
+                    const canStart = modelHasControl(selected, ${jsString(VexLifeModelsFamily.ControlUse)});
+                    ui.modelStart.disabled = state.modelsInFlight || Boolean(projection.switching) || !canStart;
+                    ui.modelStart.onclick = () => {
+                      void modelControl(${jsString(VexLifeModelsFamily.ControlUse)}, selected.handle);
+                    };
+                    ui.modelStart.textContent = selected.serving && selected.runtimeConfigurationPending
+                      ? t('workspace.button.model-apply-restart')
+                      : t('workspace.button.model-start');
+                  }
+                }
+
                 const lines = [];
                 if (projection.switching) {
                   lines.push(resolveText(projection.switching.message));
@@ -2796,19 +2952,26 @@ object VexLifeWebP1RuntimeArtifacts {
                 return state.models;
               };
 
-              const modelControl = async (controlRef, handle) => {
+              const modelControl = async (controlRef, handle, promptCacheEntries = null) => {
                 if (state.modelsInFlight) return;
-                if (controlRef === 'REMOVE_MODEL' && !window.confirm(t('workspace.button.model-remove') + '?')) return;
+                if (controlRef === ${jsString(VexLifeModelsFamily.ControlRemove)} && !window.confirm(t('workspace.button.model-remove') + '?')) return;
                 state.modelsInFlight = true;
                 renderModels();
                 try {
+                  const body = { controlRef, handle };
+                  if (promptCacheEntries !== null) body.promptCacheEntries = promptCacheEntries;
                   const response = await fetch(service.modelsControlPath, {
                     method: 'POST',
                     headers: { 'content-type': 'application/json', accept: 'application/json' },
-                    body: JSON.stringify({ controlRef, handle })
+                    body: JSON.stringify(body)
                   });
                   state.models = await readJson(response);
-                  if (controlRef === 'USE_MODEL') {
+                  if (
+                    controlRef === ${jsString(VexLifeModelsFamily.ControlUse)} ||
+                    controlRef === ${jsString(VexLifeModelsFamily.ControlSelect)} ||
+                    controlRef === ${jsString(VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration)} ||
+                    controlRef === ${jsString(VexLifeModelsFamily.ControlSetPromptCacheEntries)}
+                  ) {
                     const message = state.models?.switching?.message ?? state.models?.lastOutcome?.message;
                     if (message) notify(resolveText(message));
                   }

@@ -272,7 +272,7 @@
   "workspace.description.models": {
     "strings": {
       "en": {
-        "text": "Choose which local Heretic model Vex thinks with. Smaller models answer sooner and need less memory. Download a model to add it, and remove models you don't use to free space — they stay here to download again."
+        "text": "Choose which local model Vex uses. Smaller models usually respond sooner and use less memory. Selecting a model does not change the running model until you press Start."
       }
     },
     "surfaces": [
@@ -393,17 +393,6 @@
     "surfaces": [
       "workspace.settings"
     ]
-  },
-  "workspace.button.model-use": {
-    "strings": {
-      "en": {
-        "text": "Use"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ],
-    "dataKey": "model:control:USE_MODEL"
   },
   "workspace.button.model-download": {
     "strings": {
@@ -581,6 +570,1047 @@
     "surfaces": [
       "workspace.settings",
       "workspace.conversation"
+    ]
+  },
+  "workspace.heading.model-swap-process": {
+    "strings": {
+      "en": {
+        "text": "Current model"
+      },
+      "ar": {
+        "text": "النموذج الحالي"
+      },
+      "de": {
+        "text": "Aktuelles Modell"
+      },
+      "es": {
+        "text": "Modelo actual"
+      },
+      "fr": {
+        "text": "Modèle actuel"
+      },
+      "hi": {
+        "text": "वर्तमान मॉडल"
+      },
+      "ja": {
+        "text": "現在のモデル"
+      },
+      "ko": {
+        "text": "현재 모델"
+      },
+      "pt": {
+        "text": "Modelo atual"
+      },
+      "zh": {
+        "text": "当前模型"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-choice": {
+    "strings": {
+      "en": {
+        "text": "Model choice"
+      },
+      "ar": {
+        "text": "اختيار النموذج"
+      },
+      "de": {
+        "text": "Modellauswahl"
+      },
+      "es": {
+        "text": "Elección del modelo"
+      },
+      "fr": {
+        "text": "Choix du modèle"
+      },
+      "hi": {
+        "text": "मॉडल चयन"
+      },
+      "ja": {
+        "text": "モデル選択"
+      },
+      "ko": {
+        "text": "모델 선택"
+      },
+      "pt": {
+        "text": "Escolha do modelo"
+      },
+      "zh": {
+        "text": "模型选择"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.heading.model-configuration": {
+    "strings": {
+      "en": {
+        "text": "Performance & memory"
+      },
+      "ar": {
+        "text": "الأداء والذاكرة"
+      },
+      "de": {
+        "text": "Leistung & Speicher"
+      },
+      "es": {
+        "text": "Rendimiento y memoria"
+      },
+      "fr": {
+        "text": "Performances et mémoire"
+      },
+      "hi": {
+        "text": "प्रदर्शन और मेमोरी"
+      },
+      "ja": {
+        "text": "性能とメモリ"
+      },
+      "ko": {
+        "text": "성능 및 메모리"
+      },
+      "pt": {
+        "text": "Desempenho e memória"
+      },
+      "zh": {
+        "text": "性能与内存"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-prompt-cache-entries": {
+    "strings": {
+      "en": {
+        "text": "Keep recent conversation ready"
+      },
+      "ar": {
+        "text": "إبقاء المحادثة الأخيرة جاهزة"
+      },
+      "de": {
+        "text": "Letzte Unterhaltung bereithalten"
+      },
+      "es": {
+        "text": "Mantener lista la conversación reciente"
+      },
+      "fr": {
+        "text": "Garder la conversation récente prête"
+      },
+      "hi": {
+        "text": "हाल की बातचीत तैयार रखें"
+      },
+      "ja": {
+        "text": "最近の会話をすぐ使える状態にする"
+      },
+      "ko": {
+        "text": "최근 대화를 바로 쓸 수 있게 유지"
+      },
+      "pt": {
+        "text": "Manter a conversa recente pronta"
+      },
+      "zh": {
+        "text": "让最近的对话保持就绪"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.model-prompt-cache-entries": {
+    "strings": {
+      "en": {
+        "text": "Vex can keep some of the recent conversation ready between replies. Keeping more ready may reduce waiting on follow-up replies, but it uses more memory. Standard is recommended."
+      },
+      "ar": {
+        "text": "يمكن لـ Vex إبقاء جزء من المحادثة الأخيرة جاهزًا بين الردود. إبقاء المزيد جاهزًا قد يقلل انتظار الردود التالية، لكنه يستخدم ذاكرة أكبر. يُوصى بالإعداد القياسي."
+      },
+      "de": {
+        "text": "Vex kann Teile der letzten Unterhaltung zwischen Antworten bereithalten. Mehr bereitzuhalten kann Wartezeit bei Folgeantworten verringern, benötigt aber mehr Speicher. Standard wird empfohlen."
+      },
+      "es": {
+        "text": "Vex puede mantener parte de la conversación reciente lista entre respuestas. Mantener más preparada puede reducir la espera en respuestas siguientes, pero usa más memoria. Se recomienda Estándar."
+      },
+      "fr": {
+        "text": "Vex peut garder une partie de la conversation récente prête entre les réponses. En garder davantage peut réduire l’attente pour les réponses suivantes, mais utilise plus de mémoire. Standard est recommandé."
+      },
+      "hi": {
+        "text": "Vex जवाबों के बीच हाल की बातचीत का कुछ हिस्सा तैयार रख सकता है। अधिक हिस्सा तैयार रखने से अगले जवाब का इंतज़ार कम हो सकता है, लेकिन अधिक मेमोरी लगेगी। Standard की सलाह दी जाती है।"
+      },
+      "ja": {
+        "text": "Vex は返信の間、最近の会話の一部をすぐ使える状態に保てます。多く保つほど次の返信の待ち時間が減る可能性がありますが、より多くのメモリを使います。Standard を推奨します。"
+      },
+      "ko": {
+        "text": "Vex는 답변 사이에 최근 대화 일부를 바로 사용할 수 있게 유지할 수 있습니다. 더 많이 유지하면 후속 답변 대기 시간이 줄 수 있지만 메모리를 더 사용합니다. Standard를 권장합니다."
+      },
+      "pt": {
+        "text": "O Vex pode manter parte da conversa recente pronta entre respostas. Manter mais conteúdo pronto pode reduzir a espera nas respostas seguintes, mas usa mais memória. Recomenda-se Standard."
+      },
+      "zh": {
+        "text": "Vex 可以在两次回复之间让最近对话的一部分保持就绪。保留得越多，后续回复的等待时间可能越短，但会占用更多内存。建议使用 Standard。"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.button.model-use-recommended": {
+    "strings": {
+      "en": {
+        "text": "Use Recommended Configuration"
+      },
+      "ar": {
+        "text": "استخدام الإعداد الموصى به"
+      },
+      "de": {
+        "text": "Empfohlene Konfiguration verwenden"
+      },
+      "es": {
+        "text": "Usar configuración recomendada"
+      },
+      "fr": {
+        "text": "Utiliser la configuration recommandée"
+      },
+      "hi": {
+        "text": "अनुशंसित कॉन्फ़िगरेशन उपयोग करें"
+      },
+      "ja": {
+        "text": "推奨設定を使用"
+      },
+      "ko": {
+        "text": "권장 구성 사용"
+      },
+      "pt": {
+        "text": "Usar configuração recomendada"
+      },
+      "zh": {
+        "text": "使用推荐配置"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "model:control:USE_RECOMMENDED_RUNTIME_CONFIGURATION"
+  },
+  "workspace.button.model-start": {
+    "strings": {
+      "en": {
+        "text": "Start Selected Model"
+      },
+      "ar": {
+        "text": "تشغيل النموذج المحدد"
+      },
+      "de": {
+        "text": "Ausgewähltes Modell starten"
+      },
+      "es": {
+        "text": "Iniciar modelo seleccionado"
+      },
+      "fr": {
+        "text": "Démarrer le modèle sélectionné"
+      },
+      "hi": {
+        "text": "चुना हुआ मॉडल शुरू करें"
+      },
+      "ja": {
+        "text": "選択したモデルを開始"
+      },
+      "ko": {
+        "text": "선택한 모델 시작"
+      },
+      "pt": {
+        "text": "Iniciar modelo selecionado"
+      },
+      "zh": {
+        "text": "启动所选模型"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "model:control:USE_MODEL"
+  },
+  "workspace.button.model-apply-restart": {
+    "strings": {
+      "en": {
+        "text": "Apply & Restart Selected Model"
+      },
+      "ar": {
+        "text": "تطبيق وإعادة تشغيل النموذج المحدد"
+      },
+      "de": {
+        "text": "Anwenden & ausgewähltes Modell neu starten"
+      },
+      "es": {
+        "text": "Aplicar y reiniciar el modelo seleccionado"
+      },
+      "fr": {
+        "text": "Appliquer et redémarrer le modèle sélectionné"
+      },
+      "hi": {
+        "text": "लागू करें और चुने हुए मॉडल को पुनः शुरू करें"
+      },
+      "ja": {
+        "text": "適用して選択したモデルを再起動"
+      },
+      "ko": {
+        "text": "적용하고 선택한 모델 재시작"
+      },
+      "pt": {
+        "text": "Aplicar e reiniciar o modelo selecionado"
+      },
+      "zh": {
+        "text": "应用并重启所选模型"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "model:control:USE_MODEL"
+  },
+  "workspace.button.model-select": {
+    "strings": {
+      "en": {
+        "text": "Select"
+      },
+      "ar": {
+        "text": "تحديد"
+      },
+      "de": {
+        "text": "Auswählen"
+      },
+      "es": {
+        "text": "Seleccionar"
+      },
+      "fr": {
+        "text": "Sélectionner"
+      },
+      "hi": {
+        "text": "चुनें"
+      },
+      "ja": {
+        "text": "選択"
+      },
+      "ko": {
+        "text": "선택"
+      },
+      "pt": {
+        "text": "Selecionar"
+      },
+      "zh": {
+        "text": "选择"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "model:control:SELECT_MODEL"
+  },
+  "workspace.button.model-set-prompt-cache": {
+    "strings": {
+      "en": {
+        "text": "Set cache entries"
+      },
+      "ar": {
+        "text": "تعيين إدخالات التخزين المؤقت"
+      },
+      "de": {
+        "text": "Cache-Einträge festlegen"
+      },
+      "es": {
+        "text": "Definir entradas de caché"
+      },
+      "fr": {
+        "text": "Définir les entrées de cache"
+      },
+      "hi": {
+        "text": "कैश एंट्रियाँ सेट करें"
+      },
+      "ja": {
+        "text": "キャッシュ数を設定"
+      },
+      "ko": {
+        "text": "캐시 항목 설정"
+      },
+      "pt": {
+        "text": "Definir entradas de cache"
+      },
+      "zh": {
+        "text": "设置缓存条目"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "model:control:SET_PROMPT_CACHE_ENTRIES"
+  },
+  "workspace.status.model-selected": {
+    "strings": {
+      "en": {
+        "text": "Selected {model}. Review its configuration, then start it when you're ready."
+      },
+      "ar": {
+        "text": "تم تحديد {model}. راجع إعداداته، ثم شغّله عندما تكون جاهزًا."
+      },
+      "de": {
+        "text": "{model} ausgewählt. Prüfe die Konfiguration und starte das Modell, wenn du bereit bist."
+      },
+      "es": {
+        "text": "Se seleccionó {model}. Revisa su configuración y luego inícialo cuando estés listo."
+      },
+      "fr": {
+        "text": "{model} est sélectionné. Vérifiez sa configuration, puis démarrez-le lorsque vous êtes prêt."
+      },
+      "hi": {
+        "text": "{model} चुना गया। इसकी कॉन्फ़िगरेशन देखें, फिर तैयार होने पर इसे शुरू करें।"
+      },
+      "ja": {
+        "text": "{model} を選択しました。設定を確認し、準備ができたら開始してください。"
+      },
+      "ko": {
+        "text": "{model}을(를) 선택했습니다. 구성을 확인한 뒤 준비되면 시작하세요."
+      },
+      "pt": {
+        "text": "{model} selecionado. Revise a configuração e inicie o modelo quando estiver pronto."
+      },
+      "zh": {
+        "text": "已选择 {model}。请检查其配置，准备好后再启动。"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-runtime-configured": {
+    "strings": {
+      "en": {
+        "text": "Runtime configuration saved · {entries} warm cache entries."
+      },
+      "ar": {
+        "text": "تم حفظ إعدادات وقت التشغيل · {entries} من إدخالات التخزين المؤقت الدافئة."
+      },
+      "de": {
+        "text": "Laufzeitkonfiguration gespeichert · {entries} warme Cache-Einträge."
+      },
+      "es": {
+        "text": "Configuración de ejecución guardada · {entries} entradas activas de caché."
+      },
+      "fr": {
+        "text": "Configuration d’exécution enregistrée · {entries} entrées de cache actives."
+      },
+      "hi": {
+        "text": "रनटाइम कॉन्फ़िगरेशन सहेजी गई · {entries} वार्म कैश एंट्रियाँ।"
+      },
+      "ja": {
+        "text": "ランタイム設定を保存しました · ウォームキャッシュ {entries} 個。"
+      },
+      "ko": {
+        "text": "런타임 구성을 저장했습니다 · 웜 캐시 항목 {entries}개."
+      },
+      "pt": {
+        "text": "Configuração de runtime salva · {entries} entradas ativas de cache."
+      },
+      "zh": {
+        "text": "已保存运行时配置 · {entries} 个热缓存条目。"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.model-cache-recommendation-27b": {
+    "strings": {
+      "en": {
+        "text": "1 is the current lived safety floor for 27B after the earlier many-cache memory failure; it is not claimed as the fastest setting."
+      },
+      "ar": {
+        "text": "القيمة 1 هي حد الأمان المثبت عمليًا حاليًا لـ 27B بعد مشكلة الذاكرة السابقة الناتجة عن تعدد إدخالات التخزين المؤقت؛ ولا يُدّعى أنها الإعداد الأسرع."
+      },
+      "de": {
+        "text": "1 ist der derzeit im Betrieb bestätigte Sicherheitswert für 27B nach dem früheren Speicherproblem mit vielen Caches; dies wird nicht als schnellste Einstellung behauptet."
+      },
+      "es": {
+        "text": "1 es el límite de seguridad actual comprobado en uso real para 27B tras el problema anterior de memoria con muchas cachés; no se afirma que sea la configuración más rápida."
+      },
+      "fr": {
+        "text": "1 est la limite de sécurité actuellement validée en usage réel pour 27B après le précédent problème de mémoire lié à de nombreux caches ; ce réglage n’est pas présenté comme le plus rapide."
+      },
+      "hi": {
+        "text": "1, पहले कई कैश के कारण हुई मेमोरी समस्या के बाद 27B के लिए वर्तमान में वास्तविक उपयोग से प्रमाणित सुरक्षा सीमा है; इसे सबसे तेज़ सेटिंग नहीं माना गया है।"
+      },
+      "ja": {
+        "text": "1 は、以前の複数キャッシュによるメモリ問題の後に 27B で実運用確認された現在の安全値です。最速の設定であるとは主張していません。"
+      },
+      "ko": {
+        "text": "1은 이전 다중 캐시 메모리 문제 이후 27B에서 실제 사용으로 확인된 현재 안전값입니다. 가장 빠른 설정이라고 주장하는 값은 아닙니다."
+      },
+      "pt": {
+        "text": "1 é o limite de segurança atual comprovado em uso real para o 27B após o problema anterior de memória com muitos caches; não é apresentado como a configuração mais rápida."
+      },
+      "zh": {
+        "text": "1 是 27B 在此前多缓存内存问题之后经实际运行验证的当前安全值；并不表示它是最快的设置。"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.model-cache-recommendation-4b": {
+    "strings": {
+      "en": {
+        "text": "Standard is recommended right now. Higher levels are still experimental because the highest setting previously caused a long repetitive response and heavy memory use."
+      },
+      "ar": {
+        "text": "يُنصح حاليًا بالإعداد القياسي. لا تزال المستويات الأعلى تجريبية لأن أعلى إعداد تسبب سابقًا في استجابة تكرارية طويلة واستخدام مرتفع للذاكرة."
+      },
+      "de": {
+        "text": "Standard wird derzeit empfohlen. Höhere Stufen bleiben experimentell, weil die höchste Einstellung zuvor zu einer langen Wiederholungsschleife und hoher Speichernutzung führte."
+      },
+      "es": {
+        "text": "Se recomienda Estándar por ahora. Los niveles superiores siguen siendo experimentales porque la configuración más alta produjo antes una respuesta larga y repetitiva y un uso elevado de memoria."
+      },
+      "fr": {
+        "text": "Standard est recommandé pour le moment. Les niveaux supérieurs restent expérimentaux, car le réglage le plus élevé a précédemment provoqué une longue réponse répétitive et une forte utilisation de la mémoire."
+      },
+      "hi": {
+        "text": "अभी Standard की सलाह दी जाती है। ऊँचे स्तर अभी भी प्रयोगात्मक हैं क्योंकि सबसे ऊँची सेटिंग ने पहले लंबा दोहराव वाला जवाब और भारी मेमोरी उपयोग पैदा किया था।"
+      },
+      "ja": {
+        "text": "現在は Standard を推奨します。高い設定はまだ実験段階です。以前、最大設定で長い反復応答と大きなメモリ使用が発生しました。"
+      },
+      "ko": {
+        "text": "현재는 Standard를 권장합니다. 높은 단계는 아직 실험적입니다. 이전에 가장 높은 설정에서 긴 반복 응답과 높은 메모리 사용이 발생했습니다."
+      },
+      "pt": {
+        "text": "Standard é recomendado por enquanto. Os níveis mais altos continuam experimentais porque a configuração máxima anteriormente causou uma resposta longa e repetitiva e alto uso de memória."
+      },
+      "zh": {
+        "text": "目前建议使用 Standard。更高档位仍属实验性，因为最高设置此前曾导致长时间重复回复和较高的内存占用。"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.model-cache-recommendation-untuned": {
+    "strings": {
+      "en": {
+        "text": "1 keeps the current safety floor for this model until a model-specific cache recommendation is lived-tested."
+      },
+      "ar": {
+        "text": "تحافظ القيمة 1 على حد الأمان الحالي لهذا النموذج إلى أن يتم اختبار توصية تخزين مؤقت خاصة به عمليًا."
+      },
+      "de": {
+        "text": "1 behält für dieses Modell den aktuellen Sicherheitswert bei, bis eine modellspezifische Cache-Empfehlung im Betrieb getestet wurde."
+      },
+      "es": {
+        "text": "1 mantiene el límite de seguridad actual de este modelo hasta que se pruebe en uso real una recomendación de caché específica para él."
+      },
+      "fr": {
+        "text": "1 conserve la limite de sécurité actuelle pour ce modèle jusqu’à ce qu’une recommandation de cache propre à ce modèle soit validée en usage réel."
+      },
+      "hi": {
+        "text": "1 इस मॉडल के लिए वर्तमान सुरक्षा सीमा बनाए रखता है, जब तक मॉडल-विशिष्ट कैश अनुशंसा वास्तविक उपयोग में परीक्षित न हो जाए।"
+      },
+      "ja": {
+        "text": "このモデル固有のキャッシュ推奨値が実運用で確認されるまでは、1 を現在の安全値として維持します。"
+      },
+      "ko": {
+        "text": "이 모델에 맞는 캐시 권장값이 실제 사용으로 검증될 때까지 1을 현재 안전값으로 유지합니다."
+      },
+      "pt": {
+        "text": "1 mantém o limite de segurança atual deste modelo até que uma recomendação específica de cache seja testada em uso real."
+      },
+      "zh": {
+        "text": "在获得该模型专属缓存建议的实际运行验证之前，1 将继续作为当前安全值。"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-state-serving": {
+    "strings": {
+      "en": {
+        "text": "Vex is using {model}"
+      },
+      "ar": {
+        "text": "يستخدم Vex حاليًا {model}"
+      },
+      "de": {
+        "text": "Vex verwendet {model}"
+      },
+      "es": {
+        "text": "Vex está usando {model}"
+      },
+      "fr": {
+        "text": "Vex utilise {model}"
+      },
+      "hi": {
+        "text": "Vex अभी {model} का उपयोग कर रहा है"
+      },
+      "ja": {
+        "text": "Vex は {model} を使用中"
+      },
+      "ko": {
+        "text": "Vex가 {model}을 사용 중"
+      },
+      "pt": {
+        "text": "Vex está usando {model}"
+      },
+      "zh": {
+        "text": "Vex 正在使用 {model}"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-state-selected": {
+    "strings": {
+      "en": {
+        "text": "Selected next: {model}"
+      },
+      "ar": {
+        "text": "المحدد للتشغيل التالي: {model}"
+      },
+      "de": {
+        "text": "Als Nächstes ausgewählt: {model}"
+      },
+      "es": {
+        "text": "Seleccionado para después: {model}"
+      },
+      "fr": {
+        "text": "Sélectionné ensuite : {model}"
+      },
+      "hi": {
+        "text": "अगला चुना गया: {model}"
+      },
+      "ja": {
+        "text": "次に選択: {model}"
+      },
+      "ko": {
+        "text": "다음으로 선택됨: {model}"
+      },
+      "pt": {
+        "text": "Selecionado em seguida: {model}"
+      },
+      "zh": {
+        "text": "下一步已选择：{model}"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-none": {
+    "strings": {
+      "en": {
+        "text": "none"
+      },
+      "ar": {
+        "text": "لا شيء"
+      },
+      "de": {
+        "text": "keines"
+      },
+      "es": {
+        "text": "ninguno"
+      },
+      "fr": {
+        "text": "aucun"
+      },
+      "hi": {
+        "text": "कोई नहीं"
+      },
+      "ja": {
+        "text": "なし"
+      },
+      "ko": {
+        "text": "없음"
+      },
+      "pt": {
+        "text": "nenhum"
+      },
+      "zh": {
+        "text": "无"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-runtime-configuration-pending": {
+    "strings": {
+      "en": {
+        "text": "Configuration changed; restart the selected model to apply it."
+      },
+      "ar": {
+        "text": "تغيّرت الإعدادات؛ أعد تشغيل النموذج المحدد لتطبيقها."
+      },
+      "de": {
+        "text": "Die Konfiguration wurde geändert; starte das ausgewählte Modell neu, um sie anzuwenden."
+      },
+      "es": {
+        "text": "La configuración cambió; reinicia el modelo seleccionado para aplicarla."
+      },
+      "fr": {
+        "text": "La configuration a changé ; redémarrez le modèle sélectionné pour l’appliquer."
+      },
+      "hi": {
+        "text": "कॉन्फ़िगरेशन बदल गई है; इसे लागू करने के लिए चुने गए मॉडल को पुनः शुरू करें।"
+      },
+      "ja": {
+        "text": "設定が変更されています。適用するには選択したモデルを再起動してください。"
+      },
+      "ko": {
+        "text": "구성이 변경되었습니다. 적용하려면 선택한 모델을 다시 시작하세요."
+      },
+      "pt": {
+        "text": "A configuração mudou; reinicie o modelo selecionado para aplicá-la."
+      },
+      "zh": {
+        "text": "配置已更改；请重启所选模型以应用更改。"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-cache-current": {
+    "strings": {
+      "en": {
+        "text": "Using {current} · Recommended: {recommended}."
+      },
+      "ar": {
+        "text": "قيد الاستخدام: {current} · الموصى به: {recommended}."
+      },
+      "de": {
+        "text": "Aktiv: {current} · Empfohlen: {recommended}."
+      },
+      "es": {
+        "text": "En uso: {current} · Recomendado: {recommended}."
+      },
+      "fr": {
+        "text": "Actuel : {current} · Recommandé : {recommended}."
+      },
+      "hi": {
+        "text": "अभी: {current} · अनुशंसित: {recommended}."
+      },
+      "ja": {
+        "text": "現在: {current} · 推奨: {recommended}."
+      },
+      "ko": {
+        "text": "현재: {current} · 권장: {recommended}."
+      },
+      "pt": {
+        "text": "Em uso: {current} · Recomendado: {recommended}."
+      },
+      "zh": {
+        "text": "当前：{current} · 推荐：{recommended}。"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.heading.model-activation": {
+    "strings": {
+      "en": {
+        "text": "Apply model"
+      },
+      "ar": {
+        "text": "تطبيق النموذج"
+      },
+      "de": {
+        "text": "Modell anwenden"
+      },
+      "es": {
+        "text": "Aplicar modelo"
+      },
+      "fr": {
+        "text": "Appliquer le modèle"
+      },
+      "hi": {
+        "text": "मॉडल लागू करें"
+      },
+      "ja": {
+        "text": "モデルを適用"
+      },
+      "ko": {
+        "text": "모델 적용"
+      },
+      "pt": {
+        "text": "Aplicar modelo"
+      },
+      "zh": {
+        "text": "应用模型"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.model-start-effect": {
+    "strings": {
+      "en": {
+        "text": "Choosing a model or changing its settings does not affect Vex until you start it. This is the step that changes the model Vex is using."
+      },
+      "ar": {
+        "text": "اختيار نموذج أو تغيير إعداداته لا يؤثر على Vex حتى تقوم بتشغيله. هذه هي الخطوة التي تغيّر النموذج الذي يستخدمه Vex."
+      },
+      "de": {
+        "text": "Die Auswahl eines Modells oder das Ändern seiner Einstellungen wirkt sich erst aus, wenn du es startest. Dieser Schritt ändert das Modell, das Vex verwendet."
+      },
+      "es": {
+        "text": "Elegir un modelo o cambiar sus ajustes no afecta a Vex hasta que lo inicias. Este es el paso que cambia el modelo que Vex está usando."
+      },
+      "fr": {
+        "text": "Choisir un modèle ou modifier ses réglages n’affecte pas Vex tant que vous ne le démarrez pas. C’est cette étape qui change le modèle utilisé par Vex."
+      },
+      "hi": {
+        "text": "मॉडल चुनने या उसकी सेटिंग बदलने से Vex पर तब तक असर नहीं पड़ता जब तक आप उसे शुरू नहीं करते। यही चरण Vex द्वारा उपयोग किए जा रहे मॉडल को बदलता है।"
+      },
+      "ja": {
+        "text": "モデルを選んだり設定を変えたりしても、開始するまでは Vex に反映されません。ここで Vex が使用するモデルが切り替わります。"
+      },
+      "ko": {
+        "text": "모델을 선택하거나 설정을 바꿔도 시작하기 전까지는 Vex에 적용되지 않습니다. 이 단계에서 Vex가 사용하는 모델이 바뀝니다."
+      },
+      "pt": {
+        "text": "Escolher um modelo ou alterar suas configurações não afeta o Vex até você iniciá-lo. Esta é a etapa que muda o modelo que o Vex está usando."
+      },
+      "zh": {
+        "text": "选择模型或更改设置都不会立即影响 Vex，直到你启动它。这一步才会更改 Vex 正在使用的模型。"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-cache-current-recommended": {
+    "strings": {
+      "en": {
+        "text": "Using {current} — recommended."
+      },
+      "ar": {
+        "text": "قيد الاستخدام: {current} — الموصى به."
+      },
+      "de": {
+        "text": "Aktiv: {current} — empfohlen."
+      },
+      "es": {
+        "text": "En uso: {current} — recomendado."
+      },
+      "fr": {
+        "text": "Actuel : {current} — recommandé."
+      },
+      "hi": {
+        "text": "अभी: {current} — अनुशंसित।"
+      },
+      "ja": {
+        "text": "現在: {current} — 推奨。"
+      },
+      "ko": {
+        "text": "현재: {current} — 권장."
+      },
+      "pt": {
+        "text": "Em uso: {current} — recomendado."
+      },
+      "zh": {
+        "text": "当前：{current} — 推荐。"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-cache-level-1": {
+    "strings": {
+      "en": {
+        "text": "Standard"
+      },
+      "ar": {
+        "text": "قياسي"
+      },
+      "de": {
+        "text": "Standard"
+      },
+      "es": {
+        "text": "Estándar"
+      },
+      "fr": {
+        "text": "Standard"
+      },
+      "hi": {
+        "text": "Standard"
+      },
+      "ja": {
+        "text": "Standard"
+      },
+      "ko": {
+        "text": "Standard"
+      },
+      "pt": {
+        "text": "Standard"
+      },
+      "zh": {
+        "text": "Standard"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-cache-level-2": {
+    "strings": {
+      "en": {
+        "text": "More recent conversation ready"
+      },
+      "ar": {
+        "text": "إبقاء المزيد من المحادثة الأخيرة جاهزًا"
+      },
+      "de": {
+        "text": "Mehr der letzten Unterhaltung bereithalten"
+      },
+      "es": {
+        "text": "Mantener lista más conversación reciente"
+      },
+      "fr": {
+        "text": "Garder davantage de conversation récente prête"
+      },
+      "hi": {
+        "text": "हाल की बातचीत का अधिक हिस्सा तैयार रखें"
+      },
+      "ja": {
+        "text": "最近の会話をより多く準備"
+      },
+      "ko": {
+        "text": "최근 대화를 더 많이 준비"
+      },
+      "pt": {
+        "text": "Manter mais da conversa recente pronta"
+      },
+      "zh": {
+        "text": "让更多最近对话保持就绪"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-cache-level-3": {
+    "strings": {
+      "en": {
+        "text": "Most recent conversation ready"
+      },
+      "ar": {
+        "text": "إبقاء أكبر قدر من المحادثة الأخيرة جاهزًا"
+      },
+      "de": {
+        "text": "Möglichst viel der letzten Unterhaltung bereithalten"
+      },
+      "es": {
+        "text": "Mantener lista la mayor parte de la conversación reciente"
+      },
+      "fr": {
+        "text": "Garder le plus de conversation récente prête"
+      },
+      "hi": {
+        "text": "हाल की बातचीत का सबसे अधिक हिस्सा तैयार रखें"
+      },
+      "ja": {
+        "text": "最近の会話を最大限準備"
+      },
+      "ko": {
+        "text": "최근 대화를 가장 많이 준비"
+      },
+      "pt": {
+        "text": "Manter o máximo da conversa recente pronta"
+      },
+      "zh": {
+        "text": "让最多的最近对话保持就绪"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-recommended": {
+    "strings": {
+      "en": {
+        "text": "Recommended"
+      },
+      "ar": {
+        "text": "موصى به"
+      },
+      "de": {
+        "text": "Empfohlen"
+      },
+      "es": {
+        "text": "Recomendado"
+      },
+      "fr": {
+        "text": "Recommandé"
+      },
+      "hi": {
+        "text": "अनुशंसित"
+      },
+      "ja": {
+        "text": "推奨"
+      },
+      "ko": {
+        "text": "권장"
+      },
+      "pt": {
+        "text": "Recomendado"
+      },
+      "zh": {
+        "text": "推荐"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-experimental": {
+    "strings": {
+      "en": {
+        "text": "Experimental"
+      },
+      "ar": {
+        "text": "تجريبي"
+      },
+      "de": {
+        "text": "Experimentell"
+      },
+      "es": {
+        "text": "Experimental"
+      },
+      "fr": {
+        "text": "Expérimental"
+      },
+      "hi": {
+        "text": "प्रयोगात्मक"
+      },
+      "ja": {
+        "text": "実験的"
+      },
+      "ko": {
+        "text": "실험적"
+      },
+      "pt": {
+        "text": "Experimental"
+      },
+      "zh": {
+        "text": "实验性"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
     ]
   }
 }

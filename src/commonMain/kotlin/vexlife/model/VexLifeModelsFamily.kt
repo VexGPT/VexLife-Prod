@@ -2,6 +2,7 @@ package vexlife.model
 
 import kotlinx.serialization.Serializable
 import vexlife.semantic.VexFamilyContract
+import vexlife.model.heretic.HereticRuntimeConfiguration
 import vexlife.text.VexLifeText
 
 /**
@@ -10,18 +11,18 @@ import vexlife.text.VexLifeText
  * State is one model's relationship to this Home: whether its required artifacts are present,
  * whether a download is running, whether the Home chose it, and whether the running runtime serves it.
  *
- * Lawfulness (what each Control may do, by State):
+ * Lawfulness keeps target choice, launch configuration and activation distinct:
  * ```
- * Use        artifacts present, chosen/serving not both current -> SwitchModel
- * Download   artifacts absent or partial, nothing running       -> AcquireArtifacts (resumes a partial)
- * Redownload artifacts damaged, nothing running                 -> ReplaceArtifacts
- * Remove     artifacts here, not chosen, not serving, idle      -> RemoveArtifacts
+ * Select      stage the Settings target only; no Home/runtime effect
+ * Configure   staged target only; no runtime effect
+ * Use/Start   staged + artifacts present + not current, or current config pending -> SwitchModel
+ * Download    artifacts absent or partial, nothing running -> AcquireArtifacts
+ * Redownload  artifacts damaged, nothing running           -> ReplaceArtifacts
+ * Remove      artifacts here, not chosen, not serving, idle -> RemoveArtifacts
  * ```
  *
- * Use means the person's intention is for this model to become the model serving Vex now. It stays
- * lawful when a prior switch failed (chosen but not serving), and for the currently-serving model
- * when another target is chosen (so the person can cancel/revert the pending relationship). The
- * Family owns this meaning; concrete runtime convergence remains with LocalSetup/runtime owners.
+ * Use is now an explicit activation Control for an already-selected target. The Family owns that
+ * human meaning; concrete runtime convergence remains with LocalSetup/runtime owners.
  */
 object VexLifeModelsFamily :
     VexFamilyContract<
@@ -60,8 +61,12 @@ object VexLifeModelsFamily :
         val artifactPresence: ArtifactPresence,
         val downloading: Boolean,
         val chosen: Boolean,
+        /** Settings-stage target. This may differ from the durable Home choice until Start. */
+        val targeted: Boolean,
         val serving: Boolean,
         val switching: Boolean,
+        /** The selected/serving model has configured launch values not active in the current runtime. */
+        val runtimeConfigurationPending: Boolean = false,
         /** Any model's download is running (one at a time per Home). */
         val anyDownloadRunning: Boolean,
         /** One model-switch convergence is active for this Home. */
@@ -72,8 +77,27 @@ object VexLifeModelsFamily :
         val controlRef: String
     }
 
+    data object Select : Control {
+        override val controlRef: String = ControlSelect
+    }
+
+    /** Explicitly start/restart the already-selected target through the runtime owner. */
     data object Use : Control {
         override val controlRef: String = ControlUse
+    }
+
+    data object UseRecommendedRuntimeConfiguration : Control {
+        override val controlRef: String = ControlUseRecommendedRuntimeConfiguration
+    }
+
+    data class SetPromptCacheEntries(
+        val entries: Int,
+    ) : Control {
+        override val controlRef: String = ControlSetPromptCacheEntries
+
+        init {
+            HereticRuntimeConfiguration.requirePromptCacheEntries(entries)
+        }
     }
 
     data object Download : Control {
@@ -89,7 +113,15 @@ object VexLifeModelsFamily :
     }
 
     sealed interface Effect : VexFamilyContract.Effect<VexLifeModelsFamily> {
+        data object SelectModel : Effect
+
         data object SwitchModel : Effect
+
+        data object UseRecommendedRuntimeConfiguration : Effect
+
+        data class SetPromptCacheEntries(
+            val entries: Int,
+        ) : Effect
 
         data object AcquireArtifacts : Effect
 
@@ -119,14 +151,40 @@ object VexLifeModelsFamily :
                 !currentState.anyDownloadRunning &&
                 !currentState.anySwitchRunning
         return when (control) {
+            Select ->
+                if (
+                    !currentState.targeted &&
+                        idle
+                ) {
+                    stay(Effect.SelectModel)
+                } else {
+                    null
+                }
             Use ->
                 if (
                     currentState.artifactPresence == ArtifactPresence.Present &&
-                        !(currentState.chosen && currentState.serving) &&
+                        currentState.targeted &&
+                        (
+                            !currentState.chosen ||
+                                !currentState.serving ||
+                                currentState.runtimeConfigurationPending
+                        ) &&
                         !currentState.switching &&
                         idle
                 ) {
                     stay(Effect.SwitchModel)
+                } else {
+                    null
+                }
+            UseRecommendedRuntimeConfiguration ->
+                if (currentState.targeted && idle) {
+                    stay(Effect.UseRecommendedRuntimeConfiguration)
+                } else {
+                    null
+                }
+            is SetPromptCacheEntries ->
+                if (currentState.targeted && idle) {
+                    stay(Effect.SetPromptCacheEntries(control.entries))
                 } else {
                     null
                 }
@@ -152,6 +210,7 @@ object VexLifeModelsFamily :
                 if (
                     currentState.artifactPresence != ArtifactPresence.Absent &&
                         !currentState.chosen &&
+                        !currentState.targeted &&
                         !currentState.serving &&
                         idle
                 )
@@ -180,29 +239,42 @@ object VexLifeModelsFamily :
                     },
                 ),
             controls =
-                listOf(Use, Download, Redownload, Remove)
+                listOf(Select, Use, UseRecommendedRuntimeConfiguration, Download, Redownload, Remove)
                     .filter { act(state, it) != null }
                     .map { ControlDisplay(it.controlRef, VexLifeText(labelKey(it))) },
         )
 
     private fun labelKey(control: Control): String =
         when (control) {
-            Use -> "workspace.button.model-use"
+            Select -> "workspace.button.model-select"
+            Use -> "workspace.button.model-start"
+            UseRecommendedRuntimeConfiguration -> "workspace.button.model-use-recommended"
+            is SetPromptCacheEntries -> "workspace.button.model-set-prompt-cache"
             Download -> "workspace.button.model-download"
             Redownload -> "workspace.button.model-redownload"
             Remove -> "workspace.button.model-remove"
         }
 
-    fun controlForRef(controlRef: String): Control? =
+    fun controlForRef(
+        controlRef: String,
+        promptCacheEntries: Int? = null,
+    ): Control? =
         when (controlRef) {
+            ControlSelect -> Select
             ControlUse -> Use
+            ControlUseRecommendedRuntimeConfiguration -> UseRecommendedRuntimeConfiguration
+            ControlSetPromptCacheEntries ->
+                promptCacheEntries?.let(::SetPromptCacheEntries)
             ControlDownload -> Download
             ControlRedownload -> Redownload
             ControlRemove -> Remove
             else -> null
         }
 
+    const val ControlSelect = "SELECT_MODEL"
     const val ControlUse = "USE_MODEL"
+    const val ControlUseRecommendedRuntimeConfiguration = "USE_RECOMMENDED_RUNTIME_CONFIGURATION"
+    const val ControlSetPromptCacheEntries = "SET_PROMPT_CACHE_ENTRIES"
     const val ControlDownload = "DOWNLOAD_MODEL"
     const val ControlRedownload = "REDOWNLOAD_MODEL"
     const val ControlRemove = "REMOVE_MODEL"
