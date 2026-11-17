@@ -2353,6 +2353,10 @@
         "zh"
       ]
     },
+    "workspace.button.conversation-stop": {
+      "enHash": "08df1a9489d8",
+      "langs": []
+    },
     "workspace.button.diagnostics-clear-history": {
       "enHash": "19adfd56ce8f",
       "langs": []
@@ -2391,6 +2395,10 @@
     },
     "workspace.button.voice-input-stop": {
       "enHash": "39afe6b53fa2",
+      "langs": []
+    },
+    "workspace.description.conversation-stopped": {
+      "enHash": "dd924e145a6d",
       "langs": []
     },
     "workspace.description.diagnostics": {
@@ -2467,6 +2475,22 @@
     },
     "workspace.label.reached": {
       "enHash": "71b4d0d05045",
+      "langs": []
+    },
+    "workspace.status.conversation-cancel-not-active": {
+      "enHash": "9f4fb1eb49f8",
+      "langs": []
+    },
+    "workspace.status.conversation-cancel-unavailable": {
+      "enHash": "5036eca379de",
+      "langs": []
+    },
+    "workspace.status.conversation-stopped": {
+      "enHash": "0c7f78c3f5b1",
+      "langs": []
+    },
+    "workspace.status.conversation-stopping": {
+      "enHash": "fc690084e5bb",
       "langs": []
     },
     "workspace.status.diagnostics-enhanced-off": {
