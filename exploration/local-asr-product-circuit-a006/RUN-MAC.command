@@ -285,9 +285,32 @@ case "$FRONT_DOOR_STATE" in
     ACTIVATE_STATUS=$?
     set -e
     [ "$ACTIVATE_STATUS" -eq 0 ] || fail "candidate Product front-door Control activation failed ($ACTIVATE_STATUS)" 62
+    ACTIVATION_FAILURE="$(
+      /usr/bin/python3 - "$EVIDENCE/front-door-activation.json" <<'PY'
+import json,sys
+with open(sys.argv[1], encoding='utf-8') as f:
+    value=json.load(f)
+failure=value.get("failure")
+print("" if failure is None else json.dumps(failure, separators=(",",":")))
+PY
+    )"
+    ACTIVATION_STATE="$(
+      /usr/bin/python3 - "$EVIDENCE/front-door-activation.json" <<'PY'
+import json,sys
+with open(sys.argv[1], encoding='utf-8') as f:
+    value=json.load(f)
+print(value.get("semanticStateRef",""))
+PY
+    )"
+    {
+      printf 'activationState=%s\n' "$ACTIVATION_STATE"
+      printf 'activationFailure=%s\n' "$ACTIVATION_FAILURE"
+    } >> "$EVIDENCE/front-door-choice.txt"
+    [ -z "$ACTIVATION_FAILURE" ] || fail "candidate Product front-door effect reported failure" 63
+    [ "$ACTIVATION_STATE" = 'CURRENT' ] || fail "candidate Product front-door effect did not converge to CURRENT: $ACTIVATION_STATE" 64
     ;;
   *)
-    fail "candidate Product front door is not restartable without acquisition: $FRONT_DOOR_STATE" 63
+    fail "candidate Product front door is not restartable without acquisition: $FRONT_DOOR_STATE" 65
     ;;
 esac
 
@@ -302,12 +325,12 @@ for _ in $(/usr/bin/seq 1 120); do
   fi
   /bin/sleep 1
 done
-[ "$READY" = 'true' ] || fail 'candidate Product service never became source-current' 64
+[ "$READY" = 'true' ] || fail 'candidate Product service never became source-current' 66
 printf '%s\n' "$SOURCE_JSON" > "$EVIDENCE/source-currentness.json"
 
-/usr/bin/curl -fsS --max-time 5   'http://127.0.0.1:18210/api/v1/local-asr'   > "$EVIDENCE/local-asr-before.json"   || fail 'Local ASR Settings projection is not reachable' 65
-/usr/bin/grep -q '"currentState":"READY"' "$EVIDENCE/local-asr-before.json"   || fail 'selected Local ASR provider is not READY in the candidate service' 66
-/usr/bin/grep -q '"provider.local-asr.whispercpp"' "$EVIDENCE/local-asr-before.json"   || fail 'candidate Settings projection does not expose selected whisper.cpp provider' 67
+/usr/bin/curl -fsS --max-time 5   'http://127.0.0.1:18210/api/v1/local-asr'   > "$EVIDENCE/local-asr-before.json"   || fail 'Local ASR Settings projection is not reachable' 67
+/usr/bin/grep -q '"currentState":"READY"' "$EVIDENCE/local-asr-before.json"   || fail 'selected Local ASR provider is not READY in the candidate service' 68
+/usr/bin/grep -q '"provider.local-asr.whispercpp"' "$EVIDENCE/local-asr-before.json"   || fail 'candidate Settings projection does not expose selected whisper.cpp provider' 69
 
 CHRONOLOGY="$HOME_PATH/runtime/vexlife-prod/logs/chronology/chronology.jsonl"
 BASELINE=0
