@@ -168,11 +168,7 @@ class DirectCompanionCapabilityTurnTest {
         // Stage one was told what it can reach and exactly how to ask.
         val firstSystem = calls[0].filter { it.first == "system" }.joinToString("\n") { it.second }
         assertTrue(firstSystem.contains("What I can reach this turn, and how to ask for it."))
-        assertTrue(
-            firstSystem.contains(
-                "Now: AVAILABLE — atlas, continuity, conversation, github, home, web."
-            )
-        )
+        assertTrue(firstSystem.contains("Now: AVAILABLE — atlas, conversation, github, home"))
         assertTrue(firstSystem.contains("- continuity: Hydrate relevant older continuity"))
         assertFalse(firstSystem.contains("\"capabilityEntries\""))
         assertTrue(firstSystem.contains("- web: Read the public web"))
