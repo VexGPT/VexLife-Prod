@@ -232,7 +232,6 @@ class VexLifeModels(
                 val runtimeConfigurationPending =
                     serving == entry.modelRef &&
                         servingRuntime?.modelRef == entry.modelRef &&
-                        servingPromptCacheEntries != null &&
                         servingPromptCacheEntries != runtimeConfiguration.promptCacheEntries
                 val state =
                     state(
