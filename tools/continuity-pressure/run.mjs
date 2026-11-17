@@ -62,4 +62,13 @@ const gradle = spawnSync('./gradlew', ['-q', '--console=plain', 'continuityPress
   cwd: repo,
   stdio: 'inherit',
 });
-process.exitCode = gradle.status ?? 1;
+// Gradle wraps a non-zero adapter exit as its own failure; restore the adapter's meaning from
+// what it wrote: 3 = live stage HELD on this host, 2 = projection ERROR result.
+const resultDir = path.resolve(args['result-dir']);
+let code = gradle.status ?? 1;
+if (code !== 0 && fs.existsSync(path.join(resultDir, 'held.json'))) code = 3;
+else if (code !== 0 && fs.existsSync(path.join(resultDir, 'result.json'))) {
+  const status = JSON.parse(fs.readFileSync(path.join(resultDir, 'result.json'), 'utf8')).status;
+  if (status === 'ERROR') code = 2;
+}
+process.exitCode = code;
