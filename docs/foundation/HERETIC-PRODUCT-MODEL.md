@@ -307,6 +307,74 @@ POST /v1/chat/completions
 The future platform runtime owner must produce these portable truths. It does not get to redefine
 their meaning because it happens to own launchd/process mechanics.
 
+## Human model choice to runtime realization
+
+The human-facing Families and the static runtime topology have separate jobs:
+
+~~~text
+VexLifeProdEntryFamily
+  "May Product setup/start converge now?"
+        |
+        | ConvergeProduct effect
+        v
+
+VexLifeModelsFamily
+  "What may the person do with this offered model on this Home + target?"
+        |
+        | target realizability is borrowed truth
+        v
+
+HereticRuntimeRealization
+  exact (modelRef, target) -> realization or explicit absence
+        |
+        v
+
+HereticRuntimeAvailability Family
+  "What does EnsureAvailable mean for this exact realization now?"
+        |
+        | Effect
+        v
+
+rightful platform/runtime owner
+        |
+        | qualified evidence
+        v
+
+Product binding -> portable RuntimeSession -> shared Product body
+~~~
+
+`HereticModelCatalog` remains the owner of what the Product offers. Being in that catalog does **not**
+mean the model is runnable on every target.
+
+Permanent:
+
+~~~text
+OFFERED MODEL
+!= REALIZABLE ON THIS TARGET
+
+MEMORY FIT
+!= TARGET SUPPORT
+
+TARGET SUPPORT
+= exact HereticRuntimeRealization coverage
+~~~
+
+`VexLifeModelsFamily` therefore admits Use / Download / Redownload only when its State carries
+`realizableOnTarget=true`. Remove may remain lawful for stray files even when that target cannot run
+the model.
+
+Setup recommendation follows the same rule: it first intersects offered models with the exact target
+realizations, then applies memory fit. A high-memory Windows host does not silently inherit 27B/9B
+support merely because those models are offered; with current source, Windows x64 has only the proved
+4B realization.
+
+A Home may carry a model choice formed on another target. That is not permission to auto-fallback.
+`VexLifeProdEntryFamily.ModelTargetHeld` represents that condition so the human can choose another
+supported model while the original Home truth remains intact.
+
+The setup/model and Settings/model projections carry `targetRef` explicitly so a reader does not
+need to infer which platform/architecture the availability answer was about.
+
 ## Runtime realization recipe
 
 Current runtime behavior is no longer inferred from the model catalog or from whichever platform
