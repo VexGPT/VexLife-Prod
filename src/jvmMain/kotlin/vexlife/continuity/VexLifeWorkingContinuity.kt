@@ -19,6 +19,9 @@ import vexlife.contract.VexContractJson
  * rightful owners.
  */
 object VexLifeWorkingContinuity {
+    /** Plan reason: the turn continues an active rollover lineage, so its cursor must advance. */
+    const val RolloverLineageActiveReason = "WORKING_ROLLOVER_LINEAGE_ACTIVE"
+
     const val PressureSchema =
         "vexlife-prod.resource-context-pressure/v1"
 
@@ -446,6 +449,8 @@ object VexLifeWorkingContinuity {
         workingSet: WorkingSet,
         priorCheckpoint: Checkpoint? =
             null,
+        rolloverLineageActive: Boolean =
+            false,
     ): Plan {
         val pressure =
             projectPressure(
@@ -468,39 +473,69 @@ object VexLifeWorkingContinuity {
             }
 
         val checkpoint =
-            when (
-                pressure.state
+            if (
+                rolloverLineageActive
             ) {
-                PressureState.Normal,
-                PressureState.Watch,
-                ->
-                    null
+                formCheckpoint(
+                    pressure = pressure,
+                    workingSet = workingSet,
+                    priorCheckpoint = priorCheckpoint,
+                )
+            } else {
+                when (
+                    pressure.state
+                ) {
+                    PressureState.Normal,
+                    PressureState.Watch,
+                    ->
+                        null
 
-                PressureState.CheckpointRecommended,
-                PressureState.RolloverRequired,
-                ->
-                    formCheckpoint(
-                        pressure = pressure,
-                        workingSet = workingSet,
-                        priorCheckpoint = priorCheckpoint,
-                    )
+                    PressureState.CheckpointRecommended,
+                    PressureState.RolloverRequired,
+                    ->
+                        formCheckpoint(
+                            pressure = pressure,
+                            workingSet = workingSet,
+                            priorCheckpoint = priorCheckpoint,
+                        )
+                }
             }
 
         val state =
-            when (
-                pressure.state
+            if (
+                rolloverLineageActive
             ) {
-                PressureState.Normal,
-                PressureState.Watch,
-                ->
-                    PlanState.NoCheckpointRequired
+                PlanState.RolloverReady
+            } else {
+                when (
+                    pressure.state
+                ) {
+                    PressureState.Normal,
+                    PressureState.Watch,
+                    ->
+                        PlanState.NoCheckpointRequired
 
-                PressureState.CheckpointRecommended ->
-                    PlanState.CheckpointReady
+                    PressureState.CheckpointRecommended ->
+                        PlanState.CheckpointReady
 
-                PressureState.RolloverRequired ->
-                    PlanState.RolloverReady
+                    PressureState.RolloverRequired ->
+                        PlanState.RolloverReady
+                }
             }
+
+        val reasonCodes =
+            (
+                pressure.reasonCodes +
+                    if (rolloverLineageActive) {
+                        listOf(
+                            RolloverLineageActiveReason,
+                        )
+                    } else {
+                        emptyList()
+                    }
+            )
+                .distinct()
+                .sorted()
 
         val nextSafeAction =
             when (
@@ -523,7 +558,7 @@ object VexLifeWorkingContinuity {
                     "SOURCE_BOUND_EFFECT_FREE_CONTINUITY_ROLLOVER_PLAN",
                 currentness = "CURRENT",
                 state = state,
-                reasonCodes = pressure.reasonCodes,
+                reasonCodes = reasonCodes,
                 pressureRef = pressure.pressureRef,
                 pressureFingerprint = pressure.semanticFingerprint,
                 lineageRef = workingSet.lineageRef,

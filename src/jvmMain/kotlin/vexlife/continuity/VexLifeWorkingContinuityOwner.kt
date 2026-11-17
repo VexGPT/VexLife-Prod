@@ -991,11 +991,30 @@ class VexLifeWorkingContinuityOwner(
         workingSet: VexLifeWorkingContinuity.WorkingSet,
         current: Current?,
     ) {
+        // An active rollover lineage is a claim this owner verifies, never one it imposes: the
+        // plan may carry it only while this owner's own current receipt is a ROLLOVER_COMMITTED
+        // that requires a successor Context. A plan formed without it (an ordinary turn after a
+        // rollover, say one whose predecessor's commit failed so it could not enter as a
+        // successor) is re-derived on pressure alone, exactly as before the lineage existed.
+        val lineageSupported =
+            current
+                ?.commitReceipt
+                ?.let {
+                    receipt ->
+                    receipt.disposition ==
+                        "ROLLOVER_COMMITTED" &&
+                        receipt.successorContextRequired
+                } ==
+                true
         val derived =
             VexLifeWorkingContinuity.formPlan(
                 pressureInput = pressureInput,
                 workingSet = workingSet,
                 priorCheckpoint = current?.checkpoint,
+                rolloverLineageActive =
+                    lineageSupported &&
+                        VexLifeWorkingContinuity.RolloverLineageActiveReason in
+                            plan.reasonCodes,
             )
         require(derived == plan) {
             "working continuity owner source truth does not re-derive the exact plan"

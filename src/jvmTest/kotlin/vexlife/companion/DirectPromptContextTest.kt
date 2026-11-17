@@ -82,9 +82,22 @@ class DirectPromptContextTest {
                             ),
                     )
                 val told = DirectPromptContext.materialize(prior = null, currentRequest = request, personContext = person)
-                val system = told.messages.first { it.role == "system" }.content
-                assertTrue(system.startsWith("VEXLIFE_PERSON_CONTEXT/v1"))
-                assertTrue("日本語" in system && "Victor is nervous about Friday." in system)
+                // Current, not standing: the setting rides the current-state envelope right before
+                // the request, never the leading system block that precedes all history.
+                assertTrue(told.messages.none { it.role == "system" && "VEXLIFE_PERSON_CONTEXT/v1" in it.content })
+                val current = told.messages[told.messages.size - 2]
+                assertEquals("user", current.role)
+                assertTrue(current.content.startsWith(DirectPromptContext.CurrentStateHeader))
+                assertTrue("VEXLIFE_PERSON_CONTEXT/v1" in current.content)
+                assertTrue("日本語" in current.content && "Victor is nervous about Friday." in current.content)
+                assertEquals(request.content, told.messages.last().content)
+                val person0 =
+                    told.receipt.contextComponents.single {
+                        it.componentRef == DirectPromptContext.ComponentRefs.PersonContext
+                    }
+                assertEquals(DirectPromptContext.ComponentStability.MUTABLE_CURRENT, person0.stabilityClass)
+                assertEquals(DirectPromptContext.ComponentPlacement.LIVE_TAIL, person0.placementClass)
+                assertEquals(told.messages.size - 2, person0.providerMessageIndex)
                 assertTrue(told.receipt.personContextIncluded)
                 assertEquals(person, told.receipt.personContext)
 
@@ -758,9 +771,19 @@ class DirectPromptContextTest {
                             "system"
                     },
                 )
-                assertTrue(
+                assertFalse(
                     materialized.messages
                         .first()
+                        .content
+                        .contains(
+                            DirectConversationSourceReturn.ProtocolHeader,
+                        ),
+                )
+                assertTrue(
+                    materialized.messages
+                        .single {
+                            it.content.startsWith(DirectPromptContext.CurrentStateHeader)
+                        }
                         .content
                         .contains(
                             DirectConversationSourceReturn.ProtocolHeader,
@@ -867,12 +890,15 @@ class DirectPromptContextTest {
                     },
                 )
                 assertEquals(
-                    listOf(
-                        request.content,
-                    ),
-                    turnContext.suffixMessages.map {
-                        it.content
-                    },
+                    request.content,
+                    turnContext.suffixMessages.last().content,
+                )
+                assertTrue(
+                    turnContext.suffixMessages.single {
+                        it.content.startsWith(DirectPromptContext.CurrentStateHeader)
+                    }
+                        .content
+                        .contains("VEXLIFE_CURRENT_MEMORY_CONTEXT/v1") == false,
                 )
                 assertEquals(
                     (
@@ -1267,8 +1293,8 @@ class DirectPromptContextTest {
                 assertTrue(
                     materialized.messages.any {
                         it.role ==
-                            "system" &&
-                            it.content.contains(
+                            "user" &&
+                            it.content.startsWith(
                                 DirectConversationSourceReturn.ContextHeader,
                             ) &&
                             it.content.contains(
@@ -1468,8 +1494,8 @@ class DirectPromptContextTest {
                 assertTrue(
                     materialized.messages.any {
                         it.role ==
-                            "system" &&
-                            it.content.contains(
+                            "user" &&
+                            it.content.startsWith(
                                 DirectConversationSourceReturn.ContextHeader,
                             ) &&
                             it.content.contains(
@@ -2103,10 +2129,13 @@ class DirectPromptContextTest {
                             successor,
                     )
 
+                // Memory stays in the system block; the working coordinates are current state and
+                // come after the exact prior reply they continue from.
                 assertEquals(
                     listOf(
                         "system",
                         "assistant",
+                        "user",
                         "user",
                     ),
                     materialized.messages.map {
@@ -2120,7 +2149,7 @@ class DirectPromptContextTest {
                             "VEXLIFE_CURRENT_MEMORY_CONTEXT/v1",
                         ),
                 )
-                assertTrue(
+                assertFalse(
                     materialized.messages[0]
                         .content
                         .contains(
@@ -2128,7 +2157,17 @@ class DirectPromptContextTest {
                         ),
                 )
                 assertTrue(
-                    materialized.messages[0]
+                    materialized.messages[2]
+                        .content
+                        .startsWith(DirectPromptContext.CurrentStateHeader) &&
+                        materialized.messages[2]
+                            .content
+                            .contains(
+                                "VEXLIFE_WORKING_CONTINUITY_CONTEXT/v1",
+                            ),
+                )
+                assertTrue(
+                    materialized.messages[2]
                         .content
                         .contains(
                             "work-node.vexlife.prompt.working",
@@ -2136,10 +2175,7 @@ class DirectPromptContextTest {
                 )
                 assertEquals(
                     "Prior response that must not replay",
-                    materialized.messages[
-                        materialized.messages.size -
-                            2
-                    ]
+                    materialized.messages[1]
                         .content,
                 )
                 assertEquals(
@@ -2318,6 +2354,7 @@ class DirectPromptContextTest {
                     listOf(
                         "system",
                         "user",
+                        "user",
                     ),
                     materialized.messages.map {
                         it.role
@@ -2328,6 +2365,13 @@ class DirectPromptContextTest {
                         .content
                         .startsWith(
                             "VEXLIFE_SELF_CAPABILITY_FRAME/v1",
+                        ),
+                )
+                assertTrue(
+                    materialized.messages[1]
+                        .content
+                        .startsWith(
+                            DirectPromptContext.CurrentStateHeader,
                         ),
                 )
                 assertFalse(
@@ -2449,9 +2493,12 @@ class DirectPromptContextTest {
                         runtimeEvidence = runtime,
                     )
 
+                // Stable description first; this request's frame travels with current state, then
+                // the browser page, then the request.
                 assertEquals(
                     listOf(
                         "system",
+                        "user",
                         "user",
                         "user",
                     ),
@@ -2473,15 +2520,29 @@ class DirectPromptContextTest {
                             "VEXLIFE_SELF_CAPABILITY_FRAME/v1",
                         ),
                 )
-                assertTrue(
+                assertFalse(
                     materialized.messages[0]
+                        .content
+                        .contains(
+                            "\"effectAuthorityGranted\":false",
+                        ),
+                )
+                assertTrue(
+                    materialized.messages[1]
+                        .content
+                        .startsWith(
+                            DirectPromptContext.CurrentStateHeader,
+                        ),
+                )
+                assertTrue(
+                    materialized.messages[1]
                         .content
                         .contains(
                             "capability.vexlife.companion.local-inference",
                         ),
                 )
                 assertTrue(
-                    materialized.messages[0]
+                    materialized.messages[1]
                         .content
                         .contains(
                             "\"effectAuthorityGranted\":false",

@@ -1216,11 +1216,19 @@ class DirectCompanionTurnTest {
                 "WORKING_CHECKPOINT_SUCCESSOR",
                 second.promptContextReceipt.contextMode,
             )
-            assertTrue(
-                second.promptContextReceipt.selectedConversationEventRefs.isEmpty(),
+            // The producer exchange fills most of the prompt, so not even one whole exchange fits
+            // the overlap tail: only Vex's prior reply is kept, and the receipt says so.
+            assertEquals(
+                listOf(first.responseEventRef),
+                second.promptContextReceipt.selectedConversationEventRefs,
             )
-            assertTrue(
-                second.promptContextReceipt.selectedConversationEventSha256.isEmpty(),
+            assertEquals(
+                DirectContinuityOverlapTail.FloorState.DEGRADED_ROOM,
+                second.promptContextReceipt.overlapTail?.floorState,
+            )
+            assertEquals(
+                true,
+                second.promptContextReceipt.overlapTail?.responseBridgeOnly,
             )
             assertEquals(
                 first.responseEventRef,
@@ -1588,8 +1596,13 @@ class DirectCompanionTurnTest {
                 "WORKING_CHECKPOINT_SUCCESSOR",
                 recovered.promptContextReceipt.contextMode,
             )
-            assertTrue(
-                recovered.promptContextReceipt.selectedConversationEventRefs.isEmpty(),
+            assertEquals(
+                listOf(first.responseEventRef),
+                recovered.promptContextReceipt.selectedConversationEventRefs,
+            )
+            assertEquals(
+                true,
+                recovered.promptContextReceipt.overlapTail?.responseBridgeOnly,
             )
             assertEquals(
                 first.responseEventRef,
@@ -1619,29 +1632,37 @@ class DirectCompanionTurnTest {
                     sequence =
                         recoveredRequest.sequence,
                 )
-            val recoveredContext =
-                assertNotNull(
-                    owner.readSuccessorContext(
-                        lineageRef =
-                            firstHead.companionLineageRef,
-                        threadRef =
-                            firstHead.threadRef,
-                        currentRequestEventBinding =
-                            recoveredBinding,
-                    ),
-                )
-
-            assertTrue(
-                failedContext.successorContextRef !=
-                    recoveredContext.successorContextRef,
-            )
+            // The recovered turn was issued its own request-scoped successor Context; its prompt
+            // receipt records which one.
+            val recoveredContextRef =
+                assertNotNull(recovered.promptContextReceipt.workingContinuityContextRef)
+            assertTrue(failedContext.successorContextRef != recoveredContextRef)
             assertEquals(
                 failedRequest.eventRef,
                 failedContext.currentRequestEventBinding.eventRef,
             )
+
+            // The recovered successor continues the rollover lineage: its commit advances the head
+            // to its own request, which supersedes the checkpoint its Context was issued from, so
+            // that Context is evidence now, no longer current.
+            val afterLineage =
+                assertNotNull(
+                    owner.readCurrent(
+                        lineageRef = firstHead.companionLineageRef,
+                        threadRef = firstHead.threadRef,
+                    )
+                )
+            assertEquals("ROLLOVER_COMMITTED", afterLineage.commitReceipt.disposition)
             assertEquals(
                 recovered.requestEventRef,
-                recoveredContext.currentRequestEventBinding.eventRef,
+                afterLineage.checkpoint.workingSet.cursorEventRef,
+            )
+            assertNull(
+                owner.readSuccessorContext(
+                    lineageRef = firstHead.companionLineageRef,
+                    threadRef = firstHead.threadRef,
+                    currentRequestEventBinding = recoveredBinding,
+                )
             )
         } finally {
             home.parent

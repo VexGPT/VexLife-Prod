@@ -89,8 +89,8 @@ source, architecture and unresolved truth remain inspectable on the read side.
 
 Depth is not carried in any prompt. A person can read every part with its depth at
 `GET /api/v1/foundational-field` and can give any of it to Vex directly. Vex cannot pull depth into a
-turn by itself: Conversation source return reopens canonical Conversation only, and no second return
-route has been built. The first-person kernel says that missing depth is missing rather than pretending
+turn by itself: Conversation source return and revisit reach Conversation, Memory pages and the
+working checkpoint, not this body. The first-person kernel says that missing depth is missing rather than pretending
 it is present.
 
 Origin and standing are separate facts. Every part of the current body is `PROPOSED`. Accepting a
@@ -112,10 +112,12 @@ DirectPromptContext.materializeContinuity / reverifyContinuity
 provider
 ~~~
 
-It is first so that what is current follows it and sits nearer the request: Memory, working
-coordinates, the capability frame, person context, the source-return protocol or returned source, the
-selected Conversation and the request itself. The preamble states that the field does not outrank
-what is current.
+It is first so that everything else follows it and sits nearer the request: in the same stable
+block, Memory and the capability description; then the selected Conversation; then the current-state
+envelope (working coordinates, capability states, person context, record extent, the source-return
+protocol), any returned source, and the request itself
+([DIRECT-PERSONAL-COMPANION.md](DIRECT-PERSONAL-COMPANION.md#current-state-is-placed-as-current)). The
+preamble states that the field does not outrank what is current.
 
 The same projection is present in every mode: `FIRST_TURN`, `IMMEDIATE_PRIOR_COMPLETED_TURN`,
 `RECENT_COMPLETED_TURNS`, `WORKING_CHECKPOINT_SUCCESSOR`, `SOURCE_RETURN` and
@@ -237,6 +239,7 @@ registering such a capability fails until the field is revised.
   are held with their reason;
 - omission under token pressure is by name and priority, then held;
 - the field is first in the system prefix in every mode and does not change the capability frame;
+- person context, record extent and the source-return protocol are not in the system prefix; they ride the current-state envelope after the selected Conversation (`DirectPromptCurrentStateTest`);
 - one long Conversation whose early exchange is outside the window: the first inference asks for it,
   the exact pair is returned, the final prompt carries the same field, one answer becomes
   Conversation, and a second request in the same turn is refused;

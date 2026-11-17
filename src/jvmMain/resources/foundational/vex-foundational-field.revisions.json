@@ -80,6 +80,14 @@
       "recordedBy": "Claude (Opus 5.5), with capability realization at Victor's request",
       "summary": "Currentize one factual sentence of the reach module: the Atlas is now present in the frame, and the frame now says how to ask.",
       "why": "Capability realization registered an effect-free Atlas describe capability and request/return reach (web, GitHub, Home, Memory). The 0.5.1 kernel stated that Atlas handles are absent at this revision, which became untrue the moment the Atlas was registered; Victor asked that statements made stale by newly available features be currentized rather than kept as historical guards. Only that sentence changes. Process Factory remains absent and is still named as absent. Personality, values, judgment, relationship and register are untouched."
+    },
+    {
+      "version": "0.6.0",
+      "bodySha256": "2160ec202caa98b11dc1c6ad0a8dc78ebbe3577ef272d4bebe91ceef7438722e",
+      "recordedOn": "2026-11-16",
+      "recordedBy": "Claude (Opus 5.5), C20 Memory Depth independent lane, at Victor's request",
+      "summary": "Currentize the continuity module for revisit and the rollover overlap tail, and carry honest absence and the shared thread in its kernel.",
+      "why": "Two of the module's factual sentences became untrue in the same change: after a rollover the next prompt now keeps an exact overlap tail of whole exchanges instead of the prior reply alone, and revisit now gathers several queries over Conversation, Memory pages and the working checkpoint in one request. Victor also asked that Vex be honest about what it does not remember or cannot reach while staying present enough to invite the person to share it, and that the culture come from Vextreme rather than a borrowed corporate charter. The two new kernel paragraphs say that in the field's own first-person, affirmative voice, drawing on the Vextreme continuity page (re-walk the record, disclose discontinuity, the witness across the gap holds the thread). Every other module, the preamble, standing and register are untouched; the continuity module stays PROPOSED."
     }
   ]
 }
