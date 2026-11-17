@@ -62,6 +62,54 @@ class HereticRuntimeRealizationTest {
     }
 
     @Test
+    fun MlxAndLlamaCppShareOneQualificationSequenceContract() {
+        val mac =
+            HereticRuntimeRealization.require(
+                modelRef = HereticModelCatalog.Candidate4B.modelRef,
+                target = HereticRuntimeRealization.MacArm64,
+            )
+        val windows =
+            HereticRuntimeRealization.Windows4B
+
+        assertEquals(
+            mac.qualification.healthPath,
+            windows.qualification.healthPath,
+        )
+        assertEquals(
+            mac.qualification.modelsPath,
+            windows.qualification.modelsPath,
+        )
+        assertEquals(
+            mac.qualification.completionPath,
+            windows.qualification.completionPath,
+        )
+        assertEquals(
+            mac.qualification.maxTokens,
+            windows.qualification.maxTokens,
+        )
+        assertEquals(
+            mac.qualification.temperature,
+            windows.qualification.temperature,
+        )
+        assertEquals(
+            mac.qualification.enableThinking,
+            windows.qualification.enableThinking,
+        )
+        assertEquals(
+            mac.qualification.stream,
+            windows.qualification.stream,
+        )
+        assertEquals(
+            HereticRuntimeRealization.ModelExposure.EXACT_MATERIALIZATION_PATH,
+            mac.qualification.modelExposure,
+        )
+        assertEquals(
+            HereticRuntimeRealization.ModelExposure.EXACT_REQUEST_MODEL_ALIAS,
+            windows.qualification.modelExposure,
+        )
+    }
+
+    @Test
     fun WindowsNativeRuntimeMakesPythonEnvironmentExplicitlyNotRequired() {
         val environment =
             HereticRuntimeRealization.Windows4B.dependencies.environment
