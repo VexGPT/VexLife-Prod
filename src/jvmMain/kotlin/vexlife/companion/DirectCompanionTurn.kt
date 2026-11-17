@@ -15,6 +15,7 @@ import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.capability.VexLifeReachDefinitions
 import vexlife.conversation.DirectConversationStore
+import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.filesystem.VexOwnedPath
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
@@ -31,9 +32,6 @@ import vexlife.model.heretic.HereticModelConfiguration
  * Conversation persistence, provider invocation or presentation.
  */
 object DirectCompanionTurn {
-    const val FailureCancelledByPerson =
-        "TURN_CANCELLED_BY_PERSON"
-
     const val FailureReceiptSchema =
         "vexlife-prod.direct-companion-turn-failure/v1"
 
@@ -1935,7 +1933,7 @@ object DirectCompanionTurn {
             error
         ) {
             is DirectCompanionCancellation.Cancelled ->
-                FailureCancelledByPerson
+                VexLifeConversationTurnFamily.TerminalReason.CancelledByPerson.ref
 
             is DirectCompanionConnection.ConnectionException ->
                 "CONNECTION_" +
