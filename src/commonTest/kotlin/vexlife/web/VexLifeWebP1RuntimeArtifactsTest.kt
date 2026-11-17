@@ -617,6 +617,35 @@ class VexLifeWebP1RuntimeArtifactsTest {
             "the reasoning viewport must remain the independent scroll owner",
         )
     }
+    @Test
+    fun modelSettingsRenderTargetSupportWithoutMacSpecificWireAssumptions() {
+        val javascript =
+            VexLifeWebP1RuntimeArtifacts
+                .generate()
+                .javascript
+
+        assertTrue(
+            javascript.contains(
+                "model.realizableOnTarget",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "model.fitsThisDevice",
+            ),
+        )
+        assertTrue(
+            javascript.contains(
+                "workspace.label.model-not-supported-on-this-device",
+            ),
+        )
+        assertFalse(
+            javascript.contains(
+                "fitsThisMac",
+            ),
+        )
+    }
+
 }
 
 // [VXG RealForever]
