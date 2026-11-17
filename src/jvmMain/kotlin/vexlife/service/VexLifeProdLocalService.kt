@@ -2052,9 +2052,39 @@ class VexLifeProdLocalService private constructor(
                 streaming !=
                 null
         ) {
+            val attempt =
+                VexLifeConversationTurnFamily.Attempt(
+                    request.idempotencyKey,
+                )
+            val begin =
+                VexLifeConversationTurnFamily.resolve(
+                    currentState =
+                        conversationTurnState(),
+                    control =
+                        VexLifeConversationTurnFamily.Send(
+                            attempt,
+                        ),
+                )
+                    ?.effect as?
+                    VexLifeConversationTurnFamily.BeginTurn
+
+            if (
+                begin ==
+                    null
+            ) {
+                respondError(
+                    exchange = exchange,
+                    status = 409,
+                    code = "CONVERSATION_SEND_NOT_LAWFUL_NOW",
+                    message = "A new Conversation Send is not lawful in the current turn state.",
+                )
+                return
+            }
+
             handleStreamingSend(
                 exchange = exchange,
                 intent = intent,
+                begin = begin,
                 executor = streaming,
             )
             return
