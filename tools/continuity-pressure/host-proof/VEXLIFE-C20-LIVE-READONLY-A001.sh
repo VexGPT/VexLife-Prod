@@ -2,8 +2,8 @@
 set -u
 
 REPO='VexGPT/VexLife-Prod'
-HEAD_SHA='be6e41d751dae374b3c7f0d5cd5ea23b8c005d8f'
-TREE_SHA='c6907cfdc8dfcbc56c9233ab9fd8cae5531ae076'
+HEAD_SHA='62ee0975890c9e06c735837bca1498b7f7c12551'
+TREE_SHA='a9e63f5f5229a0a6723eca6dac97ce9fad290243'
 BASE_SHA='501e3fe3464303891287598793430b749cc91bc9'
 PR='226'
 SCENARIO_REF='scenario.vexlife.continuity-pressure.depth-continuity.v1'
