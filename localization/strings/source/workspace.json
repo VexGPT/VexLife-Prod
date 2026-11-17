@@ -11,7 +11,8 @@
     "dataKeyOwners": {
       "diagnostics": "VexLifeDiagnosticsFamily (state, control refs) and the debug export route",
       "capability": "VexLifeCapabilityBridge uses (handle:action), shown to the person as reach",
-      "model": "VexLifeModelsFamily (files, control refs) and HereticModelCatalog standing"
+      "model": "VexLifeModelsFamily (files, control refs) and HereticModelCatalog standing",
+      "voice-input": "VexLifeVoiceInputFamily (state, control, hold/failure reason refs)"
     }
   },
   "workspace.heading.diagnostics": {
@@ -517,5 +518,181 @@
     "surfaces": [
       "workspace.settings"
     ]
+  },
+  "workspace.button.voice-input-start": {
+    "strings": {
+      "en": {
+        "text": "Start local dictation"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "voice-input:control:START"
+  },
+  "workspace.button.voice-input-stop": {
+    "strings": {
+      "en": {
+        "text": "Stop local dictation"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "voice-input:control:STOP"
+  },
+  "workspace.status.voice-input-ready": {
+    "strings": {
+      "en": {
+        "text": "Dictation stays on this device and edits only this draft."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "voice-input:state:READY"
+  },
+  "workspace.status.voice-input-checking-language": {
+    "strings": {
+      "en": {
+        "text": "Checking on-device dictation for the selected language…"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "voice-input:state:CHECKING_LANGUAGE"
+  },
+  "workspace.status.voice-input-installing-language": {
+    "strings": {
+      "en": {
+        "text": "Getting on-device dictation ready for the selected language…"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "voice-input:state:INSTALLING_LANGUAGE"
+  },
+  "workspace.status.voice-input-requesting-microphone": {
+    "strings": {
+      "en": {
+        "text": "Allow microphone access to start local dictation."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "voice-input:state:REQUESTING_MICROPHONE"
+  },
+  "workspace.status.voice-input-listening": {
+    "strings": {
+      "en": {
+        "text": "Listening locally · speech stays on this device."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "voice-input:state:LISTENING"
+  },
+  "workspace.status.voice-input-stopping": {
+    "strings": {
+      "en": {
+        "text": "Stopping local dictation…"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "voice-input:state:STOPPING"
+  },
+  "workspace.status.voice-input-held-local-recognition": {
+    "strings": {
+      "en": {
+        "text": "Local dictation is not available in this browser yet."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "voice-input:reason:LOCAL_RECOGNITION_UNAVAILABLE"
+  },
+  "workspace.status.voice-input-held-microphone-api": {
+    "strings": {
+      "en": {
+        "text": "Microphone access is not available in this browser context."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "voice-input:reason:MICROPHONE_API_UNAVAILABLE"
+  },
+  "workspace.status.voice-input-held-audio-feedback": {
+    "strings": {
+      "en": {
+        "text": "Live microphone feedback is not available in this browser context."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "voice-input:reason:AUDIO_FEEDBACK_UNAVAILABLE"
+  },
+  "workspace.status.voice-input-failed-permission": {
+    "strings": {
+      "en": {
+        "text": "Microphone permission is needed for local dictation."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "voice-input:failure:MICROPHONE_PERMISSION_REQUIRED"
+  },
+  "workspace.status.voice-input-failed-microphone": {
+    "strings": {
+      "en": {
+        "text": "No usable microphone is available."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "voice-input:failure:MICROPHONE_UNAVAILABLE"
+  },
+  "workspace.status.voice-input-failed-language": {
+    "strings": {
+      "en": {
+        "text": "On-device dictation is not available for the selected language."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "voice-input:failure:LANGUAGE_UNAVAILABLE"
+  },
+  "workspace.status.voice-input-failed-recognition": {
+    "strings": {
+      "en": {
+        "text": "Local dictation stopped before recognition could continue."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "voice-input:failure:RECOGNITION_STOPPED"
+  },
+  "workspace.status.voice-input-failed-unknown": {
+    "strings": {
+      "en": {
+        "text": "Local dictation stopped."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "voice-input:failure:UNKNOWN"
   }
 }
