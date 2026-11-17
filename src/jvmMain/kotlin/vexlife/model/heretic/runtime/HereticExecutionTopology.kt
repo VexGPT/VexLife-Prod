@@ -188,14 +188,31 @@ object HereticExecutionTopology {
         val text = root["text_config"] as? JsonObject ?: root
         val hiddenLayers = text.int("num_hidden_layers")
         val interval = text.int("full_attention_interval")
+        val layerTypes = text.stringList("layer_types")
         val fullLayers =
-            if (hiddenLayers != null && interval != null && interval > 0) {
-                hiddenLayers / interval
-            } else {
-                null
+            layerTypes?.let { types ->
+                require(hiddenLayers == null || types.size == hiddenLayers) {
+                    "Heretic model layer_types count does not match num_hidden_layers"
+                }
+                require(types.all { it == "linear_attention" || it == "full_attention" }) {
+                    "Heretic model layer_types contains an unsupported attention kind"
+                }
+                if (interval != null) {
+                    require(interval > 0) {
+                        "Heretic model full_attention_interval must be positive"
+                    }
+                    require(
+                        types.withIndex().all { (index, type) ->
+                            (type == "full_attention") == ((index + 1) % interval == 0)
+                        },
+                    ) {
+                        "Heretic model layer_types does not match full_attention_interval"
+                    }
+                }
+                types.count { it == "full_attention" }
             }
         val linearLayers =
-            if (hiddenLayers != null && fullLayers != null) hiddenLayers - fullLayers else null
+            layerTypes?.count { it == "linear_attention" }
 
         val architecture =
             ModelArchitecture(
@@ -393,6 +410,12 @@ object HereticExecutionTopology {
         (this[name] as? JsonPrimitive)?.booleanOrNull
 
     private fun JsonObject.array(name: String): JsonArray? = this[name] as? JsonArray
+
+    private fun JsonObject.stringList(name: String): List<String>? =
+        array(name)?.map { element ->
+            (element as? JsonPrimitive)?.contentOrNull
+                ?: error("Heretic model $name must contain only strings")
+        }
 
     private fun sha256(bytes: ByteArray): String =
         MessageDigest.getInstance("SHA-256")
