@@ -458,7 +458,9 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains("ui.draft.value ="))
         assertTrue(bundle.javascript.contains("voiceInput.actByState"))
         assertTrue(bundle.javascript.contains("voiceInput.capabilityStateByFacts"))
-        assertTrue(bundle.javascript.contains("voiceInput.languageAvailabilityStateByProviderValue"))
+        assertTrue(
+            bundle.javascript.contains("voiceInput.languageAvailabilityStateByProviderValue")
+        )
         assertTrue(bundle.javascript.contains("voiceInput.languageInstallStateBySuccess"))
         assertTrue(bundle.javascript.contains("voiceInput.failureStateByReason"))
         assertTrue(bundle.javascript.contains("applyVoiceInputSemanticState"))
