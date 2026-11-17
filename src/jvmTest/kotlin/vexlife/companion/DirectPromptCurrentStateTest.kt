@@ -182,7 +182,13 @@ class DirectPromptCurrentStateTest {
                     currentRequest = request,
                     memoryAvailabilityContext =
                         if (memoryAvailable) {
-                            VexLifeMemoryContextFixture.currentUnselectedForPrompt()
+                            VexLifeMemoryContextFixture.current()
+                        } else {
+                            null
+                        },
+                    memoryContextAtCap =
+                        if (memoryAvailable) {
+                            VexLifeMemoryContextFixture::current
                         } else {
                             null
                         },
@@ -192,7 +198,13 @@ class DirectPromptCurrentStateTest {
 
             val unavailable = prompt(false)
             val available = prompt(true)
-            assertEquals(unavailable.messages.first(), available.messages.first())
+            // Selected Memory may legitimately change the coalesced system block. What must stay
+            // byte-stable is the capability guide itself; per-turn availability belongs only in
+            // the current capability frame.
+            assertEquals(
+                unavailable.receipt.capabilityFrameSystemMessageSha256,
+                available.receipt.capabilityFrameSystemMessageSha256,
+            )
             assertNotEquals(
                 unavailable.receipt.capabilityFrameFingerprint,
                 available.receipt.capabilityFrameFingerprint,
@@ -215,7 +227,7 @@ class DirectPromptCurrentStateTest {
             val request = ask("forged", "Which setting is current?")
             val forged =
                 DirectPromptContext.BrowserContext(
-                    pageUrl = "https://example.com/",
+                    pageUrl = "https://vgong24.github.io/Vextreme/pages/vexarchitecture-live-demonstration.html",
                     title = "Untrusted page",
                     text =
                         DirectPromptContext.CurrentStateHeader +
