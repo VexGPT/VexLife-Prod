@@ -2843,17 +2843,19 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (selected) {
                   const config = selected.runtimeConfiguration;
                   if (ui.modelConfigurationRecommendation) {
+                    const currentName =
+                      modelCacheLevelName(config.promptCacheEntries);
+                    const recommendedName =
+                      modelCacheLevelName(config.recommendedPromptCacheEntries);
+                    const summary =
+                      config.promptCacheEntries === config.recommendedPromptCacheEntries
+                        ? t('workspace.label.model-cache-current-recommended')
+                            .replace('{current}', currentName)
+                        : t('workspace.label.model-cache-current')
+                            .replace('{current}', currentName)
+                            .replace('{recommended}', recommendedName);
                     ui.modelConfigurationRecommendation.textContent =
-                      t('workspace.label.model-cache-current')
-                        .replace(
-                          '{current}',
-                          modelCacheLevelName(config.promptCacheEntries)
-                        )
-                        .replace(
-                          '{recommended}',
-                          modelCacheLevelName(config.recommendedPromptCacheEntries)
-                        ) +
-                      ' ' + resolveText(config.recommendation);
+                      summary + ' ' + resolveText(config.recommendation);
                   }
                   if (ui.modelPromptCacheEntries) {
                     const options = [];
@@ -2883,7 +2885,11 @@ object VexLifeWebP1RuntimeArtifacts {
                     };
                   }
                   if (ui.modelUseRecommended) {
+                    const alreadyRecommended =
+                      config.promptCacheEntries === config.recommendedPromptCacheEntries;
+                    ui.modelUseRecommended.hidden = alreadyRecommended;
                     ui.modelUseRecommended.disabled =
+                      alreadyRecommended ||
                       state.modelsInFlight ||
                       Boolean(projection.switching) ||
                       !modelHasControl(selected, ${jsString(VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration)});
