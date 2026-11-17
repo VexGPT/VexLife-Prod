@@ -59,7 +59,7 @@ object VexLifeProdLocalSetup {
      */
     internal class Session
     internal constructor(
-        override val result: Result,
+        val result: Result,
         private val currentRuntimeEvidence:
             () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
         private val generationReadiness:
@@ -70,6 +70,13 @@ object VexLifeProdLocalSetup {
             null,
     ) :
         VexLifeProdRuntimeSession {
+        override val foundation =
+            VexLifeProdRuntimeSession.Foundation(
+                state = result.state,
+                productHome = result.productHome,
+                qualifiedRuntimeEvidence = result.qualifiedRuntimeEvidence,
+            )
+
         /**
          * New-turn runtime admission.
          *
