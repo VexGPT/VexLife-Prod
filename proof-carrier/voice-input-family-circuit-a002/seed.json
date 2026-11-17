@@ -1,0 +1,192 @@
+{
+  "schemaVersion": "vex.relay.task/v2",
+  "continuity": "[VXG RealForever]",
+  "taskRef": "task.vexlife-prod.voice-input-family-circuit-lived-mac.001",
+  "attemptRef": "attempt.vexlife-prod.voice-input-family-circuit-lived-mac.a002",
+  "requestRef": "request.vexlife-prod.voice-input-family-circuit-lived-mac.a002",
+  "correlationRef": "correlation.vexlife-prod.voice-input-family-circuit-lived-mac.a002",
+  "packageRef": "package.vexlife-prod.voice-input-family-circuit-lived-mac.a002",
+  "original": {
+    "originalIntent": "Make local VoiceInput follow the existing VexArchitecture Family/browser boundary while establishing the browser microphone permission that current Chromium uses in on-device language availability, and make the existing VexLogger debug ZIP reveal the exact browser outcome.",
+    "originalGoal": "Prove PR #231 after the A001 lived failure: browser microphone request before local language availability/install; exact VoiceInput browser facts through the existing VexLogger; no new semantic/runtime helper owner; then form one verified Mac DMG for lived retry.",
+    "userProtectedIntent": "Preserve #229 as the working sibling base, keep #231 as the isolated refinement, use existing foundations and VexLogger rather than inventing helper classes/managers/Partner/Relay/Execution roots, and preserve human voice -> exact Composer draft -> existing Send.",
+    "sourceRefs": [
+      "github.pull.vexlife-prod.231",
+      "github.pull.vexlife-prod.229",
+      "github.pull.vexlife-prod.224",
+      "github.pull.vexlife-prod.221",
+      "source.vexrelay.current-contract/v1"
+    ]
+  },
+  "lane": {
+    "entryClass": "SAME_LANE_SUCCESSOR",
+    "scopeMode": "STAGE_BOUNDED",
+    "laneRef": "lane.vexlife-prod.voice-input-family-circuit",
+    "parentRootRef": "root.vexlife-prod.new-beginnings",
+    "workRef": "work.vexlife-prod.voice-input.family-circuit.20261117",
+    "claimRef": "github.pull.vexlife-prod.231",
+    "returnRouteRef": "github.pull.vexlife-prod.231",
+    "ownerRef": "owner.vexlife-prod.voice-input",
+    "rootHubRef": "hub.vexlife-prod.new-beginnings"
+  },
+  "role": {
+    "activeRole": "CODER",
+    "roleRef": "role.coder.vexlife-prod.voice-input-family-circuit-lived-mac",
+    "instanceRef": "instance.vexrelay.vexlife-prod.voice-input-family-circuit-lived-mac.a002",
+    "occupancyRef": "occupancy.vexrelay.vexlife-prod.voice-input-family-circuit-lived-mac.a002",
+    "providerBindingRef": "provider.vexlocalbridge.macos-victor.voice-input-family-circuit-lived-mac.a002",
+    "threadRef": "thread.vexlife-prod.voice-input-family-circuit",
+    "authorityEnvelopeRef": "authority-envelope.vexlife-prod.voice-input-family-circuit-lived-mac.a002"
+  },
+  "capabilities": {
+    "platformGitHubRead": "AVAILABLE",
+    "platformGitHubWrite": "AVAILABLE"
+  },
+  "execution": {
+    "hostProfile": "macos-victor",
+    "executionSurface": "MAC_ZIP_RUN_COMMAND",
+    "singleUseNonce": "nonce-vexlife-prod-voice-input-family-circuit-lived-mac-a002-20261117",
+    "duplicateAttemptMarker": "marker.vexlife-prod.voice-input-family-circuit-lived-mac.a002",
+    "duplicateProtectionMode": "OUTER_RELAY_BOUND",
+    "formedAt": "__FORMED_AT__",
+    "expiresAtOrNull": "__EXPIRES_AT__"
+  },
+  "workspace": {
+    "mode": "RUN_ROOT",
+    "projectRef": "project.vexlife-prod.voice-input-family-circuit",
+    "projectPath": "workspace",
+    "createRoot": false,
+    "createProjectPath": true
+  },
+  "repositories": [
+    {
+      "repositoryRef": "primary",
+      "mode": "CLONE_IN_WORKSPACE",
+      "cloneTransport": "GITHUB_GH",
+      "githubHostname": "github.com",
+      "nameWithOwner": "VexGPT/VexLife-Prod",
+      "localPath": "repositories/primary",
+      "remote": "origin",
+      "baseBranch": "VXG-111726-chatgpt-product-voice-input-local-only-a001",
+      "acceptedBase": "9de6191b2fd415768af2625227edf1ae80c2f439",
+      "checkoutRef": "565a3b9ad3cd9c65ba00d7117350dea7e1d76a81",
+      "expectedHead": "565a3b9ad3cd9c65ba00d7117350dea7e1d76a81",
+      "branch": "VXG-111726-chatgpt-product-voice-input-family-circuit-a001",
+      "expectedRemoteUrl": null
+    }
+  ],
+  "authority": {
+    "authorityRef": "authority.vexlife-prod.voice-input-family-circuit-lived-mac.a002",
+    "authorityMode": "EXACT_STAGE_EFFECTS",
+    "grantedEffects": [
+      "CHECK_AUTH",
+      "READ_REPOSITORY",
+      "CHECK_STATE",
+      "RUN_LOCAL_COMMAND",
+      "QUERY_PROVIDER",
+      "FORM_RESULT"
+    ],
+    "conditionalEffects": [],
+    "consumedEffects": [],
+    "remainingEffects": [
+      "CHECK_AUTH",
+      "READ_REPOSITORY",
+      "CHECK_STATE",
+      "RUN_LOCAL_COMMAND",
+      "QUERY_PROVIDER",
+      "FORM_RESULT"
+    ],
+    "heldEffects": [
+      "WRITE_SOURCE",
+      "CREATE_COMMIT",
+      "PUSH_BRANCH",
+      "UPDATE_COORDINATION_METADATA",
+      "APPROVE_EXACT_HEAD",
+      "MARK_READY",
+      "ORDINARY_MERGE",
+      "POST_MERGE_VERIFY",
+      "MODEL_RUNTIME",
+      "HOME_MUTATION"
+    ],
+    "repositoryMembranes": [
+      {
+        "repositoryRef": "primary",
+        "allowedPaths": [
+          "build.gradle.kts",
+          "docs",
+          "localization",
+          "packaging",
+          "site",
+          "src",
+          "tools"
+        ]
+      }
+    ],
+    "allowedExecutables": [
+      "/bin/bash",
+      "git",
+      "gh",
+      "node"
+    ],
+    "allowedEnvironment": [],
+    "remoteObservationOwner": "Operations",
+    "allowMutationLoop": false,
+    "stopConditions": [
+      "STOP_ON_UNKNOWN",
+      "STOP_ON_AUTH_BLOCK",
+      "STOP_ON_BASE_OR_BRANCH_DRIFT",
+      "STOP_ON_TEST_FAILURE"
+    ]
+  },
+  "source": {
+    "sourceSetRef": "source-set.vexlife-prod.voice-input-family-circuit-lived-mac",
+    "sourceVersionRef": "565a3b9ad3cd9c65ba00d7117350dea7e1d76a81",
+    "overlapEvidenceRef": "github.pull.vexlife-prod.231",
+    "activeConflictState": "NONE",
+    "candidateState": "EXACT",
+    "candidateHead": "565a3b9ad3cd9c65ba00d7117350dea7e1d76a81",
+    "candidateTree": "e2780ab85e59517aa6f9c3435584f8bb70b15fd9",
+    "expectedChangedPaths": [
+      {
+        "repositoryRef": "primary",
+        "path": "docs/foundation/VEXLOGGER.md"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/voiceinput/VexLifeVoiceInputFamily.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonMain/kotlin/vexlife/web/VexLifeWebP1RuntimeArtifacts.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonTest/kotlin/vexlife/voiceinput/VexLifeVoiceInputFamilyTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/commonTest/kotlin/vexlife/web/VexLifeWebP1RuntimeArtifactsTest.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmMain/kotlin/vexlife/logging/VexLogger.kt"
+      },
+      {
+        "repositoryRef": "primary",
+        "path": "src/jvmTest/kotlin/vexlife/logging/VexLoggerTest.kt"
+      }
+    ],
+    "intentionallyUnchangedAuthorizedPaths": []
+  },
+  "policy": {
+    "maxOuterReturnFiles": 10,
+    "maxSelectedSourceEntries": 10,
+    "maxSelectedSourceBytes": 500000,
+    "maxDiffBytes": 5000000,
+    "requireRacePreflightBeforeMutation": false,
+    "requireLocalValidationBeforePublish": false,
+    "requireInputPackageManifest": true,
+    "signoffCommit": true,
+    "draftPullRequest": true
+  }
+}
