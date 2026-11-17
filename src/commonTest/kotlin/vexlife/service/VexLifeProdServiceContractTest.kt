@@ -6,6 +6,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.conversation.VexLifeConversationTurnFamily
 
 class VexLifeProdServiceContractTest {
     @Test
@@ -49,6 +50,14 @@ class VexLifeProdServiceContractTest {
         assertEquals(
             "/api/v1/conversation",
             VexLifeProdServiceContract.ConversationPath,
+        )
+        assertEquals(
+            "/api/v1/conversation/turn",
+            VexLifeProdServiceContract.ConversationTurnPath,
+        )
+        assertEquals(
+            "/api/v1/conversation/cancel",
+            VexLifeProdServiceContract.ConversationCancelPath,
         )
         assertEquals(
             "/api/v1/context",
@@ -202,6 +211,76 @@ class VexLifeProdServiceContractTest {
             )
         }
     }
+    @Test
+    fun conversationTurnWireProjectsFamilyMeaningWithoutOwningIt() {
+        val attempt =
+            VexLifeConversationTurnFamily.Attempt(
+                "send.vexlife.contract.001",
+            )
+        val state =
+            VexLifeConversationTurnFamily.Active(
+                attempt,
+            )
+        val projection =
+            VexLifeProdServiceContract.ConversationTurnProjection(
+                schemaVersion =
+                    VexLifeProdServiceContract.ConversationTurnProjectionSchema,
+                state = state.stateRef,
+                display =
+                    VexLifeConversationTurnFamily.displayStateFor(
+                        state,
+                    ),
+                effectsPerformed = false,
+            )
+
+        assertEquals(
+            VexLifeConversationTurnFamily.StateActive,
+            projection.state,
+        )
+        assertEquals(
+            VexLifeConversationTurnFamily.ControlStop,
+            projection.display.primaryControlRef,
+        )
+        assertEquals(
+            attempt.ref,
+            projection.display.targetAttemptRef,
+        )
+
+        val response =
+            VexLifeProdServiceContract.ConversationCancelResponse(
+                schemaVersion =
+                    VexLifeProdServiceContract.ConversationCancelResponseSchema,
+                controlRef =
+                    VexLifeConversationTurnFamily.ControlStop,
+                attemptRef = attempt.ref,
+                outcome =
+                    VexLifeProdServiceContract.ConversationControlOutcome.REALIZED,
+                turn =
+                    VexLifeProdServiceContract.ConversationTurnProjection(
+                        schemaVersion =
+                            VexLifeProdServiceContract.ConversationTurnProjectionSchema,
+                        state =
+                            VexLifeConversationTurnFamily.StateCancelling,
+                        display =
+                            VexLifeConversationTurnFamily.displayStateFor(
+                                VexLifeConversationTurnFamily.Cancelling(
+                                    attempt,
+                                ),
+                            ),
+                        effectsPerformed = false,
+                    ),
+                effectsPerformed = true,
+            )
+        assertEquals(
+            VexLifeConversationTurnFamily.StateCancelling,
+            response.turn.state,
+        )
+        assertEquals(
+            VexLifeProdServiceContract.ConversationControlOutcome.REALIZED,
+            response.outcome,
+        )
+    }
+
     @Test
     fun memoryDreamRunRequestRequiresExplicitBoundSourceFrontier() {
         val request =
