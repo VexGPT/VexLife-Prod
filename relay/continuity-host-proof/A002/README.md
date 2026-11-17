@@ -9,20 +9,32 @@ current Relay contract source-manages a bounded `formedAt -> expiresAt` executio
 repository artifact is therefore this exact digest-bound **formation bundle**, which forms a fresh
 canonical task on the Mac at execution time.
 
-## Bound VexLife-Prod candidate
+## Bound VexLife-Prod product-proof candidate
+
+The Relay bundle intentionally targets the immutable **pre-carriage product candidate** below. The
+later commit(s) that retain this bundle in PR #209 are carriage/history only and are not silently
+included in the source-owner claim.
 
 ```text
-PR #208 base/head
+proof base (#208)
 03aee62cdbe3c1e269d9e94e05b1bc06901e3a25
 
-PR #209 head
+product-proof candidate head
 f065b23e5db99245335c8955e5d51f365197662f
 
-PR #209 tree
+product-proof candidate tree
 41435b82f5e7574ee3e501170e11d3d280dacf5d
 
-PR #209 branch
+carrier branch
 VXG-111626-direct-continuity-host-proof-a001
+```
+
+Permanent distinction:
+
+```text
+PRODUCT PROOF CANDIDATE
+!=
+RELAY CARRIAGE COMMIT
 ```
 
 ## Formation source
