@@ -368,6 +368,25 @@ object HereticRuntimeRealization {
                 it.target == target
         }
 
+    fun supports(
+        modelRef: String,
+        target: Target,
+    ): Boolean =
+        resolve(
+            modelRef = modelRef,
+            target = target,
+        ) != null
+
+    fun modelsFor(
+        target: Target,
+    ): List<HereticModelCatalog.Entry> =
+        HereticModelCatalog.Entries.filter {
+            supports(
+                modelRef = it.modelRef,
+                target = target,
+            )
+        }
+
     fun require(
         modelRef: String,
         target: Target,
