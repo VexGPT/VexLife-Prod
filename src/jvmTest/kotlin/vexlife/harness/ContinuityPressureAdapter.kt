@@ -172,7 +172,7 @@ object ContinuityPressureAdapter {
 
     private val KnownRefTags = setOf("ANCHOR", "CORRECTION", "LESSON")
 
-    private val RouteInDetail = Regex("\\((PROMPT_RESIDENT|HYDRATED_THIS_TURN)\\)")
+    private val RouteInDetail = Regex("\\((PROMPT_RESIDENT|SOURCE_RETURN_THIS_TURN|HYDRATED_THIS_TURN)\\)")
 
     // ---------------------------------------------------------------- entry
 
@@ -897,6 +897,7 @@ object ContinuityPressureAdapter {
         return observed.map { o ->
             val receipt = o.result.promptContextReceipt
             val resident = receipt.selectedConversationEventRefs.toSet()
+            val sourceReturned = receipt.sourceReturnSourceEventRefs.toSet()
             val hydrated = o.revisitSourceRefs.toSet()
             val residency =
                 known
@@ -906,6 +907,7 @@ object ContinuityPressureAdapter {
                         val state =
                             when {
                                 refs.all { it in resident } -> "PROMPT_RESIDENT"
+                                refs.any { it in sourceReturned } -> "SOURCE_RETURN_THIS_TURN"
                                 refs.any { it in hydrated } -> "HYDRATED_THIS_TURN"
                                 else -> "OMITTED_BUDGET"
                             }
@@ -917,7 +919,14 @@ object ContinuityPressureAdapter {
                     }
             val assertions =
                 o.scenarioTurn.assertionRefs.map { ref ->
-                    assertion(ref, o, observed, resident, hydrated)
+                    assertion(
+                        ref,
+                        o,
+                        observed,
+                        resident,
+                        sourceReturned,
+                        hydrated,
+                    )
                 }
             val snapshot = receipt.capabilityFrameSnapshot
             val priorObserved = observed.lastOrNull { it.ordinal < o.ordinal }
@@ -1149,6 +1158,7 @@ object ContinuityPressureAdapter {
         o: Observed,
         observed: List<Observed>,
         resident: Set<String>,
+        sourceReturned: Set<String>,
         hydrated: Set<String>,
     ): JsonObject {
         val anchorRef = AssertionAnchors[ref]
@@ -1168,6 +1178,7 @@ object ContinuityPressureAdapter {
                         val how =
                             when {
                                 refs.all { it in resident } -> "PROMPT_RESIDENT"
+                                refs.any { it in sourceReturned } -> "SOURCE_RETURN_THIS_TURN"
                                 refs.any { it in hydrated } -> "HYDRATED_THIS_TURN"
                                 else -> null
                             }
