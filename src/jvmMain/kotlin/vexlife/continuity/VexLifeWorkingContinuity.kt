@@ -19,6 +19,9 @@ import vexlife.contract.VexContractJson
  * rightful owners.
  */
 object VexLifeWorkingContinuity {
+    /** Plan reason: the turn continues an active rollover lineage, so its cursor must advance. */
+    const val RolloverLineageActiveReason = "WORKING_ROLLOVER_LINEAGE_ACTIVE"
+
     const val PressureSchema =
         "vexlife-prod.resource-context-pressure/v1"
 
@@ -525,7 +528,7 @@ object VexLifeWorkingContinuity {
                 pressure.reasonCodes +
                     if (rolloverLineageActive) {
                         listOf(
-                            "WORKING_ROLLOVER_LINEAGE_ACTIVE",
+                            RolloverLineageActiveReason,
                         )
                     } else {
                         emptyList()
