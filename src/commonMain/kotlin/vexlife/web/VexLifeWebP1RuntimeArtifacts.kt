@@ -219,6 +219,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   unknown: ${jsString(VexLifeVoiceInputFamily.FailureReason.Unknown.reasonRef)}
                 }),
                 attentionOverlay: ${jsString(VexLifeVoiceInputFamily.Attention.Overlay.name)},
+                defaultLanguage: ${jsString(VexLifeVoiceInputFamily.DefaultLanguage.personLanguageCode)},
                 languages: Object.freeze($voiceLanguage),
                 displayByState: Object.freeze($voiceStateDisplays),
                 holdDisplayByReason: Object.freeze($voiceHoldDisplays),
@@ -433,7 +434,7 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const voiceInputLanguage = () => {
-                const code = state.settings?.replyLanguage ?? 'en';
+                const code = state.settings?.replyLanguage ?? voiceInput.defaultLanguage;
                 const locale = voiceInput.languages[code];
                 return locale ? { code, locale } : null;
               };
