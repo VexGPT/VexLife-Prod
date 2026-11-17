@@ -1,5 +1,6 @@
 package vexlife.continuity
 
+import kotlinx.serialization.Serializable
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
@@ -150,7 +151,32 @@ object VexLifeContextRevisit {
         /** Distinct turns and pages resolved: each once, however many routes reached it. */
         val resolvedNodeCount: Int,
         val matchRouteCount: Int,
+        /** Canonical Conversation events walked to project turns (the whole read snapshot). */
+        val conversationEventsRead: Int = 0,
+        /** Estimated tokens of [text], what this revisit put back in front of Vex. */
+        val returnedTokens: Int = 0,
+        /** Turns and pages whose words came back. */
+        val returnedNodeCount: Int = 0,
         val effectsPerformed: Boolean = false,
+    )
+
+    /**
+     * What one revisit cost the host, apart from what Vex saw: how many owner reads, how long they
+     * took, how much of each owner was walked, and how much came back. The model-visible cost is
+     * one capability call; this is the scan behind it, measured so an index is earned by evidence
+     * rather than added ahead of it.
+     */
+    @Serializable
+    data class HostScan(
+        val ownerReadCount: Int,
+        val ownerReadNanos: Long,
+        val conversationEventsRead: Int,
+        val turnsScanned: Int,
+        val memoryPagesScanned: Int,
+        val nodesResolved: Int,
+        val nodesReturned: Int,
+        val returnedTokens: Int,
+        val frontierSize: Int,
     )
 
     fun parse(arguments: JsonObject): Parsed {
@@ -555,6 +581,10 @@ object VexLifeContextRevisit {
             resolvedNodeCount = turnMatches.size + pageMatches.size,
             matchRouteCount =
                 turnMatches.values.sumOf { it.size } + pageMatches.values.sumOf { it.size },
+            conversationEventsRead =
+                if (conversationInScope) sources.conversation?.canonicalEvents?.size ?: 0 else 0,
+            returnedTokens = estimateTokens(text.trimEnd()),
+            returnedNodeCount = chosen.size + returnedPages.size,
         )
     }
 

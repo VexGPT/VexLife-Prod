@@ -122,6 +122,8 @@ object VexLifeCapabilityBridge {
          * from older traces and from reads that return no owner-addressed source.
          */
         @EncodeDefault(EncodeDefault.Mode.NEVER) val sourceRefs: List<String> = emptyList(),
+        /** Revisit only: the host scan behind this one model-visible call (VexLifeContextRevisit.HostScan). */
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val hostScan: VexLifeContextRevisit.HostScan? = null,
     )
 
     @Serializable
@@ -297,6 +299,7 @@ object VexLifeCapabilityBridge {
                 externalEffectsExecuted = false,
                 effectAuthorityGranted = false,
                 sourceRefs = if (state == body.state) body.sourceRefs else emptyList(),
+                hostScan = body.hostScan,
             )
         VexLogger.record(
             VexLogger.Fact.CapabilityResultReturned,
@@ -330,6 +333,7 @@ object VexLifeCapabilityBridge {
         val truncated: Boolean = false,
         val facts: Map<String, String> = emptyMap(),
         val sourceRefs: List<String> = emptyList(),
+        val hostScan: VexLifeContextRevisit.HostScan? = null,
     )
 
     private const val FormReminder =
@@ -729,10 +733,21 @@ object VexLifeCapabilityBridge {
             }
         val home = admission.productHome
         fun gap(error: Exception) = error.message ?: error.javaClass.simpleName
+        var ownerReads = 0
+        var ownerReadNanos = 0L
+        fun <T> timed(read: () -> T): T {
+            val started = System.nanoTime()
+            try {
+                return read()
+            } finally {
+                ownerReads += 1
+                ownerReadNanos += System.nanoTime() - started
+            }
+        }
         var conversationGap: String? = null
         val conversation =
             try {
-                owners.readConversation(home)
+                timed { owners.readConversation(home) }
             } catch (error: Exception) {
                 conversationGap = "could not be read now: " + gap(error)
                 null
@@ -742,7 +757,7 @@ object VexLifeCapabilityBridge {
             if (VexLifeContextRevisit.Scope.MEMORY !in request.scopes) null
             else
                 try {
-                    owners.readMemory(home)
+                    timed { owners.readMemory(home) }
                 } catch (error: Exception) {
                     memoryGap = "could not be read now: " + gap(error)
                     null
@@ -757,8 +772,7 @@ object VexLifeCapabilityBridge {
                     null
                 } else
                     try {
-                        owners
-                            .readWorkingContinuity(home, head.companionLineageRef, head.threadRef)
+                        timed { owners.readWorkingContinuity(home, head.companionLineageRef, head.threadRef) }
                             ?.let {
                                 VexLifeContextRevisit.WorkingDirectory(
                                     checkpointRef = it.checkpoint.checkpointRef,
@@ -813,6 +827,18 @@ object VexLifeCapabilityBridge {
                     "routes" to result.matchRouteCount.toString(),
                 ),
             sourceRefs = result.returnedSourceRefs,
+            hostScan =
+                VexLifeContextRevisit.HostScan(
+                    ownerReadCount = ownerReads,
+                    ownerReadNanos = ownerReadNanos,
+                    conversationEventsRead = result.conversationEventsRead,
+                    turnsScanned = result.scannedTurnCount,
+                    memoryPagesScanned = result.searchedMemoryPageCount,
+                    nodesResolved = result.resolvedNodeCount,
+                    nodesReturned = result.returnedNodeCount,
+                    returnedTokens = result.returnedTokens,
+                    frontierSize = result.frontierRefs.size,
+                ),
         )
     }
 

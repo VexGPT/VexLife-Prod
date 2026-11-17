@@ -1,0 +1,144 @@
+{
+  "schemaVersion": "vexlife.continuity-pressure-scenario/v1",
+  "scenarioRef": "scenario.vexlife.continuity-pressure.current-state-placement.v1",
+  "label": "Current mutable configuration placement and cache locality",
+  "purpose": "Prove that a current person setting changes as current state, does not masquerade as ancient context, and does not unnecessarily invalidate otherwise cacheable historical placement.",
+  "syntheticOnly": true,
+  "sets": [
+    {
+      "setRef": "set.history",
+      "kind": "FORMATION",
+      "turns": [
+        {
+          "turnRef": "history.01",
+          "input": "Synthetic anchor one. Reply only: h1.",
+          "tags": [
+            "HISTORY"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "history.02",
+          "input": "Synthetic anchor two. Reply only: h2.",
+          "tags": [
+            "HISTORY"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        },
+        {
+          "turnRef": "history.03",
+          "input": "Synthetic anchor three. Reply only: h3.",
+          "tags": [
+            "HISTORY"
+          ],
+          "expectedSignals": [],
+          "assertionRefs": []
+        }
+      ]
+    },
+    {
+      "setRef": "set.configuration",
+      "kind": "CONFIGURATION_SWAP",
+      "turns": [
+        {
+          "turnRef": "config.01",
+          "input": "State the reply-language setting you currently perceive, and state whether it is current now rather than something that has always been true in this synthetic conversation.",
+          "tags": [
+            "CONFIGURATION_SWAP",
+            "CURRENTNESS",
+            "CACHE_PLACEMENT"
+          ],
+          "beforeTurnControls": [
+            {
+              "controlClass": "PERSON_SETTING_UPDATE",
+              "key": "replyLanguage",
+              "value": "zh"
+            }
+          ],
+          "expectedSignals": [
+            "LATEST_CONFIGURATION_VISIBLE",
+            "NO_FALSE_HISTORICAL_REWRITE"
+          ],
+          "assertionRefs": [
+            "assert.reply-language-zh-current"
+          ]
+        },
+        {
+          "turnRef": "config.02",
+          "input": "Keep the prior historical anchors unchanged. State the reply-language setting you currently perceive.",
+          "tags": [
+            "CONFIGURATION_PERSISTENCE",
+            "CACHE_PLACEMENT"
+          ],
+          "expectedSignals": [
+            "LATEST_CONFIGURATION_VISIBLE",
+            "STABLE_HISTORY_PRESERVED"
+          ],
+          "assertionRefs": [
+            "assert.reply-language-zh-persists"
+          ]
+        },
+        {
+          "turnRef": "config.03",
+          "input": "State the reply-language setting you currently perceive, and do not describe the prior Chinese setting as if it were the original setting from the beginning.",
+          "tags": [
+            "CONFIGURATION_SWAP",
+            "CURRENTNESS",
+            "CACHE_PLACEMENT"
+          ],
+          "beforeTurnControls": [
+            {
+              "controlClass": "PERSON_SETTING_UPDATE",
+              "key": "replyLanguage",
+              "value": "en"
+            }
+          ],
+          "expectedSignals": [
+            "LATEST_CONFIGURATION_VISIBLE",
+            "NO_FALSE_HISTORICAL_REWRITE",
+            "STABLE_HISTORY_PRESERVED"
+          ],
+          "assertionRefs": [
+            "assert.reply-language-en-current"
+          ]
+        }
+      ]
+    },
+    {
+      "setRef": "set.probe",
+      "kind": "PROBE",
+      "turns": [
+        {
+          "turnRef": "probe.01",
+          "input": "Describe the configuration timeline in this synthetic run: what changed, and what remained historical. Answer only from experiment evidence.",
+          "tags": [
+            "CONFIGURATION_TIMELINE",
+            "CONTEXT_CUSTODY"
+          ],
+          "expectedSignals": [
+            "CONFIGURATION_CHANGE_ORDER_CORRECT"
+          ],
+          "assertionRefs": [
+            "assert.configuration-timeline"
+          ]
+        },
+        {
+          "turnRef": "probe.02",
+          "input": "Did a mutable current setting appear before cacheable historical context in the provider placement? Answer only if the experiment evidence exposes that distinction.",
+          "tags": [
+            "CACHE_PLACEMENT",
+            "HONEST_CUSTODY"
+          ],
+          "expectedSignals": [
+            "PLACEMENT_EVIDENCE"
+          ],
+          "assertionRefs": [
+            "assert.mutable-placement"
+          ]
+        }
+      ]
+    }
+  ]
+}
