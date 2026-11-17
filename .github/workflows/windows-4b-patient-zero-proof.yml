@@ -1,0 +1,75 @@
+name: windows-4b-patient-zero-proof
+
+on:
+  pull_request:
+    paths:
+      - 'src/commonMain/kotlin/vexlife/model/heretic/HereticRuntimeRealization.kt'
+      - 'src/commonMain/kotlin/vexlife/model/heretic/HereticModelConfiguration.kt'
+      - 'src/commonTest/kotlin/vexlife/model/heretic/HereticRuntimeRealizationTest.kt'
+      - 'src/jvmMain/kotlin/vexlife/platform/windows/**'
+      - 'src/jvmMain/kotlin/vexlife/service/VexLifeProdLocalService.kt'
+      - 'build.gradle.kts'
+      - '.github/workflows/windows-4b-patient-zero-proof.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-4b-patient-zero-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  proof:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Compile carrier and prove realization compatibility
+        shell: pwsh
+        run: |
+          .\gradlew.bat --no-daemon --max-workers=1 jvmTest --tests "vexlife.model.heretic.HereticRuntimeRealizationTest"
+
+      - name: Assemble temporary patient-zero bundle
+        shell: pwsh
+        run: |
+          .\gradlew.bat --no-daemon --max-workers=1 assembleWindows4BPatientZeroBundle
+          $bundle = Join-Path $PWD 'build\windows-4b-patient-zero\bundle'
+          if (-not (Test-Path -LiteralPath (Join-Path $bundle 'vexlife-prod.jar') -PathType Leaf)) { throw 'PATIENT_ZERO_JAR_MISSING' }
+          if (-not (Test-Path -LiteralPath (Join-Path $bundle 'main-class.txt') -PathType Leaf)) { throw 'PATIENT_ZERO_MAIN_CLASS_MISSING' }
+          $libs = @(Get-ChildItem -LiteralPath (Join-Path $bundle 'lib') -Filter '*.jar' -File)
+          if ($libs.Count -lt 1) { throw 'PATIENT_ZERO_RUNTIME_LIBS_MISSING' }
+          Write-Host ('bundle libs=' + $libs.Count)
+
+      - name: Zip exact bundle
+        shell: pwsh
+        run: |
+          $src = Join-Path $PWD 'build\windows-4b-patient-zero\bundle'
+          $out = Join-Path $env:RUNNER_TEMP 'VEXLIFE-WINDOWS-4B-PATIENT-ZERO-BUNDLE.zip'
+          if (Test-Path -LiteralPath $out) { Remove-Item -LiteralPath $out -Force }
+          Compress-Archive -Path (Join-Path $src '*') -DestinationPath $out -CompressionLevel Optimal
+          $sha = (Get-FileHash -LiteralPath $out -Algorithm SHA256).Hash.ToLowerInvariant()
+          $bytes = (Get-Item -LiteralPath $out).Length
+          @(
+            ('sourceSha=${{ github.event.pull_request.head.sha }}'),
+            ('bundleSha256=' + $sha),
+            ('bundleBytes=' + $bytes)
+          ) | Set-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'bundle-receipt.txt') -Encoding ASCII
+          Write-Host ('bundleSha256=' + $sha)
+          Write-Host ('bundleBytes=' + $bytes)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-4b-patient-zero-${{ github.event.pull_request.head.sha }}
+          path: |
+            ${{ runner.temp }}\VEXLIFE-WINDOWS-4B-PATIENT-ZERO-BUNDLE.zip
+            ${{ runner.temp }}\bundle-receipt.txt
+          if-no-files-found: error
+          retention-days: 7
