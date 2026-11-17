@@ -2385,6 +2385,14 @@
       "enHash": "99cbaa8ea1dd",
       "langs": []
     },
+    "workspace.button.voice-input-start": {
+      "enHash": "25590c362c88",
+      "langs": []
+    },
+    "workspace.button.voice-input-stop": {
+      "enHash": "39afe6b53fa2",
+      "langs": []
+    },
     "workspace.description.diagnostics": {
       "enHash": "7b79ef07573f",
       "langs": []
@@ -2543,6 +2551,62 @@
     },
     "workspace.status.reach-web-search": {
       "enHash": "28787e0d826f",
+      "langs": []
+    },
+    "workspace.status.voice-input-checking-language": {
+      "enHash": "3224b7a65120",
+      "langs": []
+    },
+    "workspace.status.voice-input-failed-language": {
+      "enHash": "7952c843037b",
+      "langs": []
+    },
+    "workspace.status.voice-input-failed-microphone": {
+      "enHash": "888c8d37d7f0",
+      "langs": []
+    },
+    "workspace.status.voice-input-failed-permission": {
+      "enHash": "8dc6daa7fbe4",
+      "langs": []
+    },
+    "workspace.status.voice-input-failed-recognition": {
+      "enHash": "df4291d405e1",
+      "langs": []
+    },
+    "workspace.status.voice-input-failed-unknown": {
+      "enHash": "f62083959db1",
+      "langs": []
+    },
+    "workspace.status.voice-input-held-audio-feedback": {
+      "enHash": "f83f5a6cbbaa",
+      "langs": []
+    },
+    "workspace.status.voice-input-held-local-recognition": {
+      "enHash": "0aa0a84cc17e",
+      "langs": []
+    },
+    "workspace.status.voice-input-held-microphone-api": {
+      "enHash": "8c52e2fe5da7",
+      "langs": []
+    },
+    "workspace.status.voice-input-installing-language": {
+      "enHash": "6865890d4ec7",
+      "langs": []
+    },
+    "workspace.status.voice-input-listening": {
+      "enHash": "d84853f85d41",
+      "langs": []
+    },
+    "workspace.status.voice-input-ready": {
+      "enHash": "45b1316add84",
+      "langs": []
+    },
+    "workspace.status.voice-input-requesting-microphone": {
+      "enHash": "30cf7830d0b0",
+      "langs": []
+    },
+    "workspace.status.voice-input-stopping": {
+      "enHash": "0f3cbf9561fc",
       "langs": []
     }
   }
