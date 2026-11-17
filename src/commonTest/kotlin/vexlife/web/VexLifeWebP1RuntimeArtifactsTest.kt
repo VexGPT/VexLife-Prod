@@ -402,6 +402,24 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains("speech.choosing = false;"))
         assertTrue(bundle.css.contains(".quick-actions[data-open=\"false\"] > .quick-action-item"))
         assertTrue(bundle.css.contains(".quick-action-trigger[aria-expanded=\"true\"]"))
+        assertTrue(bundle.html.contains("data-vex-ref=\"${VexLifeWebP1.VoiceInput.identity.ref}\""))
+        assertTrue(bundle.html.contains("id=\"voice-waveform\""))
+        assertTrue(bundle.javascript.contains("window.SpeechRecognition"))
+        assertTrue(bundle.javascript.contains("recognition.processLocally = true"))
+        assertTrue(bundle.javascript.contains("quality: 'dictation'"))
+        assertTrue(bundle.javascript.contains("recognition.start(track)"))
+        assertTrue(bundle.javascript.contains("navigator.mediaDevices.getUserMedia"))
+        assertTrue(bundle.javascript.contains("projectDictationIntoDraft"))
+        assertTrue(bundle.javascript.contains("ui.draft.value ="))
+        assertTrue(bundle.javascript.contains("if (dictation.desiredActive) void stopVoiceInput(true)"))
+        assertFalse(
+            bundle.javascript.contains("window.webkitSpeechRecognition"),
+            "VoiceInput must not fall back to the legacy/cloud-capable prefixed recognizer",
+        )
+        assertFalse(
+            bundle.javascript.contains("processLocally = false"),
+            "VoiceInput must not silently fall back to remote speech recognition",
+        )
         assertTrue(
             bundle.html.contains(
                 "Current resources",
