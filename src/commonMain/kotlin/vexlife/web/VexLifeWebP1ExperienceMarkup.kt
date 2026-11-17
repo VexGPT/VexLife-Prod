@@ -195,7 +195,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
             <label class="visually-hidden" for="draft">Message Vex</label>
             <textarea id="draft" rows="1" placeholder="Message Vex" enterkeyhint="send"></textarea>
             <div class="voice-input-shell">
-              <button class="voice-input" type="button" data-vex-ref="${VexLifeWebP1.VoiceInput.identity.ref}" id="voice-input" aria-pressed="false" aria-expanded="false" aria-label="Start local dictation" title="Start local dictation">
+              <button class="voice-input" type="button" data-vex-ref="${VexLifeWebP1.VoiceInput.identity.ref}" id="voice-input" aria-pressed="false" aria-expanded="false" aria-label="workspace.button.voice-input-start">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M6.5 10.5a5.5 5.5 0 0 0 11 0M12 16v4M9 20h6"/></svg>
               </button>
               <div class="voice-input-overlay" id="voice-input-overlay" hidden>
