@@ -278,6 +278,8 @@ object ContinuityPressureAdapter {
         modelPath: String,
         pythonPath: String,
         pythonEnvironmentRoot: String,
+        implementationIdentity: HereticPersistentRuntime.ImplementationIdentity =
+            HereticPersistentRuntime.currentImplementationIdentity(),
     ): HereticPersistentRuntime.Binding =
         HereticPersistentRuntime.Binding(
             schemaVersion = HereticPersistentRuntime.BindingSchema,
@@ -285,7 +287,7 @@ object ContinuityPressureAdapter {
             modelPath = modelPath,
             pythonPath = pythonPath,
             pythonEnvironmentRoot = pythonEnvironmentRoot,
-            implementationIdentity = HereticPersistentRuntime.currentImplementationIdentity(),
+            implementationIdentity = implementationIdentity,
             model = HereticModelCatalog.requireEntry(modelRef),
         )
 
@@ -369,6 +371,11 @@ object ContinuityPressureAdapter {
                             modelPath = receipt.modelPath,
                             pythonPath = receipt.pythonPath,
                             pythonEnvironmentRoot = receipt.pythonEnvironmentRoot,
+                            // This experiment borrows an already-owned runtime. Its lifecycle
+                            // implementation identity belongs to the receipt that formed it, not to
+                            // this newer harness candidate. The runtime owner still re-proves exact
+                            // receipt/process/substrate currentness below.
+                            implementationIdentity = receipt.implementationIdentity,
                         ),
                     store = store,
                     platform = platform,
