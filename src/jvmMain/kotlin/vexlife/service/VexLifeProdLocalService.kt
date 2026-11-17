@@ -9,7 +9,6 @@ import java.time.DateTimeException
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
@@ -33,6 +32,7 @@ import vexlife.companion.DirectPromptContext
 import vexlife.companion.DirectTurnContextStore
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
+import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.local.VexLifeProdSetupProgress
@@ -76,10 +76,17 @@ class VexLifeProdLocalService private constructor(
     private val modelSwitcher: VexLifeModels.Switcher?,
     privateCompletionOverride: VexLifePrivateConversation.Completion? = null,
 ) : AutoCloseable {
+    private data class ActiveTurn(
+        val attempt: VexLifeConversationTurnFamily.Attempt,
+        val cancellation: DirectCompanionCancellation,
+    )
+
     private val privateConversation = VexLifePrivateConversation(Path.of(startupSetup.productHome))
     private val personSettings = VexLifePersonSettingsStore(Path.of(startupSetup.productHome))
-    private val activeTurns =
-        ConcurrentHashMap<String, DirectCompanionCancellation>()
+    private val activeTurn =
+        AtomicReference<ActiveTurn?>(
+            null,
+        )
     private val diagnostics =
         VexLifeDiagnostics(home = Path.of(startupSetup.productHome), sourceSha = sourceSha).also {
             it.startObserving()
