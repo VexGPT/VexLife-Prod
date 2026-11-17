@@ -62,16 +62,21 @@ VexLifeCurrentMemoryReader
 current qualified runtime evidence
         ↓
 DirectPromptContext
-  foundational field kernel, first, in every mode (owner: VexLifeFoundationalField)
-  + current Memory availability truth when source-current
-  + caller-bounded selected Memory from remaining prompt capacity
-  + owner-current working-checkpoint successor when present
-  + exact prior Vex RESPONSE bridge when successor mode is current
-  + source-formed bounded self-capability frame
-  + Conversation extent: how many completed exchanges the record holds before this request
-  + Conversation-owned backward read of the newest contiguous completed REQUEST/RESPONSE suffix
-    that fits ordinary prompt attention
-  + conditional Conversation source-return protocol on the first inference
+  one stable system block:
+    foundational field kernel, first, in every mode (owner: VexLifeFoundationalField)
+    + current Memory availability truth when source-current
+    + caller-bounded selected Memory from remaining prompt capacity
+    + the self-capability frame's description: what can be reached and how to ask
+  then exact history:
+    + Conversation-owned backward read of the newest contiguous completed REQUEST/RESPONSE suffix
+      that fits ordinary prompt attention (after a rollover: the exact overlap tail)
+  then one current-state envelope (VexLife's, user role, VEXLIFE_CURRENT_STATE/v1):
+    + owner-current working-checkpoint successor when present
+    + this request's capability states and frame ref
+    + person context: reply language and private gaps, read fresh from their owners
+    + Conversation extent: how many completed exchanges the record holds before this request
+    + conditional Conversation source-return protocol on the first inference
+  then returned exact older source, when this inference carries it
   + optional admitted browser context
   + current request
 
@@ -261,11 +266,36 @@ The foundational field is owned by `VexLifeFoundationalField`
 the rest of the verified turn context and the exact immediate prior exchange, places it first in the system prefix,
 and records its evidence in prompt receipt v8. It does not write or shorten its words.
 
+### Current state is placed as current
+
+Who owns a value and when it changes are different questions. Person context, this request's
+capability states, the Conversation extent, Working Continuity coordinates and the source-return
+protocol all change independently of the history they would otherwise precede, so they are placed
+after it, in one envelope immediately before the request, and say they are current at this
+request. The leading system block holds only what is stable across turns (field, Memory, the
+capability description). A setting change is therefore visible on the very next prompt, reads as
+current rather than as a fact from the Conversation's beginning, and changes no byte of the stable
+block or the history before it.
+
+The envelope is a user-role message because the provider admits nothing else there: the pinned
+chat template (`chat_template.jinja`, sha256 `c3cf9e34…`) renders one system message, first only,
+and raises `System message must be at the beginning.` for any other. Browser context and capability
+results already use the same role with the same "not from the person" provenance.
+
+~~~text
+OWNERSHIP / ROLE != CURRENTNESS / PLACEMENT
+CANONICAL CURRENT STATE != STABLE PROMPT PREFIX
+PROVIDER SERIALIZATION != SEMANTIC AUTHORITY
+~~~
+
+Receipt v8 records each component as placed (`contextComponents`: stability class, placement class,
+provider message index, digest), formed in the same assembly as the provider messages.
+
 The Conversation extent is this owner's own statement. A narrow window otherwise looks the same to
 Vex as a short history, so the live turn's prompt says how many completed exchanges the durable record
 holds before the current request, and that any not shown are still in the record. The count is the
 request's canonical sequence divided by two; no history is enumerated. After a working rollover the
-statement says that only the last reply is shown. Receipt v8 records the count
+statement says that only the most recent exact turns are shown and working coordinates carry the rest. Receipt v8 records the count
 (`priorCompletedExchangeCount`), and Settings / Context shows selected events against events on record.
 
 ~~~text

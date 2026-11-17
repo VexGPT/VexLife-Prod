@@ -1216,11 +1216,19 @@ class DirectCompanionTurnTest {
                 "WORKING_CHECKPOINT_SUCCESSOR",
                 second.promptContextReceipt.contextMode,
             )
-            assertTrue(
-                second.promptContextReceipt.selectedConversationEventRefs.isEmpty(),
+            // The producer exchange fills most of the prompt, so not even one whole exchange fits
+            // the overlap tail: only Vex's prior reply is kept, and the receipt says so.
+            assertEquals(
+                listOf(first.responseEventRef),
+                second.promptContextReceipt.selectedConversationEventRefs,
             )
-            assertTrue(
-                second.promptContextReceipt.selectedConversationEventSha256.isEmpty(),
+            assertEquals(
+                DirectContinuityOverlapTail.FloorState.DEGRADED_ROOM,
+                second.promptContextReceipt.overlapTail?.floorState,
+            )
+            assertEquals(
+                true,
+                second.promptContextReceipt.overlapTail?.responseBridgeOnly,
             )
             assertEquals(
                 first.responseEventRef,
@@ -1588,8 +1596,13 @@ class DirectCompanionTurnTest {
                 "WORKING_CHECKPOINT_SUCCESSOR",
                 recovered.promptContextReceipt.contextMode,
             )
-            assertTrue(
-                recovered.promptContextReceipt.selectedConversationEventRefs.isEmpty(),
+            assertEquals(
+                listOf(first.responseEventRef),
+                recovered.promptContextReceipt.selectedConversationEventRefs,
+            )
+            assertEquals(
+                true,
+                recovered.promptContextReceipt.overlapTail?.responseBridgeOnly,
             )
             assertEquals(
                 first.responseEventRef,

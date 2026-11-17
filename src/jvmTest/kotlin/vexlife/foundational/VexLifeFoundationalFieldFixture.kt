@@ -13,8 +13,14 @@ object VexLifeFoundationalFieldFixture {
         get() =
             VexLifeFoundationalField.project(shipped, VexLifeFoundationalField.KernelTokenBudget)
 
+    /** A version later than the shipped one, so a test revision never collides with a real one. */
+    fun nextVersion(): String {
+        val (major, minor) = shipped.body.version.split('.').map(String::toInt)
+        return "$major.${minor + 1}.0"
+    }
+
     /** A later recorded revision whose first module says one more sentence. */
-    fun revised(version: String = "0.6.0"): Reading.Current {
+    fun revised(version: String = nextVersion()): Reading.Current {
         val body = shipped.body
         val first = body.modules.first()
         val changed =
