@@ -109,7 +109,7 @@ class DirectPromptCurrentStateTest {
 
     private fun DirectPromptContext.Materialization.historyIndex() =
         receipt.contextComponents
-            .single { it.componentRef == DirectPromptContext.ComponentRefs.ConversationHistory }
+            .single { it.componentRef == DirectPromptContext.Components.Prompt.History.Conversation.ref }
             .providerMessageIndex
 
     @Test
@@ -238,15 +238,15 @@ class DirectPromptCurrentStateTest {
 
             val envelopeComponent =
                 materialized.receipt.contextComponents.single {
-                    it.componentRef == DirectPromptContext.ComponentRefs.CurrentStateEnvelope
+                    it.componentRef == DirectPromptContext.Components.Prompt.Current.ref
                 }
             val personComponent =
                 materialized.receipt.contextComponents.single {
-                    it.componentRef == DirectPromptContext.ComponentRefs.PersonContext
+                    it.componentRef == DirectPromptContext.Components.Prompt.Current.PersonContext.ref
                 }
             val browserComponent =
                 materialized.receipt.contextComponents.single {
-                    it.componentRef == DirectPromptContext.ComponentRefs.BrowserContext
+                    it.componentRef == DirectPromptContext.Components.Prompt.Live.BrowserContext.ref
                 }
             assertEquals(
                 envelopeComponent.providerMessageIndex,
