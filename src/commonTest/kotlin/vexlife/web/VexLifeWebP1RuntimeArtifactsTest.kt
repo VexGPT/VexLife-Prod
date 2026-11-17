@@ -445,7 +445,13 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(bundle.javascript.contains("window.SpeechRecognition"))
         assertTrue(bundle.javascript.contains("recognition.processLocally = true"))
-        assertTrue(bundle.javascript.contains("quality: 'dictation'"))
+        assertTrue(bundle.javascript.contains("Recognition.available(options)"))
+        assertTrue(bundle.javascript.contains("Recognition.install(options)"))
+        assertTrue(bundle.javascript.contains("processLocally: true"))
+        assertFalse(
+            bundle.javascript.contains("quality: 'dictation'"),
+            "VoiceInput must not require Chrome's optional higher dictation-quality model tier",
+        )
         assertTrue(bundle.javascript.contains("recognition.start(track)"))
         assertTrue(bundle.javascript.contains("navigator.mediaDevices.getUserMedia"))
         assertTrue(bundle.javascript.contains("projectDictationIntoDraft"))
