@@ -51,7 +51,7 @@ object ContinuityHostRuntimePrecondition {
             modelConfiguration.read(home.manifest)
                 as? FileHereticModelConfigurationStore.Snapshot.Heretic
                 ?: error("selected Vex Home has no Product runtime model selection")
-        val targetModel = HereticModelCatalog.Models.Qwen4B
+        val targetModel = HereticModelCatalog.Candidate4B
         val selection =
             modelConfiguration.selectModel(
                 manifest = home.manifest,
