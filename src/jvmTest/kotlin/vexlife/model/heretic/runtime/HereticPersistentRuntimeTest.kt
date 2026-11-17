@@ -57,6 +57,7 @@ class HereticPersistentRuntimeTest {
         var clock = 0L
         var retireCalls = 0
         var provisionalRetireCalls = 0
+        val processIdentityArgs = mutableListOf<List<String>>()
 
         override fun environmentCurrent(binding: HereticPersistentRuntime.Binding): Boolean {
             trace += "ENVIRONMENT_CURRENT"
@@ -73,6 +74,7 @@ class HereticPersistentRuntimeTest {
             args: List<String>,
         ): HereticPersistentRuntime.ProcessIdentity? {
             trace += "PROCESS_IDENTITY_$pid"
+            processIdentityArgs += args
             if (!identityAvailable) return null
             return HereticPersistentRuntime.ProcessIdentity(
                 pid = pid,
@@ -235,6 +237,7 @@ class HereticPersistentRuntimeTest {
         state: HereticRuntimeState = HereticRuntimeState.Qualified,
         implementationSha: String = binding.implementationIdentity.classSha256,
         pid: Long = 4242L,
+        runtimeArgs: List<String> = HereticPersistentRuntime.serverArgs(binding),
     ): HereticPersistentRuntime.Receipt =
         HereticPersistentRuntime.Receipt(
             schemaVersion = HereticPersistentRuntime.ReceiptSchema,
@@ -264,7 +267,7 @@ class HereticPersistentRuntimeTest {
                 pid = pid,
                 processGroupId = pid,
                 exactOwnedDetachedGroup = true,
-                args = HereticPersistentRuntime.serverArgs(binding),
+                args = runtimeArgs,
                 processSubstrate = substrate(pid),
             ),
             effects = HereticRuntimeEffectBoundary.QualifiedRuntime,
@@ -704,6 +707,123 @@ class HereticPersistentRuntimeTest {
         assertTrue(trace.contains("STORE_DELETE"))
     }
 
+    @Test
+    fun exactOwnedPrePromptCacheRuntimeRotatesIntoCurrentLaunchContract() {
+        val trace = mutableListOf<String>()
+        val current = binding()
+        val currentArgs = HereticPersistentRuntime.serverArgs(current)
+        val predecessorArgs = currentArgs.dropLast(2)
+        assertFalse("--prompt-cache-size" in predecessorArgs)
+
+        val staleSha =
+            if (current.implementationIdentity.classSha256 == "a".repeat(64)) {
+                "b".repeat(64)
+            } else {
+                "a".repeat(64)
+            }
+        val prior =
+            receipt(
+                binding = current,
+                implementationSha = staleSha,
+                runtimeArgs = predecessorArgs,
+            )
+        val store = Store(prior, trace)
+        val platform = Platform(trace).also { it.alivePids += prior.runtime.pid }
+
+        val result = HereticPersistentRuntime.startOrReuse(current, store, platform)
+
+        assertEquals(
+            "ROTATED_STALE_IMPLEMENTATION_AND_STARTED_NEW_EXACT_MLX_RUNTIME",
+            result.disposition,
+        )
+        assertTrue(trace.indexOf("RETIRE_Qualified") < trace.indexOf("SPAWN"))
+        assertTrue(predecessorArgs in platform.processIdentityArgs)
+        assertTrue(currentArgs in platform.processIdentityArgs)
+        assertEquals(currentArgs, result.receipt.runtime.args)
+        assertTrue(trace.contains("STORE_DELETE"))
+    }
+
+    @Test
+    fun exactOwnedRuntimeForNoLongerOfferedModelRetiresWithoutRequiringThatModel() {
+        val trace = mutableListOf<String>()
+        val current = binding()
+        val obsoleteModelPath = "/tmp/vexlife-prod-test/models/heretic/obsolete-gpt-oss"
+        val obsoleteArgs =
+            HereticPersistentRuntime
+                .serverArgs(
+                    current,
+                )
+                .map {
+                    if (
+                        it ==
+                            current.modelPath
+                    ) {
+                        obsoleteModelPath
+                    } else {
+                        it
+                    }
+                }
+        val prior =
+            receipt(
+                binding = current,
+                runtimeArgs = obsoleteArgs,
+            )
+                .copy(
+                    modelRef = "model.vexlife-prod.experimental.gpt-oss.removed",
+                    modelProfileRef = "model-profile.vexlife-prod.experimental.gpt-oss.removed",
+                    artifactRef = "artifact.vexlife-prod.experimental.gpt-oss.removed",
+                    artifactCustodyEvidenceRef =
+                        "resolution.vexlife-prod.experimental.gpt-oss.removed",
+                    artifactContentSetSha256 = "b".repeat(64),
+                    modelPath = obsoleteModelPath,
+                    trainerSourceCommit = "c".repeat(40),
+                )
+        val store = Store(prior, trace)
+        val platform = Platform(trace).also { it.alivePids += prior.runtime.pid }
+
+        val result =
+            HereticPersistentRuntime.startOrReuse(
+                current,
+                store,
+                platform,
+            )
+
+        assertEquals(
+            "SWITCHED_MODEL_AND_STARTED_NEW_EXACT_MLX_RUNTIME",
+            result.disposition,
+        )
+        assertTrue(trace.indexOf("RETIRE_Qualified") < trace.indexOf("SPAWN"))
+        assertTrue(obsoleteArgs in platform.processIdentityArgs)
+        assertTrue(HereticPersistentRuntime.serverArgs(current) in platform.processIdentityArgs)
+        assertTrue(trace.contains("STORE_DELETE"))
+        assertEquals(1, platform.retireCalls)
+        assertEquals(current.model.modelRef, result.receipt.modelRef)
+    }
+
+    @Test
+    fun arbitraryPriorRuntimeArgsNeverAuthorizeRetirement() {
+        val trace = mutableListOf<String>()
+        val current = binding()
+        val prior =
+            receipt(
+                binding = current,
+                implementationSha = "a".repeat(64),
+                runtimeArgs = listOf("-m", "mlx_lm.server", "--unexpected-runtime-contract"),
+            )
+        val store = Store(prior, trace)
+        val platform = Platform(trace).also { it.alivePids += prior.runtime.pid }
+
+        val error =
+            assertFailsWith<IllegalStateException> {
+                HereticPersistentRuntime.startOrReuse(current, store, platform)
+            }
+
+        assertTrue(error.message?.contains("does not match the current binding") == true)
+        assertEquals(0, platform.retireCalls)
+        assertFalse(trace.contains("STORE_DELETE"))
+        assertFalse(trace.contains("SPAWN"))
+    }
+
     private fun bindingFor(model: vexlife.model.heretic.HereticModelCatalog.Entry): HereticPersistentRuntime.Binding =
         HereticPersistentRuntime.bind(
             authorityRef = "authority.vexlife-prod.heretic-runtime.test",
@@ -734,10 +854,29 @@ class HereticPersistentRuntimeTest {
         )
 
     @Test
+    fun serverKeepsOnlyTheNewestWarmPromptCache() {
+        val args = HereticPersistentRuntime.serverArgs(binding())
+
+        val cacheFlag = args.indexOf("--prompt-cache-size")
+        assertTrue(cacheFlag >= 0)
+        assertEquals(
+            HereticPersistentRuntime.PromptCacheSequences.toString(),
+            args[cacheFlag + 1],
+        )
+        assertEquals(1, HereticPersistentRuntime.PromptCacheSequences)
+
+        // This first safety step is deliberately narrow. Do not silently claim active-KV or
+        // prefill tuning that has not yet been earned by one-cache lived stress evidence.
+        assertFalse("--prompt-cache-bytes" in args)
+        assertFalse("--kv-bits" in args)
+        assertFalse("--prefill-step-size" in args)
+    }
+
+    @Test
     fun aBindingNamesTheCatalogModelItsFilesAre() {
-        val nine = bindingFor(vexlife.model.heretic.HereticModelCatalog.Candidate9B)
-        assertEquals(vexlife.model.heretic.HereticModelCatalog.Candidate9B.modelRef, nine.model.modelRef)
-        assertEquals(vexlife.model.heretic.HereticModelCatalog.Certified27B.modelRef, binding().model.modelRef)
+        val nine = bindingFor(vexlife.model.heretic.HereticModelCatalog.Models.Qwen9B)
+        assertEquals(vexlife.model.heretic.HereticModelCatalog.Models.Qwen9B.modelRef, nine.model.modelRef)
+        assertEquals(vexlife.model.heretic.HereticModelCatalog.Models.Qwen27B.modelRef, binding().model.modelRef)
         assertTrue(HereticPersistentRuntime.serverArgs(nine).contains("/tmp/vexlife-prod-test/heretic-9b"))
     }
 
@@ -747,19 +886,19 @@ class HereticPersistentRuntimeTest {
         val prior = receipt(binding())
         val store = Store(prior, trace)
         val platform = Platform(trace).also { it.alivePids += prior.runtime.pid }
-        val nine = bindingFor(vexlife.model.heretic.HereticModelCatalog.Candidate9B)
+        val nine = bindingFor(vexlife.model.heretic.HereticModelCatalog.Models.Qwen9B)
 
         val result = HereticPersistentRuntime.startOrReuse(nine, store, platform)
 
         assertEquals("SWITCHED_MODEL_AND_STARTED_NEW_EXACT_MLX_RUNTIME", result.disposition)
         assertTrue(trace.indexOf("RETIRE_Qualified") < trace.indexOf("SPAWN"))
-        assertEquals(vexlife.model.heretic.HereticModelCatalog.Candidate9B.modelRef, result.receipt.modelRef)
+        assertEquals(vexlife.model.heretic.HereticModelCatalog.Models.Qwen9B.modelRef, result.receipt.modelRef)
         assertEquals(
-            vexlife.model.heretic.HereticModelCatalog.Candidate9B.identity.artifactContentSetSha256,
+            vexlife.model.heretic.HereticModelCatalog.Models.Qwen9B.identity.artifactContentSetSha256,
             result.receipt.artifactContentSetSha256,
         )
         assertEquals(
-            vexlife.model.heretic.HereticModelCatalog.Candidate9B.modelRef,
+            vexlife.model.heretic.HereticModelCatalog.Models.Qwen9B.modelRef,
             HereticPersistentRuntime.configurationEvidence(nine, result.receipt).modelRef,
         )
     }
@@ -772,7 +911,7 @@ class HereticPersistentRuntimeTest {
         val platform = Platform(trace).also { it.alivePids += foreign.runtime.pid }
 
         assertFailsWith<IllegalStateException> {
-            HereticPersistentRuntime.startOrReuse(bindingFor(vexlife.model.heretic.HereticModelCatalog.Candidate4B), store, platform)
+            HereticPersistentRuntime.startOrReuse(bindingFor(vexlife.model.heretic.HereticModelCatalog.Models.Qwen4B), store, platform)
         }
         assertEquals(0, platform.retireCalls)
         assertFalse(trace.contains("SPAWN"))

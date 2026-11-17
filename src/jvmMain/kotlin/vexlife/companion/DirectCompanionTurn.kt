@@ -10,14 +10,18 @@ import vexlife.logging.VexLogger
 import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
 import vexlife.conversation.DirectConversationIdentity
+import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
+import vexlife.capability.VexLifeReachDefinitions
 import vexlife.conversation.DirectConversationStore
 import vexlife.filesystem.VexOwnedPath
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.memory.VexLifeMemoryContract
+import vexlife.model.heretic.HereticCompanionProvider
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 
 /**
@@ -181,6 +185,19 @@ object DirectCompanionTurn {
         IllegalStateException(
             "Vex requested a capability again after this turn's requests were used up",
         )
+
+    private class CapabilityProviderBridgeHeldException :
+        IllegalStateException(
+            "the selected model's capability provider bridge is not qualified",
+        )
+
+    private enum class CapabilityRequestAdmission(
+        val logValue: String,
+    ) {
+        ADMITTED("admitted"),
+        EXHAUSTED("exhausted"),
+        HELD_PROVIDER_BRIDGE("held_provider_bridge"),
+    }
 
     private enum class SourceReturnProgressMode {
         Pending,
@@ -774,6 +791,18 @@ object DirectCompanionTurn {
             hooks.currentRuntimeEvidence(
                 setup,
             )
+        val companionProfile =
+            HereticModelCatalog
+                .requireEntry(
+                    initialRuntimeEvidence.modelRef,
+                )
+                .companionProfile
+        val capabilityRequestsAdmitted =
+            companionProfile.capabilityStanding in
+                setOf(
+                    HereticCompanionProvider.CapabilityStanding.QUALIFIED,
+                    HereticCompanionProvider.CapabilityStanding.QUALIFYING,
+                )
         val initialPrior =
             conversationOwner.immediatePriorCompletedTurn()
         DirectWorkingContinuity.requireSuccessorContextCurrent(
@@ -812,6 +841,7 @@ object DirectCompanionTurn {
                 runtimeEvidence = initialRuntimeEvidence,
                 sourceReturnProtocolEnabled = true,
                 foundationalField = hooks.currentFoundationalField(),
+                capabilityRequestsAdmitted = capabilityRequestsAdmitted,
             )
         val initialWorkingContinuity =
             DirectWorkingContinuity.prepare(
@@ -853,6 +883,7 @@ object DirectCompanionTurn {
             runtimeEvidence = initialRuntimeEvidence,
             sourceReturnProtocolEnabled = true,
             foundationalField = hooks.currentFoundationalField(),
+            capabilityRequestsAdmitted = capabilityRequestsAdmitted,
         )
         // One human turn may take several provider stages: capability requests (bounded by the
         // bridge) and at most one Conversation source return. All stages share one runtime binding,
@@ -886,7 +917,32 @@ object DirectCompanionTurn {
                     messages = base.materialization.messages + exchangeMessages(),
                     hooks = hooks,
                     sourceReturnRequestAllowed = sourceReturnTrace == null,
-                    capabilityRequestsAllowed = exchanges.size <= VexLifeCapabilityBridge.MaximumRequestsPerTurn,
+                    capabilityRequestAdmission =
+                        when {
+                            !capabilityRequestsAdmitted ->
+                                CapabilityRequestAdmission.HELD_PROVIDER_BRIDGE
+
+                            exchanges.size <=
+                                VexLifeCapabilityBridge.MaximumRequestsPerTurn ->
+                                CapabilityRequestAdmission.ADMITTED
+
+                            else ->
+                                CapabilityRequestAdmission.EXHAUSTED
+                        },
+                    capabilityOffer =
+                        if (
+                            capabilityRequestsAdmitted &&
+                            exchanges.size <=
+                                VexLifeCapabilityBridge.MaximumRequestsPerTurn
+                        ) {
+                            offeredCapabilities(
+                                base.materialization.receipt.capabilityFrameSnapshot
+                                    ?.availableCapabilityRefs
+                                    .orEmpty(),
+                            )
+                        } else {
+                            emptyList()
+                        },
                 )
 
             val capabilityRequest = stage.capabilityRequest
@@ -937,6 +993,7 @@ object DirectCompanionTurn {
                     sourceReturnProtocolEnabled = baseSourceReturnProtocolEnabled,
                     sourceReturnDiscovery = baseDiscovery,
                     foundationalField = hooks.currentFoundationalField(),
+                    capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 )
                 continue
             }
@@ -1018,6 +1075,7 @@ object DirectCompanionTurn {
                     sourceReturnProtocolEnabled = false,
                     sourceReturnDiscovery = discovery,
                     foundationalField = hooks.currentFoundationalField(),
+                    capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 )
             // Source return adds exact older Conversation; it must not change the ground Vex was given
             // when it asked for it.
@@ -1233,12 +1291,47 @@ object DirectCompanionTurn {
         )
     }
 
+    /**
+     * Provider-native tools are a projection of the same current Capability Frame. This helper
+     * creates no capability meaning and grants no effect authority.
+     */
+    private fun offeredCapabilities(
+        availableCapabilityRefs: List<String>,
+    ): List<VexLifeCapabilityAtlas.Definition> =
+        VexLifeReachDefinitions.EnvelopeCapabilityRefs
+            .filter {
+                it in availableCapabilityRefs
+            }
+            .mapNotNull {
+                VexLifeCapabilityAtlas.resolve(
+                    it,
+                )
+            }
+            .filter {
+                it.actions.isNotEmpty()
+            }
+
+    /** Provider-stage diagnostics only: counts/timing/enums, never provider text. */
+    private fun recordProviderStage(
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        measurement: DirectCompanionConnection.StageMeasurement,
+    ) {
+        VexLogger.record(
+            VexLogger.Fact.ProviderStageObserved,
+            mapOf(
+                "runtimeReceiptRef" to runtimeEvidence.runtimeReceiptRef,
+            ) +
+                measurement.refs(),
+        )
+    }
+
     private fun invokeProviderStage(
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
         messages: List<CompanionProviderMessage>,
         hooks: Hooks,
         sourceReturnRequestAllowed: Boolean,
-        capabilityRequestsAllowed: Boolean,
+        capabilityRequestAdmission: CapabilityRequestAdmission,
+        capabilityOffer: List<VexLifeCapabilityAtlas.Definition>,
     ): ProviderStage {
         val progressGate =
             SourceReturnProgressGate(
@@ -1251,20 +1344,38 @@ object DirectCompanionTurn {
             mapOf(
                 "runtimeReceiptRef" to runtimeEvidence.runtimeReceiptRef,
                 "stage" to if (sourceReturnRequestAllowed) "initial" else "final",
-                "capabilityRequests" to if (capabilityRequestsAllowed) "admitted" else "exhausted",
+                "capabilityRequests" to capabilityRequestAdmission.logValue,
                 "messageCount" to messages.size.toString(),
                 "approxChars" to messages.sumOf { it.content.length }.toString(),
             ),
         )
         val inference =
-            DirectCompanionConnection.invoke(
-                runtime = runtimeEvidence,
-                messages = messages,
-                transport = hooks.transport,
-                progressObserver =
-                    progressGate.connectionObserver(),
-                now = hooks.now,
-            )
+            try {
+                DirectCompanionConnection.invoke(
+                    runtime = runtimeEvidence,
+                    messages = messages,
+                    transport = hooks.transport,
+                    progressObserver =
+                        progressGate.connectionObserver(),
+                    now = hooks.now,
+                    capabilityOffer = capabilityOffer,
+                )
+            } catch (
+                failure: DirectCompanionConnection.ConnectionException,
+            ) {
+                failure.measurement
+                    ?.let {
+                        recordProviderStage(
+                            runtimeEvidence = runtimeEvidence,
+                            measurement = it,
+                        )
+                    }
+                throw failure
+            }
+        recordProviderStage(
+            runtimeEvidence = runtimeEvidence,
+            measurement = inference.measurement,
+        )
         val controlLike =
             progressGate.finish(
                 inference.content,
@@ -1286,8 +1397,22 @@ object DirectCompanionTurn {
         ) {
             "provider output resembles an incomplete Conversation source-return control request"
         }
-        if (capabilityRequest != null && !capabilityRequestsAllowed) {
-            throw CapabilityRequestLimitException()
+        if (
+            capabilityRequest !=
+                null
+        ) {
+            when (
+                capabilityRequestAdmission
+            ) {
+                CapabilityRequestAdmission.ADMITTED ->
+                    Unit
+
+                CapabilityRequestAdmission.EXHAUSTED ->
+                    throw CapabilityRequestLimitException()
+
+                CapabilityRequestAdmission.HELD_PROVIDER_BRIDGE ->
+                    throw CapabilityProviderBridgeHeldException()
+            }
         }
         if (
             !sourceReturnRequestAllowed &&
@@ -1826,6 +1951,9 @@ object DirectCompanionTurn {
 
             is RepeatedSourceReturnRequestException ->
                 "SOURCE_RETURN_RECURSION_NOT_ADMITTED"
+
+            is CapabilityProviderBridgeHeldException ->
+                "CAPABILITY_PROVIDER_BRIDGE_HELD"
 
             is IllegalArgumentException ->
                 "ADMISSION_FAILED"

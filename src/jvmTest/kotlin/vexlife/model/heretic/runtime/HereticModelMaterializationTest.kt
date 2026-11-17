@@ -35,7 +35,7 @@ class HereticModelMaterializationTest {
 
     @Test
     fun presenceIsObservedInTheChosenModelsOwnFolder() = withHome { home ->
-        val nine = HereticModelCatalog.Candidate9B
+        val nine = HereticModelCatalog.Models.Qwen9B
         val folder = home.resolve(nine.modelRootRelativePath).resolve(nine.providerRevision)
         Files.createDirectories(folder)
         val small = nine.members.first { it.filename == "config.json" }
@@ -45,15 +45,15 @@ class HereticModelMaterializationTest {
         assertEquals(small.expectedBytes, presence.presentBySizeBytes)
         assertEquals(
             "ABSENT",
-            HereticArtifactMaterialization.observePresence(home, HereticModelCatalog.Candidate4B)
+            HereticArtifactMaterialization.observePresence(home, HereticModelCatalog.Models.Qwen4B)
                 .state,
         )
     }
 
     @Test
     fun removingAModelFreesOnlyItsOwnFiles() = withHome { home ->
-        val four = HereticModelCatalog.Candidate4B
-        val nine = HereticModelCatalog.Candidate9B
+        val four = HereticModelCatalog.Models.Qwen4B
+        val nine = HereticModelCatalog.Models.Qwen9B
         val fourFolder = home.resolve(four.modelRootRelativePath).resolve(four.providerRevision)
         val nineFolder = home.resolve(nine.modelRootRelativePath).resolve(nine.providerRevision)
         Files.createDirectories(fourFolder)
@@ -76,7 +76,7 @@ class HereticModelMaterializationTest {
         assertTrue(Files.exists(nineFolder.resolve("config.json")), "another model is untouched")
         assertEquals(
             "ALREADY_ABSENT",
-            HereticArtifactMaterialization.remove(home, HereticModelCatalog.Certified27B).state,
+            HereticArtifactMaterialization.remove(home, HereticModelCatalog.Models.Qwen27B).state,
         )
     }
 }

@@ -11,7 +11,9 @@ class VexLifeModelsFamilyTest {
         chosen: Boolean = false,
         serving: Boolean = false,
         downloading: Boolean = false,
+        switching: Boolean = false,
         anyDownloadRunning: Boolean = downloading,
+        anySwitchRunning: Boolean = switching,
     ) =
         VexLifeModelsFamily.State(
             "heretic-9b",
@@ -19,7 +21,9 @@ class VexLifeModelsFamilyTest {
             downloading,
             chosen,
             serving,
+            switching,
             anyDownloadRunning,
+            anySwitchRunning,
         )
 
     private fun controls(state: VexLifeModelsFamily.State) =
@@ -42,7 +46,7 @@ class VexLifeModelsFamilyTest {
     }
 
     @Test
-    fun aPresentModelCanBeUsedOrRemovedUnlessItIsChosenOrServing() {
+    fun aPresentModelCanBeUsedUntilChosenAndServingAreBothCurrent() {
         assertEquals(
             listOf(VexLifeModelsFamily.ControlUse, VexLifeModelsFamily.ControlRemove),
             controls(state(VexLifeModelsFamily.Files.PRESENT)),
@@ -50,6 +54,14 @@ class VexLifeModelsFamilyTest {
         assertEquals(
             emptyList(),
             controls(state(VexLifeModelsFamily.Files.PRESENT, chosen = true, serving = true)),
+        )
+        assertEquals(
+            listOf(VexLifeModelsFamily.ControlUse),
+            controls(state(VexLifeModelsFamily.Files.PRESENT, serving = true)),
+        )
+        assertEquals(
+            listOf(VexLifeModelsFamily.ControlUse),
+            controls(state(VexLifeModelsFamily.Files.PRESENT, chosen = true)),
         )
         assertNull(
             VexLifeModelsFamily.resolve(
@@ -62,6 +74,13 @@ class VexLifeModelsFamilyTest {
                 state(VexLifeModelsFamily.Files.PRESENT, chosen = true),
                 VexLifeModelsFamily.Remove,
             )
+        )
+        assertEquals(
+            VexLifeModelsFamily.Effect.SwitchModel,
+            VexLifeModelsFamily.resolve(
+                state(VexLifeModelsFamily.Files.PRESENT, chosen = true),
+                VexLifeModelsFamily.Use,
+            )?.effect,
         )
     }
 
@@ -93,10 +112,14 @@ class VexLifeModelsFamilyTest {
             emptyList(),
             controls(state(VexLifeModelsFamily.Files.PARTIAL, downloading = true)),
         )
-        // A present model may still be chosen while another one downloads.
+        // Model-file mutation and runtime convergence never overlap.
         assertEquals(
-            listOf(VexLifeModelsFamily.ControlUse),
+            emptyList(),
             controls(state(VexLifeModelsFamily.Files.PRESENT, anyDownloadRunning = true)),
+        )
+        assertEquals(
+            emptyList(),
+            controls(state(VexLifeModelsFamily.Files.PRESENT, anySwitchRunning = true)),
         )
     }
 }

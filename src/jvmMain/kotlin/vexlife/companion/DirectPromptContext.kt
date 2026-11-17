@@ -16,6 +16,7 @@ import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.memory.VexLifeMemoryContract
+import vexlife.model.heretic.HereticCompanionProvider
 import vexlife.model.heretic.HereticModelConfiguration
 
 /**
@@ -64,7 +65,7 @@ object DirectPromptContext {
         VexLifeMemoryContract.ContextInputTokenBudget
 
     const val ReservedOutputTokens =
-        DirectCompanionConnection.OutputTokenLimit
+        HereticCompanionProvider.ProductMaxOutputTokens
 
     /**
      * The input budget of an ordinary direct turn: capability requests are admitted there, so their
@@ -2335,6 +2336,7 @@ object DirectPromptContext {
             "VEXLIFE_SELF_CAPABILITY_FRAME/v1",
             "These are current bounded capability handles, not effect authority or proof that an effect already occurred.",
             "Use AVAILABLE/HELD/UNAVAILABLE/UNKNOWN as currentness context. Any effect still belongs to its rightful owner and current authority.",
+            "No outside-source capability reach is admitted in this turn. Do not claim that web, repository, Home, or Memory source was fetched unless a real ${VexLifeCapabilityRequest.ResultHeader} message is present.",
             VexContractJson.compactEncode(frame),
         )
             .joinToString("\n")
