@@ -303,29 +303,48 @@ Example:
 
 
 
-## Current real-host successor — readiness R001
+## Current real-host successor — readiness R002
 
-Current Product implementation successor:
+Current Product implementation successor remains:
 
 ```text
 #223 [Platform][Windows][READINESS][DRAFT]
 head=9ba98244269897a04535a9d27996b5cafc50e758
 tree=65e56fd706d28efcd1ac77191b2161483726b634
 base main=262c208b2e65e828dd867719c29ecd286ae58a80
-hosted Windows proof run=44053924414 PASS
+hosted Windows source proof run=44053924414 PASS
 ```
 
-The next real-host action is intentionally **not** another compiler run.
+### R001 — harness automatic-variable SAFE_FAILURE
 
-Source-managed harness:
+Victor's first readiness run stopped at stage 1 before any checkpoint formed:
 
 ```text
-relay/windows-product-baseline/readiness/R001/
-  RUN-VEXLIFE-WINDOWS-READINESS.ps1
-  manifest.json
+Cannot overwrite variable Host because it is read-only or constant.
 ```
 
-R001 observes only:
+Cause:
+
+```text
+PowerShell variables are case-insensitive.
+
+$host == $Host
+$home == $HOME
+```
+
+R001 therefore learned no host/Product truth. It performed no Product/Home/model/runtime/service
+effect.
+
+### R002 — corrected checkpointed readiness harness
+
+R002 renames the semantic records:
+
+```text
+$hostObservation
+$homeObservation
+```
+
+and preserves the same no-effect four-stage route:
 
 ```text
 [1/4] Windows OS / native architecture / CPU / physical memory
@@ -334,24 +353,35 @@ R001 observes only:
 [4/4] no-effect readiness summary against #223
 ```
 
-It does not execute canonical Home classification; the probe says that explicitly instead of
-duplicating `VexLifeProdHomeFiles`.
-
-It performs no model, runtime, service, install, Home or release effect.
-
-Every completed stage is written to Downloads before the next stage begins. If Victor cancels before
-the final RETURN ZIP is formed, the checkpoint directory intentionally remains and can be recovered.
-
-Recovery is source-managed too:
+The script was sanity-executed end-to-end on a standard GitHub-hosted Windows runner before Victor
+replay:
 
 ```text
-relay/windows-product-baseline/readiness/R001/RECOVER-VEXLIFE-WINDOWS-READINESS.ps1
+Actions run 44056068045
+job harness
+Execute no-effect readiness harness PASS
+conclusion SUCCESS
 ```
 
-Recovery packages the latest retained R001 checkpoint directory and explicitly performs no replay.
+The temporary hosted workflow was removed after PASS; the run remains durable evidence.
 
-This checkpoint policy replaces the earlier all-or-nothing RETURN behavior for lived Windows work.
+Source-managed R002:
 
-<!-- [VXG RealForever][VEXLIFE-PROD][WINDOWS][READINESS-R001] -->
+```text
+relay/windows-product-baseline/readiness/R002/
+  RUN-VEXLIFE-WINDOWS-READINESS.ps1
+  RECOVER-VEXLIFE-WINDOWS-READINESS.ps1
+  manifest.json
+```
+
+R002 does not compile Product source and performs no model, runtime, service, install, Home or release
+effect.
+
+Every completed stage is written to Downloads before the next stage begins. If Victor cancels before
+the final RETURN ZIP is formed, the checkpoint directory intentionally remains.
+
+Recovery packages the latest retained R002 checkpoint directory and explicitly performs no replay.
+
+<!-- [VXG RealForever][VEXLIFE-PROD][WINDOWS][READINESS-R002] -->
 
 <!-- [VXG RealForever][VEXLIFE-PROD][WINDOWS][SOURCE-BASELINE][CURRENT] -->
