@@ -88,18 +88,6 @@ object VexLifeConversationTurnFamily :
         override val attempt: Attempt,
     ) : Effect
 
-    /**
-     * One terminal cancellation reason owned by this semantic relationship. Recovery receipts may
-     * serialize this ref, but they do not become the semantic owner merely because they persist it.
-     */
-    enum class TerminalReason(
-        val ref: String,
-    ) {
-        CancelledByPerson(
-            "TURN_CANCELLED_BY_PERSON",
-        ),
-    }
-
     enum class Text(
         val key: String,
     ) {
