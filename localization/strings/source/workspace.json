@@ -582,5 +582,205 @@
       "workspace.settings",
       "workspace.conversation"
     ]
+  },
+  "workspace.heading.model-swap-process": {
+    "strings": {
+      "en": {
+        "text": "Model swap process"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-choice": {
+    "strings": {
+      "en": {
+        "text": "Model choice"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.heading.model-configuration": {
+    "strings": {
+      "en": {
+        "text": "Selected model configuration"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-prompt-cache-entries": {
+    "strings": {
+      "en": {
+        "text": "Warm prompt cache entries"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.model-prompt-cache-entries": {
+    "strings": {
+      "en": {
+        "text": "How many distinct MLX KV prompt-cache entries may stay warm. More can reduce repeated prefill, but each long cache consumes unified memory."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.button.model-use-recommended": {
+    "strings": {
+      "en": {
+        "text": "Use recommended"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.button.model-start": {
+    "strings": {
+      "en": {
+        "text": "Start selected model"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.button.model-apply-restart": {
+    "strings": {
+      "en": {
+        "text": "Apply & restart model"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.button.model-select": {
+    "strings": {
+      "en": {
+        "text": "Select"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.button.model-set-prompt-cache": {
+    "strings": {
+      "en": {
+        "text": "Set cache entries"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-selected": {
+    "strings": {
+      "en": {
+        "text": "Selected {model}. Review its configuration, then start it when you're ready."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-runtime-configured": {
+    "strings": {
+      "en": {
+        "text": "Runtime configuration saved · {entries} warm cache entries."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.model-cache-recommendation-27b": {
+    "strings": {
+      "en": {
+        "text": "1 is the current lived safety floor for 27B after the earlier many-cache memory failure; it is not claimed as the fastest setting."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.model-cache-recommendation-4b": {
+    "strings": {
+      "en": {
+        "text": "3 is the current experimental cache candidate for 4B; it needs lived memory and reuse proof before it becomes an accepted default."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.model-cache-recommendation-untuned": {
+    "strings": {
+      "en": {
+        "text": "1 keeps the current safety floor for this model until a model-specific cache recommendation is lived-tested."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-state-serving": {
+    "strings": {
+      "en": {
+        "text": "Serving: {model}"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-state-selected": {
+    "strings": {
+      "en": {
+        "text": "Selected: {model}"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-none": {
+    "strings": {
+      "en": {
+        "text": "none"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-runtime-configuration-pending": {
+    "strings": {
+      "en": {
+        "text": "Configuration changed; restart the selected model to apply it."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-cache-current": {
+    "strings": {
+      "en": {
+        "text": "Warm cache entries: {current} · recommended: {recommended}."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
   }
 }
