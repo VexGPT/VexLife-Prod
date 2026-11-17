@@ -12,9 +12,10 @@ import vexlife.text.VexLifeText
  * dictation." It does not create a second Conversation payload type, commit a Send, open Vex's
  * Perception microphone channel, retain raw audio, or decide browser permission/runtime mechanics.
  *
- * Browser APIs are outside truth. Their concrete strings and objects are interpreted at the browser
- * adapter boundary into the typed State / reason vocabulary below. The Family owns what Start and
- * Stop mean against that exact State and which language-free [VexLifeText] keys reach presentation.
+ * Microphone APIs and the selected local speech recognizer are outside truth. Their concrete
+ * provider/runtime facts are interpreted at their rightful boundaries into the typed State / reason
+ * vocabulary below. The Family owns what Start and Stop mean against that exact State and which
+ * language-free [VexLifeText] keys reach presentation.
  */
 object VexLifeVoiceInputFamily :
     VexFamilyContract<
@@ -222,7 +223,7 @@ object VexLifeVoiceInputFamily :
     }
 
     /**
-     * Interpret current browser capability facts without performing any browser effect.
+     * Interpret current local-dictation capability facts without performing any realization effect.
      */
     fun observeCapability(
         personLanguageCode: String,
@@ -265,7 +266,7 @@ object VexLifeVoiceInputFamily :
     ): State =
         CheckingLanguage(language)
 
-    /** The browser recognizer reported that local recognition actually started. */
+    /** The selected local recognition realization actually began the microphone session. */
     fun observeRecognitionStarted(
         language: Language,
     ): State =
