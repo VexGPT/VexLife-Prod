@@ -200,7 +200,7 @@ object HereticRuntimeRealization {
                         ModelExposure.EXACT_MATERIALIZATION_PATH,
                 ),
             runtimeReceiptRelativePath =
-                HereticProductIdentity.ProductRuntimeReceiptRelativePath,
+                "runtime/vexlife-prod/heretic-persistent-runtime-owner-receipt.json",
         )
     }
 
