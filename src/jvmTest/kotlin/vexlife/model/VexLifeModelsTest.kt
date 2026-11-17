@@ -41,14 +41,14 @@ class VexLifeModelsTest {
     private fun models(
         home: Path,
         serving: () -> String? = { HereticModelCatalog.Models.Qwen27B.modelRef },
-        switcher: VexLifeModels.Switcher? = null,
+        modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
         failDownload: Boolean = true,
     ) =
         VexLifeModels(
             productHome = home,
             servingModelRef = serving,
             totalMemoryBytes = { 16 * gib },
-            switcher = switcher,
+            modelSwitchRealization = modelSwitchRealization,
             acquirer = { _ ->
                 HereticArtifactMaterialization.Acquirer { _, _ ->
                     if (failDownload) error("network unavailable in test")
@@ -97,8 +97,8 @@ class VexLifeModelsTest {
 
         var serving: String? = HereticModelCatalog.Models.Qwen27B.modelRef
         val phases = mutableListOf<VexLifeModels.SwitchPhase>()
-        val switcher =
-            VexLifeModels.Switcher {
+        val modelSwitchRealization =
+            VexLifeModels.ModelSwitchRealization {
                 entry,
                 observe,
                 ->
@@ -117,7 +117,7 @@ class VexLifeModelsTest {
         models(
             home = home,
             serving = { serving },
-            switcher = switcher,
+            modelSwitchRealization = modelSwitchRealization,
         )
             .use {
                 owner ->

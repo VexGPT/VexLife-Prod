@@ -21,12 +21,12 @@ import vexlife.text.VexLifeText
  * Settings → Models: the offered models as this Home holds them, and the person's model Controls.
  *
  * Effects and their owners:
- * - Use: persist the Home's exact choice, then request runtime convergence through [Switcher].
+ * - Use: persist the Home's exact choice, then request runtime convergence through [ModelSwitchRealization].
  * - Download: HereticArtifactMaterialization.materializeCurrent with acquisition, in the background.
  * - Redownload: HereticArtifactMaterialization.remove, then the same download.
  * - Remove: HereticArtifactMaterialization.remove (frees space; the model stays offered).
  *
- * The Family owns what Use means. [Switcher] is an injected realization seam: Product construction
+ * The Family owns what Use means. [ModelSwitchRealization] is an injected realization seam: Product construction
  * delegates the effect to LocalSetup/runtime ownership and updates serving truth only after the
  * target runtime is qualified. This class never kills/spawns a model process itself.
  *
@@ -38,7 +38,7 @@ class VexLifeModels(
     productHome: Path,
     private val servingModelRef: () -> String?,
     private val totalMemoryBytes: () -> Long?,
-    private val switcher: Switcher? = null,
+    private val modelSwitchRealization: ModelSwitchRealization? = null,
     private val acquirer: (onProgress: (Long) -> Unit) -> HereticArtifactMaterialization.Acquirer =
         { onProgress ->
             val delivered = mutableMapOf<String, Long>()
@@ -57,7 +57,7 @@ class VexLifeModels(
         Thread(runnable, "vexlife-model-download").apply { isDaemon = true }
     }
 
-    fun interface Switcher {
+    fun interface ModelSwitchRealization {
         fun switch(
             entry: HereticModelCatalog.Entry,
             observe: (SwitchPhase) -> Unit,
@@ -221,11 +221,11 @@ class VexLifeModels(
                     controlRef = controlRef,
                 )
             }
-            VexLifeModelsFamily.Effect.AcquireModel ->
+            VexLifeModelsFamily.Effect.AcquireArtifacts ->
                 startDownload(entry, controlRef, replace = false)
-            VexLifeModelsFamily.Effect.ReplaceModel ->
+            VexLifeModelsFamily.Effect.ReplaceArtifacts ->
                 startDownload(entry, controlRef, replace = true)
-            VexLifeModelsFamily.Effect.RemoveModel -> {
+            VexLifeModelsFamily.Effect.RemoveArtifacts -> {
                 val removal =
                     VexLifeProdLocalSetupLease.acquire(home).use {
                         HereticArtifactMaterialization.remove(home, entry)
@@ -259,7 +259,7 @@ class VexLifeModels(
     ) {
         val realization =
             requireNotNull(
-                switcher,
+                modelSwitchRealization,
             ) {
                 "runtime switch realization is unavailable"
             }
@@ -444,12 +444,12 @@ class VexLifeModels(
     ) =
         VexLifeModelsFamily.State(
             handle = entry.handle,
-            files =
+            artifactPresence =
                 when (presence.state) {
-                    "COMPLETE_BY_SIZE_NOT_HASHED" -> VexLifeModelsFamily.Files.PRESENT
-                    "PARTIAL_BY_SIZE" -> VexLifeModelsFamily.Files.PARTIAL
-                    "INVALID_SIZE" -> VexLifeModelsFamily.Files.DAMAGED
-                    else -> VexLifeModelsFamily.Files.ABSENT
+                    "COMPLETE_BY_SIZE_NOT_HASHED" -> VexLifeModelsFamily.ArtifactPresence.PRESENT
+                    "PARTIAL_BY_SIZE" -> VexLifeModelsFamily.ArtifactPresence.PARTIAL
+                    "INVALID_SIZE" -> VexLifeModelsFamily.ArtifactPresence.DAMAGED
+                    else -> VexLifeModelsFamily.ArtifactPresence.ABSENT
                 },
             downloading = running?.handle == entry.handle,
             chosen = chosen == entry.modelRef,

@@ -7,15 +7,15 @@ import vexlife.text.VexLifeText
 /**
  * Product semantic owner for what the person can do with one offered model in Settings → Models.
  *
- * State is one model's relationship to this Home: whether its files are here, whether a download is
+ * State is one model's relationship to this Home: whether its required artifacts are present, whether a download is
  * running, whether the Home chose it, whether the running runtime serves it.
  *
  * Lawfulness (what each Control may do, by State):
  * ```
- * Use        files present, chosen/serving not both current -> SwitchModel
- * Download   files absent or partial, nothing running         -> AcquireModel (resumes a partial)
- * Redownload files damaged, nothing running                   -> RemoveModel then AcquireModel
- * Remove     files here, not chosen, not serving, idle        -> RemoveModel
+ * Use        artifacts present, chosen/serving not both current -> SwitchModel
+ * Download   artifacts absent or partial, nothing running       -> AcquireArtifacts (resumes a partial)
+ * Redownload artifacts damaged, nothing running                 -> ReplaceArtifacts
+ * Remove     artifacts here, not chosen, not serving, idle      -> RemoveArtifacts
  * ```
  *
  * Use means the person's intention is for this model to become the model serving Vex now. It stays
@@ -30,7 +30,7 @@ object VexLifeModelsFamily :
         VexLifeModelsFamily.Control,
         VexLifeModelsFamily.Effect,
     >() {
-    enum class Files {
+    enum class ArtifactPresence {
         ABSENT,
         PARTIAL,
         PRESENT,
@@ -39,7 +39,7 @@ object VexLifeModelsFamily :
 
     data class State(
         val handle: String,
-        val files: Files,
+        val artifactPresence: ArtifactPresence,
         val downloading: Boolean,
         val chosen: Boolean,
         val serving: Boolean,
@@ -73,12 +73,12 @@ object VexLifeModelsFamily :
     sealed interface Effect : VexFamilyContract.Effect<VexLifeModelsFamily> {
         data object SwitchModel : Effect
 
-        data object AcquireModel : Effect
+        data object AcquireArtifacts : Effect
 
-        /** Remove this model's own pinned files; then acquire them again. */
-        data object ReplaceModel : Effect
+        /** Replace this model's own pinned artifact bytes through the materialization owner. */
+        data object ReplaceArtifacts : Effect
 
-        data object RemoveModel : Effect
+        data object RemoveArtifacts : Effect
     }
 
     @Serializable data class ControlDisplay(val controlRef: String, val label: VexLifeText)
@@ -103,7 +103,7 @@ object VexLifeModelsFamily :
         return when (control) {
             Use ->
                 if (
-                    currentState.files == Files.PRESENT &&
+                    currentState.artifactPresence == ArtifactPresence.PRESENT &&
                         !(currentState.chosen && currentState.serving) &&
                         !currentState.switching &&
                         idle
@@ -114,23 +114,23 @@ object VexLifeModelsFamily :
                 }
             Download ->
                 if (
-                    (currentState.files == Files.ABSENT || currentState.files == Files.PARTIAL) &&
+                    (currentState.artifactPresence == ArtifactPresence.ABSENT || currentState.artifactPresence == ArtifactPresence.PARTIAL) &&
                         idle
                 )
-                    stay(Effect.AcquireModel)
+                    stay(Effect.AcquireArtifacts)
                 else null
             Redownload ->
-                if (currentState.files == Files.DAMAGED && idle && !currentState.serving)
-                    stay(Effect.ReplaceModel)
+                if (currentState.artifactPresence == ArtifactPresence.DAMAGED && idle && !currentState.serving)
+                    stay(Effect.ReplaceArtifacts)
                 else null
             Remove ->
                 if (
-                    currentState.files != Files.ABSENT &&
+                    currentState.artifactPresence != ArtifactPresence.ABSENT &&
                         !currentState.chosen &&
                         !currentState.serving &&
                         idle
                 )
-                    stay(Effect.RemoveModel)
+                    stay(Effect.RemoveArtifacts)
                 else null
         }
     }
@@ -142,11 +142,11 @@ object VexLifeModelsFamily :
                 when {
                     state.switching -> VexLifeText("workspace.status.model-switching")
                     state.downloading -> VexLifeText("workspace.status.model-downloading")
-                    state.files == Files.PRESENT ->
+                    state.artifactPresence == ArtifactPresence.PRESENT ->
                         VexLifeText("workspace.status.model-on-this-mac")
-                    state.files == Files.PARTIAL ->
+                    state.artifactPresence == ArtifactPresence.PARTIAL ->
                         VexLifeText("workspace.status.model-partly-downloaded")
-                    state.files == Files.DAMAGED -> VexLifeText("workspace.status.model-damaged")
+                    state.artifactPresence == ArtifactPresence.DAMAGED -> VexLifeText("workspace.status.model-damaged")
                     else -> VexLifeText("workspace.status.model-not-downloaded")
                 },
             notes =

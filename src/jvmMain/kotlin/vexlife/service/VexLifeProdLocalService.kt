@@ -71,7 +71,7 @@ class VexLifeProdLocalService private constructor(
     private val memoryReader: (Path) -> VexLifeMemoryContract.Context,
     private val servingModelRef: () -> String?,
     private val servingRuntimeReceiptRef: () -> String,
-    private val modelSwitcher: VexLifeModels.Switcher?,
+    private val modelSwitchRealization: VexLifeModels.ModelSwitchRealization?,
     privateCompletionOverride: VexLifePrivateConversation.Completion? = null,
 ) : AutoCloseable {
     private val privateConversation = VexLifePrivateConversation(Path.of(startupSetup.productHome))
@@ -91,7 +91,7 @@ class VexLifeProdLocalService private constructor(
                     vexlife.model.heretic.runtime.HereticMacHostProfile.observeCurrent().observation.totalMemoryBytes
                 }.getOrNull()
             },
-            switcher = modelSwitcher,
+            modelSwitchRealization = modelSwitchRealization,
         )
 
     private val privateCompletion =
@@ -299,8 +299,8 @@ class VexLifeProdLocalService private constructor(
                 }
             }
 
-            val switcher =
-                VexLifeModels.Switcher {
+            val modelSwitchRealization =
+                VexLifeModels.ModelSwitchRealization {
                     entry,
                     observe,
                     ->
@@ -424,7 +424,7 @@ class VexLifeProdLocalService private constructor(
                         .qualifiedRuntimeEvidence
                         .runtimeReceiptRef
                 },
-                modelSwitcher = switcher,
+                modelSwitchRealization = switcher,
                 privateCompletion =
                     VexLifePrivateConversation.Completion {
                         messages ->
@@ -460,7 +460,7 @@ class VexLifeProdLocalService private constructor(
             privateCompletion: VexLifePrivateConversation.Completion? = null,
             servingModelRef: (() -> String?)? = null,
             servingRuntimeReceiptRef: (() -> String)? = null,
-            modelSwitcher: VexLifeModels.Switcher? = null,
+            modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
         ): VexLifeProdLocalService =
             startAt(
                 sourceSha = sourceSha,
@@ -492,7 +492,7 @@ class VexLifeProdLocalService private constructor(
                         ?: {
                             setup.qualifiedRuntimeEvidence.runtimeReceiptRef
                         },
-                modelSwitcher = modelSwitcher,
+                modelSwitchRealization = modelSwitchRealization,
             )
 
         private fun startAt(
@@ -513,7 +513,7 @@ class VexLifeProdLocalService private constructor(
             servingRuntimeReceiptRef: () -> String = {
                 startupSetup.qualifiedRuntimeEvidence.runtimeReceiptRef
             },
-            modelSwitcher: VexLifeModels.Switcher? = null,
+            modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
         ): VexLifeProdLocalService {
             require(
                 SourceShaPattern.matches(
@@ -582,7 +582,7 @@ class VexLifeProdLocalService private constructor(
                         memoryReader = memoryReader,
                         servingModelRef = servingModelRef,
                         servingRuntimeReceiptRef = servingRuntimeReceiptRef,
-                        modelSwitcher = modelSwitcher,
+                        modelSwitchRealization = modelSwitchRealization,
                         privateCompletionOverride = privateCompletion,
                     )
 
