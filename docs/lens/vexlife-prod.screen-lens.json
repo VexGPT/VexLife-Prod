@@ -380,6 +380,18 @@
           "slot": "InFlow"
         },
         {
+          "ref": "element.vexlife-workspace.companion.conversation.voice-input",
+          "kind": "BUTTON",
+          "label": "Voice input",
+          "parentRef": "element.vexlife-workspace.companion.conversation",
+          "symbol": "VexLifeWorkspaceBlueprint.VoiceInput",
+          "declared": "Conversation.control(\"voice-input\")",
+          "intent": "local element.vexlife-workspace.companion.conversation.composer",
+          "pathwayRef": "pathway.vexlife-prod.local.companion.conversation.voice-input",
+          "style": "Surface",
+          "slot": "Trailing"
+        },
+        {
           "ref": "element.vexlife-workspace.companion.conversation.send",
           "kind": "BUTTON",
           "label": "Send",
@@ -1179,6 +1191,42 @@
         {
           "from": "vexlife-prod.local.companion.conversation.context-share.intent",
           "to": "vexlife-prod.local.companion.conversation.context-share.reveal",
+          "label": null,
+          "kind": "FLOW"
+        }
+      ]
+    },
+    {
+      "pathwayRef": "pathway.vexlife-prod.local.companion.conversation.voice-input",
+      "label": "Presentation over Composer",
+      "disposition": "TYPED_PRESENTATION",
+      "summary": "A presentation-local interaction over another coordinate; it decides nothing.",
+      "returns": null,
+      "returnRef": null,
+      "nodes": [
+        {
+          "ref": "vexlife-prod.local.companion.conversation.voice-input.intent",
+          "face": "BEHAVIOR",
+          "role": "INTENT",
+          "label": "Activate",
+          "symbol": "VexWeb.Binding.LocalInteraction",
+          "summary": null,
+          "source": "common:web/VexLifeWebP1.kt"
+        },
+        {
+          "ref": "vexlife-prod.local.companion.conversation.voice-input.reveal",
+          "face": "BEHAVIOR",
+          "role": "NAVIGATION",
+          "label": "Composer",
+          "symbol": "element.vexlife-workspace.companion.conversation.composer",
+          "summary": null,
+          "source": "common:workspace/VexLifeWorkspaceBlueprint.kt"
+        }
+      ],
+      "edges": [
+        {
+          "from": "vexlife-prod.local.companion.conversation.voice-input.intent",
+          "to": "vexlife-prod.local.companion.conversation.voice-input.reveal",
           "label": null,
           "kind": "FLOW"
         }
