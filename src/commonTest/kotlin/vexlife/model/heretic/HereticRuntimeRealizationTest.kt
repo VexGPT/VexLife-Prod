@@ -67,6 +67,10 @@ class HereticRuntimeRealizationTest {
             HereticProductIdentity.RequestModel,
             realization.runtime.requestModel,
         )
+        assertEquals(
+            HereticProductIdentity.ProductRuntimeReceiptRelativePath,
+            realization.runtimeReceiptRelativePath,
+        )
     }
 
     @Test
