@@ -6,6 +6,7 @@ import kotlinx.serialization.json.put
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 
@@ -45,14 +46,17 @@ object ContinuityHostRuntimePrecondition {
             requireNotNull(VexLifeProdHomeFiles.observeExisting(runtimeHome)) {
                 "selected canonical Vex Home is absent"
             }
+        val modelConfiguration = FileHereticModelConfigurationStore(runtimeHome)
         val selectedBefore =
-            FileHereticModelConfigurationStore(runtimeHome).read(home.manifest)
+            modelConfiguration.read(home.manifest)
                 as? FileHereticModelConfigurationStore.Snapshot.Heretic
                 ?: error("selected Vex Home has no Product runtime model selection")
-        require(HereticModelConfiguration.isBound(selectedBefore.value)) {
-            "selected Product runtime model must already be bound before host-proof runtime start"
-        }
-        val selectedModelRef = selectedBefore.value.modelRef
+        val targetModel = HereticModelCatalog.Models.Qwen4B
+        val selection =
+            modelConfiguration.selectModel(
+                manifest = home.manifest,
+                model = targetModel,
+            )
 
         /*
          * The host-proof precondition is explicitly selecting the Product-owned runtime route.
@@ -71,8 +75,8 @@ object ContinuityHostRuntimePrecondition {
                     ),
             )
         val current = result.qualifiedRuntimeEvidence
-        require(current.modelRef == selectedModelRef) {
-            "runtime precondition changed the selected Product model"
+        require(current.modelRef == targetModel.modelRef) {
+            "runtime precondition did not realize the exact target Product model"
         }
 
         val afterWriter = DirectConversationStore(runtimeHome).threadWriterCurrentness()
@@ -89,6 +93,12 @@ object ContinuityHostRuntimePrecondition {
                 put("modelBindingDisposition", result.modelBindingDisposition)
                 put("runtimeReceiptRef", current.runtimeReceiptRef)
                 put("modelRef", current.modelRef)
+                put("targetModelRef", targetModel.modelRef)
+                put("targetModelProfileRef", targetModel.identity.modelProfileRef)
+                put("targetArtifactSetRef", targetModel.identity.artifactSetRef)
+                put("targetCompanionProfileRef", targetModel.companionProfile.profileRef)
+                put("priorModelRef", selectedBefore.value.modelRef)
+                put("modelSelectionDisposition", selection.state)
                 put("endpoint", current.endpoint)
                 put("stablePredecessorBorrowAttempted", false)
                 put("stablePredecessorMutationPerformed", false)
