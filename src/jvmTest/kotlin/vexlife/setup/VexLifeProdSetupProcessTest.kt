@@ -19,6 +19,20 @@ import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
 import vexlife.service.VexLifeProdMacServiceLifetime
 
 class VexLifeProdSetupProcessTest {
+    private fun testPath(
+        relative: String,
+    ): Path =
+        Path.of(
+                System.getProperty(
+                    "java.io.tmpdir",
+                ),
+            )
+            .resolve(
+                relative,
+            )
+            .toAbsolutePath()
+            .normalize()
+
     private fun runtimeEvidence(): HereticModelConfiguration.QualifiedRuntimeEvidence =
         HereticModelConfiguration.QualifiedRuntimeEvidence(
             realizationRef =
@@ -63,7 +77,7 @@ class VexLifeProdSetupProcessTest {
     @Test
     fun processArgumentsCarrySelectedHomeExpectedSourceAndExplicitAcquisitionAuthorization() {
         val sha = "a".repeat(40)
-        val home = Path.of("/tmp/vexlife-selected-home")
+        val home = testPath("vexlife-selected-home")
 
         val parsed =
             VexLifeProdSetupProcess.parse(
@@ -123,7 +137,7 @@ class VexLifeProdSetupProcessTest {
     fun HomeFormationVerifiesImageAndStopsBeforeAcquisitionOrProductEffects() {
         val trace = mutableListOf<String>()
         val sourceSha = "a".repeat(40)
-        val sourceImage = Path.of("/tmp/vexlife-prod-home-formation-source-image")
+        val sourceImage = testPath("vexlife-prod-home-formation-source-image")
         val observation =
             VexLifeProdPrivateServiceImage.Observation(
                 imageRef = "image.vexlife-prod.private-service.home-test",
@@ -154,7 +168,7 @@ class VexLifeProdSetupProcessTest {
         val home =
             VexLifeProdHomeFiles.Result(
                 state = "FRESH_CANONICAL_VEXLIFE_HOME_FORMED",
-                productHome = "/tmp/.vexlife",
+                productHome = testPath(".vexlife").toString(),
                 manifest = plan.manifest,
                 installation = plan.installation,
                 effectsPerformed = true,
@@ -165,7 +179,7 @@ class VexLifeProdSetupProcessTest {
                 arrayOf(
                     "--form-home",
                     "--home",
-                    "/tmp/.vexlife",
+                    testPath(".vexlife").toString(),
                     "--expected-source-sha",
                     sourceSha,
                 )
@@ -221,8 +235,8 @@ class VexLifeProdSetupProcessTest {
     fun imageVerificationPrecedesAuthorizedSetupAndInstalledImagePrecedesReady() {
         val trace = mutableListOf<String>()
         val sourceSha = "a".repeat(40)
-        val sourceImage = Path.of("/tmp/vexlife-prod-setup-source-image")
-        val productHome = "/tmp/VexLife-Prod"
+        val sourceImage = testPath("vexlife-prod-setup-source-image")
+        val productHome = testPath("VexLife-Prod").toString()
         val payloadSha = "b".repeat(64)
         val observation =
             VexLifeProdPrivateServiceImage.Observation(
@@ -334,7 +348,7 @@ class VexLifeProdSetupProcessTest {
     @Test
     fun reuseExistingModeCarriesNoAcquisitionAuthorityIntoLocalSetup() {
         val sourceSha = "a".repeat(40)
-        val sourceImage = Path.of("/tmp/vexlife-prod-setup-reuse-existing")
+        val sourceImage = testPath("vexlife-prod-setup-reuse-existing")
         val observation =
             VexLifeProdPrivateServiceImage.Observation(
                 imageRef = "image.vexlife-prod.private-service.reuse-test",
@@ -353,7 +367,7 @@ class VexLifeProdSetupProcessTest {
             VexLifeProdSetupProcess.runWithHooks(
                 arguments =
                     VexLifeProdSetupProcess.Arguments(
-                        productHome = Path.of("/tmp/vexlife-prod-setup-reuse-existing-home"),
+                        productHome = testPath("vexlife-prod-setup-reuse-existing-home"),
                         expectedSourceSha = sourceSha,
                         allowAcquisition = false,
                     ),
@@ -368,7 +382,7 @@ class VexLifeProdSetupProcessTest {
                         reportImageVerified = {},
                         establishSession = { productHome, allowAcquisition, _ ->
                             assertEquals(
-                                Path.of("/tmp/vexlife-prod-setup-reuse-existing-home"),
+                                testPath("vexlife-prod-setup-reuse-existing-home"),
                                 productHome,
                             )
                             assertFalse(allowAcquisition)
