@@ -84,19 +84,32 @@ class DirectPromptContextTest {
                 val told = DirectPromptContext.materialize(prior = null, currentRequest = request, personContext = person)
                 // Current, not standing: the setting rides the current-state envelope right before
                 // the request, never the leading system block that precedes all history.
-                assertTrue(told.messages.none { it.role == "system" && "VEXLIFE_PERSON_CONTEXT/v1" in it.content })
+                assertTrue(
+                    told.messages.none {
+                        it.role == "system" && "VEXLIFE_PERSON_CONTEXT/v1" in it.content
+                    },
+                )
                 val current = told.messages[told.messages.size - 2]
                 assertEquals("user", current.role)
                 assertTrue(current.content.startsWith(DirectPromptContext.CurrentStateHeader))
                 assertTrue("VEXLIFE_PERSON_CONTEXT/v1" in current.content)
-                assertTrue("日本語" in current.content && "Victor is nervous about Friday." in current.content)
+                assertTrue(
+                    "日本語" in current.content &&
+                        "Victor is nervous about Friday." in current.content,
+                )
                 assertEquals(request.content, told.messages.last().content)
                 val person0 =
                     told.receipt.contextComponents.single {
                         it.componentRef == DirectPromptContext.ComponentRefs.PersonContext
                     }
-                assertEquals(DirectPromptContext.ComponentStability.MUTABLE_CURRENT, person0.stabilityClass)
-                assertEquals(DirectPromptContext.ComponentPlacement.LIVE_TAIL, person0.placementClass)
+                assertEquals(
+                    DirectPromptContext.ComponentStability.MUTABLE_CURRENT,
+                    person0.stabilityClass,
+                )
+                assertEquals(
+                    DirectPromptContext.ComponentPlacement.LIVE_TAIL,
+                    person0.placementClass,
+                )
                 assertEquals(told.messages.size - 2, person0.providerMessageIndex)
                 assertTrue(told.receipt.personContextIncluded)
                 assertEquals(person, told.receipt.personContext)
