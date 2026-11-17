@@ -309,15 +309,46 @@ class VexLifeModels(
             ) {
                 "model control $controlRef is not known"
             }
-        val presence = HereticArtifactMaterialization.observePresence(home, entry)
+        val presence =
+            HereticArtifactMaterialization.observePresence(
+                home,
+                entry,
+            )
+        val chosen =
+            chosenModelRef()
+        val serving =
+            servingModelRef()
+        val effectiveRuntimeConfiguration =
+            FileHereticRuntimeConfigurationStore(
+                home,
+            )
+                .effective(
+                    entry,
+                )
+        val servingRuntime =
+            runCatching {
+                FileHereticRuntimeReceiptStore(
+                    home,
+                )
+                    .read()
+            }
+                .getOrNull()
+        val runtimeConfigurationPending =
+            serving == entry.modelRef &&
+                servingRuntime?.modelRef == entry.modelRef &&
+                servingRuntime.runtime.args
+                    .let(
+                        HereticPersistentRuntime::promptCacheEntryLimit,
+                    ) != effectiveRuntimeConfiguration.promptCacheEntries
         val state =
             state(
                 entry = entry,
                 presence = presence,
-                chosen = chosenModelRef(),
-                serving = servingModelRef(),
+                chosen = chosen,
+                serving = serving,
                 running = download.get(),
                 currentSwitch = switching.get(),
+                runtimeConfigurationPending = runtimeConfigurationPending,
             )
         val act = VexLifeModelsFamily.resolve(state, control)
         if (act == null) {
