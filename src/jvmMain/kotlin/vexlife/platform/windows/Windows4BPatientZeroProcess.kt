@@ -186,6 +186,9 @@ object Windows4BPatientZeroProcess {
         println(
             "[2/8] Verify and qualify exact Windows heretic-4b runtime",
         )
+        var firstRuntimePid: Long? =
+            null
+
         Windows4BPatientZeroRuntime
             .start(
                 modelPath =
@@ -199,6 +202,8 @@ object Windows4BPatientZeroProcess {
             )
             .use {
                 firstRuntime ->
+                firstRuntimePid =
+                    firstRuntime.process.pid()
                 checkpoint(
                     arguments.checkpointRoot,
                     "02-runtime-qualified.json",
@@ -381,25 +386,46 @@ object Windows4BPatientZeroProcess {
                         )
                     }
 
-                checkpoint(
-                    arguments.checkpointRoot,
-                    "05-first-stop.json",
-                    buildJsonObject {
-                        put(
-                            "stage",
-                            "FIRST_SERVICE_AND_RUNTIME_STOPPED",
-                        )
-                        put(
-                            "runtimeStillLive",
-                            firstRuntime.process.isAlive,
-                        )
-                        put(
-                            "effectsPerformed",
-                            true,
-                        )
-                    },
-                )
             }
+
+        val firstPid =
+            requireNotNull(
+                firstRuntimePid,
+            )
+        val firstRuntimeStillLive =
+            ProcessHandle
+                .of(
+                    firstPid,
+                )
+                .map {
+                    it.isAlive
+                }
+                .orElse(
+                    false,
+                )
+        require(
+            !firstRuntimeStillLive,
+        ) {
+            "first Windows patient-zero runtime remained live after close"
+        }
+        checkpoint(
+            arguments.checkpointRoot,
+            "05-first-stop.json",
+            buildJsonObject {
+                put(
+                    "stage",
+                    "FIRST_SERVICE_AND_RUNTIME_STOPPED",
+                )
+                put(
+                    "runtimeStillLive",
+                    false,
+                )
+                put(
+                    "effectsPerformed",
+                    true,
+                )
+            },
+        )
 
         println(
             "[5/8] First runtime stopped; restart same Home + same current Product selection",
