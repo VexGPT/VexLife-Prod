@@ -25,9 +25,9 @@ import vexlife.text.VexLifeText
  * Settings → Models: the offered models as this Home holds them, and the person's model Controls.
  *
  * Effects and their owners:
- * - Select: persist the Home's exact target only.
+ * - Select: stage the Settings target in memory only; it does not change the Home or runtime.
  * - Runtime configuration: persist admitted launch configuration only.
- * - Use/Start: request convergence of the already-selected target through [ModelSwitchRealization].
+ * - Use/Start: commit the staged target to the Home, then request convergence through [ModelSwitchRealization].
  * - Download: HereticArtifactMaterialization.materializeCurrent with acquisition, in the background.
  * - Redownload: HereticArtifactMaterialization.remove, then the same download.
  * - Remove: HereticArtifactMaterialization.remove (frees space; the model stays offered).
