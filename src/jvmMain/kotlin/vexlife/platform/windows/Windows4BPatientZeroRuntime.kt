@@ -41,23 +41,45 @@ import vexlife.filesystem.VexOwnedPath
  * and hands the shared Product one ordinary [HereticModelConfiguration.QualifiedRuntimeEvidence].
  */
 internal object Windows4BPatientZeroRuntime {
-    const val ModelFileName =
-        "model-Q4_K_M.gguf"
+    private val Realization =
+        HereticRuntimeRealization.Windows4B
 
-    const val ModelExpectedBytes =
-        2_790_000_800L
+    private val Artifact =
+        Realization.artifact
 
-    const val ModelSha256 =
-        "7b95847ce1684f98d96f13bad2daaeffcfd2f95ea2ff3821ee68943590a10159"
+    private val RuntimeBinary =
+        Realization.runtimeBinary
 
-    const val ExistingLlamaServerSha256 =
-        "af3e56d6bdb84a9b6bd50f6ad748809370bc29be42d58088041408b2933d80f7"
+    private val Runtime =
+        Realization.runtime
+
+    private val Qualification =
+        Realization.qualification
+
+    val ModelFileName: String =
+        requireNotNull(
+            Artifact.primaryFilename,
+        )
+
+    val ModelExpectedBytes: Long =
+        requireNotNull(
+            Artifact.expectedPrimaryBytes,
+        )
+
+    val ModelSha256: String =
+        Artifact.contentSetSha256
+
+    val ExistingLlamaServerSha256: String =
+        RuntimeBinary.sha256
 
     val RuntimeReceiptRelativePath: String =
-        HereticRuntimeRealization.Windows4BPatientZeroReceiptRelativePath
+        Realization.runtimeReceiptRelativePath
 
-    private const val Port =
-        18_080
+    private val Port: Int =
+        URI.create(
+            Runtime.endpoint,
+        )
+            .port
 
     private const val QualificationTimeoutMs =
         120_000L
@@ -220,7 +242,7 @@ internal object Windows4BPatientZeroRuntime {
             )
 
         val realization =
-            HereticRuntimeRealization.Windows4BPatientZero
+            Realization
 
         val args =
             listOf(
@@ -228,7 +250,7 @@ internal object Windows4BPatientZeroRuntime {
                 "-m",
                 model.toString(),
                 "--alias",
-                realization.requestModel,
+                Runtime.requestModel,
                 "--host",
                 "127.0.0.1",
                 "--port",
@@ -272,18 +294,20 @@ internal object Windows4BPatientZeroRuntime {
                         modelEntry.modelRef,
                     modelProfileRef =
                         modelEntry.identity.modelProfileRef,
+                    realizationRef =
+                        realization.realizationRef,
                     artifactRef =
-                        realization.artifactRef,
+                        Artifact.artifactRef,
                     artifactContentSetSha256 =
-                        realization.artifactContentSetSha256,
+                        Artifact.contentSetSha256,
                     runtimeAdapterRef =
-                        realization.runtimeAdapterRef,
+                        Runtime.runtimeAdapterRef,
                     runtimeClass =
-                        realization.runtimeClass,
+                        Runtime.runtimeClass,
                     endpoint =
-                        realization.endpoint,
+                        Runtime.endpoint,
                     requestModel =
-                        realization.requestModel,
+                        Runtime.requestModel,
                     qualification =
                         HereticRuntimeQualification.qualified(),
                 )
@@ -483,7 +507,7 @@ internal object Windows4BPatientZeroRuntime {
     private fun health(): String {
         val response =
             get(
-                "/health",
+                Qualification.healthPath,
             )
         require(
             response.statusCode() ==
@@ -509,7 +533,7 @@ internal object Windows4BPatientZeroRuntime {
     private fun requireExactModelAlias() {
         val response =
             get(
-                "/v1/models",
+                Qualification.modelsPath,
             )
         require(
             response.statusCode() ==
@@ -562,21 +586,34 @@ internal object Windows4BPatientZeroRuntime {
 
     private fun performQualificationInference() {
         val realization =
-            HereticRuntimeRealization.Windows4BPatientZero
+            HereticRuntimeRealization.Windows4B
 
         val body =
             buildJsonObject {
                 put(
                     "model",
-                    realization.requestModel,
+                    Runtime.requestModel,
                 )
                 put(
                     "stream",
-                    false,
+                    Qualification.stream,
                 )
                 put(
                     "max_tokens",
-                    16,
+                    Qualification.maxTokens,
+                )
+                put(
+                    "temperature",
+                    Qualification.temperature,
+                )
+                put(
+                    "chat_template_kwargs",
+                    buildJsonObject {
+                        put(
+                            "enable_thinking",
+                            Qualification.enableThinking,
+                        )
+                    },
                 )
                 put(
                     "messages",
@@ -602,8 +639,8 @@ internal object Windows4BPatientZeroRuntime {
             HttpRequest
                 .newBuilder(
                     URI.create(
-                        realization.endpoint +
-                            "/v1/chat/completions",
+                        Runtime.endpoint +
+                            Qualification.completionPath,
                     ),
                 )
                 .timeout(
@@ -638,14 +675,28 @@ internal object Windows4BPatientZeroRuntime {
                 response.statusCode()
         }
 
-        val content =
+        val parsed =
             Json
                 .parseToJsonElement(
                     response.body(),
                 )
-                .jsonObject[
-                    "choices"
-                ]
+                .jsonObject
+
+        require(
+            parsed[
+                "model"
+            ]
+                ?.jsonPrimitive
+                ?.contentOrNull ==
+                Runtime.requestModel,
+        ) {
+            "llama-server qualification completion model does not match exact request model"
+        }
+
+        val content =
+            parsed[
+                "choices"
+            ]
                 ?.let {
                     it as? JsonArray
                 }
