@@ -57,6 +57,18 @@ object VexLifeProdServiceContract {
     const val ConversationCancelResponseSchema =
         "vexlife-prod.local-service-conversation-cancel-response/v1"
 
+    const val ConversationCancelRequested =
+        "CANCEL_REQUESTED"
+
+    const val ConversationCancelNotActive =
+        "NOT_ACTIVE"
+
+    val ConversationCancelStates =
+        setOf(
+            ConversationCancelRequested,
+            ConversationCancelNotActive,
+        )
+
     const val ErrorSchema =
         "vexlife-prod.local-service-error/v1"
 
@@ -1095,8 +1107,8 @@ object VexLifeProdServiceContract {
         init {
             require(
                 schemaVersion == ConversationCancelResponseSchema &&
-                    state in setOf("CANCEL_REQUESTED", "NOT_ACTIVE") &&
-                    cancellationRequested == (state == "CANCEL_REQUESTED") &&
+                    state in ConversationCancelStates &&
+                    cancellationRequested == (state == ConversationCancelRequested) &&
                     (!effectsPerformed || cancellationRequested)
             ) {
                 "Conversation cancel response is invalid"
