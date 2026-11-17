@@ -650,38 +650,41 @@ object VexLifeWebP1RuntimeArtifacts {
                 return locale ? { code, locale } : null;
               };
 
-              const setVoiceInputState = (stateRef, options = {}) => {
-                dictation.stateRef = stateRef;
-                dictation.holdReasonRef = options.holdReasonRef ?? null;
-                dictation.failureReasonRef = options.failureReasonRef ?? null;
-                if (options.language !== undefined) dictation.language = options.language;
+              // Browser keeps only a local mirror of Family-owned semantic output. It may not
+              // manufacture State/reason refs from provider facts.
+              const applyVoiceInputSemanticState = (semanticState, language = dictation.language) => {
+                if (!semanticState) return;
+                dictation.stateRef = semanticState.stateRef;
+                dictation.holdReasonRef = semanticState.holdReasonRef ?? null;
+                dictation.failureReasonRef = semanticState.failureReasonRef ?? null;
+                if (language !== undefined) dictation.language = language;
               };
+
+              const voiceInputCapabilityKey = (
+                localRecognitionAvailable,
+                microphoneApiAvailable,
+                audioFeedbackAvailable
+              ) =>
+                [localRecognitionAvailable, microphoneApiAvailable, audioFeedbackAvailable]
+                  .map((value) => value ? '1' : '0')
+                  .join(':');
 
               const observeVoiceInputCapability = () => {
                 const language = voiceInputLanguage();
-                if (!language || !localSpeechRecognition()) {
-                  setVoiceInputState(voiceInput.state.held, {
-                    holdReasonRef: voiceInput.holdReason.localRecognitionUnavailable,
-                    language
-                  });
-                  return;
-                }
-                if (!navigator.mediaDevices?.getUserMedia) {
-                  setVoiceInputState(voiceInput.state.held, {
-                    holdReasonRef: voiceInput.holdReason.microphoneApiUnavailable,
-                    language
-                  });
-                  return;
-                }
-                if (!(window.AudioContext || window.webkitAudioContext)) {
-                  setVoiceInputState(voiceInput.state.held, {
-                    holdReasonRef: voiceInput.holdReason.audioFeedbackUnavailable,
-                    language
-                  });
-                  return;
-                }
-                setVoiceInputState(voiceInput.state.ready, { language });
+                const semanticState =
+                  voiceInput.capabilityStateByFacts[
+                    voiceInputCapabilityKey(
+                      Boolean(language && localSpeechRecognition()),
+                      Boolean(navigator.mediaDevices?.getUserMedia),
+                      Boolean(window.AudioContext || window.webkitAudioContext)
+                    )
+                  ];
+                if (!semanticState) return;
+                applyVoiceInputSemanticState(semanticState, language);
               };
+
+              const voiceInputActFor = (controlRef) =>
+                voiceInput.actByState[dictation.stateRef]?.[controlRef] ?? null;
 
               const voiceInputDisplay = () => {
                 if (dictation.stateRef === voiceInput.state.held) {
