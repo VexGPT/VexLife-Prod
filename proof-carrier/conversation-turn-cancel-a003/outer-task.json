@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "vextreme.vexlocalbridge-task-manifest/v1",
+  "artifactClass": "EXECUTABLE_RELAY",
+  "taskRef": "task.vexlocalbridge.vexlife-prod.conversation-turn-cancel-lived-mac.001",
+  "attemptRef": "attempt.vexlocalbridge.vexlife-prod.conversation-turn-cancel-lived-mac.a003",
+  "packageRef": "package.vexlocalbridge.vexlife-prod.conversation-turn-cancel-lived-mac.a003",
+  "requestRef": "request.vexlocalbridge.vexlife-prod.conversation-turn-cancel-lived-mac.a003",
+  "correlationRef": "correlation.vexlocalbridge.vexlife-prod.conversation-turn-cancel-lived-mac.a003",
+  "taskStorageKey": "vexlife-prod-conversation-turn-cancel-lived-mac",
+  "attemptStorageKey": "attempt-a003",
+  "requestingRoleRef": "Operations[VexLife-Prod]",
+  "requestingInstanceRef": "instance.operations.vexlife-prod.conversation-turn-cancel-lived-mac",
+  "parentOperationsRef": "github.pull.vexlife-prod.224",
+  "returnRouteRef": "github.pull.vexlife-prod.224",
+  "hostProfileRef": "macos-victor",
+  "repositoryExecutionProfileRefOrNull": "profile.repository.vextreme-sdk.macos-v1",
+  "repositoryRefOrNull": "VexGPT/VexLife-Prod",
+  "baseRefOrNull": "b3fec60a1a88445f8257f15f34544b9ef90c2e6c",
+  "headRefOrNull": "b2686610338838ed6ef1af52574496c184db9f0e",
+  "treeRefOrNull": "8592831cb1cd5edd99af6b94f853a7021e4d0915",
+  "branchRefOrNull": "VXG-111726-chatgpt-conversation-turn-cancel-a001",
+  "claimRefOrNull": "github.pull.vexlife-prod.224",
+  "exactPathRefs": [],
+  "authorityBinding": {
+    "authoritySchemaRef": "vextreme.effect-transaction/v1",
+    "authorityEnvelopePath": "authority/effect.json",
+    "authorityEnvelopeSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "semanticAdmissionRef": "github.pull.vexlife-prod.224",
+    "transactionRef": "transaction.vexlife-prod.conversation-turn-cancel-lived-mac.a003",
+    "transactionVersion": 1,
+    "allowedEffectRefs": [
+      "effect.vexrelay.execute"
+    ],
+    "heldEffectRefs": [
+      "effect.vexlife-prod.source-mutation",
+      "effect.vexlife-prod.product-runtime",
+      "effect.vexlife-prod.home-mutation",
+      "effect.vexlife-prod.merge"
+    ]
+  },
+  "payload": {
+    "payloadClass": "VEXRELAY_TASK_ARCHIVE",
+    "payloadRuntime": "NATIVE_VEXRELAY",
+    "payloadPath": "payload/inner-vexrelay.zip",
+    "payloadSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "typedArgv": [],
+    "immutableInputs": [
+      {
+        "path": "inputs/vexrelay-binding.json",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    ]
+  },
+  "executionStateAtFormation": "TASK_PREPARED",
+  "singleUseNonce": "nonce-vlb-vexlife-prod-conversation-turn-cancel-lived-mac-a003-20261117",
+  "stopConditions": [
+    "stop.on.identity.drift",
+    "stop.on.first.substantive.failure"
+  ],
+  "archiveDigestBinding": "FILENAME_SHA256"
+}
