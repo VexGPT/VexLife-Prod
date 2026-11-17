@@ -21,6 +21,11 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             bundle.semanticManifest.contains(
+                "\"type\":\"CAPABILITY\",\"capabilityRef\":\"conversation.cancel\"",
+            ),
+        )
+        assertTrue(
+            bundle.semanticManifest.contains(
                 "\"type\":\"CAPABILITY\",\"capabilityRef\":\"vision.selected-scope\"",
             ),
         )
@@ -405,6 +410,15 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.css.contains(".quick-action-trigger[aria-expanded=\"true\"]"))
         assertTrue(bundle.html.contains("data-vex-ref=\"${VexLifeWebP1.VoiceInput.identity.ref}\""))
         assertTrue(bundle.html.contains("id=\"voice-waveform\""))
+        assertTrue(bundle.html.contains("data-vex-ref=\"${VexLifeWebP1.Stop.identity.ref}\""))
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.ConversationCancelPath))
+        assertTrue(bundle.javascript.contains("body: JSON.stringify({ idempotencyKey: state.pending.idempotencyKey })"))
+        assertTrue(bundle.javascript.contains("ui.send.hidden = state.sendInFlight"))
+        assertTrue(bundle.javascript.contains("ui.stop.hidden = !state.sendInFlight"))
+        assertTrue(bundle.javascript.contains("workspace.button.conversation-stop"))
+        assertTrue(bundle.javascript.contains("workspace.status.conversation-stopping"))
+        assertTrue(bundle.javascript.contains("workspace.status.conversation-stopped"))
+        assertTrue(bundle.javascript.contains("state.sendCancelRequested = true"))
         assertTrue(bundle.javascript.contains("window.SpeechRecognition"))
         assertTrue(bundle.javascript.contains("recognition.processLocally = true"))
         assertTrue(bundle.javascript.contains("quality: 'dictation'"))
