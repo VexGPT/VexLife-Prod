@@ -77,25 +77,25 @@ object HereticModelConfiguration {
             ) {
                 "Heretic model binding requires a qualified runtime"
             }
-            val identity = HereticModelCatalog.entry(modelRef)?.identity
+            val model =
+                HereticModelCatalog.entry(
+                    modelRef,
+                )
             require(
-                identity != null &&
+                model != null &&
                     modelProfileRef ==
-                    identity.modelProfileRef &&
-                    artifactRef ==
-                    identity.artifactSetRef &&
-                    artifactContentSetSha256 ==
-                    identity.artifactContentSetSha256 &&
-                    runtimeAdapterRef ==
-                    identity.runtimeAdapterRef &&
-                    runtimeClass ==
-                    identity.runtimeClass &&
-                    endpoint ==
-                    identity.endpoint &&
-                    requestModel ==
-                    identity.requestModel,
+                    model.identity.modelProfileRef &&
+                    HereticRuntimeRealization.admits(
+                        model = model,
+                        artifactRef = artifactRef,
+                        artifactContentSetSha256 = artifactContentSetSha256,
+                        runtimeAdapterRef = runtimeAdapterRef,
+                        runtimeClass = runtimeClass,
+                        endpoint = endpoint,
+                        requestModel = requestModel,
+                    ),
             ) {
-                "qualified runtime evidence does not match one offered Heretic model identity"
+                "qualified runtime evidence does not match one admitted realization of an offered Heretic model"
             }
         }
     }
@@ -158,6 +158,7 @@ object HereticModelConfiguration {
             state = State.BoundProductModel,
             runtimeReceiptPath = runtimeReceiptPath,
             model = HereticModelCatalog.requireEntry(qualifiedRuntime.modelRef),
+            qualifiedRuntime = qualifiedRuntime,
         )
     }
 
@@ -212,18 +213,20 @@ object HereticModelConfiguration {
 
         return value.modelProfileRef ==
             identity.modelProfileRef &&
-            value.artifactRef ==
-            identity.artifactSetRef &&
-            value.artifactContentSetSha256 ==
-            identity.artifactContentSetSha256 &&
-            value.runtimeAdapterRef ==
-            identity.runtimeAdapterRef &&
-            value.runtimeClass ==
-            identity.runtimeClass &&
-            value.endpoint ==
-            identity.endpoint &&
-            value.requestModel ==
-            identity.requestModel &&
+            HereticRuntimeRealization.admits(
+                model =
+                    requireNotNull(
+                        HereticModelCatalog.entry(
+                            value.modelRef,
+                        ),
+                    ),
+                artifactRef = value.artifactRef,
+                artifactContentSetSha256 = value.artifactContentSetSha256,
+                runtimeAdapterRef = value.runtimeAdapterRef,
+                runtimeClass = value.runtimeClass,
+                endpoint = value.endpoint,
+                requestModel = value.requestModel,
+            ) &&
             value.runtimeReceiptPath in
             admittedRuntimeReceiptPaths
     }
@@ -265,8 +268,21 @@ object HereticModelConfiguration {
         runtimeReceiptPath: String =
             HereticProductIdentity.StableRuntimeReceiptRelativePath,
         model: HereticModelCatalog.Entry = HereticModelCatalog.Default,
-    ): Value =
-        validate(
+        qualifiedRuntime: QualifiedRuntimeEvidence? =
+            null,
+    ): Value {
+        qualifiedRuntime?.let {
+            require(
+                it.modelRef ==
+                    model.modelRef &&
+                    it.modelProfileRef ==
+                    model.identity.modelProfileRef,
+            ) {
+                "bound Heretic runtime realization must serve the selected Product model"
+            }
+        }
+
+        return validate(
             value =
                 Value(
                     schemaVersion = Schema,
@@ -275,12 +291,30 @@ object HereticModelConfiguration {
                     companionLineageRef = homeIdentity.companionLineageRef,
                     modelRef = model.identity.modelRef,
                     modelProfileRef = model.identity.modelProfileRef,
-                    artifactRef = model.identity.artifactSetRef,
-                    artifactContentSetSha256 = model.identity.artifactContentSetSha256,
-                    runtimeAdapterRef = model.identity.runtimeAdapterRef,
-                    runtimeClass = model.identity.runtimeClass,
-                    endpoint = model.identity.endpoint,
-                    requestModel = model.identity.requestModel,
+                    artifactRef =
+                        qualifiedRuntime
+                            ?.artifactRef
+                            ?: model.identity.artifactSetRef,
+                    artifactContentSetSha256 =
+                        qualifiedRuntime
+                            ?.artifactContentSetSha256
+                            ?: model.identity.artifactContentSetSha256,
+                    runtimeAdapterRef =
+                        qualifiedRuntime
+                            ?.runtimeAdapterRef
+                            ?: model.identity.runtimeAdapterRef,
+                    runtimeClass =
+                        qualifiedRuntime
+                            ?.runtimeClass
+                            ?: model.identity.runtimeClass,
+                    endpoint =
+                        qualifiedRuntime
+                            ?.endpoint
+                            ?: model.identity.endpoint,
+                    requestModel =
+                        qualifiedRuntime
+                            ?.requestModel
+                            ?: model.identity.requestModel,
                     runtimeReceiptPath = runtimeReceiptPath,
                     automaticFallback = false,
                     automaticDownload = false,
@@ -288,6 +322,7 @@ object HereticModelConfiguration {
                 ),
             homeIdentity = homeIdentity,
         )
+    }
 }
 
 // [VXG RealForever]
