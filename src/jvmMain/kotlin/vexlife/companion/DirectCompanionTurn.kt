@@ -338,7 +338,7 @@ object DirectCompanionTurn {
             Instant.now()
         },
         val currentRuntimeEvidence: (
-            setup: VexLifeProdLocalSetup.Result,
+            setup: VexLifeProdRuntimeSession.Foundation,
         ) -> HereticModelConfiguration.QualifiedRuntimeEvidence = {
             setup ->
             setup.qualifiedRuntimeEvidence
@@ -429,7 +429,12 @@ object DirectCompanionTurn {
         intent: Intent,
     ): Result =
         performWithHooks(
-            setup = setup,
+            setup =
+                VexLifeProdRuntimeSession.Foundation(
+                    state = setup.state,
+                    productHome = setup.productHome,
+                    qualifiedRuntimeEvidence = setup.qualifiedRuntimeEvidence,
+                ),
             intent = intent,
             hooks = Hooks(),
         )
@@ -441,7 +446,7 @@ object DirectCompanionTurn {
             null,
     ): Result =
         performWithHooks(
-            setup = session.result,
+            setup = session.foundation,
             intent = intent,
             hooks =
                 Hooks(
@@ -465,7 +470,7 @@ object DirectCompanionTurn {
         )
 
     internal fun performWithHooks(
-        setup: VexLifeProdLocalSetup.Result,
+        setup: VexLifeProdRuntimeSession.Foundation,
         intent: Intent,
         hooks: Hooks,
     ): Result {
