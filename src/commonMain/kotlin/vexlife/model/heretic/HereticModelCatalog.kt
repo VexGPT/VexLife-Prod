@@ -40,7 +40,7 @@ object HereticModelCatalog {
         /** Unified memory this model wants to run comfortably beside macOS and VexLife. */
         val recommendedMemoryBytes: Long,
         /** Complete provider/model representation relationship; never inherited implicitly. */
-        val companionProfile: HereticCompanionProvider.Profile,
+        val companionProfile: HereticCompanionRepresentation.Profile,
         val standing: Standing,
         /**
          * Whether Setup may start a Home on this model by itself. A newly added model family is
@@ -433,7 +433,7 @@ object HereticModelCatalog {
             members = HereticArtifactCatalog.Members,
             modelRootRelativePath = "models/heretic/qwen3.8-27b-mlx4",
             recommendedMemoryBytes = 32 * HereticModelCatalog.GiB,
-            companionProfile = HereticCompanionProvider.Profiles.Qwen27B,
+            companionProfile = HereticCompanionRepresentation.Profiles.Qwen27B,
             standing = Standing.CERTIFIED,
         )
 
@@ -461,7 +461,7 @@ object HereticModelCatalog {
             members = HereticModelCatalog.NineBMembers,
             modelRootRelativePath = "models/heretic/qwen3.8-9b-mlx5",
             recommendedMemoryBytes = 16 * HereticModelCatalog.GiB,
-            companionProfile = HereticCompanionProvider.Profiles.Qwen9B,
+            companionProfile = HereticCompanionRepresentation.Profiles.Qwen9B,
             standing = Standing.CANDIDATE,
         )
 
@@ -494,7 +494,7 @@ object HereticModelCatalog {
             members = HereticModelCatalog.FourBMembers,
             modelRootRelativePath = "models/heretic/qwen3.8-4b-distill-mlx4",
             recommendedMemoryBytes = 8 * HereticModelCatalog.GiB,
-            companionProfile = HereticCompanionProvider.Profiles.Qwen4B,
+            companionProfile = HereticCompanionRepresentation.Profiles.Qwen4B,
             standing = Standing.CANDIDATE,
         )
 
@@ -528,7 +528,7 @@ object HereticModelCatalog {
             members = HereticModelCatalog.GptOss20BMembers,
             modelRootRelativePath = "models/heretic/gpt-oss-20b-ara-v3-mlx",
             recommendedMemoryBytes = 24 * HereticModelCatalog.GiB,
-            companionProfile = HereticCompanionProvider.Profiles.GptOss20B,
+            companionProfile = HereticCompanionRepresentation.Profiles.GptOss20B,
             standing = Standing.CANDIDATE,
             autoRecommended = false,
         )

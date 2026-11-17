@@ -20,7 +20,7 @@ import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.memory.VexLifeMemoryContract
-import vexlife.model.heretic.HereticCompanionProvider
+import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 
@@ -195,7 +195,7 @@ object DirectCompanionTurn {
         val logValue: String,
     ) {
         ADMITTED("admitted"),
-        EXHAUSTED("exhausted"),
+        REQUEST_BUDGET_EXHAUSTED("exhausted"),
         HELD_PROVIDER_BRIDGE("held_provider_bridge"),
     }
 
@@ -388,7 +388,7 @@ object DirectCompanionTurn {
         val progressObserver: ProgressObserver? =
             null,
         /** How capability owners reach the web/Home/Memory; replaced in tests. */
-        val capabilityOwners: VexLifeCapabilityBridge.Owners = VexLifeCapabilityBridge.Owners(),
+        val capabilityOwners: VexLifeCapabilityBridge.OwnerBindings = VexLifeCapabilityBridge.OwnerBindings(),
         /** The foundational field as its owner reads it now; re-read at each provider boundary. */
         val currentFoundationalField: () -> VexLifeFoundationalField.Reading = {
             VexLifeFoundationalField.readCurrent()
@@ -798,11 +798,8 @@ object DirectCompanionTurn {
                 )
                 .companionProfile
         val capabilityRequestsAdmitted =
-            companionProfile.capabilityStanding in
-                setOf(
-                    HereticCompanionProvider.CapabilityStanding.QUALIFIED,
-                    HereticCompanionProvider.CapabilityStanding.QUALIFYING,
-                )
+            companionProfile.reachRepresentationStanding ==
+                HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED
         val initialPrior =
             conversationOwner.immediatePriorCompletedTurn()
         DirectWorkingContinuity.requireSuccessorContextCurrent(
@@ -927,7 +924,7 @@ object DirectCompanionTurn {
                                 CapabilityRequestAdmission.ADMITTED
 
                             else ->
-                                CapabilityRequestAdmission.EXHAUSTED
+                                CapabilityRequestAdmission.REQUEST_BUDGET_EXHAUSTED
                         },
                     capabilityOffer =
                         if (
@@ -1407,7 +1404,7 @@ object DirectCompanionTurn {
                 CapabilityRequestAdmission.ADMITTED ->
                     Unit
 
-                CapabilityRequestAdmission.EXHAUSTED ->
+                CapabilityRequestAdmission.REQUEST_BUDGET_EXHAUSTED ->
                     throw CapabilityRequestLimitException()
 
                 CapabilityRequestAdmission.HELD_PROVIDER_BRIDGE ->

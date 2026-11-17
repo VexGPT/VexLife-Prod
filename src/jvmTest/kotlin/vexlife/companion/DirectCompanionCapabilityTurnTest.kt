@@ -155,7 +155,7 @@ class DirectCompanionCapabilityTurnTest {
                     DirectCompanionTurn.Hooks(
                         transport = transport,
                         capabilityOwners =
-                            VexLifeCapabilityBridge.Owners(
+                            VexLifeCapabilityBridge.OwnerBindings(
                                 webTransport = page,
                                 resolver = publicResolver,
                             ),
@@ -194,7 +194,7 @@ class DirectCompanionCapabilityTurnTest {
                     "web",
                     "fetch",
                     "https://example.com/kites",
-                    VexLifeCapabilityBridge.State.RETURNED,
+                    VexLifeCapabilityBridge.ResultState.RETURNED,
                 )
             ),
             result.capabilityUses,
@@ -209,7 +209,7 @@ class DirectCompanionCapabilityTurnTest {
         assertTrue(
             progress.any {
                 it.phase == DirectCompanionTurn.ProgressPhase.Reached &&
-                    it.reach?.state == VexLifeCapabilityBridge.State.RETURNED
+                    it.reach?.state == VexLifeCapabilityBridge.ResultState.RETURNED
             }
         )
         assertFalse(
@@ -347,7 +347,7 @@ class DirectCompanionCapabilityTurnTest {
                                 VexLifeCapabilityBridge.ExchangeAllowanceTokens,
                         ),
                     owners =
-                        VexLifeCapabilityBridge.Owners(
+                        VexLifeCapabilityBridge.OwnerBindings(
                             webTransport = longPage,
                             resolver = publicResolver,
                         ),
@@ -499,7 +499,7 @@ class DirectCompanionCapabilityTurnTest {
                     DirectCompanionTurn.Hooks(
                         transport = transport,
                         capabilityOwners =
-                            VexLifeCapabilityBridge.Owners(
+                            VexLifeCapabilityBridge.OwnerBindings(
                                 webTransport = { _, _ -> error("late malformed request must not contact web") },
                                 resolver = publicResolver,
                             ),
@@ -511,7 +511,7 @@ class DirectCompanionCapabilityTurnTest {
             "I had not actually reached the page. The request needs to be emitted by itself.",
             result.content,
         )
-        assertEquals(VexLifeCapabilityBridge.State.INVALID_REQUEST, result.capabilityUses.single().state)
+        assertEquals(VexLifeCapabilityBridge.ResultState.INVALID_REQUEST, result.capabilityUses.single().state)
         assertFalse(result.content.contains("page says something"))
     }
 
@@ -572,13 +572,13 @@ class DirectCompanionCapabilityTurnTest {
                             }
                         },
                         capabilityOwners =
-                            VexLifeCapabilityBridge.Owners(
+                            VexLifeCapabilityBridge.OwnerBindings(
                                 webTransport = { _, _ -> error("never contacted") }
                             ),
                     ),
             )
         assertEquals(2, calls)
-        assertEquals(VexLifeCapabilityBridge.State.REFUSED, result.capabilityUses.single().state)
+        assertEquals(VexLifeCapabilityBridge.ResultState.REFUSED, result.capabilityUses.single().state)
     }
 
     @Test
@@ -627,7 +627,7 @@ class DirectCompanionCapabilityTurnTest {
             result.capabilityUses.size,
         )
         assertEquals(
-            VexLifeCapabilityBridge.State.LIMIT_REACHED,
+            VexLifeCapabilityBridge.ResultState.LIMIT_REACHED,
             result.capabilityUses.last().state,
         )
     }
@@ -746,7 +746,7 @@ class DirectCompanionCapabilityTurnTest {
                     DirectCompanionTurn.Hooks(
                         transport = transport,
                         capabilityOwners =
-                            VexLifeCapabilityBridge.Owners(webTransport = page, resolver = publicResolver),
+                            VexLifeCapabilityBridge.OwnerBindings(webTransport = page, resolver = publicResolver),
                         progressObserver = { progress += it },
                         now = { Instant.parse("2026-11-16T12:00:00Z") },
                     ),
@@ -832,7 +832,7 @@ class DirectCompanionCapabilityTurnTest {
                     "web",
                     "fetch",
                     "https://example.com/kites",
-                    VexLifeCapabilityBridge.State.RETURNED,
+                    VexLifeCapabilityBridge.ResultState.RETURNED,
                 )
             ),
             result.capabilityUses,
@@ -850,7 +850,7 @@ class DirectCompanionCapabilityTurnTest {
                     .capabilityTrace,
             )
         assertEquals(
-            VexLifeCapabilityBridge.State.RETURNED,
+            VexLifeCapabilityBridge.ResultState.RETURNED,
             trace.entries.single().state,
         )
         assertEquals(

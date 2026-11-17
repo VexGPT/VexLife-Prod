@@ -25,7 +25,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import vexlife.capability.VexLifeCapabilityAtlas
 import vexlife.capability.VexLifeCapabilityRequest
-import vexlife.model.heretic.HereticCompanionProvider
+import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
@@ -522,7 +522,7 @@ object DirectCompanionConnection {
             entry.companionProfile
         val harmony =
             profile.messageProtocol ==
-                HereticCompanionProvider.MessageProtocol.HARMONY
+                HereticCompanionRepresentation.MessageProtocol.HARMONY
         val generation =
             profile.generation
         val payload =
@@ -569,7 +569,7 @@ object DirectCompanionConnection {
         val requestBody =
             if (
                 profile.capabilityRepresentation ==
-                    HereticCompanionProvider.CapabilityRepresentation.HARMONY_FUNCTIONS
+                    HereticCompanionRepresentation.CapabilityRepresentation.HARMONY_FUNCTIONS
             ) {
                 harmonyRequestBody(
                     payload = payload,
@@ -612,7 +612,7 @@ object DirectCompanionConnection {
                 ).let {
                     if (
                         profile.reasoningRepresentation ==
-                            HereticCompanionProvider.ReasoningRepresentation.HARMONY_CHANNELS
+                            HereticCompanionRepresentation.ReasoningRepresentation.HARMONY_CHANNELS
                     ) {
                         harmonized(
                             completion = it,

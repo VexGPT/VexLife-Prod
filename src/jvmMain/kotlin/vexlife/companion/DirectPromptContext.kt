@@ -16,7 +16,7 @@ import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.memory.VexLifeMemoryContract
-import vexlife.model.heretic.HereticCompanionProvider
+import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelConfiguration
 
 /**
@@ -65,7 +65,7 @@ object DirectPromptContext {
         VexLifeMemoryContract.ContextInputTokenBudget
 
     const val ReservedOutputTokens =
-        HereticCompanionProvider.ProductMaxOutputTokens
+        HereticCompanionRepresentation.ProductMaxOutputTokens
 
     /**
      * The input budget of an ordinary direct turn: capability requests are admitted there, so their

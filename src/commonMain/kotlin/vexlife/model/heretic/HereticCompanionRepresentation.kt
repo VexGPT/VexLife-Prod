@@ -1,7 +1,7 @@
 package vexlife.model.heretic
 
 /**
- * Source-owned provider/model representation configuration for the local Companion.
+ * Source-owned model/provider representation configuration for the local Companion.
  *
  * Vex semantic owners stay elsewhere: Conversation, Foundational Field, Memory and capability
  * meanings do not become model-specific. This owner answers only how one offered model/provider
@@ -12,7 +12,13 @@ package vexlife.model.heretic
  * proves it is the same, but generation choices are explicit per model so a new model cannot
  * silently inherit another model's defaults from the Connection.
  */
-object HereticCompanionProvider {
+object HereticCompanionRepresentation {
+    /*
+     * This owner describes representation only: message protocol, reasoning carriage, reach
+     * carriage, and generation parameters for one offered model/provider relationship. It does not
+     * own the provider process, Vex semantic capability meaning, Conversation, Memory, or runtime
+     * lifecycle.
+     */
     /** Product-owned output custody bound shared by the currently offered local Companion profiles. */
     const val ProductMaxOutputTokens = 16_000
 
@@ -34,20 +40,13 @@ object HereticCompanionProvider {
         HARMONY_FUNCTIONS,
     }
 
-    enum class CapabilityStanding {
-        /** This representation is source + lived qualified for ordinary Companion use. */
+    enum class ReachRepresentationStanding {
+        /** This provider representation of Vex reach is qualified for ordinary Companion use. */
         QUALIFIED,
 
         /**
-         * Temporary qualification-carrier state. The semantic owners are unchanged and reach may
-         * be exercised only so the provider representation can earn or fail its lived proof.
-         * This state is not a mergeable terminal standing.
-         */
-        QUALIFYING,
-
-        /**
-         * Semantic VexLife reach exists, but this model's provider-native bridge is not yet
-         * qualified. The prompt must not advertise reach as available while held.
+         * Semantic VexLife reach exists, but this model/provider representation has not earned
+         * ordinary Product use. The prompt must not advertise reach as available while held.
          */
         HELD_PROVIDER_BRIDGE,
     }
@@ -119,7 +118,7 @@ object HereticCompanionProvider {
         val messageProtocol: MessageProtocol,
         val reasoningRepresentation: ReasoningRepresentation,
         val capabilityRepresentation: CapabilityRepresentation,
-        val capabilityStanding: CapabilityStanding,
+        val reachRepresentationStanding: ReachRepresentationStanding,
         val coalesceLeadingSystemMessages: Boolean,
         val modelIdentity: String?,
         val generation: Generation,
@@ -174,7 +173,7 @@ object HereticCompanionProvider {
                 messageProtocol = MessageProtocol.OPENAI_CHAT,
                 reasoningRepresentation = ReasoningRepresentation.REASONING_FIELDS,
                 capabilityRepresentation = CapabilityRepresentation.VEXLIFE_CONTROL_TEXT,
-                capabilityStanding = CapabilityStanding.QUALIFIED,
+                reachRepresentationStanding = ReachRepresentationStanding.QUALIFIED,
                 coalesceLeadingSystemMessages = false,
                 modelIdentity = null,
                 generation =
@@ -238,7 +237,7 @@ object HereticCompanionProvider {
                 messageProtocol = MessageProtocol.HARMONY,
                 reasoningRepresentation = ReasoningRepresentation.HARMONY_CHANNELS,
                 capabilityRepresentation = CapabilityRepresentation.HARMONY_FUNCTIONS,
-                capabilityStanding = CapabilityStanding.HELD_PROVIDER_BRIDGE,
+                reachRepresentationStanding = ReachRepresentationStanding.HELD_PROVIDER_BRIDGE,
                 coalesceLeadingSystemMessages = true,
                 modelIdentity = "You are Vex.",
                 generation =
