@@ -1,0 +1,37 @@
+{
+  "repositoryRef": "primary",
+  "expectedBase": "b3fec60a1a88445f8257f15f34544b9ef90c2e6c",
+  "expectedHead": "9a260906709b0836b40918c59a09ac7ec97d8a7a",
+  "expectedTree": "f390ed429b75d108fe732952ea0b455f72716988",
+  "branch": "VXG-111726-chatgpt-conversation-turn-cancel-a001",
+  "proofCommands": [
+    {
+      "command": "/bin/bash",
+      "args": [
+        "-lc",
+        "set -euo pipefail; J21=\"$(/usr/libexec/java_home -v 21 2>/dev/null)\" || { printf \"%s\\n\" \"Conversation Turn Cancel A004: JDK 21 is unavailable.\" >&2; exit 21; }; [ -n \"$J21\" ] && [ -x \"$J21/bin/java\" ] || { printf \"%s\\n\" \"Conversation Turn Cancel A004: resolved JDK is invalid.\" >&2; exit 22; }; export JAVA_HOME=\"$J21\"; export PATH=\"$JAVA_HOME/bin:$PATH\"; \"$JAVA_HOME/bin/java\" -version; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" jvmTest compileKotlinJs compileTestKotlinJs checkVexLifeStrings; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" generateVexLifeWebP1; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" verifyVexLifeWebP1; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" -PvexlifeAppVersion=0.0.0 archiveVexLifeProdMacApplication; APP_DIR=\"build/vexlife-prod-mac-application/9a260906709b0836b40918c59a09ac7ec97d8a7a\"; DMG=\"$APP_DIR/VexLife-macOS-AppleSilicon.dmg\"; SUM=\"$APP_DIR/VexLife-macOS-AppleSilicon.dmg.sha256\"; RECEIPT=\"$APP_DIR/VexLife-macOS-AppleSilicon.receipt.json\"; test -f \"$DMG\" && test -f \"$SUM\" && test -f \"$RECEIPT\"; (cd \"$APP_DIR\" && /usr/bin/shasum -a 256 -c \"VexLife-macOS-AppleSilicon.dmg.sha256\"); /usr/bin/hdiutil verify \"$DMG\"; OUT=\"$HOME/Downloads/VEXLIFE-CONVERSATION-TURN-CANCEL-A004-9a260906709b\"; /bin/mkdir -p \"$OUT\"; /bin/cp -f \"$DMG\" \"$OUT/VexLife-macOS-AppleSilicon.dmg\"; /bin/cp -f \"$SUM\" \"$OUT/VexLife-macOS-AppleSilicon.dmg.sha256\"; /bin/cp -f \"$RECEIPT\" \"$OUT/VexLife-macOS-AppleSilicon.receipt.json\"; /usr/bin/shasum -a 256 \"$OUT/VexLife-macOS-AppleSilicon.dmg\"; printf \"%s\\n\" \"Conversation Turn Cancel A004 artifact: $OUT/VexLife-macOS-AppleSilicon.dmg\"; [ -z \"$(/usr/bin/git status --porcelain=v1 -uall)\" ] || { /usr/bin/git status --porcelain=v1 -uall >&2; exit 31; }"
+      ],
+      "proofClass": "TEST",
+      "candidateEvidence": true,
+      "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+      "predicateRef": "predicate.vexlife-prod.conversation-turn-cancel-lived-mac.source-build-dmg",
+      "timeoutMs": 1200000
+    }
+  ],
+  "maxFiles": 10,
+  "stateRef": "state.vexlife-prod.conversation-turn-cancel-lived-mac",
+  "currentLifecycleState": "SOURCE_READY",
+  "currentGoal": "Prove exact PR #224 Family-connected Send/Stop source after the one-line constructor syntax repair, full JVM/JS/localization/Screen Lens/VexWeb currentness, and form one verified unsigned Mac DMG without touching Victor's current Home/runtime.",
+  "remainingGoals": [
+    "Return the canonical Relay RETURN to PR #224 / Operations.",
+    "Consume exact source/build/DMG evidence against frozen head/tree 9a260906709b / f390ed429b75.",
+    "If PASS, launch the exact DMG and live-test Family-projected Stop during provider generation and GitHub/web reach while confirming the persistent runtime remains usable for the next Send."
+  ],
+  "onPass": {
+    "lifecycleState": "SOURCE_READY",
+    "nextFunction": "F10.REVIEW",
+    "nextOwner": "Operations",
+    "whyThisIsNext": "Exact Family-connected source/build/DMG formation is complete; lived Stop round-trip against real provider/reach work remains the next receiving-side predicate."
+  },
+  "resultFilename": "RETURN-VEXLIFE-CONVERSATION-TURN-CANCEL-A004.zip"
+}
