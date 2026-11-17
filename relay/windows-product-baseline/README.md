@@ -301,4 +301,49 @@ Example:
 [4/6] Start runtime              ...
 ```
 
+
+
+## Current real-host successor — readiness R001
+
+Current Product implementation successor:
+
+```text
+#223 [Platform][Windows][READINESS][DRAFT]
+head=9ba98244269897a04535a9d27996b5cafc50e758
+tree=65e56fd706d28efcd1ac77191b2161483726b634
+base main=262c208b2e65e828dd867719c29ecd286ae58a80
+hosted Windows proof run=44053924414 PASS
+```
+
+The next real-host action is intentionally **not** another compiler run.
+
+Source-managed harness:
+
+```text
+relay/windows-product-baseline/readiness/R001/
+  RUN-VEXLIFE-WINDOWS-READINESS.ps1
+  manifest.json
+```
+
+R001 observes only:
+
+```text
+[1/4] Windows OS / native architecture / CPU / physical memory
+[2/4] proposed Home path existence + free storage on its volume
+[3/4] graphics / NVIDIA evidence when already present
+[4/4] no-effect readiness summary against #223
+```
+
+It does not execute canonical Home classification; the probe says that explicitly instead of
+duplicating `VexLifeProdHomeFiles`.
+
+It performs no model, runtime, service, install, Home or release effect.
+
+Every completed stage is written to Downloads before the next stage begins. If Victor cancels before
+the final RETURN ZIP is formed, the checkpoint directory intentionally remains and can be recovered.
+
+This checkpoint policy replaces the earlier all-or-nothing RETURN behavior for lived Windows work.
+
+<!-- [VXG RealForever][VEXLIFE-PROD][WINDOWS][READINESS-R001] -->
+
 <!-- [VXG RealForever][VEXLIFE-PROD][WINDOWS][SOURCE-BASELINE][CURRENT] -->
