@@ -1522,7 +1522,7 @@
           "role": "METHOD",
           "label": "TURN_CANCELLED_BY_PERSON",
           "symbol": "DirectCompanionTurn",
-          "summary": "The already-durable request receives the Family-owned terminal reason in its failure receipt; no response/head is committed.",
+          "summary": "The already-durable request receives the turn owner's terminal cancellation code in its failure receipt; no response/head is committed.",
           "source": "jvm:companion/DirectCompanionTurn.kt"
         },
         {
