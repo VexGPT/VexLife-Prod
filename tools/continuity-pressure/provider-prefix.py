@@ -24,6 +24,11 @@ What it reports is a deterministic projection of the pinned runtime, not provide
 - for comparison, the reuse a trimmable (pure-KV) cache would allow: the longest common token
   prefix with any earlier stored checkpoint.
 
+--without-current-state is a counterfactual, labelled as one: it drops VexLife's current-state
+envelope from every call before rendering, to size what a representation whose per-turn state is
+replayed at its position (or absent) could reuse on this runtime. It is not a prompt the Product
+sends.
+
 [VXG RealForever]
 """
 
@@ -125,11 +130,16 @@ def common_prefix(a, b):
     return n
 
 
-def analyze(calls, template, tokenizer, think):
+CURRENT_STATE_HEADER = "VEXLIFE_CURRENT_STATE/v1"
+
+
+def analyze(calls, template, tokenizer, think, without_current_state=False):
     stored = []  # LRU of checkpoint token lists, most recent last
     rows = []
     for call in calls:
         messages = [{"role": m["role"], "content": m["content"]} for m in call["messages"]]
+        if without_current_state:
+            messages = [m for m in messages if not m["content"].startswith(CURRENT_STATE_HEADER)]
         kwargs = dict(call.get("chat_template_kwargs") or {})
         row = {"ordinal": call["ordinal"], "call": call["call"], "messageCount": len(messages)}
         try:
@@ -178,6 +188,7 @@ def main():
     parser.add_argument("--zip", required=True)
     parser.add_argument("--model-dir", required=True)
     parser.add_argument("--out")
+    parser.add_argument("--without-current-state", action="store_true")
     args = parser.parse_args()
     template, tokenizer, think = load(Path(args.model_dir))
     with zipfile.ZipFile(args.zip) as bundle:
@@ -191,8 +202,9 @@ def main():
         "pinned": PINNED,
         "runtime": "mlx-lm==0.32.0 server, qwen3_5 hybrid cache (non-trimmable), prompt-cache-size 10",
         "jinja2": jinja2.__version__,
+        "counterfactual": "WITHOUT_CURRENT_STATE_ENVELOPE" if args.without_current_state else None,
     }
-    report.update(analyze(calls, template, tokenizer, think))
+    report.update(analyze(calls, template, tokenizer, think, args.without_current_state))
     text = json.dumps(report, ensure_ascii=False)
     if args.out:
         Path(args.out).write_text(text + "\n")
