@@ -304,7 +304,7 @@ class VexLifeProdEntryFamilyTest {
         val detail = VexLifeProdEntryFamily.Semantics.displayStateFor(state).detail
         val observed = detail.parts.getValue("observed")
         val requirement = detail.parts.getValue("requirement")
-        assertEquals("setup.description.host-reason-hardware", detail.parts.getValue("reason").key)
+        assertEquals("setup.description.host-reason-hardware-portable", detail.parts.getValue("reason").key)
         assertEquals("Apple M2", observed.args["hardware"])
         assertEquals(16L shl 30, observed.parts.getValue("memory").gib["memory"])
         assertEquals("Apple M4 Pro", requirement.args["hardware"])
