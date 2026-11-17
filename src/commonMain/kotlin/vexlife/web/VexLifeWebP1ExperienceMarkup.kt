@@ -290,8 +290,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
             </div>
             <label class="model-cache-field" data-vex-ref="${VexLifeWebP1.ModelPromptCacheEntries.identity.ref}">
               <span data-vex-text="workspace.label.model-prompt-cache-entries"></span>
-              <input id="model-prompt-cache-entries" type="range" min="1" max="10" step="1" value="1">
-              <output id="model-prompt-cache-value">1</output>
+              <select id="model-prompt-cache-entries"></select>
             </label>
             <p class="setting-note-line" data-vex-text="workspace.description.model-prompt-cache-entries"></p>
             <div class="model-configuration-actions">
