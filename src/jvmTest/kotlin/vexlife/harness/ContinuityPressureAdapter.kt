@@ -217,8 +217,6 @@ object ContinuityPressureAdapter {
         fun observe(): HereticModelConfiguration.QualifiedRuntimeEvidence
         /** Every provider call body as sent, in order. */
         val calls: List<JsonObject>
-        /** Observed per-call provider telemetry (live only). */
-        val telemetry: List<JsonObject>
         fun begin(turn: ScenarioTurn) {}
     }
 
@@ -245,7 +243,6 @@ object ContinuityPressureAdapter {
         override fun observe() = evidence
         override val calls: List<JsonObject>
             get() = fixture.calls
-        override val telemetry: List<JsonObject> = emptyList()
         override fun begin(turn: ScenarioTurn) {
             fixture.turn = turn
         }
@@ -278,9 +275,9 @@ object ContinuityPressureAdapter {
     }
 
     /**
-     * The live provider: every call goes to the real runtime unchanged; this only watches the SSE
-     * lines it already passes through, for the provider's own usage report and the timing of the
-     * first token, the first answer token and the end.
+     * The live provider: every call goes to the real runtime unchanged; this only keeps each call
+     * body for the provider-representation proof. Provider telemetry is the Product's own
+     * PROVIDER_STAGE_OBSERVED chronology record, not re-parsed here.
      */
     internal class LiveProvider(private val runtime: LiveRuntime) :
         Provider, DirectCompanionConnection.StreamingTransport {
@@ -289,7 +286,6 @@ object ContinuityPressureAdapter {
         override val evidence = runtime.evidence
         override fun observe() = runtime.observe()
         override val calls = mutableListOf<JsonObject>()
-        override val telemetry = mutableListOf<JsonObject>()
 
         override fun post(call: DirectCompanionConnection.HttpCall) = runtime.transport.post(call)
 
@@ -298,58 +294,7 @@ object ContinuityPressureAdapter {
             onLine: (String) -> Unit,
         ): DirectCompanionConnection.StreamingHttpResult {
             calls += Json.parseToJsonElement(call.body).jsonObject
-            val started = System.nanoTime()
-            var firstToken: Long? = null
-            var firstAnswer: Long? = null
-            var usage: JsonObject? = null
-            val result =
-                runtime.transport.postStreaming(call) { line ->
-                    val data = line.removePrefix("data:").trim()
-                    if (line.startsWith("data:") && data != "[DONE]") {
-                        runCatching { Json.parseToJsonElement(data).jsonObject }
-                            .getOrNull()
-                            ?.let { event ->
-                                (event["usage"] as? JsonObject)?.let { usage = it }
-                                val delta =
-                                    ((event["choices"] as? kotlinx.serialization.json.JsonArray)
-                                            ?.firstOrNull() as? JsonObject)
-                                        ?.get("delta") as? JsonObject
-                                fun text(key: String) =
-                                    (delta?.get(key) as? JsonPrimitive)?.contentOrNull.orEmpty()
-                                val reasoning = text("reasoning") + text("reasoning_content")
-                                val content = text("content")
-                                val now = System.nanoTime()
-                                if (firstToken == null && (reasoning.isNotEmpty() || content.isNotEmpty()))
-                                    firstToken = now
-                                if (firstAnswer == null && content.isNotEmpty()) firstAnswer = now
-                            }
-                    }
-                    onLine(line)
-                }
-            val ended = System.nanoTime()
-            fun ms(at: Long?) = at?.let { (it - started) / 1_000_000 }
-            val prompt = (usage?.get("prompt_tokens") as? JsonPrimitive)?.contentOrNull?.toIntOrNull()
-            val cached =
-                ((usage?.get("prompt_tokens_details") as? JsonObject)?.get("cached_tokens") as? JsonPrimitive)
-                    ?.contentOrNull
-                    ?.toIntOrNull()
-            telemetry +=
-                buildJsonObject {
-                    put("call", calls.size - 1)
-                    put("httpStatus", result.status)
-                    put("promptTokens", prompt)
-                    put("cachedPromptTokens", cached)
-                    put("prefillTokens", if (prompt != null && cached != null) prompt - cached else null)
-                    put(
-                        "completionTokens",
-                        (usage?.get("completion_tokens") as? JsonPrimitive)?.contentOrNull?.toIntOrNull(),
-                    )
-                    put("usageReported", usage != null)
-                    put("firstTokenMs", ms(firstToken))
-                    put("firstAnswerMs", ms(firstAnswer))
-                    put("totalMs", ms(ended))
-                }
-            return result
+            return runtime.transport.postStreaming(call, onLine)
         }
     }
 
@@ -614,7 +559,6 @@ object ContinuityPressureAdapter {
                     clock = clock.plus(Duration.ofMinutes(3))
                     provider.begin(turn)
                     val callsBefore = provider.calls.size
-                    val telemetryBefore = provider.telemetry.size
                     val recordsBefore = chronology.size
                     val startedNanos = System.nanoTime()
                     val settings = VexLifePersonSettingsStore(home)
@@ -708,7 +652,16 @@ object ContinuityPressureAdapter {
                                     )
                                     ?.disposition,
                             providerCalls = turnCalls,
-                            telemetry = provider.telemetry.drop(telemetryBefore),
+                            // Live only: the Product's own per-stage provider measurement (usage
+                            // and timing). A projection's synthetic transport measures nothing real.
+                            telemetry =
+                                if (!provider.live) emptyList() else chronology.drop(recordsBefore)
+                                    .filter { it.fact == VexLogger.Fact.ProviderStageObserved.wire }
+                                    .map { record ->
+                                        buildJsonObject {
+                                            record.refs.forEach { (key, value) -> put(key, value) }
+                                        }
+                                    },
                             chronology = chronology.drop(recordsBefore).toList(),
                             wallNanos = wallNanos,
                             pressureState = pressure,
@@ -1660,7 +1613,7 @@ object ContinuityPressureAdapter {
         files["summary.json"] = summary.toString().toByteArray()
         // Exactly what each provider call carried (synthetic only), so the provider representation
         // can be re-rendered with the pinned chat template outside this run.
-        if (provider.live) {
+        if (observed.any { it.telemetry.isNotEmpty() }) {
             files["implementation/provider-telemetry.jsonl"] =
                 jsonl(
                     observed.flatMap { o ->
