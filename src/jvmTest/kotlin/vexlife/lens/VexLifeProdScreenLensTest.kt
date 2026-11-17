@@ -51,6 +51,18 @@ class VexLifeProdScreenLensTest {
         val send = elements.single { it.string("ref") == VexLifeWorkspaceBlueprint.Send.ref }
         assertEquals("pathway.vexlife-prod.conversation.send", send.string("pathwayRef"))
         assertEquals("VexLifeWorkspaceBlueprint.Send", send.string("symbol"))
+
+        val stop = elements.single { it.string("ref") == VexLifeWorkspaceBlueprint.Stop.ref }
+        assertEquals("capability conversation.cancel", stop.string("intent"))
+        assertEquals("pathway.vexlife-prod.conversation.cancel", stop.string("pathwayRef"))
+        assertEquals("VexLifeWorkspaceBlueprint.Stop", stop.string("symbol"))
+        val cancel = pathways.getValue("pathway.vexlife-prod.conversation.cancel")
+        assertEquals("DIRECT_REGISTRATION", cancel.string("disposition"))
+        assertTrue(
+            cancel.toString().contains("DirectCompanionCancellation") &&
+                cancel.toString().contains("TURN_CANCELLED_BY_PERSON"),
+        )
+
         assertTrue((lens["chrome"] as JsonArray).isEmpty())
     }
 
