@@ -362,6 +362,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const state = {
                 conversation: null,
+                conversationTurn: null,
                 context: null,
                 currentness: null,
                 currentState: null,
@@ -3106,16 +3107,33 @@ object VexLifeWebP1RuntimeArtifacts {
                         : state.failedAttempts.length
                           ? 'A prior Send stopped. Its process is preserved here; use Try Again to form a new Send.'
                           : '';
-                ui.send.hidden = state.sendInFlight;
-                ui.stop.hidden = !state.sendInFlight;
-                ui.stop.disabled = !state.sendInFlight || state.sendCancelInFlight;
-                const stopLabel = t('workspace.button.conversation-stop');
+                const turnDisplay = state.conversationTurn?.display ?? null;
+                const turnControlRef = turnDisplay?.primaryControlRef ?? null;
+                const turnActive = Boolean(turnDisplay?.active);
+                const turnCancelling = Boolean(turnDisplay?.cancelling);
+                const sendLawful = turnControlRef === conversationTurn.control.send;
+                const stopLawful = turnControlRef === conversationTurn.control.stop;
+
+                // Family projection owns which Control is lawful. sendInFlight is only transport
+                // bookkeeping while the service is being re-observed.
+                ui.send.hidden = state.sendInFlight || (turnDisplay !== null && !sendLawful);
+                ui.stop.hidden = !(turnActive || turnCancelling);
+                const sendLabel = sendLawful && turnDisplay?.primaryLabel
+                  ? resolveText(turnDisplay.primaryLabel)
+                  : t('workspace.button.conversation-send');
+                ui.send.textContent = sendLabel;
+                ui.send.setAttribute('aria-label', sendLabel);
+                ui.send.title = sendLabel;
+                const stopLabel = stopLawful && turnDisplay?.primaryLabel
+                  ? resolveText(turnDisplay.primaryLabel)
+                  : t('workspace.button.conversation-stop');
                 ui.stop.textContent = stopLabel;
                 ui.stop.setAttribute('aria-label', stopLabel);
                 ui.stop.title = stopLabel;
+                ui.stop.disabled = !stopLawful || state.sendCancelInFlight;
                 ui.send.disabled = modelSwitching || modelSwitchHeld || (privateNow
                   ? state.privateInFlight || !ui.draft.value.trim()
-                  : state.sendInFlight || (!state.pending && !ui.draft.value.trim()));
+                  : !sendLawful || state.sendInFlight || (!state.pending && !ui.draft.value.trim()));
                 ui.responseProgress.hidden = true;
                 renderTicket();
                 renderVoiceInput();
@@ -3587,6 +3605,16 @@ object VexLifeWebP1RuntimeArtifacts {
                   String(conversation.abandonedAttemptCount ?? 0),
                   ...messages.map((message) => String(message.eventSha256 ?? ''))
                 ].join(':');
+              };
+
+              const loadConversationTurn = async () => {
+                const response = await fetch(service.conversationTurnPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.conversationTurn = await readJson(response);
+                renderComposer();
+                return state.conversationTurn;
               };
 
               const loadConversation = async (renderNow = true) => {
@@ -4355,7 +4383,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (window.confirm(t('workspace.description.diagnostics-clear-confirm'))) void diagnosticsControl('CLEAR_HISTORY');
               });
 
-              void Promise.all([loadSourceCurrentness(), loadCurrentState(), loadConversation(), loadContext(), loadVision()])
+              void Promise.all([loadSourceCurrentness(), loadCurrentState(), loadConversationTurn(), loadConversation(), loadContext(), loadVision()])
                 .then(() => {
                   render();
                   navigate(browser.initialPageUrl);
@@ -4374,8 +4402,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 });
 
               setInterval(() => {
-                if (state.pending) return;
-                void loadConversation().catch(() => {});
+                void loadConversationTurn().catch(() => {});
+                if (!state.pending) void loadConversation().catch(() => {});
                 if (!state.visionInFlight) void loadVision().catch(() => {});
                 if (!state.privateInFlight) void loadPrivate().catch(() => {});
               }, 2500);
