@@ -71,7 +71,10 @@ head dimension
 use_cache
 ~~~
 
-These values are read from the exact pinned config.json artifact member.
+These values are read from the exact pinned config.json artifact member. When that artifact
+provides an explicit layer_types sequence, the topology counts full/linear layers from that sequence
+and validates it against num_hidden_layers and full_attention_interval rather than reconstructing a
+second layer layout.
 
 Change boundary:
 
