@@ -19,7 +19,6 @@ import vexlife.contract.VexContractJson
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
-import vexlife.local.VexLifeProdLocalSetup
 import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
@@ -288,12 +287,6 @@ object Windows4BPatientZeroProcess {
                     session(
                         home =
                             home,
-                        selectionDisposition =
-                            selected.state,
-                        bindingDisposition =
-                            bound.state,
-                        runtimeDisposition =
-                            "WINDOWS_4B_PATIENT_ZERO_QUALIFIED",
                         runtime =
                             firstRuntime,
                     )
@@ -506,12 +499,6 @@ object Windows4BPatientZeroProcess {
                     session(
                         home =
                             home,
-                        selectionDisposition =
-                            "HERETIC_ALREADY_BOUND",
-                        bindingDisposition =
-                            rebound.state,
-                        runtimeDisposition =
-                            "WINDOWS_4B_PATIENT_ZERO_REQUALIFIED",
                         runtime =
                             secondRuntime,
                     )
@@ -732,9 +719,6 @@ object Windows4BPatientZeroProcess {
 
     private fun session(
         home: VexLifeProdHomeFiles.Result,
-        selectionDisposition: String,
-        bindingDisposition: String,
-        runtimeDisposition: String,
         runtime: Windows4BPatientZeroRuntime.Started,
     ): VexLifeProdRuntimeSession {
         val evidence =
