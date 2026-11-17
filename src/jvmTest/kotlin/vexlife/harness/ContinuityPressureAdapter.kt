@@ -23,6 +23,8 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import vexlife.capability.VexLifeCapabilityRequest
+import vexlife.contract.VexDurableContractFile
+import vexlife.filesystem.VexOwnedPath
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
 import vexlife.companion.DirectPromptContext
@@ -35,12 +37,19 @@ import vexlife.continuity.VexLifeWorkingContinuity
 import vexlife.person.VexLifePersonSettings
 import vexlife.person.VexLifePersonSettingsStore
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.logging.VexLogger
+import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeState
+import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
+import vexlife.model.heretic.runtime.FileHereticRuntimeReceiptStore
+import vexlife.model.heretic.runtime.HereticPersistentRuntime
+import vexlife.model.heretic.runtime.MacHereticRuntimePlatform
+import vexlife.model.heretic.runtime.StableVexLifeHereticRuntimeCompatibility
 
 /**
  * Claude lane's adapter into the shared VexWork continuity-pressure harness (#310).
@@ -263,16 +272,118 @@ object ContinuityPressureAdapter {
      * start. On an already set-up Home it observes; currentness is then re-observed read-only for
      * every stage, with no recovery, so an experiment can never restart or replace the runtime.
      */
+    private fun bindingFromReceipt(
+        authorityRef: String,
+        modelRef: String,
+        modelPath: String,
+        pythonPath: String,
+        pythonEnvironmentRoot: String,
+    ): HereticPersistentRuntime.Binding =
+        HereticPersistentRuntime.Binding(
+            schemaVersion = HereticPersistentRuntime.BindingSchema,
+            authorityRef = authorityRef,
+            modelPath = modelPath,
+            pythonPath = pythonPath,
+            pythonEnvironmentRoot = pythonEnvironmentRoot,
+            implementationIdentity = HereticPersistentRuntime.currentImplementationIdentity(),
+            model = HereticModelCatalog.requireEntry(modelRef),
+        )
+
+    /**
+     * Observe the runtime already bound by the selected Home without entering LocalSetup.
+     *
+     * LocalSetup's reuse-only route is lifecycle-safe for the Product, but it may still repair an
+     * abandoned Conversation writer or currentize the Product runtime binding. A synthetic live
+     * experiment has no authority to perform either effect on the person's canonical Home.
+     *
+     * The harness therefore follows the Home's already-bound runtimeReceiptPath and asks only that
+     * rightful runtime owner for exact currentness. Missing/pending/stale binding truth holds the
+     * experiment instead of converging or recovering anything.
+     */
+    private fun observeBoundRuntimeReadOnly(runtimeHome: Path): HereticModelConfiguration.QualifiedRuntimeEvidence {
+        val home =
+            requireNotNull(VexLifeProdHomeFiles.observeExisting(runtimeHome)) {
+                "selected canonical Vex Home is absent"
+            }
+        val configured =
+            FileHereticModelConfigurationStore(runtimeHome).read(home.manifest)
+                as? FileHereticModelConfigurationStore.Snapshot.Heretic
+                ?: error("selected Vex Home has no bound Product runtime model configuration")
+        require(HereticModelConfiguration.isBound(configured.value)) {
+            "selected Vex Home runtime model configuration is not already bound"
+        }
+
+        val platform = MacHereticRuntimePlatform(productHome = runtimeHome)
+        return when (configured.value.runtimeReceiptPath) {
+            HereticProductIdentity.StableRuntimeReceiptRelativePath -> {
+                val ownedRoot = VexOwnedPath.requireRoot(runtimeHome, "canonical VexLife Home")
+                val receipt =
+                    requireNotNull(
+                        VexDurableContractFile.read<StableVexLifeHereticRuntimeCompatibility.Receipt>(
+                            ownedRoot = ownedRoot,
+                            path =
+                                VexOwnedPath.resolveInside(
+                                    ownedRoot,
+                                    HereticProductIdentity.StableRuntimeReceiptRelativePath,
+                                ),
+                        )
+                    ) {
+                        "selected Vex Home stable runtime receipt is absent"
+                    }
+                require(receipt.modelRef == configured.value.modelRef) {
+                    "stable runtime receipt does not serve the Home's bound model"
+                }
+                val binding =
+                    bindingFromReceipt(
+                        authorityRef = receipt.authorityRef,
+                        modelRef = receipt.modelRef,
+                        modelPath = receipt.modelPath,
+                        pythonPath = receipt.pythonPath,
+                        pythonEnvironmentRoot = receipt.pythonEnvironmentRoot,
+                    )
+                requireNotNull(
+                    StableVexLifeHereticRuntimeCompatibility.observe(
+                        productHome = runtimeHome,
+                        binding = binding,
+                        platform = platform,
+                    )
+                ) {
+                    "selected stable VexLife runtime is not currently borrowable"
+                }.evidence
+            }
+
+            HereticProductIdentity.ProductRuntimeReceiptRelativePath -> {
+                val store = FileHereticRuntimeReceiptStore(runtimeHome)
+                val receipt =
+                    requireNotNull(store.read()) {
+                        "selected Vex Home Product runtime receipt is absent"
+                    }
+                require(receipt.modelRef == configured.value.modelRef) {
+                    "Product runtime receipt does not serve the Home's bound model"
+                }
+                HereticPersistentRuntime.observeCurrentQualified(
+                    binding =
+                        bindingFromReceipt(
+                            authorityRef = receipt.authorityRef,
+                            modelRef = receipt.modelRef,
+                            modelPath = receipt.modelPath,
+                            pythonPath = receipt.pythonPath,
+                            pythonEnvironmentRoot = receipt.pythonEnvironmentRoot,
+                        ),
+                    store = store,
+                    platform = platform,
+                )
+            }
+
+            else -> error("selected Vex Home runtime receipt owner is not admitted for read-only borrowing")
+        }
+    }
+
     private fun hostRuntime(runtimeHome: Path): LiveRuntime {
-        val session =
-            VexLifeProdLocalSetup.establishSession(
-                productHome = runtimeHome,
-                allowAcquisition = false,
-                allowRuntimeStart = false,
-            )
+        val evidence = observeBoundRuntimeReadOnly(runtimeHome)
         return LiveRuntime(
-            evidence = session.observeCurrentQualifiedRuntimeEvidence(),
-            observe = { session.observeCurrentQualifiedRuntimeEvidence() },
+            evidence = evidence,
+            observe = { observeBoundRuntimeReadOnly(runtimeHome) },
             transport = DirectCompanionConnection.SystemTransport,
         )
     }
@@ -1678,8 +1789,13 @@ object ContinuityPressureAdapter {
                 put("adapterRef", AdapterRef)
                 put(
                     "provider",
-                    "DETERMINISTIC_FIXTURE: echoes 'Reply only: X'; on probe turns asks revisit once with the probe's own content words; " +
-                        "on setting turns reports the reply-language setting the provider input itself carried, and where",
+                    if (provider.live) {
+                        "LIVE_MODEL: exact already-bound host runtime observed read-only; provider calls forwarded unchanged; " +
+                            "usage and timing are observations from the returned stream"
+                    } else {
+                        "DETERMINISTIC_FIXTURE: echoes 'Reply only: X'; on probe turns asks revisit once with the probe's own content words; " +
+                            "on setting turns reports the reply-language setting the provider input itself carried, and where"
+                    },
                 )
                 put(
                     "owners",
