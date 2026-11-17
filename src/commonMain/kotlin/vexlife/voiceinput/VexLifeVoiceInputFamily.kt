@@ -163,6 +163,7 @@ object VexLifeVoiceInputFamily :
         override val effectRef: String = EffectEndLocalDictation
     }
 
+    @Serializable
     enum class Attention {
         None,
         Overlay,
