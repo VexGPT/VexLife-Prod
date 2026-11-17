@@ -692,6 +692,9 @@ object DirectCompanionTurn {
                 } catch (
                     error: Throwable,
                 ) {
+                    val terminalError =
+                        hooks.cancellation?.cancelledExceptionOrNull()
+                            ?: error
                     val failure =
                         if (
                             request !=
@@ -706,7 +709,7 @@ object DirectCompanionTurn {
                                         ?.conversationHeadSha256,
                                 failureCode =
                                     failureCode(
-                                        error,
+                                        terminalError,
                                     ),
                                 responseDurablyRecorded =
                                     response !=
@@ -724,12 +727,12 @@ object DirectCompanionTurn {
                         VexLogger.Fact.TurnFailed,
                         listOfNotNull(
                                 "turnRef" to identity.turnRef,
-                                "failureCode" to failureCode(error),
+                                "failureCode" to failureCode(terminalError),
                                 failure?.let { "failureRef" to it.failureRef },
                                 "failureReceipt" to if (failure != null) "written" else "not-written",
                             )
                             .toMap(),
-                        detail = error.javaClass.simpleName + ": " + (error.message ?: ""),
+                        detail = terminalError.javaClass.simpleName + ": " + (terminalError.message ?: ""),
                     )
                     val route =
                         failure
@@ -743,12 +746,12 @@ object DirectCompanionTurn {
                     throw TurnException(
                         failureCode =
                             failureCode(
-                                error,
+                                terminalError,
                             ),
                         failureReceipt = failure,
                         retrySameSendAttemptAllowed = false,
                         exactNextSafeRoute = route,
-                        cause = error,
+                        cause = terminalError,
                     )
                 }
 
