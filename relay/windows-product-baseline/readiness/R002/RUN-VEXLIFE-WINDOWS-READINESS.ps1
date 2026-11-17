@@ -121,7 +121,7 @@ $hostObservation = [ordered]@{
     powershellVersion = $PSVersionTable.PSVersion.ToString()
     effectsPerformed = $false
 }
-[void](Write-JsonCheckpoint -Name "01-host.json" -Value $host)
+[void](Write-JsonCheckpoint -Name "01-host.json" -Value $hostObservation)
 Write-Host ("PASS: " + $hostObservation.nativeArchitecture + ", RAM=" + [math]::Round($totalMemoryBytes / 1GB, 1) + " GiB")
 Write-Host ""
 
@@ -152,7 +152,7 @@ $homeObservation = [ordered]@{
     driveFreeBytes = [long]$drive.AvailableFreeSpace
     effectsPerformed = $false
 }
-[void](Write-JsonCheckpoint -Name "02-home-storage.json" -Value $home)
+[void](Write-JsonCheckpoint -Name "02-home-storage.json" -Value $homeObservation)
 Write-Host ("PASS: Home path=" + $homeObservation.pathState + ", free storage=" + [math]::Round($homeObservation.driveFreeBytes / 1GB, 1) + " GiB")
 Write-Host ""
 
