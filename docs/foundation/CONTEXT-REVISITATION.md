@@ -174,6 +174,26 @@ PROVIDER CACHE MEASUREMENT
   no compute or cache improvement is claimed; #207/#210-style measurement owns that proof.
 ~~~
 
+## Experiment-only effective selection budget
+
+The shared continuity-pressure harness (VexWork #310) needs rollover pressure inside 10–20 turns
+without pretending the model window shrank. `DirectCompanionTurn.Hooks` (module-internal) carries
+`experimentEffectiveInputTokenBudget`; only the test-scope harness adapter
+(`tools/continuity-pressure/`, `src/jvmTest/kotlin/vexlife/harness/`) sets it, against a scratch
+Home. It reaches `DirectPromptContext.materializeContinuityAt` / `reverifyContinuityAt` (internal)
+and replaces only the selection budget; the public `materializeContinuity` passes null. The model
+window, the output reserve and the hard limit are unchanged, and the receipt records the value as
+`experimentEffectiveInputTokenBudget` (NEVER-default, so ordinary receipts keep their bytes).
+
+~~~text
+EXPERIMENT BUDGET != ORDINARY PRODUCT BUDGET != HARD MODEL LIMIT
+~~~
+
+Working Continuity thresholds are absolute multiples of the 16k output reserve, so the budget changes
+headroom, not the thresholds: below about 48k plus the 24k exchange allowance every turn starts at
+ROLLOVER_REQUIRED. At the adapter's default of 52k the run starts at CHECKPOINT_RECOMMENDED and
+crosses ROLLOVER inside the scenario's pressure set (turn 18 of 30).
+
 ## Proof
 
 ~~~text
