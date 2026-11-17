@@ -279,7 +279,7 @@ Get-ChildItem -LiteralPath $CheckpointRoot -File | Sort-Object Name | ForEach-Ob
     $inventory += [ordered]@{
         path = $_.Name
         bytes = $_.Length
-        sha256 = Get-LowerSha256 $_.FullName
+        sha256 = (Get-LowerSha256 $_.FullName)
     }
 }
 Write-Utf8NoBom -Path (Join-Path $CheckpointRoot "inventory.json") -Text (($inventory | ConvertTo-Json -Depth 6) + $NL)
