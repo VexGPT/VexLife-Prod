@@ -523,13 +523,30 @@ svg { display: block; }
 .reaches li { margin: 2px 0; overflow-wrap: anywhere; }
 .reaches li::before { content: "↳ "; color: var(--ink-3); }
 .reached-line { overflow-wrap: anywhere; }
-.models-list { display: grid; gap: 10px; margin: 8px 0; }
-.model-row { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--rule-strong); border-radius: 8px; }
+.model-state-card, .model-configuration {
+  margin: 8px 0; padding: 10px 12px; border: 1px solid var(--rule-strong); border-radius: 8px;
+  background: var(--raised);
+}
+.model-choice-field { display: grid; gap: 6px; margin: 10px 0; max-width: 540px; }
+.model-choice-field select {
+  min-height: 36px; padding: 0 10px; border: 1px solid var(--rule-strong); border-radius: 7px;
+  background: var(--surface); color: var(--ink);
+}
+.models-list { display: grid; gap: 8px; margin: 8px 0; }
+.model-row { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; padding: 9px 11px; border: 1px solid var(--rule); border-radius: 8px; }
 .model-row[data-chosen="true"] { border-color: var(--ink-2); }
 .model-row .model-name { font-weight: 600; }
 .model-row .model-facts, .model-row .model-notes { color: var(--ink-2); font-size: var(--step--1); grid-column: 1; }
 .model-row .model-controls { grid-column: 2; grid-row: 1 / span 3; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .model-row .model-controls .outline-button { height: 30px; padding: 0 10px; }
+.model-configuration { display: grid; gap: 10px; }
+.model-cache-field {
+  display: grid; grid-template-columns: minmax(150px, auto) minmax(160px, 1fr) 32px;
+  gap: 10px; align-items: center;
+}
+.model-cache-field input[type="range"] { width: 100%; }
+.model-cache-field output { text-align: right; font-variant-numeric: tabular-nums; }
+.model-configuration-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .receipt-line {
   grid-area: receipt; margin: 6px 2px 0; color: var(--ink-3); font-size: var(--step--1);
