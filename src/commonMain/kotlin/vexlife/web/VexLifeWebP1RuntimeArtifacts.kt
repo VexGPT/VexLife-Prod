@@ -3744,14 +3744,22 @@ object VexLifeWebP1RuntimeArtifacts {
 
               // The presentation reports only what it observed itself (what it showed, what it could
               // prove about the visible page). It never reports a Conversation or runtime outcome:
-              // those facts belong to their owners. A failed report changes nothing.
+              // those facts belong to their owners. Browser reports are serialized so VexLogger's
+              // chronology preserves the order this one presentation actually observed them.
+              // A failed report changes nothing about Product behavior or the next fact.
+              let reportFactTail = Promise.resolve();
               const reportFact = (fact, refs = {}) => {
                 try {
-                  void fetch(service.chronologyPath, {
-                    method: 'POST',
-                    headers: { 'content-type': 'application/json' },
-                    body: JSON.stringify({ fact, refs })
-                  }).catch(() => {});
+                  reportFactTail =
+                    reportFactTail
+                      .then(() =>
+                        fetch(service.chronologyPath, {
+                          method: 'POST',
+                          headers: { 'content-type': 'application/json' },
+                          body: JSON.stringify({ fact, refs })
+                        })
+                      )
+                      .catch(() => {});
                 } catch {}
               };
 
