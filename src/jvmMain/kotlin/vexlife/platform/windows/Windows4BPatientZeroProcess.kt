@@ -739,40 +739,20 @@ object Windows4BPatientZeroProcess {
     ): VexLifeProdRuntimeSession {
         val evidence =
             runtime.evidence
-        val result =
-            VexLifeProdLocalSetup.Result(
+        val foundation =
+            VexLifeProdRuntimeSession.Foundation(
                 state =
-                    "LOCAL_HERETIC_FOUNDATION_READY",
+                    VexLifeProdRuntimeSession.ReadyState,
                 productHome =
                     home.productHome,
-                homeDisposition =
-                    home.state,
-                modelSelectionDisposition =
-                    selectionDisposition,
-                managedPythonDisposition =
-                    "NOT_APPLICABLE_WINDOWS_LLAMA_CPP",
-                artifactDisposition =
-                    "WINDOWS_4B_GGUF_EXACT",
-                environmentDisposition =
-                    "WINDOWS_LLAMA_CPP_EXACT",
-                runtimeDisposition =
-                    runtimeDisposition,
-                modelBindingDisposition =
-                    bindingDisposition,
-                modelConfigurationState =
-                    HereticModelConfiguration.State.BoundProductModel,
                 qualifiedRuntimeEvidence =
                     evidence,
-                endpoint =
-                    evidence.endpoint,
-                requestModel =
-                    evidence.requestModel,
             )
 
         return object :
             VexLifeProdRuntimeSession {
-            override val result: VexLifeProdLocalSetup.Result =
-                result
+            override val foundation: VexLifeProdRuntimeSession.Foundation =
+                foundation
 
             override fun currentQualifiedRuntimeEvidence(
                 onRecovery: (() -> Unit)?,
