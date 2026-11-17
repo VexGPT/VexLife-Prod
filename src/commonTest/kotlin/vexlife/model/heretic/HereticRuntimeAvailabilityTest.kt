@@ -8,31 +8,31 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class HereticRuntimeAvailabilityTest {
+    private val macRealization =
+        HereticRuntimeRealization.legacyMacV1(
+            HereticProductIdentity.ModelRef,
+        )
+
     private fun evidence(
         receiptRef: String,
     ): HereticModelConfiguration.QualifiedRuntimeEvidence =
         HereticModelConfiguration.QualifiedRuntimeEvidence(
-            realizationRef =
-                HereticRuntimeRealization
-                    .legacyMacV1(
-                        HereticProductIdentity.ModelRef,
-                    )
-                    .realizationRef,
+            realizationRef = macRealization.realizationRef,
             runtimeReceiptRef = receiptRef,
             runtimeState = HereticRuntimeState.Qualified,
             modelRef = HereticProductIdentity.ModelRef,
             modelProfileRef = HereticProductIdentity.ModelProfileRef,
-            artifactRef = HereticProductIdentity.ArtifactSetRef,
-            artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
-            runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
-            runtimeClass = HereticProductIdentity.RuntimeClass,
-            endpoint = HereticProductIdentity.Endpoint,
-            requestModel = HereticProductIdentity.RequestModel,
+            artifactRef = macRealization.artifact.artifactRef,
+            artifactContentSetSha256 = macRealization.artifact.contentSetSha256,
+            runtimeAdapterRef = macRealization.runtime.runtimeAdapterRef,
+            runtimeClass = macRealization.runtime.runtimeClass,
+            endpoint = macRealization.runtime.endpoint,
+            requestModel = macRealization.runtime.requestModel,
             qualification = HereticRuntimeQualification.qualified(),
         )
 
     @Test
-    fun exactBorrowableStableRuntimeSatisfiesAvailabilityWithoutProductEffect() {
+    fun exactBorrowableStableRuntimeSatisfiesMatchingRealizationWithoutProductEffect() {
         val borrowed =
             evidence(
                 "receipt.vexlife.heretic-persistent-runtime.stable.test",
@@ -49,6 +49,7 @@ class HereticRuntimeAvailabilityTest {
                         ),
                     control =
                         HereticRuntimeAvailability.Control.EnsureAvailable(
+                            realizationRef = macRealization.realizationRef,
                             productOwnedMode =
                                 HereticRuntimeAvailability.ProductOwnedMode.AcquisitionAllowed,
                         ),
@@ -60,25 +61,50 @@ class HereticRuntimeAvailabilityTest {
                 act.admittedState,
             )
 
-        assertNull(
-            act.effect,
-        )
+        assertNull(act.effect)
         assertEquals(
             HereticRuntimeAvailability.Source.BorrowedStableVexLife,
             qualified.source,
         )
-        assertTrue(
-            qualified.evidence ===
-                borrowed,
-        )
-        assertEquals(
-            HereticProductIdentity.StableRuntimeReceiptRelativePath,
-            qualified.runtimeReceiptPath,
-        )
+        assertTrue(qualified.evidence === borrowed)
     }
 
     @Test
-    fun unavailableStablePredecessorRequestsOnlyTheLawfulProductOwnedEffect() {
+    fun qualifiedMacRuntimeCannotSatisfyWindowsRealizationRequest() {
+        val borrowed =
+            evidence(
+                "receipt.vexlife.heretic-persistent-runtime.stable.test",
+            )
+        val windows = HereticRuntimeRealization.Windows4B
+
+        val act =
+            assertNotNull(
+                HereticRuntimeAvailability.resolve(
+                    currentState =
+                        HereticRuntimeAvailability.State.StableBorrowable(
+                            evidence = borrowed,
+                            runtimeReceiptPath =
+                                HereticProductIdentity.StableRuntimeReceiptRelativePath,
+                        ),
+                    control =
+                        HereticRuntimeAvailability.Control.EnsureAvailable(
+                            realizationRef = windows.realizationRef,
+                            productOwnedMode =
+                                HereticRuntimeAvailability.ProductOwnedMode.AcquisitionAllowed,
+                        ),
+                ),
+            )
+
+        assertNull(act.admittedState)
+        val effect =
+            assertIs<HereticRuntimeAvailability.Effect.EnsureProductOwnedRuntime>(
+                act.effect,
+            )
+        assertEquals(windows.realizationRef, effect.realizationRef)
+    }
+
+    @Test
+    fun unavailablePredecessorRequestsExactRealizationEffect() {
         val acquisition =
             assertNotNull(
                 HereticRuntimeAvailability.resolve(
@@ -86,19 +112,18 @@ class HereticRuntimeAvailabilityTest {
                         HereticRuntimeAvailability.State.StablePredecessorUnavailable,
                     control =
                         HereticRuntimeAvailability.Control.EnsureAvailable(
+                            realizationRef = macRealization.realizationRef,
                             productOwnedMode =
                                 HereticRuntimeAvailability.ProductOwnedMode.AcquisitionAllowed,
                         ),
                 ),
             )
 
-        assertNull(
-            acquisition.admittedState,
-        )
-        assertEquals(
-            HereticRuntimeAvailability.Effect.EnsureProductOwnedRuntime,
-            acquisition.effect,
-        )
+        val acquireEffect =
+            assertIs<HereticRuntimeAvailability.Effect.EnsureProductOwnedRuntime>(
+                acquisition.effect,
+            )
+        assertEquals(macRealization.realizationRef, acquireEffect.realizationRef)
 
         val observationOnly =
             assertNotNull(
@@ -107,23 +132,22 @@ class HereticRuntimeAvailabilityTest {
                         HereticRuntimeAvailability.State.StablePredecessorUnavailable,
                     control =
                         HereticRuntimeAvailability.Control.EnsureAvailable(
+                            realizationRef = macRealization.realizationRef,
                             productOwnedMode =
                                 HereticRuntimeAvailability.ProductOwnedMode.ObservationOnly,
                         ),
                 ),
             )
 
-        assertNull(
-            observationOnly.admittedState,
-        )
-        assertEquals(
-            HereticRuntimeAvailability.Effect.ObserveCurrentProductOwnedRuntime,
-            observationOnly.effect,
-        )
+        val observeEffect =
+            assertIs<HereticRuntimeAvailability.Effect.ObserveCurrentProductOwnedRuntime>(
+                observationOnly.effect,
+            )
+        assertEquals(macRealization.realizationRef, observeEffect.realizationRef)
     }
 
     @Test
-    fun productOwnedObservationBecomesQualifiedWithoutRelabelingReceiptCustody() {
+    fun productOwnedObservationKeepsRealizationOwnedReceiptCoordinate() {
         val product =
             evidence(
                 "receipt.vexlife-prod.heretic-persistent-runtime.product.test",
@@ -138,12 +162,9 @@ class HereticRuntimeAvailabilityTest {
             HereticRuntimeAvailability.Source.VexLifeProdOwned,
             qualified.source,
         )
-        assertTrue(
-            qualified.evidence ===
-                product,
-        )
+        assertTrue(qualified.evidence === product)
         assertEquals(
-            HereticProductIdentity.ProductRuntimeReceiptRelativePath,
+            macRealization.runtimeReceiptRelativePath,
             qualified.runtimeReceiptPath,
         )
 
@@ -153,18 +174,15 @@ class HereticRuntimeAvailabilityTest {
                     currentState = qualified,
                     control =
                         HereticRuntimeAvailability.Control.EnsureAvailable(
+                            realizationRef = macRealization.realizationRef,
                             productOwnedMode =
                                 HereticRuntimeAvailability.ProductOwnedMode.ObservationOnly,
                         ),
                 ),
             )
 
-        assertNull(
-            repeated.admittedState,
-        )
-        assertNull(
-            repeated.effect,
-        )
+        assertNull(repeated.admittedState)
+        assertNull(repeated.effect)
     }
 }
 
