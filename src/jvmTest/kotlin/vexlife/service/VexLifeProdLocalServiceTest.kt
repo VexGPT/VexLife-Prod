@@ -2834,7 +2834,7 @@ class VexLifeProdLocalServiceTest {
                     assertTrue(
                         stream.body()
                             .contains(
-                                VexLifeConversationTurnFamily.TerminalReason.CancelledByPerson.ref,
+                                DirectCompanionTurn.FailureCancelledByPerson,
                             ),
                         stream.body(),
                     )
