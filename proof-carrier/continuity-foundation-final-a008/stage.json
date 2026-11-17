@@ -1,0 +1,37 @@
+{
+  "repositoryRef": "primary",
+  "expectedBase": "655e7c78cefba06a5e87afad285bb25a08632f05",
+  "expectedHead": "603bfebed58bba47b510d5cba27ab8795ad71c6c",
+  "expectedTree": "55b689eed95f5a961dc1ee2bd72cd5789f17c66e",
+  "branch": "VXG-111626-continuity-foundation-merge-candidate-a001",
+  "proofCommands": [
+    {
+      "command": "/bin/bash",
+      "args": [
+        "-lc",
+        "set -euo pipefail; J21=\"$(/usr/libexec/java_home -v 21 2>/dev/null)\" || { printf \"%s\\n\" \"Continuity foundation A008: JDK 21 is unavailable.\" >&2; exit 21; }; [ -n \"$J21\" ] && [ -x \"$J21/bin/java\" ] || { printf \"%s\\n\" \"Continuity foundation A008: resolved JDK is invalid.\" >&2; exit 22; }; export JAVA_HOME=\"$J21\"; export PATH=\"$JAVA_HOME/bin:$PATH\"; \"$JAVA_HOME/bin/java\" -version; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" jvmTest compileKotlinJs compileTestKotlinJs checkVexLifeStrings; ./gradlew --no-daemon -Dorg.gradle.java.home=\"$J21\" -PvexlifeAppVersion=0.0.0 archiveVexLifeProdMacApplication; APP_DIR=\"build/vexlife-prod-mac-application/603bfebed58bba47b510d5cba27ab8795ad71c6c\"; DMG=\"$APP_DIR/VexLife-macOS-AppleSilicon.dmg\"; SUM=\"$APP_DIR/VexLife-macOS-AppleSilicon.dmg.sha256\"; RECEIPT=\"$APP_DIR/VexLife-macOS-AppleSilicon.receipt.json\"; test -f \"$DMG\" && test -f \"$SUM\" && test -f \"$RECEIPT\"; (cd \"$APP_DIR\" && /usr/bin/shasum -a 256 -c \"VexLife-macOS-AppleSilicon.dmg.sha256\"); /usr/bin/hdiutil verify \"$DMG\"; /bin/mkdir -p \"$HOME/Downloads/VEXLIFE-CONTINUITY-FOUNDATION-FINAL-A008-603bfebed58b\"; /bin/cp -f \"$DMG\" \"$HOME/Downloads/VEXLIFE-CONTINUITY-FOUNDATION-FINAL-A008-603bfebed58b/VexLife-macOS-AppleSilicon.dmg\"; /bin/cp -f \"$SUM\" \"$HOME/Downloads/VEXLIFE-CONTINUITY-FOUNDATION-FINAL-A008-603bfebed58b/VexLife-macOS-AppleSilicon.dmg.sha256\"; /bin/cp -f \"$RECEIPT\" \"$HOME/Downloads/VEXLIFE-CONTINUITY-FOUNDATION-FINAL-A008-603bfebed58b/VexLife-macOS-AppleSilicon.receipt.json\"; /usr/bin/shasum -a 256 \"$HOME/Downloads/VEXLIFE-CONTINUITY-FOUNDATION-FINAL-A008-603bfebed58b/VexLife-macOS-AppleSilicon.dmg\"; printf \"%s\\n\" \"Continuity foundation A008 artifact: $HOME/Downloads/VEXLIFE-CONTINUITY-FOUNDATION-FINAL-A008-603bfebed58b/VexLife-macOS-AppleSilicon.dmg\"; [ -z \"$(/usr/bin/git status --porcelain=v1 -uall)\" ] || { /usr/bin/git status --porcelain=v1 -uall >&2; exit 31; }"
+      ],
+      "proofClass": "TEST",
+      "candidateEvidence": true,
+      "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+      "predicateRef": "predicate.vexlife-prod.continuity-foundation-final-lived-mac.source-build",
+      "timeoutMs": 1200000
+    }
+  ],
+  "maxFiles": 10,
+  "stateRef": "state.vexlife-prod.continuity-foundation-final-lived-mac",
+  "currentLifecycleState": "SOURCE_READY",
+  "currentGoal": "Prove the exact PR #212 continuity foundation source/build and form one local unsigned Mac DMG without mutating Product Home/runtime/service.",
+  "remainingGoals": [
+    "Return the canonical Relay RETURN to PR #212.",
+    "Consume exact source/build/DMG evidence against the frozen #212 head/tree.",
+    "Run final semantic/lifecycle review and integration-currentness checks before READY / merge."
+  ],
+  "onPass": {
+    "lifecycleState": "SOURCE_READY",
+    "nextFunction": "F10.REVIEW",
+    "nextOwner": "Operations",
+    "whyThisIsNext": "Exact source/build/DMG formation is complete; final semantic/lifecycle and integration-currentness review remain before merge."
+  },
+  "resultFilename": "RETURN-VEXLIFE-CONTINUITY-FOUNDATION-FINAL-A008.zip"
+}
