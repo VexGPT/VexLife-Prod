@@ -40,6 +40,7 @@ import vexlife.person.VexLifePersonSettings
 import vexlife.person.VexLifePersonSettingsStore
 import vexlife.memory.VexLifeMemoryContract
 import vexlife.memory.VexLifeMemoryFamily
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.vision.VexLifeProdVisionRuntime
 import vexlife.vision.VexLifeVisionFamily
@@ -80,6 +81,12 @@ class VexLifeProdLocalService private constructor(
     private val models =
         vexlife.model.VexLifeModels(
             productHome = Path.of(startupSetup.productHome),
+            target =
+                HereticRuntimeRealization
+                    .require(
+                        startupSetup.qualifiedRuntimeEvidence.realizationRef,
+                    )
+                    .target,
             servingModelRef = { startupSetup.qualifiedRuntimeEvidence.modelRef },
             totalMemoryBytes =
                 hostTotalMemoryBytes,
