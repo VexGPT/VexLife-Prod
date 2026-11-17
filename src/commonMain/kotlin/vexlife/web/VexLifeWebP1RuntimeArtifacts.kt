@@ -1,6 +1,7 @@
 package vexlife.web
 
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.model.VexLifeModelsFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.workspace.VexLifeSourceTemplate
 import vexlife.workspace.VexLifeWorkspaceApp
@@ -2382,6 +2383,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const modelSwitching = Boolean(state.models?.switching);
                 const modelSwitchHeld =
                   Boolean(state.models?.switchPending) &&
+                  state.models?.lastOutcome?.controlRef === ${jsString(VexLifeModelsFamily.ControlUse)} &&
                   state.models?.lastOutcome?.state === 'FAILED';
                 const canInclude = !archivesOpen && !privateNow && (contextEligible || contextReady);
                 ui.contextShare.disabled = !canInclude || state.contextLoading;
