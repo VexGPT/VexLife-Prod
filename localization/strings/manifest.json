@@ -2353,6 +2353,10 @@
         "zh"
       ]
     },
+    "workspace.button.conversation-send": {
+      "enHash": "f6f4688ff23d",
+      "langs": []
+    },
     "workspace.button.conversation-stop": {
       "enHash": "08df1a9489d8",
       "langs": []
@@ -2477,12 +2481,20 @@
       "enHash": "71b4d0d05045",
       "langs": []
     },
+    "workspace.status.conversation-active": {
+      "enHash": "0c936d488750",
+      "langs": []
+    },
     "workspace.status.conversation-cancel-not-active": {
       "enHash": "9f4fb1eb49f8",
       "langs": []
     },
     "workspace.status.conversation-cancel-unavailable": {
       "enHash": "5036eca379de",
+      "langs": []
+    },
+    "workspace.status.conversation-ready": {
+      "enHash": "5fa7aac5375c",
       "langs": []
     },
     "workspace.status.conversation-stopped": {
