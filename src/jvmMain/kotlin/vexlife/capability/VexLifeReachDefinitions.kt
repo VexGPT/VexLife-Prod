@@ -357,7 +357,7 @@ internal object VexLifeReachDefinitions {
                 modelParticipationClass = "REQUEST_RETURN",
                 sourcePath =
                     "src/jvmMain/kotlin/vexlife/companion/DirectConversationSourceReturn.kt",
-                priority = 44,
+                priority = 45,
             ),
         )
 
