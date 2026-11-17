@@ -605,6 +605,15 @@
       },
       "ja": {
         "text": "モデル切り替えプロセス"
+      },
+      "ko": {
+        "text": "모델 전환 과정"
+      },
+      "pt": {
+        "text": "Processo de troca de modelo"
+      },
+      "zh": {
+        "text": "模型切换流程"
       }
     },
     "surfaces": [
@@ -633,6 +642,15 @@
       },
       "ja": {
         "text": "モデル選択"
+      },
+      "ko": {
+        "text": "모델 선택"
+      },
+      "pt": {
+        "text": "Escolha do modelo"
+      },
+      "zh": {
+        "text": "模型选择"
       }
     },
     "surfaces": [
@@ -661,6 +679,15 @@
       },
       "ja": {
         "text": "選択したモデルの設定"
+      },
+      "ko": {
+        "text": "선택한 모델 구성"
+      },
+      "pt": {
+        "text": "Configuração do modelo selecionado"
+      },
+      "zh": {
+        "text": "所选模型配置"
       }
     },
     "surfaces": [
@@ -689,6 +716,15 @@
       },
       "ja": {
         "text": "ウォーム・プロンプトキャッシュ数"
+      },
+      "ko": {
+        "text": "웜 프롬프트 캐시 항목"
+      },
+      "pt": {
+        "text": "Entradas ativas do cache de prompts"
+      },
+      "zh": {
+        "text": "热提示缓存条目"
       }
     },
     "surfaces": [
@@ -717,6 +753,15 @@
       },
       "ja": {
         "text": "保持しておく MLX の KV プロンプトキャッシュの個数です。増やすと繰り返しのプリフィルを減らせる可能性がありますが、長いキャッシュごとにユニファイドメモリを消費します。"
+      },
+      "ko": {
+        "text": "따뜻하게 유지할 수 있는 서로 다른 MLX KV 프롬프트 캐시 항목 수입니다. 더 많이 유지하면 반복 프리필을 줄일 수 있지만, 긴 캐시마다 통합 메모리를 사용합니다."
+      },
+      "pt": {
+        "text": "Quantas entradas distintas do cache KV de prompts do MLX podem permanecer ativas. Mais entradas podem reduzir o prefill repetido, mas cada cache longo consome memória unificada."
+      },
+      "zh": {
+        "text": "允许保持热状态的不同 MLX KV 提示缓存条目数量。更多条目可能减少重复预填充，但每个长缓存都会占用统一内存。"
       }
     },
     "surfaces": [
@@ -745,6 +790,15 @@
       },
       "ja": {
         "text": "推奨設定を使用"
+      },
+      "ko": {
+        "text": "권장 설정 사용"
+      },
+      "pt": {
+        "text": "Usar recomendado"
+      },
+      "zh": {
+        "text": "使用推荐设置"
       }
     },
     "surfaces": [
@@ -773,6 +827,15 @@
       },
       "ja": {
         "text": "選択したモデルを開始"
+      },
+      "ko": {
+        "text": "선택한 모델 시작"
+      },
+      "pt": {
+        "text": "Iniciar modelo selecionado"
+      },
+      "zh": {
+        "text": "启动所选模型"
       }
     },
     "surfaces": [
@@ -801,6 +864,15 @@
       },
       "ja": {
         "text": "適用してモデルを再起動"
+      },
+      "ko": {
+        "text": "적용하고 모델 재시작"
+      },
+      "pt": {
+        "text": "Aplicar e reiniciar modelo"
+      },
+      "zh": {
+        "text": "应用并重启模型"
       }
     },
     "surfaces": [
@@ -829,6 +901,15 @@
       },
       "ja": {
         "text": "選択"
+      },
+      "ko": {
+        "text": "선택"
+      },
+      "pt": {
+        "text": "Selecionar"
+      },
+      "zh": {
+        "text": "选择"
       }
     },
     "surfaces": [
@@ -857,6 +938,15 @@
       },
       "ja": {
         "text": "キャッシュ数を設定"
+      },
+      "ko": {
+        "text": "캐시 항목 설정"
+      },
+      "pt": {
+        "text": "Definir entradas de cache"
+      },
+      "zh": {
+        "text": "设置缓存条目"
       }
     },
     "surfaces": [
@@ -885,6 +975,15 @@
       },
       "ja": {
         "text": "{model} を選択しました。設定を確認し、準備ができたら開始してください。"
+      },
+      "ko": {
+        "text": "{model}을(를) 선택했습니다. 구성을 확인한 뒤 준비되면 시작하세요."
+      },
+      "pt": {
+        "text": "{model} selecionado. Revise a configuração e inicie o modelo quando estiver pronto."
+      },
+      "zh": {
+        "text": "已选择 {model}。请检查其配置，准备好后再启动。"
       }
     },
     "surfaces": [
@@ -913,6 +1012,15 @@
       },
       "ja": {
         "text": "ランタイム設定を保存しました · ウォームキャッシュ {entries} 個。"
+      },
+      "ko": {
+        "text": "런타임 구성을 저장했습니다 · 웜 캐시 항목 {entries}개."
+      },
+      "pt": {
+        "text": "Configuração de runtime salva · {entries} entradas ativas de cache."
+      },
+      "zh": {
+        "text": "已保存运行时配置 · {entries} 个热缓存条目。"
       }
     },
     "surfaces": [
@@ -941,6 +1049,15 @@
       },
       "ja": {
         "text": "1 は、以前の複数キャッシュによるメモリ問題の後に 27B で実運用確認された現在の安全値です。最速の設定であるとは主張していません。"
+      },
+      "ko": {
+        "text": "1은 이전 다중 캐시 메모리 문제 이후 27B에서 실제 사용으로 확인된 현재 안전값입니다. 가장 빠른 설정이라고 주장하는 값은 아닙니다."
+      },
+      "pt": {
+        "text": "1 é o limite de segurança atual comprovado em uso real para o 27B após o problema anterior de memória com muitos caches; não é apresentado como a configuração mais rápida."
+      },
+      "zh": {
+        "text": "1 是 27B 在此前多缓存内存问题之后经实际运行验证的当前安全值；并不表示它是最快的设置。"
       }
     },
     "surfaces": [
@@ -969,6 +1086,15 @@
       },
       "ja": {
         "text": "3 は 4B 向けの現在の実験候補です。正式な既定値にする前に、実運用でメモリ使用量と再利用効果を確認する必要があります。"
+      },
+      "ko": {
+        "text": "3은 현재 4B용 실험적 캐시 후보입니다. 승인된 기본값이 되기 전에 실제 메모리 사용량과 재사용 효과를 검증해야 합니다."
+      },
+      "pt": {
+        "text": "3 é o candidato experimental atual de cache para o 4B; precisa de prova real de memória e reutilização antes de se tornar um padrão aceito."
+      },
+      "zh": {
+        "text": "3 是当前针对 4B 的实验性缓存候选值；在成为正式默认值之前，仍需通过实际运行验证内存占用和复用效果。"
       }
     },
     "surfaces": [
@@ -997,6 +1123,15 @@
       },
       "ja": {
         "text": "このモデル固有のキャッシュ推奨値が実運用で確認されるまでは、1 を現在の安全値として維持します。"
+      },
+      "ko": {
+        "text": "이 모델에 맞는 캐시 권장값이 실제 사용으로 검증될 때까지 1을 현재 안전값으로 유지합니다."
+      },
+      "pt": {
+        "text": "1 mantém o limite de segurança atual deste modelo até que uma recomendação específica de cache seja testada em uso real."
+      },
+      "zh": {
+        "text": "在获得该模型专属缓存建议的实际运行验证之前，1 将继续作为当前安全值。"
       }
     },
     "surfaces": [
@@ -1025,6 +1160,15 @@
       },
       "ja": {
         "text": "稼働中: {model}"
+      },
+      "ko": {
+        "text": "실행 중: {model}"
+      },
+      "pt": {
+        "text": "Em uso: {model}"
+      },
+      "zh": {
+        "text": "正在运行：{model}"
       }
     },
     "surfaces": [
@@ -1053,6 +1197,15 @@
       },
       "ja": {
         "text": "選択中: {model}"
+      },
+      "ko": {
+        "text": "선택됨: {model}"
+      },
+      "pt": {
+        "text": "Selecionado: {model}"
+      },
+      "zh": {
+        "text": "已选择：{model}"
       }
     },
     "surfaces": [
@@ -1081,6 +1234,15 @@
       },
       "ja": {
         "text": "なし"
+      },
+      "ko": {
+        "text": "없음"
+      },
+      "pt": {
+        "text": "nenhum"
+      },
+      "zh": {
+        "text": "无"
       }
     },
     "surfaces": [
@@ -1109,6 +1271,15 @@
       },
       "ja": {
         "text": "設定が変更されています。適用するには選択したモデルを再起動してください。"
+      },
+      "ko": {
+        "text": "구성이 변경되었습니다. 적용하려면 선택한 모델을 다시 시작하세요."
+      },
+      "pt": {
+        "text": "A configuração mudou; reinicie o modelo selecionado para aplicá-la."
+      },
+      "zh": {
+        "text": "配置已更改；请重启所选模型以应用更改。"
       }
     },
     "surfaces": [
@@ -1137,6 +1308,15 @@
       },
       "ja": {
         "text": "ウォームキャッシュ: {current} · 推奨: {recommended}."
+      },
+      "ko": {
+        "text": "웜 캐시 항목: {current} · 권장: {recommended}."
+      },
+      "pt": {
+        "text": "Entradas ativas de cache: {current} · recomendado: {recommended}."
+      },
+      "zh": {
+        "text": "热缓存条目：{current} · 推荐：{recommended}。"
       }
     },
     "surfaces": [
