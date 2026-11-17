@@ -12,13 +12,13 @@ class DirectContinuityProjectionWorkbenchTest {
         val ref: String,
     )
 
-    private data class Checkpoint(
+    private data class ContinuityProjectionEpoch(
         val epoch: Int,
         val ref: String,
         val sourceRefs: List<CanonicalSource>,
     )
 
-    private data class TurnKey(
+    private data class TurnContinuityProjection(
         val turnRef: String,
         val state: String,
         val anchors: List<String>,
@@ -30,7 +30,7 @@ class DirectContinuityProjectionWorkbenchTest {
         val requestRef: String,
         val responseRef: String,
         val provenanceRefs: List<String>,
-        val key: TurnKey,
+        val continuity: TurnContinuityProjection,
     )
 
     private data class ExecutionTail(
@@ -41,7 +41,7 @@ class DirectContinuityProjectionWorkbenchTest {
     )
 
     private data class Projection(
-        val checkpoint: Checkpoint,
+        val checkpoint: ContinuityProjectionEpoch,
         val spine: List<TurnEnvelope>,
         val tail: ExecutionTail,
     ) {
@@ -73,13 +73,13 @@ class DirectContinuityProjectionWorkbenchTest {
                         append('\n')
                     }
                     append("key:")
-                    append(turn.key.turnRef)
+                    append(turn.continuity.turnRef)
                     append(':')
-                    append(turn.key.state)
+                    append(turn.continuity.state)
                     append(':')
-                    append(turn.key.anchors.joinToString(","))
+                    append(turn.continuity.anchors.joinToString(","))
                     append(':')
-                    append(turn.key.takeaway)
+                    append(turn.continuity.takeaway)
                     append('\n')
                 }
             }
@@ -112,7 +112,7 @@ class DirectContinuityProjectionWorkbenchTest {
         )
 
     private val checkpoint =
-        Checkpoint(
+        ContinuityProjectionEpoch(
             epoch = 100,
             ref = "C100",
             sourceRefs = canonicalSources,
@@ -124,8 +124,8 @@ class DirectContinuityProjectionWorkbenchTest {
             requestRef = "req-101",
             responseRef = "resp-101",
             provenanceRefs = listOf("web-returned:e17"),
-            key =
-                TurnKey(
+            continuity =
+                TurnContinuityProjection(
                     turnRef = "turn-101",
                     state = "TRUNK",
                     anchors = listOf("checkpoint:C100"),
@@ -183,8 +183,8 @@ class DirectContinuityProjectionWorkbenchTest {
                 requestRef = "req-102",
                 responseRef = "resp-102",
                 provenanceRefs = listOf("web-returned:e18"),
-                key =
-                    TurnKey(
+                continuity =
+                    TurnContinuityProjection(
                         turnRef = "turn-102",
                         state = "TANGENT_RESOLVED",
                         anchors = listOf("turn-101"),
@@ -218,7 +218,7 @@ class DirectContinuityProjectionWorkbenchTest {
                     ),
             )
         val nextCheckpoint =
-            Checkpoint(
+            ContinuityProjectionEpoch(
                 epoch = 102,
                 ref = "C102",
                 sourceRefs =
