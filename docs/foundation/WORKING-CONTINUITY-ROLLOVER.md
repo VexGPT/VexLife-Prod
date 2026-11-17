@@ -218,9 +218,12 @@ Conversation currentness is independently re-bound at prompt materialization:
 - exact current durable request event ref/hash/sequence;
 - exact lineage/thread/channel adjacency.
 
-In `WORKING_CHECKPOINT_SUCCESSOR` mode the prior REQUEST/RESPONSE pair is **not** selected for the
-provider. The provider receives the current attributed Memory plus a compact working-continuity
-packet of refs/working coordinates plus the current request.
+In `WORKING_CHECKPOINT_SUCCESSOR` mode the Conversation is not replayed. On the continuity path the
+provider receives the current attributed Memory, a compact working-continuity packet of refs/working
+coordinates, an exact overlap tail of the most recent whole exchanges (at least three when they fit,
+the triggering exchange always first; the prior Vex reply alone only when not even one exchange fits)
+and the current request. The tail policy and its receipt evidence are owned by
+[CONTEXT-REVISITATION.md](CONTEXT-REVISITATION.md#rollover-overlap-tail).
 
 Prompt receipt v3 records the exact successor Context/checkpoint/claim/source identities and the
 working packet hash/token estimate. Historical v2 receipts remain hash-shape compatible: new

@@ -419,7 +419,7 @@ class DirectCompanionTurnFoundationalFieldTest {
         val provider = Provider { call, _ ->
             if (call == 1) "Producer reply" else "Successor reply"
         }
-        rollOver(home, provider)
+        val producerResult = rollOver(home, provider)
 
         val successor =
             send(
@@ -431,7 +431,12 @@ class DirectCompanionTurnFoundationalFieldTest {
 
         assertEquals(2, provider.calls.size)
         assertEquals("WORKING_CHECKPOINT_SUCCESSOR", successor.promptContextReceipt.contextMode)
-        assertTrue(successor.promptContextReceipt.selectedConversationEventRefs.isEmpty())
+        // The producer exchange is too large for the overlap tail, so only its reply is kept.
+        assertEquals(
+            listOf(producerResult.responseEventRef),
+            successor.promptContextReceipt.selectedConversationEventRefs,
+        )
+        assertEquals(true, successor.promptContextReceipt.overlapTail?.responseBridgeOnly)
         assertWholeFieldFirst(provider.system(2))
         assertTrue(provider.system(2).contains("VEXLIFE_WORKING_CONTINUITY_CONTEXT/v1"))
         assertFalse(provider.everything(2).contains("x".repeat(1024)))

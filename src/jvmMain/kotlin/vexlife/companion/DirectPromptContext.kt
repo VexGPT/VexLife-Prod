@@ -24,9 +24,11 @@ import vexlife.model.heretic.HereticModelConfiguration
  * CONTINUE selects a contiguous recent suffix of completed REQUEST/RESPONSE pairs within the admitted
  * prompt budget. Current attributed Memory may be supplied only through the exact source-owned Memory
  * contract and is reverified before provider materialization. A working-checkpoint successor does
- * not replay the prior human request or full prior Conversation pair; it may carry the exact immediately
- * prior Vex RESPONSE as a bounded assistant-role bridge. This owner performs no provider call and no
- * durable mutation.
+ * not replay the Conversation: on the continuity path it keeps an exact overlap tail of the most
+ * recent whole turns ([DirectContinuityOverlapTail], at least three when they fit, the triggering
+ * turn always first), falling back to the prior Vex RESPONSE alone only when not even that turn
+ * fits; the legacy [materialize] path still carries that RESPONSE as its bridge. This owner performs
+ * no provider call and no durable mutation.
  *
  * The foundational field is placed first in every mode when a caller supplies its Reading. Its words,
  * selection and evidence belong to [VexLifeFoundationalField]; this owner only gives it room, after
@@ -256,6 +258,9 @@ object DirectPromptContext {
         @EncodeDefault(EncodeDefault.Mode.NEVER) val capabilityExchangeAllowanceTokens: Int = 0,
         val trainingSelectionPerformed: Boolean,
         val effectsPerformed: Boolean,
+        /** Which exact recent turns a working-checkpoint successor kept, and why; null otherwise. */
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val overlapTail: DirectContinuityOverlapTail.Evidence? = null,
     )
 
     @OptIn(
@@ -463,6 +468,13 @@ object DirectPromptContext {
          */
         @EncodeDefault(EncodeDefault.Mode.NEVER)
         val capabilityExchangeAllowanceTokens: Int = 0,
+        /**
+         * In a working-checkpoint successor: the exact recent turns kept across the rollover
+         * ([selectedConversationEventRefs] names them), the floor they were held to, and whether it
+         * was met. Null in every other mode.
+         */
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val overlapTail: DirectContinuityOverlapTail.Evidence? = null,
     )
 
     /**
@@ -814,6 +826,7 @@ object DirectPromptContext {
         selected: List<DirectConversationStore.Event>,
         recentConversation: DirectConversationStore.RecentCompletedConversation?,
         sourceReturnProjection: DirectConversationSourceReturn.Projection?,
+        overlapTail: DirectContinuityOverlapTail.Evidence? = null,
     ): Materialization {
         val workingContinuity =
             fixed.workingContinuity
@@ -1138,6 +1151,7 @@ object DirectPromptContext {
                 capabilityExchangeAllowanceTokens = fixed.capabilityExchangeAllowanceTokens,
                 trainingSelectionPerformed = false,
                 effectsPerformed = false,
+                overlapTail = overlapTail,
             )
         val fingerprint =
             sha256(
@@ -1240,6 +1254,7 @@ object DirectPromptContext {
                     core.conversationExtentEstimatedSystemMessageTokens,
                 capabilityExchangeAllowanceTokens = core.capabilityExchangeAllowanceTokens,
                 effectsPerformed = core.effectsPerformed,
+                overlapTail = core.overlapTail,
             )
 
         return Materialization(
@@ -1300,6 +1315,7 @@ object DirectPromptContext {
                 foundationalField = foundationalField,
                 conversationExtentIncluded = conversationExtentIncluded,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                successorBridgeInSuffix = false,
             )
         val afterFixed =
             fixed.inputTokenBudget -
@@ -1334,6 +1350,20 @@ object DirectPromptContext {
             "direct continuity source-return context exceeds remaining prompt attention"
         }
 
+        // A working-checkpoint successor keeps an exact overlap tail of the most recent whole turns
+        // (DirectContinuityOverlapTail) in place of the prior Vex reply alone, so the first turn
+        // after a rollover still has the person's own last words.
+        val overlapTail =
+            if (prior != null && fixed.workingContinuity != null) {
+                DirectContinuityOverlapTail.fromConversation(
+                    conversationOwner = conversationOwner,
+                    prior = prior,
+                    roomTokens = afterSourceReturn,
+                    estimateTokens = ::estimatedMessageTokens,
+                )
+            } else {
+                null
+            }
         val recentConversation =
             if (
                 prior ==
@@ -1351,7 +1381,9 @@ object DirectPromptContext {
                 )
             }
         val selected =
-            if (
+            if (overlapTail != null) {
+                overlapTail.events
+            } else if (
                 prior ==
                     null ||
                 fixed.workingContinuity !=
@@ -1481,6 +1513,7 @@ object DirectPromptContext {
             selected = selected,
             recentConversation = recentConversation,
             sourceReturnProjection = sourceReturnProjection,
+            overlapTail = overlapTail?.evidence,
         )
     }
 
@@ -1807,6 +1840,11 @@ object DirectPromptContext {
         foundationalField: VexLifeFoundationalField.Reading? = null,
         conversationExtentIncluded: Boolean = false,
         capabilityRequestsAdmitted: Boolean = false,
+        /**
+         * Legacy successor bridge: the prior Vex reply alone, in the suffix. The continuity path
+         * passes false and keeps an exact overlap tail of whole turns instead.
+         */
+        successorBridgeInSuffix: Boolean = true,
     ): VerifiedFixedContext {
         // Admitting capability requests keeps room free for their exchanges in this turn; ordinary
         // context (field, Memory, Conversation) is formed inside the reduced budget.
@@ -1960,6 +1998,7 @@ object DirectPromptContext {
         val suffixMessages =
             buildList {
                 successorPriorResponse
+                    ?.takeIf { successorBridgeInSuffix }
                     ?.let {
                         response ->
                         add(
@@ -2012,7 +2051,7 @@ object DirectPromptContext {
                         inputTokenBudget -
                             otherFixedEstimate -
                             (if (sourceReturnProtocol == null) SourceReturnProtocolTokens else 0) -
-                            (if (prior != null && workingContinuity == null) {
+                            (if (prior != null && (workingContinuity == null || !successorBridgeInSuffix)) {
                                 estimatedMessageTokens(prior.requestEvent.content) +
                                     estimatedMessageTokens(prior.responseEvent.content)
                             } else {
