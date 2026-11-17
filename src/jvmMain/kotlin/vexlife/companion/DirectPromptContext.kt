@@ -161,6 +161,7 @@ object DirectPromptContext {
         /** The input budget ordinary context may use: [InputTokenBudget] less the exchange allowance. */
         val inputTokenBudget: Int = InputTokenBudget,
         val capabilityExchangeAllowanceTokens: Int = 0,
+        val experimentEffectiveInputTokenBudget: Int? = null,
     )
 
     private data class ConversationExtent(
@@ -261,6 +262,7 @@ object DirectPromptContext {
         /** Which exact recent turns a working-checkpoint successor kept, and why; null otherwise. */
         @EncodeDefault(EncodeDefault.Mode.NEVER)
         val overlapTail: DirectContinuityOverlapTail.Evidence? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val experimentEffectiveInputTokenBudget: Int? = null,
     )
 
     @OptIn(
@@ -475,6 +477,12 @@ object DirectPromptContext {
          */
         @EncodeDefault(EncodeDefault.Mode.NEVER)
         val overlapTail: DirectContinuityOverlapTail.Evidence? = null,
+        /**
+         * Set only in a continuity-pressure experiment: the effective input budget the selection
+         * used in place of [InputTokenBudget]. [inputTokenBudget] is already reduced by it; the
+         * model window and [hardTokenLimit] are not. Null in every ordinary Product prompt.
+         */
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val experimentEffectiveInputTokenBudget: Int? = null,
     )
 
     /**
@@ -1152,6 +1160,7 @@ object DirectPromptContext {
                 trainingSelectionPerformed = false,
                 effectsPerformed = false,
                 overlapTail = overlapTail,
+                experimentEffectiveInputTokenBudget = fixed.experimentEffectiveInputTokenBudget,
             )
         val fingerprint =
             sha256(
@@ -1255,6 +1264,7 @@ object DirectPromptContext {
                 capabilityExchangeAllowanceTokens = core.capabilityExchangeAllowanceTokens,
                 effectsPerformed = core.effectsPerformed,
                 overlapTail = core.overlapTail,
+                experimentEffectiveInputTokenBudget = core.experimentEffectiveInputTokenBudget,
             )
 
         return Materialization(
@@ -1288,6 +1298,47 @@ object DirectPromptContext {
         foundationalField: VexLifeFoundationalField.Reading? = null,
         conversationExtentIncluded: Boolean = false,
         capabilityRequestsAdmitted: Boolean = false,
+    ): Materialization =
+        materializeContinuityAt(
+            conversationOwner = conversationOwner,
+            prior = prior,
+            currentRequest = currentRequest,
+            memoryAvailabilityContext = memoryAvailabilityContext,
+            memoryContextAtCap = memoryContextAtCap,
+            workingContinuityContext = workingContinuityContext,
+            browserContext = browserContext,
+            personContext = personContext,
+            runtimeEvidence = runtimeEvidence,
+            sourceReturnProtocolEnabled = sourceReturnProtocolEnabled,
+            sourceReturnDiscovery = sourceReturnDiscovery,
+            foundationalField = foundationalField,
+            conversationExtentIncluded = conversationExtentIncluded,
+            capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+            experimentEffectiveInputTokenBudget = null,
+        )
+
+    /**
+     * [materializeContinuity] with an experiment-only effective input budget for continuity
+     * selection. Only the continuity-pressure harness adapter passes a value, against a scratch
+     * Home; the Product passes null. The model window, output reserve and hard limit are unchanged,
+     * and the receipt records the experiment budget beside them.
+     */
+    internal fun materializeContinuityAt(
+        conversationOwner: DirectConversationStore.Locked,
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
+        memoryAvailabilityContext: VexLifeMemoryContract.Context?,
+        memoryContextAtCap: ((memoryTokenCap: Int) -> VexLifeMemoryContract.Context)?,
+        workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        browserContext: BrowserContext?,
+        personContext: PersonContext?,
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
+        sourceReturnProtocolEnabled: Boolean,
+        sourceReturnDiscovery: DirectConversationSourceReturn.Discovery?,
+        foundationalField: VexLifeFoundationalField.Reading?,
+        conversationExtentIncluded: Boolean,
+        capabilityRequestsAdmitted: Boolean,
+        experimentEffectiveInputTokenBudget: Int?,
     ): Materialization {
         require(
             !(
@@ -1316,6 +1367,7 @@ object DirectPromptContext {
                 conversationExtentIncluded = conversationExtentIncluded,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 successorBridgeInSuffix = false,
+                experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
             )
         val afterFixed =
             fixed.inputTokenBudget -
@@ -1543,9 +1595,46 @@ object DirectPromptContext {
         foundationalField: VexLifeFoundationalField.Reading? = null,
         conversationExtentIncluded: Boolean = false,
         capabilityRequestsAdmitted: Boolean = false,
+    ) =
+        reverifyContinuityAt(
+            materialization = materialization,
+            conversationOwner = conversationOwner,
+            prior = prior,
+            currentRequest = currentRequest,
+            memoryAvailabilityContext = memoryAvailabilityContext,
+            memoryContextAtCap = memoryContextAtCap,
+            workingContinuityContext = workingContinuityContext,
+            browserContext = browserContext,
+            personContext = personContext,
+            runtimeEvidence = runtimeEvidence,
+            sourceReturnProtocolEnabled = sourceReturnProtocolEnabled,
+            sourceReturnDiscovery = sourceReturnDiscovery,
+            foundationalField = foundationalField,
+            conversationExtentIncluded = conversationExtentIncluded,
+            capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+            experimentEffectiveInputTokenBudget = null,
+        )
+
+    internal fun reverifyContinuityAt(
+        materialization: Materialization,
+        conversationOwner: DirectConversationStore.Locked,
+        prior: DirectConversationStore.ImmediatePriorCompletedTurn?,
+        currentRequest: DirectConversationStore.Event,
+        memoryAvailabilityContext: VexLifeMemoryContract.Context?,
+        memoryContextAtCap: ((memoryTokenCap: Int) -> VexLifeMemoryContract.Context)?,
+        workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
+        browserContext: BrowserContext?,
+        personContext: PersonContext?,
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence?,
+        sourceReturnProtocolEnabled: Boolean,
+        sourceReturnDiscovery: DirectConversationSourceReturn.Discovery?,
+        foundationalField: VexLifeFoundationalField.Reading?,
+        conversationExtentIncluded: Boolean,
+        capabilityRequestsAdmitted: Boolean,
+        experimentEffectiveInputTokenBudget: Int?,
     ) {
         val current =
-            materializeContinuity(
+            materializeContinuityAt(
                 conversationOwner = conversationOwner,
                 prior = prior,
                 currentRequest = currentRequest,
@@ -1565,6 +1654,7 @@ object DirectPromptContext {
                 foundationalField = foundationalField,
                 conversationExtentIncluded = conversationExtentIncluded,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
             )
         require(
             current ==
@@ -1845,12 +1935,21 @@ object DirectPromptContext {
          * passes false and keeps an exact overlap tail of whole turns instead.
          */
         successorBridgeInSuffix: Boolean = true,
+        experimentEffectiveInputTokenBudget: Int? = null,
     ): VerifiedFixedContext {
         // Admitting capability requests keeps room free for their exchanges in this turn; ordinary
         // context (field, Memory, Conversation) is formed inside the reduced budget.
         val capabilityExchangeAllowanceTokens =
             if (capabilityRequestsAdmitted) VexLifeCapabilityBridge.ExchangeAllowanceTokens else 0
-        val inputTokenBudget = InputTokenBudget - capabilityExchangeAllowanceTokens
+        require(
+            experimentEffectiveInputTokenBudget == null ||
+                experimentEffectiveInputTokenBudget in
+                    (capabilityExchangeAllowanceTokens + 1)..InputTokenBudget
+        ) {
+            "experiment effective input budget must exceed the exchange allowance and stay within the ordinary budget"
+        }
+        val inputTokenBudget =
+            (experimentEffectiveInputTokenBudget ?: InputTokenBudget) - capabilityExchangeAllowanceTokens
         require(
             currentRequest.eventKind ==
                 "REQUEST",
@@ -2107,6 +2206,7 @@ object DirectPromptContext {
             fixedInputTokenEstimate = fixedEstimate,
             inputTokenBudget = inputTokenBudget,
             capabilityExchangeAllowanceTokens = capabilityExchangeAllowanceTokens,
+            experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
         )
     }
 

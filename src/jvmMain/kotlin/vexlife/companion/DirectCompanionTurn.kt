@@ -376,6 +376,13 @@ object DirectCompanionTurn {
         val currentFoundationalField: () -> VexLifeFoundationalField.Reading = {
             VexLifeFoundationalField.readCurrent()
         },
+        /**
+         * Experiment-only effective input budget for continuity selection, set only by the
+         * continuity-pressure harness adapter against a scratch Home. The Product never sets it:
+         * null keeps the ordinary budget. It does not change the model's context window, the output
+         * reserve or the hard limit; the prompt receipt records it beside both.
+         */
+        val experimentEffectiveInputTokenBudget: Int? = null,
         val commitWorkingContinuity: (
             productHome: Path,
             turnRef: String,
@@ -812,6 +819,7 @@ object DirectCompanionTurn {
                 runtimeEvidence = initialRuntimeEvidence,
                 sourceReturnProtocolEnabled = true,
                 foundationalField = hooks.currentFoundationalField(),
+                experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
             )
         val initialWorkingContinuity =
             DirectWorkingContinuity.prepare(
@@ -853,6 +861,7 @@ object DirectCompanionTurn {
             runtimeEvidence = initialRuntimeEvidence,
             sourceReturnProtocolEnabled = true,
             foundationalField = hooks.currentFoundationalField(),
+            experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
         )
         // One human turn may take several provider stages: capability requests (bounded by the
         // bridge) and at most one Conversation source return. All stages share one runtime binding,
@@ -939,6 +948,7 @@ object DirectCompanionTurn {
                     sourceReturnProtocolEnabled = baseSourceReturnProtocolEnabled,
                     sourceReturnDiscovery = baseDiscovery,
                     foundationalField = hooks.currentFoundationalField(),
+                    experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                 )
                 continue
             }
@@ -1020,6 +1030,7 @@ object DirectCompanionTurn {
                     sourceReturnProtocolEnabled = false,
                     sourceReturnDiscovery = discovery,
                     foundationalField = hooks.currentFoundationalField(),
+                    experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                 )
             // Source return adds exact older Conversation; it must not change the ground Vex was given
             // when it asked for it.
@@ -1070,6 +1081,7 @@ object DirectCompanionTurn {
                 sourceReturnProtocolEnabled = false,
                 sourceReturnDiscovery = discovery,
                 foundationalField = hooks.currentFoundationalField(),
+                experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
             )
 
             val sourceReturnTokens =
@@ -1138,11 +1150,12 @@ object DirectCompanionTurn {
         foundationalField: VexLifeFoundationalField.Reading,
         // Ordinary direct turns admit capability requests; the prompt keeps their room free.
         capabilityRequestsAdmitted: Boolean = true,
+        experimentEffectiveInputTokenBudget: Int? = null,
     ): ContinuityPromptSelection {
         var selectedMemoryAtCap: VexLifeMemoryContract.Context? =
             null
         val materialization =
-            DirectPromptContext.materializeContinuity(
+            DirectPromptContext.materializeContinuityAt(
                 conversationOwner = conversationOwner,
                 prior = prior,
                 currentRequest = currentRequest,
@@ -1168,6 +1181,7 @@ object DirectCompanionTurn {
                 foundationalField = foundationalField,
                 conversationExtentIncluded = true,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+                experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
             )
         val selectedMemory =
             selectedMemoryAtCap
@@ -1207,8 +1221,9 @@ object DirectCompanionTurn {
             null,
         foundationalField: VexLifeFoundationalField.Reading,
         capabilityRequestsAdmitted: Boolean = true,
+        experimentEffectiveInputTokenBudget: Int? = null,
     ) {
-        DirectPromptContext.reverifyContinuity(
+        DirectPromptContext.reverifyContinuityAt(
             materialization =
                 selection.materialization,
             conversationOwner = conversationOwner,
@@ -1232,6 +1247,7 @@ object DirectCompanionTurn {
             foundationalField = foundationalField,
             conversationExtentIncluded = true,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
+            experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
         )
     }
 
