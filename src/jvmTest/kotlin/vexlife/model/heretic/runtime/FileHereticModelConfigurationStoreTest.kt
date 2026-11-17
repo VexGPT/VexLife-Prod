@@ -13,11 +13,18 @@ import vexlife.home.VexLifeProdHome
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 
 class FileHereticModelConfigurationStoreTest {
     private fun qualifiedRuntime(): HereticModelConfiguration.QualifiedRuntimeEvidence =
         HereticModelConfiguration.QualifiedRuntimeEvidence(
+            realizationRef =
+                HereticRuntimeRealization
+                    .legacyMacV1(
+                        HereticProductIdentity.ModelRef,
+                    )
+                    .realizationRef,
             runtimeReceiptRef = "receipt.vexlife-prod.heretic.test",
             runtimeState = HereticRuntimeState.Qualified,
             modelRef = HereticProductIdentity.ModelRef,
@@ -390,6 +397,13 @@ class FileHereticModelConfigurationStoreTest {
             }
             val nineRuntime =
                 HereticModelConfiguration.QualifiedRuntimeEvidence(
+                    realizationRef =
+                        HereticRuntimeRealization
+                            .require(
+                                modelRef = nine.modelRef,
+                                target = HereticRuntimeRealization.MacArm64,
+                            )
+                            .realizationRef,
                     runtimeReceiptRef = "receipt.vexlife-prod.heretic.nine",
                     runtimeState = HereticRuntimeState.Qualified,
                     modelRef = nine.identity.modelRef,
