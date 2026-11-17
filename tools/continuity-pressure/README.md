@@ -52,10 +52,13 @@ node tools/continuity-pressure/run.mjs --stage quick \
 - **Runtime:** borrowed only from the Home's already-bound runtime receipt. The live harness does
   **not** enter LocalSetup: it reads the existing Product model binding, follows its exact
   `runtimeReceiptPath` to the stable-VexLife or Product-owned runtime owner, and invokes that
-  owner's read-only currentness observation. Missing, pending or stale binding truth holds the run;
-  the harness never repairs a Conversation writer, rewrites a model binding, starts/restarts a
-  runtime, or performs acquisition. Currentness is re-observed the same way at every provider stage.
-  Turns, Conversation and Working Continuity live only in the scratch Home.
+  owner's read-only currentness observation. For a Product-owned runtime, the binding uses the
+  lifecycle implementation identity recorded by the exact receipt that formed that already-running
+  process; a newer harness checkout does not relabel the process as its own. The runtime owner still
+  re-proves the exact receipt/process/substrate before every provider stage. Missing, pending or
+  stale binding truth holds the run; the harness never repairs a Conversation writer, rewrites a
+  model binding, starts/restarts a runtime, or performs acquisition. Turns, Conversation and Working
+  Continuity live only in the scratch Home.
 - **Window:** `--experiment-window` is the operator saying this is a dedicated window. Without it,
   or without `--runtime-home`, the stage holds before touching any runtime. The live binder also
   read-only checks the canonical Conversation writer before the run and before each provider stage;
