@@ -211,7 +211,6 @@ object VexLifeWebP1RuntimeArtifacts {
                 modelConfiguration: byId('model-configuration'),
                 modelConfigurationRecommendation: byId('model-configuration-recommendation'),
                 modelPromptCacheEntries: byId('model-prompt-cache-entries'),
-                modelPromptCacheValue: byId('model-prompt-cache-value'),
                 modelUseRecommended: byId('model-use-recommended'),
                 modelStart: byId('model-start'),
                 modelsNote: byId('models-note'),
@@ -2728,6 +2727,24 @@ object VexLifeWebP1RuntimeArtifacts {
               const modelHasControl = (model, controlRef) =>
                 (model?.display?.controls || []).some((control) => control.controlRef === controlRef);
 
+              const modelCacheLevelName = (value) => {
+                const key =
+                  value === 1 ? 'workspace.label.model-cache-level-1' :
+                  value === 2 ? 'workspace.label.model-cache-level-2' :
+                  'workspace.label.model-cache-level-3';
+                return t(key);
+              };
+
+              const modelCacheLevelLabel = (value, recommended) => {
+                const parts = [modelCacheLevelName(value)];
+                if (value === recommended) {
+                  parts.push(t('workspace.label.model-recommended'));
+                } else if (value > 1) {
+                  parts.push(t('workspace.label.model-experimental'));
+                }
+                return parts.join(' · ');
+              };
+
               // Settings -> Models. Selection, launch configuration and activation remain separate
               // Controls. The renderer never turns a selection/config edit into a runtime effect.
               const renderModels = () => {
@@ -2742,9 +2759,14 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 if (ui.modelsCurrentState) {
                   const stateParts = [
-                    t('workspace.label.model-state-serving').replace('{model}', serving?.label ?? t('workspace.label.model-none')),
-                    t('workspace.label.model-state-selected').replace('{model}', selected?.label ?? t('workspace.label.model-none'))
+                    t('workspace.label.model-state-serving').replace('{model}', serving?.label ?? t('workspace.label.model-none'))
                   ];
+                  if (selected && (!serving || selected.handle !== serving.handle)) {
+                    stateParts.push(
+                      t('workspace.label.model-state-selected')
+                        .replace('{model}', selected.label)
+                    );
+                  }
                   if (projection.switching) {
                     stateParts.push(resolveText(projection.switching.message));
                   } else if (selected?.runtimeConfigurationPending) {
@@ -2823,18 +2845,35 @@ object VexLifeWebP1RuntimeArtifacts {
                   if (ui.modelConfigurationRecommendation) {
                     ui.modelConfigurationRecommendation.textContent =
                       t('workspace.label.model-cache-current')
-                        .replace('{current}', String(config.promptCacheEntries))
-                        .replace('{recommended}', String(config.recommendedPromptCacheEntries)) +
+                        .replace(
+                          '{current}',
+                          modelCacheLevelName(config.promptCacheEntries)
+                        )
+                        .replace(
+                          '{recommended}',
+                          modelCacheLevelName(config.recommendedPromptCacheEntries)
+                        ) +
                       ' ' + resolveText(config.recommendation);
                   }
                   if (ui.modelPromptCacheEntries) {
-                    ui.modelPromptCacheEntries.min = String(config.minimumPromptCacheEntries);
-                    ui.modelPromptCacheEntries.max = String(config.maximumPromptCacheEntries);
-                    ui.modelPromptCacheEntries.value = String(config.promptCacheEntries);
+                    const options = [];
+                    for (
+                      let value = config.minimumPromptCacheEntries;
+                      value <= config.maximumPromptCacheEntries;
+                      value += 1
+                    ) {
+                      const option = document.createElement('option');
+                      option.value = String(value);
+                      option.textContent =
+                        modelCacheLevelLabel(
+                          value,
+                          config.recommendedPromptCacheEntries
+                        );
+                      option.selected = value === config.promptCacheEntries;
+                      options.push(option);
+                    }
+                    ui.modelPromptCacheEntries.replaceChildren(...options);
                     ui.modelPromptCacheEntries.disabled = state.modelsInFlight || Boolean(projection.switching);
-                    ui.modelPromptCacheEntries.oninput = () => {
-                      if (ui.modelPromptCacheValue) ui.modelPromptCacheValue.textContent = ui.modelPromptCacheEntries.value;
-                    };
                     ui.modelPromptCacheEntries.onchange = () => {
                       void modelControl(
                         ${jsString(VexLifeModelsFamily.ControlSetPromptCacheEntries)},
@@ -2842,9 +2881,6 @@ object VexLifeWebP1RuntimeArtifacts {
                         Number(ui.modelPromptCacheEntries.value)
                       );
                     };
-                  }
-                  if (ui.modelPromptCacheValue) {
-                    ui.modelPromptCacheValue.textContent = String(config.promptCacheEntries);
                   }
                   if (ui.modelUseRecommended) {
                     ui.modelUseRecommended.disabled =
