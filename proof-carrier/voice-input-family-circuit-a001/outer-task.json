@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "vextreme.vexlocalbridge-task-manifest/v1",
+  "artifactClass": "EXECUTABLE_RELAY",
+  "taskRef": "task.vexlocalbridge.vexlife-prod.voice-input-family-circuit-lived-mac.001",
+  "attemptRef": "attempt.vexlocalbridge.vexlife-prod.voice-input-family-circuit-lived-mac.a001",
+  "packageRef": "package.vexlocalbridge.vexlife-prod.voice-input-family-circuit-lived-mac.a001",
+  "requestRef": "request.vexlocalbridge.vexlife-prod.voice-input-family-circuit-lived-mac.a001",
+  "correlationRef": "correlation.vexlocalbridge.vexlife-prod.voice-input-family-circuit-lived-mac.a001",
+  "taskStorageKey": "vexlife-prod-voice-input-family-circuit-lived-mac",
+  "attemptStorageKey": "attempt-a001",
+  "requestingRoleRef": "Operations[VexLife-Prod]",
+  "requestingInstanceRef": "instance.operations.vexlife-prod.voice-input-family-circuit-lived-mac",
+  "parentOperationsRef": "github.pull.vexlife-prod.231",
+  "returnRouteRef": "github.pull.vexlife-prod.231",
+  "hostProfileRef": "macos-victor",
+  "repositoryExecutionProfileRefOrNull": "profile.repository.vextreme-sdk.macos-v1",
+  "repositoryRefOrNull": "VexGPT/VexLife-Prod",
+  "baseRefOrNull": "9de6191b2fd415768af2625227edf1ae80c2f439",
+  "headRefOrNull": "d2b5883d0c2c561d1625aadf9698bcc74417d2c8",
+  "treeRefOrNull": "b36d09fe6a28fff2fe4c701f934cf87837acb973",
+  "branchRefOrNull": "VXG-111726-chatgpt-product-voice-input-family-circuit-a001",
+  "claimRefOrNull": "github.pull.vexlife-prod.231",
+  "exactPathRefs": [
+    "src/commonMain/kotlin/vexlife/voiceinput/VexLifeVoiceInputFamily.kt",
+    "src/commonMain/kotlin/vexlife/web/VexLifeWebP1RuntimeArtifacts.kt",
+    "src/commonTest/kotlin/vexlife/voiceinput/VexLifeVoiceInputFamilyTest.kt",
+    "src/commonTest/kotlin/vexlife/web/VexLifeWebP1RuntimeArtifactsTest.kt"
+  ],
+  "authorityBinding": {
+    "authoritySchemaRef": "vextreme.effect-transaction/v1",
+    "authorityEnvelopePath": "authority/effect.json",
+    "authorityEnvelopeSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "semanticAdmissionRef": "github.pull.vexlife-prod.231",
+    "transactionRef": "transaction.vexlife-prod.voice-input-family-circuit-lived-mac.a001",
+    "transactionVersion": 1,
+    "allowedEffectRefs": [
+      "effect.vexrelay.execute"
+    ],
+    "heldEffectRefs": [
+      "effect.vexlife-prod.source-mutation",
+      "effect.vexlife-prod.product-runtime",
+      "effect.vexlife-prod.home-mutation",
+      "effect.vexlife-prod.merge"
+    ]
+  },
+  "payload": {
+    "payloadClass": "VEXRELAY_TASK_ARCHIVE",
+    "payloadRuntime": "NATIVE_VEXRELAY",
+    "payloadPath": "payload/inner-vexrelay.zip",
+    "payloadSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "typedArgv": [],
+    "immutableInputs": [
+      {
+        "path": "inputs/vexrelay-binding.json",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    ]
+  },
+  "executionStateAtFormation": "TASK_PREPARED",
+  "singleUseNonce": "nonce-vlb-vexlife-prod-voice-input-family-circuit-lived-mac-a001-20261117",
+  "stopConditions": [
+    "stop.on.identity.drift",
+    "stop.on.first.substantive.failure"
+  ],
+  "archiveDigestBinding": "FILENAME_SHA256"
+}
