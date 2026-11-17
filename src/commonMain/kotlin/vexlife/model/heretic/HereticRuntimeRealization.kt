@@ -67,6 +67,12 @@ object HereticRuntimeRealization {
         val environmentRef: String,
     )
 
+    data class RuntimeBinaryProfile(
+        val binaryRef: String,
+        val filename: String,
+        val sha256: String,
+    )
+
     data class RuntimeProfile(
         val runtimeAdapterRef: String,
         val runtimeClass: String,
@@ -100,6 +106,7 @@ object HereticRuntimeRealization {
     data class Dependencies(
         val artifact: Requirement<ArtifactProfile>,
         val environment: Requirement<EnvironmentProfile>,
+        val runtimeBinary: Requirement<RuntimeBinaryProfile>,
         val runtime: Requirement<RuntimeProfile>,
         val process: Requirement<ProcessProfile>,
         val qualification: Requirement<QualificationProfile>,
@@ -190,6 +197,11 @@ object HereticRuntimeRealization {
                                         HereticProductIdentity.MlxLmVersion,
                             ),
                         ),
+                    runtimeBinary =
+                        Requirement.NotRequired(
+                            reasonRef =
+                                "not-required.vexlife-prod.macos-mlx-runtime-binary-owned-by-python-environment",
+                        ),
                     runtime =
                         Requirement.Required(
                             RuntimeProfile(
@@ -270,6 +282,17 @@ object HereticRuntimeRealization {
                         Requirement.NotRequired(
                             reasonRef =
                                 "not-required.vexlife-prod.windows-4b.native-llama-cpp-no-python-environment",
+                        ),
+                    runtimeBinary =
+                        Requirement.Required(
+                            RuntimeBinaryProfile(
+                                binaryRef =
+                                    "runtime-binary.vexlife-prod.llama-cpp.windows-x64.b10107",
+                                filename =
+                                    "llama-server.exe",
+                                sha256 =
+                                    "af3e56d6bdb84a9b6bd50f6ad748809370bc29be42d58088041408b2933d80f7",
+                            ),
                         ),
                     runtime =
                         Requirement.Required(
