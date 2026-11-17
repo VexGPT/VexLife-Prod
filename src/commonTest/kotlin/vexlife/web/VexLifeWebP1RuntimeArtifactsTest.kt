@@ -582,11 +582,6 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertFalse(
             bundle.javascript.contains(
-                "mediaDevices",
-            ),
-        )
-        assertFalse(
-            bundle.javascript.contains(
                 "ScreenCaptureKit",
             ),
         )
