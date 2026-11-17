@@ -9,6 +9,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.JsonObject
 import vexlife.continuity.ContinuityTurnFixture.Line
+import vexlife.memory.VexLifeMemoryContextFixture
 import vexlife.continuity.VexLifeContextRevisit.Parsed
 import vexlife.continuity.VexLifeContextRevisit.State
 import vexlife.contract.VexContractJson
@@ -149,6 +150,82 @@ class VexLifeContextRevisitTest {
     }
 
     @Test
+    fun workingContinuityNamesWhatMattersMemorySaysWhatItIsAndWhatIsInViewIsNotRepeated() {
+        ContinuityTurnFixture().use { fixture ->
+            fixture.commit(Line("Lamp?", "Fixed.", minutesAgo(5)))
+            val base = VexLifeMemoryContextFixture.current()
+            val page = base.pages.single()
+            val memory =
+                base.copy(
+                    pages =
+                        listOf(
+                            page,
+                            page.copy(
+                                pageRef = "page.living-journal.memory.002",
+                                statementRef = "statement.score.continuity.002",
+                                summary = "The parent objective is memory depth.",
+                            ),
+                            page.copy(
+                                pageRef = "page.living-journal.memory.003",
+                                statementRef = "statement.score.continuity.003",
+                                summary = "Budgets bound memory depth.",
+                            ),
+                        )
+                )
+            val directory =
+                VexLifeContextRevisit.WorkingDirectory(
+                    checkpointRef = null,
+                    disposition = null,
+                    cursorEventRef = null,
+                    openLoopRefs = emptyList(),
+                    currentStatementRefs =
+                        listOf("statement.score.continuity.001", "statement.score.gone.009"),
+                    activeWorkNodeRefs = emptyList(),
+                    currentIntentReceiptRefs = emptyList(),
+                )
+            val result =
+                VexLifeContextRevisit.revisit(
+                    request = request("""{"queries":[["memory depth"]]}"""),
+                    sources =
+                        VexLifeContextRevisit.Sources(
+                            conversation = fixture.store.current(),
+                            conversationGap = null,
+                            memory = memory,
+                            memoryGap = null,
+                            working = directory,
+                            workingGap = null,
+                            promptResidentEventRefs = emptySet(),
+                            promptResidentStatementRefs = setOf("statement.score.continuity.002"),
+                            now = now,
+                        ),
+                    estimateTokens = ::estimate,
+                )
+
+            // Working Continuity says it matters now; current Memory says what it is.
+            assertTrue("statement.score.continuity.001" in result.returnedSourceRefs)
+            assertTrue(result.text.contains("Victor prefers exact source-grounded continuation."))
+            assertTrue(result.text.contains("working[working_anchor]"))
+            // A query hit not already in view comes back.
+            assertTrue("statement.score.continuity.003" in result.returnedSourceRefs)
+            // Memory already in the prompt is named, not repeated.
+            assertFalse(result.text.contains("The parent objective is memory depth."))
+            assertTrue(
+                result.text.contains(
+                    "Memory already in this prompt, not repeated: statement.score.continuity.002"
+                )
+            )
+            // A statement Memory does not currently project stays an explicit, unresolved ref.
+            assertTrue("statement.score.gone.009" in result.frontierRefs)
+            assertFalse("statement.score.gone.009" in result.returnedSourceRefs)
+            assertTrue(
+                result.text.contains(
+                    "Named current by Working Continuity but not in current Memory, so not resolved here: statement.score.gone.009"
+                )
+            )
+        }
+    }
+
+    @Test
     fun aResolvedTangentLeavesTheDirectoryButARevisitReopensItWhileTheParentStaysInView() {
         ContinuityTurnFixture().use { fixture ->
             val turns =
@@ -190,7 +267,7 @@ class VexLifeContextRevisitTest {
 
             assertTrue(
                 result.text.contains(
-                    "Where the work stands — working checkpoint checkpoint.vexlife-prod.working.test (ROLLOVER_COMMITTED, formed at ${turns.last().first.turnRef})"
+                    "Where the work stands — this turn's working position; last working checkpoint checkpoint.vexlife-prod.working.test (ROLLOVER_COMMITTED, formed at ${turns.last().first.turnRef})"
                 )
             )
             assertTrue(result.text.contains("open loops: loop.memory-depth.hydration"))

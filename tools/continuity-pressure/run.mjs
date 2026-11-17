@@ -24,6 +24,11 @@ const SHARED_SCENARIOS = {
   'scenario.vexlife.continuity-pressure.current-state-placement.v1':
     'd9d86dc1195123dc7565c3173d909739e90dc017c3a027b9b2c2edd13c0a72f1',
 };
+// Lane-proposed scenarios (tools/continuity-pressure/scenarios/lane/), not shared: their results say so.
+const LANE_SCENARIOS = {
+  'scenario.vexlife.continuity-pressure.lane.claude.historical-current-state.v1':
+    '9a0d2c23dc357526007c5b575b74fdf795d712a1190cffc9cf95daff6e5be084',
+};
 const STAGES = new Set(['projection', 'analyze', 'pressure', 'probe', 'quick', 'full']);
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -40,13 +45,20 @@ for (const key of ['stage', 'scenario-ref', 'scenario-file', 'result-dir']) {
   if (!args[key]) throw new Error('--' + key + ' is required');
 }
 if (!STAGES.has(args.stage)) throw new Error('unknown stage: ' + args.stage);
-const expectedSha = SHARED_SCENARIOS[args['scenario-ref']];
-if (!expectedSha) throw new Error('only the shared scenarios are bound: ' + Object.keys(SHARED_SCENARIOS).join(', '));
-
 const scenarioFile = path.resolve(args['scenario-file']);
 const scenarioSha = crypto.createHash('sha256').update(fs.readFileSync(scenarioFile)).digest('hex');
-if (scenarioSha !== expectedSha) {
-  throw new Error('scenario digest ' + scenarioSha + ' is not the shared ' + expectedSha);
+if (args['scenario-ref'] in LANE_SCENARIOS) {
+  const laneRoot = path.join(repo, 'tools', 'continuity-pressure', 'scenarios', 'lane');
+  if (path.dirname(scenarioFile) !== laneRoot) throw new Error('a lane scenario must be read from ' + laneRoot);
+  if (scenarioSha !== LANE_SCENARIOS[args['scenario-ref']]) {
+    throw new Error('lane scenario digest ' + scenarioSha + ' is not ' + LANE_SCENARIOS[args['scenario-ref']]);
+  }
+} else {
+  const expectedSha = SHARED_SCENARIOS[args['scenario-ref']];
+  if (!expectedSha) throw new Error('only the shared and lane scenarios are bound: ' + Object.keys(SHARED_SCENARIOS).join(', '));
+  if (scenarioSha !== expectedSha) {
+    throw new Error('scenario digest ' + scenarioSha + ' is not the shared ' + expectedSha);
+  }
 }
 
 const git = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: repo, encoding: 'utf8' });
@@ -54,7 +66,8 @@ const sourceSha = git.status === 0 ? git.stdout.trim() : 'UNKNOWN';
 const dirty = spawnSync('git', ['status', '--porcelain', '--untracked-files=no'], { cwd: repo, encoding: 'utf8' });
 const sourceClean = dirty.status === 0 && dirty.stdout.trim() === '';
 
-const forwarded = ['stage', 'scenario-ref', 'pressure-strategy', 'effective-input-token-budget', 'sets', 'turns-per-set']
+const forwarded = ['stage', 'scenario-ref', 'pressure-strategy', 'effective-input-token-budget', 'sets', 'turns-per-set',
+  'runtime-home', 'experiment-window', 'payload-scale']
   .filter((key) => args[key] !== undefined)
   .flatMap((key) => ['--' + key, args[key]]);
 forwarded.push(

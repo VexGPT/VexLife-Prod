@@ -34,8 +34,13 @@ import vexlife.memory.VexLifeMemoryContract
  * - A match is relevance to this request, not meaning: nothing here is accepted, corrected, written
  *   or promoted, and the result is not a new working state.
  * - Turns already in the prompt are named, not repeated.
- * - Words are matched exactly (case- and space-insensitive). There is no meaning index yet, so a
- *   different wording needs another query in the same request, and the packet says so.
+ * - Words are matched exactly (case- and space-insensitive). The terms of one query are clues
+ *   that must all appear (conjunctive); separate queries are alternate vantages. There is no
+ *   meaning index yet, so a different wording needs another query in the same request, and the
+ *   packet says so.
+ * - Custody is the turn's: [TurnSources] is bound by the human turn that holds the Conversation
+ *   lease, the Memory projection its prompt used and its own working position, and each owner is
+ *   read at most once per turn however many queries or calls fan over it.
  */
 object VexLifeContextRevisit {
     const val Header = "VEXLIFE_REVISIT/v1"
@@ -81,6 +86,8 @@ object VexLifeContextRevisit {
         SEED,
         WINDOW,
         CORRECTIONS,
+        /** A Memory statement Working Continuity names as current, resolved through current Memory. */
+        WORKING_ANCHOR,
         CORRECTS,
         CORRECTED_BY,
         POINTED_BACK_FROM,
@@ -122,14 +129,86 @@ object VexLifeContextRevisit {
         val working: WorkingDirectory?,
         val workingGap: String?,
         val promptResidentEventRefs: Set<String>,
+        /** Memory statements this turn's prompt already carries; named, not repeated. */
+        val promptResidentStatementRefs: Set<String> = emptySet(),
         val now: Instant,
     )
 
-    /** The current working checkpoint as references; its meaning stays with its owners. */
+    /**
+     * The continuity sources one human turn holds, bound by that turn rather than chosen by the
+     * capability bridge: its own Conversation owner (the lease it already holds), the Memory
+     * projection its prompt used, its own working position, and what its prompt already carries.
+     * Each owner is read at most once per turn, on first need, however many revisit calls the turn
+     * makes; later calls reuse what was read. The values stay with their owners; this only carries
+     * them for one turn.
+     */
+    class TurnSources(
+        private val readConversation: () -> DirectConversationStore.Snapshot,
+        /** The Memory projection the turn already holds; reading it here is not another owner read. */
+        private val memory: () -> VexLifeMemoryContract.Context?,
+        private val readWorking: () -> WorkingDirectory?,
+        /** What the turn's current prompt carries; it can grow within a turn (returned source). */
+        private val promptResidentEventRefs: () -> Set<String>,
+        private val promptResidentStatementRefs: () -> Set<String>,
+        private val now: () -> Instant,
+    ) {
+        private var conversation: kotlin.Result<DirectConversationStore.Snapshot>? = null
+        private var working: kotlin.Result<WorkingDirectory?>? = null
+
+        /** Owner reads this turn has performed so far, and their total time. */
+        var ownerReads: Int = 0
+            private set
+
+        var ownerReadNanos: Long = 0
+            private set
+
+        private fun <T> once(cached: kotlin.Result<T>?, read: () -> T): kotlin.Result<T> =
+            cached
+                ?: run {
+                    val started = System.nanoTime()
+                    val outcome = runCatching(read)
+                    ownerReads += 1
+                    ownerReadNanos += System.nanoTime() - started
+                    outcome
+                }
+
+        fun sources(scopes: Set<Scope>): Sources {
+            fun gap(error: Throwable) =
+                "could not be read now: " + (error.message ?: error.javaClass.simpleName)
+            val conversationRead =
+                if (Scope.CONVERSATION in scopes)
+                    once(conversation, readConversation).also { conversation = it }
+                else null
+            val workingRead =
+                if (Scope.WORKING_CONTINUITY in scopes)
+                    once(working, readWorking).also { working = it }
+                else null
+            return Sources(
+                conversation = conversationRead?.getOrNull(),
+                conversationGap = conversationRead?.exceptionOrNull()?.let(::gap),
+                memory = memory(),
+                memoryGap = "no Memory projection is bound to this turn",
+                working = workingRead?.getOrNull(),
+                workingGap =
+                    workingRead?.exceptionOrNull()?.let(::gap)
+                        ?: if (workingRead != null && workingRead.getOrNull() == null)
+                            "no working position is bound to this turn"
+                        else null,
+                promptResidentEventRefs = promptResidentEventRefs(),
+                promptResidentStatementRefs = promptResidentStatementRefs(),
+                now = now(),
+            )
+        }
+    }
+
+    /**
+     * Where the work stands, as references; their meaning stays with their owners. The refs are
+     * this turn's working position; the checkpoint fields name the last one committed, if any.
+     */
     data class WorkingDirectory(
-        val checkpointRef: String,
-        val disposition: String,
-        val cursorEventRef: String,
+        val checkpointRef: String?,
+        val disposition: String?,
+        val cursorEventRef: String?,
         val openLoopRefs: List<String>,
         val currentStatementRefs: List<String>,
         val activeWorkNodeRefs: List<String>,
@@ -168,8 +247,11 @@ object VexLifeContextRevisit {
      */
     @Serializable
     data class HostScan(
+        /** Owner reads this call performed; 0 when the turn had already read them. */
         val ownerReadCount: Int,
         val ownerReadNanos: Long,
+        /** Owner reads the whole turn has performed so far (one per owner at most). */
+        val ownerReadsThisTurn: Int = ownerReadCount,
         val conversationEventsRead: Int,
         val turnsScanned: Int,
         val memoryPagesScanned: Int,
@@ -213,7 +295,15 @@ object VexLifeContextRevisit {
 
         val rawQueries =
             when (val value = arguments["queries"]) {
-                is JsonArray -> value.map { it as? JsonObject ?: return badQuery() }
+                // A query is an object, or a bare array of clue strings: ["a", "b"] = {"terms":["a","b"]}.
+                is JsonArray ->
+                    value.map { element ->
+                        when (element) {
+                            is JsonObject -> element
+                            is JsonArray -> JsonObject(mapOf("terms" to element))
+                            else -> return badQuery()
+                        }
+                    }
                 null ->
                     if (arguments.containsKey("terms") || arguments.containsKey("seedRefs"))
                         listOf(arguments)
@@ -322,7 +412,8 @@ object VexLifeContextRevisit {
                         query.terms.filterIndexed { i, _ ->
                             searchable.contains(normalizedTerms[i])
                         }
-                    if (hit.isNotEmpty()) {
+                    // Clues are conjunctive: every term of this query, in this turn.
+                    if (hit.size == query.terms.size) {
                         hitTurn(turn, Match(query.ref, Route.TERMS, hit.joinToString(", ")))
                         matchedTerms.getOrPut(turn.turnRef) { mutableSetOf() } +=
                             hit.map(::normalize)
@@ -332,7 +423,7 @@ object VexLifeContextRevisit {
                     val summary = normalize(page.summary)
                     val hit =
                         query.terms.filterIndexed { i, _ -> summary.contains(normalizedTerms[i]) }
-                    if (hit.isNotEmpty()) {
+                    if (hit.size == query.terms.size) {
                         pageMatches.getOrPut(page.statementRef) { mutableListOf() } +=
                             Match(query.ref, Route.TERMS, hit.joinToString(", "))
                     }
@@ -370,6 +461,18 @@ object VexLifeContextRevisit {
 
             val after = turnMatches.values.sumOf { it.size } + pageMatches.values.sumOf { it.size }
             if (after == before) emptyQueries += query.ref
+        }
+
+        // Working Continuity says which statements matter now; current Memory says what they are.
+        // A statement Memory does not currently project stays a named frontier ref, unresolved.
+        val unresolvedAnchors = mutableListOf<String>()
+        directory?.currentStatementRefs.orEmpty().forEach { statementRef ->
+            if (statementRef in pageByStatement) {
+                pageMatches.getOrPut(statementRef) { mutableListOf() } +=
+                    Match("working", Route.WORKING_ANCHOR, "named current by Working Continuity")
+            } else {
+                unresolvedAnchors += statementRef
+            }
         }
 
         // One typed step outward from what was located. Expansion never locates on its own.
@@ -475,7 +578,12 @@ object VexLifeContextRevisit {
 
         val pageLines = mutableListOf<String>()
         val returnedPages = mutableListOf<String>()
+        val residentPages = mutableListOf<String>()
         pageMatches.forEach { (statementRef, matches) ->
+            if (statementRef in sources.promptResidentStatementRefs) {
+                residentPages += statementRef
+                return@forEach
+            }
             val page = pageByStatement.getValue(statementRef)
             val line =
                 "· ${page.statementRef} [${page.effectiveState}; ${page.memoryRelation}] " +
@@ -516,6 +624,17 @@ object VexLifeContextRevisit {
                 appendLine(
                     "Already in this prompt, not repeated: " +
                         resident.sortedBy { it.request.sequence }.joinToString(", ") { it.turnRef }
+                )
+            }
+            if (residentPages.isNotEmpty()) {
+                appendLine(
+                    "Memory already in this prompt, not repeated: " + residentPages.joinToString(", ")
+                )
+            }
+            if (unresolvedAnchors.isNotEmpty()) {
+                appendLine(
+                    "Named current by Working Continuity but not in current Memory, so not resolved here: " +
+                        unresolvedAnchors.joinToString(", ")
                 )
             }
             if (corrections.isNotEmpty()) {
@@ -575,7 +694,7 @@ object VexLifeContextRevisit {
                     returnedPages,
             residentSourceRefs =
                 resident.flatMap { listOf(it.request.eventRef, it.response.eventRef) },
-            frontierRefs = frontier,
+            frontierRefs = (frontier + unresolvedAnchors).distinct(),
             scannedTurnCount = turns.size,
             searchedMemoryPageCount = pages.size,
             resolvedNodeCount = turnMatches.size + pageMatches.size,
@@ -675,10 +794,14 @@ object VexLifeContextRevisit {
                     "searched $turnCount completed turns of this thread (exact words; no meaning index yet)"
                 else null,
                 if (Scope.MEMORY in request.scopes && sources.memory != null)
-                    "$pageCount Memory pages (projection ${sources.memory.projectionState})"
+                    "$pageCount Memory pages (projection ${sources.memory.projectionState}" +
+                        (if (sources.memory.projectionState != "CURRENT" && sources.memory.reasons.isNotEmpty())
+                            ": " + sources.memory.reasons.joinToString(" | ")
+                        else "") +
+                        ")"
                 else null,
                 if (Scope.WORKING_CONTINUITY in request.scopes && sources.working != null)
-                    "the current working checkpoint"
+                    "this turn's working position"
                 else null,
             )
             .ifEmpty { listOf("nothing could be searched") }
@@ -707,11 +830,17 @@ object VexLifeContextRevisit {
         directory: WorkingDirectory,
         turnByEventRef: Map<String, VexLifeTurnNavigation.Turn>,
     ): String = buildString {
-        append(
-            "Where the work stands — working checkpoint ${directory.checkpointRef} (${directory.disposition}"
-        )
-        turnByEventRef[directory.cursorEventRef]?.let { append(", formed at ${it.turnRef}") }
-        append("); references only, their meaning lives with their owners:")
+        if (directory.checkpointRef == null) {
+            append("Where the work stands — this turn's working position; no working checkpoint committed yet")
+        } else {
+            append(
+                "Where the work stands — this turn's working position; last working checkpoint " +
+                    "${directory.checkpointRef} (${directory.disposition}"
+            )
+            turnByEventRef[directory.cursorEventRef]?.let { append(", formed at ${it.turnRef}") }
+            append(")")
+        }
+        append("; references only, their meaning lives with their owners:")
         listOf(
                 "open loops" to directory.openLoopRefs,
                 "current statements" to directory.currentStatementRefs,

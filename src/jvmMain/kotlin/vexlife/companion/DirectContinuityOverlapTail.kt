@@ -27,7 +27,9 @@ import vexlife.conversation.DirectConversationStore
  * When the floor cannot be met because the room is too small, that is reported as
  * [FloorState.DEGRADED_ROOM] rather than claimed. When not even the newest pair fits, the newest
  * Vex reply alone is kept as the earlier successor bridge did, and [Evidence.responseBridgeOnly]
- * says so.
+ * says so. When not even that reply fits, the state is [FloorState.HELD_TOKEN_BUDGET]: the
+ * successor carries no exact turn at all, and older source is reachable only through continuity
+ * revisit and the working coordinates.
  */
 object DirectContinuityOverlapTail {
     /**
@@ -57,6 +59,8 @@ object DirectContinuityOverlapTail {
         MET,
         HISTORY_SHORTER_THAN_FLOOR,
         DEGRADED_ROOM,
+        /** Not one exact event fits: zero overlap was unavoidable, and is named. */
+        HELD_TOKEN_BUDGET,
     }
 
     enum class ExpansionReason {
@@ -191,6 +195,9 @@ object DirectContinuityOverlapTail {
                 selection.evidence.copy(
                     selectedTokens = if (bridgeTokens <= admissible) bridgeTokens else 0,
                     responseBridgeOnly = bridgeTokens <= admissible,
+                    floorState =
+                        if (bridgeTokens <= admissible) selection.evidence.floorState
+                        else FloorState.HELD_TOKEN_BUDGET,
                 ),
         )
     }

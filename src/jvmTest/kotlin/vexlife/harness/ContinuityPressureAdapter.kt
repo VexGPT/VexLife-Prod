@@ -29,10 +29,14 @@ import vexlife.companion.DirectPromptContext
 import vexlife.companion.DirectTurnContextStore
 import vexlife.companion.DirectWorkingContinuity
 import vexlife.continuity.VexLifeContextRevisit
+import vexlife.conversation.DirectConversationStore
+import vexlife.continuity.VexLifeWorkingContinuityOwner
+import vexlife.continuity.VexLifeWorkingContinuity
 import vexlife.person.VexLifePersonSettings
 import vexlife.person.VexLifePersonSettingsStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -115,6 +119,15 @@ object ContinuityPressureAdapter {
          */
         val sourceClean: Boolean,
         val keepScratch: Boolean = false,
+        /**
+         * Live stages only: the host's selected Vex Home, observed read-only through the reuse-only
+         * setup route to borrow its qualified runtime. Turns still go to a scratch Home.
+         */
+        val runtimeHome: Path? = null,
+        /** Live stages only: the operator affirms a dedicated window, not alongside Victor's own conversation. */
+        val experimentWindow: Boolean = false,
+        /** Multiplies each turn's synthetic payload; 1 leaves the scenario's own sizes. Recorded. */
+        val payloadScale: Int = 1,
     )
 
     @Serializable
@@ -163,7 +176,10 @@ object ContinuityPressureAdapter {
 
     // ---------------------------------------------------------------- entry
 
-    fun run(config: Config): Int {
+    fun run(config: Config): Int = run(config, ::hostRuntime)
+
+    /** [bind] borrows the live runtime; the host route by default, replaceable only in tests. */
+    internal fun run(config: Config, bind: (Path) -> LiveRuntime): Int {
         val scenarioBytes = Files.readAllBytes(config.scenarioFile)
         val scenarioSha = sha256(scenarioBytes)
         val scenario = json.decodeFromString<Scenario>(String(scenarioBytes, Charsets.UTF_8))
@@ -172,11 +188,204 @@ object ContinuityPressureAdapter {
         }
         require(scenario.syntheticOnly) { "only synthetic scenarios may run" }
         Files.createDirectories(config.resultDir)
+        require(config.payloadScale in 1..16) { "--payload-scale is 1-16" }
         return when (config.stage) {
-            Stage.projection -> projection(config, scenario, scenarioBytes, scenarioSha)
+            Stage.projection -> projection(config, scenario, scenarioBytes, scenarioSha, FixtureProvider())
             Stage.analyze -> analyze(config)
-            else -> held(config, scenario, scenarioSha)
+            Stage.quick,
+            Stage.full -> live(config, scenario, scenarioBytes, scenarioSha, bind)
+            Stage.pressure,
+            Stage.probe ->
+                held(
+                    config,
+                    scenario,
+                    scenarioSha,
+                    "pressure and probe are two halves of one semantic live run over one scratch Home; " +
+                        "run --stage quick or --stage full, which carry that Home across both.",
+                )
         }
+    }
+
+    // ---------------------------------------------------------------- providers
+
+    /** What answers a run's provider calls, and what the run records about them. */
+    internal interface Provider {
+        val live: Boolean
+        val transport: DirectCompanionConnection.Transport
+        val evidence: HereticModelConfiguration.QualifiedRuntimeEvidence
+        /** Re-observe the same runtime; a live run never recovers or replaces it. */
+        fun observe(): HereticModelConfiguration.QualifiedRuntimeEvidence
+        /** Every provider call body as sent, in order. */
+        val calls: List<JsonObject>
+        /** Observed per-call provider telemetry (live only). */
+        val telemetry: List<JsonObject>
+        fun begin(turn: ScenarioTurn) {}
+    }
+
+    internal val FixtureEvidence =
+        HereticModelConfiguration.QualifiedRuntimeEvidence(
+            runtimeReceiptRef = "receipt.vexlife-prod.heretic.continuity-pressure-fixture",
+            runtimeState = HereticRuntimeState.Qualified,
+            modelRef = HereticProductIdentity.ModelRef,
+            modelProfileRef = HereticProductIdentity.ModelProfileRef,
+            artifactRef = HereticProductIdentity.ArtifactSetRef,
+            artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
+            runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
+            runtimeClass = HereticProductIdentity.RuntimeClass,
+            endpoint = HereticProductIdentity.Endpoint,
+            requestModel = HereticProductIdentity.RequestModel,
+            qualification = HereticRuntimeQualification.qualified(),
+        )
+
+    private class FixtureProvider : Provider {
+        private val fixture = Fixture()
+        override val live = false
+        override val transport: DirectCompanionConnection.Transport = fixture
+        override val evidence = FixtureEvidence
+        override fun observe() = evidence
+        override val calls: List<JsonObject>
+            get() = fixture.calls
+        override val telemetry: List<JsonObject> = emptyList()
+        override fun begin(turn: ScenarioTurn) {
+            fixture.turn = turn
+        }
+    }
+
+    /** The host's selected model runtime, borrowed for a live run without lifecycle authority. */
+    internal class LiveRuntime(
+        val evidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        val observe: () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
+        val transport: DirectCompanionConnection.StreamingTransport,
+    )
+
+    /**
+     * The ordinary reuse-only route the long-lived service itself takes: no acquisition, no runtime
+     * start. On an already set-up Home it observes; currentness is then re-observed read-only for
+     * every stage, with no recovery, so an experiment can never restart or replace the runtime.
+     */
+    private fun hostRuntime(runtimeHome: Path): LiveRuntime {
+        val session =
+            VexLifeProdLocalSetup.establishSession(
+                productHome = runtimeHome,
+                allowAcquisition = false,
+                allowRuntimeStart = false,
+            )
+        return LiveRuntime(
+            evidence = session.observeCurrentQualifiedRuntimeEvidence(),
+            observe = { session.observeCurrentQualifiedRuntimeEvidence() },
+            transport = DirectCompanionConnection.SystemTransport,
+        )
+    }
+
+    /**
+     * The live provider: every call goes to the real runtime unchanged; this only watches the SSE
+     * lines it already passes through, for the provider's own usage report and the timing of the
+     * first token, the first answer token and the end.
+     */
+    internal class LiveProvider(private val runtime: LiveRuntime) :
+        Provider, DirectCompanionConnection.StreamingTransport {
+        override val live = true
+        override val transport: DirectCompanionConnection.Transport = this
+        override val evidence = runtime.evidence
+        override fun observe() = runtime.observe()
+        override val calls = mutableListOf<JsonObject>()
+        override val telemetry = mutableListOf<JsonObject>()
+
+        override fun post(call: DirectCompanionConnection.HttpCall) = runtime.transport.post(call)
+
+        override fun postStreaming(
+            call: DirectCompanionConnection.HttpCall,
+            onLine: (String) -> Unit,
+        ): DirectCompanionConnection.StreamingHttpResult {
+            calls += Json.parseToJsonElement(call.body).jsonObject
+            val started = System.nanoTime()
+            var firstToken: Long? = null
+            var firstAnswer: Long? = null
+            var usage: JsonObject? = null
+            val result =
+                runtime.transport.postStreaming(call) { line ->
+                    val data = line.removePrefix("data:").trim()
+                    if (line.startsWith("data:") && data != "[DONE]") {
+                        runCatching { Json.parseToJsonElement(data).jsonObject }
+                            .getOrNull()
+                            ?.let { event ->
+                                (event["usage"] as? JsonObject)?.let { usage = it }
+                                val delta =
+                                    ((event["choices"] as? kotlinx.serialization.json.JsonArray)
+                                            ?.firstOrNull() as? JsonObject)
+                                        ?.get("delta") as? JsonObject
+                                fun text(key: String) =
+                                    (delta?.get(key) as? JsonPrimitive)?.contentOrNull.orEmpty()
+                                val reasoning = text("reasoning") + text("reasoning_content")
+                                val content = text("content")
+                                val now = System.nanoTime()
+                                if (firstToken == null && (reasoning.isNotEmpty() || content.isNotEmpty()))
+                                    firstToken = now
+                                if (firstAnswer == null && content.isNotEmpty()) firstAnswer = now
+                            }
+                    }
+                    onLine(line)
+                }
+            val ended = System.nanoTime()
+            fun ms(at: Long?) = at?.let { (it - started) / 1_000_000 }
+            val prompt = (usage?.get("prompt_tokens") as? JsonPrimitive)?.contentOrNull?.toIntOrNull()
+            val cached =
+                ((usage?.get("prompt_tokens_details") as? JsonObject)?.get("cached_tokens") as? JsonPrimitive)
+                    ?.contentOrNull
+                    ?.toIntOrNull()
+            telemetry +=
+                buildJsonObject {
+                    put("call", calls.size - 1)
+                    put("httpStatus", result.status)
+                    put("promptTokens", prompt)
+                    put("cachedPromptTokens", cached)
+                    put("prefillTokens", if (prompt != null && cached != null) prompt - cached else null)
+                    put(
+                        "completionTokens",
+                        (usage?.get("completion_tokens") as? JsonPrimitive)?.contentOrNull?.toIntOrNull(),
+                    )
+                    put("usageReported", usage != null)
+                    put("firstTokenMs", ms(firstToken))
+                    put("firstAnswerMs", ms(firstAnswer))
+                    put("totalMs", ms(ended))
+                }
+            return result
+        }
+    }
+
+    /** A live stage: bound only with an explicit host Home and a dedicated experiment window. */
+    internal fun live(
+        config: Config,
+        scenario: Scenario,
+        scenarioBytes: ByteArray,
+        scenarioSha: String,
+        bind: (Path) -> LiveRuntime,
+    ): Int {
+        val runtimeHome = config.runtimeHome
+        if (runtimeHome == null || !config.experimentWindow) {
+            return held(
+                config,
+                scenario,
+                scenarioSha,
+                "a live stage needs --runtime-home <the host's selected Vex Home, observed read-only> " +
+                    "and --experiment-window (a dedicated window, not alongside Victor's own conversation). " +
+                    "Nothing was run and no Home was touched.",
+            )
+        }
+        val runtime =
+            try {
+                bind(runtimeHome)
+            } catch (error: Throwable) {
+                return held(
+                    config,
+                    scenario,
+                    scenarioSha,
+                    "the host's qualified runtime could not be observed read-only: " +
+                        (error.message ?: error.javaClass.simpleName) +
+                        ". Nothing was run and no Home was touched.",
+                )
+            }
+        return projection(config, scenario, scenarioBytes, scenarioSha, LiveProvider(runtime))
     }
 
     // ---------------------------------------------------------------- projection
@@ -254,7 +463,7 @@ object ContinuityPressureAdapter {
                     else emptyList()
             return VexLifeCapabilityRequest.RequestHeader +
                 "\n" +
-                """{"capability":"revisit","action":"gather","arguments":{"queries":[${queries.joinToString(",")}]}}"""
+                """{"capability":"continuity","action":"revisit","arguments":{"queries":[${queries.joinToString(",")}]}}"""
         }
     }
 
@@ -262,13 +471,19 @@ object ContinuityPressureAdapter {
 
     private val PersonContextJson = Regex("\"replyLanguage\":\"([a-zA-Z-]+)\"")
 
-    /** (message index, replyLanguage) of every person-context block in a provider call. */
+    /**
+     * (message index, replyLanguage) of every person-context block VexLife itself carried in a
+     * provider call: in the system block or the current-state envelope. Text that merely looks like
+     * one inside history or returned source is history, not what VexLife said is current.
+     */
     private fun personContextsIn(messages: kotlinx.serialization.json.JsonArray): List<Pair<Int, String>> =
         messages.flatMapIndexed { index, message ->
-            message.jsonObject
-                .getValue("content")
-                .jsonPrimitive
-                .content
+            val role = message.jsonObject.getValue("role").jsonPrimitive.content
+            val content = message.jsonObject.getValue("content").jsonPrimitive.content
+            if (role != "system" && !content.startsWith(DirectPromptContext.CurrentStateHeader)) {
+                return@flatMapIndexed emptyList()
+            }
+            content
                 .split("VEXLIFE_PERSON_CONTEXT/v1")
                 .drop(1)
                 .mapNotNull { block -> PersonContextJson.find(block)?.groupValues?.get(1)?.let { index to it } }
@@ -332,6 +547,16 @@ object ContinuityPressureAdapter {
         val canonicalReplyLanguage: String? = null,
         val controls: List<Control> = emptyList(),
         val hostScans: List<VexLifeContextRevisit.HostScan> = emptyList(),
+        /** Live only: observed provider telemetry for this turn's calls. */
+        val telemetry: List<JsonObject> = emptyList(),
+        /** The Product's own chronology records written during this turn. */
+        val chronology: List<VexLogger.Record> = emptyList(),
+        val wallNanos: Long = 0,
+        /** The Working Continuity owner's pressure state for this turn's prompt. */
+        val pressureState: String? = null,
+        val planState: String? = null,
+        val checkpointRef: String? = null,
+        val cursorEventRef: String? = null,
     )
 
     private fun projection(
@@ -339,6 +564,16 @@ object ContinuityPressureAdapter {
         scenario: Scenario,
         scenarioBytes: ByteArray,
         scenarioSha: String,
+        provider: Provider,
+    ): Int = VexLogger.capturing { chronology -> run(config, scenario, scenarioBytes, scenarioSha, provider, chronology) }
+
+    private fun run(
+        config: Config,
+        scenario: Scenario,
+        scenarioBytes: ByteArray,
+        scenarioSha: String,
+        provider: Provider,
+        chronology: List<VexLogger.Record>,
     ): Int {
         val budget =
             when (config.strategy) {
@@ -353,12 +588,14 @@ object ContinuityPressureAdapter {
             deviceSuffix = "pressure-device",
             lineageSuffix = "pressure-lineage",
         )
-        val fixture = Fixture()
         var clock = start
         val hooks =
             DirectCompanionTurn.Hooks(
-                transport = fixture,
-                now = { clock },
+                transport = provider.transport,
+                // A live run keeps real time; a projection steps a synthetic clock.
+                now = { if (provider.live) Instant.now() else clock },
+                currentRuntimeEvidence = { provider.observe() },
+                reobserveSameRuntimeEvidence = { provider.observe() },
                 experimentEffectiveInputTokenBudget = budget,
             )
         val experimentRef =
@@ -375,9 +612,11 @@ object ContinuityPressureAdapter {
                 for (turn in set.turns.take(config.turnsPerSet ?: set.turns.size)) {
                     ordinal += 1
                     clock = clock.plus(Duration.ofMinutes(3))
-                    fixture.turn = turn
-                    val before = fixture.revisitPackets.size
-                    val callsBefore = fixture.calls.size
+                    provider.begin(turn)
+                    val callsBefore = provider.calls.size
+                    val telemetryBefore = provider.telemetry.size
+                    val recordsBefore = chronology.size
+                    val startedNanos = System.nanoTime()
                     val settings = VexLifePersonSettingsStore(home)
                     turn.beforeTurnControls.forEach { control ->
                         require(
@@ -393,10 +632,11 @@ object ContinuityPressureAdapter {
                     }
                     // As the service composes it each turn: read fresh from the canonical owner.
                     val language = settings.read().replyLanguage
-                    val sent = turn.input + payload(scenario.payloadSeed, turn, ordinal)
+                    val sent =
+                        turn.input + payload(scenario.payloadSeed, turn, ordinal, config.payloadScale)
                     val result =
                         DirectCompanionTurn.performWithHooks(
-                            setup = setup(home),
+                            setup = setup(home, provider.evidence),
                             intent =
                                 DirectCompanionTurn.Intent(
                                     idempotencyKey = "send.continuity-pressure.${turn.turnRef}",
@@ -414,9 +654,35 @@ object ContinuityPressureAdapter {
                     val evidence = DirectTurnContextStore(home).read(result.turnRef)
                     val revisitEntries =
                         evidence?.capabilityTrace?.entries.orEmpty().filter {
-                            it.handle == "revisit"
+                            it.handle == "continuity"
                         }
                     val revisitRefs = revisitEntries.flatMap { it.sourceRefs }
+                    val wallNanos = System.nanoTime() - startedNanos
+                    val turnCalls = provider.calls.drop(callsBefore)
+                    val workingReceipt =
+                        DirectWorkingContinuity.read(productHome = home, turnRef = result.turnRef)
+                    val head = DirectConversationStore(home).current().head
+                    val committed =
+                        head?.let {
+                            VexLifeWorkingContinuityOwner(home).readCurrent(it.companionLineageRef, it.threadRef)
+                        }
+                    val receipt = result.promptContextReceipt
+                    val pressure =
+                        VexLifeWorkingContinuity.projectPressure(
+                                VexLifeWorkingContinuity.PromptPressureInput(
+                                    promptReceiptRef = receipt.receiptRef,
+                                    providerMaterializedInputTokenEstimate =
+                                        receipt.providerMaterializedInputTokenEstimate,
+                                    inputTokenBudget = receipt.inputTokenBudget,
+                                    reservedOutputTokens = receipt.reservedOutputTokens,
+                                    hardTokenLimit = receipt.hardTokenLimit,
+                                    memoryBoundedOutStatementCount = 0,
+                                    memoryTokenBoundedOutPageCount = 0,
+                                    sourceRefs = listOf(receipt.receiptRef),
+                                )
+                            )
+                            .state
+                            .name
                     observed +=
                         Observed(
                             ordinal = ordinal,
@@ -425,14 +691,30 @@ object ContinuityPressureAdapter {
                             sentContent = sent,
                             result = result,
                             revisitSourceRefs = revisitRefs,
-                            revisitPacket = fixture.revisitPackets.drop(before).lastOrNull(),
+                            revisitPacket =
+                                turnCalls
+                                    .mapNotNull { call ->
+                                        call.getValue("messages").jsonArray.lastOrNull()?.jsonObject
+                                            ?.getValue("content")
+                                            ?.jsonPrimitive
+                                            ?.content
+                                            ?.takeIf { it.startsWith(VexLifeCapabilityRequest.ResultHeader) }
+                                    }
+                                    .lastOrNull(),
                             workingDisposition =
                                 DirectWorkingContinuity.read(
                                         productHome = home,
                                         turnRef = result.turnRef,
                                     )
                                     ?.disposition,
-                            providerCalls = fixture.calls.drop(callsBefore),
+                            providerCalls = turnCalls,
+                            telemetry = provider.telemetry.drop(telemetryBefore),
+                            chronology = chronology.drop(recordsBefore).toList(),
+                            wallNanos = wallNanos,
+                            pressureState = pressure,
+                            planState = workingReceipt?.planStateOrNull,
+                            checkpointRef = workingReceipt?.checkpointRefOrNull,
+                            cursorEventRef = committed?.checkpoint?.workingSet?.cursorEventRef,
                             canonicalReplyLanguage = language,
                             controls = turn.beforeTurnControls,
                             hostScans = revisitEntries.mapNotNull { it.hostScan },
@@ -455,6 +737,7 @@ object ContinuityPressureAdapter {
                 peakBytes,
                 deleted = !config.keepScratch,
                 failure = error.message,
+                provider = provider,
             )
         }
         val deleted = cleanup(parent, config.keepScratch)
@@ -472,10 +755,11 @@ object ContinuityPressureAdapter {
             peakBytes,
             deleted,
             null,
+            provider,
         )
     }
 
-    private fun setup(home: Path) =
+    private fun setup(home: Path, evidence: HereticModelConfiguration.QualifiedRuntimeEvidence) =
         VexLifeProdLocalSetup.Result(
             state = "LOCAL_HERETIC_FOUNDATION_READY",
             productHome = home.toString(),
@@ -487,20 +771,7 @@ object ContinuityPressureAdapter {
             runtimeDisposition = "REUSED_EXACT_OWNED_MLX_RUNTIME",
             modelBindingDisposition = "BOUND_CURRENT",
             modelConfigurationState = HereticModelConfiguration.State.BoundProductModel,
-            qualifiedRuntimeEvidence =
-                HereticModelConfiguration.QualifiedRuntimeEvidence(
-                    runtimeReceiptRef = "receipt.vexlife-prod.heretic.continuity-pressure-fixture",
-                    runtimeState = HereticRuntimeState.Qualified,
-                    modelRef = HereticProductIdentity.ModelRef,
-                    modelProfileRef = HereticProductIdentity.ModelProfileRef,
-                    artifactRef = HereticProductIdentity.ArtifactSetRef,
-                    artifactContentSetSha256 = HereticProductIdentity.ArtifactContentSetSha256,
-                    runtimeAdapterRef = HereticProductIdentity.RuntimeAdapterRef,
-                    runtimeClass = HereticProductIdentity.RuntimeClass,
-                    endpoint = HereticProductIdentity.Endpoint,
-                    requestModel = HereticProductIdentity.RequestModel,
-                    qualification = HereticRuntimeQualification.qualified(),
-                ),
+            qualifiedRuntimeEvidence = evidence,
             endpoint = HereticProductIdentity.Endpoint,
             requestModel = HereticProductIdentity.RequestModel,
         )
@@ -508,19 +779,20 @@ object ContinuityPressureAdapter {
     /**
      * Deterministic synthetic filler, separated from the probe text; empty when the turn asks none.
      */
-    internal fun payload(seed: Long, turn: ScenarioTurn, ordinal: Int): String {
+    internal fun payload(seed: Long, turn: ScenarioTurn, ordinal: Int, scale: Int = 1): String {
         if (turn.payloadTargetTokens <= 0) return ""
+        val target = turn.payloadTargetTokens * scale
         var state = seed xor (ordinal.toLong() * 0x9E3779B97F4A7C15uL.toLong())
         val words = StringBuilder()
         while (
-            DirectPromptContext.estimatedMessageTokens(words.toString()) < turn.payloadTargetTokens
+            DirectPromptContext.estimatedMessageTokens(words.toString()) < target
         ) {
             state = state xor (state shl 13)
             state = state xor (state ushr 7)
             state = state xor (state shl 17)
             words.append(PayloadWords[((state ushr 1) % PayloadWords.size).toInt()]).append(' ')
         }
-        return "\n\n[SYNTHETIC PAYLOAD seed=$seed turn=${turn.turnRef} targetTokens=${turn.payloadTargetTokens}; " +
+        return "\n\n[SYNTHETIC PAYLOAD seed=$seed turn=${turn.turnRef} targetTokens=$target; " +
             "filler, not part of the experiment's meaning]\n" +
             words.toString().trimEnd() +
             "\n[END SYNTHETIC PAYLOAD]"
@@ -607,6 +879,9 @@ object ContinuityPressureAdapter {
         if (length == 0) return null
         return after.size >= length && (0 until length).all { before[it] == after[it] }
     }
+
+    /** The label the lane scenario gives its pasted look-alike block. */
+    private const val HistoricalMarker = "saffron-lantern-settings"
 
     private val CurrentSettingAssertions =
         mapOf(
@@ -828,6 +1103,21 @@ object ContinuityPressureAdapter {
                                     json.encodeToJsonElement(carried.map { it.second }),
                                 )
                                 put("configurationChanged", changed)
+                                put("pressureState", o.pressureState)
+                                put("planState", o.planState)
+                                put("checkpointRef", o.checkpointRef)
+                                put("cursorEventRef", o.cursorEventRef)
+                                put(
+                                    "workingContinuityCommit",
+                                    when {
+                                        o.chronology.any { it.fact == VexLogger.Fact.WorkingContinuityCommitFailed.wire } -> "FAILED"
+                                        o.chronology.any { it.fact == VexLogger.Fact.WorkingContinuityCommitted.wire } -> "COMMITTED"
+                                        else -> "NOT_RECORDED"
+                                    },
+                                )
+                                if (o.telemetry.isNotEmpty()) {
+                                    put("providerTelemetry", json.encodeToJsonElement(o.telemetry))
+                                }
                                 put(
                                     "revisitHostScans",
                                     json.encodeToJsonElement(
@@ -930,6 +1220,40 @@ object ContinuityPressureAdapter {
                             "${history?.providerMessageIndex}; latest visible=$visible, placed as current after history=$current, " +
                             "history replayed exact=$historyExact; not answer quality",
                         listOf(receipt.receiptRef),
+                    )
+                }
+                ref == "assert.historical-current-state-not-authority" -> {
+                    // Where VexLife's real current state sat, and where the authentic but old
+                    // look-alike arrived, in the call Vex answered from (the last of the turn).
+                    val last = o.providerCalls.lastOrNull()?.getValue("messages")?.jsonArray
+                    val carried = last?.let(::personContextsIn).orEmpty()
+                    // The look-alike block itself (its label plus a person-context block), wherever it
+                    // sits other than VexLife's own envelope: not the probe or Vex's request naming it.
+                    val historical =
+                        last.orEmpty().withIndex().filter { (_, m) ->
+                            val content = m.jsonObject.getValue("content").jsonPrimitive.content
+                            content.contains(HistoricalMarker) &&
+                                content.contains("VEXLIFE_PERSON_CONTEXT/v1") &&
+                                !content.startsWith(DirectPromptContext.CurrentStateHeader)
+                        }
+                    fun where(index: Int): String {
+                        val m = last!![index].jsonObject
+                        val content = m.getValue("content").jsonPrimitive.content
+                        return when {
+                            content.startsWith(VexLifeCapabilityRequest.ResultHeader) -> "returned source"
+                            else -> "history (${m.getValue("role").jsonPrimitive.content})"
+                        }
+                    }
+                    val envelope = carried.singleOrNull()
+                    Triple(
+                        "UNKNOWN",
+                        "projection: VexLife carried replyLanguage=${envelope?.second} (canonical " +
+                            "${o.canonicalReplyLanguage}) at message ${envelope?.first?.plus(1)} of ${last?.size}; " +
+                            "the authentic old look-alike naming another language appears at " +
+                            historical.joinToString(", ") { "message ${it.index + 1} (${where(it.index)})" }.ifEmpty { "no message" } +
+                            "; whether Vex treats the real envelope as current is a live-answer question" +
+                            (if (o.telemetry.isNotEmpty()) "; live answer recorded in responseText" else ""),
+                        listOf(o.result.promptContextReceipt.receiptRef),
                     )
                 }
                 ref == "assert.configuration-timeline" ->
@@ -1139,6 +1463,32 @@ object ContinuityPressureAdapter {
                     put("assertionRoutes", json.encodeToJsonElement(assertionRoutes))
                     put("passesDependingOnReplayOscillation", passesOnReplay)
                     put(
+                        "pressureStateFirstTurns",
+                        buildJsonObject {
+                            turns
+                                .mapNotNull { t ->
+                                    ext(t)["pressureState"]?.jsonPrimitive?.contentOrNull?.let { it to ordinal(t) }
+                                }
+                                .groupBy({ it.first }, { it.second })
+                                .forEach { (state, ordinals) -> put(state, ordinals.min()) }
+                        },
+                    )
+                    put(
+                        "thresholdTrace",
+                        json.encodeToJsonElement(
+                            turns.map { t ->
+                                listOf(
+                                        ordinal(t).toString(),
+                                        ext(t)["pressureState"]?.jsonPrimitive?.contentOrNull ?: "-",
+                                        prompt(t).getValue("contextMode").jsonPrimitive.content,
+                                        ext(t)["workingContinuityDisposition"]?.jsonPrimitive?.contentOrNull ?: "-",
+                                        selected(t).size.toString(),
+                                    )
+                                    .joinToString(" ")
+                            }
+                        ),
+                    )
+                    put(
                         "systemAndHistoryPrefixPreservedByTurn",
                         json.encodeToJsonElement(
                             turns.map { ext(it)["systemAndHistoryPrefixPreservedFromPriorTurn"] ?: JsonNull }
@@ -1185,7 +1535,7 @@ object ContinuityPressureAdapter {
         return when {
             states.isEmpty() -> "PARTIAL"
             states.all { it == "PASS" } -> "PASS"
-            states.none { it == "PASS" } -> "FAIL"
+            states.none { it == "PASS" } && states.any { it == "FAIL" } -> "FAIL"
             else -> "PARTIAL"
         }
     }
@@ -1213,7 +1563,7 @@ object ContinuityPressureAdapter {
 
     // ---------------------------------------------------------------- held live stages
 
-    private fun held(config: Config, scenario: Scenario, scenarioSha: String): Int {
+    private fun held(config: Config, scenario: Scenario, scenarioSha: String, reason: String): Int {
         val report = buildJsonObject {
             put("state", "HELD")
             put("stage", config.stage.name)
@@ -1221,13 +1571,7 @@ object ContinuityPressureAdapter {
             put("effectClass", "HOST_SEMANTIC_MODEL_RUNTIME")
             put("scenarioRef", scenario.scenarioRef)
             put("scenarioSha256", scenarioSha)
-            put(
-                "reason",
-                "This adapter revision does not bind a qualified local model runtime to a scratch Home. " +
-                    "A live stage must form the scratch Home and borrow the current qualified runtime " +
-                    "through VexLifeProdLocalSetup on the host, then use the same send loop with the " +
-                    "system transport. Nothing was run and no Home was touched.",
-            )
+            put("reason", reason)
         }
         Files.writeString(config.resultDir.resolve("held.json"), report.toString() + "\n")
         System.err.println(report)
@@ -1248,6 +1592,7 @@ object ContinuityPressureAdapter {
         peakBytes: Long,
         deleted: Boolean,
         failure: String?,
+        provider: Provider,
     ): Int {
         val turns = turnsJson(observed, budget)
         val summary = summary(turns)
@@ -1265,6 +1610,9 @@ object ContinuityPressureAdapter {
             put("scenarioIsCanonicalShared", scenarioSha in SharedScenarioDigests)
             put("sourceSha", config.sourceSha)
             put("sourceTreeClean", config.sourceClean)
+            put("payloadScale", config.payloadScale)
+            put("liveRuntimeBorrowed", provider.live)
+            put("experimentWindowAffirmed", config.experimentWindow)
         }
         files["config.json"] = config0.toString().toByteArray()
         files["scenario.json"] = scenarioBytes
@@ -1299,6 +1647,19 @@ object ContinuityPressureAdapter {
         files["summary.json"] = summary.toString().toByteArray()
         // Exactly what each provider call carried (synthetic only), so the provider representation
         // can be re-rendered with the pinned chat template outside this run.
+        if (provider.live) {
+            files["implementation/provider-telemetry.jsonl"] =
+                jsonl(
+                    observed.flatMap { o ->
+                        o.telemetry.map { row ->
+                            buildJsonObject {
+                                put("ordinal", o.ordinal)
+                                row.forEach { (key, value) -> put(key, value) }
+                            }
+                        }
+                    }
+                )
+        }
         files["implementation/provider-calls.jsonl"] =
             jsonl(
                 observed.flatMap { o ->
@@ -1361,15 +1722,15 @@ object ContinuityPressureAdapter {
             put("runRef", runRef)
             put("scenarioRef", scenario.scenarioRef)
             put("adapterRef", AdapterRef)
-            put("executionClass", "DETERMINISTIC_PROJECTION")
+            put("executionClass", if (provider.live) "LIVE_MODEL" else "DETERMINISTIC_PROJECTION")
             put("status", status)
             put(
                 "source",
                 buildJsonObject {
                     put("repositoryRef", "VexGPT/VexLife-Prod")
                     put("sourceSha", config.sourceSha)
-                    put("modelRef", null as String?)
-                    put("runtimeRef", null as String?)
+                    put("modelRef", if (provider.live) provider.evidence.modelRef else null)
+                    put("runtimeRef", if (provider.live) provider.evidence.runtimeReceiptRef else null)
                 },
             )
             put(
@@ -1412,6 +1773,11 @@ object ContinuityPressureAdapter {
         Files.write(config.resultDir.resolve("result.json"), files.getValue("result.json"))
         val zipPath = config.resultDir.resolve("continuity-pressure-$experimentRef.zip")
         Files.write(zipPath, zipped)
+        // Transition timing is real host time from the Product's own chronology records.
+        Files.writeString(
+            config.resultDir.resolve("transition-timing.json"),
+            json.encodeToJsonElement(observed.map(::transitionTiming)).toString() + "\n",
+        )
         // Owner-read latency is real host time, so it stays beside the ZIP, not in its digest.
         Files.writeString(
             config.resultDir.resolve("host-scan-timing.json"),
@@ -1452,6 +1818,35 @@ object ContinuityPressureAdapter {
             }
         }
         return out.toByteArray()
+    }
+
+    private fun at(o: Observed, fact: VexLogger.Fact, last: Boolean = false): Instant? =
+        o.chronology
+            .filter { it.fact == fact.wire }
+            .let { if (last) it.lastOrNull() else it.firstOrNull() }
+            ?.let { Instant.parse(it.at) }
+
+    private fun millisBetween(from: Instant?, to: Instant?): Double? =
+        if (from == null || to == null) null else Duration.between(from, to).toNanos() / 1_000_000.0
+
+    /** Real host time across this turn's continuity boundaries, from the Product's chronology. */
+    private fun transitionTiming(o: Observed): JsonObject = buildJsonObject {
+        put("ordinal", o.ordinal)
+        put("contextMode", o.result.promptContextReceipt.contextMode)
+        put("pressureState", o.pressureState)
+        put("planState", o.planState)
+        put("workingContinuityDisposition", o.workingDisposition)
+        put("turnWallMs", o.wallNanos / 1_000_000.0)
+        put(
+            "sendAcceptedToProviderInvocationMs",
+            millisBetween(at(o, VexLogger.Fact.SendAccepted), at(o, VexLogger.Fact.ProviderInvocationRequested)),
+        )
+        put(
+            "answerDurableToCheckpointCommittedMs",
+            millisBetween(at(o, VexLogger.Fact.TurnCompleted), at(o, VexLogger.Fact.WorkingContinuityCommitted)),
+        )
+        put("checkpointCommitFailed", o.chronology.any { it.fact == VexLogger.Fact.WorkingContinuityCommitFailed.wire })
+        put("providerCalls", o.providerCalls.size)
     }
 
     private fun cleanup(parent: Path, keep: Boolean): Boolean {
@@ -1496,6 +1891,12 @@ object ContinuityPressureAdapter {
                 },
             sourceClean = map["source-clean"] == "true",
             keepScratch = map["keep-scratch"] == "true",
+            runtimeHome =
+                map["runtime-home"]?.let { Path.of(it) }?.also {
+                    require(it.isAbsolute) { "--runtime-home must be an absolute path" }
+                },
+            experimentWindow = map["experiment-window"] == "true",
+            payloadScale = map["payload-scale"]?.toInt() ?: 1,
         )
     }
 }

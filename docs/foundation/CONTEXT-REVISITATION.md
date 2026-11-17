@@ -29,7 +29,8 @@ Turn evidence         DirectTurnContextStore            what one turn received a
 Working continuity    VexLifeWorkingContinuityOwner     where the work stands, by reference
 Memory                VexLifeCurrentMemoryReader        accepted current meaning
 Prompt residency      DirectPromptContext               what one prompt carries
-Reach                 VexLifeCapabilityBridge + Atlas   what Vex may ask the host to read
+Turn custody          DirectCompanionTurn               which of those sources belong to this turn
+Reach                 VexLifeCapabilityBridge + Atlas   admission + request/return, nothing more
 ~~~
 
 This subsystem adds three derived relationships over those owners:
@@ -59,32 +60,46 @@ HOST CUE != PERSON'S INTENT
 CORRECTION CUE != REWRITE OF THE CORRECTED REPLY
 ~~~
 
-## Revisit — `capability.vexlife.continuity.revisit`, handle `revisit`, action `gather`
+## Revisit — `capability.vexlife.continuity.revisit`, handle `continuity`, action `revisit`
+
+One public continuity capability. It converged with the independent OpenAI lane (#220): the turn
+binds the sources, clues in one query are conjunctive, Memory already in view is not repeated,
+Working Continuity's current statements resolve through current Memory, and frontier refs are
+traced. Its engine stayed one: there is no second traversal for "hydration".
 
 ~~~text
-Vex writes one VEXLIFE_CAPABILITY_REQUEST/v1
-  queries[]  (≤ 6)  terms · seedRefs · window {lastHours, lastTurns} · corrections · speaker · from
+Vex writes one VEXLIFE_CAPABILITY_REQUEST/v1   {"capability":"continuity","action":"revisit",…}
+  queries[]  (≤ 6)  ["clue","clue"]  or  {terms · seedRefs · window {lastHours, lastTurns} ·
+                    corrections · speaker · from}
+                    terms inside one query are conjunctive clues (all must appear);
+                    separate queries are alternate vantages
   scopes            CONVERSATION · MEMORY · WORKING_CONTINUITY
   order             CURRENT_FIRST · CHRONOLOGICAL
   budgets           maxTurns ≤ 12 · maxTokens ≤ 8000
         ↓
 bridge admission   AVAILABLE in this turn's frame · request count · token room
+                   · TurnSources bound by DirectCompanionTurn (else NOT_AVAILABLE)
         ↓
-each owner read once (Conversation snapshot · Memory pages · current working checkpoint);
-an owner that cannot be read becomes a named gap, not a failed request
+TurnSources: this turn's own Conversation lease, the Memory projection its prompt used, its
+prepared working position (+ the last committed checkpoint), what its prompt carries.
+Each owner read at most once per TURN, on first need, however many queries or calls fan over
+it; an owner that cannot be read becomes a named gap, not a failed request
         ↓
-LOCATE per query          terms (exact words) · seeds · window · corrections
+LOCATE per query          terms (exact words, all of them) · seeds · window · corrections
+ANCHOR                    Working Continuity currentStatementRefs → current Memory page
+                          (WORKING_ANCHOR); not in current Memory → named, unresolved frontier
 EXPAND one typed step     CORRECTS · CORRECTED_BY · POINTED_BACK_FROM
 FUSE                      one node per turn/page; every (query, route) kept on it
 GROUP                     where the work stands → corrections (causal order) → turns → Memory
-BUDGET                    turns already in the prompt are named, not repeated;
+BUDGET                    turns and Memory statements already in the prompt are named, not repeated;
                           long turns return an exact excerpt with a `from` cursor;
                           what does not fit is a frontier with the exact request to read it
 COVERAGE                  what was searched, what was unreachable,
                           and "not found here is not the same as never happened"
         ↓
 VEXLIFE_CAPABILITY_RESULT/v1 carrying VEXLIFE_REVISIT/v1 → same turn continues (Zone 3)
-trace entry: hashes + exact returned sourceRefs (event refs / statement refs), never the words
+trace entry: hashes + exact returned sourceRefs and frontierRefs, + the host scan (owner reads
+this call, reads this turn, events walked, nodes resolved/returned, tokens, frontier), never words
 ~~~
 
 Human time and Conversation density are separate lenses: `window {lastHours: 5, lastTurns: 20}`
@@ -103,8 +118,15 @@ NOT FOUND != NEVER HAPPENED
 ~~~
 
 Words are matched exactly. There is no meaning index: a different wording is another query in the
-same request, and the packet says so. The existing once-per-turn `conversation` source return stays
-as it is; revisit is the one-call route.
+same request, and the packet says so. The existing once-per-turn `conversation` source return and
+the Memory owner's `memory recall` stay as they are; continuity revisit is the one-call route over
+all three owners.
+
+~~~text
+TURN CUSTODY != BRIDGE CHOICE
+WORKING CONTINUITY "this matters now" != MEMORY "this is the accepted statement"
+NO OPAQUE HISTORICAL TRUNCATION   (exact excerpt + cursor + read-on route, not whole-or-nothing)
+~~~
 
 ## Rollover overlap tail
 
@@ -119,8 +141,14 @@ expansion  older pairs while the newer neighbour points back to or corrects them
            — within one eighth of the room
 contiguous always an exact suffix; nothing skipped, nothing summarised
 degraded   floor not met for room → DEGRADED_ROOM, said on the receipt;
-           not even one whole exchange fits → the prior Vex reply alone (responseBridgeOnly)
+           not even one whole exchange fits → the prior Vex reply alone (responseBridgeOnly);
+           not even that reply fits → HELD_TOKEN_BUDGET: no exact turn, working coordinates and
+           continuity revisit remain
 ~~~
+
+Outside rollover, when not one exact recent event fits an ordinary prompt, the Send no longer
+fails if older source has a way back this turn (returned source, or continuity revisit in the
+frame): the receipt's context mode is `CONVERSATION_OVERLAP_HELD_TOKEN_BUDGET`.
 
 The receipt carries `overlapTail` (floor target, pairs kept, floor state, one reason per extra pair,
 tokens, budgets, policy ref) and `selectedConversationEventRefs` names the exact events. The constants
@@ -168,10 +196,11 @@ MEANING INDEX
   exact words only; multiple wordings per request are the current recall path.
 
 CROSS-CALL NODE MEMO
-  nodes resolve once per request; reuse across requests is not claimed.
+  owner reads are reused across calls in one turn; resolved nodes are recomputed per call.
 
 PROVIDER CACHE MEASUREMENT
-  no compute or cache improvement is claimed; #207/#210-style measurement owns that proof.
+  projected by tools/continuity-pressure/provider-prefix.py; observed only by a live run, whose
+  adapter records the provider's own usage report (cached_tokens) and timing per call.
 ~~~
 
 ## Experiment-only effective selection budget
@@ -192,7 +221,12 @@ EXPERIMENT BUDGET != ORDINARY PRODUCT BUDGET != HARD MODEL LIMIT
 Working Continuity thresholds are absolute multiples of the 16k output reserve, so the budget changes
 headroom, not the thresholds: below about 48k plus the 24k exchange allowance every turn starts at
 ROLLOVER_REQUIRED. At the adapter's default of 52k the run starts at CHECKPOINT_RECOMMENDED and
-crosses ROLLOVER inside the scenario's pressure set (turn 18 of 30).
+crosses ROLLOVER inside the scenario's pressure set (turn 17 of 30 with person context supplied).
+
+A live run must cross every state in few turns; the adapter's `--payload-scale` multiplies each
+turn's synthetic payload and is recorded. `--effective-input-token-budget 80000 --payload-scale 7
+--sets 3 --turns-per-set 5` projects NORMAL (1–5) → WATCH (6–7) → CHECKPOINT_RECOMMENDED (8–9) →
+ROLLOVER_REQUIRED (10, committed) → successor (11) → post-successor replay (12) in 15 turns.
 
 ## Proof
 
@@ -200,6 +234,8 @@ crosses ROLLOVER inside the scenario's pressure set (turn 18 of 30).
 src/jvmTest/kotlin/vexlife/continuity/VexLifeContextRevisitTest.kt
 src/jvmTest/kotlin/vexlife/companion/DirectContinuityOverlapTailTest.kt
 src/jvmTest/kotlin/vexlife/capability/VexLifeCapabilityRevisitTest.kt
+src/jvmTest/kotlin/vexlife/companion/DirectPromptCurrentStateTest.kt   (zero-fit held state)
+src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt   (live seam against a stub)
 ~~~
 
 Real canonical Homes and real committed turns: different wording in one request; bounded "not
@@ -208,7 +244,9 @@ tangent revisited while the parent loop stays in the directory; three routes →
 with an exact follow-up; exact excerpt with a working cursor; time and turn windows as a union;
 a perception correction returned in the person's words with no Home write; floor met / expanded /
 degraded / bridge-only through the real `materializeContinuity` + `reverifyContinuity`; bridge
-admission, owner gaps and traced source refs with an unchanged Home tree.
+admission, owner gaps and traced source refs with an unchanged Home tree; one Conversation read
+for two calls in one turn; conjunctive clues and alternate vantages; Working Continuity anchors
+resolved through Memory or left as frontier; Memory already in the prompt named, not repeated.
 
 Not proven: a lived Mac turn using revisit, and lived reading of the revised field.
 

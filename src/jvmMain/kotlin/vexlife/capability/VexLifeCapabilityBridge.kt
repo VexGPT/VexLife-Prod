@@ -71,15 +71,6 @@ object VexLifeCapabilityBridge {
         val readMemory: (Path) -> VexLifeMemoryContract.Context = {
             VexLifeCurrentMemoryReader.readCurrent(it)
         },
-        /** Read-only canonical Conversation; constructing the owner and reading it writes nothing. */
-        val readConversation: (Path) -> DirectConversationStore.Snapshot = {
-            DirectConversationStore(it).current()
-        },
-        /** The current working checkpoint for one lineage/thread, or null when none exists. */
-        val readWorkingContinuity: (Path, String, String) -> VexLifeWorkingContinuityOwner.Current? =
-            { home, lineageRef, threadRef ->
-                VexLifeWorkingContinuityOwner(home).readCurrent(lineageRef, threadRef)
-            },
         val now: () -> Instant = { Instant.now() },
     )
 
@@ -90,8 +81,13 @@ object VexLifeCapabilityBridge {
         val requestNumber: Int,
         /** Tokens still free for this exchange's two messages. */
         val tokensAvailable: Int,
-        /** Conversation events this turn's prompt already carries; revisit names them, not repeats. */
-        val promptResidentEventRefs: Set<String> = emptySet(),
+        /**
+         * The continuity sources this human turn holds, bound by the turn itself (its Conversation
+         * lease, its Memory projection, its working position, what its prompt carries). The bridge
+         * admits a continuity request; it does not decide which state belongs to the turn. Null
+         * where no turn binds them: continuity revisit is then NOT_AVAILABLE.
+         */
+        val turnSources: VexLifeContextRevisit.TurnSources? = null,
     )
 
     @OptIn(ExperimentalSerializationApi::class)
@@ -122,6 +118,8 @@ object VexLifeCapabilityBridge {
          * from older traces and from reads that return no owner-addressed source.
          */
         @EncodeDefault(EncodeDefault.Mode.NEVER) val sourceRefs: List<String> = emptyList(),
+        /** Refs found but not returned (room) or named but unresolved, so a later reader can ask for them. */
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val frontierRefs: List<String> = emptyList(),
         /** Revisit only: the host scan behind this one model-visible call (VexLifeContextRevisit.HostScan). */
         @EncodeDefault(EncodeDefault.Mode.NEVER) val hostScan: VexLifeContextRevisit.HostScan? = null,
     )
@@ -299,6 +297,7 @@ object VexLifeCapabilityBridge {
                 externalEffectsExecuted = false,
                 effectAuthorityGranted = false,
                 sourceRefs = if (state == body.state) body.sourceRefs else emptyList(),
+                frontierRefs = if (state == body.state) body.frontierRefs else (body.frontierRefs + body.sourceRefs).distinct(),
                 hostScan = body.hostScan,
             )
         VexLogger.record(
@@ -333,6 +332,7 @@ object VexLifeCapabilityBridge {
         val truncated: Boolean = false,
         val facts: Map<String, String> = emptyMap(),
         val sourceRefs: List<String> = emptyList(),
+        val frontierRefs: List<String> = emptyList(),
         val hostScan: VexLifeContextRevisit.HostScan? = null,
     )
 
@@ -731,81 +731,20 @@ object VexLifeCapabilityBridge {
                     )
                 is VexLifeContextRevisit.Parsed.Admitted -> parsed.request
             }
-        val home = admission.productHome
-        fun gap(error: Exception) = error.message ?: error.javaClass.simpleName
-        var ownerReads = 0
-        var ownerReadNanos = 0L
-        fun <T> timed(read: () -> T): T {
-            val started = System.nanoTime()
-            try {
-                return read()
-            } finally {
-                ownerReads += 1
-                ownerReadNanos += System.nanoTime() - started
-            }
-        }
-        var conversationGap: String? = null
-        val conversation =
-            try {
-                timed { owners.readConversation(home) }
-            } catch (error: Exception) {
-                conversationGap = "could not be read now: " + gap(error)
-                null
-            }
-        var memoryGap: String? = null
-        val memory =
-            if (VexLifeContextRevisit.Scope.MEMORY !in request.scopes) null
-            else
-                try {
-                    timed { owners.readMemory(home) }
-                } catch (error: Exception) {
-                    memoryGap = "could not be read now: " + gap(error)
-                    null
-                }
-        var workingGap: String? = null
-        val working =
-            if (VexLifeContextRevisit.Scope.WORKING_CONTINUITY !in request.scopes) null
-            else {
-                val head = conversation?.head
-                if (head == null) {
-                    workingGap = "no completed Conversation names a thread yet"
-                    null
-                } else
-                    try {
-                        timed { owners.readWorkingContinuity(home, head.companionLineageRef, head.threadRef) }
-                            ?.let {
-                                VexLifeContextRevisit.WorkingDirectory(
-                                    checkpointRef = it.checkpoint.checkpointRef,
-                                    disposition = it.commitReceipt.disposition,
-                                    cursorEventRef = it.checkpoint.workingSet.cursorEventRef,
-                                    openLoopRefs = it.checkpoint.workingSet.openLoopRefs,
-                                    currentStatementRefs =
-                                        it.checkpoint.workingSet.currentStatementRefs,
-                                    activeWorkNodeRefs = it.checkpoint.workingSet.activeWorkNodeRefs,
-                                    currentIntentReceiptRefs =
-                                        it.checkpoint.workingSet.currentIntentReceiptRefs,
-                                )
-                            }
-                            .also { if (it == null) workingGap = "no working checkpoint exists yet" }
-                    } catch (error: Exception) {
-                        workingGap = "could not be read now: " + gap(error)
-                        null
-                    }
-            }
+        val bound =
+            admission.turnSources
+                ?: return Body(
+                    State.NOT_AVAILABLE,
+                    "revisit",
+                    "continuity revisit is not bound to this provider turn",
+                    untrusted = false,
+                )
+        val readsBefore = bound.ownerReads
+        val nanosBefore = bound.ownerReadNanos
         val result =
             VexLifeContextRevisit.revisit(
                 request = request,
-                sources =
-                    VexLifeContextRevisit.Sources(
-                        conversation = conversation,
-                        conversationGap = conversationGap,
-                        memory = memory,
-                        memoryGap = memoryGap,
-                        working = working,
-                        workingGap = workingGap,
-                        promptResidentEventRefs = admission.promptResidentEventRefs,
-                        now = owners.now(),
-                    ),
+                sources = bound.sources(request.scopes),
                 estimateTokens = estimateTokens,
             )
         require(!result.effectsPerformed) { "revisit performed an effect" }
@@ -827,10 +766,12 @@ object VexLifeCapabilityBridge {
                     "routes" to result.matchRouteCount.toString(),
                 ),
             sourceRefs = result.returnedSourceRefs,
+            frontierRefs = result.frontierRefs,
             hostScan =
                 VexLifeContextRevisit.HostScan(
-                    ownerReadCount = ownerReads,
-                    ownerReadNanos = ownerReadNanos,
+                    ownerReadCount = bound.ownerReads - readsBefore,
+                    ownerReadNanos = bound.ownerReadNanos - nanosBefore,
+                    ownerReadsThisTurn = bound.ownerReads,
                     conversationEventsRead = result.conversationEventsRead,
                     turnsScanned = result.scannedTurnCount,
                     memoryPagesScanned = result.searchedMemoryPageCount,
