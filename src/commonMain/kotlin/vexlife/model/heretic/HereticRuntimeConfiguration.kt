@@ -39,6 +39,7 @@ object HereticRuntimeConfiguration {
 
     data class Recommendation(
         val promptCacheEntries: Int,
+        val maximumPromptCacheEntries: Int,
         val standing: String,
         val reasonKey: String,
     )
@@ -49,6 +50,8 @@ object HereticRuntimeConfiguration {
         val recommendedPromptCacheEntries: Int,
         val recommendationStanding: String,
         val recommendationReasonKey: String,
+        val minimumPromptCacheEntries: Int,
+        val maximumPromptCacheEntries: Int,
     )
 
     fun empty(): Value = Value()
@@ -62,18 +65,27 @@ object HereticRuntimeConfiguration {
             "Heretic runtime configuration model settings must be canonical"
         }
         value.models.forEach { setting ->
-            require(HereticModelCatalog.entry(setting.modelRef) != null) {
-                "Heretic runtime configuration references an unoffered model"
-            }
+            val model =
+                requireNotNull(
+                    HereticModelCatalog.entry(
+                        setting.modelRef,
+                    ),
+                ) {
+                    "Heretic runtime configuration references an unoffered model"
+                }
             require(setting.mode == ModeExplicit || setting.mode == ModeRecommended) {
                 "Heretic runtime configuration mode is not admitted"
             }
             when (setting.mode) {
                 ModeExplicit ->
-                    requirePromptCacheEntries(
-                        requireNotNull(setting.promptCacheEntries) {
-                            "explicit Heretic runtime configuration requires prompt-cache entries"
-                        }
+                    requirePromptCacheEntriesFor(
+                        model = model,
+                        value =
+                            requireNotNull(
+                                setting.promptCacheEntries,
+                            ) {
+                                "explicit Heretic runtime configuration requires prompt-cache entries"
+                            },
                     )
 
                 ModeRecommended ->
@@ -90,6 +102,7 @@ object HereticRuntimeConfiguration {
             HereticModelCatalog.Models.Qwen27B.modelRef ->
                 Recommendation(
                     promptCacheEntries = SafetyFloorPromptCacheEntries,
+                    maximumPromptCacheEntries = SafetyFloorPromptCacheEntries,
                     standing = RecommendationLivedSafetyFloor,
                     reasonKey = "workspace.description.model-cache-recommendation-27b",
                 )
@@ -97,6 +110,7 @@ object HereticRuntimeConfiguration {
             HereticModelCatalog.Models.Qwen4B.modelRef ->
                 Recommendation(
                     promptCacheEntries = Qwen4BExperimentalPromptCacheEntries,
+                    maximumPromptCacheEntries = Qwen4BExperimentalPromptCacheEntries,
                     standing = RecommendationExperimentalCandidate,
                     reasonKey = "workspace.description.model-cache-recommendation-4b",
                 )
@@ -104,6 +118,7 @@ object HereticRuntimeConfiguration {
             else ->
                 Recommendation(
                     promptCacheEntries = SafetyFloorPromptCacheEntries,
+                    maximumPromptCacheEntries = SafetyFloorPromptCacheEntries,
                     standing = RecommendationSafeFloorUntuned,
                     reasonKey = "workspace.description.model-cache-recommendation-untuned",
                 )
@@ -124,15 +139,23 @@ object HereticRuntimeConfiguration {
                     recommendedPromptCacheEntries = recommendation.promptCacheEntries,
                     recommendationStanding = recommendation.standing,
                     recommendationReasonKey = recommendation.reasonKey,
+                    minimumPromptCacheEntries = MinimumPromptCacheEntries,
+                    maximumPromptCacheEntries = recommendation.maximumPromptCacheEntries,
                 )
 
             ModeExplicit ->
                 Effective(
-                    promptCacheEntries = requirePromptCacheEntries(requireNotNull(setting.promptCacheEntries)),
+                    promptCacheEntries =
+                        requirePromptCacheEntriesFor(
+                            model = model,
+                            value = requireNotNull(setting.promptCacheEntries),
+                        ),
                     mode = ModeExplicit,
                     recommendedPromptCacheEntries = recommendation.promptCacheEntries,
                     recommendationStanding = recommendation.standing,
                     recommendationReasonKey = recommendation.reasonKey,
+                    minimumPromptCacheEntries = MinimumPromptCacheEntries,
+                    maximumPromptCacheEntries = recommendation.maximumPromptCacheEntries,
                 )
 
             else ->
@@ -142,6 +165,8 @@ object HereticRuntimeConfiguration {
                     recommendedPromptCacheEntries = recommendation.promptCacheEntries,
                     recommendationStanding = recommendation.standing,
                     recommendationReasonKey = recommendation.reasonKey,
+                    minimumPromptCacheEntries = MinimumPromptCacheEntries,
+                    maximumPromptCacheEntries = recommendation.maximumPromptCacheEntries,
                 )
         }
     }
@@ -156,7 +181,11 @@ object HereticRuntimeConfiguration {
             ModelSetting(
                 modelRef = model.modelRef,
                 mode = ModeExplicit,
-                promptCacheEntries = requirePromptCacheEntries(promptCacheEntries),
+                promptCacheEntries =
+                    requirePromptCacheEntriesFor(
+                        model = model,
+                        value = promptCacheEntries,
+                    ),
             ),
         )
 
@@ -182,6 +211,26 @@ object HereticRuntimeConfiguration {
                     .sortedBy { it.modelRef },
         ).let(::validate)
 
+    fun requirePromptCacheEntriesFor(
+        model: HereticModelCatalog.Entry,
+        value: Int,
+    ): Int {
+        val admitted = requirePromptCacheEntries(value)
+        val maximum =
+            recommendation(
+                model,
+            )
+                .maximumPromptCacheEntries
+        require(admitted <= maximum) {
+            "prompt-cache entries for ${model.handle} must be in $MinimumPromptCacheEntries..$maximum"
+        }
+        return admitted
+    }
+
+    /**
+     * Low-level mlx-lm contract bound. Product-facing model settings are further narrowed by
+     * [requirePromptCacheEntriesFor].
+     */
     fun requirePromptCacheEntries(value: Int): Int {
         require(value in MinimumPromptCacheEntries..MaximumPromptCacheEntries) {
             "prompt-cache entries must be in $MinimumPromptCacheEntries..$MaximumPromptCacheEntries"
