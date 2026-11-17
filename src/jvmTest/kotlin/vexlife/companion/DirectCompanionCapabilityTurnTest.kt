@@ -24,6 +24,7 @@ import vexlife.local.VexLifeProdLocalSetup
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 
 /**
@@ -33,6 +34,11 @@ import vexlife.model.heretic.HereticRuntimeState
  * typed result returns in the next stage -> Vex answers from it -> evidence records what happened.
  */
 class DirectCompanionCapabilityTurnTest {
+    private val macRealization =
+        HereticRuntimeRealization.legacyMacV1(
+            HereticProductIdentity.ModelRef,
+        )
+
     private fun productHome(): Path {
         val parent = Files.createTempDirectory("vexlife-prod-capability-turn-").toAbsolutePath()
         val home = parent.resolve("VexLife-Prod")
@@ -58,6 +64,7 @@ class DirectCompanionCapabilityTurnTest {
             modelConfigurationState = HereticModelConfiguration.State.BoundProductModel,
             qualifiedRuntimeEvidence =
                 HereticModelConfiguration.QualifiedRuntimeEvidence(
+                    realizationRef = macRealization.realizationRef,
                     runtimeReceiptRef = "receipt.vexlife-prod.heretic.reach",
                     runtimeState = HereticRuntimeState.Qualified,
                     modelRef = HereticProductIdentity.ModelRef,
