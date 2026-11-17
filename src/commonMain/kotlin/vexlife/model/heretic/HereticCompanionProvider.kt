@@ -238,7 +238,7 @@ object HereticCompanionProvider {
                 messageProtocol = MessageProtocol.HARMONY,
                 reasoningRepresentation = ReasoningRepresentation.HARMONY_CHANNELS,
                 capabilityRepresentation = CapabilityRepresentation.HARMONY_FUNCTIONS,
-                capabilityStanding = CapabilityStanding.QUALIFYING,
+                capabilityStanding = CapabilityStanding.HELD_PROVIDER_BRIDGE,
                 coalesceLeadingSystemMessages = true,
                 modelIdentity = "You are Vex.",
                 generation =
