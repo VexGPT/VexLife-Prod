@@ -2,8 +2,8 @@
 set -u
 
 REPO='VexGPT/VexLife-Prod'
-HEAD_SHA='7ef1deaf17fab918479b1da9696930bbd3486eb2'
-TREE_SHA='e633f25fab662733b0725e4cfca100343d694f44'
+HEAD_SHA='f39d948728c9012a2514b458cf061aa4e155f25e'
+TREE_SHA='13f7490262b8d9a4a5566b772a987389f58b555e'
 BASE_SHA='501e3fe3464303891287598793430b749cc91bc9'
 PR='226'
 SCENARIO_REF='scenario.vexlife.continuity-pressure.depth-continuity.v1'
@@ -153,7 +153,8 @@ set +e
     jvmTest \
       --tests 'vexlife.harness.ContinuityPressureAdapterTest' \
       --tests 'vexlife.companion.DirectWorkingContinuityTest.sourceReturnSuccessorPromptPreservesTheSameWorkingContinuityCustody' \
-      --tests 'vexlife.continuity.VexLifeWorkingContinuityOwnerTest.activeRolloverLineageAdvancesCurrentCursorEvenWhenPressureReturnsToNormal'
+      --tests 'vexlife.continuity.VexLifeWorkingContinuityOwnerTest.activeRolloverLineageAdvancesCurrentCursorEvenWhenPressureReturnsToNormal' \
+      --tests 'vexlife.companion.DirectConversationSourceReturnTest.protocolMessageOffersOneConditionalReturnWithoutChangingTheHumanAnswerPath'
 ) > "$RETURN_DIR/focused-harness.log" 2>&1
 FOCUSED_EXIT=$?
 set -e 2>/dev/null || true
