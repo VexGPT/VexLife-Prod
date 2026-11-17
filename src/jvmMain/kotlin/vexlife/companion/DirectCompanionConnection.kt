@@ -1195,6 +1195,16 @@ object DirectCompanionConnection {
                 call,
             )
         } catch (
+            error: InterruptedException,
+        ) {
+            Thread.currentThread().interrupt()
+            call.cancellation?.checkpoint()
+            throw error
+        } catch (
+            error: DirectCompanionCancellation.Cancelled,
+        ) {
+            throw error
+        } catch (
             error: java.net.http.HttpTimeoutException,
         ) {
             fail(
@@ -1213,6 +1223,7 @@ object DirectCompanionConnection {
         } catch (
             error: Exception,
         ) {
+            call.cancellation?.checkpoint()
             fail(
                 FailureCode.EndpointUnreachable,
                 "local Companion endpoint invocation failed",
@@ -1230,6 +1241,16 @@ object DirectCompanionConnection {
                 call,
                 onLine,
             )
+        } catch (
+            error: InterruptedException,
+        ) {
+            Thread.currentThread().interrupt()
+            call.cancellation?.checkpoint()
+            throw error
+        } catch (
+            error: DirectCompanionCancellation.Cancelled,
+        ) {
+            throw error
         } catch (
             error: java.net.http.HttpTimeoutException,
         ) {
@@ -1253,6 +1274,7 @@ object DirectCompanionConnection {
         } catch (
             error: Exception,
         ) {
+            call.cancellation?.checkpoint()
             fail(
                 FailureCode.EndpointUnreachable,
                 "local Companion streaming invocation failed",
