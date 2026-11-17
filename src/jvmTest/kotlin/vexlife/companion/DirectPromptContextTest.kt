@@ -25,6 +25,7 @@ import vexlife.memory.VexLifeMemoryContextFixture
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 
 class DirectPromptContextTest {
@@ -41,6 +42,12 @@ class DirectPromptContextTest {
             "receipt.vexlife-prod.heretic.prompt-capability",
     ) =
         HereticModelConfiguration.QualifiedRuntimeEvidence(
+            realizationRef =
+                HereticRuntimeRealization
+                    .legacyMacV1(
+                        HereticProductIdentity.ModelRef,
+                    )
+                    .realizationRef,
             runtimeReceiptRef = receiptRef,
             runtimeState = HereticRuntimeState.Qualified,
             modelRef = HereticProductIdentity.ModelRef,
