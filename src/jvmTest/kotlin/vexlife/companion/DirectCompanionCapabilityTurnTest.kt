@@ -232,10 +232,17 @@ class DirectCompanionCapabilityTurnTest {
             receipt.capabilityExchangeAllowanceTokens,
         )
         assertEquals(DirectPromptContext.DirectTurnInputTokenBudget, receipt.inputTokenBudget)
+        val frame = assertNotNull(receipt.capabilityFrameSnapshot)
         assertTrue(
             "capability.vexlife.web.read" in
-                assertNotNull(receipt.capabilityFrameSnapshot).availableCapabilityRefs
+                frame.availableCapabilityRefs
         )
+        assertTrue(
+            "capability.vexlife.continuity.hydrate" in
+                frame.availableCapabilityRefs
+        )
+        assertTrue(frame.omittedCapabilityRefs.isEmpty())
+        assertFalse(frame.truncated)
         val record = assertNotNull(DirectTurnContextStore(home).read(result.turnRef))
         val trace = assertNotNull(record.capabilityTrace)
         assertEquals(1, trace.entries.size)
