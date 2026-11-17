@@ -424,7 +424,7 @@ object VexLifeProdScreenLens {
                         DirectCompanionTurn.FailureCancelledByPerson,
                         "DirectCompanionTurn",
                         Jvm + "companion/DirectCompanionTurn.kt",
-                        "The already-durable request receives the Family-owned terminal reason in its failure receipt; no response/head is committed.",
+                        "The already-durable request receives the turn owner's terminal cancellation code in its failure receipt; no response/head is committed.",
                     ),
                     node(
                         "$n.family-return",
