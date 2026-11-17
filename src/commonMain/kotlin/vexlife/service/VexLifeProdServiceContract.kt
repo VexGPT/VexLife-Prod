@@ -54,6 +54,9 @@ object VexLifeProdServiceContract {
     const val SendStreamEventSchema =
         "vexlife-prod.local-service-send-stream-event/v1"
 
+    const val ConversationCancelResponseSchema =
+        "vexlife-prod.local-service-conversation-cancel-response/v1"
+
     const val ErrorSchema =
         "vexlife-prod.local-service-error/v1"
 
@@ -158,6 +161,9 @@ object VexLifeProdServiceContract {
 
     const val ConversationSendPath =
         "/api/v1/conversation/send"
+
+    const val ConversationCancelPath =
+        "/api/v1/conversation/cancel"
 
     @Serializable
     data class SourceCurrentness(
@@ -1066,6 +1072,36 @@ object VexLifeProdServiceContract {
             ) {
                 "send content must be non-empty"
             }
+        }
+    }
+
+    @Serializable
+    data class ConversationCancelRequest(
+        val idempotencyKey: String,
+    ) {
+        init {
+            requirePortableRef(idempotencyKey, "idempotencyKey")
+        }
+    }
+
+    @Serializable
+    data class ConversationCancelResponse(
+        val schemaVersion: String,
+        val state: String,
+        val idempotencyKey: String,
+        val cancellationRequested: Boolean,
+        val effectsPerformed: Boolean,
+    ) {
+        init {
+            require(
+                schemaVersion == ConversationCancelResponseSchema &&
+                    state in setOf("CANCEL_REQUESTED", "NOT_ACTIVE") &&
+                    cancellationRequested == (state == "CANCEL_REQUESTED") &&
+                    effectsPerformed == cancellationRequested
+            ) {
+                "Conversation cancel response is invalid"
+            }
+            requirePortableRef(idempotencyKey, "idempotencyKey")
         }
     }
 
