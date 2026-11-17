@@ -182,6 +182,53 @@ class HereticProductModelTest {
     }
 
     @Test
+    fun stableCompatibilityReceiptIsExactToCertifiedMacRealization() {
+        val macEvidence =
+            qualifiedRuntime()
+        val macBound =
+            HereticModelConfiguration.bound(
+                homeIdentity = home,
+                qualifiedRuntime = macEvidence,
+                runtimeReceiptPath = HereticProductIdentity.StableRuntimeReceiptRelativePath,
+            )
+
+        assertEquals(
+            macEvidence.realizationRef,
+            macBound.realizationRef,
+        )
+        assertEquals(
+            HereticProductIdentity.StableRuntimeReceiptRelativePath,
+            macBound.runtimeReceiptPath,
+        )
+
+        val windowsRealization =
+            HereticRuntimeRealization.Windows4B
+        val windowsEvidence =
+            HereticModelConfiguration.QualifiedRuntimeEvidence(
+                realizationRef = windowsRealization.realizationRef,
+                runtimeReceiptRef = "receipt.vexlife-prod.windows-4b.test",
+                runtimeState = HereticRuntimeState.Qualified,
+                modelRef = windowsRealization.modelRef,
+                modelProfileRef = windowsRealization.modelProfileRef,
+                artifactRef = windowsRealization.artifact.artifactRef,
+                artifactContentSetSha256 = windowsRealization.artifact.contentSetSha256,
+                runtimeAdapterRef = windowsRealization.runtime.runtimeAdapterRef,
+                runtimeClass = windowsRealization.runtime.runtimeClass,
+                endpoint = windowsRealization.runtime.endpoint,
+                requestModel = windowsRealization.runtime.requestModel,
+                qualification = HereticRuntimeQualification.qualified(),
+            )
+
+        assertFailsWith<IllegalArgumentException> {
+            HereticModelConfiguration.bound(
+                homeIdentity = home,
+                qualifiedRuntime = windowsEvidence,
+                runtimeReceiptPath = HereticProductIdentity.StableRuntimeReceiptRelativePath,
+            )
+        }
+    }
+
+    @Test
     fun boundConfigurationCannotBeFormedFromStartingRuntimeTruth() {
         assertFailsWith<IllegalArgumentException> {
             HereticModelConfiguration.QualifiedRuntimeEvidence(
