@@ -83,15 +83,85 @@ HISTORICAL HYDRATION
 The checkpoint and turn-spine structures in this workbench are derived projections. If they and every
 KV cache disappeared, canonical owners must still be sufficient to reconstruct truthful context.
 
+
+
+## Alignment with current VexArchitecture and Working Continuity owners
+
+A source review after initial workbench formation tightened the ownership model.
+
+VexArchitecture requires one question per rightful coordinate and warns against new IDs, registries and
+history owners when existing semantic identity + chronology/current custody already answer the
+question. VexLogger owns chronology; projections must not mint competing semantic identity.
+
+VexLife-Prod already has:
+
+~~~text
+VexLifeWorkingContinuity
+    pressure + reference-only checkpoint planning
+
+VexLifeWorkingContinuityOwner
+    durable checkpoint / head / successor claim / successor Context effects
+
+WorkingSet
+    lineageRef
+    threadRef
+    cursorEventRef
+    activeWorkNodeRefs
+    currentIntentReceiptRefs
+    openLoopRefs
+    currentStatementRefs
+    currentContinuityRecordRefs
+    currentDailyStratumRefOrNull
+    sourceRefs
+~~~
+
+and its checkpoint truth explicitly requires:
+
+~~~text
+referenceOnly = true
+rawTranscriptIncluded = false
+modelSummaryIncluded = false
+semanticAcceptanceCreated = false
+memoryPromotionPerformed = false
+~~~
+
+Therefore this workbench does **not** introduce another durable semantic-checkpoint owner.
+
+The refined relationship is:
+
+~~~text
+canonical Conversation / Memory / current-state / evidence owners
++ current Working Continuity checkpoint + WorkingSet
+        |
+        v
+DirectPromptContext bounded model-facing continuity projection
+        |
+        v
+provider-specific representation
+        |
+        v
+ephemeral prompt/KV computation
+~~~
+
+Likewise, the "parenthesis closing" insight is first a projection question over the existing Working
+Continuity relationship. If exact parent/active ordering cannot be truthfully recovered from the
+current WorkingSet, that is pressure to refine the rightful Working Continuity contract—not permission
+to create a second Call Stack Registry.
+
+A completed-turn navigation aid is keyed by the already-existing `turnRef`; it is a **Turn Continuity
+Projection**, not a new TurnKey identity. Semantic topic/takeaway fields remain proposed/derived until
+their rightful source is established.
+
+
 ## Three-zone prompt topology
 
 The candidate context projection is ordered by expected mutation frequency.
 
-### Zone 1 — checkpoint epoch
+### Zone 1 — continuity projection epoch
 
 ~~~text
 Foundational Field
-+ semantic checkpoint C_k
++ stable continuity projection C_k
 + stable precedence/invariant language needed to interpret later state
 ~~~
 
@@ -101,7 +171,7 @@ remain decision-relevant, and compact provenance that has already been absorbed.
 
 It is **not** a new durable truth store.
 
-Zone 1 stays byte-stable inside one checkpoint epoch. A semantic rebase intentionally creates a new
+Zone 1 stays byte-stable inside one continuity projection epoch. A semantic rebase intentionally creates a new
 epoch and may invalidate prior prompt computation.
 
 ### Zone 2 — append-only continuity spine
@@ -112,7 +182,7 @@ After checkpoint `C_k`, completed canonical turns may append bounded envelopes:
 human request identity / exact recent request text when selected
 -> host-owned grounded provenance receipt when relevant
 -> canonical Vex response
--> sealed Turn Key / structural transition
+-> sealed Turn Continuity Projection / structural transition
 ~~~
 
 The old Zone 1 + Zone 2 bytes should remain an exact prefix when a new completed turn is appended.
@@ -131,7 +201,7 @@ Zone 3 contains current mutable execution truth needed for the active invocation
 ~~~text
 current #187 reach/capability state
 current serving-model/runtime projection
-active conversational focus/call-stack projection
+active conversational focus/working-continuity focus projection
 current human input
 active intra-turn capability request/result material
 other bounded transient execution context
@@ -160,7 +230,7 @@ PROVIDER REPRESENTATION != SEMANTIC OWNER
 The existing Qwen/GPT leading-system constraints must therefore be pressure-tested before any Zone 2
 receipt format becomes production behavior.
 
-## Turn Keys and conversational call stack
+## Turn Continuity Projections and conversational working-continuity focus
 
 Long human conversations are not only chronological. A person may open nested questions, resolve a
 tangent, and expect Vex to return to the exact paused parent objective.
@@ -179,7 +249,7 @@ The host owns exact frame identity and legal transition. Vex may propose semanti
 takeaway, relation to parent, or "tangent resolved". A model proposal does not become structural truth
 without sealing against the current host-owned stack.
 
-A retrospective Turn Key may carry bounded navigation meaning such as:
+A retrospective Turn Continuity Projection may carry bounded navigation meaning such as:
 
 ~~~text
 turnRef
@@ -247,7 +317,7 @@ The source of truth is not shrunk. Only its model-facing projection is restructu
 The desired normal shape is:
 
 ~~~text
-stable checkpoint epoch + append-only spine
+stable continuity projection epoch + append-only spine
 -> longest valid provider-token prefix can be reused
 -> only the uncached suffix requires prefill
 ~~~
@@ -284,7 +354,7 @@ A future implementation should demonstrate at least these shapes:
    - next human turn does not require raw source payload to become canonical Conversation.
 
 3. **semantic rebase**
-   - checkpoint epoch changes intentionally;
+   - continuity projection epoch changes intentionally;
    - canonical source refs and unresolved obligations remain recoverable;
    - one cache rebuild is accepted;
    - following turns regain useful prefix reuse.
