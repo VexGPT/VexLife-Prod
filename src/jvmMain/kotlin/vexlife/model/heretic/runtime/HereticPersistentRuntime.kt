@@ -11,6 +11,7 @@ import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeEffectBoundary
 import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.platform.macos.MacUserLaunchdProcess
 
@@ -420,7 +421,14 @@ object HereticPersistentRuntime {
             "Heretic model configuration evidence requires one exact current qualified runtime receipt"
         }
 
+        val realization =
+            HereticRuntimeRealization.require(
+                modelRef = receipt.modelRef,
+                target = HereticRuntimeRealization.MacArm64,
+            )
+
         return HereticModelConfiguration.QualifiedRuntimeEvidence(
+            realizationRef = realization.realizationRef,
             runtimeReceiptRef = receipt.receiptRef,
             runtimeState = receipt.state,
             modelRef = receipt.modelRef,
