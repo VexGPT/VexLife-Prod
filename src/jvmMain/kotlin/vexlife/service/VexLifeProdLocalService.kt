@@ -55,7 +55,7 @@ import vexlife.web.VexWebArtifacts
  */
 class VexLifeProdLocalService private constructor(
     val sourceSha: String,
-    private val startupSetup: VexLifeProdLocalSetup.Result,
+    private val startupSetup: VexLifeProdRuntimeSession.Foundation,
     private val server: HttpServer,
     private val frameHost: VexLifeProdFrameHost,
     private val presentation: VexWebArtifacts.Bundle,
@@ -161,7 +161,7 @@ class VexLifeProdLocalService private constructor(
         private val ProductDreamExecutor =
             object : DreamExecutor {
                 override fun observe(
-                    setup: VexLifeProdLocalSetup.Result,
+                    setup: VexLifeProdRuntimeSession.Foundation,
                 ): VexLifeProdServiceContract.MemoryDreamProjection =
                     VexLifeCurrentMemoryReader
                         .readDreamSourceFrontier(
@@ -174,7 +174,7 @@ class VexLifeProdLocalService private constructor(
                         )
 
                 override fun perform(
-                    setup: VexLifeProdLocalSetup.Result,
+                    setup: VexLifeProdRuntimeSession.Foundation,
                     request: VexLifeProdServiceContract.MemoryDreamRunRequest,
                 ): VexLifeDailyMemoryDream.Result {
                     val observedAt =
@@ -305,7 +305,7 @@ class VexLifeProdLocalService private constructor(
 
             return startAt(
                 sourceSha = sourceSha,
-                startupSetup = session.result,
+                startupSetup = session.foundation,
                 address =
                     InetSocketAddress(
                         VexLifeProdServiceContract.Host,
@@ -342,7 +342,7 @@ class VexLifeProdLocalService private constructor(
                 currentStateObserver = {
                     platformProjection.observeCurrentState(
                         Path.of(
-                            session.result.productHome,
+                            session.foundation.productHome,
                         ),
                     )
                 },
@@ -353,7 +353,7 @@ class VexLifeProdLocalService private constructor(
 
         internal fun startForTest(
             sourceSha: String,
-            setup: VexLifeProdLocalSetup.Result,
+            setup: VexLifeProdRuntimeSession.Foundation,
             turnExecutor: TurnExecutor,
             streamingTurnExecutor: StreamingTurnExecutor? =
                 null,
@@ -370,7 +370,12 @@ class VexLifeProdLocalService private constructor(
         ): VexLifeProdLocalService =
             startAt(
                 sourceSha = sourceSha,
-                startupSetup = setup,
+                startupSetup =
+                    VexLifeProdRuntimeSession.Foundation(
+                        state = setup.state,
+                        productHome = setup.productHome,
+                        qualifiedRuntimeEvidence = setup.qualifiedRuntimeEvidence,
+                    ),
                 address =
                     InetSocketAddress(
                         VexLifeProdServiceContract.Host,
@@ -393,7 +398,7 @@ class VexLifeProdLocalService private constructor(
 
         private fun startAt(
             sourceSha: String,
-            startupSetup: VexLifeProdLocalSetup.Result,
+            startupSetup: VexLifeProdRuntimeSession.Foundation,
             address: InetSocketAddress,
             frameAddress: InetSocketAddress,
             turnExecutor: TurnExecutor,
@@ -508,14 +513,14 @@ class VexLifeProdLocalService private constructor(
 
     internal fun interface TurnExecutor {
         fun perform(
-            setup: VexLifeProdLocalSetup.Result,
+            setup: VexLifeProdRuntimeSession.Foundation,
             intent: DirectCompanionTurn.Intent,
         ): DirectCompanionTurn.Result
     }
 
     internal fun interface StreamingTurnExecutor {
         fun perform(
-            setup: VexLifeProdLocalSetup.Result,
+            setup: VexLifeProdRuntimeSession.Foundation,
             intent: DirectCompanionTurn.Intent,
             progressObserver: DirectCompanionTurn.ProgressObserver,
         ): DirectCompanionTurn.Result
@@ -523,11 +528,11 @@ class VexLifeProdLocalService private constructor(
 
     internal interface DreamExecutor {
         fun observe(
-            setup: VexLifeProdLocalSetup.Result,
+            setup: VexLifeProdRuntimeSession.Foundation,
         ): VexLifeProdServiceContract.MemoryDreamProjection
 
         fun perform(
-            setup: VexLifeProdLocalSetup.Result,
+            setup: VexLifeProdRuntimeSession.Foundation,
             request: VexLifeProdServiceContract.MemoryDreamRunRequest,
         ): VexLifeDailyMemoryDream.Result
     }
