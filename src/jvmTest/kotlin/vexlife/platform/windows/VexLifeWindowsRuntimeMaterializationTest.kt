@@ -452,12 +452,7 @@ class VexLifeWindowsRuntimeMaterializationTest {
         val bytes =
             ByteArrayOutputStream()
         ZipOutputStream(bytes).use { zip ->
-            entries.forEach {
-                (
-                    name,
-                    body,
-                ),
-                ->
+            entries.forEach { (name, body) ->
                 zip.putNextEntry(
                     ZipEntry(
                         name,
