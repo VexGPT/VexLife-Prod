@@ -339,6 +339,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 contextPath: ${jsString(VexLifeProdServiceContract.ContextPath)},
                 memoryPath: ${jsString(VexLifeProdServiceContract.MemoryPath)},
                 settingsPath: ${jsString(VexLifeProdServiceContract.SettingsPath)},
+                localAsrPath: ${jsString(VexLifeProdServiceContract.LocalAsrPath)},
+                localAsrTranscribePath: ${jsString(VexLifeProdServiceContract.LocalAsrTranscribePath)},
                 privatePath: ${jsString(VexLifeProdServiceContract.PrivatePath)},
                 privateControlPath: ${jsString(VexLifeProdServiceContract.PrivateControlPath)},
                 privateSendPath: ${jsString(VexLifeProdServiceContract.PrivateSendPath)},
@@ -518,6 +520,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 vexMemoryLabel: byId('vex-memory-label'),
                 modelsList: byId('models-list'),
                 modelsNote: byId('models-note'),
+                localAsrSelection: byId('local-asr-selection'),
+                localAsrStatus: byId('local-asr-status'),
+                localAsrNote: byId('local-asr-note'),
                 diagnosticsStatus: byId('diagnostics-status'),
                 diagnosticsCapture: byId('diagnostics-capture'),
                 diagnosticsRecords: byId('diagnostics-records'),
@@ -573,6 +578,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 // Settings → Models projection (VexLifeModels); refreshed while a download runs.
                 models: null,
                 modelsInFlight: false,
+                localAsr: null,
+                localAsrInFlight: false,
                 workspaceStrings: null,
                 browserContext: null,
                 includePage: false,
@@ -626,22 +633,19 @@ object VexLifeWebP1RuntimeArtifacts {
                 language: null,
                 desiredActive: false,
                 session: 0,
-                recognition: null,
                 stream: null,
                 audioContext: null,
+                audioSource: null,
                 analyser: null,
+                processor: null,
+                silentGain: null,
                 animationFrame: null,
+                sampleRate: 0,
+                pcmChunks: [],
+                sampleCount: 0,
                 draftPrefix: '',
                 finalTranscript: '',
                 interimTranscript: ''
-              };
-
-              const localSpeechRecognition = () => {
-                const Recognition = window.SpeechRecognition;
-                if (!Recognition) return null;
-                if (!('processLocally' in Recognition.prototype)) return null;
-                if (typeof Recognition.available !== 'function' || typeof Recognition.install !== 'function') return null;
-                return Recognition;
               };
 
               const voiceInputLanguage = () => {
@@ -672,12 +676,31 @@ object VexLifeWebP1RuntimeArtifacts {
                   .map((value) => value ? '1' : '0')
                   .join(':');
 
+              const selectedLocalAsrOption = () => {
+                const projection = state.localAsr;
+                if (!projection) return null;
+                return (projection.options ?? []).find((option) =>
+                  option.providerRef === projection.selectedProviderRef &&
+                  option.modelRef === projection.selectedModelRef
+                ) ?? null;
+              };
+
+              const localAsrAvailableForLanguage = (language) => {
+                const option = selectedLocalAsrOption();
+                return Boolean(
+                  language &&
+                  option &&
+                  option.currentState === 'READY' &&
+                  (option.languageCodes ?? []).includes(language.code)
+                );
+              };
+
               const observeVoiceInputCapability = () => {
                 const language = voiceInputLanguage();
                 const semanticState =
                   voiceInput.capabilityStateByFacts[
                     voiceInputCapabilityKey(
-                      Boolean(language && localSpeechRecognition()),
+                      localAsrAvailableForLanguage(language),
                       Boolean(navigator.mediaDevices?.getUserMedia),
                       Boolean(window.AudioContext || window.webkitAudioContext)
                     )
