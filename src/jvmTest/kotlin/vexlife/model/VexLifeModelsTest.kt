@@ -124,7 +124,7 @@ class VexLifeModelsTest {
                 owner.control(VexLifeModelsFamily.ControlUse, "heretic-9b")
                 owner.awaitIdle()
                 val after = owner.projection()
-                assertEquals("SWITCHED", after.lastOutcome?.state)
+                assertEquals(VexLifeModels.OutcomeState.SWITCHED, after.lastOutcome?.state)
                 assertFalse(after.switchPending)
                 assertEquals(null, after.switching)
                 assertTrue(after.models.first { it.handle == "heretic-9b" }.chosen)
@@ -151,7 +151,7 @@ class VexLifeModelsTest {
         place(home, four, "config.json")
         models(home).use { owner ->
             val after = owner.control(VexLifeModelsFamily.ControlRemove, "heretic-4b")
-            assertEquals("REMOVED", after.lastOutcome?.state)
+            assertEquals(VexLifeModels.OutcomeState.REMOVED, after.lastOutcome?.state)
             val row = after.models.first { it.handle == "heretic-4b" }
             assertEquals(0L, row.presentBytes)
             assertEquals(
@@ -168,7 +168,7 @@ class VexLifeModelsTest {
             owner.awaitIdle()
             val after = owner.projection()
             assertNull(after.downloading)
-            assertEquals("FAILED", after.lastOutcome?.state)
+            assertEquals(VexLifeModels.OutcomeState.FAILED, after.lastOutcome?.state)
             // The model can be downloaded again; nothing about the failure is hidden.
             assertTrue(
                 VexLifeModelsFamily.ControlDownload in

@@ -64,6 +64,7 @@ class VexLifeModels(
         )
     }
 
+    @Serializable
     enum class SwitchPhase {
         REQUESTED,
         WAITING_FOR_CURRENT_TURN,
@@ -75,7 +76,7 @@ class VexLifeModels(
     data class SwitchProjection(
         val handle: String,
         val label: String,
-        val phase: String,
+        val phase: SwitchPhase,
         val message: VexLifeText,
         val startedAt: String,
     )
@@ -91,7 +92,7 @@ class VexLifeModels(
     data class Row(
         val handle: String,
         val label: String,
-        val standing: String,
+        val standing: HereticModelCatalog.Standing,
         val totalBytes: Long,
         val presentBytes: Long,
         val recommendedMemoryBytes: Long,
@@ -103,10 +104,20 @@ class VexLifeModels(
     )
 
     @Serializable
+    enum class OutcomeState {
+        NOT_LAWFUL_NOW,
+        SWITCHING,
+        SWITCHED,
+        FAILED,
+        DOWNLOADED,
+        REMOVED,
+    }
+
+    @Serializable
     data class Outcome(
         val handle: String,
         val controlRef: String,
-        val state: String,
+        val state: OutcomeState,
         val message: VexLifeText,
         val at: String,
     )
@@ -147,7 +158,7 @@ class VexLifeModels(
                 Row(
                     handle = entry.handle,
                     label = entry.humanLabel,
-                    standing = entry.standing.name,
+                    standing = entry.standing,
                     totalBytes = entry.totalBytes,
                     presentBytes = presence.presentBySizeBytes,
                     recommendedMemoryBytes = entry.recommendedMemoryBytes,
@@ -197,7 +208,7 @@ class VexLifeModels(
             remember(
                 entry,
                 controlRef,
-                "NOT_LAWFUL_NOW",
+                OutcomeState.NOT_LAWFUL_NOW,
                 VexLifeText("workspace.status.model-control-not-lawful"),
             )
             return projection()
@@ -241,7 +252,7 @@ class VexLifeModels(
                 remember(
                     entry,
                     controlRef,
-                    "REMOVED",
+                    OutcomeState.REMOVED,
                     VexLifeText(
                         key = "workspace.status.model-removed",
                         gib = mapOf("freed" to removal.freedBytes),
@@ -268,7 +279,7 @@ class VexLifeModels(
             SwitchProjection(
                 handle = entry.handle,
                 label = entry.humanLabel,
-                phase = SwitchPhase.REQUESTED.name,
+                phase = SwitchPhase.REQUESTED,
                 message = switchMessage(SwitchPhase.REQUESTED, entry),
                 startedAt = startedAt,
             )
@@ -283,7 +294,7 @@ class VexLifeModels(
         remember(
             entry,
             controlRef,
-            "SWITCHING",
+            OutcomeState.SWITCHING,
             initial.message,
         )
         executor.execute {
@@ -296,7 +307,7 @@ class VexLifeModels(
                         SwitchProjection(
                             handle = entry.handle,
                             label = entry.humanLabel,
-                            phase = phase.name,
+                            phase = phase,
                             message = switchMessage(phase, entry),
                             startedAt = startedAt,
                         ),
@@ -311,7 +322,7 @@ class VexLifeModels(
                 remember(
                     entry,
                     controlRef,
-                    "SWITCHED",
+                    OutcomeState.SWITCHED,
                     VexLifeText.text(
                         "workspace.status.model-switched",
                         "model" to entry.humanLabel,
@@ -323,7 +334,7 @@ class VexLifeModels(
                 remember(
                     entry,
                     controlRef,
-                    "FAILED",
+                    OutcomeState.FAILED,
                     VexLifeText.text(
                         "workspace.status.model-switch-failed",
                         "model" to entry.humanLabel,
@@ -391,7 +402,7 @@ class VexLifeModels(
                 remember(
                     entry,
                     controlRef,
-                    "DOWNLOADED",
+                    OutcomeState.DOWNLOADED,
                     VexLifeText("workspace.status.model-downloaded"),
                 )
             } catch (error: Exception) {
@@ -403,7 +414,7 @@ class VexLifeModels(
                 remember(
                     entry,
                     controlRef,
-                    "FAILED",
+                    OutcomeState.FAILED,
                     VexLifeText.text(
                         "workspace.status.model-download-failed",
                         "reason" to (error.message ?: error.javaClass.simpleName),
@@ -418,7 +429,7 @@ class VexLifeModels(
     private fun remember(
         entry: HereticModelCatalog.Entry,
         controlRef: String,
-        state: String,
+        state: OutcomeState,
         message: VexLifeText,
     ) {
         lastOutcome.set(Outcome(entry.handle, controlRef, state, message, now().toString()))
@@ -484,7 +495,7 @@ class VexLifeModels(
         val serving = servingModelRef()
         return switching.get() == null &&
             outcome?.controlRef == VexLifeModelsFamily.ControlUse &&
-            outcome.state == "FAILED" &&
+            outcome.state == OutcomeState.FAILED &&
             chosen != null &&
             serving != null &&
             chosen != serving

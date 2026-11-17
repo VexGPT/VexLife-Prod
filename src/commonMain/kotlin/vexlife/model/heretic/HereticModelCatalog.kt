@@ -1,5 +1,7 @@
 package vexlife.model.heretic
 
+import kotlinx.serialization.Serializable
+
 /**
  * Source-owned catalog of the local Heretic models a person can choose.
  *
@@ -22,6 +24,7 @@ package vexlife.model.heretic
  *   still owed. Selecting a candidate is a human choice, never an automatic fallback.
  */
 object HereticModelCatalog {
+    @Serializable
     enum class Standing {
         CERTIFIED,
         CANDIDATE,
