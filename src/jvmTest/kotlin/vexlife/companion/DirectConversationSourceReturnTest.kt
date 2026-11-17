@@ -14,6 +14,7 @@ import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 
 class DirectConversationSourceReturnTest {
@@ -35,6 +36,12 @@ class DirectConversationSourceReturnTest {
 
     private fun runtimeEvidence() =
         HereticModelConfiguration.QualifiedRuntimeEvidence(
+            realizationRef =
+                HereticRuntimeRealization
+                    .legacyMacV1(
+                        HereticProductIdentity.ModelRef,
+                    )
+                    .realizationRef,
             runtimeReceiptRef =
                 "receipt.vexlife-prod.heretic.source-return-test",
             runtimeState = HereticRuntimeState.Qualified,
