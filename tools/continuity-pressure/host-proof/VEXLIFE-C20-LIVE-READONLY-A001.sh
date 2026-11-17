@@ -2,8 +2,8 @@
 set -u
 
 REPO='VexGPT/VexLife-Prod'
-HEAD_SHA='f39d948728c9012a2514b458cf061aa4e155f25e'
-TREE_SHA='13f7490262b8d9a4a5566b772a987389f58b555e'
+HEAD_SHA='847dde3791270c46b7a659cc27914071591d4832'
+TREE_SHA='6c566d0fd6b686e86db0c52db7bdb43c293b89d8'
 BASE_SHA='501e3fe3464303891287598793430b749cc91bc9'
 PR='226'
 SCENARIO_REF='scenario.vexlife.continuity-pressure.depth-continuity.v1'
@@ -154,7 +154,9 @@ set +e
       --tests 'vexlife.harness.ContinuityPressureAdapterTest' \
       --tests 'vexlife.companion.DirectWorkingContinuityTest.sourceReturnSuccessorPromptPreservesTheSameWorkingContinuityCustody' \
       --tests 'vexlife.continuity.VexLifeWorkingContinuityOwnerTest.activeRolloverLineageAdvancesCurrentCursorEvenWhenPressureReturnsToNormal' \
-      --tests 'vexlife.companion.DirectConversationSourceReturnTest.protocolMessageOffersOneConditionalReturnWithoutChangingTheHumanAnswerPath'
+      --tests 'vexlife.companion.DirectConversationSourceReturnTest.protocolMessageOffersOneConditionalReturnWithoutChangingTheHumanAnswerPath' \
+      --tests 'vexlife.model.heretic.HereticModelCatalogTest.everyOfferedQwenChoosesItsCurrentProviderProfileWithoutConnectionDefaults' \
+      --tests 'vexlife.companion.DirectCompanionConnectionTest.candidate4BUsesItsOwnSamplingProfileAtTheConnectionBoundary'
 ) > "$RETURN_DIR/focused-harness.log" 2>&1
 FOCUSED_EXIT=$?
 set -e 2>/dev/null || true
