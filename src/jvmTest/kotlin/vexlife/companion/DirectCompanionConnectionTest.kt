@@ -41,6 +41,26 @@ class DirectCompanionConnectionTest {
             qualification = HereticRuntimeQualification.qualified(),
         )
 
+    private fun qualifiedWindowsRuntime(): HereticModelConfiguration.QualifiedRuntimeEvidence {
+        val realization =
+            HereticRuntimeRealization.Windows4B
+
+        return HereticModelConfiguration.QualifiedRuntimeEvidence(
+            realizationRef = realization.realizationRef,
+            runtimeReceiptRef = "receipt.vexlife-prod.windows-4b.connection.test",
+            runtimeState = HereticRuntimeState.Qualified,
+            modelRef = realization.modelRef,
+            modelProfileRef = realization.modelProfileRef,
+            artifactRef = realization.artifact.artifactRef,
+            artifactContentSetSha256 = realization.artifact.contentSetSha256,
+            runtimeAdapterRef = realization.runtime.runtimeAdapterRef,
+            runtimeClass = realization.runtime.runtimeClass,
+            endpoint = realization.runtime.endpoint,
+            requestModel = realization.runtime.requestModel,
+            qualification = HereticRuntimeQualification.qualified(),
+        )
+    }
+
     @Test
     fun qualifiedRuntimeOwnsEndpointAndModelForOneActualLoopbackInference() {
         var call: DirectCompanionConnection.HttpCall? =
@@ -552,6 +572,62 @@ class DirectCompanionConnectionTest {
                 )
             }
         }
+    }
+
+    @Test
+    fun declaredWindowsRealizationUsesItsOwnQualifiedConnectionContract() {
+        val runtime =
+            qualifiedWindowsRuntime()
+        var call: DirectCompanionConnection.HttpCall? =
+            null
+
+        val result =
+            DirectCompanionConnection.invoke(
+                runtime = runtime,
+                messages =
+                    listOf(
+                        CompanionProviderMessage(
+                            role = "user",
+                            content = "Hello from Windows",
+                        ),
+                    ),
+                transport =
+                    DirectCompanionConnection.Transport {
+                        observed ->
+                        call = observed
+                        DirectCompanionConnection.HttpResult(
+                            status = 200,
+                            body =
+                                """
+                                {
+                                  "model": "default_model",
+                                  "choices": [
+                                    {
+                                      "finish_reason": "stop",
+                                      "message": {
+                                        "role": "assistant",
+                                        "content": "Hello from the same Product body."
+                                      }
+                                    }
+                                  ]
+                                }
+                                """.trimIndent(),
+                        )
+                    },
+            )
+
+        assertEquals(
+            "http://127.0.0.1:18080/v1/chat/completions",
+            requireNotNull(call).uri.toString(),
+        )
+        assertEquals(
+            runtime.requestModel,
+            result.model,
+        )
+        assertEquals(
+            "Hello from the same Product body.",
+            result.content,
+        )
     }
 
     @Test
