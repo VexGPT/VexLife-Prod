@@ -308,14 +308,14 @@ class VexLifeProdLocalService private constructor(
                     observe,
                     ->
                     observe(
-                        VexLifeModels.SwitchPhase.WAITING_FOR_CURRENT_TURN,
+                        VexLifeModels.SwitchPhase.WaitingForCurrentTurn,
                     )
                     val write =
                         sessionFence.writeLock()
                     write.lock()
                     try {
                         observe(
-                            VexLifeModels.SwitchPhase.PREPARING_TARGET,
+                            VexLifeModels.SwitchPhase.PreparingTarget,
                         )
                         val current =
                             sessionRef.get()
@@ -338,7 +338,7 @@ class VexLifeProdLocalService private constructor(
                                                     VexLifeProdSetupProgress.Phase.StartingLocalModel
                                             ) {
                                                 observe(
-                                                    VexLifeModels.SwitchPhase.SWITCHING_RUNTIME,
+                                                    VexLifeModels.SwitchPhase.SwitchingRuntime,
                                                 )
                                             }
                                         }
