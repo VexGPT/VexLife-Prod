@@ -131,6 +131,11 @@ class VexLifeProdEntryFamilyTest {
                 freeBytes = 5L shl 30,
             ),
             VexLifeProdEntryFamily.ModelFilesHeld(sourceSha, invalidBytes = 1L shl 30),
+            VexLifeProdEntryFamily.ModelTargetHeld(
+                desiredSourceSha = sourceSha,
+                modelRef = "model.vexlife-prod.test",
+                targetRef = "target.vexlife-prod.test",
+            ),
             VexLifeProdEntryFamily.HeldUnknown(sourceSha, "receipt/PID ownership is not exact"),
         )
 
