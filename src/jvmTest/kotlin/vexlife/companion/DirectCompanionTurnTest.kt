@@ -23,6 +23,7 @@ import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 
 class DirectCompanionTurnTest {
@@ -60,6 +61,12 @@ class DirectCompanionTurnTest {
             modelConfigurationState = HereticModelConfiguration.State.BoundProductModel,
             qualifiedRuntimeEvidence =
                 HereticModelConfiguration.QualifiedRuntimeEvidence(
+                    realizationRef =
+                        HereticRuntimeRealization
+                            .legacyMacV1(
+                                HereticProductIdentity.ModelRef,
+                            )
+                            .realizationRef,
                     runtimeReceiptRef = "receipt.vexlife-prod.heretic.turn",
                     runtimeState = HereticRuntimeState.Qualified,
                     modelRef = HereticProductIdentity.ModelRef,
