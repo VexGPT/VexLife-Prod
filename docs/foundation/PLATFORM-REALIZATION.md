@@ -129,6 +129,59 @@ EMULATION POSSIBILITY
 != QUALIFIED PRODUCT TARGET
 ~~~
 
+## Host observation and download routing
+
+Host observation is a separate relationship from realization support.
+
+~~~text
+WINDOWS HOST OBSERVATION
+  -> identify native OS architecture
+  -> form exact target WINDOWS / X86_64 or WINDOWS / ARM64
+
+PLATFORM REALIZATION CATALOG
+  -> answer whether that exact target has a qualified Product realization
+
+RELEASE CATALOG
+  -> expose only artifacts that actually exist for qualified targets
+
+DOWNLOAD / SITE RENDERER
+  -> present those release facts
+  != infer Product support
+~~~
+
+The Product must prefer the **native OS architecture** over the current process/JVM architecture.
+That distinction matters when Windows is running an emulated process:
+
+~~~text
+Windows ARM64 OS
++ x64 JVM/process under emulation
+-> native target remains WINDOWS / ARM64
+!= silently select WINDOWS / X86_64
+~~~
+
+`VexLifeWindowsHostObservation` source-places this adapter boundary for JVM consumers, while
+`tools/windows/vexlife-windows-host-probe.ps1` provides a read-only real-host observation surface
+using .NET's `RuntimeInformation.OSArchitecture` and `ProcessArchitecture`.
+
+The public website is deliberately not the architecture truth owner. Browser user-agent/client-hint
+information may be unavailable, reduced, spoofed, or describe the browser process rather than the
+native Product target. The eventual Windows delivery may therefore publish architecture-specific
+artifacts while a small source-owned host bootstrap/installer selects the exact one after real host
+observation. A single universal `.exe` is not assumed until a concrete packaging/runtime design earns
+that claim.
+
+For this experiment:
+
+~~~text
+HOST TARGET DETECTED
+!= WINDOWS PRODUCT REALIZATION EXISTS
+!= WINDOWS DOWNLOAD MAY BE ENABLED
+~~~
+
+The first lived proof is intentionally smaller than an installer: observe the Windows host through a
+one-command/one-return harness, preserve the machine-readable target, then build the first actual
+Windows realization against the architecture that was truly observed.
+
 ## What this candidate does not yet model
 
 Do not add placeholders merely to make the object look complete.
