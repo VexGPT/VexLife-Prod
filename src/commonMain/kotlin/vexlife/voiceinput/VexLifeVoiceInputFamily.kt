@@ -259,11 +259,11 @@ object VexLifeVoiceInputFamily :
                 )
         }
 
-    /** The realization has actually begun requesting microphone access. */
-    fun observeMicrophoneRequestStarted(
+    /** Microphone custody is established and the realization has begun checking local language. */
+    fun observeLanguageCheckStarted(
         language: Language,
     ): State =
-        RequestingMicrophone(language)
+        CheckingLanguage(language)
 
     /** The browser recognizer reported that local recognition actually started. */
     fun observeRecognitionStarted(
@@ -287,7 +287,7 @@ object VexLifeVoiceInputFamily :
                 when (control) {
                     Start ->
                         admit(
-                            CheckingLanguage(currentState.language),
+                            RequestingMicrophone(currentState.language),
                             BeginLocalDictation(currentState.language),
                         )
                     Stop -> null
@@ -297,7 +297,7 @@ object VexLifeVoiceInputFamily :
                 when (control) {
                     Start ->
                         admit(
-                            CheckingLanguage(currentState.language),
+                            RequestingMicrophone(currentState.language),
                             BeginLocalDictation(currentState.language),
                         )
                     Stop -> null
