@@ -456,7 +456,29 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains("navigator.mediaDevices.getUserMedia"))
         assertTrue(bundle.javascript.contains("projectDictationIntoDraft"))
         assertTrue(bundle.javascript.contains("ui.draft.value ="))
-        assertTrue(bundle.javascript.contains("if (dictation.desiredActive) void stopVoiceInput(true)"))
+        assertTrue(bundle.javascript.contains("voiceInput.actByState"))
+        assertTrue(bundle.javascript.contains("voiceInput.capabilityStateByFacts"))
+        assertTrue(bundle.javascript.contains("voiceInput.languageAvailabilityStateByProviderValue"))
+        assertTrue(bundle.javascript.contains("voiceInput.languageInstallStateBySuccess"))
+        assertTrue(bundle.javascript.contains("voiceInput.failureStateByReason"))
+        assertTrue(bundle.javascript.contains("applyVoiceInputSemanticState"))
+        assertTrue(bundle.javascript.contains("realizeBeginLocalDictation"))
+        assertTrue(bundle.javascript.contains("realizeEndLocalDictation"))
+        assertTrue(bundle.javascript.contains("controlRef: voiceInput.control.stop"))
+        assertTrue(bundle.javascript.contains(""downloadable""))
+        assertTrue(bundle.javascript.contains(""downloading""))
+        assertFalse(
+            bundle.javascript.contains("setVoiceInputState("),
+            "VexWeb must apply Family-authored semantic output rather than author State directly",
+        )
+        assertFalse(
+            bundle.javascript.contains("stopVoiceInput("),
+            "implicit cleanup must traverse the same Family Stop Control",
+        )
+        assertFalse(
+            bundle.javascript.contains("dictation.stateRef = voiceInput.state."),
+            "browser realization must not assign Family State from its own branch logic",
+        )
         VexLifeVoiceInputFamily.StateRefs.forEach { stateRef ->
             assertTrue(bundle.javascript.contains(stateRef), "VoiceInput State ref must reach VexWeb: $stateRef")
         }
