@@ -180,9 +180,9 @@ object HereticRuntimeRealization {
             process =
                 ProcessProfile(
                     processSubstrateRef =
-                        "process-substrate.vexlife-prod.macos.launchd-user",
+                        "substrate.vexlife.macos-user-launchd-process.001",
                     lifetimeOwnerRef =
-                        "owner.vexlife-prod.macos-heretic-runtime",
+                        "owner.vexlife-prod.heretic-persistent-runtime.001",
                 ),
             qualification =
                 openAiLoopbackQualification(
@@ -286,9 +286,9 @@ object HereticRuntimeRealization {
             process =
                 ProcessProfile(
                     processSubstrateRef =
-                        "process-substrate.vexlife-prod.windows.local-process",
+                        "substrate.vexlife.windows-local-process.001",
                     lifetimeOwnerRef =
-                        "owner.vexlife-prod.windows-heretic-runtime",
+                        "owner.vexlife-prod.windows-heretic-runtime.001",
                 ),
             qualification =
                 openAiLoopbackQualification(
