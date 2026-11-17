@@ -221,16 +221,27 @@ class ContinuityPressureAdapterTest {
                         .use { it.filter { p -> p.toString().endsWith(".zip") }.findFirst().get() }
                         .toFile()
                 )
-            val telemetry = zip.use { z ->
-                String(
-                        z.getInputStream(z.getEntry("implementation/provider-telemetry.jsonl"))
-                            .readBytes()
-                    )
-                    .lines()
-                    .filter { it.isNotBlank() }
-                    .map { Json.parseToJsonElement(it).jsonObject }
+            val (telemetry, providerLabel) = zip.use { z ->
+                val rows =
+                    String(
+                            z.getInputStream(z.getEntry("implementation/provider-telemetry.jsonl"))
+                                .readBytes()
+                        )
+                        .lines()
+                        .filter { it.isNotBlank() }
+                        .map { Json.parseToJsonElement(it).jsonObject }
+                val report =
+                    Json.parseToJsonElement(
+                            String(
+                                z.getInputStream(z.getEntry("implementation/adapter-report.json"))
+                                    .readBytes()
+                            )
+                        )
+                        .jsonObject
+                rows to report.getValue("provider").jsonPrimitive.content
             }
             assertEquals(8, telemetry.size)
+            assertTrue(providerLabel.startsWith("LIVE_MODEL:"))
             telemetry.forEach { row ->
                 val prompt = row.getValue("promptTokens").jsonPrimitive.content.toInt()
                 val cached = row.getValue("cachedPromptTokens").jsonPrimitive.content.toInt()
