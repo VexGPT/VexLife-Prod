@@ -188,7 +188,7 @@ fi
 STAGE='RUNTIME_PRECONDITION_TOOLING'
 "$GIT_BIN" -C "$SRC" checkout --detach "$PRECONDITION_TOOLING_HEAD" >> "$RETURN_DIR/clone.log" 2>&1 ||
   fail_now "$STAGE" 'host-proof precondition tooling checkout failed'
-[ -z "$($GIT_BIN" -C "$SRC" status --porcelain=v1 -uall)" ] ||
+[ -z "$($GIT_BIN -C "$SRC" status --porcelain=v1 -uall)" ] ||
   fail_now "$STAGE" 'host-proof tooling source is not clean'
 
 STAGE='RUNTIME_PRECONDITION'
@@ -202,7 +202,7 @@ RUNTIME_PRECONDITION_EXIT=$?
 set -e 2>/dev/null || true
 if [ "$RUNTIME_PRECONDITION_EXIT" -ne 0 ]; then
   STATE='HELD'
-  DETAIL="Product runtime precondition could not realize the already-selected certified runtime without acquisition; exit $RUNTIME_PRECONDITION_EXIT"
+  DETAIL="Product runtime precondition could not realize the Home's already-selected runtime without acquisition; exit $RUNTIME_PRECONDITION_EXIT"
   finish_and_exit 0
 fi
 
