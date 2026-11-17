@@ -11,6 +11,9 @@ package vexlife.model.heretic
  * heretic-4b choice; it does not add another selectable model.
  */
 object HereticRuntimeRealization {
+    const val Windows4BPatientZeroReceiptRelativePath =
+        "runtime/vexlife-prod/windows-4b-patient-zero-runtime-receipt.json"
+
     data class Value(
         val realizationRef: String,
         val modelRef: String,
