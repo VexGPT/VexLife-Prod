@@ -16,7 +16,7 @@ SDK_REPO='vgong24/Vextreme-SDK'
 SDK_HEAD='8543c7d755faba04d4c4019c02e84f992667918a'
 SDK_TREE='6376f68279f0750ee6d3868b8472368199763064'
 CARRIER_REPO='VexGPT/VexLife-Prod'
-CARRIER_REF='cc9bce184fd88813214ea595fc51d381a63098da'
+CARRIER_REF='a667fac36a0bae9bac86caaced2147ce50b216a5'
 SPEC_ROOT='proof-carrier/continuity-foundation-final-a014'
 
 resolve_exec() {
