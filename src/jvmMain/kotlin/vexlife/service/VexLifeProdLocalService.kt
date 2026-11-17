@@ -91,7 +91,11 @@ class VexLifeProdLocalService private constructor(
             Path.of(startupSetup.productHome),
         )
     private val localAsrProvider =
-        VexLifeLocalAsrProvider.fromEnvironment()
+        VexLifeLocalAsrProvider.fromHome(
+            Path.of(
+                startupSetup.productHome,
+            ),
+        )
     private val activeTurn =
         AtomicReference<ActiveTurn?>(
             null,
