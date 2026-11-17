@@ -226,18 +226,15 @@ object HereticModelConfiguration {
                 runtime.endpoint == value.endpoint &&
                 runtime.requestModel == value.requestModel
 
+        val borrowedStableMacReceipt =
+            value.runtimeReceiptPath ==
+                HereticProductIdentity.StableRuntimeReceiptRelativePath &&
+                realization.target == HereticRuntimeRealization.MacArm64 &&
+                realization.modelRef == HereticProductIdentity.ModelRef
+
         val receiptCurrent =
-            if (value.realizationRef == null) {
-                // Existing Mac v1 bindings may legitimately point at the stable compatibility
-                // receipt or the Product-owned Mac receipt.
-                value.runtimeReceiptPath in
-                    setOf(
-                        HereticProductIdentity.StableRuntimeReceiptRelativePath,
-                        realization.runtimeReceiptRelativePath,
-                    )
-            } else {
-                value.runtimeReceiptPath == realization.runtimeReceiptRelativePath
-            }
+            value.runtimeReceiptPath == realization.runtimeReceiptRelativePath ||
+                borrowedStableMacReceipt
 
         return exactRealization && receiptCurrent
     }
