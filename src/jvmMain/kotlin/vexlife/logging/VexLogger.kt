@@ -113,8 +113,15 @@ object VexLogger {
         BrowserContextReady(Owner.Browser),
         BrowserContextFailed(Owner.Browser),
         BrowserContextInvalidated(Owner.Browser),
+        VoiceInputLanguageAvailabilityObserved(Owner.Browser),
+        VoiceInputLanguageInstallObserved(Owner.Browser),
+        VoiceInputMicrophoneRequested(Owner.Browser),
+        VoiceInputMicrophoneGranted(Owner.Browser),
+        VoiceInputRecognitionStarted(Owner.Browser),
+        VoiceInputFailureObserved(Owner.Browser),
         PresentationArrived(Owner.Presentation),
         SendOutcomeUnresolvedShown(Owner.Presentation),
+        VoiceInputControlEmitted(Owner.Presentation),
 
         // Diagnostics (the Logger's own downstream projections)
         DebugHistoryCleared(Owner.Diagnostics),
