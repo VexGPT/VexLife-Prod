@@ -358,6 +358,8 @@ object VexLifeVoiceInputFamily :
 
     val FailureReasonRefs: Set<String> = FailureReason.entries.map { it.reasonRef }.toSet()
 
+    val DefaultLanguage: Language = Language.forPersonLanguage(VexLifePersonSettings.DefaultLanguage)
+
     init {
         require(
             Language.entries.map { it.personLanguageCode } ==
