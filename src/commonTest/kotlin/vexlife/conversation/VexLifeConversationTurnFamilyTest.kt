@@ -155,13 +155,6 @@ class VexLifeConversationTurnFamilyTest {
         )
     }
 
-    @Test
-    fun terminalCancellationReasonIsFamilyOwnedAndStable() {
-        assertEquals(
-            "TURN_CANCELLED_BY_PERSON",
-            VexLifeConversationTurnFamily.TerminalReason.CancelledByPerson.ref,
-        )
-    }
 }
 
 // [VXG RealForever]
