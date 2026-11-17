@@ -220,7 +220,7 @@ class VexLifeModelsTest {
                         before.runtimeConfiguration.promptCacheEntries,
                     )
                     assertEquals(
-                        3,
+                        1,
                         before.runtimeConfiguration.recommendedPromptCacheEntries,
                     )
                     assertEquals(
@@ -228,7 +228,7 @@ class VexLifeModelsTest {
                         before.runtimeConfiguration.maximumPromptCacheEntries,
                     )
                     assertEquals(
-                        HereticRuntimeConfiguration.RecommendationExperimentalCandidate,
+                        HereticRuntimeConfiguration.RecommendationHeldExperiment,
                         before.runtimeConfiguration.recommendationStanding,
                     )
 
@@ -260,7 +260,7 @@ class VexLifeModelsTest {
                         four.runtimeConfiguration.mode,
                     )
                     assertEquals(
-                        3,
+                        1,
                         four.runtimeConfiguration.promptCacheEntries,
                     )
                     assertEquals(
