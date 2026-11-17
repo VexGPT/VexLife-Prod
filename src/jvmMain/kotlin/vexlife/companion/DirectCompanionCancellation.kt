@@ -12,19 +12,14 @@ import java.util.concurrent.atomic.AtomicReference
  * own or terminate the persistent Heretic runtime process.
  */
 class DirectCompanionCancellation {
-    enum class Reason {
-        PERSON_REQUESTED,
-    }
-
-    class Cancelled internal constructor(
-        val reason: Reason,
-    ) : IllegalStateException(
-        "direct Companion turn cancelled: ${reason.name}",
-    )
+    class Cancelled internal constructor :
+        IllegalStateException(
+            "direct Companion turn cancelled",
+        )
 
     private val requested =
-        AtomicReference<Reason?>(
-            null,
+        AtomicBoolean(
+            false,
         )
 
     private val executionThread =
@@ -47,8 +42,7 @@ class DirectCompanionCancellation {
             "Direct Companion cancellation is already bound to another execution thread"
         }
         if (
-            requested.get() !=
-            null
+            requested.get()
         ) {
             thread.interrupt()
         }
@@ -58,8 +52,7 @@ class DirectCompanionCancellation {
                 null,
             )
             if (
-                requested.get() !=
-                    null &&
+                requested.get() &&
                     Thread.currentThread() ===
                     thread
             ) {
@@ -68,14 +61,11 @@ class DirectCompanionCancellation {
         }
     }
 
-    fun request(
-        reason: Reason =
-            Reason.PERSON_REQUESTED,
-    ): Boolean {
+    fun request(): Boolean {
         val first =
             requested.compareAndSet(
-                null,
-                reason,
+                false,
+                true,
             )
         if (
             first
@@ -94,28 +84,24 @@ class DirectCompanionCancellation {
     }
 
     fun checkpoint() {
-        requested
-            .get()
-            ?.let {
-                throw Cancelled(
-                    it,
-                )
-            }
+        if (
+            requested.get()
+        ) {
+            throw Cancelled()
+        }
     }
 
     fun cancelledExceptionOrNull(): Cancelled? =
-        requested
-            .get()
-            ?.let(
-                ::Cancelled,
-            )
+        Cancelled()
+            .takeIf {
+                requested.get()
+            }
 
     fun onCancel(
         action: () -> Unit,
     ): AutoCloseable {
         if (
-            requested.get() !=
-            null
+            requested.get()
         ) {
             runCatching {
                 action()
@@ -127,8 +113,7 @@ class DirectCompanionCancellation {
             action
 
         if (
-            requested.get() !=
-            null &&
+            requested.get() &&
                 cleanupActions.remove(
                     action,
                 )
@@ -147,8 +132,7 @@ class DirectCompanionCancellation {
 
     val cancellationRequested: Boolean
         get() =
-            requested.get() !=
-                null
+            requested.get()
 }
 
 // [VXG RealForever]
