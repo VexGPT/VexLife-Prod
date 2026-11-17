@@ -9,6 +9,7 @@ import kotlin.test.assertSame
 import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -17,6 +18,7 @@ import vexlife.model.heretic.HereticRuntimeState
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
 import vexlife.service.VexLifeProdMacServiceLifetime
+import vexlife.service.VexLifeProdServiceLifetime
 
 class VexLifeProdSetupProcessTest {
     private fun testPath(
@@ -339,6 +341,257 @@ class VexLifeProdSetupProcessTest {
                 "SETUP",
                 "INSTALL",
                 "SERVICE",
+                "READY",
+            ),
+            trace,
+        )
+    }
+
+    @Test
+    fun sharedSetupDelegatesRuntimeAndServiceToTheSuppliedPlatform() {
+        val trace =
+            mutableListOf<String>()
+        val sourceSha =
+            "a".repeat(
+                40,
+            )
+        val productHome =
+            testPath(
+                "vexlife-prod-platform-seam-home",
+            )
+        val sourceImage =
+            testPath(
+                "vexlife-prod-platform-seam-image",
+            )
+        val payloadSha =
+            "b".repeat(
+                64,
+            )
+        val observation =
+            VexLifeProdPrivateServiceImage.Observation(
+                imageRef =
+                    "image.vexlife-prod.private-service.platform-seam-test",
+                sourceSha =
+                    sourceSha,
+                payloadSha256 =
+                    payloadSha,
+                launcherPath =
+                    sourceImage
+                        .resolve(
+                            "bin/vexlife-prod-service",
+                        )
+                        .toString(),
+                setupLauncherPath =
+                    sourceImage
+                        .resolve(
+                            "bin/vexlife-prod-setup",
+                        )
+                        .toString(),
+                setupWindowPath =
+                    sourceImage
+                        .resolve(
+                            "setup/vexlife-prod-setup-window.applescript",
+                        )
+                        .toString(),
+                javaPath =
+                    sourceImage
+                        .resolve(
+                            "runtime/bin/java",
+                        )
+                        .toString(),
+                runtimeModules =
+                    listOf(
+                        "java.base",
+                        "java.net.http",
+                        "jdk.httpserver",
+                    ),
+                effectsPerformed =
+                    false,
+            )
+        val setup =
+            setupResult(
+                productHome.toString(),
+            )
+        val session =
+            VexLifeProdLocalSetup.Session(
+                result =
+                    setup,
+                currentRuntimeEvidence = {
+                    setup.qualifiedRuntimeEvidence
+                },
+            )
+        val installed =
+            VexLifeProdPrivateServiceImageInstaller.Result(
+                state =
+                    "INSTALLED_VERIFIED_PRIVATE_SERVICE_IMAGE",
+                sourceSha =
+                    sourceSha,
+                payloadSha256 =
+                    payloadSha,
+                imagePath =
+                    productHome
+                        .resolve(
+                            "runtime/product-service/images/$sourceSha",
+                        )
+                        .toString(),
+                imageMutationPerformed =
+                    true,
+            )
+        val service =
+            object :
+                VexLifeProdServiceLifetime {
+                override val sourceSha =
+                    sourceSha
+                override val imagePayloadSha256 =
+                    payloadSha
+                override val pid =
+                    4242L
+                override val serviceOrigin =
+                    "http://127.0.0.1:18210"
+            }
+
+        val platform =
+            object :
+                VexLifeProdSetupPlatform {
+                override val target =
+                    HereticRuntimeRealization.WindowsX64
+
+                override fun formFreshHome(
+                    productHome: Path,
+                ): VexLifeProdHomeFiles.Result =
+                    error(
+                        "product convergence must not form Home",
+                    )
+
+                override fun establishSession(
+                    productHome: Path,
+                    allowAcquisition: Boolean,
+                    allowRuntimeStart: Boolean,
+                    progress: VexLifeProdSetupProgress,
+                ): VexLifeProdRuntimeSession {
+                    trace +=
+                        "PLATFORM_SETUP"
+                    assertEquals(
+                        this@VexLifeProdSetupProcessTest
+                            .testPath(
+                                "vexlife-prod-platform-seam-home",
+                            ),
+                        productHome,
+                    )
+                    assertEquals(
+                        true,
+                        allowAcquisition,
+                    )
+                    assertEquals(
+                        true,
+                        allowRuntimeStart,
+                    )
+                    return session
+                }
+
+                override fun startService(
+                    productHome: Path,
+                    expectedSourceSha: String,
+                ): VexLifeProdServiceLifetime {
+                    trace +=
+                        "PLATFORM_SERVICE"
+                    assertEquals(
+                        this@VexLifeProdSetupProcessTest
+                            .testPath(
+                                "vexlife-prod-platform-seam-home",
+                            ),
+                        productHome,
+                    )
+                    assertEquals(
+                        sourceSha,
+                        expectedSourceSha,
+                    )
+                    return service
+                }
+            }
+
+        VexLifeProdSetupProcess.runWithHooks(
+            arguments =
+                VexLifeProdSetupProcess.Arguments(
+                    productHome =
+                        productHome,
+                    expectedSourceSha =
+                        sourceSha,
+                    allowAcquisition =
+                        true,
+                ),
+            hooks =
+                VexLifeProdSetupProcess.Hooks(
+                    platform =
+                        platform,
+                    locateImageRoot = {
+                        sourceImage
+                    },
+                    observeImage = {
+                        imageRoot,
+                        expected,
+                        ->
+                        assertEquals(
+                            sourceImage,
+                            imageRoot,
+                        )
+                        assertEquals(
+                            sourceSha,
+                            expected,
+                        )
+                        observation
+                    },
+                    installImage = {
+                        imageRoot,
+                        home,
+                        expected,
+                        ->
+                        trace +=
+                            "INSTALL"
+                        assertEquals(
+                            sourceImage,
+                            imageRoot,
+                        )
+                        assertEquals(
+                            productHome,
+                            home,
+                        )
+                        assertEquals(
+                            sourceSha,
+                            expected,
+                        )
+                        installed
+                    },
+                    reportImageVerified = {},
+                    reportReady = {
+                        _,
+                        currentSession,
+                        currentInstalled,
+                        currentService,
+                        ->
+                        trace +=
+                            "READY"
+                        assertSame(
+                            session,
+                            currentSession,
+                        )
+                        assertSame(
+                            installed,
+                            currentInstalled,
+                        )
+                        assertSame(
+                            service,
+                            currentService,
+                        )
+                    },
+                ),
+        )
+
+        assertEquals(
+            listOf(
+                "PLATFORM_SETUP",
+                "INSTALL",
+                "PLATFORM_SERVICE",
                 "READY",
             ),
             trace,
