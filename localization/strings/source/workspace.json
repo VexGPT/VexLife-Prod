@@ -596,6 +596,15 @@
       },
       "es": {
         "text": "Proceso de cambio de modelo"
+      },
+      "fr": {
+        "text": "Processus de changement de modèle"
+      },
+      "hi": {
+        "text": "मॉडल बदलने की प्रक्रिया"
+      },
+      "ja": {
+        "text": "モデル切り替えプロセス"
       }
     },
     "surfaces": [
@@ -615,6 +624,15 @@
       },
       "es": {
         "text": "Elección del modelo"
+      },
+      "fr": {
+        "text": "Choix du modèle"
+      },
+      "hi": {
+        "text": "मॉडल चयन"
+      },
+      "ja": {
+        "text": "モデル選択"
       }
     },
     "surfaces": [
@@ -634,6 +652,15 @@
       },
       "es": {
         "text": "Configuración del modelo seleccionado"
+      },
+      "fr": {
+        "text": "Configuration du modèle sélectionné"
+      },
+      "hi": {
+        "text": "चुने गए मॉडल की कॉन्फ़िगरेशन"
+      },
+      "ja": {
+        "text": "選択したモデルの設定"
       }
     },
     "surfaces": [
@@ -653,6 +680,15 @@
       },
       "es": {
         "text": "Entradas activas de caché de prompts"
+      },
+      "fr": {
+        "text": "Entrées actives du cache de prompt"
+      },
+      "hi": {
+        "text": "वार्म प्रॉम्प्ट कैश एंट्रियाँ"
+      },
+      "ja": {
+        "text": "ウォーム・プロンプトキャッシュ数"
       }
     },
     "surfaces": [
@@ -672,6 +708,15 @@
       },
       "es": {
         "text": "Cuántas entradas distintas de caché KV de prompts de MLX pueden mantenerse activas. Más entradas pueden reducir el prefill repetido, pero cada caché larga consume memoria unificada."
+      },
+      "fr": {
+        "text": "Nombre d’entrées distinctes du cache KV de prompt MLX qui peuvent rester actives. Davantage d’entrées peut réduire les prefill répétés, mais chaque cache long consomme de la mémoire unifiée."
+      },
+      "hi": {
+        "text": "MLX की कितनी अलग KV प्रॉम्प्ट-कैश एंट्रियाँ वार्म रखी जा सकती हैं। अधिक एंट्रियाँ बार-बार होने वाले प्रीफिल को घटा सकती हैं, लेकिन हर लंबा कैश यूनिफाइड मेमोरी का उपयोग करता है।"
+      },
+      "ja": {
+        "text": "保持しておく MLX の KV プロンプトキャッシュの個数です。増やすと繰り返しのプリフィルを減らせる可能性がありますが、長いキャッシュごとにユニファイドメモリを消費します。"
       }
     },
     "surfaces": [
@@ -691,6 +736,15 @@
       },
       "es": {
         "text": "Usar recomendado"
+      },
+      "fr": {
+        "text": "Utiliser le réglage recommandé"
+      },
+      "hi": {
+        "text": "अनुशंसित सेटिंग उपयोग करें"
+      },
+      "ja": {
+        "text": "推奨設定を使用"
       }
     },
     "surfaces": [
@@ -710,6 +764,15 @@
       },
       "es": {
         "text": "Iniciar modelo seleccionado"
+      },
+      "fr": {
+        "text": "Démarrer le modèle sélectionné"
+      },
+      "hi": {
+        "text": "चुना हुआ मॉडल शुरू करें"
+      },
+      "ja": {
+        "text": "選択したモデルを開始"
       }
     },
     "surfaces": [
@@ -729,6 +792,15 @@
       },
       "es": {
         "text": "Aplicar y reiniciar modelo"
+      },
+      "fr": {
+        "text": "Appliquer et redémarrer le modèle"
+      },
+      "hi": {
+        "text": "लागू करें और मॉडल पुनः शुरू करें"
+      },
+      "ja": {
+        "text": "適用してモデルを再起動"
       }
     },
     "surfaces": [
@@ -748,6 +820,15 @@
       },
       "es": {
         "text": "Seleccionar"
+      },
+      "fr": {
+        "text": "Sélectionner"
+      },
+      "hi": {
+        "text": "चुनें"
+      },
+      "ja": {
+        "text": "選択"
       }
     },
     "surfaces": [
@@ -767,6 +848,15 @@
       },
       "es": {
         "text": "Definir entradas de caché"
+      },
+      "fr": {
+        "text": "Définir les entrées de cache"
+      },
+      "hi": {
+        "text": "कैश एंट्रियाँ सेट करें"
+      },
+      "ja": {
+        "text": "キャッシュ数を設定"
       }
     },
     "surfaces": [
@@ -786,6 +876,15 @@
       },
       "es": {
         "text": "Se seleccionó {model}. Revisa su configuración y luego inícialo cuando estés listo."
+      },
+      "fr": {
+        "text": "{model} est sélectionné. Vérifiez sa configuration, puis démarrez-le lorsque vous êtes prêt."
+      },
+      "hi": {
+        "text": "{model} चुना गया। इसकी कॉन्फ़िगरेशन देखें, फिर तैयार होने पर इसे शुरू करें।"
+      },
+      "ja": {
+        "text": "{model} を選択しました。設定を確認し、準備ができたら開始してください。"
       }
     },
     "surfaces": [
@@ -805,6 +904,15 @@
       },
       "es": {
         "text": "Configuración de ejecución guardada · {entries} entradas activas de caché."
+      },
+      "fr": {
+        "text": "Configuration d’exécution enregistrée · {entries} entrées de cache actives."
+      },
+      "hi": {
+        "text": "रनटाइम कॉन्फ़िगरेशन सहेजी गई · {entries} वार्म कैश एंट्रियाँ।"
+      },
+      "ja": {
+        "text": "ランタイム設定を保存しました · ウォームキャッシュ {entries} 個。"
       }
     },
     "surfaces": [
@@ -824,6 +932,15 @@
       },
       "es": {
         "text": "1 es el límite de seguridad actual comprobado en uso real para 27B tras el problema anterior de memoria con muchas cachés; no se afirma que sea la configuración más rápida."
+      },
+      "fr": {
+        "text": "1 est la limite de sécurité actuellement validée en usage réel pour 27B après le précédent problème de mémoire lié à de nombreux caches ; ce réglage n’est pas présenté comme le plus rapide."
+      },
+      "hi": {
+        "text": "1, पहले कई कैश के कारण हुई मेमोरी समस्या के बाद 27B के लिए वर्तमान में वास्तविक उपयोग से प्रमाणित सुरक्षा सीमा है; इसे सबसे तेज़ सेटिंग नहीं माना गया है।"
+      },
+      "ja": {
+        "text": "1 は、以前の複数キャッシュによるメモリ問題の後に 27B で実運用確認された現在の安全値です。最速の設定であるとは主張していません。"
       }
     },
     "surfaces": [
@@ -843,6 +960,15 @@
       },
       "es": {
         "text": "3 es el candidato experimental actual de caché para 4B; necesita pruebas reales de memoria y reutilización antes de convertirse en un valor predeterminado aceptado."
+      },
+      "fr": {
+        "text": "3 est le candidat expérimental actuel pour le cache du 4B ; il doit encore être validé en usage réel pour la mémoire et la réutilisation avant de devenir une valeur par défaut acceptée."
+      },
+      "hi": {
+        "text": "3, 4B के लिए वर्तमान प्रयोगात्मक कैश उम्मीदवार है; स्वीकार्य डिफ़ॉल्ट बनने से पहले इसे वास्तविक मेमोरी और पुनः उपयोग प्रमाण चाहिए।"
+      },
+      "ja": {
+        "text": "3 は 4B 向けの現在の実験候補です。正式な既定値にする前に、実運用でメモリ使用量と再利用効果を確認する必要があります。"
       }
     },
     "surfaces": [
@@ -862,6 +988,15 @@
       },
       "es": {
         "text": "1 mantiene el límite de seguridad actual de este modelo hasta que se pruebe en uso real una recomendación de caché específica para él."
+      },
+      "fr": {
+        "text": "1 conserve la limite de sécurité actuelle pour ce modèle jusqu’à ce qu’une recommandation de cache propre à ce modèle soit validée en usage réel."
+      },
+      "hi": {
+        "text": "1 इस मॉडल के लिए वर्तमान सुरक्षा सीमा बनाए रखता है, जब तक मॉडल-विशिष्ट कैश अनुशंसा वास्तविक उपयोग में परीक्षित न हो जाए।"
+      },
+      "ja": {
+        "text": "このモデル固有のキャッシュ推奨値が実運用で確認されるまでは、1 を現在の安全値として維持します。"
       }
     },
     "surfaces": [
@@ -881,6 +1016,15 @@
       },
       "es": {
         "text": "En servicio: {model}"
+      },
+      "fr": {
+        "text": "En service : {model}"
+      },
+      "hi": {
+        "text": "सेवा दे रहा है: {model}"
+      },
+      "ja": {
+        "text": "稼働中: {model}"
       }
     },
     "surfaces": [
@@ -900,6 +1044,15 @@
       },
       "es": {
         "text": "Seleccionado: {model}"
+      },
+      "fr": {
+        "text": "Sélectionné : {model}"
+      },
+      "hi": {
+        "text": "चुना गया: {model}"
+      },
+      "ja": {
+        "text": "選択中: {model}"
       }
     },
     "surfaces": [
@@ -919,6 +1072,15 @@
       },
       "es": {
         "text": "ninguno"
+      },
+      "fr": {
+        "text": "aucun"
+      },
+      "hi": {
+        "text": "कोई नहीं"
+      },
+      "ja": {
+        "text": "なし"
       }
     },
     "surfaces": [
@@ -938,6 +1100,15 @@
       },
       "es": {
         "text": "La configuración cambió; reinicia el modelo seleccionado para aplicarla."
+      },
+      "fr": {
+        "text": "La configuration a changé ; redémarrez le modèle sélectionné pour l’appliquer."
+      },
+      "hi": {
+        "text": "कॉन्फ़िगरेशन बदल गई है; इसे लागू करने के लिए चुने गए मॉडल को पुनः शुरू करें।"
+      },
+      "ja": {
+        "text": "設定が変更されています。適用するには選択したモデルを再起動してください。"
       }
     },
     "surfaces": [
@@ -957,6 +1128,15 @@
       },
       "es": {
         "text": "Entradas activas de caché: {current} · recomendado: {recommended}."
+      },
+      "fr": {
+        "text": "Entrées de cache actives : {current} · recommandé : {recommended}."
+      },
+      "hi": {
+        "text": "वार्म कैश एंट्रियाँ: {current} · अनुशंसित: {recommended}."
+      },
+      "ja": {
+        "text": "ウォームキャッシュ: {current} · 推奨: {recommended}."
       }
     },
     "surfaces": [
