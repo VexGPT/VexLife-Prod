@@ -29,6 +29,21 @@ import vexlife.platform.macos.MacUserLaunchdProcess
 import vexlife.platform.python.ManagedPython
 
 class VexLifeProdLocalSetupTest {
+    private fun testPath(
+        relative: String,
+    ): String =
+        Path.of(
+                System.getProperty(
+                    "java.io.tmpdir",
+                ),
+            )
+            .resolve(
+                relative,
+            )
+            .toAbsolutePath()
+            .normalize()
+            .toString()
+
     private val macRealization =
         HereticRuntimeRealization.legacyMacV1(
             HereticProductIdentity.ModelRef,
@@ -162,12 +177,12 @@ class VexLifeProdLocalSetupTest {
                                 substrateRef = MacUserLaunchdProcess.SubstrateRef,
                                 label = "com.vexlife.prod.heretic.test",
                                 domainTarget = "gui/501",
-                                plistPath = "/tmp/vexlife-prod-test/heretic.plist",
+                                plistPath = testPath("vexlife-prod-test/heretic.plist"),
                                 programPath = binding.pythonPath,
                                 programArguments = emptyList(),
                                 workingDirectory = binding.pythonEnvironmentRoot,
-                                stdoutPath = "/tmp/vexlife-prod-test/heretic.out.log",
-                                stderrPath = "/tmp/vexlife-prod-test/heretic.err.log",
+                                stdoutPath = testPath("vexlife-prod-test/heretic.out.log"),
+                                stderrPath = testPath("vexlife-prod-test/heretic.err.log"),
                                 environment = emptyMap(),
                                 keepAlive = false,
                                 pid = pid,
@@ -193,7 +208,7 @@ class VexLifeProdLocalSetupTest {
     ): VexLifeProdLocalSetup.Result =
         VexLifeProdLocalSetup.Result(
             state = "LOCAL_HERETIC_FOUNDATION_READY",
-            productHome = "/tmp/vexlife-prod-session-test",
+            productHome = testPath("vexlife-prod-session-test"),
             homeDisposition = "EXISTING_CANONICAL_VEXLIFE_HOME_BOUND",
             modelSelectionDisposition = "HERETIC_ALREADY_BOUND",
             managedPythonDisposition = "REUSED_VERIFIED",
