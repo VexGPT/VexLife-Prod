@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "vexlife-prod.windows-home-contract-evidence-package/v1",
+  "continuity": "[VXG RealForever]",
+  "attempt": "R003",
+  "proofOwner": "VexGPT/VexLife-Prod#218",
+  "productCandidate": {
+    "pullRequest": 223,
+    "head": "9ba98244269897a04535a9d27996b5cafc50e758",
+    "tree": "65e56fd706d28efcd1ac77191b2161483726b634",
+    "baseMain": "262c208b2e65e828dd867719c29ecd286ae58a80"
+  },
+  "currentProductCoordinates": {
+    "homeManifest": "config/home.json",
+    "canonicalModelConfiguration": "config/model.json",
+    "productModelBinding": "runtime/vexlife-prod/model-binding.json",
+    "bootstrapReceipt": "recovery/bootstrap-receipt.json",
+    "currentDeviceRecord": "devices/<manifest.currentDeviceRef>.json"
+  },
+  "scope": "RAW_CONTRACT_EVIDENCE_ONLY_CANONICAL_VALIDATION_DEFERRED",
+  "forbiddenReads": [
+    "conversation bodies",
+    "memory bodies",
+    "context bodies",
+    "model weight contents"
+  ],
+  "effects": {
+    "homeMutation": false,
+    "modelDownload": false,
+    "modelLoad": false,
+    "runtimeStart": false,
+    "productServiceStart": false,
+    "installation": false,
+    "releasePublication": false
+  },
+  "publicCustodyPolicy": "RAW_HOME_DEVICE_COMPANION_IDENTIFIERS_STAY_IN_RETURN_AND_ARE_NOT_COPIED_TO_PUBLIC_GITHUB_COMMENTS"
+}
