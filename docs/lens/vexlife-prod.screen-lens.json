@@ -620,6 +620,42 @@
           "slot": "InFlow"
         },
         {
+          "ref": "element.vexlife-workspace.companion.settings.local-asr",
+          "kind": "REGION",
+          "label": "Local asr",
+          "parentRef": "element.vexlife-workspace.companion.settings",
+          "symbol": "VexLifeWorkspaceBlueprint.SettingsLocalAsr",
+          "declared": "Settings.region(\"local-asr\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.local-asr.selection",
+          "kind": "BUTTON",
+          "label": "Selection",
+          "parentRef": "element.vexlife-workspace.companion.settings.local-asr",
+          "symbol": "VexLifeWorkspaceBlueprint.LocalAsrSelection",
+          "declared": "SettingsLocalAsr.control(\"selection\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.local-asr.status",
+          "kind": "TEXT",
+          "label": "Status",
+          "parentRef": "element.vexlife-workspace.companion.settings.local-asr",
+          "symbol": "VexLifeWorkspaceBlueprint.LocalAsrStatus",
+          "declared": "SettingsLocalAsr.content(\"status\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
           "ref": "element.vexlife-workspace.companion.settings.diagnostics",
           "kind": "REGION",
           "label": "Diagnostics",
