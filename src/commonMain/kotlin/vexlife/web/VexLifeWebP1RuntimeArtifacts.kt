@@ -1667,8 +1667,10 @@ object VexLifeWebP1RuntimeArtifacts {
               const loadSettings = async () => {
                 const response = await fetch(service.settingsPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.settings = await readJson(response);
-                observeVoiceInputCapability();
-                renderVoiceInput();
+                if (!dictation.desiredActive) {
+                  observeVoiceInputCapability();
+                  renderVoiceInput();
+                }
                 renderLanguage();
                 renderSpeechVoices();
                 renderSpeech();
