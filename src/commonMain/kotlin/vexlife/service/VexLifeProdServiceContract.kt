@@ -1097,7 +1097,7 @@ object VexLifeProdServiceContract {
                 schemaVersion == ConversationCancelResponseSchema &&
                     state in setOf("CANCEL_REQUESTED", "NOT_ACTIVE") &&
                     cancellationRequested == (state == "CANCEL_REQUESTED") &&
-                    effectsPerformed == cancellationRequested
+                    (!effectsPerformed || cancellationRequested)
             ) {
                 "Conversation cancel response is invalid"
             }
