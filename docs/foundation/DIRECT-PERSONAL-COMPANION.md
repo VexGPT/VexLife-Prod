@@ -285,10 +285,39 @@ CANONICAL CURRENT STATE != STABLE PROMPT PREFIX
 PROVIDER SERIALIZATION != SEMANTIC AUTHORITY
 ~~~
 
-Prompt receipt v8 records each placed component with its stability class, placement class, provider
-message index, exact digest and source refs. Browser/page text remains untrusted reference material
-even if it contains text that imitates `VEXLIFE_CURRENT_STATE/v1`: host placement evidence and
-owner-formed component refs distinguish the real envelope, and prompt text grants no effect authority.
+Prompt identity follows the source-owned relationship topology rather than a flat component-ID
+registry:
+
+~~~text
+Prompt
+├─ System
+│  ├─ FoundationalField
+│  ├─ Memory
+│  └─ CapabilityGuide
+├─ History
+│  ├─ Conversation
+│  └─ SuccessorPriorResponse
+├─ Current
+│  ├─ WorkingContinuity
+│  ├─ CapabilityFrame
+│  ├─ PersonContext
+│  ├─ ConversationExtent
+│  └─ SourceReturnProtocol
+├─ Hydrated
+│  └─ SourceReturnProjection
+└─ Live
+   ├─ BrowserContext
+   └─ CurrentRequest
+~~~
+
+Kotlin callers carry those typed coordinates. Their wire refs are derived from parent + child
+segments at the receipt boundary; they are not separately hand-authored identities. Prompt receipt v8
+records each component's derived ref and parent ref with its stability class, placement class,
+provider-message index, exact digest and source refs.
+
+Browser/page text remains untrusted reference material even if it contains text that imitates
+`VEXLIFE_CURRENT_STATE/v1`: host placement evidence and the owner-formed topology distinguish the
+real envelope, and prompt text grants no effect authority.
 
 The Conversation extent is this owner's own statement. A narrow window otherwise looks the same to
 Vex as a short history, so the live turn's prompt says how many completed exchanges the durable record
