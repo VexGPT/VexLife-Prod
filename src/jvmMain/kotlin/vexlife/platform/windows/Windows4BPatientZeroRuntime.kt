@@ -225,7 +225,7 @@ internal object Windows4BPatientZeroRuntime {
                 path = llamaServerPath,
                 expectedBytes = null,
                 expectedSha256 = ExistingLlamaServerSha256,
-                label = "existing qualified llama-server.exe",
+                label = "existing qualified b10107 CPU llama-server.exe",
             )
 
         require(
@@ -255,8 +255,6 @@ internal object Windows4BPatientZeroRuntime {
                 "127.0.0.1",
                 "--port",
                 Port.toString(),
-                "-ngl",
-                "99",
                 "--ctx-size",
                 "16384",
                 "--jinja",
