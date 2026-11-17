@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "vexlife-prod.windows-host-probe-package/v1",
+  "continuity": "[VXG RealForever]",
+  "artifactClass": "READ_ONLY_HOST_PROBE",
+  "attempt": "A003",
+  "sourceRepository": "VexGPT/VexLife-Prod",
+  "sourcePullRequest": 215,
+  "sourceCandidateHead": "1430e2749646a7be4daf873ed758b0fe1180506c",
+  "probe": {
+    "path": "probe/vexlife-windows-host-probe.ps1",
+    "sha256": "5fe13b36751b4d6a2de7973ec0fe27f2d1f2a44a2c334290ce82ec040cc9cfe6"
+  },
+  "runner": {
+    "path": "RUN-WINDOWS-HOST-PROBE.ps1",
+    "sha256": "1ee51bdd0399010dc542ac494feebe880dbf4c1875a982cd5be78fca7a162fad"
+  },
+  "effects": {
+    "network": false,
+    "registryMutation": false,
+    "productMutation": false,
+    "homeMutation": false,
+    "modelMutation": false,
+    "serviceMutation": false,
+    "releaseMutation": false
+  },
+  "returnContract": {
+    "schemaVersion": "vexlife-prod.windows-host-probe-return/v1",
+    "expectedMembers": [
+      "RESULT-SUMMARY.txt",
+      "result.json",
+      "execution.log",
+      "inventory.json",
+      "input-package.json"
+    ]
+  },
+  "note": "Experimental one-command/one-return host probe. This is not a canonical VexRelay RETURN."
+}
