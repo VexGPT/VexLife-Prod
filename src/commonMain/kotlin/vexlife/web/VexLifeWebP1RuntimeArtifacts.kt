@@ -1791,6 +1791,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderLanguage();
                 renderSpeechVoices();
                 renderSpeech();
+                renderLocalAsr();
                 return state.settings;
               };
 
@@ -1811,6 +1812,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   state.languageOpen = false;
                   observeVoiceInputCapability();
                   renderVoiceInput();
+                  renderLocalAsr();
                   renderLanguage();
                   renderSpeechVoices();
                   renderSpeech();
@@ -3646,6 +3648,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderComposer();
                 renderSettings();
                 renderMemory();
+                renderLocalAsr();
               };
 
               const loadSourceCurrentness = async () => {
@@ -3911,6 +3914,117 @@ object VexLifeWebP1RuntimeArtifacts {
                   if (state.models?.downloading || state.models?.switching) {
                     window.setTimeout(() => { void loadModels().catch(() => {}); }, 1000);
                   }
+                }
+              };
+
+              const localAsrSelectionValue = (option) =>
+                JSON.stringify([option.providerRef, option.modelRef]);
+
+              const renderLocalAsr = () => {
+                if (!ui.localAsrSelection) return;
+                const projection = state.localAsr;
+                ui.localAsrSelection.replaceChildren();
+                if (!projection) {
+                  ui.localAsrSelection.disabled = true;
+                  if (ui.localAsrStatus) {
+                    ui.localAsrStatus.textContent = t('workspace.status.local-asr-unavailable');
+                  }
+                  observeVoiceInputCapability();
+                  renderVoiceInput();
+                  return;
+                }
+
+                for (const option of projection.options ?? []) {
+                  const node = document.createElement('option');
+                  node.value = localAsrSelectionValue(option);
+                  node.textContent = option.providerLabel + ' · ' + option.modelLabel;
+                  node.selected =
+                    option.providerRef === projection.selectedProviderRef &&
+                    option.modelRef === projection.selectedModelRef;
+                  ui.localAsrSelection.append(node);
+                }
+
+                const selected = selectedLocalAsrOption();
+                ui.localAsrSelection.disabled =
+                  state.localAsrInFlight ||
+                  dictation.desiredActive ||
+                  !(projection.options ?? []).length;
+
+                if (ui.localAsrStatus) {
+                  if (!selected) {
+                    ui.localAsrStatus.textContent = t('workspace.status.local-asr-unavailable');
+                  } else if (selected.currentState === 'READY') {
+                    ui.localAsrStatus.textContent =
+                      t('workspace.status.local-asr-ready')
+                        .replace('{provider}', selected.providerLabel)
+                        .replace('{model}', selected.modelLabel)
+                        .replace('{size}', formatBytes(selected.modelBytes));
+                  } else {
+                    const statusKey =
+                      selected.currentDetailRef === 'PROVIDER_SOURCE_NOT_CURRENT'
+                        ? 'workspace.status.local-asr-provider-not-current'
+                        : selected.currentDetailRef === 'PROVIDER_EXECUTABLE_UNAVAILABLE'
+                          ? 'workspace.status.local-asr-runtime-unavailable'
+                          : selected.currentDetailRef === 'MODEL_UNAVAILABLE'
+                            ? 'workspace.status.local-asr-model-unavailable'
+                            : selected.currentDetailRef === 'MODEL_DIGEST_NOT_CURRENT'
+                              ? 'workspace.status.local-asr-model-not-current'
+                              : 'workspace.status.local-asr-unavailable';
+                    ui.localAsrStatus.textContent = t(statusKey);
+                  }
+                }
+
+                observeVoiceInputCapability();
+                renderVoiceInput();
+              };
+
+              const loadLocalAsr = async () => {
+                const response = await fetch(service.localAsrPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.localAsr = await readJson(response);
+                renderLocalAsr();
+                return state.localAsr;
+              };
+
+              const selectLocalAsr = async (providerRef, modelRef) => {
+                if (state.localAsrInFlight) return;
+                if (dictation.desiredActive) {
+                  await applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                }
+                state.localAsrInFlight = true;
+                renderLocalAsr();
+                try {
+                  const response = await fetch(service.localAsrPath, {
+                    method: 'POST',
+                    headers: {
+                      'content-type': 'application/json',
+                      accept: 'application/json'
+                    },
+                    body: JSON.stringify({ providerRef, modelRef })
+                  });
+                  state.localAsr = await readJson(response);
+                  const selected = selectedLocalAsrOption();
+                  notify(
+                    selected
+                      ? t('workspace.status.local-asr-selected')
+                          .replace('{provider}', selected.providerLabel)
+                          .replace('{model}', selected.modelLabel)
+                      : t('workspace.status.local-asr-unavailable')
+                  );
+                } catch (error) {
+                  notify(
+                    error instanceof Error
+                      ? error.message
+                      : t('workspace.status.local-asr-unavailable')
+                  );
+                } finally {
+                  state.localAsrInFlight = false;
+                  renderLocalAsr();
                 }
               };
 
@@ -4790,6 +4904,19 @@ object VexLifeWebP1RuntimeArtifacts {
               observeVoiceInputCapability();
               renderVoiceInput();
               void loadWorkspaceStrings().catch(() => applyStaticText());
+              ui.localAsrSelection?.addEventListener('change', () => {
+                try {
+                  const [providerRef, modelRef] =
+                    JSON.parse(ui.localAsrSelection.value);
+                  void selectLocalAsr(
+                    String(providerRef),
+                    String(modelRef)
+                  );
+                } catch {
+                  notify(t('workspace.status.local-asr-unavailable'));
+                }
+              });
+
               ui.diagnosticsEnhanced?.addEventListener('click', () => {
                 const controlRef = ui.diagnosticsEnhanced.dataset.controlRef;
                 if (controlRef) void diagnosticsControl(controlRef);
@@ -4808,6 +4935,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   void loadMemory().catch(() => {});
                   void loadDiagnostics().catch(() => renderDiagnostics());
                   void loadModels().catch(() => {});
+                  void loadLocalAsr().catch(() => {
+                    state.localAsr = null;
+                    renderLocalAsr();
+                  });
                   // Observed: the presentation rendered with current service data.
                   reportFact('PRESENTATION_ARRIVED', { presentation: 'workspace' });
                 })
