@@ -93,6 +93,56 @@ class HereticRuntimeRealizationTest {
     }
 
     @Test
+    fun windows4BRuntimeBinaryIsThePinnedOfficialB10107CpuAsset() {
+        val binary =
+            HereticRuntimeRealization.Windows4B.runtimeBinary
+        val runtime =
+            HereticRuntimeRealization.Windows4B.runtime
+
+        assertEquals(
+            "runtime-binary.vexlife-prod.llama-cpp.windows-x64.cpu.b10107",
+            binary.binaryRef,
+        )
+        assertEquals(
+            "ggml-org/llama.cpp",
+            binary.providerRepository,
+        )
+        assertEquals(
+            "b10107",
+            binary.providerReleaseTag,
+        )
+        assertEquals(
+            "c0bc8591e8815c63cb01dd3f051a8b0df02501c9",
+            binary.providerSourceCommit,
+        )
+        assertEquals(
+            "llama-b10107-bin-win-cpu-x64.zip",
+            binary.archiveFilename,
+        )
+        assertEquals(
+            18_213_827L,
+            binary.archiveBytes,
+        )
+        assertEquals(
+            "52133a0a5a8f6035b1bdd2f89c3425ea8b742413d9bdb9a2dee30e3a1681b18c",
+            binary.archiveSha256,
+        )
+        assertEquals(
+            "af3e56d6bdb84a9b6bd50f6ad748809370bc29be42d58088041408b2933d80f7",
+            binary.sha256,
+        )
+        assertEquals(
+            "https://github.com/ggml-org/llama.cpp/releases/download/b10107/" +
+                "llama-b10107-bin-win-cpu-x64.zip",
+            binary.archiveUrl,
+        )
+        assertEquals(
+            "adapter.runtime.llama-cpp.windows-x64.cpu.patient-zero.001",
+            runtime.runtimeAdapterRef,
+        )
+    }
+
+    @Test
     fun MlxAndLlamaCppShareOneQualificationSequenceContract() {
         val mac =
             HereticRuntimeRealization.require(
