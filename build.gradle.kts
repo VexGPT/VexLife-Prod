@@ -3110,3 +3110,13 @@ tasks.register<JavaExec>("continuityPressure") {
     mainClass.set("vexlife.harness.ContinuityPressureAdapterKt")
     workingDir = projectDir
 }
+
+tasks.register<JavaExec>("continuityHostRuntimePrecondition") {
+    group = "verification"
+    description = "Ensure the selected already-installed Product runtime is live for a host continuity proof; no acquisition."
+    val test = kotlin.jvm().compilations.getByName("test")
+    dependsOn("jvmTestClasses")
+    classpath = files(test.output.allOutputs, test.runtimeDependencyFiles)
+    mainClass.set("vexlife.harness.ContinuityHostRuntimePreconditionKt")
+    workingDir = projectDir
+}
