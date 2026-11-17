@@ -307,6 +307,79 @@ POST /v1/chat/completions
 The future platform runtime owner must produce these portable truths. It does not get to redefine
 their meaning because it happens to own launchd/process mechanics.
 
+## Runtime realization recipe
+
+Current runtime behavior is no longer inferred from the model catalog or from whichever platform
+implementation happens to be executing. The model catalog answers **what the person chose**.
+`HereticRuntimeRealization` answers **how that exact model is realized for one target**.
+`HereticRuntimeRealizationSequence` answers **the one ordered recipe every realization follows**.
+
+~~~text
+Product model selection
+-> exact realization resolution
+-> artifact
+-> environment
+-> runtime binary
+-> process
+-> qualification /health
+-> qualification /v1/models
+-> qualification /v1/chat/completions
+-> realization-owned receipt
+-> Product model binding
+-> portable runtime session
+~~~
+
+Every stage exists for every realization. A dependency that does not apply is represented as
+`NOT_REQUIRED(reasonRef)`; it is not silently removed from the sequence.
+
+Current lived comparison:
+
+| stage | macOS ARM64 / MLX | Windows x64 / llama.cpp 4B patient-zero |
+|---|---|---|
+| Product model | selected catalog model | selected catalog model |
+| realization | exact model + `MacArm64` | exact 4B model + `WindowsX64` |
+| artifact | pinned MLX model bundle | pinned GGUF Q4_K_M |
+| environment | Python + mlx-lm required | explicitly not required |
+| runtime binary | explicitly not required; owned by Python environment | exact `llama-server.exe` required |
+| process | launchd user-process substrate | Windows local-process substrate |
+| health | `GET /health` | `GET /health` |
+| model exposure | `GET /v1/models`; exact materialization path | `GET /v1/models`; exact request-model alias |
+| completion | `POST /v1/chat/completions`, maxTokens=1, temperature=0, thinking off, non-streaming | same qualification semantics |
+| receipt | realization-owned Mac runtime coordinate | realization-owned Windows runtime coordinate |
+| Product binding | exact `realizationRef` persisted | exact `realizationRef` persisted |
+| shared handoff | `VexLifeProdRuntimeSession.Foundation` | `VexLifeProdRuntimeSession.Foundation` |
+
+The shared handoff deliberately contains only:
+
+~~~text
+ready Product foundation state
+exact Product Home
+qualified runtime realization evidence
+fresh-currentness / same-runtime observation capability
+~~~
+
+It does **not** expose Python, MLX, llama.cpp, launchd, Windows process mechanics, or platform setup
+disposition fields. Those remain implementation details behind the realization that requires them.
+
+Permanent:
+
+~~~text
+MODEL CHOICE
+!= PLATFORM IMPLEMENTATION
+
+PLATFORM IMPLEMENTATION
+!= SHARED PRODUCT BODY
+
+MLX
+and
+llama.cpp
+= different implementations of the same ordered realization contract
+~~~
+
+The current Windows row is proven only for the lived 4B patient-zero realization. Adding 9B, 27B
+or another Windows backend requires a deliberate realization entry; it does not inherit support
+from the model catalog or from the existence of the 4B path.
+
 ## VexArchitecture boundary
 
 This package is not a Family merely because it is important.
