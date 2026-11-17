@@ -168,7 +168,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 modelsControlPath: ${jsString(VexLifeProdServiceContract.ModelsControlPath)},
                 chronologyPath: ${jsString(VexLifeProdServiceContract.ChronologyPath)},
                 workspaceStringsPath: ${jsString(VexLifeProdServiceContract.WorkspaceStringsPath)},
-                sendPath: ${jsString(VexLifeProdServiceContract.ConversationSendPath)}
+                sendPath: ${jsString(VexLifeProdServiceContract.ConversationSendPath)},
+                cancelPath: ${jsString(VexLifeProdServiceContract.ConversationCancelPath)}
               });
               const apps = Object.freeze({
                 keys: $workspaceApps,
@@ -383,6 +384,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 collapsed: 'none',
                 pending: null,
                 sendInFlight: false,
+                sendCancelInFlight: false,
                 streamPhase: null,
                 streamedContent: '',
                 streamedReasoning: '',
@@ -3088,6 +3090,9 @@ object VexLifeWebP1RuntimeArtifacts {
                         : state.failedAttempts.length
                           ? 'A prior Send stopped. Its process is preserved here; use Try Again to form a new Send.'
                           : '';
+                ui.send.hidden = state.sendInFlight;
+                ui.stop.hidden = !state.sendInFlight;
+                ui.stop.disabled = !state.sendInFlight || state.sendCancelInFlight;
                 ui.send.disabled = modelSwitching || modelSwitchHeld || (privateNow
                   ? state.privateInFlight || !ui.draft.value.trim()
                   : state.sendInFlight || (!state.pending && !ui.draft.value.trim()));
@@ -3592,6 +3597,7 @@ object VexLifeWebP1RuntimeArtifacts {
               const completeCanonicalSend = async (result, streamed, preservedProcess = null) => {
                 if (streamed) followStreamSpeech(true);
                 state.sendInFlight = false;
+                state.sendCancelInFlight = false;
                 root.dataset.vexLastContextPath = String(result.contextPath ?? '');
                 root.dataset.vexLastPromptReceiptRef = String(result.promptContext?.receiptRef ?? '');
                 root.dataset.vexLastBrowserContextRef = String(result.promptContext?.browserContextRef ?? '');
@@ -3661,6 +3667,29 @@ object VexLifeWebP1RuntimeArtifacts {
                 return readJson(response);
               };
 
+              const cancelSend = async () => {
+                if (!state.sendInFlight || !state.pending || state.sendCancelInFlight) return;
+                state.sendCancelInFlight = true;
+                setCompanionStatus('Checking', 'Stopping this turn', servingModelLabel() || '');
+                renderComposer();
+                try {
+                  const response = await fetch(service.cancelPath, {
+                    method: 'POST',
+                    headers: { accept: 'application/json', 'content-type': 'application/json' },
+                    body: JSON.stringify({ idempotencyKey: state.pending.idempotencyKey })
+                  });
+                  const result = await readJson(response);
+                  notify(result.cancellationRequested
+                    ? 'Stopping this turn…'
+                    : 'That turn is no longer active.');
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : 'VexLife could not request Stop.');
+                } finally {
+                  state.sendCancelInFlight = false;
+                  renderComposer();
+                }
+              };
+
               const send = async (newAttemptSeed = null) => {
                 if (isPrivate()) {
                   await sendPrivate();
@@ -3691,6 +3720,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       });
                 state.pending = pending;
                 state.sendInFlight = true;
+                state.sendCancelInFlight = false;
                 if (!retryingExactAttempt) {
                   // A genuinely new Send owns a new live process slot. Reconciliation of the same
                   // pending idempotency key must preserve the process already observed for it.
