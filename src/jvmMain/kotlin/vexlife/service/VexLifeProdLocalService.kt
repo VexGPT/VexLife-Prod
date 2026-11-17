@@ -64,6 +64,7 @@ class VexLifeProdLocalService private constructor(
     private val dreamExecutor: DreamExecutor?,
     private val visionRuntime: VisionRuntime?,
     private val currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
+    private val hostTotalMemoryBytes: () -> Long?,
     private val memoryReader: (Path) -> VexLifeMemoryContract.Context,
     privateCompletionOverride: VexLifePrivateConversation.Completion? = null,
 ) : AutoCloseable {
@@ -79,11 +80,8 @@ class VexLifeProdLocalService private constructor(
         vexlife.model.VexLifeModels(
             productHome = Path.of(startupSetup.productHome),
             servingModelRef = { startupSetup.qualifiedRuntimeEvidence.modelRef },
-            totalMemoryBytes = {
-                runCatching {
-                    vexlife.model.heretic.runtime.HereticMacHostProfile.observeCurrent().observation.totalMemoryBytes
-                }.getOrNull()
-            },
+            totalMemoryBytes =
+                hostTotalMemoryBytes,
         )
 
     private val privateCompletion =
@@ -122,6 +120,15 @@ class VexLifeProdLocalService private constructor(
         private val ProductMemoryReader: (Path) -> VexLifeMemoryContract.Context = {
             VexLifeCurrentMemoryReader.readCurrent(it)
         }
+
+        private fun currentMacTotalMemoryBytes(): Long? =
+            runCatching {
+                    vexlife.model.heretic.runtime.HereticMacHostProfile
+                        .observeCurrent()
+                        .observation
+                        .totalMemoryBytes
+                }
+                .getOrNull()
 
         private val ProductDreamExecutor =
             object : DreamExecutor {
@@ -310,6 +317,7 @@ class VexLifeProdLocalService private constructor(
                         ),
                     )
                 },
+                hostTotalMemoryBytes = ::currentMacTotalMemoryBytes,
                 visionRuntime = visionRuntime,
             )
         }
@@ -326,6 +334,8 @@ class VexLifeProdLocalService private constructor(
                 null,
             currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)? =
                 null,
+            hostTotalMemoryBytes: (() -> Long?) =
+                ::currentMacTotalMemoryBytes,
             memoryReader: ((Path) -> VexLifeMemoryContract.Context)? = null,
             privateCompletion: VexLifePrivateConversation.Completion? = null,
         ): VexLifeProdLocalService =
@@ -347,6 +357,7 @@ class VexLifeProdLocalService private constructor(
                 dreamExecutor = dreamExecutor,
                 visionRuntime = visionRuntime,
                 currentStateObserver = currentStateObserver,
+                hostTotalMemoryBytes = hostTotalMemoryBytes,
                 memoryReader = memoryReader ?: ProductMemoryReader,
                 privateCompletion = privateCompletion,
             )
@@ -361,6 +372,7 @@ class VexLifeProdLocalService private constructor(
             dreamExecutor: DreamExecutor?,
             visionRuntime: VisionRuntime?,
             currentStateObserver: (() -> VexLifeProdServiceContract.CurrentStateProjection)?,
+            hostTotalMemoryBytes: () -> Long?,
             memoryReader: (Path) -> VexLifeMemoryContract.Context = ProductMemoryReader,
             privateCompletion: VexLifePrivateConversation.Completion? = null,
         ): VexLifeProdLocalService {
@@ -428,6 +440,7 @@ class VexLifeProdLocalService private constructor(
                         dreamExecutor = dreamExecutor,
                         visionRuntime = visionRuntime,
                         currentStateObserver = currentStateObserver,
+                        hostTotalMemoryBytes = hostTotalMemoryBytes,
                         memoryReader = memoryReader,
                         privateCompletionOverride = privateCompletion,
                     )
