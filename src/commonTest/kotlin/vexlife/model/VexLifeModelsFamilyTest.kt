@@ -12,74 +12,177 @@ class VexLifeModelsFamilyTest {
         serving: Boolean = false,
         downloading: Boolean = false,
         switching: Boolean = false,
+        runtimeConfigurationPending: Boolean = false,
         anyDownloadRunning: Boolean = downloading,
         anySwitchRunning: Boolean = switching,
     ) =
         VexLifeModelsFamily.State(
-            "heretic-9b",
-            artifactPresence,
-            downloading,
-            chosen,
-            serving,
-            switching,
-            anyDownloadRunning,
-            anySwitchRunning,
+            handle = "heretic-9b",
+            artifactPresence = artifactPresence,
+            downloading = downloading,
+            chosen = chosen,
+            serving = serving,
+            switching = switching,
+            runtimeConfigurationPending = runtimeConfigurationPending,
+            anyDownloadRunning = anyDownloadRunning,
+            anySwitchRunning = anySwitchRunning,
         )
 
     private fun controls(state: VexLifeModelsFamily.State) =
         VexLifeModelsFamily.displayStateFor(state).controls.map { it.controlRef }
 
     @Test
-    fun anAbsentModelCanOnlyBeDownloaded() {
+    fun anAbsentModelCanBeSelectedOrDownloadedWithoutStartingIt() {
+        val current =
+            state(
+                VexLifeModelsFamily.ArtifactPresence.Absent,
+            )
         assertEquals(
-            listOf(VexLifeModelsFamily.ControlDownload),
-            controls(state(VexLifeModelsFamily.ArtifactPresence.Absent)),
+            listOf(
+                VexLifeModelsFamily.ControlSelect,
+                VexLifeModelsFamily.ControlDownload,
+            ),
+            controls(current),
+        )
+        assertEquals(
+            VexLifeModelsFamily.Effect.SelectModel,
+            VexLifeModelsFamily.resolve(
+                current,
+                VexLifeModelsFamily.Select,
+            )?.effect,
         )
         assertEquals(
             VexLifeModelsFamily.Effect.AcquireArtifacts,
             VexLifeModelsFamily.resolve(
-                    state(VexLifeModelsFamily.ArtifactPresence.Absent),
-                    VexLifeModelsFamily.Download,
-                )
-                ?.effect,
+                current,
+                VexLifeModelsFamily.Download,
+            )?.effect,
+        )
+        assertNull(
+            VexLifeModelsFamily.resolve(
+                current,
+                VexLifeModelsFamily.Use,
+            ),
         )
     }
 
     @Test
-    fun aPresentModelCanBeUsedUntilChosenAndServingAreBothCurrent() {
+    fun aPresentTargetMustBeSelectedBeforeItCanBeStarted() {
+        val unselected =
+            state(
+                VexLifeModelsFamily.ArtifactPresence.Present,
+            )
         assertEquals(
-            listOf(VexLifeModelsFamily.ControlUse, VexLifeModelsFamily.ControlRemove),
-            controls(state(VexLifeModelsFamily.ArtifactPresence.Present)),
-        )
-        assertEquals(
-            emptyList(),
-            controls(state(VexLifeModelsFamily.ArtifactPresence.Present, chosen = true, serving = true)),
-        )
-        assertEquals(
-            listOf(VexLifeModelsFamily.ControlUse),
-            controls(state(VexLifeModelsFamily.ArtifactPresence.Present, serving = true)),
-        )
-        assertEquals(
-            listOf(VexLifeModelsFamily.ControlUse),
-            controls(state(VexLifeModelsFamily.ArtifactPresence.Present, chosen = true)),
+            listOf(
+                VexLifeModelsFamily.ControlSelect,
+                VexLifeModelsFamily.ControlRemove,
+            ),
+            controls(unselected),
         )
         assertNull(
             VexLifeModelsFamily.resolve(
-                state(VexLifeModelsFamily.ArtifactPresence.Present, serving = true),
-                VexLifeModelsFamily.Remove,
-            )
+                unselected,
+                VexLifeModelsFamily.Use,
+            ),
         )
-        assertNull(
-            VexLifeModelsFamily.resolve(
-                state(VexLifeModelsFamily.ArtifactPresence.Present, chosen = true),
-                VexLifeModelsFamily.Remove,
+
+        val selected =
+            state(
+                VexLifeModelsFamily.ArtifactPresence.Present,
+                chosen = true,
             )
+        assertEquals(
+            listOf(
+                VexLifeModelsFamily.ControlUse,
+                VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration,
+            ),
+            controls(selected),
         )
         assertEquals(
             VexLifeModelsFamily.Effect.SwitchModel,
             VexLifeModelsFamily.resolve(
-                state(VexLifeModelsFamily.ArtifactPresence.Present, chosen = true),
+                selected,
                 VexLifeModelsFamily.Use,
+            )?.effect,
+        )
+    }
+
+    @Test
+    fun currentServingModelRestartsOnlyWhenItsConfigurationIsPending() {
+        val current =
+            state(
+                VexLifeModelsFamily.ArtifactPresence.Present,
+                chosen = true,
+                serving = true,
+            )
+        assertEquals(
+            listOf(
+                VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration,
+            ),
+            controls(current),
+        )
+        assertNull(
+            VexLifeModelsFamily.resolve(
+                current,
+                VexLifeModelsFamily.Use,
+            ),
+        )
+
+        val changed =
+            current.copy(
+                runtimeConfigurationPending = true,
+            )
+        assertEquals(
+            listOf(
+                VexLifeModelsFamily.ControlUse,
+                VexLifeModelsFamily.ControlUseRecommendedRuntimeConfiguration,
+            ),
+            controls(changed),
+        )
+        assertEquals(
+            VexLifeModelsFamily.Effect.SwitchModel,
+            VexLifeModelsFamily.resolve(
+                changed,
+                VexLifeModelsFamily.Use,
+            )?.effect,
+        )
+    }
+
+    @Test
+    fun onlyTheSelectedTargetCanChangeRuntimeConfiguration() {
+        val unselected =
+            state(
+                VexLifeModelsFamily.ArtifactPresence.Present,
+            )
+        assertNull(
+            VexLifeModelsFamily.resolve(
+                unselected,
+                VexLifeModelsFamily.UseRecommendedRuntimeConfiguration,
+            ),
+        )
+        assertNull(
+            VexLifeModelsFamily.resolve(
+                unselected,
+                VexLifeModelsFamily.SetPromptCacheEntries(1),
+            ),
+        )
+
+        val selected =
+            unselected.copy(
+                chosen = true,
+            )
+        assertEquals(
+            VexLifeModelsFamily.Effect.UseRecommendedRuntimeConfiguration,
+            VexLifeModelsFamily.resolve(
+                selected,
+                VexLifeModelsFamily.UseRecommendedRuntimeConfiguration,
+            )?.effect,
+        )
+        assertEquals(
+            VexLifeModelsFamily.Effect.SetPromptCacheEntries(1),
+            VexLifeModelsFamily.resolve(
+                selected,
+                VexLifeModelsFamily.SetPromptCacheEntries(1),
             )?.effect,
         )
     }
@@ -87,39 +190,72 @@ class VexLifeModelsFamilyTest {
     @Test
     fun aPartialModelResumesAndADamagedOneDownloadsAgain() {
         assertEquals(
-            listOf(VexLifeModelsFamily.ControlDownload, VexLifeModelsFamily.ControlRemove),
-            controls(state(VexLifeModelsFamily.ArtifactPresence.Partial)),
+            listOf(
+                VexLifeModelsFamily.ControlSelect,
+                VexLifeModelsFamily.ControlDownload,
+                VexLifeModelsFamily.ControlRemove,
+            ),
+            controls(
+                state(
+                    VexLifeModelsFamily.ArtifactPresence.Partial,
+                ),
+            ),
         )
         assertEquals(
-            listOf(VexLifeModelsFamily.ControlRedownload, VexLifeModelsFamily.ControlRemove),
-            controls(state(VexLifeModelsFamily.ArtifactPresence.Damaged)),
+            listOf(
+                VexLifeModelsFamily.ControlSelect,
+                VexLifeModelsFamily.ControlRedownload,
+                VexLifeModelsFamily.ControlRemove,
+            ),
+            controls(
+                state(
+                    VexLifeModelsFamily.ArtifactPresence.Damaged,
+                ),
+            ),
         )
         assertEquals(
             VexLifeModelsFamily.Effect.ReplaceArtifacts,
             VexLifeModelsFamily.resolve(
-                    state(VexLifeModelsFamily.ArtifactPresence.Damaged),
-                    VexLifeModelsFamily.Redownload,
-                )
-                ?.effect,
+                state(
+                    VexLifeModelsFamily.ArtifactPresence.Damaged,
+                ),
+                VexLifeModelsFamily.Redownload,
+            )?.effect,
         )
     }
 
     @Test
-    fun whileAnyDownloadRunsNoOtherFileEffectIsLawful() {
-        val busy = state(VexLifeModelsFamily.ArtifactPresence.Partial, anyDownloadRunning = true)
-        assertEquals(emptyList(), controls(busy))
+    fun whileAnyDownloadOrSwitchRunsNoOtherEffectIsLawful() {
+        val busy =
+            state(
+                VexLifeModelsFamily.ArtifactPresence.Partial,
+                anyDownloadRunning = true,
+            )
         assertEquals(
             emptyList(),
-            controls(state(VexLifeModelsFamily.ArtifactPresence.Partial, downloading = true)),
+            controls(
+                busy,
+            ),
         )
-        // Model-file mutation and runtime convergence never overlap.
         assertEquals(
             emptyList(),
-            controls(state(VexLifeModelsFamily.ArtifactPresence.Present, anyDownloadRunning = true)),
+            controls(
+                state(
+                    VexLifeModelsFamily.ArtifactPresence.Partial,
+                    downloading = true,
+                ),
+            ),
         )
         assertEquals(
             emptyList(),
-            controls(state(VexLifeModelsFamily.ArtifactPresence.Present, anySwitchRunning = true)),
+            controls(
+                state(
+                    VexLifeModelsFamily.ArtifactPresence.Present,
+                    anySwitchRunning = true,
+                ),
+            ),
         )
     }
 }
+
+// [VXG RealForever]
