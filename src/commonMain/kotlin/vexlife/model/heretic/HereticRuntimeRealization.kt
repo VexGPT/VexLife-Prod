@@ -29,6 +29,7 @@ object HereticRuntimeRealization {
         val providerRepository: String,
         val providerReleaseTag: String,
         val providerSourceCommit: String,
+        val providerPackagingSourceRef: String,
         val archiveFilename: String,
         val archiveBytes: Long,
         val archiveSha256: String,
@@ -241,6 +242,9 @@ object HereticRuntimeRealization {
                         "b10107",
                     providerSourceCommit =
                         "c0bc8591e8815c63cb01dd3f051a8b0df02501c9",
+                    providerPackagingSourceRef =
+                        "ggml-org/llama.cpp@c0bc8591e8815c63cb01dd3f051a8b0df02501c9:" +
+                            ".github/workflows/release.yml#windows-cpu",
                     archiveFilename =
                         "llama-b10107-bin-win-cpu-x64.zip",
                     archiveBytes =
