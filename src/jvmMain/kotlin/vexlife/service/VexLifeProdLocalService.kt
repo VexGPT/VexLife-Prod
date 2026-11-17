@@ -1916,20 +1916,66 @@ class VexLifeProdLocalService private constructor(
                     exchange,
                 ),
             )
-        val cancellation =
-            activeTurns[
-                request.idempotencyKey
-            ]
-        val firstEffect =
-            cancellation
-                ?.request(
-                    DirectCompanionCancellation.Reason.PERSON_REQUESTED,
-                )
-                ?: false
-        val requested =
-            cancellation !=
+        val attempt =
+            VexLifeConversationTurnFamily.Attempt(
+                request.attemptRef,
+            )
+        val act =
+            VexLifeConversationTurnFamily.resolve(
+                currentState =
+                    conversationTurnState(),
+                control =
+                    VexLifeConversationTurnFamily.Stop(
+                        attempt,
+                    ),
+            )
+        val effect =
+            act
+                ?.effect as?
+                VexLifeConversationTurnFamily.RequestCancel
+
+        if (
+            effect ==
+                null
+        ) {
+            respondJson(
+                exchange = exchange,
+                status = 200,
+                value =
+                    VexLifeProdServiceContract.ConversationCancelResponse(
+                        schemaVersion =
+                            VexLifeProdServiceContract.ConversationCancelResponseSchema,
+                        controlRef =
+                            VexLifeConversationTurnFamily.ControlStop,
+                        attemptRef = attempt.ref,
+                        outcome =
+                            VexLifeProdServiceContract.ConversationControlOutcome.NOT_LAWFUL_NOW,
+                        turn = conversationTurnProjection(),
+                        effectsPerformed = false,
+                    ),
+            )
+            return
+        }
+
+        val active =
+            activeTurn.get()
+        val realized =
+            active !=
                 null &&
-                cancellation.cancellationRequested
+                active.attempt ==
+                effect.attempt &&
+                active.cancellation.request()
+
+        val projection =
+            conversationTurnProjection()
+        val outcome =
+            if (
+                realized
+            ) {
+                VexLifeProdServiceContract.ConversationControlOutcome.REALIZED
+            } else {
+                VexLifeProdServiceContract.ConversationControlOutcome.NOT_LAWFUL_NOW
+            }
 
         respondJson(
             exchange = exchange,
@@ -1938,17 +1984,12 @@ class VexLifeProdLocalService private constructor(
                 VexLifeProdServiceContract.ConversationCancelResponse(
                     schemaVersion =
                         VexLifeProdServiceContract.ConversationCancelResponseSchema,
-                    state =
-                        if (
-                            requested
-                        ) {
-                            VexLifeProdServiceContract.ConversationCancelRequested
-                        } else {
-                            VexLifeProdServiceContract.ConversationCancelNotActive
-                        },
-                    idempotencyKey = request.idempotencyKey,
-                    cancellationRequested = requested,
-                    effectsPerformed = firstEffect,
+                    controlRef =
+                        VexLifeConversationTurnFamily.ControlStop,
+                    attemptRef = attempt.ref,
+                    outcome = outcome,
+                    turn = projection,
+                    effectsPerformed = realized,
                 ),
         )
     }
