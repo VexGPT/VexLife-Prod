@@ -903,7 +903,7 @@ object ContinuityPressureAdapter {
                 }
             }
         } catch (error: Exception) {
-            System.err.println("projection stopped at ordinal $ordinal: ${error.message}")
+            val detail = failureDetail(error)\n            System.err.println("projection stopped at ordinal $ordinal: $detail")
             cleanup(parent, config.keepScratch)
             return writeResult(
                 config,
@@ -916,7 +916,7 @@ object ContinuityPressureAdapter {
                 "ERROR",
                 peakBytes,
                 deleted = !config.keepScratch,
-                failure = error.message,
+                failure = detail,
                 provider = provider,
             )
         }
@@ -939,7 +939,7 @@ object ContinuityPressureAdapter {
         )
     }
 
-    private fun setup(home: Path, evidence: HereticModelConfiguration.QualifiedRuntimeEvidence) =
+    private fun failureDetail(error: Throwable): String =\n        generateSequence(error) { current -> current.cause }\n            .take(8)\n            .map { current ->\n                current.javaClass.simpleName +\n                    current.message?.let { ": $it" }.orEmpty()\n            }\n            .distinct()\n            .joinToString(" <- ")\n\n    private fun setup(home: Path, evidence: HereticModelConfiguration.QualifiedRuntimeEvidence) =
         VexLifeProdLocalSetup.Result(
             state = "LOCAL_HERETIC_FOUNDATION_READY",
             productHome = home.toString(),
