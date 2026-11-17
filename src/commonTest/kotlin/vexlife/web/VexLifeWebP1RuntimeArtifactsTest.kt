@@ -423,7 +423,14 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains("await loadConversationTurn();"))
         assertTrue(bundle.javascript.contains("workspace.button.conversation-send"))
         assertTrue(bundle.javascript.contains("workspace.button.conversation-stop"))
-        assertTrue(bundle.javascript.contains("workspace.status.conversation-stopping"))
+        assertTrue(
+            bundle.javascript.contains("resolveText(display.status)"),
+            "ConversationTurn Family status must arrive through projected DisplayState",
+        )
+        assertFalse(
+            bundle.javascript.contains("workspace.status.conversation-stopping"),
+            "renderer must not re-author the Family's Cancelling status key",
+        )
         assertTrue(bundle.javascript.contains("workspace.status.conversation-stopped"))
         assertTrue(bundle.javascript.contains("state.sendCancelRequested = true"))
         VexLifeConversationTurnFamily.ControlRefs.forEach { controlRef ->
