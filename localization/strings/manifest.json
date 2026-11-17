@@ -2636,7 +2636,7 @@
       ]
     },
     "workspace.button.model-use-recommended": {
-      "enHash": "0d35367394a6",
+      "enHash": "205a0226ceca",
       "langs": [
         "ar",
         "de",
@@ -2650,7 +2650,7 @@
       ]
     },
     "workspace.button.model-start": {
-      "enHash": "c7bd12c5690f",
+      "enHash": "5b64660def73",
       "langs": [
         "ar",
         "de",
@@ -2664,7 +2664,7 @@
       ]
     },
     "workspace.button.model-apply-restart": {
-      "enHash": "7b2b69bda225",
+      "enHash": "fcc4ab8b1ea0",
       "langs": [
         "ar",
         "de",
@@ -2748,7 +2748,7 @@
       ]
     },
     "workspace.description.model-cache-recommendation-4b": {
-      "enHash": "6cd596eeb5a0",
+      "enHash": "a5e4a6fa8eb9",
       "langs": [
         "ar",
         "de",
@@ -2833,6 +2833,34 @@
     },
     "workspace.label.model-cache-current": {
       "enHash": "a3719884613a",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.heading.model-activation": {
+      "enHash": "611121b7861c",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.description.model-start-effect": {
+      "enHash": "4380bd2436f6",
       "langs": [
         "ar",
         "de",
