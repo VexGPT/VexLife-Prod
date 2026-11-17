@@ -15,9 +15,7 @@ import vexlife.capability.reach.VexLifeRepositoryReach
 import vexlife.capability.reach.VexLifeWebReach
 import vexlife.companion.CompanionProviderMessage
 import vexlife.continuity.VexLifeContextRevisit
-import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.contract.VexContractJson
-import vexlife.conversation.DirectConversationStore
 import vexlife.logging.VexLogger
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.memory.VexLifeMemoryContract
