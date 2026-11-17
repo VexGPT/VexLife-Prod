@@ -2568,6 +2568,86 @@
     "workspace.status.reach-web-search": {
       "enHash": "28787e0d826f",
       "langs": []
+    },
+    "workspace.heading.model-swap-process": {
+      "enHash": "3b546d9289d4",
+      "langs": []
+    },
+    "workspace.label.model-choice": {
+      "enHash": "d8414012c860",
+      "langs": []
+    },
+    "workspace.heading.model-configuration": {
+      "enHash": "dbf72920da7a",
+      "langs": []
+    },
+    "workspace.label.model-prompt-cache-entries": {
+      "enHash": "ee95d4b13a0a",
+      "langs": []
+    },
+    "workspace.description.model-prompt-cache-entries": {
+      "enHash": "29f895f0f3a1",
+      "langs": []
+    },
+    "workspace.button.model-use-recommended": {
+      "enHash": "0d35367394a6",
+      "langs": []
+    },
+    "workspace.button.model-start": {
+      "enHash": "c7bd12c5690f",
+      "langs": []
+    },
+    "workspace.button.model-apply-restart": {
+      "enHash": "7b2b69bda225",
+      "langs": []
+    },
+    "workspace.button.model-select": {
+      "enHash": "94d380732b55",
+      "langs": []
+    },
+    "workspace.button.model-set-prompt-cache": {
+      "enHash": "89a1e613d46e",
+      "langs": []
+    },
+    "workspace.status.model-selected": {
+      "enHash": "5806ffa3b44c",
+      "langs": []
+    },
+    "workspace.status.model-runtime-configured": {
+      "enHash": "81aa40ca5206",
+      "langs": []
+    },
+    "workspace.description.model-cache-recommendation-27b": {
+      "enHash": "a944a835fd6d",
+      "langs": []
+    },
+    "workspace.description.model-cache-recommendation-4b": {
+      "enHash": "6cd596eeb5a0",
+      "langs": []
+    },
+    "workspace.description.model-cache-recommendation-untuned": {
+      "enHash": "fa0ce59ca3aa",
+      "langs": []
+    },
+    "workspace.label.model-state-serving": {
+      "enHash": "fe35de880169",
+      "langs": []
+    },
+    "workspace.label.model-state-selected": {
+      "enHash": "4e84c276c400",
+      "langs": []
+    },
+    "workspace.label.model-none": {
+      "enHash": "0b57f489fad5",
+      "langs": []
+    },
+    "workspace.status.model-runtime-configuration-pending": {
+      "enHash": "70176383e25c",
+      "langs": []
+    },
+    "workspace.label.model-cache-current": {
+      "enHash": "a3719884613a",
+      "langs": []
     }
   }
 }
