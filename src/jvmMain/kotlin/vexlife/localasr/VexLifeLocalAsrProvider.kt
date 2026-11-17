@@ -47,6 +47,12 @@ internal interface VexLifeLocalAsrProvider {
         const val StateReady = "READY"
         const val StateUnavailable = "UNAVAILABLE"
 
+        const val DetailReady = "LOCAL_PROVIDER_READY"
+        const val DetailProviderSourceNotCurrent = "PROVIDER_SOURCE_NOT_CURRENT"
+        const val DetailProviderExecutableUnavailable = "PROVIDER_EXECUTABLE_UNAVAILABLE"
+        const val DetailModelUnavailable = "MODEL_UNAVAILABLE"
+        const val DetailModelDigestNotCurrent = "MODEL_DIGEST_NOT_CURRENT"
+
         fun fromHome(
             productHome: Path,
         ): VexLifeLocalAsrProvider =
@@ -356,7 +362,7 @@ private class WhisperCppCliProvider private constructor(
                 ExpectedProviderSourceSha
             ) {
                 return unavailable(
-                    "PROVIDER_SOURCE_NOT_CURRENT",
+                    VexLifeLocalAsrProvider.DetailProviderSourceNotCurrent,
                 )
             }
 
@@ -370,7 +376,7 @@ private class WhisperCppCliProvider private constructor(
                 )
             ) {
                 return unavailable(
-                    "PROVIDER_EXECUTABLE_UNAVAILABLE",
+                    VexLifeLocalAsrProvider.DetailProviderExecutableUnavailable,
                 )
             }
 
@@ -381,7 +387,7 @@ private class WhisperCppCliProvider private constructor(
                 )
             ) {
                 return unavailable(
-                    "MODEL_UNAVAILABLE",
+                    VexLifeLocalAsrProvider.DetailModelUnavailable,
                 )
             }
 
@@ -395,7 +401,7 @@ private class WhisperCppCliProvider private constructor(
             ) {
                 return unavailable(
                     detailRef =
-                        "MODEL_DIGEST_NOT_CURRENT",
+                        VexLifeLocalAsrProvider.DetailModelDigestNotCurrent,
                     modelSha256 =
                         observedModelSha,
                 )
@@ -411,7 +417,7 @@ private class WhisperCppCliProvider private constructor(
                         state =
                             VexLifeLocalAsrProvider.StateReady,
                         detailRef =
-                            "LOCAL_PROVIDER_READY",
+                            VexLifeLocalAsrProvider.DetailReady,
                         sourceRef =
                             sourceSha,
                         modelSha256 =
