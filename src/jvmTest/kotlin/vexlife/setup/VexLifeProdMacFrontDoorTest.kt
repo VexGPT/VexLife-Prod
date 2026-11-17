@@ -21,7 +21,19 @@ import vexlife.text.VexLifeText
 class VexLifeProdMacFrontDoorTest {
     private fun en(text: VexLifeText?): String = VexLifeStrings.resolve(requireNotNull(text), "en")
 
-    private val selectedHome = Path.of("/tmp/.vexlife")
+    private val tempRoot =
+        Path.of(
+                System.getProperty(
+                    "java.io.tmpdir",
+                ),
+            )
+            .toAbsolutePath()
+            .normalize()
+
+    private val selectedHome =
+        tempRoot.resolve(
+            ".vexlife-front-door-test",
+        )
 
     private val desired = "a".repeat(40)
 
@@ -31,7 +43,7 @@ class VexLifeProdMacFrontDoorTest {
         VexLifeProdServiceContract.CurrentStateProjection(
             schemaVersion = VexLifeProdServiceContract.CurrentStateProjectionSchema,
             observedAt = "2026-11-13T00:00:00Z",
-            homePath = "/tmp/.vexlife",
+            homePath = selectedHome.toString(),
             homeDisposition = VexLifeProdHome.LocationDisposition.Canonical.wireValue,
             homeRef = "home.vexlife.front-door-test",
             deviceRef = "device.vexlife.front-door-test",
@@ -49,7 +61,7 @@ class VexLifeProdMacFrontDoorTest {
             activeModelProfileRef = HereticModelCatalog.Candidate9B.identity.modelProfileRef,
             runtimeState = "BOUND_PRODUCT_MODEL",
             runtimeCurrentness = "CONFIGURATION_ONLY_NOT_REOBSERVED",
-            runtimeReceiptPath = "/tmp/.vexlife/runtime/heretic.json",
+            runtimeReceiptPath = selectedHome.resolve("runtime/heretic.json").toString(),
             modelArtifactState = "COMPLETE_BY_SIZE_NOT_HASHED",
             modelArtifactTotalBytes = 100L,
             modelArtifactPresentBySizeBytes = 100L,
@@ -62,7 +74,7 @@ class VexLifeProdMacFrontDoorTest {
         VexLifeProdServiceContract.CurrentStateProjection(
             schemaVersion = VexLifeProdServiceContract.CurrentStateProjectionSchema,
             observedAt = "2026-11-13T00:00:00Z",
-            homePath = "/tmp/.vexlife",
+            homePath = selectedHome.toString(),
             homeDisposition = "ABSENT_CANONICAL_VEXLIFE_HOME",
             homeRef = null,
             deviceRef = null,
@@ -97,7 +109,12 @@ class VexLifeProdMacFrontDoorTest {
             schemaVersion = VexLifeProdMacServiceLifetime.ReceiptSchema,
             sourceSha = sourceSha,
             imagePayloadSha256 = "c".repeat(64),
-            imagePath = "/tmp/.vexlife/runtime/product-service/images/" + sourceSha,
+            imagePath =
+                selectedHome
+                    .resolve(
+                        "runtime/product-service/images/" + sourceSha,
+                    )
+                    .toString(),
             serviceOrigin = VexLifeProdServiceContract.Origin,
             launchd =
                 MacUserLaunchdProcess.Receipt(
@@ -106,16 +123,39 @@ class VexLifeProdMacFrontDoorTest {
                     label = VexLifeProdMacServiceLifetime.Label,
                     domainTarget = "gui/501",
                     plistPath =
-                        "/tmp/.vexlife/runtime/product-service/launchd/com.vexlife.prod.service.plist",
+                        selectedHome
+                            .resolve(
+                                "runtime/product-service/launchd/com.vexlife.prod.service.plist",
+                            )
+                            .toString(),
                     programPath =
-                        "/tmp/.vexlife/runtime/product-service/images/" +
-                            sourceSha +
-                            "/bin/vexlife-prod-service",
+                        selectedHome
+                            .resolve(
+                                "runtime/product-service/images/" +
+                                    sourceSha +
+                                    "/bin/vexlife-prod-service",
+                            )
+                            .toString(),
                     programArguments =
                         listOf("--source-sha", sourceSha, "--home", selectedHome.toString()),
-                    workingDirectory = "/tmp/.vexlife/runtime/product-service/images/" + sourceSha,
-                    stdoutPath = "/tmp/.vexlife/runtime/product-service/logs/service.out.log",
-                    stderrPath = "/tmp/.vexlife/runtime/product-service/logs/service.err.log",
+                    workingDirectory =
+                        selectedHome
+                            .resolve(
+                                "runtime/product-service/images/" + sourceSha,
+                            )
+                            .toString(),
+                    stdoutPath =
+                        selectedHome
+                            .resolve(
+                                "runtime/product-service/logs/service.out.log",
+                            )
+                            .toString(),
+                    stderrPath =
+                        selectedHome
+                            .resolve(
+                                "runtime/product-service/logs/service.err.log",
+                            )
+                            .toString(),
                     environment = emptyMap(),
                     keepAlive = false,
                     pid = pid,
@@ -175,7 +215,7 @@ class VexLifeProdMacFrontDoorTest {
         VexLifeProdHomeFiles.Location.Formable(
             productHome = selectedHome.toString(),
             disposition = VexLifeProdHome.LocationDisposition.Absent,
-            nearestExistingAncestor = "/tmp",
+            nearestExistingAncestor = tempRoot.toString(),
             missingAncestorCount = 0,
         )
 
