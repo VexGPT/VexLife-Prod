@@ -12,7 +12,8 @@
       "diagnostics": "VexLifeDiagnosticsFamily (state, control refs) and the debug export route",
       "capability": "VexLifeCapabilityBridge uses (handle:action), shown to the person as reach",
       "model": "VexLifeModelsFamily (files, control refs) and HereticModelCatalog standing",
-      "voice-input": "VexLifeVoiceInputFamily (state, control, hold/failure reason refs)"
+      "voice-input": "VexLifeVoiceInputFamily (state, control, hold/failure reason refs)",
+      "conversation-turn": "VexLifeConversationTurnFamily (state, control, terminal reason refs)"
     }
   },
   "workspace.heading.diagnostics": {
@@ -768,7 +769,8 @@
     },
     "surfaces": [
       "workspace.conversation"
-    ]
+    ],
+    "dataKey": "conversation-turn:control:STOP"
   },
   "workspace.status.conversation-stopping": {
     "strings": {
@@ -778,7 +780,8 @@
     },
     "surfaces": [
       "workspace.conversation"
-    ]
+    ],
+    "dataKey": "conversation-turn:state:CANCELLING"
   },
   "workspace.status.conversation-stopped": {
     "strings": {
@@ -788,7 +791,8 @@
     },
     "surfaces": [
       "workspace.conversation"
-    ]
+    ],
+    "dataKey": "conversation-turn:terminal:TURN_CANCELLED_BY_PERSON"
   },
   "workspace.description.conversation-stopped": {
     "strings": {
@@ -798,7 +802,8 @@
     },
     "surfaces": [
       "workspace.conversation"
-    ]
+    ],
+    "dataKey": "conversation-turn:terminal:TURN_CANCELLED_BY_PERSON"
   },
   "workspace.status.conversation-cancel-not-active": {
     "strings": {
@@ -819,5 +824,38 @@
     "surfaces": [
       "workspace.conversation"
     ]
+  },
+  "workspace.button.conversation-send": {
+    "strings": {
+      "en": {
+        "text": "Send"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "conversation-turn:control:SEND"
+  },
+  "workspace.status.conversation-ready": {
+    "strings": {
+      "en": {
+        "text": "Ready"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "conversation-turn:state:READY"
+  },
+  "workspace.status.conversation-active": {
+    "strings": {
+      "en": {
+        "text": "Vex is working"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "conversation-turn:state:ACTIVE"
   }
 }
