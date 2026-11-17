@@ -205,6 +205,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 modelsState: byId('models-state'),
                 modelsCurrentState: byId('models-current-state'),
                 modelChoice: byId('model-choice'),
+                modelChoiceFacts: byId('model-choice-facts'),
+                modelChoiceNotes: byId('model-choice-notes'),
                 modelsList: byId('models-list'),
                 modelConfiguration: byId('model-configuration'),
                 modelConfigurationRecommendation: byId('model-configuration-recommendation'),
@@ -2771,33 +2773,30 @@ object VexLifeWebP1RuntimeArtifacts {
                   };
                 }
 
-                for (const model of models) {
-                  const row = document.createElement('div');
-                  row.className = 'model-row';
-                  row.dataset.chosen = String(Boolean(model.targeted));
-                  const name = document.createElement('p');
-                  name.className = 'model-name';
-                  name.textContent = model.label;
-                  const facts = document.createElement('p');
-                  facts.className = 'model-facts';
-                  const status = model.downloadedBytes != null
+                if (selected) {
+                  const status = selected.downloadedBytes != null
                     ? t('workspace.status.model-downloading')
-                        .replace('{done}', gibText(model.downloadedBytes))
-                        .replace('{total}', gibText(model.totalBytes))
-                    : resolveText(model.display.status);
-                  facts.textContent = status + ' · ' + t('workspace.label.model-facts')
-                    .replace('{size}', gibText(model.totalBytes))
-                    .replace('{memory}', gibText(model.recommendedMemoryBytes))
-                    .replace('{fit}', t(model.fitsThisMac ? 'workspace.label.model-fits' : 'workspace.label.model-tight'));
-                  const notes = document.createElement('p');
-                  notes.className = 'model-notes';
-                  notes.textContent = [
-                    ...(model.display.notes || []).map(resolveText),
-                    model.standing === 'CANDIDATE' ? t('workspace.label.model-candidate') : ''
-                  ].filter(Boolean).join(' · ');
-                  const controls = document.createElement('div');
-                  controls.className = 'model-controls';
-                  for (const control of model.display.controls || []) {
+                        .replace('{done}', gibText(selected.downloadedBytes))
+                        .replace('{total}', gibText(selected.totalBytes))
+                    : resolveText(selected.display.status);
+
+                  if (ui.modelChoiceFacts) {
+                    ui.modelChoiceFacts.textContent =
+                      status + ' · ' +
+                      t('workspace.label.model-facts')
+                        .replace('{size}', gibText(selected.totalBytes))
+                        .replace('{memory}', gibText(selected.recommendedMemoryBytes))
+                        .replace('{fit}', t(selected.fitsThisMac ? 'workspace.label.model-fits' : 'workspace.label.model-tight'));
+                  }
+
+                  if (ui.modelChoiceNotes) {
+                    ui.modelChoiceNotes.textContent = [
+                      ...(selected.display.notes || []).map(resolveText),
+                      selected.standing === 'CANDIDATE' ? t('workspace.label.model-candidate') : ''
+                    ].filter(Boolean).join(' · ');
+                  }
+
+                  for (const control of selected.display.controls || []) {
                     if (![
                       ${jsString(VexLifeModelsFamily.ControlDownload)},
                       ${jsString(VexLifeModelsFamily.ControlRedownload)},
@@ -2808,11 +2807,14 @@ object VexLifeWebP1RuntimeArtifacts {
                     button.className = 'outline-button';
                     button.textContent = resolveText(control.label);
                     button.disabled = state.modelsInFlight || Boolean(projection.switching);
-                    button.addEventListener('click', () => { void modelControl(control.controlRef, model.handle); });
-                    controls.append(button);
+                    button.addEventListener('click', () => {
+                      void modelControl(control.controlRef, selected.handle);
+                    });
+                    ui.modelsList.append(button);
                   }
-                  row.append(name, controls, facts, notes);
-                  ui.modelsList.append(row);
+                } else {
+                  if (ui.modelChoiceFacts) ui.modelChoiceFacts.textContent = '';
+                  if (ui.modelChoiceNotes) ui.modelChoiceNotes.textContent = '';
                 }
 
                 if (ui.modelConfiguration) ui.modelConfiguration.hidden = !selected;
