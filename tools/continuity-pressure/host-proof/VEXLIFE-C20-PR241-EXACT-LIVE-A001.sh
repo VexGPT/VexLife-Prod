@@ -6,6 +6,7 @@ PR='241'
 CANDIDATE_HEAD='d408a84cc2ab6a79874bead461fc74d1bc2eaca9'
 CANDIDATE_TREE='b058a82fd9e76ed0ef230eb27f2ed86aebe25a55'
 CANDIDATE_BASE='d0cba51decfe9057ac9afc007fdeb37da213cc97'
+PRECONDITION_TOOLING_HEAD='1538cab1b338dff2519bb82ad88e275c73088c0b'
 SCENARIO_REF='scenario.vexlife.continuity-pressure.depth-continuity.v1'
 SCENARIO_PATH='tools/continuity-pressure/scenarios/depth-continuity-v1.json'
 RUNTIME_HOME="${VEX_C20_RUNTIME_HOME:-$HOME/.vexlife}"
@@ -21,6 +22,7 @@ STATE='FAILED'
 STAGE='BOOTSTRAP'
 DETAIL='not started'
 FOCUSED_EXIT='NOT_RUN'
+RUNTIME_PRECONDITION_EXIT='NOT_RUN'
 LIVE_EXIT='NOT_RUN'
 EXPERIMENT_STATUS='NOT_RUN'
 OBSERVED_HEAD='UNOBSERVED'
@@ -57,6 +59,7 @@ observedHead=$OBSERVED_HEAD
 observedTree=$OBSERVED_TREE
 runtimeHome=$RUNTIME_HOME
 focusedProofExit=$FOCUSED_EXIT
+runtimePreconditionExit=$RUNTIME_PRECONDITION_EXIT
 liveHarnessExit=$LIVE_EXIT
 experimentStatus=$EXPERIMENT_STATUS
 scenarioRef=$SCENARIO_REF
@@ -69,7 +72,10 @@ turnsPerSet=2
 maximumLiveTurns=6
 candidateMutationAllowed=false
 canonicalConversationMutationAllowed=false
-runtimeLifecycleEffectAllowed=false
+runtimeLifecycleEffectAllowed=true
+runtimeStartAllowed=true
+acquisitionAllowed=false
+modelSwitchAllowed=false
 purpose=exact-head rollover-successor-successor live qualification
 SUMMARY
 }
@@ -145,6 +151,38 @@ STAGE='GITHUB_AUTH'
 STAGE='SOURCE_ACQUISITION'
 "$GH_BIN" repo clone "$REPO" "$SRC" -- --no-checkout > "$RETURN_DIR/clone.log" 2>&1 ||
   fail_now "$STAGE" 'repository clone failed'
+
+export GRADLE_OPTS="${GRADLE_OPTS:-} -Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.workers.max=1 -Dorg.gradle.daemon=false -Dorg.gradle.offline=true"
+
+STAGE='RUNTIME_HOME_PREFLIGHT'
+if [ ! -d "$RUNTIME_HOME" ] || [ ! -f "$RUNTIME_HOME/config/home.json" ]; then
+  STATE='HELD'
+  DETAIL="canonical Vex Home unavailable at $RUNTIME_HOME; no runtime start/model call attempted"
+  finish_and_exit 0
+fi
+
+STAGE='RUNTIME_PRECONDITION_TOOLING'
+"$GIT_BIN" -C "$SRC" checkout --detach "$PRECONDITION_TOOLING_HEAD" >> "$RETURN_DIR/clone.log" 2>&1 ||
+  fail_now "$STAGE" 'host-proof precondition tooling checkout failed'
+[ -z "$($GIT_BIN -C "$SRC" status --porcelain=v1 -uall)" ] ||
+  fail_now "$STAGE" 'host-proof tooling source is not clean'
+
+STAGE='RUNTIME_PRECONDITION'
+set +e
+(
+  cd "$SRC" &&
+  ./gradlew --offline --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx4g \
+    continuityHostRuntimePrecondition --args="--runtime-home $RUNTIME_HOME"
+) > "$RETURN_DIR/runtime-precondition.log" 2>&1
+RUNTIME_PRECONDITION_EXIT=$?
+set -e 2>/dev/null || true
+if [ "$RUNTIME_PRECONDITION_EXIT" -ne 0 ]; then
+  STATE='HELD'
+  DETAIL="Product runtime precondition could not realize the already-selected certified runtime without acquisition; exit $RUNTIME_PRECONDITION_EXIT"
+  finish_and_exit 0
+fi
+
+STAGE='EXACT_CANDIDATE_CHECKOUT'
 "$GIT_BIN" -C "$SRC" checkout --detach "$CANDIDATE_HEAD" >> "$RETURN_DIR/clone.log" 2>&1 ||
   fail_now "$STAGE" 'exact PR241 candidate checkout failed'
 OBSERVED_HEAD="$($GIT_BIN -C "$SRC" rev-parse HEAD 2>/dev/null || true)"
@@ -153,8 +191,6 @@ OBSERVED_TREE="$($GIT_BIN -C "$SRC" rev-parse 'HEAD^{tree}' 2>/dev/null || true)
 [ "$OBSERVED_TREE" = "$CANDIDATE_TREE" ] || fail_now "$STAGE" "tree mismatch: $OBSERVED_TREE"
 [ -z "$($GIT_BIN -C "$SRC" status --porcelain=v1 -uall)" ] ||
   fail_now "$STAGE" 'acquired candidate source is not clean'
-
-export GRADLE_OPTS="${GRADLE_OPTS:-} -Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.workers.max=1 -Dorg.gradle.daemon=false -Dorg.gradle.offline=true"
 
 STAGE='FOCUSED_EXACT_HEAD_PROOF'
 set +e
@@ -171,13 +207,6 @@ FOCUSED_EXIT=$?
 set -e 2>/dev/null || true
 if [ "$FOCUSED_EXIT" -ne 0 ]; then
   fail_now "$STAGE" "focused exact-head proof failed with exit $FOCUSED_EXIT"
-fi
-
-STAGE='RUNTIME_HOME_PREFLIGHT'
-if [ ! -d "$RUNTIME_HOME" ] || [ ! -f "$RUNTIME_HOME/config/home.json" ]; then
-  STATE='HELD'
-  DETAIL="canonical Vex Home unavailable at $RUNTIME_HOME; no live model call attempted"
-  finish_and_exit 0
 fi
 
 STAGE='LIVE_EXACT_HEAD_EXPERIMENT'
