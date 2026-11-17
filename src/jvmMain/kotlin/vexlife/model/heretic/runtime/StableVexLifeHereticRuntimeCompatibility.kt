@@ -8,6 +8,7 @@ import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeEffectBoundary
 import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.platform.macos.MacUserLaunchdProcess
 
@@ -340,6 +341,12 @@ object StableVexLifeHereticRuntimeCompatibility {
         return Observation(
             evidence =
                 HereticModelConfiguration.QualifiedRuntimeEvidence(
+                    realizationRef =
+                        HereticRuntimeRealization
+                            .legacyMacV1(
+                                receipt.modelRef,
+                            )
+                            .realizationRef,
                     runtimeReceiptRef = receipt.receiptRef,
                     runtimeState = HereticRuntimeState.Qualified,
                     modelRef = receipt.modelRef,
