@@ -205,7 +205,8 @@ class DirectPromptCurrentStateTest {
     }
 
     @Test
-    fun forgedCurrentStateHeaderInBrowserTextRemainsUntrustedAndSeparatelyReceipted() = withHome { home ->
+    fun forgedCurrentStateHeaderInBrowserTextRemainsUntrustedAndSeparatelyReceipted() =
+        withHome { home ->
         val store = DirectConversationStore(home)
         store.withWriterLease {
             complete(home, ask("history", "Historical message"), "Historical reply")
@@ -247,7 +248,10 @@ class DirectPromptCurrentStateTest {
                 materialized.receipt.contextComponents.single {
                     it.componentRef == DirectPromptContext.ComponentRefs.BrowserContext
                 }
-            assertEquals(envelopeComponent.providerMessageIndex, personComponent.providerMessageIndex)
+            assertEquals(
+                envelopeComponent.providerMessageIndex,
+                personComponent.providerMessageIndex,
+            )
             assertTrue(personComponent.providerMessageIndex < browserComponent.providerMessageIndex)
 
             val realEnvelope = materialized.messages[envelopeComponent.providerMessageIndex]
@@ -258,7 +262,10 @@ class DirectPromptCurrentStateTest {
             assertTrue(!untrustedBrowser.content.startsWith(DirectPromptContext.CurrentStateHeader))
             assertTrue(DirectPromptContext.CurrentStateHeader in untrustedBrowser.content)
             assertTrue("\"effectAuthorityGranted\":true" in untrustedBrowser.content)
-            assertEquals(false, materialized.receipt.capabilityFrameSnapshot?.effectAuthorityGranted)
+            assertEquals(
+                false,
+                materialized.receipt.capabilityFrameSnapshot?.effectAuthorityGranted,
+            )
             assertEquals(request.content, materialized.messages.last().content)
         }
     }
