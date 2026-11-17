@@ -312,9 +312,9 @@ object VexLifeWebP1RuntimeArtifacts {
                     )
             }
 
-        val voiceMicrophoneRequestState =
+        val voiceLanguageCheckStartedState =
             voiceSemanticState(
-                VexLifeVoiceInputFamily.observeMicrophoneRequestStarted(
+                VexLifeVoiceInputFamily.observeLanguageCheckStarted(
                     voiceExampleLanguage
                 )
             )
@@ -435,7 +435,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 languageInstallStateBySuccess:
                   Object.freeze($voiceLanguageInstallStateBySuccess),
                 failureStateByReason: Object.freeze($voiceFailureStateByReason),
-                microphoneRequestState: $voiceMicrophoneRequestState,
+                languageCheckStartedState: $voiceLanguageCheckStartedState,
                 recognitionStartedState: $voiceRecognitionStartedState
               });
 
