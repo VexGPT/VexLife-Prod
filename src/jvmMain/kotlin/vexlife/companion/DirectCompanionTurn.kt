@@ -915,10 +915,7 @@ object DirectCompanionTurn {
                         turnBoundReach =
                             VexLifeCapabilityBridge.TurnBoundReach(
                                 continuityHydrator =
-                                    VexLifeCapabilityBridge.ContinuityHydrator {
-                                        queryGroups,
-                                        availableTokens,
-                                        ->
+                                    VexLifeCapabilityBridge.ContinuityHydrator { queryGroups, availableTokens ->
                                         VexLifeContinuityHydration.hydrate(
                                             productHome = productHome,
                                             conversationOwner = conversationOwner,
