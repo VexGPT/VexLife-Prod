@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "vextreme.vexlocalbridge-task-manifest/v1",
+  "artifactClass": "EXECUTABLE_RELAY",
+  "taskRef": "task.vexlocalbridge.vexlife-prod.product-voice-input-gpt-oss-lived-mac.001",
+  "attemptRef": "attempt.vexlocalbridge.vexlife-prod.product-voice-input-gpt-oss-lived-mac.a001",
+  "packageRef": "package.vexlocalbridge.vexlife-prod.product-voice-input-gpt-oss-lived-mac.a001",
+  "requestRef": "request.vexlocalbridge.vexlife-prod.product-voice-input-gpt-oss-lived-mac.a001",
+  "correlationRef": "correlation.vexlocalbridge.vexlife-prod.product-voice-input-gpt-oss-lived-mac.a001",
+  "taskStorageKey": "vexlife-prod-product-voice-input-gpt-oss-lived-mac",
+  "attemptStorageKey": "attempt-a001",
+  "requestingRoleRef": "Operations[VexLife-Prod]",
+  "requestingInstanceRef": "instance.operations.vexlife-prod.product-voice-input-gpt-oss-lived-mac",
+  "parentOperationsRef": "branch.vexlife-prod.product-voice-input-gpt-oss-integration.a001",
+  "returnRouteRef": "branch.vexlife-prod.product-voice-input-gpt-oss-integration.a001",
+  "hostProfileRef": "macos-victor",
+  "repositoryExecutionProfileRefOrNull": "profile.repository.vextreme-sdk.macos-v1",
+  "repositoryRefOrNull": "VexGPT/VexLife-Prod",
+  "baseRefOrNull": "655e7c78cefba06a5e87afad285bb25a08632f05",
+  "headRefOrNull": "b3fec60a1a88445f8257f15f34544b9ef90c2e6c",
+  "treeRefOrNull": "4d093e376cb95a0b4220ac305c60387b00bbfd52",
+  "branchRefOrNull": "VXG-111726-chatgpt-product-voice-input-gpt-oss-integration-a001",
+  "claimRefOrNull": "branch.vexlife-prod.product-voice-input-gpt-oss-integration.a001",
+  "exactPathRefs": [],
+  "authorityBinding": {
+    "authoritySchemaRef": "vextreme.effect-transaction/v1",
+    "authorityEnvelopePath": "authority/effect.json",
+    "authorityEnvelopeSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "semanticAdmissionRef": "branch.vexlife-prod.product-voice-input-gpt-oss-integration.a001",
+    "transactionRef": "transaction.vexlife-prod.product-voice-input-gpt-oss-lived-mac.a001",
+    "transactionVersion": 1,
+    "allowedEffectRefs": [
+      "effect.vexrelay.execute"
+    ],
+    "heldEffectRefs": [
+      "effect.vexlife-prod.source-mutation",
+      "effect.vexlife-prod.product-runtime",
+      "effect.vexlife-prod.home-mutation",
+      "effect.vexlife-prod.merge"
+    ]
+  },
+  "payload": {
+    "payloadClass": "VEXRELAY_TASK_ARCHIVE",
+    "payloadRuntime": "NATIVE_VEXRELAY",
+    "payloadPath": "payload/inner-vexrelay.zip",
+    "payloadSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "typedArgv": [],
+    "immutableInputs": [
+      {
+        "path": "inputs/vexrelay-binding.json",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    ]
+  },
+  "executionStateAtFormation": "TASK_PREPARED",
+  "singleUseNonce": "nonce-vlb-vexlife-prod-product-voice-input-gpt-oss-lived-mac-a001-20261117",
+  "stopConditions": [
+    "stop.on.identity.drift",
+    "stop.on.first.substantive.failure"
+  ],
+  "archiveDigestBinding": "FILENAME_SHA256"
+}
