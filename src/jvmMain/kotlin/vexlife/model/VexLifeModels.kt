@@ -476,14 +476,14 @@ class VexLifeModels(
             handle = entry.handle,
             artifactPresence =
                 when (presence.state) {
-                    HereticArtifactMaterialization.PresenceState.COMPLETE_BY_SIZE_NOT_HASHED ->
-                        VexLifeModelsFamily.ArtifactPresence.PRESENT
-                    HereticArtifactMaterialization.PresenceState.PARTIAL_BY_SIZE ->
-                        VexLifeModelsFamily.ArtifactPresence.PARTIAL
-                    HereticArtifactMaterialization.PresenceState.INVALID_SIZE ->
-                        VexLifeModelsFamily.ArtifactPresence.DAMAGED
-                    HereticArtifactMaterialization.PresenceState.ABSENT ->
-                        VexLifeModelsFamily.ArtifactPresence.ABSENT
+                    HereticArtifactMaterialization.PresenceState.CompleteBySizeNotHashed ->
+                        VexLifeModelsFamily.ArtifactPresence.Present
+                    HereticArtifactMaterialization.PresenceState.PartialBySize ->
+                        VexLifeModelsFamily.ArtifactPresence.Partial
+                    HereticArtifactMaterialization.PresenceState.InvalidSize ->
+                        VexLifeModelsFamily.ArtifactPresence.Damaged
+                    HereticArtifactMaterialization.PresenceState.Absent ->
+                        VexLifeModelsFamily.ArtifactPresence.Absent
                 },
             downloading = running?.handle == entry.handle,
             chosen = chosen == entry.modelRef,

@@ -403,7 +403,7 @@ class HereticArtifactMaterializationTest {
                 )
 
             assertEquals(
-                HereticArtifactMaterialization.PresenceState.ABSENT,
+                HereticArtifactMaterialization.PresenceState.Absent,
                 observation.state,
             )
             assertEquals(
@@ -482,7 +482,7 @@ class HereticArtifactMaterializationTest {
                 )
 
             assertEquals(
-                HereticArtifactMaterialization.PresenceState.INVALID_SIZE,
+                HereticArtifactMaterialization.PresenceState.InvalidSize,
                 observation.state,
             )
             assertEquals(

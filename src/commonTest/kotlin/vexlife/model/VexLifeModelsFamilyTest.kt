@@ -33,12 +33,12 @@ class VexLifeModelsFamilyTest {
     fun anAbsentModelCanOnlyBeDownloaded() {
         assertEquals(
             listOf(VexLifeModelsFamily.ControlDownload),
-            controls(state(VexLifeModelsFamily.ArtifactPresence.ABSENT)),
+            controls(state(VexLifeModelsFamily.ArtifactPresence.Absent)),
         )
         assertEquals(
             VexLifeModelsFamily.Effect.AcquireArtifacts,
             VexLifeModelsFamily.resolve(
-                    state(VexLifeModelsFamily.ArtifactPresence.ABSENT),
+                    state(VexLifeModelsFamily.ArtifactPresence.Absent),
                     VexLifeModelsFamily.Download,
                 )
                 ?.effect,
@@ -49,36 +49,36 @@ class VexLifeModelsFamilyTest {
     fun aPresentModelCanBeUsedUntilChosenAndServingAreBothCurrent() {
         assertEquals(
             listOf(VexLifeModelsFamily.ControlUse, VexLifeModelsFamily.ControlRemove),
-            controls(state(VexLifeModelsFamily.ArtifactPresence.PRESENT)),
+            controls(state(VexLifeModelsFamily.ArtifactPresence.Present)),
         )
         assertEquals(
             emptyList(),
-            controls(state(VexLifeModelsFamily.ArtifactPresence.PRESENT, chosen = true, serving = true)),
+            controls(state(VexLifeModelsFamily.ArtifactPresence.Present, chosen = true, serving = true)),
         )
         assertEquals(
             listOf(VexLifeModelsFamily.ControlUse),
-            controls(state(VexLifeModelsFamily.ArtifactPresence.PRESENT, serving = true)),
+            controls(state(VexLifeModelsFamily.ArtifactPresence.Present, serving = true)),
         )
         assertEquals(
             listOf(VexLifeModelsFamily.ControlUse),
-            controls(state(VexLifeModelsFamily.ArtifactPresence.PRESENT, chosen = true)),
+            controls(state(VexLifeModelsFamily.ArtifactPresence.Present, chosen = true)),
         )
         assertNull(
             VexLifeModelsFamily.resolve(
-                state(VexLifeModelsFamily.ArtifactPresence.PRESENT, serving = true),
+                state(VexLifeModelsFamily.ArtifactPresence.Present, serving = true),
                 VexLifeModelsFamily.Remove,
             )
         )
         assertNull(
             VexLifeModelsFamily.resolve(
-                state(VexLifeModelsFamily.ArtifactPresence.PRESENT, chosen = true),
+                state(VexLifeModelsFamily.ArtifactPresence.Present, chosen = true),
                 VexLifeModelsFamily.Remove,
             )
         )
         assertEquals(
             VexLifeModelsFamily.Effect.SwitchModel,
             VexLifeModelsFamily.resolve(
-                state(VexLifeModelsFamily.ArtifactPresence.PRESENT, chosen = true),
+                state(VexLifeModelsFamily.ArtifactPresence.Present, chosen = true),
                 VexLifeModelsFamily.Use,
             )?.effect,
         )
@@ -88,16 +88,16 @@ class VexLifeModelsFamilyTest {
     fun aPartialModelResumesAndADamagedOneDownloadsAgain() {
         assertEquals(
             listOf(VexLifeModelsFamily.ControlDownload, VexLifeModelsFamily.ControlRemove),
-            controls(state(VexLifeModelsFamily.ArtifactPresence.PARTIAL)),
+            controls(state(VexLifeModelsFamily.ArtifactPresence.Partial)),
         )
         assertEquals(
             listOf(VexLifeModelsFamily.ControlRedownload, VexLifeModelsFamily.ControlRemove),
-            controls(state(VexLifeModelsFamily.ArtifactPresence.DAMAGED)),
+            controls(state(VexLifeModelsFamily.ArtifactPresence.Damaged)),
         )
         assertEquals(
             VexLifeModelsFamily.Effect.ReplaceArtifacts,
             VexLifeModelsFamily.resolve(
-                    state(VexLifeModelsFamily.ArtifactPresence.DAMAGED),
+                    state(VexLifeModelsFamily.ArtifactPresence.Damaged),
                     VexLifeModelsFamily.Redownload,
                 )
                 ?.effect,
@@ -106,20 +106,20 @@ class VexLifeModelsFamilyTest {
 
     @Test
     fun whileAnyDownloadRunsNoOtherFileEffectIsLawful() {
-        val busy = state(VexLifeModelsFamily.ArtifactPresence.PARTIAL, anyDownloadRunning = true)
+        val busy = state(VexLifeModelsFamily.ArtifactPresence.Partial, anyDownloadRunning = true)
         assertEquals(emptyList(), controls(busy))
         assertEquals(
             emptyList(),
-            controls(state(VexLifeModelsFamily.ArtifactPresence.PARTIAL, downloading = true)),
+            controls(state(VexLifeModelsFamily.ArtifactPresence.Partial, downloading = true)),
         )
         // Model-file mutation and runtime convergence never overlap.
         assertEquals(
             emptyList(),
-            controls(state(VexLifeModelsFamily.ArtifactPresence.PRESENT, anyDownloadRunning = true)),
+            controls(state(VexLifeModelsFamily.ArtifactPresence.Present, anyDownloadRunning = true)),
         )
         assertEquals(
             emptyList(),
-            controls(state(VexLifeModelsFamily.ArtifactPresence.PRESENT, anySwitchRunning = true)),
+            controls(state(VexLifeModelsFamily.ArtifactPresence.Present, anySwitchRunning = true)),
         )
     }
 }

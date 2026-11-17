@@ -30,11 +30,29 @@ object VexLifeModelsFamily :
         VexLifeModelsFamily.Control,
         VexLifeModelsFamily.Effect,
     >() {
-    enum class ArtifactPresence {
-        ABSENT,
-        PARTIAL,
-        PRESENT,
-        DAMAGED,
+    sealed interface ArtifactPresence {
+        val stateRef: String
+        val statusKey: String
+
+        data object Absent : ArtifactPresence {
+            override val stateRef = "ABSENT"
+            override val statusKey = "workspace.status.model-not-downloaded"
+        }
+
+        data object Partial : ArtifactPresence {
+            override val stateRef = "PARTIAL"
+            override val statusKey = "workspace.status.model-partly-downloaded"
+        }
+
+        data object Present : ArtifactPresence {
+            override val stateRef = "PRESENT"
+            override val statusKey = "workspace.status.model-on-this-mac"
+        }
+
+        data object Damaged : ArtifactPresence {
+            override val stateRef = "DAMAGED"
+            override val statusKey = "workspace.status.model-damaged"
+        }
     }
 
     data class State(
@@ -103,7 +121,7 @@ object VexLifeModelsFamily :
         return when (control) {
             Use ->
                 if (
-                    currentState.artifactPresence == ArtifactPresence.PRESENT &&
+                    currentState.artifactPresence == ArtifactPresence.Present &&
                         !(currentState.chosen && currentState.serving) &&
                         !currentState.switching &&
                         idle
@@ -115,8 +133,8 @@ object VexLifeModelsFamily :
             Download ->
                 if (
                     (
-                        currentState.artifactPresence == ArtifactPresence.ABSENT ||
-                            currentState.artifactPresence == ArtifactPresence.PARTIAL
+                        currentState.artifactPresence == ArtifactPresence.Absent ||
+                            currentState.artifactPresence == ArtifactPresence.Partial
                     ) &&
                         idle
                 )
@@ -124,7 +142,7 @@ object VexLifeModelsFamily :
                 else null
             Redownload ->
                 if (
-                    currentState.artifactPresence == ArtifactPresence.DAMAGED &&
+                    currentState.artifactPresence == ArtifactPresence.Damaged &&
                         idle &&
                         !currentState.serving
                 )
@@ -132,7 +150,7 @@ object VexLifeModelsFamily :
                 else null
             Remove ->
                 if (
-                    currentState.artifactPresence != ArtifactPresence.ABSENT &&
+                    currentState.artifactPresence != ArtifactPresence.Absent &&
                         !currentState.chosen &&
                         !currentState.serving &&
                         idle
@@ -149,12 +167,7 @@ object VexLifeModelsFamily :
                 when {
                     state.switching -> VexLifeText("workspace.status.model-switching")
                     state.downloading -> VexLifeText("workspace.status.model-downloading")
-                    state.artifactPresence == ArtifactPresence.PRESENT ->
-                        VexLifeText("workspace.status.model-on-this-mac")
-                    state.artifactPresence == ArtifactPresence.PARTIAL ->
-                        VexLifeText("workspace.status.model-partly-downloaded")
-                    state.artifactPresence == ArtifactPresence.DAMAGED -> VexLifeText("workspace.status.model-damaged")
-                    else -> VexLifeText("workspace.status.model-not-downloaded")
+                    else -> VexLifeText(state.artifactPresence.statusKey)
                 },
             notes =
                 listOfNotNull(

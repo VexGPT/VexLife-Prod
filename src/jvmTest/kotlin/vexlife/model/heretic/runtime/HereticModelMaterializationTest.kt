@@ -41,10 +41,10 @@ class HereticModelMaterializationTest {
         val small = nine.members.first { it.filename == "config.json" }
         Files.write(folder.resolve(small.filename), ByteArray(small.expectedBytes.toInt()))
         val presence = HereticArtifactMaterialization.observePresence(home, nine)
-        assertEquals(HereticArtifactMaterialization.PresenceState.PARTIAL_BY_SIZE, presence.state)
+        assertEquals(HereticArtifactMaterialization.PresenceState.PartialBySize, presence.state)
         assertEquals(small.expectedBytes, presence.presentBySizeBytes)
         assertEquals(
-            HereticArtifactMaterialization.PresenceState.ABSENT,
+            HereticArtifactMaterialization.PresenceState.Absent,
             HereticArtifactMaterialization.observePresence(home, HereticModelCatalog.Models.Qwen4B)
                 .state,
         )
@@ -65,7 +65,7 @@ class HereticModelMaterializationTest {
 
         val removal = HereticArtifactMaterialization.remove(home, four)
 
-        assertEquals(HereticArtifactMaterialization.RemovalState.REMOVED, removal.state)
+        assertEquals(HereticArtifactMaterialization.RemovalState.Removed, removal.state)
         assertEquals(1, removal.removedFiles)
         assertEquals(2L + "partial".length, removal.freedBytes)
         assertFalse(Files.exists(fourFolder.resolve("config.json")))
@@ -75,7 +75,7 @@ class HereticModelMaterializationTest {
         )
         assertTrue(Files.exists(nineFolder.resolve("config.json")), "another model is untouched")
         assertEquals(
-            HereticArtifactMaterialization.RemovalState.ALREADY_ABSENT,
+            HereticArtifactMaterialization.RemovalState.AlreadyAbsent,
             HereticArtifactMaterialization.remove(home, HereticModelCatalog.Models.Qwen27B).state,
         )
     }
