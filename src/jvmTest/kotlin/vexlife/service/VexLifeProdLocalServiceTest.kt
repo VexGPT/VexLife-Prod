@@ -179,6 +179,39 @@ class VexLifeProdLocalServiceTest {
             ),
         )
 
+    private fun postWav(
+        origin: String,
+        path: String,
+        body: ByteArray,
+        language: String = "en",
+    ): HttpResponse<String> =
+        client.send(
+            HttpRequest
+                .newBuilder(
+                    URI(
+                        origin +
+                            path,
+                    ),
+                )
+                .header(
+                    "content-type",
+                    "audio/wav",
+                )
+                .header(
+                    "x-vexlife-language",
+                    language,
+                )
+                .POST(
+                    HttpRequest.BodyPublishers.ofByteArray(
+                        body,
+                    ),
+                )
+                .build(),
+            HttpResponse.BodyHandlers.ofString(
+                StandardCharsets.UTF_8,
+            ),
+        )
+
     private fun statusLineWithHost(
         port: Int,
         host: String,
@@ -715,6 +748,137 @@ class VexLifeProdLocalServiceTest {
             assertTrue(Files.exists(root.resolve("runtime/vexlife-prod/settings/person.json")))
         } finally {
             root.parent.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun localAsrSelectionIsHomeBackedAndProviderCurrentnessStaysSeparate() {
+        val root =
+            Files.createTempDirectory(
+                "vexlife-prod-service-local-asr-",
+            )
+                .toAbsolutePath()
+                .resolve(
+                    "VexLife-Prod",
+                )
+        try {
+            bootstrapHome(
+                root,
+            )
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha =
+                        "a".repeat(
+                            40,
+                        ),
+                    setup =
+                        setup(
+                            root,
+                        ),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "local ASR Settings test must not run a turn",
+                            )
+                        },
+                )
+                .use {
+                    service ->
+                    fun projection() =
+                        json.decodeFromString<VexLifeProdServiceContract.LocalAsrProjection>(
+                            get(
+                                service.origin,
+                                VexLifeProdServiceContract.LocalAsrPath,
+                            ).body(),
+                        )
+
+                    val initial =
+                        projection()
+                    assertEquals(
+                        "provider.local-asr.whispercpp",
+                        initial.selectedProviderRef,
+                    )
+                    assertEquals(
+                        "model.local-asr.whisper.base.en",
+                        initial.selectedModelRef,
+                    )
+                    assertEquals(
+                        1,
+                        initial.options.size,
+                    )
+                    assertTrue(
+                        initial.options.single().selected,
+                    )
+                    assertEquals(
+                        "UNAVAILABLE",
+                        initial.options.single().currentState,
+                    )
+                    assertEquals(
+                        "PROVIDER_SOURCE_NOT_CURRENT",
+                        initial.options.single().currentDetailRef,
+                    )
+
+                    val save =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.LocalAsrPath,
+                            """{"providerRef":"provider.local-asr.whispercpp","modelRef":"model.local-asr.whisper.base.en"}""",
+                        )
+                    assertEquals(
+                        200,
+                        save.statusCode(),
+                        save.body(),
+                    )
+                    assertEquals(
+                        initial.selectedProviderRef,
+                        projection().selectedProviderRef,
+                    )
+
+                    val invalid =
+                        postJson(
+                            service.origin,
+                            VexLifeProdServiceContract.LocalAsrPath,
+                            """{"providerRef":"provider.local-asr.fake","modelRef":"model.local-asr.fake"}""",
+                        )
+                    assertEquals(
+                        400,
+                        invalid.statusCode(),
+                    )
+
+                    val unavailableTranscription =
+                        postWav(
+                            service.origin,
+                            VexLifeProdServiceContract.LocalAsrTranscribePath,
+                            ByteArray(
+                                44,
+                            ),
+                        )
+                    assertEquals(
+                        409,
+                        unavailableTranscription.statusCode(),
+                    )
+                    assertTrue(
+                        unavailableTranscription.body()
+                            .contains(
+                                "LOCAL_ASR_NOT_CURRENT",
+                            ),
+                    )
+                }
+
+            assertTrue(
+                Files.exists(
+                    root.resolve(
+                        "runtime/vexlife-prod/settings/local-asr.json",
+                    ),
+                ),
+            )
+        } finally {
+            root.parent
+                .toFile()
+                .deleteRecursively()
         }
     }
 

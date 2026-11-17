@@ -443,52 +443,62 @@ class VexLifeWebP1RuntimeArtifactsTest {
             bundle.html.contains(">Send</button>"),
             "Conversation Send words must come from Family-keyed workspace text",
         )
-        assertTrue(bundle.javascript.contains("window.SpeechRecognition"))
-        assertTrue(bundle.javascript.contains("recognition.processLocally = true"))
-        assertTrue(bundle.javascript.contains("Recognition.available(options)"))
-        assertTrue(bundle.javascript.contains("Recognition.install(options)"))
-        assertTrue(bundle.javascript.contains("processLocally: true"))
         assertFalse(
-            bundle.javascript.contains("quality: 'dictation'"),
-            "VoiceInput must not require Chrome's optional higher dictation-quality model tier",
+            bundle.javascript.contains("window.SpeechRecognition"),
+            "VoiceInput must not depend on the browser's speech-recognition provider",
         )
-        assertTrue(bundle.javascript.contains("recognition.start(track)"))
+        assertFalse(bundle.javascript.contains("Recognition.available(options)"))
+        assertFalse(bundle.javascript.contains("Recognition.install(options)"))
+        assertFalse(bundle.javascript.contains("recognition.processLocally"))
+        assertFalse(bundle.javascript.contains("recognition.start(track)"))
+        assertFalse(bundle.javascript.contains("window.webkitSpeechRecognition"))
+        assertFalse(bundle.javascript.contains("processLocally = false"))
+
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrPath))
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrTranscribePath))
         assertTrue(bundle.javascript.contains("navigator.mediaDevices.getUserMedia"))
+        assertTrue(bundle.javascript.contains("context.createScriptProcessor(4096, 1, 1)"))
+        assertTrue(bundle.javascript.contains("encodeCapturedPcmWav"))
+        assertTrue(bundle.javascript.contains("service.localAsrTranscribePath"))
+        assertTrue(bundle.javascript.contains("'content-type': 'audio/wav'"))
+        assertTrue(bundle.javascript.contains("'x-vexlife-language': language.code"))
+        assertTrue(bundle.javascript.contains("localAsrAvailableForLanguage"))
+        assertTrue(bundle.javascript.contains("selectedLocalAsrOption"))
+        assertTrue(bundle.javascript.contains("loadLocalAsr"))
+        assertTrue(bundle.javascript.contains("selectLocalAsr"))
         assertTrue(bundle.javascript.contains("projectDictationIntoDraft"))
         assertTrue(bundle.javascript.contains("ui.draft.value ="))
         assertTrue(bundle.javascript.contains("voiceInput.actByState"))
         assertTrue(bundle.javascript.contains("voiceInput.capabilityStateByFacts"))
-        assertTrue(
-            bundle.javascript.contains("voiceInput.languageAvailabilityStateByProviderValue")
-        )
-        assertTrue(bundle.javascript.contains("voiceInput.languageInstallStateBySuccess"))
         assertTrue(bundle.javascript.contains("voiceInput.failureStateByReason"))
         assertTrue(bundle.javascript.contains("applyVoiceInputSemanticState"))
         assertTrue(bundle.javascript.contains("realizeBeginLocalDictation"))
         assertTrue(bundle.javascript.contains("realizeEndLocalDictation"))
-        assertTrue(bundle.javascript.contains("voiceInput.languageCheckStartedState"))
         assertTrue(bundle.javascript.contains("controlRef: voiceInput.control.stop"))
         assertTrue(bundle.javascript.contains("VOICE_INPUT_CONTROL_EMITTED"))
         assertTrue(bundle.javascript.contains("VOICE_INPUT_MICROPHONE_REQUESTED"))
         assertTrue(bundle.javascript.contains("VOICE_INPUT_MICROPHONE_GRANTED"))
-        assertTrue(bundle.javascript.contains("VOICE_INPUT_LANGUAGE_AVAILABILITY_OBSERVED"))
-        assertTrue(bundle.javascript.contains("VOICE_INPUT_LANGUAGE_INSTALL_OBSERVED"))
-        assertTrue(bundle.javascript.contains("VOICE_INPUT_RECOGNITION_STARTED"))
+        assertTrue(bundle.javascript.contains("VOICE_INPUT_AUDIO_CAPTURE_STARTED"))
         assertTrue(bundle.javascript.contains("VOICE_INPUT_FAILURE_OBSERVED"))
+        assertFalse(bundle.javascript.contains("VOICE_INPUT_LANGUAGE_AVAILABILITY_OBSERVED"))
+        assertFalse(bundle.javascript.contains("VOICE_INPUT_LANGUAGE_INSTALL_OBSERVED"))
+        assertFalse(bundle.javascript.contains("VOICE_INPUT_RECOGNITION_STARTED"))
+        assertFalse(bundle.javascript.contains("voiceInput.languageAvailabilityStateByProviderValue"))
+        assertFalse(bundle.javascript.contains("voiceInput.languageInstallStateBySuccess"))
+        assertFalse(bundle.javascript.contains("voiceInput.languageCheckStartedState"))
         assertTrue(bundle.javascript.contains("let reportFactTail = Promise.resolve()"))
         assertTrue(bundle.javascript.contains("reportFactTail ="))
         assertTrue(bundle.javascript.contains(".then(() =>"))
+
         val voiceBeginStart = bundle.javascript.indexOf("const realizeBeginLocalDictation")
         val voiceBeginEnd = bundle.javascript.indexOf("const applyVoiceInputControl", voiceBeginStart)
         assertTrue(voiceBeginStart >= 0 && voiceBeginEnd > voiceBeginStart)
         val voiceBegin = bundle.javascript.substring(voiceBeginStart, voiceBeginEnd)
         assertTrue(
             voiceBegin.indexOf("navigator.mediaDevices.getUserMedia") <
-                voiceBegin.indexOf("ensureLocalDictationLanguage"),
-            "VoiceInput must establish browser microphone permission before local language checks",
+                voiceBegin.indexOf("startVoiceCapture(stream)"),
+            "VoiceInput must establish browser microphone permission before PCM capture",
         )
-        assertTrue(bundle.javascript.contains("\"downloadable\""))
-        assertTrue(bundle.javascript.contains("\"downloading\""))
         assertFalse(
             bundle.javascript.contains("setVoiceInputState("),
             "VexWeb must apply Family-authored semantic output rather than author State directly",

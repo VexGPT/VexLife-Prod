@@ -36,6 +36,9 @@ import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.local.VexLifeProdSetupProgress
+import vexlife.localasr.VexLifeLocalAsrProvider
+import vexlife.localasr.VexLifeLocalAsrSelection
+import vexlife.localasr.VexLifeLocalAsrSelectionStore
 import vexlife.model.VexLifeModels
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.continuity.VexLifePrivateConversation
@@ -83,6 +86,16 @@ class VexLifeProdLocalService private constructor(
 
     private val privateConversation = VexLifePrivateConversation(Path.of(startupSetup.productHome))
     private val personSettings = VexLifePersonSettingsStore(Path.of(startupSetup.productHome))
+    private val localAsrSelection =
+        VexLifeLocalAsrSelectionStore(
+            Path.of(startupSetup.productHome),
+        )
+    private val localAsrProvider =
+        VexLifeLocalAsrProvider.fromHome(
+            Path.of(
+                startupSetup.productHome,
+            ),
+        )
     private val activeTurn =
         AtomicReference<ActiveTurn?>(
             null,
@@ -119,6 +132,10 @@ class VexLifeProdLocalService private constructor(
     companion object {
         private const val MaxRequestBytes =
             256 * 1024
+
+        // ~2.5 minutes of 48 kHz mono 16-bit PCM WAV; raw audio remains request-scoped in memory.
+        private const val MaxLocalAsrRequestBytes =
+            16 * 1024 * 1024
 
         private val SourceShaPattern =
             Regex(
@@ -826,6 +843,16 @@ class VexLifeProdLocalService private constructor(
 
                 VexLifeProdServiceContract.SettingsPath -> handleSettings(exchange)
 
+                VexLifeProdServiceContract.LocalAsrPath ->
+                    handleLocalAsr(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.LocalAsrTranscribePath ->
+                    handleLocalAsrTranscribe(
+                        exchange,
+                    )
+
                 VexLifeProdServiceContract.DiagnosticsPath -> {
                     requireMethod(exchange, "GET")
                     respondJson(exchange = exchange, status = 200, value = diagnostics.projection())
@@ -1482,6 +1509,265 @@ class VexLifeProdLocalService private constructor(
             }
             else -> respondError(exchange, 405, "METHOD_NOT_ALLOWED", "settings accepts GET or POST")
         }
+    }
+
+    private fun localAsrProjection(): VexLifeProdServiceContract.LocalAsrProjection {
+        val selected =
+            localAsrSelection.read()
+        val current =
+            localAsrProvider.current()
+
+        return VexLifeProdServiceContract.LocalAsrProjection(
+            schemaVersion =
+                VexLifeProdServiceContract.LocalAsrProjectionSchema,
+            selectedProviderRef = selected.providerRef,
+            selectedModelRef = selected.modelRef,
+            options =
+                VexLifeLocalAsrSelection.Options.map {
+                    option ->
+                    val matchesCurrentProvider =
+                        option.providerRef ==
+                            current.providerRef &&
+                            option.modelRef ==
+                            current.modelRef
+                    VexLifeProdServiceContract.LocalAsrOption(
+                        providerRef = option.providerRef,
+                        modelRef = option.modelRef,
+                        providerLabel = option.providerLabel,
+                        modelLabel = option.modelLabel,
+                        languageCodes = option.languageCodes,
+                        modelBytes = option.modelBytes,
+                        standing = option.standing,
+                        selected =
+                            option.providerRef ==
+                                selected.providerRef &&
+                                option.modelRef ==
+                                selected.modelRef,
+                        currentState =
+                            if (
+                                matchesCurrentProvider
+                            ) {
+                                current.state
+                            } else {
+                                VexLifeLocalAsrProvider.StateUnavailable
+                            },
+                        currentDetailRef =
+                            if (
+                                matchesCurrentProvider
+                            ) {
+                                current.detailRef
+                            } else {
+                                "PROVIDER_NOT_ACTIVE_IN_THIS_BUILD"
+                            },
+                    )
+                },
+        )
+    }
+
+    private fun handleLocalAsr(
+        exchange: HttpExchange,
+    ) {
+        when (
+            exchange.requestMethod
+        ) {
+            "GET" ->
+                respondJson(
+                    exchange = exchange,
+                    status = 200,
+                    value = localAsrProjection(),
+                )
+
+            "POST" -> {
+                requireJson(
+                    exchange,
+                )
+                val update =
+                    JsonCodec.decodeFromString<VexLifeProdServiceContract.LocalAsrSelectionUpdate>(
+                        requestText(
+                            exchange,
+                        ),
+                    )
+                val value =
+                    VexLifeLocalAsrSelection.Value(
+                        schemaVersion =
+                            VexLifeLocalAsrSelection.Schema,
+                        providerRef =
+                            update.providerRef,
+                        modelRef =
+                            update.modelRef,
+                    )
+                localAsrSelection.write(
+                    value,
+                )
+                VexLogger.record(
+                    VexLogger.Fact.LocalAsrSelectionSaved,
+                    refs =
+                        mapOf(
+                            "providerRef" to value.providerRef,
+                            "modelRef" to value.modelRef,
+                        ),
+                )
+                respondJson(
+                    exchange = exchange,
+                    status = 200,
+                    value = localAsrProjection(),
+                )
+            }
+
+            else ->
+                respondError(
+                    exchange,
+                    405,
+                    "METHOD_NOT_ALLOWED",
+                    "local ASR accepts GET or POST",
+                )
+        }
+    }
+
+    private fun handleLocalAsrTranscribe(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireContentType(
+            exchange = exchange,
+            expected = "audio/wav",
+        )
+
+        val selected =
+            localAsrSelection.read()
+        val option =
+            VexLifeLocalAsrSelection.option(
+                selected,
+            )
+        val language =
+            exchange.requestHeaders
+                .getFirst(
+                    "x-vexlife-language",
+                )
+                ?.trim()
+                ?.lowercase()
+                ?: throw IllegalArgumentException(
+                    "local ASR requires x-vexlife-language",
+                )
+        require(
+            language in
+                option.languageCodes,
+        ) {
+            "selected local ASR model does not support the requested language"
+        }
+
+        val current =
+            localAsrProvider.current()
+        if (
+            current.providerRef !=
+                selected.providerRef ||
+            current.modelRef !=
+                selected.modelRef ||
+            !current.ready
+        ) {
+            respondError(
+                exchange,
+                409,
+                "LOCAL_ASR_NOT_CURRENT",
+                "the selected local speech recognizer is not current on this VexLife service",
+            )
+            return
+        }
+
+        val wav =
+            requestBytes(
+                exchange = exchange,
+                maximumBytes =
+                    MaxLocalAsrRequestBytes,
+            )
+        require(
+            wav.size >=
+                44 &&
+                wav.copyOfRange(
+                    0,
+                    4,
+                )
+                    .toString(
+                        StandardCharsets.US_ASCII,
+                    ) ==
+                "RIFF" &&
+                wav.copyOfRange(
+                    8,
+                    12,
+                )
+                    .toString(
+                        StandardCharsets.US_ASCII,
+                    ) ==
+                "WAVE",
+        ) {
+            "local ASR request must be one PCM WAV"
+        }
+
+        VexLogger.record(
+            VexLogger.Fact.LocalAsrInferenceStarted,
+            refs =
+                mapOf(
+                    "providerRef" to selected.providerRef,
+                    "modelRef" to selected.modelRef,
+                    "language" to language,
+                    "audioBytes" to wav.size.toString(),
+                ),
+        )
+
+        val result =
+            try {
+                localAsrProvider.transcribe(
+                    wavBytes = wav,
+                    languageCode = language,
+                )
+            } catch (
+                error: Throwable,
+            ) {
+                VexLogger.record(
+                    VexLogger.Fact.LocalAsrInferenceFailed,
+                    refs =
+                        mapOf(
+                            "providerRef" to selected.providerRef,
+                            "modelRef" to selected.modelRef,
+                            "failureType" to error.javaClass.simpleName,
+                        ),
+                )
+                respondError(
+                    exchange,
+                    503,
+                    "LOCAL_ASR_FAILED",
+                    "local speech recognition did not complete",
+                )
+                return
+            }
+
+        VexLogger.record(
+            VexLogger.Fact.LocalAsrInferenceCompleted,
+            refs =
+                mapOf(
+                    "providerRef" to result.providerRef,
+                    "modelRef" to result.modelRef,
+                    "inferenceMillis" to result.inferenceMillis.toString(),
+                ),
+        )
+
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value =
+                VexLifeProdServiceContract.LocalAsrTranscriptionResponse(
+                    schemaVersion =
+                        VexLifeProdServiceContract.LocalAsrTranscriptionResponseSchema,
+                    providerRef = result.providerRef,
+                    modelRef = result.modelRef,
+                    transcript = result.transcript,
+                    inferenceMillis = result.inferenceMillis,
+                    effectsPerformed = true,
+                ),
+        )
     }
 
     /**
@@ -3001,21 +3287,55 @@ class VexLifeProdLocalService private constructor(
         }
     }
 
+    private fun requireContentType(
+        exchange: HttpExchange,
+        expected: String,
+    ) {
+        val contentType =
+            exchange.requestHeaders
+                .getFirst(
+                    "content-type",
+                )
+                ?.substringBefore(
+                    ";",
+                )
+                ?.trim()
+                ?.lowercase()
+
+        require(
+            contentType ==
+                expected,
+        ) {
+            "route requires content-type $expected"
+        }
+    }
+
+    private fun requestBytes(
+        exchange: HttpExchange,
+        maximumBytes: Int,
+    ): ByteArray {
+        val bytes =
+            exchange.requestBody.readNBytes(
+                maximumBytes +
+                    1,
+            )
+        require(
+            bytes.size <=
+                maximumBytes,
+        ) {
+            "request body exceeds bounded local service size"
+        }
+        return bytes
+    }
+
     private fun requestText(
         exchange: HttpExchange,
     ): String {
         val bytes =
-            exchange.requestBody.readNBytes(
-                MaxRequestBytes +
-                    1,
+            requestBytes(
+                exchange = exchange,
+                maximumBytes = MaxRequestBytes,
             )
-
-        require(
-            bytes.size <=
-                MaxRequestBytes,
-        ) {
-            "request body exceeds bounded local service size"
-        }
 
         return bytes.toString(
             StandardCharsets.UTF_8,
