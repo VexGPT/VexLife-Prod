@@ -332,6 +332,50 @@ WORKING CONTINUITY HELD
 != RETROACTIVE TURN FAILURE
 ~~~
 
+## Rollover lineage
+
+A rollover is a lineage, not one event. A successor prompt is small, so pressure falls on the turn
+after `ROLLOVER_COMMITTED`. Planned on pressure alone, that successor turn would be
+`NO_CHECKPOINT_REQUIRED` and leave the head's cursor at the rollover request. The next turn's prior
+request would then not be the head's cursor, so it would not be rollover-eligible: it would fall back to
+`RECENT_COMPLETED_TURNS`, replay pre-rollover Conversation, climb back to rollover and roll over again.
+Host proof reproduced that oscillation live under Qwen 4B and certified Qwen 27B.
+
+Law:
+
+~~~text
+turn entered with a CurrentSuccessor
+-> formPlan(rolloverLineageActive = true)
+-> RolloverReady at any pressure, reason WORKING_ROLLOVER_LINEAGE_ACTIVE
+-> ROLLOVER_COMMITTED, cursor = this turn's own request
+-> the next turn is rollover-eligible and enters as a successor again
+~~~
+
+`DirectWorkingContinuity` claims the lineage only for a turn that entered with a current successor
+Context. The durable owner verifies the claim rather than imposing it: it re-derives the lineage only
+where the plan claims it **and** its own current receipt is `ROLLOVER_COMMITTED` with a required
+successor Context.
+
+- A lineage claim with no such head does not re-derive, and is refused.
+- A plan formed without the lineage (a turn that did not enter as a successor, for example after a
+  missed post-turn commit left the head's cursor behind) re-derives on pressure alone, so one missed
+  commit cannot refuse every later commit on the thread.
+
+Permanent:
+
+~~~text
+SUCCESSOR TURN
+-> ROLLOVER-READY CURSOR ADVANCE
+!= PRESSURE-ONLY NO-OP
+
+LINEAGE CLAIM
+= VERIFIED AGAINST THE OWNER'S CURRENT HEAD
+!= IMPOSED BY THE OWNER
+~~~
+
+The lineage bounds the prompt; it does not hide the Conversation. Earlier exchanges stay reachable
+through exact source return and the continuity revisit capability.
+
 ## Current candidate boundary
 
 The current live-consumer slice closes the working-context rollover loop through the real direct

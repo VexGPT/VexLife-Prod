@@ -57,11 +57,13 @@ node tools/continuity-pressure/run.mjs --stage quick \
   or without `--runtime-home`, the stage holds before touching any runtime. A real conversation
   running at the same time would contaminate cache and latency evidence.
 - **Engineered profile:** the flags above project NORMAL → WATCH → CHECKPOINT_RECOMMENDED →
-  ROLLOVER (turn 10) → successor (11) → post-successor (12) → probes in 15 turns. Longer live
+  ROLLOVER (turn 10) → successors 11–15, with the probes on successor turns, in 15 turns. Pressure
+  falls back to WATCH and NORMAL while the rollover lineage holds; no turn replays. Longer live
   replies move the crossing slightly earlier.
-- **Observed telemetry:** `implementation/provider-telemetry.jsonl` holds, per call, the
-  provider's own usage report (`promptTokens`, `cachedPromptTokens`, `prefillTokens`,
-  `completionTokens`) and `firstTokenMs`, `firstAnswerMs`, `totalMs`. This is observed reuse; the
+- **Observed telemetry:** `implementation/provider-telemetry.jsonl` holds, per provider stage, the
+  Product's own `PROVIDER_STAGE_OBSERVED` record: usage (`promptTokens`, `cachedPromptTokens`,
+  `prefillTokens`, `completionTokens`), timing (`firstTokenMs`, `firstAnswerMs`, `totalMs`) and the
+  stop and finish reasons. The adapter does not re-parse the stream. This is observed reuse; the
   `provider-prefix.py` projection is not.
 - **Transition timing:** `transition-timing.json` beside the ZIP is real host time from the
   Product's own chronology records: SEND_ACCEPTED → PROVIDER_INVOCATION_REQUESTED, and

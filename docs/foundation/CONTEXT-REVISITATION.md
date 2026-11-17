@@ -172,12 +172,12 @@ as a return.
 ## Held — named, not built
 
 ~~~text
-EPOCH SPINE AFTER THE SUCCESSOR TURN
-  successor eligibility is one turn (checkpoint cursor == prior request). The turn after it returns
-  to ordinary newest-first selection, which reaches behind the checkpoint again; near the limit
-  that alternates rollover / full replay. Needed: Working Continuity exposes the current epoch
-  boundary (latest ROLLOVER_COMMITTED in its head lineage) as a read, then residency bounds
-  ordinary selection to tail-start..now and carries the epoch directory as a stable prefix.
+EPOCH DIRECTORY AS A STABLE PREFIX
+  the rollover / full-replay alternation is closed by the rollover lineage
+  (WORKING-CONTINUITY-ROLLOVER.md#rollover-lineage): every turn after a rollover enters as a
+  successor and advances the cursor. Still held: Working Continuity exposing the epoch boundary as
+  a read so residency can carry an epoch directory as a stable prefix. The overlap tail slides each
+  turn, so a successor's history prefix is not preserved call to call.
 
 ACCEPTED DISPOSITIONS (open / paused / resolved / superseded)
   owner: Semantic Relay author + Score acceptance, both absent in Product.
@@ -199,8 +199,8 @@ CROSS-CALL NODE MEMO
   owner reads are reused across calls in one turn; resolved nodes are recomputed per call.
 
 PROVIDER CACHE MEASUREMENT
-  projected by tools/continuity-pressure/provider-prefix.py; observed only by a live run, whose
-  adapter records the provider's own usage report (cached_tokens) and timing per call.
+  projected by tools/continuity-pressure/provider-prefix.py; observed only by a live run, from the
+  Product's own PROVIDER_STAGE_OBSERVED record (usage incl. cached tokens, timing) per stage.
 ~~~
 
 ## Experiment-only effective selection budget
@@ -221,12 +221,15 @@ EXPERIMENT BUDGET != ORDINARY PRODUCT BUDGET != HARD MODEL LIMIT
 Working Continuity thresholds are absolute multiples of the 16k output reserve, so the budget changes
 headroom, not the thresholds: below about 48k plus the 24k exchange allowance every turn starts at
 ROLLOVER_REQUIRED. At the adapter's default of 52k the run starts at CHECKPOINT_RECOMMENDED and
-crosses ROLLOVER inside the scenario's pressure set (turn 17 of 30 with person context supplied).
+crosses ROLLOVER inside the scenario's pressure set (turn 17 of 30 with person context supplied);
+turns 18–30 are all successors.
 
 A live run must cross every state in few turns; the adapter's `--payload-scale` multiplies each
 turn's synthetic payload and is recorded. `--effective-input-token-budget 80000 --payload-scale 7
 --sets 3 --turns-per-set 5` projects NORMAL (1–5) → WATCH (6–7) → CHECKPOINT_RECOMMENDED (8–9) →
-ROLLOVER_REQUIRED (10, committed) → successor (11) → post-successor replay (12) in 15 turns.
+ROLLOVER_REQUIRED (10, committed) → successors 11–15 in 15 turns. Pressure falls back to WATCH
+(12) and NORMAL (14) while the lineage holds: every successor commits ROLLOVER_COMMITTED at its own
+request, keeps a 3–4 pair overlap tail and replays nothing.
 
 ## Proof
 
@@ -236,6 +239,15 @@ src/jvmTest/kotlin/vexlife/companion/DirectContinuityOverlapTailTest.kt
 src/jvmTest/kotlin/vexlife/capability/VexLifeCapabilityRevisitTest.kt
 src/jvmTest/kotlin/vexlife/companion/DirectPromptCurrentStateTest.kt   (zero-fit held state)
 src/jvmTest/kotlin/vexlife/harness/ContinuityPressureAdapterTest.kt   (live seam against a stub)
+~~~
+
+Rollover lineage (see [WORKING-CONTINUITY-ROLLOVER.md](WORKING-CONTINUITY-ROLLOVER.md#rollover-lineage)):
+
+~~~text
+DirectWorkingContinuityTest          a successor turn is rollover-ready at its own request
+VexLifeWorkingContinuityOwnerTest    the lineage advances under low pressure; a claim is verified,
+                                     not imposed
+ContinuityPressureAdapterTest        every turn after a rollover stays a bounded successor
 ~~~
 
 Real canonical Homes and real committed turns: different wording in one request; bounded "not
@@ -248,6 +260,9 @@ admission, owner gaps and traced source refs with an unchanged Home tree; one Co
 for two calls in one turn; conjunctive clues and alternate vantages; Working Continuity anchors
 resolved through Memory or left as frontier; Memory already in the prompt named, not repeated.
 
-Not proven: a lived Mac turn using revisit, and lived reading of the revised field.
+Not proven: a lived Mac turn using revisit, and lived reading of the revised field. The rollover
+lineage was observed live on the host (Qwen 4B and certified Qwen 27B: NORMAL → WATCH →
+CHECKPOINT_RECOMMENDED → ROLLOVER_COMMITTED → three successors, no replay) on the forensic stack that
+first carried it, not on the integrated candidate.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][CONTEXT-REVISITATION] -->
