@@ -12,6 +12,7 @@ import vexlife.contract.VexDurableContractFile
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
+import vexlife.capability.reach.VexLifeContinuityHydration
 import vexlife.conversation.DirectConversationStore
 import vexlife.filesystem.VexOwnedPath
 import vexlife.foundational.VexLifeFoundationalField
@@ -911,6 +912,37 @@ object DirectCompanionTurn {
                             ),
                         owners = hooks.capabilityOwners,
                         estimateTokens = DirectPromptContext::estimatedMessageTokens,
+                        turnBoundReach =
+                            VexLifeCapabilityBridge.TurnBoundReach(
+                                continuityHydrator =
+                                    VexLifeCapabilityBridge.ContinuityHydrator { queryGroups, availableTokens ->
+                                        VexLifeContinuityHydration.hydrate(
+                                            productHome = productHome,
+                                            conversationOwner = conversationOwner,
+                                            queryGroups = queryGroups,
+                                            memoryContext = baseMemoryAvailability,
+                                            workingSet = baseWorkingContinuity.workingSet,
+                                            excludedConversationEventRefs =
+                                                buildSet {
+                                                    addAll(
+                                                        base.materialization.receipt.selectedConversationEventRefs,
+                                                    )
+                                                    base.materialization.receipt.successorPriorResponseEventRef
+                                                        ?.let(::add)
+                                                    addAll(
+                                                        base.materialization.receipt.sourceReturnSourceEventRefs,
+                                                    )
+                                                },
+                                            excludedMemoryStatementRefs =
+                                                base.memoryContext.pages
+                                                    .map { it.statementRef }
+                                                    .toSet(),
+                                            availableTokens = availableTokens,
+                                            estimateTokens =
+                                                DirectPromptContext::estimatedMessageTokens,
+                                        )
+                                    },
+                            ),
                     )
                 exchanges += exchange
                 emitProgress(hooks.progressObserver, Progress(phase = ProgressPhase.Reached, reach = exchange.use))

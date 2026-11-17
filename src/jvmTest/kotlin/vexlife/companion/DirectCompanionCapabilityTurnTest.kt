@@ -19,6 +19,8 @@ import kotlinx.serialization.json.jsonPrimitive
 import vexlife.capability.VexLifeCapabilityBridge
 import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.capability.reach.VexLifeWebReach
+import vexlife.conversation.CanonicalLivedContextFixture
+import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.model.heretic.HereticModelConfiguration
@@ -166,7 +168,12 @@ class DirectCompanionCapabilityTurnTest {
         // Stage one was told what it can reach and exactly how to ask.
         val firstSystem = calls[0].filter { it.first == "system" }.joinToString("\n") { it.second }
         assertTrue(firstSystem.contains("What I can reach this turn, and how to ask for it."))
-        assertTrue(firstSystem.contains("Now: AVAILABLE — atlas, conversation, github, home"))
+        assertTrue(
+            firstSystem.contains(
+                "Now: AVAILABLE — atlas, continuity, conversation, github, home, web."
+            )
+        )
+        assertTrue(firstSystem.contains("- continuity: Hydrate relevant older continuity"))
         assertFalse(firstSystem.contains("\"capabilityEntries\""))
         assertTrue(firstSystem.contains("- web: Read the public web"))
         assertTrue(firstSystem.contains(VexLifeCapabilityRequest.RequestHeader))
@@ -265,6 +272,171 @@ class DirectCompanionCapabilityTurnTest {
             )
         assertTrue(again.recoveredCompletedTurn)
         assertEquals(result.capabilityUses, again.capabilityUses)
+    }
+
+    @Test
+    fun vexHydratesExactOlderConversationAndAnswersInTheSameTurn() = withHome { home ->
+        val store = DirectConversationStore(home)
+        lateinit var oldRequest: DirectConversationStore.Event
+        lateinit var oldResponse: DirectConversationStore.Event
+
+        store.withWriterLease {
+            oldRequest =
+                beginRequest(
+                    turnRef = "turn.reach.continuity.old",
+                    requestMessageRef = "message.reach.continuity.human.old",
+                    content =
+                        "The orchid-memory-depth rule is that Conversation stays exact while " +
+                            "hydration only borrows it.",
+                )
+            oldResponse =
+                appendResponse(
+                    request = oldRequest,
+                    responseMessageRef = "message.reach.continuity.vex.old",
+                    content =
+                        "I will keep orchid-memory-depth source ownership separate from retrieval.",
+                    model = "default_model",
+                    endpointOrigin = "http://127.0.0.1:8765",
+                    runtimeObservationRef = "observation.reach.continuity.old",
+                    invocationEvidenceRef = "evidence.reach.continuity.old",
+                )
+            val oldContext =
+                CanonicalLivedContextFixture.write(
+                    productHome = home,
+                    request = oldRequest,
+                    response = oldResponse,
+                    formedAt = Instant.parse("2026-11-16T08:00:00Z"),
+                )
+            commitCompletedTurn(
+                request = oldRequest,
+                response = oldResponse,
+                contextSha256 = oldContext.sha256,
+            )
+
+            val fillerRequest =
+                beginRequest(
+                    turnRef = "turn.reach.continuity.filler",
+                    requestMessageRef = "message.reach.continuity.human.filler",
+                    content = "filler ".repeat(120_000),
+                )
+            val fillerResponse =
+                appendResponse(
+                    request = fillerRequest,
+                    responseMessageRef = "message.reach.continuity.vex.filler",
+                    content = "The large recent turn exists only to pressure prompt residency.",
+                    model = "default_model",
+                    endpointOrigin = "http://127.0.0.1:8765",
+                    runtimeObservationRef = "observation.reach.continuity.filler",
+                    invocationEvidenceRef = "evidence.reach.continuity.filler",
+                )
+            val fillerContext =
+                CanonicalLivedContextFixture.write(
+                    productHome = home,
+                    request = fillerRequest,
+                    response = fillerResponse,
+                    formedAt = Instant.parse("2026-11-16T08:01:00Z"),
+                )
+            commitCompletedTurn(
+                request = fillerRequest,
+                response = fillerResponse,
+                contextSha256 = fillerContext.sha256,
+            )
+        }
+
+        val hydrateControl =
+            VexLifeCapabilityRequest.RequestHeader +
+                "\n" +
+                """{"capability":"continuity","action":"hydrate","arguments":{"queries":[["orchid-memory-depth"],["Conversation","retrieval"]]}}"""
+        val calls = mutableListOf<List<Pair<String, String>>>()
+        val finalAnswer = "The older source says hydration borrows exact Conversation without owning it."
+        val transport =
+            DirectCompanionConnection.Transport { call ->
+                calls += messages(call)
+                when (calls.size) {
+                    1 -> {
+                        assertFalse(
+                            calls[0]
+                                .joinToString("\n") { it.second }
+                                .contains("orchid-memory-depth")
+                        )
+                        reply(hydrateControl)
+                    }
+                    2 -> {
+                        val returned = calls[1].last()
+                        assertEquals("user", returned.first)
+                        assertTrue(returned.second.startsWith(VexLifeCapabilityRequest.ResultHeader))
+                        assertTrue(returned.second.contains("VEXLIFE_CONTINUITY_HYDRATION/v1"))
+                        assertTrue(returned.second.contains(oldRequest.content))
+                        assertTrue(returned.second.contains(oldResponse.content))
+                        assertTrue(returned.second.contains("\"state\":\"RETURNED\""))
+                        reply(finalAnswer)
+                    }
+                    else -> error("unexpected provider call")
+                }
+            }
+
+        val result =
+            DirectCompanionTurn.performWithHooks(
+                setup = setup(home),
+                intent =
+                    DirectCompanionTurn.Intent(
+                        idempotencyKey = "send.reach.continuity.001",
+                        content = "What was the orchid memory depth rule?",
+                    ),
+                hooks =
+                    DirectCompanionTurn.Hooks(
+                        transport = transport,
+                        now = { Instant.parse("2026-11-16T08:02:00Z") },
+                    ),
+            )
+
+        assertEquals(2, calls.size)
+        assertEquals(finalAnswer, result.content)
+        assertEquals(
+            "CONVERSATION_OVERLAP_HELD_TOKEN_BUDGET",
+            result.promptContextReceipt.contextMode,
+        )
+        assertEquals(
+            2,
+            result.promptContextReceipt.priorCompletedExchangeCount,
+        )
+        assertTrue(
+            result.promptContextReceipt.selectedConversationEventRefs.isEmpty(),
+        )
+        assertEquals(
+            VexLifeCapabilityBridge.Use(
+                "continuity",
+                "hydrate",
+                "continuity",
+                VexLifeCapabilityBridge.State.RETURNED,
+            ),
+            result.capabilityUses.single(),
+        )
+
+        val trace =
+            assertNotNull(
+                DirectTurnContextStore(home)
+                    .read(result.turnRef)
+                    ?.capabilityTrace,
+            )
+        val entry = trace.entries.single()
+        assertEquals("continuity", entry.handle)
+        assertEquals("hydrate", entry.action)
+        assertTrue(oldRequest.eventRef in entry.resultSourceRefs)
+        assertTrue(oldResponse.eventRef in entry.resultSourceRefs)
+        assertFalse(trace.rawResultContentPersisted)
+
+        val evidenceText =
+            Files.walk(home.resolve("runtime/vexlife-prod/turn-evidence")).use { paths ->
+                paths
+                    .filter { Files.isRegularFile(it) }
+                    .map { Files.readString(it) }
+                    .toList()
+                    .joinToString("\n")
+            }
+        assertFalse(evidenceText.contains(oldRequest.content))
+        assertTrue(evidenceText.contains(oldRequest.eventRef))
+        assertTrue(evidenceText.contains(oldResponse.eventRef))
     }
 
     @Test

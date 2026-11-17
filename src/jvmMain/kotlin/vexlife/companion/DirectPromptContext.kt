@@ -936,6 +936,11 @@ object DirectPromptContext {
                             null ->
                             "WORKING_CHECKPOINT_SUCCESSOR"
 
+                        selected.isEmpty() &&
+                            prior !=
+                            null ->
+                            "CONVERSATION_OVERLAP_HELD_TOKEN_BUDGET"
+
                         selected.size >
                             2 ->
                             "RECENT_COMPLETED_TURNS"
@@ -1334,6 +1339,14 @@ object DirectPromptContext {
             "direct continuity source-return context exceeds remaining prompt attention"
         }
 
+        val continuityHydrationAvailable =
+            fixed.capabilityFrame
+                ?.frame
+                ?.availableCapabilityRefs
+                ?.contains(
+                    "capability.vexlife.continuity.hydrate",
+                ) ==
+                true
         val recentConversation =
             if (
                 prior ==
@@ -1368,7 +1381,8 @@ object DirectPromptContext {
                 ) {
                     require(
                         sourceReturnProjection !=
-                            null,
+                            null ||
+                            continuityHydrationAvailable,
                     ) {
                         "ordinary continuity prompt requires the exact immediate prior completed turn to remain present"
                     }
@@ -2222,7 +2236,7 @@ object DirectPromptContext {
         )
     }
 
-    private const val ReachFrameTokenBudget = 6_000
+    private const val ReachFrameTokenBudget = 7_000
 
     /** Request/return reach admitted in an ordinary direct turn (VexLifeReachDefinitions). */
     private val DirectTurnReachRefs =
@@ -2232,6 +2246,7 @@ object DirectPromptContext {
             "capability.vexlife.repository.read",
             "capability.vexlife.home.read",
             "capability.vexlife.memory.recall",
+            "capability.vexlife.continuity.hydrate",
             "capability.vexlife.conversation.source-return",
         )
 
@@ -2257,6 +2272,11 @@ object DirectPromptContext {
                 "resource.vexlife-prod.memory.current-pages",
                 if (memoryCurrent) VexLifeCapabilityAtlas.ResourceState.AVAILABLE else VexLifeCapabilityAtlas.ResourceState.UNAVAILABLE,
                 listOf(bridge),
+            ),
+            available(
+                "resource.vexlife-prod.continuity.hydration",
+                currentRequest.threadRef,
+                "source-path:src/jvmMain/kotlin/vexlife/capability/reach/VexLifeContinuityHydration.kt",
             ),
             available("resource.vexlife-prod.conversation.canonical", currentRequest.threadRef),
         )

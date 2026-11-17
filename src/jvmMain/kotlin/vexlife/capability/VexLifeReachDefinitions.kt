@@ -24,6 +24,7 @@ internal object VexLifeReachDefinitions {
     const val RepositoryRef = "capability.vexlife.repository.read"
     const val HomeRef = "capability.vexlife.home.read"
     const val MemoryRef = "capability.vexlife.memory.recall"
+    const val ContinuityRef = "capability.vexlife.continuity.hydrate"
     const val ConversationRef = "capability.vexlife.conversation.source-return"
 
     const val AtlasResource = "resource.vexlife-prod.capability.registry"
@@ -31,6 +32,7 @@ internal object VexLifeReachDefinitions {
     const val RepositoryResource = "resource.vexlife-prod.network.public-github"
     const val HomeResource = "resource.vexlife-prod.home.files"
     const val MemoryResource = "resource.vexlife-prod.memory.current-pages"
+    const val ContinuityResource = "resource.vexlife-prod.continuity.hydration"
     const val ConversationResource = "resource.vexlife-prod.conversation.canonical"
 
     private val Roles = listOf(VexLifeCapabilityAtlas.CompanionRoleRef)
@@ -295,6 +297,50 @@ internal object VexLifeReachDefinitions {
                     ),
             ),
             Definition(
+                capabilityRef = ContinuityRef,
+                handle = "continuity",
+                purpose =
+                    "Hydrate relevant older continuity in one request across exact Conversation, " +
+                        "current Memory and current Working Continuity coordinates. This first slice " +
+                        "uses lexical terms and exact current anchors; a miss is not proof that no " +
+                        "semantically related durable history exists.",
+                defaultStage = VexLifeCapabilityAtlas.Stage.EXECUTABLE,
+                roleRefs = Roles,
+                platformRefs = Platforms,
+                permissionRef = VexLifeCapabilityAtlas.PermissionNone,
+                resourceRef = ContinuityResource,
+                effectClass = "READ_ONLY_LOCAL",
+                resourceClass = "CONTINUITY_HYDRATION",
+                modelParticipationClass = "REQUEST_RETURN",
+                sourcePath =
+                    "src/jvmMain/kotlin/vexlife/capability/reach/VexLifeContinuityHydration.kt",
+                priority = 44,
+                actions =
+                    listOf(
+                        Action(
+                            action = "hydrate",
+                            purpose =
+                                "Search several continuity clues together, fuse duplicate hits, " +
+                                    "re-open exact older Conversation source and return current Memory " +
+                                    "plus explicit unresolved frontier coordinates.",
+                            arguments =
+                                listOf(
+                                    arg(
+                                        "queries",
+                                        "string[][]",
+                                        true,
+                                        "1-4 query groups; each group has 1-6 distinctive words or phrases.",
+                                    )
+                                ),
+                            exampleArguments =
+                                """{"queries":[["Conversation","Memory"],["semantic ownership","separate"]]}""",
+                            returns =
+                                "Bounded exact Conversation and current Memory source with provenance, " +
+                                    "coverage and explicit frontier. No Memory/Conversation mutation.",
+                        )
+                    ),
+            ),
+            Definition(
                 capabilityRef = ConversationRef,
                 handle = "conversation",
                 purpose =
@@ -311,13 +357,13 @@ internal object VexLifeReachDefinitions {
                 modelParticipationClass = "REQUEST_RETURN",
                 sourcePath =
                     "src/jvmMain/kotlin/vexlife/companion/DirectConversationSourceReturn.kt",
-                priority = 44,
+                priority = 45,
             ),
         )
 
     /** The capabilities whose requests travel in [VexLifeCapabilityRequest] envelopes. */
     val EnvelopeCapabilityRefs: List<String> =
-        listOf(AtlasRef, WebRef, RepositoryRef, HomeRef, MemoryRef)
+        listOf(AtlasRef, WebRef, RepositoryRef, HomeRef, MemoryRef, ContinuityRef)
 }
 
 // [VXG RealForever]
