@@ -346,7 +346,7 @@ class DirectCompanionCapabilityTurnTest {
                             tokensAvailable =
                                 VexLifeCapabilityBridge.ExchangeAllowanceTokens,
                         ),
-                    owners =
+                    ownerBindings =
                         VexLifeCapabilityBridge.OwnerBindings(
                             webTransport = longPage,
                             resolver = publicResolver,

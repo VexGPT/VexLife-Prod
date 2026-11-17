@@ -962,7 +962,7 @@ object DirectCompanionTurn {
                                 tokensAvailable =
                                     base.materialization.receipt.capabilityExchangeAllowanceTokens - usedTokens,
                             ),
-                        owners = hooks.capabilityOwners,
+                        ownerBindings = hooks.capabilityOwners,
                         estimateTokens = DirectPromptContext::estimatedMessageTokens,
                     )
                 exchanges += exchange

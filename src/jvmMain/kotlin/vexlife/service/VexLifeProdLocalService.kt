@@ -50,11 +50,14 @@ import vexlife.web.VexLifeWebP1RuntimeArtifacts
 import vexlife.web.VexWebArtifacts
 
 /**
- * Fixed loopback service boundary for the local VexLife implementation.
+ * Sustained JVM host for the local VexLife Product realization.
  *
- * Browser/presentation code consumes [VexLifeProdServiceContract]. This JVM realization owns only
- * local HTTP delivery and projection. It does not own Home, Conversation, Memory, prompt selection,
- * Heretic lifecycle, source update policy, process lifetime, or presentation semantics.
+ * Browser/presentation code consumes [VexLifeProdServiceContract]. This service keeps concrete
+ * loopback delivery, frame hosting, turn delegation, diagnostics and the live model-switch
+ * realization available after the initiating browser caller disappears. Those relationships keep
+ * their own truth owners: this service does not own Home, Conversation, Memory, prompt selection,
+ * Heretic runtime lifecycle/currentness, source update policy, process lifetime, or presentation
+ * semantics.
  */
 class VexLifeProdLocalService private constructor(
     val sourceSha: String,
