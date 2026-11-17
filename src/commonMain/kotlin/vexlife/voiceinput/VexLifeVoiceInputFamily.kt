@@ -252,7 +252,11 @@ object VexLifeVoiceInputFamily :
         when (observation) {
             LocalLanguageObservation.Available -> null
             LocalLanguageObservation.InstallRequired -> InstallingLanguage(language)
-            LocalLanguageObservation.Unavailable -> Failed(language, FailureReason.LanguageUnavailable)
+            LocalLanguageObservation.Unavailable ->
+                Failed(
+                    language,
+                    FailureReason.LanguageUnavailable,
+                )
         }
 
     /** The realization has actually begun requesting microphone access. */
@@ -267,7 +271,7 @@ object VexLifeVoiceInputFamily :
     ): State =
         Listening(language)
 
-    /** Browser/provider failure has crossed the adapter boundary into one Product failure reason. */
+    /** Browser/provider failure crossed the adapter boundary into one Product failure reason. */
     fun observeFailure(
         language: Language,
         reason: FailureReason,
