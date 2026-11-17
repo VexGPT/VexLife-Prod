@@ -90,6 +90,7 @@ class VexLifeModels(
     @Serializable
     data class Projection(
         val schemaVersion: String,
+        val targetRef: String,
         val models: List<Row>,
         val totalMemoryBytes: Long?,
         val freeStorageBytes: Long?,
@@ -134,6 +135,7 @@ class VexLifeModels(
             }
         return Projection(
             schemaVersion = Schema,
+            targetRef = target.targetRef,
             models = rows,
             totalMemoryBytes = memory,
             freeStorageBytes = runCatching { Files.getFileStore(home).usableSpace }.getOrNull(),
