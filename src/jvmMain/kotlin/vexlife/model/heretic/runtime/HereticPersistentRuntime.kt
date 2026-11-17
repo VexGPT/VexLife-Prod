@@ -54,6 +54,18 @@ object HereticPersistentRuntime {
     const val OwnershipPollMs =
         50L
 
+    /**
+     * VexLife serves one human turn at a time. Keep only one mlx-lm prompt-cache entry:
+     * the immediate continuation benefits from a warm prefix, while older parallel-style cache
+     * entries only accumulate unified-memory pressure.
+     *
+     * This is the first bounded runtime-safety candidate earned by the lived 10-sequence/~20 GB
+     * cache failure. Active-KV/prefill controls remain unchanged until one-cache stress evidence
+     * proves they are also needed.
+     */
+    const val PromptCacheEntryLimit =
+        1
+
     private val RefPattern =
         Regex(
             "[A-Za-z0-9][A-Za-z0-9._:/-]*",
@@ -520,25 +532,158 @@ object HereticPersistentRuntime {
         )
     }
 
+    enum class ServerLaunchContract {
+        CURRENT,
+        PRE_PROMPT_CACHE_LIMIT,
+    }
+
     fun serverArgs(
         binding: Binding,
+    ): List<String> =
+        serverArgs(
+            binding = binding,
+            contract = ServerLaunchContract.CURRENT,
+        )
+
+    internal fun serverArgs(
+        binding: Binding,
+        contract: ServerLaunchContract,
     ): List<String> {
         validateBinding(
             binding,
         )
-
-        return listOf(
-            "-m",
-            "mlx_lm.server",
-            "--model",
-            binding.modelPath,
-            "--host",
-            "127.0.0.1",
-            "--port",
-            Port.toString(),
-            "--chat-template-args",
-            "{\"enable_thinking\":false}",
+        return serverArgs(
+            modelPath = binding.modelPath,
+            contract = contract,
         )
+    }
+
+    private fun serverArgs(
+        modelPath: String,
+        contract: ServerLaunchContract,
+    ): List<String> {
+        require(
+            modelPath.isNotBlank(),
+        ) {
+            "Heretic runtime launch contract requires one model path"
+        }
+
+        val base =
+            listOf(
+                "-m",
+                "mlx_lm.server",
+                "--model",
+                modelPath,
+                "--host",
+                "127.0.0.1",
+                "--port",
+                Port.toString(),
+                "--chat-template-args",
+                "{\"enable_thinking\":false}",
+            )
+        return when (contract) {
+            ServerLaunchContract.CURRENT ->
+                base +
+                    listOf(
+                        "--prompt-cache-size",
+                        PromptCacheEntryLimit.toString(),
+                    )
+
+            ServerLaunchContract.PRE_PROMPT_CACHE_LIMIT ->
+                base
+        }
+    }
+
+    /**
+     * Exact launch argv from a runtime contract this owner previously emitted. This is migration
+     * recognition only: arbitrary argv drift remains unowned and cannot authorize retirement.
+     */
+    internal fun serverLaunchContract(
+        binding: Binding,
+        args: List<String>,
+    ): ServerLaunchContract? =
+        serverLaunchContract(
+            modelPath = binding.modelPath,
+            args = args,
+        )
+
+    private fun serverLaunchContract(
+        modelPath: String,
+        args: List<String>,
+    ): ServerLaunchContract? =
+        ServerLaunchContract.entries.firstOrNull { contract ->
+            serverArgs(
+                modelPath = modelPath,
+                contract = contract,
+            ) == args
+        }
+
+    private fun acceptedPriorServerArgs(
+        binding: Binding,
+        receipt: Receipt,
+    ): List<String>? =
+        serverLaunchContract(
+            binding = binding,
+            args = receipt.runtime.args,
+        )
+            ?.let {
+                receipt.runtime.args
+            }
+
+    /**
+     * Retirement-only ownership for a Product runtime whose model is no longer offered.
+     *
+     * Serving eligibility is intentionally not part of this proof. A historical model may be
+     * ineligible to serve now while the process/lifetime it left behind remains exactly owned and
+     * therefore safely retireable. Model-specific identity is not promoted to current truth.
+     */
+    private fun receiptOwnsRetirableRuntimeLineage(
+        binding: Binding,
+        receipt: Receipt,
+        expectedArgs: List<String>,
+    ): Boolean {
+        val current =
+            binding.model.identity
+
+        return receipt.schemaVersion ==
+            ReceiptSchema &&
+            receipt.authorityRef ==
+            binding.authorityRef &&
+            receipt.runtimeAdapterRef ==
+            current.runtimeAdapterRef &&
+            receipt.runtimeClass ==
+            current.runtimeClass &&
+            receipt.transportClass ==
+            current.transportClass &&
+            receipt.hostExecutionProfileRef ==
+            current.hostExecutionProfileRef &&
+            receipt.pythonVersion ==
+            current.pythonVersion &&
+            receipt.mlxLmVersion ==
+            current.mlxLmVersion &&
+            receipt.pythonPath ==
+            binding.pythonPath &&
+            receipt.pythonEnvironmentRoot ==
+            binding.pythonEnvironmentRoot &&
+            receipt.endpoint ==
+            current.endpoint &&
+            receipt.requestModel ==
+            current.requestModel &&
+            receipt.implementationIdentity.repository ==
+            binding.implementationIdentity.repository &&
+            receipt.implementationIdentity.classResource ==
+            binding.implementationIdentity.classResource &&
+            receipt.runtime.pid >
+            0 &&
+            receipt.runtime.processGroupId >
+            0 &&
+            receipt.runtime.exactOwnedDetachedGroup &&
+            receipt.runtime.args ==
+            expectedArgs &&
+            receipt.runtime.processSubstrate.pid ==
+            receipt.runtime.pid &&
+            receipt.effects ==
+            HereticRuntimeEffectBoundary.QualifiedRuntime
     }
 
     fun startOrReuse(
@@ -587,17 +732,38 @@ object HereticPersistentRuntime {
         // chosen model starts. A receipt that is not provably ours still fails below.
         val priorModel =
             prior?.let { HereticModelCatalog.entry(it.modelRef) }
+
+        // A Product-owned runtime may outlive the catalog entry that selected it (for example an
+        // experimental model removed by a later/narrower build). "No longer offered" means it may
+        // not serve now; it does not erase lifecycle ownership needed to retire the exact process.
+        val unsupportedPriorArgs =
+            if (
+                prior !=
+                    null &&
+                priorModel ==
+                    null
+            ) {
+                serverLaunchContract(
+                    modelPath = prior.modelPath,
+                    args = prior.runtime.args,
+                )
+                    ?.let {
+                        prior.runtime.args
+                    }
+            } else {
+                null
+            }
         if (
             prior !=
                 null &&
-                priorModel !=
-                null &&
-                priorModel.modelRef !=
-                binding.model.modelRef &&
-                receiptBinds(
-                    binding.copy(model = priorModel, modelPath = prior.modelPath),
-                    prior,
-                    requireImplementationSha = false,
+                priorModel ==
+                    null &&
+                unsupportedPriorArgs !=
+                    null &&
+                receiptOwnsRetirableRuntimeLineage(
+                    binding = binding,
+                    receipt = prior,
+                    expectedArgs = unsupportedPriorArgs,
                 )
         ) {
             if (
@@ -607,7 +773,87 @@ object HereticPersistentRuntime {
             ) {
                 requireExactOwnedProcess(
                     prior,
-                    prior.runtime.args,
+                    unsupportedPriorArgs,
+                    platform,
+                )
+            }
+            val retired =
+                platform.retire(
+                    prior,
+                )
+            require(
+                retired.exactOwnershipVerified &&
+                    retired.verifiedNotLive,
+            ) {
+                "unsupported-model exact Heretic runtime could not be retired before current model start"
+            }
+            store.delete()
+            switchedModel =
+                true
+            VexLogger.record(
+                VexLogger.Fact.RuntimeModelSwitched,
+                mapOf(
+                    "from" to prior.modelRef,
+                    "to" to binding.model.handle,
+                    "reason" to "PRIOR_MODEL_NOT_OFFERED",
+                ),
+            )
+        }
+
+        val priorModelBinding =
+            if (
+                prior !=
+                    null &&
+                    priorModel !=
+                    null
+            ) {
+                binding.copy(
+                    model = priorModel,
+                    modelPath = prior.modelPath,
+                )
+            } else {
+                null
+            }
+        val priorModelArgs =
+            if (
+                prior !=
+                    null &&
+                    priorModelBinding !=
+                    null
+            ) {
+                acceptedPriorServerArgs(
+                    binding = priorModelBinding,
+                    receipt = prior,
+                )
+            } else {
+                null
+            }
+        if (
+            prior !=
+                null &&
+                priorModel !=
+                null &&
+                priorModelBinding !=
+                null &&
+                priorModelArgs !=
+                null &&
+                priorModel.modelRef !=
+                binding.model.modelRef &&
+                receiptBinds(
+                    binding = priorModelBinding,
+                    receipt = prior,
+                    requireImplementationSha = false,
+                    expectedArgs = priorModelArgs,
+                )
+        ) {
+            if (
+                platform.processAlive(
+                    prior.runtime.pid,
+                )
+            ) {
+                requireExactOwnedProcess(
+                    prior,
+                    priorModelArgs,
                     platform,
                 )
             }
@@ -630,19 +876,29 @@ object HereticPersistentRuntime {
             )
         }
 
+        val acceptedPriorArgs =
+            prior?.let {
+                acceptedPriorServerArgs(
+                    binding = binding,
+                    receipt = it,
+                )
+            }
         if (
             !switchedModel &&
             prior !=
                 null &&
                 !receiptBinds(
-                    binding,
-                    prior,
+                    binding = binding,
+                    receipt = prior,
                     requireImplementationSha = true,
                 ) &&
+                acceptedPriorArgs !=
+                null &&
                 receiptBinds(
-                    binding,
-                    prior,
+                    binding = binding,
+                    receipt = prior,
                     requireImplementationSha = false,
+                    expectedArgs = acceptedPriorArgs,
                 )
         ) {
             if (
@@ -652,7 +908,7 @@ object HereticPersistentRuntime {
             ) {
                 requireExactOwnedProcess(
                     prior,
-                    args,
+                    acceptedPriorArgs,
                     platform,
                 )
             }
@@ -1157,12 +1413,11 @@ object HereticPersistentRuntime {
         binding: Binding,
         receipt: Receipt,
         requireImplementationSha: Boolean,
-    ): Boolean {
-        val expectedArgs =
+        expectedArgs: List<String> =
             serverArgs(
                 binding,
-            )
-
+            ),
+    ): Boolean {
         val identity =
             binding.model.identity
         return receipt.schemaVersion ==
