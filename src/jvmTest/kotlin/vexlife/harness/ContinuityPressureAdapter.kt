@@ -29,11 +29,9 @@ import vexlife.companion.DirectPromptContext
 import vexlife.companion.DirectTurnContextStore
 import vexlife.companion.DirectWorkingContinuity
 import vexlife.continuity.VexLifeContextRevisit
-import vexlife.conversation.DirectConversationStore
-import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.continuity.VexLifeWorkingContinuity
-import vexlife.person.VexLifePersonSettings
-import vexlife.person.VexLifePersonSettingsStore
+import vexlife.continuity.VexLifeWorkingContinuityOwner
+import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.logging.VexLogger
@@ -41,6 +39,8 @@ import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeState
+import vexlife.person.VexLifePersonSettings
+import vexlife.person.VexLifePersonSettingsStore
 
 /**
  * Claude lane's adapter into the shared VexWork continuity-pressure harness (#310).
@@ -67,7 +67,10 @@ object ContinuityPressureAdapter {
     const val ExtensionKey = "vexlife-prod.claude-c20/v1"
     const val CanonicalScenarioRef = "scenario.vexlife.continuity-pressure.depth-continuity.v1"
 
-    /** Digest of the shared canonical scenario at VexWork #310 head c604191b (unchanged at 0fc67824). */
+    /**
+     * Digest of the shared canonical scenario at VexWork #310 head c604191b (unchanged at
+     * 0fc67824).
+     */
     const val CanonicalScenarioSha256 =
         "65c81bfdcc0935d261204566bfc05468317c59e962eabceffb9f7e0fca359cc1"
 
@@ -124,9 +127,14 @@ object ContinuityPressureAdapter {
          * setup route to borrow its qualified runtime. Turns still go to a scratch Home.
          */
         val runtimeHome: Path? = null,
-        /** Live stages only: the operator affirms a dedicated window, not alongside Victor's own conversation. */
+        /**
+         * Live stages only: the operator affirms a dedicated window, not alongside Victor's own
+         * conversation.
+         */
         val experimentWindow: Boolean = false,
-        /** Multiplies each turn's synthetic payload; 1 leaves the scenario's own sizes. Recorded. */
+        /**
+         * Multiplies each turn's synthetic payload; 1 leaves the scenario's own sizes. Recorded.
+         */
         val payloadScale: Int = 1,
     )
 
@@ -172,7 +180,8 @@ object ContinuityPressureAdapter {
 
     private val KnownRefTags = setOf("ANCHOR", "CORRECTION", "LESSON")
 
-    private val RouteInDetail = Regex("\\((PROMPT_RESIDENT|SOURCE_RETURN_THIS_TURN|HYDRATED_THIS_TURN)\\)")
+    private val RouteInDetail =
+        Regex("\\((PROMPT_RESIDENT|SOURCE_RETURN_THIS_TURN|HYDRATED_THIS_TURN)\\)")
 
     // ---------------------------------------------------------------- entry
 
@@ -190,7 +199,8 @@ object ContinuityPressureAdapter {
         Files.createDirectories(config.resultDir)
         require(config.payloadScale in 1..16) { "--payload-scale is 1-16" }
         return when (config.stage) {
-            Stage.projection -> projection(config, scenario, scenarioBytes, scenarioSha, FixtureProvider())
+            Stage.projection ->
+                projection(config, scenario, scenarioBytes, scenarioSha, FixtureProvider())
             Stage.analyze -> analyze(config)
             Stage.quick,
             Stage.full -> live(config, scenario, scenarioBytes, scenarioSha, bind)
@@ -213,10 +223,13 @@ object ContinuityPressureAdapter {
         val live: Boolean
         val transport: DirectCompanionConnection.Transport
         val evidence: HereticModelConfiguration.QualifiedRuntimeEvidence
+
         /** Re-observe the same runtime; a live run never recovers or replaces it. */
         fun observe(): HereticModelConfiguration.QualifiedRuntimeEvidence
+
         /** Every provider call body as sent, in order. */
         val calls: List<JsonObject>
+
         fun begin(turn: ScenarioTurn) {}
     }
 
@@ -240,9 +253,12 @@ object ContinuityPressureAdapter {
         override val live = false
         override val transport: DirectCompanionConnection.Transport = fixture
         override val evidence = FixtureEvidence
+
         override fun observe() = evidence
+
         override val calls: List<JsonObject>
             get() = fixture.calls
+
         override fun begin(turn: ScenarioTurn) {
             fixture.turn = turn
         }
@@ -284,7 +300,9 @@ object ContinuityPressureAdapter {
         override val live = true
         override val transport: DirectCompanionConnection.Transport = this
         override val evidence = runtime.evidence
+
         override fun observe() = runtime.observe()
+
         override val calls = mutableListOf<JsonObject>()
 
         override fun post(call: DirectCompanionConnection.HttpCall) = runtime.transport.post(call)
@@ -388,7 +406,8 @@ object ContinuityPressureAdapter {
                         "Fixture: the provider input carried replyLanguage=$language in message " +
                             "${index + 1} of ${messages.size} ($role)."
                     }
-                else -> "Fixture: the provider input carried ${carried.size} reply-language settings."
+                else ->
+                    "Fixture: the provider input carried ${carried.size} reply-language settings."
             }
         }
 
@@ -412,7 +431,8 @@ object ContinuityPressureAdapter {
         }
     }
 
-    private val SettingTags = setOf("CURRENTNESS", "CONFIGURATION_SWAP", "CONFIGURATION_PERSISTENCE")
+    private val SettingTags =
+        setOf("CURRENTNESS", "CONFIGURATION_SWAP", "CONFIGURATION_PERSISTENCE")
 
     private val PersonContextJson = Regex("\"replyLanguage\":\"([a-zA-Z-]+)\"")
 
@@ -421,18 +441,18 @@ object ContinuityPressureAdapter {
      * provider call: in the system block or the current-state envelope. Text that merely looks like
      * one inside history or returned source is history, not what VexLife said is current.
      */
-    private fun personContextsIn(messages: kotlinx.serialization.json.JsonArray): List<Pair<Int, String>> =
-        messages.flatMapIndexed { index, message ->
-            val role = message.jsonObject.getValue("role").jsonPrimitive.content
-            val content = message.jsonObject.getValue("content").jsonPrimitive.content
-            if (role != "system" && !content.startsWith(DirectPromptContext.CurrentStateHeader)) {
-                return@flatMapIndexed emptyList()
-            }
-            content
-                .split("VEXLIFE_PERSON_CONTEXT/v1")
-                .drop(1)
-                .mapNotNull { block -> PersonContextJson.find(block)?.groupValues?.get(1)?.let { index to it } }
+    private fun personContextsIn(
+        messages: kotlinx.serialization.json.JsonArray
+    ): List<Pair<Int, String>> = messages.flatMapIndexed { index, message ->
+        val role = message.jsonObject.getValue("role").jsonPrimitive.content
+        val content = message.jsonObject.getValue("content").jsonPrimitive.content
+        if (role != "system" && !content.startsWith(DirectPromptContext.CurrentStateHeader)) {
+            return@flatMapIndexed emptyList()
         }
+        content.split("VEXLIFE_PERSON_CONTEXT/v1").drop(1).mapNotNull { block ->
+            PersonContextJson.find(block)?.groupValues?.get(1)?.let { index to it }
+        }
+    }
 
     private val ProbeTags =
         setOf(
@@ -510,7 +530,9 @@ object ContinuityPressureAdapter {
         scenarioBytes: ByteArray,
         scenarioSha: String,
         provider: Provider,
-    ): Int = VexLogger.capturing { chronology -> run(config, scenario, scenarioBytes, scenarioSha, provider, chronology) }
+    ): Int = VexLogger.capturing { chronology ->
+        run(config, scenario, scenarioBytes, scenarioSha, provider, chronology)
+    }
 
     private fun run(
         config: Config,
@@ -577,7 +599,8 @@ object ContinuityPressureAdapter {
                     // As the service composes it each turn: read fresh from the canonical owner.
                     val language = settings.read().replyLanguage
                     val sent =
-                        turn.input + payload(scenario.payloadSeed, turn, ordinal, config.payloadScale)
+                        turn.input +
+                            payload(scenario.payloadSeed, turn, ordinal, config.payloadScale)
                     val result =
                         DirectCompanionTurn.performWithHooks(
                             setup = setup(home, provider.evidence),
@@ -606,10 +629,10 @@ object ContinuityPressureAdapter {
                     val workingReceipt =
                         DirectWorkingContinuity.read(productHome = home, turnRef = result.turnRef)
                     val head = DirectConversationStore(home).current().head
-                    val committed =
-                        head?.let {
-                            VexLifeWorkingContinuityOwner(home).readCurrent(it.companionLineageRef, it.threadRef)
-                        }
+                    val committed = head?.let {
+                        VexLifeWorkingContinuityOwner(home)
+                            .readCurrent(it.companionLineageRef, it.threadRef)
+                    }
                     val receipt = result.promptContextReceipt
                     val pressure =
                         VexLifeWorkingContinuity.projectPressure(
@@ -638,11 +661,17 @@ object ContinuityPressureAdapter {
                             revisitPacket =
                                 turnCalls
                                     .mapNotNull { call ->
-                                        call.getValue("messages").jsonArray.lastOrNull()?.jsonObject
+                                        call
+                                            .getValue("messages")
+                                            .jsonArray
+                                            .lastOrNull()
+                                            ?.jsonObject
                                             ?.getValue("content")
                                             ?.jsonPrimitive
                                             ?.content
-                                            ?.takeIf { it.startsWith(VexLifeCapabilityRequest.ResultHeader) }
+                                            ?.takeIf {
+                                                it.startsWith(VexLifeCapabilityRequest.ResultHeader)
+                                            }
                                     }
                                     .lastOrNull(),
                             workingDisposition =
@@ -653,15 +682,23 @@ object ContinuityPressureAdapter {
                                     ?.disposition,
                             providerCalls = turnCalls,
                             // Live only: the Product's own per-stage provider measurement (usage
-                            // and timing). A projection's synthetic transport measures nothing real.
+                            // and timing). A projection's synthetic transport measures nothing
+                            // real.
                             telemetry =
-                                if (!provider.live) emptyList() else chronology.drop(recordsBefore)
-                                    .filter { it.fact == VexLogger.Fact.ProviderStageObserved.wire }
-                                    .map { record ->
-                                        buildJsonObject {
-                                            record.refs.forEach { (key, value) -> put(key, value) }
+                                if (!provider.live) emptyList()
+                                else
+                                    chronology
+                                        .drop(recordsBefore)
+                                        .filter {
+                                            it.fact == VexLogger.Fact.ProviderStageObserved.wire
                                         }
-                                    },
+                                        .map { record ->
+                                            buildJsonObject {
+                                                record.refs.forEach { (key, value) ->
+                                                    put(key, value)
+                                                }
+                                            }
+                                        },
                             chronology = chronology.drop(recordsBefore).toList(),
                             wallNanos = wallNanos,
                             pressureState = pressure,
@@ -737,9 +774,7 @@ object ContinuityPressureAdapter {
         val target = turn.payloadTargetTokens * scale
         var state = seed xor (ordinal.toLong() * 0x9E3779B97F4A7C15uL.toLong())
         val words = StringBuilder()
-        while (
-            DirectPromptContext.estimatedMessageTokens(words.toString()) < target
-        ) {
+        while (DirectPromptContext.estimatedMessageTokens(words.toString()) < target) {
             state = state xor (state shl 13)
             state = state xor (state ushr 7)
             state = state xor (state shl 17)
@@ -798,7 +833,10 @@ object ContinuityPressureAdapter {
             it.stabilityClass == DirectPromptContext.ComponentStability.APPEND_ONLY_HISTORY
         }
 
-    /** Mutable or ephemeral components placed ahead of this prompt's cacheable history; null without history. */
+    /**
+     * Mutable or ephemeral components placed ahead of this prompt's cacheable history; null without
+     * history.
+     */
     private fun mutableBeforeHistory(receipt: DirectPromptContext.Receipt): List<String>? {
         val history = historyComponent(receipt) ?: return null
         return receipt.contextComponents
@@ -817,14 +855,19 @@ object ContinuityPressureAdapter {
     private fun cacheablePrefixLength(o: Observed): Int {
         val receipt = o.result.promptContextReceipt
         val system =
-            if (receipt.contextComponents.any {
+            if (
+                receipt.contextComponents.any {
                     it.placementClass == DirectPromptContext.ComponentPlacement.SYSTEM_PREFIX
                 }
-            ) 1 else 0
+            )
+                1
+            else 0
         return system + receipt.selectedConversationEventRefs.size
     }
 
-    /** Whether [current]'s first call begins with exactly the system block and history [prior] sent. */
+    /**
+     * Whether [current]'s first call begins with exactly the system block and history [prior] sent.
+     */
     private fun prefixPreserved(prior: Observed, current: Observed): Boolean? {
         val before = firstCallMessages(prior) ?: return null
         val after = firstCallMessages(current) ?: return null
@@ -888,7 +931,9 @@ object ContinuityPressureAdapter {
             val beforeHistory = mutableBeforeHistory(receipt)
             val changed =
                 o.controls.isNotEmpty() &&
-                    o.canonicalReplyLanguage != (priorObserved?.canonicalReplyLanguage ?: VexLifePersonSettings.DefaultLanguage)
+                    o.canonicalReplyLanguage !=
+                        (priorObserved?.canonicalReplyLanguage
+                            ?: VexLifePersonSettings.DefaultLanguage)
             buildJsonObject {
                 put("ordinal", o.ordinal)
                 put("setRef", o.setRef)
@@ -1039,7 +1084,9 @@ object ContinuityPressureAdapter {
                                                     "componentRefs",
                                                     json.encodeToJsonElement(
                                                         receipt.contextComponents
-                                                            .filter { it.providerMessageIndex == index }
+                                                            .filter {
+                                                                it.providerMessageIndex == index
+                                                            }
                                                             .map { it.componentRef }
                                                     ),
                                                 )
@@ -1074,8 +1121,14 @@ object ContinuityPressureAdapter {
                                 put(
                                     "workingContinuityCommit",
                                     when {
-                                        o.chronology.any { it.fact == VexLogger.Fact.WorkingContinuityCommitFailed.wire } -> "FAILED"
-                                        o.chronology.any { it.fact == VexLogger.Fact.WorkingContinuityCommitted.wire } -> "COMMITTED"
+                                        o.chronology.any {
+                                            it.fact ==
+                                                VexLogger.Fact.WorkingContinuityCommitFailed.wire
+                                        } -> "FAILED"
+                                        o.chronology.any {
+                                            it.fact ==
+                                                VexLogger.Fact.WorkingContinuityCommitted.wire
+                                        } -> "COMMITTED"
                                         else -> "NOT_RECORDED"
                                     },
                                 )
@@ -1085,11 +1138,15 @@ object ContinuityPressureAdapter {
                                 put(
                                     "revisitHostScans",
                                     json.encodeToJsonElement(
-                                        // Latency is host timing, kept out of the deterministic result.
+                                        // Latency is host timing, kept out of the deterministic
+                                        // result.
                                         o.hostScans.map { scan ->
                                             buildJsonObject {
                                                 put("ownerReadCount", scan.ownerReadCount)
-                                                put("conversationEventsRead", scan.conversationEventsRead)
+                                                put(
+                                                    "conversationEventsRead",
+                                                    scan.conversationEventsRead,
+                                                )
                                                 put("turnsScanned", scan.turnsScanned)
                                                 put("memoryPagesScanned", scan.memoryPagesScanned)
                                                 put("nodesResolved", scan.nodesResolved)
@@ -1155,12 +1212,13 @@ object ContinuityPressureAdapter {
                         }
                     val history = historyComponent(receipt)
                     val contentByEvent =
-                        observed.flatMap {
-                            listOf(
-                                it.result.requestEventRef to it.sentContent,
-                                it.result.responseEventRef to it.result.content,
-                            )
-                        }
+                        observed
+                            .flatMap {
+                                listOf(
+                                    it.result.requestEventRef to it.sentContent,
+                                    it.result.responseEventRef to it.result.content,
+                                )
+                            }
                             .toMap()
                     val historyExact =
                         history != null &&
@@ -1172,10 +1230,13 @@ object ContinuityPressureAdapter {
                                     .jsonPrimitive
                                     .content == contentByEvent[ref]
                             }
-                    val visible = carried.map { it.second } == listOf(expected) && o.canonicalReplyLanguage == expected
+                    val visible =
+                        carried.map { it.second } == listOf(expected) &&
+                            o.canonicalReplyLanguage == expected
                     val current =
                         person != null &&
-                            person.stabilityClass == DirectPromptContext.ComponentStability.MUTABLE_CURRENT &&
+                            person.stabilityClass ==
+                                DirectPromptContext.ComponentStability.MUTABLE_CURRENT &&
                             history != null &&
                             person.providerMessageIndex > history.providerMessageIndex
                     Triple(
@@ -1193,8 +1254,10 @@ object ContinuityPressureAdapter {
                     // look-alike arrived, in the call Vex answered from (the last of the turn).
                     val last = o.providerCalls.lastOrNull()?.getValue("messages")?.jsonArray
                     val carried = last?.let(::personContextsIn).orEmpty()
-                    // The look-alike block itself (its label plus a person-context block), wherever it
-                    // sits other than VexLife's own envelope: not the probe or Vex's request naming it.
+                    // The look-alike block itself (its label plus a person-context block), wherever
+                    // it
+                    // sits other than VexLife's own envelope: not the probe or Vex's request naming
+                    // it.
                     val historical =
                         last.orEmpty().withIndex().filter { (_, m) ->
                             val content = m.jsonObject.getValue("content").jsonPrimitive.content
@@ -1206,7 +1269,8 @@ object ContinuityPressureAdapter {
                         val m = last!![index].jsonObject
                         val content = m.getValue("content").jsonPrimitive.content
                         return when {
-                            content.startsWith(VexLifeCapabilityRequest.ResultHeader) -> "returned source"
+                            content.startsWith(VexLifeCapabilityRequest.ResultHeader) ->
+                                "returned source"
                             else -> "history (${m.getValue("role").jsonPrimitive.content})"
                         }
                     }
@@ -1216,9 +1280,14 @@ object ContinuityPressureAdapter {
                         "projection: VexLife carried replyLanguage=${envelope?.second} (canonical " +
                             "${o.canonicalReplyLanguage}) at message ${envelope?.first?.plus(1)} of ${last?.size}; " +
                             "the authentic old look-alike naming another language appears at " +
-                            historical.joinToString(", ") { "message ${it.index + 1} (${where(it.index)})" }.ifEmpty { "no message" } +
+                            historical
+                                .joinToString(", ") {
+                                    "message ${it.index + 1} (${where(it.index)})"
+                                }
+                                .ifEmpty { "no message" } +
                             "; whether Vex treats the real envelope as current is a live-answer question" +
-                            (if (o.telemetry.isNotEmpty()) "; live answer recorded in responseText" else ""),
+                            (if (o.telemetry.isNotEmpty()) "; live answer recorded in responseText"
+                            else ""),
                         listOf(o.result.promptContextReceipt.receiptRef),
                     )
                 }
@@ -1228,22 +1297,29 @@ object ContinuityPressureAdapter {
                         "projection: the host records the order (" +
                             observed
                                 .filter { it.ordinal <= o.ordinal && it.controls.isNotEmpty() }
-                                .joinToString(", ") { "ordinal ${it.ordinal}: ${it.canonicalReplyLanguage}" } +
+                                .joinToString(", ") {
+                                    "ordinal ${it.ordinal}: ${it.canonicalReplyLanguage}"
+                                } +
                             "); Vex sees only the current setting plus its own earlier replies, so whether it states the timeline is a live-answer question",
                         emptyList(),
                     )
                 ref == "assert.mutable-placement" -> {
                     val upTo = observed.filter { it.ordinal <= o.ordinal }
-                    val offending =
-                        upTo.mapNotNull { t ->
-                            mutableBeforeHistory(t.result.promptContextReceipt)
-                                ?.takeIf { it.isNotEmpty() }
-                                ?.let { t.ordinal to it }
-                        }
-                    val applicable = upTo.count { mutableBeforeHistory(it.result.promptContextReceipt) != null }
+                    val offending = upTo.mapNotNull { t ->
+                        mutableBeforeHistory(t.result.promptContextReceipt)
+                            ?.takeIf { it.isNotEmpty() }
+                            ?.let { t.ordinal to it }
+                    }
+                    val applicable = upTo.count {
+                        mutableBeforeHistory(it.result.promptContextReceipt) != null
+                    }
                     when {
                         applicable == 0 ->
-                            Triple("UNKNOWN", "projection: no turn carried history to place against", emptyList())
+                            Triple(
+                                "UNKNOWN",
+                                "projection: no turn carried history to place against",
+                                emptyList(),
+                            )
                         offending.isEmpty() ->
                             Triple(
                                 "PASS",
@@ -1391,26 +1467,39 @@ object ContinuityPressureAdapter {
             )
             put("knownLessonReuse", bool(assertionState("assert.tight-means-exact")))
             put("honestAbsence", bool(assertionState("assert.absence")))
-            val beforeHistory =
-                turns.mapNotNull { ext(it)["mutableCurrentBeforeCacheableHistory"]?.jsonPrimitive?.booleanOrNull }
-            put("mutableCurrentBeforeCacheableHistory", if (beforeHistory.isEmpty()) null else beforeHistory.any { it })
-            val changes = turns.filter { ext(it)["configurationChanged"]?.jsonPrimitive?.booleanOrNull == true }
-            val preservedAtChange =
-                changes.map { ext(it)["systemAndHistoryPrefixPreservedFromPriorTurn"]?.jsonPrimitive?.booleanOrNull }
+            val beforeHistory = turns.mapNotNull {
+                ext(it)["mutableCurrentBeforeCacheableHistory"]?.jsonPrimitive?.booleanOrNull
+            }
+            put(
+                "mutableCurrentBeforeCacheableHistory",
+                if (beforeHistory.isEmpty()) null else beforeHistory.any { it },
+            )
+            val changes = turns.filter {
+                ext(it)["configurationChanged"]?.jsonPrimitive?.booleanOrNull == true
+            }
+            val preservedAtChange = changes.map {
+                ext(it)["systemAndHistoryPrefixPreservedFromPriorTurn"]
+                    ?.jsonPrimitive
+                    ?.booleanOrNull
+            }
             put(
                 "stableHistoryPrefixPreservedAcrossConfigurationChange",
                 if (preservedAtChange.isEmpty() || preservedAtChange.any { it == null }) null
                 else preservedAtChange.all { it == true },
             )
-            val carriedByTurn =
-                turns.map { t ->
-                    ext(t)["carriedReplyLanguages"]?.jsonArray?.map { it.jsonPrimitive.content }.orEmpty() to
-                        ext(t)["canonicalReplyLanguage"]?.jsonPrimitive?.contentOrNull
-                }
+            val carriedByTurn = turns.map { t ->
+                ext(t)["carriedReplyLanguages"]
+                    ?.jsonArray
+                    ?.map { it.jsonPrimitive.content }
+                    .orEmpty() to ext(t)["canonicalReplyLanguage"]?.jsonPrimitive?.contentOrNull
+            }
             put(
                 "latestConfigurationObserved",
                 if (carriedByTurn.all { it.first.isEmpty() }) null
-                else carriedByTurn.all { (carried, canonical) -> carried == listOfNotNull(canonical) },
+                else
+                    carriedByTurn.all { (carried, canonical) ->
+                        carried == listOfNotNull(canonical)
+                    },
             )
             put("firstConfigurationChangeTurn", changes.firstOrNull()?.let(::ordinal))
             put(
@@ -1433,7 +1522,9 @@ object ContinuityPressureAdapter {
                         buildJsonObject {
                             turns
                                 .mapNotNull { t ->
-                                    ext(t)["pressureState"]?.jsonPrimitive?.contentOrNull?.let { it to ordinal(t) }
+                                    ext(t)["pressureState"]?.jsonPrimitive?.contentOrNull?.let {
+                                        it to ordinal(t)
+                                    }
                                 }
                                 .groupBy({ it.first }, { it.second })
                                 .forEach { (state, ordinals) -> put(state, ordinals.min()) }
@@ -1445,9 +1536,12 @@ object ContinuityPressureAdapter {
                             turns.map { t ->
                                 listOf(
                                         ordinal(t).toString(),
-                                        ext(t)["pressureState"]?.jsonPrimitive?.contentOrNull ?: "-",
+                                        ext(t)["pressureState"]?.jsonPrimitive?.contentOrNull
+                                            ?: "-",
                                         prompt(t).getValue("contextMode").jsonPrimitive.content,
-                                        ext(t)["workingContinuityDisposition"]?.jsonPrimitive?.contentOrNull ?: "-",
+                                        ext(t)["workingContinuityDisposition"]
+                                            ?.jsonPrimitive
+                                            ?.contentOrNull ?: "-",
                                         selected(t).size.toString(),
                                     )
                                     .joinToString(" ")
@@ -1457,19 +1551,30 @@ object ContinuityPressureAdapter {
                     put(
                         "systemAndHistoryPrefixPreservedByTurn",
                         json.encodeToJsonElement(
-                            turns.map { ext(it)["systemAndHistoryPrefixPreservedFromPriorTurn"] ?: JsonNull }
+                            turns.map {
+                                ext(it)["systemAndHistoryPrefixPreservedFromPriorTurn"] ?: JsonNull
+                            }
                         ),
                     )
                     put(
                         "mutableCurrentBeforeHistoryTurns",
                         json.encodeToJsonElement(
                             turns
-                                .filter { ext(it)["mutableCurrentBeforeCacheableHistory"]?.jsonPrimitive?.booleanOrNull == true }
+                                .filter {
+                                    ext(it)["mutableCurrentBeforeCacheableHistory"]
+                                        ?.jsonPrimitive
+                                        ?.booleanOrNull == true
+                                }
                                 .map(::ordinal)
                         ),
                     )
-                    val scans = turns.flatMap { ext(it)["revisitHostScans"]?.jsonArray.orEmpty() }.map { it.jsonObject }
-                    fun total(key: String) = scans.sumOf { it.getValue(key).jsonPrimitive.content.toInt() }
+                    val scans =
+                        turns
+                            .flatMap { ext(it)["revisitHostScans"]?.jsonArray.orEmpty() }
+                            .map { it.jsonObject }
+                    fun total(key: String) = scans.sumOf {
+                        it.getValue(key).jsonPrimitive.content.toInt()
+                    }
                     put(
                         "revisitHostScan",
                         buildJsonObject {
@@ -1480,8 +1585,16 @@ object ContinuityPressureAdapter {
                             put("nodesResolved", total("nodesResolved"))
                             put("nodesReturned", total("nodesReturned"))
                             put("returnedTokens", total("returnedTokens"))
-                            put("maximumFrontierSize", scans.maxOfOrNull { it.getValue("frontierSize").jsonPrimitive.content.toInt() } ?: 0)
-                            put("ownerReadLatency", "host timing; see host-scan-timing.json beside the ZIP")
+                            put(
+                                "maximumFrontierSize",
+                                scans.maxOfOrNull {
+                                    it.getValue("frontierSize").jsonPrimitive.content.toInt()
+                                } ?: 0,
+                            )
+                            put(
+                                "ownerReadLatency",
+                                "host timing; see host-scan-timing.json beside the ZIP",
+                            )
                         },
                     )
                     put(
@@ -1696,7 +1809,10 @@ object ContinuityPressureAdapter {
                     put("repositoryRef", "VexGPT/VexLife-Prod")
                     put("sourceSha", config.sourceSha)
                     put("modelRef", if (provider.live) provider.evidence.modelRef else null)
-                    put("runtimeRef", if (provider.live) provider.evidence.runtimeReceiptRef else null)
+                    put(
+                        "runtimeRef",
+                        if (provider.live) provider.evidence.runtimeReceiptRef else null,
+                    )
                 },
             )
             put(
@@ -1747,19 +1863,21 @@ object ContinuityPressureAdapter {
         // Owner-read latency is real host time, so it stays beside the ZIP, not in its digest.
         Files.writeString(
             config.resultDir.resolve("host-scan-timing.json"),
-            json.encodeToJsonElement(
-                observed.flatMap { o ->
-                    o.hostScans.map { scan ->
-                        buildJsonObject {
-                            put("ordinal", o.ordinal)
-                            put("ownerReadCount", scan.ownerReadCount)
-                            put("ownerReadNanos", scan.ownerReadNanos)
-                            put("conversationEventsRead", scan.conversationEventsRead)
-                            put("turnsScanned", scan.turnsScanned)
+            json
+                .encodeToJsonElement(
+                    observed.flatMap { o ->
+                        o.hostScans.map { scan ->
+                            buildJsonObject {
+                                put("ordinal", o.ordinal)
+                                put("ownerReadCount", scan.ownerReadCount)
+                                put("ownerReadNanos", scan.ownerReadNanos)
+                                put("conversationEventsRead", scan.conversationEventsRead)
+                                put("turnsScanned", scan.turnsScanned)
+                            }
                         }
                     }
-                }
-            ).toString() + "\n",
+                )
+                .toString() + "\n",
         )
         println(
             buildJsonObject {
@@ -1805,13 +1923,22 @@ object ContinuityPressureAdapter {
         put("turnWallMs", o.wallNanos / 1_000_000.0)
         put(
             "sendAcceptedToProviderInvocationMs",
-            millisBetween(at(o, VexLogger.Fact.SendAccepted), at(o, VexLogger.Fact.ProviderInvocationRequested)),
+            millisBetween(
+                at(o, VexLogger.Fact.SendAccepted),
+                at(o, VexLogger.Fact.ProviderInvocationRequested),
+            ),
         )
         put(
             "answerDurableToCheckpointCommittedMs",
-            millisBetween(at(o, VexLogger.Fact.TurnCompleted), at(o, VexLogger.Fact.WorkingContinuityCommitted)),
+            millisBetween(
+                at(o, VexLogger.Fact.TurnCompleted),
+                at(o, VexLogger.Fact.WorkingContinuityCommitted),
+            ),
         )
-        put("checkpointCommitFailed", o.chronology.any { it.fact == VexLogger.Fact.WorkingContinuityCommitFailed.wire })
+        put(
+            "checkpointCommitFailed",
+            o.chronology.any { it.fact == VexLogger.Fact.WorkingContinuityCommitFailed.wire },
+        )
         put("providerCalls", o.providerCalls.size)
     }
 
@@ -1858,9 +1985,11 @@ object ContinuityPressureAdapter {
             sourceClean = map["source-clean"] == "true",
             keepScratch = map["keep-scratch"] == "true",
             runtimeHome =
-                map["runtime-home"]?.let { Path.of(it) }?.also {
-                    require(it.isAbsolute) { "--runtime-home must be an absolute path" }
-                },
+                map["runtime-home"]
+                    ?.let { Path.of(it) }
+                    ?.also {
+                        require(it.isAbsolute) { "--runtime-home must be an absolute path" }
+                    },
             experimentWindow = map["experiment-window"] == "true",
             payloadScale = map["payload-scale"]?.toInt() ?: 1,
         )

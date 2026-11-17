@@ -394,7 +394,11 @@ class DirectCompanionTurnFoundationalFieldTest {
             listOf("Message 1", "Reply 1", "Message 2", "Reply 2"),
             provider.calls[2].drop(1).dropLast(2).map { it.content },
         )
-        assertTrue(provider.calls[2][provider.calls[2].size - 2].content.startsWith(DirectPromptContext.CurrentStateHeader))
+        assertTrue(
+            provider.calls[2][provider.calls[2].size - 2]
+                .content
+                .startsWith(DirectPromptContext.CurrentStateHeader)
+        )
         assertEquals("Message 3", provider.calls[2].last().content)
         assertTrue(provider.current(1).contains("holds no completed exchange before this request."))
         assertTrue(provider.current(2).contains("holds 1 completed exchange."))

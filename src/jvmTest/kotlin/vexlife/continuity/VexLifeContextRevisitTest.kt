@@ -9,10 +9,10 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.JsonObject
 import vexlife.continuity.ContinuityTurnFixture.Line
-import vexlife.memory.VexLifeMemoryContextFixture
 import vexlife.continuity.VexLifeContextRevisit.Parsed
 import vexlife.continuity.VexLifeContextRevisit.State
 import vexlife.contract.VexContractJson
+import vexlife.memory.VexLifeMemoryContextFixture
 
 /**
  * The required continuity shapes for one-call revisit, proven over a real canonical Home.

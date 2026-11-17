@@ -1,10 +1,10 @@
 package vexlife.continuity
 
-import kotlinx.serialization.Serializable
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -34,10 +34,10 @@ import vexlife.memory.VexLifeMemoryContract
  * - A match is relevance to this request, not meaning: nothing here is accepted, corrected, written
  *   or promoted, and the result is not a new working state.
  * - Turns already in the prompt are named, not repeated.
- * - Words are matched exactly (case- and space-insensitive). The terms of one query are clues
- *   that must all appear (conjunctive); separate queries are alternate vantages. There is no
- *   meaning index yet, so a different wording needs another query in the same request, and the
- *   packet says so.
+ * - Words are matched exactly (case- and space-insensitive). The terms of one query are clues that
+ *   must all appear (conjunctive); separate queries are alternate vantages. There is no meaning
+ *   index yet, so a different wording needs another query in the same request, and the packet says
+ *   so.
  * - Custody is the turn's: [TurnSources] is bound by the human turn that holds the Conversation
  *   lease, the Memory projection its prompt used and its own working position, and each owner is
  *   read at most once per turn however many queries or calls fan over it.
@@ -86,7 +86,9 @@ object VexLifeContextRevisit {
         SEED,
         WINDOW,
         CORRECTIONS,
-        /** A Memory statement Working Continuity names as current, resolved through current Memory. */
+        /**
+         * A Memory statement Working Continuity names as current, resolved through current Memory.
+         */
         WORKING_ANCHOR,
         CORRECTS,
         CORRECTED_BY,
@@ -144,7 +146,9 @@ object VexLifeContextRevisit {
      */
     class TurnSources(
         private val readConversation: () -> DirectConversationStore.Snapshot,
-        /** The Memory projection the turn already holds; reading it here is not another owner read. */
+        /**
+         * The Memory projection the turn already holds; reading it here is not another owner read.
+         */
         private val memory: () -> VexLifeMemoryContract.Context?,
         private val readWorking: () -> WorkingDirectory?,
         /** What the turn's current prompt carries; it can grow within a turn (returned source). */
@@ -295,7 +299,8 @@ object VexLifeContextRevisit {
 
         val rawQueries =
             when (val value = arguments["queries"]) {
-                // A query is an object, or a bare array of clue strings: ["a", "b"] = {"terms":["a","b"]}.
+                // A query is an object, or a bare array of clue strings: ["a", "b"] =
+                // {"terms":["a","b"]}.
                 is JsonArray ->
                     value.map { element ->
                         when (element) {
@@ -628,7 +633,8 @@ object VexLifeContextRevisit {
             }
             if (residentPages.isNotEmpty()) {
                 appendLine(
-                    "Memory already in this prompt, not repeated: " + residentPages.joinToString(", ")
+                    "Memory already in this prompt, not repeated: " +
+                        residentPages.joinToString(", ")
                 )
             }
             if (unresolvedAnchors.isNotEmpty()) {
@@ -795,7 +801,10 @@ object VexLifeContextRevisit {
                 else null,
                 if (Scope.MEMORY in request.scopes && sources.memory != null)
                     "$pageCount Memory pages (projection ${sources.memory.projectionState}" +
-                        (if (sources.memory.projectionState != "CURRENT" && sources.memory.reasons.isNotEmpty())
+                        (if (
+                            sources.memory.projectionState != "CURRENT" &&
+                                sources.memory.reasons.isNotEmpty()
+                        )
                             ": " + sources.memory.reasons.joinToString(" | ")
                         else "") +
                         ")"
@@ -831,7 +840,9 @@ object VexLifeContextRevisit {
         turnByEventRef: Map<String, VexLifeTurnNavigation.Turn>,
     ): String = buildString {
         if (directory.checkpointRef == null) {
-            append("Where the work stands — this turn's working position; no working checkpoint committed yet")
+            append(
+                "Where the work stands — this turn's working position; no working checkpoint committed yet"
+            )
         } else {
             append(
                 "Where the work stands — this turn's working position; last working checkpoint " +
