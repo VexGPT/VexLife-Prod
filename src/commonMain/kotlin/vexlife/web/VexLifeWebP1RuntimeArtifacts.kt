@@ -1183,6 +1183,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
 
                 const language = dictation.language ?? voiceInputLanguage();
+                reportFact('VOICE_INPUT_CONTROL_EMITTED', {
+                  controlRef,
+                  currentStateRef: dictation.stateRef ?? '',
+                  admittedStateRef: act.admittedState?.stateRef ?? '',
+                  effectRef: act.effectRef ?? ''
+                });
                 if (act.admittedState) {
                   applyVoiceInputSemanticState(act.admittedState, language);
                 }
