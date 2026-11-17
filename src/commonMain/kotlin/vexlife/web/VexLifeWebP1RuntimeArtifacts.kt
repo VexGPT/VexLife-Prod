@@ -652,7 +652,10 @@ object VexLifeWebP1RuntimeArtifacts {
 
               // Browser keeps only a local mirror of Family-owned semantic output. It may not
               // manufacture State/reason refs from provider facts.
-              const applyVoiceInputSemanticState = (semanticState, language = dictation.language) => {
+              const applyVoiceInputSemanticState = (
+                semanticState,
+                language = dictation.language
+              ) => {
                 if (!semanticState) return;
                 dictation.stateRef = semanticState.stateRef;
                 dictation.holdReasonRef = semanticState.holdReasonRef ?? null;
