@@ -42,7 +42,7 @@ class HereticRuntimeConfigurationTest {
             four.promptCacheEntries,
         )
         assertEquals(
-            3,
+            1,
             four.recommendedPromptCacheEntries,
         )
         assertEquals(
@@ -50,13 +50,13 @@ class HereticRuntimeConfigurationTest {
             four.maximumPromptCacheEntries,
         )
         assertEquals(
-            HereticRuntimeConfiguration.RecommendationExperimentalCandidate,
+            HereticRuntimeConfiguration.RecommendationHeldExperiment,
             four.recommendationStanding,
         )
     }
 
     @Test
-    fun recommended4BConfigurationIsThreeOnlyAfterExplicitChoice() {
+    fun recommended4BConfigurationReturnsToOneWhileTwoAndThreeRemainExperimental() {
         val configured =
             HereticRuntimeConfiguration.withRecommended(
                 value = HereticRuntimeConfiguration.empty(),
@@ -73,8 +73,16 @@ class HereticRuntimeConfigurationTest {
             effective.mode,
         )
         assertEquals(
-            3,
+            1,
             effective.promptCacheEntries,
+        )
+        assertEquals(
+            3,
+            effective.maximumPromptCacheEntries,
+        )
+        assertEquals(
+            HereticRuntimeConfiguration.RecommendationHeldExperiment,
+            effective.recommendationStanding,
         )
     }
 
