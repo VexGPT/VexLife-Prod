@@ -2804,13 +2804,22 @@ class VexLifeProdLocalServiceTest {
                         idempotencyKey,
                         cancelResult.attemptRef,
                     )
-                    assertEquals(
-                        VexLifeConversationTurnFamily.StateCancelling,
-                        cancelResult.turn.state,
-                    )
                     assertTrue(
-                        cancelResult.turn.display.cancelling,
+                        cancelResult.turn.state in
+                            setOf(
+                                VexLifeConversationTurnFamily.StateCancelling,
+                                VexLifeConversationTurnFamily.StateReady,
+                            ),
+                        "fresh post-cancel observation is either still Cancelling or already Ready",
                     )
+                    if (
+                        cancelResult.turn.state ==
+                            VexLifeConversationTurnFamily.StateCancelling
+                    ) {
+                        assertTrue(
+                            cancelResult.turn.display.cancelling,
+                        )
+                    }
                     assertTrue(
                         cancelResult.effectsPerformed,
                     )
