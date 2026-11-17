@@ -110,6 +110,10 @@ class VexLifeModelsTest {
                     owner ->
                     val projection =
                         owner.projection()
+                    assertEquals(
+                        HereticRuntimeRealization.WindowsX64.targetRef,
+                        projection.targetRef,
+                    )
                     val twentySeven =
                         projection.models.first {
                             it.handle == "heretic-27b"
