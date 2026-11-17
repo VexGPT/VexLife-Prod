@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "vexlife-prod.windows-readiness-host-proof-package/v1",
+  "continuity": "[VXG RealForever]",
+  "attempt": "R002",
+  "proofOwner": "VexGPT/VexLife-Prod#218",
+  "productCandidate": {
+    "pullRequest": 223,
+    "head": "9ba98244269897a04535a9d27996b5cafc50e758",
+    "tree": "65e56fd706d28efcd1ac77191b2161483726b634",
+    "baseMain": "262c208b2e65e828dd867719c29ecd286ae58a80",
+    "hostedWindowsProofRun": 44053924414,
+    "hostedWindowsProofConclusion": "PASS"
+  },
+  "correctionFromR001": {
+    "reason": "PowerShell automatic variables are case-insensitive",
+    "renamed": {
+      "$host": "$hostObservation",
+      "$home": "$homeObservation"
+    }
+  },
+  "stages": [
+    "HOST_OBSERVED",
+    "HOME_COORDINATE_OBSERVED",
+    "ACCELERATOR_EVIDENCE_OBSERVED",
+    "WINDOWS_READINESS_OBSERVED"
+  ],
+  "checkpointPolicy": "WRITE_EACH_COMPLETED_STAGE_BEFORE_ADVANCING",
+  "cancellationPolicy": "LEAVE_CHECKPOINT_DIRECTORY_IN_DOWNLOADS_IF_FINAL_RETURN_NOT_FORMED",
+  "effects": {
+    "homeMutation": false,
+    "modelDownload": false,
+    "modelLoad": false,
+    "runtimeStart": false,
+    "productServiceStart": false,
+    "installation": false,
+    "releasePublication": false
+  }
+}
