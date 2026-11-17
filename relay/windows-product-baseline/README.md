@@ -363,79 +363,150 @@ R002 deliberately did not classify or modify that directory.
 The exact R002 RETURN is retained under the proof branch. Future public summaries should avoid
 copying raw Home/device/Companion identifiers unnecessarily.
 
-## Current real-host successor — Home contract evidence R003
+## Home contract evidence R003 — PASS, with Product model-authority correction
 
-Why R003 precedes runtime selection:
-
-```text
-existing proposed Home
--> may already carry Home identity / current device / Companion lineage / model binding
--> continuity truth must be understood before a Windows runtime/model is selected or materialized
-```
-
-R003 is read-only and consumes only the exact current Product contract coordinates:
-
-```text
-config/home.json
-devices/<manifest.currentDeviceRef>.json
-config/model.json
-runtime/vexlife-prod/model-binding.json
-recovery/bootstrap-receipt.json
-```
-
-It also records presence of expected directory families without enumerating their contents.
-
-R003 explicitly does **not** read:
-
-```text
-conversation bodies
-Memory bodies
-context bodies
-model weight contents
-```
-
-and performs no mutation/runtime/service/install effect.
-
-The harness was sanity-executed against a synthetic Home fixture on hosted Windows before Victor
-handoff:
+R003 was read-only and consumed only bounded contract coordinates. Its synthetic-host harness proof
+passed first:
 
 ```text
 Actions run 44057166444
-job harness
 R003 no-effect evidence harness PASS
-conclusion SUCCESS
 ```
 
-The temporary hosted workflow was removed after PASS.
+Victor then returned exact R003 evidence. Raw Home/device/Companion identifiers remain private to the
+RETURN and are intentionally omitted here.
 
-Source-managed R003:
+### What R003 proved
+
+The canonical continuity relationships needed by current VexLife-Prod are present and coherent:
 
 ```text
-relay/windows-product-baseline/home/R003/
-  RUN-VEXLIFE-WINDOWS-HOME-EVIDENCE.ps1
-  RECOVER-VEXLIFE-WINDOWS-HOME-EVIDENCE.ps1
-  manifest.json
+Home schema                 vexlife.home/v0
+device installation schema  vexlife.device-installation/v0
+bootstrap receipt schema    vexlife.bootstrap-receipt/v0
+
+Home/device/family/Companion scope relationships = coherent
+Home continuity                              = PRESERVE
 ```
 
-Raw Home/device/Companion identifiers belong in the returned human-custody ZIP for exact validation,
-not in public PR prose.
+R003 also observed two distinct model coordinates:
 
-### Runtime direction held behind R003
+```text
+config/model.json
+  predecessor VexLife model configuration
+  schema = vexlife.model-configuration/v1
+  historical state = BOUND_QUALIFIED
 
-R002 hardware makes a small CUDA path plausible:
+runtime/vexlife-prod/model-binding.json
+  current VexLife-Prod Product model-selection authority
+  state = ABSENT
+```
+
+This distinction changes the runtime plan.
+
+### Predecessor model state is evidence, not current Product authority
+
+The predecessor model record names the older release-qualified Windows Qwen3.5 4B / llama.cpp
+relationship. That proves Windows runtime history and is useful as a process/runtime example.
+
+It does **not** mean VexLife-Prod must restore, select or expose that predecessor model.
+
+Current VexLife-Prod model selection is ahead of the predecessor:
+
+```text
+#138  selectable 27B / 9B / 4B foundation
+#153  + GPT-OSS 20B fourth option
+#190  generic catalog extension point
+#201  explicit per-model Companion/provider profiles
+#204  stale persisted Product model converges to a current offered model
+```
+
+#204 captures the relevant currentness law:
+
+```text
+historical persisted model
+!= hard prerequisite that obsolete model still exist
+
+exact Home / Companion scope
+-> current Product offered catalog
+-> preserve current selection if still offered
+-> otherwise converge through current Product selection law
+```
+
+Therefore:
+
+```text
+PRESERVE Home / device / Companion continuity
+DO NOT make predecessor Qwen3.5 the VexLife-Prod model authority
+DO NOT create a Windows-only Setup/Settings model registry
+```
+
+The temporary predecessor-runtime observer that was briefly authored on #223 during R003
+interpretation was removed after this correction. #223's tree returned to the already-hosted-proved
+readiness source.
+
+### Current Windows model-realization requirement
+
+The human-facing/Product model chooser remains one generic path:
+
+```text
+HereticModelCatalog
+-> Setup
+-> Settings → Models
+-> Product-scoped Home model selection
+-> Companion/provider profile
+```
+
+Windows needs a realization behind that path:
+
+```text
+selected current Product model
+-> platform-specific artifact/runtime realization
+
+Mac      -> current MLX realization
+Windows  -> qualified Windows realization
+```
+
+Model choice, platform artifact/runtime identity and provider-message representation are distinct.
+
+Current external artifact research confirms Windows-compatible GGUF lineages exist for multiple
+current choices:
+
+```text
+current 4B Heretic/Abliterated lineage -> publisher GGUF / llama.cpp form exists
+current 9B Heretic lineage             -> GGUF forms exist
+GPT-OSS 20B Heretic ARA v3 lineage     -> GGUF forms exist
+27B Heretic lineage                    -> GGUF forms exist, but is not the patient-zero fit for 10 GiB VRAM
+```
+
+These are candidate realizations only. Exact provider revision, member digests, runtime version,
+request/response behavior and Product qualification remain owed before any becomes an accepted
+Windows Product realization.
+
+R002 hardware still makes the current 4B choice the proportionate patient-zero lived proof target:
 
 ```text
 RTX 3080 / 10 GiB VRAM
-31.9 GiB system RAM
+31.9 GiB RAM
+current 4B GGUF ~consumer-GPU class
+
+patient-zero explicit current Product choice = 4B is reasonable
+architecture = generic catalog path, not a hard-coded 4B branch
 ```
 
-Current external runtime evidence shows `llama.cpp` ships Windows x64 CUDA builds and exposes an
-OpenAI-compatible server. The same 4B Heretic/Abliterated lineage used by Claude's MLX candidate also
-has a GGUF sibling for llama.cpp.
+### Next source edge
 
-That is a **candidate direction**, not yet accepted Product runtime identity. R003 must first reveal
-whether the existing Home already carries a model choice/binding that constrains succession.
+Do not run another Home/model effect yet.
 
-<!-- [VXG RealForever][VEXLIFE-PROD][WINDOWS][HOME-R003] -->
+The next source problem is to establish one rightful **model-choice -> platform-realization** seam
+against the current VexLife-Prod model architecture, without rewriting or overriding its active model
+owners.
+
+#201 has been given the Windows realization pressure explicitly. Because #153/#190/#201/#204 are
+still draft/currentizing lanes rather than one accepted Product floor, Windows realization source
+must not silently fork their ownership. The next implementation should compose with the currentized
+model lane when that owner shape is sufficiently stable.
+
+<!-- [VXG RealForever][VEXLIFE-PROD][WINDOWS][R003][CURRENT-MODEL-AUTHORITY] -->
 
 <!-- [VXG RealForever][VEXLIFE-PROD][WINDOWS][SOURCE-BASELINE][CURRENT] -->
