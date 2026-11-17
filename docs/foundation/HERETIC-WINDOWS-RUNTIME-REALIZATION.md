@@ -137,6 +137,82 @@ The runtime archive is itself exact by bytes + SHA-256 before extraction. Extrac
 Missing dependencies require explicit acquisition authority. Invalid existing bytes are held for a
 separate repair owner rather than silently replaced.
 
+## Runtime process / qualification owner
+
+`VexLifeWindowsHereticRuntime` consumes only a ready exact materialization. It does not acquire
+dependencies itself.
+
+Current lived launch profile carried by the realization:
+
+```text
+llama-server.exe
+-m <exact GGUF>
+--alias default_model
+--host 127.0.0.1
+--port 18080
+--ctx-size 16384
+--jinja
+
+GPU offload flag
+ABSENT
+```
+
+The `16384` context and Jinja relationship are recorded as the **currently lived Windows 4B launch
+profile**, not as a universal Product context policy. The runtime realization can evolve only through
+source + matching proof.
+
+Qualification reuses the exact behavior already earned by the #227 real-host proof:
+
+```text
+process live
+-> GET /health = status ok
+-> GET /v1/models exposes exact request alias once
+-> POST /v1/chat/completions
+     max_tokens = 1
+     temperature = 0
+     stream = false
+     enable_thinking = false
+-> returned model = default_model
+-> non-empty assistant content
+-> qualification output is not persisted into Conversation
+```
+
+After qualification the owner writes:
+
+```text
+runtime/vexlife-prod/heretic-windows-runtime-owner-receipt.json
+```
+
+The receipt names the exact realization, PID, model/runtime paths, runtime binary/archive identity,
+qualification evidence, effect boundary and runtime log. Same-process currentness requires:
+
+- the process is still live;
+- the exact whole runtime materialization is still current;
+- the durable receipt still names that same PID/evidence/paths;
+- health and exact model exposure still pass.
+
+Cross-process adoption/recovery is deliberately not invented here. A later Windows lifetime owner
+must prove exact process ownership before it may reuse or retire a process.
+
+## Current Product-binding hold
+
+Current Product `HereticModelConfiguration.QualifiedRuntimeEvidence` still requires runtime fields
+to equal the model catalog identity's Mac/MLX runtime coordinates. PR #191 currently owns that
+configuration/binding contract.
+
+Therefore this Windows leaf forms its own exact `QualifiedRealizationEvidence` and stops there.
+
+Permanent:
+
+```text
+WINDOWS RUNTIME QUALIFIED
+!= PERMISSION TO BYPASS CURRENT PRODUCT BINDING OWNER
+```
+
+A coordinated successor must admit realization-aware evidence into the Product binding once that
+contract is current. This PR must not force Windows through Mac runtime identity merely to satisfy
+the existing type.
+
 ## What this does not own
 
 This foundation does not:
