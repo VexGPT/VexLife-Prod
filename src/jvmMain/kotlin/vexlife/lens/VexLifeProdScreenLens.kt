@@ -192,6 +192,7 @@ object VexLifeProdScreenLens {
     private fun capabilityPathway(capabilityRef: String): JsonObject? =
         when (capabilityRef) {
             VexLifeWebP1.Refs.ConversationSendCapability.value -> sendPathway()
+            VexLifeWebP1.Refs.ConversationCancelCapability.value -> cancelPathway()
             VexLifeWebP1.Refs.VisionSelectedScopeCapability.value -> visionPathway()
             VexLifeWebP1.Refs.ConversationPrivateCapability.value -> privatePathway()
             else -> null
@@ -297,6 +298,72 @@ object VexLifeProdScreenLens {
                     edge("$n.prompt", "$n.runtime"),
                     edge("$n.runtime", "$n.conversation", label = "response committed"),
                     edge("$n.conversation", "$n.projection", "RETURN"),
+                ),
+        )
+    }
+
+    private fun cancelPathway(): JsonObject {
+        val p = "pathway.vexlife-prod.conversation.cancel"
+        val n = "vexlife-prod.cancel"
+        return pathway(
+            ref = p,
+            label = "Stop current Vex turn",
+            disposition = "DIRECT_REGISTRATION",
+            summary =
+                "The person cancels one exact admitted Send attempt. The turn is terminalized; the persistent model runtime is not stopped.",
+            returns = "a terminal cancellation result for the exact Send attempt",
+            returnRef = "$n.result",
+            nodes =
+                listOf(
+                    node(
+                        "$n.intent",
+                        "BEHAVIOR",
+                        "INTENT",
+                        "conversation.cancel",
+                        "VexLifeWebP1.Refs.ConversationCancelCapability",
+                        Common + "web/VexLifeWebP1.kt",
+                    ),
+                    node(
+                        "$n.dispatch",
+                        "BEHAVIOR",
+                        "DISPATCH",
+                        "POST ${VexLifeProdServiceContract.ConversationCancelPath}",
+                        "VexLifeProdLocalService",
+                        Jvm + "service/VexLifeProdLocalService.kt",
+                    ),
+                    node(
+                        "$n.cancellation",
+                        "DEPTH",
+                        "CONTROL",
+                        "PERSON_REQUESTED",
+                        "DirectCompanionCancellation",
+                        Jvm + "companion/DirectCompanionCancellation.kt",
+                        "Interrupts only the active turn request and closes request-local resources; it does not own the persistent Heretic runtime.",
+                    ),
+                    node(
+                        "$n.turn",
+                        "BEHAVIOR",
+                        "METHOD",
+                        "TURN_CANCELLED_BY_PERSON",
+                        "DirectCompanionTurn",
+                        Jvm + "companion/DirectCompanionTurn.kt",
+                        "The already-durable request receives a terminal failure receipt; no response/head is committed.",
+                    ),
+                    node(
+                        "$n.result",
+                        "BEHAVIOR",
+                        "RETURN",
+                        "Conversation cancel response",
+                        "VexLifeProdServiceContract.ConversationCancelResponse",
+                        Common + "service/VexLifeProdServiceContract.kt",
+                    ),
+                ),
+            edges =
+                listOf(
+                    edge("$n.intent", "$n.dispatch"),
+                    edge("$n.dispatch", "$n.cancellation"),
+                    edge("$n.cancellation", "$n.turn"),
+                    edge("$n.turn", "$n.result", "RETURN"),
                 ),
         )
     }
