@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "vexlife-prod.windows-cpu-setup-platform-proof/v1",
+  "continuity": "[VXG RealForever]",
+  "attempt": "R015",
+  "productCarrierPr": 227,
+  "productSourceSha": "8f37410561a0d9eee035efab5b68c0c752dd4f98",
+  "execution": "LOCAL_RELAY_NO_GITHUB_ACTIONS",
+  "purpose": "re-prove the corrected Windows b10107 CPU realization and shared Product setup-platform seam after the R014 test-import correction, then re-run the already-earned Windows Conversation/restart path",
+  "r014": {
+    "returnSha256": "6a8a638bbffa63651d2072fc95281b6817a7084a299ef88b9c56fd04d99469b0",
+    "disposition": "SAFE_FAILURE",
+    "runtimeReached": false,
+    "failure": "WINDOWS_CPU_SETUP_PLATFORM_TESTS_EXIT_1",
+    "cause": "VexLifeProdSetupProcessTest omitted the VexLifeProdSetupProgress import required by the new VexLifeProdSetupPlatform test override",
+    "correctionCommit": "8f37410561a0d9eee035efab5b68c0c752dd4f98",
+    "productSemanticsChanged": false
+  },
+  "windowsRuntimeCorrection": {
+    "backend": "CPU",
+    "providerRepository": "ggml-org/llama.cpp",
+    "releaseTag": "b10107",
+    "sourceCommit": "c0bc8591e8815c63cb01dd3f051a8b0df02501c9",
+    "archiveFilename": "llama-b10107-bin-win-cpu-x64.zip",
+    "archiveBytes": 18213827,
+    "archiveSha256": "52133a0a5a8f6035b1bdd2f89c3425ea8b742413d9bdb9a2dee30e3a1681b18c",
+    "llamaServerSha256": "af3e56d6bdb84a9b6bd50f6ad748809370bc29be42d58088041408b2933d80f7",
+    "runtimeAdapterRef": "adapter.runtime.llama-cpp.windows-x64.cpu.patient-zero.001",
+    "gpuOffloadFlagRequested": false
+  },
+  "setupPlatformPromotion": {
+    "interface": "vexlife.setup.VexLifeProdSetupPlatform",
+    "sharedServiceLifetimeResult": "vexlife.service.VexLifeProdServiceLifetime",
+    "sharedSetupProcessUsesPlatform": true,
+    "macImplementation": "vexlife.setup.VexLifeProdMacSetupPlatform",
+    "windowsImplementationComplete": false
+  },
+  "proofPolicy": {
+    "stringManifestCheck": "checkVexLifeStrings",
+    "livedWindowsReproof": true,
+    "realHomeMutation": false,
+    "githubActions": false
+  }
+}
