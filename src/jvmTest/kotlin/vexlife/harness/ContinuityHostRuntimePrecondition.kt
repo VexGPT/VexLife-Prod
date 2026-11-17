@@ -96,7 +96,6 @@ object ContinuityHostRuntimePrecondition {
                 put("targetModelRef", targetModel.modelRef)
                 put("targetModelProfileRef", targetModel.identity.modelProfileRef)
                 put("targetArtifactSetRef", targetModel.identity.artifactSetRef)
-                put("targetCompanionProfileRef", targetModel.companionProfile.profileRef)
                 put("priorModelRef", selectedBefore.value.modelRef)
                 put("modelSelectionDisposition", selection.state)
                 put("endpoint", current.endpoint)
