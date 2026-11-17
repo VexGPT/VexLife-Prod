@@ -273,12 +273,15 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
             <p class="setting-note-line" id="models-current-state"></p>
           </div>
 
-          <label class="model-choice-field" data-vex-ref="${VexLifeWebP1.ModelChoice.identity.ref}">
+          <div class="model-choice-field" data-vex-ref="${VexLifeWebP1.ModelChoice.identity.ref}">
             <span class="home-label" data-vex-text="workspace.label.model-choice"></span>
-            <select id="model-choice"></select>
-          </label>
-
-          <div class="models-list" data-vex-ref="${VexLifeWebP1.ModelsList.identity.ref}" id="models-list"></div>
+            <div class="model-choice-row">
+              <select id="model-choice" aria-label="Model choice"></select>
+              <div class="model-choice-actions" data-vex-ref="${VexLifeWebP1.ModelsList.identity.ref}" id="models-list"></div>
+            </div>
+            <p class="model-choice-facts" id="model-choice-facts"></p>
+            <p class="model-choice-notes" id="model-choice-notes"></p>
+          </div>
 
           <div class="model-configuration" data-vex-ref="${VexLifeWebP1.ModelConfiguration.identity.ref}" id="model-configuration">
             <div>
@@ -293,7 +296,11 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
             <p class="setting-note-line" data-vex-text="workspace.description.model-prompt-cache-entries"></p>
             <div class="model-configuration-actions">
               <button class="outline-button" data-vex-ref="${VexLifeWebP1.ModelUseRecommended.identity.ref}" id="model-use-recommended" type="button" data-vex-text="workspace.button.model-use-recommended"></button>
-              <button class="outline-button" data-vex-ref="${VexLifeWebP1.ModelStart.identity.ref}" id="model-start" type="button" data-vex-text="workspace.button.model-start"></button>
+            </div>
+            <div class="model-activation">
+              <p class="model-activation-title" data-vex-text="workspace.heading.model-activation"></p>
+              <p class="setting-note-line" data-vex-text="workspace.description.model-start-effect"></p>
+              <button class="model-start-button" data-vex-ref="${VexLifeWebP1.ModelStart.identity.ref}" id="model-start" type="button" data-vex-text="workspace.button.model-start"></button>
             </div>
           </div>
 
