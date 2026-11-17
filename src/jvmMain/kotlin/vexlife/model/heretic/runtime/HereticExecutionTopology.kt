@@ -22,16 +22,13 @@ import vexlife.model.heretic.HereticModelCatalog
 /**
  * Read-only projection of the effective local-model execution configuration.
  *
- * This object deliberately owns no model, runtime or continuity setting. It reads each value from
- * the source that already owns it, then adds two pieces of relationship information future humans
- * and AI workers otherwise have to rediscover:
- *
- * - where the effective value came from;
- * - what boundary must be crossed for that value to change.
+ * This object owns no model, runtime or continuity setting. It reads each value from the source that
+ * already owns it and adds the relationship information future humans/AI otherwise rediscover:
+ * provenance and the boundary that must be crossed for the value to change.
  *
  * Model architecture is read from the exact pinned config.json member. Product policy descends from
- * its existing Kotlin owners. mlx-lm defaults are projected only while the exact pinned dependency
- * version remains the one this source has audited.
+ * existing Kotlin owners. mlx-lm defaults are projected only while the exact pinned dependency
+ * version remains the one this source audited.
  */
 object HereticExecutionTopology {
     const val Schema = "vexlife-prod.heretic-execution-topology/v1"
@@ -145,6 +142,7 @@ object HereticExecutionTopology {
         require(productHome.isAbsolute) {
             "Heretic execution topology requires one absolute VexLife Home"
         }
+
         val plan = HereticArtifactMaterialization.plan(model)
         val configMember =
             plan.members.singleOrNull { it.logicalPath == "config.json" }
@@ -156,12 +154,14 @@ object HereticExecutionTopology {
                 .resolve(model.providerRevision)
                 .resolve(configMember.logicalPath)
                 .normalize()
+
         require(configPath.startsWith(home)) {
             "Heretic model config escaped the VexLife Home"
         }
         require(Files.isRegularFile(configPath, LinkOption.NOFOLLOW_LINKS)) {
             "Heretic model config.json is not materialized"
         }
+
         val bytes = Files.readAllBytes(configPath)
         require(bytes.size.toLong() == configMember.byteLength) {
             "Heretic model config.json size does not match the pinned member"
@@ -195,20 +195,13 @@ object HereticExecutionTopology {
                 null
             }
         val linearLayers =
-            if (hiddenLayers != null && fullLayers != null) {
-                hiddenLayers - fullLayers
-            } else {
-                null
-            }
+            if (hiddenLayers != null && fullLayers != null) hiddenLayers - fullLayers else null
 
         val architecture =
             ModelArchitecture(
                 architectureClass =
                     modelField(
-                        root.array("architectures")
-                            ?.firstOrNull()
-                            ?.jsonPrimitive
-                            ?.contentOrNull,
+                        root.array("architectures")?.firstOrNull()?.jsonPrimitive?.contentOrNull,
                         modelConfigSourceRef,
                     ),
                 modelType =
@@ -217,50 +210,15 @@ object HereticExecutionTopology {
                         modelConfigSourceRef,
                     ),
                 nativeContextTokens =
-                    modelField(
-                        text.int("max_position_embeddings"),
-                        modelConfigSourceRef,
-                    ),
-                hiddenLayers =
-                    modelField(
-                        hiddenLayers,
-                        modelConfigSourceRef,
-                    ),
-                fullAttentionInterval =
-                    modelField(
-                        interval,
-                        modelConfigSourceRef,
-                    ),
-                fullAttentionLayers =
-                    modelField(
-                        fullLayers,
-                        modelConfigSourceRef,
-                    ),
-                linearAttentionLayers =
-                    modelField(
-                        linearLayers,
-                        modelConfigSourceRef,
-                    ),
-                attentionHeads =
-                    modelField(
-                        text.int("num_attention_heads"),
-                        modelConfigSourceRef,
-                    ),
-                keyValueHeads =
-                    modelField(
-                        text.int("num_key_value_heads"),
-                        modelConfigSourceRef,
-                    ),
-                headDimension =
-                    modelField(
-                        text.int("head_dim"),
-                        modelConfigSourceRef,
-                    ),
-                cacheEnabled =
-                    modelField(
-                        text.boolean("use_cache"),
-                        modelConfigSourceRef,
-                    ),
+                    modelField(text.int("max_position_embeddings"), modelConfigSourceRef),
+                hiddenLayers = modelField(hiddenLayers, modelConfigSourceRef),
+                fullAttentionInterval = modelField(interval, modelConfigSourceRef),
+                fullAttentionLayers = modelField(fullLayers, modelConfigSourceRef),
+                linearAttentionLayers = modelField(linearLayers, modelConfigSourceRef),
+                attentionHeads = modelField(text.int("num_attention_heads"), modelConfigSourceRef),
+                keyValueHeads = modelField(text.int("num_key_value_heads"), modelConfigSourceRef),
+                headDimension = modelField(text.int("head_dim"), modelConfigSourceRef),
+                cacheEnabled = modelField(text.boolean("use_cache"), modelConfigSourceRef),
             )
 
         return Projection(
@@ -280,6 +238,7 @@ object HereticExecutionTopology {
         require(version == SupportedMlxLmVersion) {
             "Heretic execution topology has not audited mlx-lm defaults for $version"
         }
+
         val serverSource = "mlx-lm@$version:mlx_lm/server.py"
         val generateSource = "mlx-lm@$version:mlx_lm/generate.py"
         val runtimeSource =
@@ -291,7 +250,8 @@ object HereticExecutionTopology {
                     value = version,
                     provenance = Provenance.PRODUCT_SOURCE,
                     changeBoundary = ChangeBoundary.PRODUCT_SOURCE_CHANGE,
-                    sourceRef = "src/commonMain/kotlin/vexlife/model/heretic/HereticProductIdentity.kt",
+                    sourceRef =
+                        "src/commonMain/kotlin/vexlife/model/heretic/HereticProductIdentity.kt",
                 ),
             promptCacheEntries =
                 EffectiveField(
@@ -303,7 +263,7 @@ object HereticExecutionTopology {
                     inheritedDefaultSourceRef = serverSource,
                 ),
             promptCacheBytes =
-                EffectiveField(
+                EffectiveField<Long?>(
                     value = null,
                     provenance = Provenance.PINNED_MLX_LM_DEFAULT,
                     changeBoundary = ChangeBoundary.RUNTIME_RESTART,
@@ -311,38 +271,22 @@ object HereticExecutionTopology {
                     inheritedDefault = null,
                     inheritedDefaultSourceRef = serverSource,
                 ),
-            prefillStepSize =
-                pinnedMlxDefault(
-                    value = MlxDefaults.PrefillStepSize,
-                    sourceRef = serverSource,
-                ),
-            kvBits =
-                pinnedMlxDefault<Int?>(
-                    value = null,
-                    sourceRef = serverSource,
-                ),
+            prefillStepSize = pinnedMlxDefault(MlxDefaults.PrefillStepSize, serverSource),
+            kvBits = pinnedMlxDefault<Int?>(null, serverSource),
             kvGroupSize =
                 pinnedMlxDefault(
-                    value = MlxDefaults.KvGroupSize,
-                    sourceRef = serverSource,
-                    state = EffectiveState.DORMANT,
+                    MlxDefaults.KvGroupSize,
+                    serverSource,
+                    EffectiveState.DORMANT,
                 ),
             quantizedKvStart =
                 pinnedMlxDefault(
-                    value = MlxDefaults.QuantizedKvStart,
-                    sourceRef = generateSource,
-                    state = EffectiveState.DORMANT,
+                    MlxDefaults.QuantizedKvStart,
+                    generateSource,
+                    EffectiveState.DORMANT,
                 ),
-            promptConcurrency =
-                pinnedMlxDefault(
-                    value = MlxDefaults.PromptConcurrency,
-                    sourceRef = serverSource,
-                ),
-            decodeConcurrency =
-                pinnedMlxDefault(
-                    value = MlxDefaults.DecodeConcurrency,
-                    sourceRef = serverSource,
-                ),
+            promptConcurrency = pinnedMlxDefault(MlxDefaults.PromptConcurrency, serverSource),
+            decodeConcurrency = pinnedMlxDefault(MlxDefaults.DecodeConcurrency, serverSource),
         )
     }
 
@@ -353,12 +297,11 @@ object HereticExecutionTopology {
             when (sampling.basis) {
                 HereticCompanionRepresentation.SamplingBasis.PINNED_MODEL_FILE ->
                     Provenance.MODEL_ARTIFACT
-
                 HereticCompanionRepresentation.SamplingBasis.PROVIDER_RECOMMENDATION ->
                     Provenance.PROVIDER_RECOMMENDATION
             }
 
-        fun <T> samplingField(value: T): EffectiveField<T> =
+        fun <T> samplingField(value: T) =
             EffectiveField(
                 value = value,
                 provenance = samplingProvenance,
@@ -366,7 +309,7 @@ object HereticExecutionTopology {
                 sourceRef = sampling.sourceRef,
             )
 
-        fun <T> profileField(value: T): EffectiveField<T> =
+        fun <T> profileField(value: T) =
             EffectiveField(
                 value = value,
                 provenance = Provenance.PRODUCT_SOURCE,
@@ -388,10 +331,7 @@ object HereticExecutionTopology {
     }
 
     private fun continuity(): ContinuityConfiguration {
-        fun field(
-            value: Int,
-            sourceRef: String,
-        ): EffectiveField<Int> =
+        fun field(value: Int, sourceRef: String) =
             EffectiveField(
                 value = value,
                 provenance = Provenance.PRODUCT_SOURCE,
@@ -401,52 +341,26 @@ object HereticExecutionTopology {
 
         val promptSource = "src/jvmMain/kotlin/vexlife/companion/DirectPromptContext.kt"
         val memorySource = "src/commonMain/kotlin/vexlife/memory/VexLifeMemoryContract.kt"
-        val capabilitySource = "src/jvmMain/kotlin/vexlife/capability/VexLifeCapabilityBridge.kt"
+        val capabilitySource =
+            "src/jvmMain/kotlin/vexlife/capability/VexLifeCapabilityBridge.kt"
 
         return ContinuityConfiguration(
-            inputTokenBudget =
-                field(
-                    DirectPromptContext.InputTokenBudget,
-                    promptSource,
-                ),
+            inputTokenBudget = field(DirectPromptContext.InputTokenBudget, promptSource),
             capabilityExchangeReserveTokens =
-                field(
-                    VexLifeCapabilityBridge.ExchangeAllowanceTokens,
-                    capabilitySource,
-                ),
+                field(VexLifeCapabilityBridge.ExchangeAllowanceTokens, capabilitySource),
             directTurnInputWithReachTokens =
-                field(
-                    DirectPromptContext.DirectTurnInputTokenBudget,
-                    promptSource,
-                ),
+                field(DirectPromptContext.DirectTurnInputTokenBudget, promptSource),
             maximumMemoryTokens =
-                field(
-                    VexLifeMemoryContract.MaximumMemoryTokens,
-                    memorySource,
-                ),
+                field(VexLifeMemoryContract.MaximumMemoryTokens, memorySource),
             maximumRequestsPerTurn =
-                field(
-                    VexLifeCapabilityBridge.MaximumRequestsPerTurn,
-                    capabilitySource,
-                ),
-            reservedOutputTokens =
-                field(
-                    DirectPromptContext.ReservedOutputTokens,
-                    promptSource,
-                ),
-            hardInputOutputTokenLimit =
-                field(
-                    DirectPromptContext.HardTokenLimit,
-                    promptSource,
-                ),
+                field(VexLifeCapabilityBridge.MaximumRequestsPerTurn, capabilitySource),
+            reservedOutputTokens = field(DirectPromptContext.ReservedOutputTokens, promptSource),
+            hardInputOutputTokenLimit = field(DirectPromptContext.HardTokenLimit, promptSource),
             adaptiveContextPolicyState = "NOT_CONFIGURED",
         )
     }
 
-    private fun <T> modelField(
-        value: T,
-        sourceRef: String,
-    ): EffectiveField<T> =
+    private fun <T> modelField(value: T, sourceRef: String) =
         EffectiveField(
             value = value,
             provenance = Provenance.MODEL_ARTIFACT,
@@ -458,7 +372,7 @@ object HereticExecutionTopology {
         value: T,
         sourceRef: String,
         state: EffectiveState = EffectiveState.ACTIVE,
-    ): EffectiveField<T> =
+    ) =
         EffectiveField(
             value = value,
             provenance = Provenance.PINNED_MLX_LM_DEFAULT,
@@ -478,12 +392,10 @@ object HereticExecutionTopology {
     private fun JsonObject.boolean(name: String): Boolean? =
         (this[name] as? JsonPrimitive)?.booleanOrNull
 
-    private fun JsonObject.array(name: String): JsonArray? =
-        this[name] as? JsonArray
+    private fun JsonObject.array(name: String): JsonArray? = this[name] as? JsonArray
 
     private fun sha256(bytes: ByteArray): String =
-        MessageDigest
-            .getInstance("SHA-256")
+        MessageDigest.getInstance("SHA-256")
             .digest(bytes)
             .joinToString("") { "%02x".format(it.toInt() and 0xff) }
 
