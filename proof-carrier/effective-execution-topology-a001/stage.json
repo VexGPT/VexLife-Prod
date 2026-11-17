@@ -1,8 +1,8 @@
 {
   "repositoryRef": "primary",
   "expectedBase": "262c208b2e65e828dd867719c29ecd286ae58a80",
-  "expectedHead": "0d74a1a70000fff702074310f8ca10b30229d2f7",
-  "expectedTree": "b443078d72e6ae791c207e7a86479dbdb5c1dd44",
+  "expectedHead": "02a2efb642defb23f1fa094ff042344d2a7538de",
+  "expectedTree": "8f4700749872a894a7b4751c6fcebbf7ac6a2065",
   "branch": "VXG-111726-effective-execution-topology-a001",
   "proofCommands": [
     {
