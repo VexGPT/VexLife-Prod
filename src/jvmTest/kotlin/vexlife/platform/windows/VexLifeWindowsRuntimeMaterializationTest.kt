@@ -190,6 +190,58 @@ class VexLifeWindowsRuntimeMaterializationTest {
     }
 
     @Test
+    fun laterRuntimeImageDriftIsObservedAsInvalidAndNotSilentlyRepaired() {
+        val fixture =
+            fixture()
+        val transport =
+            MemoryTransport(
+                payloads(fixture),
+            )
+        val materialized =
+            VexLifeWindowsRuntimeMaterialization.ensure(
+                productHome = fixture.home,
+                allowAcquisition = true,
+                realization = fixture.realization,
+                transport = transport,
+            )
+        val helper =
+            Path.of(
+                    materialized.observation.runtimeImagePath,
+                )
+                .resolve(
+                    "lib/helper.dll",
+                )
+        Files.delete(
+            helper,
+        )
+
+        val drifted =
+            VexLifeWindowsRuntimeMaterialization.observe(
+                fixture.home,
+                fixture.realization,
+            )
+        assertEquals(
+            VexLifeWindowsRuntimeMaterialization.FileState.INVALID,
+            drifted.runtimeImageState,
+        )
+
+        val callsBeforeRetry =
+            transport.calls.size
+        assertFailsWith<IllegalArgumentException> {
+            VexLifeWindowsRuntimeMaterialization.ensure(
+                productHome = fixture.home,
+                allowAcquisition = true,
+                realization = fixture.realization,
+                transport = transport,
+            )
+        }
+        assertEquals(
+            callsBeforeRetry,
+            transport.calls.size,
+        )
+    }
+
+    @Test
     fun partialModelDownloadResumesThroughTheSharedTransport() {
         val fixture =
             fixture()
