@@ -12,6 +12,7 @@ import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetupLease
 import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticModelCatalog
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.HereticArtifactDelivery
 import vexlife.model.heretic.runtime.HereticArtifactMaterialization
@@ -34,6 +35,7 @@ import vexlife.text.VexLifeText
  */
 class VexLifeModels(
     productHome: Path,
+    private val target: HereticRuntimeRealization.Target,
     private val servingModelRef: () -> String?,
     private val totalMemoryBytes: () -> Long?,
     private val acquirer: (onProgress: (Long) -> Unit) -> HereticArtifactMaterialization.Acquirer =
@@ -68,7 +70,8 @@ class VexLifeModels(
         val totalBytes: Long,
         val presentBytes: Long,
         val recommendedMemoryBytes: Long,
-        val fitsThisMac: Boolean,
+        val realizableOnTarget: Boolean,
+        val fitsThisDevice: Boolean,
         val chosen: Boolean,
         val serving: Boolean,
         val downloadedBytes: Long?,
@@ -113,7 +116,13 @@ class VexLifeModels(
                     totalBytes = entry.totalBytes,
                     presentBytes = presence.presentBySizeBytes,
                     recommendedMemoryBytes = entry.recommendedMemoryBytes,
-                    fitsThisMac = HereticModelCatalog.fits(entry, memory),
+                    realizableOnTarget = state.realizableOnTarget,
+                    fitsThisDevice =
+                        state.realizableOnTarget &&
+                            HereticModelCatalog.fits(
+                                entry,
+                                memory,
+                            ),
                     chosen = state.chosen,
                     serving = state.serving,
                     downloadedBytes =
@@ -297,6 +306,11 @@ class VexLifeModels(
                     "INVALID_SIZE" -> VexLifeModelsFamily.Files.DAMAGED
                     else -> VexLifeModelsFamily.Files.ABSENT
                 },
+            realizableOnTarget =
+                HereticRuntimeRealization.supports(
+                    modelRef = entry.modelRef,
+                    target = target,
+                ),
             downloading = running?.handle == entry.handle,
             chosen = chosen == entry.modelRef,
             serving = serving == entry.modelRef,
@@ -314,7 +328,7 @@ class VexLifeModels(
     }
 
     companion object {
-        const val Schema = "vexlife-prod.models/v1"
+        const val Schema = "vexlife-prod.models/v2"
     }
 }
 
