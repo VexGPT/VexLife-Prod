@@ -738,8 +738,8 @@ object VexLifeWebP1RuntimeArtifacts {
                   });
 
                   recognition.addEventListener('error', (event) => {
-                    if (session !== dictation.session) return;
-                    if (event.error === 'no-speech' && dictation.desiredActive) return;
+                    if (session !== dictation.session || !dictation.desiredActive) return;
+                    if (event.error === 'no-speech') return;
                     void failVoiceInput(voiceInputFailureReason(event.error));
                   });
 
