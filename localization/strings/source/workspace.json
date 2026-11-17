@@ -13,7 +13,7 @@
       "capability": "VexLifeCapabilityBridge uses (handle:action), shown to the person as reach",
       "model": "VexLifeModelsFamily (files, control refs) and HereticModelCatalog standing",
       "voice-input": "VexLifeVoiceInputFamily (state, control, hold/failure reason refs)",
-      "conversation-turn": "VexLifeConversationTurnFamily (state, control, terminal reason refs)"
+      "conversation-turn": "VexLifeConversationTurnFamily (state and control refs)"
     }
   },
   "workspace.heading.diagnostics": {
@@ -791,8 +791,7 @@
     },
     "surfaces": [
       "workspace.conversation"
-    ],
-    "dataKey": "conversation-turn:terminal:TURN_CANCELLED_BY_PERSON"
+    ]
   },
   "workspace.description.conversation-stopped": {
     "strings": {
@@ -802,8 +801,7 @@
     },
     "surfaces": [
       "workspace.conversation"
-    ],
-    "dataKey": "conversation-turn:terminal:TURN_CANCELLED_BY_PERSON"
+    ]
   },
   "workspace.status.conversation-cancel-not-active": {
     "strings": {
