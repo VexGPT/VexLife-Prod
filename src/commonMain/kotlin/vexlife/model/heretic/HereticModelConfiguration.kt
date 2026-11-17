@@ -193,8 +193,19 @@ object HereticModelConfiguration {
         }
 
         if (value.state == State.EstablishmentPending) {
-            // Pending is a Product model choice, not a platform/runtime choice.
-            return value.realizationRef == null
+            // Pending is a Product model choice, not a platform/runtime choice. Its legacy schema
+            // fields remain non-authoritative for execution, but they must still describe the
+            // selected catalog model exactly so stale/cross-model metadata cannot masquerade as
+            // one current Product choice.
+            val identity = model.identity
+            return value.realizationRef == null &&
+                value.artifactRef == identity.artifactSetRef &&
+                value.artifactContentSetSha256 == identity.artifactContentSetSha256 &&
+                value.runtimeAdapterRef == identity.runtimeAdapterRef &&
+                value.runtimeClass == identity.runtimeClass &&
+                value.endpoint == identity.endpoint &&
+                value.requestModel == identity.requestModel &&
+                value.runtimeReceiptPath in admittedRuntimeReceiptPaths
         }
 
         val realization =
