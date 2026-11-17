@@ -563,6 +563,27 @@ class VexLifeWebP1RuntimeArtifactsTest {
             ),
         )
         assertTrue(
+            bundle.html.contains(
+                "class=\"model-start-button\"",
+            ),
+            "runtime activation must have its own visually primary presentation",
+        )
+        assertTrue(
+            bundle.html.contains(
+                "id=\"model-choice-facts\"",
+            ) &&
+                bundle.html.contains(
+                    "id=\"model-choice-notes\"",
+                ),
+            "the selected target should carry one compact summary instead of one card per model",
+        )
+        assertFalse(
+            javascript.contains(
+                "row.className = 'model-row'",
+            ),
+            "the old large per-model card renderer must not compete with the dropdown",
+        )
+        assertTrue(
             javascript.contains(
                 "modelControl(\"${VexLifeModelsFamily.ControlSelect}\", handle)",
             ),
