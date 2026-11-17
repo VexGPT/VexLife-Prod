@@ -134,9 +134,12 @@ object DirectPromptContext {
 
     private data class VerifiedCapabilityFrame(
         val frame: VexLifeCapabilityAtlas.Frame,
+        /** What can be reached and how to ask: stable while the reachable set holds. */
         val systemContent: String,
         val systemMessageSha256: String,
         val estimatedSystemMessageTokens: Int,
+        /** This request's capability states and frame ref. */
+        val currentContent: String,
     )
 
     private data class VerifiedTurnContext(
@@ -154,18 +157,185 @@ object DirectPromptContext {
         val personContextEstimatedSystemMessageTokens: Int,
         val foundationalField: VexLifeFoundationalField.Projection?,
         val conversationExtent: ConversationExtent?,
-        val prefixMessages: List<CompanionProviderMessage>,
-        val suffixMessages: List<CompanionProviderMessage>,
+        /** Stable system components before coalescing; field and Memory join at materialization. */
+        val systemParts: List<Placed>,
+        /** Exact append-only history carried outside the selected Conversation. */
+        val historyParts: List<Placed>,
+        /** Request-current VexLife state placed after Conversation history. */
+        val currentParts: List<Placed>,
+        /** Browser/live context and the exact current request. */
+        val liveParts: List<Placed>,
         val turnContextInputTokenEstimate: Int,
         /** The input budget ordinary context may use: [InputTokenBudget] less the exchange allowance. */
         val inputTokenBudget: Int = InputTokenBudget,
         val capabilityExchangeAllowanceTokens: Int = 0,
-    )
+    ) {
+        val prefixMessages: List<CompanionProviderMessage>
+            get() = systemParts.map { it.message }
+
+        val suffixMessages: List<CompanionProviderMessage>
+            get() = (historyParts + currentParts + liveParts).map { it.message }
+    }
 
     private data class ConversationExtent(
         val priorCompletedExchangeCount: Long,
         val systemContent: String,
     )
+
+    /** How prompt material changes over time; semantic ownership remains separate. */
+    @Serializable
+    enum class ComponentStability {
+        STABLE,
+        APPEND_ONLY_HISTORY,
+        MUTABLE_CURRENT,
+        EPHEMERAL_CURRENT,
+    }
+
+    /** Where one component sits in the provider message sequence. */
+    @Serializable
+    enum class ComponentPlacement {
+        SYSTEM_PREFIX,
+        HISTORICAL_SEQUENCE,
+        HYDRATED_CONTEXT,
+        LIVE_TAIL,
+        CURRENT_REQUEST,
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    @Serializable
+    data class ContextComponent(
+        val componentRef: String,
+        val stabilityClass: ComponentStability,
+        val placementClass: ComponentPlacement,
+        val logicalOrder: Int,
+        val providerMessageIndex: Int,
+        val sha256: String,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val sourceRefs: List<String> = emptyList(),
+    )
+
+    object ComponentRefs {
+        private const val Prefix = "component.vexlife-prod.prompt."
+        const val FoundationalField = Prefix + "foundational-field"
+        const val Memory = Prefix + "memory-current-context"
+        const val WorkingContinuity = Prefix + "working-continuity-successor"
+        const val CapabilityFrame = Prefix + "capability-frame"
+        const val CapabilityFrameCurrent = Prefix + "capability-frame-current"
+        const val CurrentStateEnvelope = Prefix + "current-state-envelope"
+        const val PersonContext = Prefix + "person-context"
+        const val ConversationExtent = Prefix + "conversation-extent"
+        const val SourceReturnProtocol = Prefix + "source-return-protocol"
+        const val SourceReturnProjection = Prefix + "source-return-projection"
+        const val ConversationHistory = Prefix + "conversation-history"
+        const val SuccessorPriorResponse = Prefix + "successor-prior-response"
+        const val BrowserContext = Prefix + "browser-context"
+        const val CurrentRequest = Prefix + "current-request"
+    }
+
+    private data class Section(
+        val componentRef: String,
+        val stability: ComponentStability,
+        val content: String,
+        val sourceRefs: List<String> = emptyList(),
+    )
+
+    private data class Placed(
+        val role: String,
+        val placement: ComponentPlacement,
+        val sections: List<Section>,
+        val content: String = sections.single().content,
+    ) {
+        val message: CompanionProviderMessage
+            get() = CompanionProviderMessage(role = role, content = content)
+    }
+
+    private fun systemPart(section: Section): Placed =
+        Placed(
+            role = "system",
+            placement = ComponentPlacement.SYSTEM_PREFIX,
+            sections = listOf(section),
+        )
+
+    private class Assembly(
+        val messages: List<CompanionProviderMessage>,
+        val components: List<ContextComponent>,
+    )
+
+    /**
+     * Forms provider messages and their placement evidence in the same pass: stable system prefix,
+     * exact selected Conversation, then the explicit tail.
+     */
+    private fun assemble(
+        system: List<Placed>,
+        history: List<DirectConversationStore.Event>,
+        tail: List<Placed>,
+    ): Assembly {
+        val messages = mutableListOf<CompanionProviderMessage>()
+        val components = mutableListOf<ContextComponent>()
+
+        fun record(
+            index: Int,
+            placement: ComponentPlacement,
+            section: Section,
+        ) {
+            components +=
+                ContextComponent(
+                    componentRef = section.componentRef,
+                    stabilityClass = section.stability,
+                    placementClass = placement,
+                    logicalOrder = components.size,
+                    providerMessageIndex = index,
+                    sha256 = sha256(section.content),
+                    sourceRefs = section.sourceRefs,
+                )
+        }
+
+        messages += coalesceProviderSystemPrefix(system.map { it.message })
+        system.forEach { part ->
+            part.sections.forEach { section ->
+                record(0, part.placement, section)
+            }
+        }
+
+        if (history.isNotEmpty()) {
+            val first = messages.size
+            val historyMessages =
+                history.map { event ->
+                    CompanionProviderMessage(
+                        role =
+                            when (event.eventKind) {
+                                "REQUEST" -> "user"
+                                "RESPONSE" -> "assistant"
+                                else ->
+                                    error(
+                                        "selected direct Conversation event has unsupported provider role",
+                                    )
+                            },
+                        content = event.content,
+                    )
+                }
+            messages += historyMessages
+            components +=
+                ContextComponent(
+                    componentRef = ComponentRefs.ConversationHistory,
+                    stabilityClass = ComponentStability.APPEND_ONLY_HISTORY,
+                    placementClass = ComponentPlacement.HISTORICAL_SEQUENCE,
+                    logicalOrder = components.size,
+                    providerMessageIndex = first,
+                    sha256 = sha256(VexContractJson.canonicalEncode(historyMessages)),
+                    sourceRefs = listOf(history.first().eventRef, history.last().eventRef),
+                )
+        }
+
+        tail.forEach { part ->
+            val index = messages.size
+            messages += part.message
+            part.sections.forEach { section ->
+                record(index, part.placement, section)
+            }
+        }
+        return Assembly(messages, components)
+    }
 
     @Serializable
     @ConsistentCopyVisibility
@@ -257,6 +427,8 @@ object DirectPromptContext {
         @EncodeDefault(EncodeDefault.Mode.NEVER) val capabilityExchangeAllowanceTokens: Int = 0,
         val trainingSelectionPerformed: Boolean,
         val effectsPerformed: Boolean,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val contextComponents: List<ContextComponent> = emptyList(),
     )
 
     @OptIn(
@@ -464,6 +636,8 @@ object DirectPromptContext {
          */
         @EncodeDefault(EncodeDefault.Mode.NEVER)
         val capabilityExchangeAllowanceTokens: Int = 0,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val contextComponents: List<ContextComponent> = emptyList(),
     )
 
     /**
