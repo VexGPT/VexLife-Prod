@@ -28,6 +28,14 @@ class HereticRuntimeRealizationTest {
                 model.identity.modelProfileRef,
                 realization.modelProfileRef,
             )
+            assertEquals(
+                "substrate.vexlife.macos-user-launchd-process.001",
+                realization.process.processSubstrateRef,
+            )
+            assertEquals(
+                "owner.vexlife-prod.heretic-persistent-runtime.001",
+                realization.process.lifetimeOwnerRef,
+            )
         }
     }
 
