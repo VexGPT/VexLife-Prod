@@ -5,13 +5,12 @@ import kotlinx.serialization.Serializable
 /**
  * Home + Companion-lineage scoped selection/binding relationship for one catalog Heretic model.
  *
- * [BindingScope] carries refs supplied by those rightful owners; this package does not define Home
- * or Companion lineage semantics. Selecting a model is not authority to download, activate,
- * replace another model, or start a process. Those effects belong to later runtime/platform owners.
+ * Model selection and runtime realization are distinct. A pending selection names the Product model
+ * only; a bound selection also names the exact source-owned runtime realization that qualified.
  *
- * The value names exactly one [HereticModelCatalog] entry. Its schema is unchanged from the
- * single-model era, so a Home bound to the certified 27B reads exactly as it always did; a Home that
- * selected another catalog model carries that model's identity in the same fields.
+ * v1 records created before realizationRef remain readable. Their only admitted bound compatibility
+ * is the source-known Mac relationship resolved by modelRef -> exact Mac target; platform/runtime
+ * identity is never inferred by inspecting artifact or class strings.
  */
 object HereticModelConfiguration {
     const val Schema =
@@ -35,25 +34,20 @@ object HereticModelConfiguration {
         val companionLineageRef: String,
     ) {
         init {
-            requirePortableRef(
-                homeRef,
-                "homeRef",
-            )
-            requirePortableRef(
-                companionLineageRef,
-                "companionLineageRef",
-            )
+            requirePortableRef(homeRef, "homeRef")
+            requirePortableRef(companionLineageRef, "companionLineageRef")
         }
     }
 
     /**
      * Transient current-runtime truth required to admit BOUND_HERETIC_PRODUCT_MODEL.
      *
-     * The persistent runtime owner forms this from one exact qualified receipt. Configuration
-     * consumes the evidence but does not persist or become owner of runtime/process truth.
+     * The runtime owner supplies the realizationRef explicitly. Configuration validates that exact
+     * map entry; it does not identify a realization by comparing runtime/artifact fields.
      */
     @ConsistentCopyVisibility
     data class QualifiedRuntimeEvidence internal constructor(
+        val realizationRef: String,
         val runtimeReceiptRef: String,
         val runtimeState: HereticRuntimeState,
         val modelRef: String,
@@ -67,35 +61,38 @@ object HereticModelConfiguration {
         val qualification: HereticRuntimeQualification,
     ) {
         init {
-            requirePortableRef(
-                runtimeReceiptRef,
-                "runtimeReceiptRef",
-            )
+            requirePortableRef(realizationRef, "realizationRef")
+            requirePortableRef(runtimeReceiptRef, "runtimeReceiptRef")
             require(
-                runtimeState ==
-                    HereticRuntimeState.Qualified,
+                runtimeState == HereticRuntimeState.Qualified,
             ) {
                 "Heretic model binding requires a qualified runtime"
             }
+
+            val realization =
+                HereticRuntimeRealization.require(
+                    realizationRef,
+                )
             val model =
                 HereticModelCatalog.entry(
                     modelRef,
                 )
+            val artifact = realization.artifact
+            val runtime = realization.runtime
+
             require(
                 model != null &&
-                    modelProfileRef ==
-                    model.identity.modelProfileRef &&
-                    HereticRuntimeRealization.admits(
-                        model = model,
-                        artifactRef = artifactRef,
-                        artifactContentSetSha256 = artifactContentSetSha256,
-                        runtimeAdapterRef = runtimeAdapterRef,
-                        runtimeClass = runtimeClass,
-                        endpoint = endpoint,
-                        requestModel = requestModel,
-                    ),
+                    realization.modelRef == modelRef &&
+                    realization.modelProfileRef == modelProfileRef &&
+                    model.identity.modelProfileRef == modelProfileRef &&
+                    artifact.artifactRef == artifactRef &&
+                    artifact.contentSetSha256 == artifactContentSetSha256 &&
+                    runtime.runtimeAdapterRef == runtimeAdapterRef &&
+                    runtime.runtimeClass == runtimeClass &&
+                    runtime.endpoint == endpoint &&
+                    runtime.requestModel == requestModel,
             ) {
-                "qualified runtime evidence does not match one admitted realization of an offered Heretic model"
+                "qualified runtime evidence does not match its declared Heretic realization"
             }
         }
     }
@@ -108,6 +105,7 @@ object HereticModelConfiguration {
         val companionLineageRef: String,
         val modelRef: String,
         val modelProfileRef: String,
+        val realizationRef: String? = null,
         val artifactRef: String,
         val artifactContentSetSha256: String,
         val runtimeAdapterRef: String,
@@ -130,8 +128,12 @@ object HereticModelConfiguration {
             model = model,
         )
 
-    /** The catalog model this value names. */
-    fun selected(value: Value): HereticModelCatalog.Entry = HereticModelCatalog.requireEntry(value.modelRef)
+    fun selected(
+        value: Value,
+    ): HereticModelCatalog.Entry =
+        HereticModelCatalog.requireEntry(
+            value.modelRef,
+        )
 
     fun bound(
         homeIdentity: BindingScope,
@@ -140,15 +142,7 @@ object HereticModelConfiguration {
             HereticProductIdentity.StableRuntimeReceiptRelativePath,
     ): Value {
         require(
-            qualifiedRuntime.runtimeState ==
-                HereticRuntimeState.Qualified,
-        ) {
-            "Heretic product model cannot bind without current qualified runtime evidence"
-        }
-
-        require(
-            runtimeReceiptPath in
-                admittedRuntimeReceiptPaths,
+            runtimeReceiptPath in admittedRuntimeReceiptPaths,
         ) {
             "Heretic product model binding requires one admitted runtime receipt owner"
         }
@@ -162,33 +156,17 @@ object HereticModelConfiguration {
         )
     }
 
-    /**
-     * Scope/authority validation for convergence and explicit model replacement.
-     *
-     * A stale Product identity does not become current here. This proves only that the record
-     * belongs to this exact Home/Companion scope and carries no hidden fallback/download/start
-     * authority.
-     */
     fun validateSelectionScope(
         value: Value,
         homeIdentity: BindingScope,
     ): Value {
-        require(
-            value.schemaVersion ==
-                Schema,
-        ) {
+        require(value.schemaVersion == Schema) {
             "Heretic model configuration schema drift"
         }
-        require(
-            value.homeRef ==
-                homeIdentity.homeRef,
-        ) {
+        require(value.homeRef == homeIdentity.homeRef) {
             "Heretic model configuration Home identity drift"
         }
-        require(
-            value.companionLineageRef ==
-                homeIdentity.companionLineageRef,
-        ) {
+        require(value.companionLineageRef == homeIdentity.companionLineageRef) {
             "Heretic model configuration Companion lineage drift"
         }
         require(
@@ -204,31 +182,64 @@ object HereticModelConfiguration {
     fun productIdentityCurrent(
         value: Value,
     ): Boolean {
-        val identity =
+        val model =
             HereticModelCatalog.entry(
                 value.modelRef,
             )
-                ?.identity
                 ?: return false
 
-        return value.modelProfileRef ==
-            identity.modelProfileRef &&
-            HereticRuntimeRealization.admits(
-                model =
-                    requireNotNull(
-                        HereticModelCatalog.entry(
-                            value.modelRef,
-                        ),
-                    ),
-                artifactRef = value.artifactRef,
-                artifactContentSetSha256 = value.artifactContentSetSha256,
-                runtimeAdapterRef = value.runtimeAdapterRef,
-                runtimeClass = value.runtimeClass,
-                endpoint = value.endpoint,
-                requestModel = value.requestModel,
-            ) &&
-            value.runtimeReceiptPath in
-            admittedRuntimeReceiptPaths
+        if (value.modelProfileRef != model.identity.modelProfileRef) {
+            return false
+        }
+
+        if (value.state == State.EstablishmentPending) {
+            // Pending is a Product model choice, not a platform/runtime choice.
+            return value.realizationRef == null
+        }
+
+        val realization =
+            if (value.realizationRef == null) {
+                // Source-known v1 compatibility only; no field-based platform inference.
+                HereticRuntimeRealization.legacyMacV1(
+                    value.modelRef,
+                )
+            } else {
+                runCatching {
+                        HereticRuntimeRealization.require(
+                            value.realizationRef,
+                        )
+                    }
+                    .getOrNull()
+                    ?: return false
+            }
+
+        val artifact = realization.artifact
+        val runtime = realization.runtime
+
+        val exactRealization =
+            realization.modelRef == value.modelRef &&
+                realization.modelProfileRef == value.modelProfileRef &&
+                artifact.artifactRef == value.artifactRef &&
+                artifact.contentSetSha256 == value.artifactContentSetSha256 &&
+                runtime.runtimeAdapterRef == value.runtimeAdapterRef &&
+                runtime.runtimeClass == value.runtimeClass &&
+                runtime.endpoint == value.endpoint &&
+                runtime.requestModel == value.requestModel
+
+        val receiptCurrent =
+            if (value.realizationRef == null) {
+                // Existing Mac v1 bindings may legitimately point at the stable compatibility
+                // receipt or the Product-owned Mac receipt.
+                value.runtimeReceiptPath in
+                    setOf(
+                        HereticProductIdentity.StableRuntimeReceiptRelativePath,
+                        realization.runtimeReceiptRelativePath,
+                    )
+            } else {
+                value.runtimeReceiptPath == realization.runtimeReceiptRelativePath
+            }
+
+        return exactRealization && receiptCurrent
     }
 
     fun validate(
@@ -240,11 +251,7 @@ object HereticModelConfiguration {
                 value = value,
                 homeIdentity = homeIdentity,
             )
-        require(
-            productIdentityCurrent(
-                scoped,
-            ),
-        ) {
+        require(productIdentityCurrent(scoped)) {
             "Heretic model configuration product identity drift"
         }
         return scoped
@@ -253,15 +260,11 @@ object HereticModelConfiguration {
     fun isBound(
         value: Value,
     ): Boolean =
-        value.state ==
-            State.BoundProductModel
+        value.state == State.BoundProductModel
 
     private val admittedRuntimeReceiptPaths =
-        setOf(
-            HereticProductIdentity.StableRuntimeReceiptRelativePath,
-            HereticProductIdentity.ProductRuntimeReceiptRelativePath,
-            HereticRuntimeRealization.Windows4BPatientZeroReceiptRelativePath,
-        )
+        HereticRuntimeRealization.receiptPaths() +
+            HereticProductIdentity.StableRuntimeReceiptRelativePath
 
     private fun form(
         homeIdentity: BindingScope,
@@ -269,58 +272,55 @@ object HereticModelConfiguration {
         runtimeReceiptPath: String =
             HereticProductIdentity.StableRuntimeReceiptRelativePath,
         model: HereticModelCatalog.Entry = HereticModelCatalog.Default,
-        qualifiedRuntime: QualifiedRuntimeEvidence? =
-            null,
+        qualifiedRuntime: QualifiedRuntimeEvidence? = null,
     ): Value {
         qualifiedRuntime?.let {
             require(
-                it.modelRef ==
-                    model.modelRef &&
-                    it.modelProfileRef ==
-                    model.identity.modelProfileRef,
+                it.modelRef == model.modelRef &&
+                    it.modelProfileRef == model.identity.modelProfileRef,
             ) {
                 "bound Heretic runtime realization must serve the selected Product model"
             }
         }
 
+        val value =
+            Value(
+                schemaVersion = Schema,
+                state = state,
+                homeRef = homeIdentity.homeRef,
+                companionLineageRef = homeIdentity.companionLineageRef,
+                modelRef = model.identity.modelRef,
+                modelProfileRef = model.identity.modelProfileRef,
+                realizationRef = qualifiedRuntime?.realizationRef,
+                // v1 keeps these fields present for schema compatibility. While pending, they are
+                // non-authoritative selection metadata. Bound values come from the exact resolved
+                // realization evidence.
+                artifactRef =
+                    qualifiedRuntime?.artifactRef
+                        ?: model.identity.artifactSetRef,
+                artifactContentSetSha256 =
+                    qualifiedRuntime?.artifactContentSetSha256
+                        ?: model.identity.artifactContentSetSha256,
+                runtimeAdapterRef =
+                    qualifiedRuntime?.runtimeAdapterRef
+                        ?: model.identity.runtimeAdapterRef,
+                runtimeClass =
+                    qualifiedRuntime?.runtimeClass
+                        ?: model.identity.runtimeClass,
+                endpoint =
+                    qualifiedRuntime?.endpoint
+                        ?: model.identity.endpoint,
+                requestModel =
+                    qualifiedRuntime?.requestModel
+                        ?: model.identity.requestModel,
+                runtimeReceiptPath = runtimeReceiptPath,
+                automaticFallback = false,
+                automaticDownload = false,
+                automaticActivation = false,
+            )
+
         return validate(
-            value =
-                Value(
-                    schemaVersion = Schema,
-                    state = state,
-                    homeRef = homeIdentity.homeRef,
-                    companionLineageRef = homeIdentity.companionLineageRef,
-                    modelRef = model.identity.modelRef,
-                    modelProfileRef = model.identity.modelProfileRef,
-                    artifactRef =
-                        qualifiedRuntime
-                            ?.artifactRef
-                            ?: model.identity.artifactSetRef,
-                    artifactContentSetSha256 =
-                        qualifiedRuntime
-                            ?.artifactContentSetSha256
-                            ?: model.identity.artifactContentSetSha256,
-                    runtimeAdapterRef =
-                        qualifiedRuntime
-                            ?.runtimeAdapterRef
-                            ?: model.identity.runtimeAdapterRef,
-                    runtimeClass =
-                        qualifiedRuntime
-                            ?.runtimeClass
-                            ?: model.identity.runtimeClass,
-                    endpoint =
-                        qualifiedRuntime
-                            ?.endpoint
-                            ?: model.identity.endpoint,
-                    requestModel =
-                        qualifiedRuntime
-                            ?.requestModel
-                            ?: model.identity.requestModel,
-                    runtimeReceiptPath = runtimeReceiptPath,
-                    automaticFallback = false,
-                    automaticDownload = false,
-                    automaticActivation = false,
-                ),
+            value = value,
             homeIdentity = homeIdentity,
         )
     }
