@@ -185,6 +185,50 @@ object VexLifeWebP1RuntimeArtifacts {
                 messageType: 'vexlife.browser-context/v1',
                 authoredBrowserShare: $authoredBrowserShare
               });
+              // Serialization boundary for the Kotlin VoiceInput Family. Browser code realizes
+              // Effects but does not invent Product State, Control, reason refs or display keys.
+              const voiceInput = Object.freeze({
+                state: Object.freeze({
+                  ready: ${jsString(VexLifeVoiceInputFamily.StateReady)},
+                  checkingLanguage: ${jsString(VexLifeVoiceInputFamily.StateCheckingLanguage)},
+                  installingLanguage: ${jsString(VexLifeVoiceInputFamily.StateInstallingLanguage)},
+                  requestingMicrophone: ${jsString(VexLifeVoiceInputFamily.StateRequestingMicrophone)},
+                  listening: ${jsString(VexLifeVoiceInputFamily.StateListening)},
+                  stopping: ${jsString(VexLifeVoiceInputFamily.StateStopping)},
+                  held: ${jsString(VexLifeVoiceInputFamily.StateHeld)},
+                  failed: ${jsString(VexLifeVoiceInputFamily.StateFailed)}
+                }),
+                control: Object.freeze({
+                  start: ${jsString(VexLifeVoiceInputFamily.ControlStart)},
+                  stop: ${jsString(VexLifeVoiceInputFamily.ControlStop)}
+                }),
+                effect: Object.freeze({
+                  beginLocalDictation: ${jsString(VexLifeVoiceInputFamily.EffectBeginLocalDictation)},
+                  endLocalDictation: ${jsString(VexLifeVoiceInputFamily.EffectEndLocalDictation)}
+                }),
+                holdReason: Object.freeze({
+                  localRecognitionUnavailable: ${jsString(VexLifeVoiceInputFamily.HoldReason.LocalRecognitionUnavailable.reasonRef)},
+                  microphoneApiUnavailable: ${jsString(VexLifeVoiceInputFamily.HoldReason.MicrophoneApiUnavailable.reasonRef)},
+                  audioFeedbackUnavailable: ${jsString(VexLifeVoiceInputFamily.HoldReason.AudioFeedbackUnavailable.reasonRef)}
+                }),
+                failureReason: Object.freeze({
+                  microphonePermissionRequired: ${jsString(VexLifeVoiceInputFamily.FailureReason.MicrophonePermissionRequired.reasonRef)},
+                  microphoneUnavailable: ${jsString(VexLifeVoiceInputFamily.FailureReason.MicrophoneUnavailable.reasonRef)},
+                  languageUnavailable: ${jsString(VexLifeVoiceInputFamily.FailureReason.LanguageUnavailable.reasonRef)},
+                  recognitionStopped: ${jsString(VexLifeVoiceInputFamily.FailureReason.RecognitionStopped.reasonRef)},
+                  unknown: ${jsString(VexLifeVoiceInputFamily.FailureReason.Unknown.reasonRef)}
+                }),
+                attentionOverlay: ${jsString(VexLifeVoiceInputFamily.Attention.Overlay.name)},
+                languages: Object.freeze($voiceLanguage),
+                displayByState: Object.freeze($voiceStateDisplays),
+                holdDisplayByReason: Object.freeze($voiceHoldDisplays),
+                failureDisplayByReason: Object.freeze($voiceFailureDisplays)
+              });
+              // Browser-provider vocabulary stays local to this adapter boundary.
+              const localRecognitionAvailability = Object.freeze({
+                available: 'available',
+                unavailable: 'unavailable'
+              });
 
               const byId = (id) => document.getElementById(id);
               const ui = Object.freeze({
