@@ -302,6 +302,53 @@ object ContinuityPressureAdapter {
      * rightful runtime owner for exact currentness. Missing/pending/stale binding truth holds the
      * experiment instead of converging or recovering anything.
      */
+    /**
+     * Diagnostic mirror of the Product runtime owner's private receipt-binding predicate.
+     *
+     * This never admits a runtime. It only names which already-required equalities are false so a
+     * held host experiment can return one actionable boundary instead of the owner's aggregate
+     * error. Admission still belongs exclusively to observeCurrentQualified(...).
+     */
+    private fun productReceiptBindingMismatches(
+        binding: HereticPersistentRuntime.Binding,
+        receipt: HereticPersistentRuntime.Receipt,
+    ): List<String> {
+        val identity = binding.model.identity
+        val expectedArgs = HereticPersistentRuntime.serverArgs(binding)
+        return buildList {
+            if (receipt.schemaVersion != HereticPersistentRuntime.ReceiptSchema) add("RECEIPT_SCHEMA")
+            if (receipt.authorityRef != binding.authorityRef) add("AUTHORITY_REF")
+            if (receipt.modelRef != identity.modelRef) add("MODEL_REF")
+            if (receipt.modelProfileRef != identity.modelProfileRef) add("MODEL_PROFILE_REF")
+            if (receipt.artifactRef != identity.artifactSetRef) add("ARTIFACT_REF")
+            if (receipt.artifactCustodyEvidenceRef != identity.artifactCustodyEvidenceRef) add("ARTIFACT_CUSTODY_EVIDENCE_REF")
+            if (receipt.artifactContentSetSha256 != identity.artifactContentSetSha256) add("ARTIFACT_CONTENT_SET_SHA256")
+            if (receipt.runtimeAdapterRef != identity.runtimeAdapterRef) add("RUNTIME_ADAPTER_REF")
+            if (receipt.runtimeClass != identity.runtimeClass) add("RUNTIME_CLASS")
+            if (receipt.transportClass != identity.transportClass) add("TRANSPORT_CLASS")
+            if (receipt.hostExecutionProfileRef != identity.hostExecutionProfileRef) add("HOST_EXECUTION_PROFILE_REF")
+            if (receipt.pythonVersion != identity.pythonVersion) add("PYTHON_VERSION")
+            if (receipt.mlxLmVersion != identity.mlxLmVersion) add("MLX_LM_VERSION")
+            if (receipt.trainerSourceCommit != identity.trainerSourceCommit) add("TRAINER_SOURCE_COMMIT")
+            if (receipt.modelPath != binding.modelPath) add("MODEL_PATH")
+            if (receipt.pythonPath != binding.pythonPath) add("PYTHON_PATH")
+            if (receipt.pythonEnvironmentRoot != binding.pythonEnvironmentRoot) add("PYTHON_ENVIRONMENT_ROOT")
+            if (receipt.endpoint != identity.endpoint) add("ENDPOINT")
+            if (receipt.requestModel != identity.requestModel) add("REQUEST_MODEL")
+            if (receipt.implementationIdentity.repository != binding.implementationIdentity.repository) add("IMPLEMENTATION_REPOSITORY")
+            if (receipt.implementationIdentity.classResource != binding.implementationIdentity.classResource) add("IMPLEMENTATION_CLASS_RESOURCE")
+            if (receipt.implementationIdentity.classSha256 != binding.implementationIdentity.classSha256) add("IMPLEMENTATION_CLASS_SHA256")
+            if (receipt.runtime.pid <= 0) add("PID")
+            if (receipt.runtime.processGroupId <= 0) add("PROCESS_GROUP_ID")
+            if (!receipt.runtime.exactOwnedDetachedGroup) add("EXACT_OWNED_DETACHED_GROUP")
+            if (receipt.runtime.args != expectedArgs) add("SERVER_ARGS")
+            if (receipt.runtime.processSubstrate.pid != receipt.runtime.pid) add("PROCESS_SUBSTRATE_PID")
+            if (receipt.effects != vexlife.model.heretic.HereticRuntimeEffectBoundary.QualifiedRuntime) add("EFFECT_BOUNDARY")
+            if (receipt.state != HereticRuntimeState.Qualified) add("RECEIPT_STATE")
+            if (receipt.qualification == null) add("QUALIFICATION")
+        }
+    }
+
     private fun observeBoundRuntimeReadOnly(runtimeHome: Path): HereticModelConfiguration.QualifiedRuntimeEvidence {
         val home =
             requireNotNull(VexLifeProdHomeFiles.observeExisting(runtimeHome)) {
@@ -363,20 +410,25 @@ object ContinuityPressureAdapter {
                 require(receipt.modelRef == configured.value.modelRef) {
                     "Product runtime receipt does not serve the Home's bound model"
                 }
+                val binding =
+                    bindingFromReceipt(
+                        authorityRef = receipt.authorityRef,
+                        modelRef = receipt.modelRef,
+                        modelPath = receipt.modelPath,
+                        pythonPath = receipt.pythonPath,
+                        pythonEnvironmentRoot = receipt.pythonEnvironmentRoot,
+                        // This experiment borrows an already-owned runtime. Its lifecycle
+                        // implementation identity belongs to the receipt that formed it, not to
+                        // this newer harness candidate. The runtime owner still re-proves exact
+                        // receipt/process/substrate currentness below.
+                        implementationIdentity = receipt.implementationIdentity,
+                    )
+                val mismatches = productReceiptBindingMismatches(binding, receipt)
+                require(mismatches.isEmpty()) {
+                    "Product runtime receipt binding mismatch: " + mismatches.joinToString(",")
+                }
                 HereticPersistentRuntime.observeCurrentQualified(
-                    binding =
-                        bindingFromReceipt(
-                            authorityRef = receipt.authorityRef,
-                            modelRef = receipt.modelRef,
-                            modelPath = receipt.modelPath,
-                            pythonPath = receipt.pythonPath,
-                            pythonEnvironmentRoot = receipt.pythonEnvironmentRoot,
-                            // This experiment borrows an already-owned runtime. Its lifecycle
-                            // implementation identity belongs to the receipt that formed it, not to
-                            // this newer harness candidate. The runtime owner still re-proves exact
-                            // receipt/process/substrate currentness below.
-                            implementationIdentity = receipt.implementationIdentity,
-                        ),
+                    binding = binding,
                     store = store,
                     platform = platform,
                 )
