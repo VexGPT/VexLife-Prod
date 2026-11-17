@@ -87,6 +87,14 @@ asset bytes
 asset sha256
 52133a0a5a8f6035b1bdd2f89c3425ea8b742413d9bdb9a2dee30e3a1681b18c
 
+packaging source
+ggml-org/llama.cpp@c0bc8591e8815c63cb01dd3f051a8b0df02501c9:
+.github/workflows/release.yml#windows-cpu
+
+producer relationship
+7z packs build/bin/Release/* into the CPU ZIP;
+the release job only renames that ZIP
+
 llama-server.exe sha256
 af3e56d6bdb84a9b6bd50f6ad748809370bc29be42d58088041408b2933d80f7
 
@@ -184,11 +192,14 @@ runtime/vexlife-prod/heretic-windows-runtime-owner-receipt.json
 ```
 
 The receipt names the exact realization, PID, model/runtime paths, runtime binary/archive identity,
-qualification evidence, effect boundary and runtime log. Same-process currentness requires:
+qualification evidence, effect boundary, working directory, **exact launch argv**, and runtime log.
+Same-process currentness requires:
 
 - the process is still live;
 - the exact whole runtime materialization is still current;
 - the durable receipt still names that same PID/evidence/paths;
+- the receipt launch argv still equals the launch contract current source would form for that same
+  realization;
 - health and exact model exposure still pass.
 
 Cross-process adoption/recovery is deliberately not invented here. A later Windows lifetime owner
