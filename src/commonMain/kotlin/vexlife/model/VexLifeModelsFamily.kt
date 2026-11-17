@@ -11,18 +11,18 @@ import vexlife.text.VexLifeText
  * State is one model's relationship to this Home: whether its required artifacts are present,
  * whether a download is running, whether the Home chose it, and whether the running runtime serves it.
  *
- * Lawfulness (what each Control may do, by State):
+ * Lawfulness keeps target choice, launch configuration and activation distinct:
  * ```
- * Use        artifacts present, chosen/serving not both current -> SwitchModel
- * Download   artifacts absent or partial, nothing running       -> AcquireArtifacts (resumes a partial)
- * Redownload artifacts damaged, nothing running                 -> ReplaceArtifacts
- * Remove     artifacts here, not chosen, not serving, idle      -> RemoveArtifacts
+ * Select      choose the target only; no runtime effect
+ * Configure   selected target only; no runtime effect
+ * Use/Start   selected + artifacts present + not current, or current config pending -> SwitchModel
+ * Download    artifacts absent or partial, nothing running -> AcquireArtifacts
+ * Redownload  artifacts damaged, nothing running           -> ReplaceArtifacts
+ * Remove      artifacts here, not chosen, not serving, idle -> RemoveArtifacts
  * ```
  *
- * Use means the person's intention is for this model to become the model serving Vex now. It stays
- * lawful when a prior switch failed (chosen but not serving), and for the currently-serving model
- * when another target is chosen (so the person can cancel/revert the pending relationship). The
- * Family owns this meaning; concrete runtime convergence remains with LocalSetup/runtime owners.
+ * Use is now an explicit activation Control for an already-selected target. The Family owns that
+ * human meaning; concrete runtime convergence remains with LocalSetup/runtime owners.
  */
 object VexLifeModelsFamily :
     VexFamilyContract<
