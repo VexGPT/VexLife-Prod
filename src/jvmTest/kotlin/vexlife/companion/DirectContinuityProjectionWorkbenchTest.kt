@@ -257,4 +257,66 @@ class DirectContinuityProjectionWorkbenchTest {
 
         assertFalse(projection.stablePrefix().contains(failedAttemptRef))
     }
+
+    @Test
+    fun mutablePrefixStatePreventsHistoricalConversationReuse() {
+        val historicalConversation =
+            """
+            turn:101:req|resp
+            turn:102:req|resp
+            """.trimIndent() + "\n"
+
+        val currentShape =
+            "foundation|extent=17\n" +
+                historicalConversation +
+                "request:103"
+        val nextCurrentShape =
+            "foundation|extent=18\n" +
+                historicalConversation +
+                "turn:103:req|resp\n" +
+                "request:104"
+        val currentReuse =
+            commonPrefixLength(
+                currentShape,
+                nextCurrentShape,
+            )
+
+        val stablePrefix =
+            "foundation|checkpoint=C100\n" +
+                historicalConversation
+        val projectedShape =
+            stablePrefix +
+                "state:extent=18\n" +
+                "request:103"
+        val nextProjectedShape =
+            stablePrefix +
+                "turn:103:req|resp\n" +
+                "state:extent=19\n" +
+                "request:104"
+        val projectedReuse =
+            commonPrefixLength(
+                projectedShape,
+                nextProjectedShape,
+            )
+
+        assertTrue(currentReuse < stablePrefix.length)
+        assertTrue(projectedReuse >= stablePrefix.length)
+        assertTrue(projectedReuse > currentReuse)
+    }
+
+    private fun commonPrefixLength(
+        first: String,
+        second: String,
+    ): Int {
+        val limit = minOf(first.length, second.length)
+        var index = 0
+        while (
+            index < limit &&
+            first[index] == second[index]
+        ) {
+            index += 1
+        }
+        return index
+    }
+
 }
