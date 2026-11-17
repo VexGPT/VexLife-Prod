@@ -27,6 +27,7 @@ import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
+import vexlife.conversation.VexLifeConversationTurnFamily
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.continuity.VexLifePrivateModeFamily
@@ -2693,6 +2694,22 @@ class VexLifeProdLocalServiceTest {
                     service ->
                     val idempotencyKey =
                         "send.vexlife.browser.cancel.001"
+                    val ready =
+                        json.decodeFromString<VexLifeProdServiceContract.ConversationTurnProjection>(
+                            get(
+                                service.origin,
+                                VexLifeProdServiceContract.ConversationTurnPath,
+                            ).body(),
+                        )
+                    assertEquals(
+                        VexLifeConversationTurnFamily.StateReady,
+                        ready.state,
+                    )
+                    assertEquals(
+                        VexLifeConversationTurnFamily.ControlSend,
+                        ready.display.primaryControlRef,
+                    )
+
                     val sendRequest =
                         HttpRequest
                             .newBuilder(
@@ -2737,13 +2754,33 @@ class VexLifeProdLocalServiceTest {
                         "provider stage never became active",
                     )
 
+                    val active =
+                        json.decodeFromString<VexLifeProdServiceContract.ConversationTurnProjection>(
+                            get(
+                                service.origin,
+                                VexLifeProdServiceContract.ConversationTurnPath,
+                            ).body(),
+                        )
+                    assertEquals(
+                        VexLifeConversationTurnFamily.StateActive,
+                        active.state,
+                    )
+                    assertEquals(
+                        VexLifeConversationTurnFamily.ControlStop,
+                        active.display.primaryControlRef,
+                    )
+                    assertEquals(
+                        idempotencyKey,
+                        active.display.targetAttemptRef,
+                    )
+
                     val cancel =
                         postJson(
                             service.origin,
                             VexLifeProdServiceContract.ConversationCancelPath,
                             json.encodeToString(
                                 VexLifeProdServiceContract.ConversationCancelRequest(
-                                    idempotencyKey,
+                                    attemptRef = idempotencyKey,
                                 ),
                             ),
                         )
@@ -2756,11 +2793,23 @@ class VexLifeProdLocalServiceTest {
                             cancel.body(),
                         )
                     assertEquals(
-                        VexLifeProdServiceContract.ConversationCancelRequested,
-                        cancelResult.state,
+                        VexLifeProdServiceContract.ConversationControlOutcome.REALIZED,
+                        cancelResult.outcome,
+                    )
+                    assertEquals(
+                        VexLifeConversationTurnFamily.ControlStop,
+                        cancelResult.controlRef,
+                    )
+                    assertEquals(
+                        idempotencyKey,
+                        cancelResult.attemptRef,
+                    )
+                    assertEquals(
+                        VexLifeConversationTurnFamily.StateCancelling,
+                        cancelResult.turn.state,
                     )
                     assertTrue(
-                        cancelResult.cancellationRequested,
+                        cancelResult.turn.display.cancelling,
                     )
                     assertTrue(
                         cancelResult.effectsPerformed,
@@ -2785,7 +2834,7 @@ class VexLifeProdLocalServiceTest {
                     assertTrue(
                         stream.body()
                             .contains(
-                                DirectCompanionTurn.FailureCancelledByPerson,
+                                VexLifeConversationTurnFamily.TerminalReason.CancelledByPerson.ref,
                             ),
                         stream.body(),
                     )
@@ -2799,6 +2848,22 @@ class VexLifeProdLocalServiceTest {
                     assertEquals(
                         1,
                         providerCalls,
+                    )
+
+                    val readyAgain =
+                        json.decodeFromString<VexLifeProdServiceContract.ConversationTurnProjection>(
+                            get(
+                                service.origin,
+                                VexLifeProdServiceContract.ConversationTurnPath,
+                            ).body(),
+                        )
+                    assertEquals(
+                        VexLifeConversationTurnFamily.StateReady,
+                        readyAgain.state,
+                    )
+                    assertEquals(
+                        VexLifeConversationTurnFamily.ControlSend,
+                        readyAgain.display.primaryControlRef,
                     )
 
                     val after =
