@@ -124,6 +124,7 @@ object VexLogger {
         VoiceInputLanguageInstallObserved(Owner.Browser),
         VoiceInputMicrophoneRequested(Owner.Browser),
         VoiceInputMicrophoneGranted(Owner.Browser),
+        VoiceInputAudioCaptureStarted(Owner.Browser),
         VoiceInputRecognitionStarted(Owner.Browser),
         VoiceInputFailureObserved(Owner.Browser),
         PresentationArrived(Owner.Presentation),
