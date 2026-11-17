@@ -4,6 +4,7 @@ import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.logging.VexLogger
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 
@@ -46,7 +47,7 @@ object VexLifeProdServiceProcess {
         val establishSession: (
             productHome: Path,
             allowAcquisition: Boolean,
-        ) -> VexLifeProdLocalSetup.Session = {
+        ) -> VexLifeProdRuntimeSession = {
             productHome,
             allowAcquisition,
             ->
@@ -57,7 +58,7 @@ object VexLifeProdServiceProcess {
         },
         val startService: (
             sourceSha: String,
-            session: VexLifeProdLocalSetup.Session,
+            session: VexLifeProdRuntimeSession,
             visionRuntimeExecutablePathOrNull: String?,
         ) -> AutoCloseable = {
             sourceSha,
