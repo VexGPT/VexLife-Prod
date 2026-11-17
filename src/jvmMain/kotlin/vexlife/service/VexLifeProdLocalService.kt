@@ -1710,7 +1710,8 @@ class VexLifeProdLocalService private constructor(
             VexLogger.Fact.LocalAsrInferenceStarted,
             refs =
                 mapOf(
-                    "providerRef" to selected.providerRef,
+                    "sourceSha" to sourceSha,
+                            "providerRef" to selected.providerRef,
                     "modelRef" to selected.modelRef,
                     "language" to language,
                     "audioBytes" to wav.size.toString(),
@@ -1730,6 +1731,7 @@ class VexLifeProdLocalService private constructor(
                     VexLogger.Fact.LocalAsrInferenceFailed,
                     refs =
                         mapOf(
+                            "sourceSha" to sourceSha,
                             "providerRef" to selected.providerRef,
                             "modelRef" to selected.modelRef,
                             "failureType" to error.javaClass.simpleName,
@@ -1748,7 +1750,8 @@ class VexLifeProdLocalService private constructor(
             VexLogger.Fact.LocalAsrInferenceCompleted,
             refs =
                 mapOf(
-                    "providerRef" to result.providerRef,
+                    "sourceSha" to sourceSha,
+                            "providerRef" to result.providerRef,
                     "modelRef" to result.modelRef,
                     "inferenceMillis" to result.inferenceMillis.toString(),
                 ),
