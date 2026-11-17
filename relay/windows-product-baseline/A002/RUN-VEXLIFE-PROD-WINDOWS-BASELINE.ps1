@@ -112,7 +112,7 @@ $returnRoot = Join-Path $capsule "return"
 $sourceRoot = Join-Path $capsule "source"
 $gradleHome = Join-Path $capsule "gradle-home"
 New-Item -ItemType Directory -Path $logsRoot | Out-Null
-New-Item -ItemType Directorcy -Path $returnRoot | Out-Null
+New-Item -ItemType Directory -Path $returnRoot | Out-Null
 New-Item -ItemType Directory -Path $sourceRoot | Out-Null
 New-Item -ItemType Directory -Path $gradleHome | Out-Null
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
