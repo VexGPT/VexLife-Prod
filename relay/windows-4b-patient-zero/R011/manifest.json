@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "vexlife-prod.upstream-family-realization-proof/v1",
+  "continuity": "[VXG RealForever]",
+  "attempt": "R011",
+  "productCarrierPr": 227,
+  "productSourceSha": "9c0cbb5dc9800cb35624dd432616b84ac9f5c248",
+  "execution": "LOCAL_RELAY_NO_GITHUB_ACTIONS",
+  "purpose": "re-prove the upstream Entry/Models Family-to-realization chain after completing its target-coverage and multilingual test migration, then re-run the already-earned Windows lived path",
+  "r010": {
+    "returnSha256": "2dd6767f1b287a9fca7ca4103dcdb9447a6baa667307cb3762b0c687fbae9c04",
+    "disposition": "SAFE_FAILURE",
+    "stringManifestCheck": "PASS",
+    "runtimeReached": false,
+    "failure": "UPSTREAM_FAMILY_REALIZATION_TESTS_EXIT_1",
+    "compilerFindings": [
+      "HereticRuntimeRealizationTest missing assertFalse import for new target coverage assertion",
+      "VexLifeProdSetupLanguageTest still used HostHeld chipModel/requiredChipModel after portable observedHardware/requiredHardware migration"
+    ],
+    "adjacentOmissionFound": "MODEL_TARGET_HELD was not yet included in multilingual every-entry-state coverage",
+    "semanticInvariantChanged": false
+  },
+  "corrections": {
+    "targetCoverageTestImportCommit": "19ab85d4dc49aef45f25ed17d6f14caa5520e176",
+    "portableLanguageStateCommit": "9c0cbb5dc9800cb35624dd432616b84ac9f5c248",
+    "hostHeldFixturePortable": true,
+    "modelTargetHeldMultilingualCoverage": true
+  },
+  "semanticChain": [
+    "VexLifeProdEntryFamily",
+    "VexLifeModelsFamily",
+    "HereticRuntimeRealization",
+    "HereticRuntimeAvailability",
+    "rightful platform/runtime owner",
+    "qualified realization evidence",
+    "Product binding",
+    "VexLifeProdRuntimeSession.Foundation",
+    "shared Product body"
+  ],
+  "proofPolicy": {
+    "stringManifestCheck": "checkVexLifeStrings",
+    "selectedTests": [
+      "VexLifeProdEntryFamilyTest",
+      "VexLifeModelsFamilyTest",
+      "VexLifeModelsTest",
+      "HereticModelCatalogTest",
+      "HereticProductModelTest",
+      "HereticRuntimeRealizationTest",
+      "HereticRuntimeRealizationSequenceTest",
+      "HereticRuntimeRealizationArchitectureTest",
+      "HereticRuntimeAvailabilityTest",
+      "HereticRuntimeContractTest",
+      "DirectCompanionConnectionTest",
+      "DirectCompanionTurnTest",
+      "VexLifeProdLocalSetupTest",
+      "VexLifeProdServiceProcessTest",
+      "VexLifeProdSetupModelTest",
+      "VexLifeProdSetupLanguageTest",
+      "VexLifeProdMacFrontDoorTest",
+      "VexLifeProdSetupProcessTest",
+      "VexLifeWebP1RuntimeArtifactsTest"
+    ],
+    "livedWindowsReproof": true,
+    "realHomeMutation": false,
+    "githubActions": false
+  }
+}
