@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "vexlife-prod.windows-4b-patient-zero-host-harness/v2",
+  "continuity": "[VXG RealForever]",
+  "attempt": "R005",
+  "productCarrierPr": 227,
+  "productSourceSha": "627193296cdcec9290ffc929fecd5bda8d6ead9b",
+  "execution": "LOCAL_RELAY_NO_GITHUB_ACTIONS",
+  "topology": {
+    "familyRef": "family.vexlife-prod.heretic-runtime-availability",
+    "architectureProjectionRef": "architecture.vexlife-prod.heretic-runtime-realization",
+    "formula": [
+      "Product model",
+      "Exact target",
+      "Realization",
+      "Dependencies",
+      "Family",
+      "Effect owner",
+      "Qualified evidence"
+    ],
+    "noReflectionIdentification": true,
+    "explicitNotRequired": true,
+    "boundEvidenceCarriesRealizationRef": true
+  },
+  "model": {
+    "productHandle": "heretic-4b",
+    "sha256": "7b95847ce1684f98d96f13bad2daaeffcfd2f95ea2ff3821ee68943590a10159",
+    "bytes": 2790000800
+  },
+  "effects": {
+    "realHomeMutation": false,
+    "technicalHomeOnly": true,
+    "localCompile": true,
+    "githubActions": false
+  },
+  "correctionFromR004": {
+    "failureClass": "MIXED_PLATFORM_TEST_GATE_PLUS_PENDING_SELECTION_REGRESSION",
+    "runtimeReachedInR004": false,
+    "fullJvmSuite": {
+      "testsCompleted": 582,
+      "testsFailed": 124,
+      "interpretation": "not a valid Windows gate because many failures are Mac/POSIX host semantics executed on Windows"
+    },
+    "preservedFinding": {
+      "failedTest": "HereticModelCatalogTest.aConfigurationCanNameAnyOfferedModelAndNothingElse",
+      "cause": "pending Product selection validation stopped checking that compatibility metadata still names the selected catalog model exactly",
+      "resolutionCommit": "627193296cdcec9290ffc929fecd5bda8d6ead9b"
+    },
+    "macCompatibilityRepairFromR003": {
+      "status": "preserved",
+      "originalFailingTestNoLongerFailed": true,
+      "windowsCannotBorrowMacStableReceiptRegression": "preserved"
+    }
+  },
+  "proofPolicy": {
+    "preRuntimeGate": "bounded cross-platform runtime-topology semantic suite",
+    "platformSpecificMacLifecycleTestsOnWindows": "NOT_A_WINDOWS_GATE",
+    "windowsLivedRuntimeStillRequired": true
+  },
+  "harness": {
+    "nativeStderrIsEvidence": true,
+    "gradleResultUsesExitCode": true
+  }
+}
