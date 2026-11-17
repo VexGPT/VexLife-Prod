@@ -269,9 +269,9 @@ class VexLifeModels(
                                     runtimeConfiguration.recommendationReasonKey,
                                 ),
                             minimumPromptCacheEntries =
-                                HereticRuntimeConfiguration.MinimumPromptCacheEntries,
+                                runtimeConfiguration.minimumPromptCacheEntries,
                             maximumPromptCacheEntries =
-                                HereticRuntimeConfiguration.MaximumPromptCacheEntries,
+                                runtimeConfiguration.maximumPromptCacheEntries,
                         ),
                     runtimeConfigurationPending = runtimeConfigurationPending,
                     display = VexLifeModelsFamily.displayStateFor(state),
