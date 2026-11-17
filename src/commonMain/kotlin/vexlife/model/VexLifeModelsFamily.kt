@@ -2,6 +2,7 @@ package vexlife.model
 
 import kotlinx.serialization.Serializable
 import vexlife.semantic.VexFamilyContract
+import vexlife.model.heretic.HereticRuntimeConfiguration
 import vexlife.text.VexLifeText
 
 /**
@@ -62,6 +63,8 @@ object VexLifeModelsFamily :
         val chosen: Boolean,
         val serving: Boolean,
         val switching: Boolean,
+        /** The selected/serving model has configured launch values not active in the current runtime. */
+        val runtimeConfigurationPending: Boolean = false,
         /** Any model's download is running (one at a time per Home). */
         val anyDownloadRunning: Boolean,
         /** One model-switch convergence is active for this Home. */
@@ -72,8 +75,27 @@ object VexLifeModelsFamily :
         val controlRef: String
     }
 
+    data object Select : Control {
+        override val controlRef: String = ControlSelect
+    }
+
+    /** Explicitly start/restart the already-selected target through the runtime owner. */
     data object Use : Control {
         override val controlRef: String = ControlUse
+    }
+
+    data object UseRecommendedRuntimeConfiguration : Control {
+        override val controlRef: String = ControlUseRecommendedRuntimeConfiguration
+    }
+
+    data class SetPromptCacheEntries(
+        val entries: Int,
+    ) : Control {
+        override val controlRef: String = ControlSetPromptCacheEntries
+
+        init {
+            HereticRuntimeConfiguration.requirePromptCacheEntries(entries)
+        }
     }
 
     data object Download : Control {
@@ -89,7 +111,15 @@ object VexLifeModelsFamily :
     }
 
     sealed interface Effect : VexFamilyContract.Effect<VexLifeModelsFamily> {
+        data object SelectModel : Effect
+
         data object SwitchModel : Effect
+
+        data object UseRecommendedRuntimeConfiguration : Effect
+
+        data class SetPromptCacheEntries(
+            val entries: Int,
+        ) : Effect
 
         data object AcquireArtifacts : Effect
 
@@ -119,14 +149,36 @@ object VexLifeModelsFamily :
                 !currentState.anyDownloadRunning &&
                 !currentState.anySwitchRunning
         return when (control) {
+            Select ->
+                if (
+                    !currentState.chosen &&
+                        idle
+                ) {
+                    stay(Effect.SelectModel)
+                } else {
+                    null
+                }
             Use ->
                 if (
                     currentState.artifactPresence == ArtifactPresence.Present &&
-                        !(currentState.chosen && currentState.serving) &&
+                        currentState.chosen &&
+                        (!currentState.serving || currentState.runtimeConfigurationPending) &&
                         !currentState.switching &&
                         idle
                 ) {
                     stay(Effect.SwitchModel)
+                } else {
+                    null
+                }
+            UseRecommendedRuntimeConfiguration ->
+                if (currentState.chosen && idle) {
+                    stay(Effect.UseRecommendedRuntimeConfiguration)
+                } else {
+                    null
+                }
+            is SetPromptCacheEntries ->
+                if (currentState.chosen && idle) {
+                    stay(Effect.SetPromptCacheEntries(control.entries))
                 } else {
                     null
                 }
@@ -180,29 +232,42 @@ object VexLifeModelsFamily :
                     },
                 ),
             controls =
-                listOf(Use, Download, Redownload, Remove)
+                listOf(Select, Use, UseRecommendedRuntimeConfiguration, Download, Redownload, Remove)
                     .filter { act(state, it) != null }
                     .map { ControlDisplay(it.controlRef, VexLifeText(labelKey(it))) },
         )
 
     private fun labelKey(control: Control): String =
         when (control) {
-            Use -> "workspace.button.model-use"
+            Select -> "workspace.button.model-select"
+            Use -> "workspace.button.model-start"
+            UseRecommendedRuntimeConfiguration -> "workspace.button.model-use-recommended"
+            is SetPromptCacheEntries -> "workspace.button.model-set-prompt-cache"
             Download -> "workspace.button.model-download"
             Redownload -> "workspace.button.model-redownload"
             Remove -> "workspace.button.model-remove"
         }
 
-    fun controlForRef(controlRef: String): Control? =
+    fun controlForRef(
+        controlRef: String,
+        promptCacheEntries: Int? = null,
+    ): Control? =
         when (controlRef) {
+            ControlSelect -> Select
             ControlUse -> Use
+            ControlUseRecommendedRuntimeConfiguration -> UseRecommendedRuntimeConfiguration
+            ControlSetPromptCacheEntries ->
+                promptCacheEntries?.let(::SetPromptCacheEntries)
             ControlDownload -> Download
             ControlRedownload -> Redownload
             ControlRemove -> Remove
             else -> null
         }
 
+    const val ControlSelect = "SELECT_MODEL"
     const val ControlUse = "USE_MODEL"
+    const val ControlUseRecommendedRuntimeConfiguration = "USE_RECOMMENDED_RUNTIME_CONFIGURATION"
+    const val ControlSetPromptCacheEntries = "SET_PROMPT_CACHE_ENTRIES"
     const val ControlDownload = "DOWNLOAD_MODEL"
     const val ControlRedownload = "REDOWNLOAD_MODEL"
     const val ControlRemove = "REMOVE_MODEL"
