@@ -3654,6 +3654,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.workspaceStrings = body?.strings ?? {};
                 applyStaticText();
                 renderVoiceInput();
+                renderLocalAsr();
                 renderDiagnostics();
               };
 
