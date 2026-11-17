@@ -69,7 +69,11 @@ object HereticRuntimeAvailability :
                             HereticProductIdentity.StableRuntimeReceiptRelativePath
 
                         Source.VexLifeProdOwned ->
-                            HereticProductIdentity.ProductRuntimeReceiptRelativePath
+                            HereticRuntimeRealization
+                                .require(
+                                    evidence.realizationRef,
+                                )
+                                .runtimeReceiptRelativePath
                     }
 
                 require(
@@ -159,7 +163,11 @@ object HereticRuntimeAvailability :
             evidence =
                 evidence,
             runtimeReceiptPath =
-                HereticProductIdentity.ProductRuntimeReceiptRelativePath,
+                HereticRuntimeRealization
+                    .require(
+                        evidence.realizationRef,
+                    )
+                    .runtimeReceiptRelativePath,
         )
 }
 
