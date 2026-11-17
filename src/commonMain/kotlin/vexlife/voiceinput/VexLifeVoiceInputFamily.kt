@@ -139,6 +139,20 @@ object VexLifeVoiceInputFamily :
         ),
     }
 
+    /**
+     * Product-level interpretation of the browser's local-language availability observation.
+     *
+     * The browser adapter owns provider strings such as "available", "downloadable",
+     * "downloading", and "unavailable". Those strings do not become Family State. The adapter
+     * translates them into this smallest semantic observation before the Family decides whether
+     * presentation meaning changes.
+     */
+    enum class LocalLanguageObservation {
+        Available,
+        InstallRequired,
+        Unavailable,
+    }
+
     sealed interface Control : VexFamilyContract.Control<VexLifeVoiceInputFamily> {
         val controlRef: String
     }
@@ -225,6 +239,41 @@ object VexLifeVoiceInputFamily :
         }
     }
 
+    /**
+     * Reconcile one browser-owned local-language observation into Product meaning.
+     *
+     * Available is intentionally a semantic no-op: a successful provider check is permission for
+     * the existing BeginLocalDictation realization to continue, not proof of a new Product State.
+     */
+    fun observeLocalLanguage(
+        language: Language,
+        observation: LocalLanguageObservation,
+    ): State? =
+        when (observation) {
+            LocalLanguageObservation.Available -> null
+            LocalLanguageObservation.InstallRequired -> InstallingLanguage(language)
+            LocalLanguageObservation.Unavailable -> Failed(language, FailureReason.LanguageUnavailable)
+        }
+
+    /** The realization has actually begun requesting microphone access. */
+    fun observeMicrophoneRequestStarted(
+        language: Language,
+    ): State =
+        RequestingMicrophone(language)
+
+    /** The browser recognizer reported that local recognition actually started. */
+    fun observeRecognitionStarted(
+        language: Language,
+    ): State =
+        Listening(language)
+
+    /** Browser/provider failure has crossed the adapter boundary into one Product failure reason. */
+    fun observeFailure(
+        language: Language,
+        reason: FailureReason,
+    ): State =
+        Failed(language, reason)
+
     override fun act(
         currentState: State,
         control: Control,
@@ -232,21 +281,42 @@ object VexLifeVoiceInputFamily :
         when (currentState) {
             is Ready ->
                 when (control) {
-                    Start -> stay(BeginLocalDictation(currentState.language))
+                    Start ->
+                        admit(
+                            CheckingLanguage(currentState.language),
+                            BeginLocalDictation(currentState.language),
+                        )
                     Stop -> null
                 }
 
             is Failed ->
                 when (control) {
-                    Start -> stay(BeginLocalDictation(currentState.language))
+                    Start ->
+                        admit(
+                            CheckingLanguage(currentState.language),
+                            BeginLocalDictation(currentState.language),
+                        )
                     Stop -> null
                 }
 
-            is Preparing,
+            is Preparing ->
+                when (control) {
+                    Start -> null
+                    Stop ->
+                        admit(
+                            Stopping(currentState.language),
+                            EndLocalDictation,
+                        )
+                }
+
             is Listening ->
                 when (control) {
                     Start -> null
-                    Stop -> stay(EndLocalDictation)
+                    Stop ->
+                        admit(
+                            Stopping(currentState.language),
+                            EndLocalDictation,
+                        )
                 }
 
             is Stopping,
