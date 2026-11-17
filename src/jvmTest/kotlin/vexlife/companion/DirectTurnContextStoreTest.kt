@@ -20,6 +20,7 @@ import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 
 class DirectTurnContextStoreTest {
@@ -35,6 +36,12 @@ class DirectTurnContextStoreTest {
 
     private fun runtime(): HereticModelConfiguration.QualifiedRuntimeEvidence =
         HereticModelConfiguration.QualifiedRuntimeEvidence(
+            realizationRef =
+                HereticRuntimeRealization
+                    .legacyMacV1(
+                        HereticProductIdentity.ModelRef,
+                    )
+                    .realizationRef,
             runtimeReceiptRef = "receipt.vexlife-prod.heretic.context",
             runtimeState = HereticRuntimeState.Qualified,
             modelRef = HereticProductIdentity.ModelRef,
