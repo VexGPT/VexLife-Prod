@@ -53,6 +53,8 @@ object VexLifeContinuityHydration {
         val memory: List<MemoryMatch>,
         val frontier: List<Frontier>,
         val scannedCompletedTurns: Int,
+        val conversationOwnerReadCount: Int,
+        val memoryOwnerReadCount: Int,
         val duplicateCandidatesSuppressed: Int,
         val memoryProjectionState: String,
         val memoryReasons: List<String>,
@@ -186,6 +188,8 @@ object VexLifeContinuityHydration {
             memory = selectedMemory,
             frontier = frontier,
             scannedCompletedTurns = scannedCompletedTurns,
+            conversationOwnerReadCount = queries.size,
+            memoryOwnerReadCount = queries.size,
             duplicateCandidatesSuppressed = maxOf(0, rawCandidates - uniqueCandidates),
             memoryProjectionState = memory.projectionState,
             memoryReasons = memory.reasons,
@@ -309,7 +313,12 @@ object VexLifeContinuityHydration {
         appendLine("locatorMode=$LocatorMode")
         appendLine("queries=" + resolution.queries.joinToString(" | ") { "${it.ref}:${it.terms.joinToString(",")}" })
         appendLine("coverage=exact Conversation + current Memory + Working Continuity coordinates")
-        appendLine("scannedCompletedTurns=${resolution.scannedCompletedTurns}; duplicateCandidatesSuppressed=${resolution.duplicateCandidatesSuppressed}")
+        appendLine(
+            "scannedCompletedTurns=${resolution.scannedCompletedTurns}; " +
+                "conversationOwnerReads=${resolution.conversationOwnerReadCount}; " +
+                "memoryOwnerReads=${resolution.memoryOwnerReadCount}; " +
+                "duplicateCandidatesSuppressed=${resolution.duplicateCandidatesSuppressed}"
+        )
         appendLine("memoryProjectionState=${resolution.memoryProjectionState}")
         if (resolution.memoryReasons.isNotEmpty()) {
             appendLine("memoryReasons=" + resolution.memoryReasons.joinToString(" | "))
