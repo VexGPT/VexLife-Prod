@@ -240,7 +240,7 @@ matches through exact Conversation-return authority, and forms one final prompt.
 Final source-return allocation is:
 
 ~~~text
-fixed current-turn / successor / capability context
+verified turn / successor / capability context
 + exact requested historical Conversation source
 + exact prior Vex response bridge when successor mode is current
 -> newest exact recent Conversation from the remaining capacity
@@ -258,7 +258,7 @@ tool registry.
 
 The foundational field is owned by `VexLifeFoundationalField`
 ([FOUNDATIONAL-FIELD.md](FOUNDATIONAL-FIELD.md)). This owner gives it room after the current request,
-the other fixed context and the exact immediate prior exchange, places it first in the system prefix,
+the rest of the verified turn context and the exact immediate prior exchange, places it first in the system prefix,
 and records its evidence in prompt receipt v8. It does not write or shorten its words.
 
 The Conversation extent is this owner's own statement. A narrow window otherwise looks the same to
@@ -275,6 +275,29 @@ OUTSIDE THE WINDOW
 A SHORT WINDOW
 != A SHORT HISTORY
 ~~~
+
+#### Computation cache boundary
+
+Prompt/KV cache is runtime computation, not continuity custody. `DirectPromptContext` owns truthful
+bounded provider materialization; Conversation, Memory, Working Continuity and the other source owners
+remain sufficient to reconstruct that materialization after cache eviction, process restart or model
+switch.
+
+~~~text
+SEMANTIC / DURABLE TRUTH
+-> may invalidate provider computation
+
+PROMPT / KV CACHE
+-> may reduce repeated computation
+-> may be discarded at any time
+
+CACHE HIT / MISS
+!= CONTINUITY SUCCESS / LOSS
+~~~
+
+The current Product does not claim that its provider message ordering is cache-optimal. Provider-stage
+measurement records prompt, cached and prefill token counts so later optimization can be judged by
+observed runtime reuse without moving semantic truth into the cache or lying about provider roles.
 
 ### `DirectCompanionConnection`
 
