@@ -17,6 +17,7 @@ import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeEffectBoundary
 import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.HereticArtifactMaterialization
@@ -28,6 +29,11 @@ import vexlife.platform.macos.MacUserLaunchdProcess
 import vexlife.platform.python.ManagedPython
 
 class VexLifeProdLocalSetupTest {
+    private val macRealization =
+        HereticRuntimeRealization.legacyMacV1(
+            HereticProductIdentity.ModelRef,
+        )
+
     private fun eligibleHost(): HereticMacHostProfile.Result =
         HereticMacHostProfile.evaluate(
             HereticMacHostProfile.Observation(
@@ -205,6 +211,7 @@ class VexLifeProdLocalSetupTest {
     fun newTurnExplicitGenerationUnavailableRecoversExactlyOnce() {
         val current =
             HereticModelConfiguration.QualifiedRuntimeEvidence(
+                realizationRef = macRealization.realizationRef,
                 runtimeReceiptRef = "receipt.vexlife-prod.heretic.current",
                 runtimeState = HereticRuntimeState.Qualified,
                 modelRef = HereticProductIdentity.ModelRef,
@@ -250,6 +257,7 @@ class VexLifeProdLocalSetupTest {
     fun newTurnUnknownGenerationReadinessHoldsWithoutRecovery() {
         val current =
             HereticModelConfiguration.QualifiedRuntimeEvidence(
+                realizationRef = macRealization.realizationRef,
                 runtimeReceiptRef = "receipt.vexlife-prod.heretic.current",
                 runtimeState = HereticRuntimeState.Qualified,
                 modelRef = HereticProductIdentity.ModelRef,
@@ -298,6 +306,7 @@ class VexLifeProdLocalSetupTest {
     fun sameTurnRuntimeReobservationNeverChecksReadinessOrRecovers() {
         val current =
             HereticModelConfiguration.QualifiedRuntimeEvidence(
+                realizationRef = macRealization.realizationRef,
                 runtimeReceiptRef = "receipt.vexlife-prod.heretic.same-turn",
                 runtimeState = HereticRuntimeState.Qualified,
                 modelRef = HereticProductIdentity.ModelRef,
@@ -638,6 +647,7 @@ class VexLifeProdLocalSetupTest {
             )
             val stableEvidence =
                 HereticModelConfiguration.QualifiedRuntimeEvidence(
+                    realizationRef = macRealization.realizationRef,
                     runtimeReceiptRef = "receipt.vexlife.heretic-persistent-runtime.prior.test",
                     runtimeState = HereticRuntimeState.Qualified,
                     modelRef = HereticProductIdentity.ModelRef,
@@ -738,6 +748,7 @@ class VexLifeProdLocalSetupTest {
             val fixture = CanonicalVexLifeHomeFixture.form(home)
             val stableEvidence =
                 HereticModelConfiguration.QualifiedRuntimeEvidence(
+                    realizationRef = macRealization.realizationRef,
                     runtimeReceiptRef = "receipt.vexlife.heretic-persistent-runtime.stable.test",
                     runtimeState = HereticRuntimeState.Qualified,
                     modelRef = HereticProductIdentity.ModelRef,
