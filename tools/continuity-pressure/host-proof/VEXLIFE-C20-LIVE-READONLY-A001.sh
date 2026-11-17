@@ -21,6 +21,7 @@ STATE='FAILED'
 STAGE='BOOTSTRAP'
 DETAIL='not started'
 FOCUSED_EXIT='NOT_RUN'
+RUNTIME_PRECONDITION_EXIT='NOT_RUN'
 LIVE_EXIT='NOT_RUN'
 EXPERIMENT_STATUS='NOT_RUN'
 OBSERVED_HEAD='UNOBSERVED'
@@ -57,6 +58,7 @@ observedHead=$OBSERVED_HEAD
 observedTree=$OBSERVED_TREE
 runtimeHome=$RUNTIME_HOME
 focusedHarnessExit=$FOCUSED_EXIT
+runtimePreconditionExit=$RUNTIME_PRECONDITION_EXIT
 liveHarnessExit=$LIVE_EXIT
 experimentStatus=$EXPERIMENT_STATUS
 scenarioRef=$SCENARIO_REF
@@ -66,7 +68,9 @@ effectiveInputTokenBudget=80000
 payloadScale=7
 sets=3
 turnsPerSet=5
-canonicalVictorHomeMutationAllowed=false
+runtimePreconditionCanonicalRuntimeLifecycleEffectAllowed=true
+runtimePreconditionAcquisitionAllowed=false
+continuityExperimentCanonicalHomeMutationAllowed=false
 scratchHomePolicy=DELETE_AFTER_BUNDLE
 SUMMARY
 }
@@ -157,6 +161,19 @@ fi
 STAGE='RUNTIME_HOME_PREFLIGHT'
 if [ ! -d "$RUNTIME_HOME" ] || [ ! -f "$RUNTIME_HOME/config/home.json" ]; then
   fail_now "$STAGE" "no canonical Vex Home observed at $RUNTIME_HOME; no live model call attempted"
+fi
+
+STAGE='RUNTIME_PRECONDITION'
+set +e
+(
+  cd "$SRC" &&
+  ./gradlew --offline --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx4g \
+    continuityHostRuntimePrecondition --args="--runtime-home $RUNTIME_HOME"
+) > "$RETURN_DIR/runtime-precondition.log" 2>&1
+RUNTIME_PRECONDITION_EXIT=$?
+set -e 2>/dev/null || true
+if [ "$RUNTIME_PRECONDITION_EXIT" -ne 0 ]; then
+  fail_now "$STAGE" "Product runtime precondition failed with exit $RUNTIME_PRECONDITION_EXIT"
 fi
 
 STAGE='LIVE_QUICK_EXPERIMENT'
