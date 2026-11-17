@@ -359,6 +359,136 @@ val jvmJarTask =
         "jvmJar",
     )
 
+val windows4BPatientZeroBundleRoot =
+    layout.buildDirectory.dir(
+        "windows-4b-patient-zero/bundle",
+    )
+
+tasks.register(
+    "assembleWindows4BPatientZeroBundle",
+) {
+    group =
+        "distribution"
+    description =
+        "Assemble the temporary Windows heretic-4b patient-zero JVM bundle."
+
+    dependsOn(
+        jvmJarTask,
+    )
+
+    inputs.file(
+        jvmJarTask.flatMap {
+            it.archiveFile
+        },
+    )
+    inputs.files(
+        jvmMainCompilation.runtimeDependencyFiles,
+    )
+    outputs.dir(
+        windows4BPatientZeroBundleRoot,
+    )
+
+    doLast {
+        val output =
+            windows4BPatientZeroBundleRoot
+                .get()
+                .asFile
+                .toPath()
+                .toAbsolutePath()
+                .normalize()
+
+        if (
+            Files.exists(
+                output,
+                LinkOption.NOFOLLOW_LINKS,
+            )
+        ) {
+            output
+                .toFile()
+                .deleteRecursively()
+        }
+
+        Files.createDirectories(
+            output.resolve(
+                "lib",
+            ),
+        )
+
+        Files.copy(
+            jvmJarTask
+                .get()
+                .archiveFile
+                .get()
+                .asFile
+                .toPath(),
+            output.resolve(
+                "vexlife-prod.jar",
+            ),
+            StandardCopyOption.REPLACE_EXISTING,
+        )
+
+        val dependencies =
+            requireNotNull(
+                jvmMainCompilation.runtimeDependencyFiles,
+            )
+                .files
+                .map {
+                    it.toPath()
+                        .toAbsolutePath()
+                        .normalize()
+                }
+                .sortedBy {
+                    it.fileName
+                        .toString()
+                }
+
+        require(
+            dependencies.isNotEmpty(),
+        ) {
+            "Windows patient-zero runtime dependency collection is empty"
+        }
+
+        dependencies.forEach {
+            dependency ->
+            require(
+                Files.isRegularFile(
+                    dependency,
+                    LinkOption.NOFOLLOW_LINKS,
+                ) &&
+                    dependency.fileName
+                        .toString()
+                        .endsWith(
+                            ".jar",
+                        ),
+            ) {
+                "Windows patient-zero dependency must be one regular JAR: " +
+                    dependency
+            }
+
+            Files.copy(
+                dependency,
+                output
+                    .resolve(
+                        "lib",
+                    )
+                    .resolve(
+                        dependency.fileName
+                            .toString(),
+                    ),
+                StandardCopyOption.REPLACE_EXISTING,
+            )
+        }
+
+        Files.writeString(
+            output.resolve(
+                "main-class.txt",
+            ),
+            "vexlife.platform.windows.Windows4BPatientZeroProcessKt\n",
+            StandardCharsets.UTF_8,
+        )
+    }
+}
+
 tasks.register<JavaExec>(
     "observeVexLifeProdCurrentState",
 ) {
