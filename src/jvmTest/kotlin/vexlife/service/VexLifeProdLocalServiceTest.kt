@@ -2795,20 +2795,29 @@ class VexLifeProdLocalServiceTest {
                     )
 
                     val after =
-                        json.decodeFromString<VexLifeProdServiceContract.ConversationProjection>(
-                            get(
-                                service.origin,
-                                VexLifeProdServiceContract.ConversationPath,
-                            ).body(),
-                        )
+                        DirectConversationStore(
+                            root,
+                        ).current()
                     assertEquals(
                         1,
-                        after.messages.size,
+                        after.events.size,
                         "accepted human request remains durable after cancellation",
                     )
                     assertEquals(
-                        "human",
-                        after.messages.single().role,
+                        1,
+                        after.abandonedAttempts.size,
+                    )
+                    assertEquals(
+                        "Keep working until I ask you to stop.",
+                        after.abandonedAttempts
+                            .single()
+                            .requestEvent
+                            .content,
+                    )
+                    assertNull(
+                        after.abandonedAttempts
+                            .single()
+                            .responseEventOrNull,
                     )
                 }
         } finally {
