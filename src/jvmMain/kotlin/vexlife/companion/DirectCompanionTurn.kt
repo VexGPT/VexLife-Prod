@@ -1311,6 +1311,20 @@ object DirectCompanionTurn {
                 it.actions.isNotEmpty()
             }
 
+    /** Provider-stage diagnostics only: counts/timing/enums, never provider text. */
+    private fun recordProviderStage(
+        runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        measurement: DirectCompanionConnection.StageMeasurement,
+    ) {
+        VexLogger.record(
+            VexLogger.Fact.ProviderStageObserved,
+            mapOf(
+                "runtimeReceiptRef" to runtimeEvidence.runtimeReceiptRef,
+            ) +
+                measurement.refs(),
+        )
+    }
+
     private fun invokeProviderStage(
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
         messages: List<CompanionProviderMessage>,
@@ -1336,15 +1350,32 @@ object DirectCompanionTurn {
             ),
         )
         val inference =
-            DirectCompanionConnection.invoke(
-                runtime = runtimeEvidence,
-                messages = messages,
-                transport = hooks.transport,
-                progressObserver =
-                    progressGate.connectionObserver(),
-                now = hooks.now,
-                capabilityOffer = capabilityOffer,
-            )
+            try {
+                DirectCompanionConnection.invoke(
+                    runtime = runtimeEvidence,
+                    messages = messages,
+                    transport = hooks.transport,
+                    progressObserver =
+                        progressGate.connectionObserver(),
+                    now = hooks.now,
+                    capabilityOffer = capabilityOffer,
+                )
+            } catch (
+                failure: DirectCompanionConnection.ConnectionException,
+            ) {
+                failure.measurement
+                    ?.let {
+                        recordProviderStage(
+                            runtimeEvidence = runtimeEvidence,
+                            measurement = it,
+                        )
+                    }
+                throw failure
+            }
+        recordProviderStage(
+            runtimeEvidence = runtimeEvidence,
+            measurement = inference.measurement,
+        )
         val controlLike =
             progressGate.finish(
                 inference.content,

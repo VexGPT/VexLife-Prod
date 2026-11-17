@@ -98,6 +98,7 @@ object VexLogger {
         // Conversation
         SendAccepted(Owner.Conversation),
         ProviderInvocationRequested(Owner.Conversation),
+        ProviderStageObserved(Owner.Conversation),
         TurnCompleted(Owner.Conversation),
         TurnFailed(Owner.Conversation),
         SendAttemptTerminalizedAfterLoss(Owner.Conversation),
