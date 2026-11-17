@@ -3,34 +3,106 @@ package vexlife.model.heretic
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class HereticRuntimeRealizationTest {
     private val scope =
         HereticModelConfiguration.BindingScope(
-            homeRef = "vex-home.test.windows",
-            companionLineageRef = "companion-lineage.test.windows",
+            homeRef = "vex-home.test.runtime-realization",
+            companionLineageRef = "companion-lineage.test.runtime-realization",
         )
 
     @Test
+    fun everyCurrentCatalogModelHasDeliberateMacCoverage() {
+        HereticModelCatalog.Entries.forEach { model ->
+            val realization =
+                HereticRuntimeRealization.require(
+                    modelRef = model.modelRef,
+                    target = HereticRuntimeRealization.MacArm64,
+                )
+
+            assertEquals(model.modelRef, realization.modelRef)
+            assertEquals(model.identity.modelProfileRef, realization.modelProfileRef)
+            assertEquals(
+                HereticRuntimeRealization.MacArm64,
+                realization.target,
+            )
+        }
+    }
+
+    @Test
+    fun windows4BResolvesByExactModelAndTarget() {
+        val model = HereticModelCatalog.Candidate4B
+        val realization =
+            HereticRuntimeRealization.require(
+                modelRef = model.modelRef,
+                target = HereticRuntimeRealization.WindowsX64,
+            )
+
+        assertEquals(HereticRuntimeRealization.Windows4B.realizationRef, realization.realizationRef)
+        assertEquals(model.modelRef, realization.modelRef)
+        assertEquals(
+            "model-Q4_K_M.gguf",
+            realization.artifact.primaryFilename,
+        )
+        assertEquals(
+            1,
+            realization.qualification.maxTokens,
+        )
+        assertEquals(
+            0.0,
+            realization.qualification.temperature,
+        )
+        assertEquals(
+            false,
+            realization.qualification.enableThinking,
+        )
+    }
+
+    @Test
+    fun WindowsNativeRuntimeMakesPythonEnvironmentExplicitlyNotRequired() {
+        val environment =
+            HereticRuntimeRealization.Windows4B.dependencies.environment
+
+        assertIs<HereticRuntimeRealization.Requirement.NotRequired>(environment)
+    }
+
+    @Test
+    fun unsupportedModelTargetPairIsAnExplicitAbsence() {
+        assertNull(
+            HereticRuntimeRealization.resolve(
+                modelRef = HereticModelCatalog.Candidate9B.modelRef,
+                target = HereticRuntimeRealization.WindowsX64,
+            ),
+        )
+    }
+
+    @Test
     fun existingMacRealizationRemainsAdmittedWithoutBehaviorChange() {
-        val model =
-            HereticModelCatalog.Candidate4B
-        val identity =
-            model.identity
+        val model = HereticModelCatalog.Candidate4B
+        val realization =
+            HereticRuntimeRealization.require(
+                modelRef = model.modelRef,
+                target = HereticRuntimeRealization.MacArm64,
+            )
+        val artifact = realization.artifact
+        val runtime = realization.runtime
 
         val evidence =
             HereticModelConfiguration.QualifiedRuntimeEvidence(
+                realizationRef = realization.realizationRef,
                 runtimeReceiptRef = "receipt.test.mac.4b",
                 runtimeState = HereticRuntimeState.Qualified,
                 modelRef = model.modelRef,
-                modelProfileRef = identity.modelProfileRef,
-                artifactRef = identity.artifactSetRef,
-                artifactContentSetSha256 = identity.artifactContentSetSha256,
-                runtimeAdapterRef = identity.runtimeAdapterRef,
-                runtimeClass = identity.runtimeClass,
-                endpoint = identity.endpoint,
-                requestModel = identity.requestModel,
+                modelProfileRef = model.identity.modelProfileRef,
+                artifactRef = artifact.artifactRef,
+                artifactContentSetSha256 = artifact.contentSetSha256,
+                runtimeAdapterRef = runtime.runtimeAdapterRef,
+                runtimeClass = runtime.runtimeClass,
+                endpoint = runtime.endpoint,
+                requestModel = runtime.requestModel,
                 qualification = HereticRuntimeQualification.qualified(),
             )
 
@@ -38,38 +110,33 @@ class HereticRuntimeRealizationTest {
             HereticModelConfiguration.bound(
                 homeIdentity = scope,
                 qualifiedRuntime = evidence,
+                runtimeReceiptPath = realization.runtimeReceiptRelativePath,
             )
 
-        assertTrue(
-            HereticModelConfiguration.productIdentityCurrent(
-                bound,
-            ),
-        )
-        assertEquals(
-            identity.runtimeAdapterRef,
-            bound.runtimeAdapterRef,
-        )
+        assertTrue(HereticModelConfiguration.productIdentityCurrent(bound))
+        assertEquals(realization.realizationRef, bound.realizationRef)
     }
 
     @Test
-    fun currentHeretic4BMayBindThroughWindowsPatientZeroRealization() {
-        val model =
-            HereticModelCatalog.Candidate4B
-        val realization =
-            HereticRuntimeRealization.Windows4BPatientZero
+    fun currentHeretic4BMayBindThroughWindowsRealization() {
+        val model = HereticModelCatalog.Candidate4B
+        val realization = HereticRuntimeRealization.Windows4B
+        val artifact = realization.artifact
+        val runtime = realization.runtime
 
         val evidence =
             HereticModelConfiguration.QualifiedRuntimeEvidence(
+                realizationRef = realization.realizationRef,
                 runtimeReceiptRef = "receipt.test.windows.4b",
                 runtimeState = HereticRuntimeState.Qualified,
                 modelRef = model.modelRef,
                 modelProfileRef = model.identity.modelProfileRef,
-                artifactRef = realization.artifactRef,
-                artifactContentSetSha256 = realization.artifactContentSetSha256,
-                runtimeAdapterRef = realization.runtimeAdapterRef,
-                runtimeClass = realization.runtimeClass,
-                endpoint = realization.endpoint,
-                requestModel = realization.requestModel,
+                artifactRef = artifact.artifactRef,
+                artifactContentSetSha256 = artifact.contentSetSha256,
+                runtimeAdapterRef = runtime.runtimeAdapterRef,
+                runtimeClass = runtime.runtimeClass,
+                endpoint = runtime.endpoint,
+                requestModel = runtime.requestModel,
                 qualification = HereticRuntimeQualification.qualified(),
             )
 
@@ -77,58 +144,36 @@ class HereticRuntimeRealizationTest {
             HereticModelConfiguration.bound(
                 homeIdentity = scope,
                 qualifiedRuntime = evidence,
+                runtimeReceiptPath = realization.runtimeReceiptRelativePath,
             )
 
-        assertEquals(
-            model.modelRef,
-            bound.modelRef,
-        )
-        assertEquals(
-            realization.artifactRef,
-            bound.artifactRef,
-        )
-        assertEquals(
-            realization.runtimeAdapterRef,
-            bound.runtimeAdapterRef,
-        )
-        assertEquals(
-            realization.runtimeClass,
-            bound.runtimeClass,
-        )
-        assertEquals(
-            realization.endpoint,
-            bound.endpoint,
-        )
-        assertEquals(
-            realization.requestModel,
-            bound.requestModel,
-        )
-        assertTrue(
-            HereticModelConfiguration.productIdentityCurrent(
-                bound,
-            ),
-        )
+        assertEquals(model.modelRef, bound.modelRef)
+        assertEquals(realization.realizationRef, bound.realizationRef)
+        assertEquals(artifact.artifactRef, bound.artifactRef)
+        assertEquals(runtime.runtimeAdapterRef, bound.runtimeAdapterRef)
+        assertTrue(HereticModelConfiguration.productIdentityCurrent(bound))
     }
 
     @Test
     fun windows4BRealizationCannotBeAttachedToAnotherOfferedModel() {
-        val model =
-            HereticModelCatalog.Candidate9B
-        val realization =
-            HereticRuntimeRealization.Windows4BPatientZero
+        val model = HereticModelCatalog.Candidate9B
+        val realization = HereticRuntimeRealization.Windows4B
+        val artifact = realization.artifact
+        val runtime = realization.runtime
 
         assertFailsWith<IllegalArgumentException> {
             HereticModelConfiguration.QualifiedRuntimeEvidence(
+                realizationRef = realization.realizationRef,
                 runtimeReceiptRef = "receipt.test.windows.wrong-model",
                 runtimeState = HereticRuntimeState.Qualified,
                 modelRef = model.modelRef,
                 modelProfileRef = model.identity.modelProfileRef,
-                artifactRef = realization.artifactRef,
-                artifactContentSetSha256 = realization.artifactContentSetSha256,
-                runtimeAdapterRef = realization.runtimeAdapterRef,
-                runtimeClass = realization.runtimeClass,
-                endpoint = realization.endpoint,
-                requestModel = realization.requestModel,
+                artifactRef = artifact.artifactRef,
+                artifactContentSetSha256 = artifact.contentSetSha256,
+                runtimeAdapterRef = runtime.runtimeAdapterRef,
+                runtimeClass = runtime.runtimeClass,
+                endpoint = runtime.endpoint,
+                requestModel = runtime.requestModel,
                 qualification = HereticRuntimeQualification.qualified(),
             )
         }
