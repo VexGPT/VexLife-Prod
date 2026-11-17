@@ -922,6 +922,7 @@ object DirectCompanionTurn {
             }
 
         while (true) {
+            hooks.cancellation?.checkpoint()
             val stage =
                 invokeProviderStage(
                     runtimeEvidence = stageRuntimeEvidence,
@@ -955,9 +956,11 @@ object DirectCompanionTurn {
                             emptyList()
                         },
                 )
+            hooks.cancellation?.checkpoint()
 
             val capabilityRequest = stage.capabilityRequest
             if (capabilityRequest != null) {
+                hooks.cancellation?.checkpoint()
                 val pendingUse = VexLifeCapabilityBridge.describeUse(capabilityRequest)
                 emitProgress(hooks.progressObserver, Progress(phase = ProgressPhase.Reaching, reach = pendingUse))
                 val usedTokens = exchangeMessages().sumOf { DirectPromptContext.estimatedMessageTokens(it.content) }
@@ -979,6 +982,7 @@ object DirectCompanionTurn {
                         owners = hooks.capabilityOwners,
                         estimateTokens = DirectPromptContext::estimatedMessageTokens,
                     )
+                hooks.cancellation?.checkpoint()
                 exchanges += exchange
                 emitProgress(hooks.progressObserver, Progress(phase = ProgressPhase.Reached, reach = exchange.use))
 
@@ -1011,6 +1015,7 @@ object DirectCompanionTurn {
 
             val sourceReturnRequest = stage.sourceReturnRequest
             if (sourceReturnRequest == null) {
+                hooks.cancellation?.checkpoint()
                 return FinalProviderTurn(
                     prompt = base,
                     inference = stage.inference,
@@ -1355,6 +1360,7 @@ object DirectCompanionTurn {
                     progressGate.connectionObserver(),
                 now = hooks.now,
                 capabilityOffer = capabilityOffer,
+                cancellation = hooks.cancellation,
             )
         val controlLike =
             progressGate.finish(
@@ -1925,6 +1931,9 @@ object DirectCompanionTurn {
         when (
             error
         ) {
+            is DirectCompanionCancellation.Cancelled ->
+                "TURN_CANCELLED_BY_PERSON"
+
             is DirectCompanionConnection.ConnectionException ->
                 "CONNECTION_" +
                     error.code.name
