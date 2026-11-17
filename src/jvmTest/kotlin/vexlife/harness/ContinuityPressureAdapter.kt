@@ -380,10 +380,20 @@ object ContinuityPressureAdapter {
     }
 
     private fun hostRuntime(runtimeHome: Path): LiveRuntime {
+        val writer = DirectConversationStore(runtimeHome).threadWriterCurrentness()
+        require(writer.state == "IDLE" && !writer.recoveryRequired) {
+            "canonical Conversation writer is not IDLE; live experiment requires a dedicated window and performs no recovery"
+        }
         val evidence = observeBoundRuntimeReadOnly(runtimeHome)
         return LiveRuntime(
             evidence = evidence,
-            observe = { observeBoundRuntimeReadOnly(runtimeHome) },
+            observe = {
+                val currentWriter = DirectConversationStore(runtimeHome).threadWriterCurrentness()
+                require(currentWriter.state == "IDLE" && !currentWriter.recoveryRequired) {
+                    "canonical Conversation writer became non-IDLE during live experiment; no recovery performed"
+                }
+                observeBoundRuntimeReadOnly(runtimeHome)
+            },
             transport = DirectCompanionConnection.SystemTransport,
         )
     }
