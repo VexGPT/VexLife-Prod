@@ -201,10 +201,63 @@ object DirectPromptContext {
         CURRENT_REQUEST,
     }
 
+    /**
+     * Source-owned prompt coordinate.
+     *
+     * Its wire ref is derived from the same parent/child relationship visible in Kotlin. Callers
+     * therefore carry a typed coordinate instead of reconstructing a component identity string.
+     */
+    abstract class PromptComponent internal constructor(
+        private val segment: String?,
+        val parent: PromptComponent?,
+    ) {
+        val ref: String =
+            parent
+                ?.let { owner ->
+                    owner.ref + "." + requireNotNull(segment)
+                }
+                ?: "component.vexlife-prod.prompt"
+    }
+
+    /** Readable prompt topology: siblings share a parent; children are declared beneath it. */
+    object Components {
+        object Prompt : PromptComponent(segment = null, parent = null) {
+            object System : PromptComponent("system", Prompt) {
+                object FoundationalField : PromptComponent("foundational-field", System)
+                object Memory : PromptComponent("memory-current-context", System)
+                object CapabilityGuide : PromptComponent("capability-guide", System)
+            }
+
+            object History : PromptComponent("history", Prompt) {
+                object Conversation : PromptComponent("conversation", History)
+                object SuccessorPriorResponse : PromptComponent("successor-prior-response", History)
+            }
+
+            object Current : PromptComponent("current", Prompt) {
+                object WorkingContinuity : PromptComponent("working-continuity", Current)
+                object CapabilityFrame : PromptComponent("capability-frame", Current)
+                object PersonContext : PromptComponent("person-context", Current)
+                object ConversationExtent : PromptComponent("conversation-extent", Current)
+                object SourceReturnProtocol : PromptComponent("source-return-protocol", Current)
+            }
+
+            object Hydrated : PromptComponent("hydrated", Prompt) {
+                object SourceReturnProjection :
+                    PromptComponent("source-return-projection", Hydrated)
+            }
+
+            object Live : PromptComponent("live", Prompt) {
+                object BrowserContext : PromptComponent("browser-context", Live)
+                object CurrentRequest : PromptComponent("current-request", Live)
+            }
+        }
+    }
+
     @OptIn(ExperimentalSerializationApi::class)
     @Serializable
     data class ContextComponent(
         val componentRef: String,
+        val parentComponentRef: String?,
         val stabilityClass: ComponentStability,
         val placementClass: ComponentPlacement,
         val logicalOrder: Int,
@@ -214,26 +267,8 @@ object DirectPromptContext {
         val sourceRefs: List<String> = emptyList(),
     )
 
-    object ComponentRefs {
-        private const val Prefix = "component.vexlife-prod.prompt."
-        const val FoundationalField = Prefix + "foundational-field"
-        const val Memory = Prefix + "memory-current-context"
-        const val WorkingContinuity = Prefix + "working-continuity-successor"
-        const val CapabilityFrame = Prefix + "capability-frame"
-        const val CapabilityFrameCurrent = Prefix + "capability-frame-current"
-        const val CurrentStateEnvelope = Prefix + "current-state-envelope"
-        const val PersonContext = Prefix + "person-context"
-        const val ConversationExtent = Prefix + "conversation-extent"
-        const val SourceReturnProtocol = Prefix + "source-return-protocol"
-        const val SourceReturnProjection = Prefix + "source-return-projection"
-        const val ConversationHistory = Prefix + "conversation-history"
-        const val SuccessorPriorResponse = Prefix + "successor-prior-response"
-        const val BrowserContext = Prefix + "browser-context"
-        const val CurrentRequest = Prefix + "current-request"
-    }
-
     private data class Section(
-        val componentRef: String,
+        val component: PromptComponent,
         val stability: ComponentStability,
         val content: String,
         val sourceRefs: List<String> = emptyList(),
@@ -280,7 +315,8 @@ object DirectPromptContext {
         ) {
             components +=
                 ContextComponent(
-                    componentRef = section.componentRef,
+                    componentRef = section.component.ref,
+                    parentComponentRef = section.component.parent?.ref,
                     stabilityClass = section.stability,
                     placementClass = placement,
                     logicalOrder = components.size,
@@ -318,7 +354,8 @@ object DirectPromptContext {
             messages += historyMessages
             components +=
                 ContextComponent(
-                    componentRef = ComponentRefs.ConversationHistory,
+                    componentRef = Components.Prompt.History.Conversation.ref,
+                    parentComponentRef = Components.Prompt.History.ref,
                     stabilityClass = ComponentStability.APPEND_ONLY_HISTORY,
                     placementClass = ComponentPlacement.HISTORICAL_SEQUENCE,
                     logicalOrder = components.size,
@@ -1003,7 +1040,7 @@ object DirectPromptContext {
                         add(
                             systemPart(
                                 Section(
-                                    componentRef = ComponentRefs.Memory,
+                                    component = Components.Prompt.System.Memory,
                                     stability = ComponentStability.STABLE,
                                     content = it,
                                     sourceRefs = listOf(verified.context.memoryContextRef),
@@ -1023,7 +1060,7 @@ object DirectPromptContext {
                         sections =
                             listOf(
                                 Section(
-                                    componentRef = ComponentRefs.SourceReturnProjection,
+                                    component = Components.Prompt.Hydrated.SourceReturnProjection,
                                     stability = ComponentStability.EPHEMERAL_CURRENT,
                                     content = it.systemContent,
                                     sourceRefs = it.sourceEventRefs,
@@ -2095,7 +2132,7 @@ object DirectPromptContext {
                 workingContinuity?.let {
                     add(
                         Section(
-                            componentRef = ComponentRefs.WorkingContinuity,
+                            component = Components.Prompt.Current.WorkingContinuity,
                             stability = ComponentStability.MUTABLE_CURRENT,
                             content = it.systemContent,
                             sourceRefs = listOf(it.context.successorContextRef),
@@ -2105,7 +2142,7 @@ object DirectPromptContext {
                 capabilityFrame?.let {
                     add(
                         Section(
-                            componentRef = ComponentRefs.CapabilityFrameCurrent,
+                            component = Components.Prompt.Current.CapabilityFrame,
                             stability = ComponentStability.MUTABLE_CURRENT,
                             content = it.currentContent,
                             sourceRefs = listOf(it.frame.selfCapabilityFrameRef),
@@ -2115,7 +2152,7 @@ object DirectPromptContext {
                 personContextContent?.let {
                     add(
                         Section(
-                            componentRef = ComponentRefs.PersonContext,
+                            component = Components.Prompt.Current.PersonContext,
                             stability = ComponentStability.MUTABLE_CURRENT,
                             content = it,
                         ),
@@ -2124,7 +2161,7 @@ object DirectPromptContext {
                 conversationExtent?.let {
                     add(
                         Section(
-                            componentRef = ComponentRefs.ConversationExtent,
+                            component = Components.Prompt.Current.ConversationExtent,
                             stability = ComponentStability.MUTABLE_CURRENT,
                             content = it.systemContent,
                         ),
@@ -2133,7 +2170,7 @@ object DirectPromptContext {
                 sourceReturnProtocol?.let {
                     add(
                         Section(
-                            componentRef = ComponentRefs.SourceReturnProtocol,
+                            component = Components.Prompt.Current.SourceReturnProtocol,
                             stability = ComponentStability.MUTABLE_CURRENT,
                             content = it.content,
                         ),
@@ -2145,7 +2182,7 @@ object DirectPromptContext {
                 capabilityFrame?.let {
                     systemPart(
                         Section(
-                            componentRef = ComponentRefs.CapabilityFrame,
+                            component = Components.Prompt.System.CapabilityGuide,
                             stability = ComponentStability.STABLE,
                             content = it.systemContent,
                             sourceRefs = listOf(VexLifeCapabilityAtlas.CompanionRoleRef),
@@ -2163,7 +2200,7 @@ object DirectPromptContext {
                         sections =
                             listOf(
                                 Section(
-                                    componentRef = ComponentRefs.SuccessorPriorResponse,
+                                    component = Components.Prompt.History.SuccessorPriorResponse,
                                     stability = ComponentStability.APPEND_ONLY_HISTORY,
                                     content = response.content,
                                     sourceRefs = listOf(response.eventRef),
@@ -2182,7 +2219,7 @@ object DirectPromptContext {
                             sections =
                                 listOf(
                                     Section(
-                                        componentRef = ComponentRefs.BrowserContext,
+                                        component = Components.Prompt.Live.BrowserContext,
                                         stability = ComponentStability.EPHEMERAL_CURRENT,
                                         content = browserContextMessage(browserContext),
                                         sourceRefs = listOfNotNull(browserContextRef),
@@ -2198,7 +2235,7 @@ object DirectPromptContext {
                         sections =
                             listOf(
                                 Section(
-                                    componentRef = ComponentRefs.CurrentRequest,
+                                    component = Components.Prompt.Live.CurrentRequest,
                                     stability = ComponentStability.EPHEMERAL_CURRENT,
                                     content = currentRequest.content,
                                     sourceRefs = listOf(currentRequest.eventRef),
@@ -2230,7 +2267,7 @@ object DirectPromptContext {
                     currentStateEnvelope(
                         currentSections +
                             Section(
-                                componentRef = ComponentRefs.SourceReturnProtocol,
+                                component = Components.Prompt.Current.SourceReturnProtocol,
                                 stability = ComponentStability.MUTABLE_CURRENT,
                                 content = DirectConversationSourceReturn.protocolMessage().content,
                             ),
@@ -2316,7 +2353,7 @@ object DirectPromptContext {
             turnContext.foundationalField?.systemContent?.let {
                 systemPart(
                     Section(
-                        componentRef = ComponentRefs.FoundationalField,
+                        component = Components.Prompt.System.FoundationalField,
                         stability = ComponentStability.STABLE,
                         content = it,
                         sourceRefs = listOfNotNull(turnContext.foundationalField.evidence.fieldRef),
@@ -2383,7 +2420,7 @@ object DirectPromptContext {
         val all =
             listOf(
                 Section(
-                    componentRef = ComponentRefs.CurrentStateEnvelope,
+                    component = Components.Prompt.Current,
                     stability = ComponentStability.STABLE,
                     content = CurrentStateLead,
                 ),
