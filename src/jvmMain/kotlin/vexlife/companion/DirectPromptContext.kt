@@ -994,71 +994,54 @@ object DirectPromptContext {
             turnContext.workingContinuity
         val capabilityFrame =
             turnContext.capabilityFrame
-        val prefixMessages =
+        val systemParts =
             buildList {
-                addAll(foundationalFieldMessages(turnContext))
-                memory
-                    ?.systemContent
-                    ?.let {
+                addAll(foundationalFieldParts(turnContext))
+                memory?.let { verified ->
+                    verified.systemContent?.let {
                         add(
-                            CompanionProviderMessage(
-                                role = "system",
-                                content = it,
+                            systemPart(
+                                Section(
+                                    componentRef = ComponentRefs.Memory,
+                                    stability = ComponentStability.STABLE,
+                                    content = it,
+                                    sourceRefs = listOf(verified.context.memoryContextRef),
+                                ),
                             ),
                         )
                     }
-                addAll(
-                    turnContext.prefixMessages,
-                )
-                sourceReturnProjection
-                    ?.systemContent
-                    ?.let {
-                        add(
-                            CompanionProviderMessage(
-                                role = "system",
-                                content = it,
-                            ),
-                        )
-                    }
-            }
-        val providerPrefixMessages =
-            coalesceProviderSystemPrefix(
-                prefixMessages,
-            )
-        val messages =
-            buildList {
-                addAll(
-                    providerPrefixMessages,
-                )
-                for (
-                    event in
-                    selected
-                ) {
-                    add(
-                        CompanionProviderMessage(
-                            role =
-                                when (
-                                    event.eventKind
-                                ) {
-                                    "REQUEST" ->
-                                        "user"
-
-                                    "RESPONSE" ->
-                                        "assistant"
-
-                                    else ->
-                                        error(
-                                            "selected direct Conversation event has unsupported provider role",
-                                        )
-                                },
-                            content = event.content,
-                        ),
-                    )
                 }
-                addAll(
-                    turnContext.suffixMessages,
-                )
+                addAll(turnContext.systemParts)
             }
+        val hydrated =
+            listOfNotNull(
+                sourceReturnProjection?.let {
+                    Placed(
+                        role = "user",
+                        placement = ComponentPlacement.HYDRATED_CONTEXT,
+                        sections =
+                            listOf(
+                                Section(
+                                    componentRef = ComponentRefs.SourceReturnProjection,
+                                    stability = ComponentStability.EPHEMERAL_CURRENT,
+                                    content = it.systemContent,
+                                    sourceRefs = it.sourceEventRefs,
+                                ),
+                            ),
+                    )
+                },
+            )
+        val assembly =
+            assemble(
+                system = systemParts,
+                history = selected,
+                tail =
+                    turnContext.historyParts +
+                        turnContext.currentParts +
+                        hydrated +
+                        turnContext.liveParts,
+            )
+        val messages = assembly.messages
         val estimate =
             messages.sumOf {
                 estimatedMessageTokens(
@@ -1313,6 +1296,7 @@ object DirectPromptContext {
                 capabilityExchangeAllowanceTokens = turnContext.capabilityExchangeAllowanceTokens,
                 trainingSelectionPerformed = false,
                 effectsPerformed = false,
+                contextComponents = assembly.components,
             )
         val fingerprint =
             sha256(
@@ -1415,6 +1399,7 @@ object DirectPromptContext {
                     core.conversationExtentEstimatedSystemMessageTokens,
                 capabilityExchangeAllowanceTokens = core.capabilityExchangeAllowanceTokens,
                 effectsPerformed = core.effectsPerformed,
+                contextComponents = core.contextComponents,
             )
 
         return Materialization(
@@ -2101,70 +2086,128 @@ object DirectPromptContext {
             } else {
                 null
             }
-        val prefixMessages =
+        // Stable system block -> exact history -> request-current state -> live tail.
+        // The pinned Qwen template admits one system message and requires it first, so current
+        // VexLife state is carried in a host-owned user-role envelope after Conversation history.
+        val currentSections =
             buildList {
-                workingContinuity
-                    ?.systemContent
-                    ?.let {
-                        add(
-                            CompanionProviderMessage(
-                                role = "system",
-                                content = it,
-                            ),
-                        )
-                    }
-                capabilityFrame
-                    ?.systemContent
-                    ?.let {
-                        add(
-                            CompanionProviderMessage(
-                                role = "system",
-                                content = it,
-                            ),
-                        )
-                    }
-                personContextContent?.let { add(CompanionProviderMessage(role = "system", content = it)) }
-                conversationExtent?.let {
-                    add(CompanionProviderMessage(role = "system", content = it.systemContent))
-                }
-                sourceReturnProtocol
-                    ?.let(
-                        ::add,
-                    )
-            }
-        val suffixMessages =
-            buildList {
-                successorPriorResponse
-                    ?.let {
-                        response ->
-                        add(
-                            CompanionProviderMessage(
-                                role = "assistant",
-                                content = response.content,
-                            ),
-                        )
-                    }
-                if (
-                    browserContext !=
-                        null
-                ) {
+                workingContinuity?.let {
                     add(
-                        CompanionProviderMessage(
+                        Section(
+                            componentRef = ComponentRefs.WorkingContinuity,
+                            stability = ComponentStability.MUTABLE_CURRENT,
+                            content = it.systemContent,
+                            sourceRefs = listOf(it.context.successorContextRef),
+                        ),
+                    )
+                }
+                capabilityFrame?.let {
+                    add(
+                        Section(
+                            componentRef = ComponentRefs.CapabilityFrameCurrent,
+                            stability = ComponentStability.MUTABLE_CURRENT,
+                            content = it.currentContent,
+                            sourceRefs = listOf(it.frame.selfCapabilityFrameRef),
+                        ),
+                    )
+                }
+                personContextContent?.let {
+                    add(
+                        Section(
+                            componentRef = ComponentRefs.PersonContext,
+                            stability = ComponentStability.MUTABLE_CURRENT,
+                            content = it,
+                        ),
+                    )
+                }
+                conversationExtent?.let {
+                    add(
+                        Section(
+                            componentRef = ComponentRefs.ConversationExtent,
+                            stability = ComponentStability.MUTABLE_CURRENT,
+                            content = it.systemContent,
+                        ),
+                    )
+                }
+                sourceReturnProtocol?.let {
+                    add(
+                        Section(
+                            componentRef = ComponentRefs.SourceReturnProtocol,
+                            stability = ComponentStability.MUTABLE_CURRENT,
+                            content = it.content,
+                        ),
+                    )
+                }
+            }
+        val systemParts =
+            listOfNotNull(
+                capabilityFrame?.let {
+                    systemPart(
+                        Section(
+                            componentRef = ComponentRefs.CapabilityFrame,
+                            stability = ComponentStability.STABLE,
+                            content = it.systemContent,
+                            sourceRefs = listOf(VexLifeCapabilityAtlas.CompanionRoleRef),
+                        ),
+                    )
+                },
+            )
+        val currentParts = listOfNotNull(currentStateEnvelope(currentSections))
+        val historyParts =
+            listOfNotNull(
+                successorPriorResponse?.let { response ->
+                    Placed(
+                        role = "assistant",
+                        placement = ComponentPlacement.HISTORICAL_SEQUENCE,
+                        sections =
+                            listOf(
+                                Section(
+                                    componentRef = ComponentRefs.SuccessorPriorResponse,
+                                    stability = ComponentStability.APPEND_ONLY_HISTORY,
+                                    content = response.content,
+                                    sourceRefs = listOf(response.eventRef),
+                                ),
+                            ),
+                    )
+                },
+            )
+        val liveParts =
+            buildList {
+                if (browserContext != null) {
+                    add(
+                        Placed(
                             role = "user",
-                            content =
-                                browserContextMessage(
-                                    browserContext,
+                            placement = ComponentPlacement.LIVE_TAIL,
+                            sections =
+                                listOf(
+                                    Section(
+                                        componentRef = ComponentRefs.BrowserContext,
+                                        stability = ComponentStability.EPHEMERAL_CURRENT,
+                                        content = browserContextMessage(browserContext),
+                                        sourceRefs = listOfNotNull(browserContextRef),
+                                    ),
                                 ),
                         ),
                     )
                 }
                 add(
-                    CompanionProviderMessage(
+                    Placed(
                         role = "user",
-                        content = currentRequest.content,
+                        placement = ComponentPlacement.CURRENT_REQUEST,
+                        sections =
+                            listOf(
+                                Section(
+                                    componentRef = ComponentRefs.CurrentRequest,
+                                    stability = ComponentStability.EPHEMERAL_CURRENT,
+                                    content = currentRequest.content,
+                                    sourceRefs = listOf(currentRequest.eventRef),
+                                ),
+                            ),
                     ),
                 )
             }
+        val prefixMessages = systemParts.map { it.message }
+        val suffixMessages = (historyParts + currentParts + liveParts).map { it.message }
         val otherTurnContextEstimate =
             (
                 prefixMessages +
@@ -2176,17 +2219,32 @@ object DirectPromptContext {
                     )
                 }
         // The field takes what is left after the current turn's own context and the exact immediate
-        // prior turn an ordinary continuation must keep, so carrying it can never fail a Send that
-        // would otherwise fit. Its room is measured as if the source-return protocol were present,
-        // so both inferences of one turn are given the same projection.
+        // prior turn an ordinary continuation must keep. Measure source-return protocol room at its
+        // actual current-state-envelope placement so first/final inference get the same field room.
+        val roomEstimate =
+            if (sourceReturnProtocol != null) {
+                otherTurnContextEstimate
+            } else {
+                val measured =
+                    currentStateEnvelope(
+                        currentSections +
+                            Section(
+                                componentRef = ComponentRefs.SourceReturnProtocol,
+                                stability = ComponentStability.MUTABLE_CURRENT,
+                                content = DirectConversationSourceReturn.protocolMessage().content,
+                            ),
+                    )
+                (systemParts + historyParts + listOfNotNull(measured) + liveParts).sumOf {
+                    estimatedMessageTokens(it.content)
+                }
+            }
         val foundational =
             foundationalField?.let { reading ->
                 VexLifeFoundationalField.project(
                     reading = reading,
                     availableTokens =
                         inputTokenBudget -
-                            otherTurnContextEstimate -
-                            (if (sourceReturnProtocol == null) SourceReturnProtocolTokens else 0) -
+                            roomEstimate -
                             (if (prior != null && workingContinuity == null) {
                                 estimatedMessageTokens(prior.requestEvent.content) +
                                     estimatedMessageTokens(prior.responseEvent.content)
@@ -2238,22 +2296,32 @@ object DirectPromptContext {
             personContextEstimatedSystemMessageTokens = personContextContent?.let(::estimatedMessageTokens) ?: 0,
             foundationalField = foundational,
             conversationExtent = conversationExtent,
-            prefixMessages = prefixMessages,
-            suffixMessages = suffixMessages,
+            systemParts = systemParts,
+            historyParts = historyParts,
+            currentParts = currentParts,
+            liveParts = liveParts,
             turnContextInputTokenEstimate = fixedEstimate,
             inputTokenBudget = inputTokenBudget,
             capabilityExchangeAllowanceTokens = capabilityExchangeAllowanceTokens,
         )
     }
 
-    private val SourceReturnProtocolTokens: Int by lazy {
-        estimatedMessageTokens(DirectConversationSourceReturn.protocolMessage().content)
-    }
-
     /** The field's own system block, first in the provider prefix; empty when none is carried. */
     private fun foundationalFieldMessages(turnContext: VerifiedTurnContext): List<CompanionProviderMessage> =
+        foundationalFieldParts(turnContext).map { it.message }
+
+    private fun foundationalFieldParts(turnContext: VerifiedTurnContext): List<Placed> =
         listOfNotNull(
-            turnContext.foundationalField?.systemContent?.let { CompanionProviderMessage(role = "system", content = it) },
+            turnContext.foundationalField?.systemContent?.let {
+                systemPart(
+                    Section(
+                        componentRef = ComponentRefs.FoundationalField,
+                        stability = ComponentStability.STABLE,
+                        content = it,
+                        sourceRefs = listOfNotNull(turnContext.foundationalField.evidence.fieldRef),
+                    ),
+                )
+            },
         )
 
     /**
@@ -2291,6 +2359,38 @@ object DirectPromptContext {
             systemContent =
                 listOf(ConversationExtentHeader, "priorCompletedExchanges=$count", statement)
                     .joinToString("\n"),
+        )
+    }
+
+    const val CurrentStateHeader = "VEXLIFE_CURRENT_STATE/v1"
+
+    internal val CurrentStateLead =
+        listOf(
+            CurrentStateHeader,
+            "From VexLife, not a message from the person: what is current at this request. It comes " +
+                "after the Conversation because it is current now. It is not a fact from the " +
+                "Conversation's beginning; earlier turns happened under whatever was current then.",
+        )
+            .joinToString("\n")
+
+    /** One host-owned envelope for all request-current sections; it grants no authority. */
+    private fun currentStateEnvelope(sections: List<Section>): Placed? {
+        if (sections.isEmpty()) {
+            return null
+        }
+        val all =
+            listOf(
+                Section(
+                    componentRef = ComponentRefs.CurrentStateEnvelope,
+                    stability = ComponentStability.STABLE,
+                    content = CurrentStateLead,
+                ),
+            ) + sections
+        return Placed(
+            role = "user",
+            placement = ComponentPlacement.LIVE_TAIL,
+            sections = all,
+            content = all.joinToString("\n\n") { it.content },
         )
     }
 
