@@ -5,6 +5,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.service.VexLifeProdServiceContract
+import vexlife.voiceinput.VexLifeVoiceInputFamily
 import vexlife.workspace.VexLifeWorkspaceBlueprint
 
 class VexLifeWebP1RuntimeArtifactsTest {
@@ -354,15 +355,87 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 "Whole-history enumeration: ",
             ),
         )
-        assertTrue(
+        assertFalse(
+            bundle.javascript.contains(
+                "const QUICK_ACTIONS = [",
+            ),
+            "the renderer must not recreate a second quick-action registry",
+        )
+        assertFalse(
             bundle.javascript.contains(
                 "Journeys",
             ),
+            "held Journeys must not be presented as a connected quick action",
+        )
+        assertFalse(
+            bundle.javascript.contains(
+                "Evolution",
+            ),
+            "held Evolution must not be presented as a connected quick action",
         )
         assertTrue(
             bundle.javascript.contains(
-                "Light or dark",
+                "configureSourceQuickAction",
             ),
+            "typed source Controls should be mounted into the Product Spiral",
+        )
+        assertTrue(bundle.javascript.contains("byId('speech-source')"))
+        assertTrue(bundle.javascript.contains("byId('language-source')"))
+        assertTrue(bundle.javascript.contains("byId('vision-quick-access-source')"))
+        assertTrue(
+            bundle.javascript.contains(
+                "ui.visionControl?.click();",
+            ),
+            "VisionQuickAccess should realize its authored LocalInteraction instead of bypassing Vision",
+        )
+        assertTrue(
+            bundle.javascript.contains(
+                "if (!event.isTrusted) return;",
+            ),
+            "synthetic LocalInteraction activation must not be mistaken for outside-click dismissal",
+        )
+        assertTrue(bundle.javascript.contains("'theme-quick-action'"))
+        assertTrue(bundle.javascript.contains("'support-quick-action'"))
+        assertTrue(bundle.javascript.contains("https://vgong24.github.io/Vextreme/pages/vex-support.html"))
+        assertTrue(bundle.javascript.contains("'quick-actions-trigger'"))
+        assertTrue(bundle.javascript.contains("state.quickActionsOpen"))
+        assertTrue(bundle.javascript.contains("if (!state.quickActionsOpen) {"))
+        assertTrue(bundle.javascript.contains("speech.choosing = false;"))
+        assertTrue(bundle.css.contains(".quick-actions[data-open=\"false\"] > .quick-action-item"))
+        assertTrue(bundle.css.contains(".quick-action-trigger[aria-expanded=\"true\"]"))
+        assertTrue(bundle.html.contains("data-vex-ref=\"${VexLifeWebP1.VoiceInput.identity.ref}\""))
+        assertTrue(bundle.html.contains("id=\"voice-waveform\""))
+        assertTrue(bundle.javascript.contains("window.SpeechRecognition"))
+        assertTrue(bundle.javascript.contains("recognition.processLocally = true"))
+        assertTrue(bundle.javascript.contains("quality: 'dictation'"))
+        assertTrue(bundle.javascript.contains("recognition.start(track)"))
+        assertTrue(bundle.javascript.contains("navigator.mediaDevices.getUserMedia"))
+        assertTrue(bundle.javascript.contains("projectDictationIntoDraft"))
+        assertTrue(bundle.javascript.contains("ui.draft.value ="))
+        assertTrue(bundle.javascript.contains("if (dictation.desiredActive) void stopVoiceInput(true)"))
+        VexLifeVoiceInputFamily.StateRefs.forEach { stateRef ->
+            assertTrue(bundle.javascript.contains(stateRef), "VoiceInput State ref must reach VexWeb: $stateRef")
+        }
+        VexLifeVoiceInputFamily.ControlRefs.forEach { controlRef ->
+            assertTrue(bundle.javascript.contains(controlRef), "VoiceInput Control ref must reach VexWeb: $controlRef")
+        }
+        VexLifeVoiceInputFamily.Text.entries.forEach { text ->
+            assertTrue(bundle.javascript.contains(text.key), "VoiceInput text key must reach VexWeb: ${text.key}")
+        }
+        assertFalse(bundle.javascript.contains("Dictation stays on this device and edits only this draft."))
+        assertFalse(bundle.javascript.contains("Listening locally · speech stays on this device."))
+        assertFalse(bundle.javascript.contains("Microphone permission is needed for local dictation."))
+        assertFalse(
+            bundle.html.contains("Start local dictation"),
+            "VoiceInput markup must carry keyed identity, not renderer-authored English",
+        )
+        assertFalse(
+            bundle.javascript.contains("window.webkitSpeechRecognition"),
+            "VoiceInput must not fall back to the legacy/cloud-capable prefixed recognizer",
+        )
+        assertFalse(
+            bundle.javascript.contains("processLocally = false"),
+            "VoiceInput must not silently fall back to remote speech recognition",
         )
         assertTrue(
             bundle.html.contains(
@@ -505,11 +578,6 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertFalse(
             bundle.javascript.contains(
                 "getDisplayMedia",
-            ),
-        )
-        assertFalse(
-            bundle.javascript.contains(
-                "mediaDevices",
             ),
         )
         assertFalse(
