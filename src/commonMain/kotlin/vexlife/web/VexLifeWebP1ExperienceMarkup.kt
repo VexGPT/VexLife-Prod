@@ -274,9 +274,9 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           </div>
 
           <div class="model-choice-field" data-vex-ref="${VexLifeWebP1.ModelChoice.identity.ref}">
-            <span class="home-label" data-vex-text="workspace.label.model-choice"></span>
+            <span class="home-label" id="model-choice-label" data-vex-text="workspace.label.model-choice"></span>
             <div class="model-choice-row">
-              <select id="model-choice" aria-label="Model choice"></select>
+              <select id="model-choice" aria-labelledby="model-choice-label"></select>
               <div class="model-choice-actions" data-vex-ref="${VexLifeWebP1.ModelsList.identity.ref}" id="models-list"></div>
             </div>
             <p class="model-choice-facts" id="model-choice-facts"></p>
