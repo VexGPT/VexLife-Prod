@@ -114,6 +114,14 @@ class HereticRuntimeRealizationTest {
             realization.runtime.runtimeAdapterRef,
         )
         assertEquals(
+            "substrate.vexlife.windows-local-process.001",
+            realization.process.processSubstrateRef,
+        )
+        assertEquals(
+            "owner.vexlife-prod.windows-heretic-runtime.001",
+            realization.process.lifetimeOwnerRef,
+        )
+        assertEquals(
             "http://127.0.0.1:18080",
             realization.runtime.endpoint,
         )
