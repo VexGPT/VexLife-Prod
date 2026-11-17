@@ -587,6 +587,15 @@
     "strings": {
       "en": {
         "text": "Model swap process"
+      },
+      "ar": {
+        "text": "عملية تبديل النموذج"
+      },
+      "de": {
+        "text": "Modellwechselprozess"
+      },
+      "es": {
+        "text": "Proceso de cambio de modelo"
       }
     },
     "surfaces": [
@@ -597,6 +606,15 @@
     "strings": {
       "en": {
         "text": "Model choice"
+      },
+      "ar": {
+        "text": "اختيار النموذج"
+      },
+      "de": {
+        "text": "Modellauswahl"
+      },
+      "es": {
+        "text": "Elección del modelo"
       }
     },
     "surfaces": [
@@ -607,6 +625,15 @@
     "strings": {
       "en": {
         "text": "Selected model configuration"
+      },
+      "ar": {
+        "text": "إعدادات النموذج المحدد"
+      },
+      "de": {
+        "text": "Konfiguration des ausgewählten Modells"
+      },
+      "es": {
+        "text": "Configuración del modelo seleccionado"
       }
     },
     "surfaces": [
@@ -617,6 +644,15 @@
     "strings": {
       "en": {
         "text": "Warm prompt cache entries"
+      },
+      "ar": {
+        "text": "إدخالات ذاكرة التخزين المؤقت الدافئة للموجه"
+      },
+      "de": {
+        "text": "Warme Prompt-Cache-Einträge"
+      },
+      "es": {
+        "text": "Entradas activas de caché de prompts"
       }
     },
     "surfaces": [
@@ -627,6 +663,15 @@
     "strings": {
       "en": {
         "text": "How many distinct MLX KV prompt-cache entries may stay warm. More can reduce repeated prefill, but each long cache consumes unified memory."
+      },
+      "ar": {
+        "text": "عدد إدخالات ذاكرة التخزين المؤقت KV الخاصة بـ MLX التي يمكن إبقاؤها دافئة. قد يقلل المزيد منها من إعادة الملء المتكررة، لكن كل ذاكرة تخزين مؤقت طويلة تستهلك ذاكرة موحدة."
+      },
+      "de": {
+        "text": "Wie viele unterschiedliche MLX-KV-Prompt-Cache-Einträge warm gehalten werden dürfen. Mehr Einträge können wiederholtes Prefill reduzieren, aber jeder lange Cache verbraucht Unified Memory."
+      },
+      "es": {
+        "text": "Cuántas entradas distintas de caché KV de prompts de MLX pueden mantenerse activas. Más entradas pueden reducir el prefill repetido, pero cada caché larga consume memoria unificada."
       }
     },
     "surfaces": [
@@ -637,6 +682,15 @@
     "strings": {
       "en": {
         "text": "Use recommended"
+      },
+      "ar": {
+        "text": "استخدام الموصى به"
+      },
+      "de": {
+        "text": "Empfohlene Einstellung verwenden"
+      },
+      "es": {
+        "text": "Usar recomendado"
       }
     },
     "surfaces": [
@@ -647,6 +701,15 @@
     "strings": {
       "en": {
         "text": "Start selected model"
+      },
+      "ar": {
+        "text": "تشغيل النموذج المحدد"
+      },
+      "de": {
+        "text": "Ausgewähltes Modell starten"
+      },
+      "es": {
+        "text": "Iniciar modelo seleccionado"
       }
     },
     "surfaces": [
@@ -657,6 +720,15 @@
     "strings": {
       "en": {
         "text": "Apply & restart model"
+      },
+      "ar": {
+        "text": "تطبيق وإعادة تشغيل النموذج"
+      },
+      "de": {
+        "text": "Anwenden & Modell neu starten"
+      },
+      "es": {
+        "text": "Aplicar y reiniciar modelo"
       }
     },
     "surfaces": [
@@ -667,6 +739,15 @@
     "strings": {
       "en": {
         "text": "Select"
+      },
+      "ar": {
+        "text": "تحديد"
+      },
+      "de": {
+        "text": "Auswählen"
+      },
+      "es": {
+        "text": "Seleccionar"
       }
     },
     "surfaces": [
@@ -677,6 +758,15 @@
     "strings": {
       "en": {
         "text": "Set cache entries"
+      },
+      "ar": {
+        "text": "تعيين إدخالات التخزين المؤقت"
+      },
+      "de": {
+        "text": "Cache-Einträge festlegen"
+      },
+      "es": {
+        "text": "Definir entradas de caché"
       }
     },
     "surfaces": [
@@ -687,6 +777,15 @@
     "strings": {
       "en": {
         "text": "Selected {model}. Review its configuration, then start it when you're ready."
+      },
+      "ar": {
+        "text": "تم تحديد {model}. راجع إعداداته، ثم شغّله عندما تكون جاهزًا."
+      },
+      "de": {
+        "text": "{model} ausgewählt. Prüfe die Konfiguration und starte das Modell, wenn du bereit bist."
+      },
+      "es": {
+        "text": "Se seleccionó {model}. Revisa su configuración y luego inícialo cuando estés listo."
       }
     },
     "surfaces": [
@@ -697,6 +796,15 @@
     "strings": {
       "en": {
         "text": "Runtime configuration saved · {entries} warm cache entries."
+      },
+      "ar": {
+        "text": "تم حفظ إعدادات وقت التشغيل · {entries} من إدخالات التخزين المؤقت الدافئة."
+      },
+      "de": {
+        "text": "Laufzeitkonfiguration gespeichert · {entries} warme Cache-Einträge."
+      },
+      "es": {
+        "text": "Configuración de ejecución guardada · {entries} entradas activas de caché."
       }
     },
     "surfaces": [
@@ -707,6 +815,15 @@
     "strings": {
       "en": {
         "text": "1 is the current lived safety floor for 27B after the earlier many-cache memory failure; it is not claimed as the fastest setting."
+      },
+      "ar": {
+        "text": "القيمة 1 هي حد الأمان المثبت عمليًا حاليًا لـ 27B بعد مشكلة الذاكرة السابقة الناتجة عن تعدد إدخالات التخزين المؤقت؛ ولا يُدّعى أنها الإعداد الأسرع."
+      },
+      "de": {
+        "text": "1 ist der derzeit im Betrieb bestätigte Sicherheitswert für 27B nach dem früheren Speicherproblem mit vielen Caches; dies wird nicht als schnellste Einstellung behauptet."
+      },
+      "es": {
+        "text": "1 es el límite de seguridad actual comprobado en uso real para 27B tras el problema anterior de memoria con muchas cachés; no se afirma que sea la configuración más rápida."
       }
     },
     "surfaces": [
@@ -717,6 +834,15 @@
     "strings": {
       "en": {
         "text": "3 is the current experimental cache candidate for 4B; it needs lived memory and reuse proof before it becomes an accepted default."
+      },
+      "ar": {
+        "text": "القيمة 3 هي مرشح التخزين المؤقت التجريبي الحالي لـ 4B؛ وتحتاج إلى إثبات عملي للذاكرة وإعادة الاستخدام قبل أن تصبح إعدادًا افتراضيًا معتمدًا."
+      },
+      "de": {
+        "text": "3 ist der aktuelle experimentelle Cache-Kandidat für 4B; Speicherbedarf und Wiederverwendung müssen im Betrieb nachgewiesen werden, bevor dies zum akzeptierten Standard wird."
+      },
+      "es": {
+        "text": "3 es el candidato experimental actual de caché para 4B; necesita pruebas reales de memoria y reutilización antes de convertirse en un valor predeterminado aceptado."
       }
     },
     "surfaces": [
@@ -727,6 +853,15 @@
     "strings": {
       "en": {
         "text": "1 keeps the current safety floor for this model until a model-specific cache recommendation is lived-tested."
+      },
+      "ar": {
+        "text": "تحافظ القيمة 1 على حد الأمان الحالي لهذا النموذج إلى أن يتم اختبار توصية تخزين مؤقت خاصة به عمليًا."
+      },
+      "de": {
+        "text": "1 behält für dieses Modell den aktuellen Sicherheitswert bei, bis eine modellspezifische Cache-Empfehlung im Betrieb getestet wurde."
+      },
+      "es": {
+        "text": "1 mantiene el límite de seguridad actual de este modelo hasta que se pruebe en uso real una recomendación de caché específica para él."
       }
     },
     "surfaces": [
@@ -737,6 +872,15 @@
     "strings": {
       "en": {
         "text": "Serving: {model}"
+      },
+      "ar": {
+        "text": "قيد التشغيل: {model}"
+      },
+      "de": {
+        "text": "Aktiv: {model}"
+      },
+      "es": {
+        "text": "En servicio: {model}"
       }
     },
     "surfaces": [
@@ -747,6 +891,15 @@
     "strings": {
       "en": {
         "text": "Selected: {model}"
+      },
+      "ar": {
+        "text": "محدد: {model}"
+      },
+      "de": {
+        "text": "Ausgewählt: {model}"
+      },
+      "es": {
+        "text": "Seleccionado: {model}"
       }
     },
     "surfaces": [
@@ -757,6 +910,15 @@
     "strings": {
       "en": {
         "text": "none"
+      },
+      "ar": {
+        "text": "لا شيء"
+      },
+      "de": {
+        "text": "keines"
+      },
+      "es": {
+        "text": "ninguno"
       }
     },
     "surfaces": [
@@ -767,6 +929,15 @@
     "strings": {
       "en": {
         "text": "Configuration changed; restart the selected model to apply it."
+      },
+      "ar": {
+        "text": "تغيّرت الإعدادات؛ أعد تشغيل النموذج المحدد لتطبيقها."
+      },
+      "de": {
+        "text": "Die Konfiguration wurde geändert; starte das ausgewählte Modell neu, um sie anzuwenden."
+      },
+      "es": {
+        "text": "La configuración cambió; reinicia el modelo seleccionado para aplicarla."
       }
     },
     "surfaces": [
@@ -777,6 +948,15 @@
     "strings": {
       "en": {
         "text": "Warm cache entries: {current} · recommended: {recommended}."
+      },
+      "ar": {
+        "text": "إدخالات التخزين المؤقت الدافئة: {current} · الموصى به: {recommended}."
+      },
+      "de": {
+        "text": "Warme Cache-Einträge: {current} · empfohlen: {recommended}."
+      },
+      "es": {
+        "text": "Entradas activas de caché: {current} · recomendado: {recommended}."
       }
     },
     "surfaces": [
