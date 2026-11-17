@@ -523,32 +523,60 @@ object VexLifeWindowsRuntimeMaterialization {
                     }
                 }
 
-                val actualFiles =
+                val actualEntries =
                     Files.walk(
                             imagePath,
                         )
                         .use { stream ->
                             stream
-                                .filter { path ->
-                                    Files.isRegularFile(
+                                .toList()
+                        }
+
+                actualEntries
+                    .filter {
+                        it !=
+                            imagePath
+                    }
+                    .forEach { path ->
+                        require(
+                            !Files.isSymbolicLink(
+                                path,
+                            ) &&
+                                (
+                                    Files.isDirectory(
                                         path,
                                         LinkOption.NOFOLLOW_LINKS,
-                                    )
-                                }
-                                .map { path ->
-                                    imagePath
-                                        .relativize(
+                                    ) ||
+                                        Files.isRegularFile(
                                             path,
+                                            LinkOption.NOFOLLOW_LINKS,
                                         )
-                                        .toString()
-                                        .replace(
-                                            '\\',
-                                            '/',
-                                        )
-                                }
-                                .toList()
-                                .toSet()
+                                ),
+                        ) {
+                            "Windows runtime image contains an unsupported filesystem entry"
                         }
+                    }
+
+                val actualFiles =
+                    actualEntries
+                        .filter { path ->
+                            Files.isRegularFile(
+                                path,
+                                LinkOption.NOFOLLOW_LINKS,
+                            )
+                        }
+                        .map { path ->
+                            imagePath
+                                .relativize(
+                                    path,
+                                )
+                                .toString()
+                                .replace(
+                                    '\\',
+                                    '/',
+                                )
+                        }
+                        .toSet()
 
                 require(
                     actualFiles ==
