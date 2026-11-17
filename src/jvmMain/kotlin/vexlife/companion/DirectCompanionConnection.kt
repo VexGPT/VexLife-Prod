@@ -24,6 +24,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import vexlife.capability.VexLifeCapabilityAtlas
+import vexlife.capability.VexLifeCapabilityRequest
 import vexlife.model.heretic.HereticCompanionProvider
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
@@ -78,10 +79,90 @@ object DirectCompanionConnection {
         val code: FailureCode,
         message: String,
         cause: Throwable? = null,
+        /** What the stage cost and why it stopped, when the provider answered at all. */
+        val measurement: StageMeasurement? = null,
     ) : IllegalStateException(
         message,
         cause,
     )
+
+    enum class Stop {
+        COMPLETED,
+        OUTPUT_LIMIT_DURING_REASONING,
+        OUTPUT_LIMIT_DURING_ANSWER,
+        STREAM_CLOSED_BEFORE_DONE,
+        ENDED_WITHOUT_ANSWER,
+    }
+
+    data class StageMeasurement(
+        val stop: Stop,
+        val finishReason: String?,
+        val promptTokens: Int?,
+        val cachedPromptTokens: Int?,
+        val completionTokens: Int?,
+        val firstTokenMillis: Long?,
+        val firstAnswerMillis: Long?,
+        val totalMillis: Long,
+        val reasoningCharacters: Int,
+        val answerCharacters: Int,
+        val controlHeaderInReasoning: Boolean,
+        val controlHeaderInAnswer: Boolean,
+    ) {
+        val prefillTokens: Int?
+            get() = promptTokens?.let { prompt -> prompt - (cachedPromptTokens ?: 0) }
+
+        fun refs(): Map<String, String> = buildMap {
+            put("stop", stop.name)
+            finishReason?.let { put("finishReason", it) }
+            promptTokens?.let { put("promptTokens", it.toString()) }
+            cachedPromptTokens?.let { put("cachedPromptTokens", it.toString()) }
+            prefillTokens?.let { put("prefillTokens", it.toString()) }
+            completionTokens?.let { put("completionTokens", it.toString()) }
+            firstTokenMillis?.let { put("firstTokenMs", it.toString()) }
+            firstAnswerMillis?.let { put("firstAnswerMs", it.toString()) }
+            put("totalMs", totalMillis.toString())
+            put("reasoningChars", reasoningCharacters.toString())
+            put("answerChars", answerCharacters.toString())
+            put("controlHeaderInReasoning", controlHeaderInReasoning.toString())
+            put("controlHeaderInAnswer", controlHeaderInAnswer.toString())
+        }
+    }
+
+    private val ControlHeaders =
+        listOf(
+            VexLifeCapabilityRequest.RequestHeader,
+            DirectConversationSourceReturn.RequestHeader,
+        )
+
+    private fun containsControlHeader(text: CharSequence): Boolean =
+        ControlHeaders.any { text.contains(it) }
+
+    private data class Usage(
+        val promptTokens: Int?,
+        val cachedPromptTokens: Int?,
+        val completionTokens: Int?,
+    )
+
+    private fun usageOrNull(element: JsonElement?): Usage? {
+        val usage = element as? JsonObject ?: return null
+        fun count(value: JsonElement?): Int? =
+            (value as? JsonPrimitive)?.contentOrNull?.toIntOrNull()
+        return Usage(
+            promptTokens = count(usage["prompt_tokens"]),
+            cachedPromptTokens =
+                count((usage["prompt_tokens_details"] as? JsonObject)?.get("cached_tokens")),
+            completionTokens = count(usage["completion_tokens"]),
+        )
+    }
+
+    private fun stopFor(done: Boolean, finishReason: String?, answered: Boolean): Stop =
+        when {
+            !done -> Stop.STREAM_CLOSED_BEFORE_DONE
+            finishReason == "length" && !answered -> Stop.OUTPUT_LIMIT_DURING_REASONING
+            finishReason == "length" -> Stop.OUTPUT_LIMIT_DURING_ANSWER
+            !answered -> Stop.ENDED_WITHOUT_ANSWER
+            else -> Stop.COMPLETED
+        }
 
     @Serializable
     private data class RequestPayload(
@@ -323,6 +404,7 @@ object DirectCompanionConnection {
         val reasoning: ReasoningObservation,
         val finishReason: String?,
         val assistantRoleObserved: Boolean,
+        val measurement: StageMeasurement,
     )
 
     @Serializable
@@ -391,6 +473,8 @@ object DirectCompanionConnection {
         val sealedHumanReasoning: String?,
         val runtimeObservation: RuntimeObservation,
         val invocationEvidence: InvocationEvidence,
+        /** Diagnostics only; not part of durable runtime evidence fingerprints. */
+        val measurement: StageMeasurement,
     )
 
     fun invoke(
@@ -401,6 +485,8 @@ object DirectCompanionConnection {
         now: () -> Instant = {
             Instant.now()
         },
+        /** Monotonic provider-stage timing source. */
+        monotonicNanos: () -> Long = System::nanoTime,
         /**
          * The capabilities this stage may request, as the turn's current frame reports them.
          * Provider-native carriage belongs here; admission and effects remain with VexLifeCapabilityBridge.
@@ -516,11 +602,13 @@ object DirectCompanionConnection {
                     progressObserver = progressObserver,
                     harmony = harmony,
                     capabilityOffer = capabilityOffer,
+                    monotonicNanos = monotonicNanos,
                 )
             } else {
                 invokeBulk(
                     transport = transport,
                     call = call,
+                    monotonicNanos = monotonicNanos,
                 ).let {
                     if (
                         profile.reasoningRepresentation ==
@@ -670,13 +758,16 @@ object DirectCompanionConnection {
             sealedHumanReasoning = reasoning.sealedHumanValue,
             runtimeObservation = runtimeObservation,
             invocationEvidence = invocation,
+            measurement = completion.measurement,
         )
     }
 
     private fun invokeBulk(
         transport: Transport,
         call: HttpCall,
+        monotonicNanos: () -> Long,
     ): ProviderCompletion {
+        val startedNanos = monotonicNanos()
         val http =
             post(
                 transport,
@@ -725,18 +816,58 @@ object DirectCompanionConnection {
                     FailureCode.EndpointResponseInvalid,
                     "local Companion response has no assistant message",
                 )
-        val content =
+        val finishReason =
+            stringOrNull(
+                choice[
+                    "finish_reason"
+                ],
+            )
+        val reasoning =
+            reasoningObservation(
+                message,
+            )
+        val answer =
             stringOrNull(
                 message[
                     "content"
                 ],
             )
-                ?.takeIf(
-                    String::isNotEmpty,
-                )
-                ?: fail(
+                .orEmpty()
+        val usage =
+            usageOrNull(
+                parsed[
+                    "usage"
+                ],
+            )
+        val measurement =
+            StageMeasurement(
+                stop =
+                    stopFor(
+                        done = true,
+                        finishReason = finishReason,
+                        answered = answer.isNotEmpty(),
+                    ),
+                finishReason = finishReason,
+                promptTokens = usage?.promptTokens,
+                cachedPromptTokens = usage?.cachedPromptTokens,
+                completionTokens = usage?.completionTokens,
+                firstTokenMillis = null,
+                firstAnswerMillis = null,
+                totalMillis = (monotonicNanos() - startedNanos) / 1_000_000,
+                reasoningCharacters = reasoning.trace.characterCount,
+                answerCharacters = answer.codePointCount(0, answer.length),
+                controlHeaderInReasoning =
+                    reasoning.sealedHumanValue?.let(::containsControlHeader) ?: false,
+                controlHeaderInAnswer = containsControlHeader(answer),
+            )
+        val content =
+            answer.takeIf(
+                String::isNotEmpty,
+            )
+                ?: throw ConnectionException(
                     FailureCode.EndpointResponseInvalid,
                     "local Companion response content is empty",
+                    measurement = measurement,
                 )
 
         return ProviderCompletion(
@@ -751,15 +882,8 @@ object DirectCompanionConnection {
                         "model"
                     ],
                 ),
-            reasoning = reasoningObservation(
-                message,
-            ),
-            finishReason =
-                stringOrNull(
-                    choice[
-                        "finish_reason"
-                    ],
-                ),
+            reasoning = reasoning,
+            finishReason = finishReason,
             assistantRoleObserved =
                 stringOrNull(
                     message[
@@ -767,6 +891,7 @@ object DirectCompanionConnection {
                     ],
                 ) ==
                     "assistant",
+            measurement = measurement,
         )
     }
 
@@ -776,7 +901,12 @@ object DirectCompanionConnection {
         progressObserver: ProgressObserver?,
         harmony: Boolean = false,
         capabilityOffer: List<VexLifeCapabilityAtlas.Definition> = emptyList(),
+        monotonicNanos: () -> Long,
     ): ProviderCompletion {
+        val startedNanos = monotonicNanos()
+        var firstTokenNanos: Long? = null
+        var firstAnswerNanos: Long? = null
+        var usage: Usage? = null
         val content =
             StringBuilder()
         val reasoning =
@@ -785,6 +915,9 @@ object DirectCompanionConnection {
         val toolCall = HarmonyToolCall()
 
         fun appendReasoning(delta: String) {
+            if (firstTokenNanos == null) {
+                firstTokenNanos = monotonicNanos()
+            }
             reasoning.append(delta)
             progressObserver?.observe(
                 Progress(
@@ -796,6 +929,13 @@ object DirectCompanionConnection {
         }
 
         fun appendContent(delta: String) {
+            if (firstAnswerNanos == null) {
+                val at = monotonicNanos()
+                firstAnswerNanos = at
+                if (firstTokenNanos == null) {
+                    firstTokenNanos = at
+                }
+            }
             content.append(delta)
             progressObserver?.observe(
                 Progress(
@@ -887,6 +1027,14 @@ object DirectCompanionConnection {
                     ?.let {
                         reportedModel =
                             it
+                    }
+                usageOrNull(
+                    event[
+                        "usage"
+                    ],
+                )
+                    ?.let {
+                        usage = it
                     }
                 val choice =
                     (event[
@@ -980,16 +1128,50 @@ object DirectCompanionConnection {
             status = http.status,
             redirectLocation = http.redirectLocation,
         )
+
+        fun millisSinceStart(nanos: Long?): Long? =
+            nanos?.let {
+                (it - startedNanos) /
+                    1_000_000
+            }
+
+        fun measurement(
+            answered: Boolean = content.isNotEmpty(),
+        ): StageMeasurement =
+            StageMeasurement(
+                stop =
+                    stopFor(
+                        done = done,
+                        finishReason = finishReason,
+                        answered = answered,
+                    ),
+                finishReason = finishReason,
+                promptTokens = usage?.promptTokens,
+                cachedPromptTokens = usage?.cachedPromptTokens,
+                completionTokens = usage?.completionTokens,
+                firstTokenMillis = millisSinceStart(firstTokenNanos),
+                firstAnswerMillis = millisSinceStart(firstAnswerNanos),
+                totalMillis = (monotonicNanos() - startedNanos) / 1_000_000,
+                reasoningCharacters = reasoning.codePointCount(),
+                answerCharacters = content.codePointCount(),
+                controlHeaderInReasoning = containsControlHeader(reasoning),
+                controlHeaderInAnswer = containsControlHeader(content),
+            )
+
         if (
             !done
         ) {
-            fail(
+            throw ConnectionException(
                 FailureCode.EndpointResponseInvalid,
                 "streaming Companion endpoint closed before [DONE]",
+                measurement = measurement(),
             )
         }
-        toolCall.recipient?.let { recipient ->
-            if (content.isEmpty()) {
+        toolCall.recipient?.let {
+            recipient ->
+            if (
+                content.isEmpty()
+            ) {
                 content.append(
                     HarmonyCapabilityTools.control(
                         recipient = recipient,
@@ -1006,9 +1188,10 @@ object DirectCompanionConnection {
         if (
             content.isEmpty()
         ) {
-            fail(
+            throw ConnectionException(
                 FailureCode.EndpointResponseInvalid,
                 "streaming Companion response content is empty",
+                measurement = measurement(answered = false),
             )
         }
 
@@ -1036,6 +1219,10 @@ object DirectCompanionConnection {
                         )
                     }
             }
+        val stageMeasurement =
+            measurement(
+                answered = true,
+            )
 
         return ProviderCompletion(
             httpStatus = http.status,
@@ -1050,6 +1237,7 @@ object DirectCompanionConnection {
                 ),
             finishReason = finishReason,
             assistantRoleObserved = assistantRoleObserved,
+            measurement = stageMeasurement,
         )
     }
 
