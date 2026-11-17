@@ -613,6 +613,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const failVoiceInput = async (failureReasonRef) => {
                 dictation.desiredActive = false;
+                dictation.recognition = null;
                 setVoiceInputState(voiceInput.state.failed, {
                   failureReasonRef,
                   language: dictation.language ?? voiceInputLanguage()
@@ -1415,6 +1416,8 @@ object VexLifeWebP1RuntimeArtifacts {
                   });
                   state.settings = await readJson(response);
                   state.languageOpen = false;
+                  observeVoiceInputCapability();
+                  renderVoiceInput();
                   renderLanguage();
                   renderSpeechVoices();
                   renderSpeech();
