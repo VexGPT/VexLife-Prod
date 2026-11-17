@@ -16,6 +16,7 @@ import vexlife.conversation.DirectConversationStore
 import vexlife.filesystem.VexOwnedPath
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticModelConfiguration
@@ -434,7 +435,7 @@ object DirectCompanionTurn {
         )
 
     internal fun perform(
-        session: VexLifeProdLocalSetup.Session,
+        session: VexLifeProdRuntimeSession,
         intent: Intent,
         progressObserver: ProgressObserver? =
             null,
