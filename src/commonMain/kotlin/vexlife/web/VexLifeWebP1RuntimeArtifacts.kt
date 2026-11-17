@@ -2,6 +2,7 @@ package vexlife.web
 
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.service.VexLifeProdServiceContract
+import vexlife.voiceinput.VexLifeVoiceInputFamily
 import vexlife.workspace.VexLifeSourceTemplate
 import vexlife.workspace.VexLifeWorkspaceApp
 
@@ -75,6 +76,63 @@ object VexLifeWebP1RuntimeArtifacts {
             )
         val workspaceApps = jsList(VexLifeWorkspaceApp.entries.map { it.key })
         val sourceTemplateScopes = jsList(VexLifeSourceTemplate.Members.map { it.scope })
+
+        fun jsNullable(value: String?): String = value?.let(::jsString) ?: "null"
+
+        fun voiceDisplay(state: VexLifeVoiceInputFamily.State): String {
+            val display = VexLifeVoiceInputFamily.displayStateFor(state)
+            return
+                "Object.freeze({statusKey:" + jsString(display.status.key) +
+                    ",primaryControlRef:" + jsNullable(display.primaryControlRef) +
+                    ",primaryLabelKey:" + jsNullable(display.primaryLabel?.key) +
+                    ",active:" + display.active +
+                    ",attention:" + jsString(display.attention.name) + "})"
+        }
+
+        val voiceLanguage =
+            VexLifeVoiceInputFamily.Language.entries.joinToString(
+                separator = ",",
+                prefix = "{",
+                postfix = "}",
+            ) {
+                jsString(it.personLanguageCode) + ":" + jsString(it.recognitionLocale)
+            }
+        val voiceExampleLanguage = VexLifeVoiceInputFamily.Language.English
+        val voiceStateDisplays =
+            listOf(
+                VexLifeVoiceInputFamily.StateReady to
+                    voiceDisplay(VexLifeVoiceInputFamily.Ready(voiceExampleLanguage)),
+                VexLifeVoiceInputFamily.StateCheckingLanguage to
+                    voiceDisplay(VexLifeVoiceInputFamily.CheckingLanguage(voiceExampleLanguage)),
+                VexLifeVoiceInputFamily.StateInstallingLanguage to
+                    voiceDisplay(VexLifeVoiceInputFamily.InstallingLanguage(voiceExampleLanguage)),
+                VexLifeVoiceInputFamily.StateRequestingMicrophone to
+                    voiceDisplay(VexLifeVoiceInputFamily.RequestingMicrophone(voiceExampleLanguage)),
+                VexLifeVoiceInputFamily.StateListening to
+                    voiceDisplay(VexLifeVoiceInputFamily.Listening(voiceExampleLanguage)),
+                VexLifeVoiceInputFamily.StateStopping to
+                    voiceDisplay(VexLifeVoiceInputFamily.Stopping(voiceExampleLanguage)),
+            ).joinToString(separator = ",", prefix = "{", postfix = "}") { (stateRef, display) ->
+                jsString(stateRef) + ":" + display
+            }
+        val voiceHoldDisplays =
+            VexLifeVoiceInputFamily.HoldReason.entries.joinToString(
+                separator = ",",
+                prefix = "{",
+                postfix = "}",
+            ) {
+                jsString(it.reasonRef) + ":" +
+                    voiceDisplay(VexLifeVoiceInputFamily.Held(it))
+            }
+        val voiceFailureDisplays =
+            VexLifeVoiceInputFamily.FailureReason.entries.joinToString(
+                separator = ",",
+                prefix = "{",
+                postfix = "}",
+            ) {
+                jsString(it.reasonRef) + ":" +
+                    voiceDisplay(VexLifeVoiceInputFamily.Failed(voiceExampleLanguage, it))
+            }
 
         return """
             // Generated VexLife-Prod A003-faithful presentation over current New-Beginnings owners.
