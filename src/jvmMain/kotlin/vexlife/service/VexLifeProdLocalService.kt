@@ -31,6 +31,7 @@ import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.continuity.VexLifePrivateConversation
 import vexlife.continuity.VexLifePrivateModeFamily
@@ -95,6 +96,20 @@ class VexLifeProdLocalService private constructor(
                     .let { it.content to it.sealedHumanReasoning }
             }
 
+    /**
+     * Host/platform projection consumed by the shared fixed-port Product service.
+     *
+     * Mac and Windows implementations observe their own host/current-state mechanics; the service
+     * consumes only this bounded projection and never infers platform behavior from runtime strings.
+     */
+    internal interface PlatformProjection {
+        fun observeCurrentState(
+            productHome: Path,
+        ): VexLifeProdServiceContract.CurrentStateProjection
+
+        fun totalMemoryBytes(): Long?
+    }
+
     companion object {
         private const val MaxRequestBytes =
             256 * 1024
@@ -129,6 +144,19 @@ class VexLifeProdLocalService private constructor(
                         .totalMemoryBytes
                 }
                 .getOrNull()
+
+        private object MacPlatformProjection :
+            PlatformProjection {
+            override fun observeCurrentState(
+                productHome: Path,
+            ): VexLifeProdServiceContract.CurrentStateProjection =
+                VexLifeProdCurrentState.observeCurrentMac(
+                    productHome,
+                )
+
+            override fun totalMemoryBytes(): Long? =
+                currentMacTotalMemoryBytes()
+        }
 
         private val ProductDreamExecutor =
             object : DreamExecutor {
@@ -236,8 +264,9 @@ class VexLifeProdLocalService private constructor(
          */
         internal fun start(
             sourceSha: String,
-            session: VexLifeProdLocalSetup.Session,
+            session: VexLifeProdRuntimeSession,
             visionRuntimeExecutablePathOrNull: String?,
+            platformProjection: PlatformProjection = MacPlatformProjection,
         ): VexLifeProdLocalService {
             val visionRuntime =
                 visionRuntimeExecutablePathOrNull
@@ -311,13 +340,13 @@ class VexLifeProdLocalService private constructor(
                     },
                 dreamExecutor = ProductDreamExecutor,
                 currentStateObserver = {
-                    VexLifeProdCurrentState.observeCurrentMac(
+                    platformProjection.observeCurrentState(
                         Path.of(
                             session.result.productHome,
                         ),
                     )
                 },
-                hostTotalMemoryBytes = ::currentMacTotalMemoryBytes,
+                hostTotalMemoryBytes = platformProjection::totalMemoryBytes,
                 visionRuntime = visionRuntime,
             )
         }
