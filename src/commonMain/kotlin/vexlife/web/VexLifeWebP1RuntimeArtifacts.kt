@@ -3684,7 +3684,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 // Canonical Conversation/Context own completion. Streaming presentation is only a
                 // projection, so refresh from those durable owners before retiring the pending Send.
                 try {
-                  await Promise.all([loadConversation(false), loadContext()]);
+                  await Promise.all([loadConversation(false), loadConversationTurn(), loadContext()]);
                 } catch (projectionError) {
                   notify(
                     'Turn completed, but the current projection could not be refreshed: ' +
@@ -3717,11 +3717,18 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const cancelSend = async () => {
-                if (!state.sendInFlight || !state.pending || state.sendCancelInFlight) return;
+                const display = state.conversationTurn?.display ?? null;
+                const attemptRef = display?.targetAttemptRef ?? null;
+                if (
+                  state.sendCancelInFlight ||
+                  display?.primaryControlRef !== conversationTurn.control.stop ||
+                  !attemptRef
+                ) return;
+
                 state.sendCancelInFlight = true;
                 setCompanionStatus(
                   'Checking',
-                  t('workspace.status.conversation-stopping'),
+                  resolveText(display.status),
                   servingModelLabel() || ''
                 );
                 renderComposer();
@@ -3729,13 +3736,16 @@ object VexLifeWebP1RuntimeArtifacts {
                   const response = await fetch(service.cancelPath, {
                     method: 'POST',
                     headers: { accept: 'application/json', 'content-type': 'application/json' },
-                    body: JSON.stringify({ idempotencyKey: state.pending.idempotencyKey })
+                    body: JSON.stringify({ attemptRef })
                   });
                   const result = await readJson(response);
-                  if (result.cancellationRequested) state.sendCancelRequested = true;
+                  state.conversationTurn = result.turn ?? state.conversationTurn;
+                  if (result.outcome === conversationTurn.outcome.realized) {
+                    state.sendCancelRequested = true;
+                  }
                   notify(
-                    result.cancellationRequested
-                      ? t('workspace.status.conversation-stopping')
+                    result.outcome === conversationTurn.outcome.realized
+                      ? resolveText(result.turn?.display?.status)
                       : t('workspace.status.conversation-cancel-not-active')
                   );
                 } catch (error) {
@@ -3819,6 +3829,9 @@ object VexLifeWebP1RuntimeArtifacts {
                     headers: { accept: 'text/event-stream', 'content-type': 'application/json' },
                     body: JSON.stringify(pending)
                   });
+                  // The service registers the exact Family BeginTurn before it emits SSE headers.
+                  // Re-observe that outside execution truth before offering Stop.
+                  await loadConversationTurn();
                   let result = null;
                   await readEventStream(response, (event) => {
                     if (event?.type === 'PHASE') {
@@ -3914,6 +3927,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
                   state.sendInFlight = false;
                   state.sendCancelInFlight = false;
+                  await loadConversationTurn().catch(() => {});
                   const cancelledByPerson = state.sendCancelRequested;
                   state.sendCancelRequested = false;
                   if (retireAttempt) {
