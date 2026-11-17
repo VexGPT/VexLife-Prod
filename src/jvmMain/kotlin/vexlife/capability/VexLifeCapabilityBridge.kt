@@ -7,6 +7,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
+import vexlife.capability.reach.VexLifeContinuityHydration
 import vexlife.capability.reach.VexLifeHomeReach
 import vexlife.capability.reach.VexLifeMemoryRecall
 import vexlife.capability.reach.VexLifeRepositoryReach
@@ -68,6 +69,17 @@ object VexLifeCapabilityBridge {
         val now: () -> Instant = { Instant.now() },
     )
 
+    fun interface ContinuityHydrator {
+        fun hydrate(
+            queryGroups: List<List<String>>,
+            availableTokens: Int,
+        ): VexLifeContinuityHydration.Projection
+    }
+
+    data class TurnBoundReach(
+        val continuityHydrator: ContinuityHydrator? = null,
+    )
+
     data class Admission(
         val productHome: Path,
         val availableCapabilityRefs: Set<String>,
@@ -93,6 +105,8 @@ object VexLifeCapabilityBridge {
         val contentTruncated: Boolean,
         val untrustedContent: Boolean,
         val ownerSourcePath: String?,
+        val resultSourceRefs: List<String> = emptyList(),
+        val resultFrontierRefs: List<String> = emptyList(),
         val effectClass: String?,
         val startedAt: String,
         val completedAt: String,
@@ -182,6 +196,7 @@ object VexLifeCapabilityBridge {
         admission: Admission,
         owners: Owners = Owners(),
         estimateTokens: (String) -> Int,
+        turnBoundReach: TurnBoundReach = TurnBoundReach(),
     ): Exchange {
         val startedAt = owners.now()
         val call = (parsed as? VexLifeCapabilityRequest.Parsed.Request)?.call
@@ -200,6 +215,15 @@ object VexLifeCapabilityBridge {
                 "action" to (call?.action ?: "unreadable"),
             ),
         )
+
+        val maximumTokens =
+            maxOf(
+                0,
+                minOf(
+                    MaximumResultTokens,
+                    admission.tokensAvailable - estimateTokens(parsed.controlContent),
+                ),
+            )
 
         val body: Body =
             when {
@@ -238,14 +262,17 @@ object VexLifeCapabilityBridge {
                         "${definition.handle} is not AVAILABLE in this turn's frame.",
                         untrusted = false,
                     )
-                else -> dispatch(definition, call!!, admission, owners)
+                else ->
+                    dispatch(
+                        definition = definition,
+                        call = call!!,
+                        admission = admission,
+                        owners = owners,
+                        maximumResultTokens = maximumTokens,
+                        turnBoundReach = turnBoundReach,
+                    )
             }
 
-        val maximumTokens =
-            minOf(
-                MaximumResultTokens,
-                admission.tokensAvailable - estimateTokens(parsed.controlContent),
-            )
         val (content, truncatedForRoom, state) = fit(body, admission, maximumTokens, estimateTokens)
         val completedAt = owners.now()
         val entry =
@@ -267,6 +294,18 @@ object VexLifeCapabilityBridge {
                 contentTruncated = body.truncated || truncatedForRoom,
                 untrustedContent = body.untrusted,
                 ownerSourcePath = definition?.sourcePath,
+                resultSourceRefs =
+                    if (state == body.state) {
+                        body.sourceRefs
+                    } else {
+                        emptyList()
+                    },
+                resultFrontierRefs =
+                    if (state == body.state) {
+                        body.frontierRefs
+                    } else {
+                        (body.frontierRefs + body.sourceRefs).distinct().sorted()
+                    },
                 effectClass = definition?.effectClass,
                 startedAt = startedAt.toString(),
                 completedAt = completedAt.toString(),
@@ -304,6 +343,9 @@ object VexLifeCapabilityBridge {
         val untrusted: Boolean,
         val truncated: Boolean = false,
         val facts: Map<String, String> = emptyMap(),
+        val sourceRefs: List<String> = emptyList(),
+        val frontierRefs: List<String> = emptyList(),
+        val allowContentTruncation: Boolean = true,
     )
 
     private const val FormReminder =
@@ -323,6 +365,8 @@ object VexLifeCapabilityBridge {
         call: VexLifeCapabilityRequest.Call,
         admission: Admission,
         owners: Owners,
+        maximumResultTokens: Int,
+        turnBoundReach: TurnBoundReach,
     ): Body {
         val action =
             definition.actions.firstOrNull { it.action == call.action }
@@ -354,6 +398,12 @@ object VexLifeCapabilityBridge {
                 VexLifeReachDefinitions.RepositoryRef -> repository(action.action, args, owners)
                 VexLifeReachDefinitions.HomeRef -> home(action.action, args, admission)
                 VexLifeReachDefinitions.MemoryRef -> memory(args, admission, owners)
+                VexLifeReachDefinitions.ContinuityRef ->
+                    continuity(
+                        args = args,
+                        maximumResultTokens = maximumResultTokens,
+                        turnBoundReach = turnBoundReach,
+                    )
                 else ->
                     Body(
                         State.INVALID_REQUEST,
@@ -675,6 +725,68 @@ object VexLifeCapabilityBridge {
         }
     }
 
+    private fun continuity(
+        args: JsonObject,
+        maximumResultTokens: Int,
+        turnBoundReach: TurnBoundReach,
+    ): Body {
+        val groups =
+            (args["queries"] as? JsonArray)
+                ?.map { group ->
+                    (group as? JsonArray)
+                        ?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull }
+                        ?: return Body(
+                            State.INVALID_REQUEST,
+                            "continuity",
+                            "continuity hydrate queries must be an array of string arrays",
+                            untrusted = false,
+                        )
+                }
+                ?: return Body(
+                    State.INVALID_REQUEST,
+                    "continuity",
+                    "continuity hydrate needs \"queries\": [[\"term\",\"phrase\"]]",
+                    untrusted = false,
+                )
+        val hydrator =
+            turnBoundReach.continuityHydrator
+                ?: return Body(
+                    State.NOT_AVAILABLE,
+                    "continuity",
+                    "continuity hydration is not bound to this provider turn",
+                    untrusted = false,
+                )
+        val projection =
+            hydrator.hydrate(
+                queryGroups = groups,
+                availableTokens = maxOf(0, maximumResultTokens - 512),
+            )
+        val state =
+            when (projection.state) {
+                VexLifeContinuityHydration.Returned -> State.RETURNED
+                VexLifeContinuityHydration.NotFound -> State.NOT_FOUND
+                VexLifeContinuityHydration.HeldTokenBudget -> State.HELD_TOKEN_BUDGET
+                else -> State.FAILED
+            }
+        return Body(
+            state = state,
+            target = "continuity: " + groups.flatten().joinToString(", "),
+            text = projection.text,
+            untrusted = false,
+            truncated = projection.contentTruncated,
+            facts =
+                mapOf(
+                    "locatorMode" to projection.locatorMode,
+                    "sourceCount" to projection.sourceRefs.size.toString(),
+                    "frontierCount" to projection.frontierRefs.size.toString(),
+                    "duplicatesSuppressed" to projection.duplicateCandidateCount.toString(),
+                ),
+            sourceRefs = projection.sourceRefs,
+            frontierRefs = projection.frontierRefs,
+            allowContentTruncation = false,
+        )
+    }
+
     /**
      * The result message text, cut to the room left; HELD_TOKEN_BUDGET when not even the header
      * fits.
@@ -689,6 +801,16 @@ object VexLifeCapabilityBridge {
             resultMessage(body.copy(state = state), text, cut, admission.requestNumber)
         val full = compose(body.state, body.text, false)
         if (estimateTokens(full) <= maximumTokens) return Triple(full, false, body.state)
+        if (!body.allowContentTruncation) {
+            val held =
+                compose(
+                    State.HELD_TOKEN_BUDGET,
+                    "This turn has no room left for the bounded whole-source result. " +
+                        "No exact historical source was partially returned.",
+                    false,
+                )
+            return Triple(held, false, State.HELD_TOKEN_BUDGET)
+        }
         var length = minOf(body.text.length, maxOf(0, maximumTokens) * 3)
         while (length > 200) {
             val candidate = compose(body.state, body.text.take(length), true)
