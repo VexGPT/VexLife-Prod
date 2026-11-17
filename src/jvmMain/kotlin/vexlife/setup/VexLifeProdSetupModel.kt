@@ -162,8 +162,8 @@ object VexLifeProdSetupModel {
                                     "setup.status.model-not-supported-on-this-device",
                                 )
                             entry == recommended && fits ->
-                                VexLifeText("setup.status.model-recommended")
-                            fits -> VexLifeText("setup.status.model-fits")
+                                VexLifeText("setup.status.model-recommended-on-this-device")
+                            fits -> VexLifeText("setup.status.model-fits-this-device")
                             else ->
                                 VexLifeText(
                                     key = "setup.status.model-needs-memory",
