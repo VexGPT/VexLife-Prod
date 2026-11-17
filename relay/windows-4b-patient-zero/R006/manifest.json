@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "vexlife-prod.windows-4b-patient-zero-host-harness/v2",
+  "continuity": "[VXG RealForever]",
+  "attempt": "R006",
+  "productCarrierPr": 227,
+  "productSourceSha": "79af0fc1144f68f104fbd2e1352a5fe9e1a36b3a",
+  "execution": "LOCAL_RELAY_NO_GITHUB_ACTIONS",
+  "topology": {
+    "familyRef": "family.vexlife-prod.heretic-runtime-availability",
+    "architectureProjectionRef": "architecture.vexlife-prod.heretic-runtime-realization",
+    "formula": [
+      "Product model",
+      "Exact target",
+      "Realization",
+      "Dependencies",
+      "Family",
+      "Effect owner",
+      "Qualified evidence"
+    ],
+    "sharedRuntimeSessionInterface": "vexlife.local.VexLifeProdRuntimeSession",
+    "sharedServicePlatformInterface": "vexlife.service.VexLifeProdLocalService.PlatformProjection",
+    "noReflectionIdentification": true,
+    "boundEvidenceCarriesRealizationRef": true
+  },
+  "model": {
+    "productHandle": "heretic-4b",
+    "sha256": "7b95847ce1684f98d96f13bad2daaeffcfd2f95ea2ff3821ee68943590a10159",
+    "bytes": 2790000800
+  },
+  "effects": {
+    "realHomeMutation": false,
+    "technicalHomeOnly": true,
+    "localCompile": true,
+    "githubActions": false
+  },
+  "correctionFromR005": {
+    "failureClass": "SHARED_CONVERSATION_RUNTIME_ADMISSION_WAS_MAC_SHAPED",
+    "runtimeQualification": "PASS",
+    "productBinding": "PASS",
+    "sharedServiceStart": "PASS",
+    "firstCanonicalSend": "ADMISSION_FAILED",
+    "failure": "qualified runtime evidence no longer matches one offered Heretic model identity",
+    "cause": "DirectCompanionConnection revalidated runtime endpoint/requestModel against the catalog model identity, which describes the Mac realization for heretic-4b instead of consuming the explicit runtime realizationRef",
+    "resolution": [
+      "centralize current qualified-runtime validation beside HereticModelConfiguration/HereticRuntimeRealization",
+      "DirectCompanionConnection consumes declared realization truth",
+      "add Windows realization connection regression",
+      "extract VexLifeProdRuntimeSession shared capability so Mac setup and Windows realization plug into one Product turn contract",
+      "extract VexLifeProdLocalService.PlatformProjection so the ordinary fixed-port service consumes Mac or Windows host projections without platform inference",
+      "Windows patient-zero now uses ordinary VexLifeProdLocalService.start rather than startForTest"
+    ]
+  },
+  "proofPolicy": {
+    "preRuntimeGate": "bounded shared runtime-interface semantic suite",
+    "includes": [
+      "HereticModelCatalogTest",
+      "HereticProductModelTest",
+      "HereticRuntimeRealizationTest",
+      "HereticRuntimeRealizationArchitectureTest",
+      "HereticRuntimeAvailabilityTest",
+      "HereticRuntimeContractTest",
+      "DirectCompanionConnectionTest",
+      "VexLifeProdLocalSetupTest"
+    ],
+    "windowsLivedRuntimeServiceConversationRestartStillRequired": true
+  },
+  "harness": {
+    "nativeStderrIsEvidence": true,
+    "gradleResultUsesExitCode": true
+  }
+}
