@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "vexlife-prod.windows-source-baseline/v1",
+  "continuity": "[VXG RealForever]",
+  "attempt": "A004",
+  "sourceRepository": "VexGPT/VexLife-Prod",
+  "sourceCommit": "655e7c78cefba06a5e87afad285bb25a08632f05",
+  "sourceTree": "886c131da9e3c011ed88a6badad401430362b35c",
+  "hostTarget": "WINDOWS/X86_64",
+  "nativeProcessCapture": "START_PROCESS_REDIRECTED_STDOUT_STDERR",
+  "jdk": {
+    "distribution": "Eclipse Temurin",
+    "version": "21.0.13+9",
+    "asset": "OpenJDK21U-jdk_x64_windows_hotspot_21.0.13_9.zip",
+    "sha256": "a4dbaa05fca4bd89d84584e58c459bd732efebb1722af80ab13c6516832004f9",
+    "scope": "ATTEMPT_LOCAL_ONLY"
+  },
+  "checks": ["jvmTest","compileKotlinJs","compileTestKotlinJs","checkVexLifeStrings"],
+  "heldEffects": [
+    "VEX_HOME_MUTATION",
+    "MODEL_WEIGHT_DOWNLOAD",
+    "MODEL_RUNTIME_START",
+    "PRODUCT_SERVICE_START",
+    "PRODUCT_INSTALLATION",
+    "RELEASE_PUBLICATION",
+    "PERSISTENT_GLOBAL_JDK_INSTALLATION"
+  ]
+}
