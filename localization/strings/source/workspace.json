@@ -760,34 +760,34 @@
   "workspace.button.model-use-recommended": {
     "strings": {
       "en": {
-        "text": "Use recommended"
+        "text": "Use Recommended Configuration"
       },
       "ar": {
-        "text": "استخدام الموصى به"
+        "text": "استخدام الإعداد الموصى به"
       },
       "de": {
-        "text": "Empfohlene Einstellung verwenden"
+        "text": "Empfohlene Konfiguration verwenden"
       },
       "es": {
-        "text": "Usar recomendado"
+        "text": "Usar configuración recomendada"
       },
       "fr": {
-        "text": "Utiliser le réglage recommandé"
+        "text": "Utiliser la configuration recommandée"
       },
       "hi": {
-        "text": "अनुशंसित सेटिंग उपयोग करें"
+        "text": "अनुशंसित कॉन्फ़िगरेशन उपयोग करें"
       },
       "ja": {
         "text": "推奨設定を使用"
       },
       "ko": {
-        "text": "권장 설정 사용"
+        "text": "권장 구성 사용"
       },
       "pt": {
-        "text": "Usar recomendado"
+        "text": "Usar configuração recomendada"
       },
       "zh": {
-        "text": "使用推荐设置"
+        "text": "使用推荐配置"
       }
     },
     "surfaces": [
@@ -798,7 +798,7 @@
   "workspace.button.model-start": {
     "strings": {
       "en": {
-        "text": "Start selected model"
+        "text": "Start Selected Model"
       },
       "ar": {
         "text": "تشغيل النموذج المحدد"
@@ -836,34 +836,34 @@
   "workspace.button.model-apply-restart": {
     "strings": {
       "en": {
-        "text": "Apply & restart model"
+        "text": "Apply & Restart Selected Model"
       },
       "ar": {
-        "text": "تطبيق وإعادة تشغيل النموذج"
+        "text": "تطبيق وإعادة تشغيل النموذج المحدد"
       },
       "de": {
-        "text": "Anwenden & Modell neu starten"
+        "text": "Anwenden & ausgewähltes Modell neu starten"
       },
       "es": {
-        "text": "Aplicar y reiniciar modelo"
+        "text": "Aplicar y reiniciar el modelo seleccionado"
       },
       "fr": {
-        "text": "Appliquer et redémarrer le modèle"
+        "text": "Appliquer et redémarrer le modèle sélectionné"
       },
       "hi": {
-        "text": "लागू करें और मॉडल पुनः शुरू करें"
+        "text": "लागू करें और चुने हुए मॉडल को पुनः शुरू करें"
       },
       "ja": {
-        "text": "適用してモデルを再起動"
+        "text": "適用して選択したモデルを再起動"
       },
       "ko": {
-        "text": "적용하고 모델 재시작"
+        "text": "적용하고 선택한 모델 재시작"
       },
       "pt": {
-        "text": "Aplicar e reiniciar modelo"
+        "text": "Aplicar e reiniciar o modelo selecionado"
       },
       "zh": {
-        "text": "应用并重启模型"
+        "text": "应用并重启所选模型"
       }
     },
     "surfaces": [
@@ -1061,34 +1061,34 @@
   "workspace.description.model-cache-recommendation-4b": {
     "strings": {
       "en": {
-        "text": "3 is the current experimental cache candidate for 4B; it needs lived memory and reuse proof before it becomes an accepted default."
+        "text": "1 is the current recommended safety setting. Values 2–3 remain experimental; the lived cache-3 run stayed active but entered a long repetitive generation and memory pressure, so 3 is held until a focused rerun earns it."
       },
       "ar": {
-        "text": "القيمة 3 هي مرشح التخزين المؤقت التجريبي الحالي لـ 4B؛ وتحتاج إلى إثبات عملي للذاكرة وإعادة الاستخدام قبل أن تصبح إعدادًا افتراضيًا معتمدًا."
+        "text": "القيمة 1 هي إعداد الأمان الموصى به حاليًا. تبقى القيم 2–3 تجريبية؛ ظل تشغيل cache-3 حيًا لكنه دخل في توليد تكراري طويل مع ضغط على الذاكرة، لذلك تبقى 3 معلّقة حتى يثبتها اختبار مركز."
       },
       "de": {
-        "text": "3 ist der aktuelle experimentelle Cache-Kandidat für 4B; Speicherbedarf und Wiederverwendung müssen im Betrieb nachgewiesen werden, bevor dies zum akzeptierten Standard wird."
+        "text": "1 ist derzeit die empfohlene Sicherheitseinstellung. Werte 2–3 bleiben experimentell; der Live-Lauf mit Cache 3 blieb aktiv, geriet aber in eine lange Wiederholungsschleife mit Speicherdruck. Daher bleibt 3 gehalten, bis ein gezielter Test es bestätigt."
       },
       "es": {
-        "text": "3 es el candidato experimental actual de caché para 4B; necesita pruebas reales de memoria y reutilización antes de convertirse en un valor predeterminado aceptado."
+        "text": "1 es la configuración de seguridad recomendada actualmente. Los valores 2–3 siguen siendo experimentales; la prueba real con caché 3 siguió activa, pero entró en una generación repetitiva prolongada con presión de memoria, así que 3 queda retenido hasta que una prueba enfocada lo valide."
       },
       "fr": {
-        "text": "3 est le candidat expérimental actuel pour le cache du 4B ; il doit encore être validé en usage réel pour la mémoire et la réutilisation avant de devenir une valeur par défaut acceptée."
+        "text": "1 est le réglage de sécurité actuellement recommandé. Les valeurs 2–3 restent expérimentales ; l’essai réel avec le cache à 3 est resté actif mais est entré dans une longue génération répétitive avec pression mémoire. La valeur 3 reste donc en attente d’un nouvel essai ciblé."
       },
       "hi": {
-        "text": "3, 4B के लिए वर्तमान प्रयोगात्मक कैश उम्मीदवार है; स्वीकार्य डिफ़ॉल्ट बनने से पहले इसे वास्तविक मेमोरी और पुनः उपयोग प्रमाण चाहिए।"
+        "text": "1 वर्तमान अनुशंसित सुरक्षा सेटिंग है। 2–3 अभी प्रयोगात्मक हैं; cache-3 का वास्तविक रन चलता रहा, लेकिन लंबी दोहराव वाली जनरेशन और मेमोरी दबाव में चला गया, इसलिए 3 को केंद्रित पुनः परीक्षण तक रोक कर रखा गया है।"
       },
       "ja": {
-        "text": "3 は 4B 向けの現在の実験候補です。正式な既定値にする前に、実運用でメモリ使用量と再利用効果を確認する必要があります。"
+        "text": "1 が現在の推奨安全設定です。2～3 は引き続き実験扱いです。cache=3 の実運用ではプロセス自体は生存しましたが、長い反復生成とメモリ圧迫が発生したため、3 は再検証で有効性が確認されるまで保留です。"
       },
       "ko": {
-        "text": "3은 현재 4B용 실험적 캐시 후보입니다. 승인된 기본값이 되기 전에 실제 메모리 사용량과 재사용 효과를 검증해야 합니다."
+        "text": "1이 현재 권장 안전 설정입니다. 2–3은 계속 실험값입니다. cache 3 실사용에서는 프로세스는 살아 있었지만 긴 반복 생성과 메모리 압박이 발생했으므로, 3은 집중 재시험에서 검증될 때까지 보류합니다."
       },
       "pt": {
-        "text": "3 é o candidato experimental atual de cache para o 4B; precisa de prova real de memória e reutilização antes de se tornar um padrão aceito."
+        "text": "1 é a configuração de segurança recomendada atualmente. Os valores 2–3 continuam experimentais; o teste real com cache 3 permaneceu ativo, mas entrou em uma geração repetitiva longa com pressão de memória, então 3 fica retido até que um novo teste focado o valide."
       },
       "zh": {
-        "text": "3 是当前针对 4B 的实验性缓存候选值；在成为正式默认值之前，仍需通过实际运行验证内存占用和复用效果。"
+        "text": "1 是当前推荐的安全设置。2–3 仍属实验值；cache=3 的实际运行保持存活，但进入了长时间重复生成并出现内存压力，因此 3 暂时保持为待验证状态，直到专项复测证明它可用。"
       }
     },
     "surfaces": [
@@ -1311,6 +1311,80 @@
       },
       "zh": {
         "text": "热缓存条目：{current} · 推荐：{recommended}。"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.heading.model-activation": {
+    "strings": {
+      "en": {
+        "text": "Start Model"
+      },
+      "ar": {
+        "text": "تشغيل النموذج"
+      },
+      "de": {
+        "text": "Modell starten"
+      },
+      "es": {
+        "text": "Iniciar modelo"
+      },
+      "fr": {
+        "text": "Démarrer le modèle"
+      },
+      "hi": {
+        "text": "मॉडल शुरू करें"
+      },
+      "ja": {
+        "text": "モデルを開始"
+      },
+      "ko": {
+        "text": "모델 시작"
+      },
+      "pt": {
+        "text": "Iniciar modelo"
+      },
+      "zh": {
+        "text": "启动模型"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.model-start-effect": {
+    "strings": {
+      "en": {
+        "text": "This is the step that changes the model Vex is using. It applies the selected model and configuration."
+      },
+      "ar": {
+        "text": "هذه هي الخطوة التي تغيّر النموذج الذي يستخدمه Vex. وهي تطبّق النموذج والإعداد المحددين."
+      },
+      "de": {
+        "text": "Dieser Schritt ändert das Modell, das Vex verwendet. Er übernimmt das ausgewählte Modell und seine Konfiguration."
+      },
+      "es": {
+        "text": "Este es el paso que cambia el modelo que usa Vex. Aplica el modelo y la configuración seleccionados."
+      },
+      "fr": {
+        "text": "C’est l’étape qui change le modèle utilisé par Vex. Elle applique le modèle et la configuration sélectionnés."
+      },
+      "hi": {
+        "text": "यही वह चरण है जो Vex द्वारा उपयोग किए जा रहे मॉडल को बदलता है। यह चुने गए मॉडल और कॉन्फ़िगरेशन को लागू करता है।"
+      },
+      "ja": {
+        "text": "ここで Vex が使用するモデルが切り替わります。選択したモデルと設定が適用されます。"
+      },
+      "ko": {
+        "text": "이 단계에서 Vex가 사용하는 모델이 바뀝니다. 선택한 모델과 구성이 적용됩니다."
+      },
+      "pt": {
+        "text": "Esta é a etapa que muda o modelo usado pelo Vex. Ela aplica o modelo e a configuração selecionados."
+      },
+      "zh": {
+        "text": "这一步会更改 Vex 正在使用的模型，并应用所选模型及其配置。"
       }
     },
     "surfaces": [
