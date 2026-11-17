@@ -12,6 +12,7 @@ import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.foundational.VexLifeFoundationalFieldFixture
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.memory.VexLifeMemoryContextFixture
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
@@ -165,6 +166,40 @@ class DirectPromptCurrentStateTest {
             assertEquals(
                 listOf("Which language now?", "Third reply"),
                 next.messages.drop(stableAndHistory).take(2).map { it.content },
+            )
+        }
+    }
+
+    @Test
+    fun reachGuidancePrefixDoesNotChangeWhenCurrentMemoryAvailabilityChanges() = withHome { home ->
+        val store = DirectConversationStore(home)
+        store.withWriterLease {
+            val request = ask("reach-prefix", "What can you reach?")
+            fun prompt(memoryAvailable: Boolean) =
+                DirectPromptContext.materializeContinuity(
+                    conversationOwner = this,
+                    prior = null,
+                    currentRequest = request,
+                    memoryAvailabilityContext =
+                        if (memoryAvailable) {
+                            VexLifeMemoryContextFixture.currentUnselectedForPrompt()
+                        } else {
+                            null
+                        },
+                    runtimeEvidence = runtimeEvidence(),
+                    capabilityRequestsAdmitted = true,
+                )
+
+            val unavailable = prompt(false)
+            val available = prompt(true)
+            assertEquals(unavailable.messages.first(), available.messages.first())
+            assertNotEquals(
+                unavailable.receipt.capabilityFrameFingerprint,
+                available.receipt.capabilityFrameFingerprint,
+            )
+            assertNotEquals(
+                unavailable.messages[unavailable.messages.size - 2],
+                available.messages[available.messages.size - 2],
             )
         }
     }
