@@ -1797,6 +1797,35 @@ class VexLifeProdLocalService private constructor(
         }
     }
 
+    private fun handleLocalAsrModelControl(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireJson(
+            exchange,
+        )
+        val request =
+            JsonCodec.decodeFromString<VexLifeProdServiceContract.LocalAsrModelControlRequest>(
+                requestText(
+                    exchange,
+                ),
+            )
+        localAsrModels.control(
+            controlRef =
+                request.controlRef,
+            modelRef =
+                request.modelRef,
+        )
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value = localAsrProjection(),
+        )
+    }
+
     private fun handleLocalAsrSpokenLanguage(
         exchange: HttpExchange,
     ) {
