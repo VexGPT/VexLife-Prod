@@ -27,6 +27,13 @@ object HereticModelOfferings {
         require(all.map { it.identity.artifactContentSetSha256 }.distinct().size == all.size) {
             "current model offerings contain duplicate content sets"
         }
+        val artifactRefs =
+            all.flatMap { entry ->
+                entry.members.map { it.artifactRef }
+            }
+        require(artifactRefs.distinct().size == artifactRefs.size) {
+            "current model offerings contain duplicate artifact refs"
+        }
         return all
     }
 

@@ -224,9 +224,9 @@ object HuggingFaceModelInspection {
                 .orEmpty()
                 .map { it.lowercase() }
                 .toSet()
-        require(
-            "mlx" in tags &&
-                "safetensors" in tags
+        if (
+            "mlx" !in tags ||
+                "safetensors" !in tags
         ) {
             throw InspectionException(
                 FailureCode.MODEL_NOT_MLX_SAFETENSORS,
@@ -295,12 +295,14 @@ object HuggingFaceModelInspection {
                 )
             }
 
+        val providerKey =
+            source.repository
+                .lowercase()
+                .replace(Regex("[^a-z0-9]+"), ".")
+                .trim('.')
         val sourceRef =
             "hf." +
-                source.repository
-                    .lowercase()
-                    .replace(Regex("[^a-z0-9]+"), ".")
-                    .trim('.') +
+                providerKey +
                 "." +
                 revision
         val safeLicense =
@@ -323,6 +325,8 @@ object HuggingFaceModelInspection {
                     roleRef = "artifact-role.vexlife-prod.imported.member." + role,
                     artifactRef =
                         "artifact.vexlife-prod.imported." +
+                            providerKey +
+                            "." +
                             revision.take(12) +
                             ".member." +
                             role,
@@ -592,7 +596,9 @@ object HuggingFaceModelInspection {
                 ?.toLongOrNull()
         val publishedSize =
             linkedSize
-                ?: contentSize
+                ?: contentSize.takeIf {
+                    head.status in 200..299
+                }
         val publishedSha =
             sequenceOf(
                 head.header("x-linked-etag"),

@@ -105,6 +105,18 @@ class FileHereticModelImportStore(
         ) {
             "imported model conflicts with one model already added to this Home"
         }
+        val existingArtifactRefs =
+            (
+                HereticModelCatalog.Entries.flatMap { it.members } +
+                    current.models.flatMap { existing ->
+                        existing.members.map(HereticModelImport.Member::catalogMember)
+                    }
+            ).map { it.artifactRef }.toSet()
+        require(
+            candidate.members.none { it.artifactRef in existingArtifactRefs },
+        ) {
+            "imported model artifact identity conflicts with an existing offering"
+        }
 
         val next =
             HereticModelImport.Value(
