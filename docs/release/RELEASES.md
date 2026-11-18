@@ -95,10 +95,19 @@ tools/release/publish-mac-release.sh preview
 tools/release/publish-mac-release.sh stable 0.1.0
 ~~~
 
-It requires a clean exact current `origin/main`, runs the Product tests, forms/verifies the DMG and
-publishes the GitHub Release. For a stable version, `gh release create` creates the `vX.Y.Z` tag at
-that exact source automatically. Victor never manually creates/moves a tag, edits a version file,
-builds a DMG or uploads assets.
+It requires a clean exact current `origin/main`, runs the Product tests, forms/verifies the DMG,
+publishes the GitHub Release, then republishes the source-owned VexLife Pages projection so the
+download/version catalog observes that exact newly published release. For a stable version,
+`gh release create` creates the `vX.Y.Z` tag at that exact source automatically. Victor never
+manually creates/moves a tag, edits a version file, builds a DMG or uploads assets.
+
+If the GitHub Release succeeds but the following Pages publication fails, the release already exists.
+Do **not** rebuild, move, or replay the release merely to repair its public catalog projection. Resume
+with the read-only/site-owned recovery route:
+
+~~~text
+bash tools/site/publish-gh-pages.sh
+~~~
 
 Two executors may lawfully invoke that same process:
 
