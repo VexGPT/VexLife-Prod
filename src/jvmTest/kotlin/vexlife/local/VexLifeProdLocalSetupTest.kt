@@ -397,16 +397,37 @@ class VexLifeProdLocalSetupTest {
                     },
                 )
             },
-            observeCurrentProductRuntime = { _, binding, _ ->
+            captureStableRuntimeRelease = { _, _ ->
+                {
+                    trace +=
+                        "RELEASE_STABLE_RUNTIME"
+                }
+            },
+            observeCurrentProductRuntime = { _, binding, store ->
                 trace += "PRODUCT_RUNTIME_CURRENTNESS"
+                val runtime =
+                    runtimeResult(
+                        binding,
+                    )
+                store.write(
+                    runtime.receipt,
+                )
                 HereticPersistentRuntime.configurationEvidence(
                     binding = binding,
-                    receipt = runtimeResult(binding).receipt,
+                    receipt = runtime.receipt,
                 )
             },
-            startRuntime = { _, binding, _ ->
+            startRuntime = { _, binding, store ->
                 trace += "RUNTIME"
-                runtimeResult(binding)
+                runtimeResult(
+                    binding,
+                )
+                    .also {
+                        runtime ->
+                        store.write(
+                            runtime.receipt,
+                        )
+                    }
             },
         )
 
