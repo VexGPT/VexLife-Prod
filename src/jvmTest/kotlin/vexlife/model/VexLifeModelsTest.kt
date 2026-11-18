@@ -50,7 +50,7 @@ class VexLifeModelsTest {
             servingModelRef = serving,
             totalMemoryBytes = { 16 * gib },
             modelSwitchRealization = modelSwitchRealization,
-            acquirer = { _ ->
+            acquirer = { _, _ ->
                 HereticArtifactMaterialization.Acquirer { _, _ ->
                     if (failDownload) error("network unavailable in test")
                 }

@@ -100,7 +100,11 @@ object VexLifeProdSetupModel {
             savedInHome = saved == selected,
             models =
                 HereticModelCatalog.Entries.map { entry ->
-                    val fits = HereticModelCatalog.fits(entry, totalMemoryBytes)
+                    val memoryExpectation =
+                        requireNotNull(entry.recommendedMemoryBytes) {
+                            "Product setup catalog model lacks its established memory expectation"
+                        }
+                    val fits = HereticModelCatalog.fits(entry, totalMemoryBytes) == true
                     val fit =
                         when {
                             entry == recommended && fits ->
@@ -109,7 +113,7 @@ object VexLifeProdSetupModel {
                             else ->
                                 VexLifeText(
                                     key = "setup.status.model-needs-memory",
-                                    gib = mapOf("memory" to entry.recommendedMemoryBytes),
+                                    gib = mapOf("memory" to memoryExpectation),
                                 )
                         }
                     Model(
