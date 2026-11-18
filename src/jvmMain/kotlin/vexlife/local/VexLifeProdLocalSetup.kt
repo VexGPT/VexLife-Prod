@@ -12,6 +12,7 @@ import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeAvailability
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticRuntimeConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticRuntimeReceiptStore
@@ -519,12 +520,22 @@ object VexLifeProdLocalSetup {
                 allowAcquisition,
             )
 
+        val realization =
+            requireNotNull(
+                HereticRuntimeRealization.resolve(
+                    model = model,
+                    target = HereticRuntimeRealization.MacArm64,
+                ),
+            ) {
+                "selected Home offering has no exact Mac runtime realization"
+            }
         val runtimeConfiguration =
             FileHereticRuntimeConfigurationStore(
                 canonicalHome,
             )
-                .effective(
-                    model,
+                .requireEffective(
+                    model = model,
+                    realization = realization,
                 )
         val binding =
             HereticPersistentRuntime.bind(
