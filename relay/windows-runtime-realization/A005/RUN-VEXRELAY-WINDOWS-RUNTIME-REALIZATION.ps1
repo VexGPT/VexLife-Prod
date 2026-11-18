@@ -3,7 +3,7 @@ param()
 
 $ErrorActionPreference = 'Stop'
 
-$RelaySourceHead = '426e45f9d5e2974e05c4e3e99e737833974a7dbb'
+$RelaySourceHead = 'b78916eb7c5daa7624db9f51409a7b5b3284794e'
 $CandidateHead = '2c54c81f3d318163ee5b09a6d35363af75c33c9d'
 $SdkHead = '8543c7d755faba04d4c4019c02e84f992667918a'
 $SdkTree = '6376f68279f0750ee6d3868b8472368199763064'
@@ -11,10 +11,10 @@ $ContractBlob = 'b53cbac01c2deeb45fad5c32ce98e0796c04126f'
 $JdkUrl = 'https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9/OpenJDK21U-jdk_x64_windows_hotspot_21.0.13_9.zip'
 $JdkSha256 = 'a4dbaa05fca4bd89d84584e58c459bd732efebb1722af80ab13c6516832004f9'
 $RawBase = "https://raw.githubusercontent.com/VexGPT/VexLife-Prod/$RelaySourceHead/relay/windows-runtime-realization/A005"
-$BootstrapRoot = Join-Path $env:TEMP ('VXR-A005-' + $CandidateHead.Substring(0,8))
+$BootstrapRoot = Join-Path $env:TEMP ('VXR-A005R-' + $CandidateHead.Substring(0,8))
 
 if (Test-Path -LiteralPath $BootstrapRoot) {
-    throw 'A005_BOOTSTRAP_ROOT_ALREADY_EXISTS_DO_NOT_REPLAY'
+    throw 'A005_CORRECTED_BOOTSTRAP_ROOT_ALREADY_EXISTS_DO_NOT_REPLAY'
 }
 New-Item -ItemType Directory -Path $BootstrapRoot | Out-Null
 
