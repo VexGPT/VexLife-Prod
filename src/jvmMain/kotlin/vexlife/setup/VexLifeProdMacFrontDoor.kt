@@ -127,6 +127,16 @@ object VexLifeProdMacFrontDoor {
                         "Mac front-door owned-service state requires exact source/PID projection"
                     }
 
+                VexLifeProdEntryFamily.StateServiceRecoveryRequired ->
+                    require(
+                        !currentServiceSourceSha.isNullOrBlank() &&
+                            currentServicePid != null &&
+                            currentServicePid > 0 &&
+                            serviceDetail == null
+                    ) {
+                        "service-recovery projection requires one strict witnessed source/PID"
+                    }
+
                 VexLifeProdEntryFamily.StateStartRequired ->
                     require(currentServicePid == null && serviceDetail == null) {
                         "start-required projection must not claim a live owned service"
@@ -567,6 +577,17 @@ object VexLifeProdMacFrontDoor {
                         desiredSourceSha = desiredSourceSha,
                         priorServiceSourceSha = null,
                     )
+                )
+
+            is VexLifeProdMacServiceLifetime.ExistingObservation.RecoverableLegacyOrphan ->
+                observed(
+                    VexLifeProdEntryFamily.ServiceRecoveryRequired(
+                        desiredSourceSha = desiredSourceSha,
+                        priorServiceSourceSha = existing.sourceCurrentness.sourceSha,
+                        priorServicePid = existing.launchdObservation.pid,
+                    ),
+                    sourceSha = existing.sourceCurrentness.sourceSha,
+                    pid = existing.launchdObservation.pid,
                 )
 
             is VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady -> {
