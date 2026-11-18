@@ -73,6 +73,13 @@ class VexLifeContextProfileStore(
 
     fun directory(): Path = root
 
+    /** Ensure the inspectable profile root exists without creating or selecting a profile. */
+    fun ensureDirectory(): Path {
+        VexOwnedPath.ensureDirectory(home, root)
+        VexOwnedPath.ensureDirectory(home, profiles)
+        return root
+    }
+
     fun readActive(
         productFoundation: VexLifeContextProfile.ProductFoundationIdentity,
     ): VexLifeContextProfile.Effective {
