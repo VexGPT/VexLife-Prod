@@ -43,5 +43,16 @@
     "JUnit XML printed on Gradle failure",
     "LIVED_STEP checkpoints identify first reached browser/CDP/profile stage"
   ],
-  "humanRealization": "Fetch exact base64 carriage from pinned GitHub companion commit; decode, verify, run; return canonical ZIP."
+  "humanRealization": "Fetch exact base64 carriage from pinned GitHub companion commit; decode, verify, run; return canonical ZIP.",
+  "githubCarriageCorrection": {
+    "firstLauncherDisposition": "FAIL_CLOSED_BEFORE_EXECUTION",
+    "expectedDecodedSha256": "8b9e8831b0b2347fe7e386166598f9891671bdd5bc194de71709b776fd5d59ac",
+    "observedWrongSha256": "c8bd7d44db8721e324b10e9d83b71bffe60c43a49f59970c31e655ac4e771b82",
+    "corruptedPart": "bundle.b64.part04",
+    "difference": "expected H8FXZusF+; carried H8FXzusF+",
+    "corrected": true,
+    "combinedBase64Characters": 35448,
+    "executionReached": false,
+    "productSourceChanged": false
+  }
 }
