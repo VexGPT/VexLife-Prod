@@ -72,7 +72,14 @@ object VexLifeProdLocalSetup {
             null,
         private val releaseRuntime: (() -> Unit)? =
             null,
-    ) {
+    ) :
+        VexLifeProdRuntimeSession {
+        override val foundation =
+            VexLifeProdRuntimeSession.Foundation(
+                state = result.state,
+                productHome = result.productHome,
+                qualifiedRuntimeEvidence = result.qualifiedRuntimeEvidence,
+            )
         /**
          * New-turn runtime admission.
          *
@@ -80,8 +87,8 @@ object VexLifeProdLocalSetup {
          * exact process may recover once. An exact mlx-lm Unavailable result may also recover once
          * at this safe boundary. Unknown readiness preserves the live exact-owned process and holds.
          */
-        fun currentQualifiedRuntimeEvidence(
-            onRecovery: (() -> Unit)? = null
+        override fun currentQualifiedRuntimeEvidence(
+            onRecovery: (() -> Unit)?,
         ): HereticModelConfiguration.QualifiedRuntimeEvidence {
             val current =
                 try {
@@ -162,7 +169,7 @@ object VexLifeProdLocalSetup {
          * runtime receipt/process is still current, but it may not replace the runtime underneath
          * a turn that already began.
          */
-        fun observeCurrentQualifiedRuntimeEvidence(): HereticModelConfiguration.QualifiedRuntimeEvidence =
+        override fun observeCurrentQualifiedRuntimeEvidence(): HereticModelConfiguration.QualifiedRuntimeEvidence =
             currentRuntimeEvidence()
 
         /**
@@ -171,7 +178,7 @@ object VexLifeProdLocalSetup {
          * Borrowed predecessor runtime has no Product-owned release capability here; its exact
          * compatibility owner remains responsible for that lifecycle.
          */
-        fun releaseSustainedRuntime() {
+        override fun releaseSustainedRuntime() {
             releaseRuntime?.invoke()
         }
     }
