@@ -421,6 +421,14 @@ svg { display: block; }
   border: 1px solid var(--rule); border-radius: 8px; background: var(--ground);
   color: var(--ink); font: 11.5px/1.45 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere;
 }
+.context-evidence-disclosure {
+  margin: 8px 0 0; border: 1px solid var(--rule); border-radius: 8px; background: var(--surface);
+}
+.context-evidence-disclosure > summary {
+  display: list-item; padding: 8px 10px; cursor: pointer;
+  color: var(--ink-2); font-weight: 600; font-size: var(--step--1);
+}
+.context-evidence-disclosure > pre { margin: 0 8px 8px; }
 .context-section[data-context-kind="foundation"] { border-left-color: #9c83d7; background: color-mix(in srgb, #9c83d7 8%, var(--surface)); }
 .context-section[data-context-kind="memory"] { border-left-color: #d5aa42; background: color-mix(in srgb, #d5aa42 8%, var(--surface)); }
 .context-section[data-context-kind="continuity"] { border-left-color: #8c6ab8; background: color-mix(in srgb, #8c6ab8 7%, var(--surface)); }

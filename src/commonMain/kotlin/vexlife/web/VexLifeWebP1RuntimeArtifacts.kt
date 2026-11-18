@@ -2579,6 +2579,18 @@ object VexLifeWebP1RuntimeArtifacts {
                 return pre;
               };
 
+              const contextEvidenceDisclosure = (parent, summaryText, text) => {
+                const details = document.createElement('details');
+                details.className = 'context-evidence-disclosure';
+                const summary = document.createElement('summary');
+                summary.textContent = summaryText;
+                const pre = document.createElement('pre');
+                pre.textContent = String(text ?? '');
+                details.append(summary, pre);
+                parent.append(details);
+                return details;
+              };
+
               const currentContextProfile = () => state.contextProfiles?.active ?? null;
 
               const profileDefinitionFromForm = () => {
@@ -2688,11 +2700,21 @@ object VexLifeWebP1RuntimeArtifacts {
                   return;
                 }
 
-                ui.vexContextTurnSummary.textContent =
-                  'Last completed turn · ' + String(state.context.turnRef ?? '');
+                const exactTurnRef = String(state.context.turnRef ?? '');
+                const usedInputTokens = Number(prompt.providerMaterializedInputTokenEstimate ?? 0);
+                const inputTokenBudget = Number(prompt.inputTokenBudget ?? 0);
+                const priorCompletedExchanges = Number(prompt.priorCompletedExchangeCount ?? 0);
+                const usedWorkingContinuity = String(prompt.contextMode ?? '').includes('WORKING_CHECKPOINT');
+                ui.vexContextTurnSummary.textContent = 'Last completed reply';
+                ui.vexContextTurnSummary.title = exactTurnRef;
                 ui.vexContextBudget.textContent =
-                  Number(prompt.providerMaterializedInputTokenEstimate ?? 0).toLocaleString() +
-                  ' / ' + Number(prompt.inputTokenBudget ?? 0).toLocaleString() + ' input tokens';
+                  usedWorkingContinuity
+                    ? 'Earlier conversation was condensed'
+                    : priorCompletedExchanges > 0
+                      ? 'Recent conversation fit directly'
+                      : 'Conversation started here';
+                ui.vexContextBudget.title =
+                  usedInputTokens.toLocaleString() + ' / ' + inputTokenBudget.toLocaleString() + ' input tokens';
 
                 const changes = [];
                 const change = (title, detail, stateName) => {
@@ -2717,33 +2739,44 @@ object VexLifeWebP1RuntimeArtifacts {
                   change('Context profile.', active.definition.name + ' is current for the next turn.', 'current');
                 }
 
-                if (String(prompt.contextMode ?? '').includes('WORKING_CHECKPOINT')) {
+                if (usedWorkingContinuity) {
                   change(
-                    'Context rollover.',
-                    'This turn used working continuity instead of keeping the whole recent conversation resident. Older exact conversation remains reachable.',
+                    'Earlier conversation was condensed.',
+                    'Vex carried forward the current position instead of keeping the whole recent conversation in view. Older conversation is still in your archives and can be revisited.',
                     'changed'
                   );
+                } else if (priorCompletedExchanges > 0) {
+                  change(
+                    'Recent conversation stayed available.',
+                    'Vex could use the recent conversation directly for this reply; no continuity handoff was needed.',
+                    'current'
+                  );
                 } else {
-                  change('Context residency.', 'No rollover transition is shown for this turn.', 'current');
+                  change(
+                    'Conversation started here.',
+                    'There was no earlier conversation to carry into this reply.',
+                    'current'
+                  );
                 }
 
                 if (prompt.memoryIncluded) {
                   const currentMemory = state.memory?.memoryContextFingerprint ?? null;
+                  const rememberedCount = Number(state.memory?.rememberedCount ?? 0);
                   if (currentMemory && prompt.memoryContextFingerprint && currentMemory !== prompt.memoryContextFingerprint) {
                     change(
-                      'Structured Memory changed.',
-                      'The Memory packet available now is newer or different from the one used for this reply.',
+                      'Memory changed since this reply.',
+                      'The Memory available now is different from what shaped this reply.',
                       'changed'
                     );
                   } else {
                     change(
-                      'Structured Memory.',
-                      'This reply used the Memory packet ' + shortIdentity(prompt.memoryContextRef) + '.',
+                      'Memory.',
+                      'Vex used ' + rememberedCount + ' current remembered item' + (rememberedCount === 1 ? '' : 's') + ' for this reply.',
                       'current'
                     );
                   }
                 } else {
-                  change('Structured Memory.', 'No structured Memory packet was supplied to this reply.', 'current');
+                  change('Memory.', 'No structured Memory was included in this reply.', 'current');
                 }
                 ui.contextChangesList.replaceChildren(...changes);
 
@@ -2753,37 +2786,39 @@ object VexLifeWebP1RuntimeArtifacts {
                 const profileMode = prompt.contextProfileFoundationMode ?? 'PRODUCT_DEFAULT';
                 ui.contextFoundationStatus.textContent =
                   productField?.state === 'CARRIED' || productField?.state === 'CARRIED_PARTIAL'
-                    ? 'Product foundation ' + (productField.fieldVersion ?? '')
-                    : 'Product foundation held';
+                    ? 'VexLife foundation ' + (productField.fieldVersion ?? '')
+                    : 'Foundation was not available';
                 if (productField) {
+                  const omittedFoundationParts = Number(productField.omittedModuleRefs?.length ?? 0);
                   contextLine(
                     ui.contextFoundationBody,
-                    (productField.carriedModules?.length ?? 0) + ' Product modules carried' +
-                      ((productField.omittedModuleRefs?.length ?? 0)
-                        ? ' · ' + productField.omittedModuleRefs.length + ' left out for room'
-                        : ''),
-                    'VexLife foundation'
+                    omittedFoundationParts > 0
+                      ? "VexLife's built-in foundation was included, with " + omittedFoundationParts +
+                        ' part' + (omittedFoundationParts === 1 ? '' : 's') + ' left out to make room.'
+                      : "VexLife's built-in foundation was included.",
+                    'Built-in foundation'
                   );
                   const liveField = state.foundationalField;
                   if (
                     liveField?.kernelText &&
                     liveField?.foundationalField?.bodySha256 === productField.bodySha256
                   ) {
-                    contextExactText(ui.contextFoundationBody, liveField.kernelText);
+                    contextEvidenceDisclosure(ui.contextFoundationBody, 'Show exact foundation text', liveField.kernelText);
                   } else {
                     contextLine(
                       ui.contextFoundationBody,
-                      'The receipt identifies the exact historical version. Its current source text is not substituted here.',
-                      'Exact text'
+                      'VexLife kept the exact historical foundation identity for this reply instead of substituting the current text.',
+                      'Exact evidence'
                     );
                   }
                 }
                 if (prompt.contextProfileRef) {
                   contextLine(
                     ui.contextFoundationBody,
-                    profileMode.replaceAll('_', ' ').toLowerCase() +
-                      ' · ' + (prompt.profileFoundationState ?? 'no separate profile text'),
-                    'Context profile'
+                    profileMode === 'EXTEND_PRODUCT_DEFAULT'
+                      ? 'The profile used for this reply added its own foundation after the built-in VexLife foundation.'
+                      : 'This reply used the built-in VexLife foundation without a separate profile extension.',
+                    'Profile for this reply'
                   );
                 }
                 if (
@@ -2792,51 +2827,64 @@ object VexLifeWebP1RuntimeArtifacts {
                   active.fingerprint === prompt.contextProfileFingerprint &&
                   active.definition.foundationText
                 ) {
-                  contextExactText(ui.contextFoundationBody, active.definition.foundationText);
+                  contextEvidenceDisclosure(
+                    ui.contextFoundationBody,
+                    'Show exact profile foundation text',
+                    active.definition.foundationText
+                  );
                 } else if (prompt.profileFoundationState === 'CARRIED') {
                   contextLine(
                     ui.contextFoundationBody,
-                    'The exact profile revision is preserved in Vex Home; this screen will not replace it with the current revision.',
+                    'The exact profile revision used for this reply is preserved in Vex Home; this screen will not replace it with the current revision.',
                     'Personal foundation'
                   );
                 }
 
                 // Structured Memory.
                 ui.contextMemoryBody.replaceChildren();
+                const rememberedCount = Number(state.memory?.rememberedCount ?? 0);
                 ui.contextMemoryStatus.textContent =
                   prompt.memoryIncluded
-                    ? (state.memory?.rememberedCount ?? 0) + ' current remembered items'
-                    : 'Not supplied';
+                    ? rememberedCount + ' remembered item' + (rememberedCount === 1 ? '' : 's') + ' used'
+                    : 'Not used';
                 if (prompt.memoryIncluded) {
-                  contextLine(ui.contextMemoryBody, shortIdentity(prompt.memoryContextRef), 'Memory packet');
                   contextLine(
                     ui.contextMemoryBody,
                     prompt.memoryContextFingerprint === state.memory?.memoryContextFingerprint
-                      ? 'The packet used for this reply is still current.'
-                      : 'The packet used for this reply is historical; VexLife will not relabel current Memory as the old packet.',
+                      ? 'The Memory that shaped this reply is still the Memory available now.'
+                      : 'The Memory that shaped this reply is historical; VexLife will not relabel current Memory as the old one.',
                     'Currentness'
                   );
                   contextLine(
                     ui.contextMemoryBody,
-                    'Structured Memory is separate from exact Conversation and from Vex’s ephemeral reasoning.',
+                    'Memory carries accepted current meaning. Exact Conversation and Vex’s temporary working process stay separate.',
                     'Meaning'
                   );
+                  contextEvidenceDisclosure(
+                    ui.contextMemoryBody,
+                    'Show exact Memory reference',
+                    String(prompt.memoryContextRef ?? '')
+                  );
                 } else {
-                  contextLine(ui.contextMemoryBody, state.memory?.display?.detail ?? 'No Memory packet was used.');
+                  contextLine(ui.contextMemoryBody, state.memory?.display?.detail ?? 'No structured Memory was used for this reply.');
                 }
 
                 // Working continuity / rollover.
                 ui.contextContinuityBody.replaceChildren();
                 ui.contextContinuityStatus.textContent =
-                  prompt.workingContinuityIncluded ? 'Included' : 'Not included';
+                  prompt.workingContinuityIncluded ? 'Current position carried forward' : 'Not needed';
                 if (prompt.workingContinuityIncluded) {
-                  contextLine(ui.contextContinuityBody, shortIdentity(prompt.workingContinuityContextRef), 'Working position');
                   contextLine(
                     ui.contextContinuityBody,
-                    'A rollover changes what is resident in the prompt; it does not delete older Conversation or automatically turn it into Memory.'
+                    'Vex carried forward the current position instead of keeping the whole recent conversation in view. Older Conversation is still kept in your archives.'
+                  );
+                  contextEvidenceDisclosure(
+                    ui.contextContinuityBody,
+                    'Show exact continuity reference',
+                    String(prompt.workingContinuityContextRef ?? '')
                   );
                 } else {
-                  contextLine(ui.contextContinuityBody, 'This turn did not carry a working-continuity successor.');
+                  contextLine(ui.contextContinuityBody, 'The recent conversation did not need a separate continuity handoff for this reply.');
                 }
 
                 // Exact selected Conversation.
@@ -2844,13 +2892,18 @@ object VexLifeWebP1RuntimeArtifacts {
                 const selectedRefs = new Set(prompt.selectedConversationEventRefs ?? []);
                 const selectedMessages = messages.filter((message) => selectedRefs.has(message.eventRef));
                 ui.contextConversationStatus.textContent =
-                  selectedMessages.length + ' exact message' + (selectedMessages.length === 1 ? '' : 's') + ' resident';
+                  selectedMessages.length === 0
+                    ? 'No earlier messages used'
+                    : selectedMessages.length + ' earlier message' + (selectedMessages.length === 1 ? '' : 's') + ' used';
                 contextLine(
                   ui.contextConversationBody,
-                  String(prompt.priorCompletedExchangeCount ?? 0) +
-                    ' completed exchange' + (prompt.priorCompletedExchangeCount === 1 ? '' : 's') +
-                    ' existed before this request; ' + selectedMessages.length + ' exact messages were selected here.',
-                  'Conversation extent'
+                  priorCompletedExchanges === 0
+                    ? 'This reply started a new conversation, so there were no earlier messages to include.'
+                    : 'There were ' + priorCompletedExchanges + ' earlier completed exchange' +
+                      (priorCompletedExchanges === 1 ? '' : 's') + '; Vex used ' +
+                      selectedMessages.length + ' earlier message' + (selectedMessages.length === 1 ? '' : 's') +
+                      ' directly for this reply.',
+                  'What came from Conversation'
                 );
                 for (const message of selectedMessages) {
                   const card = document.createElement('div');
@@ -2866,7 +2919,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
                 // Browser / reached context: exact historical content is intentionally not reconstructed.
                 ui.contextBrowserBody.replaceChildren();
-                ui.contextBrowserStatus.textContent = prompt.browserContextIncluded ? 'Included' : 'Not included';
+                ui.contextBrowserStatus.textContent = prompt.browserContextIncluded ? 'Used' : 'Not used';
                 if (prompt.browserContextIncluded) {
                   contextLine(ui.contextBrowserBody, prompt.browserTitle || prompt.browserPageUrl || 'Page', 'Browser context');
                   contextLine(
@@ -2897,22 +2950,43 @@ object VexLifeWebP1RuntimeArtifacts {
                 // The current request is not part of selected prior Conversation; show its exact
                 // canonical event separately so the causal stack never skips the human cause.
                 ui.contextRequestBody.replaceChildren();
-                ui.contextRequestStatus.textContent = latestHuman ? 'Exact Conversation request' : 'Unavailable';
+                ui.contextRequestStatus.textContent = latestHuman ? 'Your exact message' : 'Unavailable';
                 if (latestHuman) {
                   contextExactText(ui.contextRequestBody, latestHuman.content);
                 } else {
                   contextLine(ui.contextRequestBody, 'The current request is not available in the Conversation projection.');
                 }
 
-                // Exact provider component order / stability is evidence, not another owner.
+                // Exact provider component order remains available, but human meaning is primary.
+                const componentLabels = Object.freeze({
+                  'foundational-field': 'VexLife foundation',
+                  'memory-current-context': 'Structured Memory',
+                  'capability-frame': 'Capability guide',
+                  'current-state-envelope': 'Current VexLife state',
+                  'capability-frame-current': 'Capabilities available now',
+                  'person-context': 'Your settings',
+                  'conversation-extent': 'Conversation extent',
+                  'working-continuity': 'Conversation continuity',
+                  'browser-context': 'Browser context',
+                  'source-return-protocol': 'Older Conversation retrieval',
+                  'current-request': 'Your message'
+                });
+                const placementLabels = Object.freeze({
+                  SYSTEM_PREFIX: 'standing context',
+                  LIVE_TAIL: 'current context',
+                  CURRENT_REQUEST: 'your message'
+                });
                 const componentItems = (prompt.contextComponents ?? []).map((component) => {
                   const item = document.createElement('li');
-                  const name = document.createElement('code');
-                  name.textContent = component.componentRef.replace('component.vexlife-prod.prompt.', '');
+                  const exactRef = component.componentRef.replace('component.vexlife-prod.prompt.', '');
+                  const name = document.createElement('span');
+                  name.textContent = componentLabels[exactRef] ?? exactRef.replaceAll('-', ' ');
+                  name.title = component.componentRef;
                   const detail = document.createElement('span');
                   detail.textContent =
-                    ' · ' + component.stabilityClass.toLowerCase().replaceAll('_', ' ') +
-                    ' · ' + component.placementClass.toLowerCase().replaceAll('_', ' ') +
+                    ' · ' + (placementLabels[component.placementClass] ?? component.placementClass.toLowerCase().replaceAll('_', ' '));
+                  detail.title =
+                    component.stabilityClass + ' · ' + component.placementClass +
                     ' · provider message ' + component.providerMessageIndex;
                   item.append(name, detail);
                   return item;
@@ -2924,13 +2998,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 const responseKey = String(latestVex?.messageRef ?? '');
                 const reasoning = responseKey ? state.humanReasoningByResponse.get(responseKey) : null;
                 ui.contextProcessStatus.textContent =
-                  reasoning ? 'Visible in this session' : 'Raw process not retained';
+                  reasoning ? 'Visible in this session' : 'Not kept after the reply';
                 if (reasoning) {
                   contextExactText(ui.contextProcessBody, reasoning);
                 } else {
                   contextLine(
                     ui.contextProcessBody,
-                    'VexLife keeps normalized evidence that a turn ran, but raw model reasoning is not persisted after the browser session under the current Product contract.'
+                    'Vex’s temporary working process was not saved after the reply. VexLife kept evidence that the turn ran without turning that process into durable Memory.'
                   );
                 }
                 if (reaches.length) {
@@ -2945,14 +3019,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
 
                 ui.contextAfterBody.replaceChildren();
-                contextLine(ui.contextAfterBody, 'Human request and Vex reply are retained as exact canonical Conversation.', 'Conversation');
-                contextLine(ui.contextAfterBody, 'The prompt receipt keeps component identities, ordering, hashes and source refs.', 'Prompt evidence');
-                contextLine(ui.contextAfterBody, 'Raw reasoning is not written into durable Context evidence.', 'Process');
+                contextLine(ui.contextAfterBody, 'Your message and Vex’s reply stayed in your archives.', 'Conversation');
+                contextLine(ui.contextAfterBody, 'VexLife kept a receipt of what shaped the reply, including order and source identities.', 'Evidence');
+                contextLine(ui.contextAfterBody, 'Vex’s temporary working process was not saved as durable Context or Memory.', 'Process');
                 contextLine(
                   ui.contextAfterBody,
                   active
-                    ? active.definition.name + ' is the profile that will construct the next accepted message.'
-                    : 'VexLife defaults will construct the next accepted message.',
+                    ? active.definition.name + ' will shape your next message.'
+                    : 'VexLife defaults will shape your next message.',
                   'Next turn'
                 );
               };

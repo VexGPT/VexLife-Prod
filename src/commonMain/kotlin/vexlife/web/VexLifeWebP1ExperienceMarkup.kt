@@ -196,7 +196,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
               <div class="context-section-body" id="context-memory-body"></div>
             </details>
             <details class="context-section context-continuity" data-context-kind="continuity">
-              <summary><span>Working continuity</span><small id="context-continuity-status">Checking</small></summary>
+              <summary><span>Conversation continuity</span><small id="context-continuity-status">Checking</small></summary>
               <div class="context-section-body" id="context-continuity-body"></div>
             </details>
             <details class="context-section context-conversation" data-context-kind="conversation" open>
@@ -204,7 +204,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
               <div class="context-section-body" id="context-conversation-body"></div>
             </details>
             <details class="context-section context-browser" data-context-kind="browser">
-              <summary><span>Browser / reached context</span><small id="context-browser-status">Checking</small></summary>
+              <summary><span>Browser / things Vex reached</span><small id="context-browser-status">Checking</small></summary>
               <div class="context-section-body" id="context-browser-body"></div>
             </details>
             <details class="context-section context-request" data-context-kind="request" open>
@@ -212,7 +212,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
               <div class="context-section-body" id="context-request-body"></div>
             </details>
             <details class="context-section context-exact" data-context-kind="exact">
-              <summary><span>Exact component order</span><small>Evidence</small></summary>
+              <summary><span>How Vex put it together</span><small>Exact order available</small></summary>
               <ol class="context-component-list" id="context-component-list"></ol>
             </details>
           </div>
@@ -220,12 +220,12 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <div class="context-flow-arrow" aria-hidden="true">↓</div>
 
           <details class="context-section context-process" data-vex-ref="${VexLifeWebP1.VexContextProcess.identity.ref}" data-context-kind="process" open>
-            <summary><span>Vex's process</span><small id="context-process-status">Session view</small></summary>
+            <summary><span>Vex's working process</span><small id="context-process-status">Session view</small></summary>
             <label class="context-process-setting">
-              <span>Keep process visible</span>
+              <span>Show process from</span>
               <select id="context-process-retention">
-                <option value="SESSION_ONLY">During this browser session</option>
-                <option value="PREVIOUS_TURN">Previous completed turn only</option>
+                <option value="SESSION_ONLY">This browser session</option>
+                <option value="PREVIOUS_TURN">Previous reply only</option>
               </select>
             </label>
             <div class="context-section-body" id="context-process-body"></div>
@@ -234,7 +234,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <div class="context-flow-arrow" aria-hidden="true">↓</div>
 
           <details class="context-section context-output" data-vex-ref="${VexLifeWebP1.VexContextOutput.identity.ref}" data-context-kind="output" open>
-            <summary><span>Vex's reply</span><small>Exact Conversation</small></summary>
+            <summary><span>Vex's reply</span><small>Exact reply</small></summary>
             <div class="context-section-body" id="context-output-body"></div>
           </details>
 
