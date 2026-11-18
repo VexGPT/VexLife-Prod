@@ -278,6 +278,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 localAsrPath: ${jsString(VexLifeProdServiceContract.LocalAsrPath)},
                 localAsrSpokenLanguagePath: ${jsString(VexLifeProdServiceContract.LocalAsrSpokenLanguagePath)},
                 localAsrModelControlPath: ${jsString(VexLifeProdServiceContract.LocalAsrModelControlPath)},
+                localAsrPreparePath: ${jsString(VexLifeProdServiceContract.LocalAsrPreparePath)},
                 localAsrTranscribePath: ${jsString(VexLifeProdServiceContract.LocalAsrTranscribePath)},
                 privatePath: ${jsString(VexLifeProdServiceContract.PrivatePath)},
                 privateControlPath: ${jsString(VexLifeProdServiceContract.PrivateControlPath)},
@@ -598,6 +599,13 @@ object VexLifeWebP1RuntimeArtifacts {
                 return code ? { code } : null;
               };
 
+              // While one Begin/End realization is active, capability refreshes may observe new
+              // provider facts but may not overwrite the Family's in-flight session State.
+              const voiceInputSessionOwnsState = () =>
+                dictation.stateRef === voiceInput.state.requestingMicrophone ||
+                dictation.stateRef === voiceInput.state.listening ||
+                dictation.stateRef === voiceInput.state.stopping;
+
               // Browser keeps only a local mirror of Family-owned semantic output. It may not
               // manufacture State/reason refs from provider facts.
               const applyVoiceInputSemanticState = (semanticState) => {
@@ -639,7 +647,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 );
               };
 
-              const observeVoiceInputCapability = () => {
+              const observeVoiceInputCapability = (force = false) => {
+                if (!force && voiceInputSessionOwnsState()) return;
                 const language = voiceInputLanguage();
                 const semanticState =
                   voiceInput.capabilityStateByFacts[
@@ -909,6 +918,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
                 if (
                   stage === 'local-asr' ||
+                  stage === 'local-asr-prepare' ||
                   code === 'AbortError' ||
                   code === 'InvalidStateError'
                 ) {
@@ -938,6 +948,16 @@ object VexLifeWebP1RuntimeArtifacts {
                   stateRef: dictation.stateRef ?? ''
                 });
                 await settleVoiceInputFailure(semanticState);
+              };
+
+              const prepareLocalAsr = async () => {
+                const response = await fetch(service.localAsrPreparePath, {
+                  method: 'POST',
+                  headers: { accept: 'application/json' }
+                });
+                if (!response.ok) {
+                  await readJson(response);
+                }
               };
 
               const transcribeCapturedAudio = async (
@@ -1105,7 +1125,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (abort) {
                   clearCapturedPcm();
                   dictation.language = null;
-                  observeVoiceInputCapability();
+                  observeVoiceInputCapability(true);
                   renderVoiceInput();
                   return;
                 }
@@ -1124,7 +1144,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   clearCapturedPcm();
                   dictation.language = null;
                   await loadLocalAsr().catch(() => {});
-                  observeVoiceInputCapability();
+                  observeVoiceInputCapability(true);
                   renderVoiceInput();
                 } catch (error) {
                   const code =
@@ -1146,7 +1166,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   !(window.AudioContext || window.webkitAudioContext)
                 ) {
                   dictation.desiredActive = false;
-                  observeVoiceInputCapability();
+                  observeVoiceInputCapability(true);
                   renderVoiceInput();
                   return;
                 }
@@ -1175,6 +1195,8 @@ object VexLifeWebP1RuntimeArtifacts {
                   language: language.code
                 });
 
+                const providerReady = prepareLocalAsr();
+
                 let stream;
                 try {
                   stream = await navigator.mediaDevices.getUserMedia({
@@ -1186,6 +1208,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     video: false
                   });
                 } catch (error) {
+                  void providerReady.catch(() => {});
                   if (session !== dictation.session) return;
                   const code =
                     error instanceof DOMException
@@ -1209,6 +1232,23 @@ object VexLifeWebP1RuntimeArtifacts {
                   language: language.code
                 });
                 dictation.stream = stream;
+
+                try {
+                  await providerReady;
+                } catch (error) {
+                  if (session !== dictation.session) return;
+                  const code =
+                    error instanceof Error
+                      ? error.message
+                      : String(error);
+                  await failVoiceInput(
+                    voiceInputFailureReason(code, 'local-asr-prepare'),
+                    { stage: 'local-asr-prepare', code }
+                  );
+                  return;
+                }
+
+                if (!dictation.desiredActive || session !== dictation.session) return;
 
                 try {
                   await startVoiceCapture(stream);
@@ -4197,7 +4237,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       button.type = 'button';
                       button.className = 'outline-button';
                       button.textContent = t(control.labelKey);
-                      button.disabled = state.localAsrInFlight || dictation.desiredActive;
+                      button.disabled = state.localAsrInFlight || voiceInputSessionOwnsState();
                       button.addEventListener('click', () => {
                         void localAsrModelControl(control.controlRef, option.modelRef);
                       });
@@ -4231,12 +4271,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 const selected = selectedLocalAsrOption();
                 ui.localAsrSelection.disabled =
                   state.localAsrInFlight ||
-                  dictation.desiredActive ||
+                  voiceInputSessionOwnsState() ||
                   !(projection.options ?? []).length;
                 if (ui.localAsrSpokenLanguage) {
                   ui.localAsrSpokenLanguage.disabled =
                     state.localAsrInFlight ||
-                    dictation.desiredActive ||
+                    voiceInputSessionOwnsState() ||
                     !(projection.spokenLanguageChoices ?? []).length;
                 }
 
@@ -4289,11 +4329,14 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const selectLocalAsr = async (providerRef, modelRef) => {
                 if (state.localAsrInFlight) return;
-                if (dictation.desiredActive) {
-                  await applyVoiceInputControl({
-                    controlRef: voiceInput.control.stop,
-                    abort: true
-                  });
+                if (voiceInputSessionOwnsState()) {
+                  if (dictation.desiredActive) {
+                    await applyVoiceInputControl({
+                      controlRef: voiceInput.control.stop,
+                      abort: true
+                    });
+                  }
+                  if (voiceInputSessionOwnsState()) return;
                 }
                 state.localAsrInFlight = true;
                 renderLocalAsr();
@@ -4336,11 +4379,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 ) {
                   return;
                 }
-                if (dictation.desiredActive) {
-                  await applyVoiceInputControl({
-                    controlRef: voiceInput.control.stop,
-                    abort: true
-                  });
+                if (voiceInputSessionOwnsState()) {
+                  if (dictation.desiredActive) {
+                    await applyVoiceInputControl({
+                      controlRef: voiceInput.control.stop,
+                      abort: true
+                    });
+                  }
+                  if (voiceInputSessionOwnsState()) return;
                 }
                 state.localAsrInFlight = true;
                 renderLocalAsr();
@@ -4381,11 +4427,14 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const selectLocalAsrSpokenLanguage = async (mode, languageCode) => {
                 if (state.localAsrInFlight) return;
-                if (dictation.desiredActive) {
-                  await applyVoiceInputControl({
-                    controlRef: voiceInput.control.stop,
-                    abort: true
-                  });
+                if (voiceInputSessionOwnsState()) {
+                  if (dictation.desiredActive) {
+                    await applyVoiceInputControl({
+                      controlRef: voiceInput.control.stop,
+                      abort: true
+                    });
+                  }
+                  if (voiceInputSessionOwnsState()) return;
                 }
                 state.localAsrInFlight = true;
                 renderLocalAsr();

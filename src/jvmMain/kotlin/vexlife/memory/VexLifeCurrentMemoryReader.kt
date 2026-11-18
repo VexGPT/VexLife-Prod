@@ -159,6 +159,7 @@ object VexLifeCurrentMemoryReader {
         val sourceSemanticAuthorityHeadSha256: String,
         val activeStatementRefs: List<String>,
         val heldStatementRefs: List<String>,
+        val openLoopRefs: List<String>,
     )
 
     internal data class DreamPriorDaily(
@@ -383,24 +384,63 @@ object VexLifeCurrentMemoryReader {
                 identity = identity,
                 conversationStore = conversationStore,
                 conversation = conversation,
-                authorityPolicy = ScoreAuthorityPolicy.REQUIRE_CURRENT_MEMBERSHIP,
+                authorityPolicy =
+                    // Daily is a consolidation snapshot, not current semantic authority. Historical
+                    // Score/authority sources may remain valid after a later Keep; currentness is
+                    // classified only after the Daily bundle and its recorded ancestry validate.
+                    ScoreAuthorityPolicy.ALLOW_HISTORICAL_HELD,
+            )
+        val currentAuthority =
+            requireCurrentScoreAuthority(
+                score = score,
+                label = "Daily Memory",
             )
         val daily =
             loadDaily(
                 home = home,
                 identity = identity,
-                score = score,
                 conversationStore = conversationStore,
             )
 
-        if (
-            promptFrontierCurrentness(
-                sourceConversationHeadSha256 =
+        require(
+            scoreHeadLineageContains(
+                home = home,
+                identity = identity,
+                current = score.head,
+                expectedHistoricalSha256 = daily.sourceScoreHeadSha256,
+                expectedSourceConversationHeadSha256 =
                     daily.sourceConversationHeadSha256,
-                currentConversationHeadSha256 =
-                    conversationHead.conversationHeadSha256,
-            ) ==
-            "HELD"
+            ),
+        ) {
+            "Daily Memory source Score head is not in the current Score lineage"
+        }
+        require(
+            semanticAuthorityLineageContains(
+                home = home,
+                identity = identity,
+                current = currentAuthority,
+                expectedHistoricalSha256 = daily.sourceSemanticAuthorityHeadSha256,
+            ),
+        ) {
+            "Daily Memory source semantic authority head is not in the current authority lineage"
+        }
+
+        if (
+            daily.sourceScoreHeadSha256 !=
+                score.head.string(
+                    "scoreHeadSha256",
+                ) ||
+                daily.sourceSemanticAuthorityHeadSha256 !=
+                currentAuthority.string(
+                    "semanticAuthorityHeadSha256",
+                ) ||
+                promptFrontierCurrentness(
+                    sourceConversationHeadSha256 =
+                        daily.sourceConversationHeadSha256,
+                    currentConversationHeadSha256 =
+                        conversationHead.conversationHeadSha256,
+                ) ==
+                "HELD"
         ) {
             return held(
                 reasons =
@@ -410,6 +450,12 @@ object VexLifeCurrentMemoryReader {
                 memoryTokenCap = memoryTokenCap,
             )
         }
+
+        requireCurrentDailyProjection(
+            score = score,
+            currentAuthority = currentAuthority,
+            daily = daily,
+        )
 
         return formContext(
             score = score,
@@ -3229,17 +3275,296 @@ object VexLifeCurrentMemoryReader {
         }
     }
 
+    private fun scoreHeadLineageContains(
+        home: Path,
+        identity: Identity,
+        current: JsonObject,
+        expectedHistoricalSha256: String,
+        expectedSourceConversationHeadSha256: String,
+    ): Boolean {
+        requireSha256(
+            expectedHistoricalSha256,
+            "historical Score head",
+        )
+        requireSha256(
+            expectedSourceConversationHeadSha256,
+            "historical Score source Conversation head",
+        )
+        val root =
+            "score/" +
+                identity.lineageRef +
+                "/" +
+                identity.threadRef
+        val visited =
+            mutableSetOf<String>()
+        var cursor =
+            current
+        while (
+            true
+        ) {
+            val currentSha =
+                cursor.string(
+                    "scoreHeadSha256",
+                )
+            require(
+                visited.add(
+                    currentSha,
+                ),
+            ) {
+                "Score head lineage contains a cycle"
+            }
+            if (
+                currentSha ==
+                expectedHistoricalSha256
+            ) {
+                require(
+                    cursor.string(
+                        "sourceConversationHeadSha256",
+                    ) ==
+                        expectedSourceConversationHeadSha256,
+                ) {
+                    "Daily Memory source Conversation head differs from its source Score head"
+                }
+                return true
+            }
+            val sequence =
+                cursor.long(
+                    "sequence",
+                )
+            val prior =
+                cursor.nullableString(
+                    "priorScoreHeadSha256",
+                )
+            if (
+                sequence ==
+                0L
+            ) {
+                require(
+                    prior ==
+                        null,
+                ) {
+                    "Score genesis head has a predecessor"
+                }
+                return false
+            }
+            val priorSha =
+                requireNotNull(
+                    prior,
+                ) {
+                    "Score non-genesis head has no predecessor"
+                }
+            requireSha256(
+                priorSha,
+                "prior Score head",
+            )
+            val previous =
+                readObject(
+                    home,
+                    inside(
+                        home,
+                        root +
+                            "/heads/" +
+                            priorSha +
+                            ".json",
+                    ),
+                    "prior Score head",
+                )
+            validateScoreHead(
+                previous,
+                identity,
+            )
+            require(
+                previous.string(
+                    "scoreHeadSha256",
+                ) ==
+                    priorSha &&
+                    previous.long(
+                        "sequence",
+                    ) ==
+                    sequence -
+                    1,
+            ) {
+                "Score head lineage is not contiguous"
+            }
+            cursor =
+                previous
+        }
+    }
+
+    private fun semanticAuthorityLineageContains(
+        home: Path,
+        identity: Identity,
+        current: JsonObject,
+        expectedHistoricalSha256: String,
+    ): Boolean {
+        requireSha256(
+            expectedHistoricalSha256,
+            "historical semantic authority head",
+        )
+        val root =
+            "semantic-authority/score/" +
+                identity.lineageRef +
+                "/" +
+                identity.threadRef
+        val visited =
+            mutableSetOf<String>()
+        var cursor =
+            current
+        while (
+            true
+        ) {
+            val currentSha =
+                cursor.string(
+                    "semanticAuthorityHeadSha256",
+                )
+            require(
+                visited.add(
+                    currentSha,
+                ),
+            ) {
+                "semantic authority head lineage contains a cycle"
+            }
+            if (
+                currentSha ==
+                expectedHistoricalSha256
+            ) {
+                return true
+            }
+            val sequence =
+                cursor.long(
+                    "sequence",
+                )
+            val prior =
+                cursor.nullableString(
+                    "priorSemanticAuthorityHeadSha256",
+                )
+            if (
+                sequence ==
+                0L
+            ) {
+                require(
+                    prior ==
+                        null,
+                ) {
+                    "semantic authority genesis head has a predecessor"
+                }
+                return false
+            }
+            val priorSha =
+                requireNotNull(
+                    prior,
+                ) {
+                    "semantic authority non-genesis head has no predecessor"
+                }
+            requireSha256(
+                priorSha,
+                "priorSemanticAuthorityHeadSha256",
+            )
+            val previous =
+                readAddressed(
+                    home = home,
+                    path =
+                        inside(
+                            home,
+                            root +
+                                "/heads/" +
+                                priorSha +
+                                ".json",
+                        ),
+                    schemaVersion = SemanticAuthorityHeadSchema,
+                    refField = "semanticAuthorityHeadRef",
+                    hashField = "semanticAuthorityHeadSha256",
+                    prefix = "score-semantic-authority-head",
+                    label = "prior semantic authority head",
+                )
+            validateAuthorityIdentity(
+                previous,
+                identity,
+            )
+            require(
+                previous.long(
+                    "sequence",
+                ) ==
+                    sequence -
+                    1,
+            ) {
+                "semantic authority head sequence is not contiguous"
+            }
+            cursor =
+                previous
+        }
+    }
+
+    private fun requireCurrentDailyProjection(
+        score: ScoreSnapshot,
+        currentAuthority: JsonObject,
+        daily: DailySnapshot,
+    ) {
+        val currentStatements =
+            score.statements
+                .filter(
+                    Statement::current,
+                )
+                .sortedBy(
+                    Statement::statementRef,
+                )
+        val active =
+            currentStatements
+                .filter {
+                    it.acceptedForContinuity &&
+                        it.consentState in
+                        positiveConsent &&
+                        authorityContains(
+                            currentAuthority,
+                            it,
+                        )
+                }
+                .map(
+                    Statement::statementRef,
+                )
+        val held =
+            currentStatements
+                .filter {
+                    !(
+                        it.acceptedForContinuity &&
+                            it.consentState in
+                            positiveConsent &&
+                            authorityContains(
+                                currentAuthority,
+                                it,
+                            )
+                    )
+                }
+                .map(
+                    Statement::statementRef,
+                )
+        val loops =
+            score.openLoops
+                .filter {
+                    it.state ==
+                        "OPEN"
+                }
+                .map(
+                    OpenLoop::ref,
+                )
+                .sorted()
+        require(
+            daily.activeStatementRefs ==
+                active &&
+                daily.heldStatementRefs ==
+                held &&
+                daily.openLoopRefs ==
+                loops,
+        ) {
+            "Daily Memory projection differs from current Score/authority"
+        }
+    }
+
     private fun loadDaily(
         home: Path,
         identity: Identity,
-        score: ScoreSnapshot,
         conversationStore: DirectConversationStore,
     ): DailySnapshot {
-        val currentAuthority =
-            requireCurrentScoreAuthority(
-                score = score,
-                label = "Daily Memory",
-            )
         val root =
             "daily-memory-dream/" +
                 identity.lineageRef +
@@ -3281,25 +3606,29 @@ object VexLifeCurrentMemoryReader {
                     "threadRef",
                 ) ==
                 identity.threadRef &&
-                sourceConversationHead ==
-                score.head.string(
-                    "sourceConversationHeadSha256",
-                ) &&
                 head.string(
-                    "sourceScoreHeadSha256",
+                    "contractRef",
                 ) ==
-                score.head.string(
-                    "scoreHeadSha256",
-                ) &&
-                head.string(
-                    "sourceSemanticAuthorityHeadSha256",
-                ) ==
-                currentAuthority.string(
-                    "semanticAuthorityHeadSha256",
-                ),
+                "contract.multivex.g03.daily-memory-only-dream/v1",
         ) {
-            "Daily Memory head is not exact to the current Score/authority source frontier"
+            "Daily Memory head identity is invalid"
         }
+        requireSha256(
+            sourceConversationHead,
+            "Daily Memory source Conversation head",
+        )
+        requireSha256(
+            head.string(
+                "sourceScoreHeadSha256",
+            ),
+            "Daily Memory source Score head",
+        )
+        requireSha256(
+            head.string(
+                "sourceSemanticAuthorityHeadSha256",
+            ),
+            "Daily Memory source semantic authority head",
+        )
         val historicalDailySource =
             conversationStore.historicalCompletedTurn(
                 sourceConversationHead,
@@ -3390,14 +3719,14 @@ object VexLifeCurrentMemoryReader {
                 stratum.string(
                     "sourceScoreHeadSha256",
                 ) ==
-                score.head.string(
-                    "scoreHeadSha256",
+                head.string(
+                    "sourceScoreHeadSha256",
                 ) &&
                 stratum.string(
                     "sourceSemanticAuthorityHeadSha256",
                 ) ==
-                currentAuthority.string(
-                    "semanticAuthorityHeadSha256",
+                head.string(
+                    "sourceSemanticAuthorityHeadSha256",
                 ) &&
                 !stratum.boolean(
                     "trainingRan",
@@ -3495,8 +3824,8 @@ object VexLifeCurrentMemoryReader {
             )
 
         val authoritySha =
-            currentAuthority.string(
-                "semanticAuthorityHeadSha256",
+            head.string(
+                "sourceSemanticAuthorityHeadSha256",
             )
         for (
             receipt in
@@ -3599,8 +3928,8 @@ object VexLifeCurrentMemoryReader {
                     receipt.string(
                         "sourceScoreHeadSha256",
                     ) ==
-                    score.head.string(
-                        "scoreHeadSha256",
+                    head.string(
+                        "sourceScoreHeadSha256",
                     ),
             ) {
                 "Daily Memory child receipt differs from its exact Daily source frontier"
@@ -3629,81 +3958,106 @@ object VexLifeCurrentMemoryReader {
             "Daily Memory bundle violated read-only/reference-only boundary"
         }
 
-        val currentStatements =
-            score.statements
-                .filter(
-                    Statement::current,
-                )
-                .sortedBy(
-                    Statement::statementRef,
-                )
         val active =
-            currentStatements
-                .filter {
-                    it.acceptedForContinuity &&
-                        it.consentState in
-                        positiveConsent &&
-                        authorityContains(
-                            currentAuthority,
-                            it,
-                        )
-                }
-                .map(
-                    Statement::statementRef,
-                )
-        val held =
-            currentStatements
-                .filter {
-                    !(
-                        it.acceptedForContinuity &&
-                            it.consentState in
-                            positiveConsent &&
-                            authorityContains(
-                                currentAuthority,
-                                it,
-                            )
-                    )
-                }
-                .map(
-                    Statement::statementRef,
-                )
-        val loops =
-            score.openLoops
-                .filter {
-                    it.state ==
-                        "OPEN"
-                }
-                .map(
-                    OpenLoop::ref,
-                )
-                .sorted()
-        require(
             postDream.stringList(
                 "activeContinuityStatementRefs",
-            ) ==
+            )
+        val held =
+            postDream.stringList(
+                "heldOrDeferredStatementRefs",
+            )
+        val loops =
+            postDream.stringList(
+                "openLoopRefs",
+            )
+        for (
+            refs in
+            listOf(
+                active,
+                held,
+                loops,
+            )
+        ) {
+            refs.forEach {
+                ref ->
+                require(
+                    ref.matches(
+                        Regex(
+                            "[A-Za-z0-9][A-Za-z0-9._:/-]*",
+                        ),
+                    ),
+                ) {
+                    "Daily Memory projected ref must be one portable non-empty ref"
+                }
+            }
+            require(
+                refs.distinct().size ==
+                    refs.size &&
+                    refs.sorted() ==
+                    refs,
+            ) {
+                "Daily Memory projected refs must be unique and sorted"
+            }
+        }
+        require(
+            active.toSet()
+                .intersect(
+                    held.toSet(),
+                )
+                .isEmpty(),
+        ) {
+            "Daily Memory active and held statement refs overlap"
+        }
+
+        val consolidationActive =
+            consolidation.objectList(
+                "carriedCurrentScoreBindings",
+            )
+                .map {
+                    it.string(
+                        "statementRef",
+                    )
+                }
+        val consolidationHeld =
+            consolidation.objectList(
+                "heldOrDeferredScoreBindings",
+            )
+                .map {
+                    it.string(
+                        "statementRef",
+                    )
+                }
+        val consolidationLoops =
+            consolidation.objectList(
+                "openLoopCarryForwardBindings",
+            )
+                .map {
+                    it.string(
+                        "openLoopRef",
+                    )
+                }
+        require(
+            consolidationActive ==
                 active &&
-                postDream.stringList(
-                    "heldOrDeferredStatementRefs",
-                ) ==
+                consolidationHeld ==
                 held &&
-                postDream.stringList(
-                    "openLoopRefs",
-                ) ==
+                consolidationLoops ==
                 loops,
         ) {
-            "post-Dream Memory projection differs from current Score/authority"
+            "Daily Memory consolidation bindings differ from post-Dream projection"
         }
 
         return DailySnapshot(
             stratum = stratum,
             sourceConversationHeadSha256 = sourceConversationHead,
             sourceScoreHeadSha256 =
-                score.head.string(
-                    "scoreHeadSha256",
+                head.string(
+                    "sourceScoreHeadSha256",
                 ),
             sourceSemanticAuthorityHeadSha256 = authoritySha,
             activeStatementRefs = active,
             heldStatementRefs = held,
+            openLoopRefs = loops,
         )
     }
 

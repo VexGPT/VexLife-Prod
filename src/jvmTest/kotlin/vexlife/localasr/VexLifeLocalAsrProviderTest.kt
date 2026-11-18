@@ -1,5 +1,6 @@
 package vexlife.localasr
 
+import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -7,51 +8,148 @@ import kotlin.test.assertTrue
 
 class VexLifeLocalAsrProviderTest {
     @Test
-    fun stdinWhisperInvocationRequestsTextOnStdout() {
+    fun persistentWhisperServerBindsExactModelToLoopback() {
         val command =
-            whisperCppCliCommand(
-                executablePath = Path.of("/vex/home/bin/whisper-cli"),
-                modelPath = Path.of("/vex/home/models/ggml-base.en.bin"),
-                languageCode = "en",
+            whisperCppServerCommand(
+                executablePath =
+                    Path.of(
+                        "/vex/home/bin/whisper-server",
+                    ),
+                modelPath =
+                    Path.of(
+                        "/vex/home/models/ggml-base.bin",
+                    ),
+                port =
+                    18427,
             )
 
-        assertEquals("/vex/home/bin/whisper-cli", command.first())
-        assertTrue(command.windowed(2).any { it == listOf("-f", "-") })
-        assertTrue(command.contains("-np"))
-        assertTrue(command.contains("-nt"))
-        assertTrue(
-            command.contains("-otxt"),
-            "stdin whisper-cli must explicitly emit final transcript text to stdout",
+        assertEquals(
+            "/vex/home/bin/whisper-server",
+            command.first(),
         )
-        assertTrue(command.windowed(2).any { it == listOf("-l", "en") })
+        assertTrue(
+            command.windowed(
+                2,
+            )
+                .any {
+                    it ==
+                        listOf(
+                            "-m",
+                            "/vex/home/models/ggml-base.bin",
+                        )
+                },
+        )
+        assertTrue(
+            command.windowed(
+                2,
+            )
+                .any {
+                    it ==
+                        listOf(
+                            "--host",
+                            "127.0.0.1",
+                        )
+                },
+        )
+        assertTrue(
+            command.windowed(
+                2,
+            )
+                .any {
+                    it ==
+                        listOf(
+                            "--port",
+                            "18427",
+                        )
+                },
+        )
+        assertTrue(
+            command.contains(
+                "-nt",
+            ),
+        )
     }
 
     @Test
-    fun multilingualWhisperInvocationCarriesSelectedLanguage() {
-        val command =
-            whisperCppCliCommand(
-                executablePath = Path.of("/vex/home/bin/whisper-cli"),
-                modelPath = Path.of("/vex/home/models/ggml-base.bin"),
-                languageCode = "ja",
+    fun serverInferenceMultipartCarriesAudioLanguageAndJsonContract() {
+        val audio =
+            "RIFF-test-WAVE"
+                .toByteArray(
+                    StandardCharsets.US_ASCII,
+                )
+        val request =
+            whisperCppServerMultipart(
+                wavBytes =
+                    audio,
+                languageCode =
+                    "zh",
+                boundary =
+                    "vexlife-test-boundary",
             )
 
-        assertTrue(command.windowed(2).any { it == listOf("-m", "/vex/home/models/ggml-base.bin") })
-        assertTrue(command.windowed(2).any { it == listOf("-l", "ja") })
-        assertTrue(command.windowed(2).any { it == listOf("-f", "-") })
-        assertTrue(command.contains("-otxt"))
+        assertEquals(
+            "multipart/form-data; boundary=vexlife-test-boundary",
+            request.contentType,
+        )
+        val body =
+            request.body.toString(
+                StandardCharsets.ISO_8859_1,
+            )
+        assertTrue(
+            body.contains(
+                "name=\"file\"; filename=\"audio.wav\"",
+            ),
+        )
+        assertTrue(
+            body.contains(
+                "Content-Type: audio/wav",
+            ),
+        )
+        assertTrue(
+            body.contains(
+                "RIFF-test-WAVE",
+            ),
+        )
+        assertTrue(
+            body.contains(
+                "name=\"language\"\r\n\r\nzh",
+            ),
+        )
+        assertTrue(
+            body.contains(
+                "name=\"response_format\"\r\n\r\njson",
+            ),
+        )
+        assertTrue(
+            body.contains(
+                "name=\"no_timestamps\"\r\n\r\ntrue",
+            ),
+        )
     }
 
     @Test
-    fun multilingualWhisperInvocationCanRequestAutoDetection() {
-        val command =
-            whisperCppCliCommand(
-                executablePath = Path.of("/vex/home/bin/whisper-cli"),
-                modelPath = Path.of("/vex/home/models/ggml-base.bin"),
-                languageCode = "auto",
+    fun serverInferenceMultipartCanRequestAutoDetection() {
+        val request =
+            whisperCppServerMultipart(
+                wavBytes =
+                    byteArrayOf(
+                        1,
+                    ),
+                languageCode =
+                    "auto",
+                boundary =
+                    "vexlife-test-auto",
             )
 
-        assertTrue(command.windowed(2).any { it == listOf("-l", "auto") })
-        assertTrue(command.contains("-otxt"))
+        val body =
+            request.body.toString(
+                StandardCharsets.ISO_8859_1,
+            )
+        assertTrue(
+            body.contains(
+                "name=\"language\"\r\n\r\nauto",
+            ),
+        )
     }
 }
 

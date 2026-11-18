@@ -1,12 +1,21 @@
 package vexlife.localasr
 
+import java.net.InetAddress
+import java.net.ServerSocket
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.security.MessageDigest
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit
+import java.time.Duration
+import java.util.UUID
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * Concrete local speech-to-text provider boundary.
@@ -38,9 +47,13 @@ internal interface VexLifeLocalAsrProvider {
 
     fun current(): Current
 
+    /** Ensure the selected provider/model realization is loaded before microphone capture proceeds. */
+    fun prepare()
+
     fun transcribe(
         wavBytes: ByteArray,
         languageCode: String,
+        timeout: Duration,
     ): Result
 
     companion object {
@@ -56,62 +69,533 @@ internal interface VexLifeLocalAsrProvider {
         fun fromHome(
             productHome: Path,
             selection: VexLifeLocalAsrSelection.Value,
+            runtime: VexLifeLocalAsrRuntime,
         ): VexLifeLocalAsrProvider =
-            WhisperCppCliProvider.observeHome(
+            WhisperCppServerProvider.observeHome(
                 productHome = productHome,
                 selection = selection,
+                runtime = runtime,
             )
     }
 }
 
 /**
- * A004 realization: the Product service feeds an exact pinned whisper.cpp executable WAV bytes over
- * stdin. A003 already proved direct JVM/JNA; this process realization is intentionally used only to
- * finish the browser->service->ASR->Composer lived circuit without vendoring the upstream Java
- * binding into Product source first.
+ * Service-lifetime whisper.cpp realization.
+ *
+ * Progressive dictation must not spawn a new native process and reload the model for every partial
+ * hypothesis. One Product service therefore owns one warm loopback whisper-server process for the
+ * currently used speech model. Provider/model/language meaning remains outside this runtime.
  */
-internal fun whisperCppCliCommand(
+internal class VexLifeLocalAsrRuntime : AutoCloseable {
+    private data class Running(
+        val modelRef: String,
+        val modelPath: Path,
+        val process: Process,
+        val port: Int,
+    )
+
+    private val http =
+        HttpClient
+            .newBuilder()
+            .connectTimeout(
+                Duration.ofSeconds(
+                    2,
+                ),
+            )
+            .build()
+
+    private var running: Running? =
+        null
+
+    @Synchronized
+    fun prepare(
+        executable: Path,
+        model: Path,
+        modelRef: String,
+    ) {
+        val current =
+            running
+        if (
+            current !=
+                null &&
+            current.modelRef ==
+                modelRef &&
+            current.modelPath ==
+                model &&
+            current.process.isAlive &&
+            healthy(
+                current.port,
+            )
+        ) {
+            return
+        }
+
+        stopRunning()
+
+        val port =
+            ephemeralLoopbackPort()
+        val processBuilder =
+            ProcessBuilder(
+                whisperCppServerCommand(
+                    executablePath =
+                        executable,
+                    modelPath =
+                        model,
+                    port =
+                        port,
+                )
+            )
+        processBuilder
+            .environment()["DYLD_LIBRARY_PATH"] =
+            requireNotNull(
+                executable.parent,
+            )
+                .toString()
+        processBuilder.redirectOutput(
+            ProcessBuilder.Redirect.DISCARD,
+        )
+        processBuilder.redirectError(
+            ProcessBuilder.Redirect.DISCARD,
+        )
+
+        val process =
+            processBuilder.start()
+        val candidate =
+            Running(
+                modelRef =
+                    modelRef,
+                modelPath =
+                    model,
+                process =
+                    process,
+                port =
+                    port,
+            )
+        running =
+            candidate
+
+        try {
+            waitUntilReady(
+                candidate,
+            )
+        } catch (
+            error: Throwable,
+        ) {
+            stopRunning()
+            throw error
+        }
+    }
+
+    @Synchronized
+    fun transcribe(
+        executable: Path,
+        model: Path,
+        modelRef: String,
+        wavBytes: ByteArray,
+        languageCode: String,
+        timeout: Duration,
+    ): String {
+        prepare(
+            executable =
+                executable,
+            model =
+                model,
+            modelRef =
+                modelRef,
+        )
+        val active =
+            requireNotNull(
+                running,
+            )
+        val multipart =
+            whisperCppServerMultipart(
+                wavBytes =
+                    wavBytes,
+                languageCode =
+                    languageCode,
+            )
+        val request =
+            HttpRequest
+                .newBuilder(
+                    URI.create(
+                        "http://127.0.0.1:" +
+                            active.port +
+                            "/inference",
+                    ),
+                )
+                .timeout(
+                    timeout,
+                )
+                .header(
+                    "content-type",
+                    multipart.contentType,
+                )
+                .header(
+                    "accept",
+                    "application/json",
+                )
+                .POST(
+                    HttpRequest.BodyPublishers.ofByteArray(
+                        multipart.body,
+                    ),
+                )
+                .build()
+        val response =
+            http.send(
+                request,
+                HttpResponse.BodyHandlers.ofString(
+                    StandardCharsets.UTF_8,
+                ),
+            )
+        require(
+            response.statusCode() in
+                200..299,
+        ) {
+            "local ASR provider returned HTTP " +
+                response.statusCode() +
+                ": " +
+                response.body()
+                    .replace(
+                        Regex(
+                            "\\s+",
+                        ),
+                        " ",
+                    )
+                    .take(
+                        320,
+                    )
+        }
+
+        val transcript =
+            requireNotNull(
+                Json
+                    .parseToJsonElement(
+                        response.body(),
+                    )
+                    .jsonObject["text"],
+            ) {
+                "local ASR provider response has no transcript"
+            }
+                .jsonPrimitive
+                .content
+                .replace(
+                    Regex(
+                        "\\s+",
+                    ),
+                    " ",
+                )
+                .trim()
+
+        require(
+            transcript.isNotEmpty(),
+        ) {
+            "local ASR provider returned no transcript"
+        }
+
+        return transcript
+    }
+
+    private fun waitUntilReady(
+        candidate: Running,
+    ) {
+        val deadline =
+            System.nanoTime() +
+                PrepareTimeout.toNanos()
+        while (
+            System.nanoTime() <
+            deadline
+        ) {
+            require(
+                candidate.process.isAlive,
+            ) {
+                "local ASR provider exited while loading the selected speech model"
+            }
+            if (
+                healthy(
+                    candidate.port,
+                )
+            ) {
+                return
+            }
+            Thread.sleep(
+                100,
+            )
+        }
+        error(
+            "local ASR provider did not become ready within " +
+                PrepareTimeout.seconds +
+                " seconds",
+        )
+    }
+
+    private fun healthy(
+        port: Int,
+    ): Boolean =
+        runCatching {
+            val response =
+                http.send(
+                    HttpRequest
+                        .newBuilder(
+                            URI.create(
+                                "http://127.0.0.1:" +
+                                    port +
+                                    "/health",
+                            ),
+                        )
+                        .timeout(
+                            HealthTimeout,
+                        )
+                        .GET()
+                        .build(),
+                    HttpResponse.BodyHandlers.discarding(),
+                )
+            response.statusCode() ==
+                200
+        }
+            .getOrDefault(
+                false,
+            )
+
+    private fun stopRunning() {
+        val active =
+            running
+        running =
+            null
+        if (
+            active ==
+                null
+        ) {
+            return
+        }
+
+        active.process.destroy()
+        runCatching {
+            if (
+                !active.process.waitFor(
+                    2,
+                    java.util.concurrent.TimeUnit.SECONDS,
+                )
+            ) {
+                active.process.destroyForcibly()
+                active.process.waitFor(
+                    2,
+                    java.util.concurrent.TimeUnit.SECONDS,
+                )
+            }
+        }
+    }
+
+    override fun close() {
+        synchronized(
+            this,
+        ) {
+            stopRunning()
+        }
+    }
+
+    companion object {
+        private val PrepareTimeout =
+            Duration.ofSeconds(
+                45,
+            )
+        private val HealthTimeout =
+            Duration.ofMillis(
+                500,
+            )
+
+        private fun ephemeralLoopbackPort(): Int =
+            ServerSocket(
+                0,
+                1,
+                InetAddress.getLoopbackAddress(),
+            )
+                .use {
+                    it.localPort
+                }
+    }
+}
+
+internal fun whisperCppServerCommand(
     executablePath: Path,
     modelPath: Path,
-    languageCode: String,
+    port: Int,
 ): List<String> =
     listOf(
         executablePath.toString(),
         "-m",
         modelPath.toString(),
-        "-f",
-        "-",
-        "-l",
-        languageCode,
-        "-nt",
-        "-np",
-        // stdin makes whisper-cli's default output target "-"; explicitly request text output so
-        // stdout carries the final transcript instead of only completing inference silently.
-        "-otxt",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        port.toString(),
         "-t",
         "4",
+        "-nt",
     )
 
-private class WhisperCppCliProvider private constructor(
+internal data class WhisperCppServerMultipart(
+    val contentType: String,
+    val body: ByteArray,
+)
+
+internal fun whisperCppServerMultipart(
+    wavBytes: ByteArray,
+    languageCode: String,
+    boundary: String =
+        "vexlife-local-asr-" +
+            UUID.randomUUID()
+                .toString()
+                .replace(
+                    "-",
+                    "",
+                ),
+): WhisperCppServerMultipart {
+    require(
+        wavBytes.isNotEmpty(),
+    ) {
+        "local ASR audio is empty"
+    }
+    require(
+        boundary.matches(
+            Regex(
+                "[A-Za-z0-9._-]+",
+            ),
+        ),
+    ) {
+        "local ASR multipart boundary is invalid"
+    }
+
+    val output =
+        java.io.ByteArrayOutputStream()
+
+    fun line(value: String) {
+        output.write(
+            value.toByteArray(
+                StandardCharsets.UTF_8,
+            ),
+        )
+        output.write(
+            "\r\n".toByteArray(
+                StandardCharsets.US_ASCII,
+            ),
+        )
+    }
+
+    fun field(
+        name: String,
+        value: String,
+    ) {
+        line(
+            "--$boundary",
+        )
+        line(
+            "Content-Disposition: form-data; name=\"$name\"",
+        )
+        line(
+            "",
+        )
+        line(
+            value,
+        )
+    }
+
+    line(
+        "--$boundary",
+    )
+    line(
+        "Content-Disposition: form-data; name=\"file\"; filename=\"audio.wav\"",
+    )
+    line(
+        "Content-Type: audio/wav",
+    )
+    line(
+        "",
+    )
+    output.write(
+        wavBytes,
+    )
+    output.write(
+        "\r\n".toByteArray(
+            StandardCharsets.US_ASCII,
+        ),
+    )
+
+    field(
+        "language",
+        languageCode,
+    )
+    field(
+        "response_format",
+        "json",
+    )
+    field(
+        "no_timestamps",
+        "true",
+    )
+    field(
+        "temperature",
+        "0.0",
+    )
+    field(
+        "temperature_inc",
+        "0.2",
+    )
+
+    line(
+        "--$boundary--",
+    )
+
+    return WhisperCppServerMultipart(
+        contentType =
+            "multipart/form-data; boundary=$boundary",
+        body =
+            output.toByteArray(),
+    )
+}
+
+private class WhisperCppServerProvider private constructor(
     private val executable: Path,
     private val model: Path,
     private val sourceIdentity: Path,
     private val modelRef: String,
     private val expectedModelSha256: String,
     private val supportedLanguageCodes: Set<String>,
+    private val runtime: VexLifeLocalAsrRuntime,
 ) : VexLifeLocalAsrProvider {
     override fun current(): VexLifeLocalAsrProvider.Current =
         observeCurrent(
-            executable = executable,
-            model = model,
-            sourceIdentity = sourceIdentity,
-            modelRef = modelRef,
-            expectedModelSha256 = expectedModelSha256,
+            executable =
+                executable,
+            model =
+                model,
+            sourceIdentity =
+                sourceIdentity,
+            modelRef =
+                modelRef,
+            expectedModelSha256 =
+                expectedModelSha256,
         )
+
+    override fun prepare() {
+        require(
+            current().ready,
+        ) {
+            "selected local ASR provider is not current"
+        }
+        runtime.prepare(
+            executable =
+                executable,
+            model =
+                model,
+            modelRef =
+                modelRef,
+        )
+    }
 
     override fun transcribe(
         wavBytes: ByteArray,
         languageCode: String,
+        timeout: Duration,
     ): VexLifeLocalAsrProvider.Result {
         val observed =
             current()
@@ -132,150 +616,39 @@ private class WhisperCppCliProvider private constructor(
         ) {
             "selected local ASR model does not support requested language"
         }
-        require(
-            wavBytes.isNotEmpty(),
-        ) {
-            "local ASR audio is empty"
-        }
-
-        val executablePath =
-            executable
-        val modelPath =
-            model
 
         val started =
             System.nanoTime()
-        val processBuilder =
-            ProcessBuilder(
-                whisperCppCliCommand(
-                    executablePath = executablePath,
-                    modelPath = modelPath,
-                    languageCode = languageCode,
-                )
-            )
-        // The Home-owned provider bundle keeps the exact native dylibs beside whisper-cli.
-        // Provider library discovery is concrete realization, not Product/Family meaning.
-        processBuilder
-            .environment()["DYLD_LIBRARY_PATH"] =
-            requireNotNull(
-                executablePath.parent,
-            )
-                .toString()
-        val process =
-            processBuilder.start()
-
-        val stdout =
-            CompletableFuture.supplyAsync {
-                process.inputStream
-                    .readBytes()
-                    .toString(
-                        StandardCharsets.UTF_8,
-                    )
-            }
-        val stderr =
-            CompletableFuture.supplyAsync {
-                process.errorStream
-                    .readBytes()
-                    .toString(
-                        StandardCharsets.UTF_8,
-                    )
-            }
-
-        try {
-            process.outputStream.use {
-                output ->
-                output.write(
+        val transcript =
+            runtime.transcribe(
+                executable =
+                    executable,
+                model =
+                    model,
+                modelRef =
+                    modelRef,
+                wavBytes =
                     wavBytes,
-                )
-            }
-
-            if (
-                !process.waitFor(
-                    45,
-                    TimeUnit.SECONDS,
-                )
-            ) {
-                process.destroyForcibly()
-                throw IllegalStateException(
-                    "local ASR inference timed out",
-                )
-            }
-
-            val standardOutput =
-                stdout
-                    .get(
-                        5,
-                        TimeUnit.SECONDS,
-                    )
-            val standardError =
-                stderr
-                    .get(
-                        5,
-                        TimeUnit.SECONDS,
-                    )
-
-            require(
-                process.exitValue() ==
-                    0,
-            ) {
-                "local ASR provider exited " +
-                    process.exitValue() +
-                    ": " +
-                    standardError
-                        .lineSequence()
-                        .toList()
-                        .takeLast(
-                            3,
-                        )
-                        .joinToString(
-                            " ",
-                        )
-                        .take(
-                            480,
-                        )
-            }
-
-            val transcript =
-                standardOutput
-                    .lineSequence()
-                    .map(
-                        String::trim,
-                    )
-                    .filter(
-                        String::isNotEmpty,
-                    )
-                    .joinToString(
-                        " ",
-                    )
-                    .replace(
-                        Regex(
-                            "\\s+",
-                        ),
-                        " ",
-                    )
-                    .trim()
-
-            require(
-                transcript.isNotEmpty(),
-            ) {
-                "local ASR provider returned no transcript"
-            }
-
-            return VexLifeLocalAsrProvider.Result(
-                providerRef = observed.providerRef,
-                modelRef = observed.modelRef,
-                transcript = transcript,
-                inferenceMillis =
-                    (System.nanoTime() - started) /
-                        1_000_000L,
+                languageCode =
+                    languageCode,
+                timeout =
+                    timeout,
             )
-        } finally {
-            if (
-                process.isAlive
-            ) {
-                process.destroyForcibly()
-            }
-        }
+
+        return VexLifeLocalAsrProvider.Result(
+            providerRef =
+                observed.providerRef,
+            modelRef =
+                observed.modelRef,
+            transcript =
+                transcript,
+            inferenceMillis =
+                (
+                    System.nanoTime() -
+                        started
+                ) /
+                    1_000_000L,
+        )
     }
 
     companion object {
@@ -287,7 +660,7 @@ private class WhisperCppCliProvider private constructor(
 
         const val ExecutableRelativePath =
             ProviderRootRelativePath +
-                "/bin/whisper-cli"
+                "/bin/whisper-server"
 
         const val SourceIdentityRelativePath =
             ProviderRootRelativePath +
@@ -296,7 +669,8 @@ private class WhisperCppCliProvider private constructor(
         fun observeHome(
             productHome: Path,
             selection: VexLifeLocalAsrSelection.Value,
-        ): WhisperCppCliProvider {
+            runtime: VexLifeLocalAsrRuntime,
+        ): WhisperCppServerProvider {
             require(
                 selection.providerRef ==
                     VexLifeLocalAsrSelection.WhisperCppProviderRef,
@@ -350,13 +724,21 @@ private class WhisperCppCliProvider private constructor(
                 "local ASR provider paths must remain inside Vex Home"
             }
 
-            return WhisperCppCliProvider(
-                executable = executable,
-                model = model,
-                sourceIdentity = sourceIdentity,
-                modelRef = artifact.modelRef,
-                expectedModelSha256 = artifact.sha256,
-                supportedLanguageCodes = option.languageCodes.toSet(),
+            return WhisperCppServerProvider(
+                executable =
+                    executable,
+                model =
+                    model,
+                sourceIdentity =
+                    sourceIdentity,
+                modelRef =
+                    artifact.modelRef,
+                expectedModelSha256 =
+                    artifact.sha256,
+                supportedLanguageCodes =
+                    option.languageCodes.toSet(),
+                runtime =
+                    runtime,
             )
         }
 
@@ -398,9 +780,12 @@ private class WhisperCppCliProvider private constructor(
                         modelRef,
                     state =
                         VexLifeLocalAsrProvider.StateUnavailable,
-                    detailRef = detailRef,
-                    sourceRef = sourceSha,
-                    modelSha256 = modelSha256,
+                    detailRef =
+                        detailRef,
+                    sourceRef =
+                        sourceSha,
+                    modelSha256 =
+                        modelSha256,
                 )
 
             if (
@@ -483,7 +868,8 @@ private class WhisperCppCliProvider private constructor(
                     input ->
                     val buffer =
                         ByteArray(
-                            1024 * 1024,
+                            1024 *
+                                1024,
                         )
                     while (
                         true

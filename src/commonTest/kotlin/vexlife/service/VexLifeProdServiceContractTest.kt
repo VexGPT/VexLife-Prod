@@ -67,6 +67,10 @@ class VexLifeProdServiceContractTest {
             VexLifeProdServiceContract.LocalAsrModelControlPath,
         )
         assertEquals(
+            "/api/v1/local-asr/prepare",
+            VexLifeProdServiceContract.LocalAsrPreparePath,
+        )
+        assertEquals(
             "/api/v1/local-asr/transcribe",
             VexLifeProdServiceContract.LocalAsrTranscribePath,
         )
