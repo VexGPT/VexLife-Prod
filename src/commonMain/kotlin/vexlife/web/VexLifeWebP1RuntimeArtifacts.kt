@@ -88,6 +88,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 currentStatePath: ${jsString(VexLifeProdServiceContract.CurrentStatePath)},
                 conversationPath: ${jsString(VexLifeProdServiceContract.ConversationPath)},
                 contextPath: ${jsString(VexLifeProdServiceContract.ContextPath)},
+                contextProfilesPath: ${jsString(VexLifeProdServiceContract.ContextProfilesPath)},
+                contextProfilesControlPath: ${jsString(VexLifeProdServiceContract.ContextProfilesControlPath)},
+                contextProfileExportPath: ${jsString(VexLifeProdServiceContract.ContextProfileExportPath)},
+                foundationalFieldPath: ${jsString(VexLifeProdServiceContract.FoundationalFieldPath)},
                 memoryPath: ${jsString(VexLifeProdServiceContract.MemoryPath)},
                 settingsPath: ${jsString(VexLifeProdServiceContract.SettingsPath)},
                 privatePath: ${jsString(VexLifeProdServiceContract.PrivatePath)},
@@ -110,6 +114,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 keys: $workspaceApps,
                 sourceTemplate: ${jsString(VexLifeWorkspaceApp.SourceTemplate.key)},
                 archives: ${jsString(VexLifeWorkspaceApp.Archives.key)},
+                vexContext: ${jsString(VexLifeWorkspaceApp.VexContext.key)},
                 browser: ${jsString(VexLifeWorkspaceApp.Browser.key)},
                 sourceTemplateScopes: $sourceTemplateScopes,
                 storageKey: 'vexlife-prod.presentation.app'
@@ -146,6 +151,39 @@ object VexLifeWebP1RuntimeArtifacts {
                 archives: byId('archives'),
                 archivesSummary: byId('archives-summary'),
                 archivesTimeline: byId('archives-timeline'),
+                vexContext: byId('vex-context'),
+                contextProfileBadge: byId('context-profile-badge'),
+                contextProfileSummary: byId('context-profile-summary'),
+                contextProfileName: byId('context-profile-name'),
+                contextProfileFoundationMode: byId('context-profile-foundation-mode'),
+                contextProfileFoundationField: byId('context-profile-foundation-field'),
+                contextProfileFoundationText: byId('context-profile-foundation-text'),
+                contextProfileProcessRetention: byId('context-profile-process-retention'),
+                contextProfileSave: byId('context-profile-save'),
+                contextProfileSaveAs: byId('context-profile-save-as'),
+                contextProfileRestore: byId('context-profile-restore'),
+                contextProfileExport: byId('context-profile-export'),
+                contextProfileImport: byId('context-profile-import'),
+                contextProfileHome: byId('context-profile-home'),
+                contextProfileNote: byId('context-profile-note'),
+                contextChangesList: byId('context-changes-list'),
+                vexContextTurnSummary: byId('vex-context-turn-summary'),
+                vexContextBudget: byId('vex-context-budget'),
+                contextFoundationStatus: byId('context-foundation-status'),
+                contextFoundationBody: byId('context-foundation-body'),
+                contextMemoryStatus: byId('context-memory-status'),
+                contextMemoryBody: byId('context-memory-body'),
+                contextContinuityStatus: byId('context-continuity-status'),
+                contextContinuityBody: byId('context-continuity-body'),
+                contextConversationStatus: byId('context-conversation-status'),
+                contextConversationBody: byId('context-conversation-body'),
+                contextBrowserStatus: byId('context-browser-status'),
+                contextBrowserBody: byId('context-browser-body'),
+                contextComponentList: byId('context-component-list'),
+                contextProcessStatus: byId('context-process-status'),
+                contextProcessBody: byId('context-process-body'),
+                contextOutputBody: byId('context-output-body'),
+                contextAfterBody: byId('context-after-body'),
                 quickActions: byId('quick-actions'),
                 languagePanel: byId('language-panel'),
                 languageList: byId('language-list'),
@@ -263,6 +301,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   return apps.sourceTemplate;
                 })(),
                 memory: null,
+                contextProfiles: null,
+                foundationalField: null,
+                contextProfileDirty: false,
+                contextProfileInFlight: false,
                 diagnostics: null,
                 diagnosticsInFlight: false,
                 // Settings → Models projection (VexLifeModels); refreshed while a download runs.
@@ -2271,10 +2313,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.appSelector.value = app;
                 ui.family.hidden = app !== apps.sourceTemplate;
                 ui.archives.hidden = app !== apps.archives;
-                ui.viewport.hidden = app === apps.archives;
+                ui.vexContext.hidden = app !== apps.vexContext;
+                ui.viewport.hidden = app === apps.archives || app === apps.vexContext;
                 ui.addressForm.dataset.app = app;
-                ui.query.disabled = app === apps.archives;
-                if (app === apps.archives) ui.frameStatus.hidden = true;
+                ui.query.disabled = app === apps.archives || app === apps.vexContext;
+                if (app === apps.archives || app === apps.vexContext) ui.frameStatus.hidden = true;
                 for (const member of ui.family.querySelectorAll('.family-member')) {
                   const current = String(state.humanPageUrl ?? '').startsWith(member.dataset.familyScope);
                   if (current) member.setAttribute('aria-current', 'page');
@@ -2282,6 +2325,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
                 root.dataset.vexApp = app;
                 if (app === apps.archives) renderArchives();
+                if (app === apps.vexContext) renderVexContext();
               };
 
               const archiveDayKey = (date) =>
@@ -2375,7 +2419,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 try {
                   localStorage.setItem(apps.storageKey, app);
                 } catch {}
-                if (app === apps.archives) {
+                if (app === apps.archives || app === apps.vexContext) {
                   state.includePage = false;
                 } else if (app === apps.sourceTemplate && !inSourceTemplate(state.humanPageUrl)) {
                   const home = ui.family.querySelector('.family-member')?.dataset.familyHome;
