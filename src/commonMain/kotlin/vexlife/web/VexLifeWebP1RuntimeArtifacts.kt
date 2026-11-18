@@ -293,6 +293,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 memoryPath: ${jsString(VexLifeProdServiceContract.MemoryPath)},
                 settingsPath: ${jsString(VexLifeProdServiceContract.SettingsPath)},
                 localAsrPath: ${jsString(VexLifeProdServiceContract.LocalAsrPath)},
+                localAsrSpokenLanguagePath: ${jsString(VexLifeProdServiceContract.LocalAsrSpokenLanguagePath)},
                 localAsrTranscribePath: ${jsString(VexLifeProdServiceContract.LocalAsrTranscribePath)},
                 privatePath: ${jsString(VexLifeProdServiceContract.PrivatePath)},
                 privateControlPath: ${jsString(VexLifeProdServiceContract.PrivateControlPath)},
@@ -469,6 +470,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 modelsList: byId('models-list'),
                 modelsNote: byId('models-note'),
                 localAsrSelection: byId('local-asr-selection'),
+                localAsrSpokenLanguage: byId('local-asr-spoken-language'),
                 localAsrStatus: byId('local-asr-status'),
                 localAsrNote: byId('local-asr-note'),
                 diagnosticsStatus: byId('diagnostics-status'),
@@ -609,7 +611,12 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const voiceInputLanguage = () => {
-                const code = state.settings?.replyLanguage ?? voiceInput.defaultLanguage;
+                const projection = state.localAsr;
+                const code =
+                  projection?.resolvedSpokenLanguageCode ??
+                  state.settings?.replyLanguage ??
+                  voiceInput.defaultLanguage;
+                if (code === 'auto') return { code: 'auto', locale: null };
                 const locale = voiceInput.languages[code];
                 return locale ? { code, locale } : null;
               };
@@ -647,11 +654,15 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const localAsrAvailableForLanguage = (language) => {
                 const option = selectedLocalAsrOption();
+                const supportedCodes = option?.languageCodes ?? [];
                 return Boolean(
                   language &&
                   option &&
                   option.currentState === 'READY' &&
-                  (option.languageCodes ?? []).includes(language.code)
+                  (
+                    supportedCodes.includes(language.code) ||
+                    (language.code === 'auto' && supportedCodes.length > 1)
+                  )
                 );
               };
 
