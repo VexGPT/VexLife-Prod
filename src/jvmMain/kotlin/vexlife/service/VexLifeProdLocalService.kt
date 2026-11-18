@@ -642,7 +642,9 @@ class VexLifeProdLocalService private constructor(
                     }
 
             val presentation =
-                VexLifeWebP1RuntimeArtifacts.generate()
+                VexLifeWebP1RuntimeArtifacts.generate(
+                    presentationSourceSha = sourceSha,
+                )
             val executor =
                 Executors.newCachedThreadPool()
             var frameHost: VexLifeProdFrameHost? =
@@ -831,6 +833,20 @@ class VexLifeProdLocalService private constructor(
                     status = 403,
                     code = "CROSS_ORIGIN_EFFECT_NOT_ADMITTED",
                     message = "cross-origin browser requests may not invoke VexLife local effects",
+                )
+                return
+            }
+
+            if (
+                !browserPresentationCurrent(
+                    exchange,
+                )
+            ) {
+                respondError(
+                    exchange = exchange,
+                    status = 409,
+                    code = VexLifeProdServiceContract.StalePresentationCode,
+                    message = "VexLife updated while this page was open. Reload VexLife to continue.",
                 )
                 return
             }
@@ -3578,6 +3594,52 @@ class VexLifeProdLocalService private constructor(
                 "same-origin" ||
             fetchSite ==
                 "none"
+    }
+
+    /**
+     * Browser pages are source-bound manifestations of this exact Product service. A browser page
+     * that survived a service replacement must not perform an Effect against the newer/different
+     * service. Non-browser local clients retain their separate admission path.
+     */
+    private fun browserPresentationCurrent(
+        exchange: HttpExchange,
+    ): Boolean {
+        if (
+            exchange.requestMethod ==
+                "GET" ||
+            exchange.requestMethod ==
+                "HEAD"
+        ) {
+            return true
+        }
+
+        val browserOriginated =
+            exchange.requestHeaders
+                .getFirst(
+                    "Origin",
+                ) !=
+                null ||
+                exchange.requestHeaders
+                    .getFirst(
+                        "Sec-Fetch-Site",
+                    ) !=
+                null
+
+        if (
+            !browserOriginated
+        ) {
+            return true
+        }
+
+        val presentationSource =
+            exchange.requestHeaders
+                .getFirst(
+                    VexLifeProdServiceContract.PresentationSourceHeader,
+                )
+                ?.trim()
+
+        return presentationSource ==
+            sourceSha
     }
 
     private fun requireMethod(
