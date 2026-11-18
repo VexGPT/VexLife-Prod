@@ -48,6 +48,7 @@ import vexlife.memory.VexLifeMemoryFamily
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.platform.VexLifeJvmPlatformTarget
+import vexlife.platform.VexLifePlatformRealization
 import vexlife.platform.windows.VexLifeProdWindowsCurrentState
 import vexlife.vision.VexLifeProdVisionRuntime
 import vexlife.vision.VexLifeVisionFamily
@@ -144,7 +145,7 @@ class VexLifeProdLocalService private constructor(
             VexLifeCurrentMemoryReader.readCurrent(it)
         }
 
-        private fun currentTarget(): HereticRuntimeRealization.Target =
+        private fun currentTarget(): VexLifePlatformRealization.Target =
             VexLifeJvmPlatformTarget.requireCurrent()
 
         private fun currentTotalMemoryBytes(): Long? =
