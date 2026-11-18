@@ -875,6 +875,11 @@ class VexLifeProdLocalService private constructor(
                         exchange,
                     )
 
+                VexLifeProdServiceContract.LocalAsrModelControlPath ->
+                    handleLocalAsrModelControl(
+                        exchange,
+                    )
+
                 VexLifeProdServiceContract.LocalAsrTranscribePath ->
                     handleLocalAsrTranscribe(
                         exchange,
