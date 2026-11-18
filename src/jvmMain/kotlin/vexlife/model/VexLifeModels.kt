@@ -615,11 +615,17 @@ class VexLifeModels(
                 require(entry.origin == HereticModelCatalog.Origin.HOME_IMPORTED) {
                     "only one Home-imported model can be forgotten"
                 }
-                FileHereticRuntimeConfigurationStore(home)
-                    .forgetModel(entry.modelRef)
                 val forgotten =
-                    FileHereticModelImportStore(home)
-                        .forget(entry.handle)
+                    VexLifeProdLocalSetupLease.acquire(home).use {
+                        // Forget depends on this model's artifact bytes remaining absent. Hold the
+                        // same Home setup lease used by artifact mutation across the final absence
+                        // check, runtime-setting cleanup, and imported-history write so a concurrent
+                        // setup/download cannot create orphaned bytes between those effects.
+                        FileHereticRuntimeConfigurationStore(home)
+                            .forgetModel(entry.modelRef)
+                        FileHereticModelImportStore(home)
+                            .forget(entry.handle)
+                    }
                 remember(
                     entry,
                     controlRef,
