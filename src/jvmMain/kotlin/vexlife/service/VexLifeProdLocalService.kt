@@ -1436,6 +1436,16 @@ class VexLifeProdLocalService private constructor(
             when (
                 request.controlRef
             ) {
+                VexLifeContextProfileFamily.ControlUse ->
+                    VexLifeContextProfileFamily.Use(
+                        profileRef =
+                            requireNotNull(
+                                request.profileRef,
+                            ) {
+                                "using a saved Context Profile requires its profile ref"
+                            },
+                    )
+
                 VexLifeContextProfileFamily.ControlSave ->
                     VexLifeContextProfileFamily.Save(
                         profileRef =
@@ -1516,6 +1526,15 @@ class VexLifeProdLocalService private constructor(
         when (
             val effect = act.effect
         ) {
+            is VexLifeContextProfileFamily.Effect.SelectSaved -> {
+                contextProfiles.selectSaved(
+                    profileRef = effect.profileRef,
+                    productFoundation = productFoundation,
+                )
+                effectPerformed =
+                    true
+            }
+
             is VexLifeContextProfileFamily.Effect.Persist -> {
                 val profileRef =
                     requireNotNull(
