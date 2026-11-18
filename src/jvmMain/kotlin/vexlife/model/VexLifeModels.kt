@@ -14,6 +14,7 @@ import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.HereticRuntimeConfiguration
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HuggingFaceModelInspection
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticModelImportStore
@@ -47,6 +48,7 @@ class VexLifeModels(
     productHome: Path,
     private val servingModelRef: () -> String?,
     private val totalMemoryBytes: () -> Long?,
+    private val runtimeRealizations: HereticRuntimeRealization.Resolver,
     private val modelSwitchRealization: ModelSwitchRealization? = null,
     private val acquirer:
         (
@@ -77,7 +79,7 @@ class VexLifeModels(
 
     fun interface ModelSwitchRealization {
         fun switch(
-            entry: HereticModelCatalog.Entry,
+            realization: HereticRuntimeRealization.Value,
             observe: (SwitchPhase) -> Unit,
         )
     }
@@ -266,6 +268,12 @@ class VexLifeModels(
                 )
         val rows =
             HereticModelOfferings.entries(home).map { entry ->
+                val runtimeResolution =
+                    runtimeRealizations.resolve(
+                        entry,
+                    )
+                val realizable =
+                    runtimeResolution is HereticRuntimeRealization.Resolution.Supported
                 val presence = HereticArtifactMaterialization.observePresence(home, entry)
                 val runtimeConfiguration =
                     runtimeConfigurationStore.effective(
@@ -284,6 +292,7 @@ class VexLifeModels(
                         serving = serving,
                         running = running,
                         currentSwitch = currentSwitch,
+                        realizable = realizable,
                         runtimeConfiguration = runtimeConfiguration,
                         runtimeConfigurationPending = runtimeConfigurationPending,
                     )
@@ -645,6 +654,24 @@ class VexLifeModels(
         entry: HereticModelCatalog.Entry,
         controlRef: String,
     ) {
+        val resolved =
+            when (
+                val resolution =
+                    runtimeRealizations.resolve(
+                        entry,
+                    )
+            ) {
+                is HereticRuntimeRealization.Resolution.Supported ->
+                    resolution.realization
+
+                is HereticRuntimeRealization.Resolution.Unsupported ->
+                    error(
+                        "selected model has no runtime realization on current target " +
+                            HereticRuntimeRealization.targetRef(
+                                resolution.target,
+                            ),
+                    )
+            }
         val realization =
             requireNotNull(
                 modelSwitchRealization,
@@ -677,7 +704,7 @@ class VexLifeModels(
         executor.execute {
             try {
                 realization.switch(
-                    entry,
+                    resolved,
                 ) {
                     phase ->
                     switching.set(
@@ -835,6 +862,7 @@ class VexLifeModels(
         serving: String?,
         running: Download?,
         currentSwitch: SwitchProjection?,
+        realizable: Boolean,
         runtimeConfiguration: HereticRuntimeConfiguration.Effective,
         runtimeConfigurationPending: Boolean = false,
     ) =
@@ -857,6 +885,7 @@ class VexLifeModels(
             serving = serving == entry.modelRef,
             switching = currentSwitch?.handle == entry.handle,
             imported = entry.origin == HereticModelCatalog.Origin.HOME_IMPORTED,
+            realizable = realizable,
             runtimeConfiguration = runtimeConfiguration,
             runtimeConfigurationPending = runtimeConfigurationPending,
             anyDownloadRunning = running != null,
