@@ -4,7 +4,7 @@
   "sourcePr": 251,
   "tempRelayPr": 261,
   "attempt": "LIVED-A002",
-  "disposition": "SEALED_NOT_EXECUTED",
+  "disposition": "CONSUMED_SAFE_FAILURE",
   "predecessor": {
     "attempt": "LIVED-A001",
     "disposition": "FORMATION_REJECTED_BEFORE_PRODUCT_PROOF",
@@ -32,5 +32,25 @@
       "relay-context.json",
       "README.txt"
     ]
+  },
+  "result": {
+    "outerReturnSha256": "c4a0faf98c19ab7c5340c70bc5557dca4f140c19ed26f2cc1bacd5765f27cb90",
+    "outerDisposition": "PASS",
+    "innerReturnSha256": "d1d4eec0ad32d69b3347576c75a969a2a48c6009febeb986be6a75779a6271f3",
+    "innerDisposition": "SAFE_FAILURE",
+    "exactCandidateReached": true,
+    "expectedHeadPassed": true,
+    "expectedTreePassed": true,
+    "temporaryHarnessCompiled": true,
+    "livedJvmTestReached": true,
+    "browserDriverExitCode": 1,
+    "browserDriverFailureTextPreserved": false,
+    "candidateStayedClean": true,
+    "realHomeTouched": false,
+    "classification": "LIVED_BROWSER_DRIVER_EXIT_NONZERO_MESSAGE_NOT_PRESERVED"
+  },
+  "successor": {
+    "attempt": "LIVED-A003",
+    "change": "Proof-harness diagnostics only: preserve browser-driver.log + JUnit XML and emit browser-stage checkpoints. Product bytes unchanged."
   }
 }
