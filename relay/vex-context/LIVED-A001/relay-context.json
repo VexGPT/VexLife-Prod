@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "vexlife-prod.vex-context-lived-browser-carriage/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 251,
+  "tempRelayPr": 261,
+  "attempt": "LIVED-A001",
+  "disposition": "SEALED_NOT_EXECUTED",
+  "candidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "branch": "VXG-111726-vex-context-profiles-a001",
+    "base": "64c5be05a2e4331de86672d1285923f175e88e9f",
+    "head": "4ecf2d3c0fb21f9958455313148b7e04eeb759fd",
+    "tree": "dbf3ec8511c99ee940fd78eecebcd3963eada495",
+    "changedPathCount": 22
+  },
+  "livedBoundary": {
+    "disposableCanonicalHome": true,
+    "realHomeTouched": false,
+    "realModelCalled": false,
+    "ordinaryProductServiceRotated": false,
+    "productServiceMode": "startForTest random loopback ports",
+    "turnMode": "DirectCompanionTurn canonical scripted provider",
+    "browserMode": "headless Chrome over actual generated VexWeb"
+  },
+  "assertions": [
+    "exact baseline request/reply and Product Foundation visible",
+    "Save As creates next-turn profile without rewriting last-turn receipt",
+    "Save advances named profile revision",
+    "process-view preference does not dirty/export/import with profile",
+    "restore default preserves saved profiles",
+    "import creates local copy",
+    "View in Vex Home targets disposable proof Home",
+    "two screenshots captured"
+  ],
+  "memorySibling": {
+    "sourcePr": 247,
+    "observedHead": "da45af6aa117d767ab8c0a678b0d2c676e7a9c8a",
+    "semanticOwnerDeltaSinceAssurance": false,
+    "heldIntegrationOverlap": "generated Screen Lens"
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "predicateClass": "SOURCE_OWNER_BROWSER",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor",
+    "resultFilename": "RETURN-VEXLIFE-VEX-CONTEXT-LIVED-BROWSER-A001.zip"
+  },
+  "formationBundle": {
+    "filename": "VexLife-Vex-Context-LivedBrowser-RelayFormation-A001--sha256-971fe077d9b9750004846f8d21d8589d94ad5774f19e2401d4fc9dbbaf0556cc.zip",
+    "sha256": "971fe077d9b9750004846f8d21d8589d94ad5774f19e2401d4fc9dbbaf0556cc",
+    "bytes": 25568,
+    "members": [
+      "RUN.command",
+      "formation.mjs",
+      "relay-context.json",
+      "README.txt"
+    ],
+    "fullManifestLocation": "inside formation ZIP"
+  },
+  "authorityBoundary": {
+    "allowed": [
+      "exact repository read/check",
+      "temporary disposable-checkout proof harness",
+      "disposable Home/service/Chrome proof",
+      "form canonical RETURN"
+    ],
+    "held": [
+      "real Vex Home mutation",
+      "real model/runtime mutation",
+      "ordinary service rotation",
+      "Memory semantic mutation",
+      "approval",
+      "READY",
+      "merge",
+      "publication"
+    ]
+  }
+}
