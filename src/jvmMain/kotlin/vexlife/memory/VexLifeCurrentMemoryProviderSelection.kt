@@ -9,8 +9,8 @@ import java.nio.file.Path
  * the exact statement refs that Daily actually supplied and receives only the remaining admitted
  * Memory token room.
  *
- * This owner does not choose prompt placement, provider role, or receipt shape. Those remain with the
- * current prompt/context owner.
+ * This owner does not choose prompt placement, provider role, or receipt shape. Those remain with
+ * the current prompt/context owner.
  */
 internal object VexLifeCurrentMemoryProviderSelection {
     data class Selection(
@@ -44,40 +44,28 @@ internal object VexLifeCurrentMemoryProviderSelection {
 
         val dailyStatementRefs =
             daily.pages
-                .map(
-                    VexLifeMemoryContract.Page::statementRef,
-                )
+                .map(VexLifeMemoryContract.Page::statementRef)
                 .also {
                     require(it.distinct().size == it.size) {
                         "Daily Memory selection contains duplicate statement refs"
                     }
                 }
                 .toSet()
-        val remainingCurrentSemanticTokenCap =
-            memoryTokenCap -
-                daily.estimatedSystemMessageTokens
+        val remainingCurrentSemanticTokenCap = memoryTokenCap - daily.estimatedSystemMessageTokens
         val currentAcceptedSemantic =
             VexLifeCurrentAcceptedSemanticPromptBlock.form(
-                projection =
-                    VexLifeCurrentAcceptedSemanticProjection.read(
-                        productHome,
-                    ),
+                projection = VexLifeCurrentAcceptedSemanticProjection.read(productHome),
                 excludedStatementRefs = dailyStatementRefs,
                 memoryTokenCap = remainingCurrentSemanticTokenCap,
             )
         require(
-            dailyStatementRefs
-                .intersect(
-                    currentAcceptedSemantic.statementRefs.toSet(),
-                )
-                .isEmpty(),
+            dailyStatementRefs.intersect(currentAcceptedSemantic.statementRefs.toSet()).isEmpty()
         ) {
             "Daily and current accepted semantic provider selections overlap by statement ref"
         }
 
         val estimatedSelectedTokens =
-            daily.estimatedSystemMessageTokens +
-                currentAcceptedSemantic.estimatedContentTokens
+            daily.estimatedSystemMessageTokens + currentAcceptedSemantic.estimatedContentTokens
         require(estimatedSelectedTokens <= memoryTokenCap) {
             "selected Memory provider components exceed the admitted Memory token cap"
         }
