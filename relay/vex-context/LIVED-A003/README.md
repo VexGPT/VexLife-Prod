@@ -70,3 +70,30 @@ Expected return:
 `RETURN-VEXLIFE-VEX-CONTEXT-LIVED-BROWSER-A003--sha256-<digest>.zip`
 
 <!-- [VXG RealForever][PR251][PR261][LIVED-BROWSER][A003][GITHUB-CARRIED] -->
+
+
+## GitHub carriage correction
+
+Victor's first GitHub-native launcher correctly failed closed on SHA-256 mismatch:
+
+```text
+expected 8b9e8831b0b2347fe7e386166598f9891671bdd5bc194de71709b776fd5d59ac
+observed c8bd7d44db8721e324b10e9d83b71bffe60c43a49f59970c31e655ac4e771b82
+```
+
+The failure occurred before ZIP extraction or Relay execution.
+
+Root cause was one manually-carried base64 character in `bundle.b64.part04`:
+
+```text
+expected  ...H8FXZusF+...
+carried   ...H8FXzusF+...
+                  ^
+```
+
+The part is corrected in GitHub. The combined carried base64 now matches the original expected length
+(`35448` characters) and the original per-part + combined rolling checksums. The human launcher still
+requires the authoritative decoded ZIP SHA-256 and byte count before execution, so this bookkeeping
+repair cannot bypass the cryptographic gate.
+
+No Product source changed.
