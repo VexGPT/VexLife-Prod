@@ -123,3 +123,51 @@ No Product mutation, Home/Memory mutation, approval, READY, merge or publication
 A004 is not PASS until its exact canonical RETURN is consumed.
 
 <!-- [VXG RealForever][PR251][PR261][TEMP-RELAY][A004] -->
+
+
+## A004 consumed result — post-assurance SourceOwner PASS
+
+Victor returned:
+
+```text
+RETURN-t251vc-a004--sha256-e33c6f63852991dfd8c12c755599a07daee133e43d9b6ffed7c3ff204fce7d9f.zip
+
+outer VexLocalBridge
+  sha256      e33c6f63852991dfd8c12c755599a07daee133e43d9b6ffed7c3ff204fce7d9f
+  disposition PASS
+
+inner VexRelay
+  sha256      0855da6d68767f57d7c96ec6c5011997d5e2691031e183efdccce94d4d195675
+  disposition PASS
+```
+
+Exact post-assurance candidate proven:
+
+```text
+base 64c5be05a2e4331de86672d1285923f175e88e9f
+head 4ecf2d3c0fb21f9958455313148b7e04eeb759fd
+tree dbf3ec8511c99ee940fd78eecebcd3963eada495
+paths 22
+```
+
+Proof:
+
+```text
+checkVexLifeStrings                         PASS
+full jvmTest                                PASS
+compileKotlinJs + compileTestKotlinJs       PASS
+ExactHeadSourceOwnerProof review            PASS
+22 changed paths accounted                  PASS
+10 complete source bodies selected          contract-bound projection
+12 complete source bodies omitted           projection cap only; full diff/index retained
+candidate findings                          0
+harness findings                            0
+environment findings                        0
+unknown findings                            0
+```
+
+No Product source, branch, Home, Memory, model/runtime, approval, READY, merge or publication mutation
+was performed by this proof attempt.
+
+The source/semantic-correction re-proof gate is consumed. The next edge is exact currentness
+confirmation followed by lived Vex Context/Profile UI proof.
