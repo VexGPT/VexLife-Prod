@@ -12,12 +12,52 @@ import vexlife.platform.windows.VexLifeProdWindowsRuntimeSession
  * concrete owners.
  */
 internal object VexLifeProdRuntimeSessionFactory {
+    /**
+     * Long-lived Product service construction.
+     *
+     * Mac keeps its existing reuse-only service-process boundary. Windows service process owns the
+     * native llama.cpp child and may start it from already-materialized exact dependencies.
+     */
+    fun establishForServiceProcess(
+        productHome: Path,
+    ): VexLifeProdRuntimeSession {
+        val realization =
+            selectedRealization(
+                productHome,
+            )
+        return establishExact(
+            productHome = productHome,
+            realization = realization,
+            allowAcquisition = false,
+            allowRuntimeStart =
+                realization.target ==
+                    HereticRuntimeRealization.WindowsX64,
+        )
+    }
+
     fun establishCurrent(
         productHome: Path,
         allowAcquisition: Boolean,
         allowRuntimeStart: Boolean,
         progress: VexLifeProdSetupProgress = VexLifeProdSetupProgress.Silent,
     ): VexLifeProdRuntimeSession {
+        val realization =
+            selectedRealization(
+                productHome,
+            )
+
+        return establishExact(
+            productHome = productHome,
+            realization = realization,
+            allowAcquisition = allowAcquisition,
+            allowRuntimeStart = allowRuntimeStart,
+            progress = progress,
+        )
+    }
+
+    private fun selectedRealization(
+        productHome: Path,
+    ): HereticRuntimeRealization.Value {
         val manifest =
             requireNotNull(
                 vexlife.home.VexLifeProdHomeFiles.observeExisting(
@@ -41,32 +81,23 @@ internal object VexLifeProdRuntimeSessionFactory {
                     VexLifeJvmPlatformTarget::requireCurrent,
                 ),
             )
-        val realization =
-            when (
-                val resolution =
-                    resolver.resolve(
-                        selected,
-                    )
-            ) {
-                is HereticRuntimeRealization.Resolution.Supported ->
-                    resolution.realization
+        return when (
+            val resolution =
+                resolver.resolve(
+                    selected,
+                )
+        ) {
+            is HereticRuntimeRealization.Resolution.Supported ->
+                resolution.realization
 
-                is HereticRuntimeRealization.Resolution.Unsupported ->
-                    error(
-                        "selected Product model has no runtime realization on current target " +
-                            HereticRuntimeRealization.targetRef(
-                                resolution.target,
-                            ),
-                    )
-            }
-
-        return establishExact(
-            productHome = productHome,
-            realization = realization,
-            allowAcquisition = allowAcquisition,
-            allowRuntimeStart = allowRuntimeStart,
-            progress = progress,
-        )
+            is HereticRuntimeRealization.Resolution.Unsupported ->
+                error(
+                    "selected Product model has no runtime realization on current target " +
+                        HereticRuntimeRealization.targetRef(
+                            resolution.target,
+                        ),
+                )
+        }
     }
 
     fun establishExact(
