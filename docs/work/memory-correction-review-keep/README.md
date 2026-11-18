@@ -108,6 +108,13 @@ human decision receipt exists
 + semantic acceptance already exists
 -> reconcile exact candidate + exact decision; do not mint a second acceptance
 
+read current Score coordinates first
++ deterministic statementRef is current
+-> resolve and verify its exact acceptance binding
+
+no current statementRef
+-> append once through the Score owner using the observed scoreHeadSha256
+
 deterministic statementRef already exists in current Score
 + it binds the same acceptance
 -> do not append a second Score statement
