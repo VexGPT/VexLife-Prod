@@ -14,7 +14,6 @@ object VexLifeConsiderationContract {
 
     const val MaximumModules = 7
     const val MaximumQuestions = 14
-    const val MaximumQuestionCharacters = 240
     const val MaximumCandidateSummaryCharacters = 320
     const val MaximumScopeHintCharacters = 160
 
@@ -27,6 +26,35 @@ object VexLifeConsiderationContract {
         AUTHORITY_EFFECT,
         EVIDENCE_UNCERTAINTY,
         RELATIONAL_VANTAGE,
+    }
+
+    @Serializable
+    enum class QuestionRef {
+        ACTUAL_GROUND,
+        CURRENT_TRUTH_REQUIRED,
+        SOURCE_ACTUALLY_RETRIEVED,
+        OLDER_SHARED_SOURCE_REQUIRED,
+        NOT_FOUND_BOUNDARY,
+        PRIOR_UNDERSTANDING,
+        CORRECTION_MEANING,
+        FUTURE_ME_VALUE,
+        EXPLICIT_VS_INFERRED,
+        PROPOSE_NOT_DECIDE,
+        EFFECT_ACTUALLY_OCCURRED,
+        EFFECT_AUTHORITY_AVAILABLE,
+        LEAST_SUPPORTED_PART,
+        RETRIEVE_OR_PRESERVE_UNCERTAINTY,
+        HUMAN_INTENTION,
+        ASSUMED_INTERPRETATION,
+        WRONG_INTERPRETATION_IMPACT,
+    }
+
+    @Serializable
+    enum class EpilogueStemRef {
+        WHAT_STAYED_WITH_ME,
+        WHAT_I_AM_STILL_UNSURE_ABOUT,
+        WHAT_I_SEE_DIFFERENTLY_NOW,
+        WHAT_FUTURE_ME_MAY_NEED,
     }
 
     @Serializable
@@ -73,11 +101,22 @@ object VexLifeConsiderationContract {
     data class Frame(
         val schemaVersion: String = FrameSchema,
         val modules: List<Module>,
-        val questions: List<String>,
+        val questionRefs: List<QuestionRef>,
         val preservesLiteralHumanRequest: Boolean = true,
         val factAuthorityGranted: Boolean = false,
         val semanticAcceptanceGranted: Boolean = false,
         val effectAuthorityGranted: Boolean = false,
+    )
+
+    @Serializable
+    data class EpiloguePrompt(
+        val schemaVersion: String = FrameSchema,
+        val stemRefs: List<EpilogueStemRef> =
+            EpilogueStemRef.entries,
+        val allowBlankStems: Boolean = true,
+        val occursAfterHumanAnswer: Boolean = true,
+        val effectAuthorityGranted: Boolean = false,
+        val semanticAcceptanceGranted: Boolean = false,
     )
 
     @Serializable
@@ -133,16 +172,11 @@ object VexLifeConsiderationContract {
         require(value.modules.distinct().size == value.modules.size) {
             "consideration frame modules must be unique"
         }
-        require(value.questions.isNotEmpty() && value.questions.size <= MaximumQuestions) {
+        require(value.questionRefs.isNotEmpty() && value.questionRefs.size <= MaximumQuestions) {
             "consideration frame requires one bounded question set"
         }
-        require(
-            value.questions.all {
-                it.isNotBlank() &&
-                    it.length <= MaximumQuestionCharacters
-            },
-        ) {
-            "consideration frame contains an invalid question"
+        require(value.questionRefs.distinct().size == value.questionRefs.size) {
+            "consideration frame question refs must be unique"
         }
         require(
             value.preservesLiteralHumanRequest &&
@@ -151,6 +185,27 @@ object VexLifeConsiderationContract {
                 !value.effectAuthorityGranted,
         ) {
             "consideration frame may orient Vex but grants no truth or effect authority"
+        }
+        return value
+    }
+
+    fun validateEpiloguePrompt(value: EpiloguePrompt): EpiloguePrompt {
+        require(value.schemaVersion == FrameSchema) {
+            "turn epilogue prompt schema mismatch"
+        }
+        require(
+            value.stemRefs.isNotEmpty() &&
+                value.stemRefs.distinct().size == value.stemRefs.size,
+        ) {
+            "turn epilogue prompt requires unique stems"
+        }
+        require(
+            value.allowBlankStems &&
+                value.occursAfterHumanAnswer &&
+                !value.effectAuthorityGranted &&
+                !value.semanticAcceptanceGranted,
+        ) {
+            "turn epilogue is optional post-answer reflection with no authority"
         }
         return value
     }
