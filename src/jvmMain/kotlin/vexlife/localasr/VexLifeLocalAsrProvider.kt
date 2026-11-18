@@ -68,6 +68,27 @@ internal interface VexLifeLocalAsrProvider {
  * finish the browser->service->ASR->Composer lived circuit without vendoring the upstream Java
  * binding into Product source first.
  */
+internal fun whisperCppCliCommand(
+    executablePath: Path,
+    modelPath: Path,
+): List<String> =
+    listOf(
+        executablePath.toString(),
+        "-m",
+        modelPath.toString(),
+        "-f",
+        "-",
+        "-l",
+        "en",
+        "-nt",
+        "-np",
+        // stdin makes whisper-cli's default output target "-"; explicitly request text output so
+        // stdout carries the final transcript instead of only completing inference silently.
+        "-otxt",
+        "-t",
+        "4",
+    )
+
 private class WhisperCppCliProvider private constructor(
     private val executable: Path,
     private val model: Path,
@@ -112,17 +133,10 @@ private class WhisperCppCliProvider private constructor(
             System.nanoTime()
         val processBuilder =
             ProcessBuilder(
-                executablePath.toString(),
-                "-m",
-                modelPath.toString(),
-                "-f",
-                "-",
-                "-l",
-                "en",
-                "-nt",
-                "-np",
-                "-t",
-                "4",
+                whisperCppCliCommand(
+                    executablePath = executablePath,
+                    modelPath = modelPath,
+                )
             )
         // The Home-owned provider bundle keeps the exact native dylibs beside whisper-cli.
         // Provider library discovery is concrete realization, not Product/Family meaning.
