@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "vexlife-prod.temp-host-proof-continuity/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 310,
+  "sourceHead": "4d509b1f72ddc6cfeef38ce94192b62b4b61a3e4",
+  "sourceTree": "382dfcc3fcf7e5b9dd47e90900c02019d66109b5",
+  "sourceBase": "d2b241b903e34e0e14b3c561ffcfa77ae367662a",
+  "priorAttempt": {
+    "attempt": "A001",
+    "returnSha256": "3350bc1b85c706b396f1fc6e9cda653e47e2dedf8d6f4b354023b9ab563740a1",
+    "disposition": "FAIL",
+    "firstSubstantiveFailure": "compileKotlinJvm: java.lang.OutOfMemoryError: GC overhead limit exceeded",
+    "reachedLivedVoice": false
+  },
+  "architectureCorrection": {
+    "summary": "VoiceInput session semantics no longer duplicate Local-ASR spoken-language truth",
+    "sourceCommit": "4d509b1f72ddc6cfeef38ce94192b62b4b61a3e4",
+    "spokenLanguageOwner": "VexLifeLocalAsrSpokenLanguage + LocalAsrProjection",
+    "voiceInputOwner": "VexLifeVoiceInputFamily session State/Control/Effect",
+    "realizationBoundary": "VexLifeWebP1RuntimeArtifacts browser dictation session"
+  },
+  "predicates": [
+    "COMPLETE_REPOSITORY_SOURCE_BUILD_TEST_GATE",
+    "CURRENT_PRODUCT_LIFETIME_FRONT_DOOR",
+    "BASE_MULTILINGUAL_SELECTED",
+    "VEX_REPLY_LANGUAGE_EN",
+    "SPOKEN_LANGUAGE_FIXED_ZH",
+    "PARTIAL_INFERENCE_COMPLETED_MODEL_BASE_LANGUAGE_ZH",
+    "FINAL_INFERENCE_COMPLETED_MODEL_BASE_LANGUAGE_ZH",
+    "PROGRESSIVE_COMPOSER_CHINESE_HUMAN_WITNESS",
+    "FINAL_COMPOSER_CHINESE_EDITABLE_HUMAN_WITNESS",
+    "NO_AUTOMATIC_SEND"
+  ],
+  "buildPolicy": {
+    "gradleJvmMaxHeap": "2048m",
+    "gradleMaxWorkers": 2,
+    "kotlinCompilerExecutionStrategy": "in-process",
+    "purpose": "A001 build-memory recovery only; no Product semantic change"
+  },
+  "launcher": {
+    "path": "relay/voiceinput-current-main/A002/RUN-MAC.command",
+    "commit": "2b1019d941aa5b3f244fa484570083faf46067b1",
+    "blobSha": "a22e67b26ce1e4cf497b31ca7e622c7c95834346"
+  },
+  "expectedReturn": "RETURN-VEXLIFE-VOICEINPUT-CURRENT-MAIN-A002.zip",
+  "retention": {
+    "microphoneAudio": false,
+    "transcriptText": false
+  },
+  "disposition": "FORMED_NOT_EXECUTED"
+}
