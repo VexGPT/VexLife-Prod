@@ -172,6 +172,17 @@ class DirectCompanionTurnTest {
             0
         val progress =
             mutableListOf<DirectCompanionTurn.Progress>()
+        val browserContext =
+            DirectPromptContext.BrowserContext(
+                pageUrl =
+                    VexLifeProdBrowserContract.InitialPageUrl,
+                title =
+                    "Vextreme Terrain",
+                text =
+                    "Current terrain page context supplied through explicit Include this page.",
+                capture =
+                    VexLifeProdBrowserContract.CaptureRendered,
+            )
         val sourceReturnRequest =
             "VEXLIFE_CONVERSATION_SOURCE_RETURN_REQUEST/v1" +
                 "\n" +
@@ -249,6 +260,12 @@ class DirectCompanionTurnTest {
                                     "What was the exact older lantern-garden detail?",
                                 ),
                             )
+                            assertTrue(
+                                call.body.contains(
+                                    browserContext.text,
+                                ),
+                                "explicit browser context must remain present in the initial source-return stage",
+                            )
                             assertFalse(
                                 call.body.contains(
                                     "lantern-garden exact older source",
@@ -301,6 +318,12 @@ class DirectCompanionTurnTest {
                                 call.body.contains(
                                     "What was the exact older lantern-garden detail?",
                                 ),
+                            )
+                            assertTrue(
+                                call.body.contains(
+                                    browserContext.text,
+                                ),
+                                "the same explicit browser context must remain bound across the source-return stage",
                             )
                             assertFalse(
                                 call.body.contains(
@@ -365,6 +388,8 @@ class DirectCompanionTurnTest {
                                 "send.self-development.source-return.live.001",
                             content =
                                 "What was the exact older lantern-garden detail?",
+                            browserContext =
+                                browserContext,
                         ),
                     hooks =
                         DirectCompanionTurn.Hooks(
@@ -420,6 +445,17 @@ class DirectCompanionTurnTest {
             )
             assertFalse(
                 result.promptContextReceipt.sourceReturnProtocolEnabled,
+            )
+            assertTrue(
+                result.promptContextReceipt.browserContextIncluded,
+            )
+            assertTrue(
+                DirectPromptContext.browserContextMatches(
+                    receipt =
+                        result.promptContextReceipt,
+                    context =
+                        browserContext,
+                ),
             )
 
             val projectedProgress =
