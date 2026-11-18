@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "vexlife-prod.temp-host-proof-continuity/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 331,
+  "sourceHead": "1411e4d670e03b1ac144334d04b8c4af46dc0e23",
+  "sourceTree": "f54bf851099195c3f773fa30fc9d02af5b6525d6",
+  "priorAttempt": {
+    "attempt": "A002",
+    "returnSha256": "bbff00513d67260e2a72de573a84ffd6dff5634e48d66db29120ab1babb741a8",
+    "disposition": "FAIL",
+    "firstSubstantiveFailure": "jvmTest: 755 tests completed, 2 stale proof/presentation assertions failed",
+    "reachedLivedVoice": false
+  },
+  "corrections": [
+    "regenerate committed Screen Lens with LocalAsrComposerOutput Blueprint element",
+    "replace brittle pre-script-ranking local-voice implementation assertion with current local-only voice filter contract"
+  ],
+  "predicates": [
+    "COMPLETE_REPOSITORY_SOURCE_BUILD_TEST_GATE",
+    "CURRENT_PRODUCT_LIFETIME_FRONT_DOOR",
+    "A004_QUALIFIED_PERSISTENT_WHISPER_PROVIDER_REUSED",
+    "REPLY_LANGUAGE_ZH_HANS_OBSERVED",
+    "REPLY_LANGUAGE_ZH_HANT_OBSERVED",
+    "ZH_HANS_FOLLOW_REPLY_RESOLVES_SPOKEN_ZH",
+    "ZH_HANT_FOLLOW_REPLY_RESOLVES_SPOKEN_ZH",
+    "BASE_MULTILINGUAL_AS_SPOKEN_PARTIAL_FINAL",
+    "BASE_MULTILINGUAL_TRANSLATE_ENGLISH_PARTIAL_FINAL",
+    "AS_SPOKEN_MIXED_LANGUAGE_COMPOSER_HUMAN_WITNESS",
+    "TRANSLATE_TO_ENGLISH_COMPOSER_HUMAN_WITNESS",
+    "SCRIPT_MATCHING_SPEECH_VOICE_PREFERENCE_HUMAN_WITNESS_IF_AVAILABLE",
+    "NO_AUTOMATIC_SEND"
+  ],
+  "expectedReturn": "RETURN-VEXLIFE-VOICE-LANGUAGE-OUTPUT-A003.zip",
+  "retention": {
+    "microphoneAudio": false,
+    "transcriptText": false
+  },
+  "disposition": "FORMED_NOT_EXECUTED"
+}
