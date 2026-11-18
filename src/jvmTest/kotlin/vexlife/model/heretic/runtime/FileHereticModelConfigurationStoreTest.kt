@@ -13,6 +13,7 @@ import vexlife.home.VexLifeProdHome
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeQualification
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 
 class FileHereticModelConfigurationStoreTest {
@@ -210,6 +211,221 @@ class FileHereticModelConfigurationStoreTest {
             assertEquals(
                 HereticProductIdentity.ProductRuntimeReceiptRelativePath,
                 rebound.value.runtimeReceiptPath,
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun legacyV1BoundRecordReadsAsV2WithoutMutatingTheHome() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-model-binding-v1-migration-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+        try {
+            val fixture =
+                CanonicalVexLifeHomeFixture.form(
+                    home,
+                )
+            val store =
+                FileHereticModelConfigurationStore(
+                    home,
+                )
+            store.selectHeretic(
+                fixture.manifest,
+            )
+            val current =
+                store.bindQualified(
+                    manifest = fixture.manifest,
+                    qualifiedRuntime = qualifiedRuntime(),
+                )
+                    .value
+            val legacy =
+                HereticModelConfiguration.LegacyValueV1(
+                    schemaVersion =
+                        HereticModelConfiguration.LegacySchema,
+                    state =
+                        current.state,
+                    homeRef =
+                        current.homeRef,
+                    companionLineageRef =
+                        current.companionLineageRef,
+                    modelRef =
+                        current.modelRef,
+                    modelProfileRef =
+                        current.modelProfileRef,
+                    artifactRef =
+                        current.artifactRef,
+                    artifactContentSetSha256 =
+                        current.artifactContentSetSha256,
+                    runtimeAdapterRef =
+                        current.runtimeAdapterRef,
+                    runtimeClass =
+                        current.runtimeClass,
+                    endpoint =
+                        current.endpoint,
+                    requestModel =
+                        current.requestModel,
+                    runtimeReceiptPath =
+                        current.runtimeReceiptPath,
+                    automaticFallback =
+                        current.automaticFallback,
+                    automaticDownload =
+                        current.automaticDownload,
+                    automaticActivation =
+                        current.automaticActivation,
+                )
+            val path =
+                home.resolve(
+                    VexLifeProdHome.ModelConfigurationRelativePath,
+                )
+            Files.writeString(
+                path,
+                VexContractJson.encode(
+                    legacy,
+                ),
+            )
+            val before =
+                Files.readString(
+                    path,
+                )
+
+            val migrated =
+                assertIs<FileHereticModelConfigurationStore.Snapshot.Heretic>(
+                    store.read(
+                        fixture.manifest,
+                    ),
+                )
+                    .value
+
+            assertEquals(
+                HereticModelConfiguration.Schema,
+                migrated.schemaVersion,
+            )
+            assertEquals(
+                HereticRuntimeRealization
+                    .require(
+                        modelRef = migrated.modelRef,
+                        target = HereticRuntimeRealization.MacArm64,
+                    )
+                    .realizationRef,
+                migrated.realizationRef,
+            )
+            assertEquals(
+                before,
+                Files.readString(
+                    path,
+                ),
+                "read migration must not rewrite durable Home state",
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun windowsQualifiedRealizationPersistsWithoutMacRuntimeIdentity() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-model-binding-windows-realization-",
+            )
+                .toAbsolutePath()
+        val home =
+            parent.resolve(
+                ".vexlife",
+            )
+        try {
+            val fixture =
+                CanonicalVexLifeHomeFixture.form(
+                    home,
+                )
+            val store =
+                FileHereticModelConfigurationStore(
+                    home,
+                )
+            val realization =
+                HereticRuntimeRealization.WindowsQwen4B
+            val model =
+                vexlife.model.heretic.HereticModelCatalog.Models.Qwen4B
+            store.selectModel(
+                manifest = fixture.manifest,
+                model = model,
+            )
+            val evidence =
+                HereticModelConfiguration.QualifiedRuntimeEvidence(
+                    runtimeReceiptRef =
+                        "receipt.vexlife-prod.windows-heretic.4242",
+                    runtimeState =
+                        HereticRuntimeState.Qualified,
+                    modelRef =
+                        realization.modelRef,
+                    realizationRef =
+                        realization.realizationRef,
+                    modelProfileRef =
+                        realization.modelProfileRef,
+                    artifactRef =
+                        realization.artifact.artifactRef,
+                    artifactContentSetSha256 =
+                        realization.artifact.contentSetSha256,
+                    runtimeAdapterRef =
+                        realization.runtime.runtimeAdapterRef,
+                    runtimeClass =
+                        realization.runtime.runtimeClass,
+                    endpoint =
+                        realization.runtime.endpoint,
+                    requestModel =
+                        realization.runtime.requestModel,
+                    qualification =
+                        HereticRuntimeQualification.qualified(),
+                )
+
+            val transition =
+                store.bindQualified(
+                    manifest = fixture.manifest,
+                    qualifiedRuntime = evidence,
+                    runtimeReceiptPath =
+                        realization.runtimeReceiptRelativePath,
+                )
+
+            assertEquals(
+                FileHereticModelConfigurationStore.TransitionState.BoundToQualifiedRuntime,
+                transition.state,
+            )
+            assertEquals(
+                realization.realizationRef,
+                transition.value.realizationRef,
+            )
+            assertEquals(
+                realization.artifact.artifactRef,
+                transition.value.artifactRef,
+            )
+            assertEquals(
+                realization.runtime.runtimeAdapterRef,
+                transition.value.runtimeAdapterRef,
+            )
+            assertEquals(
+                realization.runtime.runtimeClass,
+                transition.value.runtimeClass,
+            )
+            assertEquals(
+                realization.runtimeReceiptRelativePath,
+                transition.value.runtimeReceiptPath,
+            )
+            assertEquals(
+                realization,
+                HereticModelConfiguration.boundRealization(
+                    transition.value,
+                ),
             )
         } finally {
             parent
