@@ -108,8 +108,7 @@ internal object VexLifeCurrentAcceptedSemanticProjection {
             }
         val state =
             if (
-                snapshot.scoreHeadSha256 ==
-                null
+                statements.isEmpty()
             ) {
                 "EMPTY"
             } else {
@@ -118,16 +117,13 @@ internal object VexLifeCurrentAcceptedSemanticProjection {
         require(
             (
                 state ==
-                    "EMPTY" &&
-                    statements.isEmpty() &&
-                    snapshot.sourceScoreConversationHeadSha256 ==
-                        null &&
-                    snapshot.semanticAuthorityHeadSha256 ==
-                        null
+                    "EMPTY"
             ) ||
                 (
                     state ==
                         "CURRENT" &&
+                        snapshot.scoreHeadSha256 !=
+                            null &&
                         snapshot.sourceScoreConversationHeadSha256 !=
                             null &&
                         snapshot.semanticAuthorityHeadSha256 !=

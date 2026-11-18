@@ -280,8 +280,8 @@ class VexLifeCurrentAcceptedSemanticProjectionTest {
                             sourceEventHashes =
                                 conversation.sourceEventHashes,
                             formedAt =
-                                Instant.parse(
-                                    "2026-11-18T09:00:10Z",
+                                conversation.baseTime.plusSeconds(
+                                    10,
                                 ),
                         ),
                 )
@@ -294,8 +294,8 @@ class VexLifeCurrentAcceptedSemanticProjectionTest {
             humanSubjectRef =
                 "person.local-user",
             decidedAt =
-                Instant.parse(
-                    "2026-11-18T09:00:20Z",
+                conversation.baseTime.plusSeconds(
+                    20,
                 ),
         )
     }
@@ -345,6 +345,7 @@ class VexLifeCurrentAcceptedSemanticProjectionTest {
         val request: DirectConversationStore.Event,
         val response: DirectConversationStore.Event,
         val headSha256: String,
+        val baseTime: Instant,
     ) {
         val sourceEventHashes: List<String>
             get() =
@@ -433,6 +434,8 @@ class VexLifeCurrentAcceptedSemanticProjectionTest {
                     response = response,
                     headSha256 =
                         head.conversationHeadSha256,
+                    baseTime =
+                        baseTime,
                 )
         }
         return fixture
@@ -447,9 +450,12 @@ class VexLifeCurrentAcceptedSemanticProjectionTest {
             .use {
                 stream ->
                 stream
-                    .filter(
-                        Files::isRegularFile,
-                    )
+                    .filter {
+                        path ->
+                        Files.isRegularFile(
+                            path,
+                        )
+                    }
                     .toList()
                     .associate {
                         path ->

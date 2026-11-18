@@ -700,15 +700,6 @@ object VexLifeCurrentMemoryReader {
                 authorityPolicy =
                     ScoreAuthorityPolicy.REQUIRE_CURRENT_MEMBERSHIP,
             )
-        val authority =
-            requireCurrentScoreAuthority(
-                score = score,
-                label = "current accepted semantic projection",
-            )
-        val semanticAuthorityHeadSha256 =
-            authority.string(
-                "semanticAuthorityHeadSha256",
-            )
         val currentStatements =
             score.statements
                 .filter(
@@ -717,6 +708,20 @@ object VexLifeCurrentMemoryReader {
                 .sortedBy(
                     Statement::statementRef,
                 )
+        val semanticAuthorityHeadSha256 =
+            score.authority
+                ?.string(
+                    "semanticAuthorityHeadSha256",
+                )
+        if (
+            currentStatements.isNotEmpty()
+        ) {
+            requireNotNull(
+                semanticAuthorityHeadSha256,
+            ) {
+                "current accepted semantic statements require current semantic authority"
+            }
+        }
         require(
             currentStatements
                 .map(
