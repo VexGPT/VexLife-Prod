@@ -619,6 +619,9 @@ object VexLifeProdMacFrontDoor {
                 }
             }
 
+            is VexLifeProdMacServiceLifetime.ExistingObservation.RecoverableLegacyOrphan ->
+                error("recoverable legacy orphan was already mapped before prerequisite evaluation")
+
             is VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned,
             is VexLifeProdMacServiceLifetime.ExistingObservation.HeldUnknown ->
                 error("running/held service observation was already mapped")
