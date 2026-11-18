@@ -596,6 +596,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 progressiveLastSampleCount: 0,
                 lastSpeechAt: 0,
                 speechActive: false,
+                speechSinceLastCommit: false,
                 noiseFloor: 0.004,
                 lastHypothesis: '',
                 stableHypothesisPasses: 0,
@@ -806,6 +807,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   const now = performance.now();
                   if (rms >= threshold) {
                     dictation.speechActive = true;
+                    dictation.speechSinceLastCommit = true;
                     dictation.lastSpeechAt = now;
                   } else {
                     if (rms < threshold * 0.7) {
@@ -1087,6 +1089,7 @@ object VexLifeWebP1RuntimeArtifacts {
                       dictation.interimTranscript = '';
                       dictation.lastHypothesis = '';
                       dictation.stableHypothesisPasses = 0;
+                      dictation.speechSinceLastCommit = false;
                       clearCapturedPcm(true);
                       projectDictationIntoDraft();
                     }
@@ -1120,7 +1123,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
 
                 try {
-                  const transcript = await transcribeCapturedAudio(language);
+                  const transcript =
+                    dictation.speechSinceLastCommit
+                      ? await transcribeCapturedAudio(language)
+                      : null;
                   if (transcript) {
                     dictation.finalTranscript =
                       appendTranscriptSegment(dictation.finalTranscript, transcript);
@@ -1170,6 +1176,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 dictation.progressiveLastSampleCount = 0;
                 dictation.lastSpeechAt = 0;
                 dictation.speechActive = false;
+                dictation.speechSinceLastCommit = false;
                 dictation.noiseFloor = 0.004;
                 dictation.lastHypothesis = '';
                 dictation.stableHypothesisPasses = 0;
