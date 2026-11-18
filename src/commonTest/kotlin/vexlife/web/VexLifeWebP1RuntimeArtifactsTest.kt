@@ -502,6 +502,31 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(bundle.javascript.contains("projectDictationIntoDraft"))
         assertTrue(bundle.javascript.contains("ui.draft.value ="))
+        assertTrue(bundle.javascript.contains("const maybeProgressiveTranscription = () =>"))
+        assertTrue(bundle.javascript.contains("dictation.progressiveTimer = window.setInterval"))
+        assertTrue(bundle.javascript.contains("periodicWhileSpeaking"))
+        assertTrue(bundle.javascript.contains("refineThinkingPause"))
+        assertTrue(bundle.javascript.contains("silenceAfterResult >= 900"))
+        assertTrue(bundle.javascript.contains("silenceAfterResult >= 2600"))
+        assertTrue(bundle.javascript.contains("dictation.stableHypothesisPasses >= 2"))
+        assertTrue(bundle.javascript.contains("endsAtStrongSentenceBoundary"))
+        assertTrue(bundle.javascript.contains("endsWithEnglishFiller"))
+        assertTrue(
+            bundle.javascript.contains("dictation.interimTranscript = transcript"),
+            "progressive dictation must replace the mutable Composer tail with the latest hypothesis",
+        )
+        assertTrue(
+            bundle.javascript.contains("clearCapturedPcm(true)"),
+            "settled live segments must release bounded PCM while preserving the open capture rate",
+        )
+        assertTrue(
+            bundle.javascript.contains("dictation.speechSinceLastCommit"),
+            "final Stop must not retranscribe trailing silence after a settled live segment",
+        )
+        assertTrue(
+            bundle.javascript.contains("if (progressive) await progressive.catch(() => {})"),
+            "final Stop must serialize behind any in-flight progressive recognition",
+        )
         assertTrue(bundle.javascript.contains("voiceInput.actByState"))
         assertTrue(bundle.javascript.contains("voiceInput.capabilityStateByFacts"))
         assertTrue(bundle.javascript.contains("voiceInput.failureStateByReason"))
