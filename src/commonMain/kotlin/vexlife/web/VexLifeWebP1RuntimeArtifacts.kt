@@ -4007,6 +4007,41 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (text) text.dataset.open = String(text.dataset.open !== 'true');
               });
 
+              const markContextProfileDirty = () => {
+                state.contextProfileDirty = true;
+                renderContextProfile();
+              };
+              ui.contextProfileName.addEventListener('input', markContextProfileDirty);
+              ui.contextProfileFoundationText.addEventListener('input', markContextProfileDirty);
+              ui.contextProfileProcessRetention.addEventListener('change', markContextProfileDirty);
+              ui.contextProfileFoundationMode.addEventListener('change', () => {
+                state.contextProfileDirty = true;
+                ui.contextProfileFoundationField.hidden =
+                  ui.contextProfileFoundationMode.value !== 'EXTEND_PRODUCT_DEFAULT' &&
+                  ui.contextProfileFoundationMode.value !== 'REPLACE_PRODUCT_DEFAULT';
+                renderContextProfile();
+              });
+              ui.contextProfileSave.addEventListener('click', () => void saveContextProfile(false));
+              ui.contextProfileSaveAs.addEventListener('click', () => void saveContextProfile(true));
+              ui.contextProfileRestore.addEventListener('click', () => {
+                if (!window.confirm('Return to this VexLife version’s default context profile? Your saved profiles will stay in Vex Home.')) return;
+                void contextProfileControl('RESTORE_PRODUCT_DEFAULT')
+                  .then((result) => {
+                    if (result) notify('Using VexLife defaults again. Your saved profiles were kept.');
+                  })
+                  .catch((error) => notify(error instanceof Error ? error.message : 'VexLife defaults could not be restored.'));
+              });
+              ui.contextProfileHome.addEventListener('click', () => {
+                void contextProfileControl('REVEAL_IN_HOME')
+                  .then((result) => {
+                    if (result?.outcome !== 'REALIZED') notify('The profile files are in Vex Home, but this host could not open its file manager.');
+                  })
+                  .catch((error) => notify(error instanceof Error ? error.message : 'Vex Home could not be opened.'));
+              });
+              ui.contextProfileImport.addEventListener('change', () => {
+                void importContextProfile(ui.contextProfileImport.files?.[0] ?? null);
+              });
+
               // Context is admitted only from the Product-owned context frame, only for the exact page
               // whose identity is currently proven (contextTargetPageUrl). A message for any other
               // page is stale or foreign; arrival alone never makes a page eligible.
@@ -4313,14 +4348,22 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (window.confirm(t('workspace.description.diagnostics-clear-confirm'))) void diagnosticsControl('CLEAR_HISTORY');
               });
 
-              void Promise.all([loadSourceCurrentness(), loadCurrentState(), loadConversation(), loadContext(), loadVision()])
+              void Promise.all([
+                loadSourceCurrentness(),
+                loadCurrentState(),
+                loadConversation(),
+                loadContext(),
+                loadVision(),
+                loadMemory(),
+                loadContextProfiles(),
+                loadFoundationalField()
+              ])
                 .then(() => {
                   render();
                   navigate(browser.initialPageUrl);
                   renderApp();
                   void loadPrivate().catch(() => {});
                   void loadSettings().catch(() => {});
-                  void loadMemory().catch(() => {});
                   void loadDiagnostics().catch(() => renderDiagnostics());
                   void loadModels().catch(() => {});
                   // Observed: the presentation rendered with current service data.
