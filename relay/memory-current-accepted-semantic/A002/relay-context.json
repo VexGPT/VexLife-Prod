@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "vexlife-prod.memory-current-accepted-semantic-relay-context/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 284,
+  "tempRelayPr": 285,
+  "attempt": "A002",
+  "disposition": "SEALED_NOT_EXECUTED",
+  "productCandidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "base": "6c86e72594ea57a890324a8b7a745244d7acc94d",
+    "head": "0ad04255e429aefe7850cbbb18c523a337cac9e2",
+    "tree": "ace6fcdeaea72a9815bdcc008eb2904b0454d52e",
+    "branch": "VXG-111726-memory-current-accepted-semantic-a001",
+    "changedPaths": [
+      "docs/work/memory-current-accepted-semantic/README.md",
+      "src/jvmMain/kotlin/vexlife/memory/VexLifeCurrentAcceptedSemanticProjection.kt",
+      "src/jvmMain/kotlin/vexlife/memory/VexLifeCurrentMemoryReader.kt",
+      "src/jvmTest/kotlin/vexlife/memory/VexLifeCurrentAcceptedSemanticProjectionTest.kt"
+    ]
+  },
+  "formationBundle": {
+    "filename": "VexLife-Memory-Current-Accepted-Semantic-RelayFormation-A002--sha256-858b4c6b82ea8f135ed527068a18add0cd3089ff54689a10ab5f036fb033b4f7.zip",
+    "sha256": "858b4c6b82ea8f135ed527068a18add0cd3089ff54689a10ab5f036fb033b4f7",
+    "bytes": 7643,
+    "members": [
+      "RUN.command",
+      "formation.mjs",
+      "README.txt"
+    ],
+    "syntaxChecks": [
+      "bash -n RUN.command PASS",
+      "node --check formation.mjs PASS"
+    ]
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064",
+    "currentContractBlob": "b53cbac01c2deeb45fad5c32ce98e0796c04126f",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor"
+  },
+  "proof": [
+    "./gradlew --no-daemon checkVexLifeStrings --stacktrace",
+    "./gradlew --no-daemon jvmTest --stacktrace",
+    "./gradlew --no-daemon compileKotlinJs compileTestKotlinJs --stacktrace",
+    "exact four-path review snapshot"
+  ],
+  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION"
+}
