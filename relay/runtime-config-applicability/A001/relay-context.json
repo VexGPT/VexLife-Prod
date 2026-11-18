@@ -368,7 +368,7 @@
     "attemptStorageKey": "a001",
     "requestingRoleRef": "Operations",
     "requestingInstanceRef": "instance.chatgpt.windows-runtime-realization.successor",
-    "parentOperationsRef": "github.pr.VexGPT/VexLife-Prod.269",
+    "parentOperationsRef": "github.pr.VexGPT.VexLife-Prod.269",
     "returnRouteRef": "github.pr.VexGPT.VexLife-Prod.269",
     "hostProfileRef": "windows-victor",
     "repositoryExecutionProfileRefOrNull": "profile.repository.vextreme-sdk.windows-v1",
