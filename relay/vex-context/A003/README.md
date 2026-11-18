@@ -88,3 +88,50 @@ No Product mutation, Home/Memory mutation, approval, READY, merge or publication
 A003 is not PASS until its exact canonical RETURN is consumed.
 
 <!-- [VXG RealForever][PR251][PR261][TEMP-RELAY][A003] -->
+
+
+## A003 consumed result — SourceOwner PASS
+
+Victor returned the exact canonical outer RETURN:
+
+```text
+RETURN-t251vc-a003--sha256-b114ccdcf37c7d01bf8959443e2bbb836da69fa3e7933695fd9337560a000d11.zip
+
+outer VexLocalBridge
+  sha256      b114ccdcf37c7d01bf8959443e2bbb836da69fa3e7933695fd9337560a000d11
+  disposition PASS
+
+inner VexRelay
+  sha256      5eb6d050b9cbcd98f6e46d88159a66063e9058ed69e6d11c96a127192fb1a122
+  disposition PASS
+```
+
+Exact source candidate proven:
+
+```text
+head d76cc1f212d2aed5ac7a1f3241c6bd18d7205ceb
+tree 7cef99e8df38976dfdfcd7537332b34d43c943dd
+base 64c5be05a2e4331de86672d1285923f175e88e9f
+```
+
+Proof:
+
+```text
+checkVexLifeStrings                         PASS
+full jvmTest                                PASS
+compileKotlinJs + compileTestKotlinJs       PASS
+ExactHeadSourceOwnerProof review            PASS
+21 changed paths accounted                  PASS
+10 complete source bodies selected          contract-bound projection
+11 complete source bodies omitted           projection cap only; full diff/index retained
+candidate findings                          0
+harness findings                            0
+environment findings                        0
+unknown findings                            0
+```
+
+No source, branch, Home, Memory, model/runtime, approval, READY, merge or publication mutation was
+performed by the proof attempt.
+
+The exact SourceOwner gate is now consumed. The next unconsumed edge is fresh semantic assurance
+against current VexArchitecture ownership and the then-current Memory / Consideration sibling work.
