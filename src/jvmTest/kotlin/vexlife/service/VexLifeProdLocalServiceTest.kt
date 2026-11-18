@@ -2478,6 +2478,207 @@ class VexLifeProdLocalServiceTest {
     }
 
     @Test
+    fun newerDurablePromptReceiptHoldsOnlyContextProjection() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-service-newer-context-",
+            )
+                .toAbsolutePath()
+        val root =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        val turnRef =
+            "turn.self-development.newer-context"
+
+        try {
+            bootstrapHome(
+                root,
+            )
+            val store =
+                DirectConversationStore(
+                    root,
+                )
+            var expectedHeadSha256 =
+                ""
+            var expectedContextPath =
+                ""
+
+            store.withWriterLease {
+                val request =
+                    beginRequest(
+                        turnRef =
+                            turnRef,
+                        requestMessageRef =
+                            "message.self-development.human.newer-context",
+                        content =
+                            "Newer Context request",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-18T12:00:00Z",
+                            ),
+                    )
+                val response =
+                    appendResponse(
+                        request = request,
+                        responseMessageRef =
+                            "message.self-development.companion.newer-context",
+                        content =
+                            "Newer Context response",
+                        model =
+                            "default_model",
+                        endpointOrigin =
+                            "http://127.0.0.1:8765",
+                        runtimeObservationRef =
+                            "observation.vexlife-prod.model-runtime.newer-context",
+                        invocationEvidenceRef =
+                            "evidence.vexlife-prod.model-runtime-invocation.newer-context",
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-18T12:00:01Z",
+                            ),
+                    )
+                val context =
+                    CanonicalLivedContextFixture.write(
+                        productHome =
+                            root,
+                        request =
+                            request,
+                        response =
+                            response,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-18T12:00:02Z",
+                            ),
+                    )
+                val head =
+                    commitCompletedTurn(
+                        request =
+                            request,
+                        response =
+                            response,
+                        contextSha256 =
+                            context.sha256,
+                        formedAt =
+                            Instant.parse(
+                                "2026-11-18T12:00:03Z",
+                            ),
+                    )
+                expectedHeadSha256 =
+                    head.conversationHeadSha256
+                expectedContextPath =
+                    head.contextPath
+            }
+
+            val evidenceDirectory =
+                root.resolve(
+                    "runtime/vexlife-prod/turn-evidence",
+                )
+            Files.createDirectories(
+                evidenceDirectory,
+            )
+            Files.writeString(
+                evidenceDirectory.resolve(
+                    "$turnRef.json",
+                ),
+                """
+                {
+                  "schemaVersion": "${DirectTurnContextStore.RuntimeEvidenceSchema}",
+                  "promptContext": {
+                    "schemaVersion": "vexlife-prod.direct-prompt-materialization-receipt/v9",
+                    "contextProfileRef": "profile.vexlife.context.product-default"
+                  }
+                }
+                """.trimIndent(),
+            )
+
+            VexLifeProdLocalService
+                .startForTest(
+                    sourceSha =
+                        "d".repeat(
+                            40,
+                        ),
+                    setup =
+                        setup(
+                            root,
+                        ),
+                    turnExecutor =
+                        VexLifeProdLocalService.TurnExecutor {
+                            _,
+                            _,
+                            ->
+                            error(
+                                "held Context GET must not run a turn",
+                            )
+                        },
+                )
+                .use {
+                    service ->
+                    val contextResponse =
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.ContextPath,
+                        )
+                    assertEquals(
+                        200,
+                        contextResponse.statusCode(),
+                        contextResponse.body(),
+                    )
+                    val projection =
+                        json.decodeFromString<VexLifeProdServiceContract.ContextProjection>(
+                            contextResponse.body(),
+                        )
+                    assertEquals(
+                        VexLifeProdServiceContract.ContextStateHeldUnsupportedDurablePromptReceipt,
+                        projection.state,
+                    )
+                    assertEquals(
+                        expectedHeadSha256,
+                        projection.currentConversationHeadSha256,
+                    )
+                    assertEquals(
+                        turnRef,
+                        projection.turnRef,
+                    )
+                    assertEquals(
+                        expectedContextPath,
+                        projection.contextPath,
+                    )
+                    assertNull(
+                        projection.promptContext,
+                    )
+                    assertEquals(
+                        VexLifeProdServiceContract.ContextHeldReasonPromptReceiptSchemaUnsupported,
+                        projection.heldReason,
+                    )
+                    assertEquals(
+                        "vexlife-prod.direct-prompt-materialization-receipt/v9",
+                        projection.durablePromptReceiptSchema,
+                    )
+
+                    assertEquals(
+                        200,
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.ModelsPath,
+                        ).statusCode(),
+                    )
+                    assertEquals(
+                        200,
+                        get(
+                            service.origin,
+                            VexLifeProdServiceContract.DiagnosticsPath,
+                        ).statusCode(),
+                    )
+                }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
     fun sendDelegatesToCanonicalTurnAndDuplicateAttemptDoesNotCallProviderTwice() {
         val parent =
             Files.createTempDirectory(
