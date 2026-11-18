@@ -493,6 +493,11 @@ object VexLifeWebP1 {
             VexLifeWorkspaceBlueprint.LocalAsrSelection,
         )
 
+    val LocalAsrSpokenLanguage =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalAsrSpokenLanguage,
+        )
+
     val LocalAsrStatus =
         blueprintSurface(
             VexLifeWorkspaceBlueprint.LocalAsrStatus,
@@ -504,6 +509,7 @@ object VexLifeWebP1 {
             children =
                 listOf(
                     LocalAsrSelection,
+                    LocalAsrSpokenLanguage,
                     LocalAsrStatus,
                 ),
         )
