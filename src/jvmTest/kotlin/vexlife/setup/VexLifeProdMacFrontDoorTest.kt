@@ -294,6 +294,48 @@ class VexLifeProdMacFrontDoorTest {
     }
 
     @Test
+    fun witnessedLegacyOrphanMapsToExplicitRecoveryControl() {
+        val observed =
+            VexLifeProdMacServiceLifetime.ExistingObservation.RecoverableLegacyOrphan(
+                sourceCurrentness = currentness(prior),
+                launchdObservation = MacUserLaunchdProcess.Observation.Running(4242L),
+            )
+        val projection =
+            VexLifeProdMacFrontDoor.observeWithHooks(
+                desiredSourceSha = desired,
+                productHome = selectedHome,
+                hooks = hooks(observed),
+            )
+        val resolved =
+            VexLifeProdMacFrontDoor.resolveTypedControlWithHooks(
+                desiredSourceSha = desired,
+                productHome = selectedHome,
+                controlRef = VexLifeProdEntryFamily.ControlRecoverStaleService,
+                hooks = hooks(observed),
+            )
+
+        assertEquals(
+            VexLifeProdEntryFamily.StateServiceRecoveryRequired,
+            projection.semanticStateRef,
+        )
+        assertEquals(
+            prior,
+            projection.currentServiceSourceSha,
+        )
+        assertEquals(
+            4242L,
+            projection.currentServicePid,
+        )
+        assertEquals(
+            "Retire old service & continue",
+            en(projection.displayState.primaryLabel),
+        )
+        val effect = requireNotNull(resolved.effect as? VexLifeProdEntryFamily.ConvergeProduct)
+        assertFalse(effect.allowAcquisition)
+        assertTrue(effect.allowRuntimeStart)
+    }
+
+    @Test
     fun runningPriorProductCannotMaskPendingSelectedModelAcquisition() {
         val model = HereticModelCatalog.Models.Qwen9B
         val pendingModel =
