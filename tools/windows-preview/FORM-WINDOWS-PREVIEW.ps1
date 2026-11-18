@@ -126,16 +126,61 @@ New-Item -ItemType Directory -Path $ImageDest -Force | Out-Null
 New-Item -ItemType Directory -Path $ZipStage -Force | Out-Null
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 
+$DiagnosticPath = Join-Path $OutputDirectory ('VexLife-Windows-preview-diagnostic-' + $SourceSha.Substring(0,12) + '.log')
+$DiagnosticLines = New-Object System.Collections.Generic.List[string]
+function Add-Diagnostic {
+    param([string]$Line)
+    $DiagnosticLines.Add($Line)
+}
+function Flush-Diagnostic {
+    $DiagnosticLines | Set-Content -LiteralPath $DiagnosticPath -Encoding UTF8
+}
+Add-Diagnostic "sourceSha=$SourceSha"
+Add-Diagnostic "sourceTree=$SourceTree"
+Add-Diagnostic "repositoryRoot=$RepositoryRoot"
+Add-Diagnostic "callerCwd=$([Environment]::CurrentDirectory)"
+Add-Diagnostic "powershellLocation=$((Get-Location).Path)"
+Add-Diagnostic "javaHome=$JavaHome"
+Add-Diagnostic "java=$Java"
+Add-Diagnostic "jdeps=$Jdeps"
+Add-Diagnostic "jlink=$Jlink"
+Add-Diagnostic "jpackage=$Jpackage"
+Add-Diagnostic "gradle=$Gradle"
+Add-Diagnostic "initScript=$InitScript"
+Add-Diagnostic "outputDirectory=$OutputDirectory"
+Add-Diagnostic "javaVersionExit=$JavaVersionExit"
+Add-Diagnostic "javaVersion=$($JavaVersion -replace '[\r\n]+',' | ')"
+Flush-Diagnostic
+
 Write-Host "VexLife Windows preview: compiling exact Product source $SourceSha ..."
 $GradleArgs = @(
     '--no-daemon',
     '--max-workers=1',
+    '-p',
+    $RepositoryRoot,
     '-I',
     $InitScript,
     "-PvexlifeWindowsPreviewInputDir=$InputDir",
     'stageVexLifeWindowsPreviewInputs'
 )
-Invoke-Checked -Executable $Gradle -Arguments $GradleArgs -FailureCode 'WINDOWS_PREVIEW_INPUT_STAGE_FAILED'
+Add-Diagnostic "stage=INPUT_STAGE"
+Add-Diagnostic ("gradleArgs=" + ($GradleArgs -join ' '))
+Flush-Diagnostic
+$PriorStageErrorActionPreference = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
+try {
+    $StageOutput = & $Gradle @GradleArgs 2>&1
+    $StageExit = $LASTEXITCODE
+} finally {
+    $ErrorActionPreference = $PriorStageErrorActionPreference
+}
+$StageOutput | ForEach-Object { Write-Host ([string]$_) }
+Add-Diagnostic "stageExit=$StageExit"
+$StageOutput | ForEach-Object { Add-Diagnostic ("stageOutput=" + [string]$_) }
+Flush-Diagnostic
+if ($StageExit -ne 0) {
+    throw "WINDOWS_PREVIEW_INPUT_STAGE_FAILED:exit=$StageExit diagnostic=$DiagnosticPath"
+}
 
 $MainJarPointer = Join-Path $InputDir 'vexlife-main-jar.txt'
 if (-not (Test-Path -LiteralPath $MainJarPointer -PathType Leaf)) {
@@ -196,7 +241,12 @@ $JlinkArgs = @(
     '--no-header-files',
     '--no-man-pages'
 )
+Add-Diagnostic "stage=JLINK"
+Add-Diagnostic ("jlinkArgs=" + ($JlinkArgs -join ' '))
+Flush-Diagnostic
 Invoke-Checked -Executable $Jlink -Arguments $JlinkArgs -FailureCode 'WINDOWS_PREVIEW_JLINK_FAILED'
+Add-Diagnostic "jlinkExit=0"
+Flush-Diagnostic
 
 $RuntimeJava = Join-Path $RuntimeDir 'bin\java.exe'
 if (-not (Test-Path -LiteralPath $RuntimeJava -PathType Leaf)) {
@@ -226,7 +276,12 @@ $JpackageArgs = @(
     '--java-options',
     "-Dvexlife.prod.sourceSha=$SourceSha"
 )
+Add-Diagnostic "stage=JPACKAGE"
+Add-Diagnostic ("jpackageArgs=" + ($JpackageArgs -join ' '))
+Flush-Diagnostic
 Invoke-Checked -Executable $Jpackage -Arguments $JpackageArgs -FailureCode 'WINDOWS_PREVIEW_JPACKAGE_FAILED'
+Add-Diagnostic "jpackageExit=0"
+Flush-Diagnostic
 
 $AppImage = Join-Path $ImageDest 'VexLife'
 $AppExe = Join-Path $AppImage 'VexLife.exe'
@@ -344,4 +399,10 @@ Write-Host "VEXLIFE_WINDOWS_PREVIEW_TREE=$SourceTree"
 Write-Host "VEXLIFE_WINDOWS_PREVIEW_EXE=VexLife\VexLife.exe"
 Write-Host "VEXLIFE_WINDOWS_PREVIEW_ZIP=$FinalZip"
 Write-Host "VEXLIFE_WINDOWS_PREVIEW_ZIP_SHA256=$ZipSha256"
+Add-Diagnostic "stage=COMPLETE"
+Add-Diagnostic "zip=$FinalZip"
+Add-Diagnostic "zipSha256=$ZipSha256"
+Add-Diagnostic "zipBytes=$ZipBytes"
+Flush-Diagnostic
+Write-Host "VEXLIFE_WINDOWS_PREVIEW_DIAGNOSTIC=$DiagnosticPath"
 Write-Host "VEXLIFE_WINDOWS_PREVIEW_ZIP_BYTES=$ZipBytes"
