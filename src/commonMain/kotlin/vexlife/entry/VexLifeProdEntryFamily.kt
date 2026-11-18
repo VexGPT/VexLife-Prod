@@ -220,6 +220,22 @@ class VexLifeProdEntryFamily private constructor() :
         override val effectRef: String = EffectFormCanonicalHome
     }
 
+    data class RetireStaleService(
+        val priorServiceSourceSha: String,
+        val priorServicePid: Long,
+    ) : EntryEffect {
+        override val effectRef: String = EffectRetireStaleService
+
+        init {
+            require(
+                Regex("[0-9a-f]{40}").matches(priorServiceSourceSha) &&
+                    priorServicePid > 0
+            ) {
+                "stale-service retirement requires one exact witnessed source/PID"
+            }
+        }
+    }
+
     /**
      * [allowAcquisition] authorizes downloading/creating missing model + runtime prerequisites.
      * [allowRuntimeStart] authorizes starting the exact local runtime from prerequisites that are
@@ -335,7 +351,12 @@ class VexLifeProdEntryFamily private constructor() :
             is ServiceRecoveryRequired ->
                 when (control) {
                     RecoverStaleService ->
-                        stay(restartWithoutAcquisition(currentState.desiredSourceSha))
+                        stay(
+                            RetireStaleService(
+                                priorServiceSourceSha = currentState.priorServiceSourceSha,
+                                priorServicePid = currentState.priorServicePid,
+                            )
+                        )
 
                     Cancel -> stay()
 
@@ -699,6 +720,7 @@ class VexLifeProdEntryFamily private constructor() :
 
         const val EffectOpenPresentation = "OPEN_PRESENTATION"
         const val EffectFormCanonicalHome = "FORM_CANONICAL_HOME"
+        const val EffectRetireStaleService = "RETIRE_STALE_SERVICE"
         const val EffectConvergeProduct = "CONVERGE_PRODUCT"
 
         const val JourneyStepMac = "MAC"
