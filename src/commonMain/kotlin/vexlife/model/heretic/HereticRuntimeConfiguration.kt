@@ -12,6 +12,15 @@ import kotlinx.serialization.Serializable
 object HereticRuntimeConfiguration {
     const val Schema = "vexlife-prod.heretic-runtime-configuration/v1"
 
+    /**
+     * Exact configuration relationship currently earned by mlx-lm realizations.
+     *
+     * This is deliberately not a model property: the same modelRef may be realized by another
+     * runtime that does not share mlx-lm prompt-cache semantics.
+     */
+    const val MlxPromptCacheProfileRef =
+        "runtime-config.vexlife-prod.heretic.mlx-prompt-cache.v1"
+
     const val MinimumPromptCacheEntries = 1
     const val MaximumPromptCacheEntries = 10
     const val SafetyFloorPromptCacheEntries = 1
@@ -173,6 +182,61 @@ object HereticRuntimeConfiguration {
                     minimumPromptCacheEntries = MinimumPromptCacheEntries,
                     maximumPromptCacheEntries = recommendation.maximumPromptCacheEntries,
                 )
+        }
+    }
+
+    sealed interface Applicability {
+        val realizationRef: String
+
+        data class Applicable(
+            override val realizationRef: String,
+            val effective: Effective,
+        ) : Applicability
+
+        data class NotApplicable(
+            override val realizationRef: String,
+            val modelRef: String,
+        ) : Applicability
+    }
+
+    /**
+     * Resolve one stored Home configuration against one exact runtime realization.
+     *
+     * A model-scoped stored value may survive a target switch, but it becomes active only when the
+     * selected realization explicitly participates in this configuration relationship.
+     */
+    fun resolve(
+        value: Value,
+        model: HereticModelCatalog.Entry,
+        realization: HereticRuntimeRealization.Value,
+    ): Applicability {
+        require(
+            realization.modelRef ==
+                model.modelRef,
+        ) {
+            "runtime configuration model and realization do not match"
+        }
+
+        return if (
+            realization.runtimeConfigurationProfileRef ==
+                MlxPromptCacheProfileRef
+        ) {
+            Applicability.Applicable(
+                realizationRef =
+                    realization.realizationRef,
+                effective =
+                    effective(
+                        value = value,
+                        model = model,
+                    ),
+            )
+        } else {
+            Applicability.NotApplicable(
+                realizationRef =
+                    realization.realizationRef,
+                modelRef =
+                    model.modelRef,
+            )
         }
     }
 
