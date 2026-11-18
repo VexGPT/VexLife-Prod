@@ -25,7 +25,7 @@ class VexLifeWebP1Test {
                 .toSet()
 
         assertEquals(
-            62,
+            69,
             blueprint.size,
         )
         assertTrue(
@@ -186,6 +186,25 @@ class VexLifeWebP1Test {
             ),
         )
 
+        val voiceInput =
+            VexLifeWebP1.Surface
+                .coordinates()
+                .single {
+                    it.ref ==
+                        VexLifeWorkspaceBlueprint.VoiceInput.ref
+                }
+        assertTrue(
+            VexWeb.Interaction.Activate in
+                voiceInput.interactions,
+        )
+        val voiceInputBinding =
+            voiceInput.binding as
+                VexWeb.Binding.LocalInteraction
+        assertEquals(
+            VexLifeWebP1.Composer.identity.ref,
+            voiceInputBinding.target.ref,
+        )
+
         val send =
             VexLifeWebP1.Surface
                 .coordinates()
@@ -272,6 +291,14 @@ class VexLifeWebP1Test {
             coordinates
                 .getValue(
                     VexLifeWebP1.ContextShare.identity.ref,
+                )
+                .containerRef,
+        )
+        assertEquals(
+            VexLifeWebP1.Composer.identity.ref,
+            coordinates
+                .getValue(
+                    VexLifeWebP1.VoiceInput.identity.ref,
                 )
                 .containerRef,
         )
