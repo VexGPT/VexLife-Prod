@@ -145,23 +145,14 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
           <label class="context-profile-field">
             <span>Foundation</span>
             <select id="context-profile-foundation-mode">
-              <option value="PRODUCT_DEFAULT">VexLife default</option>
-              <option value="EXTEND_PRODUCT_DEFAULT">VexLife default + my extension</option>
-              <option value="REPLACE_PRODUCT_DEFAULT">Use my foundation instead</option>
-              <option value="OFF">No foundation</option>
+              <option value="PRODUCT_DEFAULT">VexLife foundation</option>
+              <option value="EXTEND_PRODUCT_DEFAULT">VexLife foundation + my extension</option>
             </select>
           </label>
           <label class="context-profile-field context-profile-foundation-text" id="context-profile-foundation-field" hidden>
             <span>My foundation</span>
             <textarea id="context-profile-foundation-text" rows="7" maxlength="16000" placeholder="Write the context you want Vex to receive here."></textarea>
             <small>Configuration only. This does not copy your conversations or memories into the profile.</small>
-          </label>
-          <label class="context-profile-field">
-            <span>Process after a turn</span>
-            <select id="context-profile-process-retention">
-              <option value="SESSION_ONLY">Show it during this session</option>
-              <option value="PREVIOUS_TURN">Keep the previous turn visible in this session</option>
-            </select>
           </label>
           <div class="context-profile-actions" data-vex-ref="${VexLifeWebP1.VexContextProfileSave.identity.ref}">
             <button class="outline-button" type="button" id="context-profile-save">Save</button>
@@ -225,6 +216,13 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
 
           <details class="context-section context-process" data-vex-ref="${VexLifeWebP1.VexContextProcess.identity.ref}" data-context-kind="process" open>
             <summary><span>Vex's process</span><small id="context-process-status">Session view</small></summary>
+            <label class="context-process-setting">
+              <span>Keep process visible</span>
+              <select id="context-profile-process-retention">
+                <option value="SESSION_ONLY">During this browser session</option>
+                <option value="PREVIOUS_TURN">Previous completed turn only</option>
+              </select>
+            </label>
             <div class="context-section-body" id="context-process-body"></div>
           </details>
 
