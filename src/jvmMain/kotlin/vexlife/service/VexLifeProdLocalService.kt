@@ -826,7 +826,16 @@ class VexLifeProdLocalService private constructor(
                     requireMethod(exchange, "POST")
                     requireJson(exchange)
                     val request = JsonCodec.decodeFromString<ModelControlRequest>(requestText(exchange))
-                    respondJson(exchange = exchange, status = 200, value = models.control(request.controlRef, request.handle))
+                    respondJson(
+                        exchange = exchange,
+                        status = 200,
+                        value =
+                            models.control(
+                                controlRef = request.controlRef,
+                                handle = request.handle,
+                                promptCacheEntries = request.promptCacheEntries,
+                            ),
+                    )
                 }
 
                 VexLifeProdServiceContract.DiagnosticsExportPath -> handleDiagnosticsExport(exchange)
@@ -1331,7 +1340,11 @@ class VexLifeProdLocalService private constructor(
     private data class DiagnosticsControlRequest(val controlRef: String)
 
     @kotlinx.serialization.Serializable
-    private data class ModelControlRequest(val controlRef: String, val handle: String)
+    private data class ModelControlRequest(
+        val controlRef: String,
+        val handle: String,
+        val promptCacheEntries: Int? = null,
+    )
 
     private fun handleDiagnosticsControl(exchange: HttpExchange) {
         requireMethod(exchange, "POST")

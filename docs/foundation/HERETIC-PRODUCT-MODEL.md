@@ -200,7 +200,10 @@ runtime serves Y != X   -> at Setup Start the runtime owner retires its own exac
                            (same exact-ownership path as a stale implementation), starts X:
                            SWITCHED_MODEL_AND_STARTED_NEW_EXACT_MLX_RUNTIME
 borrowed stable runtime -> only ever for the certified 27B
-service process         -> still reuse-only: it never starts or switches a runtime
+ordinary service turns  -> reuse the current qualified Session under the Session read fence
+explicit Models Start   -> the accepted Models Effect takes the Session write fence, asks LocalSetup
+                           for bounded runtime convergence, verifies the exact qualified target, then
+                           and only then replaces the serving Session
 ~~~
 
 Host eligibility (`HereticMacHostProfile`) was a stale guard for this: it required exactly an

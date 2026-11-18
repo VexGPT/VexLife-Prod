@@ -267,7 +267,42 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
         <section class="setting" data-vex-ref="${VexLifeWebP1.SettingsModels.identity.ref}" aria-labelledby="models-heading">
           <h2 id="models-heading" data-vex-text="workspace.heading.models"></h2>
           <p class="setting-note-line" data-vex-text="workspace.description.models"></p>
-          <div class="models-list" data-vex-ref="${VexLifeWebP1.ModelsList.identity.ref}" id="models-list"></div>
+
+          <div class="model-state-card" data-vex-ref="${VexLifeWebP1.ModelsState.identity.ref}" id="models-state">
+            <p class="memory-label" data-vex-text="workspace.heading.model-swap-process"></p>
+            <p class="setting-note-line" id="models-current-state"></p>
+          </div>
+
+          <div class="model-choice-field" data-vex-ref="${VexLifeWebP1.ModelChoice.identity.ref}">
+            <span class="home-label" id="model-choice-label" data-vex-text="workspace.label.model-choice"></span>
+            <div class="model-choice-row">
+              <select id="model-choice" aria-labelledby="model-choice-label"></select>
+              <div class="model-choice-actions" data-vex-ref="${VexLifeWebP1.ModelsList.identity.ref}" id="models-list"></div>
+            </div>
+            <p class="model-choice-facts" id="model-choice-facts"></p>
+            <p class="model-choice-notes" id="model-choice-notes"></p>
+          </div>
+
+          <div class="model-configuration" data-vex-ref="${VexLifeWebP1.ModelConfiguration.identity.ref}" id="model-configuration">
+            <div>
+              <p class="memory-label" data-vex-text="workspace.heading.model-configuration"></p>
+              <p class="setting-note-line" id="model-configuration-recommendation"></p>
+            </div>
+            <label class="model-cache-field" data-vex-ref="${VexLifeWebP1.ModelPromptCacheEntries.identity.ref}">
+              <span data-vex-text="workspace.label.model-prompt-cache-entries"></span>
+              <select id="model-prompt-cache-entries"></select>
+            </label>
+            <p class="setting-note-line" data-vex-text="workspace.description.model-prompt-cache-entries"></p>
+            <div class="model-configuration-actions">
+              <button class="outline-button" data-vex-ref="${VexLifeWebP1.ModelUseRecommended.identity.ref}" id="model-use-recommended" type="button" data-vex-text="workspace.button.model-use-recommended"></button>
+            </div>
+            <div class="model-activation">
+              <p class="model-activation-title" data-vex-text="workspace.heading.model-activation"></p>
+              <p class="setting-note-line" data-vex-text="workspace.description.model-start-effect"></p>
+              <button class="model-start-button" data-vex-ref="${VexLifeWebP1.ModelStart.identity.ref}" id="model-start" type="button" data-vex-text="workspace.button.model-start"></button>
+            </div>
+          </div>
+
           <p class="setting-note-line" id="models-note"></p>
         </section>
 

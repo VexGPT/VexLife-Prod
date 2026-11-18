@@ -182,9 +182,15 @@ object VexLifeWorkspaceBlueprint :
         SettingsContinuity.control(
             "dream-sync",
         )
-    /** Settings → Models: the offered models, the one Vex uses, and Use / Download / Remove. */
+    /** Settings -> Models: current serving state, target selection, runtime configuration and files. */
     val SettingsModels = Settings.region("models")
+    val ModelsState = SettingsModels.content("state")
+    val ModelChoice = SettingsModels.control("choice")
     val ModelsList = SettingsModels.content("list")
+    val ModelConfiguration = SettingsModels.region("configuration")
+    val ModelPromptCacheEntries = ModelConfiguration.control("prompt-cache-entries")
+    val ModelUseRecommended = ModelConfiguration.control("use-recommended")
+    val ModelStart = ModelConfiguration.control("start")
     val SettingsDiagnostics = Settings.region("diagnostics")
     val DiagnosticsTrace = SettingsDiagnostics.content("trace")
     val DiagnosticsEnhancedCapture = SettingsDiagnostics.control("enhanced-capture")
