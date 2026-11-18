@@ -502,6 +502,44 @@ object VexLifeWebP1 {
                 ),
         )
 
+    val LocalAsrSelection =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalAsrSelection,
+        )
+
+    val LocalAsrModelsList =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalAsrModelsList,
+        )
+
+    val LocalAsrSpokenLanguage =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalAsrSpokenLanguage,
+        )
+
+    val LocalAsrStatus =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalAsrStatus,
+        )
+
+    val LocalAsrStorageNote =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalAsrStorageNote,
+        )
+
+    val SettingsLocalAsr =
+        blueprintSurface(
+            element = VexLifeWorkspaceBlueprint.SettingsLocalAsr,
+            children =
+                listOf(
+                    LocalAsrSelection,
+                    LocalAsrModelsList,
+                    LocalAsrSpokenLanguage,
+                    LocalAsrStatus,
+                    LocalAsrStorageNote,
+                ),
+        )
+
     val DiagnosticsTrace = blueprintSurface(VexLifeWorkspaceBlueprint.DiagnosticsTrace)
     val DiagnosticsEnhancedCapture = blueprintSurface(VexLifeWorkspaceBlueprint.DiagnosticsEnhancedCapture)
     val DiagnosticsClearHistory = blueprintSurface(VexLifeWorkspaceBlueprint.DiagnosticsClearHistory)
@@ -530,6 +568,7 @@ object VexLifeWebP1 {
                     SettingsHome,
                     SettingsContinuity,
                     SettingsModels,
+                    SettingsLocalAsr,
                     SettingsDiagnostics,
                 ),
         )
