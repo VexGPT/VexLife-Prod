@@ -194,6 +194,15 @@ object VexLifeWorkspaceBlueprint :
     val ModelPromptCacheEntries = ModelConfiguration.control("prompt-cache-entries")
     val ModelUseRecommended = ModelConfiguration.control("use-recommended")
     val ModelStart = ModelConfiguration.control("start")
+
+    /** Local microphone speech recognition: installed model, spoken language and currentness. */
+    val SettingsLocalAsr = Settings.region("local-asr")
+    val LocalAsrSelection = SettingsLocalAsr.control("selection")
+    val LocalAsrModelsList = SettingsLocalAsr.content("models-list")
+    val LocalAsrSpokenLanguage = SettingsLocalAsr.control("spoken-language")
+    val LocalAsrStatus = SettingsLocalAsr.content("status")
+    val LocalAsrStorageNote = SettingsLocalAsr.content("storage-note")
+
     val SettingsDiagnostics = Settings.region("diagnostics")
     val DiagnosticsTrace = SettingsDiagnostics.content("trace")
     val DiagnosticsEnhancedCapture = SettingsDiagnostics.control("enhanced-capture")
