@@ -195,7 +195,7 @@ class VexLifeProdLocalService private constructor(
         private val ProductDreamExecutor =
             object : DreamExecutor {
                 override fun observe(
-                    setup: VexLifeProdLocalSetup.Result,
+                    setup: VexLifeProdRuntimeSession.Foundation,
                 ): VexLifeProdServiceContract.MemoryDreamProjection =
                     VexLifeCurrentMemoryReader
                         .readDreamSourceFrontier(
@@ -208,7 +208,7 @@ class VexLifeProdLocalService private constructor(
                         )
 
                 override fun perform(
-                    setup: VexLifeProdLocalSetup.Result,
+                    setup: VexLifeProdRuntimeSession.Foundation,
                     request: VexLifeProdServiceContract.MemoryDreamRunRequest,
                 ): VexLifeDailyMemoryDream.Result {
                     val observedAt =
@@ -707,14 +707,14 @@ class VexLifeProdLocalService private constructor(
 
     internal fun interface TurnExecutor {
         fun perform(
-            setup: VexLifeProdLocalSetup.Result,
+            setup: VexLifeProdRuntimeSession.Foundation,
             intent: DirectCompanionTurn.Intent,
         ): DirectCompanionTurn.Result
     }
 
     internal fun interface StreamingTurnExecutor {
         fun perform(
-            setup: VexLifeProdLocalSetup.Result,
+            setup: VexLifeProdRuntimeSession.Foundation,
             intent: DirectCompanionTurn.Intent,
             progressObserver: DirectCompanionTurn.ProgressObserver,
         ): DirectCompanionTurn.Result
@@ -722,11 +722,11 @@ class VexLifeProdLocalService private constructor(
 
     internal interface DreamExecutor {
         fun observe(
-            setup: VexLifeProdLocalSetup.Result,
+            setup: VexLifeProdRuntimeSession.Foundation,
         ): VexLifeProdServiceContract.MemoryDreamProjection
 
         fun perform(
-            setup: VexLifeProdLocalSetup.Result,
+            setup: VexLifeProdRuntimeSession.Foundation,
             request: VexLifeProdServiceContract.MemoryDreamRunRequest,
         ): VexLifeDailyMemoryDream.Result
     }
