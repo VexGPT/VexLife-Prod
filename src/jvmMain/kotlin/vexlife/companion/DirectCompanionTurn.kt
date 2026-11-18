@@ -817,7 +817,7 @@ object DirectCompanionTurn {
     private fun performProviderTurn(
         conversationOwner: DirectConversationStore.Locked,
         productHome: Path,
-        setup: VexLifeProdLocalSetup.Result,
+        setup: VexLifeProdRuntimeSession.Foundation,
         currentRequest: DirectConversationStore.Event,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
         browserContext: DirectPromptContext.BrowserContext?,
