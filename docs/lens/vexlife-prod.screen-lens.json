@@ -668,24 +668,24 @@
           "slot": "InFlow"
         },
         {
-          "ref": "element.vexlife-workspace.companion.settings.local-asr.storage-note",
-          "kind": "TEXT",
-          "label": "Storage note",
-          "parentRef": "element.vexlife-workspace.companion.settings.local-asr",
-          "symbol": "VexLifeWorkspaceBlueprint.LocalAsrStorageNote",
-          "declared": "SettingsLocalAsr.content(\"storage-note\")",
-          "intent": null,
-          "pathwayRef": null,
-          "style": "Surface",
-          "slot": "InFlow"
-        },
-        {
           "ref": "element.vexlife-workspace.companion.settings.local-asr.status",
           "kind": "TEXT",
           "label": "Status",
           "parentRef": "element.vexlife-workspace.companion.settings.local-asr",
           "symbol": "VexLifeWorkspaceBlueprint.LocalAsrStatus",
           "declared": "SettingsLocalAsr.content(\"status\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.companion.settings.local-asr.storage-note",
+          "kind": "TEXT",
+          "label": "Storage note",
+          "parentRef": "element.vexlife-workspace.companion.settings.local-asr",
+          "symbol": "VexLifeWorkspaceBlueprint.LocalAsrStorageNote",
+          "declared": "SettingsLocalAsr.content(\"storage-note\")",
           "intent": null,
           "pathwayRef": null,
           "style": "Surface",
