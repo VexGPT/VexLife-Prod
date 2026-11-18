@@ -3,7 +3,7 @@
   "continuity": "[VXG RealForever]",
   "sourcePr": 251,
   "attempt": "A001",
-  "disposition": "SEALED_NOT_EXECUTED",
+  "disposition": "CONSUMED_SAFE_FAILURE",
   "architecture": {
     "vextremeMain": "1a0f161b4175e83c223e57642d08501004cdb9fd",
     "familyQuestion": "Which named context-construction configuration should shape the next accepted Vex turn?",
@@ -78,5 +78,27 @@
       "PUBLICATION"
     ]
   },
-  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION"
+  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION",
+  "result": {
+    "outerReturnSha256": "bda4ab7887583c3838cdb025e07b7fd203b9a4aec8cec604053d8dc9f7d725a4",
+    "outerDisposition": "PASS",
+    "innerReturnSha256": "91cfd446e16963df6c8c8b2e1658eb6d7417e7930e40675c8f249de39e12e894",
+    "innerDisposition": "SAFE_FAILURE",
+    "firstSubstantiveFailure": "UNACCEPTED_EXIT_CODE:1 compileKotlinJvm unresolved Vex Context web projections and provider-turn intent scope",
+    "classification": "PRODUCT_CANDIDATE_COMPILE_WIRING",
+    "repositoryGroundingReached": true,
+    "stringsTaskReached": true,
+    "jvmTestsReached": false,
+    "jsCompileReached": false,
+    "reviewSnapshotReached": false,
+    "carrierFindings": [],
+    "environmentFindings": []
+  },
+  "successor": {
+    "attempt": "A002",
+    "productCorrection": [
+      "Expose Vex Context Blueprint children through VexLifeWebP1",
+      "Pass frozen Context Profile into performProviderTurn and use helper-scoped parameter"
+    ]
+  }
 }
