@@ -3,6 +3,7 @@ package vexlife.model.heretic
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 
 class HereticRuntimeConfigurationTest {
     @Test
@@ -83,6 +84,49 @@ class HereticRuntimeConfigurationTest {
         assertEquals(
             HereticRuntimeConfiguration.RecommendationHeldExperiment,
             effective.recommendationStanding,
+        )
+    }
+
+    @Test
+    fun sameModelHasMlxConfigurationOnMacButNotLlamaCppOnWindows() {
+        val model =
+            HereticModelCatalog.Models.Qwen4B
+        val value =
+            HereticRuntimeConfiguration.withPromptCacheEntries(
+                value = HereticRuntimeConfiguration.empty(),
+                model = model,
+                promptCacheEntries = 2,
+            )
+        val mac =
+            HereticRuntimeRealization.require(
+                modelRef = model.modelRef,
+                target = HereticRuntimeRealization.MacArm64,
+            )
+
+        val applicable =
+            assertIs<HereticRuntimeConfiguration.Applicability.Applicable>(
+                HereticRuntimeConfiguration.resolve(
+                    value = value,
+                    model = model,
+                    realization = mac,
+                ),
+            )
+        assertEquals(
+            2,
+            applicable.effective.promptCacheEntries,
+        )
+
+        val windows =
+            assertIs<HereticRuntimeConfiguration.Applicability.NotApplicable>(
+                HereticRuntimeConfiguration.resolve(
+                    value = value,
+                    model = model,
+                    realization = HereticRuntimeRealization.WindowsQwen4B,
+                ),
+            )
+        assertEquals(
+            model.modelRef,
+            windows.modelRef,
         )
     }
 
