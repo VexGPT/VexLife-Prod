@@ -29,6 +29,7 @@ import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HereticRuntimeState
 
 /**
@@ -1475,17 +1476,27 @@ object DirectCompanionConnection {
                 "direct Companion Connection requires one qualified Heretic runtime",
             )
         }
-        val identity = model.identity
+        val realization =
+            requireNotNull(
+                HereticRuntimeRealization.resolveByRef(
+                    model = model,
+                    realizationRef = runtime.realizationRef,
+                ),
+            ) {
+                "qualified runtime realization is not offered for this Heretic model"
+            }
         require(
             runtime.modelRef == model.modelRef &&
-                runtime.modelProfileRef ==
-                identity.modelProfileRef &&
-                runtime.endpoint ==
-                identity.endpoint &&
-                runtime.requestModel ==
-                identity.requestModel,
+                runtime.realizationRef == realization.realizationRef &&
+                runtime.modelProfileRef == realization.modelProfileRef &&
+                runtime.artifactRef == realization.artifact.artifactRef &&
+                runtime.artifactContentSetSha256 == realization.artifact.contentSetSha256 &&
+                runtime.runtimeAdapterRef == realization.runtime.runtimeAdapterRef &&
+                runtime.runtimeClass == realization.runtime.runtimeClass &&
+                runtime.endpoint == realization.runtime.endpoint &&
+                runtime.requestModel == realization.runtime.requestModel,
         ) {
-            "qualified runtime evidence no longer matches one offered Heretic model identity"
+            "qualified runtime evidence no longer matches its exact Heretic runtime realization"
         }
     }
 
