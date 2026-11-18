@@ -4162,14 +4162,9 @@ object VexLifeWebP1RuntimeArtifacts {
                     const notes = document.createElement('div');
                     notes.className = 'model-notes';
                     notes.textContent =
-                      [
-                        option.selected ? t('workspace.label.model-chosen') : '',
-                        (option.languageCodes ?? []).length === 1
-                          ? String(option.languageCodes[0]).toUpperCase()
-                          : String((option.languageCodes ?? []).length) + ' languages'
-                      ]
-                        .filter(Boolean)
-                        .join(' · ');
+                      option.selected
+                        ? t('workspace.label.model-chosen')
+                        : '';
 
                     const controls = document.createElement('div');
                     controls.className = 'model-controls';
@@ -4256,6 +4251,15 @@ object VexLifeWebP1RuntimeArtifacts {
                 });
                 state.localAsr = await readJson(response);
                 renderLocalAsr();
+                if (
+                  (state.localAsr?.options ?? []).some(
+                    (option) => option.downloadedBytes != null
+                  )
+                ) {
+                  window.setTimeout(() => {
+                    void loadLocalAsr().catch(() => {});
+                  }, 1000);
+                }
                 return state.localAsr;
               };
 
@@ -4296,6 +4300,58 @@ object VexLifeWebP1RuntimeArtifacts {
                 } finally {
                   state.localAsrInFlight = false;
                   renderLocalAsr();
+                }
+              };
+
+              const localAsrModelControl = async (controlRef, modelRef) => {
+                if (state.localAsrInFlight) return;
+                if (
+                  controlRef ===
+                    ${jsString(VexLifeLocalAsrModelsFamily.ControlRemove)} &&
+                  !window.confirm(t('workspace.button.model-remove') + '?')
+                ) {
+                  return;
+                }
+                if (dictation.desiredActive) {
+                  await applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                }
+                state.localAsrInFlight = true;
+                renderLocalAsr();
+                try {
+                  const response = await fetch(service.localAsrModelControlPath, {
+                    method: 'POST',
+                    headers: {
+                      'content-type': 'application/json',
+                      accept: 'application/json'
+                    },
+                    body: JSON.stringify({
+                      controlRef: String(controlRef),
+                      modelRef: String(modelRef)
+                    })
+                  });
+                  state.localAsr = await readJson(response);
+                  observeVoiceInputCapability();
+                } catch (error) {
+                  notify(
+                    error instanceof Error
+                      ? error.message
+                      : t('workspace.status.model-control-not-lawful')
+                  );
+                } finally {
+                  state.localAsrInFlight = false;
+                  renderLocalAsr();
+                  if (
+                    (state.localAsr?.options ?? []).some(
+                      (option) => option.downloadedBytes != null
+                    )
+                  ) {
+                    window.setTimeout(() => {
+                      void loadLocalAsr().catch(() => {});
+                    }, 1000);
+                  }
                 }
               };
 
