@@ -146,6 +146,8 @@ class VexLifeContextProfileStore(
         profileRef: String?,
         definition: VexLifeContextProfile.Definition,
         productFoundation: VexLifeContextProfile.ProductFoundationIdentity,
+        basedOnProductFoundation: VexLifeContextProfile.ProductFoundationIdentity =
+            productFoundation,
         formedAt: Instant = Instant.now(),
     ): VexLifeContextProfile.Effective {
         val ref =
@@ -174,7 +176,7 @@ class VexLifeContextProfileStore(
                 profileRef = ref,
                 revision = existing?.revision?.plus(1) ?: 1,
                 definition = definition,
-                basedOnProductFoundation = productFoundation,
+                basedOnProductFoundation = basedOnProductFoundation,
                 priorFingerprint = existing?.fingerprint,
                 formedAt = formedAt.toString(),
             )
@@ -240,6 +242,7 @@ class VexLifeContextProfileStore(
             profileRef = null,
             definition = portable.definition(),
             productFoundation = productFoundation,
+            basedOnProductFoundation = portable.basedOnProductFoundation,
             formedAt = formedAt,
         )
 
