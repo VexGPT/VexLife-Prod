@@ -48,10 +48,10 @@ class VexLifeConsiderationContractTest {
                             VexLifeConsiderationContract.Module.CURRENT_TRUTH,
                             VexLifeConsiderationContract.Module.EVIDENCE_UNCERTAINTY,
                         ),
-                    questions =
+                    questionRefs =
                         listOf(
-                            "Is current outside truth required?",
-                            "What part of my intended answer is least supported?",
+                            VexLifeConsiderationContract.QuestionRef.CURRENT_TRUTH_REQUIRED,
+                            VexLifeConsiderationContract.QuestionRef.LEAST_SUPPORTED_PART,
                         ),
                 ),
             )
@@ -71,9 +71,9 @@ class VexLifeConsiderationContractTest {
                         listOf(
                             VexLifeConsiderationContract.Module.CURRENT_TRUTH,
                         ),
-                    questions =
+                    questionRefs =
                         listOf(
-                            "Is current outside truth required?",
+                            VexLifeConsiderationContract.QuestionRef.CURRENT_TRUTH_REQUIRED,
                         ),
                     factAuthorityGranted = true,
                 ),
@@ -116,6 +116,19 @@ class VexLifeConsiderationContractTest {
     }
 
     @Test
+    fun epiloguePromptIsOptionalPostAnswerReflectionWithoutAuthority() {
+        val prompt =
+            VexLifeConsiderationContract.validateEpiloguePrompt(
+                VexLifeConsiderationContract.EpiloguePrompt(),
+            )
+
+        assertTrue(prompt.allowBlankStems)
+        assertTrue(prompt.occursAfterHumanAnswer)
+        assertFalse(prompt.effectAuthorityGranted)
+        assertFalse(prompt.semanticAcceptanceGranted)
+    }
+
+    @Test
     fun routerSelectsOnlyImplicatedQuestionFamilies() {
         val frame =
             requireNotNull(
@@ -136,18 +149,12 @@ class VexLifeConsiderationContractTest {
             frame.modules,
         )
         assertTrue(
-            frame.questions.any {
-                it.contains(
-                    "actually retrieved",
-                )
-            },
+            VexLifeConsiderationContract.QuestionRef.SOURCE_ACTUALLY_RETRIEVED in
+                frame.questionRefs,
         )
         assertTrue(
-            frame.questions.any {
-                it.contains(
-                    "Future Me",
-                )
-            },
+            VexLifeConsiderationContract.QuestionRef.FUTURE_ME_VALUE in
+                frame.questionRefs,
         )
     }
 
