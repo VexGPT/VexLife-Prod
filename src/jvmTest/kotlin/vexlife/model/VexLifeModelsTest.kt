@@ -14,6 +14,7 @@ import vexlife.home.VexLifeProdHomeFiles
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelImport
 import vexlife.model.heretic.HereticRuntimeConfiguration
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HuggingFaceModelInspection
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticModelImportStore
@@ -53,11 +54,18 @@ class VexLifeModelsTest {
         serving: () -> String? = { HereticModelCatalog.Models.Qwen27B.modelRef },
         modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
         failDownload: Boolean = true,
+        target: HereticRuntimeRealization.Target = HereticRuntimeRealization.MacArm64,
     ) =
         VexLifeModels(
             productHome = home,
             servingModelRef = serving,
             totalMemoryBytes = { 16 * gib },
+            runtimeRealizations =
+                HereticRuntimeRealization.Resolver(
+                    HereticRuntimeRealization.TargetSource {
+                        target
+                    },
+                ),
             modelSwitchRealization = modelSwitchRealization,
             acquirer = { _, _ ->
                 HereticArtifactMaterialization.Acquirer { _, _ ->
@@ -226,19 +234,19 @@ class VexLifeModelsTest {
                             }
                     assertEquals(
                         1,
-                        before.runtimeConfiguration.promptCacheEntries,
+                        before.runtimeConfiguration!!.promptCacheEntries,
                     )
                     assertEquals(
                         1,
-                        before.runtimeConfiguration.recommendedPromptCacheEntries,
+                        before.runtimeConfiguration!!.recommendedPromptCacheEntries,
                     )
                     assertEquals(
                         3,
-                        before.runtimeConfiguration.maximumPromptCacheEntries,
+                        before.runtimeConfiguration!!.maximumPromptCacheEntries,
                     )
                     assertEquals(
                         HereticRuntimeConfiguration.RecommendationHeldExperiment,
-                        before.runtimeConfiguration.recommendationStanding,
+                        before.runtimeConfiguration!!.recommendationStanding,
                     )
 
                     owner.control(
@@ -281,11 +289,11 @@ class VexLifeModelsTest {
                     )
                     assertEquals(
                         HereticRuntimeConfiguration.ModeExplicit,
-                        four.runtimeConfiguration.mode,
+                        four.runtimeConfiguration!!.mode,
                     )
                     assertEquals(
                         1,
-                        four.runtimeConfiguration.promptCacheEntries,
+                        four.runtimeConfiguration!!.promptCacheEntries,
                     )
                     assertEquals(
                         "heretic-27b",
@@ -339,6 +347,12 @@ class VexLifeModelsTest {
                 explicit = null,
                 language = "en",
                 totalMemoryBytes = 16 * gib,
+                runtimeRealizations =
+                    HereticRuntimeRealization.Resolver(
+                        HereticRuntimeRealization.TargetSource {
+                            HereticRuntimeRealization.MacArm64
+                        },
+                    ),
             )
         assertEquals(handle, setupAfterRestart.selected)
         val setupImported = setupAfterRestart.models.single { it.handle == handle }
@@ -484,6 +498,12 @@ class VexLifeModelsTest {
                 productHome = home,
                 servingModelRef = { HereticModelCatalog.Models.Qwen27B.modelRef },
                 totalMemoryBytes = { 16 * gib },
+                runtimeRealizations =
+                    HereticRuntimeRealization.Resolver(
+                        HereticRuntimeRealization.TargetSource {
+                            HereticRuntimeRealization.MacArm64
+                        },
+                    ),
                 acquirer = { _, progress ->
                     HereticArtifactMaterialization.Acquirer { _, finalPath ->
                         Files.write(finalPath, bytes)
@@ -569,6 +589,47 @@ class VexLifeModelsTest {
                 )
                 assertTrue(FileHereticModelImportStore(home).entries().isEmpty())
             }
+        }
+
+    @Test
+    fun windowsKeepsHomeModelsVisibleButAdmitsOnlyRealizedControls() =
+        withHome { home, _ ->
+            models(
+                home = home,
+                target = HereticRuntimeRealization.WindowsX64,
+            )
+                .use { owner ->
+                    val projection = owner.projection()
+                    assertEquals(
+                        HereticModelCatalog.Entries.map { it.handle },
+                        projection.models.map { it.handle },
+                    )
+
+                    val four = projection.models.single { it.handle == "heretic-4b" }
+                    assertNull(four.runtimeConfiguration)
+                    assertTrue(
+                        VexLifeModelsFamily.ControlDownload in
+                            four.display.controls.map { it.controlRef },
+                    )
+
+                    val nine = projection.models.single { it.handle == "heretic-9b" }
+                    assertEquals(
+                        "workspace.status.model-control-not-lawful",
+                        nine.display.status.key,
+                    )
+                    assertEquals(emptyList(), nine.display.controls)
+                    assertNull(nine.runtimeConfiguration)
+
+                    val rejected =
+                        owner.control(
+                            VexLifeModelsFamily.ControlSelect,
+                            "heretic-9b",
+                        )
+                    assertEquals(
+                        VexLifeModels.OutcomeState.NotLawfulNow.stateRef,
+                        rejected.lastOutcome?.state,
+                    )
+                }
         }
 
     @Test
