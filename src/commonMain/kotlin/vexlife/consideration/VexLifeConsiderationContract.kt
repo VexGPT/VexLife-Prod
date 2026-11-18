@@ -180,20 +180,28 @@ object VexLifeConsiderationContract {
             }
 
             MemoryCandidateDisposition.CANDIDATE -> {
-                require(value.memoryCandidate.candidateClass != null) {
+                val candidate = value.memoryCandidate
+                require(candidate.candidateClass != null) {
                     "memory candidate requires one candidate class"
                 }
+                val summary =
+                    requireNotNull(
+                        candidate.summary,
+                    ) {
+                        "memory candidate requires one bounded summary"
+                    }
                 require(
-                    !value.memoryCandidate.summary.isNullOrBlank() &&
-                        value.memoryCandidate.summary.length <= MaximumCandidateSummaryCharacters,
+                    summary.isNotBlank() &&
+                        summary.length <= MaximumCandidateSummaryCharacters,
                 ) {
                     "memory candidate requires one bounded summary"
                 }
+                val scopeHint = candidate.scopeHint
                 require(
-                    value.memoryCandidate.scopeHint == null ||
+                    scopeHint == null ||
                         (
-                            value.memoryCandidate.scopeHint.isNotBlank() &&
-                                value.memoryCandidate.scopeHint.length <= MaximumScopeHintCharacters
+                            scopeHint.isNotBlank() &&
+                                scopeHint.length <= MaximumScopeHintCharacters
                         ),
                 ) {
                     "memory candidate scope hint is invalid"
