@@ -180,6 +180,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 contextConversationBody: byId('context-conversation-body'),
                 contextBrowserStatus: byId('context-browser-status'),
                 contextBrowserBody: byId('context-browser-body'),
+                contextRequestStatus: byId('context-request-status'),
+                contextRequestBody: byId('context-request-body'),
                 contextComponentList: byId('context-component-list'),
                 contextProcessStatus: byId('context-process-status'),
                 contextProcessBody: byId('context-process-body'),
@@ -2543,6 +2545,7 @@ object VexLifeWebP1RuntimeArtifacts {
                     ui.contextContinuityBody,
                     ui.contextConversationBody,
                     ui.contextBrowserBody,
+                    ui.contextRequestBody,
                     ui.contextProcessBody,
                     ui.contextOutputBody,
                     ui.contextAfterBody
@@ -2757,6 +2760,16 @@ object VexLifeWebP1RuntimeArtifacts {
                       ' · ' + String(reach.state ?? ''),
                     'Reached'
                   );
+                }
+
+                // The current request is not part of selected prior Conversation; show its exact
+                // canonical event separately so the causal stack never skips the human cause.
+                ui.contextRequestBody.replaceChildren();
+                ui.contextRequestStatus.textContent = latestHuman ? 'Exact Conversation request' : 'Unavailable';
+                if (latestHuman) {
+                  contextExactText(ui.contextRequestBody, latestHuman.content);
+                } else {
+                  contextLine(ui.contextRequestBody, 'The current request is not available in the Conversation projection.');
                 }
 
                 // Exact provider component order / stability is evidence, not another owner.
