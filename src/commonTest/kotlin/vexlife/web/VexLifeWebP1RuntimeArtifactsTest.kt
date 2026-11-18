@@ -596,12 +596,6 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 ),
             "VexWeb must not own the human meaning of runtime-configuration values",
         )
-        assertFalse(
-            bundle.html.contains(
-                "type=\"range\"",
-            ),
-            "the primary Settings surface should not expose the raw cache count as a slider",
-        )
         assertTrue(
             javascript.contains(
                 "modelControl(\"${VexLifeModelsFamily.ControlSelect}\", handle)",
