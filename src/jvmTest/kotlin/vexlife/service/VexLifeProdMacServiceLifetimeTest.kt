@@ -619,7 +619,7 @@ class VexLifeProdMacServiceLifetimeTest {
     }
 
     @Test
-    fun noReceiptAndNoStableLaunchdJobIsAbsentButPresentLabelIsHeldUnknown() {
+    fun noReceiptRequiresMatchingLaunchdAndTypedEndpointBeforeLegacyRecovery() {
         fixture()
             .use {
                 fixture ->
@@ -634,15 +634,11 @@ class VexLifeProdMacServiceLifetimeTest {
                         productHome = fixture.home,
                         desiredSourceSha = fixture.sourceSha,
                         host = fixture.host,
-                    lifetimeRoot = fixture.lifetimeRoot,
+                        lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
                 assertIs<VexLifeProdMacServiceLifetime.Observation.Absent>(
                     absent,
-                )
-                assertEquals(
-                    0,
-                    probe.calls,
                 )
 
                 fixture.host.servicePresent =
@@ -652,20 +648,112 @@ class VexLifeProdMacServiceLifetimeTest {
                 fixture.host.alive =
                     true
 
-                val unknown =
+                val recoverable =
                     VexLifeProdMacServiceLifetime.observe(
                         productHome = fixture.home,
                         desiredSourceSha = fixture.sourceSha,
                         host = fixture.host,
-                    lifetimeRoot = fixture.lifetimeRoot,
+                        lifetimeRoot = fixture.lifetimeRoot,
+                        probe = probe,
+                    )
+                assertIs<VexLifeProdMacServiceLifetime.Observation.RecoverableLegacyOrphan>(
+                    recoverable,
+                )
+                assertEquals(
+                    fixture.host.currentPid,
+                    recoverable.launchdObservation.pid,
+                )
+                assertEquals(
+                    fixture.sourceSha,
+                    recoverable.sourceCurrentness.sourceSha,
+                )
+
+                probe.pidOverride =
+                    9999L
+                val mismatched =
+                    VexLifeProdMacServiceLifetime.observe(
+                        productHome = fixture.home,
+                        desiredSourceSha = fixture.sourceSha,
+                        host = fixture.host,
+                        lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
                 assertIs<VexLifeProdMacServiceLifetime.Observation.HeldUnknown>(
-                    unknown,
+                    mismatched,
+                )
+            }
+    }
+
+    @Test
+    fun witnessedLegacyOrphanIsRetiredBeforeDesiredServiceStarts() {
+        fixture()
+            .use {
+                fixture ->
+                fixture.host.servicePresent =
+                    true
+                fixture.host.running =
+                    true
+                fixture.host.alive =
+                    true
+                fixture.host.currentPid =
+                    4242L
+                fixture.host.nextBootstrapPid =
+                    5252L
+
+                val probe =
+                    Probe(
+                        fixture.sourceSha,
+                        fixture.host,
+                    )
+
+                val existing =
+                    VexLifeProdMacServiceLifetime.observeExisting(
+                        productHome = fixture.home,
+                        host = fixture.host,
+                        lifetimeRoot = fixture.lifetimeRoot,
+                        probe = probe,
+                    )
+                assertIs<
+                    VexLifeProdMacServiceLifetime.ExistingObservation.RecoverableLegacyOrphan
+                >(
+                    existing,
+                )
+
+                val started =
+                    VexLifeProdMacServiceLifetime.startOrReuse(
+                        productHome = fixture.home,
+                        desiredSourceSha = fixture.sourceSha,
+                        host = fixture.host,
+                        lifetimeRoot = fixture.lifetimeRoot,
+                        probe = probe,
+                    )
+
+                assertEquals(
+                    "STARTED_CURRENT_SERVICE",
+                    started.disposition,
+                )
+                assertTrue(
+                    started.priorProcessRetired,
                 )
                 assertEquals(
-                    0,
-                    probe.calls,
+                    1,
+                    fixture.host.bootoutCount(),
+                )
+                assertEquals(
+                    1,
+                    fixture.host.bootstrapCount(),
+                )
+                assertEquals(
+                    5252L,
+                    started.pid,
+                )
+                assertEquals(
+                    5252L,
+                    assertNotNull(
+                        lifetimeReceipt(
+                            fixture.lifetimeRoot,
+                        ),
+                    ).launchd.pid,
                 )
             }
     }
