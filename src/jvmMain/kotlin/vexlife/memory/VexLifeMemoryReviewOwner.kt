@@ -712,13 +712,31 @@ internal object VexLifeMemoryReviewOwner {
             statementRef(
                 review,
             )
-        val existingStatement =
+        val coordinates =
             VexLifeCurrentMemoryReader
-                .readCurrentScoreStatementBinding(
-                    productHome = home,
-                    statementRef =
-                        statementRef,
+                .readCurrentScoreCoordinates(
+                    home,
                 )
+        val statementIsCurrent =
+            statementRef in
+                coordinates.currentStatementRefs
+        val existingStatement =
+            if (
+                statementIsCurrent
+            ) {
+                requireNotNull(
+                    VexLifeCurrentMemoryReader
+                        .readCurrentScoreStatementBinding(
+                            productHome = home,
+                            statementRef =
+                                statementRef,
+                        ),
+                ) {
+                    "current Score coordinates name a statement whose binding cannot be resolved"
+                }
+            } else {
+                null
+            }
         val scoreRecovered =
             existingStatement !=
                 null
@@ -735,20 +753,12 @@ internal object VexLifeMemoryReviewOwner {
                 ) {
                     "current Score statement exists with different semantic acceptance"
                 }
-                VexLifeCurrentMemoryReader
-                    .readCurrentScoreCoordinates(
-                        home,
-                    )
-                    .scoreHeadSha256
-                    ?: error(
-                        "current Score statement has no current Score head",
-                    )
+                requireNotNull(
+                    coordinates.scoreHeadSha256,
+                ) {
+                    "current Score statement has no current Score head"
+                }
             } else {
-                val coordinates =
-                    VexLifeCurrentMemoryReader
-                        .readCurrentScoreCoordinates(
-                            home,
-                        )
                 VexLifeScoreContinuity
                     .appendAcceptedStatement(
                         productHome = home,
