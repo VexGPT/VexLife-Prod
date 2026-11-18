@@ -173,5 +173,15 @@
     "surfaces": [
       "windows-setup.window"
     ]
+  },
+  "windows-setup.description.working-close-held": {
+    "strings": {
+      "en": {
+        "text": "VexLife is still working on this setup step. Keep this window open until it finishes."
+      }
+    },
+    "surfaces": [
+      "windows-setup.window"
+    ]
   }
 }
