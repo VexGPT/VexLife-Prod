@@ -26,6 +26,7 @@ import javax.swing.JScrollPane
 import javax.swing.JTextArea
 import javax.swing.JTextField
 import javax.swing.SwingUtilities
+import javax.swing.UIManager
 import javax.swing.SwingWorker
 import vexlife.entry.VexLifeProdEntryFamily
 import vexlife.local.VexLifeProdSetupProgress
@@ -791,6 +792,11 @@ internal class VexLifeProdWindowsSetupWindow private constructor(
         fun open(
             plan: VexLifeProdWindowsPreview.LaunchPlan,
         ) {
+            runCatching {
+                UIManager.setLookAndFeel(
+                    UIManager.getSystemLookAndFeelClassName(),
+                )
+            }
             SwingUtilities.invokeLater {
                 VexLifeProdWindowsSetupWindow(plan).show()
             }
