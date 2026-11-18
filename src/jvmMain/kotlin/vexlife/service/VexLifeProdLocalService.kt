@@ -42,6 +42,9 @@ import vexlife.memory.VexLifeDailyMemoryDream
 import vexlife.person.VexLifePersonSettings
 import vexlife.person.VexLifePersonSettingsStore
 import vexlife.memory.VexLifeMemoryContract
+import vexlife.release.VexLifeReleaseIdentity
+import vexlife.release.VexLifeReleaseInboxFamily
+import vexlife.release.VexLifeReleaseUpdates
 import vexlife.memory.VexLifeMemoryFamily
 import vexlife.model.heretic.HereticRuntimeState
 import vexlife.vision.VexLifeProdVisionRuntime
@@ -75,6 +78,12 @@ class VexLifeProdLocalService private constructor(
     private val servingModelRef: () -> String?,
     private val servingRuntimeReceiptRef: () -> String,
     private val modelSwitchRealization: VexLifeModels.ModelSwitchRealization?,
+    private val releaseAlertsProjection: () -> VexLifeReleaseInboxFamily.DisplayState,
+    private val releaseAlertsControl:
+        (
+            String,
+            VexLifeReleaseIdentity.Coordinate,
+        ) -> VexLifeReleaseUpdates.ControlResult,
     privateCompletionOverride: VexLifePrivateConversation.Completion? = null,
 ) : AutoCloseable {
     private val privateConversation = VexLifePrivateConversation(Path.of(startupSetup.productHome))
@@ -464,6 +473,13 @@ class VexLifeProdLocalService private constructor(
             servingModelRef: (() -> String?)? = null,
             servingRuntimeReceiptRef: (() -> String)? = null,
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
+            releaseAlertsProjection: (() -> VexLifeReleaseInboxFamily.DisplayState)? = null,
+            releaseAlertsControl:
+                ((
+                    String,
+                    VexLifeReleaseIdentity.Coordinate,
+                ) -> VexLifeReleaseUpdates.ControlResult)? =
+                null,
         ): VexLifeProdLocalService =
             startAt(
                 sourceSha = sourceSha,
@@ -496,6 +512,8 @@ class VexLifeProdLocalService private constructor(
                             setup.qualifiedRuntimeEvidence.runtimeReceiptRef
                         },
                 modelSwitchRealization = modelSwitchRealization,
+                releaseAlertsProjection = releaseAlertsProjection,
+                releaseAlertsControl = releaseAlertsControl,
             )
 
         private fun startAt(
@@ -517,6 +535,13 @@ class VexLifeProdLocalService private constructor(
                 startupSetup.qualifiedRuntimeEvidence.runtimeReceiptRef
             },
             modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
+            releaseAlertsProjection: (() -> VexLifeReleaseInboxFamily.DisplayState)? = null,
+            releaseAlertsControl:
+                ((
+                    String,
+                    VexLifeReleaseIdentity.Coordinate,
+                ) -> VexLifeReleaseUpdates.ControlResult)? =
+                null,
         ): VexLifeProdLocalService {
             require(
                 SourceShaPattern.matches(
@@ -549,6 +574,28 @@ class VexLifeProdLocalService private constructor(
                 productHome,
             )
                 .current()
+
+            val releaseUpdates =
+                VexLifeReleaseUpdates(
+                    sourceSha = sourceSha,
+                    productHome = productHome,
+                )
+            val realizedReleaseAlertsProjection =
+                releaseAlertsProjection
+                    ?: {
+                        releaseUpdates.projection()
+                    }
+            val realizedReleaseAlertsControl =
+                releaseAlertsControl
+                    ?: {
+                        controlRef,
+                        release,
+                        ->
+                        releaseUpdates.control(
+                            controlRef = controlRef,
+                            release = release,
+                        )
+                    }
 
             val presentation =
                 VexLifeWebP1RuntimeArtifacts.generate()
@@ -586,6 +633,8 @@ class VexLifeProdLocalService private constructor(
                         servingModelRef = servingModelRef,
                         servingRuntimeReceiptRef = servingRuntimeReceiptRef,
                         modelSwitchRealization = modelSwitchRealization,
+                        releaseAlertsProjection = realizedReleaseAlertsProjection,
+                        releaseAlertsControl = realizedReleaseAlertsControl,
                         privateCompletionOverride = privateCompletion,
                     )
 
@@ -806,6 +855,26 @@ class VexLifeProdLocalService private constructor(
 
                 VexLifeProdServiceContract.MemoryPath -> handleMemory(exchange)
 
+                VexLifeProdServiceContract.ReleaseAlertsPath -> {
+                    requireMethod(exchange, "GET")
+                    respondJson(
+                        exchange = exchange,
+                        status = 200,
+                        value =
+                            VexLifeProdServiceContract.ReleaseAlertsProjection(
+                                schemaVersion =
+                                    VexLifeProdServiceContract.ReleaseAlertsProjectionSchema,
+                                display = releaseAlertsProjection(),
+                                effectsPerformed = false,
+                            ),
+                    )
+                }
+
+                VexLifeProdServiceContract.ReleaseAlertsControlPath ->
+                    handleReleaseAlertsControl(
+                        exchange,
+                    )
+
                 VexLifeProdServiceContract.FoundationalFieldPath -> handleFoundationalField(exchange)
 
                 VexLifeProdServiceContract.SettingsPath -> handleSettings(exchange)
@@ -843,6 +912,12 @@ class VexLifeProdLocalService private constructor(
                 VexLifeProdServiceContract.ChronologyPath -> handlePresentationFact(exchange)
 
                 VexLifeProdServiceContract.WorkspaceStringsPath -> handleStrings(exchange, scope = "workspace")
+
+                VexLifeProdServiceContract.ReleaseAlertsStringsPath ->
+                    handleStrings(
+                        exchange,
+                        scope = "release-alerts",
+                    )
 
                 VexLifeProdServiceContract.PrivatePath -> handlePrivate(exchange)
 
@@ -1039,6 +1114,60 @@ class VexLifeProdLocalService private constructor(
         )
         exchange.responseBody.write(
             bytes,
+        )
+    }
+
+    private fun handleReleaseAlertsControl(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireJson(
+            exchange,
+        )
+        val request =
+            JsonCodec.decodeFromString<VexLifeProdServiceContract.ReleaseAlertsControlRequest>(
+                requestText(
+                    exchange,
+                ),
+            )
+        val result =
+            releaseAlertsControl(
+                request.controlRef,
+                request.release,
+            )
+
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value =
+                VexLifeProdServiceContract.ReleaseAlertsControlResult(
+                    schemaVersion =
+                        VexLifeProdServiceContract.ReleaseAlertsControlResultSchema,
+                    controlRef = request.controlRef,
+                    outcome =
+                        when (
+                            result.outcome
+                        ) {
+                            VexLifeReleaseUpdates.ControlOutcome.Realized ->
+                                VexLifeProdServiceContract.ReleaseAlertsControlRealized
+
+                            VexLifeReleaseUpdates.ControlOutcome.NotLawfulNow ->
+                                VexLifeProdServiceContract.ReleaseAlertsControlNotLawfulNow
+                        },
+                    releaseAlerts =
+                        VexLifeProdServiceContract.ReleaseAlertsProjection(
+                            schemaVersion =
+                                VexLifeProdServiceContract.ReleaseAlertsProjectionSchema,
+                            display = result.display,
+                            effectsPerformed = false,
+                        ),
+                    pageToOpenOrNull =
+                        result.pageToOpenOrNull
+                            ?.value,
+                ),
         )
     }
 

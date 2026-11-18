@@ -1,0 +1,109 @@
+{
+  "_meta": {
+    "scope": "release-alerts",
+    "category": "product",
+    "description": "Human-facing communication about intentionally published VexLife Stable and Preview releases.",
+    "keyConvention": "release-alerts.{element-type}.{semantic-name}",
+    "surfaces": {
+      "release-alerts.inbox": "the VexLife release communication panel"
+    },
+    "dataKeyOwners": {
+      "release-alerts": "VexLifeReleaseInboxFamily (acknowledgement State and Controls)"
+    }
+  },
+  "release-alerts.heading.panel": {
+    "strings": {
+      "en": {
+        "text": "VexLife updates"
+      }
+    },
+    "surfaces": [
+      "release-alerts.inbox"
+    ]
+  },
+  "release-alerts.label.quick-action": {
+    "strings": {
+      "en": {
+        "text": "Updates"
+      }
+    },
+    "surfaces": [
+      "release-alerts.inbox"
+    ]
+  },
+  "release-alerts.status.update-available": {
+    "strings": {
+      "en": {
+        "text": "New version available"
+      }
+    },
+    "surfaces": [
+      "release-alerts.inbox"
+    ],
+    "dataKey": "release-alerts:state:UNREAD"
+  },
+  "release-alerts.status.viewed": {
+    "strings": {
+      "en": {
+        "text": "Viewed"
+      }
+    },
+    "surfaces": [
+      "release-alerts.inbox"
+    ],
+    "dataKey": "release-alerts:state:VIEWED"
+  },
+  "release-alerts.button.view": {
+    "strings": {
+      "en": {
+        "text": "View update"
+      }
+    },
+    "surfaces": [
+      "release-alerts.inbox"
+    ],
+    "dataKey": "release-alerts:control:VIEW_RELEASE"
+  },
+  "release-alerts.button.dismiss": {
+    "strings": {
+      "en": {
+        "text": "Dismiss"
+      }
+    },
+    "surfaces": [
+      "release-alerts.inbox"
+    ],
+    "dataKey": "release-alerts:control:DISMISS_RELEASE"
+  },
+  "release-alerts.description.empty": {
+    "strings": {
+      "en": {
+        "text": "No release notes are waiting."
+      }
+    },
+    "surfaces": [
+      "release-alerts.inbox"
+    ]
+  },
+  "release-alerts.status.preview-update-available": {
+    "strings": {
+      "en": {
+        "text": "New Preview available"
+      }
+    },
+    "surfaces": [
+      "release-alerts.inbox"
+    ],
+    "dataKey": "release-alerts:state:UNREAD_PREVIEW"
+  },
+  "release-alerts.description.unavailable": {
+    "strings": {
+      "en": {
+        "text": "VexLife couldn't check for updates right now."
+      }
+    },
+    "surfaces": [
+      "release-alerts.inbox"
+    ]
+  }
+}
