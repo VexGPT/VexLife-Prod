@@ -9,6 +9,7 @@ import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeEffectBoundary
 import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeState
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.platform.macos.MacUserLaunchdProcess
 
 /**
@@ -380,6 +381,16 @@ object StableVexLifeHereticRuntimeCompatibility {
                     runtimeReceiptRef = receipt.receiptRef,
                     runtimeState = HereticRuntimeState.Qualified,
                     modelRef = receipt.modelRef,
+                    realizationRef =
+                        requireNotNull(
+                            HereticRuntimeRealization.resolve(
+                                model = binding.model,
+                                target = HereticRuntimeRealization.MacArm64,
+                            ),
+                        ) {
+                            "stable qualified Mac runtime model has no exact Mac realization"
+                        }
+                            .realizationRef,
                     modelProfileRef = receipt.modelProfileRef,
                     artifactRef = receipt.artifactRef,
                     artifactContentSetSha256 = receipt.artifactContentSetSha256,
