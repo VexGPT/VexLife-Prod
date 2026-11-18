@@ -67,3 +67,46 @@ Upload the exact canonical:
 even on SAFE_FAILURE.
 
 <!-- [VXG RealForever][PR251][PR261][LIVED-BROWSER][A002] -->
+
+
+## LIVED-A002 consumed result
+
+Victor returned:
+
+```text
+RETURN-t251vc-lived-a002--sha256-c4a0faf98c19ab7c5340c70bc5557dca4f140c19ed26f2cc1bacd5765f27cb90.zip
+outer sha256 c4a0faf98c19ab7c5340c70bc5557dca4f140c19ed26f2cc1bacd5765f27cb90
+outer disposition PASS
+
+inner sha256 d1d4eec0ad32d69b3347576c75a969a2a48c6009febeb986be6a75779a6271f3
+inner disposition SAFE_FAILURE
+```
+
+The Relay envelope was accepted and the exact #251 candidate checked out at the expected head/tree.
+The temporary lived Kotlin harness compiled and the single lived JVM test ran.
+
+The first substantive failure was:
+
+```text
+UNACCEPTED_EXIT_CODE:1
+VexContextLivedBrowserProofTest
+line 307: browser driver exitCode != 0
+```
+
+The RETURN proves the browser driver stopped but does not preserve the driver's own stdout/stderr
+message because Gradle captured it behind the assertion. Therefore the exact browser failure class is
+not yet grounded.
+
+Classification:
+
+```text
+PRODUCT SOURCE FAILURE     not established
+RELAY/CARRIER FAILURE      no
+LIVED BROWSER HARNESS      stopped inside browser driver
+EXACT BROWSER CAUSE        not preserved -> must diagnose, not guess
+```
+
+The candidate remained clean before/after and no real Vex Home/model/service/Memory mutation occurred.
+
+Successor LIVED-A003 changes only proof observability: preserve browser-driver.log and JUnit XML on
+failure, emit explicit Chrome/CDP/page/profile stage checkpoints, then re-run the same exact candidate.
