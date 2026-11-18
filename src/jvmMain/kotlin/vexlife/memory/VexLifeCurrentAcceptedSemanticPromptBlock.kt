@@ -187,9 +187,9 @@ internal object VexLifeCurrentAcceptedSemanticPromptBlock {
 
         val content =
             includedStatements
-                .takeIf(
-                    List<*>::isNotEmpty,
-                )
+                .takeIf {
+                    it.isNotEmpty()
+                }
                 ?.let {
                     providerContent(
                         projection = projection,
