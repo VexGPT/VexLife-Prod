@@ -623,6 +623,11 @@ object VexLifeProdServiceContract {
         val schemaVersion: String,
         val state: String,
         val display: VexLifeMemoryFamily.DisplayState,
+        /** Current Memory packet identity, so Vex Context can compare "now" with the last turn. */
+        val memoryContextRef: String? = null,
+        val memoryContextFingerprint: String? = null,
+        val currentDailyStratumRef: String? = null,
+        val rememberedCount: Int = 0,
         val effectsPerformed: Boolean,
     ) {
         init {
