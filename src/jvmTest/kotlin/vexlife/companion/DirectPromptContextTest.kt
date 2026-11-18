@@ -55,6 +55,20 @@ class DirectPromptContextTest {
         )
 
     @Test
+    fun personContextAcceptsScriptSpecificReplyLanguage() {
+        val context =
+            DirectPromptContext.PersonContext(
+                replyLanguage = "zh-Hans",
+                replyLanguageName = "简体中文",
+                privateConversations = emptyList(),
+            )
+        assertEquals(
+            "zh-Hans",
+            context.replyLanguage,
+        )
+    }
+
+    @Test
     fun personContextTellsVexTheReplyLanguageAndThePrivateGaps() {
         val parent = Files.createTempDirectory("vexlife-prod-direct-prompt-person-").toAbsolutePath()
         val productHome = parent.resolve(".vexlife")

@@ -539,6 +539,11 @@ object VexLifeWebP1 {
             VexLifeWorkspaceBlueprint.LocalAsrSpokenLanguage,
         )
 
+    val LocalAsrComposerOutput =
+        blueprintSurface(
+            VexLifeWorkspaceBlueprint.LocalAsrComposerOutput,
+        )
+
     val LocalAsrStatus =
         blueprintSurface(
             VexLifeWorkspaceBlueprint.LocalAsrStatus,
@@ -557,6 +562,7 @@ object VexLifeWebP1 {
                     LocalAsrSelection,
                     LocalAsrModelsList,
                     LocalAsrSpokenLanguage,
+                    LocalAsrComposerOutput,
                     LocalAsrStatus,
                     LocalAsrStorageNote,
                 ),

@@ -348,6 +348,11 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
             <select id="local-asr-spoken-language" data-vex-ref="${VexLifeWebP1.LocalAsrSpokenLanguage.identity.ref}" disabled></select>
           </div>
           <p class="setting-note-line" data-vex-text="workspace.description.local-asr-spoken-language-note"></p>
+          <div class="local-asr-row">
+            <label for="local-asr-composer-output" data-vex-text="workspace.label.local-asr-composer-output"></label>
+            <select id="local-asr-composer-output" data-vex-ref="${VexLifeWebP1.LocalAsrComposerOutput.identity.ref}" disabled></select>
+          </div>
+          <p class="setting-note-line" data-vex-text="workspace.description.local-asr-composer-output-note"></p>
           <p class="setting-note-line" data-vex-ref="${VexLifeWebP1.LocalAsrStatus.identity.ref}" id="local-asr-status" role="status"></p>
           <p class="setting-note-line" id="local-asr-note" data-vex-text="workspace.description.local-asr-note"></p>
           <p class="setting-note-line" id="local-asr-storage-note" data-vex-ref="${VexLifeWebP1.LocalAsrStorageNote.identity.ref}"></p>

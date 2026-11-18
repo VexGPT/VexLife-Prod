@@ -33,6 +33,24 @@ class VexLifeLocalAsrSpokenLanguageTest {
             ),
         )
         assertEquals(
+            "zh",
+            VexLifeLocalAsrSpokenLanguage.resolvedLanguageCode(
+                value =
+                    VexLifeLocalAsrSpokenLanguage.Default,
+                replyLanguage =
+                    "zh-Hans",
+            ),
+        )
+        assertEquals(
+            "zh",
+            VexLifeLocalAsrSpokenLanguage.resolvedLanguageCode(
+                value =
+                    VexLifeLocalAsrSpokenLanguage.Default,
+                replyLanguage =
+                    "zh-Hant",
+            ),
+        )
+        assertEquals(
             "auto",
             VexLifeLocalAsrSpokenLanguage.resolvedLanguageCode(
                 value =

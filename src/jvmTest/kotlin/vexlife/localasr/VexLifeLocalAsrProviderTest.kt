@@ -125,6 +125,43 @@ class VexLifeLocalAsrProviderTest {
                 "name=\"no_timestamps\"\r\n\r\ntrue",
             ),
         )
+        assertTrue(
+            body.contains(
+                "name=\"translate\"\r\n\r\nfalse",
+            ),
+        )
+    }
+
+    @Test
+    fun serverInferenceMultipartCanTranslateToEnglish() {
+        val request =
+            whisperCppServerMultipart(
+                wavBytes =
+                    byteArrayOf(
+                        1,
+                    ),
+                languageCode =
+                    "zh",
+                translateToEnglish =
+                    true,
+                boundary =
+                    "vexlife-test-translate",
+            )
+
+        val body =
+            request.body.toString(
+                StandardCharsets.ISO_8859_1,
+            )
+        assertTrue(
+            body.contains(
+                "name=\"language\"\r\n\r\nzh",
+            ),
+        )
+        assertTrue(
+            body.contains(
+                "name=\"translate\"\r\n\r\ntrue",
+            ),
+        )
     }
 
     @Test

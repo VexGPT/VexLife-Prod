@@ -208,6 +208,7 @@ object VexLifeWorkspaceBlueprint :
     val LocalAsrSelection = SettingsLocalAsr.control("selection")
     val LocalAsrModelsList = SettingsLocalAsr.content("models-list")
     val LocalAsrSpokenLanguage = SettingsLocalAsr.control("spoken-language")
+    val LocalAsrComposerOutput = SettingsLocalAsr.control("composer-output")
     val LocalAsrStatus = SettingsLocalAsr.content("status")
     val LocalAsrStorageNote = SettingsLocalAsr.content("storage-note")
 
