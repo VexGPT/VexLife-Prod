@@ -10,6 +10,31 @@ import vexlife.conversation.VexLifeConversationTurnFamily
 
 class VexLifeProdServiceContractTest {
     @Test
+    fun localAsrDictationPassVocabularyIsExact() {
+        assertEquals(
+            "x-vexlife-dictation-pass",
+            VexLifeProdServiceContract.LocalAsrDictationPassHeader,
+        )
+        assertEquals(
+            VexLifeProdServiceContract.LocalAsrDictationPass.Partial,
+            VexLifeProdServiceContract.LocalAsrDictationPass.forWire(
+                "partial",
+            ),
+        )
+        assertEquals(
+            VexLifeProdServiceContract.LocalAsrDictationPass.Final,
+            VexLifeProdServiceContract.LocalAsrDictationPass.forWire(
+                "final",
+            ),
+        )
+        assertNull(
+            VexLifeProdServiceContract.LocalAsrDictationPass.forWire(
+                "stream",
+            ),
+        )
+    }
+
+    @Test
     fun ordinaryServiceTopologyIsOneFixedSourceContract() {
         assertEquals(
             "127.0.0.1",
