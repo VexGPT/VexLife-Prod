@@ -10,7 +10,9 @@ import kotlin.test.assertTrue
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticRuntimeConfiguration
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
+import vexlife.model.heretic.runtime.FileHereticRuntimeConfigurationStore
 import vexlife.model.heretic.runtime.HereticArtifactMaterialization
 
 /**
@@ -44,11 +46,19 @@ class VexLifeModelsTest {
         serving: () -> String? = { HereticModelCatalog.Models.Qwen27B.modelRef },
         modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
         failDownload: Boolean = true,
+        target: vexlife.platform.VexLifePlatformRealization.Target =
+            HereticRuntimeRealization.MacArm64,
     ) =
         VexLifeModels(
             productHome = home,
             servingModelRef = serving,
             totalMemoryBytes = { 16 * gib },
+            runtimeRealizations =
+                HereticRuntimeRealization.Resolver(
+                    HereticRuntimeRealization.TargetSource {
+                        target
+                    },
+                ),
             modelSwitchRealization = modelSwitchRealization,
             acquirer = { _ ->
                 HereticArtifactMaterialization.Acquirer { _, _ ->
@@ -100,12 +110,14 @@ class VexLifeModelsTest {
             }
 
         var serving: String? = HereticModelCatalog.Models.Qwen27B.modelRef
+        var switchedRealization: HereticRuntimeRealization.Value? = null
         val phases = mutableListOf<VexLifeModels.SwitchPhase>()
         val modelSwitchRealization =
             VexLifeModels.ModelSwitchRealization {
-                entry,
+                realization,
                 observe,
                 ->
+                switchedRealization = realization
                 observe(VexLifeModels.SwitchPhase.WaitingForCurrentTurn)
                 observe(VexLifeModels.SwitchPhase.PreparingTarget)
                 observe(VexLifeModels.SwitchPhase.SwitchingRuntime)
@@ -115,7 +127,7 @@ class VexLifeModelsTest {
                         VexLifeModels.SwitchPhase.PreparingTarget,
                         VexLifeModels.SwitchPhase.SwitchingRuntime,
                     )
-                serving = entry.modelRef
+                serving = realization.modelRef
             }
 
         models(
@@ -178,6 +190,14 @@ class VexLifeModelsTest {
                     nine,
                     FileHereticModelConfigurationStore(home).selectedModel(fixture.manifest),
                 )
+                assertEquals(
+                    HereticRuntimeRealization.MacArm64,
+                    requireNotNull(switchedRealization).target,
+                )
+                assertEquals(
+                    "MLX_LM_DIRECT_RUNTIME",
+                    requireNotNull(switchedRealization).runtime.runtimeClass,
+                )
                 assertTrue(Files.exists(folder.resolve("config.json")))
             }
     }
@@ -217,19 +237,19 @@ class VexLifeModelsTest {
                             }
                     assertEquals(
                         1,
-                        before.runtimeConfiguration.promptCacheEntries,
+                        requireNotNull(before.runtimeConfiguration).promptCacheEntries,
                     )
                     assertEquals(
                         1,
-                        before.runtimeConfiguration.recommendedPromptCacheEntries,
+                        requireNotNull(before.runtimeConfiguration).recommendedPromptCacheEntries,
                     )
                     assertEquals(
                         3,
-                        before.runtimeConfiguration.maximumPromptCacheEntries,
+                        requireNotNull(before.runtimeConfiguration).maximumPromptCacheEntries,
                     )
                     assertEquals(
                         HereticRuntimeConfiguration.RecommendationHeldExperiment,
-                        before.runtimeConfiguration.recommendationStanding,
+                        requireNotNull(before.runtimeConfiguration).recommendationStanding,
                     )
 
                     owner.control(
@@ -249,6 +269,7 @@ class VexLifeModelsTest {
                                 it.handle == "heretic-4b"
                             }
                             .runtimeConfiguration
+                            .let(::requireNotNull)
                             .promptCacheEntries,
                     )
                     val configured =
@@ -272,11 +293,11 @@ class VexLifeModelsTest {
                     )
                     assertEquals(
                         HereticRuntimeConfiguration.ModeExplicit,
-                        four.runtimeConfiguration.mode,
+                        requireNotNull(four.runtimeConfiguration).mode,
                     )
                     assertEquals(
                         1,
-                        four.runtimeConfiguration.promptCacheEntries,
+                        requireNotNull(four.runtimeConfiguration).promptCacheEntries,
                     )
                     assertEquals(
                         "heretic-27b",
@@ -298,6 +319,92 @@ class VexLifeModelsTest {
                     assertEquals(
                         HereticModelCatalog.Models.Qwen27B,
                         FileHereticModelConfigurationStore(home).selectedModel(manifest),
+                    )
+                }
+        }
+
+    @Test
+    fun windowsFourBDoesNotExposeOrWriteTheMlxPromptCacheConfiguration() =
+        withHome {
+            home,
+            _,
+            ->
+            models(
+                home = home,
+                target = HereticRuntimeRealization.WindowsX64,
+            )
+                .use {
+                    owner ->
+                    val projection =
+                        owner.projection()
+                    assertEquals(
+                        listOf(
+                            "heretic-4b",
+                        ),
+                        projection.models.map {
+                            it.handle
+                        },
+                    )
+                    val four =
+                        projection.models
+                            .single()
+
+                    assertEquals(
+                        HereticRuntimeRealization.WindowsQwen4B
+                            .artifact
+                            .expectedPrimaryBytes,
+                        four.totalBytes,
+                    )
+                    assertEquals(
+                        0L,
+                        four.presentBytes,
+                    )
+                    assertEquals(
+                        "workspace.status.model-not-downloaded",
+                        four.display.status.key,
+                    )
+
+                    assertNull(
+                        four.runtimeConfiguration,
+                    )
+                    assertEquals(
+                        false,
+                        four.display.runtimeConfigurationApplicable,
+                    )
+                    assertEquals(
+                        emptyList(),
+                        four.display.runtimeConfigurationChoices,
+                    )
+
+                    owner.control(
+                        VexLifeModelsFamily.ControlSelect,
+                        "heretic-4b",
+                    )
+                    val rejected =
+                        owner.control(
+                            VexLifeModelsFamily.ControlSetPromptCacheEntries,
+                            "heretic-4b",
+                            promptCacheEntries = 2,
+                        )
+                    assertEquals(
+                        VexLifeModels.OutcomeState.NotLawfulNow.stateRef,
+                        rejected.lastOutcome?.state,
+                    )
+                    assertFalse(
+                        Files.exists(
+                            home.resolve(
+                                FileHereticRuntimeConfigurationStore.RelativePath,
+                            ),
+                        ),
+                    )
+                    val unsupported =
+                        owner.control(
+                            VexLifeModelsFamily.ControlSelect,
+                            "heretic-9b",
+                        )
+                    assertEquals(
+                        VexLifeModels.OutcomeState.NotLawfulNow.stateRef,
+                        unsupported.lastOutcome?.state,
                     )
                 }
         }

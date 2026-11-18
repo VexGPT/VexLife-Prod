@@ -4,7 +4,8 @@ import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import vexlife.home.VexLifeProdHomeFiles
-import vexlife.local.VexLifeProdLocalSetup
+import vexlife.local.VexLifeProdRuntimeSession
+import vexlife.local.VexLifeProdRuntimeSessionFactory
 import vexlife.logging.VexLogger
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 
@@ -85,18 +86,22 @@ object VexLifeProdServiceProcess {
         val establishSession: (
             productHome: Path,
             allowAcquisition: Boolean,
-        ) -> VexLifeProdLocalSetup.Session = {
+        ) -> VexLifeProdRuntimeSession = {
             productHome,
             allowAcquisition,
             ->
-            VexLifeProdLocalSetup.establishSession(
-                productHome = productHome,
-                allowAcquisition = allowAcquisition,
+            require(
+                !allowAcquisition,
+            ) {
+                "long-lived Product service process never grants runtime acquisition authority"
+            }
+            VexLifeProdRuntimeSessionFactory.establishForServiceProcess(
+                productHome,
             )
         },
         val startService: (
             sourceSha: String,
-            session: VexLifeProdLocalSetup.Session,
+            session: VexLifeProdRuntimeSession,
             visionRuntimeExecutablePathOrNull: String?,
         ) -> AutoCloseable = {
             sourceSha,

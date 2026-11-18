@@ -16,7 +16,7 @@ class VexLifeModelsFamilyTest {
         serving: Boolean = false,
         downloading: Boolean = false,
         switching: Boolean = false,
-        runtimeConfiguration: HereticRuntimeConfiguration.Effective =
+        runtimeConfiguration: HereticRuntimeConfiguration.Effective? =
             HereticRuntimeConfiguration.effective(
                 HereticRuntimeConfiguration.empty(),
                 HereticModelCatalog.Models.Qwen4B,
@@ -188,6 +188,57 @@ class VexLifeModelsFamilyTest {
                 changed,
                 VexLifeModelsFamily.Use,
             )?.effect,
+        )
+    }
+
+    @Test
+    fun aRealizationWithoutRuntimeConfigurationShowsAndAdmitsNoConfigurationControls() {
+        val selected =
+            state(
+                artifactPresence = VexLifeModelsFamily.ArtifactPresence.Present,
+                targeted = true,
+                runtimeConfiguration = null,
+            )
+        val display =
+            VexLifeModelsFamily.displayStateFor(
+                selected,
+            )
+
+        assertEquals(
+            false,
+            display.runtimeConfigurationApplicable,
+        )
+        assertNull(
+            display.runtimeConfigurationSummary,
+        )
+        assertNull(
+            display.runtimeConfigurationRecommendation,
+        )
+        assertEquals(
+            emptyList(),
+            display.runtimeConfigurationChoices,
+        )
+        assertNull(
+            VexLifeModelsFamily.resolve(
+                selected,
+                VexLifeModelsFamily.UseRecommendedRuntimeConfiguration,
+            ),
+        )
+        assertNull(
+            VexLifeModelsFamily.resolve(
+                selected,
+                VexLifeModelsFamily.SetPromptCacheEntries(
+                    2,
+                ),
+            ),
+        )
+        assertEquals(
+            VexLifeModelsFamily.Effect.SwitchModel,
+            VexLifeModelsFamily.resolve(
+                selected,
+                VexLifeModelsFamily.Use,
+            )
+                ?.effect,
         )
     }
 

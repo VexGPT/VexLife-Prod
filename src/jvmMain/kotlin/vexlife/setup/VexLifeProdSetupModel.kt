@@ -4,6 +4,7 @@ import java.nio.file.Path
 import kotlinx.serialization.Serializable
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.model.heretic.HereticModelCatalog
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.text.VexLifeStrings
 import vexlife.text.VexLifeText
@@ -18,7 +19,8 @@ import vexlife.text.VexLifeText
  * downloads and starts exactly that model.
  *
  * Resolution, most explicit first: the model chosen in this window, the model the Home chose, the
- * largest offered model that fits this Mac's memory. Choosing is not downloading and not starting.
+ * largest target-supported model that fits this computer's memory. Choosing is not downloading and
+ * not starting. Catalog offering never implies realization support on the current target.
  */
 object VexLifeProdSetupModel {
     const val Schema = "vexlife-prod.setup-model/v1"
@@ -75,10 +77,32 @@ object VexLifeProdSetupModel {
         productHome: Path,
         explicit: String?,
         totalMemoryBytes: Long?,
-    ): HereticModelCatalog.Entry =
-        explicit?.let(HereticModelCatalog::byHandle)
-            ?: saved(productHome)
-            ?: HereticModelCatalog.recommendedFor(totalMemoryBytes)
+        runtimeRealizations: HereticRuntimeRealization.Resolver,
+    ): HereticModelCatalog.Entry {
+        val candidate =
+            explicit?.let(
+                HereticModelCatalog::byHandle,
+            )
+                ?: saved(
+                    productHome,
+                )
+                ?: runtimeRealizations.recommendedFor(
+                    totalMemoryBytes,
+                )
+        requireNotNull(
+            candidate,
+        ) {
+            "selected model is not offered by this Product"
+        }
+        require(
+            runtimeRealizations.resolve(
+                candidate,
+            ) is HereticRuntimeRealization.Resolution.Supported,
+        ) {
+            "selected model has no runtime realization on the current target"
+        }
+        return candidate
+    }
 
     /** No-effect: the offered models in [language], and which one setup will use. */
     fun observe(
@@ -86,20 +110,29 @@ object VexLifeProdSetupModel {
         explicit: String?,
         language: String,
         totalMemoryBytes: Long?,
+        runtimeRealizations: HereticRuntimeRealization.Resolver,
     ): Projection {
         val saved = saved(productHome)
         val selected =
-            explicit?.let(HereticModelCatalog::byHandle)
-                ?: saved
-                ?: HereticModelCatalog.recommendedFor(totalMemoryBytes)
-        val recommended = HereticModelCatalog.recommendedFor(totalMemoryBytes)
+            resolve(
+                productHome = productHome,
+                explicit = explicit,
+                totalMemoryBytes = totalMemoryBytes,
+                runtimeRealizations = runtimeRealizations,
+            )
+        val recommended =
+            runtimeRealizations.recommendedFor(
+                totalMemoryBytes,
+            )
+        val supported =
+            runtimeRealizations.supportedModels()
         return Projection(
             schemaVersion = Schema,
             selected = selected.handle,
             chosen = explicit != null || saved != null,
             savedInHome = saved == selected,
             models =
-                HereticModelCatalog.Entries.map { entry ->
+                supported.map { entry ->
                     val fits = HereticModelCatalog.fits(entry, totalMemoryBytes)
                     val fit =
                         when {
@@ -157,15 +190,34 @@ object VexLifeProdSetupModel {
         handle: String,
         language: String,
         totalMemoryBytes: Long?,
+        runtimeRealizations: HereticRuntimeRealization.Resolver,
     ): Projection {
         val model =
-            requireNotNull(HereticModelCatalog.byHandle(handle)) { "model $handle is not offered" }
-        val persisted = persist(productHome, model)
-        return observe(
+            requireNotNull(
+                HereticModelCatalog.byHandle(
+                    handle,
+                ),
+            ) {
+                "model $handle is not offered"
+            }
+        require(
+            runtimeRealizations.resolve(
+                model,
+            ) is HereticRuntimeRealization.Resolution.Supported,
+        ) {
+            "model $handle has no runtime realization on the current target"
+        }
+        val persisted =
+            persist(
                 productHome,
+                model,
+            )
+        return observe(
+                productHome = productHome,
                 explicit = handle,
                 language = language,
                 totalMemoryBytes = totalMemoryBytes,
+                runtimeRealizations = runtimeRealizations,
             )
             .copy(effectsPerformed = persisted)
     }

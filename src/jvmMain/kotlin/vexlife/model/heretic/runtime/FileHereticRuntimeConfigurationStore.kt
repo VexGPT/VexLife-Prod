@@ -6,6 +6,7 @@ import vexlife.contract.VexDurableContractFile
 import vexlife.filesystem.VexOwnedPath
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticRuntimeConfiguration
+import vexlife.model.heretic.HereticRuntimeRealization
 
 /** Durable per-model runtime configuration beneath the Product-owned runtime scope. */
 class FileHereticRuntimeConfigurationStore(
@@ -39,16 +40,44 @@ class FileHereticRuntimeConfigurationStore(
 
     fun effective(
         model: HereticModelCatalog.Entry,
-    ): HereticRuntimeConfiguration.Effective =
-        HereticRuntimeConfiguration.effective(
+        realization: HereticRuntimeRealization.Value,
+    ): HereticRuntimeConfiguration.Applicability =
+        HereticRuntimeConfiguration.resolve(
             value = read(),
             model = model,
+            realization = realization,
         )
+
+    fun requireEffective(
+        model: HereticModelCatalog.Entry,
+        realization: HereticRuntimeRealization.Value,
+    ): HereticRuntimeConfiguration.Effective =
+        when (
+            val applicability =
+                effective(
+                    model = model,
+                    realization = realization,
+                )
+        ) {
+            is HereticRuntimeConfiguration.Applicability.Applicable ->
+                applicability.effective
+
+            is HereticRuntimeConfiguration.Applicability.NotApplicable ->
+                error(
+                    "runtime configuration is not applicable to realization " +
+                        applicability.realizationRef,
+                )
+        }
 
     fun setPromptCacheEntries(
         model: HereticModelCatalog.Entry,
+        realization: HereticRuntimeRealization.Value,
         promptCacheEntries: Int,
     ): HereticRuntimeConfiguration.Effective {
+        requireEffective(
+            model = model,
+            realization = realization,
+        )
         write(
             HereticRuntimeConfiguration.withPromptCacheEntries(
                 value = read(),
@@ -56,7 +85,10 @@ class FileHereticRuntimeConfigurationStore(
                 promptCacheEntries = promptCacheEntries,
             ),
         )
-        return effective(model)
+        return requireEffective(
+            model = model,
+            realization = realization,
+        )
     }
 
     /**
@@ -66,13 +98,19 @@ class FileHereticRuntimeConfigurationStore(
      */
     fun useRecommended(
         model: HereticModelCatalog.Entry,
+        realization: HereticRuntimeRealization.Value,
     ): HereticRuntimeConfiguration.Effective {
+        requireEffective(
+            model = model,
+            realization = realization,
+        )
         val recommendation =
             HereticRuntimeConfiguration.recommendation(
                 model,
             )
         return setPromptCacheEntries(
             model = model,
+            realization = realization,
             promptCacheEntries = recommendation.promptCacheEntries,
         )
     }

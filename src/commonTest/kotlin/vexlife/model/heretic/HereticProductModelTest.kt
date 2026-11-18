@@ -4,6 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class HereticProductModelTest {
@@ -157,6 +158,13 @@ class HereticProductModelTest {
                 pending,
             ),
         )
+        assertEquals(
+            HereticModelConfiguration.Schema,
+            pending.schemaVersion,
+        )
+        assertNull(
+            pending.realizationRef,
+        )
 
         val bound =
             HereticModelConfiguration.bound(
@@ -171,6 +179,151 @@ class HereticProductModelTest {
         assertTrue(
             HereticModelConfiguration.isBound(
                 bound,
+            ),
+        )
+        assertEquals(
+            HereticRuntimeRealization
+                .require(
+                    modelRef = HereticProductIdentity.ModelRef,
+                    target = HereticRuntimeRealization.MacArm64,
+                )
+                .realizationRef,
+            bound.realizationRef,
+        )
+    }
+
+    @Test
+    fun windowsQualifiedRuntimeBindsItsExactRealizationInsteadOfMacCatalogRuntime() {
+        val realization =
+            HereticRuntimeRealization.WindowsQwen4B
+        val evidence =
+            HereticModelConfiguration.QualifiedRuntimeEvidence(
+                runtimeReceiptRef =
+                    "receipt.vexlife-prod.windows-heretic.4242",
+                runtimeState =
+                    HereticRuntimeState.Qualified,
+                modelRef =
+                    realization.modelRef,
+                realizationRef =
+                    realization.realizationRef,
+                modelProfileRef =
+                    realization.modelProfileRef,
+                artifactRef =
+                    realization.artifact.artifactRef,
+                artifactContentSetSha256 =
+                    realization.artifact.contentSetSha256,
+                runtimeAdapterRef =
+                    realization.runtime.runtimeAdapterRef,
+                runtimeClass =
+                    realization.runtime.runtimeClass,
+                endpoint =
+                    realization.runtime.endpoint,
+                requestModel =
+                    realization.runtime.requestModel,
+                qualification =
+                    HereticRuntimeQualification.qualified(),
+            )
+
+        val bound =
+            HereticModelConfiguration.bound(
+                homeIdentity = home,
+                qualifiedRuntime = evidence,
+                runtimeReceiptPath =
+                    realization.runtimeReceiptRelativePath,
+            )
+
+        assertEquals(
+            realization.realizationRef,
+            bound.realizationRef,
+        )
+        assertEquals(
+            realization.artifact.artifactRef,
+            bound.artifactRef,
+        )
+        assertEquals(
+            realization.runtime.runtimeAdapterRef,
+            bound.runtimeAdapterRef,
+        )
+        assertEquals(
+            realization.runtime.runtimeClass,
+            bound.runtimeClass,
+        )
+        assertEquals(
+            realization.runtimeReceiptRelativePath,
+            bound.runtimeReceiptPath,
+        )
+        assertTrue(
+            HereticModelConfiguration.productIdentityCurrent(
+                bound,
+            ),
+        )
+        assertEquals(
+            realization,
+            HereticModelConfiguration.boundRealization(
+                bound,
+            ),
+        )
+    }
+
+    @Test
+    fun legacyBoundMacRecordMigratesInMemoryToExactMacRealization() {
+        val legacy =
+            HereticModelConfiguration.LegacyValueV1(
+                schemaVersion =
+                    HereticModelConfiguration.LegacySchema,
+                state =
+                    HereticModelConfiguration.State.BoundProductModel,
+                homeRef =
+                    home.homeRef,
+                companionLineageRef =
+                    home.companionLineageRef,
+                modelRef =
+                    HereticProductIdentity.ModelRef,
+                modelProfileRef =
+                    HereticProductIdentity.ModelProfileRef,
+                artifactRef =
+                    HereticProductIdentity.ArtifactSetRef,
+                artifactContentSetSha256 =
+                    HereticProductIdentity.ArtifactContentSetSha256,
+                runtimeAdapterRef =
+                    HereticProductIdentity.RuntimeAdapterRef,
+                runtimeClass =
+                    HereticProductIdentity.RuntimeClass,
+                endpoint =
+                    HereticProductIdentity.Endpoint,
+                requestModel =
+                    HereticProductIdentity.RequestModel,
+                runtimeReceiptPath =
+                    HereticProductIdentity.StableRuntimeReceiptRelativePath,
+                automaticFallback =
+                    false,
+                automaticDownload =
+                    false,
+                automaticActivation =
+                    false,
+            )
+
+        val migrated =
+            HereticModelConfiguration.migrateLegacy(
+                legacy,
+            )
+
+        assertEquals(
+            HereticModelConfiguration.Schema,
+            migrated.schemaVersion,
+        )
+        assertEquals(
+            HereticRuntimeRealization
+                .require(
+                    modelRef = legacy.modelRef,
+                    target = HereticRuntimeRealization.MacArm64,
+                )
+                .realizationRef,
+            migrated.realizationRef,
+        )
+        assertTrue(
+            HereticModelConfiguration.productIdentityCurrent(
+                migrated,
             ),
         )
     }

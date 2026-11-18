@@ -292,7 +292,7 @@
   "workspace.label.model-fits": {
     "strings": {
       "en": {
-        "text": "fits this Mac"
+        "text": "fits this computer"
       }
     },
     "surfaces": [
@@ -302,7 +302,7 @@
   "workspace.label.model-tight": {
     "strings": {
       "en": {
-        "text": "more than this Mac has"
+        "text": "more than this computer has"
       }
     },
     "surfaces": [
@@ -320,10 +320,10 @@
     ],
     "dataKey": "model:standing:CANDIDATE"
   },
-  "workspace.status.model-on-this-mac": {
+  "workspace.status.model-on-this-computer": {
     "strings": {
       "en": {
-        "text": "on this Mac"
+        "text": "on this computer"
       }
     },
     "surfaces": [

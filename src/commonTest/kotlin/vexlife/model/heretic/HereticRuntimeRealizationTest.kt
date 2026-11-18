@@ -1,0 +1,361 @@
+package vexlife.model.heretic
+
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertNotEquals
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import vexlife.platform.VexLifePlatformRealization
+
+class HereticRuntimeRealizationTest {
+    private val gib = 1024L * 1024L * 1024L
+
+    @Test
+    fun crossPlatformFourBIdentityDoesNotNameOneRuntimeRepresentation() {
+        assertEquals(
+            "Heretic 4B Distill",
+            HereticModelCatalog.Models.Qwen4B.humanLabel,
+        )
+        assertFalse(
+            HereticModelCatalog.Models.Qwen4B.humanLabel.contains("MLX"),
+        )
+        assertFalse(
+            HereticModelCatalog.Models.Qwen4B.humanLabel.contains("GGUF"),
+        )
+    }
+
+    @Test
+    fun everyCurrentCatalogModelHasDeliberateMacArm64Coverage() {
+        assertEquals(
+            HereticModelCatalog.Entries,
+            HereticRuntimeRealization.modelsFor(
+                HereticRuntimeRealization.MacArm64,
+            ),
+        )
+
+        HereticModelCatalog.Entries.forEach { model ->
+            val realization =
+                HereticRuntimeRealization.require(
+                    modelRef = model.modelRef,
+                    target = HereticRuntimeRealization.MacArm64,
+                )
+            assertEquals(model.modelRef, realization.modelRef)
+            assertEquals(
+                model.identity.modelProfileRef,
+                realization.modelProfileRef,
+            )
+            assertEquals(
+                "substrate.vexlife.macos-user-launchd-process.001",
+                realization.process.processSubstrateRef,
+            )
+            assertEquals(
+                "owner.vexlife-prod.heretic-persistent-runtime.001",
+                realization.process.lifetimeOwnerRef,
+            )
+        }
+    }
+
+    @Test
+    fun currentMacRuntimeIdentityAndRealizationMustMoveDeliberatelyTogether() {
+        val realization =
+            HereticRuntimeRealization.require(
+                modelRef = HereticModelCatalog.Models.Qwen4B.modelRef,
+                target = HereticRuntimeRealization.MacArm64,
+            )
+
+        assertEquals(
+            HereticProductIdentity.RuntimeAdapterRef,
+            realization.runtime.runtimeAdapterRef,
+        )
+        assertEquals(
+            HereticProductIdentity.RuntimeClass,
+            realization.runtime.runtimeClass,
+        )
+        assertEquals(
+            HereticProductIdentity.TransportClass,
+            realization.runtime.transportClass,
+        )
+        assertEquals(
+            HereticProductIdentity.Endpoint,
+            realization.runtime.endpoint,
+        )
+        assertEquals(
+            HereticProductIdentity.RequestModel,
+            realization.runtime.requestModel,
+        )
+        assertEquals(
+            HereticProductIdentity.ProductRuntimeReceiptRelativePath,
+            realization.runtimeReceiptRelativePath,
+        )
+        assertEquals(
+            HereticRuntimeConfiguration.MlxPromptCacheProfileRef,
+            realization.runtimeConfigurationProfileRef,
+        )
+    }
+
+    @Test
+    fun windowsX64CoverageIsExplicitAndDoesNotInheritTheCatalog() {
+        assertEquals(
+            listOf(
+                HereticModelCatalog.Models.Qwen4B,
+            ),
+            HereticRuntimeRealization.modelsFor(
+                HereticRuntimeRealization.WindowsX64,
+            ),
+        )
+        assertTrue(
+            HereticRuntimeRealization.supports(
+                modelRef = HereticModelCatalog.Models.Qwen4B.modelRef,
+                target = HereticRuntimeRealization.WindowsX64,
+            ),
+        )
+        assertFalse(
+            HereticRuntimeRealization.supports(
+                modelRef = HereticModelCatalog.Models.Qwen9B.modelRef,
+                target = HereticRuntimeRealization.WindowsX64,
+            ),
+        )
+        assertFalse(
+            HereticRuntimeRealization.supports(
+                modelRef = HereticModelCatalog.Models.Qwen27B.modelRef,
+                target = HereticRuntimeRealization.WindowsX64,
+            ),
+        )
+        assertFalse(
+            HereticRuntimeRealization.supports(
+                modelRef = HereticModelCatalog.Models.GptOss20B.modelRef,
+                target = HereticRuntimeRealization.WindowsX64,
+            ),
+        )
+    }
+
+    @Test
+    fun windows4BRealizationPinsTheLivedCpuRuntimeAndGguf() {
+        val realization =
+            HereticRuntimeRealization.WindowsQwen4B
+        val binary =
+            requireNotNull(
+                realization.runtimeBinary,
+            )
+
+        assertEquals(
+            "model-Q4_K_M.gguf",
+            realization.artifact.primaryFilename,
+        )
+        assertEquals(
+            2_790_000_800L,
+            realization.artifact.expectedPrimaryBytes,
+        )
+        assertEquals(
+            "7b95847ce1684f98d96f13bad2daaeffcfd2f95ea2ff3821ee68943590a10159",
+            realization.artifact.contentSetSha256,
+        )
+        assertEquals(
+            "ggml-org/llama.cpp@c0bc8591e8815c63cb01dd3f051a8b0df02501c9:" +
+                ".github/workflows/release.yml#windows-cpu",
+            binary.providerPackagingSourceRef,
+        )
+        assertEquals(
+            "llama-b10107-bin-win-cpu-x64.zip",
+            binary.archiveFilename,
+        )
+        assertEquals(
+            18_213_827L,
+            binary.archiveBytes,
+        )
+        assertEquals(
+            "52133a0a5a8f6035b1bdd2f89c3425ea8b742413d9bdb9a2dee30e3a1681b18c",
+            binary.archiveSha256,
+        )
+        assertEquals(
+            "af3e56d6bdb84a9b6bd50f6ad748809370bc29be42d58088041408b2933d80f7",
+            binary.executableSha256,
+        )
+        assertEquals(
+            "adapter.runtime.llama-cpp.windows-x64.cpu.b10107.001",
+            realization.runtime.runtimeAdapterRef,
+        )
+        assertEquals(
+            "substrate.vexlife.windows-local-process.001",
+            realization.process.processSubstrateRef,
+        )
+        assertEquals(
+            "owner.vexlife-prod.windows-heretic-runtime.001",
+            realization.process.lifetimeOwnerRef,
+        )
+        assertEquals(
+            "http://127.0.0.1:18080",
+            realization.runtime.endpoint,
+        )
+        assertNull(
+            realization.runtimeConfigurationProfileRef,
+        )
+        val launch =
+            requireNotNull(
+                realization.runtime.livedLaunchProfile,
+            )
+        assertEquals(
+            16_384,
+            launch.contextTokens,
+        )
+        assertTrue(
+            launch.jinja,
+        )
+        assertNull(
+            launch.gpuOffloadLayers,
+        )
+    }
+
+    @Test
+    fun oneResolverInterfaceUsesFreshTargetWithoutMacWindowsBranching() {
+        var currentTarget =
+            HereticRuntimeRealization.MacArm64
+        val resolver =
+            HereticRuntimeRealization.Resolver(
+                HereticRuntimeRealization.TargetSource {
+                    currentTarget
+                },
+            )
+        val model =
+            HereticModelCatalog.Models.Qwen4B
+
+        val mac =
+            assertIs<HereticRuntimeRealization.Resolution.Supported>(
+                resolver.resolve(
+                    model,
+                ),
+            )
+
+        currentTarget =
+            HereticRuntimeRealization.WindowsX64
+
+        val windows =
+            assertIs<HereticRuntimeRealization.Resolution.Supported>(
+                resolver.resolve(
+                    model,
+                ),
+            )
+
+        assertEquals(
+            HereticRuntimeRealization.MacArm64,
+            mac.target,
+        )
+        assertEquals(
+            HereticRuntimeRealization.WindowsX64,
+            windows.target,
+        )
+        assertEquals(
+            "MLX_LM_DIRECT_RUNTIME",
+            mac.realization.runtime.runtimeClass,
+        )
+        assertEquals(
+            "LLAMA_CPP_OPENAI_RUNTIME",
+            windows.realization.runtime.runtimeClass,
+        )
+        assertNotEquals(
+            mac.realization.realizationRef,
+            windows.realization.realizationRef,
+        )
+    }
+
+    @Test
+    fun resolverHoldsUnsupportedTargetInsteadOfFallingBack() {
+        val resolver =
+            HereticRuntimeRealization.Resolver(
+                HereticRuntimeRealization.TargetSource {
+                    HereticRuntimeRealization.WindowsX64
+                },
+            )
+
+        val unsupported =
+            assertIs<HereticRuntimeRealization.Resolution.Unsupported>(
+                resolver.resolve(
+                    HereticModelCatalog.Models.Qwen9B,
+                ),
+            )
+
+        assertEquals(
+            HereticModelCatalog.Models.Qwen9B.modelRef,
+            unsupported.modelRef,
+        )
+        assertEquals(
+            HereticRuntimeRealization.WindowsX64,
+            unsupported.target,
+        )
+    }
+
+    @Test
+    fun recommendationUsesOnlyFreshTargetCoverageBeforeMemoryFit() {
+        val windows =
+            HereticRuntimeRealization.Resolver(
+                HereticRuntimeRealization.TargetSource {
+                    HereticRuntimeRealization.WindowsX64
+                },
+            )
+        val mac =
+            HereticRuntimeRealization.Resolver(
+                HereticRuntimeRealization.TargetSource {
+                    HereticRuntimeRealization.MacArm64
+                },
+            )
+
+        assertEquals(
+            listOf(
+                HereticModelCatalog.Models.Qwen4B,
+            ),
+            windows.supportedModels(),
+        )
+        assertEquals(
+            HereticModelCatalog.Models.Qwen4B,
+            windows.recommendedFor(
+                32L * gib,
+            ),
+        )
+        assertEquals(
+            HereticModelCatalog.Models.Qwen4B,
+            windows.recommendedFor(
+                null,
+            ),
+        )
+        assertEquals(
+            HereticModelCatalog.Models.Qwen9B,
+            mac.recommendedFor(
+                16L * gib,
+            ),
+        )
+    }
+
+    @Test
+    fun targetResolutionNeverFallsAcrossArchitectureOrPlatform() {
+        val windowsArm64 =
+            VexLifePlatformRealization.Target(
+                platform =
+                    VexLifePlatformRealization.PlatformFamily.WINDOWS,
+                architecture =
+                    VexLifePlatformRealization.Architecture.ARM64,
+            )
+
+        assertNull(
+            HereticRuntimeRealization.resolve(
+                modelRef = HereticModelCatalog.Models.Qwen4B.modelRef,
+                target = windowsArm64,
+            ),
+        )
+        assertNull(
+            HereticRuntimeRealization.resolve(
+                modelRef = HereticModelCatalog.Models.Qwen4B.modelRef,
+                target =
+                    VexLifePlatformRealization.Target(
+                        platform =
+                            VexLifePlatformRealization.PlatformFamily.ANDROID,
+                        architecture =
+                            VexLifePlatformRealization.Architecture.ARM64,
+                    ),
+            ),
+        )
+    }
+}
+
+// [VXG RealForever]
