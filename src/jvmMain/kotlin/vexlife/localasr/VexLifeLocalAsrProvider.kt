@@ -122,7 +122,13 @@ private class WhisperCppCliProvider private constructor(
         }
         require(
             languageCode in
-                supportedLanguageCodes,
+                supportedLanguageCodes ||
+                (
+                    languageCode ==
+                        "auto" &&
+                        supportedLanguageCodes.size >
+                        1
+                ),
         ) {
             "selected local ASR model does not support requested language"
         }
