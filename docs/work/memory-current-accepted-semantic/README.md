@@ -66,6 +66,20 @@ is modified here.
 
 The projection is derived only from validated current Score replay + current semantic authority.
 
+It projects only Score statements that satisfy the same accepted-continuity law already used by
+Daily Memory:
+
+```text
+statement is current in Score
++ acceptedForContinuity = true
++ positive consent (PERMITTED or NARROWED)
++ exact membership in current semantic authority
+= current accepted semantic continuity
+```
+
+A current Score statement that is held/deferred/non-consent-admitted is not projected merely because
+it is current in Score.
+
 It carries both frontiers instead of collapsing them:
 
 ```text
