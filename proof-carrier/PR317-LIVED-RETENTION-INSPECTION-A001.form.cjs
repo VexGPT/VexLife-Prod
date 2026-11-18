@@ -34,9 +34,9 @@ const authorityEnvelope={
   transactionRef:'transaction.vexlife-prod.pr317.lived-retention-inspection.a001',
   transactionVersion:1,
   allowedEffectRefs:[
-    'effect.vexlife-prod.pr307.host-retention-inspection',
-    'effect.vexlife-prod.pr307.loopback-currentness-inspection',
-    'effect.vexlife-prod.pr307.inspection-evidence-retention',
+    'effect.vexlife-prod.pr317.host-retention-inspection',
+    'effect.vexlife-prod.pr317.loopback-currentness-inspection',
+    'effect.vexlife-prod.pr317.inspection-evidence-retention',
   ],
   heldEffectRefs:[
     'effect.vexlife-prod.source-mutation',
