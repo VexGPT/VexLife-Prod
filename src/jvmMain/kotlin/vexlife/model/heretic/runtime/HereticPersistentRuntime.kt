@@ -440,11 +440,14 @@ object HereticPersistentRuntime {
             runtimeState = receipt.state,
             modelRef = receipt.modelRef,
             realizationRef =
-                HereticRuntimeRealization
-                    .require(
-                        modelRef = receipt.modelRef,
+                requireNotNull(
+                    HereticRuntimeRealization.resolve(
+                        model = binding.model,
                         target = HereticRuntimeRealization.MacArm64,
-                    )
+                    ),
+                ) {
+                    "qualified Mac runtime model has no exact Mac realization"
+                }
                     .realizationRef,
             modelProfileRef = receipt.modelProfileRef,
             artifactRef = receipt.artifactRef,
