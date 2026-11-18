@@ -4894,11 +4894,15 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (window.confirm(t('workspace.description.diagnostics-clear-confirm'))) void diagnosticsControl('CLEAR_HISTORY');
               });
 
+              // Human browser navigation is independent from local Companion/context projection
+              // currentness. One failed localhost projection must not suppress the person's browser.
+              render();
+              navigate(browser.initialPageUrl);
+              renderApp();
+
               void Promise.all([loadSourceCurrentness(), loadCurrentState(), loadConversationTurn(), loadConversation(), loadContext(), loadVision()])
                 .then(() => {
                   render();
-                  navigate(browser.initialPageUrl);
-                  renderApp();
                   void loadPrivate().catch(() => {});
                   void refreshSettingsProjections(false).then((current) => {
                     if (current) return;
