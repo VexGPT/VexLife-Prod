@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "vexlife-prod.memory-consideration-relay-context/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 247,
+  "tempRelayPr": 254,
+  "attempt": "A002",
+  "disposition": "SEALED_NOT_EXECUTED",
+  "predecessor": {
+    "attempt": "A001",
+    "outerReturnSha256": "ca79c43a15885c3be7cde261ccb5afeed93ea861970d17f43df7e4d8f8b36994",
+    "innerReturnSha256": "7a441ca6d5de8035109cc959691567df88467566f87c70e4815a14cb62a25e54",
+    "disposition": "SAFE_FAILURE",
+    "classification": "PRODUCT_TEST_FIXTURE_INCOMPLETE_CONVERSATION_SOURCE_PAIR",
+    "productExecutionReached": true,
+    "repositoryGroundingReached": true,
+    "testsExecuted": true
+  },
+  "productCandidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "base": "b0b6fb9a6107f2475ae434472ed13335a303af87",
+    "head": "db0bda47aebb77e5df58e55545fa76eb9b42e4c4",
+    "tree": "dbb07f55d86cdfaffc76391bf0be26eeb3564349",
+    "branch": "VXG-111726-memory-consideration-foundation-a001",
+    "correction": "VexLifeSemanticAcceptanceWriterTest now supplies complete request/response source pairs"
+  },
+  "formationBundle": {
+    "filename": "VexLife-Memory-Consideration-RelayFormation-A002--sha256-6098e35ad75ecd9dd5eaa0c83e000314d788d02f845270b711800e16e17272c7.zip",
+    "sha256": "6098e35ad75ecd9dd5eaa0c83e000314d788d02f845270b711800e16e17272c7",
+    "bytes": 8387,
+    "members": [
+      "RUN.command",
+      "formation.mjs",
+      "README.txt"
+    ],
+    "syntaxChecks": [
+      "bash -n RUN.command PASS",
+      "node --check formation.mjs PASS"
+    ]
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064",
+    "currentContractBlob": "b53cbac01c2deeb45fad5c32ce98e0796c04126f",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor"
+  },
+  "proof": [
+    "./gradlew --no-daemon checkVexLifeStrings --stacktrace",
+    "./gradlew --no-daemon jvmTest --stacktrace",
+    "./gradlew --no-daemon compileKotlinJs compileTestKotlinJs --stacktrace",
+    "exact nine-path review snapshot"
+  ],
+  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION"
+}
