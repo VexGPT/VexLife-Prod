@@ -132,6 +132,9 @@ object VexLifeProdServiceContract {
     /** The person's microphone-language preference; independent from Vex reply language. */
     const val LocalAsrSpokenLanguagePath = "/api/v1/local-asr/spoken-language"
 
+    /** Download/use/remove one offered local speech-recognition model artifact. */
+    const val LocalAsrModelControlPath = "/api/v1/local-asr/model/control"
+
     const val LocalAsrDictationPassHeader = "x-vexlife-dictation-pass"
 
     enum class LocalAsrDictationPass(val wire: String) {
@@ -523,6 +526,12 @@ object VexLifeProdServiceContract {
     }
 
     @Serializable
+    data class LocalAsrModelControl(
+        val controlRef: String,
+        val labelKey: String,
+    )
+
+    @Serializable
     data class LocalAsrOption(
         val providerRef: String,
         val modelRef: String,
@@ -532,6 +541,10 @@ object VexLifeProdServiceContract {
         val modelBytes: Long,
         val standing: String,
         val selected: Boolean,
+        val artifactState: String,
+        val presentBytes: Long,
+        val downloadedBytes: Long?,
+        val controls: List<LocalAsrModelControl>,
         val currentState: String,
         val currentDetailRef: String,
     )
@@ -555,6 +568,7 @@ object VexLifeProdServiceContract {
         val spokenLanguageCode: String?,
         val resolvedSpokenLanguageCode: String,
         val spokenLanguageChoices: List<LocalAsrSpokenLanguageChoice>,
+        val freeStorageBytes: Long?,
         val options: List<LocalAsrOption>,
     ) {
         init {
@@ -587,6 +601,12 @@ object VexLifeProdServiceContract {
     data class LocalAsrSpokenLanguageUpdate(
         val mode: String,
         val languageCode: String? = null,
+    )
+
+    @Serializable
+    data class LocalAsrModelControlRequest(
+        val controlRef: String,
+        val modelRef: String,
     )
 
     @Serializable
