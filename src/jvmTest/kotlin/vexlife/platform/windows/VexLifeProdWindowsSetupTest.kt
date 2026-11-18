@@ -6,7 +6,6 @@ import kotlin.test.Test
 import kotlin.test.assertIs
 import kotlin.test.assertEquals
 import vexlife.home.CanonicalVexLifeHomeFixture
-import vexlife.home.VexLifeProdHome
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticRuntimeRealization
@@ -119,6 +118,58 @@ class VexLifeProdWindowsSetupTest {
         assertEquals(
             true,
             observed.materialization?.ready,
+        )
+    }
+
+    @Test
+    fun unsupportedSavedMacModelRequiresExplicitWindowsChoice() {
+        val parent =
+            Files.createTempDirectory("vexlife-windows-setup-unsupported-")
+                .toAbsolutePath()
+        val home = parent.resolve(".vexlife")
+        CanonicalVexLifeHomeFixture.form(home)
+        val location = VexLifeProdHomeFiles.observeLocation(home)
+        val macOnlyModel = HereticModelCatalog.Models.Qwen27B
+        check(
+            VexLifeProdSetupModel.persist(
+                productHome = home,
+                model = macOnlyModel,
+            )
+        )
+
+        val observed =
+            VexLifeProdWindowsSetup.observeWithHooks(
+                desiredSourceSha = sourceSha,
+                productHome = home,
+                explicitModelHandle = null,
+                hooks =
+                    hooks(
+                        location = location,
+                        current =
+                            currentProjection(
+                                home = home,
+                                location = location,
+                                selectedModel = macOnlyModel,
+                            ),
+                        materialization = absentMaterialization(home),
+                    ),
+            )
+
+        val held =
+            assertIs<vexlife.entry.VexLifeProdEntryFamily.HeldUnknown>(
+                observed.entryState,
+            )
+        assertEquals(
+            "SELECTED_MODEL_NOT_SUPPORTED_ON_WINDOWS",
+            held.detail,
+        )
+        assertEquals(
+            null,
+            observed.selectedModel,
+        )
+        assertEquals(
+            listOf(HereticModelCatalog.Models.Qwen4B),
+            observed.supportedModels,
         )
     }
 
