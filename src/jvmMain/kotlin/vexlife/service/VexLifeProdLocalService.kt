@@ -528,7 +528,7 @@ class VexLifeProdLocalService private constructor(
 
         internal fun startForTest(
             sourceSha: String,
-            setup: VexLifeProdRuntimeSession.Foundation,
+            setup: VexLifeProdLocalSetup.Result,
             turnExecutor: TurnExecutor,
             streamingTurnExecutor: StreamingTurnExecutor? =
                 null,
