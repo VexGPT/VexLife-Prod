@@ -191,21 +191,73 @@ class DirectTurnContextStore(
             "turnRef",
         )
 
-        val text =
+        val canonicalText =
             VexDurableContractFile.readText(
                 ownedRoot = productHome,
                 path =
-                    runtimeEvidencePath(
+                    pathFor(
                         turnRef,
                     ),
             )
                 ?: return null
+        val canonical =
+            decodeAndValidateCanonicalContext(
+                canonicalText,
+            )
+        val productRuntimeEvidenceRefs =
+            canonical.contextSourceRefs
+                .filter {
+                    it.startsWith(
+                        "evidence.vexlife-prod.turn-runtime.",
+                    )
+                }
+        if (
+            productRuntimeEvidenceRefs.isEmpty()
+        ) {
+            return null
+        }
+        require(
+            productRuntimeEvidenceRefs.size ==
+                1
+        ) {
+            "product-created canonical turn context must reference exactly one runtime evidence sidecar"
+        }
+        val expectedEvidenceRef =
+            productRuntimeEvidenceRefs.single()
+        val text =
+            requireNotNull(
+                VexDurableContractFile.readText(
+                    ownedRoot = productHome,
+                    path =
+                        runtimeEvidencePath(
+                            turnRef,
+                        ),
+                ),
+            ) {
+                "product-created canonical turn context is missing its runtime evidence sidecar"
+            }
         val objectValue =
             VexContractJson.Strict
                 .parseToJsonElement(
                     text,
                 )
                 .jsonObject
+        require(
+            objectValue[
+                "turnRef"
+            ]
+                ?.jsonPrimitive
+                ?.content ==
+                canonical.turnRef &&
+                objectValue[
+                    "evidenceRef"
+                ]
+                    ?.jsonPrimitive
+                    ?.content ==
+                expectedEvidenceRef,
+        ) {
+            "product runtime evidence envelope does not bind the canonical turn context"
+        }
         val runtimeEvidenceSchema =
             requireNotNull(
                 objectValue[
