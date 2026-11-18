@@ -163,11 +163,21 @@ internal object VexLifeProdWindowsSetup {
                     HereticRuntimeRealization.WindowsX64
                 },
             )
+        val offeredModels =
+            when (location) {
+                is VexLifeProdHomeFiles.Location.Existing ->
+                    HereticModelOfferings.entries(
+                        home,
+                    )
+
+                is VexLifeProdHomeFiles.Location.Formable,
+                is VexLifeProdHomeFiles.Location.Held,
+                ->
+                    HereticModelCatalog.Entries
+            }
         val supportedModels =
             resolver.supportedModels(
-                HereticModelOfferings.entries(
-                    home,
-                ),
+                offeredModels,
             )
         val savedModel = VexLifeProdSetupModel.saved(home)
         val savedModelSupported =
