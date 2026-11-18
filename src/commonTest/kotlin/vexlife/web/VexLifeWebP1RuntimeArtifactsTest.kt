@@ -454,6 +454,16 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertFalse(bundle.javascript.contains("window.webkitSpeechRecognition"))
         assertFalse(bundle.javascript.contains("processLocally = false"))
 
+        val initialBrowserNavigation =
+            bundle.javascript.indexOf("navigate(browser.initialPageUrl);")
+        val localProjectionStartup =
+            bundle.javascript.indexOf(
+                "void Promise.all([loadSourceCurrentness(), loadCurrentState(), loadConversationTurn(), loadConversation(), loadContext(), loadVision()])"
+            )
+        assertTrue(initialBrowserNavigation >= 0)
+        assertTrue(localProjectionStartup > initialBrowserNavigation)
+        assertTrue(bundle.javascript.contains(VexLifeProdBrowserContract.InitialPageUrl))
+
         assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrPath))
         assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrTranscribePath))
         assertTrue(bundle.javascript.contains("navigator.mediaDevices.getUserMedia"))
