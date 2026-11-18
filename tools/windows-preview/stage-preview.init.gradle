@@ -2,42 +2,38 @@
 // Proof/release-preview-only Gradle adapter. It projects the existing JVM jar + runtime dependency
 // owner into one staging directory without changing the Product build's dependency registry.
 
-allprojects {
-    afterEvaluate { project ->
-        if (project != rootProject) {
-            return
-        }
+gradle.projectsEvaluated {
+    def root = gradle.rootProject
 
-        tasks.register("stageVexLifeWindowsPreviewInputs") {
-            group = "distribution"
-            description = "Stage the exact JVM jar and owned runtime dependency jars for Windows lived preview packaging."
-            dependsOn(tasks.named("jvmJar"))
+    root.tasks.register("stageVexLifeWindowsPreviewInputs") {
+        group = "distribution"
+        description = "Stage the exact JVM jar and owned runtime dependency jars for Windows lived preview packaging."
+        dependsOn(root.tasks.named("jvmJar"))
 
-            doLast {
-                def outputValue = project.findProperty("vexlifeWindowsPreviewInputDir")
-                if (outputValue == null || outputValue.toString().trim().isEmpty()) {
-                    throw new GradleException("vexlifeWindowsPreviewInputDir is required")
-                }
-
-                def outputDir = project.file(outputValue.toString())
-                project.delete(outputDir)
-                outputDir.mkdirs()
-
-                def jarTask = tasks.named("jvmJar").get()
-                def mainJar = jarTask.archiveFile.get().asFile
-                def kotlinExtension = project.extensions.getByName("kotlin")
-                def mainCompilation =
-                    kotlinExtension.targets.getByName("jvm").compilations.getByName("main")
-                def dependencies = mainCompilation.runtimeDependencyFiles
-
-                project.copy {
-                    from(mainJar)
-                    from(dependencies)
-                    into(outputDir)
-                }
-
-                new File(outputDir, "vexlife-main-jar.txt").setText(mainJar.name + "\n", "UTF-8")
+        doLast {
+            def outputValue = root.findProperty("vexlifeWindowsPreviewInputDir")
+            if (outputValue == null || outputValue.toString().trim().isEmpty()) {
+                throw new GradleException("vexlifeWindowsPreviewInputDir is required")
             }
+
+            def outputDir = root.file(outputValue.toString())
+            root.delete(outputDir)
+            outputDir.mkdirs()
+
+            def jarTask = root.tasks.named("jvmJar").get()
+            def mainJar = jarTask.archiveFile.get().asFile
+            def kotlinExtension = root.extensions.getByName("kotlin")
+            def mainCompilation =
+                kotlinExtension.targets.getByName("jvm").compilations.getByName("main")
+            def dependencies = mainCompilation.runtimeDependencyFiles
+
+            root.copy {
+                from(mainJar)
+                from(dependencies)
+                into(outputDir)
+            }
+
+            new File(outputDir, "vexlife-main-jar.txt").setText(mainJar.name + "\n", "UTF-8")
         }
     }
 }
