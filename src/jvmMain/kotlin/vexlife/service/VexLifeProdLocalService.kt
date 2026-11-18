@@ -34,6 +34,13 @@ import vexlife.conversation.DirectConversationStore
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.local.VexLifeProdSetupProgress
+import vexlife.localasr.VexLifeLocalAsrModels
+import vexlife.localasr.VexLifeLocalAsrModelsFamily
+import vexlife.localasr.VexLifeLocalAsrProvider
+import vexlife.localasr.VexLifeLocalAsrSelection
+import vexlife.localasr.VexLifeLocalAsrSelectionStore
+import vexlife.localasr.VexLifeLocalAsrSpokenLanguage
+import vexlife.localasr.VexLifeLocalAsrSpokenLanguageStore
 import vexlife.model.VexLifeModels
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.continuity.VexLifePrivateConversation
@@ -88,6 +95,34 @@ class VexLifeProdLocalService private constructor(
 ) : AutoCloseable {
     private val privateConversation = VexLifePrivateConversation(Path.of(startupSetup.productHome))
     private val personSettings = VexLifePersonSettingsStore(Path.of(startupSetup.productHome))
+    private val localAsrProductHome =
+        Path.of(
+            startupSetup.productHome,
+        )
+    private val localAsrSelection =
+        VexLifeLocalAsrSelectionStore(
+            localAsrProductHome,
+        )
+    private val localAsrSpokenLanguage =
+        VexLifeLocalAsrSpokenLanguageStore(
+            localAsrProductHome,
+        )
+    private val localAsrModels =
+        VexLifeLocalAsrModels(
+            productHome =
+                localAsrProductHome,
+            selectionStore =
+                localAsrSelection,
+        )
+
+    private fun localAsrProvider(
+        selection: VexLifeLocalAsrSelection.Value,
+    ): VexLifeLocalAsrProvider =
+        VexLifeLocalAsrProvider.fromHome(
+            productHome = localAsrProductHome,
+            selection = selection,
+        )
+
     private val diagnostics =
         VexLifeDiagnostics(home = Path.of(startupSetup.productHome), sourceSha = sourceSha).also {
             it.startObserving()
@@ -120,6 +155,10 @@ class VexLifeProdLocalService private constructor(
     companion object {
         private const val MaxRequestBytes =
             256 * 1024
+
+        // ~2.5 minutes of 48 kHz mono 16-bit PCM WAV; raw audio remains request-scoped in memory.
+        private const val MaxLocalAsrRequestBytes =
+            16 * 1024 * 1024
 
         private val SourceShaPattern =
             Regex(
@@ -727,6 +766,7 @@ class VexLifeProdLocalService private constructor(
     override fun close() {
         runCatching { diagnostics.close() }
         runCatching { models.close() }
+        runCatching { localAsrModels.close() }
         var visionCloseFailure: Throwable? =
             null
 
@@ -878,6 +918,26 @@ class VexLifeProdLocalService private constructor(
                 VexLifeProdServiceContract.FoundationalFieldPath -> handleFoundationalField(exchange)
 
                 VexLifeProdServiceContract.SettingsPath -> handleSettings(exchange)
+
+                VexLifeProdServiceContract.LocalAsrPath ->
+                    handleLocalAsr(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.LocalAsrSpokenLanguagePath ->
+                    handleLocalAsrSpokenLanguage(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.LocalAsrModelControlPath ->
+                    handleLocalAsrModelControl(
+                        exchange,
+                    )
+
+                VexLifeProdServiceContract.LocalAsrTranscribePath ->
+                    handleLocalAsrTranscribe(
+                        exchange,
+                    )
 
                 VexLifeProdServiceContract.DiagnosticsPath -> {
                     requireMethod(exchange, "GET")
