@@ -374,7 +374,35 @@
       ]
     },
     "setup.description.choose-model": {
-      "enHash": "f2702d642f27",
+      "enHash": "fb7ceedba184",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.choose-model-add-later": {
+      "enHash": "da1bff57b571",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.choose-model-change-later": {
+      "enHash": "77d4f008868f",
       "langs": [
         "ar",
         "de",
