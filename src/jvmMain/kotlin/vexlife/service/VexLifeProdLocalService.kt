@@ -39,6 +39,8 @@ import vexlife.local.VexLifeProdSetupProgress
 import vexlife.localasr.VexLifeLocalAsrProvider
 import vexlife.localasr.VexLifeLocalAsrSelection
 import vexlife.localasr.VexLifeLocalAsrSelectionStore
+import vexlife.localasr.VexLifeLocalAsrSpokenLanguage
+import vexlife.localasr.VexLifeLocalAsrSpokenLanguageStore
 import vexlife.model.VexLifeModels
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.continuity.VexLifePrivateConversation
@@ -92,6 +94,10 @@ class VexLifeProdLocalService private constructor(
         )
     private val localAsrSelection =
         VexLifeLocalAsrSelectionStore(
+            localAsrProductHome,
+        )
+    private val localAsrSpokenLanguage =
+        VexLifeLocalAsrSpokenLanguageStore(
             localAsrProductHome,
         )
 
