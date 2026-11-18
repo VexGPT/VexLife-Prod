@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "vexlife-prod.github-carried-relay-formation/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 251,
+  "companionPr": 261,
+  "attempt": "LIVED-A003",
+  "decoded": {
+    "filename": "VexLife-Vex-Context-LivedBrowser-RelayFormation-A003--sha256-8b9e8831b0b2347fe7e386166598f9891671bdd5bc194de71709b776fd5d59ac.zip",
+    "sha256": "8b9e8831b0b2347fe7e386166598f9891671bdd5bc194de71709b776fd5d59ac",
+    "bytes": 26585
+  },
+  "parts": [
+    "bundle.b64.part01",
+    "bundle.b64.part02",
+    "bundle.b64.part03",
+    "bundle.b64.part04",
+    "bundle.b64.part05",
+    "bundle.b64.part06"
+  ]
+}
