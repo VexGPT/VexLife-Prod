@@ -4073,12 +4073,27 @@ object VexLifeWebP1RuntimeArtifacts {
               const localAsrSelectionValue = (option) =>
                 JSON.stringify([option.providerRef, option.modelRef]);
 
+              const localAsrSpokenLanguageValue = (choice) =>
+                JSON.stringify([choice.mode, choice.languageCode ?? null]);
+
+              const localAsrSpokenLanguageLabel = (choice) => {
+                if (choice.labelKey) {
+                  return t(choice.labelKey)
+                    .replace('{language}', String(choice.languageLabel ?? ''));
+                }
+                return String(choice.languageLabel ?? choice.languageCode ?? '');
+              };
+
               const renderLocalAsr = () => {
                 if (!ui.localAsrSelection) return;
                 const projection = state.localAsr;
                 ui.localAsrSelection.replaceChildren();
+                ui.localAsrSpokenLanguage?.replaceChildren();
                 if (!projection) {
                   ui.localAsrSelection.disabled = true;
+                  if (ui.localAsrSpokenLanguage) {
+                    ui.localAsrSpokenLanguage.disabled = true;
+                  }
                   if (ui.localAsrStatus) {
                     ui.localAsrStatus.textContent = t('workspace.status.local-asr-unavailable');
                   }
@@ -4097,11 +4112,28 @@ object VexLifeWebP1RuntimeArtifacts {
                   ui.localAsrSelection.append(node);
                 }
 
+                if (ui.localAsrSpokenLanguage) {
+                  for (const choice of projection.spokenLanguageChoices ?? []) {
+                    const node = document.createElement('option');
+                    node.value = localAsrSpokenLanguageValue(choice);
+                    node.textContent = localAsrSpokenLanguageLabel(choice);
+                    node.selected = Boolean(choice.selected);
+                    node.disabled = !choice.supportedBySelectedModel && !choice.selected;
+                    ui.localAsrSpokenLanguage.append(node);
+                  }
+                }
+
                 const selected = selectedLocalAsrOption();
                 ui.localAsrSelection.disabled =
                   state.localAsrInFlight ||
                   dictation.desiredActive ||
                   !(projection.options ?? []).length;
+                if (ui.localAsrSpokenLanguage) {
+                  ui.localAsrSpokenLanguage.disabled =
+                    state.localAsrInFlight ||
+                    dictation.desiredActive ||
+                    !(projection.spokenLanguageChoices ?? []).length;
+                }
 
                 if (ui.localAsrStatus) {
                   if (!selected) {
@@ -4169,6 +4201,42 @@ object VexLifeWebP1RuntimeArtifacts {
                           .replace('{model}', selected.modelLabel)
                       : t('workspace.status.local-asr-unavailable')
                   );
+                } catch (error) {
+                  notify(
+                    error instanceof Error
+                      ? error.message
+                      : t('workspace.status.local-asr-unavailable')
+                  );
+                } finally {
+                  state.localAsrInFlight = false;
+                  renderLocalAsr();
+                }
+              };
+
+              const selectLocalAsrSpokenLanguage = async (mode, languageCode) => {
+                if (state.localAsrInFlight) return;
+                if (dictation.desiredActive) {
+                  await applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                }
+                state.localAsrInFlight = true;
+                renderLocalAsr();
+                try {
+                  const response = await fetch(service.localAsrSpokenLanguagePath, {
+                    method: 'POST',
+                    headers: {
+                      'content-type': 'application/json',
+                      accept: 'application/json'
+                    },
+                    body: JSON.stringify({
+                      mode: String(mode),
+                      languageCode: languageCode == null ? null : String(languageCode)
+                    })
+                  });
+                  state.localAsr = await readJson(response);
+                  observeVoiceInputCapability();
                 } catch (error) {
                   notify(
                     error instanceof Error
