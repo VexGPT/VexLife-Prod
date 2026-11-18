@@ -537,6 +537,25 @@ object HereticRuntimeRealization {
                 )
             }
 
+    fun resolveByRef(
+        model: HereticModelCatalog.Entry,
+        realizationRef: String,
+    ): Value? =
+        listOfNotNull(
+            resolve(
+                model = model,
+                target = MacArm64,
+            ),
+            resolve(
+                model = model,
+                target = WindowsX64,
+            ),
+        )
+            .singleOrNull {
+                it.realizationRef ==
+                    realizationRef
+            }
+
     fun require(
         modelRef: String,
         target: VexLifePlatformRealization.Target,
