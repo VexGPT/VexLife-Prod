@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "vexlife-prod.temp-host-proof-continuity/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 273,
+  "predecessorAttempt": "A001",
+  "predecessorReturn": {
+    "sha256": "b7bb2ccdfb4c854e41d548f1a0ff0f8fbbb1b9dedf321f4cb3c03521eaa47806",
+    "disposition": "FAIL",
+    "sourceSha": "f616571a897693ff4dd325672c7a7c270dbaa323",
+    "sourceTree": "1c6a9ab7da8192f8d7ccff3231514e0388943fc5",
+    "firstSubstantiveFailure": "checkVexLifeStrings rejected workspace.option.local-asr-spoken-language-follow"
+  },
+  "repair": {
+    "class": "SOURCE_LOCALIZATION_CONTRACT",
+    "detail": "Rename spoken-language choice keys from unsupported workspace.option.* to repository-owned workspace.label.* and update manifest"
+  },
+  "productCandidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "head": "17b9d4d5859d4037add77be8f9ee829fef223eb1"
+  },
+  "launcher": {
+    "path": "relay/voiceinput-spoken-language/A002/RUN-MAC.command",
+    "commit": "b548f22e0f52777c7c58eaf5eccb1a2e8e0912f0",
+    "blobSha": "7b073f54d96d73b4716d4a737cc85cfb4499d3fc"
+  },
+  "expectedReturn": "RETURN-VEXLIFE-VOICEINPUT-SPOKEN-LANGUAGE-A002.zip",
+  "disposition": "FORMED_NOT_EXECUTED"
+}

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "vexlife-prod.temp-host-proof-continuity/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 273,
+  "predecessorAttempt": "A004",
+  "predecessorReturn": {
+    "sha256": "a882ce43020f560445586d25b7e26f80514bac60214f72646512e2c683d36e70",
+    "disposition": "FAIL",
+    "sourceSha": "de6a23b763bbf6a18489c5b84f04f59a8938e285",
+    "sourceTree": "baf1c713b952dfc9364968cdc7f917a7adde47e0",
+    "sourceBuildDisposition": "PASS",
+    "firstSubstantiveFailure": "front door HOLD_UNKNOWN: stable com.vexlife.prod.service launchd label Running(pid=60349) without product lifetime receipt"
+  },
+  "sourceCandidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "head": "de6a23b763bbf6a18489c5b84f04f59a8938e285",
+    "sourceChangedAfterA004": false
+  },
+  "boundary": {
+    "type": "EXPLICIT_HUMAN_HOST_RECOVERY",
+    "automatedOwnershipInference": false,
+    "readOnlyIdentityFirst": true,
+    "confirmationToken": "STOP",
+    "authorizedEffect": "launchctl bootout gui/<uid>/com.vexlife.prod.service",
+    "deletesVexHomeFiles": false,
+    "requiresPostEffectLaunchdAbsence": true,
+    "requiresPostEffectProductFrontDoorReobservation": true
+  },
+  "launcher": {
+    "path": "relay/voiceinput-spoken-language/A005/RUN-MAC.command",
+    "commit": "909ce8852b035c2c3c5ef662a7ceeff5d776d027",
+    "blobSha": "f0dcc7236a25c60c7858cc28d28ec1a1222ce4d3"
+  },
+  "expectedReturn": "RETURN-VEXLIFE-VOICEINPUT-SPOKEN-LANGUAGE-A005.zip",
+  "disposition": "FORMED_NOT_EXECUTED"
+}
