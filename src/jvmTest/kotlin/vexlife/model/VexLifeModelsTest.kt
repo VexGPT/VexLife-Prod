@@ -418,22 +418,27 @@ class VexLifeModelsTest {
                     artifactCustodyEvidenceRef =
                         "artifact-custody.vexlife-prod.imported.hf-windows-held.001",
                     artifactContentSetSha256 = "3".repeat(64),
-                    modelRootRelativePath = "models/heretic/imported/hf-windows-held",
+                    modelRootRelativePath = "models/heretic/hf-windows-held",
                     providerLicense = "apache-2.0",
-                    representationRef = HereticModelImport.RepresentationMlx,
-                    totalBytes = 1L,
+                    representationRef = HereticModelImport.RepresentationQwen3OpenAiChat,
+                    companionProfileRef =
+                        "companion-profile.vexlife-prod.imported.hf-windows-held.001",
                     members =
                         listOf(
                             HereticModelImport.Member(
+                                roleRef =
+                                    "artifact-role.vexlife-prod.imported.config",
                                 artifactRef =
                                     "artifact.vexlife-prod.imported.hf-windows-held.member.config",
+                                filename = "config.json",
+                                mediaType = "application/json",
+                                sha256 = "4".repeat(64),
+                                expectedBytes = 1L,
                                 sourceRef =
                                     "source.huggingface.example.windows-held." +
                                         "2".repeat(40),
-                                filename = "config.json",
-                                logicalPath = "config.json",
-                                sha256 = "4".repeat(64),
-                                expectedBytes = 1L,
+                                licenseRef =
+                                    "license.huggingface.example.windows-held.apache-2.0",
                             ),
                         ),
                 )
