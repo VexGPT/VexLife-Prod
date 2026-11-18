@@ -71,7 +71,14 @@ object VexLifeProdLocalSetup {
             null,
         private val releaseRuntime: (() -> Unit)? =
             null,
-    ) {
+    ) :
+        VexLifeProdRuntimeSession {
+        override val foundation =
+            VexLifeProdRuntimeSession.Foundation(
+                state = result.state,
+                productHome = result.productHome,
+                qualifiedRuntimeEvidence = result.qualifiedRuntimeEvidence,
+            )
         /**
          * New-turn runtime admission.
          *
@@ -79,8 +86,8 @@ object VexLifeProdLocalSetup {
          * exact process may recover once. An exact mlx-lm Unavailable result may also recover once
          * at this safe boundary. Unknown readiness preserves the live exact-owned process and holds.
          */
-        fun currentQualifiedRuntimeEvidence(
-            onRecovery: (() -> Unit)? = null
+        override fun currentQualifiedRuntimeEvidence(
+            onRecovery: (() -> Unit)?,
         ): HereticModelConfiguration.QualifiedRuntimeEvidence {
             val current =
                 try {
@@ -161,7 +168,7 @@ object VexLifeProdLocalSetup {
          * runtime receipt/process is still current, but it may not replace the runtime underneath
          * a turn that already began.
          */
-        fun observeCurrentQualifiedRuntimeEvidence(): HereticModelConfiguration.QualifiedRuntimeEvidence =
+        override fun observeCurrentQualifiedRuntimeEvidence(): HereticModelConfiguration.QualifiedRuntimeEvidence =
             currentRuntimeEvidence()
 
         /**
@@ -170,7 +177,7 @@ object VexLifeProdLocalSetup {
          * Borrowed predecessor runtime has no Product-owned release capability here; its exact
          * compatibility owner remains responsible for that lifecycle.
          */
-        fun releaseSustainedRuntime() {
+        override fun releaseSustainedRuntime() {
             releaseRuntime?.invoke()
         }
     }
@@ -496,9 +503,31 @@ object VexLifeProdLocalSetup {
                 manifest = home.manifest,
                 totalMemoryBytes = host.observation.totalMemoryBytes,
             )
-        // The Home's own choice decides which catalog model is materialized and run. A Home that
-        // never chose is given the certified default, exactly as before the catalog existed.
+        // The Home's own choice decides which catalog model is materialized and run. LocalSetup is
+        // the Mac realization owner, so resolve that model against the exact Mac target before any
+        // realization-scoped runtime configuration is applied.
         val model = HereticModelConfiguration.selected(selected.value)
+        val realization =
+            when (
+                val resolution =
+                    HereticRuntimeRealization
+                        .Resolver(
+                            HereticRuntimeRealization.TargetSource {
+                                HereticRuntimeRealization.MacArm64
+                            },
+                        )
+                        .resolve(
+                            model,
+                        )
+            ) {
+                is HereticRuntimeRealization.Resolution.Supported ->
+                    resolution.realization
+
+                is HereticRuntimeRealization.Resolution.Unsupported ->
+                    error(
+                        "selected Product model has no Mac runtime realization",
+                    )
+            }
 
         hooks.progress.phase(VexLifeProdSetupProgress.Phase.PreparingPython)
         val managedPython = hooks.ensureManagedPython(Path.of(home.productHome), allowAcquisition)
@@ -514,11 +543,6 @@ object VexLifeProdLocalSetup {
                 allowAcquisition,
             )
 
-        val realization =
-            HereticRuntimeRealization.require(
-                modelRef = model.modelRef,
-                target = HereticRuntimeRealization.MacArm64,
-            )
         val runtimeConfiguration =
             FileHereticRuntimeConfigurationStore(
                 canonicalHome,
