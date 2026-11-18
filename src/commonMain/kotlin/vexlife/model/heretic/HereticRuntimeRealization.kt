@@ -106,8 +106,11 @@ object HereticRuntimeRealization {
             require(realizationRef.matches(PortableRef)) {
                 "runtime realization ref must be portable"
             }
-            require(HereticModelCatalog.entry(modelRef)?.identity?.modelProfileRef == modelProfileRef) {
-                "runtime realization model/profile relationship is not current"
+            require(modelRef.matches(PortableRef)) {
+                "runtime realization modelRef must be portable"
+            }
+            require(modelProfileRef.matches(PortableRef)) {
+                "runtime realization modelProfileRef must be portable"
             }
             require(runtimeReceiptRelativePath.isNotBlank()) {
                 "runtime realization receipt path must be non-blank"
@@ -371,51 +374,168 @@ object HereticRuntimeRealization {
     class Resolver(
         private val targetSource: TargetSource,
     ) {
+        fun currentTarget(): VexLifePlatformRealization.Target =
+            targetSource.current()
+
+        fun supportedModels(
+            offerings: List<HereticModelCatalog.Entry>,
+        ): List<HereticModelCatalog.Entry> =
+            offerings.filter {
+                resolve(
+                    it,
+                ) is Resolution.Supported
+            }
+
+        fun recommendedFor(
+            offerings: List<HereticModelCatalog.Entry>,
+            totalMemoryBytes: Long?,
+        ): HereticModelCatalog.Entry {
+            val supported =
+                supportedModels(
+                    offerings,
+                )
+            require(
+                supported.isNotEmpty(),
+            ) {
+                "current target has no admitted Heretic runtime realization"
+            }
+            val startable =
+                supported.filter {
+                    it.autoRecommended
+                }
+            require(
+                startable.isNotEmpty(),
+            ) {
+                "current target has no auto-recommended Heretic runtime realization"
+            }
+
+            if (
+                totalMemoryBytes ==
+                    null
+            ) {
+                return HereticModelCatalog.Default
+                    .takeIf {
+                        it in
+                            startable
+                    }
+                    ?: startable.minBy {
+                        it.recommendedMemoryBytes
+                            ?: Long.MAX_VALUE
+                    }
+            }
+
+            return startable.firstOrNull {
+                HereticModelCatalog.fits(
+                    it,
+                    totalMemoryBytes,
+                ) ==
+                    true
+            }
+                ?: startable.minBy {
+                    it.recommendedMemoryBytes
+                        ?: Long.MAX_VALUE
+                }
+        }
+
         fun resolve(
             model: HereticModelCatalog.Entry,
         ): Resolution =
-            resolve(
-                model.modelRef,
+            resolutionFor(
+                model = model,
+                target = currentTarget(),
             )
 
+        /**
+         * Model-ref-only resolution is deliberately limited to Product-catalog offerings.
+         * Home imports must carry their admitted offering object so provider/artifact identity is
+         * not reconstructed from a ref alone.
+         */
         fun resolve(
             modelRef: String,
         ): Resolution =
-            resolutionFor(
-                modelRef = modelRef,
-                target = targetSource.current(),
-            )
+            HereticModelCatalog
+                .entry(
+                    modelRef,
+                )
+                ?.let(
+                    ::resolve,
+                )
+                ?: Resolution.Unsupported(
+                    modelRef = modelRef,
+                    target = currentTarget(),
+                )
     }
 
     fun resolutionFor(
-        modelRef: String,
+        model: HereticModelCatalog.Entry,
         target: VexLifePlatformRealization.Target,
-    ): Resolution {
-        HereticModelCatalog.requireEntry(
-            modelRef,
-        )
-
-        return resolve(
-            modelRef = modelRef,
+    ): Resolution =
+        resolve(
+            model = model,
             target = target,
         )
             ?.let(
                 Resolution::Supported,
             )
             ?: Resolution.Unsupported(
-                modelRef = modelRef,
+                modelRef = model.modelRef,
                 target = target,
             )
+
+    fun resolutionFor(
+        modelRef: String,
+        target: VexLifePlatformRealization.Target,
+    ): Resolution {
+        val model =
+            requireNotNull(
+                HereticModelCatalog.entry(
+                    modelRef,
+                ),
+            ) {
+                "model $modelRef is not a Product-catalog offering; Home imports require offering-bound resolution"
+            }
+        return resolutionFor(
+            model = model,
+            target = target,
+        )
     }
+
+    fun resolve(
+        model: HereticModelCatalog.Entry,
+        target: VexLifePlatformRealization.Target,
+    ): Value? =
+        when (target) {
+            MacArm64 ->
+                macMlx(
+                    model,
+                )
+
+            WindowsX64 ->
+                WindowsQwen4B.takeIf {
+                    model.origin ==
+                        HereticModelCatalog.Origin.PRODUCT_CATALOG &&
+                        model.modelRef ==
+                            WindowsQwen4B.modelRef
+                }
+
+            else ->
+                null
+        }
 
     fun resolve(
         modelRef: String,
         target: VexLifePlatformRealization.Target,
     ): Value? =
-        Entries.firstOrNull {
-            it.modelRef == modelRef &&
-                it.target == target
-        }
+        HereticModelCatalog
+            .entry(
+                modelRef,
+            )
+            ?.let {
+                resolve(
+                    model = it,
+                    target = target,
+                )
+            }
 
     fun require(
         modelRef: String,
