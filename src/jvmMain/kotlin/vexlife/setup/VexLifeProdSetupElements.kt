@@ -17,6 +17,7 @@ object VexLifeProdSetupElements {
         listOf(
                 VexLifeProdEntryFamily.OpenCurrent,
                 VexLifeProdEntryFamily.ConvergeDesired,
+                VexLifeProdEntryFamily.RecoverStaleService,
                 VexLifeProdEntryFamily.Start,
                 VexLifeProdEntryFamily.FormHome,
                 VexLifeProdEntryFamily.SetUp,
