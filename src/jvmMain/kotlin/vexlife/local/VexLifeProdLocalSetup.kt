@@ -12,6 +12,7 @@ import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeAvailability
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticRuntimeConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticRuntimeReceiptStore
@@ -496,14 +497,42 @@ object VexLifeProdLocalSetup {
                 manifest = home.manifest,
                 totalMemoryBytes = host.observation.totalMemoryBytes,
             )
-        // The Home's own choice decides which current offering is materialized and run. A Home
-        // import remains a first-class choice across Product restarts; a Home that never chose
-        // still receives the Product's ordinary recommended catalog model.
+        // The Home's own choice decides which current offering is materialized and run. Resolve
+        // that exact Home offering against the Mac target before target-scoped runtime
+        // configuration, artifact materialization or process custody is formed.
         val model =
             HereticModelOfferings.requireEntry(
                 canonicalHome,
                 selected.value.modelRef,
             )
+        val realization =
+            when (
+                val resolution =
+                    HereticRuntimeRealization
+                        .Resolver(
+                            targetSource =
+                                HereticRuntimeRealization.TargetSource {
+                                    HereticRuntimeRealization.MacArm64
+                                },
+                            modelSource =
+                                HereticRuntimeRealization.ModelSource {
+                                    HereticModelOfferings.entries(
+                                        canonicalHome,
+                                    )
+                                },
+                        )
+                        .resolve(
+                            model,
+                        )
+            ) {
+                is HereticRuntimeRealization.Resolution.Supported ->
+                    resolution.realization
+
+                is HereticRuntimeRealization.Resolution.Unsupported ->
+                    error(
+                        "selected Product model has no Mac runtime realization",
+                    )
+            }
 
         hooks.progress.phase(VexLifeProdSetupProgress.Phase.PreparingPython)
         val managedPython = hooks.ensureManagedPython(Path.of(home.productHome), allowAcquisition)
@@ -523,8 +552,9 @@ object VexLifeProdLocalSetup {
             FileHereticRuntimeConfigurationStore(
                 canonicalHome,
             )
-                .effective(
-                    model,
+                .requireEffective(
+                    model = model,
+                    realization = realization,
                 )
         val binding =
             HereticPersistentRuntime.bind(
