@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "vexlife-prod.temp-host-proof-continuity/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 256,
+  "sourceHead": "a363b216486f8f857dda4913176a9f9692135e3b",
+  "sourceBase": "0c17d4e445bb87439bcad6200ae6e622b3284ebe",
+  "purpose": "Progressive pause-aware local dictation lived proof",
+  "host": "macos-victor",
+  "launcher": {
+    "path": "relay/voiceinput-progressive/A001/RUN-MAC.command",
+    "commit": "aaa0043809399668cf4b19cbba3028e47e6977a3",
+    "blobSha": "f17a9a818ff66a661aae9c0e7a4b5a01cfbfe1d9"
+  },
+  "predicates": [
+    "SOURCE_BUILD_CURRENT",
+    "LOCAL_ASR_READY",
+    "PARTIAL_ASR_PASS_COMPLETED",
+    "PROVISIONAL_TEXT_VISIBLE_BEFORE_STOP_HUMAN_WITNESS",
+    "THINKING_PAUSE_DOES_NOT_FALSE_COMMIT_HUMAN_WITNESS",
+    "FINAL_ASR_PASS_COMPLETED",
+    "FINAL_COMPOSER_EDITABLE_HUMAN_WITNESS",
+    "NO_AUTOMATIC_SEND"
+  ],
+  "expectedReturn": "RETURN-VEXLIFE-VOICEINPUT-PROGRESSIVE-A001.zip",
+  "contentRetention": {
+    "microphoneAudio": false,
+    "transcriptText": false
+  },
+  "disposition": "FORMED_NOT_EXECUTED",
+  "closePolicy": "CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION"
+}
