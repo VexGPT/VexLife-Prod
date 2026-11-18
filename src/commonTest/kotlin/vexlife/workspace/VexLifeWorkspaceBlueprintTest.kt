@@ -47,6 +47,7 @@ class VexLifeWorkspaceBlueprintTest {
                 VexLifeWorkspaceBlueprint.ContinuityMemory.ref to VexLifeWorkspaceBlueprint.SettingsContinuity.ref,
                 VexLifeWorkspaceBlueprint.SettingsLocalAsr.ref to VexLifeWorkspaceBlueprint.Settings.ref,
                 VexLifeWorkspaceBlueprint.LocalAsrSelection.ref to VexLifeWorkspaceBlueprint.SettingsLocalAsr.ref,
+                VexLifeWorkspaceBlueprint.LocalAsrSpokenLanguage.ref to VexLifeWorkspaceBlueprint.SettingsLocalAsr.ref,
                 VexLifeWorkspaceBlueprint.LocalAsrStatus.ref to VexLifeWorkspaceBlueprint.SettingsLocalAsr.ref,
                 VexLifeWorkspaceBlueprint.SettingsDiagnostics.ref to VexLifeWorkspaceBlueprint.Settings.ref,
                 VexLifeWorkspaceBlueprint.DiagnosticsTrace.ref to VexLifeWorkspaceBlueprint.SettingsDiagnostics.ref,
