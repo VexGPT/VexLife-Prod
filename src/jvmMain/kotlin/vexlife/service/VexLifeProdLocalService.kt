@@ -2,7 +2,6 @@ package vexlife.service
 
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
-import java.awt.Desktop
 import java.net.InetSocketAddress
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
@@ -1583,19 +1582,41 @@ class VexLifeProdLocalService private constructor(
                     contextProfiles.ensureDirectory()
                 effectPerformed =
                     runCatching {
-                        require(
-                            Desktop.isDesktopSupported() &&
-                                Desktop.getDesktop()
-                                    .isSupported(
-                                        Desktop.Action.OPEN,
-                                    ),
-                        ) {
-                            "this host cannot reveal the Vex Home in its file manager"
-                        }
-                        Desktop.getDesktop()
-                            .open(
-                                directory.toFile(),
+                        val osName =
+                            System.getProperty(
+                                "os.name",
+                                "",
                             )
+                                .lowercase()
+                        val command =
+                            when {
+                                osName.contains("mac") ->
+                                    listOf(
+                                        "/usr/bin/open",
+                                        directory.toString(),
+                                    )
+
+                                osName.contains("win") ->
+                                    listOf(
+                                        "explorer.exe",
+                                        directory.toString(),
+                                    )
+
+                                osName.contains("linux") ->
+                                    listOf(
+                                        "xdg-open",
+                                        directory.toString(),
+                                    )
+
+                                else ->
+                                    error(
+                                        "this host has no admitted Vex Home file-manager command",
+                                    )
+                            }
+                        ProcessBuilder(
+                            command,
+                        )
+                            .start()
                         true
                     }
                         .getOrElse {
