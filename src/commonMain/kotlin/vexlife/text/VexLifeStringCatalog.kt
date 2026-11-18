@@ -110,7 +110,7 @@ class VexLifeStringCatalog private constructor(private val sources: List<Source>
             requireNotNull(sources.firstOrNull { it.scope == scope }) {
                 "unknown string scope: $scope"
             }
-        return VexLifePersonSettings.Languages.map { it.first }
+        return VexLifePersonSettings.ScreenLanguages.map { it.first }
             .filter { language ->
                 language == SourceLanguage ||
                     source.entries.values.all { entry ->
@@ -138,7 +138,7 @@ class VexLifeStringCatalog private constructor(private val sources: List<Source>
                 requireNotNull(meta["scope"]?.jsonPrimitive?.content) {
                     "string source has no _meta.scope"
                 }
-            val languages = VexLifePersonSettings.Languages.map { it.first }.toSet()
+            val languages = VexLifePersonSettings.ScreenLanguages.map { it.first }.toSet()
             val entries =
                 root.entries
                     .filter { it.key != "_meta" }

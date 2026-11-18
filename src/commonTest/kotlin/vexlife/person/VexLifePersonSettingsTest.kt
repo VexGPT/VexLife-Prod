@@ -43,6 +43,25 @@ class VexLifePersonSettingsTest {
                 VexLifePersonSettings.LegacyChinese,
             ),
         )
+        // Screens keep the script the person reads: Traditional replies (and legacy `zh` Homes,
+        // which stay Traditional) are never shown Simplified screens.
+        assertEquals(
+            VexLifePersonSettings.TraditionalChinese,
+            VexLifePersonSettings.localizationLanguageForReply(VexLifePersonSettings.TraditionalChinese),
+        )
+        assertEquals(
+            VexLifePersonSettings.TraditionalChinese,
+            VexLifePersonSettings.localizationLanguageForReply(VexLifePersonSettings.LegacyChinese),
+        )
+        assertEquals(
+            listOf("zh", "zh-Hant"),
+            VexLifePersonSettings.ScreenLanguages.map { it.first }.filter { it.startsWith("zh") },
+        )
+        assertEquals(
+            VexLifePersonSettings.Languages.map { it.first },
+            VexLifePersonSettings.ScreenLanguages.map { it.first }.filter { it != VexLifePersonSettings.TraditionalChinese },
+            "the microphone's spoken languages stay one Chinese",
+        )
     }
 }
 
