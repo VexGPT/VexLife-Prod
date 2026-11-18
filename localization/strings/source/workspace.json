@@ -972,5 +972,153 @@
     "surfaces": [
       "workspace.settings"
     ]
+  },
+  "workspace.label.local-asr-spoken-language": {
+    "strings": {
+      "en": {
+        "text": "Spoken language"
+      },
+      "ar": {
+        "text": "لغة الكلام"
+      },
+      "de": {
+        "text": "Gesprochene Sprache"
+      },
+      "es": {
+        "text": "Idioma hablado"
+      },
+      "fr": {
+        "text": "Langue parlée"
+      },
+      "hi": {
+        "text": "बोली जाने वाली भाषा"
+      },
+      "ja": {
+        "text": "話す言語"
+      },
+      "ko": {
+        "text": "말하는 언어"
+      },
+      "pt": {
+        "text": "Idioma falado"
+      },
+      "zh": {
+        "text": "语音输入语言"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.option.local-asr-spoken-language-follow": {
+    "strings": {
+      "en": {
+        "text": "Follow Vex reply language · {language}"
+      },
+      "ar": {
+        "text": "اتباع لغة رد Vex · {language}"
+      },
+      "de": {
+        "text": "Antwortsprache von Vex verwenden · {language}"
+      },
+      "es": {
+        "text": "Usar el idioma de respuesta de Vex · {language}"
+      },
+      "fr": {
+        "text": "Suivre la langue de réponse de Vex · {language}"
+      },
+      "hi": {
+        "text": "Vex की उत्तर भाषा का उपयोग करें · {language}"
+      },
+      "ja": {
+        "text": "Vex の返信言語に合わせる · {language}"
+      },
+      "ko": {
+        "text": "Vex 답변 언어 따르기 · {language}"
+      },
+      "pt": {
+        "text": "Seguir o idioma de resposta do Vex · {language}"
+      },
+      "zh": {
+        "text": "跟随 Vex 的回复语言 · {language}"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.option.local-asr-spoken-language-auto": {
+    "strings": {
+      "en": {
+        "text": "Auto-detect spoken language"
+      },
+      "ar": {
+        "text": "اكتشاف لغة الكلام تلقائيًا"
+      },
+      "de": {
+        "text": "Gesprochene Sprache automatisch erkennen"
+      },
+      "es": {
+        "text": "Detectar automáticamente el idioma hablado"
+      },
+      "fr": {
+        "text": "Détecter automatiquement la langue parlée"
+      },
+      "hi": {
+        "text": "बोली जाने वाली भाषा अपने आप पहचानें"
+      },
+      "ja": {
+        "text": "話している言語を自動検出"
+      },
+      "ko": {
+        "text": "말하는 언어 자동 감지"
+      },
+      "pt": {
+        "text": "Detectar automaticamente o idioma falado"
+      },
+      "zh": {
+        "text": "自动检测语音语言"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.local-asr-spoken-language-note": {
+    "strings": {
+      "en": {
+        "text": "Choose the language your microphone should transcribe. It can differ from the language Vex replies in."
+      },
+      "ar": {
+        "text": "اختر اللغة التي يجب أن ينسخها الميكروفون. يمكن أن تختلف عن اللغة التي يرد بها Vex."
+      },
+      "de": {
+        "text": "Wähle die Sprache, die dein Mikrofon transkribieren soll. Sie kann von der Sprache abweichen, in der Vex antwortet."
+      },
+      "es": {
+        "text": "Elige el idioma que debe transcribir tu micrófono. Puede ser distinto del idioma en que responde Vex."
+      },
+      "fr": {
+        "text": "Choisissez la langue que votre microphone doit transcrire. Elle peut être différente de la langue de réponse de Vex."
+      },
+      "hi": {
+        "text": "वह भाषा चुनें जिसे आपका माइक्रोफ़ोन लिखित रूप में बदले। यह Vex की उत्तर भाषा से अलग हो सकती है।"
+      },
+      "ja": {
+        "text": "マイクで文字起こしする言語を選びます。Vex が返信する言語とは別に設定できます。"
+      },
+      "ko": {
+        "text": "마이크가 받아쓸 언어를 선택하세요. Vex가 답변하는 언어와 달라도 됩니다."
+      },
+      "pt": {
+        "text": "Escolha o idioma que o microfone deve transcrever. Ele pode ser diferente do idioma em que o Vex responde."
+      },
+      "zh": {
+        "text": "选择麦克风要转写的语言。它可以与 Vex 的回复语言不同。"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
   }
 }
