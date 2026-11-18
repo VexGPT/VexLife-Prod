@@ -62,6 +62,30 @@ class VexLifeCurrentMemoryDailyFrontierTest {
                 currentDaily.sourceSemanticAuthorityHeadSha256,
             )
 
+            val currentSelection =
+                VexLifeCurrentMemoryProviderSelection.read(
+                    home,
+                )
+            assertTrue(currentSelection.dailyContext.included)
+            assertFalse(currentSelection.currentAcceptedSemanticBlock.included)
+            assertEquals(
+                currentDaily.pages
+                    .map(
+                        VexLifeMemoryContract.Page::statementRef,
+                    )
+                    .sorted(),
+                currentSelection.currentAcceptedSemanticBlock.excludedStatementRefs,
+            )
+            assertEquals(
+                currentDaily.estimatedSystemMessageTokens,
+                currentSelection.estimatedSelectedTokens,
+            )
+            assertTrue(
+                currentSelection.estimatedSelectedTokens <=
+                    currentSelection.memoryTokenCap,
+            )
+            assertFalse(currentSelection.effectsPerformed)
+
             val later =
                 completedConversation(
                     home = home,
@@ -91,16 +115,30 @@ class VexLifeCurrentMemoryDailyFrontierTest {
             assertEquals(listOf("DAILY_MEMORY_SOURCE_FRONTIER_STALE"), heldDaily.reasons)
             assertTrue(heldDaily.pages.isEmpty())
 
-            val projection = VexLifeCurrentAcceptedSemanticProjection.read(home)
-            assertEquals("CURRENT", projection.state)
-            assertTrue(projection.statements.any { it.summary == TightSummary })
-            assertTrue(projection.statements.any { it.summary == CausalSummary })
-
-            val block = VexLifeCurrentAcceptedSemanticPromptBlock.form(projection)
+            val staleSelection =
+                VexLifeCurrentMemoryProviderSelection.read(
+                    home,
+                )
+            assertFalse(staleSelection.dailyContext.included)
+            assertEquals(
+                VexLifeMemoryContract.MaximumMemoryTokens,
+                staleSelection.remainingCurrentSemanticTokenCap,
+            )
+            val block =
+                staleSelection.currentAcceptedSemanticBlock
             assertTrue(block.included)
             val content = assertNotNull(block.content)
             assertTrue(content.contains(TightSummary))
             assertTrue(content.contains(CausalSummary))
+            assertEquals(
+                block.estimatedContentTokens,
+                staleSelection.estimatedSelectedTokens,
+            )
+            assertTrue(
+                staleSelection.estimatedSelectedTokens <=
+                    staleSelection.memoryTokenCap,
+            )
+            assertFalse(staleSelection.effectsPerformed)
 
             val consolidation =
                 Files.walk(home).use { stream ->
