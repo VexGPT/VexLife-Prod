@@ -38,8 +38,6 @@ class VexLifeContextProfileStoreTest {
                             foundationMode =
                                 VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT,
                             foundationText = "Explain relationships in words I can follow.",
-                            processRetention =
-                                VexLifeContextProfile.ProcessRetention.PREVIOUS_TURN,
                         ),
                     productFoundation = productFoundation,
                     formedAt = Instant.parse("2026-11-17T20:00:00Z"),
@@ -105,10 +103,8 @@ class VexLifeContextProfileStoreTest {
                 VexLifeContextProfile.Portable(
                     name = "Shared learning profile",
                     foundationMode =
-                        VexLifeContextProfile.FoundationMode.REPLACE_PRODUCT_DEFAULT,
-                    foundationText = "Use this shared foundation experiment.",
-                    processRetention =
-                        VexLifeContextProfile.ProcessRetention.SESSION_ONLY,
+                        VexLifeContextProfile.FoundationMode.EXTEND_PRODUCT_DEFAULT,
+                    foundationText = "Use this shared foundation extension.",
                     basedOnProductFoundation = importedBasis,
                 )
 
@@ -124,7 +120,7 @@ class VexLifeContextProfileStoreTest {
             val exported = store.portable(imported)
             assertEquals(portable, exported)
             assertEquals("Shared learning profile", exported.name)
-            assertEquals("Use this shared foundation experiment.", exported.foundationText)
+            assertEquals("Use this shared foundation extension.", exported.foundationText)
         } finally {
             parent.toFile().deleteRecursively()
         }
