@@ -28,7 +28,8 @@ class VexLifeWebP1RuntimeArtifactsTest {
             )
         )
         assertTrue(javascript.contains("value?.code === service.stalePresentationCode"))
-        assertTrue(javascript.contains("window.location.reload()"))
+        assertTrue(javascript.contains("Reloading automatically"))
+        assertTrue(javascript.contains("window.setTimeout(() => window.location.reload(), 2500)"))
         assertTrue(javascript.contains("const effectFetch = async"))
         assertEquals(
             16,
