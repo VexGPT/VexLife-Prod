@@ -20,20 +20,35 @@ internal object VexLifeProdRuntimeSessionFactory {
      */
     fun establishForServiceProcess(
         productHome: Path,
-    ): VexLifeProdRuntimeSession {
-        val realization =
-            selectedRealization(
-                productHome,
-            )
-        return establishExact(
-            productHome = productHome,
-            realization = realization,
-            allowAcquisition = false,
-            allowRuntimeStart =
-                realization.target ==
-                    HereticRuntimeRealization.WindowsX64,
-        )
-    }
+    ): VexLifeProdRuntimeSession =
+        when (
+            VexLifeJvmPlatformTarget.requireCurrent()
+        ) {
+            HereticRuntimeRealization.MacArm64 ->
+                VexLifeProdLocalSetup.establishSession(
+                    productHome = productHome,
+                    allowAcquisition = false,
+                    allowRuntimeStart = false,
+                )
+
+            HereticRuntimeRealization.WindowsX64 -> {
+                val realization =
+                    selectedRealization(
+                        productHome,
+                    )
+                establishExact(
+                    productHome = productHome,
+                    realization = realization,
+                    allowAcquisition = false,
+                    allowRuntimeStart = true,
+                )
+            }
+
+            else ->
+                error(
+                    "Product service process has no runtime Session for the current target",
+                )
+        }
 
     fun establishCurrent(
         productHome: Path,
