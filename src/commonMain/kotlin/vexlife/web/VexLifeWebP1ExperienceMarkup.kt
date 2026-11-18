@@ -291,6 +291,7 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
             <label for="local-asr-spoken-language" data-vex-text="workspace.label.local-asr-spoken-language"></label>
             <select id="local-asr-spoken-language" data-vex-ref="${VexLifeWebP1.LocalAsrSpokenLanguage.identity.ref}" disabled></select>
           </div>
+          <p class="setting-note-line" data-vex-text="workspace.description.local-asr-spoken-language-note"></p>
           <p class="setting-note-line" data-vex-ref="${VexLifeWebP1.LocalAsrStatus.identity.ref}" id="local-asr-status" role="status"></p>
           <p class="setting-note-line" id="local-asr-note" data-vex-text="workspace.description.local-asr-note"></p>
         </section>
