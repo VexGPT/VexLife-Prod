@@ -321,10 +321,12 @@ object VexLifeProdServiceContract {
                     require(
                         !activeModelRef.isNullOrBlank() &&
                             !activeModelProfileRef.isNullOrBlank() &&
-                            modelMinimumMemoryBytes !=
-                            null &&
-                            modelMinimumMemoryBytes >=
-                            0 &&
+                            (
+                                modelMinimumMemoryBytes ==
+                                    null ||
+                                    modelMinimumMemoryBytes >=
+                                    0
+                            ) &&
                             runtimeCurrentness ==
                             "CONFIGURATION_ONLY_NOT_REOBSERVED" &&
                             !runtimeReceiptPath.isNullOrBlank() &&
