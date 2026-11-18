@@ -13,6 +13,7 @@ object VexLifeLocalAsrSelection {
 
     const val WhisperCppProviderRef = "provider.local-asr.whispercpp"
     const val WhisperBaseEnglishModelRef = "model.local-asr.whisper.base.en"
+    const val WhisperBaseMultilingualModelRef = "model.local-asr.whisper.base"
 
     @Serializable
     data class Option(
@@ -36,10 +37,34 @@ object VexLifeLocalAsrSelection {
             standing = "QUALIFIED_A002_A003",
         )
 
+    val WhisperBaseMultilingual =
+        Option(
+            providerRef = WhisperCppProviderRef,
+            modelRef = WhisperBaseMultilingualModelRef,
+            providerLabel = "whisper.cpp",
+            modelLabel = "Whisper Base Multilingual",
+            languageCodes =
+                listOf(
+                    "en",
+                    "ja",
+                    "zh",
+                    "ko",
+                    "fr",
+                    "de",
+                    "es",
+                    "pt",
+                    "ar",
+                    "hi",
+                ),
+            modelBytes = 147_951_465L,
+            standing = "CANDIDATE_MULTILINGUAL_A001",
+        )
+
     /** Only combinations with lived provider evidence are exposed as selectable. */
     val Options: List<Option> =
         listOf(
             WhisperBaseEnglish,
+            WhisperBaseMultilingual,
         )
 
     @Serializable
