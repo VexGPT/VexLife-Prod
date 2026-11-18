@@ -67,6 +67,8 @@ object VexLifeModelsFamily :
         val switching: Boolean,
         /** This offering was explicitly added to this Vex Home rather than shipped in the Product. */
         val imported: Boolean = false,
+        /** The current platform has one exact runtime realization for this offering. */
+        val realizable: Boolean = true,
         /** Exact effective launch configuration against which configuration Controls are resolved. */
         val runtimeConfiguration: HereticRuntimeConfiguration.Effective,
         /** The selected/serving model has configured launch values not active in the current runtime. */
@@ -179,7 +181,8 @@ object VexLifeModelsFamily :
         return when (control) {
             Select ->
                 if (
-                    !currentState.targeted &&
+                    currentState.realizable &&
+                        !currentState.targeted &&
                         idle
                 ) {
                     admit(
@@ -192,7 +195,8 @@ object VexLifeModelsFamily :
                 }
             Use ->
                 if (
-                    currentState.artifactPresence == ArtifactPresence.Present &&
+                    currentState.realizable &&
+                        currentState.artifactPresence == ArtifactPresence.Present &&
                         currentState.targeted &&
                         (
                             !currentState.chosen ||
@@ -208,7 +212,8 @@ object VexLifeModelsFamily :
                 }
             UseRecommendedRuntimeConfiguration ->
                 if (
-                    currentState.targeted &&
+                    currentState.realizable &&
+                        currentState.targeted &&
                         (
                             currentState.runtimeConfiguration.promptCacheEntries !=
                                 currentState.runtimeConfiguration.recommendedPromptCacheEntries ||
@@ -223,7 +228,8 @@ object VexLifeModelsFamily :
                 }
             is SetPromptCacheEntries ->
                 if (
-                    currentState.targeted &&
+                    currentState.realizable &&
+                        currentState.targeted &&
                         control.entries in
                             currentState.runtimeConfiguration.minimumPromptCacheEntries..
                                 currentState.runtimeConfiguration.maximumPromptCacheEntries &&
@@ -240,7 +246,8 @@ object VexLifeModelsFamily :
                 }
             Download ->
                 if (
-                    (
+                    currentState.realizable &&
+                        (
                         currentState.artifactPresence == ArtifactPresence.Absent ||
                             currentState.artifactPresence == ArtifactPresence.Partial
                     ) &&
@@ -250,7 +257,8 @@ object VexLifeModelsFamily :
                 else null
             Redownload ->
                 if (
-                    currentState.artifactPresence == ArtifactPresence.Damaged &&
+                    currentState.realizable &&
+                        currentState.artifactPresence == ArtifactPresence.Damaged &&
                         idle &&
                         !currentState.serving
                 )
@@ -316,6 +324,7 @@ object VexLifeModelsFamily :
             handle = state.handle,
             status =
                 when {
+                    !state.realizable -> VexLifeText("workspace.status.model-control-not-lawful")
                     state.switching -> VexLifeText("workspace.status.model-switching")
                     state.downloading -> VexLifeText("workspace.status.model-downloading")
                     else -> VexLifeText(state.artifactPresence.statusKey)
