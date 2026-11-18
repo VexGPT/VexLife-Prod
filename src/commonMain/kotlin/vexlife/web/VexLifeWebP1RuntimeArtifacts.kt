@@ -588,6 +588,17 @@ object VexLifeWebP1RuntimeArtifacts {
                 processor: null,
                 silentGain: null,
                 animationFrame: null,
+                progressiveTimer: null,
+                progressivePromise: null,
+                progressiveInFlight: false,
+                progressiveCooldownUntil: 0,
+                progressiveLastAt: 0,
+                progressiveLastSampleCount: 0,
+                lastSpeechAt: 0,
+                speechActive: false,
+                noiseFloor: 0.004,
+                lastHypothesis: '',
+                stableHypothesisPasses: 0,
                 sampleRate: 0,
                 pcmChunks: [],
                 sampleCount: 0,
@@ -693,6 +704,10 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const stopVoiceCapture = async () => {
+                if (dictation.progressiveTimer !== null) {
+                  window.clearInterval(dictation.progressiveTimer);
+                  dictation.progressiveTimer = null;
+                }
                 if (dictation.animationFrame !== null) {
                   cancelAnimationFrame(dictation.animationFrame);
                   dictation.animationFrame = null;
@@ -781,7 +796,35 @@ object VexLifeWebP1RuntimeArtifacts {
                   copy.set(input);
                   dictation.pcmChunks.push(copy);
                   dictation.sampleCount += copy.length;
+
+                  let power = 0;
+                  for (let index = 0; index < input.length; index += 1) {
+                    power += input[index] * input[index];
+                  }
+                  const rms = Math.sqrt(power / Math.max(1, input.length));
+                  const threshold = Math.max(0.008, dictation.noiseFloor * 3.0);
+                  const now = performance.now();
+                  if (rms >= threshold) {
+                    dictation.speechActive = true;
+                    dictation.lastSpeechAt = now;
+                  } else {
+                    if (rms < threshold * 0.7) {
+                      dictation.noiseFloor =
+                        Math.max(0.001, Math.min(0.03, dictation.noiseFloor * 0.97 + rms * 0.03));
+                    }
+                    if (
+                      dictation.speechActive &&
+                      dictation.lastSpeechAt > 0 &&
+                      now - dictation.lastSpeechAt >= 220
+                    ) {
+                      dictation.speechActive = false;
+                    }
+                  }
                 };
+
+                dictation.progressiveTimer = window.setInterval(() => {
+                  void maybeProgressiveTranscription();
+                }, 250);
 
                 dictation.audioContext = context;
                 dictation.audioSource = source;
@@ -852,10 +895,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 return new Uint8Array(bytes);
               };
 
-              const clearCapturedPcm = () => {
+              const clearCapturedPcm = (preserveSampleRate = false) => {
                 dictation.pcmChunks = [];
                 dictation.sampleCount = 0;
-                dictation.sampleRate = 0;
+                if (!preserveSampleRate) dictation.sampleRate = 0;
+                dictation.progressiveLastSampleCount = 0;
               };
 
               const voiceInputFailureReason = (error, stage) => {
@@ -940,11 +984,133 @@ object VexLifeWebP1RuntimeArtifacts {
                 return String(result.transcript ?? '').trim();
               };
 
+              const normalizedHypothesis = (value) =>
+                String(value ?? '')
+                  .trim()
+                  .replace(/\s+/gu, ' ');
+
+              const endsAtStrongSentenceBoundary = (value) =>
+                /[.!?。！？؟।॥][\s"'”’）)\]]*$/u.test(String(value ?? '').trim());
+
+              const endsWithEnglishFiller = (value, language) =>
+                language?.code === 'en' &&
+                /(?:^|[\s,])(?:um+|uh+|erm+|hmm+)[.!?…]*$/iu.test(String(value ?? '').trim());
+
+              const maybeProgressiveTranscription = () => {
+                if (
+                  !dictation.desiredActive ||
+                  dictation.progressiveInFlight ||
+                  !dictation.language ||
+                  dictation.sampleRate <= 0 ||
+                  performance.now() < dictation.progressiveCooldownUntil
+                ) {
+                  return;
+                }
+
+                const now = performance.now();
+                const minimumSamples = dictation.sampleRate * 0.8;
+                const newSamples =
+                  dictation.sampleCount - dictation.progressiveLastSampleCount;
+                if (dictation.sampleCount < minimumSamples || newSamples < dictation.sampleRate * 0.35) {
+                  return;
+                }
+
+                const silenceMs =
+                  dictation.lastSpeechAt > 0
+                    ? Math.max(0, now - dictation.lastSpeechAt)
+                    : 0;
+                const periodicWhileSpeaking =
+                  dictation.speechActive &&
+                  now - dictation.progressiveLastAt >= 1800;
+                const refineThinkingPause =
+                  !dictation.speechActive &&
+                  silenceMs >= 550 &&
+                  now - dictation.progressiveLastAt >= 500;
+
+                if (!periodicWhileSpeaking && !refineThinkingPause) return;
+
+                const requestSession = dictation.session;
+                const requestedSamples = dictation.sampleCount;
+                dictation.progressiveLastAt = now;
+                dictation.progressiveLastSampleCount = requestedSamples;
+                dictation.progressiveInFlight = true;
+
+                const run = (async () => {
+                  try {
+                    const transcript = await transcribeCapturedAudio(dictation.language);
+                    if (
+                      !transcript ||
+                      requestSession !== dictation.session ||
+                      !dictation.desiredActive
+                    ) {
+                      return;
+                    }
+
+                    const normalized = normalizedHypothesis(transcript);
+                    if (normalized === normalizedHypothesis(dictation.lastHypothesis)) {
+                      dictation.stableHypothesisPasses += 1;
+                    } else {
+                      dictation.lastHypothesis = transcript;
+                      dictation.stableHypothesisPasses = 1;
+                    }
+
+                    dictation.interimTranscript = transcript;
+                    projectDictationIntoDraft();
+
+                    const completedAt = performance.now();
+                    const silenceAfterResult =
+                      dictation.lastSpeechAt > 0
+                        ? Math.max(0, completedAt - dictation.lastSpeechAt)
+                        : 0;
+                    const noNewAudio = dictation.sampleCount === requestedSamples;
+                    const stable = dictation.stableHypothesisPasses >= 2;
+                    const sentenceBoundary = endsAtStrongSentenceBoundary(transcript);
+                    const fillerTail = endsWithEnglishFiller(transcript, dictation.language);
+
+                    const sentenceSettled =
+                      noNewAudio &&
+                      !dictation.speechActive &&
+                      silenceAfterResult >= 900 &&
+                      sentenceBoundary &&
+                      stable &&
+                      !fillerTail;
+                    const longPauseSettled =
+                      noNewAudio &&
+                      !dictation.speechActive &&
+                      silenceAfterResult >= 2600 &&
+                      stable &&
+                      !fillerTail;
+
+                    if (sentenceSettled || longPauseSettled) {
+                      dictation.finalTranscript =
+                        appendTranscriptSegment(dictation.finalTranscript, transcript);
+                      dictation.interimTranscript = '';
+                      dictation.lastHypothesis = '';
+                      dictation.stableHypothesisPasses = 0;
+                      clearCapturedPcm(true);
+                      projectDictationIntoDraft();
+                    }
+                  } catch {
+                    // Progressive recognition is an enhancement. A partial-pass failure must never
+                    // kill the microphone session or the proven final Stop -> transcript fallback.
+                    dictation.progressiveCooldownUntil = performance.now() + 3000;
+                  } finally {
+                    if (requestSession === dictation.session) {
+                      dictation.progressiveInFlight = false;
+                    }
+                  }
+                })();
+
+                dictation.progressivePromise = run;
+              };
+
               const realizeEndLocalDictation = async (abort = false) => {
                 const language = dictation.language ?? voiceInputLanguage();
                 dictation.desiredActive = false;
                 dictation.session += 1;
+                const progressive = dictation.progressivePromise;
                 await stopVoiceCapture();
+                if (progressive) await progressive.catch(() => {});
 
                 if (abort) {
                   clearCapturedPcm();
@@ -997,6 +1163,16 @@ object VexLifeWebP1RuntimeArtifacts {
                 dictation.draftPrefix = ui.draft.value;
                 dictation.finalTranscript = '';
                 dictation.interimTranscript = '';
+                dictation.progressivePromise = null;
+                dictation.progressiveInFlight = false;
+                dictation.progressiveCooldownUntil = 0;
+                dictation.progressiveLastAt = 0;
+                dictation.progressiveLastSampleCount = 0;
+                dictation.lastSpeechAt = 0;
+                dictation.speechActive = false;
+                dictation.noiseFloor = 0.004;
+                dictation.lastHypothesis = '';
+                dictation.stableHypothesisPasses = 0;
                 clearCapturedPcm();
 
                 reportFact('VOICE_INPUT_MICROPHONE_REQUESTED', {
