@@ -708,8 +708,10 @@ object VexLifeCurrentMemoryReader {
                 .sortedBy(
                     Statement::statementRef,
                 )
-        val semanticAuthorityHeadSha256 =
+        val currentAuthority =
             score.authority
+        val semanticAuthorityHeadSha256 =
+            currentAuthority
                 ?.string(
                     "semanticAuthorityHeadSha256",
                 )
@@ -717,11 +719,25 @@ object VexLifeCurrentMemoryReader {
             currentStatements.isNotEmpty()
         ) {
             requireNotNull(
-                semanticAuthorityHeadSha256,
+                currentAuthority,
             ) {
-                "current accepted semantic statements require current semantic authority"
+                "current Score statements require current semantic authority"
             }
         }
+        val acceptedContinuity =
+            currentStatements
+                .filter {
+                    statement ->
+                    statement.acceptedForContinuity &&
+                        statement.consentState in
+                            positiveConsent &&
+                        currentAuthority !=
+                            null &&
+                        authorityContains(
+                            currentAuthority,
+                            statement,
+                        )
+                }
         require(
             currentStatements
                 .map(
@@ -756,7 +772,7 @@ object VexLifeCurrentMemoryReader {
             semanticAuthorityHeadSha256 =
                 semanticAuthorityHeadSha256,
             statements =
-                currentStatements.map {
+                acceptedContinuity.map {
                     statement ->
                     CurrentAcceptedStatement(
                         statementRef = statement.statementRef,

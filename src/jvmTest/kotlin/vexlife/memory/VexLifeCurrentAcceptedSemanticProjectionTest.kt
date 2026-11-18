@@ -105,6 +105,13 @@ class VexLifeCurrentAcceptedSemanticProjectionTest {
                 Summary,
                 statement.summary,
             )
+            assertTrue(
+                statement.consentState in
+                    setOf(
+                        "PERMITTED",
+                        "NARROWED",
+                    ),
+            )
             assertEquals(
                 first.headSha256,
                 projection.observedConversationHeadSha256,
