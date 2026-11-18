@@ -17,6 +17,8 @@ import vexlife.context.VexLifeContextProfile
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.foundational.VexLifeFoundationalField
+import vexlife.memory.VexLifeCurrentAcceptedSemanticPromptBlock
+import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelConfiguration
@@ -138,7 +140,25 @@ object DirectPromptContext {
     private data class VerifiedMemory(
         val context: VexLifeMemoryContract.Context,
         val systemContent: String?,
-    )
+        val currentAcceptedSemanticBlock: VexLifeCurrentAcceptedSemanticPromptBlock.Block? = null,
+    ) {
+        val promptResidentStatementRefs: Set<String> =
+            buildSet {
+                if (context.included) {
+                    context.pages.forEach {
+                        add(it.statementRef)
+                    }
+                }
+                currentAcceptedSemanticBlock
+                    ?.takeIf {
+                        it.included
+                    }
+                    ?.statementRefs
+                    ?.forEach {
+                        add(it)
+                    }
+            }
+    }
 
     private data class VerifiedCapabilityFrame(
         val frame: VexLifeCapabilityAtlas.Frame,
@@ -235,6 +255,7 @@ object DirectPromptContext {
         const val FoundationalField = Prefix + "foundational-field"
         const val ContextProfileFoundation = Prefix + "context-profile-foundation"
         const val Memory = Prefix + "memory-current-context"
+        const val MemoryCurrentAcceptedSemantic = Prefix + "memory-current-accepted-semantic"
         const val WorkingContinuity = Prefix + "working-continuity-successor"
         const val CapabilityFrame = Prefix + "capability-frame"
         const val CapabilityFrameCurrent = Prefix + "capability-frame-current"
@@ -1049,6 +1070,25 @@ object DirectPromptContext {
                             ),
                         )
                     }
+                    verified.currentAcceptedSemanticBlock
+                        ?.takeIf {
+                            it.included
+                        }
+                        ?.let {
+                            block ->
+                            add(
+                                systemPart(
+                                    Section(
+                                        ComponentRefs.MemoryCurrentAcceptedSemantic,
+                                        ComponentStability.STABLE,
+                                        requireNotNull(
+                                            block.content,
+                                        ),
+                                        block.sourceRefs,
+                                    ),
+                                ),
+                            )
+                        }
                 }
                 addAll(turnContext.systemParts)
             }
@@ -1540,6 +1580,9 @@ object DirectPromptContext {
         conversationExtentIncluded: Boolean,
         capabilityRequestsAdmitted: Boolean,
         experimentEffectiveInputTokenBudget: Int?,
+        memoryProviderSelectionAtCap: ((
+            memoryTokenCap: Int,
+        ) -> VexLifeCurrentMemoryProviderSelection.Selection)? = null,
     ): Materialization {
         require(
             !(
@@ -1716,28 +1759,46 @@ object DirectPromptContext {
                 ?.context
                 ?.let {
                     availability ->
-                    val selectedMemory =
-                        if (
-                            availability.memoryTokenCap ==
-                                memoryTokenCap
-                        ) {
-                            availability
-                        } else {
-                            requireNotNull(
-                                memoryContextAtCap,
-                            ) {
-                                "direct continuity prompt requires caller-bounded Memory source for the selected cap"
-                            }
-                                .invoke(
-                                    memoryTokenCap,
-                                )
-                        }
                     val verified =
-                        requireNotNull(
-                            verifyMemoryContext(
-                                selectedMemory,
-                            ),
-                        )
+                        memoryProviderSelectionAtCap
+                            ?.invoke(
+                                memoryTokenCap,
+                            )
+                            ?.let {
+                                selection ->
+                                require(
+                                    selection.memoryTokenCap ==
+                                        memoryTokenCap,
+                                ) {
+                                    "Memory provider selection does not bind the exact remaining prompt cap"
+                                }
+                                verifyMemoryProviderSelection(
+                                    selection,
+                                )
+                            }
+                            ?: run {
+                                val selectedMemory =
+                                    if (
+                                        availability.memoryTokenCap ==
+                                            memoryTokenCap
+                                    ) {
+                                        availability
+                                    } else {
+                                        requireNotNull(
+                                            memoryContextAtCap,
+                                        ) {
+                                            "direct continuity prompt requires caller-bounded Memory source for the selected cap"
+                                        }
+                                            .invoke(
+                                                memoryTokenCap,
+                                            )
+                                    }
+                                requireNotNull(
+                                    verifyMemoryContext(
+                                        selectedMemory,
+                                    ),
+                                )
+                            }
                     requireSameMemoryFrontier(
                         availability = availability,
                         selected = verified.context,
@@ -1842,6 +1903,9 @@ object DirectPromptContext {
         conversationExtentIncluded: Boolean,
         capabilityRequestsAdmitted: Boolean,
         experimentEffectiveInputTokenBudget: Int?,
+        memoryProviderSelectionAtCap: ((
+            memoryTokenCap: Int,
+        ) -> VexLifeCurrentMemoryProviderSelection.Selection)? = null,
     ) {
         val current =
             materializeContinuityAt(
@@ -1866,6 +1930,7 @@ object DirectPromptContext {
                 conversationExtentIncluded = conversationExtentIncluded,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
+                memoryProviderSelectionAtCap = memoryProviderSelectionAtCap,
             )
         require(
             current ==
@@ -3132,6 +3197,88 @@ object DirectPromptContext {
      */
     internal fun memorySystemMessage(context: VexLifeMemoryContract.Context): String? =
         verifyMemoryContext(context)?.systemContent
+
+    private fun verifyMemoryProviderSelection(
+        selection: VexLifeCurrentMemoryProviderSelection.Selection,
+    ): VerifiedMemory {
+        require(
+            !selection.effectsPerformed &&
+                selection.memoryTokenCap ==
+                selection.dailyContext.memoryTokenCap,
+        ) {
+            "Memory provider selection identity is invalid"
+        }
+        val daily =
+            requireNotNull(
+                verifyMemoryContext(
+                    selection.dailyContext,
+                ),
+            )
+        val semantic =
+            selection.currentAcceptedSemanticBlock
+        val semanticContent =
+            semantic.content
+        val semanticTokens =
+            semanticContent
+                ?.let(
+                    ::estimatedMessageTokens,
+                )
+                ?: 0
+        require(
+            semantic.schemaVersion ==
+                VexLifeCurrentAcceptedSemanticPromptBlock.Schema &&
+                semantic.included ==
+                (
+                    semanticContent !=
+                        null
+                ) &&
+                semantic.contentSha256 ==
+                semanticContent
+                    ?.let(
+                        ::sha256,
+                    ) &&
+                semantic.estimatedContentTokens ==
+                semanticTokens &&
+                !semantic.effectsPerformed,
+        ) {
+            "current accepted-semantic Memory block does not bind its exact provider bytes"
+        }
+        require(
+            selection.remainingCurrentSemanticTokenCap ==
+                selection.memoryTokenCap -
+                daily.context.estimatedSystemMessageTokens &&
+                semantic.memoryTokenCap ==
+                selection.remainingCurrentSemanticTokenCap &&
+                selection.estimatedSelectedTokens ==
+                daily.context.estimatedSystemMessageTokens +
+                semantic.estimatedContentTokens &&
+                selection.estimatedSelectedTokens <=
+                selection.memoryTokenCap,
+        ) {
+            "Memory provider selection does not preserve the shared Memory token cap"
+        }
+        val dailyStatementRefs =
+            daily.context.pages
+                .map {
+                    it.statementRef
+                }
+                .toSet()
+        require(
+            dailyStatementRefs
+                .intersect(
+                    semantic.statementRefs.toSet(),
+                )
+                .isEmpty() &&
+                semantic.statementRefs.distinct().size ==
+                semantic.statementRefs.size,
+        ) {
+            "Memory provider selection repeats one statement across Daily and accepted-semantic components"
+        }
+
+        return daily.copy(
+            currentAcceptedSemanticBlock = semantic,
+        )
+    }
 
     private fun verifyMemoryContext(
         value: VexLifeMemoryContract.Context?,

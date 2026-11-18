@@ -1,6 +1,8 @@
 package vexlife.companion
 
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.security.MessageDigest
 import java.time.Instant
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -21,6 +23,8 @@ import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationIdentity
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.memory.VexLifeCurrentAcceptedSemanticPromptBlock
+import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.memory.VexLifeMemoryContextFixture
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
@@ -2782,6 +2786,259 @@ class DirectPromptContextTest {
                     )
                 }
             }
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun memoryProviderSelectionPlacesDailyAndAcceptedSemanticMemoryAsAdjacentPromptComponents() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-prompt-memory-provider-selection-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                ".vexlife",
+            )
+
+        fun digest(
+            value: String,
+        ): String =
+            MessageDigest
+                .getInstance(
+                    "SHA-256",
+                )
+                .digest(
+                    value.toByteArray(
+                        StandardCharsets.UTF_8,
+                    ),
+                )
+                .joinToString(
+                    "",
+                ) {
+                    "%02x".format(
+                        it.toInt() and
+                            0xff,
+                    )
+                }
+
+        try {
+            home(
+                productHome,
+            )
+            DirectConversationStore(
+                productHome,
+            )
+                .withWriterLease {
+                    val request =
+                        beginRequest(
+                            turnRef =
+                                "turn.self-development.memory-provider-selection.001",
+                            requestMessageRef =
+                                "message.self-development.human.memory-provider-selection.001",
+                            content =
+                                "Use the Memory that is actually selected for this turn.",
+                        )
+                    val availability =
+                        VexLifeMemoryContextFixture.current()
+                    val semanticStatementRef =
+                        "statement.vexlife-prod.memory-review.semantic-connector-001"
+
+                    fun selection(
+                        memoryTokenCap: Int,
+                    ): VexLifeCurrentMemoryProviderSelection.Selection {
+                        val daily =
+                            VexLifeMemoryContextFixture.current(
+                                memoryTokenCap,
+                            )
+                        val remaining =
+                            memoryTokenCap -
+                                daily.estimatedSystemMessageTokens
+                        val semanticContent =
+                            listOf(
+                                VexLifeCurrentAcceptedSemanticPromptBlock.Header,
+                                "Current accepted semantic Memory for connector proof.",
+                                semanticStatementRef,
+                            )
+                                .joinToString(
+                                    "\n",
+                                )
+                        val semanticTokens =
+                            DirectPromptContext.estimatedMessageTokens(
+                                semanticContent,
+                            )
+                        require(
+                            semanticTokens <=
+                                remaining,
+                        )
+                        val block =
+                            VexLifeCurrentAcceptedSemanticPromptBlock.Block(
+                                schemaVersion =
+                                    VexLifeCurrentAcceptedSemanticPromptBlock.Schema,
+                                blockRef =
+                                    "prompt-block.vexlife-prod.current-accepted-semantic.connector-proof",
+                                semanticFingerprint =
+                                    "b".repeat(
+                                        64,
+                                    ),
+                                sourceProjectionRef =
+                                    "projection.vexlife-prod.current-accepted-semantic.connector-proof",
+                                sourceProjectionSemanticFingerprint =
+                                    "c".repeat(
+                                        64,
+                                    ),
+                                statementRefs =
+                                    listOf(
+                                        semanticStatementRef,
+                                    ),
+                                excludedStatementRefs =
+                                    daily.pages.map {
+                                        it.statementRef
+                                    },
+                                boundedOutStatementRefs =
+                                    emptyList(),
+                                tokenBoundedOutStatementRefs =
+                                    emptyList(),
+                                memoryTokenCap =
+                                    remaining,
+                                content =
+                                    semanticContent,
+                                contentSha256 =
+                                    digest(
+                                        semanticContent,
+                                    ),
+                                estimatedContentTokens =
+                                    semanticTokens,
+                                sourceRefs =
+                                    listOf(
+                                        "projection.vexlife-prod.current-accepted-semantic.connector-proof",
+                                        semanticStatementRef,
+                                        "score-semantic-acceptance.connector-proof",
+                                    ),
+                                included =
+                                    true,
+                                effectsPerformed =
+                                    false,
+                            )
+                        return VexLifeCurrentMemoryProviderSelection.Selection(
+                            memoryTokenCap =
+                                memoryTokenCap,
+                            dailyContext =
+                                daily,
+                            currentAcceptedSemanticBlock =
+                                block,
+                            remainingCurrentSemanticTokenCap =
+                                remaining,
+                            estimatedSelectedTokens =
+                                daily.estimatedSystemMessageTokens +
+                                semanticTokens,
+                            effectsPerformed =
+                                false,
+                        )
+                    }
+
+                    val materialized =
+                        DirectPromptContext.materializeContinuityAt(
+                            conversationOwner =
+                                this,
+                            prior =
+                                null,
+                            currentRequest =
+                                request,
+                            memoryAvailabilityContext =
+                                availability,
+                            memoryContextAtCap = {
+                                memoryTokenCap ->
+                                VexLifeMemoryContextFixture.current(
+                                    memoryTokenCap,
+                                )
+                            },
+                            workingContinuityContext =
+                                null,
+                            browserContext =
+                                null,
+                            personContext =
+                                null,
+                            runtimeEvidence =
+                                runtimeEvidence(),
+                            sourceReturnProtocolEnabled =
+                                false,
+                            sourceReturnDiscovery =
+                                null,
+                            foundationalField =
+                                null,
+                            contextProfile =
+                                null,
+                            conversationExtentIncluded =
+                                false,
+                            capabilityRequestsAdmitted =
+                                false,
+                            experimentEffectiveInputTokenBudget =
+                                null,
+                            memoryProviderSelectionAtCap =
+                                ::selection,
+                        )
+
+                    val memoryComponents =
+                        materialized.receipt.contextComponents
+                            .filter {
+                                it.componentRef in
+                                    setOf(
+                                        DirectPromptContext.ComponentRefs.Memory,
+                                        DirectPromptContext.ComponentRefs.MemoryCurrentAcceptedSemantic,
+                                    )
+                            }
+                    assertEquals(
+                        listOf(
+                            DirectPromptContext.ComponentRefs.Memory,
+                            DirectPromptContext.ComponentRefs.MemoryCurrentAcceptedSemantic,
+                        ),
+                        memoryComponents.map {
+                            it.componentRef
+                        },
+                    )
+                    assertTrue(
+                        memoryComponents.all {
+                            it.providerMessageIndex ==
+                                0
+                        },
+                    )
+                    assertTrue(
+                        materialized.messages.first().content.contains(
+                            "VEXLIFE_CURRENT_MEMORY_CONTEXT/v1",
+                        ),
+                    )
+                    assertTrue(
+                        materialized.messages.first().content.contains(
+                            VexLifeCurrentAcceptedSemanticPromptBlock.Header,
+                        ),
+                    )
+                    assertTrue(
+                        availability.pages
+                            .map {
+                                it.statementRef
+                            }
+                            .toSet()
+                            .intersect(
+                                setOf(
+                                    semanticStatementRef,
+                                ),
+                            )
+                            .isEmpty(),
+                    )
+                    assertEquals(
+                        availability.memoryContextRef,
+                        materialized.receipt.memoryContextRef,
+                    )
+                    assertTrue(
+                        materialized.receipt.memoryIncluded,
+                        "legacy Daily receipt fields stay bound to the Daily component",
+                    )
+                }
         } finally {
             parent
                 .toFile()

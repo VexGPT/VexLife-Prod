@@ -201,9 +201,17 @@ These labels are projections from existing owners. The first slice does not add 
 A rollover means prompt residency changed. It does not mean Conversation was deleted or Memory was
 automatically condensed. Structured Memory is named separately.
 
-The current Memory comparison is fingerprint-based: the screen can say that current Memory differs
-from the packet used for the last reply. It does not invent a historical "Memory changed at" timestamp
-that no current owner records.
+The current Memory comparison is fingerprint-based only for the Daily Memory component whose
+`memoryContextRef` / fingerprint already has that owner. Current Memory selection may now supply
+more than one Memory-owned prompt component under one shared Memory cap: Daily first, then current
+accepted-semantic Memory with exact Daily statement refs excluded. That selection remains owned by
+`VexLifeCurrentMemoryProviderSelection`; Vex Context does not reproduce its budgeting or dedupe law.
+
+The exact `contextComponents` receipt is the human-facing source of truth for which Memory components
+actually shaped the completed turn. A held or absent Daily component therefore does not license the
+presentation to say that no Memory shaped the reply when an accepted-semantic Memory component was
+actually supplied. The surface also does not invent a historical "Memory changed at" timestamp that
+no current owner records.
 
 ## Human surface
 

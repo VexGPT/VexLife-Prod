@@ -2736,6 +2736,19 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.vexContextBudget.title =
                   usedInputTokens.toLocaleString() + ' / ' + inputTokenBudget.toLocaleString() + ' input tokens';
 
+                const promptMemoryComponents =
+                  (prompt.contextComponents ?? []).filter((component) =>
+                    component.componentRef === 'component.vexlife-prod.prompt.memory-current-context' ||
+                    component.componentRef === 'component.vexlife-prod.prompt.memory-current-accepted-semantic'
+                  );
+                const dailyMemoryUsed =
+                  promptMemoryComponents.some((component) =>
+                    component.componentRef === 'component.vexlife-prod.prompt.memory-current-context');
+                const acceptedSemanticMemoryUsed =
+                  promptMemoryComponents.some((component) =>
+                    component.componentRef === 'component.vexlife-prod.prompt.memory-current-accepted-semantic');
+                const anyPromptMemoryUsed = promptMemoryComponents.length > 0;
+
                 const changes = [];
                 const change = (title, detail, stateName) => {
                   const item = document.createElement('div');
@@ -2804,24 +2817,32 @@ object VexLifeWebP1RuntimeArtifacts {
                   );
                 }
 
-                if (prompt.memoryIncluded) {
+                if (acceptedSemanticMemoryUsed) {
+                  change(
+                    'Memory shaped this reply.',
+                    dailyMemoryUsed
+                      ? 'Daily Memory and current accepted-semantic Memory were both supplied under one shared Memory budget.'
+                      : 'Current accepted-semantic Memory was supplied even though no Daily Memory component entered the prompt.',
+                    'current'
+                  );
+                } else if (dailyMemoryUsed) {
                   const currentMemory = state.memory?.memoryContextFingerprint ?? null;
                   const rememberedCount = Number(state.memory?.rememberedCount ?? 0);
                   if (currentMemory && prompt.memoryContextFingerprint && currentMemory !== prompt.memoryContextFingerprint) {
                     change(
                       'Memory changed since this reply.',
-                      'The Memory available now is different from what shaped this reply.',
+                      'The Daily Memory available now is different from the Daily Memory component that shaped this reply.',
                       'changed'
                     );
                   } else {
                     change(
                       'Memory.',
-                      'Vex used ' + rememberedCount + ' current remembered item' + (rememberedCount === 1 ? '' : 's') + ' for this reply.',
+                      'Vex used ' + rememberedCount + ' current Daily Memory item' + (rememberedCount === 1 ? '' : 's') + ' for this reply.',
                       'current'
                     );
                   }
                 } else {
-                  change('Memory.', 'No structured Memory was included in this reply.', 'current');
+                  change('Memory.', 'No structured Memory component was included in this reply.', 'current');
                 }
                 ui.contextChangesList.replaceChildren(...changes);
 
@@ -2889,29 +2910,42 @@ object VexLifeWebP1RuntimeArtifacts {
                 ui.contextMemoryBody.replaceChildren();
                 const rememberedCount = Number(state.memory?.rememberedCount ?? 0);
                 ui.contextMemoryStatus.textContent =
-                  prompt.memoryIncluded
-                    ? rememberedCount + ' remembered item' + (rememberedCount === 1 ? '' : 's') + ' used'
-                    : 'Not used';
-                if (prompt.memoryIncluded) {
+                  acceptedSemanticMemoryUsed
+                    ? (dailyMemoryUsed ? 'Daily + accepted semantic Memory used' : 'Accepted semantic Memory used')
+                    : dailyMemoryUsed
+                      ? rememberedCount + ' Daily Memory item' + (rememberedCount === 1 ? '' : 's') + ' used'
+                      : 'Not used';
+                if (anyPromptMemoryUsed) {
+                  if (dailyMemoryUsed) {
+                    contextLine(
+                      ui.contextMemoryBody,
+                      prompt.memoryContextFingerprint === state.memory?.memoryContextFingerprint
+                        ? 'The Daily Memory component that shaped this reply is still the Daily Memory available now.'
+                        : 'The Daily Memory component that shaped this reply is historical; VexLife will not relabel current Daily Memory as the old one.',
+                      'Daily currentness'
+                    );
+                    contextEvidenceDisclosure(
+                      ui.contextMemoryBody,
+                      'Show exact Daily Memory reference',
+                      String(prompt.memoryContextRef ?? '')
+                    );
+                  }
+                  if (acceptedSemanticMemoryUsed) {
+                    contextLine(
+                      ui.contextMemoryBody,
+                      dailyMemoryUsed
+                        ? 'Current accepted-semantic Memory also shaped this reply under the same Memory budget. Exact statement refs already supplied by Daily were excluded from this second component.'
+                        : 'Current accepted-semantic Memory shaped this reply even though no Daily Memory component entered the prompt.',
+                      'Accepted semantic Memory'
+                    );
+                  }
                   contextLine(
                     ui.contextMemoryBody,
-                    prompt.memoryContextFingerprint === state.memory?.memoryContextFingerprint
-                      ? 'The Memory that shaped this reply is still the Memory available now.'
-                      : 'The Memory that shaped this reply is historical; VexLife will not relabel current Memory as the old one.',
-                    'Currentness'
-                  );
-                  contextLine(
-                    ui.contextMemoryBody,
-                    'Memory carries accepted current meaning. Exact Conversation and Vex’s temporary working process stay separate.',
-                    'Meaning'
-                  );
-                  contextEvidenceDisclosure(
-                    ui.contextMemoryBody,
-                    'Show exact Memory reference',
-                    String(prompt.memoryContextRef ?? '')
+                    'This view follows the exact Memory components recorded by the prompt receipt; it does not infer aggregate Memory participation from Daily Memory alone.',
+                    'Evidence'
                   );
                 } else {
-                  contextLine(ui.contextMemoryBody, state.memory?.display?.detail ?? 'No structured Memory was used for this reply.');
+                  contextLine(ui.contextMemoryBody, state.memory?.display?.detail ?? 'No structured Memory component was used for this reply.');
                 }
 
                 // Working continuity / rollover.
@@ -3034,7 +3068,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 // Exact provider component order remains available, but human meaning is primary.
                 const componentLabels = Object.freeze({
                   'foundational-field': 'VexLife foundation',
-                  'memory-current-context': 'Structured Memory',
+                  'memory-current-context': 'Daily Memory',
+                  'memory-current-accepted-semantic': 'Accepted semantic Memory',
                   'capability-frame': 'Capability guide',
                   'current-state-envelope': 'Current VexLife state',
                   'capability-frame-current': 'Capabilities available now',

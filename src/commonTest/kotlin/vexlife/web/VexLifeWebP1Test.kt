@@ -238,6 +238,16 @@ class VexLifeWebP1Test {
                 "not the post-chat-template/tokenized model input",
             ),
         )
+        assertTrue(
+            runtimeArtifacts.javascript.contains(
+                "memory-current-accepted-semantic",
+            ),
+        )
+        assertTrue(
+            runtimeArtifacts.javascript.contains(
+                "does not infer aggregate Memory participation from Daily Memory alone",
+            ),
+        )
 
         val send =
             VexLifeWebP1.Surface

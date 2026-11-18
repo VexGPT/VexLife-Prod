@@ -21,6 +21,7 @@ import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.continuity.VexLifeContextRevisit
 import vexlife.continuity.VexLifeWorkingContinuityOwner
+import vexlife.memory.VexLifeCurrentMemoryProviderSelection
 import vexlife.memory.VexLifeCurrentMemoryReader
 import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticCompanionRepresentation
@@ -405,6 +406,10 @@ object DirectCompanionTurn {
                 memoryTokenCap = memoryTokenCap,
             )
         },
+        val memoryProviderSelectionAtCap: ((
+            productHome: Path,
+            memoryTokenCap: Int,
+        ) -> VexLifeCurrentMemoryProviderSelection.Selection)? = null,
         val progressObserver: ProgressObserver? =
             null,
         /** How capability owners reach the web/Home/Memory; replaced in tests. */
@@ -450,6 +455,7 @@ object DirectCompanionTurn {
     private data class ContinuityPromptSelection(
         val materialization: DirectPromptContext.Materialization,
         val memoryContext: VexLifeMemoryContract.Context,
+        val promptResidentMemoryStatementRefs: Set<String>,
     )
 
     private data class ProviderStage(
@@ -475,7 +481,18 @@ object DirectCompanionTurn {
         performWithHooks(
             setup = setup,
             intent = intent,
-            hooks = Hooks(),
+            hooks =
+                Hooks(
+                    memoryProviderSelectionAtCap = {
+                        productHome,
+                        memoryTokenCap,
+                        ->
+                        VexLifeCurrentMemoryProviderSelection.read(
+                            productHome = productHome,
+                            memoryTokenCap = memoryTokenCap,
+                        )
+                    },
+                ),
         )
 
     internal fun perform(
@@ -503,6 +520,15 @@ object DirectCompanionTurn {
                     },
                     reobserveSameRuntimeEvidence = {
                         session.observeCurrentQualifiedRuntimeEvidence()
+                    },
+                    memoryProviderSelectionAtCap = {
+                        productHome,
+                        memoryTokenCap,
+                        ->
+                        VexLifeCurrentMemoryProviderSelection.read(
+                            productHome = productHome,
+                            memoryTokenCap = memoryTokenCap,
+                        )
                     },
                     progressObserver = progressObserver,
                 ),
@@ -917,6 +943,8 @@ object DirectCompanionTurn {
                     },
             memoryContextAtCap =
                 hooks.memoryContextAtCap,
+            memoryProviderSelectionAtCap =
+                hooks.memoryProviderSelectionAtCap,
             workingContinuityContext =
                 workingContinuityContext,
             browserContext = browserContext,
@@ -971,7 +999,7 @@ object DirectCompanionTurn {
                         .toSet()
                 },
                 promptResidentStatementRefs = {
-                    base.memoryContext.takeIf { it.included }?.pages.orEmpty().map { it.statementRef }.toSet()
+                    base.promptResidentMemoryStatementRefs
                 },
                 now = hooks.now,
             )
@@ -1284,6 +1312,10 @@ object DirectCompanionTurn {
             productHome: Path,
             memoryTokenCap: Int,
         ) -> VexLifeMemoryContract.Context,
+        memoryProviderSelectionAtCap: ((
+            productHome: Path,
+            memoryTokenCap: Int,
+        ) -> VexLifeCurrentMemoryProviderSelection.Selection)?,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
@@ -1298,6 +1330,8 @@ object DirectCompanionTurn {
         experimentEffectiveInputTokenBudget: Int? = null,
     ): ContinuityPromptSelection {
         var selectedMemoryAtCap: VexLifeMemoryContract.Context? =
+            null
+        var selectedMemoryProviderSelection: VexLifeCurrentMemoryProviderSelection.Selection? =
             null
         val materialization =
             DirectPromptContext.materializeContinuityAt(
@@ -1316,6 +1350,22 @@ object DirectCompanionTurn {
                                 it
                         }
                 },
+                memoryProviderSelectionAtCap =
+                    memoryProviderSelectionAtCap
+                        ?.let {
+                            select ->
+                            {
+                                memoryTokenCap ->
+                                select(
+                                    productHome,
+                                    memoryTokenCap,
+                                )
+                                    .also {
+                                        selectedMemoryProviderSelection =
+                                            it
+                                    }
+                            }
+                        },
                 workingContinuityContext = workingContinuityContext,
                 browserContext = browserContext,
                 personContext = personContext,
@@ -1330,7 +1380,9 @@ object DirectCompanionTurn {
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
             )
         val selectedMemory =
-            selectedMemoryAtCap
+            selectedMemoryProviderSelection
+                ?.dailyContext
+                ?: selectedMemoryAtCap
                 ?: memoryAvailability
         require(
             materialization.receipt.memoryContextRef ==
@@ -1341,9 +1393,30 @@ object DirectCompanionTurn {
             "direct Companion continuity prompt does not bind the exact selected Memory projection"
         }
 
+        val promptResidentMemoryStatementRefs =
+            buildSet {
+                if (
+                    selectedMemory.included
+                ) {
+                    selectedMemory.pages.forEach {
+                        add(it.statementRef)
+                    }
+                }
+                selectedMemoryProviderSelection
+                    ?.currentAcceptedSemanticBlock
+                    ?.takeIf {
+                        it.included
+                    }
+                    ?.statementRefs
+                    ?.forEach {
+                        add(it)
+                    }
+            }
+
         return ContinuityPromptSelection(
             materialization = materialization,
             memoryContext = selectedMemory,
+            promptResidentMemoryStatementRefs = promptResidentMemoryStatementRefs,
         )
     }
 
@@ -1358,6 +1431,10 @@ object DirectCompanionTurn {
             productHome: Path,
             memoryTokenCap: Int,
         ) -> VexLifeMemoryContract.Context,
+        memoryProviderSelectionAtCap: ((
+            productHome: Path,
+            memoryTokenCap: Int,
+        ) -> VexLifeCurrentMemoryProviderSelection.Selection)?,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
@@ -1384,6 +1461,18 @@ object DirectCompanionTurn {
                     memoryTokenCap,
                 )
             },
+            memoryProviderSelectionAtCap =
+                memoryProviderSelectionAtCap
+                    ?.let {
+                        select ->
+                        {
+                            memoryTokenCap ->
+                            select(
+                                productHome,
+                                memoryTokenCap,
+                            )
+                        }
+                    },
             workingContinuityContext = workingContinuityContext,
             browserContext = browserContext,
             personContext = personContext,
