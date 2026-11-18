@@ -23,7 +23,7 @@ class VexLifeWorkspaceBlueprintTest {
             refs.toSet().size,
         )
         assertEquals(
-            59,
+            70,
             refs.size,
         )
 
@@ -34,6 +34,17 @@ class VexLifeWorkspaceBlueprintTest {
                 VexLifeWorkspaceBlueprint.Speech.ref to VexLifeWorkspaceBlueprint.QuickActions.ref,
                 VexLifeWorkspaceBlueprint.SourceTemplateFamily.ref to VexLifeWorkspaceBlueprint.Browser.ref,
                 VexLifeWorkspaceBlueprint.ArchivesTimeline.ref to VexLifeWorkspaceBlueprint.Archives.ref,
+                VexLifeWorkspaceBlueprint.VexContext.ref to VexLifeWorkspaceBlueprint.Browser.ref,
+                VexLifeWorkspaceBlueprint.VexContextProfile.ref to VexLifeWorkspaceBlueprint.VexContext.ref,
+                VexLifeWorkspaceBlueprint.VexContextProfileSave.ref to VexLifeWorkspaceBlueprint.VexContextProfile.ref,
+                VexLifeWorkspaceBlueprint.VexContextProfileRestore.ref to VexLifeWorkspaceBlueprint.VexContextProfile.ref,
+                VexLifeWorkspaceBlueprint.VexContextProfilePortability.ref to VexLifeWorkspaceBlueprint.VexContextProfile.ref,
+                VexLifeWorkspaceBlueprint.VexContextProfileHome.ref to VexLifeWorkspaceBlueprint.VexContextProfile.ref,
+                VexLifeWorkspaceBlueprint.VexContextChanges.ref to VexLifeWorkspaceBlueprint.VexContext.ref,
+                VexLifeWorkspaceBlueprint.VexContextInput.ref to VexLifeWorkspaceBlueprint.VexContext.ref,
+                VexLifeWorkspaceBlueprint.VexContextProcess.ref to VexLifeWorkspaceBlueprint.VexContext.ref,
+                VexLifeWorkspaceBlueprint.VexContextOutput.ref to VexLifeWorkspaceBlueprint.VexContext.ref,
+                VexLifeWorkspaceBlueprint.VexContextAfter.ref to VexLifeWorkspaceBlueprint.VexContext.ref,
                 VexLifeWorkspaceBlueprint.BrowserFrameStatus.ref to VexLifeWorkspaceBlueprint.Browser.ref,
                 VexLifeWorkspaceBlueprint.Vision.ref to VexLifeWorkspaceBlueprint.Companion.ref,
                 VexLifeWorkspaceBlueprint.CompanionViewSwitch.ref to VexLifeWorkspaceBlueprint.Companion.ref,
