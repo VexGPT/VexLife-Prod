@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "vexlife-prod.main-health-release-alert-currentness-relay-context/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 268,
+  "tempRelayPr": 270,
+  "attempt": "A001",
+  "disposition": "SEALED_NOT_EXECUTED",
+  "candidate": {
+    "base": "14c1fe7b094761e1c1e6fb30360765cd6414b6a8",
+    "head": "5b93204f42e926ee70e939159916aebcd3851276",
+    "tree": "151d4130b4db11ec3e75711f4d5bcdfbff214ef0",
+    "branch": "VXG-111726-main-health-release-alert-currentness-a001",
+    "paths": [
+      "src/jvmMain/kotlin/vexlife/text/VexLifeStrings.kt",
+      "src/jvmMain/kotlin/vexlife/lens/VexLifeProdScreenLens.kt",
+      "docs/lens/vexlife-prod.screen-lens.json"
+    ]
+  },
+  "formationBundle": {
+    "filename": "VexLife-Main-Health-Release-Alert-Currentness-RelayFormation-A001--sha256-4a6fb929ec7d0725ca2ed3015d7a6647f736a7b3b3979e45aea7078538f83549.zip",
+    "sha256": "4a6fb929ec7d0725ca2ed3015d7a6647f736a7b3b3979e45aea7078538f83549",
+    "bytes": 7431,
+    "syntaxChecks": [
+      "bash -n RUN.command PASS",
+      "node --check formation.mjs PASS"
+    ]
+  },
+  "observedBaseFailures": [
+    "VexLifeProdScreenLensTest.committedLensIsCurrent",
+    "VexLifeProdLocalServiceTest.releaseAlertsProjectionCanBeSimulatedWithoutRealPublishedReleaseTraffic",
+    "VexLifeStringsTest.everySourceFileIsAShippedScope"
+  ],
+  "proof": [
+    "checkVexLifeStrings",
+    "full jvmTest",
+    "compileKotlinJs + compileTestKotlinJs",
+    "exact three-path review"
+  ],
+  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION"
+}
