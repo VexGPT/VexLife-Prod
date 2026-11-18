@@ -222,7 +222,7 @@ object HuggingFaceModelInspection {
             (metadata["tags"] as? JsonArray)
                 ?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull }
                 .orEmpty()
-                .map(String::lowercase)
+                .map { it.lowercase() }
                 .toSet()
         require(
             "mlx" in tags &&
@@ -601,6 +601,27 @@ object HuggingFaceModelInspection {
                 .mapNotNull(::normalizedEtag)
                 .firstOrNull(Sha256Pattern::matches)
 
+        val known = alreadyRead
+        if (known != null) {
+            val observedSha = sha256(known)
+            if (publishedSha != null) {
+                require(publishedSha == observedSha) {
+                    "provider SHA-256 for $filename does not match the inspected exact-revision bytes"
+                }
+            }
+            if (publishedSize != null && publishedSize > 0) {
+                require(publishedSize == known.size.toLong()) {
+                    "provider size for $filename does not match the inspected exact-revision bytes"
+                }
+            }
+            return FileIdentity(
+                filename = filename,
+                bytes = known.size.toLong(),
+                sha256 = observedSha,
+                mediaType = mediaType(filename),
+            )
+        }
+
         if (
             publishedSha != null &&
                 publishedSize != null &&
@@ -614,10 +635,8 @@ object HuggingFaceModelInspection {
             )
         }
 
-        val known = alreadyRead
         val bytes =
-            known
-                ?: run {
+            run {
                     if (
                         publishedSize != null &&
                             publishedSize > SmallFileBodyLimit
