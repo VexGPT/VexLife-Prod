@@ -325,6 +325,9 @@ object VexLifeProdMacSetupCard {
             VexLifeProdEntryFamily.StateUpdateRepairRequired ->
                 text("setup.status.service-not-responding")
 
+            VexLifeProdEntryFamily.StateServiceRecoveryRequired ->
+                text("setup.status.service-recovery-available")
+
             VexLifeProdEntryFamily.StateStartRequired -> text("setup.status.service-not-running")
 
             VexLifeProdEntryFamily.StateHeldUnknown -> text("setup.status.service-unverified")
