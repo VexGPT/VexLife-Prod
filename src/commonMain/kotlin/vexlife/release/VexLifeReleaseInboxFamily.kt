@@ -5,11 +5,11 @@ import vexlife.semantic.VexFamilyContract
 import vexlife.text.VexLifeText
 
 /**
- * Product semantic owner for intentionally published Stable VexLife release communication.
+ * Product semantic owner for intentionally published VexLife release communication.
  *
  * Upstream release availability decides whether a release applies to this installation. This Family
  * does not fetch GitHub, compare versions, install software, or own Spiral geometry. It owns only
- * the person's acknowledgement relationship to already-applicable Stable release communication.
+ * the person's acknowledgement relationship to already-applicable release communication.
  *
  * Dismissed communication is omitted from State after acknowledgement truth is re-observed. A View
  * or Dismiss Control emits an Effect and does not predict that acknowledgement was persisted.
@@ -26,28 +26,26 @@ object VexLifeReleaseInboxFamily :
         Viewed,
     }
 
+    @Serializable
     enum class AcknowledgementStanding {
         Viewed,
         Dismissed,
     }
 
+    enum class SourceCurrentness {
+        Current,
+        Unavailable,
+    }
+
     data class Notice(
         val release: VexLifeReleaseIdentity.Published,
     ) {
-        val identity: VexLifeReleaseIdentity.Value.Stable
-
-        init {
-            identity =
-                requireNotNull(
-                    release.identity as? VexLifeReleaseIdentity.Value.Stable,
-                ) {
-                    "release inbox communication is reserved for Stable VexLife releases"
-                }
-        }
+        val identity: VexLifeReleaseIdentity.Value =
+            release.identity
     }
 
     data class Acknowledgement(
-        val identity: VexLifeReleaseIdentity.Value.Stable,
+        val identity: VexLifeReleaseIdentity.Value,
         val standing: AcknowledgementStanding,
     )
 
@@ -57,6 +55,7 @@ object VexLifeReleaseInboxFamily :
     )
 
     data class State(
+        val sourceCurrentness: SourceCurrentness,
         val communications: List<Communication>,
     ) : VexFamilyContract.State<VexLifeReleaseInboxFamily> {
         init {
@@ -73,17 +72,17 @@ object VexLifeReleaseInboxFamily :
     }
 
     sealed interface Control : VexFamilyContract.Control<VexLifeReleaseInboxFamily> {
-        val identity: VexLifeReleaseIdentity.Value.Stable
+        val identity: VexLifeReleaseIdentity.Value
         val controlRef: String
 
         data class View(
-            override val identity: VexLifeReleaseIdentity.Value.Stable,
+            override val identity: VexLifeReleaseIdentity.Value,
         ) : Control {
             override val controlRef: String = ControlView
         }
 
         data class Dismiss(
-            override val identity: VexLifeReleaseIdentity.Value.Stable,
+            override val identity: VexLifeReleaseIdentity.Value,
         ) : Control {
             override val controlRef: String = ControlDismiss
         }
@@ -95,13 +94,14 @@ object VexLifeReleaseInboxFamily :
         ) : Effect
 
         data class DismissRelease(
-            val identity: VexLifeReleaseIdentity.Value.Stable,
+            val identity: VexLifeReleaseIdentity.Value,
         ) : Effect
     }
 
     @Serializable
     data class ItemDisplay(
-        val version: String,
+        val release: VexLifeReleaseIdentity.Coordinate,
+        val releaseIdentifier: String,
         val publishedAtEpochMillis: Long,
         val page: String,
         val unread: Boolean,
@@ -124,6 +124,8 @@ object VexLifeReleaseInboxFamily :
     fun observe(
         notices: List<Notice>,
         acknowledgements: List<Acknowledgement>,
+        sourceCurrentness: SourceCurrentness =
+            SourceCurrentness.Current,
     ): State {
         require(
             notices.map(Notice::identity).distinct().size == notices.size,
@@ -141,9 +143,12 @@ object VexLifeReleaseInboxFamily :
             acknowledgements.associateBy(Acknowledgement::identity)
 
         return State(
+            sourceCurrentness = sourceCurrentness,
             communications =
                 notices
-                    .sortedByDescending { it.release.publishedAtEpochMillis }
+                    .sortedByDescending {
+                        it.release.publishedAtEpochMillis
+                    }
                     .mapNotNull { notice ->
                         when (acknowledgementByIdentity[notice.identity]?.standing) {
                             AcknowledgementStanding.Dismissed -> null
@@ -152,6 +157,7 @@ object VexLifeReleaseInboxFamily :
                                     notice = notice,
                                     standing = Standing.Viewed,
                                 )
+
                             null ->
                                 Communication(
                                     notice = notice,
@@ -168,7 +174,8 @@ object VexLifeReleaseInboxFamily :
     ): Act<VexLifeReleaseInboxFamily, State, Effect>? {
         val communication =
             currentState.communications.singleOrNull {
-                it.notice.identity == control.identity
+                it.notice.identity ==
+                    control.identity
             } ?: return null
 
         return when (control) {
@@ -190,41 +197,91 @@ object VexLifeReleaseInboxFamily :
 
     override fun displayStateFor(state: State): DisplayState =
         DisplayState(
-            quickActionLabel = VexLifeText(KeyQuickAction),
-            heading = VexLifeText(KeyHeading),
-            empty = VexLifeText(KeyEmpty),
-            unreadCount = state.communications.count { it.standing == Standing.Unread },
+            quickActionLabel =
+                VexLifeText(
+                    KeyQuickAction,
+                ),
+            heading =
+                VexLifeText(
+                    KeyHeading,
+                ),
+            empty =
+                VexLifeText(
+                    when (state.sourceCurrentness) {
+                        SourceCurrentness.Current -> KeyEmpty
+                        SourceCurrentness.Unavailable -> KeyUnavailable
+                    },
+                ),
+            unreadCount =
+                state.communications.count {
+                    it.standing ==
+                        Standing.Unread
+                },
             items =
                 state.communications.map { communication ->
+                    val identity =
+                        communication.notice.identity
                     ItemDisplay(
-                        version = versionText(communication.notice.identity.version),
-                        publishedAtEpochMillis = communication.notice.release.publishedAtEpochMillis,
-                        page = communication.notice.release.page.value,
-                        unread = communication.standing == Standing.Unread,
+                        release =
+                            VexLifeReleaseIdentity.coordinate(
+                                identity,
+                            ),
+                        releaseIdentifier =
+                            VexLifeReleaseIdentity.identifier(
+                                identity,
+                            ),
+                        publishedAtEpochMillis =
+                            communication.notice.release.publishedAtEpochMillis,
+                        page =
+                            communication.notice.release.page.value,
+                        unread =
+                            communication.standing ==
+                                Standing.Unread,
                         status =
                             VexLifeText(
-                                if (communication.standing == Standing.Unread) {
-                                    KeyUpdateAvailable
-                                } else {
-                                    KeyViewed
+                                when (communication.standing) {
+                                    Standing.Viewed -> KeyViewed
+                                    Standing.Unread ->
+                                        when (identity) {
+                                            is VexLifeReleaseIdentity.Value.Stable ->
+                                                KeyUpdateAvailable
+
+                                            is VexLifeReleaseIdentity.Value.Preview ->
+                                                KeyPreviewUpdateAvailable
+                                        }
                                 },
                             ),
                         viewControlRef = ControlView,
-                        viewLabel = VexLifeText(KeyView),
+                        viewLabel =
+                            VexLifeText(
+                                KeyView,
+                            ),
                         dismissControlRef = ControlDismiss,
-                        dismissLabel = VexLifeText(KeyDismiss),
+                        dismissLabel =
+                            VexLifeText(
+                                KeyDismiss,
+                            ),
                     )
                 },
         )
 
-    private fun versionText(
-        version: VexLifeReleaseIdentity.SemanticVersion,
-    ): String =
-        listOf(
-            version.major,
-            version.minor,
-            version.patch,
-        ).joinToString(".")
+    fun controlForRef(
+        controlRef: String,
+        identity: VexLifeReleaseIdentity.Value,
+    ): Control? =
+        when (controlRef) {
+            ControlView ->
+                Control.View(
+                    identity,
+                )
+
+            ControlDismiss ->
+                Control.Dismiss(
+                    identity,
+                )
+
+            else -> null
+        }
 
     const val ControlView = "VIEW_RELEASE"
     const val ControlDismiss = "DISMISS_RELEASE"
@@ -232,7 +289,9 @@ object VexLifeReleaseInboxFamily :
     const val KeyQuickAction = "release-alerts.label.quick-action"
     const val KeyHeading = "release-alerts.heading.panel"
     const val KeyEmpty = "release-alerts.description.empty"
+    const val KeyUnavailable = "release-alerts.description.unavailable"
     const val KeyUpdateAvailable = "release-alerts.status.update-available"
+    const val KeyPreviewUpdateAvailable = "release-alerts.status.preview-update-available"
     const val KeyViewed = "release-alerts.status.viewed"
     const val KeyView = "release-alerts.button.view"
     const val KeyDismiss = "release-alerts.button.dismiss"

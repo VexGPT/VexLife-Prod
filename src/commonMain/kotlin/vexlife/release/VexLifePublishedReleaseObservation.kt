@@ -15,6 +15,30 @@ object VexLifePublishedReleaseObservation {
             require(observedAtEpochMillis >= 0) {
                 "published-release observation requires a non-negative observation instant"
             }
+
+            val stableVersions =
+                releases.mapNotNull {
+                    (it.identity as? VexLifeReleaseIdentity.Value.Stable)
+                        ?.version
+                }
+            require(
+                stableVersions.distinct().size ==
+                    stableVersions.size,
+            ) {
+                "published-release observation cannot contain two Stable identities for one version"
+            }
+
+            val previewSources =
+                releases.mapNotNull {
+                    (it.identity as? VexLifeReleaseIdentity.Value.Preview)
+                        ?.sourceSha
+                }
+            require(
+                previewSources.distinct().size ==
+                    previewSources.size,
+            ) {
+                "published-release observation cannot contain duplicate Preview source identities"
+            }
         }
     }
 
