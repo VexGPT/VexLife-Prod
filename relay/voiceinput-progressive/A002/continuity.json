@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "vexlife-prod.temp-host-proof-continuity/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 256,
+  "predecessorAttempt": "A001",
+  "predecessorDisposition": "CARRIER_FAILURE_BEFORE_LIVED_STEP",
+  "productCandidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "head": "a363b216486f8f857dda4913176a9f9692135e3b"
+  },
+  "rootCause": {
+    "class": "PROOF_CARRIER",
+    "detail": "pipefail plus inherited set -e treated an expected zero partial-pass baseline as fatal"
+  },
+  "launcher": {
+    "path": "relay/voiceinput-progressive/A002/RUN-MAC.command",
+    "commit": "17cc7dd203622d72557add57c7c2170f4bba6339",
+    "blobSha": "3516afa26bc85937b1080308b9248bb200935459"
+  },
+  "expectedReturn": "RETURN-VEXLIFE-VOICEINPUT-PROGRESSIVE-A002.zip",
+  "disposition": "FORMED_NOT_EXECUTED"
+}
