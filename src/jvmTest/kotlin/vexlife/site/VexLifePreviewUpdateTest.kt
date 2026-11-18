@@ -16,6 +16,10 @@ class VexLifePreviewUpdateTest {
     private val buildSource = Files.readString(root.resolve("build.gradle.kts"))
     private val appIconArtwork =
         Files.readString(root.resolve("packaging/macos-app/vextreme-app-icon.svg"))
+    private val releaseScript =
+        Files.readString(root.resolve("tools/release/publish-mac-release.sh"))
+    private val pagesPublishScript =
+        Files.readString(root.resolve("tools/site/publish-gh-pages.sh"))
 
     @Test
     fun newestTwoPreviewsRemainSelectableDuringUpdateComparison() {
@@ -62,6 +66,22 @@ class VexLifePreviewUpdateTest {
         assertContains(appIconArtwork, "translate(62 62) scale(7.5)")
         assertContains(buildSource, "macApplicationIconArtworkSource")
         assertContains(buildSource, "packaging/macos-app/vextreme-app-icon.svg")
+    }
+
+    @Test
+    fun releasePublicationRefreshesThePublicDownloadCatalogAfterTheReleaseExists() {
+        val releaseCreate = releaseScript.indexOf("gh release create")
+        val pagesPublish = releaseScript.indexOf("tools/site/publish-gh-pages.sh")
+        assertContains(releaseScript, "VEXLIFE_REPOSITORY=\"$REPOSITORY\"")
+        assertContains(releaseScript, "tools/site/publish-gh-pages.sh")
+        kotlin.test.assertTrue(releaseCreate >= 0 && pagesPublish > releaseCreate)
+    }
+
+    @Test
+    fun hostedPagesPublicationConfiguresGitAuthenticationBeforeTheSeparatePushCheckout() {
+        val setupGit = pagesPublishScript.indexOf("gh auth setup-git")
+        val clone = pagesPublishScript.indexOf("git clone --quiet --no-checkout")
+        kotlin.test.assertTrue(setupGit >= 0 && clone > setupGit)
     }
 
     @Test
