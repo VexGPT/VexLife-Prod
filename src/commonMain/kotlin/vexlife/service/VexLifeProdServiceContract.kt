@@ -36,6 +36,9 @@ object VexLifeProdServiceContract {
     const val ContextProfileControlResultSchema =
         "vexlife-prod.local-service-context-profile-control-result/v1"
 
+    const val ContextProfileHomeRevealResultSchema =
+        "vexlife-prod.local-service-context-profile-home-reveal-result/v1"
+
     const val MemoryDreamProjectionSchema =
         "vexlife-prod.local-service-memory-dream-projection/v1"
 
@@ -109,6 +112,9 @@ object VexLifeProdServiceContract {
 
     const val ContextProfilesControlPath =
         "/api/v1/context-profiles/control"
+
+    const val ContextProfileHomeRevealPath =
+        "/api/v1/context-profiles/reveal-in-home"
 
     const val ContextProfileExportPath =
         "/api/v1/context-profiles/export"
@@ -509,6 +515,20 @@ object VexLifeProdServiceContract {
         init {
             require(schemaVersion == ContextProfileControlResultSchema) {
                 "Context Profile control result schema is not current"
+            }
+        }
+    }
+
+    @Serializable
+    data class ContextProfileHomeRevealResult(
+        val schemaVersion: String,
+        val outcome: String,
+        val effectPerformed: Boolean,
+        val homeRelativePath: String,
+    ) {
+        init {
+            require(schemaVersion == ContextProfileHomeRevealResultSchema) {
+                "Context Profile Home reveal result schema is not current"
             }
         }
     }
@@ -1304,7 +1324,6 @@ object VexLifeProdServiceContract {
         val contextProfileRevision: Int? = null,
         val contextProfileFingerprint: String? = null,
         val contextProfileFoundationMode: String? = null,
-        val contextProfileProcessRetention: String? = null,
         val profileFoundationState: String? = null,
         val profileFoundationHeldReason: String? = null,
         val profileFoundationSystemMessageSha256: String? = null,
