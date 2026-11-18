@@ -410,7 +410,7 @@ class VexLifeProdLocalServiceTest {
                         crossSiteWithoutOrigin.statusCode(),
                     )
 
-                    val sameOrigin =
+                    val staleSameOrigin =
                         client.send(
                             HttpRequest
                                 .newBuilder(
@@ -443,11 +443,99 @@ class VexLifeProdLocalServiceTest {
                             ),
                         )
                     assertEquals(
-                        400,
-                        sameOrigin.statusCode(),
+                        409,
+                        staleSameOrigin.statusCode(),
                     )
                     assertTrue(
-                        sameOrigin.body()
+                        staleSameOrigin.body()
+                            .contains(
+                                VexLifeProdServiceContract.StalePresentationCode,
+                            ),
+                    )
+
+                    val mismatchedSameOrigin =
+                        client.send(
+                            HttpRequest
+                                .newBuilder(
+                                    URI(
+                                        service.origin +
+                                            VexLifeProdServiceContract.ConversationSendPath,
+                                    ),
+                                )
+                                .header(
+                                    "content-type",
+                                    "application/json",
+                                )
+                                .header(
+                                    "Origin",
+                                    service.origin,
+                                )
+                                .header(
+                                    "Sec-Fetch-Site",
+                                    "same-origin",
+                                )
+                                .header(
+                                    VexLifeProdServiceContract.PresentationSourceHeader,
+                                    "b".repeat(40),
+                                )
+                                .POST(
+                                    HttpRequest.BodyPublishers.ofString(
+                                        "{}",
+                                        StandardCharsets.UTF_8,
+                                    ),
+                                )
+                                .build(),
+                            HttpResponse.BodyHandlers.ofString(
+                                StandardCharsets.UTF_8,
+                            ),
+                        )
+                    assertEquals(
+                        409,
+                        mismatchedSameOrigin.statusCode(),
+                    )
+
+                    val currentSameOrigin =
+                        client.send(
+                            HttpRequest
+                                .newBuilder(
+                                    URI(
+                                        service.origin +
+                                            VexLifeProdServiceContract.ConversationSendPath,
+                                    ),
+                                )
+                                .header(
+                                    "content-type",
+                                    "application/json",
+                                )
+                                .header(
+                                    "Origin",
+                                    service.origin,
+                                )
+                                .header(
+                                    "Sec-Fetch-Site",
+                                    "same-origin",
+                                )
+                                .header(
+                                    VexLifeProdServiceContract.PresentationSourceHeader,
+                                    "a".repeat(40),
+                                )
+                                .POST(
+                                    HttpRequest.BodyPublishers.ofString(
+                                        "{}",
+                                        StandardCharsets.UTF_8,
+                                    ),
+                                )
+                                .build(),
+                            HttpResponse.BodyHandlers.ofString(
+                                StandardCharsets.UTF_8,
+                            ),
+                        )
+                    assertEquals(
+                        400,
+                        currentSameOrigin.statusCode(),
+                    )
+                    assertTrue(
+                        currentSameOrigin.body()
                             .contains(
                                 "REQUEST_JSON_INVALID",
                             ),
