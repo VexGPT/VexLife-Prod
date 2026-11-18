@@ -115,6 +115,7 @@
       "grantedEffects": [
         "READ_REPOSITORY",
         "CHECK_STATE",
+        "QUERY_PROVIDER",
         "RUN_LOCAL_COMMAND",
         "FORM_RESULT"
       ],
@@ -123,6 +124,7 @@
       "remainingEffects": [
         "READ_REPOSITORY",
         "CHECK_STATE",
+        "QUERY_PROVIDER",
         "RUN_LOCAL_COMMAND",
         "FORM_RESULT"
       ],
