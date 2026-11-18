@@ -8,18 +8,21 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.serialization.Serializable
+import vexlife.artifact.DirectHttpsArtifactDelivery
 import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetupLease
 import vexlife.logging.VexLogger
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.HereticRuntimeConfiguration
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HuggingFaceModelInspection
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticModelImportStore
 import vexlife.model.heretic.runtime.FileHereticRuntimeConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticRuntimeReceiptStore
 import vexlife.model.heretic.runtime.HereticPersistentRuntime
+import vexlife.model.heretic.runtime.HereticRealizationArtifactMaterialization
 import vexlife.model.heretic.runtime.HereticArtifactDelivery
 import vexlife.model.heretic.runtime.HereticArtifactMaterialization
 import vexlife.text.VexLifeText
@@ -47,6 +50,7 @@ class VexLifeModels(
     productHome: Path,
     private val servingModelRef: () -> String?,
     private val totalMemoryBytes: () -> Long?,
+    private val runtimeRealizations: HereticRuntimeRealization.Resolver,
     private val modelSwitchRealization: ModelSwitchRealization? = null,
     private val acquirer:
         (
@@ -67,6 +71,8 @@ class VexLifeModels(
         { sourceUrl ->
             HuggingFaceModelInspection.inspect(sourceUrl)
         },
+    private val windowsArtifactTransport: DirectHttpsArtifactDelivery.Transport =
+        DirectHttpsArtifactDelivery.JdkTransport,
     private val now: () -> Instant = { Instant.now() },
 ) : AutoCloseable {
     private val home: Path = productHome.toAbsolutePath().normalize()
@@ -77,7 +83,7 @@ class VexLifeModels(
 
     fun interface ModelSwitchRealization {
         fun switch(
-            entry: HereticModelCatalog.Entry,
+            realization: HereticRuntimeRealization.Value,
             observe: (SwitchPhase) -> Unit,
         )
     }
@@ -118,6 +124,12 @@ class VexLifeModels(
 
     private data class Download(val handle: String, val baseBytes: Long, val totalBytes: Long)
 
+    private data class ArtifactView(
+        val presence: VexLifeModelsFamily.ArtifactPresence,
+        val totalBytes: Long,
+        val presentBytes: Long,
+    )
+
     private val download = AtomicReference<Download?>(null)
     /** Settings-stage target. Durable Home choice changes only when Start is accepted. */
     private val targetModelRef = AtomicReference<String?>(null)
@@ -155,7 +167,7 @@ class VexLifeModels(
         val targeted: Boolean,
         val serving: Boolean,
         val downloadedBytes: Long?,
-        val runtimeConfiguration: RuntimeConfigurationProjection,
+        val runtimeConfiguration: RuntimeConfigurationProjection?,
         val runtimeConfigurationPending: Boolean,
         val display: VexLifeModelsFamily.DisplayState,
     )
@@ -266,24 +278,56 @@ class VexLifeModels(
                 )
         val rows =
             HereticModelOfferings.entries(home).map { entry ->
-                val presence = HereticArtifactMaterialization.observePresence(home, entry)
-                val runtimeConfiguration =
-                    runtimeConfigurationStore.effective(
+                val runtimeResolution =
+                    runtimeRealizations.resolve(
                         entry,
                     )
+                val realization =
+                    (
+                        runtimeResolution as?
+                            HereticRuntimeRealization.Resolution.Supported
+                    )
+                        ?.realization
+                val realizable =
+                    realization !=
+                        null
+                val artifact =
+                    artifactView(
+                        entry = entry,
+                        realization = realization,
+                    )
+                val runtimeConfiguration =
+                    realization
+                        ?.let {
+                            runtimeConfigurationStore
+                                .effective(
+                                    model = entry,
+                                    realization = it,
+                                )
+                        }
+                        ?.let {
+                            applicability ->
+                            (
+                                applicability as?
+                                    HereticRuntimeConfiguration.Applicability.Applicable
+                            )
+                                ?.effective
+                        }
                 val runtimeConfigurationPending =
-                    serving == entry.modelRef &&
+                    runtimeConfiguration != null &&
+                        serving == entry.modelRef &&
                         servingRuntime?.modelRef == entry.modelRef &&
                         servingPromptCacheEntries != runtimeConfiguration.promptCacheEntries
                 val state =
                     state(
                         entry = entry,
-                        presence = presence,
+                        presence = artifact.presence,
                         chosen = chosen,
                         targeted = target,
                         serving = serving,
                         running = running,
                         currentSwitch = currentSwitch,
+                        realizable = realizable,
                         runtimeConfiguration = runtimeConfiguration,
                         runtimeConfigurationPending = runtimeConfigurationPending,
                     )
@@ -291,8 +335,8 @@ class VexLifeModels(
                     handle = entry.handle,
                     label = entry.humanLabel,
                     standing = entry.standing,
-                    totalBytes = entry.totalBytes,
-                    presentBytes = presence.presentBySizeBytes,
+                    totalBytes = artifact.totalBytes,
+                    presentBytes = artifact.presentBytes,
                     recommendedMemoryBytes = entry.recommendedMemoryBytes,
                     fitsThisMac = HereticModelCatalog.fits(entry, memory),
                     imported = entry.origin == HereticModelCatalog.Origin.HOME_IMPORTED,
@@ -307,18 +351,21 @@ class VexLifeModels(
                             ?.takeIf { it.handle == entry.handle }
                             ?.let { it.baseBytes + downloadedBytes.get() },
                     runtimeConfiguration =
-                        RuntimeConfigurationProjection(
-                            promptCacheEntries = runtimeConfiguration.promptCacheEntries,
-                            mode = runtimeConfiguration.mode,
-                            recommendedPromptCacheEntries =
-                                runtimeConfiguration.recommendedPromptCacheEntries,
-                            recommendationStanding =
-                                runtimeConfiguration.recommendationStanding,
-                            minimumPromptCacheEntries =
-                                runtimeConfiguration.minimumPromptCacheEntries,
-                            maximumPromptCacheEntries =
-                                runtimeConfiguration.maximumPromptCacheEntries,
-                        ),
+                        runtimeConfiguration
+                            ?.let {
+                                RuntimeConfigurationProjection(
+                                    promptCacheEntries = it.promptCacheEntries,
+                                    mode = it.mode,
+                                    recommendedPromptCacheEntries =
+                                        it.recommendedPromptCacheEntries,
+                                    recommendationStanding =
+                                        it.recommendationStanding,
+                                    minimumPromptCacheEntries =
+                                        it.minimumPromptCacheEntries,
+                                    maximumPromptCacheEntries =
+                                        it.maximumPromptCacheEntries,
+                                )
+                            },
                     runtimeConfigurationPending = runtimeConfigurationPending,
                     display = VexLifeModelsFamily.displayStateFor(state),
                 )
@@ -432,10 +479,14 @@ class VexLifeModels(
             ) {
                 "model control $controlRef is not known"
             }
-        val presence =
-            HereticArtifactMaterialization.observePresence(
-                home,
+        val realization =
+            resolvedRealization(
                 entry,
+            )
+        val artifact =
+            artifactView(
+                entry = entry,
+                realization = realization,
             )
         val chosen =
             chosenModelRef()
@@ -445,12 +496,24 @@ class VexLifeModels(
         val serving =
             servingModelRef()
         val effectiveRuntimeConfiguration =
-            FileHereticRuntimeConfigurationStore(
-                home,
-            )
-                .effective(
-                    entry,
-                )
+            realization
+                ?.let {
+                    FileHereticRuntimeConfigurationStore(
+                        home,
+                    )
+                        .effective(
+                            model = entry,
+                            realization = it,
+                        )
+                }
+                ?.let {
+                    applicability ->
+                    (
+                        applicability as?
+                            HereticRuntimeConfiguration.Applicability.Applicable
+                    )
+                        ?.effective
+                }
         val servingRuntime =
             runCatching {
                 FileHereticRuntimeReceiptStore(
@@ -460,7 +523,8 @@ class VexLifeModels(
             }
                 .getOrNull()
         val runtimeConfigurationPending =
-            serving == entry.modelRef &&
+            effectiveRuntimeConfiguration != null &&
+                serving == entry.modelRef &&
                 servingRuntime != null &&
                 servingRuntime.modelRef == entry.modelRef &&
                 servingRuntime.runtime.args
@@ -470,12 +534,13 @@ class VexLifeModels(
         val state =
             state(
                 entry = entry,
-                presence = presence,
+                presence = artifact.presence,
                 chosen = chosen,
                 targeted = target,
                 serving = serving,
                 running = download.get(),
                 currentSwitch = switching.get(),
+                realizable = realization != null,
                 runtimeConfiguration = effectiveRuntimeConfiguration,
                 runtimeConfigurationPending = runtimeConfigurationPending,
             )
@@ -555,7 +620,13 @@ class VexLifeModels(
                 val configured =
                     FileHereticRuntimeConfigurationStore(home)
                         .useRecommended(
-                            entry,
+                            model = entry,
+                            realization =
+                                requireNotNull(
+                                    realization,
+                                ) {
+                                    "runtime configuration effect requires one exact realization"
+                                },
                         )
                 remember(
                     entry,
@@ -572,6 +643,12 @@ class VexLifeModels(
                     FileHereticRuntimeConfigurationStore(home)
                         .setPromptCacheEntries(
                             model = entry,
+                            realization =
+                                requireNotNull(
+                                    realization,
+                                ) {
+                                    "runtime configuration effect requires one exact realization"
+                                },
                             promptCacheEntries = effect.entries,
                         )
                 remember(
@@ -591,7 +668,17 @@ class VexLifeModels(
             VexLifeModelsFamily.Effect.RemoveArtifacts -> {
                 val removal =
                     VexLifeProdLocalSetupLease.acquire(home).use {
-                        HereticArtifactMaterialization.remove(home, entry)
+                        realization
+                            ?.let {
+                                HereticRealizationArtifactMaterialization.removeModel(
+                                    productHome = home,
+                                    realization = it,
+                                )
+                            }
+                            ?: HereticArtifactMaterialization.remove(
+                                home,
+                                entry,
+                            )
                     }
                 VexLogger.record(
                     VexLogger.Fact.ModelFilesRemoved,
@@ -645,6 +732,24 @@ class VexLifeModels(
         entry: HereticModelCatalog.Entry,
         controlRef: String,
     ) {
+        val resolved =
+            when (
+                val resolution =
+                    runtimeRealizations.resolve(
+                        entry,
+                    )
+            ) {
+                is HereticRuntimeRealization.Resolution.Supported ->
+                    resolution.realization
+
+                is HereticRuntimeRealization.Resolution.Unsupported ->
+                    error(
+                        "selected model has no runtime realization on current target " +
+                            HereticRuntimeRealization.targetRef(
+                                resolution.target,
+                            ),
+                    )
+            }
         val realization =
             requireNotNull(
                 modelSwitchRealization,
@@ -677,7 +782,7 @@ class VexLifeModels(
         executor.execute {
             try {
                 realization.switch(
-                    entry,
+                    resolved,
                 ) {
                     phase ->
                     switching.set(
@@ -744,10 +849,39 @@ class VexLifeModels(
         controlRef: String,
         replace: Boolean,
     ) {
+        val realization =
+            requireNotNull(
+                resolvedRealization(
+                    entry,
+                ),
+            ) {
+                "model download requires one exact runtime realization"
+            }
+        val before =
+            HereticRealizationArtifactMaterialization.observe(
+                productHome = home,
+                realization = realization,
+            )
         val base =
-            if (replace) 0L
-            else HereticArtifactMaterialization.observePresence(home, entry).presentBySizeBytes
-        if (!download.compareAndSet(null, Download(entry.handle, base, entry.totalBytes))) return
+            if (
+                replace
+            ) {
+                0L
+            } else {
+                before.presentBytes
+            }
+        if (
+            !download.compareAndSet(
+                null,
+                Download(
+                    entry.handle,
+                    base,
+                    before.totalBytes,
+                ),
+            )
+        ) {
+            return
+        }
         downloadedBytes.set(0)
         VexLogger.record(
             VexLogger.Fact.ModelDownloadStarted,
@@ -756,17 +890,34 @@ class VexLifeModels(
         executor.execute {
             try {
                 VexLifeProdLocalSetupLease.acquire(home).use {
-                    if (replace) HereticArtifactMaterialization.remove(home, entry)
-                    HereticArtifactMaterialization.materializeCurrent(
+                    if (
+                        replace
+                    ) {
+                        HereticRealizationArtifactMaterialization.removeModel(
+                            productHome = home,
+                            realization = realization,
+                        )
+                    }
+                    HereticRealizationArtifactMaterialization.ensureModel(
                         productHome = home,
+                        realization = realization,
                         allowAcquisition = true,
-                        acquirer =
+                        macAcquirer =
                             acquirer(
                                 entry,
-                            ) { bytes ->
-                                downloadedBytes.set(bytes)
+                            ) {
+                                bytes ->
+                                downloadedBytes.set(
+                                    bytes,
+                                )
                             },
-                        model = entry,
+                        windowsTransport = windowsArtifactTransport,
+                        onProgress = {
+                            bytes ->
+                            downloadedBytes.set(
+                                bytes,
+                            )
+                        },
                     )
                 }
                 VexLogger.record(
@@ -817,6 +968,85 @@ class VexLifeModels(
         )
     }
 
+    private fun artifactView(
+        entry: HereticModelCatalog.Entry,
+        realization: HereticRuntimeRealization.Value?,
+    ): ArtifactView =
+        realization
+            ?.let {
+                HereticRealizationArtifactMaterialization.observe(
+                    productHome = home,
+                    realization = it,
+                )
+            }
+            ?.let {
+                observed ->
+                ArtifactView(
+                    presence =
+                        when (
+                            observed.state
+                        ) {
+                            HereticRealizationArtifactMaterialization.PresenceState.PRESENT ->
+                                VexLifeModelsFamily.ArtifactPresence.Present
+
+                            HereticRealizationArtifactMaterialization.PresenceState.PARTIAL ->
+                                VexLifeModelsFamily.ArtifactPresence.Partial
+
+                            HereticRealizationArtifactMaterialization.PresenceState.DAMAGED ->
+                                VexLifeModelsFamily.ArtifactPresence.Damaged
+
+                            HereticRealizationArtifactMaterialization.PresenceState.ABSENT ->
+                                VexLifeModelsFamily.ArtifactPresence.Absent
+                        },
+                    totalBytes = observed.totalBytes,
+                    presentBytes = observed.presentBytes,
+                )
+            }
+            ?: HereticArtifactMaterialization
+                .observePresence(
+                    home,
+                    entry,
+                )
+                .let {
+                    observed ->
+                    ArtifactView(
+                        presence =
+                            when (
+                                observed.state
+                            ) {
+                                HereticArtifactMaterialization.PresenceState.CompleteBySizeNotHashed ->
+                                    VexLifeModelsFamily.ArtifactPresence.Present
+
+                                HereticArtifactMaterialization.PresenceState.PartialBySize ->
+                                    VexLifeModelsFamily.ArtifactPresence.Partial
+
+                                HereticArtifactMaterialization.PresenceState.InvalidSize ->
+                                    VexLifeModelsFamily.ArtifactPresence.Damaged
+
+                                HereticArtifactMaterialization.PresenceState.Absent ->
+                                    VexLifeModelsFamily.ArtifactPresence.Absent
+                            },
+                        totalBytes = observed.totalBytes,
+                        presentBytes = observed.presentBySizeBytes,
+                    )
+                }
+
+    private fun resolvedRealization(
+        entry: HereticModelCatalog.Entry,
+    ): HereticRuntimeRealization.Value? =
+        when (
+            val resolution =
+                runtimeRealizations.resolve(
+                    entry,
+                )
+        ) {
+            is HereticRuntimeRealization.Resolution.Supported ->
+                resolution.realization
+
+            is HereticRuntimeRealization.Resolution.Unsupported ->
+                null
+        }
+
     private fun chosenModelRef(): String? = runCatching {
         val manifest =
             VexLifeProdHomeFiles.observeExisting(home)?.manifest ?: return@runCatching null
@@ -829,34 +1059,26 @@ class VexLifeModels(
 
     private fun state(
         entry: HereticModelCatalog.Entry,
-        presence: HereticArtifactMaterialization.PresenceObservation,
+        presence: VexLifeModelsFamily.ArtifactPresence,
         chosen: String?,
         targeted: String?,
         serving: String?,
         running: Download?,
         currentSwitch: SwitchProjection?,
-        runtimeConfiguration: HereticRuntimeConfiguration.Effective,
+        realizable: Boolean,
+        runtimeConfiguration: HereticRuntimeConfiguration.Effective?,
         runtimeConfigurationPending: Boolean = false,
     ) =
         VexLifeModelsFamily.State(
             handle = entry.handle,
-            artifactPresence =
-                when (presence.state) {
-                    HereticArtifactMaterialization.PresenceState.CompleteBySizeNotHashed ->
-                        VexLifeModelsFamily.ArtifactPresence.Present
-                    HereticArtifactMaterialization.PresenceState.PartialBySize ->
-                        VexLifeModelsFamily.ArtifactPresence.Partial
-                    HereticArtifactMaterialization.PresenceState.InvalidSize ->
-                        VexLifeModelsFamily.ArtifactPresence.Damaged
-                    HereticArtifactMaterialization.PresenceState.Absent ->
-                        VexLifeModelsFamily.ArtifactPresence.Absent
-                },
+            artifactPresence = presence,
             downloading = running?.handle == entry.handle,
             chosen = chosen == entry.modelRef,
             targeted = targeted == entry.modelRef,
             serving = serving == entry.modelRef,
             switching = currentSwitch?.handle == entry.handle,
             imported = entry.origin == HereticModelCatalog.Origin.HOME_IMPORTED,
+            realizable = realizable,
             runtimeConfiguration = runtimeConfiguration,
             runtimeConfigurationPending = runtimeConfigurationPending,
             anyDownloadRunning = running != null,

@@ -292,7 +292,7 @@
   "workspace.label.model-fits": {
     "strings": {
       "en": {
-        "text": "fits this Mac"
+        "text": "fits this computer"
       }
     },
     "surfaces": [
@@ -302,7 +302,7 @@
   "workspace.label.model-tight": {
     "strings": {
       "en": {
-        "text": "more than this Mac has"
+        "text": "more than this computer has"
       }
     },
     "surfaces": [

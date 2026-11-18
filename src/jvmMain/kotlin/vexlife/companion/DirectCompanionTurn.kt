@@ -18,6 +18,7 @@ import vexlife.conversation.DirectConversationStore
 import vexlife.filesystem.VexOwnedPath
 import vexlife.foundational.VexLifeFoundationalField
 import vexlife.local.VexLifeProdLocalSetup
+import vexlife.local.VexLifeProdRuntimeSession
 import vexlife.continuity.VexLifeContextRevisit
 import vexlife.continuity.VexLifeWorkingContinuityOwner
 import vexlife.memory.VexLifeCurrentMemoryReader
@@ -357,7 +358,7 @@ object DirectCompanionTurn {
             Instant.now()
         },
         val currentRuntimeEvidence: (
-            setup: VexLifeProdLocalSetup.Result,
+            setup: VexLifeProdRuntimeSession.Foundation,
         ) -> HereticModelConfiguration.QualifiedRuntimeEvidence = {
             setup ->
             setup.qualifiedRuntimeEvidence
@@ -451,23 +452,28 @@ object DirectCompanionTurn {
     )
 
     fun perform(
-        setup: VexLifeProdLocalSetup.Result,
+        setup: VexLifeProdRuntimeSession.Foundation,
         intent: Intent,
     ): Result =
         performWithHooks(
-            setup = setup,
+            setup =
+                VexLifeProdRuntimeSession.Foundation(
+                    state = setup.state,
+                    productHome = setup.productHome,
+                    qualifiedRuntimeEvidence = setup.qualifiedRuntimeEvidence,
+                ),
             intent = intent,
             hooks = Hooks(),
         )
 
     internal fun perform(
-        session: VexLifeProdLocalSetup.Session,
+        session: VexLifeProdRuntimeSession,
         intent: Intent,
         progressObserver: ProgressObserver? =
             null,
     ): Result =
         performWithHooks(
-            setup = session.result,
+            setup = session.foundation,
             intent = intent,
             hooks =
                 Hooks(
@@ -492,6 +498,22 @@ object DirectCompanionTurn {
 
     internal fun performWithHooks(
         setup: VexLifeProdLocalSetup.Result,
+        intent: Intent,
+        hooks: Hooks,
+    ): Result =
+        performWithHooks(
+            setup =
+                VexLifeProdRuntimeSession.Foundation(
+                    state = setup.state,
+                    productHome = setup.productHome,
+                    qualifiedRuntimeEvidence = setup.qualifiedRuntimeEvidence,
+                ),
+            intent = intent,
+            hooks = hooks,
+        )
+
+    internal fun performWithHooks(
+        setup: VexLifeProdRuntimeSession.Foundation,
         intent: Intent,
         hooks: Hooks,
     ): Result {
@@ -796,7 +818,7 @@ object DirectCompanionTurn {
     private fun performProviderTurn(
         conversationOwner: DirectConversationStore.Locked,
         productHome: Path,
-        setup: VexLifeProdLocalSetup.Result,
+        setup: VexLifeProdRuntimeSession.Foundation,
         currentRequest: DirectConversationStore.Event,
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
         browserContext: DirectPromptContext.BrowserContext?,

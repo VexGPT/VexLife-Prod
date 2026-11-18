@@ -14,6 +14,7 @@ import vexlife.home.VexLifeProdHomeFiles
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelImport
 import vexlife.model.heretic.HereticRuntimeConfiguration
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.HuggingFaceModelInspection
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticModelImportStore
@@ -53,11 +54,19 @@ class VexLifeModelsTest {
         serving: () -> String? = { HereticModelCatalog.Models.Qwen27B.modelRef },
         modelSwitchRealization: VexLifeModels.ModelSwitchRealization? = null,
         failDownload: Boolean = true,
+        target: vexlife.platform.VexLifePlatformRealization.Target =
+            HereticRuntimeRealization.MacArm64,
     ) =
         VexLifeModels(
             productHome = home,
             servingModelRef = serving,
             totalMemoryBytes = { 16 * gib },
+            runtimeRealizations =
+                HereticRuntimeRealization.Resolver(
+                    HereticRuntimeRealization.TargetSource {
+                        target
+                    },
+                ),
             modelSwitchRealization = modelSwitchRealization,
             acquirer = { _, _ ->
                 HereticArtifactMaterialization.Acquirer { _, _ ->
@@ -112,7 +121,7 @@ class VexLifeModelsTest {
         val phases = mutableListOf<VexLifeModels.SwitchPhase>()
         val modelSwitchRealization =
             VexLifeModels.ModelSwitchRealization {
-                entry,
+                realization,
                 observe,
                 ->
                 observe(VexLifeModels.SwitchPhase.WaitingForCurrentTurn)
@@ -124,7 +133,7 @@ class VexLifeModelsTest {
                         VexLifeModels.SwitchPhase.PreparingTarget,
                         VexLifeModels.SwitchPhase.SwitchingRuntime,
                     )
-                serving = entry.modelRef
+                serving = realization.modelRef
             }
 
         models(
@@ -339,6 +348,12 @@ class VexLifeModelsTest {
                 explicit = null,
                 language = "en",
                 totalMemoryBytes = 16 * gib,
+                runtimeRealizations =
+                    HereticRuntimeRealization.Resolver(
+                        HereticRuntimeRealization.TargetSource {
+                            HereticRuntimeRealization.MacArm64
+                        },
+                    ),
             )
         assertEquals(handle, setupAfterRestart.selected)
         val setupImported = setupAfterRestart.models.single { it.handle == handle }
@@ -383,6 +398,78 @@ class VexLifeModelsTest {
             HereticModelCatalog.Models.Qwen27B,
         )
     }
+
+    @Test
+    fun importedMlxOfferingRemainsVisibleButNotRunnableOnWindows() =
+        withHome { home, _ ->
+            val record =
+                HereticModelImport.Record(
+                    importRef = "model-import.vexlife-prod.huggingface.windows-held",
+                    sourceUrl = "https://huggingface.co/example/Windows-Held-MLX",
+                    providerRepository = "example/Windows-Held-MLX",
+                    providerRevision = "2".repeat(40),
+                    handle = "hf-windows-held",
+                    humanLabel = "Windows Held MLX",
+                    modelBundleRef = "model-bundle.vexlife.imported.hf-windows-held.001",
+                    generationRef = "generation.vexlife-prod.imported-provider." + "2".repeat(12),
+                    modelRef = "model.vexlife-prod.imported.hf-windows-held.001",
+                    modelProfileRef = "model-profile.vexlife-prod.imported.hf-windows-held.candidate",
+                    artifactSetRef = "artifact-set.vexlife-prod.imported.hf-windows-held.001",
+                    artifactCustodyEvidenceRef =
+                        "artifact-custody.vexlife-prod.imported.hf-windows-held.001",
+                    artifactContentSetSha256 = "3".repeat(64),
+                    modelRootRelativePath = "models/heretic/hf-windows-held",
+                    providerLicense = "apache-2.0",
+                    representationRef = HereticModelImport.RepresentationQwen3OpenAiChat,
+                    companionProfileRef =
+                        "companion-profile.vexlife-prod.imported.hf-windows-held.001",
+                    members =
+                        listOf(
+                            HereticModelImport.Member(
+                                roleRef =
+                                    "artifact-role.vexlife-prod.imported.config",
+                                artifactRef =
+                                    "artifact.vexlife-prod.imported.hf-windows-held.member.config",
+                                filename = "config.json",
+                                mediaType = "application/json",
+                                sha256 = "4".repeat(64),
+                                expectedBytes = 1L,
+                                sourceRef =
+                                    "source.huggingface.example.windows-held." +
+                                        "2".repeat(40),
+                                licenseRef =
+                                    "license.huggingface.example.windows-held.apache-2.0",
+                            ),
+                        ),
+                )
+            FileHereticModelImportStore(home).append(record)
+
+            models(
+                home = home,
+                target = HereticRuntimeRealization.WindowsX64,
+            ).use { owner ->
+                val row =
+                    owner.projection()
+                        .models
+                        .single { it.handle == record.handle }
+                assertTrue(row.imported)
+                assertEquals(
+                    "workspace.status.model-control-not-lawful",
+                    row.display.status.key,
+                )
+                assertTrue(
+                    row.display.controls.none {
+                        it.controlRef in
+                            setOf(
+                                VexLifeModelsFamily.ControlSelect,
+                                VexLifeModelsFamily.ControlUse,
+                                VexLifeModelsFamily.ControlDownload,
+                                VexLifeModelsFamily.ControlRedownload,
+                            )
+                    },
+                )
+            }
+        }
 
     @Test
     fun importedModelCanBeAddedDownloadedRemovedRedownloadedAndForgotten() =

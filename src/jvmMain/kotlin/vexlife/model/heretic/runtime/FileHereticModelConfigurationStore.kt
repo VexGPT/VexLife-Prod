@@ -322,10 +322,21 @@ class FileHereticModelConfigurationStore(
             }
 
             is ScopedSnapshot.Heretic -> {
+                val currentOffering =
+                    HereticModelOfferings.entry(
+                        productHome,
+                        scoped.value.modelRef,
+                    )
+                val currentIdentityCurrent =
+                    currentOffering?.let {
+                        HereticModelConfiguration.productIdentityCurrent(
+                            value = scoped.value,
+                            model = it,
+                        )
+                    } ==
+                        true
                 if (
-                    HereticModelConfiguration.productIdentityCurrent(
-                        scoped.value,
-                    ) &&
+                    currentIdentityCurrent &&
                     scoped.value.modelRef ==
                     model.modelRef
                 ) {
@@ -358,9 +369,7 @@ class FileHereticModelConfigurationStore(
                     Transition(
                         state =
                             if (
-                                HereticModelConfiguration.productIdentityCurrent(
-                                    scoped.value,
-                                )
+                                currentIdentityCurrent
                             ) {
                                 TransitionState.ModelSwitchedPending
                             } else {
@@ -543,6 +552,31 @@ class FileHereticModelConfigurationStore(
                             ),
                     ),
                 )
+
+            HereticModelConfiguration.LegacySchema -> {
+                val legacy =
+                    VexContractJson.decode<HereticModelConfiguration.LegacyValueV1>(
+                        text,
+                    )
+                val model =
+                    HereticModelOfferings.requireEntry(
+                        productHome,
+                        legacy.modelRef,
+                    )
+                ScopedSnapshot.Heretic(
+                    HereticModelConfiguration.validateSelectionScope(
+                        value =
+                            HereticModelConfiguration.migrateLegacy(
+                                value = legacy,
+                                model = model,
+                            ),
+                        homeIdentity =
+                            bindingScope(
+                                manifest,
+                            ),
+                    ),
+                )
+            }
 
             else ->
                 error(
