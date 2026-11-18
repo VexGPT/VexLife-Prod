@@ -8,6 +8,7 @@ import vexlife.local.VexLifeProdLocalSetup
 import vexlife.local.VexLifeProdSetupProgress
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
+import vexlife.packaging.VexLifeProdPrivateServiceImageRetention
 import vexlife.service.VexLifeProdMacServiceLifetime
 
 /**
@@ -86,6 +87,19 @@ object VexLifeProdSetupProcess {
                 VexLifeProdMacServiceLifetime.startOrReuse(
                     productHome = productHome,
                     desiredSourceSha = expectedSourceSha,
+                )
+            },
+        val reclaimRetiredImages:
+            (
+                productHome: Path,
+                currentSourceSha: String,
+                currentPayloadSha256: String,
+            ) -> VexLifeProdPrivateServiceImageRetention.Result =
+            { productHome, currentSourceSha, currentPayloadSha256 ->
+                VexLifeProdPrivateServiceImageRetention.reclaimRetiredVerifiedImages(
+                    productHome = productHome,
+                    currentSourceSha = currentSourceSha,
+                    currentPayloadSha256 = currentPayloadSha256,
                 )
             },
         val reportImageVerified: (VexLifeProdPrivateServiceImage.Observation) -> Unit =
@@ -285,6 +299,12 @@ object VexLifeProdSetupProcess {
         ) {
             "started VexLife-Prod service differs from the verified installed image"
         }
+
+        hooks.reclaimRetiredImages(
+            Path.of(session.result.productHome),
+            service.sourceSha,
+            service.imagePayloadSha256,
+        )
 
         hooks.reportReady(arguments, session, installed, service)
     }
