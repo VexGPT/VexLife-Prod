@@ -269,7 +269,7 @@ on chooseModel(homePath)
 	alert's setInformativeText:(my chromeText("setup.description.choose-model"))
 	alert's addButtonWithTitle:(my chromeText("setup.button.continue"))
 	alert's addButtonWithTitle:(my chromeText("setup.button.cancel"))
-	set popup to current application's NSPopUpButton's alloc()'s initWithFrame:(current application's NSMakeRect(0, 0, 420, 28)) pullsDown:false
+	set popup to current application's NSPopUpButton's alloc()'s initWithFrame:(current application's NSMakeRect(0, 48, 480, 28)) pullsDown:false
 	set modelCount to (modelsValue's |count|()) as integer
 	set selectedIndex to 0
 	repeat with modelIndex from 0 to (modelCount - 1)
@@ -278,7 +278,23 @@ on chooseModel(homePath)
 		if (my dictionaryText(modelValue, "handle", "")) is currentHandle then set selectedIndex to modelIndex
 	end repeat
 	popup's selectItemAtIndex:selectedIndex
-	alert's setAccessoryView:popup
+
+	-- This guidance belongs only to the model-choice container. The language chooser stays scoped to
+	-- language. Startup teaches later model flexibility here without becoming a second import flow.
+	set futureText to (my chromeText("setup.description.choose-model-change-later")) & linefeed & (my chromeText("setup.description.choose-model-add-later"))
+	set futureField to current application's NSTextField's wrappingLabelWithString:futureText
+	futureField's setSelectable:true
+	futureField's setPreferredMaxLayoutWidth:480
+	set futureSize to futureField's fittingSize()
+	set futureHeight to (height of futureSize)
+	futureField's setFrame:(current application's NSMakeRect(0, 0, 480, futureHeight))
+
+	set accessoryHeight to futureHeight + 48
+	set chooserView to current application's NSView's alloc()'s initWithFrame:(current application's NSMakeRect(0, 0, 480, accessoryHeight))
+	popup's setFrame:(current application's NSMakeRect(0, futureHeight + 20, 480, 28))
+	chooserView's addSubview:popup
+	chooserView's addSubview:futureField
+	alert's setAccessoryView:chooserView
 	current application's NSApp's activateIgnoringOtherApps:true
 	set response to (alert's runModal()) as integer
 	if response is not NSAlertFirstButtonReturn then return false
