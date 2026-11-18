@@ -17,12 +17,69 @@ import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
  * retains process custody for the shared Product service.
  */
 internal object VexLifeProdWindowsRuntimeSession {
+    internal data class RuntimeHandle(
+        val evidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        val observeCurrent:
+            () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
+        val closeRuntime: () -> Unit,
+    )
+
+    internal data class Hooks(
+        val observeMaterialization:
+            (
+                productHome: Path,
+                realization: HereticRuntimeRealization.Value,
+            ) -> VexLifeWindowsRuntimeMaterialization.Observation =
+            VexLifeWindowsRuntimeMaterialization::observe,
+        val ensureMaterialization:
+            (
+                productHome: Path,
+                allowAcquisition: Boolean,
+                realization: HereticRuntimeRealization.Value,
+            ) -> VexLifeWindowsRuntimeMaterialization.Result =
+            { productHome, allowAcquisition, realization ->
+                VexLifeWindowsRuntimeMaterialization.ensure(
+                    productHome = productHome,
+                    allowAcquisition = allowAcquisition,
+                    realization = realization,
+                )
+            },
+        val startRuntime:
+            (
+                productHome: Path,
+                realization: HereticRuntimeRealization.Value,
+            ) -> RuntimeHandle =
+            { productHome, realization ->
+                val started =
+                    VexLifeWindowsHereticRuntime.start(
+                        productHome = productHome,
+                        realization = realization,
+                    )
+                RuntimeHandle(
+                    evidence =
+                        VexLifeWindowsHereticRuntime.modelConfigurationEvidence(
+                            started.evidence,
+                        ),
+                    observeCurrent = {
+                        VexLifeWindowsHereticRuntime.modelConfigurationEvidence(
+                            VexLifeWindowsHereticRuntime.observeCurrent(
+                                started,
+                            ),
+                        )
+                    },
+                    closeRuntime =
+                        started::close,
+                )
+            },
+    )
+
     fun establish(
         productHome: Path,
         realization: HereticRuntimeRealization.Value,
         allowAcquisition: Boolean,
         allowRuntimeStart: Boolean,
         progress: VexLifeProdSetupProgress = VexLifeProdSetupProgress.Silent,
+        hooks: Hooks = Hooks(),
     ): VexLifeProdRuntimeSession {
         require(
             productHome.isAbsolute,
@@ -88,17 +145,17 @@ internal object VexLifeProdWindowsRuntimeSession {
             if (
                 allowAcquisition
             ) {
-                VexLifeWindowsRuntimeMaterialization
-                    .ensure(
-                        productHome = canonicalHome,
-                        allowAcquisition = true,
-                        realization = realization,
+                hooks
+                    .ensureMaterialization(
+                        canonicalHome,
+                        true,
+                        realization,
                     )
                     .observation
             } else {
-                VexLifeWindowsRuntimeMaterialization.observe(
-                    productHome = canonicalHome,
-                    realization = realization,
+                hooks.observeMaterialization(
+                    canonicalHome,
+                    realization,
                 )
             }
         require(
@@ -116,17 +173,15 @@ internal object VexLifeProdWindowsRuntimeSession {
         progress.phase(
             VexLifeProdSetupProgress.Phase.StartingLocalModel,
         )
-        val started =
-            VexLifeWindowsHereticRuntime.start(
-                productHome = canonicalHome,
-                realization = realization,
+        val runtime =
+            hooks.startRuntime(
+                canonicalHome,
+                realization,
             )
 
         try {
             val evidence =
-                VexLifeWindowsHereticRuntime.modelConfigurationEvidence(
-                    started.evidence,
-                )
+                runtime.evidence
             val bound =
                 modelConfiguration.bindQualified(
                     manifest = home.manifest,
@@ -143,20 +198,20 @@ internal object VexLifeProdWindowsRuntimeSession {
 
             return Session(
                 productHome = canonicalHome,
-                started = started,
+                runtime = runtime,
                 evidence = evidence,
             )
         } catch (
             error: Throwable,
         ) {
-            started.close()
+            runtime.closeRuntime()
             throw error
         }
     }
 
     private class Session(
         private val productHome: Path,
-        private val started: VexLifeWindowsHereticRuntime.Started,
+        private val runtime: RuntimeHandle,
         evidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
     ) :
         VexLifeProdRuntimeSession {
@@ -177,14 +232,10 @@ internal object VexLifeProdWindowsRuntimeSession {
 
         override fun observeCurrentQualifiedRuntimeEvidence():
             HereticModelConfiguration.QualifiedRuntimeEvidence =
-            VexLifeWindowsHereticRuntime.modelConfigurationEvidence(
-                VexLifeWindowsHereticRuntime.observeCurrent(
-                    started,
-                ),
-            )
+            runtime.observeCurrent()
 
         override fun close() {
-            started.close()
+            runtime.closeRuntime()
         }
     }
 
