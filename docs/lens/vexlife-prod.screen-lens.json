@@ -152,6 +152,42 @@
           "slot": "InFlow"
         },
         {
+          "ref": "element.vexlife-workspace.header.utilities.quick-actions.release-alerts",
+          "kind": "BUTTON",
+          "label": "Release alerts",
+          "parentRef": "element.vexlife-workspace.header.utilities.quick-actions",
+          "symbol": "VexLifeWorkspaceBlueprint.ReleaseAlerts",
+          "declared": "QuickActions.control(\"release-alerts\")",
+          "intent": "local element.vexlife-workspace.header.utilities.release-alerts-panel",
+          "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.release-alerts",
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.header.utilities.release-alerts-panel",
+          "kind": "REGION",
+          "label": "Release alerts panel",
+          "parentRef": "element.vexlife-workspace.header.utilities",
+          "symbol": "VexLifeWorkspaceBlueprint.ReleaseAlertsPanel",
+          "declared": "Utilities.region(\"release-alerts-panel\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
+          "ref": "element.vexlife-workspace.header.utilities.release-alerts-panel.release-alerts-list",
+          "kind": "STACK",
+          "label": "Release alerts list",
+          "parentRef": "element.vexlife-workspace.header.utilities.release-alerts-panel",
+          "symbol": "VexLifeWorkspaceBlueprint.ReleaseAlertsList",
+          "declared": "ReleaseAlertsPanel.collection(\"release-alerts-list\")",
+          "intent": null,
+          "pathwayRef": null,
+          "style": "Surface",
+          "slot": "InFlow"
+        },
+        {
           "ref": "element.vexlife-workspace.browser",
           "kind": "REGION",
           "label": "Browser",
@@ -852,6 +888,42 @@
       ]
     },
     {
+      "pathwayRef": "pathway.vexlife-prod.local.header.utilities.quick-actions.release-alerts",
+      "label": "Presentation over Release alerts panel",
+      "disposition": "TYPED_PRESENTATION",
+      "summary": "A presentation-local interaction over another coordinate; it decides nothing.",
+      "returns": null,
+      "returnRef": null,
+      "nodes": [
+        {
+          "ref": "vexlife-prod.local.header.utilities.quick-actions.release-alerts.intent",
+          "face": "BEHAVIOR",
+          "role": "INTENT",
+          "label": "Activate",
+          "symbol": "VexWeb.Binding.LocalInteraction",
+          "summary": null,
+          "source": "common:web/VexLifeWebP1.kt"
+        },
+        {
+          "ref": "vexlife-prod.local.header.utilities.quick-actions.release-alerts.reveal",
+          "face": "BEHAVIOR",
+          "role": "NAVIGATION",
+          "label": "Release alerts panel",
+          "symbol": "element.vexlife-workspace.header.utilities.release-alerts-panel",
+          "summary": null,
+          "source": "common:workspace/VexLifeWorkspaceBlueprint.kt"
+        }
+      ],
+      "edges": [
+        {
+          "from": "vexlife-prod.local.header.utilities.quick-actions.release-alerts.intent",
+          "to": "vexlife-prod.local.header.utilities.quick-actions.release-alerts.reveal",
+          "label": null,
+          "kind": "FLOW"
+        }
+      ]
+    },
+    {
       "pathwayRef": "pathway.vexlife-prod.vision.selected-scope",
       "label": "Choose or release a window",
       "disposition": "SCAE_FAMILY",
@@ -1403,7 +1475,7 @@
       "ref": "note.vexlife-prod.memory.projection-only",
       "subjectRef": "element.vexlife-workspace.companion.settings.continuity.memory",
       "text": "Projection only",
-      "detail": "Shows VexLifeMemoryFamily's DisplayState from GET /api/v1/memory. No Controls until Memory formation has an owner."
+      "detail": "Shows VexLifeMemoryFamily's DisplayState from GET /api/v1/memory. Memory Controls are not connected to ordinary Product UI/runtime yet."
     }
   ],
   "provenance": {
