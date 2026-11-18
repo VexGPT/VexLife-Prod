@@ -111,6 +111,12 @@ class DirectTurnContextStore(
         val evidenceSha256: String,
     )
 
+    data class PromptReceiptCompatibility(
+        val runtimeEvidenceSchema: String,
+        val promptReceiptSchema: String,
+        val readableByCurrentSource: Boolean,
+    )
+
     @ConsistentCopyVisibility
     data class Record internal constructor(
         val schemaVersion: String,
@@ -171,6 +177,79 @@ class DirectTurnContextStore(
             this.productHome,
             "runtime/vexlife-prod/turn-evidence",
         )
+
+    /**
+     * Inspect only the durable envelope needed to decide whether this source generation may decode
+     * the nested prompt receipt. This does not reinterpret newer fields, weaken strict JSON, or
+     * claim that unsupported evidence is otherwise valid.
+     */
+    fun inspectPromptReceiptCompatibility(
+        turnRef: String,
+    ): PromptReceiptCompatibility? {
+        requireSafeRef(
+            turnRef,
+            "turnRef",
+        )
+
+        val text =
+            VexDurableContractFile.readText(
+                ownedRoot = productHome,
+                path =
+                    runtimeEvidencePath(
+                        turnRef,
+                    ),
+            )
+                ?: return null
+        val objectValue =
+            VexContractJson.Strict
+                .parseToJsonElement(
+                    text,
+                )
+                .jsonObject
+        val runtimeEvidenceSchema =
+            requireNotNull(
+                objectValue[
+                    "schemaVersion"
+                ]
+                    ?.jsonPrimitive
+                    ?.content,
+            ) {
+                "product runtime turn evidence has no schemaVersion"
+            }
+        val promptObject =
+            objectValue[
+                "promptContext"
+            ] as? JsonObject
+                ?: error(
+                    "product runtime turn evidence has no promptContext object",
+                )
+        val promptReceiptSchema =
+            requireNotNull(
+                promptObject[
+                    "schemaVersion"
+                ]
+                    ?.jsonPrimitive
+                    ?.content,
+            ) {
+                "product runtime turn evidence promptContext has no schemaVersion"
+            }
+
+        return PromptReceiptCompatibility(
+            runtimeEvidenceSchema = runtimeEvidenceSchema,
+            promptReceiptSchema = promptReceiptSchema,
+            readableByCurrentSource =
+                promptReceiptSchema in
+                    setOf(
+                        DirectPromptContext.ReceiptSchemaV2,
+                        DirectPromptContext.ReceiptSchemaV3,
+                        DirectPromptContext.ReceiptSchemaV4,
+                        DirectPromptContext.ReceiptSchemaV5,
+                        DirectPromptContext.ReceiptSchemaV6,
+                        DirectPromptContext.ReceiptSchemaV7,
+                        DirectPromptContext.ReceiptSchema,
+                    ),
+        )
+    }
 
     fun record(
         request: DirectConversationStore.Event,
