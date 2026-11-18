@@ -311,6 +311,55 @@ class VexLifeModelsTest {
                 }
         }
 
+    private fun assertImportedModelSurvivesRestart(
+        home: Path,
+        record: HereticModelImport.Record,
+        handle: String,
+    ) {
+        val setupAfterRestart =
+            VexLifeProdSetupModel.observe(
+                productHome = home,
+                explicit = null,
+                language = "en",
+                totalMemoryBytes = 16 * gib,
+            )
+        assertEquals(handle, setupAfterRestart.selected)
+        val setupImported = setupAfterRestart.models.single { it.handle == handle }
+        assertNull(setupImported.fits)
+        assertFalse(setupImported.recommended)
+        assertTrue(setupImported.line.contains("memory fit not established"))
+
+        val currentAfterRestart =
+            VexLifeProdCurrentState.observeWithHooks(
+                VexLifeProdCurrentState.Hooks(
+                    resolveProductHome = { home },
+                    observeLocation = { observedHome ->
+                        VexLifeProdHomeFiles.observeLocation(observedHome)
+                    },
+                    observeHost = {
+                        HereticMacHostProfile.evaluate(
+                            HereticMacHostProfile.Observation(
+                                platform = "darwin",
+                                architecture = "arm64",
+                                chipModel = "Apple M4 Pro",
+                                totalMemoryBytes = 16 * gib,
+                            )
+                        )
+                    },
+                    observeModel = { observedHome, manifest ->
+                        FileHereticModelConfigurationStore(observedHome).read(manifest)
+                    },
+                    observeArtifacts = { observedHome, model ->
+                        HereticArtifactMaterialization.observePresence(observedHome, model)
+                    },
+                    observeFreeStorageBytes = { 50 * gib },
+                    now = { Instant.parse("2026-11-18T12:00:00Z") },
+                )
+            )
+        assertEquals(record.modelRef, currentAfterRestart.activeModelRef)
+        assertNull(currentAfterRestart.modelMinimumMemoryBytes)
+    }
+
     @Test
     fun importedModelCanBeAddedDownloadedRemovedRedownloadedAndForgotten() =
         withHome { home, _ ->
@@ -439,47 +488,11 @@ class VexLifeModelsTest {
 
                 owner.control(VexLifeModelsFamily.ControlSelect, handle)
 
-                // A process restart must reconstruct the Home-imported model from durable Home truth.
-                val setupAfterRestart =
-                    VexLifeProdSetupModel.observe(
-                        productHome = home,
-                        explicit = null,
-                        language = "en",
-                        totalMemoryBytes = 16 * gib,
-                    )
-                assertEquals(handle, setupAfterRestart.selected)
-                val setupImported = setupAfterRestart.models.single { it.handle == handle }
-                assertNull(setupImported.fits)
-                assertFalse(setupImported.recommended)
-                assertTrue(setupImported.line.contains("memory fit not established"))
-
-                val currentAfterRestart =
-                    VexLifeProdCurrentState.observeWithHooks(
-                        VexLifeProdCurrentState.Hooks(
-                            resolveProductHome = { home },
-                            observeLocation = { VexLifeProdHomeFiles.observeLocation(it) },
-                            observeHost = {
-                                HereticMacHostProfile.evaluate(
-                                    HereticMacHostProfile.Observation(
-                                        platform = "darwin",
-                                        architecture = "arm64",
-                                        chipModel = "Apple M4 Pro",
-                                        totalMemoryBytes = 16 * gib,
-                                    )
-                                )
-                            },
-                            observeModel = { productHome, manifest ->
-                                FileHereticModelConfigurationStore(productHome).read(manifest)
-                            },
-                            observeArtifacts = { productHome, model ->
-                                HereticArtifactMaterialization.observePresence(productHome, model)
-                            },
-                            observeFreeStorageBytes = { 50 * gib },
-                            now = { Instant.parse("2026-11-18T12:00:00Z") },
-                        )
-                    )
-                assertEquals(record.modelRef, currentAfterRestart.activeModelRef)
-                assertNull(currentAfterRestart.modelMinimumMemoryBytes)
+                assertImportedModelSurvivesRestart(
+                    home = home,
+                    record = record,
+                    handle = handle,
+                )
 
                 owner.control(VexLifeModelsFamily.ControlDownload, handle)
                 owner.awaitIdle()
