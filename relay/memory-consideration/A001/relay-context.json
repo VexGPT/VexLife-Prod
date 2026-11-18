@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "vexlife-prod.memory-consideration-relay-context/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 247,
+  "attempt": "A001",
+  "disposition": "FORMING_NOT_EXECUTED",
+  "productCandidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "branch": "VXG-111726-memory-consideration-foundation-a001",
+    "base": "b0b6fb9a6107f2475ae434472ed13335a303af87",
+    "head": "5a93c49416457dd44701467ef131a0d148901c69",
+    "tree": "46245bbbd0282654bd6ba965a6753fff9a6551db",
+    "changedPaths": [
+      "docs/work/memory-consideration-successor/README.md",
+      "src/commonMain/kotlin/vexlife/consideration/VexLifeConsiderationContract.kt",
+      "src/commonMain/kotlin/vexlife/consideration/VexLifeConsiderationRouter.kt",
+      "src/commonMain/kotlin/vexlife/memory/VexLifeMemoryReviewPolicy.kt",
+      "src/commonTest/kotlin/vexlife/consideration/VexLifeConsiderationContractTest.kt",
+      "src/commonTest/kotlin/vexlife/memory/VexLifeMemoryReviewPolicyTest.kt",
+      "src/jvmMain/kotlin/vexlife/memory/VexLifeCurrentMemoryReader.kt",
+      "src/jvmMain/kotlin/vexlife/memory/VexLifeSemanticAcceptanceWriter.kt",
+      "src/jvmTest/kotlin/vexlife/memory/VexLifeSemanticAcceptanceWriterTest.kt"
+    ]
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "sdkRepository": "vgong24/Vextreme-SDK",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064",
+    "currentContractBlob": "b53cbac01c2deeb45fad5c32ce98e0796c04126f",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "adapter": "adapter.vexrelay.repository/v2",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor"
+  },
+  "intendedProofCommands": [
+    [
+      "./gradlew",
+      "--no-daemon",
+      "checkVexLifeStrings"
+    ],
+    [
+      "./gradlew",
+      "--no-daemon",
+      "jvmTest",
+      "--tests",
+      "vexlife.consideration.VexLifeConsiderationContractTest",
+      "--tests",
+      "vexlife.memory.VexLifeMemoryReviewPolicyTest",
+      "--tests",
+      "vexlife.memory.VexLifeSemanticAcceptanceWriterTest",
+      "--tests",
+      "vexlife.memory.VexLifeScoreContinuityTest",
+      "--tests",
+      "vexlife.memory.VexLifeCurrentMemoryReaderTest"
+    ],
+    [
+      "./gradlew",
+      "--no-daemon",
+      "compileKotlinJs"
+    ]
+  ],
+  "predecessorGuards": [
+    "NO_RETAINED_SDK_OR_VEX_HOME_ASSUMPTION",
+    "FRESH_SOURCE_MANAGED_TASK_WINDOW",
+    "SPLIT_GRADLE_TEST_FILTER_FROM_STRING_CHECK",
+    "EXACT_SDK_HEAD_TREE_CONTRACT_VERIFY",
+    "REVIEW_MEMBRANE_FAILURE_IS_HARNESS_UNTIL_PRODUCT_EVIDENCE_SAYS_OTHERWISE",
+    "TEMP_PR_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION"
+  ],
+  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION"
+}
