@@ -214,7 +214,8 @@ class VexLifeProdMacServiceLifetimeTest {
                 1
 
             if (
-                !available
+                !available ||
+                !host.alive
             ) {
                 return null
             }
