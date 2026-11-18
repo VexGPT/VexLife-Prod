@@ -1,0 +1,415 @@
+{
+  "schemaVersion": "vexlife-prod.windows-runtime-realization-relay-context/v1",
+  "continuity": "[VXG RealForever]",
+  "recipe": "ExactHeadSourceOwnerProof",
+  "priorAttempt": {
+    "attemptRef": "attempt.vexrelay.vexlife-prod.windows-runtime-realization.sourceowner.a004",
+    "outerReturnSha256": "7e75fe333f390a4effb4a69a64853df5eb63b8cb617c5fe3d16c4fc47cec5853",
+    "innerReturnSha256": "1af382a61a91df7e144ff9c5d27865bfb9c8e1ecb37d29b1346394256f76c5f7",
+    "disposition": "SAFE_FAILURE",
+    "firstFailure": "checkVexLifeStrings received --tests because jvmTest and checkVexLifeStrings were combined in one Gradle invocation",
+    "classification": "HARNESS_GRADLE_ARGUMENT_ROUTING",
+    "productExecutionReached": false,
+    "repositoryGroundingReached": true,
+    "javaAdmitted": true,
+    "exactCandidateHeadObserved": "2c54c81f3d318163ee5b09a6d35363af75c33c9d",
+    "exactCandidateTreeObserved": "524bb1e8112c45f0455af8f2f6b81375cea67c93"
+  },
+  "sdk": {
+    "repository": "vgong24/Vextreme-SDK",
+    "head": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "tree": "6376f68279f0750ee6d3868b8472368199763064",
+    "currentContractBlob": "b53cbac01c2deeb45fad5c32ce98e0796c04126f",
+    "contractRef": "source.vexrelay.current-contract/v1"
+  },
+  "candidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "branch": "VXG-111726-chatgpt-windows-runtime-realization-a001",
+    "base": "5f0d95f49a5a20d021d2bc25e80ee4a1cb1460b0",
+    "head": "2c54c81f3d318163ee5b09a6d35363af75c33c9d",
+    "tree": "524bb1e8112c45f0455af8f2f6b81375cea67c93"
+  },
+  "internalPathPolicy": {
+    "reason": "Windows child-process working directories must remain below the classic MAX_PATH envelope even when the human-visible package/return identity is descriptive.",
+    "outerOutputStemMaxChars": 12,
+    "innerTaskStorageKey": "t243rt",
+    "innerAttemptStorageKey": "a003",
+    "workspaceProjectPath": "p",
+    "repositoryLocalPath": "r",
+    "finalDownloadsFilenameMaxChars": 255,
+    "finalReturnPolicy": "COPY_BYTE_IDENTICAL_OUTER_VEXLOCALBRIDGE_RETURN_TO_DOWNLOADS; OUTER_RETURN_PRESERVES_CARRIER_CLEANUP_PLUS_INNER_VEXRELAY_RETURN; PRESERVE_ORIGINAL_RETURN_PREFIX; TRUNCATE_PREFIX_ONLY_IF_REQUIRED; APPEND_FULL_SHA256"
+  },
+  "seed": {
+    "schemaVersion": "vex.relay.task/v2",
+    "continuity": "[VXG RealForever]",
+    "taskRef": "task.vexrelay.vexlife-prod.windows-runtime-realization.sourceowner.20261117a",
+    "attemptRef": "attempt.vexrelay.vexlife-prod.windows-runtime-realization.sourceowner.a005",
+    "requestRef": "request.vexrelay.vexlife-prod.windows-runtime-realization.sourceowner.a005",
+    "correlationRef": "correlation.vexrelay.vexlife-prod.windows-runtime-realization.sourceowner.a005",
+    "packageRef": "package.vexrelay.vexlife-prod.windows-runtime-realization.sourceowner.a005",
+    "original": {
+      "originalIntent": "Preserve one reusable target-neutral runtime-realization interface so Product consumers do not branch on Mac versus Windows.",
+      "originalGoal": "Prove the exact current Windows runtime-realization source-owner candidate after adding the reusable TargetSource plus Resolver checkpoint.",
+      "userProtectedIntent": "Keep platform distinctions behind rightful owners, preserve VexArchitecture boundaries, and use VexRelay rather than GitHub Actions for host proof.",
+      "sourceRefs": [
+        "github.pr.VexGPT.VexLife-Prod.243",
+        "checkpoint.vexlife-prod.heretic-runtime-realization.target-neutral-resolver.20261117A",
+        "source.vexrelay.current-contract/v1"
+      ]
+    },
+    "lane": {
+      "entryClass": "SAME_LANE_SUCCESSOR",
+      "scopeMode": "STAGE_BOUNDED",
+      "laneRef": "lane.vexlife-prod.windows-runtime-realization.a001",
+      "parentRootRef": "root.vexlife-prod.new-beginnings",
+      "workRef": "work.vexlife.official-application.windows-runtime-realization.a001",
+      "claimRef": "work.vexlife.official-application.windows-runtime-realization.a001",
+      "returnRouteRef": "route.github.pr.VexGPT.VexLife-Prod.243",
+      "ownerRef": "owner.chatgpt.windows-runtime-realization",
+      "rootHubRef": "hub.vexlife-prod.new-beginnings"
+    },
+    "role": {
+      "activeRole": "CODER",
+      "roleRef": "role.coder.vexlife-prod.windows-runtime-realization",
+      "instanceRef": "instance.chatgpt.windows-runtime-realization.successor",
+      "occupancyRef": "occupancy.vexlife-prod.windows-runtime-realization.a001",
+      "providerBindingRef": "provider.git.public.vexlife-prod",
+      "threadRef": "thread.github.pr.VexGPT.VexLife-Prod.243",
+      "authorityEnvelopeRef": "authority-envelope.user.windows-runtime-realization.20261117a"
+    },
+    "capabilities": {
+      "platformGitHubRead": "UNAVAILABLE",
+      "platformGitHubWrite": "UNAVAILABLE"
+    },
+    "execution": {
+      "hostProfile": "windows-victor",
+      "executionSurface": "WINDOWS_ZIP_POWERSHELL",
+      "singleUseNonce": "nonce-vexlife-prod-windows-runtime-realization-sourceowner-a005",
+      "duplicateAttemptMarker": "marker.vexlife-prod.windows-runtime-realization.sourceowner.a005",
+      "duplicateProtectionMode": "OUTER_RELAY_BOUND",
+      "formedAt": "2000-01-01T00:00:00.000Z",
+      "expiresAtOrNull": "2000-01-01T00:30:00.000Z"
+    },
+    "workspace": {
+      "mode": "RUN_ROOT",
+      "projectRef": "project.vexlife-prod.windows-runtime-realization.proof",
+      "projectPath": "p",
+      "createRoot": true,
+      "createProjectPath": true
+    },
+    "repositories": [
+      {
+        "repositoryRef": "primary",
+        "mode": "CLONE_IN_WORKSPACE",
+        "nameWithOwner": "VexGPT/VexLife-Prod",
+        "localPath": "r",
+        "remote": "origin",
+        "baseBranch": "main",
+        "acceptedBase": "5f0d95f49a5a20d021d2bc25e80ee4a1cb1460b0",
+        "expectedHead": "2c54c81f3d318163ee5b09a6d35363af75c33c9d",
+        "branch": "VXG-111726-chatgpt-windows-runtime-realization-a001",
+        "cloneUrl": "https://github.com/VexGPT/VexLife-Prod.git",
+        "cloneTransport": "GIT",
+        "checkoutRef": "2c54c81f3d318163ee5b09a6d35363af75c33c9d"
+      }
+    ],
+    "authority": {
+      "authorityRef": "authority.user.vexlife-prod.windows-runtime-realization.continue.20261117a",
+      "authorityMode": "EXACT_STAGE_EFFECTS",
+      "grantedEffects": [
+        "READ_REPOSITORY",
+        "CHECK_STATE",
+        "QUERY_PROVIDER",
+        "RUN_LOCAL_COMMAND",
+        "FORM_RESULT"
+      ],
+      "conditionalEffects": [],
+      "consumedEffects": [],
+      "remainingEffects": [
+        "READ_REPOSITORY",
+        "CHECK_STATE",
+        "QUERY_PROVIDER",
+        "RUN_LOCAL_COMMAND",
+        "FORM_RESULT"
+      ],
+      "heldEffects": [
+        "APPROVE_EXACT_HEAD",
+        "MARK_READY",
+        "ORDINARY_MERGE"
+      ],
+      "repositoryMembranes": [
+        {
+          "repositoryRef": "primary",
+          "allowedPaths": [
+            "docs/foundation/HERETIC-WINDOWS-RUNTIME-REALIZATION.md",
+            "src/commonMain/kotlin/vexlife/model/heretic/HereticRuntimeRealization.kt",
+            "src/commonTest/kotlin/vexlife/model/heretic/HereticRuntimeRealizationTest.kt",
+            "src/jvmMain/kotlin/vexlife/platform/windows/VexLifeWindowsHereticRuntime.kt",
+            "src/jvmMain/kotlin/vexlife/platform/windows/VexLifeWindowsRuntimeMaterialization.kt",
+            "src/jvmTest/kotlin/vexlife/platform/windows/VexLifeWindowsHereticRuntimeTest.kt",
+            "src/jvmTest/kotlin/vexlife/platform/windows/VexLifeWindowsRuntimeMaterializationTest.kt"
+          ]
+        }
+      ],
+      "allowedExecutables": [
+        "C:\\Windows\\System32\\cmd.exe"
+      ],
+      "allowedEnvironment": [
+        "JAVA_HOME",
+        "GRADLE_OPTS"
+      ],
+      "remoteObservationOwner": "LocalRelay",
+      "allowMutationLoop": false,
+      "stopConditions": [
+        "STOP_ON_UNKNOWN",
+        "STOP_ON_PATH_ESCAPE",
+        "STOP_ON_AUTH_BLOCK",
+        "STOP_ON_TEST_FAILURE"
+      ]
+    },
+    "source": {
+      "sourceSetRef": "source-set.vexlife-prod.windows-runtime-realization.a001",
+      "sourceVersionRef": "source-version.vexlife-prod.windows-runtime-realization.2c54c81f",
+      "overlapEvidenceRef": "overlap.vexlife-prod.windows-runtime-realization.current",
+      "activeConflictState": "NONE",
+      "candidateState": "EXACT",
+      "candidateHead": "2c54c81f3d318163ee5b09a6d35363af75c33c9d",
+      "candidateTree": "524bb1e8112c45f0455af8f2f6b81375cea67c93",
+      "expectedChangedPaths": [
+        {
+          "repositoryRef": "primary",
+          "path": "docs/foundation/HERETIC-WINDOWS-RUNTIME-REALIZATION.md"
+        },
+        {
+          "repositoryRef": "primary",
+          "path": "src/commonMain/kotlin/vexlife/model/heretic/HereticRuntimeRealization.kt"
+        },
+        {
+          "repositoryRef": "primary",
+          "path": "src/commonTest/kotlin/vexlife/model/heretic/HereticRuntimeRealizationTest.kt"
+        },
+        {
+          "repositoryRef": "primary",
+          "path": "src/jvmMain/kotlin/vexlife/platform/windows/VexLifeWindowsHereticRuntime.kt"
+        },
+        {
+          "repositoryRef": "primary",
+          "path": "src/jvmMain/kotlin/vexlife/platform/windows/VexLifeWindowsRuntimeMaterialization.kt"
+        },
+        {
+          "repositoryRef": "primary",
+          "path": "src/jvmTest/kotlin/vexlife/platform/windows/VexLifeWindowsHereticRuntimeTest.kt"
+        },
+        {
+          "repositoryRef": "primary",
+          "path": "src/jvmTest/kotlin/vexlife/platform/windows/VexLifeWindowsRuntimeMaterializationTest.kt"
+        }
+      ],
+      "intentionallyUnchangedAuthorizedPaths": []
+    },
+    "policy": {
+      "maxOuterReturnFiles": 10,
+      "maxSelectedSourceEntries": 10,
+      "maxSelectedSourceBytes": 500000,
+      "maxDiffBytes": 5000000,
+      "requireRacePreflightBeforeMutation": false,
+      "requireLocalValidationBeforePublish": false,
+      "requireInputPackageManifest": true,
+      "signoffCommit": true,
+      "draftPullRequest": true
+    }
+  },
+  "stage": {
+    "repositoryRef": "primary",
+    "expectedBase": "5f0d95f49a5a20d021d2bc25e80ee4a1cb1460b0",
+    "expectedHead": "2c54c81f3d318163ee5b09a6d35363af75c33c9d",
+    "expectedTree": "524bb1e8112c45f0455af8f2f6b81375cea67c93",
+    "branch": "VXG-111726-chatgpt-windows-runtime-realization-a001",
+    "proofCommands": [
+      {
+        "command": "C:\\Windows\\System32\\cmd.exe",
+        "args": [
+          "/d",
+          "/s",
+          "/c",
+          "gradlew.bat",
+          "--no-daemon",
+          "--max-workers=1",
+          "checkVexLifeStrings"
+        ],
+        "proofClass": "TEST",
+        "candidateEvidence": true,
+        "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+        "predicateRef": "predicate.vexlife-prod.windows-runtime-realization.strings",
+        "timeoutMs": 600000,
+        "inheritEnvKeys": [
+          "JAVA_HOME",
+          "GRADLE_OPTS"
+        ]
+      },
+      {
+        "command": "C:\\Windows\\System32\\cmd.exe",
+        "args": [
+          "/d",
+          "/s",
+          "/c",
+          "gradlew.bat",
+          "--no-daemon",
+          "--max-workers=1",
+          "jvmTest",
+          "--tests",
+          "vexlife.platform.VexLifePlatformRealizationTest",
+          "--tests",
+          "vexlife.platform.windows.VexLifeWindowsHostObservationTest",
+          "--tests",
+          "vexlife.platform.windows.VexLifeWindowsReadinessTest",
+          "--tests",
+          "vexlife.model.heretic.HereticRuntimeRealizationTest",
+          "--tests",
+          "vexlife.platform.windows.VexLifeWindowsRuntimeMaterializationTest",
+          "--tests",
+          "vexlife.platform.windows.VexLifeWindowsHereticRuntimeTest"
+        ],
+        "proofClass": "TEST",
+        "candidateEvidence": true,
+        "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+        "predicateRef": "predicate.vexlife-prod.windows-runtime-realization.focused-jvm",
+        "timeoutMs": 900000,
+        "inheritEnvKeys": [
+          "JAVA_HOME",
+          "GRADLE_OPTS"
+        ]
+      },
+      {
+        "command": "C:\\Windows\\System32\\cmd.exe",
+        "args": [
+          "/d",
+          "/s",
+          "/c",
+          "gradlew.bat",
+          "--no-daemon",
+          "--max-workers=1",
+          "compileKotlinJs"
+        ],
+        "proofClass": "TEST",
+        "candidateEvidence": true,
+        "predicateClass": "SOURCE_OWNER_BEHAVIOR",
+        "predicateRef": "predicate.vexlife-prod.windows-runtime-realization.common-js-compile",
+        "timeoutMs": 600000,
+        "inheritEnvKeys": [
+          "JAVA_HOME",
+          "GRADLE_OPTS"
+        ]
+      }
+    ],
+    "maxFiles": 10,
+    "stateRef": "state.vexlife-prod.windows-runtime-realization.sourceowner.pending",
+    "currentLifecycleState": "SOURCE_READY",
+    "currentGoal": "Prove the exact target-neutral runtime-realization source-owner candidate on Victor's Windows host.",
+    "remainingGoals": [
+      "Consume the canonical RETURN and classify the exact first failure or PASS.",
+      "If SourceOwner passes, reconcile the current-main Models/configuration consumer seam without duplicating platform meaning.",
+      "Keep Independent Assurance, approval, READY and merge as separate later predicates."
+    ],
+    "onPass": {
+      "lifecycleState": "ASSURANCE_PENDING",
+      "nextFunction": "F13.RUN_FRESH_ASSURANCE",
+      "nextOwner": "Operations",
+      "whyThisIsNext": "The exact source-owner candidate is proven; semantic assurance and integration currentness remain separate."
+    },
+    "resultFilename": "RETURN-VEXLIFE-WINDOWS-RUNTIME-REALIZATION-SOURCEOWNER-A005.zip"
+  },
+  "authorityEnvelope": {
+    "authoritySchemaRef": "vextreme.effect-transaction/v1",
+    "semanticAdmissionRef": "authority.user.vexlife-prod.windows-runtime-realization.continue.20261117a",
+    "transactionRef": "transaction.vexlife-prod.windows-runtime-realization.sourceowner.20261117a",
+    "transactionVersion": 5,
+    "allowedEffectRefs": [
+      "effect.vexrelay.execute"
+    ],
+    "heldEffectRefs": [
+      "effect.vexlife-prod.merge",
+      "effect.vexlife-prod.ready",
+      "effect.vexlife-prod.approve"
+    ]
+  },
+  "outerTaskTemplate": {
+    "schemaVersion": "vextreme.vexlocalbridge-task-manifest/v1",
+    "artifactClass": "EXECUTABLE_RELAY",
+    "taskRef": "task.vexlocalbridge.vexlife-prod.windows-runtime-realization.sourceowner.20261117a",
+    "attemptRef": "attempt.vexlocalbridge.vexlife-prod.windows-runtime-realization.sourceowner.a005",
+    "packageRef": "package.vexlocalbridge.vexlife-prod.windows-runtime-realization.sourceowner.a005",
+    "requestRef": "request.vexlocalbridge.vexlife-prod.windows-runtime-realization.sourceowner.a005",
+    "correlationRef": "correlation.vexlocalbridge.vexlife-prod.windows-runtime-realization.sourceowner.a005",
+    "taskStorageKey": "t243rt",
+    "attemptStorageKey": "a005",
+    "requestingRoleRef": "Operations",
+    "requestingInstanceRef": "instance.chatgpt.windows-runtime-realization.successor",
+    "parentOperationsRef": "github.pr.VexGPT.VexLife-Prod.243",
+    "returnRouteRef": "github.pr.VexGPT.VexLife-Prod.243",
+    "hostProfileRef": "windows-victor",
+    "repositoryExecutionProfileRefOrNull": "profile.repository.vextreme-sdk.windows-v1",
+    "repositoryRefOrNull": "VexGPT/VexLife-Prod",
+    "baseRefOrNull": "5f0d95f49a5a20d021d2bc25e80ee4a1cb1460b0",
+    "headRefOrNull": "2c54c81f3d318163ee5b09a6d35363af75c33c9d",
+    "treeRefOrNull": "524bb1e8112c45f0455af8f2f6b81375cea67c93",
+    "branchRefOrNull": "VXG-111726-chatgpt-windows-runtime-realization-a001",
+    "claimRefOrNull": "work.vexlife.official-application.windows-runtime-realization.a001",
+    "exactPathRefs": [
+      "docs/foundation/HERETIC-WINDOWS-RUNTIME-REALIZATION.md",
+      "src/commonMain/kotlin/vexlife/model/heretic/HereticRuntimeRealization.kt",
+      "src/commonTest/kotlin/vexlife/model/heretic/HereticRuntimeRealizationTest.kt",
+      "src/jvmMain/kotlin/vexlife/platform/windows/VexLifeWindowsHereticRuntime.kt",
+      "src/jvmMain/kotlin/vexlife/platform/windows/VexLifeWindowsRuntimeMaterialization.kt",
+      "src/jvmTest/kotlin/vexlife/platform/windows/VexLifeWindowsHereticRuntimeTest.kt",
+      "src/jvmTest/kotlin/vexlife/platform/windows/VexLifeWindowsRuntimeMaterializationTest.kt"
+    ],
+    "authorityBinding": {
+      "authoritySchemaRef": "vextreme.effect-transaction/v1",
+      "authorityEnvelopePath": "authority/effect.json",
+      "authorityEnvelopeSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "semanticAdmissionRef": "stale",
+      "transactionRef": "stale",
+      "transactionVersion": 1,
+      "allowedEffectRefs": [
+        "stale"
+      ],
+      "heldEffectRefs": []
+    },
+    "payload": {
+      "payloadClass": "VEXRELAY_TASK_ARCHIVE",
+      "payloadRuntime": "NATIVE_VEXRELAY",
+      "payloadPath": "payload/inner-vexrelay.zip",
+      "payloadSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "typedArgv": [],
+      "immutableInputs": [
+        {
+          "path": "inputs/vexrelay-binding.json",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    "executionStateAtFormation": "TASK_PREPARED",
+    "singleUseNonce": "nonce-vexlocalbridge-vexlife-prod-windows-runtime-realization-sourceowner-a005",
+    "stopConditions": [
+      "stop.on.identity.drift",
+      "stop.on.test.failure",
+      "stop.on.source.currentness.failure"
+    ],
+    "archiveDigestBinding": "FILENAME_SHA256"
+  },
+  "ttlMs": 1800000,
+  "canonicalOutputStem": "VEXLIFE-WINDOWS-RUNTIME-REALIZATION-SOURCEOWNER-A005",
+  "javaProofDependency": {
+    "source": "R015 previously-lived Windows patient-zero proof",
+    "distribution": "Eclipse Temurin",
+    "version": "21.0.13+9",
+    "archive": "OpenJDK21U-jdk_x64_windows_hotspot_21.0.13_9.zip",
+    "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9/OpenJDK21U-jdk_x64_windows_hotspot_21.0.13_9.zip",
+    "sha256": "a4dbaa05fca4bd89d84584e58c459bd732efebb1722af80ab13c6516832004f9",
+    "preferredCachedPath": "~/Downloads/VEXLIFE-WINDOWS-4B-PATIENT-ZERO-CACHE/OpenJDK21U-jdk_x64_windows_hotspot_21.0.13_9.zip",
+    "materialization": "ATTEMPT_LOCAL_ONLY",
+    "persistentGlobalInstall": false,
+    "gradleOpts": "-Dorg.gradle.jvmargs=-Xmx2048m -Dorg.gradle.workers.max=1 -Dorg.gradle.parallel=false -Dkotlin.compiler.execution.strategy=in-process"
+  }
+}
