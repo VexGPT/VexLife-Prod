@@ -3300,6 +3300,162 @@
     "workspace.status.reach-web-search": {
       "enHash": "28787e0d826f",
       "langs": []
+    },
+    "workspace.button.model-use": {
+      "enHash": "99cbaa8ea1dd",
+      "langs": []
+    },
+    "workspace.button.voice-input-start": {
+      "enHash": "25590c362c88",
+      "langs": []
+    },
+    "workspace.button.voice-input-stop": {
+      "enHash": "39afe6b53fa2",
+      "langs": []
+    },
+    "workspace.description.local-asr": {
+      "enHash": "fecb13af2aac",
+      "langs": []
+    },
+    "workspace.description.local-asr-note": {
+      "enHash": "3d5489c0a555",
+      "langs": []
+    },
+    "workspace.description.local-asr-spoken-language-note": {
+      "enHash": "2d5bdd5d104e",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.heading.local-asr": {
+      "enHash": "cdf1e66ec9c3",
+      "langs": []
+    },
+    "workspace.label.local-asr-selection": {
+      "enHash": "f3f31d4c430b",
+      "langs": []
+    },
+    "workspace.label.local-asr-spoken-language": {
+      "enHash": "1da6ea3d6a5b",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.local-asr-spoken-language-auto": {
+      "enHash": "d41fd914c603",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.local-asr-spoken-language-follow": {
+      "enHash": "1f0de9edc461",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.status.local-asr-model-not-current": {
+      "enHash": "fc516b06312d",
+      "langs": []
+    },
+    "workspace.status.local-asr-model-unavailable": {
+      "enHash": "b38ef8bb5cbb",
+      "langs": []
+    },
+    "workspace.status.local-asr-provider-not-current": {
+      "enHash": "e36e3a3bfae0",
+      "langs": []
+    },
+    "workspace.status.local-asr-ready": {
+      "enHash": "f04df9ecab80",
+      "langs": []
+    },
+    "workspace.status.local-asr-runtime-unavailable": {
+      "enHash": "31e78a35e1eb",
+      "langs": []
+    },
+    "workspace.status.local-asr-selected": {
+      "enHash": "f7011247d0a0",
+      "langs": []
+    },
+    "workspace.status.local-asr-unavailable": {
+      "enHash": "1037e4b739b8",
+      "langs": []
+    },
+    "workspace.status.voice-input-failed-microphone": {
+      "enHash": "888c8d37d7f0",
+      "langs": []
+    },
+    "workspace.status.voice-input-failed-permission": {
+      "enHash": "8dc6daa7fbe4",
+      "langs": []
+    },
+    "workspace.status.voice-input-failed-recognition": {
+      "enHash": "df4291d405e1",
+      "langs": []
+    },
+    "workspace.status.voice-input-failed-unknown": {
+      "enHash": "f62083959db1",
+      "langs": []
+    },
+    "workspace.status.voice-input-held-audio-feedback": {
+      "enHash": "f83f5a6cbbaa",
+      "langs": []
+    },
+    "workspace.status.voice-input-held-local-recognition": {
+      "enHash": "85483e7e0183",
+      "langs": []
+    },
+    "workspace.status.voice-input-held-microphone-api": {
+      "enHash": "8c52e2fe5da7",
+      "langs": []
+    },
+    "workspace.status.voice-input-listening": {
+      "enHash": "d84853f85d41",
+      "langs": []
+    },
+    "workspace.status.voice-input-ready": {
+      "enHash": "45b1316add84",
+      "langs": []
+    },
+    "workspace.status.voice-input-requesting-microphone": {
+      "enHash": "30cf7830d0b0",
+      "langs": []
+    },
+    "workspace.status.voice-input-stopping": {
+      "enHash": "0f3cbf9561fc",
+      "langs": []
     }
   }
 }

@@ -12,6 +12,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vexlife.contract.VexContractJson
 import vexlife.conversation.CanonicalLivedContextFixture
@@ -23,6 +24,64 @@ import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeState
 
 class DirectTurnContextStoreTest {
+    @Test
+    fun unboundNewerPromptReceiptSidecarDoesNotCreateCompatibilityMeaning() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-context-unbound-newer-receipt-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        val turnRef =
+            "turn.self-development.unbound-newer-prompt-receipt"
+
+        try {
+            home(
+                productHome,
+            )
+            val evidenceDirectory =
+                productHome.resolve(
+                    "runtime/vexlife-prod/turn-evidence",
+                )
+            Files.createDirectories(
+                evidenceDirectory,
+            )
+            Files.writeString(
+                evidenceDirectory.resolve(
+                    "$turnRef.json",
+                ),
+                """
+                {
+                  "schemaVersion": "${DirectTurnContextStore.RuntimeEvidenceSchema}",
+                  "turnRef": "$turnRef",
+                  "evidenceRef": "evidence.vexlife-prod.turn-runtime.${"e".repeat(32)}",
+                  "promptContext": {
+                    "schemaVersion": "vexlife-prod.direct-prompt-materialization-receipt/v9",
+                    "contextProfileRef": "profile.vexlife.context.product-default"
+                  }
+                }
+                """.trimIndent(),
+            )
+
+            assertNull(
+                DirectTurnContextStore(
+                    productHome,
+                )
+                    .inspectPromptReceiptCompatibility(
+                        turnRef,
+                    ),
+                "a sidecar that is not referenced by canonical Context must not create Product compatibility meaning",
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
     private fun home(
         productHome: java.nio.file.Path,
     ) {

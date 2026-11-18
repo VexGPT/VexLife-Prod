@@ -633,6 +633,30 @@ svg { display: block; }
   background: var(--sunken); color: var(--ink-3); border-color: var(--rule-strong);
 }
 
+/* Local voice recognition uses the same compact card language without sharing LLM lifecycle. */
+.models-list { display: grid; gap: 10px; margin: 8px 0; }
+.model-row { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--rule-strong); border-radius: 8px; }
+.model-row[data-chosen="true"] { border-color: var(--ink-2); }
+.model-row .model-name { font-weight: 600; }
+.model-row .model-facts, .model-row .model-notes { color: var(--ink-2); font-size: var(--step--1); grid-column: 1; }
+.model-row .model-controls { grid-column: 2; grid-row: 1 / span 3; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.model-row .model-controls .outline-button { height: 30px; padding: 0 10px; }
+
+.local-asr-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 1.35fr);
+  gap: 10px 14px; align-items: center; margin: 10px 0 6px;
+}
+.local-asr-row label { color: var(--ink-2); font-size: var(--step--1); }
+.local-asr-row select {
+  width: 100%; min-height: 36px; padding: 7px 34px 7px 10px;
+  background: var(--raised); color: var(--ink);
+  border: 1px solid var(--rule-strong); border-radius: 8px;
+}
+.local-asr-row select:disabled { color: var(--ink-3); background: var(--sunken); }
+@media (max-width: 720px) {
+  .local-asr-row { grid-template-columns: 1fr; }
+}
+
 .receipt-line {
   grid-area: receipt; margin: 6px 2px 0; color: var(--ink-3); font-size: var(--step--1);
 }
@@ -706,6 +730,29 @@ svg { display: block; }
   background: var(--raised); border: 1px solid var(--rule-strong); border-radius: 22px;
 }
 .compose-row textarea::placeholder { color: var(--ink-3); }
+.voice-input-shell { position: relative; flex: none; }
+.voice-input {
+  display: grid; place-items: center; width: 44px; height: 44px; padding: 0;
+  background: var(--surface); color: var(--ink-2); border: 1px solid var(--rule-strong); border-radius: 50%;
+}
+.voice-input:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-2); }
+.voice-input:disabled { color: var(--ink-3); border-color: var(--rule); background: var(--sunken); }
+.voice-input svg {
+  width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.7;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.voice-input[data-state="listening"] { color: var(--ink); border-color: var(--ink); }
+.voice-input-overlay {
+  position: absolute; right: 50%; bottom: calc(100% + 10px); z-index: 25;
+  width: 148px; padding: 10px; transform: translateX(50%);
+  background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 12px; box-shadow: var(--shadow);
+}
+.voice-input-overlay[hidden] { display: none; }
+.voice-input-overlay canvas {
+  display: block; width: 112px; height: 44px; margin: 0 auto 7px;
+  background: var(--sunken); border: 1px solid var(--rule); border-radius: 8px;
+}
+.voice-input-overlay p { margin: 0; color: var(--ink-2); font-size: 11.5px; line-height: 1.35; text-align: center; }
 .send, .stop {
   flex: none; height: 44px; padding: 0 20px;
   border-radius: 9px; font-weight: 700;

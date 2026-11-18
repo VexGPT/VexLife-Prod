@@ -76,8 +76,30 @@ class VexLifeStringsTest {
                     vexlife.model.VexLifeModelsFamily.ArtifactPresence.Damaged,
                 ).map { "model:files:${it.stateRef}" } +
                 vexlife.model.heretic.HereticModelCatalog.Standing.entries.map { "model:standing:${it.name}" }
+        val voiceInputRefs =
+            vexlife.voiceinput.VexLifeVoiceInputFamily.StateRefs.map { "voice-input:state:$it" } +
+                vexlife.voiceinput.VexLifeVoiceInputFamily.ControlRefs.map {
+                    "voice-input:control:$it"
+                } +
+                vexlife.voiceinput.VexLifeVoiceInputFamily.HoldReasonRefs.map {
+                    "voice-input:reason:$it"
+                } +
+                vexlife.voiceinput.VexLifeVoiceInputFamily.FailureReasonRefs.map {
+                    "voice-input:failure:$it"
+                }
+        val localAsrRefs =
+            listOf(
+                vexlife.localasr.VexLifeLocalAsrProvider.StateReady,
+                vexlife.localasr.VexLifeLocalAsrProvider.DetailProviderSourceNotCurrent,
+                vexlife.localasr.VexLifeLocalAsrProvider.DetailProviderExecutableUnavailable,
+                vexlife.localasr.VexLifeLocalAsrProvider.DetailModelUnavailable,
+                vexlife.localasr.VexLifeLocalAsrProvider.DetailModelDigestNotCurrent,
+            ).map { "local-asr:state:$it" } +
+                "local-asr:selection:SAVED"
         val known =
             capabilityRefs.toSet() +
+            voiceInputRefs +
+            localAsrRefs +
             setOf(
                 "diagnostics:state:" + vexlife.diagnostics.VexLifeDiagnosticsFamily.StateRecording,
                 "diagnostics:state:" + vexlife.diagnostics.VexLifeDiagnosticsFamily.StateRecordingEnhanced,

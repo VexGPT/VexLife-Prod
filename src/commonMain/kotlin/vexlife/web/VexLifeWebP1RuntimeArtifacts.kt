@@ -1,9 +1,11 @@
 package vexlife.web
 
 import vexlife.browser.VexLifeProdBrowserContract
+import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.model.VexLifeModelsFamily
 import vexlife.release.VexLifeReleaseInboxFamily
 import vexlife.service.VexLifeProdServiceContract
+import vexlife.voiceinput.VexLifeVoiceInputFamily
 import vexlife.workspace.VexLifeSourceTemplate
 import vexlife.workspace.VexLifeWorkspaceApp
 
@@ -19,7 +21,9 @@ import vexlife.workspace.VexLifeWorkspaceApp
  * - current Send idempotency / Memory / working-continuity / runtime owners remain untouched.
  */
 object VexLifeWebP1RuntimeArtifacts {
-    fun generate(): VexWebArtifacts.Bundle {
+    fun generate(
+        presentationSourceSha: String? = null,
+    ): VexWebArtifacts.Bundle {
         val semantic =
             VexWebArtifacts.generate(
                 VexLifeWebP1.Surface,
@@ -31,12 +35,16 @@ object VexLifeWebP1RuntimeArtifacts {
             css =
                 VexLifeWebP1ExperienceStyle.render(),
             javascript =
-                runtimeJavascript().trimIndent() +
+                runtimeJavascript(
+                    presentationSourceSha,
+                ).trimIndent() +
                     "\n",
         )
     }
 
-    private fun runtimeJavascript(): String {
+    private fun runtimeJavascript(
+        presentationSourceSha: String?,
+    ): String {
         val browserCompanionSeam =
             VexLifeWebP1.BodyFrame.seams
                 .filterIsInstance<VexWeb.Seam.Vertical>()
@@ -78,6 +86,185 @@ object VexLifeWebP1RuntimeArtifacts {
         val workspaceApps = jsList(VexLifeWorkspaceApp.entries.map { it.key })
         val sourceTemplateScopes = jsList(VexLifeSourceTemplate.Members.map { it.scope })
 
+        fun jsNullable(value: String?): String = value?.let(::jsString) ?: "null"
+
+        fun voiceDisplay(state: VexLifeVoiceInputFamily.State): String {
+            val display = VexLifeVoiceInputFamily.displayStateFor(state)
+            return buildString {
+                append("Object.freeze({statusKey:")
+                append(jsString(display.status.key))
+                append(",primaryControlRef:")
+                append(jsNullable(display.primaryControlRef))
+                append(",primaryLabelKey:")
+                append(jsNullable(display.primaryLabel?.key))
+                append(",active:")
+                append(display.active)
+                append(",attention:")
+                append(jsString(display.attention.name))
+                append("})")
+            }
+        }
+
+        val voiceStateDisplays =
+            listOf(
+                VexLifeVoiceInputFamily.StateReady to
+                    voiceDisplay(VexLifeVoiceInputFamily.Ready),
+                VexLifeVoiceInputFamily.StateRequestingMicrophone to
+                    voiceDisplay(VexLifeVoiceInputFamily.RequestingMicrophone),
+                VexLifeVoiceInputFamily.StateListening to
+                    voiceDisplay(VexLifeVoiceInputFamily.Listening),
+                VexLifeVoiceInputFamily.StateStopping to
+                    voiceDisplay(VexLifeVoiceInputFamily.Stopping),
+            ).joinToString(separator = ",", prefix = "{", postfix = "}") { (stateRef, display) ->
+                jsString(stateRef) + ":" + display
+            }
+        val voiceHoldDisplays =
+            VexLifeVoiceInputFamily.HoldReason.entries.joinToString(
+                separator = ",",
+                prefix = "{",
+                postfix = "}",
+            ) {
+                jsString(it.reasonRef) + ":" +
+                    voiceDisplay(VexLifeVoiceInputFamily.Held(it))
+            }
+        val voiceFailureDisplays =
+            VexLifeVoiceInputFamily.FailureReason.entries.joinToString(
+                separator = ",",
+                prefix = "{",
+                postfix = "}",
+            ) {
+                jsString(it.reasonRef) + ":" +
+                    voiceDisplay(VexLifeVoiceInputFamily.Failed(it))
+            }
+
+        fun voiceSemanticState(
+            state: VexLifeVoiceInputFamily.State?,
+        ): String {
+            if (state == null) return "null"
+            val holdReason =
+                (state as? VexLifeVoiceInputFamily.Held)
+                    ?.reason
+                    ?.reasonRef
+            val failureReason =
+                (state as? VexLifeVoiceInputFamily.Failed)
+                    ?.reason
+                    ?.reasonRef
+            return buildString {
+                append("Object.freeze({stateRef:")
+                append(jsString(state.stateRef))
+                append(",holdReasonRef:")
+                append(jsNullable(holdReason))
+                append(",failureReasonRef:")
+                append(jsNullable(failureReason))
+                append("})")
+            }
+        }
+
+        fun voiceAct(
+            state: VexLifeVoiceInputFamily.State,
+            control: VexLifeVoiceInputFamily.Control,
+        ): String {
+            val act =
+                VexLifeVoiceInputFamily.resolve(
+                    currentState = state,
+                    control = control,
+                )
+                    ?: return "null"
+            return buildString {
+                append("Object.freeze({admittedState:")
+                append(voiceSemanticState(act.admittedState))
+                append(",effectRef:")
+                append(jsNullable(act.effect?.effectRef))
+                append("})")
+            }
+        }
+
+        val voiceExampleStates =
+            listOf(
+                VexLifeVoiceInputFamily.Ready,
+                VexLifeVoiceInputFamily.RequestingMicrophone,
+                VexLifeVoiceInputFamily.Listening,
+                VexLifeVoiceInputFamily.Stopping,
+                VexLifeVoiceInputFamily.Held(
+                    VexLifeVoiceInputFamily.HoldReason.LocalRecognitionUnavailable
+                ),
+                VexLifeVoiceInputFamily.Failed(
+                    VexLifeVoiceInputFamily.FailureReason.Unknown,
+                ),
+            )
+        val voiceActByState =
+            voiceExampleStates.joinToString(
+                separator = ",",
+                prefix = "{",
+                postfix = "}",
+            ) { state ->
+                jsString(state.stateRef) +
+                    ":Object.freeze({" +
+                    jsString(VexLifeVoiceInputFamily.ControlStart) +
+                    ":" +
+                    voiceAct(state, VexLifeVoiceInputFamily.Start) +
+                    "," +
+                    jsString(VexLifeVoiceInputFamily.ControlStop) +
+                    ":" +
+                    voiceAct(state, VexLifeVoiceInputFamily.Stop) +
+                    "})"
+            }
+
+        val voiceCapabilityStateByFacts =
+            buildList {
+                for (localRecognition in listOf(false, true)) {
+                    for (microphoneApi in listOf(false, true)) {
+                        for (audioFeedback in listOf(false, true)) {
+                            val key =
+                                listOf(
+                                    localRecognition,
+                                    microphoneApi,
+                                    audioFeedback,
+                                )
+                                    .joinToString(":") {
+                                        if (it) "1" else "0"
+                                    }
+                            add(
+                                jsString(key) +
+                                    ":" +
+                                    voiceSemanticState(
+                                        VexLifeVoiceInputFamily.observeCapability(
+                                            localRecognitionAvailable = localRecognition,
+                                            microphoneApiAvailable = microphoneApi,
+                                            audioFeedbackAvailable = audioFeedback,
+                                        )
+                                    )
+                            )
+                        }
+                    }
+                }
+            }
+                .joinToString(
+                    separator = ",",
+                    prefix = "{",
+                    postfix = "}",
+                )
+
+        val voiceFailureStateByReason =
+            VexLifeVoiceInputFamily.FailureReason.entries.joinToString(
+                separator = ",",
+                prefix = "{",
+                postfix = "}",
+            ) { reason ->
+                jsString(reason.reasonRef) +
+                    ":" +
+                    voiceSemanticState(
+                        VexLifeVoiceInputFamily.observeFailure(
+                            reason,
+                        )
+                    )
+            }
+
+        val voiceRecognitionStartedState =
+            voiceSemanticState(
+                VexLifeVoiceInputFamily.observeRecognitionStarted()
+            )
+
         return """
             // Generated VexLife-Prod A003-faithful presentation over current New-Beginnings owners.
             (() => {
@@ -85,15 +272,24 @@ object VexLifeWebP1RuntimeArtifacts {
               if (!root) return;
 
               const service = Object.freeze({
+                presentationSourceSha: ${jsNullable(presentationSourceSha)},
+                presentationSourceHeader: ${jsString(VexLifeProdServiceContract.PresentationSourceHeader)},
+                stalePresentationCode: ${jsString(VexLifeProdServiceContract.StalePresentationCode)},
                 sourceCurrentnessPath: ${jsString(VexLifeProdServiceContract.SourceCurrentnessPath)},
                 currentStatePath: ${jsString(VexLifeProdServiceContract.CurrentStatePath)},
                 conversationPath: ${jsString(VexLifeProdServiceContract.ConversationPath)},
                 contextPath: ${jsString(VexLifeProdServiceContract.ContextPath)},
+                contextHeldUnsupportedState: ${jsString(VexLifeProdServiceContract.ContextStateHeldUnsupportedDurablePromptReceipt)},
                 memoryPath: ${jsString(VexLifeProdServiceContract.MemoryPath)},
                 releaseAlertsPath: ${jsString(VexLifeProdServiceContract.ReleaseAlertsPath)},
                 releaseAlertsControlPath: ${jsString(VexLifeProdServiceContract.ReleaseAlertsControlPath)},
                 releaseAlertsStringsPath: ${jsString(VexLifeProdServiceContract.ReleaseAlertsStringsPath)},
                 settingsPath: ${jsString(VexLifeProdServiceContract.SettingsPath)},
+                localAsrPath: ${jsString(VexLifeProdServiceContract.LocalAsrPath)},
+                localAsrSpokenLanguagePath: ${jsString(VexLifeProdServiceContract.LocalAsrSpokenLanguagePath)},
+                localAsrModelControlPath: ${jsString(VexLifeProdServiceContract.LocalAsrModelControlPath)},
+                localAsrPreparePath: ${jsString(VexLifeProdServiceContract.LocalAsrPreparePath)},
+                localAsrTranscribePath: ${jsString(VexLifeProdServiceContract.LocalAsrTranscribePath)},
                 privatePath: ${jsString(VexLifeProdServiceContract.PrivatePath)},
                 privateControlPath: ${jsString(VexLifeProdServiceContract.PrivateControlPath)},
                 privateSendPath: ${jsString(VexLifeProdServiceContract.PrivateSendPath)},
@@ -133,6 +329,46 @@ object VexLifeWebP1RuntimeArtifacts {
                 captureRendered: ${jsString(VexLifeProdBrowserContract.CaptureRendered)},
                 messageType: 'vexlife.browser-context/v1',
                 authoredBrowserShare: $authoredBrowserShare
+              });
+
+              // Serialization boundary for the Kotlin VoiceInput Family. Browser code realizes
+              // Effects but does not invent Product State, Control, reason refs or display keys.
+              const voiceInput = Object.freeze({
+                state: Object.freeze({
+                  ready: ${jsString(VexLifeVoiceInputFamily.StateReady)},
+                  requestingMicrophone: ${jsString(VexLifeVoiceInputFamily.StateRequestingMicrophone)},
+                  listening: ${jsString(VexLifeVoiceInputFamily.StateListening)},
+                  stopping: ${jsString(VexLifeVoiceInputFamily.StateStopping)},
+                  held: ${jsString(VexLifeVoiceInputFamily.StateHeld)},
+                  failed: ${jsString(VexLifeVoiceInputFamily.StateFailed)}
+                }),
+                control: Object.freeze({
+                  start: ${jsString(VexLifeVoiceInputFamily.ControlStart)},
+                  stop: ${jsString(VexLifeVoiceInputFamily.ControlStop)}
+                }),
+                effect: Object.freeze({
+                  beginLocalDictation: ${jsString(VexLifeVoiceInputFamily.EffectBeginLocalDictation)},
+                  endLocalDictation: ${jsString(VexLifeVoiceInputFamily.EffectEndLocalDictation)}
+                }),
+                holdReason: Object.freeze({
+                  localRecognitionUnavailable: ${jsString(VexLifeVoiceInputFamily.HoldReason.LocalRecognitionUnavailable.reasonRef)},
+                  microphoneApiUnavailable: ${jsString(VexLifeVoiceInputFamily.HoldReason.MicrophoneApiUnavailable.reasonRef)},
+                  audioFeedbackUnavailable: ${jsString(VexLifeVoiceInputFamily.HoldReason.AudioFeedbackUnavailable.reasonRef)}
+                }),
+                failureReason: Object.freeze({
+                  microphonePermissionRequired: ${jsString(VexLifeVoiceInputFamily.FailureReason.MicrophonePermissionRequired.reasonRef)},
+                  microphoneUnavailable: ${jsString(VexLifeVoiceInputFamily.FailureReason.MicrophoneUnavailable.reasonRef)},
+                  recognitionStopped: ${jsString(VexLifeVoiceInputFamily.FailureReason.RecognitionStopped.reasonRef)},
+                  unknown: ${jsString(VexLifeVoiceInputFamily.FailureReason.Unknown.reasonRef)}
+                }),
+                attentionOverlay: ${jsString(VexLifeVoiceInputFamily.Attention.Overlay.name)},
+                displayByState: Object.freeze($voiceStateDisplays),
+                holdDisplayByReason: Object.freeze($voiceHoldDisplays),
+                failureDisplayByReason: Object.freeze($voiceFailureDisplays),
+                actByState: Object.freeze($voiceActByState),
+                capabilityStateByFacts: Object.freeze($voiceCapabilityStateByFacts),
+                failureStateByReason: Object.freeze($voiceFailureStateByReason),
+                recognitionStartedState: $voiceRecognitionStartedState
               });
 
               const byId = (id) => document.getElementById(id);
@@ -198,6 +434,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 composerHold: byId('composer-hold'),
                 composeForm: byId('compose-form'),
                 draft: byId('draft'),
+                voiceInput: byId('voice-input'),
+                voiceInputOverlay: byId('voice-input-overlay'),
+                voiceInputStatus: byId('voice-input-status'),
+                voiceWaveform: byId('voice-waveform'),
                 send: byId('send'),
                 stop: byId('stop'),
                 contextWindow: byId('context-window'),
@@ -229,6 +469,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 modelUseRecommended: byId('model-use-recommended'),
                 modelStart: byId('model-start'),
                 modelsNote: byId('models-note'),
+                localAsrSelection: byId('local-asr-selection'),
+                localAsrModelsList: byId('local-asr-models-list'),
+                localAsrSpokenLanguage: byId('local-asr-spoken-language'),
+                localAsrStatus: byId('local-asr-status'),
+                localAsrNote: byId('local-asr-note'),
+                localAsrStorageNote: byId('local-asr-storage-note'),
                 diagnosticsStatus: byId('diagnostics-status'),
                 diagnosticsCapture: byId('diagnostics-capture'),
                 diagnosticsRecords: byId('diagnostics-records'),
@@ -286,6 +532,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 models: null,
                 modelsInFlight: false,
                 modelImportInFlight: false,
+                // Local microphone recognition is independent from the serving reasoning model.
+                localAsr: null,
+                localAsrInFlight: false,
                 workspaceStrings: null,
                 browserContext: null,
                 includePage: false,
@@ -326,6 +575,776 @@ object VexLifeWebP1RuntimeArtifacts {
                 theme: null
               };
 
+              // VoiceInput execution lives at the browser boundary. Semantic meaning comes from
+              // VexLifeVoiceInputFamily above; browser API strings are converted here and do not leak
+              // into Product State or human-facing copy.
+              const dictation = {
+                stateRef: null,
+                holdReasonRef: null,
+                failureReasonRef: null,
+                language: null,
+                desiredActive: false,
+                session: 0,
+                stream: null,
+                audioContext: null,
+                audioSource: null,
+                analyser: null,
+                processor: null,
+                silentGain: null,
+                animationFrame: null,
+                progressiveTimer: null,
+                progressivePromise: null,
+                progressiveInFlight: false,
+                progressiveCooldownUntil: 0,
+                progressiveLastAt: 0,
+                progressiveLastSampleCount: 0,
+                lastSpeechAt: 0,
+                speechActive: false,
+                speechSinceLastCommit: false,
+                noiseFloor: 0.004,
+                lastHypothesis: '',
+                stableHypothesisPasses: 0,
+                sampleRate: 0,
+                pcmChunks: [],
+                sampleCount: 0,
+                draftPrefix: '',
+                finalTranscript: '',
+                interimTranscript: ''
+              };
+
+              const voiceInputLanguage = () => {
+                const code = state.localAsr?.resolvedSpokenLanguageCode ?? null;
+                return code ? { code } : null;
+              };
+
+              // While one Begin/End realization is active, capability refreshes may observe new
+              // provider facts but may not overwrite the Family's in-flight session State.
+              const voiceInputSessionOwnsState = () =>
+                dictation.stateRef === voiceInput.state.requestingMicrophone ||
+                dictation.stateRef === voiceInput.state.listening ||
+                dictation.stateRef === voiceInput.state.stopping;
+
+              // Browser keeps only a local mirror of Family-owned semantic output. It may not
+              // manufacture State/reason refs from provider facts.
+              const applyVoiceInputSemanticState = (semanticState) => {
+                if (!semanticState) return;
+                dictation.stateRef = semanticState.stateRef;
+                dictation.holdReasonRef = semanticState.holdReasonRef ?? null;
+                dictation.failureReasonRef = semanticState.failureReasonRef ?? null;
+              };
+
+              const voiceInputCapabilityKey = (
+                localRecognitionAvailable,
+                microphoneApiAvailable,
+                audioFeedbackAvailable
+              ) =>
+                [localRecognitionAvailable, microphoneApiAvailable, audioFeedbackAvailable]
+                  .map((value) => value ? '1' : '0')
+                  .join(':');
+
+              const selectedLocalAsrOption = () => {
+                const projection = state.localAsr;
+                if (!projection) return null;
+                return (projection.options ?? []).find((option) =>
+                  option.providerRef === projection.selectedProviderRef &&
+                  option.modelRef === projection.selectedModelRef
+                ) ?? null;
+              };
+
+              const localAsrAvailableForLanguage = (language) => {
+                const option = selectedLocalAsrOption();
+                const supportedCodes = option?.languageCodes ?? [];
+                return Boolean(
+                  language &&
+                  option &&
+                  option.currentState === 'READY' &&
+                  (
+                    supportedCodes.includes(language.code) ||
+                    (language.code === 'auto' && supportedCodes.length > 1)
+                  )
+                );
+              };
+
+              const observeVoiceInputCapability = (force = false) => {
+                if (!force && voiceInputSessionOwnsState()) return;
+                const language = voiceInputLanguage();
+                const semanticState =
+                  voiceInput.capabilityStateByFacts[
+                    voiceInputCapabilityKey(
+                      localAsrAvailableForLanguage(language),
+                      Boolean(navigator.mediaDevices?.getUserMedia),
+                      Boolean(window.AudioContext || window.webkitAudioContext)
+                    )
+                  ];
+                if (!semanticState) return;
+                applyVoiceInputSemanticState(semanticState);
+              };
+
+              const voiceInputActFor = (controlRef) =>
+                voiceInput.actByState[dictation.stateRef]?.[controlRef] ?? null;
+
+              const voiceInputDisplay = () => {
+                if (dictation.stateRef === voiceInput.state.held) {
+                  return voiceInput.holdDisplayByReason[dictation.holdReasonRef] ?? null;
+                }
+                if (dictation.stateRef === voiceInput.state.failed) {
+                  return voiceInput.failureDisplayByReason[dictation.failureReasonRef] ??
+                    voiceInput.failureDisplayByReason[voiceInput.failureReason.unknown];
+                }
+                return voiceInput.displayByState[dictation.stateRef] ?? null;
+              };
+
+              const renderVoiceInput = () => {
+                if (!ui.voiceInput) return;
+                const display = voiceInputDisplay();
+                if (!display) return;
+                ui.voiceInput.disabled =
+                  !display.primaryControlRef || state.sendInFlight || state.privateInFlight;
+                ui.voiceInput.dataset.state = dictation.stateRef ?? '';
+                ui.voiceInput.dataset.holdReason = dictation.holdReasonRef ?? '';
+                ui.voiceInput.dataset.failureReason = dictation.failureReasonRef ?? '';
+                ui.voiceInput.setAttribute('aria-pressed', String(Boolean(display.active)));
+                const overlay = display.attention === voiceInput.attentionOverlay;
+                ui.voiceInput.setAttribute('aria-expanded', String(overlay));
+                const humanLabel = display.primaryLabelKey
+                  ? t(display.primaryLabelKey)
+                  : t(display.statusKey);
+                ui.voiceInput.setAttribute('aria-label', humanLabel);
+                ui.voiceInput.title = humanLabel;
+                if (ui.voiceInputOverlay) ui.voiceInputOverlay.hidden = !overlay;
+                if (ui.voiceInputStatus) ui.voiceInputStatus.textContent = t(display.statusKey);
+              };
+
+              const stopVoiceCapture = async () => {
+                if (dictation.progressiveTimer !== null) {
+                  window.clearInterval(dictation.progressiveTimer);
+                  dictation.progressiveTimer = null;
+                }
+                if (dictation.animationFrame !== null) {
+                  cancelAnimationFrame(dictation.animationFrame);
+                  dictation.animationFrame = null;
+                }
+                if (dictation.processor) {
+                  dictation.processor.onaudioprocess = null;
+                  try { dictation.processor.disconnect(); } catch {}
+                  dictation.processor = null;
+                }
+                if (dictation.silentGain) {
+                  try { dictation.silentGain.disconnect(); } catch {}
+                  dictation.silentGain = null;
+                }
+                if (dictation.audioSource) {
+                  try { dictation.audioSource.disconnect(); } catch {}
+                  dictation.audioSource = null;
+                }
+                if (dictation.stream) {
+                  for (const track of dictation.stream.getTracks()) track.stop();
+                  dictation.stream = null;
+                }
+                const context = dictation.audioContext;
+                dictation.audioContext = null;
+                dictation.analyser = null;
+                if (context && context.state !== 'closed') {
+                  await context.close().catch(() => {});
+                }
+                if (ui.voiceWaveform) {
+                  const context2d = ui.voiceWaveform.getContext('2d');
+                  context2d?.clearRect(0, 0, ui.voiceWaveform.width, ui.voiceWaveform.height);
+                }
+              };
+
+              const drawVoiceWaveform = () => {
+                const analyser = dictation.analyser;
+                const canvas = ui.voiceWaveform;
+                if (!dictation.desiredActive || !analyser || !canvas) return;
+                const context2d = canvas.getContext('2d');
+                if (!context2d) return;
+                const values = new Uint8Array(analyser.frequencyBinCount);
+                analyser.getByteFrequencyData(values);
+                context2d.clearRect(0, 0, canvas.width, canvas.height);
+                context2d.fillStyle = getComputedStyle(ui.voiceInput).color;
+                const bars = 14;
+                const gap = 3;
+                const width = (canvas.width - gap * (bars - 1)) / bars;
+                for (let index = 0; index < bars; index += 1) {
+                  const bucket = Math.floor((index / bars) * values.length);
+                  const normalized = values[bucket] / 255;
+                  const height = Math.max(3, normalized * (canvas.height - 8));
+                  const x = index * (width + gap);
+                  const y = (canvas.height - height) / 2;
+                  context2d.fillRect(x, y, width, height);
+                }
+                dictation.animationFrame = requestAnimationFrame(drawVoiceWaveform);
+              };
+
+              const startVoiceCapture = async (stream) => {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                const context = new AudioContextClass();
+                await context.resume();
+                const source = context.createMediaStreamSource(stream);
+                const analyser = context.createAnalyser();
+                analyser.fftSize = 128;
+                analyser.smoothingTimeConstant = 0.78;
+                source.connect(analyser);
+
+                // ScriptProcessor is deliberately used only for the first lived local-ASR circuit:
+                // it exposes raw PCM without another browser recognition provider. Once the circuit
+                // is proven, AudioWorklet can replace this concrete capture mechanism without
+                // changing VoiceInput or local-ASR ownership.
+                const processor = context.createScriptProcessor(4096, 1, 1);
+                const silentGain = context.createGain();
+                silentGain.gain.value = 0;
+                source.connect(processor);
+                processor.connect(silentGain);
+                silentGain.connect(context.destination);
+
+                dictation.sampleRate = context.sampleRate;
+                dictation.pcmChunks = [];
+                dictation.sampleCount = 0;
+                processor.onaudioprocess = (event) => {
+                  if (!dictation.desiredActive) return;
+                  const input = event.inputBuffer.getChannelData(0);
+                  const copy = new Float32Array(input.length);
+                  copy.set(input);
+                  dictation.pcmChunks.push(copy);
+                  dictation.sampleCount += copy.length;
+
+                  let power = 0;
+                  for (let index = 0; index < input.length; index += 1) {
+                    power += input[index] * input[index];
+                  }
+                  const rms = Math.sqrt(power / Math.max(1, input.length));
+                  const threshold = Math.max(0.008, dictation.noiseFloor * 3.0);
+                  const now = performance.now();
+                  if (rms >= threshold) {
+                    dictation.speechActive = true;
+                    dictation.speechSinceLastCommit = true;
+                    dictation.lastSpeechAt = now;
+                  } else {
+                    if (rms < threshold * 0.7) {
+                      dictation.noiseFloor =
+                        Math.max(0.001, Math.min(0.03, dictation.noiseFloor * 0.97 + rms * 0.03));
+                    }
+                    if (
+                      dictation.speechActive &&
+                      dictation.lastSpeechAt > 0 &&
+                      now - dictation.lastSpeechAt >= 220
+                    ) {
+                      dictation.speechActive = false;
+                    }
+                  }
+                };
+
+                dictation.progressiveTimer = window.setInterval(() => {
+                  void maybeProgressiveTranscription();
+                }, 250);
+
+                dictation.audioContext = context;
+                dictation.audioSource = source;
+                dictation.analyser = analyser;
+                dictation.processor = processor;
+                dictation.silentGain = silentGain;
+                drawVoiceWaveform();
+              };
+
+              const appendTranscriptSegment = (existing, next) => {
+                const segment = String(next ?? '').trim();
+                if (!segment) return existing;
+                return existing ? existing + ' ' + segment : segment;
+              };
+
+              const projectDictationIntoDraft = () => {
+                const spoken = [dictation.finalTranscript, dictation.interimTranscript]
+                  .map((value) => String(value ?? '').trim())
+                  .filter(Boolean)
+                  .join(' ');
+                const prefix = dictation.draftPrefix;
+                ui.draft.value =
+                  prefix +
+                  (prefix && spoken && !/\s$/u.test(prefix) ? ' ' : '') +
+                  spoken;
+                sizeDraft();
+              };
+
+              const encodeCapturedPcmWav = () => {
+                const sampleRate = Number(dictation.sampleRate);
+                const sampleCount = Number(dictation.sampleCount);
+                if (!Number.isFinite(sampleRate) || sampleRate <= 0 || sampleCount <= 0) return null;
+
+                const bytes = new ArrayBuffer(44 + sampleCount * 2);
+                const view = new DataView(bytes);
+                const writeText = (offset, text) => {
+                  for (let index = 0; index < text.length; index += 1) {
+                    view.setUint8(offset + index, text.charCodeAt(index));
+                  }
+                };
+
+                writeText(0, 'RIFF');
+                view.setUint32(4, 36 + sampleCount * 2, true);
+                writeText(8, 'WAVE');
+                writeText(12, 'fmt ');
+                view.setUint32(16, 16, true);
+                view.setUint16(20, 1, true);
+                view.setUint16(22, 1, true);
+                view.setUint32(24, sampleRate, true);
+                view.setUint32(28, sampleRate * 2, true);
+                view.setUint16(32, 2, true);
+                view.setUint16(34, 16, true);
+                writeText(36, 'data');
+                view.setUint32(40, sampleCount * 2, true);
+
+                let sampleIndex = 0;
+                for (const chunk of dictation.pcmChunks) {
+                  for (let index = 0; index < chunk.length; index += 1) {
+                    const sample = Math.max(-1, Math.min(1, chunk[index]));
+                    view.setInt16(
+                      44 + sampleIndex * 2,
+                      sample < 0 ? sample * 0x8000 : sample * 0x7fff,
+                      true
+                    );
+                    sampleIndex += 1;
+                  }
+                }
+                return new Uint8Array(bytes);
+              };
+
+              const clearCapturedPcm = (preserveSampleRate = false) => {
+                dictation.pcmChunks = [];
+                dictation.sampleCount = 0;
+                if (!preserveSampleRate) dictation.sampleRate = 0;
+                dictation.progressiveLastSampleCount = 0;
+              };
+
+              const voiceInputFailureReason = (error, stage) => {
+                const code = String(error ?? '');
+                if (
+                  stage === 'microphone' &&
+                  (
+                    code === 'not-allowed' ||
+                    code === 'service-not-allowed' ||
+                    code === 'NotAllowedError' ||
+                    code === 'Permission denied'
+                  )
+                ) {
+                  return voiceInput.failureReason.microphonePermissionRequired;
+                }
+                if (
+                  stage === 'microphone' &&
+                  (code === 'audio-capture' || code === 'NotFoundError')
+                ) {
+                  return voiceInput.failureReason.microphoneUnavailable;
+                }
+                if (
+                  stage === 'local-asr' ||
+                  stage === 'local-asr-prepare' ||
+                  code === 'AbortError' ||
+                  code === 'InvalidStateError'
+                ) {
+                  return voiceInput.failureReason.recognitionStopped;
+                }
+                return voiceInput.failureReason.unknown;
+              };
+
+              const settleVoiceInputFailure = async (semanticState) => {
+                dictation.desiredActive = false;
+                applyVoiceInputSemanticState(semanticState);
+                await stopVoiceCapture();
+                clearCapturedPcm();
+                dictation.language = null;
+                renderVoiceInput();
+              };
+
+              const failVoiceInput = async (failureReasonRef, options = {}) => {
+                const semanticState =
+                  voiceInput.failureStateByReason[failureReasonRef] ??
+                  voiceInput.failureStateByReason[voiceInput.failureReason.unknown];
+                if (!semanticState) return;
+                reportFact('VOICE_INPUT_FAILURE_OBSERVED', {
+                  stage: String(options.stage ?? 'unknown'),
+                  code: String(options.code ?? 'unknown'),
+                  failureReasonRef,
+                  stateRef: dictation.stateRef ?? ''
+                });
+                await settleVoiceInputFailure(semanticState);
+              };
+
+              const prepareLocalAsr = async () => {
+                const response = await effectFetch(service.localAsrPreparePath, {
+                  method: 'POST',
+                  headers: { accept: 'application/json' }
+                });
+                if (!response.ok) {
+                  await readJson(response);
+                }
+              };
+
+              const transcribeCapturedAudio = async (
+                language,
+                dictationPass = ${jsString(VexLifeProdServiceContract.LocalAsrDictationPass.Final.wire)}
+              ) => {
+                const wav = encodeCapturedPcmWav();
+                if (!wav) return null;
+                const response = await effectFetch(service.localAsrTranscribePath, {
+                  method: 'POST',
+                  headers: {
+                    accept: 'application/json',
+                    'content-type': 'audio/wav',
+                    'x-vexlife-language': language.code,
+                    ${jsString(VexLifeProdServiceContract.LocalAsrDictationPassHeader)}: dictationPass
+                  },
+                  body: wav
+                });
+                const result = await readJson(response);
+                const projection = state.localAsr;
+                if (
+                  !projection ||
+                  result.providerRef !== projection.selectedProviderRef ||
+                  result.modelRef !== projection.selectedModelRef
+                ) {
+                  throw new Error('Local speech recognition returned from a provider other than the selected one.');
+                }
+                return String(result.transcript ?? '').trim();
+              };
+
+              const normalizedHypothesis = (value) =>
+                String(value ?? '')
+                  .trim()
+                  .replace(/\s+/gu, ' ');
+
+              const endsAtStrongSentenceBoundary = (value) =>
+                /[.!?。！？؟।॥][\s"'”’）)\]]*$/u.test(String(value ?? '').trim());
+
+              const endsWithEnglishFiller = (value, language) =>
+                language?.code === 'en' &&
+                /(?:^|[\s,])(?:um+|uh+|erm+|hmm+)[.!?…]*$/iu.test(String(value ?? '').trim());
+
+              const maybeProgressiveTranscription = () => {
+                if (
+                  !dictation.desiredActive ||
+                  dictation.progressiveInFlight ||
+                  !dictation.speechSinceLastCommit ||
+                  !dictation.language ||
+                  dictation.sampleRate <= 0 ||
+                  performance.now() < dictation.progressiveCooldownUntil
+                ) {
+                  return;
+                }
+
+                const now = performance.now();
+                const minimumSamples = dictation.sampleRate * 0.8;
+                const newSamples =
+                  dictation.sampleCount - dictation.progressiveLastSampleCount;
+                if (dictation.sampleCount < minimumSamples || newSamples < dictation.sampleRate * 0.35) {
+                  return;
+                }
+
+                const silenceMs =
+                  dictation.lastSpeechAt > 0
+                    ? Math.max(0, now - dictation.lastSpeechAt)
+                    : 0;
+                const periodicWhileSpeaking =
+                  dictation.speechActive &&
+                  now - dictation.progressiveLastAt >= 1400;
+                const refineThinkingPause =
+                  !dictation.speechActive &&
+                  silenceMs >= 550 &&
+                  now - dictation.progressiveLastAt >= 500;
+
+                if (!periodicWhileSpeaking && !refineThinkingPause) return;
+
+                const requestSession = dictation.session;
+                const requestedSamples = dictation.sampleCount;
+                dictation.progressiveLastAt = now;
+                dictation.progressiveLastSampleCount = requestedSamples;
+                dictation.progressiveInFlight = true;
+
+                const run = (async () => {
+                  try {
+                    const transcript =
+                      await transcribeCapturedAudio(
+                        dictation.language,
+                        ${jsString(VexLifeProdServiceContract.LocalAsrDictationPass.Partial.wire)}
+                      );
+                    if (
+                      !transcript ||
+                      requestSession !== dictation.session ||
+                      !dictation.desiredActive
+                    ) {
+                      return;
+                    }
+
+                    const normalized = normalizedHypothesis(transcript);
+                    if (normalized === normalizedHypothesis(dictation.lastHypothesis)) {
+                      dictation.stableHypothesisPasses += 1;
+                    } else {
+                      dictation.lastHypothesis = transcript;
+                      dictation.stableHypothesisPasses = 1;
+                    }
+
+                    dictation.interimTranscript = transcript;
+                    projectDictationIntoDraft();
+
+                    const completedAt = performance.now();
+                    const silenceAfterResult =
+                      dictation.lastSpeechAt > 0
+                        ? Math.max(0, completedAt - dictation.lastSpeechAt)
+                        : 0;
+                    const noNewAudio = dictation.sampleCount === requestedSamples;
+                    const stable = dictation.stableHypothesisPasses >= 2;
+                    const sentenceBoundary = endsAtStrongSentenceBoundary(transcript);
+                    const fillerTail = endsWithEnglishFiller(transcript, dictation.language);
+
+                    const sentenceSettled =
+                      noNewAudio &&
+                      !dictation.speechActive &&
+                      silenceAfterResult >= 900 &&
+                      sentenceBoundary &&
+                      stable &&
+                      !fillerTail;
+                    const longPauseSettled =
+                      noNewAudio &&
+                      !dictation.speechActive &&
+                      silenceAfterResult >= 2600 &&
+                      stable &&
+                      !fillerTail;
+
+                    if (sentenceSettled || longPauseSettled) {
+                      dictation.finalTranscript =
+                        appendTranscriptSegment(dictation.finalTranscript, transcript);
+                      dictation.interimTranscript = '';
+                      dictation.lastHypothesis = '';
+                      dictation.stableHypothesisPasses = 0;
+                      dictation.speechSinceLastCommit = false;
+                      clearCapturedPcm(true);
+                      projectDictationIntoDraft();
+                    }
+                  } catch {
+                    // Progressive recognition is an enhancement. A partial-pass failure must never
+                    // kill the microphone session or the proven final Stop -> transcript fallback.
+                    dictation.progressiveCooldownUntil = performance.now() + 3000;
+                  } finally {
+                    if (requestSession === dictation.session) {
+                      dictation.progressiveInFlight = false;
+                    }
+                  }
+                })();
+
+                dictation.progressivePromise = run;
+              };
+
+              const realizeEndLocalDictation = async (abort = false) => {
+                const language = dictation.language ?? voiceInputLanguage();
+                dictation.desiredActive = false;
+                dictation.session += 1;
+                const progressive = dictation.progressivePromise;
+                await stopVoiceCapture();
+                if (progressive) await progressive.catch(() => {});
+
+                if (abort) {
+                  clearCapturedPcm();
+                  dictation.language = null;
+                  observeVoiceInputCapability(true);
+                  renderVoiceInput();
+                  return;
+                }
+
+                try {
+                  const transcript =
+                    dictation.speechSinceLastCommit
+                      ? await transcribeCapturedAudio(language)
+                      : null;
+                  if (transcript) {
+                    dictation.finalTranscript =
+                      appendTranscriptSegment(dictation.finalTranscript, transcript);
+                    dictation.interimTranscript = '';
+                    projectDictationIntoDraft();
+                  }
+                  clearCapturedPcm();
+                  dictation.language = null;
+                  await loadLocalAsr().catch(() => {});
+                  observeVoiceInputCapability(true);
+                  renderVoiceInput();
+                } catch (error) {
+                  const code =
+                    error instanceof Error
+                      ? error.message
+                      : String(error);
+                  await failVoiceInput(
+                    voiceInputFailureReason(code, 'local-asr'),
+                    { stage: 'local-asr', code }
+                  );
+                }
+              };
+
+              const realizeBeginLocalDictation = async (language) => {
+                if (
+                  !language ||
+                  !localAsrAvailableForLanguage(language) ||
+                  !navigator.mediaDevices?.getUserMedia ||
+                  !(window.AudioContext || window.webkitAudioContext)
+                ) {
+                  dictation.desiredActive = false;
+                  observeVoiceInputCapability(true);
+                  renderVoiceInput();
+                  return;
+                }
+
+                const session = dictation.session + 1;
+                dictation.session = session;
+                dictation.desiredActive = true;
+                dictation.language = language;
+                dictation.draftPrefix = ui.draft.value;
+                dictation.finalTranscript = '';
+                dictation.interimTranscript = '';
+                dictation.progressivePromise = null;
+                dictation.progressiveInFlight = false;
+                dictation.progressiveCooldownUntil = 0;
+                dictation.progressiveLastAt = 0;
+                dictation.progressiveLastSampleCount = 0;
+                dictation.lastSpeechAt = 0;
+                dictation.speechActive = false;
+                dictation.speechSinceLastCommit = false;
+                dictation.noiseFloor = 0.004;
+                dictation.lastHypothesis = '';
+                dictation.stableHypothesisPasses = 0;
+                clearCapturedPcm();
+
+                reportFact('VOICE_INPUT_MICROPHONE_REQUESTED', {
+                  language: language.code
+                });
+
+                const providerReady = prepareLocalAsr();
+
+                let stream;
+                try {
+                  stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                      echoCancellation: true,
+                      noiseSuppression: true,
+                      autoGainControl: true
+                    },
+                    video: false
+                  });
+                } catch (error) {
+                  void providerReady.catch(() => {});
+                  if (session !== dictation.session) return;
+                  const code =
+                    error instanceof DOMException
+                      ? error.name
+                      : error instanceof Error
+                        ? error.message
+                        : error;
+                  await failVoiceInput(
+                    voiceInputFailureReason(code, 'microphone'),
+                    { stage: 'microphone', code }
+                  );
+                  return;
+                }
+
+                if (!dictation.desiredActive || session !== dictation.session) {
+                  for (const track of stream.getTracks()) track.stop();
+                  return;
+                }
+
+                reportFact('VOICE_INPUT_MICROPHONE_GRANTED', {
+                  language: language.code
+                });
+                dictation.stream = stream;
+
+                try {
+                  await providerReady;
+                } catch (error) {
+                  if (session !== dictation.session) return;
+                  const code =
+                    error instanceof Error
+                      ? error.message
+                      : String(error);
+                  await failVoiceInput(
+                    voiceInputFailureReason(code, 'local-asr-prepare'),
+                    { stage: 'local-asr-prepare', code }
+                  );
+                  return;
+                }
+
+                if (!dictation.desiredActive || session !== dictation.session) return;
+
+                try {
+                  await startVoiceCapture(stream);
+                } catch (error) {
+                  const code =
+                    error instanceof DOMException
+                      ? error.name
+                      : error instanceof Error
+                        ? error.message
+                        : error;
+                  await failVoiceInput(
+                    voiceInput.failureReason.unknown,
+                    { stage: 'audio-capture', code }
+                  );
+                  return;
+                }
+
+                if (!dictation.desiredActive || session !== dictation.session) return;
+
+                reportFact('VOICE_INPUT_AUDIO_CAPTURE_STARTED', {
+                  language: language.code,
+                  sampleRate: String(dictation.sampleRate),
+                  providerRef: String(state.localAsr?.selectedProviderRef ?? ''),
+                  modelRef: String(state.localAsr?.selectedModelRef ?? '')
+                });
+                applyVoiceInputSemanticState(voiceInput.recognitionStartedState);
+                renderVoiceInput();
+              };
+
+              const applyVoiceInputControl = async (options = {}) => {
+                if (state.sendInFlight || state.privateInFlight) return;
+
+                if (
+                  !dictation.desiredActive &&
+                  (dictation.stateRef === null ||
+                    dictation.stateRef === voiceInput.state.ready ||
+                    dictation.stateRef === voiceInput.state.held)
+                ) {
+                  observeVoiceInputCapability();
+                }
+
+                const display = voiceInputDisplay();
+                const controlRef = options.controlRef ?? display?.primaryControlRef ?? null;
+                if (!controlRef) {
+                  renderVoiceInput();
+                  return;
+                }
+
+                const act = voiceInputActFor(controlRef);
+                if (!act) {
+                  renderVoiceInput();
+                  return;
+                }
+
+                reportFact('VOICE_INPUT_CONTROL_EMITTED', {
+                  controlRef,
+                  currentStateRef: dictation.stateRef ?? '',
+                  admittedStateRef: act.admittedState?.stateRef ?? '',
+                  effectRef: act.effectRef ?? ''
+                });
+                if (act.admittedState) {
+                  applyVoiceInputSemanticState(act.admittedState);
+                }
+                renderVoiceInput();
+
+                if (act.effectRef === voiceInput.effect.beginLocalDictation) {
+                  const language = voiceInputLanguage();
+                  if (!language) {
+                    observeVoiceInputCapability();
+                    renderVoiceInput();
+                    return;
+                  }
+                  await realizeBeginLocalDictation(language);
+                } else if (act.effectRef === voiceInput.effect.endLocalDictation) {
+                  await realizeEndLocalDictation(Boolean(options.abort));
+                }
+              };
+
               const releaseAlertsRef = ${jsString(VexLifeWebP1.ReleaseAlerts.identity.ref)};
               const QUICK_ACTIONS = [
                 { key: 'journeys', label: 'Journeys', icon: '<path d="M4 15.5c0-2 1.6-3 3.4-3.4l3.4-.8 2.2-4.3c.4-.8 1.4-1 2-.3l.6.6c.5.5.5 1.3 0 1.8l-1 1.2 2.8.8c1.4.4 2.4 1.7 2.4 3.2v1.2H4z"/><path d="M8 12l1.4 2M11 11.4l1.3 2"/>' },
@@ -351,6 +1370,23 @@ object VexLifeWebP1RuntimeArtifacts {
                   throw error;
                 }
                 return value;
+              };
+
+              const effectFetch = async (path, init = {}) => {
+                const headers = new Headers(init.headers || {});
+                if (service.presentationSourceSha) {
+                  headers.set(service.presentationSourceHeader, service.presentationSourceSha);
+                }
+                const response = await fetch(path, { ...init, headers });
+                if (response.status === 409) {
+                  let value = null;
+                  try { value = await response.clone().json(); } catch {}
+                  if (value?.code === service.stalePresentationCode) {
+                    notify(String(value?.message ?? 'VexLife updated while this page was open.') + ' Reloading automatically…');
+                    window.setTimeout(() => window.location.reload(), 2500);
+                  }
+                }
+                return response;
               };
 
               const readEventStream = async (response, onEvent) => {
@@ -959,12 +1995,14 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderLanguage();
                 renderSpeechVoices();
                 renderSpeech();
+                observeVoiceInputCapability();
+                renderVoiceInput();
                 return state.settings;
               };
 
               const chooseLanguage = async (code) => {
                 try {
-                  const response = await fetch(service.settingsPath, {
+                  const response = await effectFetch(service.settingsPath, {
                     method: 'POST',
                     headers: { 'content-type': 'application/json', accept: 'application/json' },
                     body: JSON.stringify({ replyLanguage: code })
@@ -974,6 +2012,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   renderLanguage();
                   renderSpeechVoices();
                   renderSpeech();
+                  await loadLocalAsr().catch(() => {
+                    observeVoiceInputCapability();
+                    renderVoiceInput();
+                  });
                   const name = state.settings.languages.find((language) => language.code === code)?.name ?? code;
                   notify('Vex will reply in ' + name + '.');
                 } catch (error) {
@@ -983,7 +2025,7 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const releaseAlertControl = async (entry, controlRef) => {
                 try {
-                  const response = await fetch(service.releaseAlertsControlPath, {
+                  const response = await effectFetch(service.releaseAlertsControlPath, {
                     method: 'POST',
                     headers: { 'content-type': 'application/json', accept: 'application/json' },
                     body: JSON.stringify({
@@ -2346,7 +3388,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.privateInFlight = true;
                 renderPrivate();
                 try {
-                  const response = await fetch(path, {
+                  const response = await effectFetch(path, {
                     method: 'POST',
                     headers: { 'content-type': 'application/json', accept: 'application/json' },
                     body: JSON.stringify(body ?? {})
@@ -2576,6 +3618,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   : state.sendInFlight || (!state.pending && !ui.draft.value.trim()));
                 ui.responseProgress.hidden = true;
                 renderTicket();
+                renderVoiceInput();
               };
 
               const setMeter = (meter, parts, text, label, known = true) => {
@@ -2715,7 +3758,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderVision();
                 renderTimeline();
                 renderComposer();
+                renderVoiceInput();
                 renderSettings();
+                renderLocalAsr();
                 renderMemory();
               };
 
@@ -2783,6 +3828,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderDiagnostics();
                 renderReleaseAlerts();
                 renderQuickActions();
+                renderLocalAsr();
+                renderVoiceInput();
               };
 
               // The presentation reports only what it observed itself (what it showed, what it could
@@ -2790,7 +3837,7 @@ object VexLifeWebP1RuntimeArtifacts {
               // those facts belong to their owners. A failed report changes nothing.
               const reportFact = (fact, refs = {}) => {
                 try {
-                  void fetch(service.chronologyPath, {
+                  void effectFetch(service.chronologyPath, {
                     method: 'POST',
                     headers: { 'content-type': 'application/json' },
                     body: JSON.stringify({ fact, refs })
@@ -2852,7 +3899,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.diagnosticsInFlight = true;
                 renderDiagnostics();
                 try {
-                  const response = await fetch(service.diagnosticsControlPath, {
+                  const response = await effectFetch(service.diagnosticsControlPath, {
                     method: 'POST',
                     headers: { 'content-type': 'application/json', accept: 'application/json' },
                     body: JSON.stringify({ controlRef })
@@ -3165,7 +4212,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.modelImportInFlight = true;
                 renderModels();
                 try {
-                  const response = await fetch(service.modelsImportCheckPath, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify({ sourceUrl }) });
+                  const response = await effectFetch(service.modelsImportCheckPath, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify({ sourceUrl }) });
                   state.models = await readJson(response);
                 } catch { notify(t('workspace.status.model-import-unavailable')); }
                 finally { state.modelImportInFlight = false; renderModels(); }
@@ -3178,7 +4225,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.modelImportInFlight = true;
                 renderModels();
                 try {
-                  const response = await fetch(service.modelsImportAddPath, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify({ importRef }) });
+                  const response = await effectFetch(service.modelsImportAddPath, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify({ importRef }) });
                   state.models = await readJson(response);
                 } catch { notify(t('workspace.status.model-import-unavailable')); }
                 finally { state.modelImportInFlight = false; renderModels(); }
@@ -3193,7 +4240,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 try {
                   const body = { controlRef, handle };
                   if (promptCacheEntries !== null) body.promptCacheEntries = promptCacheEntries;
-                  const response = await fetch(service.modelsControlPath, {
+                  const response = await effectFetch(service.modelsControlPath, {
                     method: 'POST',
                     headers: { 'content-type': 'application/json', accept: 'application/json' },
                     body: JSON.stringify(body)
@@ -3217,6 +4264,332 @@ object VexLifeWebP1RuntimeArtifacts {
                   if (state.models?.downloading || state.models?.switching) {
                     window.setTimeout(() => { void loadModels().catch(() => {}); }, 1000);
                   }
+                }
+              };
+
+              const localAsrSelectionValue = (option) =>
+                JSON.stringify([option.providerRef, option.modelRef]);
+
+              const localAsrSpokenLanguageValue = (choice) =>
+                JSON.stringify([choice.mode, choice.languageCode ?? null]);
+
+              const localAsrSpokenLanguageLabel = (choice) => {
+                if (choice.labelKey) {
+                  return t(choice.labelKey)
+                    .replace('{language}', String(choice.languageLabel ?? ''));
+                }
+                return String(choice.languageLabel ?? choice.languageCode ?? '');
+              };
+
+              const localAsrArtifactStatusText = (option) => {
+                if (option.downloadedBytes != null) {
+                  return t('workspace.status.model-downloading')
+                    .replace('{done}', gibText(option.downloadedBytes))
+                    .replace('{total}', gibText(option.modelBytes));
+                }
+                switch (option.artifactState) {
+                  case ${jsString(VexLifeLocalAsrModelsFamily.ArtifactPresent)}:
+                    return t('workspace.status.model-on-this-mac');
+                  case ${jsString(VexLifeLocalAsrModelsFamily.ArtifactPartial)}:
+                    return t('workspace.status.model-partly-downloaded');
+                  case ${jsString(VexLifeLocalAsrModelsFamily.ArtifactDamaged)}:
+                    return t('workspace.status.model-damaged');
+                  default:
+                    return t('workspace.status.model-not-downloaded');
+                }
+              };
+
+              const renderLocalAsr = () => {
+                if (!ui.localAsrSelection) return;
+                const projection = state.localAsr;
+                ui.localAsrSelection.replaceChildren();
+                ui.localAsrModelsList?.replaceChildren();
+                ui.localAsrSpokenLanguage?.replaceChildren();
+                if (!projection) {
+                  ui.localAsrSelection.disabled = true;
+                  if (ui.localAsrSpokenLanguage) {
+                    ui.localAsrSpokenLanguage.disabled = true;
+                  }
+                  if (ui.localAsrStatus) {
+                    ui.localAsrStatus.textContent = t('workspace.status.local-asr-unavailable');
+                  }
+                  observeVoiceInputCapability();
+                  renderVoiceInput();
+                  return;
+                }
+
+                for (const option of projection.options ?? []) {
+                  const node = document.createElement('option');
+                  node.value = localAsrSelectionValue(option);
+                  node.textContent =
+                    option.providerLabel + ' · ' + option.modelLabel + ' · ' +
+                    localAsrArtifactStatusText(option);
+                  node.selected =
+                    option.providerRef === projection.selectedProviderRef &&
+                    option.modelRef === projection.selectedModelRef;
+                  node.disabled =
+                    !node.selected &&
+                    !(option.controls ?? []).some(
+                      (control) =>
+                        control.controlRef ===
+                        ${jsString(VexLifeLocalAsrModelsFamily.ControlUse)}
+                    );
+                  ui.localAsrSelection.append(node);
+
+                  if (ui.localAsrModelsList) {
+                    const row = document.createElement('div');
+                    row.className = 'model-row';
+                    row.dataset.chosen = String(Boolean(option.selected));
+
+                    const name = document.createElement('div');
+                    name.className = 'model-name';
+                    name.textContent = option.providerLabel + ' · ' + option.modelLabel;
+
+                    const facts = document.createElement('div');
+                    facts.className = 'model-facts';
+                    facts.textContent =
+                      localAsrArtifactStatusText(option) +
+                      ' · ' +
+                      formatBytes(option.modelBytes);
+
+                    const notes = document.createElement('div');
+                    notes.className = 'model-notes';
+                    notes.textContent =
+                      option.selected
+                        ? t('workspace.label.model-chosen')
+                        : '';
+
+                    const controls = document.createElement('div');
+                    controls.className = 'model-controls';
+                    for (const control of option.controls ?? []) {
+                      const button = document.createElement('button');
+                      button.type = 'button';
+                      button.className = 'outline-button';
+                      button.textContent = t(control.labelKey);
+                      button.disabled = state.localAsrInFlight || voiceInputSessionOwnsState();
+                      button.addEventListener('click', () => {
+                        void localAsrModelControl(control.controlRef, option.modelRef);
+                      });
+                      controls.append(button);
+                    }
+
+                    row.append(name, facts, notes, controls);
+                    ui.localAsrModelsList.append(row);
+                  }
+                }
+
+                if (ui.localAsrStorageNote) {
+                  ui.localAsrStorageNote.textContent =
+                    projection.freeStorageBytes == null
+                      ? ''
+                      : t('workspace.label.model-free-space')
+                          .replace('{free}', gibText(projection.freeStorageBytes));
+                }
+
+                if (ui.localAsrSpokenLanguage) {
+                  for (const choice of projection.spokenLanguageChoices ?? []) {
+                    const node = document.createElement('option');
+                    node.value = localAsrSpokenLanguageValue(choice);
+                    node.textContent = localAsrSpokenLanguageLabel(choice);
+                    node.selected = Boolean(choice.selected);
+                    node.disabled = !choice.supportedBySelectedModel && !choice.selected;
+                    ui.localAsrSpokenLanguage.append(node);
+                  }
+                }
+
+                const selected = selectedLocalAsrOption();
+                ui.localAsrSelection.disabled =
+                  state.localAsrInFlight ||
+                  voiceInputSessionOwnsState() ||
+                  !(projection.options ?? []).length;
+                if (ui.localAsrSpokenLanguage) {
+                  ui.localAsrSpokenLanguage.disabled =
+                    state.localAsrInFlight ||
+                    voiceInputSessionOwnsState() ||
+                    !(projection.spokenLanguageChoices ?? []).length;
+                }
+
+                if (ui.localAsrStatus) {
+                  if (!selected) {
+                    ui.localAsrStatus.textContent = t('workspace.status.local-asr-unavailable');
+                  } else if (selected.currentState === 'READY') {
+                    ui.localAsrStatus.textContent =
+                      t('workspace.status.local-asr-ready')
+                        .replace('{provider}', selected.providerLabel)
+                        .replace('{model}', selected.modelLabel)
+                        .replace('{size}', formatBytes(selected.modelBytes));
+                  } else {
+                    const statusKey =
+                      selected.currentDetailRef === 'PROVIDER_SOURCE_NOT_CURRENT'
+                        ? 'workspace.status.local-asr-provider-not-current'
+                        : selected.currentDetailRef === 'PROVIDER_EXECUTABLE_UNAVAILABLE'
+                          ? 'workspace.status.local-asr-runtime-unavailable'
+                          : selected.currentDetailRef === 'MODEL_UNAVAILABLE'
+                            ? 'workspace.status.local-asr-model-unavailable'
+                            : selected.currentDetailRef === 'MODEL_DIGEST_NOT_CURRENT'
+                              ? 'workspace.status.local-asr-model-not-current'
+                              : 'workspace.status.local-asr-unavailable';
+                    ui.localAsrStatus.textContent = t(statusKey);
+                  }
+                }
+
+                observeVoiceInputCapability();
+                renderVoiceInput();
+              };
+
+              const loadLocalAsr = async () => {
+                const response = await fetch(service.localAsrPath, {
+                  headers: { accept: 'application/json' },
+                  cache: 'no-store'
+                });
+                state.localAsr = await readJson(response);
+                renderLocalAsr();
+                if (
+                  (state.localAsr?.options ?? []).some(
+                    (option) => option.downloadedBytes != null
+                  )
+                ) {
+                  window.setTimeout(() => {
+                    void loadLocalAsr().catch(() => {});
+                  }, 1000);
+                }
+                return state.localAsr;
+              };
+
+              const selectLocalAsr = async (providerRef, modelRef) => {
+                if (state.localAsrInFlight) return;
+                if (voiceInputSessionOwnsState()) {
+                  if (dictation.desiredActive) {
+                    await applyVoiceInputControl({
+                      controlRef: voiceInput.control.stop,
+                      abort: true
+                    });
+                  }
+                  if (voiceInputSessionOwnsState()) return;
+                }
+                state.localAsrInFlight = true;
+                renderLocalAsr();
+                try {
+                  const response = await effectFetch(service.localAsrPath, {
+                    method: 'POST',
+                    headers: {
+                      'content-type': 'application/json',
+                      accept: 'application/json'
+                    },
+                    body: JSON.stringify({ providerRef, modelRef })
+                  });
+                  state.localAsr = await readJson(response);
+                  const selected = selectedLocalAsrOption();
+                  notify(
+                    selected
+                      ? t('workspace.status.local-asr-selected')
+                          .replace('{provider}', selected.providerLabel)
+                          .replace('{model}', selected.modelLabel)
+                      : t('workspace.status.local-asr-unavailable')
+                  );
+                } catch (error) {
+                  notify(
+                    error instanceof Error
+                      ? error.message
+                      : t('workspace.status.local-asr-unavailable')
+                  );
+                } finally {
+                  state.localAsrInFlight = false;
+                  renderLocalAsr();
+                }
+              };
+
+              const localAsrModelControl = async (controlRef, modelRef) => {
+                if (state.localAsrInFlight) return;
+                if (
+                  controlRef ===
+                    ${jsString(VexLifeLocalAsrModelsFamily.ControlRemove)} &&
+                  !window.confirm(t('workspace.button.model-remove') + '?')
+                ) {
+                  return;
+                }
+                if (voiceInputSessionOwnsState()) {
+                  if (dictation.desiredActive) {
+                    await applyVoiceInputControl({
+                      controlRef: voiceInput.control.stop,
+                      abort: true
+                    });
+                  }
+                  if (voiceInputSessionOwnsState()) return;
+                }
+                state.localAsrInFlight = true;
+                renderLocalAsr();
+                try {
+                  const response = await effectFetch(service.localAsrModelControlPath, {
+                    method: 'POST',
+                    headers: {
+                      'content-type': 'application/json',
+                      accept: 'application/json'
+                    },
+                    body: JSON.stringify({
+                      controlRef: String(controlRef),
+                      modelRef: String(modelRef)
+                    })
+                  });
+                  state.localAsr = await readJson(response);
+                  observeVoiceInputCapability();
+                } catch (error) {
+                  notify(
+                    error instanceof Error
+                      ? error.message
+                      : t('workspace.status.model-control-not-lawful')
+                  );
+                } finally {
+                  state.localAsrInFlight = false;
+                  renderLocalAsr();
+                  if (
+                    (state.localAsr?.options ?? []).some(
+                      (option) => option.downloadedBytes != null
+                    )
+                  ) {
+                    window.setTimeout(() => {
+                      void loadLocalAsr().catch(() => {});
+                    }, 1000);
+                  }
+                }
+              };
+
+              const selectLocalAsrSpokenLanguage = async (mode, languageCode) => {
+                if (state.localAsrInFlight) return;
+                if (voiceInputSessionOwnsState()) {
+                  if (dictation.desiredActive) {
+                    await applyVoiceInputControl({
+                      controlRef: voiceInput.control.stop,
+                      abort: true
+                    });
+                  }
+                  if (voiceInputSessionOwnsState()) return;
+                }
+                state.localAsrInFlight = true;
+                renderLocalAsr();
+                try {
+                  const response = await effectFetch(service.localAsrSpokenLanguagePath, {
+                    method: 'POST',
+                    headers: {
+                      'content-type': 'application/json',
+                      accept: 'application/json'
+                    },
+                    body: JSON.stringify({
+                      mode: String(mode),
+                      languageCode: languageCode == null ? null : String(languageCode)
+                    })
+                  });
+                  state.localAsr = await readJson(response);
+                  observeVoiceInputCapability();
+                } catch (error) {
+                  notify(
+                    error instanceof Error
+                      ? error.message
+                      : t('workspace.status.local-asr-unavailable')
+                  );
+                } finally {
+                  state.localAsrInFlight = false;
+                  renderLocalAsr();
                 }
               };
 
@@ -3253,7 +4626,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderVision();
 
                 try {
-                  const response = await fetch(service.visionControlPath, {
+                  const response = await effectFetch(service.visionControlPath, {
                     method: 'POST',
                     headers: { accept: 'application/json', 'content-type': 'application/json' },
                     body: JSON.stringify({ controlRef, requestRef })
@@ -3313,6 +4686,15 @@ object VexLifeWebP1RuntimeArtifacts {
                 const response = await fetch(service.contextPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.context = await readJson(response);
                 renderSettings();
+                if (state.context?.state === service.contextHeldUnsupportedState) {
+                  const schema = String(state.context.durablePromptReceiptSchema ?? 'unknown durable schema');
+                  notify(
+                    'This VexLife build cannot project the latest turn context (' +
+                    schema +
+                    '). Conversation, Models, diagnostics, and other independent surfaces remain available.'
+                  );
+                }
+                return state.context;
               };
 
               const completeCanonicalSend = async (result, streamed, preservedProcess = null) => {
@@ -3379,7 +4761,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 // already-failed attempt, or performs the originally intended Send if the first
                 // transport never reached it. It must never create a second model call for one
                 // already-completed/failed attempt.
-                const response = await fetch(service.sendPath, {
+                const response = await effectFetch(service.sendPath, {
                   method: 'POST',
                   headers: { accept: 'application/json', 'content-type': 'application/json' },
                   body: JSON.stringify(pending)
@@ -3449,7 +4831,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 render();
 
                 try {
-                  const response = await fetch(service.sendPath, {
+                  const response = await effectFetch(service.sendPath, {
                     method: 'POST',
                     headers: { accept: 'text/event-stream', 'content-type': 'application/json' },
                     body: JSON.stringify(pending)
@@ -3890,8 +5272,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderCompanionHead();
                 if (state.view === 'settings') {
                   renderSettings();
+                  renderLocalAsr();
                   void loadCurrentState().catch(() => {});
                   void loadMemory().catch(() => {});
+                  void loadLocalAsr().catch(() => {});
                 }
               });
 
@@ -3916,19 +5300,43 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderComposer();
               });
 
+              ui.voiceInput?.addEventListener('click', () => {
+                void applyVoiceInputControl();
+              });
+
               ui.composeForm.addEventListener('submit', (event) => {
                 event.preventDefault();
+                if (dictation.desiredActive) {
+                  void applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                }
                 void send();
               });
 
               ui.draft.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
                   event.preventDefault();
+                  if (dictation.desiredActive) {
+                    void applyVoiceInputControl({
+                      controlRef: voiceInput.control.stop,
+                      abort: true
+                    });
+                  }
                   void send();
                 }
               });
 
-              ui.draft.addEventListener('input', () => sizeDraft());
+              ui.draft.addEventListener('input', () => {
+                if (dictation.desiredActive) {
+                  void applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                }
+                sizeDraft();
+              });
               ui.timeline.addEventListener('scroll', () => {
                 state.timelineScrollTop = ui.timeline.scrollTop;
                 state.timelineFollowTail = isElementAtBottom(ui.timeline);
@@ -3943,7 +5351,10 @@ object VexLifeWebP1RuntimeArtifacts {
                   if (!failed) return;
                   void send({
                     content: failed.content,
-                    browserContext: failed.browserContext
+                    // Try Again is one new Send, not a replay of the failed attempt. Re-read the
+                    // current explicit browser-context choice so navigation/unlocation cannot
+                    // smuggle stale page bytes into the successor attempt.
+                    browserContext: state.includePage ? state.browserContext : null
                   });
                   return;
                 }
@@ -4028,13 +5439,59 @@ object VexLifeWebP1RuntimeArtifacts {
               });
               window.addEventListener('resize', applySplit);
               document.addEventListener('visibilitychange', () => {
-                if (!document.hidden) void loadReleaseAlerts().catch(() => {});
+                if (document.hidden && dictation.desiredActive) {
+                  void applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                } else if (!document.hidden) {
+                  void loadReleaseAlerts().catch(() => {});
+                }
+              });
+
+              observeVoiceInputCapability();
+              renderVoiceInput();
+              // Local ASR currentness is independent from Conversation/Context/Release startup.
+              // One bounded retry covers setup/service convergence without creating stable polling.
+              void loadLocalAsr().catch(() => {
+                window.setTimeout(() => {
+                  void loadLocalAsr().catch(() => {
+                    observeVoiceInputCapability();
+                    renderVoiceInput();
+                  });
+                }, 1000);
               });
 
               void loadWorkspaceStrings().catch(() => applyStaticText());
               ui.modelImportCheck?.addEventListener('click', () => { void checkModelImport(); });
               ui.modelImportUrl?.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); void checkModelImport(); } });
               ui.modelImportAdd?.addEventListener('click', () => { void addModelImport(); });
+
+
+              ui.localAsrSelection?.addEventListener('change', () => {
+                try {
+                  const [providerRef, modelRef] =
+                    JSON.parse(ui.localAsrSelection.value);
+                  void selectLocalAsr(
+                    String(providerRef),
+                    String(modelRef)
+                  );
+                } catch {
+                  notify(t('workspace.status.local-asr-unavailable'));
+                }
+              });
+              ui.localAsrSpokenLanguage?.addEventListener('change', () => {
+                try {
+                  const [mode, languageCode] =
+                    JSON.parse(ui.localAsrSpokenLanguage.value);
+                  void selectLocalAsrSpokenLanguage(
+                    String(mode),
+                    languageCode == null ? null : String(languageCode)
+                  );
+                } catch {
+                  notify(t('workspace.status.local-asr-unavailable'));
+                }
+              });
 
               ui.diagnosticsEnhanced?.addEventListener('click', () => {
                 const controlRef = ui.diagnosticsEnhanced.dataset.controlRef;
@@ -4048,13 +5505,21 @@ object VexLifeWebP1RuntimeArtifacts {
                 loadSourceCurrentness(),
                 loadCurrentState(),
                 loadConversation(),
-                loadContext(),
                 loadVision()
               ])
                 .then(() => {
                   render();
                   navigate(browser.initialPageUrl);
                   renderApp();
+                  void loadContext().catch((error) => {
+                    state.context = null;
+                    renderSettings();
+                    notify(
+                      error instanceof Error
+                        ? 'Vex context is unavailable: ' + error.message
+                        : 'Vex context is unavailable in this build.'
+                    );
+                  });
                   void loadPrivate().catch(() => {});
                   void loadSettings().catch(() => {});
                   void loadMemory().catch(() => {});
