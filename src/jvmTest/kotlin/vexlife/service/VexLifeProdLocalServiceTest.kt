@@ -22,6 +22,7 @@ import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.companion.DirectCompanionConnection
 import vexlife.companion.DirectCompanionTurn
+import vexlife.companion.DirectTurnContextStore
 import vexlife.conversation.CanonicalLivedContextFixture
 import vexlife.conversation.DirectConversationStore
 import vexlife.home.CanonicalVexLifeHomeFixture
