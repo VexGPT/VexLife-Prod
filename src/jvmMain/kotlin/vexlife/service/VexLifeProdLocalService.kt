@@ -2052,6 +2052,10 @@ class VexLifeProdLocalService private constructor(
             schemaVersion = VexLifeProdServiceContract.MemoryProjectionSchema,
             state = state.stateRef,
             display = VexLifeMemoryFamily.displayStateFor(state),
+            memoryContextRef = context?.memoryContextRef,
+            memoryContextFingerprint = context?.semanticFingerprint,
+            currentDailyStratumRef = context?.currentDailyStratumRef,
+            rememberedCount = context?.pages?.size ?: 0,
             effectsPerformed = false,
         )
     }
