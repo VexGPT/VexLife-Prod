@@ -1331,7 +1331,7 @@ class VexLifeProdLocalService private constructor(
         return VexLifeVisionFamily.observe(
             routeReachable = runtime != null,
             runtimeReadable = projected?.ok == true,
-            scopeState = projected?.projectionOrNull?.state,
+            scopeState = VexLifeVisionFamily.ScopeState.fromWire(projected?.projectionOrNull?.state),
         )
     }
 

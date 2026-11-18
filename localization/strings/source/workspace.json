@@ -106,7 +106,8 @@
     "surfaces": [
       "workspace.settings"
     ],
-    "dataKey": "diagnostics:control:START_ENHANCED"
+    "dataKey": "diagnostics:control:START_ENHANCED",
+    "lens": "element.vexlife-workspace.companion.settings.diagnostics.enhanced-capture"
   },
   "workspace.button.diagnostics-stop-enhanced": {
     "strings": {
@@ -117,7 +118,8 @@
     "surfaces": [
       "workspace.settings"
     ],
-    "dataKey": "diagnostics:control:STOP_ENHANCED"
+    "dataKey": "diagnostics:control:STOP_ENHANCED",
+    "lens": "element.vexlife-workspace.companion.settings.diagnostics.enhanced-capture"
   },
   "workspace.button.diagnostics-clear-history": {
     "strings": {
@@ -128,7 +130,8 @@
     "surfaces": [
       "workspace.settings"
     ],
-    "dataKey": "diagnostics:control:CLEAR_HISTORY"
+    "dataKey": "diagnostics:control:CLEAR_HISTORY",
+    "lens": "element.vexlife-workspace.companion.settings.diagnostics.clear-history"
   },
   "workspace.button.diagnostics-export": {
     "strings": {
@@ -139,7 +142,8 @@
     "surfaces": [
       "workspace.settings"
     ],
-    "dataKey": "diagnostics:export:DEBUG_ZIP"
+    "dataKey": "diagnostics:export:DEBUG_ZIP",
+    "lens": "element.vexlife-workspace.companion.settings.diagnostics.export"
   },
   "workspace.description.diagnostics-enhanced-note": {
     "strings": {
@@ -793,7 +797,8 @@
     "surfaces": [
       "workspace.settings"
     ],
-    "dataKey": "model:control:USE_RECOMMENDED_RUNTIME_CONFIGURATION"
+    "dataKey": "model:control:USE_RECOMMENDED_RUNTIME_CONFIGURATION",
+    "lens": "element.vexlife-workspace.companion.settings.models.configuration.use-recommended"
   },
   "workspace.button.model-start": {
     "strings": {
@@ -831,7 +836,8 @@
     "surfaces": [
       "workspace.settings"
     ],
-    "dataKey": "model:control:USE_MODEL"
+    "dataKey": "model:control:USE_MODEL",
+    "lens": "element.vexlife-workspace.companion.settings.models.configuration.start"
   },
   "workspace.button.model-apply-restart": {
     "strings": {
@@ -869,7 +875,8 @@
     "surfaces": [
       "workspace.settings"
     ],
-    "dataKey": "model:control:USE_MODEL"
+    "dataKey": "model:control:USE_MODEL",
+    "lens": "element.vexlife-workspace.companion.settings.models.configuration.start"
   },
   "workspace.button.model-select": {
     "strings": {
@@ -945,7 +952,8 @@
     "surfaces": [
       "workspace.settings"
     ],
-    "dataKey": "model:control:SET_PROMPT_CACHE_ENTRIES"
+    "dataKey": "model:control:SET_PROMPT_CACHE_ENTRIES",
+    "lens": "element.vexlife-workspace.companion.settings.models.configuration.prompt-cache-entries"
   },
   "workspace.status.model-selected": {
     "strings": {
@@ -2189,7 +2197,8 @@
     "surfaces": [
       "workspace.conversation"
     ],
-    "dataKey": "voice-input:control:START"
+    "dataKey": "voice-input:control:START",
+    "lens": "element.vexlife-workspace.companion.conversation.voice-input"
   },
   "workspace.button.voice-input-stop": {
     "strings": {
@@ -2200,7 +2209,8 @@
     "surfaces": [
       "workspace.conversation"
     ],
-    "dataKey": "voice-input:control:STOP"
+    "dataKey": "voice-input:control:STOP",
+    "lens": "element.vexlife-workspace.companion.conversation.voice-input"
   },
   "workspace.description.local-asr": {
     "strings": {
