@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "vexlife-prod.memory-consideration-relay-context/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 247,
+  "tempRelayPr": 254,
+  "attempt": "A004",
+  "disposition": "SEALED_NOT_EXECUTED",
+  "predecessors": [
+    {
+      "attempt": "A001",
+      "disposition": "SAFE_FAILURE",
+      "classification": "PRODUCT_TEST_FIXTURE_INCOMPLETE_CONVERSATION_SOURCE_PAIR"
+    },
+    {
+      "attempt": "A002",
+      "disposition": "PASS",
+      "classification": "EXACT_HEAD_SOURCE_OWNER_PROOF_PASS"
+    },
+    {
+      "attempt": "A003",
+      "disposition": "PASS",
+      "classification": "EXACT_HEAD_SOURCE_OWNER_PROOF_PASS_AND_ASSURANCE_CLEAR"
+    }
+  ],
+  "currentization": {
+    "mainHead": "e9b293f597efb65903a264343f22e97506633a76",
+    "priorProductHead": "bd3a15bebf8d7ccd6024225a355f8652991a1a8c",
+    "currentProductHead": "09598d29282f4d792a277cb5eedb375806214b7f",
+    "currentProductTree": "d89d74f132c8b9ac761442f428a33f483a5e9d0e",
+    "ownedBlobMutation": false,
+    "overlap": "NONE_ON_NINE_OWNED_PATHS",
+    "purpose": "FINAL_CURRENT_MAIN_SOURCEOWNER_PROOF_BEFORE_MERGE_READINESS"
+  },
+  "formationBundle": {
+    "filename": "VexLife-Memory-Consideration-RelayFormation-A004--sha256-d25a42952e218d019ee11dd5f78cabb472b58c9a558c8f5fc0a7a7732e48a2ec.zip",
+    "sha256": "d25a42952e218d019ee11dd5f78cabb472b58c9a558c8f5fc0a7a7732e48a2ec",
+    "bytes": 8372,
+    "members": [
+      "RUN.command",
+      "formation.mjs",
+      "README.txt"
+    ],
+    "syntaxChecks": [
+      "bash -n RUN.command PASS",
+      "node --check formation.mjs PASS"
+    ]
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064",
+    "currentContractBlob": "b53cbac01c2deeb45fad5c32ce98e0796c04126f",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor"
+  },
+  "proof": [
+    "./gradlew --no-daemon checkVexLifeStrings --stacktrace",
+    "./gradlew --no-daemon jvmTest --stacktrace",
+    "./gradlew --no-daemon compileKotlinJs compileTestKotlinJs --stacktrace",
+    "exact nine-path review snapshot"
+  ],
+  "onPass": "RECOMPUTE_FRESH_ASSURANCE_ON_CURRENT_MAIN_HEAD_THEN_MARK_PR247_READY_IF_PROVIDER_CURRENTNESS_UNCHANGED",
+  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION"
+}
