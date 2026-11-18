@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "vexlife-prod.temp-host-proof-continuity/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 331,
+  "sourceHead": "b30d817295dd8cca23941c53b8a43d00572555e2",
+  "sourceTree": "d9cac09f1a3a661cc4afae8acd68a6d2ffba43ba",
+  "priorAttempt": {
+    "attempt": "A001",
+    "returnSha256": "beb184d16078f690c3c965ed5a2d6b7c3382189d2d86a33fe79e50f5d36efce9",
+    "disposition": "FAIL",
+    "firstSubstantiveFailure": "compileTestKotlinJvm unresolved references caused by two missing test imports",
+    "reachedLivedVoice": false
+  },
+  "correction": [
+    "import vexlife.localasr.VexLifeLocalAsrComposerOutput in VexLifeProdLocalServiceTest",
+    "import vexlife.localasr.VexLifeLocalAsrModelsFamily in VexLifeProdLocalServiceTest"
+  ],
+  "predicates": [
+    "COMPLETE_REPOSITORY_SOURCE_BUILD_TEST_GATE",
+    "CURRENT_PRODUCT_LIFETIME_FRONT_DOOR",
+    "A004_QUALIFIED_PERSISTENT_WHISPER_PROVIDER_REUSED",
+    "REPLY_LANGUAGE_ZH_HANS_OBSERVED",
+    "REPLY_LANGUAGE_ZH_HANT_OBSERVED",
+    "ZH_HANS_FOLLOW_REPLY_RESOLVES_SPOKEN_ZH",
+    "ZH_HANT_FOLLOW_REPLY_RESOLVES_SPOKEN_ZH",
+    "BASE_MULTILINGUAL_AS_SPOKEN_PARTIAL_FINAL",
+    "BASE_MULTILINGUAL_TRANSLATE_ENGLISH_PARTIAL_FINAL",
+    "AS_SPOKEN_MIXED_LANGUAGE_COMPOSER_HUMAN_WITNESS",
+    "TRANSLATE_TO_ENGLISH_COMPOSER_HUMAN_WITNESS",
+    "SCRIPT_MATCHING_SPEECH_VOICE_PREFERENCE_HUMAN_WITNESS_IF_AVAILABLE",
+    "NO_AUTOMATIC_SEND"
+  ],
+  "expectedReturn": "RETURN-VEXLIFE-VOICE-LANGUAGE-OUTPUT-A002.zip",
+  "retention": {
+    "microphoneAudio": false,
+    "transcriptText": false
+  },
+  "disposition": "FORMED_NOT_EXECUTED"
+}
