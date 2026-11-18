@@ -711,6 +711,13 @@ object VexLifeProdMacFrontDoorProcess {
                     progress = progress,
                 )
             },
+        val retireStaleService: (priorServiceSourceSha: String, priorServicePid: Long) -> Unit =
+            { priorServiceSourceSha, priorServicePid ->
+                VexLifeProdMacServiceLifetime.retireRecoverableLegacyOrphan(
+                    expectedSourceSha = priorServiceSourceSha,
+                    expectedPid = priorServicePid,
+                )
+            },
         val convergeProduct:
             (
                 desiredSourceSha: String,
@@ -1190,6 +1197,7 @@ object VexLifeProdMacFrontDoorProcess {
                 null -> "NONE"
                 VexLifeProdEntryFamily.OpenPresentation -> effect.effectRef
                 VexLifeProdEntryFamily.FormCanonicalHome -> effect.effectRef
+                is VexLifeProdEntryFamily.RetireStaleService -> effect.effectRef
                 is VexLifeProdEntryFamily.ConvergeProduct ->
                     effect.effectRef +
                         (if (effect.allowAcquisition) ":ACQUIRE" else "") +
@@ -1236,6 +1244,29 @@ object VexLifeProdMacFrontDoorProcess {
                 }
                 // The Home exists now, so this process's facts can be kept inside it from here on.
                 VexLogger.bindHome(selectedHome)
+                VexLogger.record(VexLogger.Fact.SetupEffectCompleted, mapOf("effectRef" to effectRef))
+                ActivationProjection(
+                    schemaVersion = ActivationSchema,
+                    controlRef = resolved.controlRef,
+                    semanticStateRef = reobserve(),
+                    manifestationRef = ManifestationRefreshEntry,
+                )
+            }
+
+            is VexLifeProdEntryFamily.RetireStaleService -> {
+                VexLogger.record(VexLogger.Fact.SetupEffectStarted, mapOf("effectRef" to effectRef))
+                try {
+                    hooks.retireStaleService(
+                        effect.priorServiceSourceSha,
+                        effect.priorServicePid,
+                    )
+                } catch (error: Exception) {
+                    return failed(
+                        resolved.controlRef,
+                        effectRef,
+                        VexLifeProdSetupFailure.classify(error, language),
+                    )
+                }
                 VexLogger.record(VexLogger.Fact.SetupEffectCompleted, mapOf("effectRef" to effectRef))
                 ActivationProjection(
                     schemaVersion = ActivationSchema,
