@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "vexlife-prod.memory-consideration-relay-context/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 247,
+  "tempRelayPr": 254,
+  "attempt": "A003",
+  "disposition": "SEALED_NOT_EXECUTED",
+  "predecessors": [
+    {
+      "attempt": "A001",
+      "disposition": "SAFE_FAILURE",
+      "classification": "PRODUCT_TEST_FIXTURE_INCOMPLETE_CONVERSATION_SOURCE_PAIR"
+    },
+    {
+      "attempt": "A002",
+      "disposition": "PASS",
+      "outerReturnSha256": "7608c7b9fa504634d57c7f58ceb9b9c67bbdffee3b3940d31477295da604a939",
+      "innerReturnSha256": "f9d129bb9208cff2ece3ca583d8280d7a47cad06ecaea2e9930d33be4538a7a0",
+      "classification": "EXACT_HEAD_SOURCE_OWNER_PROOF_PASS"
+    }
+  ],
+  "assuranceCorrection": {
+    "classification": "STALE_PRODUCT_README_TRUTH",
+    "productSemanticImplementationChanged": false,
+    "correctedPath": "docs/work/memory-consideration-successor/README.md",
+    "correction": "README now states the explicit-Keep semantic-acceptance writer is formed and distinguishes it from still-unwired prompt/UI/current-semantic-continuity edges"
+  },
+  "productCandidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "base": "b0b6fb9a6107f2475ae434472ed13335a303af87",
+    "head": "bd3a15bebf8d7ccd6024225a355f8652991a1a8c",
+    "tree": "a1d5686b6bd12106f7730affa3d9ddfcc6e64cd8",
+    "branch": "VXG-111726-memory-consideration-foundation-a001"
+  },
+  "formationBundle": {
+    "filename": "VexLife-Memory-Consideration-RelayFormation-A003--sha256-26159d8b0251ff74d95fd822e2c6911829a52bbaf816bd8914148347b35ff634.zip",
+    "sha256": "26159d8b0251ff74d95fd822e2c6911829a52bbaf816bd8914148347b35ff634",
+    "bytes": 8457,
+    "members": [
+      "RUN.command",
+      "formation.mjs",
+      "README.txt"
+    ],
+    "syntaxChecks": [
+      "bash -n RUN.command PASS",
+      "node --check formation.mjs PASS"
+    ]
+  },
+  "relay": {
+    "contractRef": "source.vexrelay.current-contract/v1",
+    "sdkHead": "8543c7d755faba04d4c4019c02e84f992667918a",
+    "sdkTree": "6376f68279f0750ee6d3868b8472368199763064",
+    "currentContractBlob": "b53cbac01c2deeb45fad5c32ce98e0796c04126f",
+    "recipe": "ExactHeadSourceOwnerProof",
+    "carrier": "adapter.vexlocalbridge.native-vexrelay-task-archive/v1",
+    "hostProfile": "macos-victor"
+  },
+  "proof": [
+    "./gradlew --no-daemon checkVexLifeStrings --stacktrace",
+    "./gradlew --no-daemon jvmTest --stacktrace",
+    "./gradlew --no-daemon compileKotlinJs compileTestKotlinJs --stacktrace",
+    "exact nine-path review snapshot"
+  ],
+  "onPass": "RUN_FRESH_ASSURANCE_ON_EXACT_A003_HEAD_THEN_RECONCILE_CURRENT_MAIN",
+  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION"
+}
