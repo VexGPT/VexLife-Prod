@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "vexlife-prod.memory-review-keep-relay-context/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 276,
+  "tempRelayPr": 278,
+  "attempt": "A003",
+  "disposition": "SEALED_NOT_EXECUTED",
+  "predecessors": [
+    {
+      "attempt": "A001",
+      "disposition": "FORMATION_SAFE_FAILURE",
+      "classification": "DUPLICATE_SOURCE_REFS_AND_PREDECESSOR_FORMATION_RESIDUE",
+      "productExecutionStarted": false
+    },
+    {
+      "attempt": "A002",
+      "outerReturnSha256": "36870b8b56003c387ff2b2bf0d37c0adbc6937e2b9eecfd78e4be4fc7f0b4069",
+      "innerReturnSha256": "09475eb80718312653a671c76aa1a1737524427b0c32c5c98697470e0856d743",
+      "disposition": "SAFE_FAILURE",
+      "classification": "PROPOSAL_CANDIDATE_IDENTITY_FROZEN_ACROSS_HUMAN_DECISION_BOUNDARY",
+      "testsExecuted": 708,
+      "failedTests": 3
+    }
+  ],
+  "productCandidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "base": "428bb31c8609474ecd6528a044ee47a9a9e89628",
+    "head": "44211d78e0b57417b46e99a3048f95e16e87545f",
+    "tree": "2cde9e8c2f859d93cabcaf2f3ce6d9e396c2e705",
+    "branch": "VXG-111726-memory-correction-review-keep-a001",
+    "correction": "proposal identity retained as evidence; decision-time accepted candidate matched by stable semantic subject + exact source/meaning + exact human decision"
+  },
+  "formationBundle": {
+    "filename": "VexLife-Memory-Review-Keep-RelayFormation-A003--sha256-f17d9de5d61e9d4ea5c45e135ffd328325b98f6cde9ccf3e1357fdf14fb83118.zip",
+    "sha256": "f17d9de5d61e9d4ea5c45e135ffd328325b98f6cde9ccf3e1357fdf14fb83118",
+    "bytes": 7780,
+    "members": [
+      "RUN.command",
+      "formation.mjs",
+      "README.txt"
+    ],
+    "syntaxChecks": [
+      "bash -n RUN.command PASS",
+      "node --check formation.mjs PASS"
+    ]
+  },
+  "proof": [
+    "./gradlew --no-daemon checkVexLifeStrings --stacktrace",
+    "./gradlew --no-daemon jvmTest --stacktrace",
+    "./gradlew --no-daemon compileKotlinJs compileTestKotlinJs --stacktrace",
+    "exact five-path review snapshot"
+  ],
+  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION"
+}
