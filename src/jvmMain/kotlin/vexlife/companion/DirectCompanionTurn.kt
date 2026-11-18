@@ -899,6 +899,8 @@ object DirectCompanionTurn {
                     currentInitialMemoryAvailability,
                 memoryContextAtCap =
                     hooks.memoryContextAtCap,
+                memoryProviderSelectionAtCap =
+                    hooks.memoryProviderSelectionAtCap,
                 workingContinuityContext =
                     workingContinuityContext,
                 browserContext = browserContext,
@@ -1101,6 +1103,7 @@ object DirectCompanionTurn {
                             }
                         },
                     memoryContextAtCap = hooks.memoryContextAtCap,
+                    memoryProviderSelectionAtCap = hooks.memoryProviderSelectionAtCap,
                     workingContinuityContext = workingContinuityContext,
                     browserContext = browserContext,
                     personContext = personContext,
@@ -1185,6 +1188,8 @@ object DirectCompanionTurn {
                         currentFinalMemoryAvailability,
                     memoryContextAtCap =
                         hooks.memoryContextAtCap,
+                    memoryProviderSelectionAtCap =
+                        hooks.memoryProviderSelectionAtCap,
                     workingContinuityContext =
                         workingContinuityContext,
                     browserContext = browserContext,
@@ -1244,6 +1249,8 @@ object DirectCompanionTurn {
                         },
                 memoryContextAtCap =
                     hooks.memoryContextAtCap,
+                memoryProviderSelectionAtCap =
+                    hooks.memoryProviderSelectionAtCap,
                 workingContinuityContext =
                     workingContinuityContext,
                 browserContext = browserContext,
