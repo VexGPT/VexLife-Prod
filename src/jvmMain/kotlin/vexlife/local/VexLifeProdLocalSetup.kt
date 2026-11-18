@@ -11,7 +11,6 @@ import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeAvailability
-import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticRuntimeConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticRuntimeReceiptStore
@@ -68,6 +67,8 @@ object VexLifeProdLocalSetup {
             null,
         private val recoverRuntimeEvidence:
             (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)? =
+            null,
+        private val releaseRuntime: (() -> Unit)? =
             null,
     ) :
         VexLifeProdRuntimeSession {
@@ -168,13 +169,30 @@ object VexLifeProdLocalSetup {
          */
         override fun observeCurrentQualifiedRuntimeEvidence(): HereticModelConfiguration.QualifiedRuntimeEvidence =
             currentRuntimeEvidence()
+
+        /**
+         * Release only a runtime this Product already proved it owns.
+         *
+         * Borrowed predecessor runtime has no Product-owned release capability here; its exact
+         * compatibility owner remains responsible for that lifecycle.
+         */
+        override fun releaseSustainedRuntime() {
+            releaseRuntime?.invoke()
+        }
     }
+
+    private data class RuntimeAvailabilityResolution(
+        val availability: HereticRuntimeAvailability.State.Qualified,
+        val disposition: String,
+        val productOwnedReceipt: HereticPersistentRuntime.Receipt? = null,
+    )
 
     private data class Established(
         val result: Result,
         val currentRuntimeEvidence: () -> HereticModelConfiguration.QualifiedRuntimeEvidence,
         val generationReadiness: () -> HereticPersistentRuntime.GenerationReadiness,
         val recoverRuntimeEvidence: (() -> HereticModelConfiguration.QualifiedRuntimeEvidence)?,
+        val releaseRuntime: (() -> Unit)?,
     )
 
     internal data class Hooks(
@@ -263,6 +281,22 @@ object VexLifeProdLocalSetup {
                     binding = binding,
                     expected = observation,
                     platform = MacHereticRuntimePlatform(productHome = productHome),
+                )
+            },
+        val captureStableRuntimeRelease:
+            (
+                productHome: Path,
+                binding: HereticPersistentRuntime.Binding,
+            ) -> (() -> Unit)? =
+            { productHome, binding ->
+                val platform =
+                    MacHereticRuntimePlatform(
+                        productHome = productHome,
+                    )
+                StableVexLifeHereticRuntimeCompatibility.capturedRelease(
+                    productHome = productHome,
+                    binding = binding,
+                    platform = platform,
                 )
             },
         val observeCurrentProductRuntime:
@@ -486,18 +520,12 @@ object VexLifeProdLocalSetup {
                 allowAcquisition,
             )
 
-        val realization =
-            HereticRuntimeRealization.require(
-                modelRef = model.modelRef,
-                target = HereticRuntimeRealization.MacArm64,
-            )
         val runtimeConfiguration =
             FileHereticRuntimeConfigurationStore(
                 canonicalHome,
             )
-                .requireEffective(
-                    model = model,
-                    realization = realization,
+                .effective(
+                    model,
                 )
         val binding =
             HereticPersistentRuntime.bind(
@@ -569,7 +597,7 @@ object VexLifeProdLocalSetup {
                 "Heretic runtime availability did not resolve one lawful relationship"
             }
 
-        val availabilityAndDisposition =
+        val runtimeResolution =
             when (val admitted = availabilityAct.admittedState) {
                 is HereticRuntimeAvailability.State.Qualified -> {
                     require(
@@ -580,32 +608,46 @@ object VexLifeProdLocalSetup {
                         "borrowed stable Heretic runtime availability must not request a product-owned effect"
                     }
 
-                    admitted to "BORROWED_STABLE_VEXLIFE_QUALIFIED_RUNTIME"
+                    RuntimeAvailabilityResolution(
+                        availability = admitted,
+                        disposition = "BORROWED_STABLE_VEXLIFE_QUALIFIED_RUNTIME",
+                    )
                 }
 
                 null -> {
-                    val productRuntimeStore = FileHereticRuntimeReceiptStore(canonicalHome)
+                    val productRuntimeStore =
+                        FileHereticRuntimeReceiptStore(
+                            canonicalHome,
+                        )
 
                     when (availabilityAct.effect) {
                         HereticRuntimeAvailability.Effect.EnsureProductOwnedRuntime -> {
                             hooks.progress.phase(VexLifeProdSetupProgress.Phase.StartingLocalModel)
                             val runtime =
-                                hooks.startRuntime(canonicalHome, binding, productRuntimeStore)
-
-                            HereticRuntimeAvailability.interpretProductOwnedQualified(
-                                HereticPersistentRuntime.configurationEvidence(
-                                    binding = binding,
-                                    receipt = runtime.receipt,
+                                hooks.startRuntime(
+                                    canonicalHome,
+                                    binding,
+                                    productRuntimeStore,
                                 )
-                            ) to
-                                if (
-                                    migratedStablePredecessor
-                                ) {
-                                    "MIGRATED_STABLE_PRIOR_LAUNCH_CONTRACT_TO_" +
+                            RuntimeAvailabilityResolution(
+                                availability =
+                                    HereticRuntimeAvailability.interpretProductOwnedQualified(
+                                        HereticPersistentRuntime.configurationEvidence(
+                                            binding = binding,
+                                            receipt = runtime.receipt,
+                                        ),
+                                    ),
+                                disposition =
+                                    if (
+                                        migratedStablePredecessor
+                                    ) {
+                                        "MIGRATED_STABLE_PRIOR_LAUNCH_CONTRACT_TO_" +
+                                            runtime.disposition
+                                    } else {
                                         runtime.disposition
-                                } else {
-                                    runtime.disposition
-                                }
+                                    },
+                                productOwnedReceipt = runtime.receipt,
+                            )
                         }
 
                         HereticRuntimeAvailability.Effect.ObserveCurrentProductOwnedRuntime -> {
@@ -615,14 +657,25 @@ object VexLifeProdLocalSetup {
                                     binding,
                                     productRuntimeStore,
                                 )
-
-                            HereticRuntimeAvailability.interpretProductOwnedQualified(evidence) to
-                                "REOBSERVED_CURRENT_PRODUCT_QUALIFIED_RUNTIME"
+                            RuntimeAvailabilityResolution(
+                                availability =
+                                    HereticRuntimeAvailability.interpretProductOwnedQualified(
+                                        evidence,
+                                    ),
+                                disposition =
+                                    "REOBSERVED_CURRENT_PRODUCT_QUALIFIED_RUNTIME",
+                                productOwnedReceipt =
+                                    requireNotNull(
+                                        productRuntimeStore.read(),
+                                    ) {
+                                        "current Product-owned Heretic runtime lost its exact receipt during session formation"
+                                    },
+                            )
                         }
 
                         null ->
                             error(
-                                "unresolved Heretic runtime availability lacks one product-owned effect"
+                                "unresolved Heretic runtime availability lacks one product-owned effect",
                             )
                     }
                 }
@@ -631,8 +684,8 @@ object VexLifeProdLocalSetup {
                     error("Heretic runtime availability admitted a non-qualified terminal state")
             }
 
-        val availability = availabilityAndDisposition.first
-        val runtimeDisposition = availabilityAndDisposition.second
+        val availability = runtimeResolution.availability
+        val runtimeDisposition = runtimeResolution.disposition
         val qualifiedRuntimeEvidence = availability.evidence
         val runtimeReceiptPath = availability.runtimeReceiptPath
 
@@ -686,6 +739,26 @@ object VexLifeProdLocalSetup {
                 HereticRuntimeAvailability.Source.BorrowedStableVexLife -> null
             }
 
+        val releaseRuntime =
+            when (availability.source) {
+                HereticRuntimeAvailability.Source.VexLifeProdOwned ->
+                    runtimeResolution.productOwnedReceipt
+                        ?.let {
+                            receipt ->
+                            capturedProductRuntimeRelease(
+                                productHome = canonicalHome,
+                                binding = binding,
+                                receipt = receipt,
+                            )
+                        }
+
+                HereticRuntimeAvailability.Source.BorrowedStableVexLife ->
+                    hooks.captureStableRuntimeRelease(
+                        canonicalHome,
+                        binding,
+                    )
+            }
+
         val bound =
             modelConfiguration.bindQualified(
                 manifest = home.manifest,
@@ -713,7 +786,61 @@ object VexLifeProdLocalSetup {
             currentRuntimeEvidence = currentRuntimeEvidence,
             generationReadiness = generationReadiness,
             recoverRuntimeEvidence = recoverRuntimeEvidence,
+            releaseRuntime = releaseRuntime,
         )
+    }
+
+    private class CapturedRuntimeReceiptStore(
+        receipt: HereticPersistentRuntime.Receipt,
+    ) : HereticPersistentRuntime.ReceiptStore {
+        private var current: HereticPersistentRuntime.Receipt? =
+            receipt
+
+        override fun read(): HereticPersistentRuntime.Receipt? =
+            current
+
+        override fun write(
+            receipt: HereticPersistentRuntime.Receipt,
+        ) {
+            current =
+                receipt
+        }
+
+        override fun delete() {
+            current =
+                null
+        }
+    }
+
+    private fun capturedProductRuntimeRelease(
+        productHome: Path,
+        binding: HereticPersistentRuntime.Binding,
+        receipt: HereticPersistentRuntime.Receipt,
+    ): () -> Unit {
+        // Construct the concrete host adapter while the admitted Home still exists. Retirement
+        // later uses its captured exact process/substrate evidence and does not rediscover ownership.
+        val platform =
+            MacHereticRuntimePlatform(
+                productHome = productHome,
+            )
+        val store =
+            CapturedRuntimeReceiptStore(
+                receipt,
+            )
+
+        return {
+            val stopped =
+                HereticPersistentRuntime.stop(
+                    binding = binding,
+                    store = store,
+                    platform = platform,
+                )
+            require(
+                stopped.verifiedNotLive,
+            ) {
+                "Product-owned Heretic runtime release was not verified"
+            }
+        }
     }
 
     private fun convergeConversationWriter(productHome: Path, hooks: Hooks) {
@@ -776,6 +903,7 @@ object VexLifeProdLocalSetup {
             currentRuntimeEvidence = established.currentRuntimeEvidence,
             generationReadiness = established.generationReadiness,
             recoverRuntimeEvidence = established.recoverRuntimeEvidence,
+            releaseRuntime = established.releaseRuntime,
         )
     }
 
