@@ -57,14 +57,13 @@ object VexLifeProdWindowsPreview {
                 .toAbsolutePath()
                 .normalize()
 
-        val productHome =
-            (homeOverride ?: defaultHome.resolve(".vexlife"))
-                .toAbsolutePath()
-                .normalize()
-
-        require(productHome.isAbsolute) {
+        val selectedHome =
+            homeOverride ?: defaultHome.resolve(".vexlife")
+        require(selectedHome.isAbsolute) {
             "Windows lived preview Vex Home must be one absolute path"
         }
+        val productHome =
+            selectedHome.normalize()
 
         return LaunchPlan(
             sourceSha = exactSourceSha,
