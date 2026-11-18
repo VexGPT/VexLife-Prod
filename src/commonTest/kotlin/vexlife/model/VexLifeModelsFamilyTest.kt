@@ -26,7 +26,7 @@ class VexLifeModelsFamilyTest {
         anySwitchRunning: Boolean = switching,
     ) =
         VexLifeModelsFamily.State(
-            handle = "heretic-9b",
+            handle = "heretic-4b",
             artifactPresence = artifactPresence,
             downloading = downloading,
             chosen = chosen,
