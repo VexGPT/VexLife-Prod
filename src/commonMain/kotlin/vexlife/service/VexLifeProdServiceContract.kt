@@ -47,6 +47,15 @@ object VexLifeProdServiceContract {
     const val ContextHeldReasonPromptReceiptSchemaUnsupported =
         "PROMPT_RECEIPT_SCHEMA_NOT_SUPPORTED_BY_THIS_BUILD"
 
+    const val ContextProfilesProjectionSchema =
+        "vexlife-prod.local-service-context-profiles-projection/v1"
+
+    const val ContextProfileControlResultSchema =
+        "vexlife-prod.local-service-context-profile-control-result/v1"
+
+    const val ContextProfileHomeRevealResultSchema =
+        "vexlife-prod.local-service-context-profile-home-reveal-result/v1"
+
     const val MemoryDreamProjectionSchema =
         "vexlife-prod.local-service-memory-dream-projection/v1"
 
