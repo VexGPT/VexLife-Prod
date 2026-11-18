@@ -48,6 +48,73 @@ RUNTIME STARTED
 != PRODUCT SERVICE STARTED
 ```
 
+## VexArchitecture ownership map
+
+This relationship follows the current VexArchitecture rule that an architectural noun is earned by
+the question it alone answers. The edges are therefore owners, not a required pipeline of fashionable
+types:
+
+```text
+human model intention
+        ↓
+VexLifeModelsFamily
+  State / Control / lawful Effect meaning
+        +
+VexLifePlatformRealization.Target
+  exact observed platform / architecture
+        ↓
+HereticRuntimeRealization
+  static exact (modelRef, target) composition
+        ↓
+VexLifeWindowsRuntimeMaterialization
+  exact dependency custody/materialization
+        ↓
+VexLifeWindowsHereticRuntime
+  concrete process lifetime + qualification
+        ↓
+realization-scoped qualified evidence
+        ↓
+later Product-binding reconciliation
+        ↓
+concrete platform Product-service lifetime
+        ↓
+shared VexLife Product service / Conversation
+```
+
+The neighboring current-main owners remain separate because they answer different questions:
+
+- `HereticCompanionRepresentation` owns provider/message/reasoning/generation representation. It does
+  not become runtime realization merely because both eventually affect inference.
+- `HereticExecutionTopology` is a read-only projection of effective model/runtime/continuity
+  configuration and provenance. It does not become configuration or realization authority.
+- PR #246 keeps human model target, runtime-configuration choice, and explicit Start semantics in the
+  Models relationship. This foundation supplies exact target realization; it does not create a
+  second model Family or a Windows-specific chooser.
+- The currently implemented `promptCacheEntries` setting was earned against the Product MLX runtime.
+  A Windows llama.cpp realization must not inherit that setting merely because it realizes the same
+  `modelRef`. Cross-target configuration must be admitted by the selected realization/runtime
+  relationship, not by model identity alone.
+
+### Partner and sustained-service decisions
+
+No `VexPartner` relationship is earned by the current Windows runtime edge. The llama.cpp process is
+a Product-owned concrete runtime realization, and the current proof does not expose a recurring
+independently-owned Source / Signal / Connection / Conversion / Observation vocabulary whose loss
+would make the relationship ambiguous. If such an external-participant relationship appears later,
+it can earn Partner then; the name `Connection` or an HTTP boundary alone is not enough.
+
+Likewise, this source does not invent a generic `VexService` root. The Windows runtime process and
+the later long-lived Product service have concrete lifetime owners. A reusable Service root is only
+earned if a repeated Admission / Retention / Release law becomes real and would otherwise be lost.
+
+```text
+SEPARATE OWNERSHIP
+!= FRAGMENTATION
+
+ONE PRODUCT BODY
+!= ONE GIANT OWNER
+```
+
 ## Current coverage
 
 Mac ARM64 coverage is explicit for every currently offered catalog model. This source does not move
@@ -207,9 +274,9 @@ must prove exact process ownership before it may reuse or retire a process.
 
 ## Current Product-binding hold
 
-Current Product `HereticModelConfiguration.QualifiedRuntimeEvidence` still requires runtime fields
-to equal the model catalog identity's Mac/MLX runtime coordinates. PR #191 currently owns that
-configuration/binding contract.
+Current-main `HereticModelConfiguration.QualifiedRuntimeEvidence` still validates runtime fields
+against the catalog model identity's Mac/MLX coordinates and has no `realizationRef`. That source is
+the actual present boundary; an older PR number is not current authority for it.
 
 Therefore this Windows leaf forms its own exact `QualifiedRealizationEvidence` and stops there.
 
@@ -218,27 +285,42 @@ Permanent:
 ```text
 WINDOWS RUNTIME QUALIFIED
 != PERMISSION TO BYPASS CURRENT PRODUCT BINDING OWNER
+
+SAME MODEL
+!= SAME RUNTIME REALIZATION
+!= SAME RUNTIME CONFIGURATION
 ```
 
-A coordinated successor must admit realization-aware evidence into the Product binding once that
-contract is current. This PR must not force Windows through Mac runtime identity merely to satisfy
-the existing type.
+A coordinated consumer must admit realization-aware evidence into Product binding before ordinary
+Windows setup/service can treat this runtime as the selected Product runtime. It must also reconcile
+#246's staged target/configuration/explicit-Start semantics without applying MLX-only configuration
+to llama.cpp by `modelRef` alone. This PR must not force Windows through Mac runtime identity merely
+to satisfy the existing type.
 
-## What this does not own
+## Exact owners inside this foundation
 
-This foundation does not:
+This foundation contains three deliberately different owners:
 
-- choose the person's model;
-- modify per-model runtime configuration such as prompt-cache entries;
-- start or stop llama.cpp;
-- qualify runtime HTTP behavior;
-- bind the Product model configuration;
-- start/stop the long-lived Product service;
-- form the Windows private Product image;
-- install an app/package;
-- publish a Windows release.
+- `HereticRuntimeRealization` owns static model + target -> dependency/process/qualification
+  composition and performs no effect.
+- `VexLifeWindowsRuntimeMaterialization` owns exact dependency presence/acquisition and performs no
+  model-selection or runtime-start effect.
+- `VexLifeWindowsHereticRuntime` owns the concrete Windows llama.cpp process it starts, its bounded
+  HTTP qualification, same-process re-observation, receipt, and retirement of that exact started
+  process.
 
-Those are downstream owners.
+The foundation as a whole still does **not** own:
+
+- the person's model-selection / staged-target / Start meaning;
+- per-model runtime configuration such as MLX prompt-cache entries;
+- Product model binding;
+- the long-lived Windows Product-service lifetime;
+- Windows Product-entry observation/Setup manifestation or the private Product image;
+- app/package installation;
+- Windows release publication.
+
+Those remain separate current or successor owners. Keeping them separate preserves the causal edges;
+it is not permission for two owners to decide the same State or effect.
 
 ## Proof boundary
 
@@ -263,12 +345,19 @@ A later real-host proof is required before claiming ordinary Windows acquisition
 should download/reuse the exact current realization into a technical/protected test Home first; it
 does not require the final Windows Product service or installer to prove this materialization owner.
 
-## Lineage
+## Lineage and current convergence
 
-- #223 owns current Windows host/Home readiness observations.
-- #238 owns staged model target + per-model runtime configuration / explicit Start.
-- #227 preserves the lived 4B Windows runtime/Conversation proof and the CPU identity correction.
-- This foundation owns the durable selected-model + exact-target runtime realization and dependency
-  materialization relationship.
+- #223 owns Windows host/architecture/Home readiness observation and is currentized onto current
+  `main`.
+- #246 is the current-main Models integration surface for staged target + runtime configuration +
+  explicit Start; #238 is its development/proof lineage.
+- #227 is lived proof/evidence: the 4B Windows runtime, shared Product Conversation/restart circuit,
+  realization-bound Product binding, and CPU identity correction all passed there. Its patient-zero
+  process/relay history is not ordinary Product architecture.
+- This foundation owns the durable selected-model + exact-target runtime realization, dependency
+  materialization, and concrete Windows runtime qualification relationship.
+- The next integration edge is realization-aware Product binding + ordinary Windows
+  Setup/service-lifetime consumption. That edge should join these current owners; it should not
+  recreate their meanings in a new all-in-one owner.
 
 <!-- [VXG RealForever][VEXLIFE-PROD][WINDOWS][HERETIC-RUNTIME-REALIZATION] -->
