@@ -285,36 +285,16 @@
           "JAVA_HOME",
           "GRADLE_OPTS"
         ]
-      },
-      {
-        "command": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
-        "args": [
-          "-NoProfile",
-          "-ExecutionPolicy",
-          "Bypass",
-          "-File",
-          "tools\\windows-preview\\FORM-WINDOWS-PREVIEW.ps1",
-          "-OutputDirectory",
-          "build\\windows-preview-proof-output"
-        ],
-        "proofClass": "TEST",
-        "candidateEvidence": true,
-        "predicateClass": "SOURCE_OWNER_BEHAVIOR",
-        "predicateRef": "predicate.vexlife-prod.windows-release-preview.app-image",
-        "timeoutMs": 1200000,
-        "inheritEnvKeys": [
-          "JAVA_HOME",
-          "GRADLE_OPTS"
-        ]
       }
     ],
     "maxFiles": 10,
     "stateRef": "state.vexlife-prod.windows-release-preview.sourceowner.pending",
     "currentLifecycleState": "SOURCE_READY",
-    "currentGoal": "Prove the Windows lived-preview source and actual app-image formation on Windows x64.",
+    "currentGoal": "Prove the Windows lived-preview source on the exact Windows candidate before outer app-image formation.",
     "remainingGoals": [
-      "Consume exact RETURN and classify any source/packaging failure.",
-      "On SourceOwner PASS, retain the digest-bound preview ZIP and reveal the exact VexLife.exe for Victor.",
+      "Consume exact RETURN and classify any source failure.",
+      "On SourceOwner PASS, form the source-bound app image from the same exact candidate/JDK in the outer bootstrap.",
+      "Retain the digest-bound preview ZIP and reveal the exact VexLife.exe for Victor.",
       "After lived Windows use, decide final installer/service-lifetime realization from evidence.",
       "Keep assurance, approval, READY and merge separate."
     ],
