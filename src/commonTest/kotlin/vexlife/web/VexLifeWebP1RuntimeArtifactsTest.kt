@@ -456,12 +456,15 @@ class VexLifeWebP1RuntimeArtifactsTest {
 
         val initialBrowserNavigation =
             bundle.javascript.indexOf("navigate(browser.initialPageUrl);")
+        val settingsProjectionStartup =
+            bundle.javascript.indexOf("void refreshSettingsProjections(false).then((current) =>")
         val localProjectionStartup =
             bundle.javascript.indexOf(
                 "void Promise.all([loadSourceCurrentness(), loadCurrentState(), loadConversationTurn(), loadConversation(), loadContext(), loadVision()])"
             )
         assertTrue(initialBrowserNavigation >= 0)
-        assertTrue(localProjectionStartup > initialBrowserNavigation)
+        assertTrue(settingsProjectionStartup > initialBrowserNavigation)
+        assertTrue(localProjectionStartup > settingsProjectionStartup)
         assertTrue(bundle.javascript.contains(VexLifeProdBrowserContract.InitialPageUrl))
 
         assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrPath))
