@@ -2459,6 +2459,78 @@
         "zh"
       ]
     },
+    "windows-setup.description.held-unknown": {
+      "enHash": "6941616ff8cd",
+      "langs": []
+    },
+    "windows-setup.description.home-formation-required": {
+      "enHash": "6270fc5172b0",
+      "langs": []
+    },
+    "windows-setup.description.home-held": {
+      "enHash": "420d2891ef82",
+      "langs": []
+    },
+    "windows-setup.description.host-held": {
+      "enHash": "ce054061d779",
+      "langs": []
+    },
+    "windows-setup.description.model-not-supported": {
+      "enHash": "f048e9ee51cf",
+      "langs": []
+    },
+    "windows-setup.description.running": {
+      "enHash": "0d1c79f301c9",
+      "langs": []
+    },
+    "windows-setup.description.start-required": {
+      "enHash": "da0b789eae64",
+      "langs": []
+    },
+    "windows-setup.description.start-required-newer-version": {
+      "enHash": "da0b789eae64",
+      "langs": []
+    },
+    "windows-setup.description.working-close-held": {
+      "enHash": "1dd6a54009cd",
+      "langs": []
+    },
+    "windows-setup.heading.host-held": {
+      "enHash": "cd60bde254ec",
+      "langs": []
+    },
+    "windows-setup.label.free-space": {
+      "enHash": "48fde6548694",
+      "langs": []
+    },
+    "windows-setup.label.home": {
+      "enHash": "363105a63705",
+      "langs": []
+    },
+    "windows-setup.label.model": {
+      "enHash": "4c14777c6932",
+      "langs": []
+    },
+    "windows-setup.label.runtime-needed": {
+      "enHash": "c7211db20291",
+      "langs": []
+    },
+    "windows-setup.label.runtime-ready": {
+      "enHash": "d3ee102bbf47",
+      "langs": []
+    },
+    "windows-setup.label.step-computer": {
+      "enHash": "3fb7a219309b",
+      "langs": []
+    },
+    "windows-setup.status.model-fits": {
+      "enHash": "dbb960b2d8e3",
+      "langs": []
+    },
+    "windows-setup.status.model-recommended": {
+      "enHash": "39db243261aa",
+      "langs": []
+    },
     "workspace.button.diagnostics-clear-history": {
       "enHash": "19adfd56ce8f",
       "langs": []
@@ -2904,7 +2976,7 @@
       ]
     },
     "workspace.label.model-fits": {
-      "enHash": "b7cf00fdd907",
+      "enHash": "dbb960b2d8e3",
       "langs": []
     },
     "workspace.label.model-free-space": {
@@ -3042,7 +3114,7 @@
       ]
     },
     "workspace.label.model-tight": {
-      "enHash": "8368cc93803d",
+      "enHash": "37fd4df6f3e1",
       "langs": []
     },
     "workspace.label.reach-state": {
