@@ -22,6 +22,7 @@ class VexLifeCapabilityAtlasTest {
     private val reachCapabilityRefs =
         listOf(
             "capability.vexlife.atlas.describe",
+            "capability.vexlife.continuity.revisit",
             "capability.vexlife.conversation.source-return",
             "capability.vexlife.home.read",
             "capability.vexlife.memory.recall",

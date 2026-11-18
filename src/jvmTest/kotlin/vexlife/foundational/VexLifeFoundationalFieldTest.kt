@@ -170,7 +170,7 @@ class VexLifeFoundationalFieldTest {
         val first = body.modules.first()
         val changed =
             body.copy(
-                version = "0.6.0",
+                version = VexLifeFoundationalFieldFixture.nextVersion(),
                 modules =
                     listOf(first.copy(kernel = first.kernel + "One more sentence of meaning.")) +
                         body.modules.drop(1),
@@ -189,7 +189,7 @@ class VexLifeFoundationalFieldTest {
         val recorded = assertIs<Reading.Current>(reading(changed))
         assertNotEquals(shipped.bodySha256, recorded.bodySha256)
         val projected = VexLifeFoundationalField.project(recorded, 100_000).evidence
-        assertEquals("0.6.0", projected.fieldVersion)
+        assertEquals(VexLifeFoundationalFieldFixture.nextVersion(), projected.fieldVersion)
         assertNotEquals(whole().evidence.systemMessageSha256, projected.systemMessageSha256)
         assertNotEquals(whole().evidence.bodyRef, projected.bodyRef)
     }

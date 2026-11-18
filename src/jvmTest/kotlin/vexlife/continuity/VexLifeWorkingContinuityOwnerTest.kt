@@ -452,6 +452,169 @@ class VexLifeWorkingContinuityOwnerTest {
     }
 
     @Test
+    fun activeRolloverLineageAdvancesCurrentCursorEvenWhenPressureReturnsToNormal() {
+        val home =
+            Files.createTempDirectory(
+                "vexlife-working-owner-rollover-lineage-",
+            )
+                .toAbsolutePath()
+
+        try {
+            val owner =
+                VexLifeWorkingContinuityOwner(
+                    home,
+                )
+            val firstWorking =
+                workingSet()
+            val (
+                firstInput,
+                firstPlan,
+            ) =
+                rolloverPlan(
+                    firstWorking,
+                )
+            val first =
+                owner.commitPlan(
+                    plan = firstPlan,
+                    pressureInput = firstInput,
+                    workingSet = firstWorking,
+                )
+
+            assertEquals(
+                "ROLLOVER_COMMITTED",
+                first.state,
+            )
+
+            val nextWorking =
+                workingSet(
+                    cursor =
+                        "event.vexlife.request.owner-test.successor-next",
+                    statement =
+                        "statement.vexlife.owner-test.successor-next",
+                )
+            val nextInput =
+                pressureInput(
+                    estimate = 100_000,
+                )
+            assertEquals(
+                VexLifeWorkingContinuity.PressureState.Normal,
+                VexLifeWorkingContinuity.projectPressure(
+                    nextInput,
+                )
+                    .state,
+            )
+
+            val nextPlan =
+                VexLifeWorkingContinuity.formPlan(
+                    pressureInput = nextInput,
+                    workingSet = nextWorking,
+                    priorCheckpoint =
+                        first.current.checkpoint,
+                    rolloverLineageActive = true,
+                )
+
+            assertEquals(
+                VexLifeWorkingContinuity.PlanState.RolloverReady,
+                nextPlan.state,
+            )
+            assertTrue(
+                "WORKING_ROLLOVER_LINEAGE_ACTIVE" in
+                    nextPlan.reasonCodes,
+            )
+
+            val advanced =
+                owner.commitPlan(
+                    plan = nextPlan,
+                    pressureInput = nextInput,
+                    workingSet = nextWorking,
+                )
+
+            assertEquals(
+                "ROLLOVER_COMMITTED",
+                advanced.state,
+            )
+            assertEquals(
+                nextWorking.cursorEventRef,
+                advanced.current.checkpoint.workingSet.cursorEventRef,
+            )
+            assertTrue(
+                advanced.current.commitReceipt.successorContextRequired,
+            )
+        } finally {
+            home
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
+    @Test
+    fun aTurnThatDidNotEnterAsSuccessorStillCommitsAfterARollover() {
+        val home = Files.createTempDirectory("vexlife-working-owner-missed-successor-").toAbsolutePath()
+        try {
+            val owner = VexLifeWorkingContinuityOwner(home)
+            val firstWorking = workingSet()
+            val (firstInput, firstPlan) = rolloverPlan(firstWorking)
+            val first = owner.commitPlan(plan = firstPlan, pressureInput = firstInput, workingSet = firstWorking)
+            assertEquals("ROLLOVER_COMMITTED", first.state)
+
+            // The head still names a rollover, but this turn was not issued its successor Context
+            // (its predecessor's commit was missed, so the head's cursor is not its prior request).
+            // It forms its plan on pressure alone, and the owner must accept that plan: imposing the
+            // lineage here would refuse every later commit on this thread.
+            val laterWorking =
+                workingSet(
+                    cursor = "event.vexlife.request.owner-test.missed-successor",
+                    statement = "statement.vexlife.owner-test.missed-successor",
+                )
+            val (laterInput, laterPlan) =
+                checkpointPlan(workingSet = laterWorking, prior = first.current.checkpoint)
+            assertFalse(VexLifeWorkingContinuity.RolloverLineageActiveReason in laterPlan.reasonCodes)
+            val later = owner.commitPlan(plan = laterPlan, pressureInput = laterInput, workingSet = laterWorking)
+            assertEquals("CHECKPOINT_COMMITTED", later.state)
+            assertEquals(
+                "event.vexlife.request.owner-test.missed-successor",
+                later.current.checkpoint.workingSet.cursorEventRef,
+            )
+        } finally {
+            home.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun aLineageClaimWithoutAnActiveRolloverHeadIsRefusedByTheOwner() {
+        val home = Files.createTempDirectory("vexlife-working-owner-forged-lineage-").toAbsolutePath()
+        try {
+            val owner = VexLifeWorkingContinuityOwner(home)
+            val firstWorking = workingSet()
+            val (firstInput, firstPlan) = checkpointPlan(workingSet = firstWorking, prior = null)
+            val first = owner.commitPlan(plan = firstPlan, pressureInput = firstInput, workingSet = firstWorking)
+            assertEquals("CHECKPOINT_COMMITTED", first.state)
+
+            // The current head is a checkpoint, not a rollover: a plan claiming an active
+            // rollover lineage has nothing to continue, so the owner does not re-derive it.
+            val nextWorking =
+                workingSet(
+                    cursor = "event.vexlife.request.owner-test.forged-next",
+                    statement = "statement.vexlife.owner-test.forged-next",
+                )
+            val nextInput = pressureInput(estimate = 100_000)
+            val claimed =
+                VexLifeWorkingContinuity.formPlan(
+                    pressureInput = nextInput,
+                    workingSet = nextWorking,
+                    priorCheckpoint = first.current.checkpoint,
+                    rolloverLineageActive = true,
+                )
+            assertTrue(VexLifeWorkingContinuity.RolloverLineageActiveReason in claimed.reasonCodes)
+            assertFailsWith<IllegalArgumentException> {
+                owner.commitPlan(plan = claimed, pressureInput = nextInput, workingSet = nextWorking)
+            }
+        } finally {
+            home.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
     fun checkpointOnlyCommitCannotClaimSuccessorContext() {
         val home =
             Files.createTempDirectory(

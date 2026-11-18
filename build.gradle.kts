@@ -3097,3 +3097,16 @@ tasks.register<JavaExec>("compileVexLifeStrings") {
 }
 
 // [VXG RealForever]
+
+// Experiment-only: the shared VexWork continuity-pressure harness adapter (#310). It runs from the
+// JVM test compilation so nothing it uses ships in the Product, against a synthetic scratch Home
+// it deletes after forming its result. Invoked by tools/continuity-pressure/run.mjs.
+tasks.register<JavaExec>("continuityPressure") {
+    group = "verification"
+    description = "Run the continuity-pressure harness adapter (experiment-only, scratch Home)."
+    val test = kotlin.jvm().compilations.getByName("test")
+    dependsOn("jvmTestClasses")
+    classpath = files(test.output.allOutputs, test.runtimeDependencyFiles)
+    mainClass.set("vexlife.harness.ContinuityPressureAdapterKt")
+    workingDir = projectDir
+}
