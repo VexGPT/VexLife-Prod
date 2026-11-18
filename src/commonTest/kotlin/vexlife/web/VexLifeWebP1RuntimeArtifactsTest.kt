@@ -480,6 +480,10 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 workspaceStringsEnd,
             )
         assertTrue(
+            workspaceStringsLoad.contains("renderModels();"),
+            "Models must rerender after workspace localization arrives",
+        )
+        assertTrue(
             workspaceStringsLoad.contains("renderLocalAsr();"),
             "Local ASR must rerender after workspace localization arrives",
         )
@@ -489,6 +493,28 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains("voiceInput.capabilityStateByFacts"))
         assertTrue(bundle.javascript.contains("voiceInput.failureStateByReason"))
         assertTrue(bundle.javascript.contains("applyVoiceInputSemanticState"))
+        assertTrue(
+            bundle.javascript.contains("const refreshSettingsProjections = async"),
+            "Settings must have one live re-observation path for current projections",
+        )
+        val settingsSwitchStart =
+            bundle.javascript.indexOf("ui.viewSwitch.addEventListener('click'")
+        val settingsSwitchEnd =
+            bundle.javascript.indexOf(
+                "ui.contextShare.addEventListener('click'",
+                settingsSwitchStart,
+            )
+        assertTrue(settingsSwitchStart >= 0 && settingsSwitchEnd > settingsSwitchStart)
+        assertTrue(
+            bundle.javascript
+                .substring(settingsSwitchStart, settingsSwitchEnd)
+                .contains("void refreshSettingsProjections();"),
+            "opening Settings must reobserve Models, Diagnostics and Local ASR after transient failure",
+        )
+        assertTrue(
+            bundle.javascript.contains("void refreshSettingsProjections(false).then((current) =>"),
+            "startup must perform bounded recovery when a Settings projection initially fails",
+        )
         assertTrue(bundle.javascript.contains("realizeBeginLocalDictation"))
         assertTrue(bundle.javascript.contains("realizeEndLocalDictation"))
         assertTrue(bundle.javascript.contains("controlRef: voiceInput.control.stop"))
