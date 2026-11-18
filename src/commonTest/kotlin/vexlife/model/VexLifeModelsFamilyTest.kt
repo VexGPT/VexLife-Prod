@@ -108,20 +108,41 @@ class VexLifeModelsFamilyTest {
             ),
             controls(selected),
         )
+        val configurationChoices =
+            VexLifeModelsFamily
+                .displayStateFor(
+                    selected,
+                )
+                .runtimeConfigurationChoices
         assertEquals(
             listOf(
                 1,
                 2,
                 3,
             ),
-            VexLifeModelsFamily
-                .displayStateFor(
-                    selected,
-                )
-                .runtimeConfigurationChoices
-                .map {
-                    it.promptCacheEntries
-                },
+            configurationChoices.map {
+                it.promptCacheEntries
+            },
+        )
+        assertEquals(
+            listOf(
+                "workspace.label.model-cache-level-1",
+                "workspace.label.model-cache-level-2",
+                "workspace.label.model-cache-level-3",
+            ),
+            configurationChoices.map {
+                it.label.key
+            },
+        )
+        assertEquals(
+            listOf(
+                "workspace.label.model-recommended",
+                "workspace.label.model-experimental",
+                "workspace.label.model-experimental",
+            ),
+            configurationChoices.map {
+                it.standing.key
+            },
         )
         assertEquals(
             VexLifeModelsFamily.Effect.SwitchModel,

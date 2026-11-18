@@ -584,17 +584,17 @@ class VexLifeWebP1RuntimeArtifactsTest {
             ),
             "the old large per-model card renderer must not compete with the dropdown",
         )
-        assertTrue(
+        assertFalse(
             javascript.contains(
                 "workspace.label.model-cache-level-1",
-            ) &&
+            ) ||
                 javascript.contains(
                     "workspace.label.model-cache-level-2",
-                ) &&
+                ) ||
                 javascript.contains(
                     "workspace.label.model-cache-level-3",
                 ),
-            "the UI should explain the three admitted cache values as human-readable levels",
+            "VexWeb must not own the human meaning of runtime-configuration values",
         )
         assertFalse(
             bundle.html.contains(
@@ -610,15 +610,18 @@ class VexLifeWebP1RuntimeArtifactsTest {
         )
         assertTrue(
             javascript.contains(
-                "\"${VexLifeModelsFamily.ControlSetPromptCacheEntries}\"",
-            ),
-            "the performance choice must return the runtime-configuration Control",
+                "choice.controlRef",
+            ) &&
+                javascript.contains(
+                    "choice.promptCacheEntries",
+                ),
+            "the performance choice must return the Control projected by Models DisplayState",
         )
         assertTrue(
             javascript.contains(
-                "modelControl(\"${VexLifeModelsFamily.ControlUse}\", selected.handle)",
+                "modelControl(startControl.controlRef, selected.handle)",
             ),
-            "explicit Start must remain the runtime-convergence Control",
+            "explicit Start must return the activation Control projected by Models DisplayState",
         )
         assertFalse(
             javascript.contains(
