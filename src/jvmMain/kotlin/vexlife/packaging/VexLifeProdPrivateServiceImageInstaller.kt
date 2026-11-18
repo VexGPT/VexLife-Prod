@@ -32,10 +32,19 @@ object VexLifeProdPrivateServiceImageInstaller {
         val imageMutationPerformed: Boolean,
     )
 
-    fun installedImagePath(
+    /**
+     * Pure coordinate for an image that was installed beneath one Home path.
+     *
+     * Lifetime reconciliation may need this after the Home itself disappeared, so coordinate
+     * formation cannot require the Home to still be current.
+     */
+    fun installedImageCoordinate(
         productHome: Path,
         sourceSha: String,
     ): Path {
+        require(productHome.isAbsolute) {
+            "installed private service-image Home coordinate must be absolute"
+        }
         require(
             sourceSha.matches(
                 Regex(
@@ -47,15 +56,47 @@ object VexLifeProdPrivateServiceImageInstaller {
         }
 
         val home =
-            currentHomeRoot(
-                productHome,
+            productHome.normalize()
+        val relative =
+            Path.of(
+                ImageBaseRelativePath,
             )
+                .resolve(
+                    sourceSha,
+                )
+        require(
+            !relative.isAbsolute,
+        ) {
+            "installed private service-image relative coordinate became absolute"
+        }
+        val resolved =
+            home
+                .resolve(
+                    relative,
+                )
+                .normalize()
+        require(
+            resolved.startsWith(
+                home,
+            ),
+        ) {
+            "installed private service-image coordinate escaped its Home"
+        }
 
-        return VexOwnedPath.resolveInside(
-            home,
-            "$ImageBaseRelativePath/$sourceSha",
-        )
+        return resolved
     }
+
+    fun installedImagePath(
+        productHome: Path,
+        sourceSha: String,
+    ): Path =
+        installedImageCoordinate(
+            productHome =
+                currentHomeRoot(
+                    productHome,
+                ),
+            sourceSha = sourceSha,
+        )
 
     fun install(
         sourceImageRoot: Path,

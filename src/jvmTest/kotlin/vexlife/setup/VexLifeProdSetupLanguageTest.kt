@@ -37,6 +37,11 @@ class VexLifeProdSetupLanguageTest {
             VexLifeProdEntryFamily.UpdateAvailable(sha),
             VexLifeProdEntryFamily.RepairRequired(sha),
             VexLifeProdEntryFamily.UpdateRepairRequired(sha),
+            VexLifeProdEntryFamily.ServiceRecoveryRequired(
+                desiredSourceSha = sha,
+                priorServiceSourceSha = "b".repeat(40),
+                priorServicePid = 4242L,
+            ),
             VexLifeProdEntryFamily.StartRequired(sha, priorServiceSourceSha = null),
             VexLifeProdEntryFamily.StartRequired(sha, priorServiceSourceSha = "b".repeat(40)),
             VexLifeProdEntryFamily.HomeFormationRequired(sha),

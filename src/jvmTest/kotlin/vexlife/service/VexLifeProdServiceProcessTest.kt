@@ -5,6 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
@@ -205,14 +206,35 @@ class VexLifeProdServiceProcessTest {
                             ready,
                         )
                     },
+                    observeHomeIdentity = {
+                        productHome ->
+                        assertEquals(
+                            arguments.productHome,
+                            productHome,
+                        )
+                        VexLifeProdServiceProcess.HomeIdentity(
+                            homePath = arguments.productHome.toString(),
+                            homeRef = "vex-home.device.vexlife.service-process-test",
+                            deviceRef = "device.vexlife.service-process-test",
+                            companionLineageRef =
+                                "companion-lineage.vexlife.service-process-test",
+                        )
+                    },
                     awaitTermination = {
-                        running ->
+                        running,
+                        homeCurrent,
+                        releaseRuntime,
+                        ->
                         trace +=
                             "AWAIT"
                         assertSame(
                             service,
                             running,
                         )
+                        assertTrue(
+                            homeCurrent(),
+                        )
+                        releaseRuntime()
                         running.close()
                     },
                 ),
@@ -229,7 +251,45 @@ class VexLifeProdServiceProcessTest {
             ),
             trace,
         )
+    } 
+    @Test
+    fun homeRetentionRequiresSustainedIdentityLossAndResetsAfterRecovery() {
+        val retention =
+            VexLifeProdServiceProcess.HomeRetention()
+
+        assertFalse(
+            retention.observe(
+                false,
+            ),
+        )
+        assertFalse(
+            retention.observe(
+                false,
+            ),
+        )
+        assertFalse(
+            retention.observe(
+                true,
+            ),
+            "a recovered exact Home resets the loss window",
+        )
+        assertFalse(
+            retention.observe(
+                false,
+            ),
+        )
+        assertFalse(
+            retention.observe(
+                false,
+            ),
+        )
+        assertTrue(
+            retention.observe(
+                false,
+            ),
+        )
     }
+
 }
 
 // [VXG RealForever]
