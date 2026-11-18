@@ -98,6 +98,11 @@ object VexLogger {
 
         // Local speech-to-text provider. Facts carry stable provider/model coordinates, never audio/text.
         LocalAsrSelectionSaved(Owner.Person),
+        LocalAsrSpokenLanguageSaved(Owner.Person),
+        LocalAsrModelDownloadStarted(Owner.LocalAsr),
+        LocalAsrModelDownloadCompleted(Owner.LocalAsr),
+        LocalAsrModelDownloadFailed(Owner.LocalAsr),
+        LocalAsrModelFilesRemoved(Owner.LocalAsr),
         LocalAsrInferenceStarted(Owner.LocalAsr),
         LocalAsrInferenceCompleted(Owner.LocalAsr),
         LocalAsrInferenceFailed(Owner.LocalAsr),

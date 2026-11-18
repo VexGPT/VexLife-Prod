@@ -17,110 +17,27 @@
       "local-asr": "VexLifeLocalAsrSelection (selected provider/model) plus local provider/model currentness"
     }
   },
-  "workspace.heading.diagnostics": {
+  "workspace.button.conversation-send": {
     "strings": {
       "en": {
-        "text": "Debug & diagnostics"
+        "text": "Send"
       }
     },
     "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.description.diagnostics": {
-    "strings": {
-      "en": {
-        "text": "VexLife keeps a short history of what happened (setup steps, service and model starts, sends and how they ended) so a problem can be traced to its cause. It holds no conversation text."
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.status.diagnostics-recording": {
-    "strings": {
-      "en": {
-        "text": "Trace: recording the normal history"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
+      "workspace.conversation"
     ],
-    "dataKey": "diagnostics:state:RECORDING"
+    "dataKey": "conversation-turn:control:SEND"
   },
-  "workspace.status.diagnostics-enhanced-off": {
+  "workspace.button.conversation-stop": {
     "strings": {
       "en": {
-        "text": "Enhanced capture: off"
+        "text": "Stop"
       }
     },
     "surfaces": [
-      "workspace.settings"
+      "workspace.conversation"
     ],
-    "dataKey": "diagnostics:state:RECORDING"
-  },
-  "workspace.status.diagnostics-enhanced-on": {
-    "strings": {
-      "en": {
-        "text": "Enhanced capture: on until {until}"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ],
-    "dataKey": "diagnostics:state:RECORDING_ENHANCED"
-  },
-  "workspace.status.diagnostics-unavailable": {
-    "strings": {
-      "en": {
-        "text": "The debug history isn't available right now."
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.label.diagnostics-records": {
-    "strings": {
-      "en": {
-        "text": "{count} records kept since {since}"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.label.diagnostics-no-records": {
-    "strings": {
-      "en": {
-        "text": "No records yet"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.button.diagnostics-start-enhanced": {
-    "strings": {
-      "en": {
-        "text": "Start enhanced capture"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ],
-    "dataKey": "diagnostics:control:START_ENHANCED"
-  },
-  "workspace.button.diagnostics-stop-enhanced": {
-    "strings": {
-      "en": {
-        "text": "Stop enhanced capture"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ],
-    "dataKey": "diagnostics:control:STOP_ENHANCED"
+    "dataKey": "conversation-turn:control:STOP"
   },
   "workspace.button.diagnostics-clear-history": {
     "strings": {
@@ -144,269 +61,27 @@
     ],
     "dataKey": "diagnostics:export:DEBUG_ZIP"
   },
-  "workspace.description.diagnostics-enhanced-note": {
+  "workspace.button.diagnostics-start-enhanced": {
     "strings": {
       "en": {
-        "text": "Enhanced capture also records process and memory snapshots every 30 seconds for two hours, then stops by itself."
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.description.diagnostics-export-note": {
-    "strings": {
-      "en": {
-        "text": "The ZIP holds states, timings, process IDs, receipt summaries and short log tails. It never includes your conversations, prompts or page contents."
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.description.diagnostics-clear-confirm": {
-    "strings": {
-      "en": {
-        "text": "Clear the debug history? Only this history is removed. Your conversations, memory and Vex Home stay as they are."
+        "text": "Start enhanced capture"
       }
     },
     "surfaces": [
       "workspace.settings"
     ],
-    "dataKey": "diagnostics:control:CLEAR_HISTORY"
+    "dataKey": "diagnostics:control:START_ENHANCED"
   },
-  "workspace.status.reach-web-fetch": {
+  "workspace.button.diagnostics-stop-enhanced": {
     "strings": {
       "en": {
-        "text": "reading {target}"
-      }
-    },
-    "surfaces": [
-      "workspace.conversation"
-    ],
-    "dataKey": "capability:web:fetch"
-  },
-  "workspace.status.reach-web-search": {
-    "strings": {
-      "en": {
-        "text": "searching the web for {target}"
-      }
-    },
-    "surfaces": [
-      "workspace.conversation"
-    ],
-    "dataKey": "capability:web:search"
-  },
-  "workspace.status.reach-github": {
-    "strings": {
-      "en": {
-        "text": "reading GitHub {target}"
-      }
-    },
-    "surfaces": [
-      "workspace.conversation"
-    ],
-    "dataKey": "capability:github:read"
-  },
-  "workspace.status.reach-home": {
-    "strings": {
-      "en": {
-        "text": "looking in my Home at {target}"
-      }
-    },
-    "surfaces": [
-      "workspace.conversation"
-    ],
-    "dataKey": "capability:home:read"
-  },
-  "workspace.status.reach-memory": {
-    "strings": {
-      "en": {
-        "text": "searching Memory for {target}"
-      }
-    },
-    "surfaces": [
-      "workspace.conversation"
-    ],
-    "dataKey": "capability:memory:search"
-  },
-  "workspace.status.reach-atlas": {
-    "strings": {
-      "en": {
-        "text": "checking what I can reach"
-      }
-    },
-    "surfaces": [
-      "workspace.conversation"
-    ],
-    "dataKey": "capability:atlas:describe"
-  },
-  "workspace.label.reached": {
-    "strings": {
-      "en": {
-        "text": "reached"
-      }
-    },
-    "surfaces": [
-      "workspace.conversation"
-    ],
-    "dataKey": "capability:trace:USES"
-  },
-  "workspace.label.reach-state": {
-    "strings": {
-      "en": {
-        "text": "({state})"
-      }
-    },
-    "surfaces": [
-      "workspace.conversation"
-    ]
-  },
-  "workspace.heading.models": {
-    "strings": {
-      "en": {
-        "text": "Models"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.description.models": {
-    "strings": {
-      "en": {
-        "text": "Choose which local Heretic model Vex thinks with. Smaller models answer sooner and need less memory. Download a model to add it, and remove models you don't use to free space — they stay here to download again."
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.label.model-facts": {
-    "strings": {
-      "en": {
-        "text": "{size} GiB · wants {memory} GiB memory · {fit}"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.label.model-fits": {
-    "strings": {
-      "en": {
-        "text": "fits this Mac"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.label.model-tight": {
-    "strings": {
-      "en": {
-        "text": "more than this Mac has"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.label.model-candidate": {
-    "strings": {
-      "en": {
-        "text": "new — not yet lived-tested"
+        "text": "Stop enhanced capture"
       }
     },
     "surfaces": [
       "workspace.settings"
     ],
-    "dataKey": "model:standing:CANDIDATE"
-  },
-  "workspace.status.model-on-this-mac": {
-    "strings": {
-      "en": {
-        "text": "on this Mac"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ],
-    "dataKey": "model:files:PRESENT"
-  },
-  "workspace.status.model-not-downloaded": {
-    "strings": {
-      "en": {
-        "text": "not downloaded"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ],
-    "dataKey": "model:files:ABSENT"
-  },
-  "workspace.status.model-partly-downloaded": {
-    "strings": {
-      "en": {
-        "text": "partly downloaded"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ],
-    "dataKey": "model:files:PARTIAL"
-  },
-  "workspace.status.model-damaged": {
-    "strings": {
-      "en": {
-        "text": "files damaged"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ],
-    "dataKey": "model:files:DAMAGED"
-  },
-  "workspace.status.model-downloading": {
-    "strings": {
-      "en": {
-        "text": "downloading {done} of {total} GiB"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.label.model-serving": {
-    "strings": {
-      "en": {
-        "text": "Vex is using this model now"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.label.model-chosen": {
-    "strings": {
-      "en": {
-        "text": "chosen"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.button.model-use": {
-    "strings": {
-      "en": {
-        "text": "Use"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ],
-    "dataKey": "model:control:USE_MODEL"
+    "dataKey": "diagnostics:control:STOP_ENHANCED"
   },
   "workspace.button.model-download": {
     "strings": {
@@ -441,150 +116,16 @@
     ],
     "dataKey": "model:control:REMOVE_MODEL"
   },
-  "workspace.status.model-control-not-lawful": {
+  "workspace.button.model-use": {
     "strings": {
       "en": {
-        "text": "That isn't possible for this model right now."
+        "text": "Use"
       }
     },
     "surfaces": [
       "workspace.settings"
-    ]
-  },
-  "workspace.status.model-removed": {
-    "strings": {
-      "en": {
-        "text": "Removed — {freed} GiB freed."
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.status.model-downloaded": {
-    "strings": {
-      "en": {
-        "text": "Downloaded and verified."
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.status.model-download-failed": {
-    "strings": {
-      "en": {
-        "text": "The download didn't finish: {reason}"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.status.models-switch-pending": {
-    "strings": {
-      "en": {
-        "text": "The selected model and the model serving Vex do not match yet."
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.label.model-free-space": {
-    "strings": {
-      "en": {
-        "text": "{free} GiB free on this disk"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.label.model-chosen-pending": {
-    "strings": {
-      "en": {
-        "text": "selected · becoming the serving model"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.status.model-switching": {
-    "strings": {
-      "en": {
-        "text": "switching"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.status.model-switch-requested": {
-    "strings": {
-      "en": {
-        "text": "Switch accepted. Preparing {model}."
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.status.model-switch-waiting": {
-    "strings": {
-      "en": {
-        "text": "Waiting for the current Vex turn to finish before switching to {model}."
-      }
-    },
-    "surfaces": [
-      "workspace.settings",
-      "workspace.conversation"
-    ]
-  },
-  "workspace.status.model-switch-preparing": {
-    "strings": {
-      "en": {
-        "text": "Checking {model} and its local runtime."
-      }
-    },
-    "surfaces": [
-      "workspace.settings",
-      "workspace.conversation"
-    ]
-  },
-  "workspace.status.model-switch-runtime": {
-    "strings": {
-      "en": {
-        "text": "Switching the local model to {model}."
-      }
-    },
-    "surfaces": [
-      "workspace.settings",
-      "workspace.conversation"
-    ]
-  },
-  "workspace.status.model-switched": {
-    "strings": {
-      "en": {
-        "text": "Vex is now using {model}."
-      }
-    },
-    "surfaces": [
-      "workspace.settings",
-      "workspace.conversation"
-    ]
-  },
-  "workspace.status.model-switch-failed": {
-    "strings": {
-      "en": {
-        "text": "Could not switch to {model}: {reason}"
-      }
-    },
-    "surfaces": [
-      "workspace.settings",
-      "workspace.conversation"
-    ]
+    ],
+    "dataKey": "model:control:USE_MODEL"
   },
   "workspace.button.voice-input-start": {
     "strings": {
@@ -608,16 +149,823 @@
     ],
     "dataKey": "voice-input:control:STOP"
   },
-  "workspace.status.voice-input-ready": {
+  "workspace.description.conversation-stopped": {
     "strings": {
       "en": {
-        "text": "Dictation stays on this device and edits only this draft."
+        "text": "Stopped. Your message is back in the Composer so you can edit or delete it."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.description.diagnostics": {
+    "strings": {
+      "en": {
+        "text": "VexLife keeps a short history of what happened (setup steps, service and model starts, sends and how they ended) so a problem can be traced to its cause. It holds no conversation text."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.diagnostics-clear-confirm": {
+    "strings": {
+      "en": {
+        "text": "Clear the debug history? Only this history is removed. Your conversations, memory and Vex Home stay as they are."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "diagnostics:control:CLEAR_HISTORY"
+  },
+  "workspace.description.diagnostics-enhanced-note": {
+    "strings": {
+      "en": {
+        "text": "Enhanced capture also records process and memory snapshots every 30 seconds for two hours, then stops by itself."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.diagnostics-export-note": {
+    "strings": {
+      "en": {
+        "text": "The ZIP holds states, timings, process IDs, receipt summaries and short log tails. It never includes your conversations, prompts or page contents."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.local-asr": {
+    "strings": {
+      "en": {
+        "text": "Choose which qualified local speech recognizer turns your microphone into editable Composer text. Audio stays on this Mac."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.local-asr-note": {
+    "strings": {
+      "en": {
+        "text": "The microphone uses this selection. The transcript stays editable until you press Send."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.local-asr-spoken-language-note": {
+    "strings": {
+      "en": {
+        "text": "Choose the language your microphone should transcribe. It can differ from the language Vex replies in."
+      },
+      "ar": {
+        "text": "اختر اللغة التي يجب أن ينسخها الميكروفون. يمكن أن تختلف عن اللغة التي يرد بها Vex."
+      },
+      "de": {
+        "text": "Wähle die Sprache, die dein Mikrofon transkribieren soll. Sie kann von der Sprache abweichen, in der Vex antwortet."
+      },
+      "es": {
+        "text": "Elige el idioma que debe transcribir tu micrófono. Puede ser distinto del idioma en que responde Vex."
+      },
+      "fr": {
+        "text": "Choisissez la langue que votre microphone doit transcrire. Elle peut être différente de la langue de réponse de Vex."
+      },
+      "hi": {
+        "text": "वह भाषा चुनें जिसे आपका माइक्रोफ़ोन लिखित रूप में बदले। यह Vex की उत्तर भाषा से अलग हो सकती है।"
+      },
+      "ja": {
+        "text": "マイクで文字起こしする言語を選びます。Vex が返信する言語とは別に設定できます。"
+      },
+      "ko": {
+        "text": "마이크가 받아쓸 언어를 선택하세요. Vex가 답변하는 언어와 달라도 됩니다."
+      },
+      "pt": {
+        "text": "Escolha o idioma que o microfone deve transcrever. Ele pode ser diferente do idioma em que o Vex responde."
+      },
+      "zh": {
+        "text": "选择麦克风要转写的语言。它可以与 Vex 的回复语言不同。"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.description.models": {
+    "strings": {
+      "en": {
+        "text": "Choose which local Heretic model Vex thinks with. Smaller models answer sooner and need less memory. Download a model to add it, and remove models you don't use to free space — they stay here to download again."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.heading.diagnostics": {
+    "strings": {
+      "en": {
+        "text": "Debug & diagnostics"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.heading.local-asr": {
+    "strings": {
+      "en": {
+        "text": "Local voice recognition"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.heading.models": {
+    "strings": {
+      "en": {
+        "text": "Models"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.diagnostics-no-records": {
+    "strings": {
+      "en": {
+        "text": "No records yet"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.diagnostics-records": {
+    "strings": {
+      "en": {
+        "text": "{count} records kept since {since}"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.local-asr-selection": {
+    "strings": {
+      "en": {
+        "text": "Recognition provider"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.local-asr-spoken-language": {
+    "strings": {
+      "en": {
+        "text": "Spoken language"
+      },
+      "ar": {
+        "text": "لغة الكلام"
+      },
+      "de": {
+        "text": "Gesprochene Sprache"
+      },
+      "es": {
+        "text": "Idioma hablado"
+      },
+      "fr": {
+        "text": "Langue parlée"
+      },
+      "hi": {
+        "text": "बोली जाने वाली भाषा"
+      },
+      "ja": {
+        "text": "話す言語"
+      },
+      "ko": {
+        "text": "말하는 언어"
+      },
+      "pt": {
+        "text": "Idioma falado"
+      },
+      "zh": {
+        "text": "语音输入语言"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.local-asr-spoken-language-auto": {
+    "strings": {
+      "en": {
+        "text": "Auto-detect spoken language"
+      },
+      "ar": {
+        "text": "اكتشاف لغة الكلام تلقائيًا"
+      },
+      "de": {
+        "text": "Gesprochene Sprache automatisch erkennen"
+      },
+      "es": {
+        "text": "Detectar automáticamente el idioma hablado"
+      },
+      "fr": {
+        "text": "Détecter automatiquement la langue parlée"
+      },
+      "hi": {
+        "text": "बोली जाने वाली भाषा अपने आप पहचानें"
+      },
+      "ja": {
+        "text": "話している言語を自動検出"
+      },
+      "ko": {
+        "text": "말하는 언어 자동 감지"
+      },
+      "pt": {
+        "text": "Detectar automaticamente o idioma falado"
+      },
+      "zh": {
+        "text": "自动检测语音语言"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.local-asr-spoken-language-follow": {
+    "strings": {
+      "en": {
+        "text": "Follow Vex reply language · {language}"
+      },
+      "ar": {
+        "text": "اتباع لغة رد Vex · {language}"
+      },
+      "de": {
+        "text": "Antwortsprache von Vex verwenden · {language}"
+      },
+      "es": {
+        "text": "Usar el idioma de respuesta de Vex · {language}"
+      },
+      "fr": {
+        "text": "Suivre la langue de réponse de Vex · {language}"
+      },
+      "hi": {
+        "text": "Vex की उत्तर भाषा का उपयोग करें · {language}"
+      },
+      "ja": {
+        "text": "Vex の返信言語に合わせる · {language}"
+      },
+      "ko": {
+        "text": "Vex 답변 언어 따르기 · {language}"
+      },
+      "pt": {
+        "text": "Seguir o idioma de resposta do Vex · {language}"
+      },
+      "zh": {
+        "text": "跟随 Vex 的回复语言 · {language}"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-candidate": {
+    "strings": {
+      "en": {
+        "text": "new — not yet lived-tested"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "model:standing:CANDIDATE"
+  },
+  "workspace.label.model-chosen": {
+    "strings": {
+      "en": {
+        "text": "chosen"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-chosen-pending": {
+    "strings": {
+      "en": {
+        "text": "selected · becoming the serving model"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-facts": {
+    "strings": {
+      "en": {
+        "text": "{size} GiB · wants {memory} GiB memory · {fit}"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-fits": {
+    "strings": {
+      "en": {
+        "text": "fits this Mac"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-free-space": {
+    "strings": {
+      "en": {
+        "text": "{free} GiB free on this disk"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-serving": {
+    "strings": {
+      "en": {
+        "text": "Vex is using this model now"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.model-tight": {
+    "strings": {
+      "en": {
+        "text": "more than this Mac has"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.label.reach-state": {
+    "strings": {
+      "en": {
+        "text": "({state})"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.label.reached": {
+    "strings": {
+      "en": {
+        "text": "reached"
       }
     },
     "surfaces": [
       "workspace.conversation"
     ],
-    "dataKey": "voice-input:state:READY"
+    "dataKey": "capability:trace:USES"
+  },
+  "workspace.status.conversation-active": {
+    "strings": {
+      "en": {
+        "text": "Vex is working"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "conversation-turn:state:ACTIVE"
+  },
+  "workspace.status.conversation-cancel-not-active": {
+    "strings": {
+      "en": {
+        "text": "That turn is no longer active."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.conversation-cancel-unavailable": {
+    "strings": {
+      "en": {
+        "text": "VexLife could not request Stop."
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.conversation-ready": {
+    "strings": {
+      "en": {
+        "text": "Ready"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "conversation-turn:state:READY"
+  },
+  "workspace.status.conversation-stopped": {
+    "strings": {
+      "en": {
+        "text": "Stopped by you"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.conversation-stopping": {
+    "strings": {
+      "en": {
+        "text": "Stopping this turn…"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "conversation-turn:state:CANCELLING"
+  },
+  "workspace.status.diagnostics-enhanced-off": {
+    "strings": {
+      "en": {
+        "text": "Enhanced capture: off"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "diagnostics:state:RECORDING"
+  },
+  "workspace.status.diagnostics-enhanced-on": {
+    "strings": {
+      "en": {
+        "text": "Enhanced capture: on until {until}"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "diagnostics:state:RECORDING_ENHANCED"
+  },
+  "workspace.status.diagnostics-recording": {
+    "strings": {
+      "en": {
+        "text": "Trace: recording the normal history"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "diagnostics:state:RECORDING"
+  },
+  "workspace.status.diagnostics-unavailable": {
+    "strings": {
+      "en": {
+        "text": "The debug history isn't available right now."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.local-asr-model-not-current": {
+    "strings": {
+      "en": {
+        "text": "The selected speech-recognition model does not match its qualified bytes."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "local-asr:state:MODEL_DIGEST_NOT_CURRENT"
+  },
+  "workspace.status.local-asr-model-unavailable": {
+    "strings": {
+      "en": {
+        "text": "The selected speech-recognition model is not on this Mac yet."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "local-asr:state:MODEL_UNAVAILABLE"
+  },
+  "workspace.status.local-asr-provider-not-current": {
+    "strings": {
+      "en": {
+        "text": "The selected local speech-recognition runtime does not match the qualified provider source."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "local-asr:state:PROVIDER_SOURCE_NOT_CURRENT"
+  },
+  "workspace.status.local-asr-ready": {
+    "strings": {
+      "en": {
+        "text": "Ready locally · {provider} · {model} · {size}"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "local-asr:state:READY"
+  },
+  "workspace.status.local-asr-runtime-unavailable": {
+    "strings": {
+      "en": {
+        "text": "The selected local speech-recognition runtime is not on this Mac yet."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "local-asr:state:PROVIDER_EXECUTABLE_UNAVAILABLE"
+  },
+  "workspace.status.local-asr-selected": {
+    "strings": {
+      "en": {
+        "text": "Selected {provider} · {model}."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "local-asr:selection:SAVED"
+  },
+  "workspace.status.local-asr-unavailable": {
+    "strings": {
+      "en": {
+        "text": "The selected local speech recognizer is not ready."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-control-not-lawful": {
+    "strings": {
+      "en": {
+        "text": "That isn't possible for this model right now."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-damaged": {
+    "strings": {
+      "en": {
+        "text": "files damaged"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "model:files:DAMAGED"
+  },
+  "workspace.status.model-download-failed": {
+    "strings": {
+      "en": {
+        "text": "The download didn't finish: {reason}"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-downloaded": {
+    "strings": {
+      "en": {
+        "text": "Downloaded and verified."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-downloading": {
+    "strings": {
+      "en": {
+        "text": "downloading {done} of {total} GiB"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-not-downloaded": {
+    "strings": {
+      "en": {
+        "text": "not downloaded"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "model:files:ABSENT"
+  },
+  "workspace.status.model-on-this-mac": {
+    "strings": {
+      "en": {
+        "text": "on this Mac"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "model:files:PRESENT"
+  },
+  "workspace.status.model-partly-downloaded": {
+    "strings": {
+      "en": {
+        "text": "partly downloaded"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ],
+    "dataKey": "model:files:PARTIAL"
+  },
+  "workspace.status.model-removed": {
+    "strings": {
+      "en": {
+        "text": "Removed — {freed} GiB freed."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-switch-failed": {
+    "strings": {
+      "en": {
+        "text": "Could not switch to {model}: {reason}"
+      }
+    },
+    "surfaces": [
+      "workspace.settings",
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.model-switch-preparing": {
+    "strings": {
+      "en": {
+        "text": "Checking {model} and its local runtime."
+      }
+    },
+    "surfaces": [
+      "workspace.settings",
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.model-switch-requested": {
+    "strings": {
+      "en": {
+        "text": "Switch accepted. Preparing {model}."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.model-switch-runtime": {
+    "strings": {
+      "en": {
+        "text": "Switching the local model to {model}."
+      }
+    },
+    "surfaces": [
+      "workspace.settings",
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.model-switch-waiting": {
+    "strings": {
+      "en": {
+        "text": "Waiting for the current Vex turn to finish before switching to {model}."
+      }
+    },
+    "surfaces": [
+      "workspace.settings",
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.model-switched": {
+    "strings": {
+      "en": {
+        "text": "Vex is now using {model}."
+      }
+    },
+    "surfaces": [
+      "workspace.settings",
+      "workspace.conversation"
+    ]
+  },
+  "workspace.status.model-switching": {
+    "strings": {
+      "en": {
+        "text": "switching"
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.models-switch-pending": {
+    "strings": {
+      "en": {
+        "text": "The selected model and the model serving Vex do not match yet."
+      }
+    },
+    "surfaces": [
+      "workspace.settings"
+    ]
+  },
+  "workspace.status.reach-atlas": {
+    "strings": {
+      "en": {
+        "text": "checking what I can reach"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "capability:atlas:describe"
+  },
+  "workspace.status.reach-github": {
+    "strings": {
+      "en": {
+        "text": "reading GitHub {target}"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "capability:github:read"
+  },
+  "workspace.status.reach-home": {
+    "strings": {
+      "en": {
+        "text": "looking in my Home at {target}"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "capability:home:read"
+  },
+  "workspace.status.reach-memory": {
+    "strings": {
+      "en": {
+        "text": "searching Memory for {target}"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "capability:memory:search"
+  },
+  "workspace.status.reach-web-fetch": {
+    "strings": {
+      "en": {
+        "text": "reading {target}"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "capability:web:fetch"
+  },
+  "workspace.status.reach-web-search": {
+    "strings": {
+      "en": {
+        "text": "searching the web for {target}"
+      }
+    },
+    "surfaces": [
+      "workspace.conversation"
+    ],
+    "dataKey": "capability:web:search"
   },
   "workspace.status.voice-input-checking-language": {
     "strings": {
@@ -630,93 +978,16 @@
     ],
     "dataKey": "voice-input:state:CHECKING_LANGUAGE"
   },
-  "workspace.status.voice-input-installing-language": {
+  "workspace.status.voice-input-failed-language": {
     "strings": {
       "en": {
-        "text": "Getting on-device dictation ready for the selected language…"
+        "text": "The selected local speech recognizer does not support this language."
       }
     },
     "surfaces": [
       "workspace.conversation"
     ],
-    "dataKey": "voice-input:state:INSTALLING_LANGUAGE"
-  },
-  "workspace.status.voice-input-requesting-microphone": {
-    "strings": {
-      "en": {
-        "text": "Allow microphone access to start local dictation."
-      }
-    },
-    "surfaces": [
-      "workspace.conversation"
-    ],
-    "dataKey": "voice-input:state:REQUESTING_MICROPHONE"
-  },
-  "workspace.status.voice-input-listening": {
-    "strings": {
-      "en": {
-        "text": "Listening locally · speech stays on this device."
-      }
-    },
-    "surfaces": [
-      "workspace.conversation"
-    ],
-    "dataKey": "voice-input:state:LISTENING"
-  },
-  "workspace.status.voice-input-stopping": {
-    "strings": {
-      "en": {
-        "text": "Stopping local dictation…"
-      }
-    },
-    "surfaces": [
-      "workspace.conversation"
-    ],
-    "dataKey": "voice-input:state:STOPPING"
-  },
-  "workspace.status.voice-input-held-local-recognition": {
-    "strings": {
-      "en": {
-        "text": "Local dictation is not ready on this device."
-      }
-    },
-    "surfaces": [
-      "workspace.conversation"
-    ],
-    "dataKey": "voice-input:reason:LOCAL_RECOGNITION_UNAVAILABLE"
-  },
-  "workspace.status.voice-input-held-microphone-api": {
-    "strings": {
-      "en": {
-        "text": "Microphone access is not available in this browser context."
-      }
-    },
-    "surfaces": [
-      "workspace.conversation"
-    ],
-    "dataKey": "voice-input:reason:MICROPHONE_API_UNAVAILABLE"
-  },
-  "workspace.status.voice-input-held-audio-feedback": {
-    "strings": {
-      "en": {
-        "text": "Live microphone feedback is not available in this browser context."
-      }
-    },
-    "surfaces": [
-      "workspace.conversation"
-    ],
-    "dataKey": "voice-input:reason:AUDIO_FEEDBACK_UNAVAILABLE"
-  },
-  "workspace.status.voice-input-failed-permission": {
-    "strings": {
-      "en": {
-        "text": "Microphone permission is needed for local dictation."
-      }
-    },
-    "surfaces": [
-      "workspace.conversation"
-    ],
-    "dataKey": "voice-input:failure:MICROPHONE_PERMISSION_REQUIRED"
+    "dataKey": "voice-input:failure:LANGUAGE_UNAVAILABLE"
   },
   "workspace.status.voice-input-failed-microphone": {
     "strings": {
@@ -729,16 +1000,16 @@
     ],
     "dataKey": "voice-input:failure:MICROPHONE_UNAVAILABLE"
   },
-  "workspace.status.voice-input-failed-language": {
+  "workspace.status.voice-input-failed-permission": {
     "strings": {
       "en": {
-        "text": "The selected local speech recognizer does not support this language."
+        "text": "Microphone permission is needed for local dictation."
       }
     },
     "surfaces": [
       "workspace.conversation"
     ],
-    "dataKey": "voice-input:failure:LANGUAGE_UNAVAILABLE"
+    "dataKey": "voice-input:failure:MICROPHONE_PERMISSION_REQUIRED"
   },
   "workspace.status.voice-input-failed-recognition": {
     "strings": {
@@ -762,215 +1033,92 @@
     ],
     "dataKey": "voice-input:failure:UNKNOWN"
   },
-  "workspace.button.conversation-stop": {
+  "workspace.status.voice-input-held-audio-feedback": {
     "strings": {
       "en": {
-        "text": "Stop"
+        "text": "Live microphone feedback is not available in this browser context."
       }
     },
     "surfaces": [
       "workspace.conversation"
     ],
-    "dataKey": "conversation-turn:control:STOP"
+    "dataKey": "voice-input:reason:AUDIO_FEEDBACK_UNAVAILABLE"
   },
-  "workspace.status.conversation-stopping": {
+  "workspace.status.voice-input-held-local-recognition": {
     "strings": {
       "en": {
-        "text": "Stopping this turn…"
+        "text": "Local dictation is not ready on this device."
       }
     },
     "surfaces": [
       "workspace.conversation"
     ],
-    "dataKey": "conversation-turn:state:CANCELLING"
+    "dataKey": "voice-input:reason:LOCAL_RECOGNITION_UNAVAILABLE"
   },
-  "workspace.status.conversation-stopped": {
+  "workspace.status.voice-input-held-microphone-api": {
     "strings": {
       "en": {
-        "text": "Stopped by you"
-      }
-    },
-    "surfaces": [
-      "workspace.conversation"
-    ]
-  },
-  "workspace.description.conversation-stopped": {
-    "strings": {
-      "en": {
-        "text": "Stopped. Your message is back in the Composer so you can edit or delete it."
-      }
-    },
-    "surfaces": [
-      "workspace.conversation"
-    ]
-  },
-  "workspace.status.conversation-cancel-not-active": {
-    "strings": {
-      "en": {
-        "text": "That turn is no longer active."
-      }
-    },
-    "surfaces": [
-      "workspace.conversation"
-    ]
-  },
-  "workspace.status.conversation-cancel-unavailable": {
-    "strings": {
-      "en": {
-        "text": "VexLife could not request Stop."
-      }
-    },
-    "surfaces": [
-      "workspace.conversation"
-    ]
-  },
-  "workspace.button.conversation-send": {
-    "strings": {
-      "en": {
-        "text": "Send"
+        "text": "Microphone access is not available in this browser context."
       }
     },
     "surfaces": [
       "workspace.conversation"
     ],
-    "dataKey": "conversation-turn:control:SEND"
+    "dataKey": "voice-input:reason:MICROPHONE_API_UNAVAILABLE"
   },
-  "workspace.status.conversation-ready": {
+  "workspace.status.voice-input-installing-language": {
     "strings": {
       "en": {
-        "text": "Ready"
+        "text": "Getting on-device dictation ready for the selected language…"
       }
     },
     "surfaces": [
       "workspace.conversation"
     ],
-    "dataKey": "conversation-turn:state:READY"
+    "dataKey": "voice-input:state:INSTALLING_LANGUAGE"
   },
-  "workspace.status.conversation-active": {
+  "workspace.status.voice-input-listening": {
     "strings": {
       "en": {
-        "text": "Vex is working"
+        "text": "Listening locally · speech stays on this device."
       }
     },
     "surfaces": [
       "workspace.conversation"
     ],
-    "dataKey": "conversation-turn:state:ACTIVE"
+    "dataKey": "voice-input:state:LISTENING"
   },
-  "workspace.heading.local-asr": {
+  "workspace.status.voice-input-ready": {
     "strings": {
       "en": {
-        "text": "Local voice recognition"
+        "text": "Dictation stays on this device and edits only this draft."
       }
     },
     "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.description.local-asr": {
-    "strings": {
-      "en": {
-        "text": "Choose which qualified local speech recognizer turns your microphone into editable Composer text. Audio stays on this Mac."
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.label.local-asr-selection": {
-    "strings": {
-      "en": {
-        "text": "Recognition provider"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.description.local-asr-note": {
-    "strings": {
-      "en": {
-        "text": "The microphone uses this selection. The transcript stays editable until you press Send."
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
-  },
-  "workspace.status.local-asr-ready": {
-    "strings": {
-      "en": {
-        "text": "Ready locally · {provider} · {model} · {size}"
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
+      "workspace.conversation"
     ],
-    "dataKey": "local-asr:state:READY"
+    "dataKey": "voice-input:state:READY"
   },
-  "workspace.status.local-asr-selected": {
+  "workspace.status.voice-input-requesting-microphone": {
     "strings": {
       "en": {
-        "text": "Selected {provider} · {model}."
+        "text": "Allow microphone access to start local dictation."
       }
     },
     "surfaces": [
-      "workspace.settings"
+      "workspace.conversation"
     ],
-    "dataKey": "local-asr:selection:SAVED"
+    "dataKey": "voice-input:state:REQUESTING_MICROPHONE"
   },
-  "workspace.status.local-asr-provider-not-current": {
+  "workspace.status.voice-input-stopping": {
     "strings": {
       "en": {
-        "text": "The selected local speech-recognition runtime does not match the qualified provider source."
+        "text": "Stopping local dictation…"
       }
     },
     "surfaces": [
-      "workspace.settings"
+      "workspace.conversation"
     ],
-    "dataKey": "local-asr:state:PROVIDER_SOURCE_NOT_CURRENT"
-  },
-  "workspace.status.local-asr-runtime-unavailable": {
-    "strings": {
-      "en": {
-        "text": "The selected local speech-recognition runtime is not on this Mac yet."
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ],
-    "dataKey": "local-asr:state:PROVIDER_EXECUTABLE_UNAVAILABLE"
-  },
-  "workspace.status.local-asr-model-unavailable": {
-    "strings": {
-      "en": {
-        "text": "The selected speech-recognition model is not on this Mac yet."
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ],
-    "dataKey": "local-asr:state:MODEL_UNAVAILABLE"
-  },
-  "workspace.status.local-asr-model-not-current": {
-    "strings": {
-      "en": {
-        "text": "The selected speech-recognition model does not match its qualified bytes."
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ],
-    "dataKey": "local-asr:state:MODEL_DIGEST_NOT_CURRENT"
-  },
-  "workspace.status.local-asr-unavailable": {
-    "strings": {
-      "en": {
-        "text": "The selected local speech recognizer is not ready."
-      }
-    },
-    "surfaces": [
-      "workspace.settings"
-    ]
+    "dataKey": "voice-input:state:STOPPING"
   }
 }

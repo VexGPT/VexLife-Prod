@@ -89,6 +89,22 @@ class VexLifeProdServiceContractTest {
             VexLifeProdServiceContract.ContextPath,
         )
         assertEquals(
+            "/api/v1/local-asr",
+            VexLifeProdServiceContract.LocalAsrPath,
+        )
+        assertEquals(
+            "/api/v1/local-asr/spoken-language",
+            VexLifeProdServiceContract.LocalAsrSpokenLanguagePath,
+        )
+        assertEquals(
+            "/api/v1/local-asr/model/control",
+            VexLifeProdServiceContract.LocalAsrModelControlPath,
+        )
+        assertEquals(
+            "/api/v1/local-asr/transcribe",
+            VexLifeProdServiceContract.LocalAsrTranscribePath,
+        )
+        assertEquals(
             "/api/v1/foundational-field",
             VexLifeProdServiceContract.FoundationalFieldPath,
         )

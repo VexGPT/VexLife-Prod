@@ -2,6 +2,7 @@ package vexlife.web
 
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.conversation.VexLifeConversationTurnFamily
+import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.voiceinput.VexLifeVoiceInputFamily
 import vexlife.workspace.VexLifeSourceTemplate
@@ -293,6 +294,8 @@ object VexLifeWebP1RuntimeArtifacts {
                 memoryPath: ${jsString(VexLifeProdServiceContract.MemoryPath)},
                 settingsPath: ${jsString(VexLifeProdServiceContract.SettingsPath)},
                 localAsrPath: ${jsString(VexLifeProdServiceContract.LocalAsrPath)},
+                localAsrSpokenLanguagePath: ${jsString(VexLifeProdServiceContract.LocalAsrSpokenLanguagePath)},
+                localAsrModelControlPath: ${jsString(VexLifeProdServiceContract.LocalAsrModelControlPath)},
                 localAsrTranscribePath: ${jsString(VexLifeProdServiceContract.LocalAsrTranscribePath)},
                 privatePath: ${jsString(VexLifeProdServiceContract.PrivatePath)},
                 privateControlPath: ${jsString(VexLifeProdServiceContract.PrivateControlPath)},
@@ -469,8 +472,11 @@ object VexLifeWebP1RuntimeArtifacts {
                 modelsList: byId('models-list'),
                 modelsNote: byId('models-note'),
                 localAsrSelection: byId('local-asr-selection'),
+                localAsrModelsList: byId('local-asr-models-list'),
+                localAsrSpokenLanguage: byId('local-asr-spoken-language'),
                 localAsrStatus: byId('local-asr-status'),
                 localAsrNote: byId('local-asr-note'),
+                localAsrStorageNote: byId('local-asr-storage-note'),
                 diagnosticsStatus: byId('diagnostics-status'),
                 diagnosticsCapture: byId('diagnostics-capture'),
                 diagnosticsRecords: byId('diagnostics-records'),
@@ -609,7 +615,12 @@ object VexLifeWebP1RuntimeArtifacts {
               };
 
               const voiceInputLanguage = () => {
-                const code = state.settings?.replyLanguage ?? voiceInput.defaultLanguage;
+                const projection = state.localAsr;
+                const code =
+                  projection?.resolvedSpokenLanguageCode ??
+                  state.settings?.replyLanguage ??
+                  voiceInput.defaultLanguage;
+                if (code === 'auto') return { code: 'auto', locale: null };
                 const locale = voiceInput.languages[code];
                 return locale ? { code, locale } : null;
               };
@@ -647,11 +658,15 @@ object VexLifeWebP1RuntimeArtifacts {
 
               const localAsrAvailableForLanguage = (language) => {
                 const option = selectedLocalAsrOption();
+                const supportedCodes = option?.languageCodes ?? [];
                 return Boolean(
                   language &&
                   option &&
                   option.currentState === 'READY' &&
-                  (option.languageCodes ?? []).includes(language.code)
+                  (
+                    supportedCodes.includes(language.code) ||
+                    (language.code === 'auto' && supportedCodes.length > 1)
+                  )
                 );
               };
 
@@ -4062,12 +4077,46 @@ object VexLifeWebP1RuntimeArtifacts {
               const localAsrSelectionValue = (option) =>
                 JSON.stringify([option.providerRef, option.modelRef]);
 
+              const localAsrSpokenLanguageValue = (choice) =>
+                JSON.stringify([choice.mode, choice.languageCode ?? null]);
+
+              const localAsrSpokenLanguageLabel = (choice) => {
+                if (choice.labelKey) {
+                  return t(choice.labelKey)
+                    .replace('{language}', String(choice.languageLabel ?? ''));
+                }
+                return String(choice.languageLabel ?? choice.languageCode ?? '');
+              };
+
+              const localAsrArtifactStatusText = (option) => {
+                if (option.downloadedBytes != null) {
+                  return t('workspace.status.model-downloading')
+                    .replace('{done}', gibText(option.downloadedBytes))
+                    .replace('{total}', gibText(option.modelBytes));
+                }
+                switch (option.artifactState) {
+                  case ${jsString(VexLifeLocalAsrModelsFamily.ArtifactPresent)}:
+                    return t('workspace.status.model-on-this-mac');
+                  case ${jsString(VexLifeLocalAsrModelsFamily.ArtifactPartial)}:
+                    return t('workspace.status.model-partly-downloaded');
+                  case ${jsString(VexLifeLocalAsrModelsFamily.ArtifactDamaged)}:
+                    return t('workspace.status.model-damaged');
+                  default:
+                    return t('workspace.status.model-not-downloaded');
+                }
+              };
+
               const renderLocalAsr = () => {
                 if (!ui.localAsrSelection) return;
                 const projection = state.localAsr;
                 ui.localAsrSelection.replaceChildren();
+                ui.localAsrModelsList?.replaceChildren();
+                ui.localAsrSpokenLanguage?.replaceChildren();
                 if (!projection) {
                   ui.localAsrSelection.disabled = true;
+                  if (ui.localAsrSpokenLanguage) {
+                    ui.localAsrSpokenLanguage.disabled = true;
+                  }
                   if (ui.localAsrStatus) {
                     ui.localAsrStatus.textContent = t('workspace.status.local-asr-unavailable');
                   }
@@ -4079,11 +4128,80 @@ object VexLifeWebP1RuntimeArtifacts {
                 for (const option of projection.options ?? []) {
                   const node = document.createElement('option');
                   node.value = localAsrSelectionValue(option);
-                  node.textContent = option.providerLabel + ' · ' + option.modelLabel;
+                  node.textContent =
+                    option.providerLabel + ' · ' + option.modelLabel + ' · ' +
+                    localAsrArtifactStatusText(option);
                   node.selected =
                     option.providerRef === projection.selectedProviderRef &&
                     option.modelRef === projection.selectedModelRef;
+                  node.disabled =
+                    !node.selected &&
+                    !(option.controls ?? []).some(
+                      (control) =>
+                        control.controlRef ===
+                        ${jsString(VexLifeLocalAsrModelsFamily.ControlUse)}
+                    );
                   ui.localAsrSelection.append(node);
+
+                  if (ui.localAsrModelsList) {
+                    const row = document.createElement('div');
+                    row.className = 'model-row';
+                    row.dataset.chosen = String(Boolean(option.selected));
+
+                    const name = document.createElement('div');
+                    name.className = 'model-name';
+                    name.textContent = option.providerLabel + ' · ' + option.modelLabel;
+
+                    const facts = document.createElement('div');
+                    facts.className = 'model-facts';
+                    facts.textContent =
+                      localAsrArtifactStatusText(option) +
+                      ' · ' +
+                      formatBytes(option.modelBytes);
+
+                    const notes = document.createElement('div');
+                    notes.className = 'model-notes';
+                    notes.textContent =
+                      option.selected
+                        ? t('workspace.label.model-chosen')
+                        : '';
+
+                    const controls = document.createElement('div');
+                    controls.className = 'model-controls';
+                    for (const control of option.controls ?? []) {
+                      const button = document.createElement('button');
+                      button.type = 'button';
+                      button.className = 'outline-button';
+                      button.textContent = t(control.labelKey);
+                      button.disabled = state.localAsrInFlight || dictation.desiredActive;
+                      button.addEventListener('click', () => {
+                        void localAsrModelControl(control.controlRef, option.modelRef);
+                      });
+                      controls.append(button);
+                    }
+
+                    row.append(name, facts, notes, controls);
+                    ui.localAsrModelsList.append(row);
+                  }
+                }
+
+                if (ui.localAsrStorageNote) {
+                  ui.localAsrStorageNote.textContent =
+                    projection.freeStorageBytes == null
+                      ? ''
+                      : t('workspace.label.model-free-space')
+                          .replace('{free}', gibText(projection.freeStorageBytes));
+                }
+
+                if (ui.localAsrSpokenLanguage) {
+                  for (const choice of projection.spokenLanguageChoices ?? []) {
+                    const node = document.createElement('option');
+                    node.value = localAsrSpokenLanguageValue(choice);
+                    node.textContent = localAsrSpokenLanguageLabel(choice);
+                    node.selected = Boolean(choice.selected);
+                    node.disabled = !choice.supportedBySelectedModel && !choice.selected;
+                    ui.localAsrSpokenLanguage.append(node);
+                  }
                 }
 
                 const selected = selectedLocalAsrOption();
@@ -4091,6 +4209,12 @@ object VexLifeWebP1RuntimeArtifacts {
                   state.localAsrInFlight ||
                   dictation.desiredActive ||
                   !(projection.options ?? []).length;
+                if (ui.localAsrSpokenLanguage) {
+                  ui.localAsrSpokenLanguage.disabled =
+                    state.localAsrInFlight ||
+                    dictation.desiredActive ||
+                    !(projection.spokenLanguageChoices ?? []).length;
+                }
 
                 if (ui.localAsrStatus) {
                   if (!selected) {
@@ -4127,6 +4251,15 @@ object VexLifeWebP1RuntimeArtifacts {
                 });
                 state.localAsr = await readJson(response);
                 renderLocalAsr();
+                if (
+                  (state.localAsr?.options ?? []).some(
+                    (option) => option.downloadedBytes != null
+                  )
+                ) {
+                  window.setTimeout(() => {
+                    void loadLocalAsr().catch(() => {});
+                  }, 1000);
+                }
                 return state.localAsr;
               };
 
@@ -4158,6 +4291,94 @@ object VexLifeWebP1RuntimeArtifacts {
                           .replace('{model}', selected.modelLabel)
                       : t('workspace.status.local-asr-unavailable')
                   );
+                } catch (error) {
+                  notify(
+                    error instanceof Error
+                      ? error.message
+                      : t('workspace.status.local-asr-unavailable')
+                  );
+                } finally {
+                  state.localAsrInFlight = false;
+                  renderLocalAsr();
+                }
+              };
+
+              const localAsrModelControl = async (controlRef, modelRef) => {
+                if (state.localAsrInFlight) return;
+                if (
+                  controlRef ===
+                    ${jsString(VexLifeLocalAsrModelsFamily.ControlRemove)} &&
+                  !window.confirm(t('workspace.button.model-remove') + '?')
+                ) {
+                  return;
+                }
+                if (dictation.desiredActive) {
+                  await applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                }
+                state.localAsrInFlight = true;
+                renderLocalAsr();
+                try {
+                  const response = await fetch(service.localAsrModelControlPath, {
+                    method: 'POST',
+                    headers: {
+                      'content-type': 'application/json',
+                      accept: 'application/json'
+                    },
+                    body: JSON.stringify({
+                      controlRef: String(controlRef),
+                      modelRef: String(modelRef)
+                    })
+                  });
+                  state.localAsr = await readJson(response);
+                  observeVoiceInputCapability();
+                } catch (error) {
+                  notify(
+                    error instanceof Error
+                      ? error.message
+                      : t('workspace.status.model-control-not-lawful')
+                  );
+                } finally {
+                  state.localAsrInFlight = false;
+                  renderLocalAsr();
+                  if (
+                    (state.localAsr?.options ?? []).some(
+                      (option) => option.downloadedBytes != null
+                    )
+                  ) {
+                    window.setTimeout(() => {
+                      void loadLocalAsr().catch(() => {});
+                    }, 1000);
+                  }
+                }
+              };
+
+              const selectLocalAsrSpokenLanguage = async (mode, languageCode) => {
+                if (state.localAsrInFlight) return;
+                if (dictation.desiredActive) {
+                  await applyVoiceInputControl({
+                    controlRef: voiceInput.control.stop,
+                    abort: true
+                  });
+                }
+                state.localAsrInFlight = true;
+                renderLocalAsr();
+                try {
+                  const response = await fetch(service.localAsrSpokenLanguagePath, {
+                    method: 'POST',
+                    headers: {
+                      'content-type': 'application/json',
+                      accept: 'application/json'
+                    },
+                    body: JSON.stringify({
+                      mode: String(mode),
+                      languageCode: languageCode == null ? null : String(languageCode)
+                    })
+                  });
+                  state.localAsr = await readJson(response);
+                  observeVoiceInputCapability();
                 } catch (error) {
                   notify(
                     error instanceof Error
@@ -5072,6 +5293,18 @@ object VexLifeWebP1RuntimeArtifacts {
                   void selectLocalAsr(
                     String(providerRef),
                     String(modelRef)
+                  );
+                } catch {
+                  notify(t('workspace.status.local-asr-unavailable'));
+                }
+              });
+              ui.localAsrSpokenLanguage?.addEventListener('change', () => {
+                try {
+                  const [mode, languageCode] =
+                    JSON.parse(ui.localAsrSpokenLanguage.value);
+                  void selectLocalAsrSpokenLanguage(
+                    String(mode),
+                    languageCode == null ? null : String(languageCode)
                   );
                 } catch {
                   notify(t('workspace.status.local-asr-unavailable'));

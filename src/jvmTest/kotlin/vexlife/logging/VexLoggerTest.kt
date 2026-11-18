@@ -45,6 +45,18 @@ class VexLoggerTest {
             VexLogger.Owner.Person,
             VexLogger.Fact.LocalAsrSelectionSaved.owner,
         )
+        assertEquals(
+            VexLogger.Owner.Person,
+            VexLogger.Fact.LocalAsrSpokenLanguageSaved.owner,
+        )
+        assertEquals(
+            VexLogger.Owner.LocalAsr,
+            VexLogger.Fact.LocalAsrModelDownloadCompleted.owner,
+        )
+        assertEquals(
+            VexLogger.Owner.LocalAsr,
+            VexLogger.Fact.LocalAsrModelFilesRemoved.owner,
+        )
         assertEquals(VexLogger.Fact.entries.size, VexLogger.Fact.entries.map { it.wire }.toSet().size)
         VexLogger.Fact.entries.forEach { assertEquals(it, VexLogger.Fact.fromWire(it.wire)) }
     }

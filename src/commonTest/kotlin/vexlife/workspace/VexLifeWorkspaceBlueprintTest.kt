@@ -23,7 +23,7 @@ class VexLifeWorkspaceBlueprintTest {
             refs.toSet().size,
         )
         assertEquals(
-            57,
+            60,
             refs.size,
         )
 
@@ -47,7 +47,10 @@ class VexLifeWorkspaceBlueprintTest {
                 VexLifeWorkspaceBlueprint.ContinuityMemory.ref to VexLifeWorkspaceBlueprint.SettingsContinuity.ref,
                 VexLifeWorkspaceBlueprint.SettingsLocalAsr.ref to VexLifeWorkspaceBlueprint.Settings.ref,
                 VexLifeWorkspaceBlueprint.LocalAsrSelection.ref to VexLifeWorkspaceBlueprint.SettingsLocalAsr.ref,
+                VexLifeWorkspaceBlueprint.LocalAsrModelsList.ref to VexLifeWorkspaceBlueprint.SettingsLocalAsr.ref,
+                VexLifeWorkspaceBlueprint.LocalAsrSpokenLanguage.ref to VexLifeWorkspaceBlueprint.SettingsLocalAsr.ref,
                 VexLifeWorkspaceBlueprint.LocalAsrStatus.ref to VexLifeWorkspaceBlueprint.SettingsLocalAsr.ref,
+                VexLifeWorkspaceBlueprint.LocalAsrStorageNote.ref to VexLifeWorkspaceBlueprint.SettingsLocalAsr.ref,
                 VexLifeWorkspaceBlueprint.SettingsDiagnostics.ref to VexLifeWorkspaceBlueprint.Settings.ref,
                 VexLifeWorkspaceBlueprint.DiagnosticsTrace.ref to VexLifeWorkspaceBlueprint.SettingsDiagnostics.ref,
                 VexLifeWorkspaceBlueprint.DiagnosticsExport.ref to VexLifeWorkspaceBlueprint.SettingsDiagnostics.ref,

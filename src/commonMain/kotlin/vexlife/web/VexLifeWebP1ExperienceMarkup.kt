@@ -287,8 +287,15 @@ ${VexLifeSourceTemplate.Members.joinToString("\n") { "        <button type=\"but
             <label for="local-asr-selection" data-vex-text="workspace.label.local-asr-selection"></label>
             <select id="local-asr-selection" data-vex-ref="${VexLifeWebP1.LocalAsrSelection.identity.ref}" disabled></select>
           </div>
+          <div class="models-list" id="local-asr-models-list" data-vex-ref="${VexLifeWebP1.LocalAsrModelsList.identity.ref}"></div>
+          <div class="local-asr-row">
+            <label for="local-asr-spoken-language" data-vex-text="workspace.label.local-asr-spoken-language"></label>
+            <select id="local-asr-spoken-language" data-vex-ref="${VexLifeWebP1.LocalAsrSpokenLanguage.identity.ref}" disabled></select>
+          </div>
+          <p class="setting-note-line" data-vex-text="workspace.description.local-asr-spoken-language-note"></p>
           <p class="setting-note-line" data-vex-ref="${VexLifeWebP1.LocalAsrStatus.identity.ref}" id="local-asr-status" role="status"></p>
           <p class="setting-note-line" id="local-asr-note" data-vex-text="workspace.description.local-asr-note"></p>
+          <p class="setting-note-line" id="local-asr-storage-note" data-vex-ref="${VexLifeWebP1.LocalAsrStorageNote.identity.ref}"></p>
         </section>
 
         <section class="setting" data-vex-ref="${VexLifeWebP1.SettingsDiagnostics.identity.ref}" aria-labelledby="diagnostics-heading">

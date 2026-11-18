@@ -2429,6 +2429,20 @@
       "enHash": "3d5489c0a555",
       "langs": []
     },
+    "workspace.description.local-asr-spoken-language-note": {
+      "enHash": "2d5bdd5d104e",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
     "workspace.description.models": {
       "enHash": "3f9eef16b166",
       "langs": []
@@ -2456,6 +2470,48 @@
     "workspace.label.local-asr-selection": {
       "enHash": "f3f31d4c430b",
       "langs": []
+    },
+    "workspace.label.local-asr-spoken-language": {
+      "enHash": "1da6ea3d6a5b",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.local-asr-spoken-language-auto": {
+      "enHash": "d41fd914c603",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "workspace.label.local-asr-spoken-language-follow": {
+      "enHash": "1f0de9edc461",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
     },
     "workspace.label.model-candidate": {
       "enHash": "7eacf88f9467",

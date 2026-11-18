@@ -40,6 +40,19 @@ class VexLifeLocalAsrProviderTest {
         assertTrue(command.windowed(2).any { it == listOf("-f", "-") })
         assertTrue(command.contains("-otxt"))
     }
+
+    @Test
+    fun multilingualWhisperInvocationCanRequestAutoDetection() {
+        val command =
+            whisperCppCliCommand(
+                executablePath = Path.of("/vex/home/bin/whisper-cli"),
+                modelPath = Path.of("/vex/home/models/ggml-base.bin"),
+                languageCode = "auto",
+            )
+
+        assertTrue(command.windowed(2).any { it == listOf("-l", "auto") })
+        assertTrue(command.contains("-otxt"))
+    }
 }
 
 // [VXG RealForever]

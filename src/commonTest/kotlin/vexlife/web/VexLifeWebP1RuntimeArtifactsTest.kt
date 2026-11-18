@@ -5,6 +5,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import vexlife.browser.VexLifeProdBrowserContract
 import vexlife.conversation.VexLifeConversationTurnFamily
+import vexlife.localasr.VexLifeLocalAsrModelsFamily
 import vexlife.service.VexLifeProdServiceContract
 import vexlife.voiceinput.VexLifeVoiceInputFamily
 import vexlife.workspace.VexLifeWorkspaceBlueprint
@@ -468,13 +469,42 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains(VexLifeProdBrowserContract.InitialPageUrl))
 
         assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrPath))
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrSpokenLanguagePath))
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrModelControlPath))
         assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrTranscribePath))
+        assertTrue(bundle.html.contains("id=\"local-asr-models-list\""))
+        assertTrue(bundle.html.contains("id=\"local-asr-spoken-language\""))
+        assertTrue(bundle.html.contains("id=\"local-asr-storage-note\""))
+        assertTrue(bundle.javascript.contains("projection?.resolvedSpokenLanguageCode"))
+        assertTrue(bundle.javascript.contains("localAsrModelControl"))
+        assertTrue(bundle.javascript.contains(VexLifeLocalAsrModelsFamily.ControlUse))
+        assertTrue(bundle.javascript.contains(VexLifeLocalAsrModelsFamily.ControlRemove))
+        assertTrue(bundle.javascript.contains("for (const control of option.controls ?? [])"))
+        assertTrue(bundle.javascript.contains("button.textContent = t(control.labelKey)"))
+        assertTrue(
+            bundle.javascript.contains(
+                "void localAsrModelControl(control.controlRef, option.modelRef);",
+            ),
+        )
+        assertTrue(bundle.javascript.contains("option.downloadedBytes != null"))
+        assertTrue(bundle.javascript.contains("workspace.status.model-not-downloaded"))
+        assertTrue(bundle.javascript.contains("workspace.status.model-on-this-mac"))
+        assertTrue(bundle.javascript.contains("code === 'auto'"))
+        assertTrue(bundle.javascript.contains("selectLocalAsrSpokenLanguage"))
+        assertTrue(bundle.javascript.contains("localAsrSpokenLanguageValue"))
+        assertTrue(bundle.javascript.contains("supportedBySelectedModel"))
         assertTrue(bundle.javascript.contains("navigator.mediaDevices.getUserMedia"))
         assertTrue(bundle.javascript.contains("context.createScriptProcessor(4096, 1, 1)"))
         assertTrue(bundle.javascript.contains("encodeCapturedPcmWav"))
         assertTrue(bundle.javascript.contains("service.localAsrTranscribePath"))
         assertTrue(bundle.javascript.contains("'content-type': 'audio/wav'"))
         assertTrue(bundle.javascript.contains("'x-vexlife-language': language.code"))
+        assertFalse(
+            bundle.javascript.contains(
+                "const code = state.settings?.replyLanguage ?? voiceInput.defaultLanguage;",
+            ),
+            "VoiceInput must not permanently couple microphone language to Vex reply language",
+        )
         assertTrue(
             bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrDictationPassHeader),
         )
