@@ -860,6 +860,11 @@ class VexLifeProdLocalService private constructor(
                         exchange,
                     )
 
+                VexLifeProdServiceContract.LocalAsrSpokenLanguagePath ->
+                    handleLocalAsrSpokenLanguage(
+                        exchange,
+                    )
+
                 VexLifeProdServiceContract.LocalAsrTranscribePath ->
                     handleLocalAsrTranscribe(
                         exchange,
@@ -1745,6 +1750,67 @@ class VexLifeProdLocalService private constructor(
         }
     }
 
+    private fun handleLocalAsrSpokenLanguage(
+        exchange: HttpExchange,
+    ) {
+        requireMethod(
+            exchange,
+            "POST",
+        )
+        requireJson(
+            exchange,
+        )
+        val update =
+            JsonCodec.decodeFromString<VexLifeProdServiceContract.LocalAsrSpokenLanguageUpdate>(
+                requestText(
+                    exchange,
+                ),
+            )
+        val value =
+            VexLifeLocalAsrSpokenLanguage.Value(
+                schemaVersion =
+                    VexLifeLocalAsrSpokenLanguage.Schema,
+                mode =
+                    update.mode,
+                languageCode =
+                    update.languageCode,
+            )
+
+        val selectedOption =
+            VexLifeLocalAsrSelection.option(
+                localAsrSelection.read(),
+            )
+        val replyLanguage =
+            personSettings.read()
+                .replyLanguage
+        val resolved =
+            VexLifeLocalAsrSpokenLanguage.resolvedLanguageCode(
+                value = value,
+                replyLanguage = replyLanguage,
+            )
+        require(
+            (
+                resolved ==
+                    "auto" &&
+                    selectedOption.languageCodes.size >
+                    1
+            ) ||
+                resolved in
+                    selectedOption.languageCodes,
+        ) {
+            "selected local ASR model does not support the chosen spoken language"
+        }
+
+        localAsrSpokenLanguage.write(
+            value,
+        )
+        respondJson(
+            exchange = exchange,
+            status = 200,
+            value = localAsrProjection(),
+        )
+    }
+
     private fun handleLocalAsrTranscribe(
         exchange: HttpExchange,
     ) {
@@ -1763,7 +1829,7 @@ class VexLifeProdLocalService private constructor(
             VexLifeLocalAsrSelection.option(
                 selected,
             )
-        val language =
+        val requestedLanguage =
             exchange.requestHeaders
                 .getFirst(
                     "x-vexlife-language",
@@ -1773,12 +1839,34 @@ class VexLifeProdLocalService private constructor(
                 ?: throw IllegalArgumentException(
                     "local ASR requires x-vexlife-language",
                 )
+        val configuredLanguage =
+            VexLifeLocalAsrSpokenLanguage.resolvedLanguageCode(
+                value =
+                    localAsrSpokenLanguage.read(),
+                replyLanguage =
+                    personSettings.read()
+                        .replyLanguage,
+            )
         require(
-            language in
-                option.languageCodes,
+            requestedLanguage ==
+                configuredLanguage,
+        ) {
+            "local ASR request language does not match the current microphone-language setting"
+        }
+        require(
+            (
+                configuredLanguage ==
+                    "auto" &&
+                    option.languageCodes.size >
+                    1
+            ) ||
+                configuredLanguage in
+                    option.languageCodes,
         ) {
             "selected local ASR model does not support the requested language"
         }
+        val language =
+            configuredLanguage
 
         val dictationPass =
             exchange.requestHeaders
