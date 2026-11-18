@@ -23,6 +23,73 @@ import vexlife.model.heretic.HereticRuntimeQualification
 import vexlife.model.heretic.HereticRuntimeState
 
 class DirectTurnContextStoreTest {
+    @Test
+    fun newerPromptReceiptGenerationIsObservedBeforeStrictDecode() {
+        val parent =
+            Files.createTempDirectory(
+                "vexlife-prod-direct-context-newer-receipt-",
+            )
+                .toAbsolutePath()
+        val productHome =
+            parent.resolve(
+                "VexLife-Prod",
+            )
+        val turnRef =
+            "turn.self-development.newer-prompt-receipt"
+
+        try {
+            home(
+                productHome,
+            )
+            val evidenceDirectory =
+                productHome.resolve(
+                    "runtime/vexlife-prod/turn-evidence",
+                )
+            Files.createDirectories(
+                evidenceDirectory,
+            )
+            Files.writeString(
+                evidenceDirectory.resolve(
+                    "$turnRef.json",
+                ),
+                """
+                {
+                  "schemaVersion": "${DirectTurnContextStore.RuntimeEvidenceSchema}",
+                  "promptContext": {
+                    "schemaVersion": "vexlife-prod.direct-prompt-materialization-receipt/v9",
+                    "contextProfileRef": "profile.vexlife.context.product-default"
+                  }
+                }
+                """.trimIndent(),
+            )
+
+            val compatibility =
+                assertNotNull(
+                    DirectTurnContextStore(
+                        productHome,
+                    )
+                        .inspectPromptReceiptCompatibility(
+                            turnRef,
+                        ),
+                )
+            assertEquals(
+                DirectTurnContextStore.RuntimeEvidenceSchema,
+                compatibility.runtimeEvidenceSchema,
+            )
+            assertEquals(
+                "vexlife-prod.direct-prompt-materialization-receipt/v9",
+                compatibility.promptReceiptSchema,
+            )
+            assertFalse(
+                compatibility.readableByCurrentSource,
+            )
+        } finally {
+            parent
+                .toFile()
+                .deleteRecursively()
+        }
+    }
+
     private fun home(
         productHome: java.nio.file.Path,
     ) {
