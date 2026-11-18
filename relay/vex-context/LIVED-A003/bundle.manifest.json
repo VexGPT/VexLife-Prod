@@ -16,5 +16,15 @@
     "bundle.b64.part04",
     "bundle.b64.part05",
     "bundle.b64.part06"
-  ]
+  ],
+  "preferredGitHubCarrier": "bundle.b64",
+  "legacyCarriageParts": [
+    "bundle.b64.part01",
+    "bundle.b64.part02",
+    "bundle.b64.part03",
+    "bundle.b64.part04",
+    "bundle.b64.part05",
+    "bundle.b64.part06"
+  ],
+  "humanLauncher": "Fetch bundle.b64 from the pinned companion commit, base64-decode, require decoded sha256/bytes, then run."
 }
