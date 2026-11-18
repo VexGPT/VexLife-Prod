@@ -56,6 +56,29 @@ class VexLifeProdEntryFamily private constructor() :
     }
 
     /**
+     * A legacy VexLife Product service survived after its Home-scoped ownership receipt disappeared,
+     * but the Mac adapter still has a strict VexLife-specific recovery witness for the same
+     * launchd PID and typed Product endpoint. The person may explicitly retire that old service and
+     * continue ordinary convergence; this is not exact receipt ownership and is never silently reused.
+     */
+    data class ServiceRecoveryRequired(
+        override val desiredSourceSha: String,
+        val priorServiceSourceSha: String,
+        val priorServicePid: Long,
+    ) : EntryState {
+        override val stateRef: String = StateServiceRecoveryRequired
+
+        init {
+            require(
+                Regex("[0-9a-f]{40}").matches(priorServiceSourceSha) &&
+                    priorServicePid > 0
+            ) {
+                "service recovery requires one exact witnessed VexLife source/PID"
+            }
+        }
+    }
+
+    /**
      * Home and every model/runtime prerequisite are present; the Product service is simply not
      * running (for example after a restart of the Mac). Starting needs no acquisition authority.
      *
@@ -163,6 +186,10 @@ class VexLifeProdEntryFamily private constructor() :
 
     data object ConvergeDesired : EntryControl {
         override val controlRef: String = ControlConvergeDesired
+    }
+
+    data object RecoverStaleService : EntryControl {
+        override val controlRef: String = ControlRecoverStaleService
     }
 
     data object Start : EntryControl {
@@ -305,6 +332,16 @@ class VexLifeProdEntryFamily private constructor() :
                     else -> null
                 }
 
+            is ServiceRecoveryRequired ->
+                when (control) {
+                    RecoverStaleService ->
+                        stay(restartWithoutAcquisition(currentState.desiredSourceSha))
+
+                    Cancel -> stay()
+
+                    else -> null
+                }
+
             is StartRequired ->
                 when (control) {
                     Start -> stay(restartWithoutAcquisition(currentState.desiredSourceSha))
@@ -390,6 +427,16 @@ class VexLifeProdEntryFamily private constructor() :
                     title = text("setup.heading.update-repair-required"),
                     detail = text("setup.description.update-repair-required"),
                     primary = ControlConvergeDesired to text("setup.button.update-restart"),
+                    journey = journey(Complete, Complete, Complete, JourneyCurrent, Upcoming),
+                )
+
+            is ServiceRecoveryRequired ->
+                display(
+                    title = text("setup.heading.service-recovery-required"),
+                    detail = text("setup.description.service-recovery-required"),
+                    primary =
+                        ControlRecoverStaleService to
+                            text("setup.button.retire-old-service-continue"),
                     journey = journey(Complete, Complete, Complete, JourneyCurrent, Upcoming),
                 )
 
@@ -615,6 +662,7 @@ class VexLifeProdEntryFamily private constructor() :
         const val StateUpdateAvailable = "UPDATE_AVAILABLE"
         const val StateRepairRequired = "REPAIR_REQUIRED"
         const val StateUpdateRepairRequired = "UPDATE_REPAIR_REQUIRED"
+        const val StateServiceRecoveryRequired = "SERVICE_RECOVERY_REQUIRED"
         const val StateStartRequired = "START_REQUIRED"
         const val StateHomeFormationRequired = "HOME_FORMATION_REQUIRED"
         const val StateHomeHeld = "HOME_HELD"
@@ -630,6 +678,7 @@ class VexLifeProdEntryFamily private constructor() :
                 StateUpdateAvailable,
                 StateRepairRequired,
                 StateUpdateRepairRequired,
+                StateServiceRecoveryRequired,
                 StateStartRequired,
                 StateHomeFormationRequired,
                 StateHomeHeld,
@@ -642,6 +691,7 @@ class VexLifeProdEntryFamily private constructor() :
 
         const val ControlOpenCurrent = "OPEN_CURRENT"
         const val ControlConvergeDesired = "CONVERGE_DESIRED"
+        const val ControlRecoverStaleService = "RECOVER_STALE_SERVICE"
         const val ControlStart = "START"
         const val ControlFormHome = "FORM_HOME"
         const val ControlSetUp = "SET_UP"
@@ -680,6 +730,8 @@ class VexLifeProdEntryFamily private constructor() :
                 ControlOpenCurrent -> OpenCurrent
 
                 ControlConvergeDesired -> ConvergeDesired
+
+                ControlRecoverStaleService -> RecoverStaleService
 
                 ControlStart -> Start
 
