@@ -897,6 +897,24 @@ class VexLifeProdSetupJourneyTest {
     }
 
     @Test
+    fun nativeModelChooserKeepsFutureModelManagementSecondaryToTheChoice() {
+        val source =
+            Files.readString(
+                Path.of(
+                    "packaging/private-service-image/setup/vexlife-prod-setup-window.applescript"
+                )
+            )
+
+        assertTrue(source.contains("setup.description.choose-model-change-later"))
+        assertTrue(source.contains("setup.description.choose-model-add-later"))
+        assertTrue(source.contains("setAccessoryView:chooserView"))
+        assertFalse(
+            source.contains("--model-import"),
+            "startup teaches where imports live; it must not become a second import workflow",
+        )
+    }
+
+    @Test
     fun nativeSetupWindowUsesAppleScriptObjCSafeNSNullSelector() {
         val source =
             Files.readString(
