@@ -728,7 +728,9 @@ internal object VexLifeMemoryReviewOwner {
                                 humanDecision =
                                     VexLifeSemanticAcceptanceWriter.HumanDecisionSource(
                                         humanSubjectRef =
-                                            humanSubjectRef,
+                                            decision.value.string(
+                                                "humanSubjectRef",
+                                            ),
                                         decisionRef =
                                             decision.decisionRef,
                                         decisionSha256 =
