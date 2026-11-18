@@ -85,3 +85,57 @@ No Product mutation, Home/Memory mutation, approval, READY, merge or publication
 A002 is not PASS until its exact canonical RETURN is consumed.
 
 <!-- [VXG RealForever][PR251][PR261][TEMP-RELAY][A002] -->
+
+
+## A002 consumed result
+
+Victor returned:
+
+```text
+RETURN-t251vc-a002--sha256-8b75e9d6ec554cf56964e7c0f484c168e6ebf1459011d242bb5c361cfd76b555.zip
+outer sha256  8b75e9d6ec554cf56964e7c0f484c168e6ebf1459011d242bb5c361cfd76b555
+outer disposition PASS
+
+inner sha256  bd90a3aa8adf704eeb1ae6bf1ff8e309da99dd399e9158be105d7df281840e90
+inner disposition SAFE_FAILURE
+```
+
+A002 advanced past A001:
+
+```text
+repository grounding PASS
+expected head/tree PASS
+checkVexLifeStrings PASS
+compileKotlinJvm PASS
+full jvmTest reached
+646 tests / 3 failed
+```
+
+The three failures were:
+
+1. `DirectCompanionTurnFoundationalFieldTest.aFieldThatChangesBetweenTheTwoInferences...`
+   - behavior still failed before the final inference as intended;
+   - the assertion missed because the candidate broadened the exception text from
+     "foundational field changed..." to "foundational field or Context Profile changed...".
+
+2. `VexLifeWebP1Test.p1ManifestsEveryCurrentBlueprintCoordinate...`
+   - stale proof cardinality: 59 -> 70 after the 11 new Vex Context coordinates.
+
+3. `VexLifeProdScreenLensTest.committedLensIsCurrent`
+   - the committed Product-owned Screen Lens had not yet been regenerated after the Blueprint
+     changed.
+
+No JS compile or SourceOwner review snapshot was reached after the JVM failure.
+
+Classification: **candidate proof/projection currentness**, not Relay/carrier failure and not a new
+semantic-owner defect.
+
+Product correction for A003:
+
+```text
+- preserve prior Foundational Field failure vocabulary while still checking Context Profile identity;
+- advance VexWeb coordinate proof to 70;
+- regenerate docs/lens/vexlife-prod.screen-lens.json to the exact 70-coordinate Blueprint/VexWeb projection.
+```
+
+A002 remains immutable attempt history. A003 re-proves the corrected exact Product candidate.
