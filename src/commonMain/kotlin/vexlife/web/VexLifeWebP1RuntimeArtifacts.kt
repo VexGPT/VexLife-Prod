@@ -3654,6 +3654,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.workspaceStrings = body?.strings ?? {};
                 applyStaticText();
                 renderVoiceInput();
+                renderModels();
                 renderLocalAsr();
                 renderDiagnostics();
               };
@@ -3982,6 +3983,26 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.memory = await readJson(response);
                 renderMemory();
                 return state.memory;
+              };
+
+              // Settings is a live projection, not a one-shot startup snapshot. A transient setup,
+              // runtime or Home-currentness failure must not leave configuration controls permanently
+              // empty after their rightful service owners recover.
+              const refreshSettingsProjections = async (includeCurrentState = true) => {
+                const loads = [
+                  loadSettings(),
+                  loadMemory(),
+                  loadDiagnostics(),
+                  loadModels(),
+                  loadLocalAsr()
+                ];
+                if (includeCurrentState) loads.unshift(loadCurrentState());
+                const outcomes = await Promise.allSettled(loads);
+                renderSettings();
+                renderModels();
+                renderLocalAsr();
+                renderDiagnostics();
+                return outcomes.every((outcome) => outcome.status === 'fulfilled');
               };
 
               const loadVision = async () => {
@@ -4676,8 +4697,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 renderCompanionHead();
                 if (state.view === 'settings') {
                   renderSettings();
-                  void loadCurrentState().catch(() => {});
-                  void loadMemory().catch(() => {});
+                  void refreshSettingsProjections();
                 }
               });
 
@@ -4880,13 +4900,13 @@ object VexLifeWebP1RuntimeArtifacts {
                   navigate(browser.initialPageUrl);
                   renderApp();
                   void loadPrivate().catch(() => {});
-                  void loadSettings().catch(() => {});
-                  void loadMemory().catch(() => {});
-                  void loadDiagnostics().catch(() => renderDiagnostics());
-                  void loadModels().catch(() => {});
-                  void loadLocalAsr().catch(() => {
-                    state.localAsr = null;
-                    renderLocalAsr();
+                  void refreshSettingsProjections(false).then((current) => {
+                    if (current) return;
+                    // One bounded recovery pass covers setup/runtime convergence without turning
+                    // stable Settings into a polling loop.
+                    window.setTimeout(() => {
+                      void refreshSettingsProjections(false);
+                    }, 1000);
                   });
                   // Observed: the presentation rendered with current service data.
                   reportFact('PRESENTATION_ARRIVED', { presentation: 'workspace' });
