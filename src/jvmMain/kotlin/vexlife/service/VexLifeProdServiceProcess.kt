@@ -3,6 +3,7 @@ package vexlife.service
 import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
+import vexlife.home.VexLifeProdHomeFiles
 import vexlife.local.VexLifeProdLocalSetup
 import vexlife.logging.VexLogger
 import vexlife.packaging.VexLifeProdPrivateServiceImage
@@ -20,6 +21,44 @@ object VexLifeProdServiceProcess {
         Regex(
             "[0-9a-f]{40,64}",
         )
+
+    private const val HomeRetentionPollMs =
+        2_000L
+
+    private const val HomeLossConfirmations =
+        3
+
+    private const val RuntimeReleaseRetryMs =
+        5_000L
+
+    internal data class HomeIdentity(
+        val homePath: String,
+        val homeRef: String,
+        val deviceRef: String,
+        val companionLineageRef: String,
+    )
+
+    internal class HomeRetention {
+        private var consecutiveLosses =
+            0
+
+        fun observe(
+            current: Boolean,
+        ): Boolean {
+            if (
+                current
+            ) {
+                consecutiveLosses =
+                    0
+                return false
+            }
+
+            consecutiveLosses +=
+                1
+            return consecutiveLosses >=
+                HomeLossConfirmations
+        }
+    }
 
     data class Arguments(
         val sourceSha: String,
@@ -82,8 +121,14 @@ object VexLifeProdServiceProcess {
                     VexLifeProdServiceContract.Origin,
             )
         },
+        val observeHomeIdentity: (
+            Path,
+        ) -> HomeIdentity? =
+            ::observeHomeIdentity,
         val awaitTermination: (
             AutoCloseable,
+            () -> Boolean,
+            () -> Unit,
         ) -> Unit = ::awaitProcessTermination,
     )
 
@@ -146,18 +191,36 @@ object VexLifeProdServiceProcess {
             mapOf("pid" to ProcessHandle.current().pid().toString()),
         )
 
+        val retainedHomeIdentity =
+            requireNotNull(
+                hooks.observeHomeIdentity(
+                    arguments.productHome,
+                ),
+            ) {
+                "VexLife-Prod service requires one exact current Home identity at admission"
+            }
+
         val visionRuntimeExecutablePathOrNull =
             hooks.resolveVisionRuntimeExecutablePath(
                 arguments.sourceSha,
             )
 
+        val session =
+            try {
+                hooks.establishSession(
+                    arguments.productHome,
+                    false,
+                )
+            } catch (error: Throwable) {
+                VexLogger.record(
+                    VexLogger.Fact.ServiceStartFailed,
+                    detail = error.javaClass.simpleName + ": " + (error.message ?: ""),
+                )
+                throw error
+            }
+
         val service =
             try {
-                val session =
-                    hooks.establishSession(
-                        arguments.productHome,
-                        false,
-                    )
                 hooks.startService(
                     arguments.sourceSha,
                     session,
@@ -178,11 +241,39 @@ object VexLifeProdServiceProcess {
 
         hooks.awaitTermination(
             service,
+            {
+                hooks.observeHomeIdentity(
+                    arguments.productHome,
+                ) ==
+                    retainedHomeIdentity
+            },
+            session::releaseSustainedRuntime,
         )
     }
 
-    private fun awaitProcessTermination(
+    private fun observeHomeIdentity(
+        productHome: Path,
+    ): HomeIdentity? =
+        runCatching {
+                VexLifeProdHomeFiles.observeExisting(
+                    productHome,
+                )
+            }
+            .getOrNull()
+            ?.let {
+                current ->
+                HomeIdentity(
+                    homePath = current.productHome,
+                    homeRef = current.manifest.homeRef,
+                    deviceRef = current.manifest.currentDeviceRef,
+                    companionLineageRef = current.manifest.currentCompanionLineageRef,
+                )
+            }
+
+    internal fun awaitProcessTermination(
         service: AutoCloseable,
+        homeCurrent: () -> Boolean,
+        releaseRuntime: () -> Unit,
     ) {
         val latch =
             CountDownLatch(
@@ -209,8 +300,6 @@ object VexLifeProdServiceProcess {
         val shutdownHook =
             Thread(
                 {
-                    // Observed: this JVM is being terminated (launchd bootout, SIGTERM, logout).
-                    // A process killed outright leaves no such record; that absence is evidence too.
                     VexLogger.record(VexLogger.Fact.ServiceProcessTerminating)
                     closeOnce()
                     latch.countDown()
@@ -218,15 +307,93 @@ object VexLifeProdServiceProcess {
                 "vexlife-prod-service-shutdown",
             )
 
+        val homeRetention =
+            Thread(
+                {
+                    val retention =
+                        HomeRetention()
+                    while (
+                        !Thread
+                            .currentThread()
+                            .isInterrupted
+                    ) {
+                        val current =
+                            runCatching(
+                                homeCurrent,
+                            )
+                                .getOrDefault(
+                                    false,
+                                )
+                        if (
+                            retention.observe(
+                                current,
+                            )
+                        ) {
+                            // Stop exposing Product effects as soon as the exact admitted Home is
+                            // no longer current. Keep this JVM alive until exact Product-owned
+                            // runtime release succeeds so that deleting Home cannot erase the last
+                            // in-memory retirement capability.
+                            closeOnce()
+
+                            while (
+                                !Thread
+                                    .currentThread()
+                                    .isInterrupted
+                            ) {
+                                try {
+                                    releaseRuntime()
+                                    latch.countDown()
+                                    return@Thread
+                                } catch (
+                                    _: Throwable,
+                                ) {
+                                    try {
+                                        Thread.sleep(
+                                            RuntimeReleaseRetryMs,
+                                        )
+                                    } catch (
+                                        _: InterruptedException,
+                                    ) {
+                                        Thread
+                                            .currentThread()
+                                            .interrupt()
+                                    }
+                                }
+                            }
+                            return@Thread
+                        }
+
+                        try {
+                            Thread.sleep(
+                                HomeRetentionPollMs,
+                            )
+                        } catch (
+                            _: InterruptedException,
+                        ) {
+                            Thread
+                                .currentThread()
+                                .interrupt()
+                        }
+                    }
+                },
+                "vexlife-prod-home-retention",
+            )
+                .also {
+                    it.isDaemon =
+                        true
+                }
+
         Runtime
             .getRuntime()
             .addShutdownHook(
                 shutdownHook,
             )
+        homeRetention.start()
 
         try {
             latch.await()
         } finally {
+            homeRetention.interrupt()
             try {
                 Runtime
                     .getRuntime()

@@ -397,6 +397,12 @@ class VexLifeProdLocalSetupTest {
                     },
                 )
             },
+            captureStableRuntimeRelease = { _, _ ->
+                {
+                    trace +=
+                        "RELEASE_STABLE_RUNTIME"
+                }
+            },
             observeCurrentProductRuntime = { _, binding, _ ->
                 trace += "PRODUCT_RUNTIME_CURRENTNESS"
                 HereticPersistentRuntime.configurationEvidence(

@@ -571,9 +571,13 @@ object VexLifeProdMacFrontDoor {
 
             is VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady -> {
                 val sourceSha = existing.receipt.sourceSha
-                if (existing.launchdObservation == MacUserLaunchdProcess.Observation.Absent) {
-                    // The exact owned receipt survives but launchd no longer carries the service
-                    // (for example after the Mac restarted). That is stopped, not broken.
+                if (
+                    !existing.servesSelectedHome ||
+                    existing.launchdObservation == MacUserLaunchdProcess.Observation.Absent
+                ) {
+                    // The exact service is either stopped or belongs to another prior Home identity.
+                    // Both are ordinary lifetime convergence: preserve every Home, retire only the
+                    // exact owned service if needed, then start it against the selected Home.
                     observed(
                         VexLifeProdEntryFamily.StartRequired(
                             desiredSourceSha = desiredSourceSha,

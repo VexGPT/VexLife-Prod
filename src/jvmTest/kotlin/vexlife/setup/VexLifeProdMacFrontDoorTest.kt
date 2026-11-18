@@ -349,11 +349,13 @@ class VexLifeProdMacFrontDoorTest {
             VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(
                 receipt = receipt(desired),
                 launchdObservation = MacUserLaunchdProcess.Observation.LoadedStopped,
+                servesSelectedHome = true,
             )
         val priorRepair =
             VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(
                 receipt = receipt(prior),
                 launchdObservation = MacUserLaunchdProcess.Observation.LoadedStopped,
+                servesSelectedHome = true,
             )
 
         assertEquals(
@@ -373,6 +375,36 @@ class VexLifeProdMacFrontDoorTest {
                     hooks = hooks(priorRepair),
                 )
                 .semanticStateRef,
+        )
+    }
+
+    @Test
+    fun exactServiceForAnotherHomeMapsToStartInsteadOfRepairOrUnknown() {
+        val otherHomeService =
+            VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(
+                receipt = receipt(desired),
+                launchdObservation = MacUserLaunchdProcess.Observation.Running(4242L),
+                servesSelectedHome = false,
+            )
+
+        val projection =
+            VexLifeProdMacFrontDoor.observeWithHooks(
+                desiredSourceSha = desired,
+                productHome = selectedHome,
+                hooks = hooks(otherHomeService),
+            )
+
+        assertEquals(
+            VexLifeProdEntryFamily.StateStartRequired,
+            projection.semanticStateRef,
+        )
+        assertEquals(
+            desired,
+            projection.currentServiceSourceSha,
+        )
+        assertEquals(
+            null,
+            projection.currentServicePid,
         )
     }
 

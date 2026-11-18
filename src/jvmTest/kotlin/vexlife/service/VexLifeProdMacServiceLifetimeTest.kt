@@ -13,11 +13,13 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
 import vexlife.filesystem.VexOwnedPath
 import vexlife.home.CanonicalVexLifeHomeFixture
+import vexlife.home.VexLifeProdHomeFiles
 import vexlife.packaging.VexLifeProdPrivateServiceImage
 import vexlife.packaging.VexLifeProdPrivateServiceImageInstaller
 import vexlife.platform.macos.MacUserLaunchdProcess
@@ -212,6 +214,7 @@ class VexLifeProdMacServiceLifetimeTest {
     private data class Fixture(
         val parent: Path,
         val home: Path,
+        val lifetimeRoot: Path,
         val host: Host,
         val sourceSha: String,
     ) : AutoCloseable {
@@ -251,6 +254,10 @@ class VexLifeProdMacServiceLifetimeTest {
         return Fixture(
             parent = parent,
             home = home,
+            lifetimeRoot =
+                parent.resolve(
+                    "machine-lifetime",
+                ),
             host = Host(),
             sourceSha = sourceSha,
         )
@@ -486,15 +493,37 @@ class VexLifeProdMacServiceLifetimeTest {
         )
 
     private fun lifetimeReceipt(
-        home: Path,
-    ): VexLifeProdMacServiceLifetime.Receipt? =
-        VexDurableContractFile.read(
-            ownedRoot = home,
+        lifetimeRoot: Path,
+    ): VexLifeProdMacServiceLifetime.Receipt? {
+        if (
+            !Files.exists(
+                lifetimeRoot,
+                java.nio.file.LinkOption.NOFOLLOW_LINKS,
+            )
+        ) {
+            return null
+        }
+        val root =
+            VexOwnedPath.requireRoot(
+                lifetimeRoot,
+                "test VexLife Product service lifetime root",
+            )
+
+        return VexDurableContractFile.read(
+            ownedRoot = root,
             path =
                 VexOwnedPath.resolveInside(
-                    home,
-                    VexLifeProdMacServiceLifetime.ReceiptRelativePath,
+                    root,
+                    VexLifeProdMacServiceLifetime.LifetimeReceiptFileName,
                 ),
+        )
+    }
+
+    private fun lifetimeReceiptPath(
+        lifetimeRoot: Path,
+    ): Path =
+        lifetimeRoot.resolve(
+            VexLifeProdMacServiceLifetime.LifetimeReceiptFileName,
         )
 
     @Test
@@ -516,6 +545,7 @@ class VexLifeProdMacServiceLifetimeTest {
                     VexLifeProdMacServiceLifetime.observeExisting(
                         productHome = fixture.home,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
                 assertIs<VexLifeProdMacServiceLifetime.ExistingObservation.Absent>(
@@ -533,6 +563,7 @@ class VexLifeProdMacServiceLifetimeTest {
                     VexLifeProdMacServiceLifetime.observeExisting(
                         productHome = fixture.home,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
                 assertIs<VexLifeProdMacServiceLifetime.ExistingObservation.HeldUnknown>(
@@ -556,6 +587,7 @@ class VexLifeProdMacServiceLifetimeTest {
                         productHome = fixture.home,
                         desiredSourceSha = fixture.sourceSha,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe = liveProbe,
                     )
                 assertEquals(
@@ -567,6 +599,7 @@ class VexLifeProdMacServiceLifetimeTest {
                     VexLifeProdMacServiceLifetime.observeExisting(
                         productHome = fixture.home,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe = liveProbe,
                     )
                 assertIs<VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned>(
@@ -599,6 +632,7 @@ class VexLifeProdMacServiceLifetimeTest {
                         productHome = fixture.home,
                         desiredSourceSha = fixture.sourceSha,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
                 assertIs<VexLifeProdMacServiceLifetime.Observation.Absent>(
@@ -621,6 +655,7 @@ class VexLifeProdMacServiceLifetimeTest {
                         productHome = fixture.home,
                         desiredSourceSha = fixture.sourceSha,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
                 assertIs<VexLifeProdMacServiceLifetime.Observation.HeldUnknown>(
@@ -649,6 +684,7 @@ class VexLifeProdMacServiceLifetimeTest {
                         productHome = fixture.home,
                         desiredSourceSha = fixture.sourceSha,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
 
@@ -677,7 +713,7 @@ class VexLifeProdMacServiceLifetimeTest {
                 val receipt =
                     assertNotNull(
                         lifetimeReceipt(
-                            fixture.home,
+                            fixture.lifetimeRoot,
                         ),
                     )
                 assertEquals(
@@ -728,12 +764,13 @@ class VexLifeProdMacServiceLifetimeTest {
                         productHome = fixture.home,
                         desiredSourceSha = fixture.sourceSha,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
                 val receiptBefore =
                     Files.readString(
-                        fixture.home.resolve(
-                            VexLifeProdMacServiceLifetime.ReceiptRelativePath,
+                        lifetimeReceiptPath(
+                            fixture.lifetimeRoot,
                         ),
                     )
 
@@ -742,6 +779,7 @@ class VexLifeProdMacServiceLifetimeTest {
                         productHome = fixture.home,
                         desiredSourceSha = fixture.sourceSha,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
 
@@ -773,8 +811,8 @@ class VexLifeProdMacServiceLifetimeTest {
                 assertEquals(
                     receiptBefore,
                     Files.readString(
-                        fixture.home.resolve(
-                            VexLifeProdMacServiceLifetime.ReceiptRelativePath,
+                        lifetimeReceiptPath(
+                            fixture.lifetimeRoot,
                         ),
                     ),
                 )
@@ -796,6 +834,7 @@ class VexLifeProdMacServiceLifetimeTest {
                         productHome = fixture.home,
                         desiredSourceSha = fixture.sourceSha,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
 
@@ -819,6 +858,7 @@ class VexLifeProdMacServiceLifetimeTest {
                         productHome = fixture.home,
                         desiredSourceSha = nextSource,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
 
@@ -851,7 +891,7 @@ class VexLifeProdMacServiceLifetimeTest {
                 val receipt =
                     assertNotNull(
                         lifetimeReceipt(
-                            fixture.home,
+                            fixture.lifetimeRoot,
                         ),
                     )
                 assertEquals(
@@ -865,22 +905,233 @@ class VexLifeProdMacServiceLifetimeTest {
             }
     }
 
+    @Test
+    fun machineLifetimeReceiptSurvivesHomeDeletionAndConvergesFreshIdentityAtSamePath() {
+        fixture()
+            .use {
+                fixture ->
+                val probe =
+                    Probe(
+                        fixture.sourceSha,
+                        fixture.host,
+                    )
+                VexLifeProdMacServiceLifetime.startOrReuse(
+                    productHome = fixture.home,
+                    desiredSourceSha = fixture.sourceSha,
+                    host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
+                    probe = probe,
+                )
+                val prior =
+                    assertNotNull(
+                        lifetimeReceipt(
+                            fixture.lifetimeRoot,
+                        ),
+                    )
+                val priorBinding =
+                    assertNotNull(
+                        prior.homeBinding,
+                    )
+
+                fixture.home
+                    .toFile()
+                    .deleteRecursively()
+
+                bootstrapHome(
+                    fixture.home,
+                )
+                installImage(
+                    parent = fixture.parent,
+                    home = fixture.home,
+                    sourceSha = fixture.sourceSha,
+                    label = "fresh-home",
+                )
+                val freshHome =
+                    requireNotNull(
+                        VexLifeProdHomeFiles.observeExisting(
+                            fixture.home,
+                        ),
+                    )
+                assertNotEquals(
+                    priorBinding.homeRef,
+                    freshHome.manifest.homeRef,
+                )
+
+                val existing =
+                    assertIs<VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady>(
+                        VexLifeProdMacServiceLifetime.observeExisting(
+                            productHome = fixture.home,
+                            host = fixture.host,
+                            lifetimeRoot = fixture.lifetimeRoot,
+                            probe = probe,
+                        ),
+                    )
+                assertFalse(
+                    existing.servesSelectedHome,
+                )
+
+                fixture.host.nextBootstrapPid =
+                    5252L
+                val converged =
+                    VexLifeProdMacServiceLifetime.startOrReuse(
+                        productHome = fixture.home,
+                        desiredSourceSha = fixture.sourceSha,
+                        host = fixture.host,
+                        lifetimeRoot = fixture.lifetimeRoot,
+                        probe = probe,
+                    )
+
+                assertTrue(
+                    converged.priorProcessRetired,
+                )
+                assertEquals(
+                    1,
+                    fixture.host.bootoutCount(),
+                )
+                assertEquals(
+                    2,
+                    fixture.host.bootstrapCount(),
+                )
+                val current =
+                    assertNotNull(
+                        lifetimeReceipt(
+                            fixture.lifetimeRoot,
+                        ),
+                    )
+                assertEquals(
+                    VexLifeProdMacServiceLifetime.ReceiptSchema,
+                    current.schemaVersion,
+                )
+                assertEquals(
+                    freshHome.manifest.homeRef,
+                    assertNotNull(
+                        current.homeBinding,
+                    )
+                        .homeRef,
+                )
+            }
+    }
+
+    @Test
+    fun selectingAnotherHomeRetiresOnlyServiceRealizationAndPreservesPriorHome() {
+        fixture()
+            .use {
+                fixture ->
+                val probe =
+                    Probe(
+                        fixture.sourceSha,
+                        fixture.host,
+                    )
+                VexLifeProdMacServiceLifetime.startOrReuse(
+                    productHome = fixture.home,
+                    desiredSourceSha = fixture.sourceSha,
+                    host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
+                    probe = probe,
+                )
+
+                val otherHome =
+                    fixture.parent.resolve(
+                        "Other-Vex-Home",
+                    )
+                bootstrapHome(
+                    otherHome,
+                )
+                installImage(
+                    parent = fixture.parent,
+                    home = otherHome,
+                    sourceSha = fixture.sourceSha,
+                    label = "other-home",
+                )
+                val priorManifest =
+                    requireNotNull(
+                        VexLifeProdHomeFiles.observeExisting(
+                            fixture.home,
+                        ),
+                    )
+                        .manifest
+
+                val existing =
+                    assertIs<VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady>(
+                        VexLifeProdMacServiceLifetime.observeExisting(
+                            productHome = otherHome,
+                            host = fixture.host,
+                            lifetimeRoot = fixture.lifetimeRoot,
+                            probe = probe,
+                        ),
+                    )
+                assertFalse(
+                    existing.servesSelectedHome,
+                )
+
+                fixture.host.nextBootstrapPid =
+                    5252L
+                val switched =
+                    VexLifeProdMacServiceLifetime.startOrReuse(
+                        productHome = otherHome,
+                        desiredSourceSha = fixture.sourceSha,
+                        host = fixture.host,
+                        lifetimeRoot = fixture.lifetimeRoot,
+                        probe = probe,
+                    )
+
+                assertTrue(
+                    switched.priorProcessRetired,
+                )
+                assertEquals(
+                    priorManifest,
+                    requireNotNull(
+                        VexLifeProdHomeFiles.observeExisting(
+                            fixture.home,
+                        ),
+                    )
+                        .manifest,
+                )
+            }
+    }
+
     /**
      * Rewrites the running exact-owned service's receipt and plist to the pre-selected-Home launch
      * contract (`--source-sha` only), the shape an installed 8faf58e8-era Product carries.
      */
-    private fun becomePriorContractService(home: Path) {
-        val receipt = assertNotNull(lifetimeReceipt(home))
+    private fun becomePriorContractService(
+        fixture: Fixture,
+    ) {
+        val receipt =
+            assertNotNull(
+                lifetimeReceipt(
+                    fixture.lifetimeRoot,
+                ),
+            )
         val legacy =
             receipt.copy(
+                schemaVersion =
+                    VexLifeProdMacServiceLifetime.LegacyReceiptSchema,
                 launchd =
-                    receipt.launchd.copy(programArguments = listOf("--source-sha", receipt.sourceSha))
+                    receipt.launchd.copy(
+                        programArguments =
+                            listOf(
+                                "--source-sha",
+                                receipt.sourceSha,
+                            ),
+                    ),
+                homeBinding = null,
             )
         VexDurableContractFile.write(
-            ownedRoot = home,
-            path = VexOwnedPath.resolveInside(home, VexLifeProdMacServiceLifetime.ReceiptRelativePath),
+            ownedRoot = fixture.home,
+            path =
+                VexOwnedPath.resolveInside(
+                    fixture.home,
+                    VexLifeProdMacServiceLifetime.ReceiptRelativePath,
+                ),
             value = legacy,
         )
+        Files.deleteIfExists(
+            lifetimeReceiptPath(
+                fixture.lifetimeRoot,
+            ),
+        )
+
         val spec =
             MacUserLaunchdProcess.form(
                 label = legacy.launchd.label,
@@ -894,8 +1145,12 @@ class VexLifeProdMacServiceLifetimeTest {
                 uid = legacy.launchd.domainTarget.substringAfter("gui/").toLong(),
             )
         Files.writeString(
-            Path.of(legacy.launchd.plistPath),
-            MacUserLaunchdProcess.renderPlist(spec),
+            Path.of(
+                legacy.launchd.plistPath,
+            ),
+            MacUserLaunchdProcess.renderPlist(
+                spec,
+            ),
             StandardCharsets.UTF_8,
         )
     }
@@ -909,15 +1164,17 @@ class VexLifeProdMacServiceLifetimeTest {
                     productHome = fixture.home,
                     desiredSourceSha = fixture.sourceSha,
                     host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                     probe = probe,
                     legacyDefaultHome = fixture.home,
                 )
-                becomePriorContractService(fixture.home)
+                becomePriorContractService(fixture)
 
                 val existing =
                     VexLifeProdMacServiceLifetime.observeExisting(
                         productHome = fixture.home,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                         legacyDefaultHome = fixture.home,
                     )
@@ -929,6 +1186,7 @@ class VexLifeProdMacServiceLifetimeTest {
                         productHome = fixture.home,
                         desiredSourceSha = fixture.sourceSha,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                         legacyDefaultHome = fixture.home,
                     )
@@ -948,12 +1206,13 @@ class VexLifeProdMacServiceLifetimeTest {
                         productHome = fixture.home,
                         desiredSourceSha = nextSource,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                         legacyDefaultHome = fixture.home,
                     )
                 assertTrue(updated.priorProcessRetired)
                 assertEquals(1, fixture.host.bootoutCount(), "only the exact prior service is retired")
-                val receipt = assertNotNull(lifetimeReceipt(fixture.home))
+                val receipt = assertNotNull(lifetimeReceipt(fixture.lifetimeRoot))
                 assertEquals(nextSource, receipt.sourceSha)
                 assertEquals(
                     listOf("--source-sha", nextSource, "--home", fixture.home.toString()),
@@ -972,10 +1231,11 @@ class VexLifeProdMacServiceLifetimeTest {
                     productHome = fixture.home,
                     desiredSourceSha = fixture.sourceSha,
                     host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                     probe = probe,
                     legacyDefaultHome = fixture.home,
                 )
-                becomePriorContractService(fixture.home)
+                becomePriorContractService(fixture)
 
                 // A --source-sha-only service always served ~/.vexlife; at another coordinate the
                 // receipt is incoherent and must not be treated as owned.
@@ -984,6 +1244,7 @@ class VexLifeProdMacServiceLifetimeTest {
                     VexLifeProdMacServiceLifetime.observeExisting(
                         productHome = fixture.home,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                         legacyDefaultHome = elsewhere,
                     )
@@ -1001,6 +1262,7 @@ class VexLifeProdMacServiceLifetimeTest {
                     productHome = fixture.home,
                     desiredSourceSha = fixture.sourceSha,
                     host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                     probe = probe,
                 )
                 // The Mac restarted: launchd no longer carries the job, the receipt survives.
@@ -1013,12 +1275,13 @@ class VexLifeProdMacServiceLifetimeTest {
                     VexLifeProdMacServiceLifetime.observeExisting(
                         productHome = fixture.home,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
                 val notReady =
                     assertIs<VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady>(existing)
                 assertEquals(MacUserLaunchdProcess.Observation.Absent, notReady.launchdObservation)
-                assertNotNull(lifetimeReceipt(fixture.home), "the receipt is preserved, not deleted")
+                assertNotNull(lifetimeReceipt(fixture.lifetimeRoot), "the receipt is preserved, not deleted")
             }
     }
 
@@ -1036,6 +1299,7 @@ class VexLifeProdMacServiceLifetimeTest {
                     productHome = fixture.home,
                     desiredSourceSha = fixture.sourceSha,
                     host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                     probe = probe,
                 )
                 val bootoutBefore =
@@ -1049,6 +1313,7 @@ class VexLifeProdMacServiceLifetimeTest {
                         productHome = fixture.home,
                         desiredSourceSha = fixture.sourceSha,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
 
@@ -1061,6 +1326,7 @@ class VexLifeProdMacServiceLifetimeTest {
                         productHome = fixture.home,
                         desiredSourceSha = fixture.sourceSha,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
                 }
@@ -1086,13 +1352,14 @@ class VexLifeProdMacServiceLifetimeTest {
                     productHome = fixture.home,
                     desiredSourceSha = fixture.sourceSha,
                     host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                     probe = probe,
                 )
 
                 val receipt =
                     assertNotNull(
                         lifetimeReceipt(
-                            fixture.home,
+                            fixture.lifetimeRoot,
                         ),
                     )
                 Files.writeString(
@@ -1109,6 +1376,7 @@ class VexLifeProdMacServiceLifetimeTest {
                         productHome = fixture.home,
                         desiredSourceSha = fixture.sourceSha,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
 
@@ -1148,6 +1416,7 @@ class VexLifeProdMacServiceLifetimeTest {
                     productHome = fixture.home,
                     desiredSourceSha = fixture.sourceSha,
                     host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                     probe = initialProbe,
                 )
 
@@ -1179,6 +1448,7 @@ class VexLifeProdMacServiceLifetimeTest {
                         productHome = fixture.home,
                         desiredSourceSha = fixture.sourceSha,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
 
@@ -1231,6 +1501,7 @@ class VexLifeProdMacServiceLifetimeTest {
                         productHome = fixture.home,
                         desiredSourceSha = fixture.sourceSha,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
 
@@ -1262,7 +1533,7 @@ class VexLifeProdMacServiceLifetimeTest {
                 )
                 assertNotNull(
                     lifetimeReceipt(
-                        fixture.home,
+                        fixture.lifetimeRoot,
                     ),
                 )
             }
@@ -1288,6 +1559,7 @@ class VexLifeProdMacServiceLifetimeTest {
                         productHome = fixture.home,
                         desiredSourceSha = fixture.sourceSha,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
                 }
@@ -1309,7 +1581,7 @@ class VexLifeProdMacServiceLifetimeTest {
                 assertEquals(
                     null,
                     lifetimeReceipt(
-                        fixture.home,
+                        fixture.lifetimeRoot,
                     ),
                 )
             }
@@ -1321,8 +1593,8 @@ class VexLifeProdMacServiceLifetimeTest {
             .use {
                 fixture ->
                 val receiptPath =
-                    fixture.home.resolve(
-                        VexLifeProdMacServiceLifetime.ReceiptRelativePath,
+                    lifetimeReceiptPath(
+                        fixture.lifetimeRoot,
                     )
                 Files.createDirectories(
                     requireNotNull(
@@ -1339,6 +1611,7 @@ class VexLifeProdMacServiceLifetimeTest {
                         productHome = fixture.home,
                         desiredSourceSha = fixture.sourceSha,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe =
                             Probe(
                                 fixture.sourceSha,
@@ -1372,9 +1645,12 @@ class VexLifeProdMacServiceLifetimeTest {
             .use {
                 fixture ->
                 val receiptPath =
-                    fixture.home.resolve(
-                        VexLifeProdMacServiceLifetime.ReceiptRelativePath,
+                    lifetimeReceiptPath(
+                        fixture.lifetimeRoot,
                     )
+                Files.createDirectories(
+                    fixture.lifetimeRoot,
+                )
                 val outside =
                     fixture.parent.resolve(
                         "outside-receipt-target",
@@ -1411,6 +1687,7 @@ class VexLifeProdMacServiceLifetimeTest {
                         productHome = fixture.home,
                         desiredSourceSha = fixture.sourceSha,
                         host = fixture.host,
+                    lifetimeRoot = fixture.lifetimeRoot,
                         probe = probe,
                     )
                 }
