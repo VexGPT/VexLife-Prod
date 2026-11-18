@@ -133,12 +133,24 @@ internal object VexLifeProdRuntimeSessionFactory {
             realization.target
         ) {
             HereticRuntimeRealization.MacArm64 ->
-                VexLifeProdLocalSetup.establishSession(
-                    productHome = productHome,
-                    allowAcquisition = allowAcquisition,
-                    allowRuntimeStart = allowRuntimeStart,
-                    progress = progress,
-                )
+                VexLifeProdLocalSetup
+                    .establishSession(
+                        productHome = productHome,
+                        allowAcquisition = allowAcquisition,
+                        allowRuntimeStart = allowRuntimeStart,
+                        progress = progress,
+                    )
+                    .also {
+                        session ->
+                        require(
+                            session.foundation
+                                .qualifiedRuntimeEvidence
+                                .realizationRef ==
+                                realization.realizationRef,
+                        ) {
+                            "Mac runtime Session converged a realization other than the requested exact target"
+                        }
+                    }
 
             HereticRuntimeRealization.WindowsX64 ->
                 VexLifeProdWindowsRuntimeSession.establish(
