@@ -366,10 +366,6 @@ class VexLifeProdLocalService private constructor(
                     realization,
                     observe,
                     ->
-                    val entry =
-                        vexlife.model.heretic.HereticModelCatalog.requireEntry(
-                            realization.modelRef,
-                        )
                     require(
                         realization.target ==
                             vexlife.platform.VexLifeJvmPlatformTarget.requireCurrent(),
