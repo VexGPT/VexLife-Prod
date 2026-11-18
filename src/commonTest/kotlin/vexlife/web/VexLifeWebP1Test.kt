@@ -186,18 +186,20 @@ class VexLifeWebP1Test {
             ),
         )
 
+        val runtimeArtifacts =
+            VexLifeWebP1RuntimeArtifacts.generate()
         assertTrue(
-            artifacts.javascript.contains(
+            runtimeArtifacts.javascript.contains(
                 "contextConversationCollapsedByEventRef",
             ),
         )
         assertTrue(
-            artifacts.javascript.contains(
+            runtimeArtifacts.javascript.contains(
                 "Collapse message",
             ),
         )
         assertTrue(
-            artifacts.javascript.contains(
+            runtimeArtifacts.javascript.contains(
                 "Show message",
             ),
         )
