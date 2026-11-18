@@ -902,13 +902,29 @@ object VexLifeProdMacFrontDoorProcess {
         utf8StandardOutput.flush()
     }
 
-    /** No-effect: the offered models, how each fits this Mac, and which one setup will use. */
+    private fun currentRuntimeRealizations():
+        vexlife.model.heretic.HereticRuntimeRealization.Resolver =
+        vexlife.model.heretic.HereticRuntimeRealization.Resolver(
+            vexlife.model.heretic.HereticRuntimeRealization.TargetSource(
+                vexlife.platform.VexLifeJvmPlatformTarget::requireCurrent,
+            ),
+        )
+
+    /** No-effect: the offered models realizable on this JVM target, and which one setup will use. */
     fun observeModel(productHome: Path, model: String?, language: String?) {
         val selected = runCatching { VexLifeProdSetupLanguage.resolve(productHome, language, null) }
             .getOrDefault(VexLifePersonSettings.DefaultLanguage)
         val memory = runCatching { HereticMacHostProfile.observeCurrent().observation.totalMemoryBytes }.getOrNull()
         utf8StandardOutput.println(
-            VexContractJson.encode(VexLifeProdSetupModel.observe(productHome, model, selected, memory))
+            VexContractJson.encode(
+                VexLifeProdSetupModel.observe(
+                    productHome = productHome,
+                    explicit = model,
+                    language = selected,
+                    totalMemoryBytes = memory,
+                    runtimeRealizations = currentRuntimeRealizations(),
+                ),
+            )
         )
         utf8StandardOutput.flush()
     }
@@ -919,7 +935,14 @@ object VexLifeProdMacFrontDoorProcess {
         val selected = runCatching { VexLifeProdSetupLanguage.resolve(productHome, language, null) }
             .getOrDefault(VexLifePersonSettings.DefaultLanguage)
         val memory = runCatching { HereticMacHostProfile.observeCurrent().observation.totalMemoryBytes }.getOrNull()
-        val projection = VexLifeProdSetupModel.choose(productHome, model, selected, memory)
+        val projection =
+            VexLifeProdSetupModel.choose(
+                productHome = productHome,
+                handle = model,
+                language = selected,
+                totalMemoryBytes = memory,
+                runtimeRealizations = currentRuntimeRealizations(),
+            )
         if (projection.effectsPerformed) {
             VexLogger.record(VexLogger.Fact.PersonModelChosen, mapOf("model" to model))
         }
