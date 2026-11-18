@@ -1526,12 +1526,126 @@ class VexLifeProdLocalService private constructor(
     private fun localAsrProjection(): VexLifeProdServiceContract.LocalAsrProjection {
         val selected =
             localAsrSelection.read()
+        val selectedOption =
+            VexLifeLocalAsrSelection.option(
+                selected,
+            )
+        val spokenLanguage =
+            localAsrSpokenLanguage.read()
+        val replyLanguage =
+            personSettings.read()
+                .replyLanguage
+        val resolvedSpokenLanguage =
+            VexLifeLocalAsrSpokenLanguage.resolvedLanguageCode(
+                value = spokenLanguage,
+                replyLanguage = replyLanguage,
+            )
+
+        fun supports(
+            mode: String,
+            languageCode: String?,
+        ): Boolean =
+            when (mode) {
+                VexLifeLocalAsrSpokenLanguage.FollowReplyLanguage ->
+                    replyLanguage in
+                        selectedOption.languageCodes
+
+                VexLifeLocalAsrSpokenLanguage.AutoDetect ->
+                    selectedOption.languageCodes.size >
+                        1
+
+                VexLifeLocalAsrSpokenLanguage.Fixed ->
+                    languageCode in
+                        selectedOption.languageCodes
+
+                else ->
+                    false
+            }
+
+        val spokenLanguageChoices =
+            buildList {
+                add(
+                    VexLifeProdServiceContract.LocalAsrSpokenLanguageChoice(
+                        mode =
+                            VexLifeLocalAsrSpokenLanguage.FollowReplyLanguage,
+                        languageCode =
+                            null,
+                        labelKey =
+                            "workspace.option.local-asr-spoken-language-follow",
+                        languageLabel =
+                            VexLifePersonSettings.languageName(
+                                replyLanguage,
+                            ),
+                        selected =
+                            spokenLanguage.mode ==
+                            VexLifeLocalAsrSpokenLanguage.FollowReplyLanguage,
+                        supportedBySelectedModel =
+                            supports(
+                                VexLifeLocalAsrSpokenLanguage.FollowReplyLanguage,
+                                null,
+                            ),
+                    ),
+                )
+                add(
+                    VexLifeProdServiceContract.LocalAsrSpokenLanguageChoice(
+                        mode =
+                            VexLifeLocalAsrSpokenLanguage.AutoDetect,
+                        languageCode =
+                            null,
+                        labelKey =
+                            "workspace.option.local-asr-spoken-language-auto",
+                        languageLabel =
+                            null,
+                        selected =
+                            spokenLanguage.mode ==
+                            VexLifeLocalAsrSpokenLanguage.AutoDetect,
+                        supportedBySelectedModel =
+                            supports(
+                                VexLifeLocalAsrSpokenLanguage.AutoDetect,
+                                null,
+                            ),
+                    ),
+                )
+                VexLifePersonSettings.Languages.forEach {
+                    language ->
+                    add(
+                        VexLifeProdServiceContract.LocalAsrSpokenLanguageChoice(
+                            mode =
+                                VexLifeLocalAsrSpokenLanguage.Fixed,
+                            languageCode =
+                                language.first,
+                            labelKey =
+                                null,
+                            languageLabel =
+                                language.second,
+                            selected =
+                                spokenLanguage.mode ==
+                                    VexLifeLocalAsrSpokenLanguage.Fixed &&
+                                    spokenLanguage.languageCode ==
+                                    language.first,
+                            supportedBySelectedModel =
+                                supports(
+                                    VexLifeLocalAsrSpokenLanguage.Fixed,
+                                    language.first,
+                                ),
+                        ),
+                    )
+                }
+            }
 
         return VexLifeProdServiceContract.LocalAsrProjection(
             schemaVersion =
                 VexLifeProdServiceContract.LocalAsrProjectionSchema,
             selectedProviderRef = selected.providerRef,
             selectedModelRef = selected.modelRef,
+            spokenLanguageMode =
+                spokenLanguage.mode,
+            spokenLanguageCode =
+                spokenLanguage.languageCode,
+            resolvedSpokenLanguageCode =
+                resolvedSpokenLanguage,
+            spokenLanguageChoices =
+                spokenLanguageChoices,
             options =
                 VexLifeLocalAsrSelection.Options.map {
                     option ->
