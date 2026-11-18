@@ -215,7 +215,7 @@ $JpackageArgs = @(
     '--vendor',
     'VexGPT',
     '--description',
-    'VexLife Windows lived preview',
+    'VexLife Windows setup preview',
     '--java-options',
     "-Dvexlife.prod.sourceSha=$SourceSha"
 )
@@ -244,6 +244,10 @@ $Receipt = [ordered]@{
     windowsServiceInstalled = $false
     autoStartConfigured = $false
     signed = $false
+    setupJourney = 'WINDOWS_NATIVE_PRODUCT_ENTRY_PREVIEW'
+    productLifetime = 'EXE_OWNS_SERVICE_AND_RUNTIME_WHILE_OPEN'
+    safeCancelDuringActiveSetup = $false
+    windowsSpecificLocalization = 'ENGLISH_PREVIEW'
     livedAcceptance = 'PENDING_VICTOR_WINDOWS_RUN'
     runtimeModules = $Modules
 }
@@ -261,11 +265,16 @@ Run:
 Default Vex Home:
   %USERPROFILE%\.vexlife
 
-The app starts the real VexLife Product service and opens the canonical browser presentation.
-Keep the small VexLife preview window open while using VexLife; closing it stops this preview process.
+The app opens the native Windows VexLife Setup Journey first. It preserves and inspects the selected
+Vex Home, keeps Home creation separate from local-model/runtime setup, then starts the shared Product
+service and opens the canonical browser presentation.
 
-This build does not install a Windows Service, configure auto-start, or claim code signing.
-Lived acceptance is intentionally pending until this exact artifact is exercised on Victor's Windows machine.
+Keep the VexLife window open while using the browser Product. After setup is idle, closing the window
+stops this preview's Product service and local model.
+
+This build does not install a Windows Service, configure auto-start, or claim code signing. Active
+setup/download work is not presented as safely cancellable in this preview. Lived acceptance remains
+pending until this exact artifact is exercised on Victor's Windows machine.
 
 Source:
   $SourceSha
