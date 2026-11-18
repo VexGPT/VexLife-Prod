@@ -64,7 +64,7 @@ class VexLifeProdEntryFamilyTest {
                     state,
                     VexLifeProdEntryFamily.RecoverStaleService,
                 )
-                ?.effect as VexLifeProdEntryFamily.ConvergeProduct
+                ?.effect as VexLifeProdEntryFamily.RetireStaleService
 
         assertEquals(
             VexLifeProdEntryFamily.ControlRecoverStaleService,
@@ -74,8 +74,14 @@ class VexLifeProdEntryFamilyTest {
             "setup.button.retire-old-service-continue",
             display.primaryLabel?.key,
         )
-        assertFalse(effect.allowAcquisition)
-        assertTrue(effect.allowRuntimeStart)
+        assertEquals(
+            "b".repeat(40),
+            effect.priorServiceSourceSha,
+        )
+        assertEquals(
+            4242L,
+            effect.priorServicePid,
+        )
         assertNull(
             VexLifeProdEntryFamily.Semantics.resolve(
                 state,
