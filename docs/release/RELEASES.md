@@ -214,6 +214,48 @@ Walkthrough screenshots remain lived evidence: `site/walkthrough/<step>.png` for
 `site/data/walkthrough.json` (language, home, model, setup, ready). A step without its screenshot
 says so.
 
+## Preview update-alert acceptance checkpoint
+
+The first Preview that contains the lived/merged Mac service-lifetime correction was published from:
+
+~~~text
+Preview B
+source 7345cc2e366e918a9298f0a03c96950c9bae4ac0
+tag    private-service-image-7345cc2e366e918a9298f0a03c96950c9bae4ac0
+published 2026-11-18T10:53:35Z
+~~~
+
+Its GitHub prerelease and the source-owned `gh-pages` release catalog independently read back that exact
+source. The immediate release-alert acceptance sequence intentionally uses a later Preview cut from a
+new exact `main` source so both sides of the comparison run the current Product lifetime/release logic:
+
+~~~text
+install/open published Preview B
+-> Product identifies its installed source as one published Preview
+-> publish later Preview C from exact current main
+-> release observer sees Preview C as the newest intentionally published Preview
+-> Release Inbox projects one unread Preview update
+-> collapsed Spiral host shows the update dot
+-> expanded Alerts child owns the dot instead
+-> View update opens the public VexLife download surface
+-> install/open Preview C
+-> installed Preview identity becomes current
+~~~
+
+The later Preview does not need a fabricated feature merely to change identity. A truthful source-owned
+documentation/currentization change may create the next exact source cutoff; the release script still
+re-runs Product tests, rebuilds the exact source-bound DMG and publishes a distinct immutable Preview.
+
+Permanent:
+
+~~~text
+UNPUBLISHED CANDIDATE SOURCE != INSTALLED PUBLISHED PREVIEW IDENTITY
+SOURCE SHA CHANGE != FEATURE CLAIM
+NEWER PUBLISHED PREVIEW != AUTOMATIC INSTALL
+RELEASE ALERT != RELEASE PUBLICATION AUTHORITY
+VIEW UPDATE != INSTALL EFFECT
+~~~
+
 ## Proof boundary
 
 A macOS runner can prove that the exact source:
