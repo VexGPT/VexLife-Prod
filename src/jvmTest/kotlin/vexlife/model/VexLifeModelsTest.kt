@@ -418,7 +418,8 @@ class VexLifeModelsTest {
                     artifactSetRef = "artifact-set.vexlife-prod.imported.hf-windows-held.001",
                     artifactCustodyEvidenceRef =
                         "artifact-custody.vexlife-prod.imported.hf-windows-held.001",
-                    artifactContentSetSha256 = "3".repeat(64),
+                    artifactContentSetSha256 =
+                        "54a5a3d062d90b8095d66e0633d46a94daf5c33d84218dc147e17c34f7e90841",
                     modelRootRelativePath = "models/heretic/hf-windows-held",
                     providerLicense = "apache-2.0",
                     representationRef = HereticModelImport.RepresentationQwen3OpenAiChat,
