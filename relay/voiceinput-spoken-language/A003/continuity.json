@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "vexlife-prod.temp-host-proof-continuity/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 273,
+  "predecessorAttempt": "A002",
+  "predecessorReturn": {
+    "sha256": "0a589eb3db35171b78b3165078c6fe509dccec08c8d39570833b18687c5d951b",
+    "disposition": "FAIL",
+    "sourceSha": "17b9d4d5859d4037add77be8f9ee829fef223eb1",
+    "sourceTree": "72c7362666feb505da0862c62e5eb67a3331de45",
+    "passedBeforeFailure": [
+      "compileKotlinJs",
+      "compileTestKotlinJs",
+      "compileKotlinJvm",
+      "compileTestKotlinJvm",
+      "checkVexLifeStrings",
+      "generateVexLifeWebP1",
+      "verifyVexLifeWebP1",
+      "assembleVexLifeProdServiceImage"
+    ],
+    "firstSubstantiveFailure": "jvmTest: 4 stale VexWeb/ScreenLens proof expectations after three new Settings coordinates"
+  },
+  "repair": {
+    "class": "SOURCE_PROOF_CURRENTNESS",
+    "detail": "Advance workspace coordinate counts, guard projected Controls at projection boundary, regenerate committed Screen Lens"
+  },
+  "productCandidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "head": "ad16915366fd0503f1c02bdac5ce715e329fc104"
+  },
+  "launcher": {
+    "path": "relay/voiceinput-spoken-language/A003/RUN-MAC.command",
+    "commit": "d1cbdd478c675f9de3e37757db509790ecbc8950",
+    "blobSha": "6e3c617466debb2796f3d632e6a5b3bce2831025"
+  },
+  "expectedReturn": "RETURN-VEXLIFE-VOICEINPUT-SPOKEN-LANGUAGE-A003.zip",
+  "disposition": "FORMED_NOT_EXECUTED"
+}
