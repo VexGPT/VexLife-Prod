@@ -1018,6 +1018,7 @@ object VexLifeWebP1RuntimeArtifacts {
                   renderLanguage();
                   renderSpeechVoices();
                   renderSpeech();
+                  renderVexContext();
                   const name = state.settings.languages.find((language) => language.code === code)?.name ?? code;
                   notify('Vex will reply in ' + name + '.');
                 } catch (error) {
@@ -2747,6 +2748,31 @@ object VexLifeWebP1RuntimeArtifacts {
                   change('Context profile.', active.definition.name + ' is current for the next turn.', 'current');
                 }
 
+                const usedReplyLanguage = String(prompt.replyLanguage ?? '');
+                const currentReplyLanguage = String(state.settings?.replyLanguage ?? '');
+                const languageName = (code) =>
+                  state.settings?.languages?.find((language) => language.code === code)?.name ??
+                  (code === usedReplyLanguage ? prompt.replyLanguageName : null) ??
+                  code;
+                if (usedReplyLanguage) {
+                  if (currentReplyLanguage && currentReplyLanguage !== usedReplyLanguage) {
+                    change(
+                      'Reply language changed.',
+                      'This reply was told ' + languageName(usedReplyLanguage) +
+                        '. Your next message is currently set to ' + languageName(currentReplyLanguage) +
+                        '. VexLife will read that Home setting at Send and provide it automatically before Vex starts thinking.',
+                      'changed'
+                    );
+                  } else {
+                    change(
+                      'Reply language.',
+                      'Vex was told ' + languageName(usedReplyLanguage) +
+                        ' for this reply. VexLife read it from your Vex Home at Send and provided it automatically; Vex did not reach for it.',
+                      'current'
+                    );
+                  }
+                }
+
                 if (usedWorkingContinuity) {
                   change(
                     'Earlier conversation was condensed.',
@@ -3020,8 +3046,14 @@ object VexLifeWebP1RuntimeArtifacts {
                   name.textContent = componentLabels[exactRef] ?? exactRef.replaceAll('-', ' ');
                   name.title = component.componentRef;
                   const detail = document.createElement('span');
-                  detail.textContent =
-                    ' · ' + (placementLabels[component.placementClass] ?? component.placementClass.toLowerCase().replaceAll('_', ' '));
+                  const placement =
+                    placementLabels[component.placementClass] ??
+                    component.placementClass.toLowerCase().replaceAll('_', ' ');
+                  const arrival =
+                    exactRef === 'person-context'
+                      ? ' · read from Vex Home at Send · provided automatically · no reach required'
+                      : '';
+                  detail.textContent = ' · ' + placement + arrival;
                   detail.title =
                     component.stabilityClass + ' · ' + component.placementClass +
                     ' · provider message ' + component.providerMessageIndex;

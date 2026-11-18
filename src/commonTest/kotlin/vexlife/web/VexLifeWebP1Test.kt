@@ -203,6 +203,21 @@ class VexLifeWebP1Test {
                 "Show message",
             ),
         )
+        assertTrue(
+            runtimeArtifacts.javascript.contains(
+                "Reply language changed.",
+            ),
+        )
+        assertTrue(
+            runtimeArtifacts.javascript.contains(
+                "read from Vex Home at Send",
+            ),
+        )
+        assertTrue(
+            runtimeArtifacts.javascript.contains(
+                "provided automatically · no reach required",
+            ),
+        )
 
         val send =
             VexLifeWebP1.Surface
