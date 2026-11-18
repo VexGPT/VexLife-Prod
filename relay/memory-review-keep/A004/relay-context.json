@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "vexlife-prod.memory-review-keep-relay-context/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 276,
+  "tempRelayPr": 278,
+  "attempt": "A004",
+  "disposition": "SEALED_NOT_EXECUTED",
+  "predecessors": [
+    {
+      "attempt": "A001",
+      "disposition": "FORMATION_SAFE_FAILURE",
+      "classification": "DUPLICATE_SOURCE_REFS"
+    },
+    {
+      "attempt": "A002",
+      "disposition": "SAFE_FAILURE",
+      "classification": "PROPOSAL_CANDIDATE_IDENTITY_FROZEN_ACROSS_KEEP_BOUNDARY"
+    },
+    {
+      "attempt": "A003",
+      "disposition": "SAFE_FAILURE",
+      "classification": "SCORE_STATEMENT_BINDING_PROBED_BEFORE_SCORE_HEAD_EXISTS"
+    }
+  ],
+  "productCandidate": {
+    "repository": "VexGPT/VexLife-Prod",
+    "base": "428bb31c8609474ecd6528a044ee47a9a9e89628",
+    "head": "b373170d8d8e88531e4ca9058512302d2ad735bb",
+    "tree": "ecb776c29713bbde82ee6b5e38fc90adc79485c6",
+    "branch": "VXG-111726-memory-correction-review-keep-a001",
+    "changedPaths": [
+      "docs/work/memory-correction-review-keep/README.md",
+      "src/commonMain/kotlin/vexlife/memory/VexLifeMemoryReviewFamily.kt",
+      "src/commonTest/kotlin/vexlife/memory/VexLifeMemoryReviewFamilyTest.kt",
+      "src/jvmMain/kotlin/vexlife/memory/VexLifeMemoryReviewOwner.kt",
+      "src/jvmTest/kotlin/vexlife/memory/VexLifeMemoryReviewOwnerTest.kt"
+    ]
+  },
+  "formationBundle": {
+    "filename": "VexLife-Memory-Review-Keep-RelayFormation-A004--sha256-1c647fce5464d08097bb19ae80ca363cb93954cca6d04b8a6dae384d7919df43.zip",
+    "sha256": "1c647fce5464d08097bb19ae80ca363cb93954cca6d04b8a6dae384d7919df43",
+    "bytes": 7728,
+    "syntaxChecks": [
+      "bash -n RUN.command PASS",
+      "node --check formation.mjs PASS"
+    ]
+  },
+  "proof": [
+    "./gradlew --no-daemon checkVexLifeStrings --stacktrace",
+    "./gradlew --no-daemon jvmTest --stacktrace",
+    "./gradlew --no-daemon compileKotlinJs compileTestKotlinJs --stacktrace",
+    "exact five-path review snapshot"
+  ],
+  "closePolicy": "TEMP_PROOF_CARRIAGE_CLOSE_UNMERGED_AFTER_EVIDENCE_CONSUMPTION"
+}
