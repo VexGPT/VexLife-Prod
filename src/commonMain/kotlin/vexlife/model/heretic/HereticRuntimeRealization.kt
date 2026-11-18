@@ -13,6 +13,11 @@ import vexlife.platform.VexLifePlatformRealization
  * no nearest-target, model or platform fallback exists.
  */
 object HereticRuntimeRealization {
+    private val PortableRef =
+        Regex(
+            "[a-z][a-z0-9._-]*",
+        )
+
     data class ArtifactProfile(
         val artifactRef: String,
         val providerRepository: String,
@@ -455,10 +460,6 @@ object HereticRuntimeRealization {
             "." +
             target.architecture.name.lowercase()
 
-    private val PortableRef =
-        Regex(
-            "[a-z][a-z0-9._-]*",
-        )
 }
 
 // [VXG RealForever]
