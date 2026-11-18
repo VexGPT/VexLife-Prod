@@ -541,31 +541,16 @@ internal object VexLifeMemoryReviewOwner {
                             decidedAt =
                                 decidedAt,
                         )
-                writeImmutable(
-                    home = home,
-                    path =
-                        decisionPath(
-                            root = root,
-                            decisionSha256 =
-                                decision.decisionSha256,
-                        ),
-                    value =
-                        decision.value,
-                    label =
-                        "Memory review decision",
-                )
-                if (
-                    faults.failAfterDecisionReceipt
-                ) {
-                    error(
-                        "SIMULATED_MEMORY_REVIEW_FAILURE_AFTER_DECISION_RECEIPT",
-                    )
-                }
-
                 when (
                     effect
                 ) {
                     is VexLifeMemoryReviewFamily.Effect.Defer -> {
+                        writeDecisionReceipt(
+                            home = home,
+                            root = root,
+                            decision = decision,
+                            faults = faults,
+                        )
                         writeDecisionAndResolve(
                             home = home,
                             root = root,
@@ -585,6 +570,12 @@ internal object VexLifeMemoryReviewOwner {
                     }
 
                     is VexLifeMemoryReviewFamily.Effect.Dismiss -> {
+                        writeDecisionReceipt(
+                            home = home,
+                            root = root,
+                            decision = decision,
+                            faults = faults,
+                        )
                         writeDecisionAndResolve(
                             home = home,
                             root = root,
@@ -648,6 +639,12 @@ internal object VexLifeMemoryReviewOwner {
             ) {
                 "MEMORY_REVIEW_STALE: Conversation advanced after this review was formed"
             }
+            writeDecisionReceipt(
+                home = home,
+                root = root,
+                decision = decision,
+                faults = faults,
+            )
 
             keepWhileConversationLocked(
                 home = home,
@@ -1370,6 +1367,34 @@ internal object VexLifeMemoryReviewOwner {
             value =
                 value,
         )
+    }
+
+    private fun writeDecisionReceipt(
+        home: Path,
+        root: Path,
+        decision: DecisionReceipt,
+        faults: Faults,
+    ) {
+        writeImmutable(
+            home = home,
+            path =
+                decisionPath(
+                    root = root,
+                    decisionSha256 =
+                        decision.decisionSha256,
+                ),
+            value =
+                decision.value,
+            label =
+                "Memory review decision",
+        )
+        if (
+            faults.failAfterDecisionReceipt
+        ) {
+            error(
+                "SIMULATED_MEMORY_REVIEW_FAILURE_AFTER_DECISION_RECEIPT",
+            )
+        }
     }
 
     private fun writeDecisionAndResolve(
