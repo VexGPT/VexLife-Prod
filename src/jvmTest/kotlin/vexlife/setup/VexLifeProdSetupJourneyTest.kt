@@ -565,6 +565,7 @@ class VexLifeProdSetupJourneyTest {
             VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(
                 receipt = receipt(desired),
                 launchdObservation = MacUserLaunchdProcess.Observation.Absent,
+                servesSelectedHome = true,
             )
         val hooks = existingHooks(service = stopped)
         val projection = observe(existingHome, hooks)
@@ -590,6 +591,7 @@ class VexLifeProdSetupJourneyTest {
                         VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(
                             receipt = receipt(prior),
                             launchdObservation = MacUserLaunchdProcess.Observation.Absent,
+                            servesSelectedHome = true,
                         )
                 ),
             )
@@ -607,6 +609,7 @@ class VexLifeProdSetupJourneyTest {
                         VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(
                             receipt = receipt(desired),
                             launchdObservation = MacUserLaunchdProcess.Observation.LoadedStopped,
+                            servesSelectedHome = true,
                         )
                 ),
             )
@@ -623,6 +626,7 @@ class VexLifeProdSetupJourneyTest {
                         VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady(
                             receipt = receipt(desired),
                             launchdObservation = MacUserLaunchdProcess.Observation.LoadedStopped,
+                            servesSelectedHome = true,
                         ),
                     runtimeEnvironmentPresent = false,
                 ),

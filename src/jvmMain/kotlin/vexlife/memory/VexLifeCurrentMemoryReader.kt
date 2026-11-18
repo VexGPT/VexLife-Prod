@@ -229,6 +229,34 @@ object VexLifeCurrentMemoryReader {
         val semanticAcceptanceSha256: String,
     )
 
+    internal data class CurrentAcceptedStatement(
+        val statementRef: String,
+        val subjectRef: String,
+        val semanticSubjectFingerprint: String,
+        val summary: String,
+        val summaryHash: String,
+        val memoryRelation: String,
+        val recordedStatementState: String,
+        val effectiveState: String,
+        val consentState: String,
+        val semanticAcceptanceRef: String,
+        val semanticAcceptanceSha256: String,
+        val semanticAuthorityHeadSha256: String,
+        val sourceConversationHeadSha256: String,
+    )
+
+    internal data class CurrentAcceptedSemanticSnapshot(
+        val homeRef: String,
+        val deviceRef: String,
+        val companionLineageRef: String,
+        val threadRef: String,
+        val observedConversationHeadSha256: String?,
+        val scoreHeadSha256: String?,
+        val sourceScoreConversationHeadSha256: String?,
+        val semanticAuthorityHeadSha256: String?,
+        val statements: List<CurrentAcceptedStatement>,
+    )
+
     @Serializable
     private data class PageIdentity(
         val dailyStratumSha256: String,
@@ -595,6 +623,180 @@ object VexLifeCurrentMemoryReader {
                         },
                 )
                     .sorted(),
+        )
+    }
+
+    internal fun readCurrentAcceptedSemanticSnapshot(
+        productHome: Path,
+        threadRef: String =
+            DirectConversationIdentity.ThreadRef,
+    ): CurrentAcceptedSemanticSnapshot {
+        val home =
+            VexOwnedPath.requireRoot(
+                productHome,
+                "canonical VexLife Home",
+            )
+        val currentHome =
+            requireNotNull(
+                VexLifeProdHomeFiles.observeExisting(
+                    home,
+                ),
+            ) {
+                "current accepted semantic reader requires one current canonical VexLife Home"
+            }
+        val identity =
+            Identity(
+                homeRef = currentHome.manifest.homeRef,
+                deviceRef = currentHome.manifest.currentDeviceRef,
+                lineageRef = currentHome.manifest.currentCompanionLineageRef,
+                threadRef = threadRef,
+            )
+        val conversationStore =
+            DirectConversationStore(
+                home,
+            )
+        val conversation =
+            conversationStore.current()
+        val observedConversationHeadSha256 =
+            conversation.head
+                ?.conversationHeadSha256
+        val coordinates =
+            readCurrentScoreCoordinates(
+                productHome = home,
+                threadRef = threadRef,
+            )
+
+        if (
+            coordinates.scoreHeadSha256 ==
+            null
+        ) {
+            require(
+                coordinates.currentStatementRefs.isEmpty() &&
+                    coordinates.semanticAuthorityHeadSha256 ==
+                        null,
+            ) {
+                "empty Score coordinates cannot carry accepted semantic continuity"
+            }
+            return CurrentAcceptedSemanticSnapshot(
+                homeRef = identity.homeRef,
+                deviceRef = identity.deviceRef,
+                companionLineageRef = identity.lineageRef,
+                threadRef = identity.threadRef,
+                observedConversationHeadSha256 =
+                    observedConversationHeadSha256,
+                scoreHeadSha256 = null,
+                sourceScoreConversationHeadSha256 = null,
+                semanticAuthorityHeadSha256 = null,
+                statements = emptyList(),
+            )
+        }
+
+        val score =
+            loadScore(
+                home = home,
+                identity = identity,
+                conversationStore = conversationStore,
+                conversation = conversation,
+                authorityPolicy =
+                    ScoreAuthorityPolicy.REQUIRE_CURRENT_MEMBERSHIP,
+            )
+        val currentStatements =
+            score.statements
+                .filter(
+                    Statement::current,
+                )
+                .sortedBy(
+                    Statement::statementRef,
+                )
+        val currentAuthority =
+            score.authority
+        val semanticAuthorityHeadSha256 =
+            currentAuthority
+                ?.string(
+                    "semanticAuthorityHeadSha256",
+                )
+        if (
+            currentStatements.isNotEmpty()
+        ) {
+            requireNotNull(
+                currentAuthority,
+            ) {
+                "current Score statements require current semantic authority"
+            }
+        }
+        val acceptedContinuity =
+            currentStatements
+                .filter {
+                    statement ->
+                    statement.acceptedForContinuity &&
+                        statement.consentState in
+                            positiveConsent &&
+                        currentAuthority !=
+                            null &&
+                        authorityContains(
+                            currentAuthority,
+                            statement,
+                        )
+                }
+        require(
+            currentStatements
+                .map(
+                    Statement::statementRef,
+                ) ==
+                coordinates.currentStatementRefs &&
+                score.head.string(
+                    "scoreHeadSha256",
+                ) ==
+                    coordinates.scoreHeadSha256 &&
+                score.head.string(
+                    "sourceConversationHeadSha256",
+                ) ==
+                    coordinates.sourceConversationHeadSha256 &&
+                semanticAuthorityHeadSha256 ==
+                    coordinates.semanticAuthorityHeadSha256,
+        ) {
+            "current accepted semantic projection differs from current Score coordinates"
+        }
+
+        return CurrentAcceptedSemanticSnapshot(
+            homeRef = identity.homeRef,
+            deviceRef = identity.deviceRef,
+            companionLineageRef = identity.lineageRef,
+            threadRef = identity.threadRef,
+            observedConversationHeadSha256 =
+                observedConversationHeadSha256,
+            scoreHeadSha256 =
+                coordinates.scoreHeadSha256,
+            sourceScoreConversationHeadSha256 =
+                coordinates.sourceConversationHeadSha256,
+            semanticAuthorityHeadSha256 =
+                semanticAuthorityHeadSha256,
+            statements =
+                acceptedContinuity.map {
+                    statement ->
+                    CurrentAcceptedStatement(
+                        statementRef = statement.statementRef,
+                        subjectRef = statement.subjectRef,
+                        semanticSubjectFingerprint =
+                            statement.semanticSubjectFingerprint,
+                        summary = statement.summary,
+                        summaryHash = statement.summaryHash,
+                        memoryRelation = statement.memoryRelation,
+                        recordedStatementState =
+                            statement.recordedState,
+                        effectiveState =
+                            statement.effectiveState,
+                        consentState = statement.consentState,
+                        semanticAcceptanceRef =
+                            statement.acceptanceRef,
+                        semanticAcceptanceSha256 =
+                            statement.acceptanceSha256,
+                        semanticAuthorityHeadSha256 =
+                            statement.semanticAuthorityHeadSha256,
+                        sourceConversationHeadSha256 =
+                            statement.sourceConversationHeadSha256,
+                    )
+                },
         )
     }
 

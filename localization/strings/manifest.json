@@ -247,6 +247,20 @@
         "zh"
       ]
     },
+    "setup.button.retire-old-service-continue": {
+      "enHash": "7f4d82e471b5",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
     "setup.button.set-up": {
       "enHash": "5c54a392cd4f",
       "langs": [
@@ -500,7 +514,7 @@
       ]
     },
     "setup.description.held-unknown": {
-      "enHash": "f8b74be7473d",
+      "enHash": "15da1452bf02",
       "langs": [
         "ar",
         "de",
@@ -879,6 +893,20 @@
     },
     "setup.description.repair-required": {
       "enHash": "59768788213f",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.description.service-recovery-required": {
+      "enHash": "3e8922b31096",
       "langs": [
         "ar",
         "de",
@@ -1341,6 +1369,20 @@
     },
     "setup.heading.repair-required": {
       "enHash": "0cb8f2efa2b3",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.heading.service-recovery-required": {
+      "enHash": "fa22a12063cf",
       "langs": [
         "ar",
         "de",
@@ -2321,6 +2363,20 @@
     },
     "setup.status.service-not-responding": {
       "enHash": "468583fb0fa1",
+      "langs": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hi",
+        "ja",
+        "ko",
+        "pt",
+        "zh"
+      ]
+    },
+    "setup.status.service-recovery-available": {
+      "enHash": "abafcd278ad3",
       "langs": [
         "ar",
         "de",

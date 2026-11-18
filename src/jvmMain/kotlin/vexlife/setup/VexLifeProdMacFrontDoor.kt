@@ -127,6 +127,16 @@ object VexLifeProdMacFrontDoor {
                         "Mac front-door owned-service state requires exact source/PID projection"
                     }
 
+                VexLifeProdEntryFamily.StateServiceRecoveryRequired ->
+                    require(
+                        !currentServiceSourceSha.isNullOrBlank() &&
+                            currentServicePid != null &&
+                            currentServicePid > 0 &&
+                            serviceDetail == null
+                    ) {
+                        "service-recovery projection requires one strict witnessed source/PID"
+                    }
+
                 VexLifeProdEntryFamily.StateStartRequired ->
                     require(currentServicePid == null && serviceDetail == null) {
                         "start-required projection must not claim a live owned service"
@@ -484,6 +494,17 @@ object VexLifeProdMacFrontDoor {
                     detail = existing.detail,
                 )
 
+            is VexLifeProdMacServiceLifetime.ExistingObservation.RecoverableLegacyOrphan ->
+                return observed(
+                    VexLifeProdEntryFamily.ServiceRecoveryRequired(
+                        desiredSourceSha = desiredSourceSha,
+                        priorServiceSourceSha = existing.sourceCurrentness.sourceSha,
+                        priorServicePid = existing.launchdObservation.pid,
+                    ),
+                    sourceSha = existing.sourceCurrentness.sourceSha,
+                    pid = existing.launchdObservation.pid,
+                )
+
             is VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned -> {
                 // Preserve the existing open/update behavior for an already-bound model. Only a
                 // newly selected model may require prerequisite evaluation before service
@@ -576,9 +597,13 @@ object VexLifeProdMacFrontDoor {
 
             is VexLifeProdMacServiceLifetime.ExistingObservation.OwnedNotReady -> {
                 val sourceSha = existing.receipt.sourceSha
-                if (existing.launchdObservation == MacUserLaunchdProcess.Observation.Absent) {
-                    // The exact owned receipt survives but launchd no longer carries the service
-                    // (for example after the Mac restarted). That is stopped, not broken.
+                if (
+                    !existing.servesSelectedHome ||
+                    existing.launchdObservation == MacUserLaunchdProcess.Observation.Absent
+                ) {
+                    // The exact service is either stopped or belongs to another prior Home identity.
+                    // Both are ordinary lifetime convergence: preserve every Home, retire only the
+                    // exact owned service if needed, then start it against the selected Home.
                     observed(
                         VexLifeProdEntryFamily.StartRequired(
                             desiredSourceSha = desiredSourceSha,
@@ -598,6 +623,9 @@ object VexLifeProdMacFrontDoor {
                     )
                 }
             }
+
+            is VexLifeProdMacServiceLifetime.ExistingObservation.RecoverableLegacyOrphan ->
+                error("recoverable legacy orphan was already mapped before prerequisite evaluation")
 
             is VexLifeProdMacServiceLifetime.ExistingObservation.RunningOwned,
             is VexLifeProdMacServiceLifetime.ExistingObservation.HeldUnknown ->
@@ -689,6 +717,13 @@ object VexLifeProdMacFrontDoorProcess {
                     desiredSourceSha = desiredSourceSha,
                     productHome = productHome,
                     progress = progress,
+                )
+            },
+        val retireStaleService: (priorServiceSourceSha: String, priorServicePid: Long) -> Unit =
+            { priorServiceSourceSha, priorServicePid ->
+                VexLifeProdMacServiceLifetime.retireRecoverableLegacyOrphan(
+                    expectedSourceSha = priorServiceSourceSha,
+                    expectedPid = priorServicePid,
                 )
             },
         val convergeProduct:
@@ -1170,6 +1205,7 @@ object VexLifeProdMacFrontDoorProcess {
                 null -> "NONE"
                 VexLifeProdEntryFamily.OpenPresentation -> effect.effectRef
                 VexLifeProdEntryFamily.FormCanonicalHome -> effect.effectRef
+                is VexLifeProdEntryFamily.RetireStaleService -> effect.effectRef
                 is VexLifeProdEntryFamily.ConvergeProduct ->
                     effect.effectRef +
                         (if (effect.allowAcquisition) ":ACQUIRE" else "") +
@@ -1216,6 +1252,29 @@ object VexLifeProdMacFrontDoorProcess {
                 }
                 // The Home exists now, so this process's facts can be kept inside it from here on.
                 VexLogger.bindHome(selectedHome)
+                VexLogger.record(VexLogger.Fact.SetupEffectCompleted, mapOf("effectRef" to effectRef))
+                ActivationProjection(
+                    schemaVersion = ActivationSchema,
+                    controlRef = resolved.controlRef,
+                    semanticStateRef = reobserve(),
+                    manifestationRef = ManifestationRefreshEntry,
+                )
+            }
+
+            is VexLifeProdEntryFamily.RetireStaleService -> {
+                VexLogger.record(VexLogger.Fact.SetupEffectStarted, mapOf("effectRef" to effectRef))
+                try {
+                    hooks.retireStaleService(
+                        effect.priorServiceSourceSha,
+                        effect.priorServicePid,
+                    )
+                } catch (error: Exception) {
+                    return failed(
+                        resolved.controlRef,
+                        effectRef,
+                        VexLifeProdSetupFailure.classify(error, language),
+                    )
+                }
                 VexLogger.record(VexLogger.Fact.SetupEffectCompleted, mapOf("effectRef" to effectRef))
                 ActivationProjection(
                     schemaVersion = ActivationSchema,
