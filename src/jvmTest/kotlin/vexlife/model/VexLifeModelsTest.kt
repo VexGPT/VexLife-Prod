@@ -107,12 +107,14 @@ class VexLifeModelsTest {
             }
 
         var serving: String? = HereticModelCatalog.Models.Qwen27B.modelRef
+        var switchedRealization: HereticRuntimeRealization.Value? = null
         val phases = mutableListOf<VexLifeModels.SwitchPhase>()
         val modelSwitchRealization =
             VexLifeModels.ModelSwitchRealization {
                 realization,
                 observe,
                 ->
+                switchedRealization = realization
                 observe(VexLifeModels.SwitchPhase.WaitingForCurrentTurn)
                 observe(VexLifeModels.SwitchPhase.PreparingTarget)
                 observe(VexLifeModels.SwitchPhase.SwitchingRuntime)
@@ -184,6 +186,14 @@ class VexLifeModelsTest {
                 assertEquals(
                     nine,
                     FileHereticModelConfigurationStore(home).selectedModel(fixture.manifest),
+                )
+                assertEquals(
+                    HereticRuntimeRealization.MacArm64,
+                    requireNotNull(switchedRealization).target,
+                )
+                assertEquals(
+                    "MLX_LM_DIRECT_RUNTIME",
+                    requireNotNull(switchedRealization).runtime.runtimeClass,
                 )
                 assertTrue(Files.exists(folder.resolve("config.json")))
             }
