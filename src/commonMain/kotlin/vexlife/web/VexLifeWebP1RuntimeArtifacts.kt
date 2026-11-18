@@ -296,6 +296,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 releaseAlertsControlPath: ${jsString(VexLifeProdServiceContract.ReleaseAlertsControlPath)},
                 releaseAlertsStringsPath: ${jsString(VexLifeProdServiceContract.ReleaseAlertsStringsPath)},
                 settingsPath: ${jsString(VexLifeProdServiceContract.SettingsPath)},
+                localAsrPath: ${jsString(VexLifeProdServiceContract.LocalAsrPath)},
+                localAsrSpokenLanguagePath: ${jsString(VexLifeProdServiceContract.LocalAsrSpokenLanguagePath)},
+                localAsrModelControlPath: ${jsString(VexLifeProdServiceContract.LocalAsrModelControlPath)},
+                localAsrTranscribePath: ${jsString(VexLifeProdServiceContract.LocalAsrTranscribePath)},
                 privatePath: ${jsString(VexLifeProdServiceContract.PrivatePath)},
                 privateControlPath: ${jsString(VexLifeProdServiceContract.PrivateControlPath)},
                 privateSendPath: ${jsString(VexLifeProdServiceContract.PrivateSendPath)},
@@ -333,6 +337,51 @@ object VexLifeWebP1RuntimeArtifacts {
                 captureRendered: ${jsString(VexLifeProdBrowserContract.CaptureRendered)},
                 messageType: 'vexlife.browser-context/v1',
                 authoredBrowserShare: $authoredBrowserShare
+              });
+
+              // Serialization boundary for the Kotlin VoiceInput Family. Browser code realizes
+              // Effects but does not invent Product State, Control, reason refs or display keys.
+              const voiceInput = Object.freeze({
+                state: Object.freeze({
+                  ready: ${jsString(VexLifeVoiceInputFamily.StateReady)},
+                  checkingLanguage: ${jsString(VexLifeVoiceInputFamily.StateCheckingLanguage)},
+                  installingLanguage: ${jsString(VexLifeVoiceInputFamily.StateInstallingLanguage)},
+                  requestingMicrophone: ${jsString(VexLifeVoiceInputFamily.StateRequestingMicrophone)},
+                  listening: ${jsString(VexLifeVoiceInputFamily.StateListening)},
+                  stopping: ${jsString(VexLifeVoiceInputFamily.StateStopping)},
+                  held: ${jsString(VexLifeVoiceInputFamily.StateHeld)},
+                  failed: ${jsString(VexLifeVoiceInputFamily.StateFailed)}
+                }),
+                control: Object.freeze({
+                  start: ${jsString(VexLifeVoiceInputFamily.ControlStart)},
+                  stop: ${jsString(VexLifeVoiceInputFamily.ControlStop)}
+                }),
+                effect: Object.freeze({
+                  beginLocalDictation: ${jsString(VexLifeVoiceInputFamily.EffectBeginLocalDictation)},
+                  endLocalDictation: ${jsString(VexLifeVoiceInputFamily.EffectEndLocalDictation)}
+                }),
+                holdReason: Object.freeze({
+                  localRecognitionUnavailable: ${jsString(VexLifeVoiceInputFamily.HoldReason.LocalRecognitionUnavailable.reasonRef)},
+                  microphoneApiUnavailable: ${jsString(VexLifeVoiceInputFamily.HoldReason.MicrophoneApiUnavailable.reasonRef)},
+                  audioFeedbackUnavailable: ${jsString(VexLifeVoiceInputFamily.HoldReason.AudioFeedbackUnavailable.reasonRef)}
+                }),
+                failureReason: Object.freeze({
+                  microphonePermissionRequired: ${jsString(VexLifeVoiceInputFamily.FailureReason.MicrophonePermissionRequired.reasonRef)},
+                  microphoneUnavailable: ${jsString(VexLifeVoiceInputFamily.FailureReason.MicrophoneUnavailable.reasonRef)},
+                  languageUnavailable: ${jsString(VexLifeVoiceInputFamily.FailureReason.LanguageUnavailable.reasonRef)},
+                  recognitionStopped: ${jsString(VexLifeVoiceInputFamily.FailureReason.RecognitionStopped.reasonRef)},
+                  unknown: ${jsString(VexLifeVoiceInputFamily.FailureReason.Unknown.reasonRef)}
+                }),
+                attentionOverlay: ${jsString(VexLifeVoiceInputFamily.Attention.Overlay.name)},
+                defaultLanguage: ${jsString(VexLifeVoiceInputFamily.DefaultLanguage.personLanguageCode)},
+                languages: Object.freeze($voiceLanguage),
+                displayByState: Object.freeze($voiceStateDisplays),
+                holdDisplayByReason: Object.freeze($voiceHoldDisplays),
+                failureDisplayByReason: Object.freeze($voiceFailureDisplays),
+                actByState: Object.freeze($voiceActByState),
+                capabilityStateByFacts: Object.freeze($voiceCapabilityStateByFacts),
+                failureStateByReason: Object.freeze($voiceFailureStateByReason),
+                recognitionStartedState: $voiceRecognitionStartedState
               });
 
               const byId = (id) => document.getElementById(id);
@@ -398,6 +447,10 @@ object VexLifeWebP1RuntimeArtifacts {
                 composerHold: byId('composer-hold'),
                 composeForm: byId('compose-form'),
                 draft: byId('draft'),
+                voiceInput: byId('voice-input'),
+                voiceInputOverlay: byId('voice-input-overlay'),
+                voiceInputStatus: byId('voice-input-status'),
+                voiceWaveform: byId('voice-waveform'),
                 send: byId('send'),
                 stop: byId('stop'),
                 contextWindow: byId('context-window'),
@@ -424,6 +477,12 @@ object VexLifeWebP1RuntimeArtifacts {
                 modelUseRecommended: byId('model-use-recommended'),
                 modelStart: byId('model-start'),
                 modelsNote: byId('models-note'),
+                localAsrSelection: byId('local-asr-selection'),
+                localAsrModelsList: byId('local-asr-models-list'),
+                localAsrSpokenLanguage: byId('local-asr-spoken-language'),
+                localAsrStatus: byId('local-asr-status'),
+                localAsrNote: byId('local-asr-note'),
+                localAsrStorageNote: byId('local-asr-storage-note'),
                 diagnosticsStatus: byId('diagnostics-status'),
                 diagnosticsCapture: byId('diagnostics-capture'),
                 diagnosticsRecords: byId('diagnostics-records'),
@@ -480,6 +539,9 @@ object VexLifeWebP1RuntimeArtifacts {
                 // Settings → Models projection (VexLifeModels); refreshed while a download runs.
                 models: null,
                 modelsInFlight: false,
+                // Local microphone recognition is independent from the serving reasoning model.
+                localAsr: null,
+                localAsrInFlight: false,
                 workspaceStrings: null,
                 browserContext: null,
                 includePage: false,
