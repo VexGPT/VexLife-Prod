@@ -10,6 +10,7 @@ import kotlin.test.assertTrue
 import vexlife.home.CanonicalVexLifeHomeFixture
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticRuntimeConfiguration
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.HereticArtifactMaterialization
 
@@ -49,6 +50,12 @@ class VexLifeModelsTest {
             productHome = home,
             servingModelRef = serving,
             totalMemoryBytes = { 16 * gib },
+            runtimeRealizations =
+                HereticRuntimeRealization.Resolver(
+                    HereticRuntimeRealization.TargetSource {
+                        HereticRuntimeRealization.MacArm64
+                    },
+                ),
             modelSwitchRealization = modelSwitchRealization,
             acquirer = { _ ->
                 HereticArtifactMaterialization.Acquirer { _, _ ->
@@ -103,7 +110,7 @@ class VexLifeModelsTest {
         val phases = mutableListOf<VexLifeModels.SwitchPhase>()
         val modelSwitchRealization =
             VexLifeModels.ModelSwitchRealization {
-                entry,
+                realization,
                 observe,
                 ->
                 observe(VexLifeModels.SwitchPhase.WaitingForCurrentTurn)
@@ -115,7 +122,7 @@ class VexLifeModelsTest {
                         VexLifeModels.SwitchPhase.PreparingTarget,
                         VexLifeModels.SwitchPhase.SwitchingRuntime,
                     )
-                serving = entry.modelRef
+                serving = realization.modelRef
             }
 
         models(
