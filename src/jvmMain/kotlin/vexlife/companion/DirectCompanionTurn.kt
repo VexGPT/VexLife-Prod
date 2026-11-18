@@ -614,6 +614,7 @@ object DirectCompanionTurn {
                                 workingSuccessorContext,
                             browserContext = intent.browserContext,
                             personContext = intent.personContext,
+                            contextProfile = intent.contextProfile,
                             hooks = hooks,
                         )
                     val prompt =
@@ -806,6 +807,7 @@ object DirectCompanionTurn {
         workingContinuityContext: DirectWorkingContinuity.CurrentSuccessor?,
         browserContext: DirectPromptContext.BrowserContext?,
         personContext: DirectPromptContext.PersonContext?,
+        contextProfile: VexLifeContextProfile.Effective?,
         hooks: Hooks,
     ): FinalProviderTurn {
         val initialMemoryAvailability =
@@ -863,7 +865,7 @@ object DirectCompanionTurn {
                 runtimeEvidence = initialRuntimeEvidence,
                 sourceReturnProtocolEnabled = true,
                 foundationalField = hooks.currentFoundationalField(),
-                contextProfile = intent.contextProfile,
+            contextProfile = contextProfile,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
             )
@@ -907,7 +909,7 @@ object DirectCompanionTurn {
             runtimeEvidence = initialRuntimeEvidence,
             sourceReturnProtocolEnabled = true,
             foundationalField = hooks.currentFoundationalField(),
-                contextProfile = intent.contextProfile,
+            contextProfile = contextProfile,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
             experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
         )
@@ -1054,7 +1056,7 @@ object DirectCompanionTurn {
                     sourceReturnProtocolEnabled = baseSourceReturnProtocolEnabled,
                     sourceReturnDiscovery = baseDiscovery,
                     foundationalField = hooks.currentFoundationalField(),
-                contextProfile = intent.contextProfile,
+            contextProfile = contextProfile,
                     capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                     experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                 )
@@ -1138,7 +1140,7 @@ object DirectCompanionTurn {
                     sourceReturnProtocolEnabled = false,
                     sourceReturnDiscovery = discovery,
                     foundationalField = hooks.currentFoundationalField(),
-                contextProfile = intent.contextProfile,
+            contextProfile = contextProfile,
                     capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                     experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
                 )
@@ -1197,7 +1199,7 @@ object DirectCompanionTurn {
                 sourceReturnProtocolEnabled = false,
                 sourceReturnDiscovery = discovery,
                 foundationalField = hooks.currentFoundationalField(),
-                contextProfile = intent.contextProfile,
+            contextProfile = contextProfile,
                 experimentEffectiveInputTokenBudget = hooks.experimentEffectiveInputTokenBudget,
             )
 
@@ -1297,7 +1299,7 @@ object DirectCompanionTurn {
                     sourceReturnProtocolEnabled,
                 sourceReturnDiscovery = sourceReturnDiscovery,
                 foundationalField = foundationalField,
-                contextProfile = contextProfile,
+            contextProfile = contextProfile,
                 conversationExtentIncluded = true,
                 capabilityRequestsAdmitted = capabilityRequestsAdmitted,
                 experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
@@ -1365,7 +1367,7 @@ object DirectCompanionTurn {
                 sourceReturnProtocolEnabled,
             sourceReturnDiscovery = sourceReturnDiscovery,
             foundationalField = foundationalField,
-                contextProfile = contextProfile,
+            contextProfile = contextProfile,
             conversationExtentIncluded = true,
             capabilityRequestsAdmitted = capabilityRequestsAdmitted,
             experimentEffectiveInputTokenBudget = experimentEffectiveInputTokenBudget,
