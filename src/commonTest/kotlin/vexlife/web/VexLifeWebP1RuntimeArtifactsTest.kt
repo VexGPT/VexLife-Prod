@@ -647,6 +647,18 @@ class VexLifeWebP1RuntimeArtifactsTest {
             ),
             "the old large Models per-model card renderer must not compete with the dropdown",
         )
+        assertTrue(
+            javascript.contains(
+                "row.className = 'model-storage-row'",
+            ) &&
+                javascript.contains(
+                    "models.filter((model) => model.presentBytes > 0 || model.imported)",
+                ) &&
+                javascript.contains(
+                    "modelControl(control.controlRef, model.handle)",
+                ),
+            "storage controls must remain bound to each model's projected lawfulness instead of only the dropdown target",
+        )
         assertFalse(
             javascript.contains(
                 "workspace.label.model-cache-level-1",

@@ -65,6 +65,12 @@ object HereticCompanionRepresentation {
 
         /** Values explicitly published for this model or its exact source lineage. */
         PROVIDER_RECOMMENDATION,
+
+        /**
+         * Product-owned conservative defaults for an imported provider relationship that has not
+         * earned model-specific sampling guidance yet.
+         */
+        PRODUCT_DEFAULT,
     }
 
     data class Sampling(
@@ -220,6 +226,37 @@ object HereticCompanionRepresentation {
                         temperature = 0.6,
                         topP = 0.95,
                         topK = 20,
+                    ),
+            )
+
+
+        /**
+         * Conservative OpenAI-chat representation for one Home-imported Qwen3 MLX model.
+         *
+         * Ordinary chat may be attempted after the runtime qualifies, but Vex capability reach is
+         * held until this exact imported provider relationship earns that representation.
+         */
+        fun importedQwen(profileRef: String): Profile =
+            Profile(
+                profileRef = profileRef,
+                messageProtocol = MessageProtocol.OPENAI_CHAT,
+                reasoningRepresentation = ReasoningRepresentation.REASONING_FIELDS,
+                capabilityRepresentation = CapabilityRepresentation.VEXLIFE_CONTROL_TEXT,
+                reachRepresentationStanding = ReachRepresentationStanding.HELD_PROVIDER_BRIDGE,
+                coalesceLeadingSystemMessages = false,
+                modelIdentity = null,
+                generation =
+                    Generation(
+                        sampling =
+                            Sampling(
+                                basis = SamplingBasis.PRODUCT_DEFAULT,
+                                sourceRef = "source.vexlife-prod.imported-qwen3.sampling.v1",
+                                temperature = 0.6,
+                                topP = 0.95,
+                                topK = 20,
+                            ),
+                        productMaxOutputTokens = ProductMaxOutputTokens,
+                        reasoningEffort = null,
                     ),
             )
 

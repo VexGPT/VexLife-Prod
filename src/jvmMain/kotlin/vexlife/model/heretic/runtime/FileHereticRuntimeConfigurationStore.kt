@@ -5,6 +5,7 @@ import vexlife.contract.VexContractJson
 import vexlife.contract.VexDurableContractFile
 import vexlife.filesystem.VexOwnedPath
 import vexlife.model.heretic.HereticModelCatalog
+import vexlife.model.heretic.HereticModelOfferings
 import vexlife.model.heretic.HereticRuntimeConfiguration
 
 /** Durable per-model runtime configuration beneath the Product-owned runtime scope. */
@@ -33,7 +34,8 @@ class FileHereticRuntimeConfigurationStore(
             "VexLife-Prod Heretic runtime configuration schema is not admitted"
         }
         return HereticRuntimeConfiguration.validate(
-            VexContractJson.decode(text),
+            value = VexContractJson.decode(text),
+            modelForRef = ::offering,
         )
     }
 
@@ -43,6 +45,7 @@ class FileHereticRuntimeConfigurationStore(
         HereticRuntimeConfiguration.effective(
             value = read(),
             model = model,
+            modelForRef = ::offering,
         )
 
     fun setPromptCacheEntries(
@@ -54,6 +57,7 @@ class FileHereticRuntimeConfigurationStore(
                 value = read(),
                 model = model,
                 promptCacheEntries = promptCacheEntries,
+                modelForRef = ::offering,
             ),
         )
         return effective(model)
@@ -77,13 +81,36 @@ class FileHereticRuntimeConfigurationStore(
         )
     }
 
+    fun forgetModel(modelRef: String) {
+        val current = read()
+        if (current.models.none { it.modelRef == modelRef }) return
+        write(
+            current.copy(
+                models =
+                    current.models
+                        .filterNot { it.modelRef == modelRef }
+                        .sortedBy { it.modelRef },
+            ),
+        )
+    }
+
     private fun write(value: HereticRuntimeConfiguration.Value) {
         VexDurableContractFile.write(
             ownedRoot = productHome,
             path = path(),
-            value = HereticRuntimeConfiguration.validate(value),
+            value =
+                HereticRuntimeConfiguration.validate(
+                    value = value,
+                    modelForRef = ::offering,
+                ),
         )
     }
+
+    private fun offering(modelRef: String): HereticModelCatalog.Entry? =
+        HereticModelOfferings.entry(
+            productHome,
+            modelRef,
+        )
 
     private fun path(): Path =
         VexOwnedPath.resolveInside(

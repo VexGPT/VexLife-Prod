@@ -25,6 +25,7 @@ import vexlife.memory.VexLifeMemoryContract
 import vexlife.model.heretic.HereticCompanionRepresentation
 import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
+import vexlife.model.heretic.HereticModelOfferings
 
 /**
  * One direct personal human -> Vex turn over the isolated VexLife-Prod local foundation.
@@ -810,12 +811,13 @@ object DirectCompanionTurn {
             hooks.currentRuntimeEvidence(
                 setup,
             )
+        val companionEntry =
+            HereticModelOfferings.requireEntry(
+                productHome,
+                initialRuntimeEvidence.modelRef,
+            )
         val companionProfile =
-            HereticModelCatalog
-                .requireEntry(
-                    initialRuntimeEvidence.modelRef,
-                )
-                .companionProfile
+            companionEntry.companionProfile
         val capabilityRequestsAdmitted =
             companionProfile.reachRepresentationStanding ==
                 HereticCompanionRepresentation.ReachRepresentationStanding.QUALIFIED
@@ -966,6 +968,7 @@ object DirectCompanionTurn {
             val stage =
                 invokeProviderStage(
                     runtimeEvidence = stageRuntimeEvidence,
+                    model = companionEntry,
                     messages = base.materialization.messages + exchangeMessages(),
                     hooks = hooks,
                     sourceReturnRequestAllowed = sourceReturnTrace == null,
@@ -1387,6 +1390,7 @@ object DirectCompanionTurn {
 
     private fun invokeProviderStage(
         runtimeEvidence: HereticModelConfiguration.QualifiedRuntimeEvidence,
+        model: HereticModelCatalog.Entry,
         messages: List<CompanionProviderMessage>,
         hooks: Hooks,
         sourceReturnRequestAllowed: Boolean,
@@ -1419,6 +1423,7 @@ object DirectCompanionTurn {
                         progressGate.connectionObserver(),
                     now = hooks.now,
                     capabilityOffer = capabilityOffer,
+                    model = model,
                 )
             } catch (
                 failure: DirectCompanionConnection.ConnectionException,

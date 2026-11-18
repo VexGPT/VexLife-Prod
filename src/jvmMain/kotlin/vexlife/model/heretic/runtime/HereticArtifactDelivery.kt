@@ -4,6 +4,7 @@ import java.nio.file.Path
 import vexlife.artifact.DirectHttpsArtifactDelivery
 import vexlife.model.heretic.HereticArtifactCatalog
 import vexlife.model.heretic.HereticArtifactDeliveryCatalog
+import vexlife.model.heretic.HereticModelCatalog
 
 /**
  * JVM realization of the current Prod-owned Heretic delivery catalog.
@@ -13,6 +14,7 @@ import vexlife.model.heretic.HereticArtifactDeliveryCatalog
  */
 object HereticArtifactDelivery {
     class Acquirer(
+        private val model: HereticModelCatalog.Entry = HereticModelCatalog.Default,
         private val transport: DirectHttpsArtifactDelivery.Transport =
             DirectHttpsArtifactDelivery.JdkTransport,
         private val onProgress: (
@@ -30,7 +32,8 @@ object HereticArtifactDelivery {
         ) {
             val channel =
                 HereticArtifactDeliveryCatalog.channelFor(
-                    member.artifactRef,
+                    model = model,
+                    member = member,
                 )
 
             require(

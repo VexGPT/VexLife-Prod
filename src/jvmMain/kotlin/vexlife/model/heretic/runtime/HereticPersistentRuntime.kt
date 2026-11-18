@@ -332,6 +332,7 @@ object HereticPersistentRuntime {
         materialization: HereticArtifactMaterialization.Result,
         environment: HereticPythonEnvironment.Result,
         promptCacheEntryLimit: Int = PromptCacheEntryLimit,
+        model: HereticModelCatalog.Entry? = null,
     ): Binding {
         require(
             RefPattern.matches(
@@ -340,18 +341,23 @@ object HereticPersistentRuntime {
         ) {
             "Heretic runtime authorityRef must be one stable ref"
         }
-        val model =
-            HereticModelCatalog.Entries.firstOrNull {
-                it.identity.artifactContentSetSha256 == materialization.contentSetSha256
-            }
+        val selectedModel =
+            model
+                ?: HereticModelCatalog.Entries.firstOrNull {
+                    it.identity.artifactContentSetSha256 == materialization.contentSetSha256
+                }
         require(
             materialization.state ==
                 HereticArtifactMaterialization.MaterializedExactState &&
-                model != null &&
+                selectedModel != null &&
+                materialization.contentSetSha256 ==
+                    selectedModel.identity.artifactContentSetSha256 &&
+                materialization.providerRevision ==
+                    selectedModel.providerRevision &&
                 materialization.memberCount ==
-                model.members.size,
+                    selectedModel.members.size,
         ) {
-            "Heretic runtime binding requires one exact catalog model materialization"
+            "Heretic runtime binding requires one exact selected-model materialization"
         }
         require(
             (
@@ -399,7 +405,7 @@ object HereticPersistentRuntime {
             pythonPath = python.toString(),
             pythonEnvironmentRoot = environmentRoot.toString(),
             implementationIdentity = currentImplementationIdentity(),
-            model = model,
+            model = selectedModel,
             promptCacheEntryLimit =
                 HereticRuntimeConfiguration.requirePromptCacheEntries(
                     promptCacheEntryLimit,
@@ -784,7 +790,13 @@ object HereticPersistentRuntime {
         // implementation lineage), so it is retired through the same exact-ownership path before the
         // chosen model starts. A receipt that is not provably ours still fails below.
         val priorModel =
-            prior?.let { HereticModelCatalog.entry(it.modelRef) }
+            prior?.let { receipt ->
+                if (receipt.modelRef == binding.model.modelRef) {
+                    binding.model
+                } else {
+                    HereticModelCatalog.entry(receipt.modelRef)
+                }
+            }
 
         // A Product-owned runtime may outlive the catalog entry that selected it (for example an
         // experimental model removed by a later/narrower build). "No longer offered" means it may

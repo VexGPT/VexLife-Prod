@@ -77,25 +77,13 @@ object HereticModelConfiguration {
             ) {
                 "Heretic model binding requires a qualified runtime"
             }
-            val identity = HereticModelCatalog.entry(modelRef)?.identity
-            require(
-                identity != null &&
-                    modelProfileRef ==
-                    identity.modelProfileRef &&
-                    artifactRef ==
-                    identity.artifactSetRef &&
-                    artifactContentSetSha256 ==
-                    identity.artifactContentSetSha256 &&
-                    runtimeAdapterRef ==
-                    identity.runtimeAdapterRef &&
-                    runtimeClass ==
-                    identity.runtimeClass &&
-                    endpoint ==
-                    identity.endpoint &&
-                    requestModel ==
-                    identity.requestModel,
-            ) {
-                "qualified runtime evidence does not match one offered Heretic model identity"
+            requirePortableRef(modelRef, "modelRef")
+            requirePortableRef(modelProfileRef, "modelProfileRef")
+            requirePortableRef(artifactRef, "artifactRef")
+            requireSha256(artifactContentSetSha256, "artifactContentSetSha256")
+            requirePortableRef(runtimeAdapterRef, "runtimeAdapterRef")
+            require(runtimeClass.isNotBlank() && endpoint.isNotBlank() && requestModel.isNotBlank()) {
+                "qualified runtime evidence requires one complete model/runtime identity"
             }
         }
     }
@@ -138,6 +126,10 @@ object HereticModelConfiguration {
         qualifiedRuntime: QualifiedRuntimeEvidence,
         runtimeReceiptPath: String =
             HereticProductIdentity.StableRuntimeReceiptRelativePath,
+        model: HereticModelCatalog.Entry =
+            HereticModelCatalog.requireEntry(
+                qualifiedRuntime.modelRef,
+            ),
     ): Value {
         require(
             qualifiedRuntime.runtimeState ==
@@ -153,11 +145,25 @@ object HereticModelConfiguration {
             "Heretic product model binding requires one admitted runtime receipt owner"
         }
 
+        require(
+            qualifiedRuntime.modelRef == model.modelRef &&
+                qualifiedRuntime.modelProfileRef == model.identity.modelProfileRef &&
+                qualifiedRuntime.artifactRef == model.identity.artifactSetRef &&
+                qualifiedRuntime.artifactContentSetSha256 ==
+                    model.identity.artifactContentSetSha256 &&
+                qualifiedRuntime.runtimeAdapterRef == model.identity.runtimeAdapterRef &&
+                qualifiedRuntime.runtimeClass == model.identity.runtimeClass &&
+                qualifiedRuntime.endpoint == model.identity.endpoint &&
+                qualifiedRuntime.requestModel == model.identity.requestModel,
+        ) {
+            "qualified runtime evidence does not match the selected Heretic model identity"
+        }
+
         return form(
             homeIdentity = homeIdentity,
             state = State.BoundProductModel,
             runtimeReceiptPath = runtimeReceiptPath,
-            model = HereticModelCatalog.requireEntry(qualifiedRuntime.modelRef),
+            model = model,
         )
     }
 
@@ -202,14 +208,22 @@ object HereticModelConfiguration {
 
     fun productIdentityCurrent(
         value: Value,
-    ): Boolean {
-        val identity =
-            HereticModelCatalog.entry(
-                value.modelRef,
-            )
-                ?.identity
-                ?: return false
+    ): Boolean =
+        HereticModelCatalog.entry(value.modelRef)
+            ?.let { model ->
+                productIdentityCurrent(
+                    value = value,
+                    model = model,
+                )
+            }
+            ?: false
 
+    fun productIdentityCurrent(
+        value: Value,
+        model: HereticModelCatalog.Entry,
+    ): Boolean {
+        if (value.modelRef != model.modelRef) return false
+        val identity = model.identity
         return value.modelProfileRef ==
             identity.modelProfileRef &&
             value.artifactRef ==
@@ -232,6 +246,26 @@ object HereticModelConfiguration {
         value: Value,
         homeIdentity: BindingScope,
     ): Value {
+        val model =
+            requireNotNull(
+                HereticModelCatalog.entry(
+                    value.modelRef,
+                ),
+            ) {
+                "Heretic model configuration references an unoffered Product-catalog model"
+            }
+        return validate(
+            value = value,
+            homeIdentity = homeIdentity,
+            model = model,
+        )
+    }
+
+    fun validate(
+        value: Value,
+        homeIdentity: BindingScope,
+        model: HereticModelCatalog.Entry,
+    ): Value {
         val scoped =
             validateSelectionScope(
                 value = value,
@@ -239,7 +273,8 @@ object HereticModelConfiguration {
             )
         require(
             productIdentityCurrent(
-                scoped,
+                value = scoped,
+                model = model,
             ),
         ) {
             "Heretic model configuration product identity drift"
@@ -287,6 +322,7 @@ object HereticModelConfiguration {
                     automaticActivation = false,
                 ),
             homeIdentity = homeIdentity,
+            model = model,
         )
 }
 
