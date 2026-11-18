@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "vexlife-prod.temp-host-proof-continuity/v1",
+  "continuity": "[VXG RealForever]",
+  "sourcePr": 310,
+  "sourceHead": "2c01df0d45a0269ebd53bc1163f82f2c5b284f14",
+  "sourceTree": "137c87bd026c0aff67132707191009756b19384b",
+  "sourceBase": "b95c2034ad9416920f24801ee87f5c21eda47cdf",
+  "livedRegression": {
+    "evidence": "vexlife-debug-2026-11-18T115624.zip",
+    "sha256": "0182c7d74c526793dd027f35a5b9be0f21f70d33eb10088dc97d576ce0f99c25",
+    "sourceHead": "c5c0fb72288036fafbbd0d9f240963db476c4582",
+    "findings": [
+      "microphone capture entered Listening with Base Multilingual and zh",
+      "first partial inference started with model.local-asr.whisper.base and language=zh",
+      "first partial completion took 99288ms",
+      "session/settings advanced before old partial completed",
+      "old Stop later crossed a zh-to-en microphone-language change"
+    ]
+  },
+  "corrections": [
+    "VoiceInput session State cannot be overwritten by capability refresh while Requesting/Listening/Stopping",
+    "Local-ASR settings mutations cannot cross an unfinished Voice session",
+    "one service-lifetime pinned whisper-server stays warm for the selected speech model",
+    "Begin prepares the selected Local-ASR realization before capture enters Listening",
+    "partial inference has an end-to-end 8 second provider request timeout",
+    "final inference has an end-to-end 45 second provider request timeout",
+    "A004 provider bundle includes whisper-server from the same pinned whisper.cpp source"
+  ],
+  "predicates": [
+    "COMPLETE_REPOSITORY_SOURCE_BUILD_TEST_GATE",
+    "CURRENT_PRODUCT_LIFETIME_FRONT_DOOR",
+    "PERSISTENT_WHISPER_SERVER_CURRENT",
+    "BASE_MULTILINGUAL_SELECTED",
+    "VEX_REPLY_LANGUAGE_EN",
+    "SPOKEN_LANGUAGE_FIXED_ZH",
+    "PARTIAL_INFERENCE_COMPLETED_MODEL_BASE_LANGUAGE_ZH",
+    "FINAL_INFERENCE_COMPLETED_MODEL_BASE_LANGUAGE_ZH",
+    "PROGRESSIVE_COMPOSER_CHINESE_HUMAN_WITNESS",
+    "FINAL_COMPOSER_CHINESE_EDITABLE_HUMAN_WITNESS",
+    "NO_AUTOMATIC_SEND"
+  ],
+  "buildPolicy": {
+    "gradleJvmMaxHeap": "2048m",
+    "gradleMaxWorkers": 2,
+    "kotlinCompilerExecutionStrategy": "in-process",
+    "standing": "A002 removed prior compiler OOM; retained"
+  },
+  "launcher": {
+    "path": "relay/voiceinput-current-main/A004/RUN-MAC.command",
+    "commit": "ad916f598f03f24acbf41eeeaa14a07137a10bc4",
+    "blobSha": "51c6aa781990e24f71cc94ced047608e70a9a1d2"
+  },
+  "expectedReturn": "RETURN-VEXLIFE-VOICEINPUT-CURRENT-MAIN-A004.zip",
+  "retention": {
+    "microphoneAudio": false,
+    "transcriptText": false
+  },
+  "disposition": "FORMED_NOT_EXECUTED"
+}
