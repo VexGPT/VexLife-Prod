@@ -129,6 +129,19 @@ object VexLifeProdServiceContract {
     /** One bounded local-only transcription effect; request body is one mono PCM WAV. */
     const val LocalAsrTranscribePath = "/api/v1/local-asr/transcribe"
 
+    const val LocalAsrDictationPassHeader = "x-vexlife-dictation-pass"
+
+    enum class LocalAsrDictationPass(val wire: String) {
+        Partial("partial"),
+        Final("final"),
+        ;
+
+        companion object {
+            fun forWire(value: String): LocalAsrDictationPass? =
+                entries.firstOrNull { it.wire == value }
+        }
+    }
+
     const val LocalAsrProjectionSchema =
         "vexlife-prod.local-asr-projection/v1"
 
