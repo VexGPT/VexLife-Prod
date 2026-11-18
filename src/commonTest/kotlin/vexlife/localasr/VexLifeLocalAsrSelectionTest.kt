@@ -39,6 +39,41 @@ class VexLifeLocalAsrSelectionTest {
                 selected.modelRef,
             ),
         )
+        val multilingual =
+            VexLifeLocalAsrSelection.WhisperBaseMultilingual
+        assertEquals(
+            VexLifeLocalAsrSelection.WhisperBaseMultilingualModelRef,
+            multilingual.modelRef,
+        )
+        assertEquals(
+            listOf(
+                "en",
+                "ja",
+                "zh",
+                "ko",
+                "fr",
+                "de",
+                "es",
+                "pt",
+                "ar",
+                "hi",
+            ),
+            multilingual.languageCodes,
+        )
+        assertEquals(
+            147_951_465L,
+            multilingual.modelBytes,
+        )
+        assertEquals(
+            2,
+            VexLifeLocalAsrSelection.Options.size,
+        )
+        assertNotNull(
+            VexLifeLocalAsrSelection.option(
+                multilingual.providerRef,
+                multilingual.modelRef,
+            ),
+        )
 
         assertFailsWith<IllegalArgumentException> {
             VexLifeLocalAsrSelection.Value(
