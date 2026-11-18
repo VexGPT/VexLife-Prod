@@ -193,6 +193,12 @@ object VexLifeWorkspaceBlueprint :
     /** Settings → Models: the offered models, the one Vex uses, and Use / Download / Remove. */
     val SettingsModels = Settings.region("models")
     val ModelsList = SettingsModels.content("list")
+
+    /** Which qualified local speech recognizer/model the person wants VoiceInput to use. */
+    val SettingsLocalAsr = Settings.region("local-asr")
+    val LocalAsrSelection = SettingsLocalAsr.control("selection")
+    val LocalAsrStatus = SettingsLocalAsr.content("status")
+
     val SettingsDiagnostics = Settings.region("diagnostics")
     val DiagnosticsTrace = SettingsDiagnostics.content("trace")
     val DiagnosticsEnhancedCapture = SettingsDiagnostics.control("enhanced-capture")

@@ -443,52 +443,118 @@ class VexLifeWebP1RuntimeArtifactsTest {
             bundle.html.contains(">Send</button>"),
             "Conversation Send words must come from Family-keyed workspace text",
         )
-        assertTrue(bundle.javascript.contains("window.SpeechRecognition"))
-        assertTrue(bundle.javascript.contains("recognition.processLocally = true"))
-        assertTrue(bundle.javascript.contains("Recognition.available(options)"))
-        assertTrue(bundle.javascript.contains("Recognition.install(options)"))
-        assertTrue(bundle.javascript.contains("processLocally: true"))
         assertFalse(
-            bundle.javascript.contains("quality: 'dictation'"),
-            "VoiceInput must not require Chrome's optional higher dictation-quality model tier",
+            bundle.javascript.contains("window.SpeechRecognition"),
+            "VoiceInput must not depend on the browser's speech-recognition provider",
         )
-        assertTrue(bundle.javascript.contains("recognition.start(track)"))
+        assertFalse(bundle.javascript.contains("Recognition.available(options)"))
+        assertFalse(bundle.javascript.contains("Recognition.install(options)"))
+        assertFalse(bundle.javascript.contains("recognition.processLocally"))
+        assertFalse(bundle.javascript.contains("recognition.start(track)"))
+        assertFalse(bundle.javascript.contains("window.webkitSpeechRecognition"))
+        assertFalse(bundle.javascript.contains("processLocally = false"))
+
+        val initialBrowserNavigation =
+            bundle.javascript.indexOf("navigate(browser.initialPageUrl);")
+        val settingsProjectionStartup =
+            bundle.javascript.indexOf("void refreshSettingsProjections(false).then((current) =>")
+        val localProjectionStartup =
+            bundle.javascript.indexOf(
+                "void Promise.all([loadSourceCurrentness(), loadCurrentState(), loadConversationTurn(), loadConversation(), loadContext(), loadVision()])"
+            )
+        assertTrue(initialBrowserNavigation >= 0)
+        assertTrue(settingsProjectionStartup > initialBrowserNavigation)
+        assertTrue(localProjectionStartup > settingsProjectionStartup)
+        assertTrue(bundle.javascript.contains(VexLifeProdBrowserContract.InitialPageUrl))
+
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrPath))
+        assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrTranscribePath))
         assertTrue(bundle.javascript.contains("navigator.mediaDevices.getUserMedia"))
+        assertTrue(bundle.javascript.contains("context.createScriptProcessor(4096, 1, 1)"))
+        assertTrue(bundle.javascript.contains("encodeCapturedPcmWav"))
+        assertTrue(bundle.javascript.contains("service.localAsrTranscribePath"))
+        assertTrue(bundle.javascript.contains("'content-type': 'audio/wav'"))
+        assertTrue(bundle.javascript.contains("'x-vexlife-language': language.code"))
+        assertTrue(bundle.javascript.contains("localAsrAvailableForLanguage"))
+        assertTrue(bundle.javascript.contains("selectedLocalAsrOption"))
+        assertTrue(bundle.javascript.contains("loadLocalAsr"))
+        assertTrue(bundle.javascript.contains("selectLocalAsr"))
+        val workspaceStringsStart =
+            bundle.javascript.indexOf("const loadWorkspaceStrings = async () =>")
+        val workspaceStringsEnd =
+            bundle.javascript.indexOf(
+                "// The presentation reports only what it observed itself",
+                workspaceStringsStart,
+            )
+        assertTrue(workspaceStringsStart >= 0 && workspaceStringsEnd > workspaceStringsStart)
+        val workspaceStringsLoad =
+            bundle.javascript.substring(
+                workspaceStringsStart,
+                workspaceStringsEnd,
+            )
+        assertTrue(
+            workspaceStringsLoad.contains("renderModels();"),
+            "Models must rerender after workspace localization arrives",
+        )
+        assertTrue(
+            workspaceStringsLoad.contains("renderLocalAsr();"),
+            "Local ASR must rerender after workspace localization arrives",
+        )
         assertTrue(bundle.javascript.contains("projectDictationIntoDraft"))
         assertTrue(bundle.javascript.contains("ui.draft.value ="))
         assertTrue(bundle.javascript.contains("voiceInput.actByState"))
         assertTrue(bundle.javascript.contains("voiceInput.capabilityStateByFacts"))
-        assertTrue(
-            bundle.javascript.contains("voiceInput.languageAvailabilityStateByProviderValue")
-        )
-        assertTrue(bundle.javascript.contains("voiceInput.languageInstallStateBySuccess"))
         assertTrue(bundle.javascript.contains("voiceInput.failureStateByReason"))
         assertTrue(bundle.javascript.contains("applyVoiceInputSemanticState"))
+        assertTrue(
+            bundle.javascript.contains("const refreshSettingsProjections = async"),
+            "Settings must have one live re-observation path for current projections",
+        )
+        val settingsSwitchStart =
+            bundle.javascript.indexOf("ui.viewSwitch.addEventListener('click'")
+        val settingsSwitchEnd =
+            bundle.javascript.indexOf(
+                "ui.contextShare.addEventListener('click'",
+                settingsSwitchStart,
+            )
+        assertTrue(settingsSwitchStart >= 0 && settingsSwitchEnd > settingsSwitchStart)
+        assertTrue(
+            bundle.javascript
+                .substring(settingsSwitchStart, settingsSwitchEnd)
+                .contains("void refreshSettingsProjections();"),
+            "opening Settings must reobserve Models, Diagnostics and Local ASR after transient failure",
+        )
+        assertTrue(
+            bundle.javascript.contains("void refreshSettingsProjections(false).then((current) =>"),
+            "startup must perform bounded recovery when a Settings projection initially fails",
+        )
         assertTrue(bundle.javascript.contains("realizeBeginLocalDictation"))
         assertTrue(bundle.javascript.contains("realizeEndLocalDictation"))
-        assertTrue(bundle.javascript.contains("voiceInput.languageCheckStartedState"))
         assertTrue(bundle.javascript.contains("controlRef: voiceInput.control.stop"))
         assertTrue(bundle.javascript.contains("VOICE_INPUT_CONTROL_EMITTED"))
         assertTrue(bundle.javascript.contains("VOICE_INPUT_MICROPHONE_REQUESTED"))
         assertTrue(bundle.javascript.contains("VOICE_INPUT_MICROPHONE_GRANTED"))
-        assertTrue(bundle.javascript.contains("VOICE_INPUT_LANGUAGE_AVAILABILITY_OBSERVED"))
-        assertTrue(bundle.javascript.contains("VOICE_INPUT_LANGUAGE_INSTALL_OBSERVED"))
-        assertTrue(bundle.javascript.contains("VOICE_INPUT_RECOGNITION_STARTED"))
+        assertTrue(bundle.javascript.contains("VOICE_INPUT_AUDIO_CAPTURE_STARTED"))
         assertTrue(bundle.javascript.contains("VOICE_INPUT_FAILURE_OBSERVED"))
+        assertFalse(bundle.javascript.contains("VOICE_INPUT_LANGUAGE_AVAILABILITY_OBSERVED"))
+        assertFalse(bundle.javascript.contains("VOICE_INPUT_LANGUAGE_INSTALL_OBSERVED"))
+        assertFalse(bundle.javascript.contains("VOICE_INPUT_RECOGNITION_STARTED"))
+        assertFalse(bundle.javascript.contains("voiceInput.languageAvailabilityStateByProviderValue"))
+        assertFalse(bundle.javascript.contains("voiceInput.languageInstallStateBySuccess"))
+        assertFalse(bundle.javascript.contains("voiceInput.languageCheckStartedState"))
         assertTrue(bundle.javascript.contains("let reportFactTail = Promise.resolve()"))
         assertTrue(bundle.javascript.contains("reportFactTail ="))
         assertTrue(bundle.javascript.contains(".then(() =>"))
+
         val voiceBeginStart = bundle.javascript.indexOf("const realizeBeginLocalDictation")
         val voiceBeginEnd = bundle.javascript.indexOf("const applyVoiceInputControl", voiceBeginStart)
         assertTrue(voiceBeginStart >= 0 && voiceBeginEnd > voiceBeginStart)
         val voiceBegin = bundle.javascript.substring(voiceBeginStart, voiceBeginEnd)
         assertTrue(
             voiceBegin.indexOf("navigator.mediaDevices.getUserMedia") <
-                voiceBegin.indexOf("ensureLocalDictationLanguage"),
-            "VoiceInput must establish browser microphone permission before local language checks",
+                voiceBegin.indexOf("startVoiceCapture(stream)"),
+            "VoiceInput must establish browser microphone permission before PCM capture",
         )
-        assertTrue(bundle.javascript.contains("\"downloadable\""))
-        assertTrue(bundle.javascript.contains("\"downloading\""))
         assertFalse(
             bundle.javascript.contains("setVoiceInputState("),
             "VexWeb must apply Family-authored semantic output rather than author State directly",

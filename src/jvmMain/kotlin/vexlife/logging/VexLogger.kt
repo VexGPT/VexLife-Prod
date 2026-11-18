@@ -42,6 +42,7 @@ object VexLogger {
         ServiceLifetime("service-lifetime"),
         Service("service"),
         HereticRuntime("heretic-runtime"),
+        LocalAsr("local-asr"),
         Conversation("conversation"),
         Browser("browser"),
         Presentation("presentation"),
@@ -95,6 +96,12 @@ object VexLogger {
         RuntimeProcessNoLongerLive(Owner.HereticRuntime),
         RuntimeProcessLive(Owner.HereticRuntime),
 
+        // Local speech-to-text provider. Facts carry stable provider/model coordinates, never audio/text.
+        LocalAsrSelectionSaved(Owner.Person),
+        LocalAsrInferenceStarted(Owner.LocalAsr),
+        LocalAsrInferenceCompleted(Owner.LocalAsr),
+        LocalAsrInferenceFailed(Owner.LocalAsr),
+
         // Conversation
         SendAccepted(Owner.Conversation),
         ProviderInvocationRequested(Owner.Conversation),
@@ -117,6 +124,7 @@ object VexLogger {
         VoiceInputLanguageInstallObserved(Owner.Browser),
         VoiceInputMicrophoneRequested(Owner.Browser),
         VoiceInputMicrophoneGranted(Owner.Browser),
+        VoiceInputAudioCaptureStarted(Owner.Browser),
         VoiceInputRecognitionStarted(Owner.Browser),
         VoiceInputFailureObserved(Owner.Browser),
         PresentationArrived(Owner.Presentation),
