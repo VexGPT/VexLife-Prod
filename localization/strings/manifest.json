@@ -3161,14 +3161,6 @@
       "enHash": "28787e0d826f",
       "langs": []
     },
-    "workspace.status.voice-input-checking-language": {
-      "enHash": "3224b7a65120",
-      "langs": []
-    },
-    "workspace.status.voice-input-failed-language": {
-      "enHash": "676ef479f6f4",
-      "langs": []
-    },
     "workspace.status.voice-input-failed-microphone": {
       "enHash": "888c8d37d7f0",
       "langs": []
@@ -3195,10 +3187,6 @@
     },
     "workspace.status.voice-input-held-microphone-api": {
       "enHash": "8c52e2fe5da7",
-      "langs": []
-    },
-    "workspace.status.voice-input-installing-language": {
-      "enHash": "6865890d4ec7",
       "langs": []
     },
     "workspace.status.voice-input-listening": {

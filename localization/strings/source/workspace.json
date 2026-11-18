@@ -1910,28 +1910,6 @@
       "workspace.settings"
     ]
   },
-  "workspace.status.voice-input-checking-language": {
-    "strings": {
-      "en": {
-        "text": "Checking on-device dictation for the selected language…"
-      }
-    },
-    "surfaces": [
-      "workspace.conversation"
-    ],
-    "dataKey": "voice-input:state:CHECKING_LANGUAGE"
-  },
-  "workspace.status.voice-input-failed-language": {
-    "strings": {
-      "en": {
-        "text": "The selected local speech recognizer does not support this language."
-      }
-    },
-    "surfaces": [
-      "workspace.conversation"
-    ],
-    "dataKey": "voice-input:failure:LANGUAGE_UNAVAILABLE"
-  },
   "workspace.status.voice-input-failed-microphone": {
     "strings": {
       "en": {
@@ -2008,17 +1986,6 @@
       "workspace.conversation"
     ],
     "dataKey": "voice-input:reason:MICROPHONE_API_UNAVAILABLE"
-  },
-  "workspace.status.voice-input-installing-language": {
-    "strings": {
-      "en": {
-        "text": "Getting on-device dictation ready for the selected language…"
-      }
-    },
-    "surfaces": [
-      "workspace.conversation"
-    ],
-    "dataKey": "voice-input:state:INSTALLING_LANGUAGE"
   },
   "workspace.status.voice-input-listening": {
     "strings": {

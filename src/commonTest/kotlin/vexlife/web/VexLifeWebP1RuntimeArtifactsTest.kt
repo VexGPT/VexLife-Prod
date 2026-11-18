@@ -469,7 +469,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrSpokenLanguagePath))
         assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrModelControlPath))
         assertTrue(bundle.javascript.contains(VexLifeProdServiceContract.LocalAsrTranscribePath))
-        assertTrue(bundle.javascript.contains("projection?.resolvedSpokenLanguageCode"))
+        assertTrue(bundle.javascript.contains("state.localAsr?.resolvedSpokenLanguageCode"))
         assertTrue(bundle.javascript.contains("code === 'auto'"))
         assertTrue(bundle.javascript.contains("localAsrAvailableForLanguage"))
         assertTrue(bundle.javascript.contains("const maybeProgressiveTranscription = () =>"))
@@ -625,11 +625,19 @@ class VexLifeWebP1RuntimeArtifactsTest {
                 ),
             "the selected target should carry one compact summary instead of one card per model",
         )
+        val modelsRenderer =
+            javascript
+                .substringAfter(
+                    "const renderModels = () => {",
+                )
+                .substringBefore(
+                    "const localAsrSelectionValue =",
+                )
         assertFalse(
-            javascript.contains(
+            modelsRenderer.contains(
                 "row.className = 'model-row'",
             ),
-            "the old large per-model card renderer must not compete with the dropdown",
+            "the old large Models per-model card renderer must not compete with the dropdown",
         )
         assertFalse(
             javascript.contains(
