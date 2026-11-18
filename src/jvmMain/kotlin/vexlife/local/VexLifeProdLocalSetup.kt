@@ -11,6 +11,7 @@ import vexlife.model.heretic.HereticModelCatalog
 import vexlife.model.heretic.HereticModelConfiguration
 import vexlife.model.heretic.HereticProductIdentity
 import vexlife.model.heretic.HereticRuntimeAvailability
+import vexlife.model.heretic.HereticRuntimeRealization
 import vexlife.model.heretic.runtime.FileHereticModelConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticRuntimeConfigurationStore
 import vexlife.model.heretic.runtime.FileHereticRuntimeReceiptStore
@@ -478,12 +479,18 @@ object VexLifeProdLocalSetup {
                 allowAcquisition,
             )
 
+        val realization =
+            HereticRuntimeRealization.require(
+                modelRef = model.modelRef,
+                target = HereticRuntimeRealization.MacArm64,
+            )
         val runtimeConfiguration =
             FileHereticRuntimeConfigurationStore(
                 canonicalHome,
             )
-                .effective(
-                    model,
+                .requireEffective(
+                    model = model,
+                    realization = realization,
                 )
         val binding =
             HereticPersistentRuntime.bind(
