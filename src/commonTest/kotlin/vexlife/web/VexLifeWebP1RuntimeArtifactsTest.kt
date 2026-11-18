@@ -457,7 +457,7 @@ class VexLifeWebP1RuntimeArtifactsTest {
         assertTrue(bundle.javascript.contains(": (state.conversation?.messages ?? []))"))
         // A private message goes only to the private route.
         assertTrue(bundle.javascript.contains("await sendPrivate();"))
-        assertTrue(bundle.javascript.contains("voice.localService &&"))
+        assertTrue(bundle.javascript.contains(".filter((voice) => voice.localService)"))
 
         // VoiceInput is a local drafting path over one selected Local-ASR provider.
         assertTrue(bundle.html.contains("id=\"voice-input\""))
