@@ -154,6 +154,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 vexContext: byId('vex-context'),
                 contextProfileBadge: byId('context-profile-badge'),
                 contextProfileSummary: byId('context-profile-summary'),
+                contextProfileChoice: byId('context-profile-choice'),
                 contextProfileName: byId('context-profile-name'),
                 contextProfileFoundationMode: byId('context-profile-foundation-mode'),
                 contextProfileFoundationField: byId('context-profile-foundation-field'),
@@ -2464,6 +2465,18 @@ object VexLifeWebP1RuntimeArtifacts {
                   return;
                 }
                 const active = projection.active;
+                const choices = [
+                  { profileRef: 'profile.vexlife.context.product-default', definition: { name: 'VexLife Default' }, productDefault: true },
+                  ...(projection.saved ?? [])
+                ];
+                ui.contextProfileChoice.replaceChildren(...choices.map((profile) => {
+                  const option = document.createElement('option');
+                  option.value = profile.profileRef;
+                  option.textContent = profile.definition.name + (profile.productDefault ? '' : ' · r' + profile.revision);
+                  return option;
+                }));
+                ui.contextProfileChoice.value = active.profileRef;
+                ui.contextProfileChoice.disabled = state.contextProfileInFlight;
                 ui.contextProfileBadge.textContent = active.definition.name;
                 ui.contextProfileSummary.textContent =
                   active.productDefault
@@ -4011,6 +4024,23 @@ object VexLifeWebP1RuntimeArtifacts {
                 state.contextProfileDirty = true;
                 renderContextProfile();
               };
+              ui.contextProfileChoice.addEventListener('change', () => {
+                const profileRef = ui.contextProfileChoice.value;
+                const active = currentContextProfile();
+                if (!profileRef || profileRef === active?.profileRef) return;
+                if (state.contextProfileDirty && !window.confirm('Switch profiles and discard the unsaved changes on this screen?')) {
+                  ui.contextProfileChoice.value = active?.profileRef ?? '';
+                  return;
+                }
+                void contextProfileControl(
+                  profileRef === 'profile.vexlife.context.product-default' ? 'RESTORE_PRODUCT_DEFAULT' : 'USE',
+                  profileRef === 'profile.vexlife.context.product-default' ? {} : { profileRef }
+                )
+                  .then((result) => {
+                    if (result) notify('Using “' + result.profiles.active.definition.name + '” for your next message.');
+                  })
+                  .catch((error) => notify(error instanceof Error ? error.message : 'That Context Profile could not be selected.'));
+              });
               ui.contextProfileName.addEventListener('input', markContextProfileDirty);
               ui.contextProfileFoundationText.addEventListener('input', markContextProfileDirty);
               ui.contextProfileProcessRetention.addEventListener('change', markContextProfileDirty);
