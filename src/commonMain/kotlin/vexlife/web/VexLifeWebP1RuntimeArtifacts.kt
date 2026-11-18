@@ -2610,7 +2610,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (productField) {
                   contextLine(
                     ui.contextFoundationBody,
-                    (productField.carriedModuleRefs?.length ?? 0) + ' Product modules carried' +
+                    (productField.carriedModules?.length ?? 0) + ' Product modules carried' +
                       ((productField.omittedModuleRefs?.length ?? 0)
                         ? ' · ' + productField.omittedModuleRefs.length + ' left out for room'
                         : ''),
@@ -3509,6 +3509,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const response = await fetch(service.memoryPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.memory = await readJson(response);
                 renderMemory();
+                renderVexContext();
                 return state.memory;
               };
 
@@ -3591,6 +3592,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 if (renderNow && priorIdentity !== nextIdentity) {
                   renderTimeline();
                   if (state.app === apps.archives) renderArchives();
+                  if (state.app === apps.vexContext) renderVexContext();
                 }
               };
 
@@ -3598,6 +3600,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 const response = await fetch(service.contextPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.context = await readJson(response);
                 renderSettings();
+                renderVexContext();
               };
 
               const completeCanonicalSend = async (result, streamed, preservedProcess = null) => {
@@ -3634,6 +3637,20 @@ object VexLifeWebP1RuntimeArtifacts {
                 }
                 if (Array.isArray(result.capabilityUses) && result.capabilityUses.length > 0) {
                   state.reachesByResponse.set(String(result.responseMessageRef ?? ''), result.capabilityUses);
+                }
+                if (
+                  responseKey &&
+                  state.contextProfiles?.active?.definition?.processRetention === 'PREVIOUS_TURN'
+                ) {
+                  for (const key of Array.from(state.humanReasoningByResponse.keys())) {
+                    if (!key.startsWith('private.') && key !== responseKey) state.humanReasoningByResponse.delete(key);
+                  }
+                  for (const key of Array.from(state.processEntriesByResponse.keys())) {
+                    if (key !== responseKey) state.processEntriesByResponse.delete(key);
+                  }
+                  for (const key of Array.from(state.reachesByResponse.keys())) {
+                    if (key !== responseKey) state.reachesByResponse.delete(key);
+                  }
                 }
                 state.liveReaches = [];
 
