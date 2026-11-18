@@ -984,7 +984,7 @@ class VexLifeProdLocalService private constructor(
                 VexLifeProdServiceContract.ModelsControlPath -> {
                     requireMethod(exchange, "POST")
                     requireJson(exchange)
-                    val request = JsonCodec.decodeFromString<ModelControlRequest>(requestText(exchange))
+                    val request = decodeRequest<ModelControlRequest>(exchange)
                     respondJson(
                         exchange = exchange,
                         status = 200,
@@ -1000,14 +1000,14 @@ class VexLifeProdLocalService private constructor(
                 VexLifeProdServiceContract.ModelsImportCheckPath -> {
                     requireMethod(exchange, "POST")
                     requireJson(exchange)
-                    val request = JsonCodec.decodeFromString<ModelImportCheckRequest>(requestText(exchange))
+                    val request = decodeRequest<ModelImportCheckRequest>(exchange)
                     respondJson(exchange = exchange, status = 200, value = models.checkImport(request.sourceUrl))
                 }
 
                 VexLifeProdServiceContract.ModelsImportAddPath -> {
                     requireMethod(exchange, "POST")
                     requireJson(exchange)
-                    val request = JsonCodec.decodeFromString<ModelImportAddRequest>(requestText(exchange))
+                    val request = decodeRequest<ModelImportAddRequest>(exchange)
                     respondJson(exchange = exchange, status = 200, value = models.addCheckedImport(request.importRef))
                 }
 
@@ -1096,13 +1096,22 @@ class VexLifeProdLocalService private constructor(
                     ),
             )
         } catch (
-            error: SerializationException,
+            error: RequestJsonInvalid,
         ) {
             respondError(
                 exchange = exchange,
                 status = 400,
                 code = "REQUEST_JSON_INVALID",
                 message = "request JSON does not match the current service contract",
+            )
+        } catch (
+            error: SerializationException,
+        ) {
+            respondError(
+                exchange = exchange,
+                status = 500,
+                code = "PRODUCT_CONTRACT_SERIALIZATION_FAILED",
+                message = "VexLife could not read or project one Product contract",
             )
         } catch (
             error: IllegalArgumentException,
@@ -1232,11 +1241,7 @@ class VexLifeProdLocalService private constructor(
             exchange,
         )
         val request =
-            JsonCodec.decodeFromString<VexLifeProdServiceContract.ReleaseAlertsControlRequest>(
-                requestText(
-                    exchange,
-                ),
-            )
+            decodeRequest<VexLifeProdServiceContract.ReleaseAlertsControlRequest>(exchange)
         val result =
             releaseAlertsControl(
                 request.controlRef,
@@ -1314,7 +1319,7 @@ class VexLifeProdLocalService private constructor(
         requireMethod(exchange, "POST")
         requireJson(exchange)
         val request =
-            JsonCodec.decodeFromString<VexLifeProdServiceContract.VisionControlRequest>(requestText(exchange))
+            decodeRequest<VexLifeProdServiceContract.VisionControlRequest>(exchange)
         val control = requireNotNull(VexLifeVisionFamily.controlForRef(request.controlRef))
         val runtime = visionRuntime
         val act = VexLifeVisionFamily.resolve(currentState = observedVisionState(), control = control)
@@ -1425,11 +1430,7 @@ class VexLifeProdLocalService private constructor(
         }
 
         val request =
-            JsonCodec.decodeFromString<VexLifeProdServiceContract.VisionScopeCommandRequest>(
-                requestText(
-                    exchange,
-                ),
-            )
+            decodeRequest<VexLifeProdServiceContract.VisionScopeCommandRequest>(exchange)
         val result =
             currentVisionRuntime.engage(
                 request.requestRef,
@@ -1479,11 +1480,7 @@ class VexLifeProdLocalService private constructor(
         }
 
         val request =
-            JsonCodec.decodeFromString<VexLifeProdServiceContract.VisionScopeCommandRequest>(
-                requestText(
-                    exchange,
-                ),
-            )
+            decodeRequest<VexLifeProdServiceContract.VisionScopeCommandRequest>(exchange)
         val result =
             currentVisionRuntime.stop(
                 request.requestRef,
@@ -1516,11 +1513,7 @@ class VexLifeProdLocalService private constructor(
             exchange,
         )
 
-        JsonCodec.decodeFromString<VexLifeProdServiceContract.VisionLookNowRequest>(
-            requestText(
-                exchange,
-            ),
-        )
+        decodeRequest<VexLifeProdServiceContract.VisionLookNowRequest>(exchange)
 
         respondError(
             exchange = exchange,
@@ -1588,7 +1581,7 @@ class VexLifeProdLocalService private constructor(
     private fun handleDiagnosticsControl(exchange: HttpExchange) {
         requireMethod(exchange, "POST")
         requireJson(exchange)
-        val request = JsonCodec.decodeFromString<DiagnosticsControlRequest>(requestText(exchange))
+        val request = decodeRequest<DiagnosticsControlRequest>(exchange)
         respondJson(exchange = exchange, status = 200, value = diagnostics.control(request.controlRef))
     }
 
@@ -1614,7 +1607,7 @@ class VexLifeProdLocalService private constructor(
     private fun handlePresentationFact(exchange: HttpExchange) {
         requireMethod(exchange, "POST")
         requireJson(exchange)
-        val reported = JsonCodec.decodeFromString<PresentationFact>(requestText(exchange))
+        val reported = decodeRequest<PresentationFact>(exchange)
         val fact = VexLogger.Fact.fromWire(reported.fact)
         if (
             fact == null ||
@@ -1660,7 +1653,7 @@ class VexLifeProdLocalService private constructor(
             "GET" -> respondJson(exchange = exchange, status = 200, value = settingsProjection())
             "POST" -> {
                 requireJson(exchange)
-                val update = JsonCodec.decodeFromString<VexLifeProdServiceContract.SettingsUpdate>(requestText(exchange))
+                val update = decodeRequest<VexLifeProdServiceContract.SettingsUpdate>(exchange)
                 personSettings.write(VexLifePersonSettings.Value(VexLifePersonSettings.Schema, update.replyLanguage))
                 respondJson(exchange = exchange, status = 200, value = settingsProjection())
             }
@@ -1872,11 +1865,7 @@ class VexLifeProdLocalService private constructor(
                     exchange,
                 )
                 val update =
-                    JsonCodec.decodeFromString<VexLifeProdServiceContract.LocalAsrSelectionUpdate>(
-                        requestText(
-                            exchange,
-                        ),
-                    )
+                    decodeRequest<VexLifeProdServiceContract.LocalAsrSelectionUpdate>(exchange)
                 val value =
                     VexLifeLocalAsrSelection.Value(
                         schemaVersion =
@@ -1933,11 +1922,7 @@ class VexLifeProdLocalService private constructor(
             exchange,
         )
         val request =
-            JsonCodec.decodeFromString<VexLifeProdServiceContract.LocalAsrModelControlRequest>(
-                requestText(
-                    exchange,
-                ),
-            )
+            decodeRequest<VexLifeProdServiceContract.LocalAsrModelControlRequest>(exchange)
         localAsrModels.control(
             controlRef =
                 request.controlRef,
@@ -1962,11 +1947,7 @@ class VexLifeProdLocalService private constructor(
             exchange,
         )
         val update =
-            JsonCodec.decodeFromString<VexLifeProdServiceContract.LocalAsrSpokenLanguageUpdate>(
-                requestText(
-                    exchange,
-                ),
-            )
+            decodeRequest<VexLifeProdServiceContract.LocalAsrSpokenLanguageUpdate>(exchange)
         val value =
             VexLifeLocalAsrSpokenLanguage.Value(
                 schemaVersion =
@@ -2360,7 +2341,7 @@ class VexLifeProdLocalService private constructor(
     private fun handlePrivateControl(exchange: HttpExchange) {
         requireMethod(exchange, "POST")
         requireJson(exchange)
-        val request = JsonCodec.decodeFromString<VexLifeProdServiceContract.PrivateControlRequest>(requestText(exchange))
+        val request = decodeRequest<VexLifeProdServiceContract.PrivateControlRequest>(exchange)
         val control = requireNotNull(VexLifePrivateModeFamily.controlForRef(request.controlRef))
         val act = VexLifePrivateModeFamily.resolve(privateConversation.state(), control)
         val outcome =
@@ -2424,7 +2405,7 @@ class VexLifeProdLocalService private constructor(
             return
         }
         requireJson(exchange)
-        val request = JsonCodec.decodeFromString<VexLifeProdServiceContract.PrivateSendRequest>(requestText(exchange))
+        val request = decodeRequest<VexLifeProdServiceContract.PrivateSendRequest>(exchange)
         if (!requirePrivateOpen(exchange)) return
         val memory = runCatching { memoryReader(Path.of(startupSetup.productHome)) }.getOrNull()
         val memoryMessage = memory?.let { runCatching { DirectPromptContext.memorySystemMessage(it) }.getOrNull() }
@@ -2455,7 +2436,7 @@ class VexLifeProdLocalService private constructor(
     private fun handlePrivateNoteKeep(exchange: HttpExchange) {
         requireMethod(exchange, "POST")
         requireJson(exchange)
-        val request = JsonCodec.decodeFromString<VexLifeProdServiceContract.PrivateNoteKeepRequest>(requestText(exchange))
+        val request = decodeRequest<VexLifeProdServiceContract.PrivateNoteKeepRequest>(exchange)
         if (!requirePrivateOpen(exchange)) return
         privateEffect(exchange) { privateConversation.keepNote(request.text) }
     }
@@ -2616,11 +2597,7 @@ class VexLifeProdLocalService private constructor(
                     exchange,
                 )
                 val request =
-                    JsonCodec.decodeFromString<VexLifeProdServiceContract.MemoryDreamRunRequest>(
-                        requestText(
-                            exchange,
-                        ),
-                    )
+                    decodeRequest<VexLifeProdServiceContract.MemoryDreamRunRequest>(exchange)
                 val before =
                     executor.observe(
                         startupSetup,
@@ -2760,11 +2737,7 @@ class VexLifeProdLocalService private constructor(
         )
 
         val request =
-            JsonCodec.decodeFromString<VexLifeProdServiceContract.SendRequest>(
-                requestText(
-                    exchange,
-                ),
-            )
+            decodeRequest<VexLifeProdServiceContract.SendRequest>(exchange)
 
         val intent =
             sendIntent(
@@ -3280,6 +3253,8 @@ class VexLifeProdLocalService private constructor(
                 ?: return VexLifeProdServiceContract.ContextProjection(
                     schemaVersion =
                         VexLifeProdServiceContract.ContextProjectionSchema,
+                    state =
+                        VexLifeProdServiceContract.ContextStateEmpty,
                     currentConversationHeadSha256 =
                         null,
                     turnRef =
@@ -3291,16 +3266,50 @@ class VexLifeProdLocalService private constructor(
                     effectsPerformed =
                         false,
                 )
-        val record =
+        val contextStore =
             DirectTurnContextStore(
                 productHome,
             )
+        val compatibility =
+            contextStore.inspectPromptReceiptCompatibility(
+                head.turnRef,
+            )
+        if (
+            compatibility !=
+                null &&
+                !compatibility.readableByCurrentSource
+        ) {
+            return VexLifeProdServiceContract.ContextProjection(
+                schemaVersion =
+                    VexLifeProdServiceContract.ContextProjectionSchema,
+                state =
+                    VexLifeProdServiceContract.ContextStateHeldUnsupportedDurablePromptReceipt,
+                currentConversationHeadSha256 =
+                    head.conversationHeadSha256,
+                turnRef =
+                    head.turnRef,
+                contextPath =
+                    head.contextPath,
+                promptContext =
+                    null,
+                heldReason =
+                    VexLifeProdServiceContract.ContextHeldReasonPromptReceiptSchemaUnsupported,
+                durablePromptReceiptSchema =
+                    compatibility.promptReceiptSchema,
+                effectsPerformed =
+                    false,
+            )
+        }
+        val record =
+            contextStore
                 .read(
                     head.turnRef,
                 )
                 ?: return VexLifeProdServiceContract.ContextProjection(
                     schemaVersion =
                         VexLifeProdServiceContract.ContextProjectionSchema,
+                    state =
+                        VexLifeProdServiceContract.ContextStateHistoricalWithoutProductEvidence,
                     currentConversationHeadSha256 =
                         head.conversationHeadSha256,
                     turnRef =
@@ -3330,6 +3339,8 @@ class VexLifeProdLocalService private constructor(
         return VexLifeProdServiceContract.ContextProjection(
             schemaVersion =
                 VexLifeProdServiceContract.ContextProjectionSchema,
+            state =
+                VexLifeProdServiceContract.ContextStateAvailable,
             currentConversationHeadSha256 =
                 head.conversationHeadSha256,
             turnRef =
@@ -3752,6 +3763,29 @@ class VexLifeProdLocalService private constructor(
         }
         return bytes
     }
+
+    private class RequestJsonInvalid(
+        cause: SerializationException,
+    ) : RuntimeException(
+            cause,
+        )
+
+    private inline fun <reified T> decodeRequest(
+        exchange: HttpExchange,
+    ): T =
+        try {
+            JsonCodec.decodeFromString<T>(
+                requestText(
+                    exchange,
+                ),
+            )
+        } catch (
+            error: SerializationException,
+        ) {
+            throw RequestJsonInvalid(
+                error,
+            )
+        }
 
     private fun requestText(
         exchange: HttpExchange,

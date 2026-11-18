@@ -279,6 +279,7 @@ object VexLifeWebP1RuntimeArtifacts {
                 currentStatePath: ${jsString(VexLifeProdServiceContract.CurrentStatePath)},
                 conversationPath: ${jsString(VexLifeProdServiceContract.ConversationPath)},
                 contextPath: ${jsString(VexLifeProdServiceContract.ContextPath)},
+                contextHeldUnsupportedState: ${jsString(VexLifeProdServiceContract.ContextStateHeldUnsupportedDurablePromptReceipt)},
                 memoryPath: ${jsString(VexLifeProdServiceContract.MemoryPath)},
                 releaseAlertsPath: ${jsString(VexLifeProdServiceContract.ReleaseAlertsPath)},
                 releaseAlertsControlPath: ${jsString(VexLifeProdServiceContract.ReleaseAlertsControlPath)},
@@ -4685,6 +4686,15 @@ object VexLifeWebP1RuntimeArtifacts {
                 const response = await fetch(service.contextPath, { headers: { accept: 'application/json' }, cache: 'no-store' });
                 state.context = await readJson(response);
                 renderSettings();
+                if (state.context?.state === service.contextHeldUnsupportedState) {
+                  const schema = String(state.context.durablePromptReceiptSchema ?? 'unknown durable schema');
+                  notify(
+                    'This VexLife build cannot project the latest turn context (' +
+                    schema +
+                    '). Conversation, Models, diagnostics, and other independent surfaces remain available.'
+                  );
+                }
+                return state.context;
               };
 
               const completeCanonicalSend = async (result, streamed, preservedProcess = null) => {
@@ -5492,13 +5502,21 @@ object VexLifeWebP1RuntimeArtifacts {
                 loadSourceCurrentness(),
                 loadCurrentState(),
                 loadConversation(),
-                loadContext(),
                 loadVision()
               ])
                 .then(() => {
                   render();
                   navigate(browser.initialPageUrl);
                   renderApp();
+                  void loadContext().catch((error) => {
+                    state.context = null;
+                    renderSettings();
+                    notify(
+                      error instanceof Error
+                        ? 'Vex context is unavailable: ' + error.message
+                        : 'Vex context is unavailable in this build.'
+                    );
+                  });
                   void loadPrivate().catch(() => {});
                   void loadSettings().catch(() => {});
                   void loadMemory().catch(() => {});
