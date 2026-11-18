@@ -408,6 +408,8 @@ object VexLifeCurrentMemoryReader {
                 identity = identity,
                 current = score.head,
                 expectedHistoricalSha256 = daily.sourceScoreHeadSha256,
+                expectedSourceConversationHeadSha256 =
+                    daily.sourceConversationHeadSha256,
             ),
         ) {
             "Daily Memory source Score head is not in the current Score lineage"
@@ -3278,10 +3280,15 @@ object VexLifeCurrentMemoryReader {
         identity: Identity,
         current: JsonObject,
         expectedHistoricalSha256: String,
+        expectedSourceConversationHeadSha256: String,
     ): Boolean {
         requireSha256(
             expectedHistoricalSha256,
             "historical Score head",
+        )
+        requireSha256(
+            expectedSourceConversationHeadSha256,
+            "historical Score source Conversation head",
         )
         val root =
             "score/" +
@@ -3310,6 +3317,14 @@ object VexLifeCurrentMemoryReader {
                 currentSha ==
                 expectedHistoricalSha256
             ) {
+                require(
+                    cursor.string(
+                        "sourceConversationHeadSha256",
+                    ) ==
+                        expectedSourceConversationHeadSha256,
+                ) {
+                    "Daily Memory source Conversation head differs from its source Score head"
+                }
                 return true
             }
             val sequence =
