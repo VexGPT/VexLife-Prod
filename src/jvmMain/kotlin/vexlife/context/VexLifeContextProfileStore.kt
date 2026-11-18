@@ -142,6 +142,22 @@ class VexLifeContextProfileStore(
         }
     }
 
+    fun selectSaved(
+        profileRef: String,
+        productFoundation: VexLifeContextProfile.ProductFoundationIdentity,
+    ): VexLifeContextProfile.Effective {
+        val revision =
+            readCurrentRevision(
+                profileRef,
+            )
+        VexOwnedPath.ensureDirectory(home, root)
+        select(profileRef)
+        return effective(
+            revision = revision,
+            productFoundation = productFoundation,
+        )
+    }
+
     fun save(
         profileRef: String?,
         definition: VexLifeContextProfile.Definition,
