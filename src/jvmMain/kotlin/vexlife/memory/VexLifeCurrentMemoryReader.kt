@@ -221,6 +221,14 @@ object VexLifeCurrentMemoryReader {
         val acceptance: JsonObject,
     )
 
+    internal data class CurrentScoreStatementBinding(
+        val statementRef: String,
+        val semanticSubjectFingerprint: String,
+        val memoryRelation: String,
+        val semanticAcceptanceRef: String,
+        val semanticAcceptanceSha256: String,
+    )
+
     @Serializable
     private data class PageIdentity(
         val dailyStratumSha256: String,
@@ -590,6 +598,95 @@ object VexLifeCurrentMemoryReader {
         )
     }
 
+    internal fun readCurrentSemanticAuthorityHead(
+        productHome: Path,
+        threadRef: String =
+            DirectConversationIdentity.ThreadRef,
+    ): JsonObject? {
+        val home =
+            VexOwnedPath.requireRoot(
+                productHome,
+                "canonical VexLife Home",
+            )
+        val currentHome =
+            requireNotNull(
+                VexLifeProdHomeFiles.observeExisting(
+                    home,
+                ),
+            ) {
+                "semantic authority reader requires one current canonical VexLife Home"
+            }
+        val identity =
+            Identity(
+                homeRef = currentHome.manifest.homeRef,
+                deviceRef = currentHome.manifest.currentDeviceRef,
+                lineageRef = currentHome.manifest.currentCompanionLineageRef,
+                threadRef = threadRef,
+            )
+
+        return loadAuthorityOrNull(
+            home = home,
+            identity = identity,
+        )
+    }
+
+    internal fun readCurrentScoreStatementBinding(
+        productHome: Path,
+        statementRef: String,
+        threadRef: String =
+            DirectConversationIdentity.ThreadRef,
+    ): CurrentScoreStatementBinding? {
+        val home =
+            VexOwnedPath.requireRoot(
+                productHome,
+                "canonical VexLife Home",
+            )
+        val currentHome =
+            requireNotNull(
+                VexLifeProdHomeFiles.observeExisting(
+                    home,
+                ),
+            ) {
+                "Score statement reader requires one current canonical VexLife Home"
+            }
+        val identity =
+            Identity(
+                homeRef = currentHome.manifest.homeRef,
+                deviceRef = currentHome.manifest.currentDeviceRef,
+                lineageRef = currentHome.manifest.currentCompanionLineageRef,
+                threadRef = threadRef,
+            )
+        val conversationStore =
+            DirectConversationStore(
+                home,
+            )
+        val score =
+            loadScore(
+                home = home,
+                identity = identity,
+                conversationStore = conversationStore,
+                conversation = conversationStore.current(),
+                authorityPolicy =
+                    ScoreAuthorityPolicy.ALLOW_HISTORICAL_HELD,
+            )
+        val statement =
+            score.statements
+                .singleOrNull {
+                    it.current &&
+                        it.statementRef ==
+                        statementRef
+                }
+                ?: return null
+
+        return CurrentScoreStatementBinding(
+            statementRef = statement.statementRef,
+            semanticSubjectFingerprint =
+                statement.semanticSubjectFingerprint,
+            memoryRelation = statement.memoryRelation,
+            semanticAcceptanceRef = statement.acceptanceRef,
+            semanticAcceptanceSha256 = statement.acceptanceSha256,
+        )
+    }
 
     internal fun readCurrentScoreAcceptance(
         productHome: Path,
