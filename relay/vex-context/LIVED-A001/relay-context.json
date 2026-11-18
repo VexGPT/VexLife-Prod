@@ -4,7 +4,7 @@
   "sourcePr": 251,
   "tempRelayPr": 261,
   "attempt": "LIVED-A001",
-  "disposition": "SEALED_NOT_EXECUTED",
+  "disposition": "FORMATION_REJECTED_BEFORE_PRODUCT_PROOF",
   "candidate": {
     "repository": "VexGPT/VexLife-Prod",
     "branch": "VXG-111726-vex-context-profiles-a001",
@@ -77,5 +77,13 @@
       "merge",
       "publication"
     ]
+  },
+  "result": {
+    "failure": "MANIFEST_ROUTE_LIFECYCLE_STATE:continuationPlan.onPass:LIVED_UI_PROVEN",
+    "productCheckoutReached": false,
+    "productExecutionReached": false,
+    "browserProofReached": false,
+    "sourceMutation": false,
+    "correction": "Use canonical lifecycle state ASSURANCE_EVIDENCE_READY with fresh LIVED-A002 attempt identity."
   }
 }
